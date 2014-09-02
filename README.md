@@ -32,7 +32,7 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 * Switches and foreign objects, there is a delegate you can implement to handle foreign objects, once you say you can handle it, its up to you to handle the SVG as IJSVG will stop parsing the document once you have told it you will handle it
 
 
-# What doesnt work
+# What doesn't work
 * Animation
 * The A command
 * Transform for skewX and skewY
