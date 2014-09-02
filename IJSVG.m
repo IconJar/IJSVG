@@ -34,7 +34,18 @@ static NSColor * _baseColor = nil;
 
 - (id)initWithFile:(NSString *)file
 {
-    if( ( self = [self initWithFilePathURL:[NSURL fileURLWithPath:file]] ) != nil )
+    if( ( self = [self initWithFile:file
+                           delegate:nil] ) != nil )
+    {
+    }
+    return self;
+}
+
+- (id)initWithFile:(NSString *)file
+          delegate:(id<IJSVGDelegate>)delegate
+{
+    if( ( self = [self initWithFilePathURL:[NSURL fileURLWithPath:file]
+                                  delegate:delegate] ) )
     {
     }
     return self;
@@ -42,15 +53,26 @@ static NSColor * _baseColor = nil;
 
 - (id)initWithFilePathURL:(NSURL *)aURL
 {
-    if( [IJSVGCache enabled] )
+    if( ( self = [self initWithFilePathURL:aURL
+                                  delegate:nil] ) != nil )
     {
-        IJSVG * svg = nil;
-        if( ( svg = [IJSVGCache cachedSVGForFileURL:aURL] ) != nil )
-            return [svg retain];
     }
-    
+    return self;
+}
+
+- (id)initWithFilePathURL:(NSURL *)aURL
+                 delegate:(id<IJSVGDelegate>)delegate
+{
+//    if( [IJSVGCache enabled] )
+//    {
+//        IJSVG * svg = nil;
+//        if( ( svg = [IJSVGCache cachedSVGForFileURL:aURL] ) != nil )
+//            return [svg retain];
+//    }
+//    
     if( ( self = [super init] ) != nil )
     {
+        _delegate = delegate;
         _group = [[IJSVGParser groupForFileURL:aURL] retain];
         if( [IJSVGCache enabled] )
             [IJSVGCache cacheSVG:self
@@ -220,6 +242,31 @@ static NSColor * _baseColor = nil;
     // restore the graphics state
     CGContextRestoreGState(ref);
     
+}
+
+#pragma mark IJSVGParserDelegate
+
+- (BOOL)svgParser:(IJSVGParser *)parser
+shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject
+{
+    if( _delegate == nil )
+        return NO;
+    if( [_delegate respondsToSelector:@selector(svg:shouldHandleForeignObject:)] )
+        return [_delegate svg:self
+    shouldHandleForeignObject:foreignObject];
+    return NO;
+}
+
+- (void)svgParser:(IJSVGParser *)parser
+handleForeignObject:(IJSVGForeignObject *)foreignObject
+         document:(NSXMLDocument *)document
+{
+    if( _delegate == nil )
+        return;
+    if( [_delegate respondsToSelector:@selector(svg:handleForeignObject:document:)] )
+        [_delegate svg:self
+   handleForeignObject:foreignObject
+              document:document];
 }
 
 @end

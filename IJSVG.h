@@ -10,12 +10,26 @@
 #import "IJSVGParser.h"
 #import "IJSVGBezierPathAdditions.h"
 
+@class IJSVG;
+
+@protocol IJSVGDelegate <NSObject,IJSVGParserDelegate>
+
+@optional
+- (BOOL)svg:(IJSVG *)svg
+shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject;
+- (void)svg:(IJSVG *)svg
+handleForeignObject:(IJSVGForeignObject *)foreignObject
+   document:(NSXMLDocument *)document;
+
+@end
+
 @interface IJSVG : NSObject {
     
 @private
     IJSVGParser * _group;
     CGFloat _scale;
     NSMutableArray * _colors;
+    id<IJSVGDelegate> _delegate;
     
 }
 
@@ -23,7 +37,11 @@
 + (void)setBaseColor:(NSColor *)color;
 
 - (id)initWithFile:(NSString *)file;
+- (id)initWithFile:(NSString *)file
+          delegate:(id<IJSVGDelegate>)delegate;
 - (id)initWithFilePathURL:(NSURL *)aURL;
+- (id)initWithFilePathURL:(NSURL *)aURL
+                 delegate:(id<IJSVGDelegate>)delegate;
 - (NSImage *)imageWithSize:(NSSize)aSize;
 - (void)drawAtPoint:(NSPoint)point
                size:(NSSize)size;

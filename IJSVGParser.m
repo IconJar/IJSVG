@@ -14,7 +14,15 @@
 
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
 {
-    return [[[[self class] alloc] initWithFileURL:aURL] autorelease];
+    return [[self class] groupForFileURL:aURL
+                                delegate:nil];
+}
+
++ (IJSVGParser *)groupForFileURL:(NSURL *)aURL
+                        delegate:(id<IJSVGParserDelegate>)delegate
+{
+    return [[[[self class] alloc] initWithFileURL:aURL
+                                         delegate:delegate] autorelease];
 }
 
 - (void)dealloc
@@ -23,9 +31,11 @@
 }
 
 - (id)initWithFileURL:(NSURL *)aURL
+             delegate:(id<IJSVGParserDelegate>)delegate
 {
     if( ( self = [self initWithFileURL:aURL
-                              encoding:NSUTF8StringEncoding] ) != nil )
+                              encoding:NSUTF8StringEncoding
+                              delegate:delegate] ) != nil )
     {
     }
     return self;
@@ -33,9 +43,11 @@
 
 - (id)initWithFileURL:(NSURL *)aURL
              encoding:(NSStringEncoding)encoding
+             delegate:(id<IJSVGParserDelegate>)delegate
 {
     if( ( self = [super init] ) != nil )
     {
+        _delegate = delegate;
         
         // load the document / file, assume its UTF8
         NSError * error = nil;
@@ -84,6 +96,73 @@
         CGFloat w = [[[svgElement attributeForName:@"width"] stringValue] floatValue];
         CGFloat h = [[[svgElement attributeForName:@"height"] stringValue] floatValue];
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
+    }
+    
+    // find foreign objects...
+    NSXMLElement * switchElement = nil;
+    NSArray * switchElements = [svgElement nodesForXPath:@"switch"
+                                                   error:nil];
+    if( [switchElements count] != 0 )
+    {
+        // for performance reasons, ask for this once!
+        BOOL handlesShouldHandle = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
+        BOOL handlesHandle = [_delegate respondsToSelector:@selector(svgParser:handleForeignObject:document:)];
+        
+        // we have a switch, work out what the objects are...
+        switchElement = switchElements[0];
+        NSXMLElement * child = nil;
+        for( child in [switchElement children] )
+        {
+            if( [[child name] isEqualToString:@"foreignObject"] )
+            {
+                // if the delegate fails,
+                // just remove the child from its parent
+                if( _delegate == nil )
+                {
+                    NSInteger index = [child index];
+                    [child detach];
+                    [(NSXMLElement *)[child parent] removeChildAtIndex:index];
+                    continue;
+                }
+                
+                // create the temp foreign object
+                IJSVGForeignObject * foreignObject = [[[IJSVGForeignObject alloc] init] autorelease];
+                
+                // grab the common attributes
+                [self _parseElementForCommonAttributes:child
+                                                  node:foreignObject];
+                foreignObject.requiredExtension = [[child attributeForName:@"requiredExtensions"] stringValue];
+                
+                // ask the delegate
+                if( handlesShouldHandle )
+                {
+                    
+                    // does it handle the foreign object?
+                    if( [_delegate svgParser:self
+                   shouldHandleForeignObject:foreignObject] )
+                    {
+                        
+                        // handle it if so
+                        if( handlesHandle )
+                        {
+                            [_delegate svgParser:self
+                             handleForeignObject:foreignObject
+                                        document:_document];
+                            break;
+                        } else {
+                            // remove the child from its parent
+                            // so its clean incase we cant handle the next one
+                            NSInteger index = [child index];
+                            [child detach];
+                            [(NSXMLElement *)[child parent] removeChildAtIndex:index];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // set the main element to the switch
+        svgElement = switchElement;
     }
     
     // the root element is SVG, so iterate over its children
@@ -150,6 +229,16 @@
     NSXMLNode * windingRuleAttribute = [element attributeForName:@"fill-rule"];
     if( windingRuleAttribute != nil )
         node.windingRule = [IJSVGUtils windingRuleForString:[element stringValue]];
+    
+    // width
+    NSXMLNode * widthAttribute = [element attributeForName:@"width"];
+    if( widthAttribute != nil )
+        node.width = [IJSVGUtils floatValue:[widthAttribute stringValue]];
+    
+    // height
+    NSXMLNode * heightAttribute = [element attributeForName:@"height"];
+    if( heightAttribute != nil )
+        node.height = [IJSVGUtils floatValue:[heightAttribute stringValue]];
     
 }
 
