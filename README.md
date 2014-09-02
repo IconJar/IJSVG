@@ -29,6 +29,7 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 * Filling: fill color, fill mode ( winding rules ), fill opacity
 * Color: supports all predefined colors from the SVG spec and hex values
 * Caching: has basic caching implemenation
+* Switches and foreign objects, there is a delegate you can implement to handle foreign objects, once you say you can handle it, its up to you to handle the SVG as IJSVG will stop parsing the document once you have told it you will handle it
 
 
 # What doesnt work
@@ -37,7 +38,6 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 * Transform for skewX and skewY
 * Transform for rotate around a point
 * Dashed strokes
-* If the SVG has a switch in it from other application (Adobe products) it will fail to find a valid SVG (this is being worked on)
 
 ## Credit
 IJSVG is loosely based on [UIBezierPath-SVG](https://github.com/ap4y/UIBezierPath-SVG) by [ap4y](https://github.com/ap4y)
