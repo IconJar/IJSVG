@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>83EE8FFF-CAF0-4D33-92A0-4CA5D3A6A33C</string>
+	<key>IDESourceControlProjectName</key>
+	<string>IJSVGExample</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>D72EFE5A8E718DCC42CFCBCE6A16E2165A4F6596</key>
+		<string>https://github.com/curthard89/IJSVG.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>IJSVGExample/IJSVGExample.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>D72EFE5A8E718DCC42CFCBCE6A16E2165A4F6596</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/curthard89/IJSVG.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>D72EFE5A8E718DCC42CFCBCE6A16E2165A4F6596</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>D72EFE5A8E718DCC42CFCBCE6A16E2165A4F6596</string>
+			<key>IDESourceControlWCCName</key>
+			<string>IJSVG</string>
+		</dict>
+	</array>
+</dict>
+</plist>

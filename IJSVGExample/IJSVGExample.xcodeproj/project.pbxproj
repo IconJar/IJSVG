@@ -1,0 +1,565 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
+		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
+		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
+		5956658519B62F4600D805FF /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5956658319B62F4600D805FF /* MainMenu.xib */; };
+		5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956659019B62F4700D805FF /* IJSVGExampleTests.m */; };
+		595665C719B6302600D805FF /* IJSVG.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956659E19B6302600D805FF /* IJSVG.m */; };
+		595665C819B6302600D805FF /* IJSVGBezierPathAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665A019B6302600D805FF /* IJSVGBezierPathAdditions.m */; };
+		595665C919B6302600D805FF /* IJSVGCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665A219B6302600D805FF /* IJSVGCache.m */; };
+		595665CA19B6302600D805FF /* IJSVGColor.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665A419B6302600D805FF /* IJSVGColor.m */; };
+		595665CB19B6302600D805FF /* IJSVGCommand.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665A619B6302600D805FF /* IJSVGCommand.m */; };
+		595665CC19B6302600D805FF /* IJSVGCommandClose.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665A819B6302600D805FF /* IJSVGCommandClose.m */; };
+		595665CD19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665AA19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m */; };
+		595665CE19B6302600D805FF /* IJSVGCommandCurve.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665AC19B6302600D805FF /* IJSVGCommandCurve.m */; };
+		595665CF19B6302600D805FF /* IJSVGCommandHorizontalLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665AE19B6302600D805FF /* IJSVGCommandHorizontalLine.m */; };
+		595665D019B6302600D805FF /* IJSVGCommandLineTo.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B019B6302600D805FF /* IJSVGCommandLineTo.m */; };
+		595665D119B6302600D805FF /* IJSVGCommandMove.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B119B6302600D805FF /* IJSVGCommandMove.m */; };
+		595665D219B6302600D805FF /* IJSVGCommandQuadraticCurve.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B319B6302600D805FF /* IJSVGCommandQuadraticCurve.m */; };
+		595665D319B6302600D805FF /* IJSVGCommandSmoothCurve.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B519B6302600D805FF /* IJSVGCommandSmoothCurve.m */; };
+		595665D419B6302600D805FF /* IJSVGCommandVerticalLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B719B6302600D805FF /* IJSVGCommandVerticalLine.m */; };
+		595665D519B6302600D805FF /* IJSVGForeignObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665B919B6302600D805FF /* IJSVGForeignObject.m */; };
+		595665D619B6302600D805FF /* IJSVGGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665BB19B6302600D805FF /* IJSVGGroup.m */; };
+		595665D719B6302600D805FF /* IJSVGNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665BD19B6302600D805FF /* IJSVGNode.m */; };
+		595665D819B6302600D805FF /* IJSVGParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665BF19B6302600D805FF /* IJSVGParser.m */; };
+		595665D919B6302600D805FF /* IJSVGPath.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665C119B6302600D805FF /* IJSVGPath.m */; };
+		595665DA19B6302600D805FF /* IJSVGTransform.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665C319B6302600D805FF /* IJSVGTransform.m */; };
+		595665DB19B6302600D805FF /* IJSVGUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665C519B6302600D805FF /* IJSVGUtils.m */; };
+		595665DC19B6302600D805FF /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 595665C619B6302600D805FF /* README.md */; };
+		595665DE19B6309C00D805FF /* test.svg in Resources */ = {isa = PBXBuildFile; fileRef = 595665DD19B6309C00D805FF /* test.svg */; };
+		595665E119B630B600D805FF /* SVGView.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665E019B630B600D805FF /* SVGView.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		5956658B19B62F4700D805FF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5956656F19B62F4600D805FF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5956657619B62F4600D805FF;
+			remoteInfo = IJSVGExample;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5956657C19B62F4600D805FF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		5956657E19B62F4600D805FF /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		5956657F19B62F4600D805FF /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		5956658119B62F4600D805FF /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		5956658419B62F4600D805FF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		5956658A19B62F4700D805FF /* IJSVGExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = IJSVGExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5956658F19B62F4700D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		5956659019B62F4700D805FF /* IJSVGExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGExampleTests.m; sourceTree = "<group>"; };
+		5956659A19B62F9500D805FF /* IJSVGExample-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IJSVGExample-Prefix.pch"; sourceTree = "<group>"; };
+		5956659C19B6301800D805FF /* IJSVGCommandMove.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandMove.h; path = ../../IJSVGCommandMove.h; sourceTree = "<group>"; };
+		5956659D19B6302600D805FF /* IJSVG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVG.h; path = ../../IJSVG.h; sourceTree = "<group>"; };
+		5956659E19B6302600D805FF /* IJSVG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVG.m; path = ../../IJSVG.m; sourceTree = "<group>"; };
+		5956659F19B6302600D805FF /* IJSVGBezierPathAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGBezierPathAdditions.h; path = ../../IJSVGBezierPathAdditions.h; sourceTree = "<group>"; };
+		595665A019B6302600D805FF /* IJSVGBezierPathAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGBezierPathAdditions.m; path = ../../IJSVGBezierPathAdditions.m; sourceTree = "<group>"; };
+		595665A119B6302600D805FF /* IJSVGCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCache.h; path = ../../IJSVGCache.h; sourceTree = "<group>"; };
+		595665A219B6302600D805FF /* IJSVGCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCache.m; path = ../../IJSVGCache.m; sourceTree = "<group>"; };
+		595665A319B6302600D805FF /* IJSVGColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGColor.h; path = ../../IJSVGColor.h; sourceTree = "<group>"; };
+		595665A419B6302600D805FF /* IJSVGColor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGColor.m; path = ../../IJSVGColor.m; sourceTree = "<group>"; };
+		595665A519B6302600D805FF /* IJSVGCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommand.h; path = ../../IJSVGCommand.h; sourceTree = "<group>"; };
+		595665A619B6302600D805FF /* IJSVGCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommand.m; path = ../../IJSVGCommand.m; sourceTree = "<group>"; };
+		595665A719B6302600D805FF /* IJSVGCommandClose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandClose.h; path = ../../IJSVGCommandClose.h; sourceTree = "<group>"; };
+		595665A819B6302600D805FF /* IJSVGCommandClose.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandClose.m; path = ../../IJSVGCommandClose.m; sourceTree = "<group>"; };
+		595665A919B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandCommandSmoothQuadraticCurve.h; path = ../../IJSVGCommandCommandSmoothQuadraticCurve.h; sourceTree = "<group>"; };
+		595665AA19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandCommandSmoothQuadraticCurve.m; path = ../../IJSVGCommandCommandSmoothQuadraticCurve.m; sourceTree = "<group>"; };
+		595665AB19B6302600D805FF /* IJSVGCommandCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandCurve.h; path = ../../IJSVGCommandCurve.h; sourceTree = "<group>"; };
+		595665AC19B6302600D805FF /* IJSVGCommandCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandCurve.m; path = ../../IJSVGCommandCurve.m; sourceTree = "<group>"; };
+		595665AD19B6302600D805FF /* IJSVGCommandHorizontalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandHorizontalLine.h; path = ../../IJSVGCommandHorizontalLine.h; sourceTree = "<group>"; };
+		595665AE19B6302600D805FF /* IJSVGCommandHorizontalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandHorizontalLine.m; path = ../../IJSVGCommandHorizontalLine.m; sourceTree = "<group>"; };
+		595665AF19B6302600D805FF /* IJSVGCommandLineTo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandLineTo.h; path = ../../IJSVGCommandLineTo.h; sourceTree = "<group>"; };
+		595665B019B6302600D805FF /* IJSVGCommandLineTo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandLineTo.m; path = ../../IJSVGCommandLineTo.m; sourceTree = "<group>"; };
+		595665B119B6302600D805FF /* IJSVGCommandMove.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandMove.m; path = ../../IJSVGCommandMove.m; sourceTree = "<group>"; };
+		595665B219B6302600D805FF /* IJSVGCommandQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandQuadraticCurve.h; path = ../../IJSVGCommandQuadraticCurve.h; sourceTree = "<group>"; };
+		595665B319B6302600D805FF /* IJSVGCommandQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandQuadraticCurve.m; path = ../../IJSVGCommandQuadraticCurve.m; sourceTree = "<group>"; };
+		595665B419B6302600D805FF /* IJSVGCommandSmoothCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandSmoothCurve.h; path = ../../IJSVGCommandSmoothCurve.h; sourceTree = "<group>"; };
+		595665B519B6302600D805FF /* IJSVGCommandSmoothCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandSmoothCurve.m; path = ../../IJSVGCommandSmoothCurve.m; sourceTree = "<group>"; };
+		595665B619B6302600D805FF /* IJSVGCommandVerticalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandVerticalLine.h; path = ../../IJSVGCommandVerticalLine.h; sourceTree = "<group>"; };
+		595665B719B6302600D805FF /* IJSVGCommandVerticalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandVerticalLine.m; path = ../../IJSVGCommandVerticalLine.m; sourceTree = "<group>"; };
+		595665B819B6302600D805FF /* IJSVGForeignObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGForeignObject.h; path = ../../IJSVGForeignObject.h; sourceTree = "<group>"; };
+		595665B919B6302600D805FF /* IJSVGForeignObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGForeignObject.m; path = ../../IJSVGForeignObject.m; sourceTree = "<group>"; };
+		595665BA19B6302600D805FF /* IJSVGGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGroup.h; path = ../../IJSVGGroup.h; sourceTree = "<group>"; };
+		595665BB19B6302600D805FF /* IJSVGGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGroup.m; path = ../../IJSVGGroup.m; sourceTree = "<group>"; };
+		595665BC19B6302600D805FF /* IJSVGNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGNode.h; path = ../../IJSVGNode.h; sourceTree = "<group>"; };
+		595665BD19B6302600D805FF /* IJSVGNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGNode.m; path = ../../IJSVGNode.m; sourceTree = "<group>"; };
+		595665BE19B6302600D805FF /* IJSVGParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGParser.h; path = ../../IJSVGParser.h; sourceTree = "<group>"; };
+		595665BF19B6302600D805FF /* IJSVGParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGParser.m; path = ../../IJSVGParser.m; sourceTree = "<group>"; };
+		595665C019B6302600D805FF /* IJSVGPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGPath.h; path = ../../IJSVGPath.h; sourceTree = "<group>"; };
+		595665C119B6302600D805FF /* IJSVGPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGPath.m; path = ../../IJSVGPath.m; sourceTree = "<group>"; };
+		595665C219B6302600D805FF /* IJSVGTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGTransform.h; path = ../../IJSVGTransform.h; sourceTree = "<group>"; };
+		595665C319B6302600D805FF /* IJSVGTransform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGTransform.m; path = ../../IJSVGTransform.m; sourceTree = "<group>"; };
+		595665C419B6302600D805FF /* IJSVGUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGUtils.h; path = ../../IJSVGUtils.h; sourceTree = "<group>"; };
+		595665C519B6302600D805FF /* IJSVGUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGUtils.m; path = ../../IJSVGUtils.m; sourceTree = "<group>"; };
+		595665C619B6302600D805FF /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../../README.md; sourceTree = "<group>"; };
+		595665DD19B6309C00D805FF /* test.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = test.svg; sourceTree = "<group>"; };
+		595665DF19B630B600D805FF /* SVGView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGView.h; sourceTree = "<group>"; };
+		595665E019B630B600D805FF /* SVGView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGView.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5956657419B62F4600D805FF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5956658719B62F4700D805FF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5956656E19B62F4600D805FF = {
+			isa = PBXGroup;
+			children = (
+				5956657919B62F4600D805FF /* IJSVGExample */,
+				5956658D19B62F4700D805FF /* IJSVGExampleTests */,
+				5956657819B62F4600D805FF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5956657819B62F4600D805FF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5956657719B62F4600D805FF /* IJSVGExample.app */,
+				5956658A19B62F4700D805FF /* IJSVGExampleTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5956657919B62F4600D805FF /* IJSVGExample */ = {
+			isa = PBXGroup;
+			children = (
+				5956659B19B62FA400D805FF /* IJSVG */,
+				5956657E19B62F4600D805FF /* AppDelegate.h */,
+				5956657F19B62F4600D805FF /* AppDelegate.m */,
+				5956658119B62F4600D805FF /* Images.xcassets */,
+				5956658319B62F4600D805FF /* MainMenu.xib */,
+				5956657A19B62F4600D805FF /* Supporting Files */,
+				595665DF19B630B600D805FF /* SVGView.h */,
+				595665E019B630B600D805FF /* SVGView.m */,
+			);
+			path = IJSVGExample;
+			sourceTree = "<group>";
+		};
+		5956657A19B62F4600D805FF /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				595665DD19B6309C00D805FF /* test.svg */,
+				5956657B19B62F4600D805FF /* Info.plist */,
+				5956657C19B62F4600D805FF /* main.m */,
+				5956659A19B62F9500D805FF /* IJSVGExample-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		5956658D19B62F4700D805FF /* IJSVGExampleTests */ = {
+			isa = PBXGroup;
+			children = (
+				5956659019B62F4700D805FF /* IJSVGExampleTests.m */,
+				5956658E19B62F4700D805FF /* Supporting Files */,
+			);
+			path = IJSVGExampleTests;
+			sourceTree = "<group>";
+		};
+		5956658E19B62F4700D805FF /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				5956658F19B62F4700D805FF /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		5956659B19B62FA400D805FF /* IJSVG */ = {
+			isa = PBXGroup;
+			children = (
+				5956659D19B6302600D805FF /* IJSVG.h */,
+				5956659E19B6302600D805FF /* IJSVG.m */,
+				5956659F19B6302600D805FF /* IJSVGBezierPathAdditions.h */,
+				595665A019B6302600D805FF /* IJSVGBezierPathAdditions.m */,
+				595665A119B6302600D805FF /* IJSVGCache.h */,
+				595665A219B6302600D805FF /* IJSVGCache.m */,
+				595665A319B6302600D805FF /* IJSVGColor.h */,
+				595665A419B6302600D805FF /* IJSVGColor.m */,
+				595665A519B6302600D805FF /* IJSVGCommand.h */,
+				595665A619B6302600D805FF /* IJSVGCommand.m */,
+				595665A719B6302600D805FF /* IJSVGCommandClose.h */,
+				595665A819B6302600D805FF /* IJSVGCommandClose.m */,
+				595665A919B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.h */,
+				595665AA19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m */,
+				595665AB19B6302600D805FF /* IJSVGCommandCurve.h */,
+				595665AC19B6302600D805FF /* IJSVGCommandCurve.m */,
+				595665AD19B6302600D805FF /* IJSVGCommandHorizontalLine.h */,
+				595665AE19B6302600D805FF /* IJSVGCommandHorizontalLine.m */,
+				595665AF19B6302600D805FF /* IJSVGCommandLineTo.h */,
+				595665B019B6302600D805FF /* IJSVGCommandLineTo.m */,
+				595665B119B6302600D805FF /* IJSVGCommandMove.m */,
+				595665B219B6302600D805FF /* IJSVGCommandQuadraticCurve.h */,
+				595665B319B6302600D805FF /* IJSVGCommandQuadraticCurve.m */,
+				595665B419B6302600D805FF /* IJSVGCommandSmoothCurve.h */,
+				595665B519B6302600D805FF /* IJSVGCommandSmoothCurve.m */,
+				595665B619B6302600D805FF /* IJSVGCommandVerticalLine.h */,
+				595665B719B6302600D805FF /* IJSVGCommandVerticalLine.m */,
+				595665B819B6302600D805FF /* IJSVGForeignObject.h */,
+				595665B919B6302600D805FF /* IJSVGForeignObject.m */,
+				595665BA19B6302600D805FF /* IJSVGGroup.h */,
+				595665BB19B6302600D805FF /* IJSVGGroup.m */,
+				595665BC19B6302600D805FF /* IJSVGNode.h */,
+				595665BD19B6302600D805FF /* IJSVGNode.m */,
+				595665BE19B6302600D805FF /* IJSVGParser.h */,
+				595665BF19B6302600D805FF /* IJSVGParser.m */,
+				595665C019B6302600D805FF /* IJSVGPath.h */,
+				595665C119B6302600D805FF /* IJSVGPath.m */,
+				595665C219B6302600D805FF /* IJSVGTransform.h */,
+				595665C319B6302600D805FF /* IJSVGTransform.m */,
+				595665C419B6302600D805FF /* IJSVGUtils.h */,
+				595665C519B6302600D805FF /* IJSVGUtils.m */,
+				595665C619B6302600D805FF /* README.md */,
+				5956659C19B6301800D805FF /* IJSVGCommandMove.h */,
+			);
+			name = IJSVG;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5956657619B62F4600D805FF /* IJSVGExample */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5956659419B62F4700D805FF /* Build configuration list for PBXNativeTarget "IJSVGExample" */;
+			buildPhases = (
+				5956657319B62F4600D805FF /* Sources */,
+				5956657419B62F4600D805FF /* Frameworks */,
+				5956657519B62F4600D805FF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IJSVGExample;
+			productName = IJSVGExample;
+			productReference = 5956657719B62F4600D805FF /* IJSVGExample.app */;
+			productType = "com.apple.product-type.application";
+		};
+		5956658919B62F4700D805FF /* IJSVGExampleTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5956659719B62F4700D805FF /* Build configuration list for PBXNativeTarget "IJSVGExampleTests" */;
+			buildPhases = (
+				5956658619B62F4700D805FF /* Sources */,
+				5956658719B62F4700D805FF /* Frameworks */,
+				5956658819B62F4700D805FF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5956658C19B62F4700D805FF /* PBXTargetDependency */,
+			);
+			name = IJSVGExampleTests;
+			productName = IJSVGExampleTests;
+			productReference = 5956658A19B62F4700D805FF /* IJSVGExampleTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5956656F19B62F4600D805FF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0600;
+				ORGANIZATIONNAME = "Curtis Hard";
+				TargetAttributes = {
+					5956657619B62F4600D805FF = {
+						CreatedOnToolsVersion = 6.0;
+					};
+					5956658919B62F4700D805FF = {
+						CreatedOnToolsVersion = 6.0;
+						TestTargetID = 5956657619B62F4600D805FF;
+					};
+				};
+			};
+			buildConfigurationList = 5956657219B62F4600D805FF /* Build configuration list for PBXProject "IJSVGExample" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5956656E19B62F4600D805FF;
+			productRefGroup = 5956657819B62F4600D805FF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5956657619B62F4600D805FF /* IJSVGExample */,
+				5956658919B62F4700D805FF /* IJSVGExampleTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5956657519B62F4600D805FF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
+				595665DE19B6309C00D805FF /* test.svg in Resources */,
+				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5956658819B62F4700D805FF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5956657319B62F4600D805FF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				595665CB19B6302600D805FF /* IJSVGCommand.m in Sources */,
+				595665CF19B6302600D805FF /* IJSVGCommandHorizontalLine.m in Sources */,
+				595665D519B6302600D805FF /* IJSVGForeignObject.m in Sources */,
+				595665C919B6302600D805FF /* IJSVGCache.m in Sources */,
+				595665D819B6302600D805FF /* IJSVGParser.m in Sources */,
+				595665D319B6302600D805FF /* IJSVGCommandSmoothCurve.m in Sources */,
+				595665DC19B6302600D805FF /* README.md in Sources */,
+				595665C719B6302600D805FF /* IJSVG.m in Sources */,
+				595665D919B6302600D805FF /* IJSVGPath.m in Sources */,
+				595665D219B6302600D805FF /* IJSVGCommandQuadraticCurve.m in Sources */,
+				595665E119B630B600D805FF /* SVGView.m in Sources */,
+				595665CE19B6302600D805FF /* IJSVGCommandCurve.m in Sources */,
+				595665D719B6302600D805FF /* IJSVGNode.m in Sources */,
+				595665C819B6302600D805FF /* IJSVGBezierPathAdditions.m in Sources */,
+				5956658019B62F4600D805FF /* AppDelegate.m in Sources */,
+				595665D419B6302600D805FF /* IJSVGCommandVerticalLine.m in Sources */,
+				595665CD19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m in Sources */,
+				595665D019B6302600D805FF /* IJSVGCommandLineTo.m in Sources */,
+				595665DA19B6302600D805FF /* IJSVGTransform.m in Sources */,
+				595665D619B6302600D805FF /* IJSVGGroup.m in Sources */,
+				5956657D19B62F4600D805FF /* main.m in Sources */,
+				595665CC19B6302600D805FF /* IJSVGCommandClose.m in Sources */,
+				595665D119B6302600D805FF /* IJSVGCommandMove.m in Sources */,
+				595665CA19B6302600D805FF /* IJSVGColor.m in Sources */,
+				595665DB19B6302600D805FF /* IJSVGUtils.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5956658619B62F4700D805FF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5956658C19B62F4700D805FF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5956657619B62F4600D805FF /* IJSVGExample */;
+			targetProxy = 5956658B19B62F4700D805FF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		5956658319B62F4600D805FF /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5956658419B62F4600D805FF /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		5956659219B62F4700D805FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREFIX_HEADER = "IJSVGExample/IJSVGExample-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx10.9;
+			};
+			name = Debug;
+		};
+		5956659319B62F4700D805FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREFIX_HEADER = "IJSVGExample/IJSVGExample-Prefix.pch";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx10.9;
+			};
+			name = Release;
+		};
+		5956659519B62F4700D805FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = IJSVGExample/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		5956659619B62F4700D805FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = IJSVGExample/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		5956659819B62F4700D805FF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+			};
+			name = Debug;
+		};
+		5956659919B62F4700D805FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5956657219B62F4600D805FF /* Build configuration list for PBXProject "IJSVGExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5956659219B62F4700D805FF /* Debug */,
+				5956659319B62F4700D805FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5956659419B62F4700D805FF /* Build configuration list for PBXNativeTarget "IJSVGExample" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5956659519B62F4700D805FF /* Debug */,
+				5956659619B62F4700D805FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		5956659719B62F4700D805FF /* Build configuration list for PBXNativeTarget "IJSVGExampleTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5956659819B62F4700D805FF /* Debug */,
+				5956659919B62F4700D805FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5956656F19B62F4600D805FF /* Project object */;
+}
