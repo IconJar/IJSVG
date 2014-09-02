@@ -111,56 +111,32 @@
         // we have a switch, work out what the objects are...
         switchElement = switchElements[0];
         NSXMLElement * child = nil;
-        for( child in [switchElement children] )
+        if( _delegate != nil )
         {
-            if( [[child name] isEqualToString:@"foreignObject"] )
+            for( child in [switchElement children] )
             {
-                // if the delegate fails,
-                // just remove the child from its parent
-                if( _delegate == nil )
+                if( [[child name] isEqualToString:@"foreignObject"] )
                 {
-                    NSInteger index = [child index];
-                    [child detach];
-                    [(NSXMLElement *)[child parent] removeChildAtIndex:index];
-                    continue;
-                }
-                
-                // create the temp foreign object
-                IJSVGForeignObject * foreignObject = [[[IJSVGForeignObject alloc] init] autorelease];
-                
-                // grab the common attributes
-                [self _parseElementForCommonAttributes:child
-                                                  node:foreignObject];
-                foreignObject.requiredExtension = [[child attributeForName:@"requiredExtensions"] stringValue];
-                
-                // ask the delegate
-                if( handlesShouldHandle )
-                {
+                    // create the temp foreign object
+                    IJSVGForeignObject * foreignObject = [[[IJSVGForeignObject alloc] init] autorelease];
                     
-                    // does it handle the foreign object?
-                    if( [_delegate svgParser:self
-                   shouldHandleForeignObject:foreignObject] )
+                    // grab the common attributes
+                    [self _parseElementForCommonAttributes:child
+                                                      node:foreignObject];
+                    foreignObject.requiredExtension = [[child attributeForName:@"requiredExtensions"] stringValue];
+                    
+                    // ask the delegate
+                    if( handlesShouldHandle && [_delegate svgParser:self
+                                          shouldHandleForeignObject:foreignObject] && handlesHandle )
                     {
-                        
-                        // handle it if so
-                        if( handlesHandle )
-                        {
-                            [_delegate svgParser:self
-                             handleForeignObject:foreignObject
-                                        document:_document];
-                            break;
-                        } else {
-                            // remove the child from its parent
-                            // so its clean incase we cant handle the next one
-                            NSInteger index = [child index];
-                            [child detach];
-                            [(NSXMLElement *)[child parent] removeChildAtIndex:index];
-                        }
+                        [_delegate svgParser:self
+                         handleForeignObject:foreignObject
+                                    document:_document];
+                        break;
                     }
                 }
             }
         }
-        
         // set the main element to the switch
         svgElement = switchElement;
     }

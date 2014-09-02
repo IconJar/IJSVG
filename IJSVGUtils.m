@@ -129,5 +129,4 @@
     return [string floatValue];
 }
 
-
 @end
