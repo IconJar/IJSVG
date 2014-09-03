@@ -30,7 +30,7 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 * Commands: M, L, H, V, C, S, T, Q and Z (have yet to look at A) and full support for multiple parameters of each type
 * Transformations: matrix, rotate (not around a point - currently), translate, scale transformations
 * Stroking: stroking (not dashed - currently), stroke color, stroke opacity
-* Filling: fill color, fill mode ( winding rules ), fill opacity
+* Filling: fill color, fill mode ( winding rules ), fill opacity, linear gradients
 * Color: supports all predefined colors from the SVG spec and hex values
 * Caching: has basic caching implemenation
 * Switches and foreign objects, there is a delegate you can implement to handle foreign objects, once you say you can handle it, its up to you to handle the SVG as IJSVG will stop parsing the document once you have told it you will handle it
@@ -39,9 +39,11 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 # What doesn't work
 * Animation
 * The A command
+* Radial gradients
 * Transform for skewX and skewY
 * Transform for rotate around a point
 * Dashed strokes
+* Text!
 
 ## Credit
 IJSVG is loosely based on [UIBezierPath-SVG](https://github.com/ap4y/UIBezierPath-SVG) by [ap4y](https://github.com/ap4y)
