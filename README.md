@@ -47,3 +47,5 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 
 ## Credit
 IJSVG is loosely based on [UIBezierPath-SVG](https://github.com/ap4y/UIBezierPath-SVG) by [ap4y](https://github.com/ap4y)
+
+SVG icons in example found around the net, some from [Sketch App Resources](http://www.sketchappsources.com/all-svg-resource.html) all open source and free to use
