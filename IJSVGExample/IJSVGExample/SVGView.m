@@ -20,9 +20,7 @@
 {
     if( ( self = [super initWithCoder:aDecoder] ) != nil )
     {
-        NSString * svgImage = [[NSBundle mainBundle] pathForResource:@"test"
-                                                              ofType:@"svg"];
-        svg = [[IJSVG alloc] initWithFile:svgImage];
+        svg = [[IJSVG svgNamed:@"test.svg"] retain];
     }
     return self;
 }

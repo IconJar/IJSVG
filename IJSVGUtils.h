@@ -22,5 +22,8 @@
 + (void)logParameters:(CGFloat *)param
                 count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString *)string;
++ (CGFloat)angleBetweenPointA:(NSPoint)point
+                       pointb:(NSPoint)point;
++ (NSString *)defURL:(NSString *)string;
 
 @end

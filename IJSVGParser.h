@@ -14,6 +14,9 @@
 #import "IJSVGCommand.h"
 #import "IJSVGColor.h"
 #import "IJSVGTransform.h"
+#import "IJSVGDef.h"
+#import "IJSVGLinearGradient.h"
+#import "IJSVGRadialGradient.h"
 
 @class IJSVGParser;
 

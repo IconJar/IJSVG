@@ -35,6 +35,9 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 
 + (NSColor *)baseColor;
 + (void)setBaseColor:(NSColor *)color;
++ (id)svgNamed:(NSString *)string;
++ (id)svgNamed:(NSString *)string
+      delegate:(id<IJSVGDelegate>)delegate;
 
 - (id)initWithFile:(NSString *)file;
 - (id)initWithFile:(NSString *)file

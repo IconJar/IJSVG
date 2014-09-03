@@ -512,8 +512,25 @@ static NSMutableDictionary * _colorTree = nil;
 + (NSColor *)colorFromHEXString:(NSString *)string
                           alpha:(CGFloat)alpha
 {
+    // absolutely no string
+    if( string == nil || string.length == 0 )
+        return nil;
+    
     if( [[string substringToIndex:1] isEqualToString:@"#"] )
         string = [string substringFromIndex:1];
+    
+    // whats the length?
+    if(string.length == 3) {
+        // shorthand...
+        NSMutableString * str = [[[NSMutableString alloc] init] autorelease];
+        for( NSInteger i = 0; i < string.length; i++ )
+        {
+            NSString * sub = [string substringWithRange:NSMakeRange( i, 1)];
+            [str appendFormat:@"%@%@",sub,sub];
+        }
+        string = str;
+    }
+    
     NSScanner * scanner = [NSScanner scannerWithString:string];
     unsigned int hex;
     if( [scanner scanHexInt:&hex] )

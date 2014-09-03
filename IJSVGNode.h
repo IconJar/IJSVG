@@ -7,6 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IJSVGStyle.h"
+
+@class IJSVGDef;
+@class IJSVGGradient;
 
 typedef NS_OPTIONS( NSInteger, IJSVGWindingRule ) {
     IJSVGWindingRuleNonZero,
@@ -18,10 +22,14 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject {
     
+    NSString * name;
+    
     CGFloat x;
     CGFloat y;
     CGFloat width;
     CGFloat height;
+    
+    IJSVGGradient * fillGradient;
     
     NSColor * fillColor;
     NSColor * strokeColor;
@@ -38,8 +46,11 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     
     IJSVGWindingRule windingRule;
     
+    IJSVGDef * def;
+    
 }
 
+@property ( nonatomic, copy ) NSString * name;
 @property ( nonatomic, assign ) CGFloat x;
 @property ( nonatomic, assign ) CGFloat y;
 @property ( nonatomic, assign ) CGFloat width;
@@ -54,5 +65,11 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
 @property ( nonatomic, retain ) NSArray * transforms;
+@property ( nonatomic, retain ) IJSVGDef * def;
+@property ( nonatomic, retain ) IJSVGGradient * fillGradient;
+
+- (id)initWithDef:(BOOL)flag;
+- (void)addDef:(IJSVGDef *)aDef;
+- (IJSVGDef *)defForID:(NSString *)anID;
 
 @end

@@ -143,6 +143,7 @@
     
     // the root element is SVG, so iterate over its children
     // recursively
+    self.name = svgElement.name;
     [self _parseBlock:svgElement
             intoGroup:self];
     
@@ -179,11 +180,16 @@
     NSXMLNode * fillAttribute = [element attributeForName:@"fill"];
     if( fillAttribute != nil )
     {
+        NSString * defID = [IJSVGUtils defURL:[fillAttribute stringValue]];
+        if( defID != nil )
+            node.fillGradient = (IJSVGGradient *)[node defForID:defID];
+        else {
         // change the fill color over if its allowed
-        node.fillColor = [IJSVGColor colorFromString:[fillAttribute stringValue]];
-        if( node.fillOpacity != 1.f )
-            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                         to:node.fillOpacity];
+            node.fillColor = [IJSVGColor colorFromString:[fillAttribute stringValue]];
+            if( node.fillOpacity != 1.f )
+                node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
+                                                             to:node.fillOpacity];
+        }
     }
     
     // stroke width
@@ -223,13 +229,22 @@
 {
     for( NSXMLElement * element in [anElement children] )
     {
-        NSString * name = [[element name] lowercaseString];
+        NSString * subName = [[element name] lowercaseString];
         
-        if( [name isEqualToString:@"g"] )
+        if( [subName isEqualToString:@"defs"] )
+        {
+            
+            // defs
+            [self _parseDef:element
+                   intoNode:parentGroup];
+            continue;
+            
+        } else if( [subName isEqualToString:@"g"] )
         {
             
             // its a group
             IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
+            group.name = subName;
             group.parentNode = parentGroup;
             
             // find common attributes
@@ -238,11 +253,13 @@
             [parentGroup addChild:group];
             [self _parseBlock:element
                     intoGroup:group];
+            continue;
             
-        } else if( [name isEqualToString:@"path"] ) {
+        } else if( [subName isEqualToString:@"path"] ) {
             
             // its a path
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.name = subName;
             path.parentNode = parentGroup;
             
             // find common attributes
@@ -251,11 +268,13 @@
             [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
                                intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-        } else if( [name isEqualToString:@"polygon"] ) {
+        } else if( [subName isEqualToString:@"polygon"] ) {
             
             // its a polygon
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.name = subName;
             path.parentNode = parentGroup;
             
             // find common attributes
@@ -264,12 +283,13 @@
             [self _parsePolygon:element
                        intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-            
-        } else if( [name isEqualToString:@"polyline"] ) {
+        } else if( [subName isEqualToString:@"polyline"] ) {
           
             // its a polyline
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.name = subName;
             path.parentNode = parentGroup;
             
             // find common attributes
@@ -278,11 +298,13 @@
             [self _parsePolyline:element
                         intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-        } else if( [name isEqualToString:@"rect"] ) {
+        } else if( [subName isEqualToString:@"rect"] ) {
             
             // its a rect
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.name = subName;
             path.parentNode = parentGroup;
             
             // find common attributes
@@ -291,11 +313,13 @@
             [self _parseRect:element
                     intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-        } else if( [name isEqualToString:@"line"] ) {
+        } else if( [subName isEqualToString:@"line"] ) {
             
             // its a line
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.name = subName;
             path.parentNode = parentGroup;
             
             // find common attributes
@@ -304,12 +328,14 @@
             [self _parseLine:element
                     intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-        } else if( [name isEqualToString:@"circle"] ) {
+        } else if( [subName isEqualToString:@"circle"] ) {
             
             // its a cirle
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-            path.parentNode = parentNode;
+            path.name = subName;
+            path.parentNode = parentGroup;
             
             // find common attributes
             [self _parseElementForCommonAttributes:element
@@ -317,12 +343,14 @@
             [self _parseCircle:element
                       intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
-        } else if( [name isEqualToString:@"ellipse"] ) {
+        } else if( [subName isEqualToString:@"ellipse"] ) {
             
             // its a ellipse
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-            path.parentNode = parentNode;
+            path.name = subName;
+            path.parentNode = parentGroup;
             
             // find common attributes
             [self _parseElementForCommonAttributes:element
@@ -330,12 +358,42 @@
             [self _parseEllipse:element
                       intoPath:path];
             [parentGroup addChild:path];
+            continue;
             
         }
     }
 }
 
 #pragma mark Parser stuff!
+
+- (void)_parseDef:(NSXMLElement *)element
+         intoNode:(IJSVGNode *)node
+{
+    for( NSXMLElement * child in [element children] )
+    {
+        if( [[child name] isEqualToString:@"linearGradient"] )
+        {
+            // linear gradient
+            IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
+            gradient.gradient = [IJSVGLinearGradient parseGradient:child
+                                                          gradient:gradient];
+            [self _parseElementForCommonAttributes:child
+                                              node:gradient];
+            [node addDef:gradient];
+            
+        } else if( [[child name] isEqualToString:@"radialGradient"] )
+        {
+            // radial gradient
+            IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
+            gradient.gradient = [IJSVGRadialGradient parseGradient:child
+                                                          gradient:gradient];
+            [self _parseElementForCommonAttributes:child
+                                              node:gradient];
+            [node addDef:gradient];
+            
+        }
+    }
+}
 
 - (void)_parsePathCommandData:(NSString *)command
                      intoPath:(IJSVGPath *)path

@@ -32,6 +32,24 @@ static NSColor * _baseColor = nil;
     return _baseColor;
 }
 
++ (id)svgNamed:(NSString *)string
+{
+    return [[self class] svgNamed:string
+                         delegate:nil];
+}
+
++ (id)svgNamed:(NSString *)string
+      delegate:(id<IJSVGDelegate>)delegate
+{
+    NSBundle * bundle = [NSBundle mainBundle];
+    NSString * str = nil;
+    if( ( str = [bundle pathForResource:[string stringByDeletingPathExtension]
+                                 ofType:[string pathExtension]] ) )
+        return [[[self alloc] initWithFile:str
+                                  delegate:delegate] autorelease];
+    return nil;
+}
+
 - (id)initWithFile:(NSString *)file
 {
     if( ( self = [self initWithFile:file
@@ -226,7 +244,25 @@ static NSColor * _baseColor = nil;
         [path.fillColor set];
     
     // fill the path
-    [path.path fill];
+    if( path.fillGradient != nil )
+    {
+        if( [path.fillGradient isKindOfClass:[IJSVGLinearGradient class]] )
+        {
+            // linear gradient
+            NSGradient * gradient = [path.fillGradient gradient];;
+            [gradient drawInBezierPath:path.path
+                                 angle:path.fillGradient.angle];
+        } else if( [path.fillGradient isKindOfClass:[IJSVGRadialGradient class]] )
+        {
+            // radial gradient
+            IJSVGRadialGradient * radGrad = (IJSVGRadialGradient *)path.fillGradient;
+            [radGrad.gradient drawInBezierPath:path.path
+                        relativeCenterPosition:NSZeroPoint];
+        }
+    } else {
+        // just use the color instead
+        [path.path fill];
+    }
     
     // any stroke?
     if( path.strokeColor != nil )

@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5910114B19B739B7009F8A35 /* IJSVGStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910114A19B739B7009F8A35 /* IJSVGStyle.m */; };
+		5910114E19B75C9C009F8A35 /* IJSVGGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910114D19B75C9C009F8A35 /* IJSVGGradient.m */; };
+		5910115119B75E44009F8A35 /* IJSVGRadialGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910115019B75E44009F8A35 /* IJSVGRadialGradient.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
 		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
 		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
@@ -36,6 +39,9 @@
 		595665DC19B6302600D805FF /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 595665C619B6302600D805FF /* README.md */; };
 		595665DE19B6309C00D805FF /* test.svg in Resources */ = {isa = PBXBuildFile; fileRef = 595665DD19B6309C00D805FF /* test.svg */; };
 		595665E119B630B600D805FF /* SVGView.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665E019B630B600D805FF /* SVGView.m */; };
+		59A0E79D19B72EA7001BA157 /* IJSVGCommandArc.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E79C19B72EA7001BA157 /* IJSVGCommandArc.m */; };
+		59A0E7A219B7333C001BA157 /* IJSVGLinearGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E7A119B7333C001BA157 /* IJSVGLinearGradient.m */; };
+		59A0E7A519B7334F001BA157 /* IJSVGDef.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E7A419B7334F001BA157 /* IJSVGDef.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +55,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		5910114919B739B7009F8A35 /* IJSVGStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyle.h; path = ../../IJSVGStyle.h; sourceTree = "<group>"; };
+		5910114A19B739B7009F8A35 /* IJSVGStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyle.m; path = ../../IJSVGStyle.m; sourceTree = "<group>"; };
+		5910114C19B75C9C009F8A35 /* IJSVGGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGradient.h; path = ../../IJSVGGradient.h; sourceTree = "<group>"; };
+		5910114D19B75C9C009F8A35 /* IJSVGGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGradient.m; path = ../../IJSVGGradient.m; sourceTree = "<group>"; };
+		5910114F19B75E44009F8A35 /* IJSVGRadialGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGRadialGradient.h; path = ../../IJSVGRadialGradient.h; sourceTree = "<group>"; };
+		5910115019B75E44009F8A35 /* IJSVGRadialGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGRadialGradient.m; path = ../../IJSVGRadialGradient.m; sourceTree = "<group>"; };
 		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5956657C19B62F4600D805FF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -106,6 +118,12 @@
 		595665DD19B6309C00D805FF /* test.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = test.svg; sourceTree = "<group>"; };
 		595665DF19B630B600D805FF /* SVGView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGView.h; sourceTree = "<group>"; };
 		595665E019B630B600D805FF /* SVGView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGView.m; sourceTree = "<group>"; };
+		59A0E79B19B72EA7001BA157 /* IJSVGCommandArc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandArc.h; path = ../../IJSVGCommandArc.h; sourceTree = "<group>"; };
+		59A0E79C19B72EA7001BA157 /* IJSVGCommandArc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandArc.m; path = ../../IJSVGCommandArc.m; sourceTree = "<group>"; };
+		59A0E7A019B7333C001BA157 /* IJSVGLinearGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGLinearGradient.h; path = ../../IJSVGLinearGradient.h; sourceTree = "<group>"; };
+		59A0E7A119B7333C001BA157 /* IJSVGLinearGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGLinearGradient.m; path = ../../IJSVGLinearGradient.m; sourceTree = "<group>"; };
+		59A0E7A319B7334F001BA157 /* IJSVGDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGDef.h; path = ../../IJSVGDef.h; sourceTree = "<group>"; };
+		59A0E7A419B7334F001BA157 /* IJSVGDef.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGDef.m; path = ../../IJSVGDef.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -231,8 +249,20 @@
 				595665C319B6302600D805FF /* IJSVGTransform.m */,
 				595665C419B6302600D805FF /* IJSVGUtils.h */,
 				595665C519B6302600D805FF /* IJSVGUtils.m */,
-				595665C619B6302600D805FF /* README.md */,
 				5956659C19B6301800D805FF /* IJSVGCommandMove.h */,
+				59A0E79B19B72EA7001BA157 /* IJSVGCommandArc.h */,
+				59A0E79C19B72EA7001BA157 /* IJSVGCommandArc.m */,
+				59A0E7A319B7334F001BA157 /* IJSVGDef.h */,
+				59A0E7A419B7334F001BA157 /* IJSVGDef.m */,
+				5910114919B739B7009F8A35 /* IJSVGStyle.h */,
+				5910114A19B739B7009F8A35 /* IJSVGStyle.m */,
+				5910114C19B75C9C009F8A35 /* IJSVGGradient.h */,
+				5910114D19B75C9C009F8A35 /* IJSVGGradient.m */,
+				59A0E7A019B7333C001BA157 /* IJSVGLinearGradient.h */,
+				59A0E7A119B7333C001BA157 /* IJSVGLinearGradient.m */,
+				5910114F19B75E44009F8A35 /* IJSVGRadialGradient.h */,
+				5910115019B75E44009F8A35 /* IJSVGRadialGradient.m */,
+				595665C619B6302600D805FF /* README.md */,
 			);
 			name = IJSVG;
 			sourceTree = "<group>";
@@ -341,16 +371,21 @@
 				595665CF19B6302600D805FF /* IJSVGCommandHorizontalLine.m in Sources */,
 				595665D519B6302600D805FF /* IJSVGForeignObject.m in Sources */,
 				595665C919B6302600D805FF /* IJSVGCache.m in Sources */,
+				59A0E79D19B72EA7001BA157 /* IJSVGCommandArc.m in Sources */,
 				595665D819B6302600D805FF /* IJSVGParser.m in Sources */,
 				595665D319B6302600D805FF /* IJSVGCommandSmoothCurve.m in Sources */,
+				5910114B19B739B7009F8A35 /* IJSVGStyle.m in Sources */,
+				59A0E7A519B7334F001BA157 /* IJSVGDef.m in Sources */,
 				595665DC19B6302600D805FF /* README.md in Sources */,
 				595665C719B6302600D805FF /* IJSVG.m in Sources */,
 				595665D919B6302600D805FF /* IJSVGPath.m in Sources */,
 				595665D219B6302600D805FF /* IJSVGCommandQuadraticCurve.m in Sources */,
+				5910115119B75E44009F8A35 /* IJSVGRadialGradient.m in Sources */,
 				595665E119B630B600D805FF /* SVGView.m in Sources */,
 				595665CE19B6302600D805FF /* IJSVGCommandCurve.m in Sources */,
 				595665D719B6302600D805FF /* IJSVGNode.m in Sources */,
 				595665C819B6302600D805FF /* IJSVGBezierPathAdditions.m in Sources */,
+				59A0E7A219B7333C001BA157 /* IJSVGLinearGradient.m in Sources */,
 				5956658019B62F4600D805FF /* AppDelegate.m in Sources */,
 				595665D419B6302600D805FF /* IJSVGCommandVerticalLine.m in Sources */,
 				595665CD19B6302600D805FF /* IJSVGCommandCommandSmoothQuadraticCurve.m in Sources */,
@@ -360,6 +395,7 @@
 				5956657D19B62F4600D805FF /* main.m in Sources */,
 				595665CC19B6302600D805FF /* IJSVGCommandClose.m in Sources */,
 				595665D119B6302600D805FF /* IJSVGCommandMove.m in Sources */,
+				5910114E19B75C9C009F8A35 /* IJSVGGradient.m in Sources */,
 				595665CA19B6302600D805FF /* IJSVGColor.m in Sources */,
 				595665DB19B6302600D805FF /* IJSVGUtils.m in Sources */,
 			);
@@ -550,6 +586,7 @@
 				5956659619B62F4700D805FF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		5956659719B62F4700D805FF /* Build configuration list for PBXNativeTarget "IJSVGExampleTests" */ = {
 			isa = XCConfigurationList;
@@ -558,6 +595,7 @@
 				5956659919B62F4700D805FF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
