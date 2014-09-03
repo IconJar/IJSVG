@@ -273,15 +273,26 @@ static NSColor * _baseColor = nil;
         } else if( [path.fillGradient isKindOfClass:[IJSVGRadialGradient class]] )
         {
             // radial gradient
+            // very rudimentary at the moment
             IJSVGRadialGradient * radGrad = (IJSVGRadialGradient *)path.fillGradient;
             [radGrad.gradient drawInBezierPath:path.path
                         relativeCenterPosition:NSZeroPoint];
         }
     } else {
+        // no gradient specified
         // just use the color instead
         if( path.fillColor != nil )
         {
             [path.fillColor set];
+            [path.path fill];
+        } else if( _baseColor != nil ) {
+            
+            // is there a base color?
+            // this is basically used whenever no color
+            // is set, its also set via [IJSVG setBaseColor],
+            // this must be defined!
+            
+            [_baseColor set];
             [path.path fill];
         }
     }
@@ -289,6 +300,9 @@ static NSColor * _baseColor = nil;
     // any stroke?
     if( path.strokeColor != nil )
     {
+        // default line width is 1
+        // if its defined elsewhere, then
+        // use that one instead
         CGFloat lineWidth = 1.f;
         if( path.strokeWidth != 0 )
             lineWidth = path.strokeWidth;
