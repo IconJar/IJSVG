@@ -81,13 +81,17 @@ static NSColor * _baseColor = nil;
 - (id)initWithFilePathURL:(NSURL *)aURL
                  delegate:(id<IJSVGDelegate>)delegate
 {
-//    if( [IJSVGCache enabled] )
-//    {
-//        IJSVG * svg = nil;
-//        if( ( svg = [IJSVGCache cachedSVGForFileURL:aURL] ) != nil )
-//            return [svg retain];
-//    }
-//    
+    if( [IJSVGCache enabled] )
+    {
+        IJSVG * svg = nil;
+        if( ( svg = [IJSVGCache cachedSVGForFileURL:aURL] ) != nil )
+#ifndef __clang_analyzer__
+            return [svg retain];
+#else
+        {}
+#endif
+    }
+    
     if( ( self = [super init] ) != nil )
     {
         _delegate = delegate;
@@ -127,9 +131,30 @@ static NSColor * _baseColor = nil;
 
 - (void)drawInRect:(NSRect)rect
 {
+    
+    // prep for draw...
     [self _beginDraw:rect];
+    
+    // setup the transforms and scale on the main context
+    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSaveGState(ref);
+    
+    // scale the whole drawing context, but first, we need
+    // to translate the context so its centered
+    CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
+    CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
+    CGContextTranslateCTM( ref, tX, tY );
+    CGContextScaleCTM( ref, _scale, _scale );
+    
+    // apply standard defaults
+    [self _applyDefaults:ref
+                    node:_group];
+    
+    // begin draw
     [self _drawGroup:_group
                 rect:rect];
+    
+    CGContextRestoreGState(ref);
 }
 
 - (void)_recursiveColors:(IJSVGGroup *)group
@@ -194,6 +219,8 @@ static NSColor * _baseColor = nil;
             [self _drawGroup:child
                         rect:rect];
     }
+    
+    // restore the context
     CGContextRestoreGState(context);
 }
 
@@ -225,14 +252,7 @@ static NSColor * _baseColor = nil;
     CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
     CGContextSaveGState(ref);
     
-    // scale the whole drawing context, but first, we need
-    // to translate the context so its centered
-    CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
-    CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
-    CGContextTranslateCTM( ref, tX, tY );
-    CGContextScaleCTM( ref, _scale, _scale );
-    
-    // apply standard defaults
+    // there could be transforms per path
     [self _applyDefaults:ref
                     node:path];
     
@@ -240,8 +260,6 @@ static NSColor * _baseColor = nil;
     // use the base if its not set
     if( path.fillColor == nil && _baseColor != nil )
         [_baseColor set];
-    else
-        [path.fillColor set];
     
     // fill the path
     if( path.fillGradient != nil )
@@ -261,7 +279,11 @@ static NSColor * _baseColor = nil;
         }
     } else {
         // just use the color instead
-        [path.path fill];
+        if( path.fillColor != nil )
+        {
+            [path.fillColor set];
+            [path.path fill];
+        }
     }
     
     // any stroke?

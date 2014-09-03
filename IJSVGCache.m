@@ -10,7 +10,7 @@
 
 @implementation IJSVGCache
 
-// 5mb
+// 5MB
 #define MAX_CACHE_SIZE 5000000
 
 static NSCache * _cache = nil;
@@ -37,6 +37,14 @@ static BOOL _enabled = YES;
     NSFileManager * fm = [NSFileManager defaultManager];
     NSDictionary * atts = [fm attributesOfItemAtPath:[aURL path]
                                                error:nil];
+    
+    // cache is nil ... for some reason..?
+    if( _cache == nil )
+    {
+        _cache = [[NSCache alloc] init];
+        [_cache setTotalCostLimit:MAX_CACHE_SIZE];
+    }
+    
     [_cache setObject:svg
                forKey:aURL
                  cost:[atts fileSize]+sizeof(svg)];

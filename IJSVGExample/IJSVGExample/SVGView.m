@@ -20,7 +20,7 @@
 {
     if( ( self = [super initWithCoder:aDecoder] ) != nil )
     {
-        svg = [[IJSVG svgNamed:@"test.svg"] retain];
+        svg = [[IJSVG svgNamed:@"paperplane.svg"] retain];
     }
     return self;
 }

@@ -251,8 +251,16 @@
             [self _parseElementForCommonAttributes:element
                                               node:group];
             [parentGroup addChild:group];
+            
+            // could be gradients within
+            // the group's aswell, so work those out
+            [self _parseDef:element
+                   intoNode:group];
+            
+            // recursively parse blocks
             [self _parseBlock:element
                     intoGroup:group];
+            
             continue;
             
         } else if( [subName isEqualToString:@"path"] ) {

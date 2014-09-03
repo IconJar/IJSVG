@@ -42,6 +42,8 @@
 		59A0E79D19B72EA7001BA157 /* IJSVGCommandArc.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E79C19B72EA7001BA157 /* IJSVGCommandArc.m */; };
 		59A0E7A219B7333C001BA157 /* IJSVGLinearGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E7A119B7333C001BA157 /* IJSVGLinearGradient.m */; };
 		59A0E7A519B7334F001BA157 /* IJSVGDef.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A0E7A419B7334F001BA157 /* IJSVGDef.m */; };
+		59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59B93C6C19B7D1840063E823 /* paperplane.svg */; };
+		59B93C6F19B7D32C0063E823 /* products.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59B93C6E19B7D32C0063E823 /* products.svg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -124,6 +126,8 @@
 		59A0E7A119B7333C001BA157 /* IJSVGLinearGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGLinearGradient.m; path = ../../IJSVGLinearGradient.m; sourceTree = "<group>"; };
 		59A0E7A319B7334F001BA157 /* IJSVGDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGDef.h; path = ../../IJSVGDef.h; sourceTree = "<group>"; };
 		59A0E7A419B7334F001BA157 /* IJSVGDef.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGDef.m; path = ../../IJSVGDef.m; sourceTree = "<group>"; };
+		59B93C6C19B7D1840063E823 /* paperplane.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = paperplane.svg; sourceTree = "<group>"; };
+		59B93C6E19B7D32C0063E823 /* products.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = products.svg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -180,6 +184,8 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				59B93C6E19B7D32C0063E823 /* products.svg */,
+				59B93C6C19B7D1840063E823 /* paperplane.svg */,
 				595665DD19B6309C00D805FF /* test.svg */,
 				5956657B19B62F4600D805FF /* Info.plist */,
 				5956657C19B62F4600D805FF /* main.m */,
@@ -347,8 +353,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */,
 				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
 				595665DE19B6309C00D805FF /* test.svg in Resources */,
+				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
