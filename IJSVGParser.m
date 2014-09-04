@@ -153,6 +153,16 @@
 - (void)_parseElementForCommonAttributes:(NSXMLElement *)element
                                     node:(IJSVGNode *)node
 {
+    
+    // any clippath?
+    NSXMLNode * clipPathAttribute = [element attributeForName:@"clip-path"];
+    if( clipPathAttribute != nil )
+    {
+        NSString * clipID = [IJSVGUtils defURL:[clipPathAttribute stringValue]];
+        if( clipID )
+            node.clipPath = (IJSVGGroup *)[node defForID:clipID];
+    }
+    
     // work out any extra attributes
     // opacity
     NSXMLNode * opacityAttribute = [element attributeForName:@"opacity"];
@@ -257,7 +267,9 @@
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:group];
-                [parentGroup addChild:group];
+                
+                if( !flag )
+                    [parentGroup addChild:group];
                 
                 // recursively parse blocks
                 [self _parseBlock:element
@@ -265,7 +277,7 @@
                               def:NO];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:group];
                 continue;
             }
@@ -282,10 +294,12 @@
                                                   node:path];
                 [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
                                    intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -302,10 +316,12 @@
                                                   node:path];
                 [self _parsePolygon:element
                            intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -322,10 +338,12 @@
                                                   node:path];
                 [self _parsePolyline:element
                             intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -342,10 +360,12 @@
                                                   node:path];
                 [self _parseRect:element
                         intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -365,7 +385,7 @@
                 [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -382,10 +402,12 @@
                                                   node:path];
                 [self _parseCircle:element
                           intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -402,10 +424,12 @@
                                                   node:path];
                 [self _parseEllipse:element
                            intoPath:path];
-                [parentGroup addChild:path];
+                
+                if( !flag )
+                    [parentGroup addChild:path];
                 
                 // could be defined
-                if( def )
+                if( flag )
                     [parentGroup addDef:path];
                 continue;
             }
@@ -451,6 +475,26 @@
                                                   node:gradient];
                 [parentGroup addDef:gradient];
                 continue;
+            }
+                
+            // clippath
+            case IJSVGNodeTypeClipPath: {
+                IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
+                group.type = aType;
+                group.name = subName;
+                group.parentNode = parentGroup;
+                
+                // find common attributes
+                [self _parseElementForCommonAttributes:element
+                                                  node:group];
+                
+                // recursively parse blocks
+                [self _parseBlock:element
+                        intoGroup:group
+                              def:NO];
+                
+                // add it as a def
+                [parentGroup addDef:group];
             }
                 
         }

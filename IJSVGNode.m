@@ -29,6 +29,7 @@
 @synthesize windingRule;
 @synthesize def;
 @synthesize fillGradient;
+@synthesize clipPath;
 
 - (void)dealloc
 {
@@ -69,6 +70,8 @@
         return IJSVGNodeTypeLinearGradient;
     if( [string isEqualToString:@"radialgradient"] )
         return IJSVGNodeTypeRadialGradient;
+    if( [string isEqualToString:@"clippath"] )
+        return IJSVGNodeTypeClipPath;
     return IJSVGNodeTypeNotFound;
 }
 
@@ -95,6 +98,7 @@
     
     node.fillColor = self.fillColor;
     node.strokeColor = self.strokeColor;
+    node.clipPath = self.clipPath;
     
     node.opacity = self.opacity;
     node.strokeWidth = self.strokeWidth;

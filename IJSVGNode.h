@@ -11,6 +11,7 @@
 
 @class IJSVGDef;
 @class IJSVGGradient;
+@class IJSVGGroup;
 
 typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeGroup,
@@ -25,6 +26,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeUse,
     IJSVGNodeTypeLinearGradient,
     IJSVGNodeTypeRadialGradient,
+    IJSVGNodeTypeClipPath,
     IJSVGNodeTypeNotFound
 };
 
@@ -59,6 +61,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     NSString * identifier;
     
     IJSVGNode * parentNode;
+    IJSVGGroup * clipPath;
     NSArray * transforms;
     
     IJSVGWindingRule windingRule;
@@ -81,6 +84,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) NSColor * strokeColor;
 @property ( nonatomic, copy ) NSString * identifier;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
+@property ( nonatomic, assign ) IJSVGGroup * clipPath;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
 @property ( nonatomic, retain ) NSArray * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;

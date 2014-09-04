@@ -207,21 +207,86 @@ static NSColor * _baseColor = nil;
     [self _applyDefaults:context
                     node:group];
     
-    // it could be a group or a path
-    for( id child in [group children] )
+    dispatch_block_t drawBlock = ^{
+        // it could be a group or a path
+        for( id child in [group children] )
+        {
+            if( [child isKindOfClass:[IJSVGPath class]] )
+            {
+                IJSVGPath * p = (IJSVGPath *)child;
+                if( p.clipPath != nil )
+                {
+                    for( id clip in p.clipPath.children )
+                    {
+                        if( [clip isKindOfClass:[IJSVGGroup class]] )
+                            [self _drawGroup:clip
+                                        rect:rect];
+                        else {
+                            
+                            // there is a clip path, save the context
+                            CGContextSaveGState( context );
+                            
+                            // add the clip
+                            IJSVGPath * p = (IJSVGPath *)clip;
+                            [p.path addClip];
+                            
+                            // draw the path
+                            [self _drawPath:child
+                                       rect:rect];
+                            
+                            // restore the context
+                            CGContextRestoreGState( context );
+                        }
+                    }
+                } else {
+                    // as its just a path, we can happily
+                    // just draw it in the current context
+                    [self _drawPath:child
+                               rect:rect];
+                }
+            } else if( [child isKindOfClass:[IJSVGGroup class]] ) {
+                
+                // if its a group, we recursively call this method
+                // to generate the paths required
+                [self _drawGroup:child
+                            rect:rect];
+            }
+        }
+
+    };
+    
+    // group clipping
+    if( group.clipPath != nil )
     {
-        if( [child isKindOfClass:[IJSVGPath class]] )
-            // as its just a path, we can happily
-            // just draw it in the current context
-            [self _drawPath:child
-                       rect:rect];
-        else if( [child isKindOfClass:[IJSVGGroup class]] )
-            
-            // if its a group, we recursively call this method
-            // to generate the paths required
-            [self _drawGroup:child
-                        rect:rect];
-    }
+        
+        // find the clipped children
+        for( id child in group.clipPath.children )
+        {
+            // if its a group, run this again
+            if( [child isKindOfClass:[IJSVGGroup class]] )
+                [self _drawGroup:child
+                            rect:rect];
+            else {
+                
+                // save the context state
+                CGContextSaveGState( context );
+                
+                // find the path
+                IJSVGPath * p = (IJSVGPath *)child;
+                
+                // clip the context
+                [p.path addClip];
+                
+                // draw the paths
+                drawBlock();
+                
+                // restore again
+                CGContextRestoreGState( context );
+            }
+        }
+    } else
+        // just draw the block
+        drawBlock();
     
     // restore the context
     CGContextRestoreGState(context);
@@ -289,13 +354,15 @@ static NSColor * _baseColor = nil;
             [path.fillColor set];
             [path.path fill];
         } else if( _baseColor != nil ) {
-            
+
             // is there a base color?
             // this is basically used whenever no color
             // is set, its also set via [IJSVG setBaseColor],
             // this must be defined!
             
             [_baseColor set];
+            [path.path fill];
+        } else {
             [path.path fill];
         }
     }

@@ -689,8 +689,12 @@
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                     <customView id="bHV-ou-brV" customClass="SVGExampleView3">
-                        <rect key="frame" x="0.0" y="0.0" width="631" height="238"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <rect key="frame" x="0.0" y="0.0" width="310" height="238"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
+                    </customView>
+                    <customView id="osq-NY-OyC" customClass="SVGExampleView4">
+                        <rect key="frame" x="309" y="0.0" width="322" height="238"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" heightSizable="YES"/>
                     </customView>
                 </subviews>
             </view>

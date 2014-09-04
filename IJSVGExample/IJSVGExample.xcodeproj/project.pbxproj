@@ -10,6 +10,8 @@
 		5910114B19B739B7009F8A35 /* IJSVGStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910114A19B739B7009F8A35 /* IJSVGStyle.m */; };
 		5910114E19B75C9C009F8A35 /* IJSVGGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910114D19B75C9C009F8A35 /* IJSVGGradient.m */; };
 		5910115119B75E44009F8A35 /* IJSVGRadialGradient.m in Sources */ = {isa = PBXBuildFile; fileRef = 5910115019B75E44009F8A35 /* IJSVGRadialGradient.m */; };
+		59459CEC19B906FE00CE493B /* clipped.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59459CEB19B906FE00CE493B /* clipped.svg */; };
+		59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */ = {isa = PBXBuildFile; fileRef = 59459CEE19B9074F00CE493B /* SVGExampleView4.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
 		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
 		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
@@ -67,6 +69,9 @@
 		5910114D19B75C9C009F8A35 /* IJSVGGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGradient.m; path = ../../IJSVGGradient.m; sourceTree = "<group>"; };
 		5910114F19B75E44009F8A35 /* IJSVGRadialGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGRadialGradient.h; path = ../../IJSVGRadialGradient.h; sourceTree = "<group>"; };
 		5910115019B75E44009F8A35 /* IJSVGRadialGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGRadialGradient.m; path = ../../IJSVGRadialGradient.m; sourceTree = "<group>"; };
+		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
+		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
+		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
 		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5956657C19B62F4600D805FF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -194,6 +199,8 @@
 				59A11E6E19B89D2000E44498 /* SVGExampleView2.m */,
 				59A11E7019B89D6600E44498 /* SVGExampleView3.h */,
 				59A11E7119B89D6600E44498 /* SVGExampleView3.m */,
+				59459CED19B9074F00CE493B /* SVGExampleView4.h */,
+				59459CEE19B9074F00CE493B /* SVGExampleView4.m */,
 			);
 			path = IJSVGExample;
 			sourceTree = "<group>";
@@ -201,6 +208,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				59459CEB19B906FE00CE493B /* clipped.svg */,
 				59F799E119B880CE00096CB7 /* htc_one.svg */,
 				59B93C6E19B7D32C0063E823 /* products.svg */,
 				59B93C6C19B7D1840063E823 /* paperplane.svg */,
@@ -377,6 +385,7 @@
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
+				59459CEC19B906FE00CE493B /* clipped.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -427,6 +436,7 @@
 				5910114E19B75C9C009F8A35 /* IJSVGGradient.m in Sources */,
 				59A11E6F19B89D2000E44498 /* SVGExampleView2.m in Sources */,
 				595665CA19B6302600D805FF /* IJSVGColor.m in Sources */,
+				59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */,
 				595665DB19B6302600D805FF /* IJSVGUtils.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
