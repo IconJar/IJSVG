@@ -14,6 +14,8 @@ Add all the IJSVG library files into your project, import the IJSVG.h into the f
 
 #### Step 1 - initialize the SVG object
     IJSVG * svg = [[IJSVG alloc] initWithFilePathURL:someURLHere];
+    // or with and without extension to find it within the bundle
+    IJSVG * svg = [IJSVG svgNamed:@"my_svg"]; 
 
 #### Step 2 - grab the NSImage from it
     NSImage * svgImage = [svg imageWithSize:NSMakeSize(100.f,100.f)];
@@ -24,7 +26,7 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 
     - (void)drawRect
     {
-      [svg drawInRect:self.bounds] 
+      [svg drawInRect:self.bounds];
     }
     
 # What it supports
