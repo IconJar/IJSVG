@@ -12,6 +12,22 @@
 @class IJSVGDef;
 @class IJSVGGradient;
 
+typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
+    IJSVGNodeTypeGroup,
+    IJSVGNodeTypePath,
+    IJSVGNodeTypeDef,
+    IJSVGNodeTypePolygon,
+    IJSVGNodeTypePolyline,
+    IJSVGNodeTypeRect,
+    IJSVGNodeTypeLine,
+    IJSVGNodeTypeCircle,
+    IJSVGNodeTypeEllipse,
+    IJSVGNodeTypeUse,
+    IJSVGNodeTypeLinearGradient,
+    IJSVGNodeTypeRadialGradient,
+    IJSVGNodeTypeNotFound
+};
+
 typedef NS_OPTIONS( NSInteger, IJSVGWindingRule ) {
     IJSVGWindingRuleNonZero,
     IJSVGWindingRuleEvenOdd,
@@ -22,6 +38,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying> {
     
+    IJSVGNodeType type;
     NSString * name;
     
     CGFloat x;
@@ -50,6 +67,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     
 }
 
+@property ( nonatomic, assign ) IJSVGNodeType type;
 @property ( nonatomic, copy ) NSString * name;
 @property ( nonatomic, assign ) CGFloat x;
 @property ( nonatomic, assign ) CGFloat y;
@@ -67,6 +85,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) NSArray * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
+
++ (IJSVGNodeType)typeForString:(NSString *)string;
 
 - (id)initWithDef:(BOOL)flag;
 - (void)addDef:(IJSVGNode *)aDef;

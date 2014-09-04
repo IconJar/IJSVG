@@ -16,13 +16,18 @@
     [super dealloc];
 }
 
-- (id)initWithCoder:(NSCoder *)aDecoder
+- (id)initWithFrame:(NSRect)frameRect
 {
-    if( ( self = [super initWithCoder:aDecoder] ) != nil )
+    if( ( self = [super initWithFrame:frameRect] ) != nil )
     {
-        svg = [[IJSVG svgNamed:@"test"] retain];
+        svg = [self svg];
     }
     return self;
+}
+
+- (IJSVG *)svg
+{
+    return [[IJSVG svgNamed:@"test"] retain];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

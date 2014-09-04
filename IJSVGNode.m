@@ -11,6 +11,7 @@
 
 @implementation IJSVGNode
 
+@synthesize type;
 @synthesize name;
 @synthesize x;
 @synthesize y;
@@ -31,6 +32,7 @@
 
 - (void)dealloc
 {
+    [fillGradient release], fillGradient = nil;
     [transforms release], transforms = nil;
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
@@ -38,6 +40,36 @@
     [def release], def = nil;
     [name release], name = nil;
     [super dealloc];
+}
+
++ (IJSVGNodeType)typeForString:(NSString *)string
+{
+    string = [string lowercaseString];
+    if( [string isEqualToString:@"defs"] )
+        return IJSVGNodeTypeDef;
+    if( [string isEqualToString:@"g"] )
+        return IJSVGNodeTypeGroup;
+    if( [string isEqualToString:@"path"] )
+        return IJSVGNodeTypePath;
+    if( [string isEqualToString:@"polygon"] )
+        return IJSVGNodeTypePolygon;
+    if( [string isEqualToString:@"polyline"] )
+        return IJSVGNodeTypePolyline;
+    if( [string isEqualToString:@"rect"] )
+        return IJSVGNodeTypeRect;
+    if( [string isEqualToString:@"line"] )
+        return IJSVGNodeTypeLine;
+    if( [string isEqualToString:@"circle"] )
+        return IJSVGNodeTypeCircle;
+    if( [string isEqualToString:@"ellipse"] )
+        return IJSVGNodeTypeEllipse;
+    if( [string isEqualToString:@"use"] )
+        return IJSVGNodeTypeUse;
+    if( [string isEqualToString:@"lineargradient"] )
+        return IJSVGNodeTypeLinearGradient;
+    if( [string isEqualToString:@"radialgradient"] )
+        return IJSVGNodeTypeRadialGradient;
+    return IJSVGNodeTypeNotFound;
 }
 
 - (id)init
@@ -52,6 +84,7 @@
 {
     IJSVGNode * node = [[self class] allocWithZone:zone];
     node.name = self.name;
+    node.type = self.type;
     
     node.x = self.x;
     node.y = self.y;
