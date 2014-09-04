@@ -2,6 +2,8 @@ IJSVG
 =====
 IJSVG is a Mac OSX 10.7+ COCOA library for rendering SVG's within your COCOA applications, its extremely fast and native.
 
+Orignaly written for IconJar (in development)
+
 It takes SVG's files and makes pretty pictures like this:
 
 ![SVG Example](http://cl.ly/image/0G3S3Q1s271Z/Screen%20Shot%202014-09-02%20at%2018.17.52.png)
