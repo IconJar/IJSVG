@@ -30,6 +30,13 @@
     return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    IJSVGPath * node = [super copyWithZone:zone];
+    [node overwritePath:self.path];
+    return node;
+}
+
 - (NSPoint)currentPoint
 {
     return [subpath currentPoint];

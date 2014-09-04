@@ -48,6 +48,36 @@
     return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    IJSVGNode * node = [[self class] allocWithZone:zone];
+    node.name = self.name;
+    
+    node.x = self.x;
+    node.y = self.y;
+    node.width = self.width;
+    node.height = self.height;
+    
+    node.fillGradient = self.fillGradient;
+    
+    node.fillColor = self.fillColor;
+    node.strokeColor = self.strokeColor;
+    
+    node.opacity = self.opacity;
+    node.strokeWidth = self.strokeWidth;
+    node.fillOpacity = self.fillOpacity;
+    node.strokeOpacity = self.strokeOpacity;
+    
+    node.identifier = self.identifier;
+    
+    node.transforms = self.transforms;
+    node.def = self.def;
+    node.windingRule = self.windingRule;
+    node.parentNode = self.parentNode;
+    
+    return node;
+}
+
 - (id)initWithDef:(BOOL)flag
 {
     if( ( self = [super init] ) != nil )
@@ -71,7 +101,7 @@
     return nil;
 }
 
-- (void)addDef:(IJSVGDef *)aDef
+- (void)addDef:(IJSVGNode *)aDef
 {
     [def addDef:aDef];
 }
@@ -141,6 +171,15 @@
     if( strokeOpacity != 0.f )
         return strokeOpacity;
     return 0.f;
+}
+
+// even though the spec explicity states fill color
+// must be on the path, it can also be on the
+- (NSColor *)fillColor
+{
+    if( fillColor == nil && parentNode != nil )
+        return parentNode.fillColor;
+    return fillColor;
 }
 
 @end

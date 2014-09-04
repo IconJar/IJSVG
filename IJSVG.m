@@ -43,8 +43,11 @@ static NSColor * _baseColor = nil;
 {
     NSBundle * bundle = [NSBundle mainBundle];
     NSString * str = nil;
+    NSString * ext = [string pathExtension];
+    if( ext == nil || ext.length == 0 )
+        ext = @"svg";
     if( ( str = [bundle pathForResource:[string stringByDeletingPathExtension]
-                                 ofType:[string pathExtension]] ) )
+                                 ofType:ext] ) )
         return [[[self alloc] initWithFile:str
                                   delegate:delegate] autorelease];
     return nil;

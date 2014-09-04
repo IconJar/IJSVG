@@ -20,7 +20,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGWindingRule ) {
 
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
-@interface IJSVGNode : NSObject {
+@interface IJSVGNode : NSObject <NSCopying> {
     
     NSString * name;
     
@@ -69,7 +69,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
 
 - (id)initWithDef:(BOOL)flag;
-- (void)addDef:(IJSVGDef *)aDef;
+- (void)addDef:(IJSVGNode *)aDef;
 - (IJSVGDef *)defForID:(NSString *)anID;
 
 @end

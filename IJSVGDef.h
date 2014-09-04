@@ -16,4 +16,6 @@
     
 }
 
+- (void)addDef:(IJSVGNode *)aDef;
+
 @end

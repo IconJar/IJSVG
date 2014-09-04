@@ -18,5 +18,6 @@
 
 - (void)addChild:(id)child;
 - (NSArray *)children;
+- (void)purgeChildren;
 
 @end

@@ -25,6 +25,23 @@
     return self;
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    IJSVGGroup * node = [[self class] allocWithZone:zone];
+    for( IJSVGNode * childNode in self.children )
+    {
+        childNode = [[childNode copy] autorelease];
+        childNode.parentNode = node;
+        [node addChild:childNode];
+    }
+    return node;
+}
+
+- (void)purgeChildren
+{
+    [children removeAllObjects];
+}
+
 - (void)addChild:(id)child
 {
     [children addObject:child];

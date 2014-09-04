@@ -145,7 +145,8 @@
     // recursively
     self.name = svgElement.name;
     [self _parseBlock:svgElement
-            intoGroup:self];
+            intoGroup:self
+                  def:NO];
     
 }
 
@@ -226,21 +227,24 @@
 
 - (void)_parseBlock:(NSXMLElement *)anElement
           intoGroup:(IJSVGGroup*)parentGroup
+                def:(BOOL)flag
 {
+    
+    // if flag is yes, then anything we find inside this
+    //
+    
     for( NSXMLElement * element in [anElement children] )
     {
         NSString * subName = [[element name] lowercaseString];
-        
         if( [subName isEqualToString:@"defs"] )
         {
-            
-            // defs
-            [self _parseDef:element
-                   intoNode:parentGroup];
+            // any defs?
+            [self _parseBlock:element
+                    intoGroup:parentGroup
+                          def:YES];
             continue;
             
-        } else if( [subName isEqualToString:@"g"] )
-        {
+        } else if( [subName isEqualToString:@"g"] ) {
             
             // its a group
             IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
@@ -252,14 +256,14 @@
                                               node:group];
             [parentGroup addChild:group];
             
-            // could be gradients within
-            // the group's aswell, so work those out
-            [self _parseDef:element
-                   intoNode:group];
-            
             // recursively parse blocks
             [self _parseBlock:element
-                    intoGroup:group];
+                    intoGroup:group
+                          def:NO];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:group];
             
             continue;
             
@@ -276,6 +280,11 @@
             [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
                                intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"polygon"] ) {
@@ -291,6 +300,11 @@
             [self _parsePolygon:element
                        intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"polyline"] ) {
@@ -306,6 +320,11 @@
             [self _parsePolyline:element
                         intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"rect"] ) {
@@ -321,6 +340,11 @@
             [self _parseRect:element
                     intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"line"] ) {
@@ -336,6 +360,11 @@
             [self _parseLine:element
                     intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"circle"] ) {
@@ -351,6 +380,11 @@
             [self _parseCircle:element
                       intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
         } else if( [subName isEqualToString:@"ellipse"] ) {
@@ -366,42 +400,56 @@
             [self _parseEllipse:element
                       intoPath:path];
             [parentGroup addChild:path];
+            
+            // could be defined
+            if( def )
+                [parentGroup addDef:path];
+            
             continue;
             
+        } else if( [subName isEqualToString:@"use"] ) {
+            
+            // its a use command
+            NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+            NSString * xlinkID = [xlink substringFromIndex:1];
+            IJSVGNode * node = [parentGroup defForID:xlinkID];
+            if( node != nil )
+            {
+                // copy the node
+                node = [[node copy] autorelease];
+                node.parentNode = parentGroup;
+                
+                // grab the common attributes
+                [self _parseElementForCommonAttributes:element
+                                                  node:node];
+                [parentGroup addChild:node];
+            }
+            
+        } else if( [subName isEqualToString:@"lineargradient"] ) {
+            
+            // linear gradient
+            IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
+            gradient.gradient = [IJSVGLinearGradient parseGradient:element
+                                                          gradient:gradient];
+            [self _parseElementForCommonAttributes:element
+                                              node:gradient];
+            [parentGroup addDef:gradient];
+            continue;
+            
+        } else if( [subName isEqualToString:@"radialgradient"] ) {
+            
+            // radial gradient
+            IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
+            gradient.gradient = [IJSVGRadialGradient parseGradient:element
+                                                          gradient:gradient];
+            [self _parseElementForCommonAttributes:element
+                                              node:gradient];
+            [parentGroup addDef:gradient];
         }
     }
 }
 
 #pragma mark Parser stuff!
-
-- (void)_parseDef:(NSXMLElement *)element
-         intoNode:(IJSVGNode *)node
-{
-    for( NSXMLElement * child in [element children] )
-    {
-        if( [[child name] isEqualToString:@"linearGradient"] )
-        {
-            // linear gradient
-            IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
-            gradient.gradient = [IJSVGLinearGradient parseGradient:child
-                                                          gradient:gradient];
-            [self _parseElementForCommonAttributes:child
-                                              node:gradient];
-            [node addDef:gradient];
-            
-        } else if( [[child name] isEqualToString:@"radialGradient"] )
-        {
-            // radial gradient
-            IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
-            gradient.gradient = [IJSVGRadialGradient parseGradient:child
-                                                          gradient:gradient];
-            [self _parseElementForCommonAttributes:child
-                                              node:gradient];
-            [node addDef:gradient];
-            
-        }
-    }
-}
 
 - (void)_parsePathCommandData:(NSString *)command
                      intoPath:(IJSVGPath *)path

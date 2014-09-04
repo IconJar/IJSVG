@@ -25,8 +25,10 @@
     return self;
 }
 
-- (void)addDef:(IJSVGDef *)aDef
+- (void)addDef:(IJSVGNode *)aDef
 {
+    if( aDef.identifier == nil )
+        return;
     [_dict setObject:aDef
               forKey:aDef.identifier];
 }
