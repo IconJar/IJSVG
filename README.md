@@ -8,6 +8,20 @@ It takes SVG's files and makes pretty pictures like this:
 
 ![SVG Example](http://cl.ly/image/0G3S3Q1s271Z/Screen%20Shot%202014-09-02%20at%2018.17.52.png)
 
+Example app
+====
+There is an example application provided, it will generate this test bed for SVG's
+
+![SVG Example App](http://cl.ly/image/2j1T2c351Z22/Screen%20Shot%202014-09-05%20at%2017.50.50.png)
+
+The example screen contains six SVG's rendered in individual views, from left to right.
+* First example shows transforms and colours
+* Second example shows linear gradients
+* Third example shows defined paths being reused
+* Forth example shows transforms such as translate being used and stroke colours
+* Fith example shows clip paths being used
+* Sixth example shows dashed stroke array's being used
+
 Quick Start
 ====
 Add all the IJSVG library files into your project, import the IJSVG.h into the files you wish to use the SVG's. The easiest way to
