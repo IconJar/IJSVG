@@ -193,7 +193,7 @@ static NSMutableDictionary * _colorTree = nil;
     NSString * hex = nil;
     if( ( hex = [_colorTree objectForKey:name] ) == nil )
         return nil;
-    return [[self class] colorFromHEXString:name
+    return [[self class] colorFromHEXString:hex
                                       alpha:1.f];
 }
 

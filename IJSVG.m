@@ -157,7 +157,7 @@ static NSColor * _baseColor = nil;
         // begin draw
         [self _drawGroup:_group
                     rect:rect];
-    
+        
     }
     CGContextRestoreGState(ref);
 }
@@ -211,7 +211,7 @@ static NSColor * _baseColor = nil;
             // save the context
             CGContextSaveGState(context);
             {
-
+                
                 if( [clip isKindOfClass:[IJSVGGroup class]] )
                 {
                     [self _drawGroup:clip
@@ -223,8 +223,8 @@ static NSColor * _baseColor = nil;
                     [path.path addClip];
                     block();
                 }
-            
-            // restore the context
+                
+                // restore the context
             }
             CGContextRestoreGState(context);
         }
@@ -241,7 +241,7 @@ static NSColor * _baseColor = nil;
     CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
     CGContextSaveGState( context );
     {
-    
+        
         // perform any transforms
         [self _applyDefaults:context
                         node:group];
@@ -273,7 +273,7 @@ static NSColor * _baseColor = nil;
                                 rect:rect];
                 }
             }
-
+            
         };
         
         // main group clipping
@@ -281,7 +281,7 @@ static NSColor * _baseColor = nil;
                 context:context
               drawBlock:drawBlock
                    rect:rect];
-    
+        
     }
     // restore the context
     CGContextRestoreGState(context);
@@ -344,7 +344,7 @@ static NSColor * _baseColor = nil;
                 [path.fillColor set];
                 [path.path fill];
             } else if( _baseColor != nil ) {
-
+                
                 // is there a base color?
                 // this is basically used whenever no color
                 // is set, its also set via [IJSVG setBaseColor],
@@ -364,13 +364,21 @@ static NSColor * _baseColor = nil;
             // if its defined elsewhere, then
             // use that one instead
             CGFloat lineWidth = 1.f;
-            if( path.strokeWidth != 0 )
+            if( path.strokeWidth != 0.f )
                 lineWidth = path.strokeWidth;
+            [path.path setLineCapStyle:path.lineCapStyle];
             [path.strokeColor setStroke];
             [path.path setLineWidth:lineWidth];
+            
+            // any dashed array?
+            if( path.strokeDashArrayCount != 0 )
+                [path.path setLineDash:path.strokeDashArray
+                                 count:path.strokeDashArrayCount
+                                 phase:path.strokeDashOffset];
+            
             [path.path stroke];
         }
-    
+        
     }
     // restore the graphics state
     CGContextRestoreGState(ref);

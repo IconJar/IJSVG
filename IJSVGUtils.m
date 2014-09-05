@@ -86,6 +86,19 @@
     return IJSVGWindingRuleNonZero;
 }
 
++ (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string
+{
+    if( [string isEqualToString:@"butt"] )
+        return IJSVGLineCapStyleButt;
+    if( [string isEqualToString:@"square"] )
+        return IJSVGLineCapStyleSquare;
+    if( [string isEqualToString:@"round"] )
+        return IJSVGLineCapStyleRound;
+    if( [string isEqualToString:@"inherit"] )
+        return IJSVGLineCapStyleInherit;
+    return IJSVGLineCapStyleButt;
+}
+
 + (NSRegularExpression *)viewBoxRegex
 {
     static NSRegularExpression * _reg = nil;

@@ -36,6 +36,13 @@ typedef NS_OPTIONS( NSInteger, IJSVGWindingRule ) {
     IJSVGWindingRuleInherit
 };
 
+typedef  NS_OPTIONS( NSInteger, IJSVGLineCapStyle ) {
+    IJSVGLineCapStyleButt,
+    IJSVGLineCapStyleRound,
+    IJSVGLineCapStyleSquare,
+    IJSVGLineCapStyleInherit
+};
+
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying> {
@@ -58,6 +65,10 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     CGFloat fillOpacity;
     CGFloat strokeOpacity;
     
+    CGFloat * strokeDashArray;
+    NSInteger strokeDashArrayCount;
+    CGFloat strokeDashOffset;
+    
     NSString * identifier;
     
     IJSVGNode * parentNode;
@@ -65,6 +76,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     NSArray * transforms;
     
     IJSVGWindingRule windingRule;
+    IJSVGLineCapStyle lineCapStyle;
     
     IJSVGDef * def;
     
@@ -86,9 +98,13 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
 @property ( nonatomic, assign ) IJSVGGroup * clipPath;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
+@property ( nonatomic, assign ) IJSVGLineCapStyle lineCapStyle;
 @property ( nonatomic, retain ) NSArray * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
+@property ( nonatomic, assign ) CGFloat * strokeDashArray;
+@property ( nonatomic, assign ) NSInteger strokeDashArrayCount;
+@property ( nonatomic, assign ) CGFloat strokeDashOffset;
 
 + (IJSVGNodeType)typeForString:(NSString *)string;
 

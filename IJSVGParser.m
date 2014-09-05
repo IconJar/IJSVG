@@ -163,6 +163,11 @@
             node.clipPath = (IJSVGGroup *)[node defForID:clipID];
     }
     
+    // any line cap style?
+    NSXMLNode * lineCapAttribute = [element attributeForName:@"stroke-linecap"];
+    if( lineCapAttribute != nil )
+        node.lineCapStyle = [IJSVGUtils lineCapStyleForString:[lineCapAttribute stringValue]];
+    
     // work out any extra attributes
     // opacity
     NSXMLNode * opacityAttribute = [element attributeForName:@"opacity"];
@@ -183,6 +188,23 @@
                                                            to:node.strokeOpacity];
     }
     
+    // dash node
+    NSXMLNode * dashArrayAttribute = [element attributeForName:@"stroke-dasharray"];
+    if( dashArrayAttribute != nil )
+    {
+        NSInteger paramCount = 0;
+        CGFloat * params = [IJSVGUtils commandParameters:[dashArrayAttribute stringValue]
+                                                   count:&paramCount];
+        node.strokeDashArray = params;
+        node.strokeDashArrayCount = paramCount;
+    }
+    
+    // dash offset
+    NSXMLNode * dashOffsetAttribute = [element attributeForName:@"stroke-dashoffset"];
+    if( dashOffsetAttribute != nil )
+        node.strokeDashOffset = [[dashOffsetAttribute stringValue] floatValue];
+    
+    // fill opacity
     NSXMLNode * fillOpacityAttribute = [element attributeForName:@"fill-opacity"];
     if( fillOpacityAttribute != nil )
         node.fillOpacity = [IJSVGUtils floatValue:[fillOpacityAttribute stringValue]];
@@ -584,7 +606,7 @@
     CGFloat y1 = [[[element attributeForName:@"y1"] stringValue] floatValue];
     CGFloat x2 = [[[element attributeForName:@"x2"] stringValue] floatValue];
     CGFloat y2 = [[[element attributeForName:@"y2"] stringValue] floatValue];
-    NSString * command = [NSString stringWithFormat:@"M%f %fL%f %fz",x1,y1,x2,y2];
+    NSString * command = [NSString stringWithFormat:@"M%f %fL%f %f",x1,y1,x2,y2];
     [self _parsePathCommandData:command
                        intoPath:path];
 }

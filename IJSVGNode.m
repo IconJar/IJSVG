@@ -30,9 +30,14 @@
 @synthesize def;
 @synthesize fillGradient;
 @synthesize clipPath;
+@synthesize lineCapStyle;
+@synthesize strokeDashArrayCount;
+@synthesize strokeDashArray;
+@synthesize strokeDashOffset;
 
 - (void)dealloc
 {
+    free(strokeDashArray);
     [fillGradient release], fillGradient = nil;
     [transforms release], transforms = nil;
     [fillColor release], fillColor = nil;
@@ -110,7 +115,15 @@
     node.transforms = self.transforms;
     node.def = self.def;
     node.windingRule = self.windingRule;
+    node.lineCapStyle = self.lineCapStyle;
     node.parentNode = self.parentNode;
+    
+    // dash array needs physical memory copied
+    CGFloat * nStrokeDashArray = (CGFloat *)malloc(node.strokeDashArrayCount*sizeof(CGFloat));
+    memcpy( self.strokeDashArray, nStrokeDashArray, node.strokeDashArrayCount*sizeof(CGFloat));
+    node.strokeDashArray = nStrokeDashArray;
+    node.strokeDashArrayCount = self.strokeDashArrayCount;
+    node.strokeDashOffset = self.strokeDashOffset;
     
     return node;
 }
@@ -157,6 +170,22 @@
                 return parentNode.windingRule;
     }
     return IJSVGWindingRuleNonZero;
+}
+
+- (IJSVGLineCapStyle)lineCapStyle
+{
+    switch (lineCapStyle) {
+        case IJSVGLineCapStyleButt:
+            return NSButtLineCapStyle;
+        case IJSVGLineCapStyleRound:
+            return NSRoundLineCapStyle;
+        case IJSVGLineCapStyleSquare:
+            return NSSquareLineCapStyle;
+        case IJSVGLineCapStyleInherit:
+            if( parentNode != nil )
+                return parentNode.lineCapStyle;
+    }
+    return IJSVGLineCapStyleButt;
 }
 
 // these are all recursive, so go up the chain

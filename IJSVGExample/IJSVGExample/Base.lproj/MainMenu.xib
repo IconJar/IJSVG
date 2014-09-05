@@ -681,7 +681,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                     <customView id="jOS-l1-voG" customClass="SVGExampleView2">
-                        <rect key="frame" x="394.9999965835309" y="227" width="161" height="225"/>
+                        <rect key="frame" x="395" y="227" width="161" height="225"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMinY="YES"/>
                     </customView>
                     <customView id="mxr-zw-MsV" customClass="SVGExampleView1">
@@ -689,11 +689,15 @@
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                     </customView>
                     <customView id="bHV-ou-brV" customClass="SVGExampleView3">
-                        <rect key="frame" x="0.0" y="0.0" width="273" height="228"/>
+                        <rect key="frame" x="0.0" y="0.0" width="161" height="228"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
                     </customView>
                     <customView id="osq-NY-OyC" customClass="SVGExampleView4">
-                        <rect key="frame" x="272.5" y="0.0" width="283.5" height="228"/>
+                        <rect key="frame" x="160" y="0.0" width="236" height="228"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
+                    </customView>
+                    <customView id="PEb-ng-OIe" customClass="SVGExampleView5">
+                        <rect key="frame" x="395" y="0.0" width="161" height="228"/>
                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" heightSizable="YES"/>
                     </customView>
                 </subviews>
