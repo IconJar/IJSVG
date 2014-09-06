@@ -23,7 +23,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 
 @end
 
-@interface IJSVG : NSObject {
+@interface IJSVG : NSObject <NSPasteboardWriting> {
     
 @private
     IJSVGParser * _group;
@@ -50,5 +50,6 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
                size:(NSSize)size;
 - (void)drawInRect:(NSRect)rect;
 - (NSArray *)colors;
+- (NSData *)PDFData;
 
 @end

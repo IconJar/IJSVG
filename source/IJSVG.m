@@ -24,12 +24,15 @@ static NSColor * _baseColor = nil;
 {
     if( _baseColor != nil )
         [_baseColor release], _baseColor = nil;
-    _baseColor = [color retain];
+    if( color == nil )
+        _baseColor = nil;
+    else
+        _baseColor = [color retain];
 }
 
 + (NSColor *)baseColor
 {
-    return _baseColor;
+    return [[_baseColor copy] autorelease];
 }
 
 + (id)svgNamed:(NSString *)string
@@ -116,6 +119,53 @@ static NSColor * _baseColor = nil;
     return im;
 }
 
+- (NSData *)PDFData
+{
+    NSColor * oldBaseColour = [[self class] baseColor];
+    [[self class] setBaseColor:nil];
+    // store the old context
+    NSGraphicsContext * oldGraphicsContext = [NSGraphicsContext currentContext];
+    
+    // create the data for the PDF
+    NSMutableData * data = [[[NSMutableData alloc] init] autorelease];
+    
+    // assign the data to the consumer
+    CGDataConsumerRef dataConsumer = CGDataConsumerCreateWithCFData((CFMutableDataRef)data);
+    const CGRect box = CGRectMake( 0.f, 0.f, _group.size.width, _group.size.height );
+    
+    // create the context
+    CGContextRef context = CGPDFContextCreate( dataConsumer, &box, NULL );
+    NSGraphicsContext * newContext = [NSGraphicsContext graphicsContextWithGraphicsPort:context
+                                                                                flipped:NO];
+    
+    CGContextSaveGState(context);
+    
+    // set it as the current
+    [NSGraphicsContext setCurrentContext:newContext];
+    CGContextBeginPage( context, &box );
+    
+    // the context is currently upside down, doh! flip it...
+    CGContextScaleCTM( context, 1, -1 );
+    CGContextTranslateCTM( context, 0, -box.size.height);
+    
+    // draw the icon
+    [self _drawInRect:(NSRect)box
+              context:context];
+    CGContextEndPage(context);
+    
+    //clean up
+    CGPDFContextClose(context);
+    CGContextRelease(context);
+    CGDataConsumerRelease(dataConsumer);
+    
+    CGContextRestoreGState(context);
+    
+    // set the graphics context back to its original
+    [NSGraphicsContext setCurrentContext:oldGraphicsContext];
+    [[self class] setBaseColor:oldBaseColour];
+    return data;
+}
+
 - (NSArray *)colors
 {
     if( _colors == nil )
@@ -134,12 +184,17 @@ static NSColor * _baseColor = nil;
 
 - (void)drawInRect:(NSRect)rect
 {
-    
+    [self _drawInRect:rect
+              context:[[NSGraphicsContext currentContext] graphicsPort]];
+}
+
+- (void)_drawInRect:(NSRect)rect
+           context:(CGContextRef)ref
+{
     // prep for draw...
     [self _beginDraw:rect];
     
     // setup the transforms and scale on the main context
-    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
     CGContextSaveGState(ref);
     {
         
@@ -156,7 +211,8 @@ static NSColor * _baseColor = nil;
         
         // begin draw
         [self _drawGroup:_group
-                    rect:rect];
+                    rect:rect
+                 context:ref];
         
     }
     CGContextRestoreGState(ref);
@@ -215,7 +271,8 @@ static NSColor * _baseColor = nil;
                 if( [clip isKindOfClass:[IJSVGGroup class]] )
                 {
                     [self _drawGroup:clip
-                                rect:rect];
+                                rect:rect
+                             context:context];
                 } else {
                     
                     // add the clip and draw
@@ -237,8 +294,8 @@ static NSColor * _baseColor = nil;
 
 - (void)_drawGroup:(IJSVGGroup *)group
               rect:(NSRect)rect
+           context:(CGContextRef)context
 {
-    CGContextRef context = [[NSGraphicsContext currentContext] graphicsPort];
     CGContextSaveGState( context );
     {
         
@@ -256,7 +313,8 @@ static NSColor * _baseColor = nil;
                     dispatch_block_t block = ^(void)
                     {
                         [self _drawPath:(IJSVGPath *)child
-                                   rect:rect];
+                                   rect:rect
+                                context:context];
                     };
                     
                     // draw the clip
@@ -270,7 +328,8 @@ static NSColor * _baseColor = nil;
                     // if its a group, we recursively call this method
                     // to generate the paths required
                     [self _drawGroup:child
-                                rect:rect];
+                                rect:rect
+                             context:context];
                 }
             }
             
@@ -309,10 +368,10 @@ static NSColor * _baseColor = nil;
 
 - (void)_drawPath:(IJSVGPath *)path
              rect:(NSRect)rect
+          context:(CGContextRef)ref
 {
     // there should be a colour on it...
     // defaults to black if not existant
-    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
     CGContextSaveGState(ref);
     {
         // there could be transforms per path
@@ -383,6 +442,20 @@ static NSColor * _baseColor = nil;
     // restore the graphics state
     CGContextRestoreGState(ref);
     
+}
+
+#pragma mark NSPasteboard
+
+- (NSArray *)writableTypesForPasteboard:(NSPasteboard *)pasteboard
+{
+    return @[NSPasteboardTypePDF];
+}
+
+- (id)pasteboardPropertyListForType:(NSString *)type
+{
+    if( [type isEqualToString:NSPasteboardTypePDF] )
+        return [self PDFData];
+    return nil;
 }
 
 #pragma mark IJSVGParserDelegate
