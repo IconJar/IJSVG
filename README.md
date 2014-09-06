@@ -8,6 +8,8 @@ It takes SVG's files and makes pretty pictures like this:
 
 ![SVG Example](http://cl.ly/image/0G3S3Q1s271Z/Screen%20Shot%202014-09-02%20at%2018.17.52.png)
 
+It also supports the NSPasteboards writing protocol, an IJSVG object can be put onto the pasteboard and application like Sketch and Photoshop can paste them into the document as vector objects (generated PDF's on the fly).
+
 Example app
 ====
 There is an example application provided, it will generate this test bed for SVG's
