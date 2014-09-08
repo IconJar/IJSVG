@@ -57,6 +57,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     
     IJSVGGradient * fillGradient;
     
+    BOOL usesDefaultFillColor;
+    
     NSColor * fillColor;
     NSColor * strokeColor;
     
@@ -84,6 +86,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @property ( nonatomic, assign ) IJSVGNodeType type;
 @property ( nonatomic, copy ) NSString * name;
+@property ( nonatomic, assign ) BOOL usesDefaultFillColor;
 @property ( nonatomic, assign ) CGFloat x;
 @property ( nonatomic, assign ) CGFloat y;
 @property ( nonatomic, assign ) CGFloat width;

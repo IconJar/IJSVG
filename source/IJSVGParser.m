@@ -223,6 +223,9 @@
                 node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
                                                              to:node.fillOpacity];
         }
+    } else {
+        node.usesDefaultFillColor = YES;
+        node.fillColor = [NSColor blackColor];
     }
     
     // stroke width

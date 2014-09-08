@@ -34,6 +34,7 @@
 @synthesize strokeDashArrayCount;
 @synthesize strokeDashArray;
 @synthesize strokeDashOffset;
+@synthesize usesDefaultFillColor;
 
 - (void)dealloc
 {
@@ -111,6 +112,7 @@
     node.strokeOpacity = self.strokeOpacity;
     
     node.identifier = self.identifier;
+    node.usesDefaultFillColor = self.usesDefaultFillColor;
     
     node.transforms = self.transforms;
     node.def = self.def;

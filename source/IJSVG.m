@@ -227,7 +227,7 @@ static NSColor * _baseColor = nil;
 
 - (void)_recursiveColors:(IJSVGGroup *)group
 {
-    if( group.fillColor != nil )
+    if( group.fillColor != nil && !group.usesDefaultFillColor )
         [self _addColor:group.fillColor];
     if( group.strokeColor != nil )
         [self _addColor:group.strokeColor];
@@ -237,7 +237,7 @@ static NSColor * _baseColor = nil;
             [self _recursiveColors:node];
         else {
             IJSVGPath * p = (IJSVGPath*)node;
-            if( p.fillColor != nil )
+            if( p.fillColor != nil && !p.usesDefaultFillColor )
                 [self _addColor:p.fillColor];
             if( p.strokeColor != nil )
                 [self _addColor:p.strokeColor];
