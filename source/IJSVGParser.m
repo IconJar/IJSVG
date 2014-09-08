@@ -243,7 +243,10 @@
     // winding rule
     NSXMLNode * windingRuleAttribute = [element attributeForName:@"fill-rule"];
     if( windingRuleAttribute != nil )
-        node.windingRule = [IJSVGUtils windingRuleForString:[element stringValue]];
+    {
+        node.windingRule = [IJSVGUtils windingRuleForString:[windingRuleAttribute stringValue]];
+    } else
+        node.windingRule = IJSVGWindingRuleInherit;
     
     // width
     NSXMLNode * widthAttribute = [element attributeForName:@"width"];

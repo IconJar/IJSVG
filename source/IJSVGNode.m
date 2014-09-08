@@ -159,17 +159,9 @@
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    switch(windingRule)
-    {
-        case IJSVGWindingRuleEvenOdd:
-            return NSEvenOddWindingRule;
-        case IJSVGWindingRuleNonZero:
-            return NSNonZeroWindingRule;
-        case IJSVGWindingRuleInherit:
-            if( parentNode != nil )
-                return parentNode.windingRule;
-    }
-    return IJSVGWindingRuleNonZero;
+    if( windingRule == IJSVGWindingRuleInherit && parentNode != nil )
+        return parentNode.windingRule;
+    return windingRule;
 }
 
 - (IJSVGLineCapStyle)lineCapStyle

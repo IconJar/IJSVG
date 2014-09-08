@@ -51,5 +51,6 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 - (void)drawInRect:(NSRect)rect;
 - (NSArray *)colors;
 - (NSData *)PDFData;
+- (NSData *)PDFDataWithRect:(NSRect)rect;
 
 @end

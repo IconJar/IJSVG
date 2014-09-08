@@ -77,7 +77,7 @@
     return foundID;
 }
 
-+ (NSWindingRule)windingRuleForString:(NSString *)string
++ (IJSVGWindingRule)windingRuleForString:(NSString *)string
 {
     if( [string isEqualToString:@"evenodd"] )
         return IJSVGWindingRuleEvenOdd;

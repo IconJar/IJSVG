@@ -17,7 +17,7 @@
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count;
 + (CGFloat *)parseViewBox:(NSString *)string;
-+ (NSWindingRule)windingRuleForString:(NSString *)string;
++ (IJSVGWindingRule)windingRuleForString:(NSString *)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string;
 + (NSString *)cleanCommandString:(NSString *)string;
 + (void)logParameters:(CGFloat *)param

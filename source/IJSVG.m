@@ -121,6 +121,13 @@ static NSColor * _baseColor = nil;
 
 - (NSData *)PDFData
 {
+    return [self PDFDataWithRect:(NSRect){
+        .origin=NSZeroPoint,
+        .size=_group.size}];
+}
+
+- (NSData *)PDFDataWithRect:(NSRect)rect
+{
     NSColor * oldBaseColour = [[self class] baseColor];
     [[self class] setBaseColor:nil];
     // store the old context
@@ -131,7 +138,7 @@ static NSColor * _baseColor = nil;
     
     // assign the data to the consumer
     CGDataConsumerRef dataConsumer = CGDataConsumerCreateWithCFData((CFMutableDataRef)data);
-    const CGRect box = CGRectMake( 0.f, 0.f, _group.size.width, _group.size.height );
+    const CGRect box = CGRectMake( rect.origin.x, rect.origin.y, rect.size.width, rect.size.height );
     
     // create the context
     CGContextRef context = CGPDFContextCreate( dataConsumer, &box, NULL );
@@ -398,6 +405,7 @@ static NSColor * _baseColor = nil;
         } else {
             // no gradient specified
             // just use the color instead
+            [path.path setWindingRule:path.windingRule];
             if( path.fillColor != nil )
             {
                 [path.fillColor set];
