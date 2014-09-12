@@ -87,6 +87,7 @@ static NSColor * _baseColor = nil;
 - (id)initWithFilePathURL:(NSURL *)aURL
                  delegate:(id<IJSVGDelegate>)delegate
 {
+#ifndef __clang_analyzer__
     if( [IJSVGCache enabled] )
     {
         IJSVG * svg = nil;
@@ -94,12 +95,8 @@ static NSColor * _baseColor = nil;
         {
             // have to release, as this was called from an alloc..!
             [self release];
-#ifndef __clang_analyzer__
             return [svg retain];
         }
-#else
-        {}
-#endif
     }
     
     if( ( self = [super init] ) != nil )
@@ -110,6 +107,7 @@ static NSColor * _baseColor = nil;
             [IJSVGCache cacheSVG:self
                          fileURL:aURL];
     }
+#endif
     return self;
 }
 
