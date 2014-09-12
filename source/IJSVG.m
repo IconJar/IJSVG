@@ -50,7 +50,7 @@ static NSColor * _baseColor = nil;
     if( ext == nil || ext.length == 0 )
         ext = @"svg";
     if( ( str = [bundle pathForResource:[string stringByDeletingPathExtension]
-                                 ofType:ext] ) )
+                                 ofType:ext] ) != nil )
         return [[[self alloc] initWithFile:str
                                   delegate:delegate] autorelease];
     return nil;
@@ -91,8 +91,12 @@ static NSColor * _baseColor = nil;
     {
         IJSVG * svg = nil;
         if( ( svg = [IJSVGCache cachedSVGForFileURL:aURL] ) != nil )
+        {
+            // have to release, as this was called from an alloc..!
+            [self release];
 #ifndef __clang_analyzer__
             return [svg retain];
+        }
 #else
         {}
 #endif
@@ -196,7 +200,7 @@ static NSColor * _baseColor = nil;
 }
 
 - (void)_drawInRect:(NSRect)rect
-           context:(CGContextRef)ref
+            context:(CGContextRef)ref
 {
     // prep for draw...
     [self _beginDraw:rect];
