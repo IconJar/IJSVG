@@ -198,7 +198,7 @@ static NSColor * _baseColor = nil;
 }
 
 - (void)_drawInRect:(NSRect)rect
-            context:(CGContextRef)ref
+           context:(CGContextRef)ref
 {
     // prep for draw...
     [self _beginDraw:rect];
@@ -239,7 +239,7 @@ static NSColor * _baseColor = nil;
             [self _recursiveColors:node];
         else {
             IJSVGPath * p = (IJSVGPath*)node;
-            if( p.fillColor != nil && !p.usesDefaultFillColor )
+            if( p.fillColor != nil )
                 [self _addColor:p.fillColor];
             if( p.strokeColor != nil )
                 [self _addColor:p.strokeColor];
