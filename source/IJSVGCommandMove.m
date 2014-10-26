@@ -33,7 +33,12 @@
         [[path currentSubpath] moveToPoint:NSMakePoint( params[0], params[1])];
         return;
     }
-    [[path currentSubpath] relativeMoveToPoint:NSMakePoint( params[0], params[1])];
+    @try {
+        [[path currentSubpath] relativeMoveToPoint:NSMakePoint( params[0], params[1])];
+    }
+    @catch (NSException *exception) {
+        [[path currentSubpath] moveToPoint:NSMakePoint( params[0], params[1])];
+    }
 }
 
 @end
