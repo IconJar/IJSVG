@@ -168,18 +168,12 @@
 
 - (IJSVGLineCapStyle)lineCapStyle
 {
-    switch (lineCapStyle) {
-        case IJSVGLineCapStyleButt:
-            return NSButtLineCapStyle;
-        case IJSVGLineCapStyleRound:
-            return NSRoundLineCapStyle;
-        case IJSVGLineCapStyleSquare:
-            return NSSquareLineCapStyle;
-        case IJSVGLineCapStyleInherit:
-            if( parentNode != nil )
-                return parentNode.lineCapStyle;
+    if( lineCapStyle == IJSVGLineCapStyleInherit )
+    {
+        if( parentNode != nil )
+            return parentNode.lineCapStyle;
     }
-    return IJSVGLineCapStyleButt;
+    return lineCapStyle;
 }
 
 // these are all recursive, so go up the chain

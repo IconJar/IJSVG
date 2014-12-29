@@ -407,7 +407,7 @@ static NSColor * _baseColor = nil;
         } else {
             // no gradient specified
             // just use the color instead
-            [path.path setWindingRule:path.windingRule];
+            [path.path setWindingRule:(NSWindingRule)path.windingRule];
             if( path.fillColor != nil )
             {
                 [path.fillColor set];
@@ -435,7 +435,7 @@ static NSColor * _baseColor = nil;
             CGFloat lineWidth = 1.f;
             if( path.strokeWidth != 0.f )
                 lineWidth = path.strokeWidth;
-            [path.path setLineCapStyle:path.lineCapStyle];
+            [path.path setLineCapStyle:(NSLineCapStyle)path.lineCapStyle];
             [path.strokeColor setStroke];
             [path.path setLineWidth:lineWidth];
             

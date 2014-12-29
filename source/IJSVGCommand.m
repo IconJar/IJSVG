@@ -62,11 +62,15 @@ static NSMutableDictionary * _classes = nil;
             [cs appendString:self.command];
             
             // memory for this will be handled by the created subcommand
-            CGFloat * subParams = (CGFloat*)malloc(self.requiredParameters*sizeof(CGFloat));
-            for( NSInteger p = 0; p < self.requiredParameters; p++ )
+            CGFloat * subParams = 0;
+            if( self.requiredParameters != 0 )
             {
-                subParams[p] = self.parameters[i*self.requiredParameters+p];
-                [cs appendFormat:@"%f ",subParams[p]];
+                subParams = (CGFloat*)malloc(self.requiredParameters*sizeof(CGFloat));
+                for( NSInteger p = 0; p < self.requiredParameters; p++ )
+                {
+                    subParams[p] = self.parameters[i*self.requiredParameters+p];
+                    [cs appendFormat:@"%f ",subParams[p]];
+                }
             }
             
             // create a subcommand per set
