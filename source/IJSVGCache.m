@@ -36,10 +36,16 @@ static BOOL _enabled = YES;
          fileURL:(NSURL *)aURL
 {
     // use the malloc size for the object size,
+    // actually bad idea, use the file size
     // is this correct?
+    struct stat st;
+    long cost = 0;
+    if( lstat( [[aURL path] cStringUsingEncoding:NSUTF8StringEncoding], &st ) != -1 )
+        cost = st.st_size;
+    
     [_cache setObject:svg
                forKey:aURL
-                 cost:malloc_size(svg)];
+                 cost:cost];
 }
 
 + (void)setEnabled:(BOOL)flag

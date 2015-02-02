@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <sys/stat.h>
 #import "IJSVG.h"
 
 @interface IJSVGCache : NSObject {
