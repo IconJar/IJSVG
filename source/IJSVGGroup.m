@@ -25,9 +25,16 @@
     return self;
 }
 
+- (void)prepareFromCopy
+{
+    children = [[NSMutableArray alloc] init];
+}
+
 - (id)copyWithZone:(NSZone *)zone
 {
-    IJSVGGroup * node = [[self class] allocWithZone:zone];
+    IJSVGGroup * node = [super copyWithZone:zone];
+    [node prepareFromCopy];
+    
     for( IJSVGNode * childNode in self.children )
     {
         childNode = [[childNode copy] autorelease];
@@ -44,12 +51,18 @@
 
 - (void)addChild:(id)child
 {
-    [children addObject:child];
+    if( child != nil )
+        [children addObject:child];
 }
 
 - (NSArray *)children
 {
     return children;
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@ - %ld",[super description],self.children.count];
 }
 
 @end

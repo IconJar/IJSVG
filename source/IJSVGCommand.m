@@ -44,7 +44,7 @@ static NSMutableDictionary * _classes = nil;
         type = [IJSVGUtils typeForCommandString:self.command];
         commandClass = [[self class] commandClassForCommandLetter:self.command];
         parameters = [IJSVGUtils commandParameters:str
-                                                  count:&parameterCount];
+                                             count:&parameterCount];
         requiredParameters = [self.commandClass requiredParameterCount];
         
         // now work out the sets of parameters we have

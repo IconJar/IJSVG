@@ -10,7 +10,7 @@
 
 @implementation IJSVGUtils
 
-#define FLOAT_EXP @"[-+]?[0-9]*\\.?[0-9]+"
+#define FLOAT_EXP @"[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"
 
 + (IJSVGCommandType)typeForCommandString:(NSString *)string
 {
@@ -22,7 +22,7 @@
     static NSRegularExpression *_commandRegex;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _commandRegex = [[NSRegularExpression alloc] initWithPattern:@"[A-Za-z]"
+        _commandRegex = [[NSRegularExpression alloc] initWithPattern:@"[MmZzLlHhVvCcSsQqTtAa]{1}"
                                                              options:0
                                                                error:nil];
     });
@@ -51,9 +51,9 @@
                                                       error:nil];
     });
     return [_reg stringByReplacingMatchesInString:string
-                                         options:0
-                                           range:NSMakeRange( 0, string.length )
-                                    withTemplate:@""];
+                                          options:0
+                                            range:NSMakeRange( 0, string.length )
+                                     withTemplate:@""];
 }
 
 + (NSString *)defURL:(NSString *)string
@@ -70,10 +70,10 @@
                            options:0
                              range:NSMakeRange( 0, string.length )
                         usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-    {
-        if( ( foundID = [string substringWithRange:[result rangeAtIndex:1]] ) != nil )
-            *stop = YES;
-    }];
+     {
+         if( ( foundID = [string substringWithRange:[result rangeAtIndex:1]] ) != nil )
+             *stop = YES;
+     }];
     return foundID;
 }
 
@@ -119,11 +119,19 @@
                                      options:0
                                        range:NSMakeRange( 0, command.length)];
     CGFloat * ret = (CGFloat *)malloc(matches.count*sizeof(CGFloat));
+    NSDictionary * dict = [NSDictionary dictionaryWithObject:@"."
+                                                      forKey:NSLocaleDecimalSeparator];
     for( NSInteger i = 0; i < matches.count; i++ )
     {
         NSTextCheckingResult * match = [matches objectAtIndex:i];
         NSString * paramString = [command substringWithRange:match.range];
-        ret[i] = (CGFloat)[paramString floatValue];
+        NSDecimalNumber * decimal = nil;
+        if( [paramString rangeOfString:@"."].location != NSNotFound )
+            decimal = [NSDecimalNumber decimalNumberWithString:paramString
+                                                        locale:dict];
+        else
+            decimal = [NSDecimalNumber decimalNumberWithString:paramString];
+        ret[i] = (CGFloat)[decimal floatValue];
         *count += 1;
     }
     return ret;
@@ -143,6 +151,15 @@
         ret[i] = (CGFloat)[paramString floatValue];
     }
     return ret;
+}
+
++ (CGFloat)floatValue:(NSString *)string
+   fallBackForPercent:(CGFloat)fallBack
+{
+    CGFloat val = [string floatValue];
+    if( [string rangeOfString:@"%"].location != NSNotFound )
+        val = (fallBack * val)/100;
+    return val;
 }
 
 + (void)logParameters:(CGFloat *)param

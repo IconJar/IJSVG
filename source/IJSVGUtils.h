@@ -26,5 +26,7 @@
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;
 + (NSString *)defURL:(NSString *)string;
++ (CGFloat)floatValue:(NSString *)string
+   fallBackForPercent:(CGFloat)viewBox;
 
 @end

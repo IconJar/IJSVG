@@ -22,12 +22,14 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
     IJSVGTransformCommand command;
     CGFloat * parameters;
     NSInteger parameterCount;
+    NSInteger sort;
     
 }
 
 @property ( nonatomic, assign ) IJSVGTransformCommand command;
 @property ( nonatomic, assign ) CGFloat * parameters;
 @property ( nonatomic, assign ) NSInteger parameterCount;
+@property ( nonatomic, assign ) NSInteger sort;
 
 + (NSArray *)transformsForString:(NSString *)string;
 + (void)performTransform:(IJSVGTransform *)transform

@@ -160,6 +160,7 @@ typedef NS_ENUM( NSInteger, IJSVGPredefinedColor ) {
 
 @interface IJSVGColor : NSObject
 
++ (NSColor *)computeColor:(id)colour;
 + (NSColor *)colorFromString:(NSString *)string;
 + (NSColor *)colorFromHEXString:(NSString *)string
                           alpha:(CGFloat)alpha;

@@ -198,7 +198,7 @@ static NSColor * _baseColor = nil;
 }
 
 - (void)_drawInRect:(NSRect)rect
-           context:(CGContextRef)ref
+            context:(CGContextRef)ref
 {
     // prep for draw...
     [self _beginDraw:rect];
@@ -211,6 +211,20 @@ static NSColor * _baseColor = nil;
         // to translate the context so its centered
         CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
         CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
+        tX -= _group.viewBox.origin.x*_scale;
+        tY -= _group.viewBox.origin.y*_scale;
+        
+        // we also need to calculate the viewport so we can clip
+        // the drawing if needed
+        NSRect viewPort = NSZeroRect;
+        viewPort.origin.x = tX;
+        viewPort.origin.y = tY;
+        viewPort.size.width = _group.size.width*_scale;
+        viewPort.size.height = _group.size.height*_scale;
+        
+        // clip any drawing to the view port
+        [[NSBezierPath bezierPathWithRect:viewPort] addClip];
+        
         CGContextTranslateCTM( ref, tX, tY );
         CGContextScaleCTM( ref, _scale, _scale );
         
@@ -225,6 +239,12 @@ static NSColor * _baseColor = nil;
         
     }
     CGContextRestoreGState(ref);
+    
+}
+
+- (NSRect)computedViewPort
+{
+    return NSMakeRect( 0.f, 0.f, 200.f, 200.f);
 }
 
 - (void)_recursiveColors:(IJSVGGroup *)group
@@ -366,6 +386,7 @@ static NSColor * _baseColor = nil;
     
     // scale it
     CGContextSetAlpha( context, opacity );
+    CGContextTranslateCTM( context, node.x, node.y);
     
     // perform any transforms
     for( IJSVGTransform * transform in node.transforms )
@@ -373,6 +394,7 @@ static NSColor * _baseColor = nil;
         [IJSVGTransform performTransform:transform
                                inContext:context];
     }
+    
 }
 
 - (void)_drawPath:(IJSVGPath *)path
@@ -434,7 +456,7 @@ static NSColor * _baseColor = nil;
             // use that one instead
             CGFloat lineWidth = 1.f;
             if( path.strokeWidth != 0.f )
-                lineWidth = path.strokeWidth;
+                lineWidth = fabs(path.strokeWidth);
             [path.path setLineCapStyle:(NSLineCapStyle)path.lineCapStyle];
             [path.strokeColor setStroke];
             [path.path setLineWidth:lineWidth];

@@ -137,6 +137,9 @@
         self.opacity = 0.f;
         self.fillOpacity = 1.f;
         self.strokeOpacity = 1.f;
+        self.strokeWidth = IJSVGInheritedFloatValue;
+        self.windingRule = IJSVGWindingRuleInherit;
+        self.lineCapStyle = IJSVGWindingRuleInherit;
         if( flag )
             def = [[IJSVGDef alloc] init];
     }

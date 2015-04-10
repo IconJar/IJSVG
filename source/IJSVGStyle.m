@@ -42,7 +42,7 @@
 {
     static NSRegularExpression * _reg = nil;
     static dispatch_once_t onceToken;
-    IJSVGStyle * style = [[[[self class] alloc] init] autorelease];
+    IJSVGStyle * style = [[[self class] alloc] init];
     dispatch_once(&onceToken, ^{
         _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z\\-]+)\\:([^;]+)\\;?"
                                                     options:0
@@ -52,14 +52,14 @@
                            options:0
                              range:NSMakeRange( 0, string.length )
                         usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-    {
-        NSString * key = [string substringWithRange:[result rangeAtIndex:1]];
-        NSString * value = [string substringWithRange:[result rangeAtIndex:2]];
-        [[self class] computeStyleProperty:key
-                                     value:value
-                                     style:style];
-    }];
-    return style;
+     {
+         NSString * key = [string substringWithRange:[result rangeAtIndex:1]];
+         NSString * value = [string substringWithRange:[result rangeAtIndex:2]];
+         [[self class] computeStyleProperty:key
+                                      value:value
+                                      style:style];
+     }];
+    return [style autorelease];
 }
 
 + (NSString *)trimString:(NSString *)string
@@ -67,40 +67,30 @@
     return [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
++ (NSArray *)allowedColourKeys
+{
+    return @[@"fill",@"stroke-colour",@"stop-color",@"stroke"];
+}
+
 + (void)computeStyleProperty:(NSString *)key
-                     value:(NSString *)value
-                     style:(IJSVGStyle *)style
+                       value:(NSString *)value
+                       style:(IJSVGStyle *)style
 {
     key = [[self class] trimString:key];
     value = [[self class] trimString:value];
     id val = nil;
-    if( [value length] > 4 )
-    {
-        // is RGBA value
-        if( [[value substringToIndex:3] isEqualToString:@"rgb"] )
-        {
-            NSInteger count = 0;
-            CGFloat * params = [IJSVGUtils commandParameters:value
-                                                       count:&count];
-            CGFloat alpha = 1;
-            if( count == 4 )
-                alpha = params[3];
-            val = [NSColor colorWithCalibratedRed:params[0]/255
-                                            green:params[1]/255
-                                             blue:params[2]/255
-                                            alpha:alpha];
-            free(params);
-        } else if( [[value substringToIndex:1] isEqualToString:@"#"] ) {
-            // hex value
-            val = [IJSVGColor colorFromHEXString:value
-                                           alpha:1.f];
-        }
-    }
     
-    // value is numeric, convert to a float
-    if( [[self class] isNumeric:value] )
-        val = @([value floatValue]);
-
+    // is it a color?
+    NSColor * color = [IJSVGColor colorFromString:value];
+    if( color == nil || ![[self allowedColourKeys] containsObject:key] )
+    {
+        // value is numeric, convert to a float
+        val = value;
+        if( [[self class] isNumeric:value] )
+            val = @([value floatValue]);
+    } else
+        val = color;
+    
     // set the value
     if( val != nil )
         [style setPropertyValue:val
@@ -110,8 +100,7 @@
 
 + (BOOL)isNumeric:(NSString *)string
 {
-    NSCharacterSet * nonNumbers = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
-    return [string rangeOfCharacterFromSet:nonNumbers].location == NSNotFound;
+    return [[NSScanner scannerWithString:string] scanFloat:NULL];
 }
 
 - (NSString *)description

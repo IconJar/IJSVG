@@ -175,6 +175,13 @@ static NSMutableDictionary * _colorTree = nil;
     });
 }
 
++ (NSColor *)computeColor:(id)colour
+{
+    if( [colour isKindOfClass:[NSColor class]] )
+        return colour;
+    return nil;
+}
+
 + (NSColor *)colorFromString:(NSString *)string
 {
     NSColor * color = [[self class] colorFromPredefinedColorName:string];

@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGCommandMove.h"
+#import "IJSVGCommandLineTo.h"
 
 
 @implementation IJSVGCommandMove
@@ -28,6 +29,19 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path
 {
+    // move to's allow more then one move to, but if there are more then one,
+    // we need to run the line to instead...who knew!
+    if( command.commandClass == [self class])
+    {
+        [IJSVGCommandLineTo runWithParams:params
+                               paramCount:count
+                          previousCommand:command
+                                     type:type
+                                     path:path];
+        return;
+    }
+    
+    // actual move to command
     if( type == IJSVGCommandTypeAbsolute )
     {
         [[path currentSubpath] moveToPoint:NSMakePoint( params[0], params[1])];
