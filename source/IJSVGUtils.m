@@ -86,6 +86,19 @@
     return IJSVGWindingRuleNonZero;
 }
 
++ (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString *)string
+{
+    if( [string isEqualToString:@"mitre"] )
+        return IJSVGLineJoinStyleMiter;
+    if( [string isEqualToString:@"round"] )
+        return IJSVGLineJoinStyleRound;
+    if( [string isEqualToString:@"bevel"] )
+        return IJSVGLineJoinStyleBevel;
+    if( [string isEqualToString:@"inherit"] )
+        return IJSVGLineJoinStyleInherit;
+    return IJSVGLineJoinStyleMiter;
+}
+
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string
 {
     if( [string isEqualToString:@"butt"] )
@@ -114,6 +127,13 @@
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count
 {
+    if( [command isKindOfClass:[NSNumber class]] )
+    {
+        CGFloat * ret = (CGFloat *)malloc(1*sizeof(CGFloat));
+        ret[0] = [(NSNumber *)command floatValue];
+        *count = 1;
+        return ret;
+    }
     NSRegularExpression * exp = [[self class] commandRegex];
     NSArray * matches = [exp matchesInString:command
                                      options:0
@@ -154,7 +174,7 @@
 }
 
 + (CGFloat)floatValue:(NSString *)string
-   fallBackForPercent:(CGFloat)fallBack
+     fallBackForPercent:(CGFloat)fallBack
 {
     CGFloat val = [string floatValue];
     if( [string rangeOfString:@"%"].location != NSNotFound )

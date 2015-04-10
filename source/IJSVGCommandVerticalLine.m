@@ -32,9 +32,10 @@
         [[path currentSubpath] lineToPoint:NSMakePoint( [path currentSubpath].currentPoint.x, params[0])];
         return;
     }
-    NSPoint point = NSMakePoint( [path currentSubpath].currentPoint.x,
-                                [path currentSubpath].currentPoint.y + params[0]);
-    [[path currentSubpath] lineToPoint:point];
+    [[path currentSubpath] relativeLineToPoint:NSMakePoint( 0.f, params[0])];
+//    NSPoint point = NSMakePoint( [path currentSubpath].currentPoint.x,
+//                                [path currentSubpath].currentPoint.y + );
+//    [[path currentSubpath] lineToPoint:point];
 }
 
 @end

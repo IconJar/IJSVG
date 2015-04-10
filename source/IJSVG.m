@@ -198,7 +198,7 @@ static NSColor * _baseColor = nil;
 }
 
 - (void)_drawInRect:(NSRect)rect
-            context:(CGContextRef)ref
+           context:(CGContextRef)ref
 {
     // prep for draw...
     [self _beginDraw:rect];
@@ -206,7 +206,7 @@ static NSColor * _baseColor = nil;
     // setup the transforms and scale on the main context
     CGContextSaveGState(ref);
     {
-        
+    
         // scale the whole drawing context, but first, we need
         // to translate the context so its centered
         CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
@@ -429,7 +429,9 @@ static NSColor * _baseColor = nil;
         } else {
             // no gradient specified
             // just use the color instead
-            [path.path setWindingRule:(NSWindingRule)path.windingRule];
+            if( path.windingRule != IJSVGWindingRuleInherit )
+                [path.path setWindingRule:(NSWindingRule)path.windingRule];
+            
             if( path.fillColor != nil )
             {
                 [path.fillColor set];
@@ -455,9 +457,17 @@ static NSColor * _baseColor = nil;
             // if its defined elsewhere, then
             // use that one instead
             CGFloat lineWidth = 1.f;
-            if( path.strokeWidth != 0.f )
-                lineWidth = fabs(path.strokeWidth);
-            [path.path setLineCapStyle:(NSLineCapStyle)path.lineCapStyle];
+            if( path.strokeWidth > 0.f )
+                lineWidth = path.strokeWidth;
+            
+            if( path.lineCapStyle != IJSVGLineCapStyleInherit )
+                [path.path setLineCapStyle:(NSLineCapStyle)path.lineCapStyle];
+            else
+                [path.path setLineCapStyle:NSButtLineCapStyle];
+            
+            if( path.lineJoinStyle != IJSVGLineJoinStyleInherit )
+                [path.path setLineJoinStyle:(NSLineJoinStyle)path.lineJoinStyle];
+            
             [path.strokeColor setStroke];
             [path.path setLineWidth:lineWidth];
             

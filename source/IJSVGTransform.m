@@ -66,23 +66,23 @@
                                options:0
                                  range:NSMakeRange( 0, string.length )
                             usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-         {
-             NSString * command = [string substringWithRange:[result rangeAtIndex:1]];
-             IJSVGTransformCommand commandType = [[self class] commandForCommandString:command];
-             if( commandType == IJSVGTransformCommandNotImplemented )
-                 return;
-             
-             // create the transform
-             NSString * params = [string substringWithRange:[result rangeAtIndex:2]];
-             IJSVGTransform * transform = [[[[self class] alloc] init] autorelease];
-             NSInteger count = 0;
-             transform.command = commandType;
-             transform.parameters = [IJSVGUtils commandParameters:params
-                                                            count:&count];
-             transform.parameterCount = count;
-             transform.sort = [[self class] sortForTransformCommand:commandType];
-             [transforms addObject:transform];
-         }];
+        {
+            NSString * command = [string substringWithRange:[result rangeAtIndex:1]];
+            IJSVGTransformCommand commandType = [[self class] commandForCommandString:command];
+            if( commandType == IJSVGTransformCommandNotImplemented )
+                return;
+            
+            // create the transform
+            NSString * params = [string substringWithRange:[result rangeAtIndex:2]];
+            IJSVGTransform * transform = [[[[self class] alloc] init] autorelease];
+            NSInteger count = 0;
+            transform.command = commandType;
+            transform.parameters = [IJSVGUtils commandParameters:params
+                                                           count:&count];
+            transform.parameterCount = count;
+            transform.sort = [[self class] sortForTransformCommand:commandType];
+            [transforms addObject:transform];
+        }];
     }
     return transforms;
 }
@@ -92,7 +92,7 @@
 {
     switch( transform.command )
     {
-            // matrix
+        // matrix
         case IJSVGTransformCommandMatrix: {
             CGContextConcatCTM( context, CGAffineTransformMake( transform.parameters[0],
                                                                transform.parameters[1],
@@ -102,8 +102,8 @@
                                                                transform.parameters[5]));
             break;
         }
-            
-            // translate
+        
+        // translate
         case IJSVGTransformCommandTranslate: {
             if( transform.parameterCount == 1 )
                 CGContextTranslateCTM( context, transform.parameters[0], 0 );
@@ -112,7 +112,7 @@
             break;
         }
             
-            // scale
+        // scale
         case IJSVGTransformCommandScale: {
             if( transform.parameterCount == 1 )
                 CGContextScaleCTM( context, transform.parameters[0], transform.parameters[0] );
@@ -121,7 +121,7 @@
             break;
         }
             
-            // rotate
+        // rotate
         case IJSVGTransformCommandRotate: {
             // these are in radians, not degrees
             if( transform.parameterCount == 1 )
@@ -129,7 +129,7 @@
             // need support for rotate around a point
         }
             
-            // do nothing
+        // do nothing
         case IJSVGTransformCommandNotImplemented: {
             
         }

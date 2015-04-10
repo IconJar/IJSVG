@@ -12,7 +12,7 @@
 @implementation IJSVGCache
 
 // 5MB
-#define MAX_CACHE_SIZE 10000000
+#define MAX_CACHE_SIZE 5000000
 
 static NSCache * _cache = nil;
 static BOOL _enabled = YES;

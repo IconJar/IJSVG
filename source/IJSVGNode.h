@@ -43,6 +43,13 @@ typedef  NS_OPTIONS( NSInteger, IJSVGLineCapStyle ) {
     IJSVGLineCapStyleInherit
 };
 
+typedef NS_OPTIONS( NSInteger, IJSVGLineJoinStyle ) {
+    IJSVGLineJoinStyleMiter,
+    IJSVGLineJoinStyleRound,
+    IJSVGLineJoinStyleBevel,
+    IJSVGLineJoinStyleInherit
+};
+
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying> {
@@ -79,6 +86,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     
     IJSVGWindingRule windingRule;
     IJSVGLineCapStyle lineCapStyle;
+    IJSVGLineJoinStyle joinStyle;
     
     IJSVGDef * def;
     
@@ -102,6 +110,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, assign ) IJSVGGroup * clipPath;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
 @property ( nonatomic, assign ) IJSVGLineCapStyle lineCapStyle;
+@property ( nonatomic, assign ) IJSVGLineJoinStyle lineJoinStyle;
 @property ( nonatomic, retain ) NSArray * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;

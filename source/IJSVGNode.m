@@ -31,6 +31,7 @@
 @synthesize fillGradient;
 @synthesize clipPath;
 @synthesize lineCapStyle;
+@synthesize lineJoinStyle;
 @synthesize strokeDashArrayCount;
 @synthesize strokeDashArray;
 @synthesize strokeDashOffset;
@@ -118,6 +119,7 @@
     node.def = self.def;
     node.windingRule = self.windingRule;
     node.lineCapStyle = self.lineCapStyle;
+    node.lineJoinStyle = self.lineJoinStyle;
     node.parentNode = self.parentNode;
     
     // dash array needs physical memory copied
@@ -137,9 +139,11 @@
         self.opacity = 0.f;
         self.fillOpacity = 1.f;
         self.strokeOpacity = 1.f;
+        self.strokeDashOffset = 0.f;
         self.strokeWidth = IJSVGInheritedFloatValue;
         self.windingRule = IJSVGWindingRuleInherit;
-        self.lineCapStyle = IJSVGWindingRuleInherit;
+        self.lineCapStyle = IJSVGLineCapStyleInherit;
+        self.lineJoinStyle = IJSVGLineJoinStyleInherit;
         if( flag )
             def = [[IJSVGDef alloc] init];
     }
@@ -177,6 +181,16 @@
             return parentNode.lineCapStyle;
     }
     return lineCapStyle;
+}
+
+- (IJSVGLineJoinStyle)lineJoinStyle
+{
+    if( lineJoinStyle == IJSVGLineJoinStyleInherit )
+    {
+        if( parentNode != nil )
+            return parentNode.lineJoinStyle;
+    }
+    return lineJoinStyle;
 }
 
 // these are all recursive, so go up the chain

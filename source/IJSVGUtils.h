@@ -18,6 +18,7 @@
                          count:(NSInteger *)count;
 + (CGFloat *)parseViewBox:(NSString *)string;
 + (IJSVGWindingRule)windingRuleForString:(NSString *)string;
++ (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString *)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string;
 + (NSString *)cleanCommandString:(NSString *)string;
 + (void)logParameters:(CGFloat *)param

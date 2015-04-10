@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGColor.h"
+#import "IJSVGUtils.h"
 
 @implementation IJSVGColor
 
@@ -184,14 +185,36 @@ static NSMutableDictionary * _colorTree = nil;
 
 + (NSColor *)colorFromString:(NSString *)string
 {
+    if( [string length] < 3 )
+        return nil;
+ 
+    string = [string lowercaseString];
     NSColor * color = [[self class] colorFromPredefinedColorName:string];
-    if( color == nil )
+    if( color != nil )
+        return color;
+    
+    if( [[string lowercaseString] isEqualToString:@"none"] )
+        return [NSColor clearColor];
+    
+    // is it RGB?
+    if( [[string substringToIndex:3] isEqualToString:@"rgb"] )
     {
-        if( [[string lowercaseString] isEqualToString:@"none"] )
-            return [NSColor clearColor];
-        color = [[self class] colorFromHEXString:string
-                                           alpha:1.f];
+        NSInteger count = 0;
+        CGFloat * params = [IJSVGUtils commandParameters:string
+                                                   count:&count];
+        CGFloat alpha = 1;
+        if( count == 4 )
+            alpha = params[3];
+        color = [NSColor colorWithCalibratedRed:params[0]/255
+                                        green:params[1]/255
+                                         blue:params[2]/255
+                                        alpha:alpha];
+        free(params);
+        return color;
     }
+    
+    color = [[self class] colorFromHEXString:string
+                                       alpha:1.f];
     return color;
 }
 
@@ -516,11 +539,22 @@ static NSMutableDictionary * _colorTree = nil;
                                      alpha:alphaValue];
 }
 
++ (BOOL)isColor:(NSString *)string
+{
+    return [[string substringToIndex:1] isEqualToString:@"#"] || [[string substringToIndex:3] isEqualToString:@"rgb"];
+}
+
++ (BOOL)isHex:(NSString *)string
+{
+    NSCharacterSet *chars = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789ABCDEFabcdef#"] invertedSet];
+    return [string rangeOfCharacterFromSet:chars].location == NSNotFound;
+}
+
 + (NSColor *)colorFromHEXString:(NSString *)string
                           alpha:(CGFloat)alpha
 {
     // absolutely no string
-    if( string == nil || string.length == 0 )
+    if( string == nil || string.length == 0 || ![[self class] isHex:string] )
         return nil;
     
     if( [[string substringToIndex:1] isEqualToString:@"#"] )

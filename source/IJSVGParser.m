@@ -177,6 +177,11 @@
     if( lineCapAttribute != nil )
         node.lineCapStyle = [IJSVGUtils lineCapStyleForString:[lineCapAttribute stringValue]];
     
+    // any line join style?
+    NSXMLNode * lineJoinAttribute = [element attributeForName:@"stroke-linejoin"];
+    if( lineJoinAttribute != nil )
+        node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:[lineCapAttribute stringValue]];
+    
     // work out any extra attributes
     // opacity
     NSXMLNode * opacityAttribute = [element attributeForName:@"opacity"];
@@ -325,7 +330,11 @@
         
         // line cap style
         if( [style property:@"stroke-linecap"] != nil )
-            node.lineCapStyle = [IJSVGUtils lineCapStyleForString:[style property:@"stroke-line-cap"]];
+            node.lineCapStyle = [IJSVGUtils lineCapStyleForString:[style property:@"stroke-linecap"]];
+        
+        // line join style
+        if( [style property:@"stroke-linejoin"] != nil )
+            node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:[style property:@"stroke-linejoin"]];
         
         // opacity
         if( [style property:@"opacity"] != nil )
@@ -338,15 +347,11 @@
         // dash
         if( [style property:@"stroke-dasharray"] != nil )
         {
-            id prop = [style property:@"stroke-dasharray"];
-            if( [prop isKindOfClass:[NSString class]] )
-            {
-                NSInteger paramCount = 0;
-                CGFloat * params = [IJSVGUtils commandParameters:prop
-                                                           count:&paramCount];
-                node.strokeDashArray = params;
-                node.strokeDashArrayCount = paramCount;
-            }
+            NSInteger paramCount = 0;
+            CGFloat * params = [IJSVGUtils commandParameters:[style property:@"stroke-dasharray"]
+                                                       count:&paramCount];
+            node.strokeDashArray = params;
+            node.strokeDashArrayCount = paramCount;
         }
         
         // dash offset
