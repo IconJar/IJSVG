@@ -33,10 +33,14 @@
         aGradient.angle = [IJSVGUtils angleBetweenPointA:NSMakePoint( x1, y1 )
                                                   pointb:NSMakePoint( x2, y2 )];
     
+    if( aGradient.gradient != nil )
+        return nil;
+    
     // compute the color stops and colours
     NSArray * colors = nil;
     CGFloat * stopsParams = [[self class] computeColorStopsFromString:element
                                                                colors:&colors];
+    
     // create the gradient with the colours
     NSGradient * grad = [[[NSGradient alloc] initWithColors:colors
                                                atLocations:stopsParams

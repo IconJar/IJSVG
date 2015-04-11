@@ -174,7 +174,7 @@
 }
 
 + (CGFloat)floatValue:(NSString *)string
-     fallBackForPercent:(CGFloat)fallBack
+   fallBackForPercent:(CGFloat)fallBack
 {
     CGFloat val = [string floatValue];
     if( [string rangeOfString:@"%"].location != NSNotFound )

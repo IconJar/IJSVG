@@ -211,19 +211,20 @@ static NSColor * _baseColor = nil;
         // to translate the context so its centered
         CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
         CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
-        tX -= _group.viewBox.origin.x*_scale;
-        tY -= _group.viewBox.origin.y*_scale;
         
         // we also need to calculate the viewport so we can clip
         // the drawing if needed
         NSRect viewPort = NSZeroRect;
-        viewPort.origin.x = tX;
-        viewPort.origin.y = tY;
-        viewPort.size.width = _group.size.width*_scale;
-        viewPort.size.height = _group.size.height*_scale;
+        viewPort.origin.x = round(rect.size.width/2-(_group.proposedViewSize.width/2)*_clipScale);
+        viewPort.origin.y = round(rect.size.height/2-(_group.proposedViewSize.height/2)*_clipScale);;
+        viewPort.size.width = _group.proposedViewSize.width*_clipScale;
+        viewPort.size.height = _group.proposedViewSize.height*_clipScale;
         
         // clip any drawing to the view port
         [[NSBezierPath bezierPathWithRect:viewPort] addClip];
+        
+        tX -= _group.viewBox.origin.x*_scale;
+        tY -= _group.viewBox.origin.y*_scale;
         
         CGContextTranslateCTM( ref, tX, tY );
         CGContextScaleCTM( ref, _scale, _scale );
@@ -281,7 +282,12 @@ static NSColor * _baseColor = nil;
     // to transform the paths into our viewbox
     NSSize dest = rect.size;
     NSSize source = _group.viewBox.size;
-    _scale = MIN(dest.width/source.width,dest.height/source.height);
+    _clipScale = MIN(dest.width/_group.proposedViewSize.width,dest.height/_group.proposedViewSize.height);
+   
+    // work out the actual scale based on the clip scale
+    CGFloat w = _group.proposedViewSize.width*_clipScale;
+    CGFloat h = _group.proposedViewSize.height*_clipScale;
+    _scale = MIN(w/source.width,h/source.height);
 }
 
 - (void)_prepClip:(IJSVGNode *)node
@@ -412,20 +418,30 @@ static NSColor * _baseColor = nil;
         // fill the path
         if( path.fillGradient != nil )
         {
-            if( [path.fillGradient isKindOfClass:[IJSVGLinearGradient class]] )
+            CGContextSaveGState(ref);
             {
-                // linear gradient
-                NSGradient * gradient = [path.fillGradient gradient];;
-                [gradient drawInBezierPath:path.path
-                                     angle:path.fillGradient.angle];
-            } else if( [path.fillGradient isKindOfClass:[IJSVGRadialGradient class]] )
-            {
-                // radial gradient
-                // very rudimentary at the moment
-                IJSVGRadialGradient * radGrad = (IJSVGRadialGradient *)path.fillGradient;
-                [radGrad.gradient drawInBezierPath:path.path
-                            relativeCenterPosition:NSZeroPoint];
-            }
+                // apply any gradient fill transforms
+                for( IJSVGTransform * transform in path.gradientTransforms )
+                {
+                    [IJSVGTransform performTransform:transform
+                                           inContext:ref];
+                }
+                
+                if( [path.fillGradient isKindOfClass:[IJSVGLinearGradient class]] )
+                {
+                    // linear gradient
+                    NSGradient * gradient = [path.fillGradient gradient];;
+                    [gradient drawInBezierPath:path.path
+                                         angle:path.fillGradient.angle];
+                } else if( [path.fillGradient isKindOfClass:[IJSVGRadialGradient class]] )
+                {
+                    // radial gradient
+                    // very rudimentary at the moment
+                    IJSVGRadialGradient * radGrad = (IJSVGRadialGradient *)path.fillGradient;
+                    [radGrad.gradient drawInBezierPath:path.path
+                                relativeCenterPosition:NSZeroPoint];
+                }
+            } CGContextRestoreGState(ref);
         } else {
             // no gradient specified
             // just use the color instead

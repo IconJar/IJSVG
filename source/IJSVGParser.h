@@ -34,6 +34,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 @interface IJSVGParser : IJSVGGroup {
     
     NSRect viewBox;
+    NSSize proposedViewSize;
     
 @private
     id<IJSVGParserDelegate> _delegate;
@@ -42,6 +43,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 }
 
 @property ( nonatomic, readonly ) NSRect viewBox;
+@property ( nonatomic, readonly ) NSSize proposedViewSize;
 
 - (id)initWithFileURL:(NSURL *)aURL
              delegate:(id<IJSVGParserDelegate>)delegate;

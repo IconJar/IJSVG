@@ -11,6 +11,7 @@
 @implementation IJSVGParser
 
 @synthesize viewBox;
+@synthesize proposedViewSize;
 
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
 {
@@ -97,6 +98,15 @@
         CGFloat h = [[[svgElement attributeForName:@"height"] stringValue] floatValue];
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
     }
+    
+    CGFloat w = [[[svgElement attributeForName:@"width"] stringValue] floatValue];
+    CGFloat h = [[[svgElement attributeForName:@"height"] stringValue] floatValue];
+    if( w == 0.f && h == 0.f )
+    {
+        w = viewBox.size.width;
+        h = viewBox.size.height;
+    }
+    proposedViewSize = NSMakeSize( w, h );
     
     // find foreign objects...
     NSXMLElement * switchElement = nil;
@@ -258,6 +268,17 @@
         if( node.transforms != nil )
             [tran addObjectsFromArray:node.transforms];
         node.transforms = tran;
+    }
+    
+    // gradient transforms
+    NSXMLNode * gradTransformAttribute = [element attributeForName:@"gradientTransform"];
+    if( gradTransformAttribute != nil )
+    {
+        NSMutableArray * tran = [[[NSMutableArray alloc] init] autorelease];
+        [tran addObjectsFromArray:[IJSVGTransform transformsForString:[gradTransformAttribute stringValue]]];
+        if( node.gradientTransforms != nil )
+            [tran addObjectsFromArray:node.gradientTransforms];
+        node.gradientTransforms = tran;
     }
     
     // winding rule
@@ -606,6 +627,24 @@
                 // linear gradient
             case IJSVGNodeTypeLinearGradient: {
                 
+                NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+                NSString * xlinkID = [xlink substringFromIndex:1];
+                IJSVGNode * node = [parentGroup defForID:xlinkID];
+                if( node != nil )
+                {
+                    // we are a clone
+                    IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
+                    grad.type = aType;
+                    [grad applyPropertiesFromNode:node];
+                    grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                    [IJSVGLinearGradient parseGradient:element
+                                              gradient:grad];
+                    [self _parseElementForCommonAttributes:element
+                                                      node:grad];
+                    [parentGroup addDef:grad];
+                    continue;
+                }
+                
                 IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
                 gradient.type = aType;
                 gradient.gradient = [IJSVGLinearGradient parseGradient:element
@@ -618,6 +657,25 @@
                 
                 // radial gradient
             case IJSVGNodeTypeRadialGradient: {
+                
+                NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+                NSString * xlinkID = [xlink substringFromIndex:1];
+                IJSVGNode * node = [parentGroup defForID:xlinkID];
+                if( node != nil )
+                {
+                    // we are a clone
+                    IJSVGRadialGradient * grad = [[[IJSVGRadialGradient alloc] init] autorelease];
+                    grad.type = aType;
+                    [grad applyPropertiesFromNode:node];
+                    grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                    [IJSVGRadialGradient parseGradient:element
+                                              gradient:grad];
+                    [self _parseElementForCommonAttributes:element
+                                                      node:grad];
+                    [parentGroup addDef:grad];
+                    continue;
+                }
+                
                 IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
                 gradient.type = aType;
                 gradient.gradient = [IJSVGRadialGradient parseGradient:element

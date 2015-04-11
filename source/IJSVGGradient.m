@@ -19,6 +19,13 @@
     [super dealloc];
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    IJSVGGradient * clone = [super copyWithZone:zone];
+    clone.gradient = [[self.gradient copy] autorelease];
+    return clone;
+}
+
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
                                   colors:(NSArray **)someColors
 {

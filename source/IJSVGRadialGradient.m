@@ -16,6 +16,7 @@
 @synthesize fy;
 @synthesize radius;
 
+
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGRadialGradient *)gradient
 {
@@ -38,6 +39,9 @@
         gradient.fx = .5;
         gradient.fy = .5;
     }
+    
+    if( gradient.gradient != nil )
+        return nil;
     
     NSArray * colors = nil;
     CGFloat * colorStops = [[self class] computeColorStopsFromString:element colors:&colors];

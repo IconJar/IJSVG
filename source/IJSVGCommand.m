@@ -90,6 +90,12 @@ static NSMutableDictionary * _classes = nil;
     return self;
 }
 
++ (NSPoint)readCoordinatePair:(CGFloat *)pairs
+                        index:(NSInteger)index
+{
+    return NSMakePoint( pairs[index*2], pairs[index*2+1]);
+}
+
 + (void)registerClass:(Class)aClass
            forCommand:(NSString *)command
 {

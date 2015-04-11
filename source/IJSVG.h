@@ -28,6 +28,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 @private
     IJSVGParser * _group;
     CGFloat _scale;
+    CGFloat _clipScale;
     NSMutableArray * _colors;
     id<IJSVGDelegate> _delegate;
     
