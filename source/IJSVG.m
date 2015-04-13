@@ -347,9 +347,11 @@ static NSColor * _baseColor = nil;
                 {
                     dispatch_block_t block = ^(void)
                     {
-                        [self _drawPath:(IJSVGPath *)child
-                                   rect:rect
-                                context:context];
+                        IJSVGPath * p = (IJSVGPath *)child;
+                        if( p.shouldRender )
+                            [self _drawPath:p
+                                       rect:rect
+                                    context:context];
                     };
                     
                     // draw the clip

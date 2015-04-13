@@ -319,6 +319,14 @@
     {
         IJSVGStyle * style = [IJSVGStyle parseStyleString:[styleNode stringValue]];
         
+        // actual display
+        NSString * display = nil;
+        if( ( display = [style property:@"display"] ) != nil )
+        {
+            if( [display isEqualToString:@"none"] )
+                node.shouldRender = NO;
+        }
+        
         // fill color
         NSColor * fill = nil;
         if( ( fill = [style property:@"fill"] ) != nil )

@@ -11,6 +11,7 @@
 
 @implementation IJSVGNode
 
+@synthesize shouldRender;
 @synthesize type;
 @synthesize name;
 @synthesize x;
@@ -124,6 +125,8 @@
     self.lineJoinStyle = node.lineJoinStyle;
     self.parentNode = node.parentNode;
     
+    self.shouldRender = node.shouldRender;
+    
     // dash array needs physical memory copied
     CGFloat * nStrokeDashArray = (CGFloat *)malloc(node.strokeDashArrayCount*sizeof(CGFloat));
     memcpy( self.strokeDashArray, nStrokeDashArray, node.strokeDashArrayCount*sizeof(CGFloat));
@@ -147,6 +150,7 @@
         self.fillOpacity = 1.f;
         self.strokeOpacity = 1.f;
         self.strokeDashOffset = 0.f;
+        self.shouldRender = YES;
         self.strokeWidth = IJSVGInheritedFloatValue;
         self.windingRule = IJSVGWindingRuleInherit;
         self.lineCapStyle = IJSVGLineCapStyleInherit;
