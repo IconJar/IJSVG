@@ -47,7 +47,7 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
     
 # What it supports
 * Elements: def, use, g, path, clipPath, circle, elipse, rect, polyline, polygon and line (supports groups heirachy and inheritance, clip-paths etc)
-* Commands: M, L, H, V, C, S, T, Q and Z (have yet to look at A) and full support for multiple parameters of each type
+* Commands: A, M, L, H, V, C, S, T, Q and Z (have yet to look at A) and full support for multiple parameters of each type
 * Transformations: matrix, rotate (not around a point - currently), translate, scale transformations
 * Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style
 * Filling: fill color, fill mode (winding rules), fill opacity, linear gradients (rudimentary radial gradients)
