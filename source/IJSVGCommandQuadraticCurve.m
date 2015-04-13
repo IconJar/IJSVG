@@ -23,6 +23,7 @@
 
 + (void)runWithParams:(CGFloat *)params
            paramCount:(NSInteger)count
+              command:(IJSVGCommand *)currentCommand
       previousCommand:(IJSVGCommand *)command
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path

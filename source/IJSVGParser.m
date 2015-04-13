@@ -238,9 +238,11 @@
     if( fillAttribute != nil )
     {
         NSString * defID = [IJSVGUtils defURL:[fillAttribute stringValue]];
-        if( defID != nil )
-            node.fillGradient = (IJSVGGradient *)[node defForID:defID];
-        else {
+        if( defID != nil ) {
+            IJSVGGradient * grad = (IJSVGGradient *)[node defForID:defID];
+            node.fillGradient = grad;
+            node.gradientTransforms = grad.gradientTransforms;
+        } else {
             // change the fill color over if its allowed
             node.fillColor = [IJSVGColor colorFromString:[fillAttribute stringValue]];
             if( node.fillOpacity != 1.f )
@@ -324,8 +326,11 @@
             if( [fill isKindOfClass:[NSString class]] )
             {
                 NSString * defID = [IJSVGUtils defURL:(NSString *)fill];
-                if( defID != nil )
-                    node.fillGradient = (IJSVGGradient *)[node defForID:defID];
+                if( defID != nil ) {
+                    IJSVGGradient * grad = (IJSVGGradient *)[node defForID:defID];
+                    node.fillGradient = grad;
+                    node.gradientTransforms = grad.gradientTransforms;
+                }
             } else {
                 if( [IJSVGColor computeColor:fill] != nil )
                     node.fillColor = fill;
@@ -775,6 +780,7 @@
         {
             [subCommand.commandClass runWithParams:subCommand.parameters
                                         paramCount:subCommand.parameterCount
+                                           command:subCommand
                                    previousCommand:preCommand
                                               type:subCommand.type
                                               path:path];

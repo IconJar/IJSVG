@@ -25,6 +25,7 @@
 
 + (void)runWithParams:(CGFloat *)params
            paramCount:(NSInteger)count
+              command:(IJSVGCommand *)currentCommand
       previousCommand:(IJSVGCommand *)command
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path
@@ -35,6 +36,7 @@
     {
         [IJSVGCommandLineTo runWithParams:params
                                paramCount:count
+                                  command:currentCommand
                           previousCommand:command
                                      type:type
                                      path:path];

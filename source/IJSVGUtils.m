@@ -12,6 +12,30 @@
 
 #define FLOAT_EXP @"[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"
 
+CGFloat angle( CGPoint a, CGPoint b ) {
+    return [IJSVGUtils angleBetweenPointA:a
+                                   pointb:b];
+}
+
+CGFloat ratio( CGPoint a, CGPoint b ) {
+    return (a.x * b.x + a.y * b.y) / (magnitude(a) * magnitude(b));
+}
+
+CGFloat magnitude(CGPoint point)
+{
+    return sqrtf(powf(point.x, 2) + powf(point.y, 2));
+}
+
+CGFloat radians_to_degrees(CGFloat radians)
+{
+    return ((radians) * (180.0 / M_PI));
+}
+
+CGFloat degrees_to_radians( CGFloat degrees )
+{
+    return ( ( degrees ) / 180.0 * M_PI );
+}
+
 + (IJSVGCommandType)typeForCommandString:(NSString *)string
 {
     return [string isEqualToString:[string uppercaseString]] ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
@@ -200,13 +224,10 @@
     return [string floatValue];
 }
 
-+ (CGFloat)angleBetweenPointA:(NSPoint)startingPoint
-                       pointb:(NSPoint)endingPoint
++ (CGFloat)angleBetweenPointA:(NSPoint)point1
+                       pointb:(NSPoint)point2
 {
-    CGPoint originPoint = CGPointMake(endingPoint.x - startingPoint.x, endingPoint.y - startingPoint.y);
-    CGFloat bearingRadians = atan2f(originPoint.y, originPoint.x);
-    CGFloat bearingDegrees = bearingRadians * (180.0 / M_PI);
-    return (bearingDegrees > 0.0 ? bearingDegrees : (360.0 + bearingDegrees));
+    return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(ratio(point1, point2));
 }
 
 @end

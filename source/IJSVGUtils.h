@@ -11,6 +11,12 @@
 
 @interface IJSVGUtils : NSObject
 
+CGFloat magnitude(CGPoint point);
+CGFloat ratio( CGPoint a, CGPoint b );
+CGFloat angle( CGPoint a, CGPoint b );
+CGFloat radians_to_degrees( CGFloat radians);
+CGFloat degrees_to_radians( CGFloat degrees );
+
 + (IJSVGCommandType)typeForCommandString:(NSString *)string;
 + (NSRegularExpression *)commandNameRegex;
 + (NSRegularExpression *)commandRegex;

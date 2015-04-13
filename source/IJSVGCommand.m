@@ -39,6 +39,7 @@ static NSMutableDictionary * _classes = nil;
     if( ( self = [super init] ) != nil )
     {
         // work out the basics
+        _currentIndex = 0;
         subCommands = [[NSMutableArray alloc] init];
         command = [[str substringToIndex:1] copy];
         type = [IJSVGUtils typeForCommandString:self.command];
@@ -123,6 +124,31 @@ static NSMutableDictionary * _classes = nil;
     if( ( command = [_classes objectForKey:[str lowercaseString]] ) == nil )
         return nil;
     return NSClassFromString(command);
+}
+
+- (CGFloat)readFloat
+{
+    CGFloat f = parameters[_currentIndex];
+    _currentIndex++;
+    return f;
+}
+
+- (NSPoint)readPoint
+{
+    CGFloat x = parameters[_currentIndex];
+    CGFloat y = parameters[_currentIndex+1];
+    _currentIndex+=2;
+    return NSMakePoint( x, y );
+}
+
+- (BOOL)readBOOL
+{
+    return [self readFloat] == 1;
+}
+
+- (void)resetRead
+{
+    _currentIndex = 0;
 }
 
 @end

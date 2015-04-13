@@ -420,6 +420,10 @@ static NSColor * _baseColor = nil;
         {
             CGContextSaveGState(ref);
             {
+                // for this to work, we need to add the clip so when
+                // drawing occurs, it doesnt go outside the path bounds
+                [path.path addClip];
+                
                 // apply any gradient fill transforms
                 for( IJSVGTransform * transform in path.gradientTransforms )
                 {
@@ -441,7 +445,8 @@ static NSColor * _baseColor = nil;
                     [radGrad.gradient drawInBezierPath:path.path
                                 relativeCenterPosition:NSZeroPoint];
                 }
-            } CGContextRestoreGState(ref);
+            }
+            CGContextRestoreGState(ref);
         } else {
             // no gradient specified
             // just use the color instead

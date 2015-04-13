@@ -21,6 +21,7 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
 @required
 + (void)runWithParams:(CGFloat *)params
            paramCount:(NSInteger)count
+              command:(IJSVGCommand *)currentCommand
       previousCommand:(IJSVGCommand *)command
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path;
@@ -39,6 +40,7 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
     NSInteger requiredParameters;
     IJSVGCommandType type;
     IJSVGCommand * previousCommand;
+    NSInteger _currentIndex;
     Class<IJSVGCommandProtocol> commandClass;
 }
 
@@ -62,5 +64,10 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
            forCommand:(NSString *)command;
 + (NSDictionary *)registeredCommandClasses;
 + (Class<IJSVGCommandProtocol>)commandClassForCommandLetter:(NSString *)str;
+
+- (CGFloat)readFloat;
+- (NSPoint)readPoint;
+- (BOOL)readBOOL;
+- (void)resetRead;
 
 @end
