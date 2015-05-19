@@ -27,7 +27,9 @@ typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeLinearGradient,
     IJSVGNodeTypeRadialGradient,
     IJSVGNodeTypeClipPath,
-    IJSVGNodeTypeNotFound
+    IJSVGNodeTypeGlyph,
+    IJSVGNodeTypeMask,
+    IJSVGNodeTypeNotFound,
 };
 
 typedef NS_OPTIONS( NSInteger, IJSVGWindingRule ) {

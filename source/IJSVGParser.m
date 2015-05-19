@@ -182,6 +182,15 @@
             node.clipPath = (IJSVGGroup *)[node defForID:clipID];
     }
     
+    // any mask?
+    NSXMLNode * maskAttribute = [element attributeForName:@"mask"];
+    if( maskAttribute != nil )
+    {
+        NSString * maskID = [IJSVGUtils defURL:[maskAttribute stringValue]];
+        if( maskID )
+            node.clipPath = (IJSVGGroup *)[node defForID:maskID];
+    }
+    
     // any line cap style?
     NSXMLNode * lineCapAttribute = [element attributeForName:@"stroke-linecap"];
     if( lineCapAttribute != nil )
@@ -311,6 +320,11 @@
             node.height = [IJSVGUtils floatValue:[heightAttribute stringValue]];
     }
     
+    // display
+    NSXMLNode * displayAttribute = [element attributeForName:@"display"];
+    if( [[[displayAttribute stringValue] lowercaseString] isEqualToString:@"none"] )
+        node.shouldRender = NO;
+    
     // now we need to work out if there is any style...apparently this is a thing now,
     // people use the style attribute... -_-
     // style
@@ -423,6 +437,7 @@
             }
                 
                 // group
+            case IJSVGNodeTypeMask:
             case IJSVGNodeTypeGroup: {
                 IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
                 group.type = aType;
@@ -892,6 +907,8 @@
     
     CGFloat rX = [[[element attributeForName:@"rx"] stringValue] floatValue];
     CGFloat rY = [[[element attributeForName:@"ry"] stringValue] floatValue];
+    if( [element attributeForName:@"ry"] == nil )
+        rY = rX;
     
     [element removeAttributeForName:@"x"];
     [element removeAttributeForName:@"y"];

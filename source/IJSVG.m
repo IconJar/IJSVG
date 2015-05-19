@@ -220,6 +220,13 @@ static NSColor * _baseColor = nil;
         viewPort.size.width = _group.proposedViewSize.width*_clipScale;
         viewPort.size.height = _group.proposedViewSize.height*_clipScale;
         
+        // attempt to not crash when dealing with dodgy SVG's
+        if( isnan(viewPort.origin.x) || isnan(viewPort.origin.y) || isnan(viewPort.size.width) || isnan(viewPort.size.height) )
+        {
+            CGContextRestoreGState(ref);
+            return;
+        }
+        
         // clip any drawing to the view port
         [[NSBezierPath bezierPathWithRect:viewPort] addClip];
         
@@ -331,6 +338,10 @@ static NSColor * _baseColor = nil;
               rect:(NSRect)rect
            context:(CGContextRef)context
 {
+    
+    if( !group.shouldRender )
+        return;
+    
     CGContextSaveGState( context );
     {
         

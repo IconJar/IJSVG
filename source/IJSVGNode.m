@@ -80,8 +80,12 @@
         return IJSVGNodeTypeLinearGradient;
     if( [string isEqualToString:@"radialgradient"] )
         return IJSVGNodeTypeRadialGradient;
+    if( [string isEqualToString:@"glyph"] )
+        return IJSVGNodeTypeGlyph;
     if( [string isEqualToString:@"clippath"] )
         return IJSVGNodeTypeClipPath;
+    if( [string isEqualToString:@"mask"] )
+        return IJSVGNodeTypeMask;
     return IJSVGNodeTypeNotFound;
 }
 
