@@ -16,11 +16,13 @@
     
     NSBezierPath * path;
     NSBezierPath * subpath;
+    CGPoint lastControlPoint;
     
 }
 
 @property ( nonatomic, readonly ) NSBezierPath * path;
 @property ( nonatomic, readonly ) NSBezierPath * subpath;
+@property ( nonatomic, assign ) CGPoint lastControlPoint;
 
 - (NSBezierPath *)currentSubpath;
 - (void)close;

@@ -8,6 +8,7 @@
 
 #import "IJSVGCommandCommandSmoothQuadraticCurve.h"
 #import "IJSVGUtils.h"
+#import "IJSVGCommandQuadraticCurve.h"
 
 @implementation IJSVGCommandCommandSmoothQuadraticCurve
 
@@ -19,7 +20,7 @@
 
 + (NSInteger)requiredParameterCount
 {
-    return 4;
+    return 2;
 }
 
 + (void)runWithParams:(CGFloat *)params
@@ -29,31 +30,37 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path
 {
-    NSPoint firstPoint = NSMakePoint( [path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y );
+    NSPoint commandPoint = NSMakePoint( [path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y );
     if( command != nil )
     {
-        if( command.commandClass == [self class] )
+        if( command.commandClass == [IJSVGCommandQuadraticCurve class] )
         {
+            // quadratic curve
             if( command.type == IJSVGCommandTypeAbsolute )
             {
-                firstPoint =  NSMakePoint(-1*command.parameters[0] + 2*[path currentSubpath].currentPoint.x,
-                                          -1*command.parameters[1] + 2*[path currentSubpath].currentPoint.y);
+                commandPoint =  NSMakePoint(-1*command.parameters[0] + 2*[path currentSubpath].currentPoint.x,
+                                            -1*command.parameters[1] + 2*[path currentSubpath].currentPoint.y);
             } else {
                 NSPoint oldPoint = CGPointMake([path currentSubpath].currentPoint.x - command.parameters[2],
                                                [path currentSubpath].currentPoint.y - command.parameters[3]);
-                firstPoint = CGPointMake(-1*(command.parameters[0] + oldPoint.x) + 2*[path currentSubpath].currentPoint.x,
-                                         -1*(command.parameters[1] + oldPoint.y) + 2*[path currentSubpath].currentPoint.y);
+                commandPoint = CGPointMake(-1*(command.parameters[0] + oldPoint.x) + 2*([path currentSubpath].currentPoint.x),
+                                           -1*(command.parameters[1] + oldPoint.y) + 2*[path currentSubpath].currentPoint.y);
             }
+        } else if( command.commandClass == [self class] ) {
+            // smooth quadratic curve
+            commandPoint = CGPointMake(-1*(path.lastControlPoint.x) + 2*([path currentSubpath].currentPoint.x),
+                                       -1*(path.lastControlPoint.y) + 2*[path currentSubpath].currentPoint.y);
         }
     }
+    path.lastControlPoint = commandPoint;
     if( type == IJSVGCommandTypeAbsolute )
     {
         [[path currentSubpath] addQuadCurveToPoint:NSMakePoint(params[0], params[1])
-                          controlPoint:NSMakePoint(firstPoint.x, firstPoint.y)];
+                                      controlPoint:commandPoint];
         return;
     }
     [[path currentSubpath] addQuadCurveToPoint:NSMakePoint([path currentSubpath].currentPoint.x + params[0], [path currentSubpath].currentPoint.y + params[1])
-                      controlPoint:CGPointMake(firstPoint.x, firstPoint.y)];
+                                  controlPoint:commandPoint];
 }
 
 @end

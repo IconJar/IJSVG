@@ -10,16 +10,13 @@
 
 @implementation NSBezierPath (IJSVGAdditions)
 
-- (void)addQuadCurveToPoint:(NSPoint)aPoint
-               controlPoint:(NSPoint)cp
+- (void)addQuadCurveToPoint:(CGPoint)QP2 controlPoint:(CGPoint)QP1
 {
-    NSPoint QP0 = self.currentPoint;
-    NSPoint CP3 = aPoint;
-    NSPoint CP1 = NSMakePoint(QP0.x + ((2.f/3.f) * (cp.x - QP0.x)),
-                              QP0.y + ((2.0 / 3.0) * (cp.y - QP0.y)));
+    CGPoint QP0 = [self currentPoint];
+    CGPoint CP3 = QP2;
+    CGPoint CP1 = CGPointMake( QP0.x + ((2.0 / 3.0) * (QP1.x - QP0.x)), QP0.y + ((2.0 / 3.0) * (QP1.y - QP0.y)));
+    CGPoint CP2 = CGPointMake( QP2.x + (2.0 / 3.0) * (QP1.x - QP2.x), QP2.y + (2.0 / 3.0) * (QP1.y - QP2.y) );
     
-    NSPoint CP2 = CGPointMake(aPoint.x + (2.0 / 3.0) * (cp.x - aPoint.x),
-                              aPoint.y + (2.0 / 3.0) * (cp.y - aPoint.y));
     [self curveToPoint:CP3
          controlPoint1:CP1
          controlPoint2:CP2];

@@ -13,6 +13,7 @@
 
 @synthesize path;
 @synthesize subpath;
+@synthesize lastControlPoint;
 
 - (void)dealloc
 {
