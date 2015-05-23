@@ -39,6 +39,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument * _document;
+    NSMutableArray * _glyphs;
     
 }
 
@@ -54,5 +55,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
                         delegate:(id<IJSVGParserDelegate>)delegate;
 - (NSSize)size;
+- (BOOL)isFont;
+- (NSArray *)glyphs;
 
 @end

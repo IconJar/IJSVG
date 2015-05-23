@@ -27,6 +27,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeLinearGradient,
     IJSVGNodeTypeRadialGradient,
     IJSVGNodeTypeClipPath,
+    IJSVGNodeTypeFont,
     IJSVGNodeTypeGlyph,
     IJSVGNodeTypeMask,
     IJSVGNodeTypeNotFound,
@@ -58,6 +59,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     
     IJSVGNodeType type;
     NSString * name;
+    NSString * unicode;
     
     CGFloat x;
     CGFloat y;
@@ -98,6 +100,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @property ( nonatomic, assign ) IJSVGNodeType type;
 @property ( nonatomic, copy ) NSString * name;
+@property ( nonatomic, copy ) NSString * unicode;
 @property ( nonatomic, assign ) BOOL shouldRender;
 @property ( nonatomic, assign ) BOOL usesDefaultFillColor;
 @property ( nonatomic, assign ) CGFloat x;

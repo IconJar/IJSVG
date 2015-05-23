@@ -28,6 +28,7 @@
 
 - (void)dealloc
 {
+    [_glyphs release], _glyphs = nil;
     [super dealloc];
 }
 
@@ -48,7 +49,8 @@
 {
     if( ( self = [super init] ) != nil )
     {
-        _delegate = delegate;
+        _delegate = delegate;        
+        _glyphs = [[NSMutableArray alloc] init];
         
         // load the document / file, assume its UTF8
         NSError * error = nil;
@@ -163,6 +165,14 @@
 - (void)_parseElementForCommonAttributes:(NSXMLElement *)element
                                     node:(IJSVGNode *)node
 {
+    
+    // unicode
+    NSXMLNode * unicodeAttribute = [element attributeForName:@"unicode"];
+    if( unicodeAttribute != nil )
+    {
+        NSString * str = [unicodeAttribute stringValue];
+        node.unicode = [NSString stringWithFormat:@"%04x",[str characterAtIndex:0]];
+    }
     
     // x and y
     NSXMLNode * xAttribute = [element attributeForName:@"x"];
@@ -414,6 +424,21 @@
     
 }
 
+- (BOOL)isFont
+{
+    return [_glyphs count] != 0;
+}
+
+- (NSArray *)glyphs
+{
+    return _glyphs;
+}
+
+- (void)addGlyph:(IJSVGNode *)glyph
+{
+    [_glyphs addObject:glyph];
+}
+
 - (void)_parseBlock:(NSXMLElement *)anElement
           intoGroup:(IJSVGGroup*)parentGroup
                 def:(BOOL)flag
@@ -436,7 +461,37 @@
                 continue;
             }
                 
+            // glyph
+            case IJSVGNodeTypeGlyph: {
+                
+                // no path data
+                if( [element attributeForName:@"d"] == nil || [[element attributeForName:@"d"] stringValue].length == 0 )
+                    continue;
+                
+                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+                path.type = aType;
+                path.name = subName;
+                path.parentNode = parentGroup;
+                
+                // find common attributes
+                [self _parseElementForCommonAttributes:element
+                                                  node:path];
+                
+                // pass the commands for it
+                [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
+                                   intoPath:path];
+                
+                // check the size...
+                if( NSIsEmptyRect([path path].controlPointBounds) )
+                    continue;
+                
+                // add the glyph
+                [self addGlyph:path];
+                continue;
+            }
+                
                 // group
+            case IJSVGNodeTypeFont:
             case IJSVGNodeTypeMask:
             case IJSVGNodeTypeGroup: {
                 IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];

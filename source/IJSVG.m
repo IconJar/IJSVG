@@ -111,6 +111,16 @@ static NSColor * _baseColor = nil;
     return self;
 }
 
+- (BOOL)isFont
+{
+    return [_group isFont];
+}
+
+- (NSArray *)glyphs
+{
+    return [_group glyphs];
+}
+
 - (NSImage *)imageWithSize:(NSSize)aSize
 {
     NSImage * im = [[[NSImage alloc] initWithSize:aSize] autorelease];

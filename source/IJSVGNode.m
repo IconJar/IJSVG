@@ -14,6 +14,7 @@
 @synthesize shouldRender;
 @synthesize type;
 @synthesize name;
+@synthesize unicode;
 @synthesize x;
 @synthesize y;
 @synthesize width;
@@ -82,6 +83,8 @@
         return IJSVGNodeTypeRadialGradient;
     if( [string isEqualToString:@"glyph"] )
         return IJSVGNodeTypeGlyph;
+    if( [string isEqualToString:@"font"] )
+        return IJSVGNodeTypeFont;
     if( [string isEqualToString:@"clippath"] )
         return IJSVGNodeTypeClipPath;
     if( [string isEqualToString:@"mask"] )

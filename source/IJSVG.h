@@ -35,6 +35,8 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 }
 
 + (NSColor *)baseColor;
+- (BOOL)isFont;
+- (NSArray *)glyphs;
 + (void)setBaseColor:(NSColor *)color;
 + (id)svgNamed:(NSString *)string;
 + (id)svgNamed:(NSString *)string
