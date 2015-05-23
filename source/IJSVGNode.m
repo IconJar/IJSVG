@@ -43,6 +43,7 @@
 - (void)dealloc
 {
     free(strokeDashArray);
+    [unicode release], unicode = nil;
     [fillGradient release], fillGradient = nil;
     [transforms release], transforms = nil;
     [gradientTransforms release], gradientTransforms = nil;
@@ -104,6 +105,7 @@
 {
     self.name = node.name;
     self.type = node.type;
+    self.unicode = node.unicode;
     
     self.x = node.x;
     self.y = node.y;
