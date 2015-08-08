@@ -329,6 +329,7 @@ static NSColor * _baseColor = nil;
                     
                     // add the clip and draw
                     IJSVGPath * path = (IJSVGPath *)clip;
+                    [self _applyDefaults:context node:path];
                     [path.path addClip];
                     block();
                 }
