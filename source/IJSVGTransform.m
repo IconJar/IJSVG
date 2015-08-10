@@ -87,6 +87,68 @@
     return transforms;
 }
 
++ (NSBezierPath *)transformedPath:(IJSVGPath *)path
+{
+    if( path.transforms.count == 0 )
+        return path.path;
+    NSBezierPath * cop = [[path.path copy] autorelease];
+    for( IJSVGTransform * transform in path.transforms )
+    {
+        NSAffineTransform * at = [NSAffineTransform transform];
+        switch( transform.command )
+        {
+            // matrix
+            case IJSVGTransformCommandMatrix: {
+                at.transformStruct = (NSAffineTransformStruct) {
+                    .m11 = transform.parameters[0],
+                    .m12 = transform.parameters[1],
+                    .m21 = transform.parameters[2],
+                    .m22 = transform.parameters[3],
+                    .tX = transform.parameters[4],
+                    .tY = transform.parameters[5],
+                };
+                break;
+            }
+                
+            // translate
+            case IJSVGTransformCommandTranslate: {
+                if( transform.parameterCount == 1 )
+                    [at translateXBy:transform.parameters[0]
+                                 yBy:0];
+                else
+                    [at translateXBy:transform.parameters[0]
+                                 yBy:transform.parameters[1]];
+                break;
+            }
+            
+            // scale
+            case IJSVGTransformCommandScale: {
+                if( transform.parameterCount == 1 )
+                    [at scaleBy:transform.parameters[0]];
+                else
+                    [at scaleXBy:transform.parameters[0]
+                             yBy:transform.parameters[1]];
+                break;
+            }
+                
+            // rotate
+            case IJSVGTransformCommandRotate: {
+                if( transform.parameterCount == 1 )
+                    [at rotateByDegrees:transform.parameters[0]];
+                break;
+            }
+                
+            // do nothing
+            case IJSVGTransformCommandNotImplemented: {
+                
+            }
+            
+        }
+        [cop transformUsingAffineTransform:at];
+    }
+    return cop;
+}
+
 + (void)performTransform:(IJSVGTransform *)transform
                inContext:(CGContextRef)context
 {

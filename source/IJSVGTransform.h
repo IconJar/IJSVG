@@ -34,5 +34,6 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 + (NSArray *)transformsForString:(NSString *)string;
 + (void)performTransform:(IJSVGTransform *)transform
                inContext:(CGContextRef)context;
++ (NSBezierPath *)transformedPath:(IJSVGPath *)path;
 
 @end
