@@ -19,7 +19,6 @@ CGFloat degrees_to_radians( CGFloat degrees );
 
 + (IJSVGCommandType)typeForCommandString:(NSString *)string;
 + (NSRegularExpression *)commandNameRegex;
-+ (NSRegularExpression *)commandRegex;
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count;
 + (CGFloat *)parseViewBox:(NSString *)string;
@@ -35,5 +34,7 @@ CGFloat degrees_to_radians( CGFloat degrees );
 + (NSString *)defURL:(NSString *)string;
 + (CGFloat)floatValue:(NSString *)string
    fallBackForPercent:(CGFloat)viewBox;
++ (CGFloat *)scanFloatsFromString:(NSString *)string
+                             size:(NSInteger *)length;
 
 @end

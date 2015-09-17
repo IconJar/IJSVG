@@ -10,8 +10,6 @@
 
 @implementation IJSVGUtils
 
-#define FLOAT_EXP @"[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"
-
 CGFloat angle( CGPoint a, CGPoint b ) {
     return [IJSVGUtils angleBetweenPointA:a
                                    pointb:b];
@@ -51,18 +49,6 @@ CGFloat degrees_to_radians( CGFloat degrees )
                                                                error:nil];
     });
     return _commandRegex;
-}
-
-+ (NSRegularExpression *)commandRegex
-{
-    static NSRegularExpression * _reg = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:FLOAT_EXP
-                                                    options:0
-                                                      error:nil];
-    });
-    return _reg;
 }
 
 + (NSString *)cleanCommandString:(NSString *)string
@@ -136,18 +122,6 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return IJSVGLineCapStyleButt;
 }
 
-+ (NSRegularExpression *)viewBoxRegex
-{
-    static NSRegularExpression * _reg = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:FLOAT_EXP
-                                                    options:0
-                                                      error:nil];
-    });
-    return _reg;
-}
-
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count
 {
@@ -158,43 +132,44 @@ CGFloat degrees_to_radians( CGFloat degrees )
         *count = 1;
         return ret;
     }
-    NSRegularExpression * exp = [[self class] commandRegex];
-    NSArray * matches = [exp matchesInString:command
-                                     options:0
-                                       range:NSMakeRange( 0, command.length)];
-    CGFloat * ret = (CGFloat *)malloc(matches.count*sizeof(CGFloat));
-    NSDictionary * dict = [NSDictionary dictionaryWithObject:@"."
-                                                      forKey:NSLocaleDecimalSeparator];
-    for( NSInteger i = 0; i < matches.count; i++ )
+    return [[self class] scanFloatsFromString:command
+                                         size:count];
+}
+
++ (CGFloat *)scanFloatsFromString:(NSString *)string
+                             size:(NSInteger *)length
+{
+    NSInteger defSize = 1000;
+    NSInteger size = defSize;
+    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*size);
+    NSScanner * scanner = [[[NSScanner alloc] initWithString:string] autorelease];
+    float num = 0;
+    NSInteger i = 0;
+    while( [scanner isAtEnd] == NO )
     {
-        NSTextCheckingResult * match = [matches objectAtIndex:i];
-        NSString * paramString = [command substringWithRange:match.range];
-        NSDecimalNumber * decimal = nil;
-        if( [paramString rangeOfString:@"."].location != NSNotFound )
-            decimal = [NSDecimalNumber decimalNumberWithString:paramString
-                                                        locale:dict];
-        else
-            decimal = [NSDecimalNumber decimalNumberWithString:paramString];
-        ret[i] = (CGFloat)[decimal floatValue];
-        *count += 1;
+        if( [scanner scanFloat:&num] )
+        {
+            if( (i+1) == size )
+            {
+                // if we reach here, we need to reallocate memory...serious amount of floats..
+                // something going on weird in the SVG? - possible...
+                size += defSize;
+                floats = (CGFloat *)realloc( floats, sizeof(CGFloat)*size);
+            }
+            floats[i++] = num;
+            continue;
+        }
+        [scanner setScanLocation:scanner.scanLocation+1];
     }
-    return ret;
+    *length = i;
+    return floats;
 }
 
 + (CGFloat *)parseViewBox:(NSString *)string
 {
-    NSRegularExpression * exp = [[self class] viewBoxRegex];
-    NSArray * matches = [exp matchesInString:string
-                                     options:0
-                                       range:NSMakeRange( 0, string.length)];
-    CGFloat * ret = (CGFloat *)malloc(matches.count*sizeof(CGFloat));
-    for( NSInteger i = 0; i < matches.count; i++ )
-    {
-        NSTextCheckingResult * match = [matches objectAtIndex:i];
-        NSString * paramString = [string substringWithRange:match.range];
-        ret[i] = (CGFloat)[paramString floatValue];
-    }
-    return ret;
+    NSInteger size = 0;
+    return [[self class] scanFloatsFromString:string
+                                         size:&size];
 }
 
 + (CGFloat)floatValue:(NSString *)string

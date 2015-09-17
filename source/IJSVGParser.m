@@ -16,13 +16,24 @@
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
 {
     return [[self class] groupForFileURL:aURL
+                                   error:nil
                                 delegate:nil];
 }
 
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
                         delegate:(id<IJSVGParserDelegate>)delegate
 {
+    return [[self class] groupForFileURL:aURL
+                                   error:nil
+                                delegate:delegate];
+}
+
++ (IJSVGParser *)groupForFileURL:(NSURL *)aURL
+                           error:(NSError **)error
+                        delegate:(id<IJSVGParserDelegate>)delegate
+{
     return [[[[self class] alloc] initWithFileURL:aURL
+                                            error:error
                                          delegate:delegate] autorelease];
 }
 
@@ -33,18 +44,18 @@
 }
 
 - (id)initWithFileURL:(NSURL *)aURL
+                error:(NSError **)error
              delegate:(id<IJSVGParserDelegate>)delegate
 {
-    if( ( self = [self initWithFileURL:aURL
-                              encoding:NSUTF8StringEncoding
-                              delegate:delegate] ) != nil )
-    {
-    }
-    return self;
+    return [self initWithFileURL:aURL
+                        encoding:NSUTF8StringEncoding
+                           error:error
+                        delegate:delegate];
 }
 
 - (id)initWithFileURL:(NSURL *)aURL
              encoding:(NSStringEncoding)encoding
+                error:(NSError **)error
              delegate:(id<IJSVGParserDelegate>)delegate
 {
     if( ( self = [super init] ) != nil )
@@ -53,18 +64,54 @@
         _glyphs = [[NSMutableArray alloc] init];
         
         // load the document / file, assume its UTF8
-        NSError * error = nil;
+        NSError * anError = nil;
         NSString * str = [[[NSString alloc] initWithContentsOfURL:aURL
                                                          encoding:encoding
-                                                            error:&error] autorelease];
+                                                            error:&anError] autorelease];
+        
+        // error grabbing contents from the file :(
+        if( anError != nil )
+        {
+            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                 code:IJSVGErrorReadingFile
+                                             userInfo:nil] autorelease];
+            [self release], self = nil;
+            return nil;
+        }
+            
         
         // use NSXMLDocument as its the easiest thing to do on OSX
-        _document = [[NSXMLDocument alloc] initWithXMLString:str
-                                                     options:0
-                                                       error:&error];
+        anError = nil;
+        @try {
+            _document = [[NSXMLDocument alloc] initWithXMLString:str
+                                                         options:0
+                                                           error:&anError];
+        }
+        @catch (NSException *exception) {
+        }
+        
+        // error parsing the XML document
+        if( anError != nil )
+        {
+            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                 code:IJSVGErrorParsingFile
+                                             userInfo:nil] autorelease];
+            [self release], self = nil;
+            [_document release], _document = nil;
+            return nil;
+        }
         
         // where the fun begin...
         [self _parse];
+        
+        anError = nil;
+        if( ![self _validateParse:&anError] )
+        {
+            *error = anError;
+            [self release], self = nil;
+            [_document release], _document = nil;
+            return nil;
+        }
         
         // we have actually finished with the document at this point
         // so just get rid of it
@@ -72,6 +119,20 @@
         
     }
     return self;
+}
+
+- (BOOL)_validateParse:(NSError **)error
+{
+    // check viewbox...
+    if( NSEqualRects( self.viewBox, NSZeroRect ) )
+    {
+        if( error != NULL )
+            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                 code:IJSVGErrorInvalidViewBox
+                                             userInfo:nil] autorelease];
+        return NO;
+    }
+    return YES;
 }
 
 - (NSSize)size
@@ -183,6 +244,26 @@
     if( yAttribute )
         node.y = [[yAttribute stringValue] floatValue];
     
+    // width
+    NSXMLNode * widthAttribute = [element attributeForName:@"width"];
+    if( widthAttribute != nil )
+    {
+        if( [[widthAttribute stringValue] isEqualToString:@"100%"] )
+            node.width = self.viewBox.size.width;
+        else
+            node.width = [IJSVGUtils floatValue:[widthAttribute stringValue]];
+    }
+    
+    // height
+    NSXMLNode * heightAttribute = [element attributeForName:@"height"];
+    if( heightAttribute != nil )
+    {
+        if( [[heightAttribute stringValue] isEqualToString:@"100%"] )
+            node.height = self.viewBox.size.height;
+        else
+            node.height = [IJSVGUtils floatValue:[heightAttribute stringValue]];
+    }
+    
     // any clippath?
     NSXMLNode * clipPathAttribute = [element attributeForName:@"clip-path"];
     if( clipPathAttribute != nil )
@@ -200,6 +281,28 @@
         if( maskID )
             node.clipPath = (IJSVGGroup *)[node defForID:maskID];
     }
+    
+    // ID
+    NSXMLNode * idAttribute = [element attributeForName:@"id"];
+    if( idAttribute != nil )
+        node.identifier = [idAttribute stringValue];
+    
+    // transforms
+    NSXMLNode * transformAttribute = [element attributeForName:@"transform"];
+    if( transformAttribute != nil )
+    {
+        NSMutableArray * tran = [[[NSMutableArray alloc] init] autorelease];
+        [tran addObjectsFromArray:[IJSVGTransform transformsForString:[transformAttribute stringValue]]];
+        if( node.transforms != nil )
+            [tran addObjectsFromArray:node.transforms];
+        node.transforms = tran;
+    }
+    
+    if( node.type == IJSVGNodeTypeMask )
+        return;
+    
+    
+#pragma mark Styles
     
     // any line cap style?
     NSXMLNode * lineCapAttribute = [element attributeForName:@"stroke-linecap"];
@@ -275,21 +378,6 @@
     if( strokeWidthAttribute != nil )
         node.strokeWidth = [IJSVGUtils floatValue:[strokeWidthAttribute stringValue]];
     
-    // ID
-    NSXMLNode * idAttribute = [element attributeForName:@"id"];
-    if( idAttribute != nil )
-        node.identifier = [idAttribute stringValue];
-    
-    // transforms
-    NSXMLNode * transformAttribute = [element attributeForName:@"transform"];
-    if( transformAttribute != nil )
-    {
-        NSMutableArray * tran = [[[NSMutableArray alloc] init] autorelease];
-        [tran addObjectsFromArray:[IJSVGTransform transformsForString:[transformAttribute stringValue]]];
-        if( node.transforms != nil )
-            [tran addObjectsFromArray:node.transforms];
-        node.transforms = tran;
-    }
     
     // gradient transforms
     NSXMLNode * gradTransformAttribute = [element attributeForName:@"gradientTransform"];
@@ -310,30 +398,12 @@
     } else
         node.windingRule = IJSVGWindingRuleInherit;
     
-    // width
-    NSXMLNode * widthAttribute = [element attributeForName:@"width"];
-    if( widthAttribute != nil )
-    {
-        if( [[widthAttribute stringValue] isEqualToString:@"100%"] )
-            node.width = self.viewBox.size.width;
-        else
-            node.width = [IJSVGUtils floatValue:[widthAttribute stringValue]];
-    }
-    
-    // height
-    NSXMLNode * heightAttribute = [element attributeForName:@"height"];
-    if( heightAttribute != nil )
-    {
-        if( [[heightAttribute stringValue] isEqualToString:@"100%"] )
-            node.height = self.viewBox.size.height;
-        else
-            node.height = [IJSVGUtils floatValue:[heightAttribute stringValue]];
-    }
-    
     // display
     NSXMLNode * displayAttribute = [element attributeForName:@"display"];
     if( [[[displayAttribute stringValue] lowercaseString] isEqualToString:@"none"] )
         node.shouldRender = NO;
+ 
+#pragma mark style sheets
     
     // now we need to work out if there is any style...apparently this is a thing now,
     // people use the style attribute... -_-

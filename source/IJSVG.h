@@ -44,16 +44,36 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 
 - (id)initWithFile:(NSString *)file;
 - (id)initWithFile:(NSString *)file
+             error:(NSError **)error;
+- (id)initWithFile:(NSString *)file
+          delegate:(id<IJSVGDelegate>)delegate;
+- (id)initWithFile:(NSString *)file
+             error:(NSError **)error
           delegate:(id<IJSVGDelegate>)delegate;
 - (id)initWithFilePathURL:(NSURL *)aURL;
 - (id)initWithFilePathURL:(NSURL *)aURL
+                    error:(NSError **)error;
+- (id)initWithFilePathURL:(NSURL *)aURL
+                 delegate:(id<IJSVGDelegate>)delegate;
+- (id)initWithFilePathURL:(NSURL *)aURL
+                    error:(NSError **)error
                  delegate:(id<IJSVGDelegate>)delegate;
 - (NSImage *)imageWithSize:(NSSize)aSize;
-- (void)drawAtPoint:(NSPoint)point
+- (NSImage *)imageWithSize:(NSSize)aSize
+                     error:(NSError **)error;
+- (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)size;
-- (void)drawInRect:(NSRect)rect;
+- (BOOL)drawAtPoint:(NSPoint)point
+               size:(NSSize)aSize
+              error:(NSError **)error;
+- (BOOL)drawInRect:(NSRect)rect;
+- (BOOL)drawInRect:(NSRect)rect
+             error:(NSError **)error;
 - (NSArray *)colors;
 - (NSData *)PDFData;
+- (NSData *)PDFData:(NSError **)error;
 - (NSData *)PDFDataWithRect:(NSRect)rect;
+- (NSData *)PDFDataWithRect:(NSRect)rect
+                      error:(NSError **)error;
 
 @end

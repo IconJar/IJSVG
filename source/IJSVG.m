@@ -36,12 +36,29 @@ static NSColor * _baseColor = nil;
 }
 
 + (id)svgNamed:(NSString *)string
+         error:(NSError **)error
 {
     return [[self class] svgNamed:string
+                            error:error
                          delegate:nil];
 }
 
 + (id)svgNamed:(NSString *)string
+{
+    return [[self class] svgNamed:string
+                            error:nil];
+}
+
++ (id)svgNamed:(NSString *)string
+      delegate:(id<IJSVGDelegate>)delegate
+{
+    return [[self class] svgNamed:string
+                            error:nil
+                         delegate:delegate];
+}
+
++ (id)svgNamed:(NSString *)string
+         error:(NSError **)error
       delegate:(id<IJSVGDelegate>)delegate
 {
     NSBundle * bundle = [NSBundle mainBundle];
@@ -52,39 +69,67 @@ static NSColor * _baseColor = nil;
     if( ( str = [bundle pathForResource:[string stringByDeletingPathExtension]
                                  ofType:ext] ) != nil )
         return [[[self alloc] initWithFile:str
+                                     error:error
                                   delegate:delegate] autorelease];
     return nil;
 }
 
 - (id)initWithFile:(NSString *)file
 {
-    if( ( self = [self initWithFile:file
-                           delegate:nil] ) != nil )
-    {
-    }
-    return self;
+    return [self initWithFile:file
+                     delegate:nil];
+}
+
+- (id)initWithFile:(NSString *)file
+             error:(NSError **)error
+{
+    return [self initWithFile:file
+                        error:error
+                     delegate:nil];
 }
 
 - (id)initWithFile:(NSString *)file
           delegate:(id<IJSVGDelegate>)delegate
 {
-    if( ( self = [self initWithFilePathURL:[NSURL fileURLWithPath:file]
-                                  delegate:delegate] ) )
-    {
-    }
-    return self;
+    return [self initWithFile:file
+                        error:nil
+                     delegate:delegate];
+}
+
+- (id)initWithFile:(NSString *)file
+             error:(NSError **)error
+          delegate:(id<IJSVGDelegate>)delegate
+{
+    return [self initWithFilePathURL:[NSURL fileURLWithPath:file]
+                               error:error
+                            delegate:delegate];
 }
 
 - (id)initWithFilePathURL:(NSURL *)aURL
 {
-    if( ( self = [self initWithFilePathURL:aURL
-                                  delegate:nil] ) != nil )
-    {
-    }
-    return self;
+    return [self initWithFilePathURL:aURL
+                               error:nil
+                            delegate:nil];
 }
 
 - (id)initWithFilePathURL:(NSURL *)aURL
+                    error:(NSError **)error
+{
+    return [self initWithFilePathURL:aURL
+                               error:error
+                            delegate:nil];
+}
+
+- (id)initWithFilePathURL:(NSURL *)aURL
+                 delegate:(id<IJSVGDelegate>)delegate
+{
+    return [self initWithFilePathURL:aURL
+                               error:nil
+                            delegate:delegate];
+}
+
+- (id)initWithFilePathURL:(NSURL *)aURL
+                    error:(NSError **)error
                  delegate:(id<IJSVGDelegate>)delegate
 {
 #ifndef __clang_analyzer__
@@ -101,8 +146,19 @@ static NSColor * _baseColor = nil;
     
     if( ( self = [super init] ) != nil )
     {
+        NSError * anError = nil;
         _delegate = delegate;
-        _group = [[IJSVGParser groupForFileURL:aURL] retain];
+        _group = [[IJSVGParser groupForFileURL:aURL
+                                         error:&anError
+                                      delegate:nil] retain];
+        // something went wrong...
+        if( _group == nil )
+        {
+            if( error != NULL )
+                *error = anError;
+            [self release], self = nil;
+            return nil;
+        }
         if( [IJSVGCache enabled] )
             [IJSVGCache cacheSVG:self
                          fileURL:aURL];
@@ -123,22 +179,43 @@ static NSColor * _baseColor = nil;
 
 - (NSImage *)imageWithSize:(NSSize)aSize
 {
+    return [self imageWithSize:aSize
+                         error:nil];
+}
+
+- (NSImage *)imageWithSize:(NSSize)aSize
+                     error:(NSError **)error
+{
     NSImage * im = [[[NSImage alloc] initWithSize:aSize] autorelease];
     [im lockFocus];
     [self drawAtPoint:NSMakePoint( 0.f, 0.f )
-                 size:aSize];
+                 size:aSize
+                error:error];
     [im unlockFocus];
     return im;
 }
 
 - (NSData *)PDFData
 {
+    return [self PDFData:nil];
+}
+
+- (NSData *)PDFData:(NSError **)error
+{
     return [self PDFDataWithRect:(NSRect){
         .origin=NSZeroPoint,
-        .size=_group.size}];
+        .size=_group.size}
+                           error:error];
 }
 
 - (NSData *)PDFDataWithRect:(NSRect)rect
+{
+    return [self PDFDataWithRect:rect
+                           error:nil];
+}
+
+- (NSData *)PDFDataWithRect:(NSRect)rect
+                      error:(NSError **)error
 {
     NSColor * oldBaseColour = [[self class] baseColor];
     [[self class] setBaseColor:nil];
@@ -169,7 +246,8 @@ static NSColor * _baseColor = nil;
     
     // draw the icon
     [self _drawInRect:(NSRect)box
-              context:context];
+              context:context
+                error:error];
     CGContextEndPage(context);
     
     //clean up
@@ -195,28 +273,46 @@ static NSColor * _baseColor = nil;
     return [[_colors copy] autorelease];
 }
 
-- (void)drawAtPoint:(NSPoint)point
+- (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)aSize
 {
-    [self drawInRect:NSMakeRect( point.x, point.y, aSize.width, aSize.height )];
+    return [self drawAtPoint:point
+                        size:aSize
+                       error:nil];
 }
 
-- (void)drawInRect:(NSRect)rect
+- (BOOL)drawAtPoint:(NSPoint)point
+               size:(NSSize)aSize
+              error:(NSError **)error
 {
-    [self _drawInRect:rect
-              context:[[NSGraphicsContext currentContext] graphicsPort]];
+    return [self drawInRect:NSMakeRect( point.x, point.y, aSize.width, aSize.height )
+                      error:error];
 }
 
-- (void)_drawInRect:(NSRect)rect
-           context:(CGContextRef)ref
+- (BOOL)drawInRect:(NSRect)rect
+{
+    return [self drawInRect:rect
+                     error:nil];
+}
+
+- (BOOL)drawInRect:(NSRect)rect
+             error:(NSError **)error
+{
+    return [self _drawInRect:rect
+                     context:[[NSGraphicsContext currentContext] graphicsPort]
+                       error:error];
+}
+
+- (BOOL)_drawInRect:(NSRect)rect
+            context:(CGContextRef)ref
+              error:(NSError **)error
 {
     // prep for draw...
-    [self _beginDraw:rect];
-    
-    // setup the transforms and scale on the main context
     CGContextSaveGState(ref);
-    {
-    
+    @try {
+        
+        [self _beginDraw:rect];
+            
         // scale the whole drawing context, but first, we need
         // to translate the context so its centered
         CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
@@ -229,13 +325,6 @@ static NSColor * _baseColor = nil;
         viewPort.origin.y = round(rect.size.height/2-(_group.proposedViewSize.height/2)*_clipScale);;
         viewPort.size.width = _group.proposedViewSize.width*_clipScale;
         viewPort.size.height = _group.proposedViewSize.height*_clipScale;
-        
-        // attempt to not crash when dealing with dodgy SVG's
-        if( isnan(viewPort.origin.x) || isnan(viewPort.origin.y) || isnan(viewPort.size.width) || isnan(viewPort.size.height) )
-        {
-            CGContextRestoreGState(ref);
-            return;
-        }
         
         // clip any drawing to the view port
         [[NSBezierPath bezierPathWithRect:viewPort] addClip];
@@ -256,13 +345,17 @@ static NSColor * _baseColor = nil;
                  context:ref];
         
     }
-    CGContextRestoreGState(ref);
-    
-}
-
-- (NSRect)computedViewPort
-{
-    return NSMakeRect( 0.f, 0.f, 200.f, 200.f);
+    @catch (NSException *exception) {
+        // just catch and give back a drawing error to the caller
+        if( error != NULL )
+            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                 code:IJSVGErrorDrawing
+                                             userInfo:nil] autorelease];
+    }
+    @finally {
+        CGContextRestoreGState(ref);
+    }
+    return (error == nil);
 }
 
 - (void)_recursiveColors:(IJSVGGroup *)group
