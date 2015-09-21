@@ -123,7 +123,11 @@
 
 - (BOOL)_validateParse:(NSError **)error
 {
-    // check viewbox...
+    // check is font
+    if( self.isFont )
+        return YES;
+    
+    // check the viewbox
     if( NSEqualRects( self.viewBox, NSZeroRect ) )
     {
         if( error != NULL )
@@ -864,47 +868,99 @@
     }
 }
 
+static NSCharacterSet * _commandCharSet = nil;
+
++ (NSCharacterSet *)_commandCharSet
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _commandCharSet = [[NSCharacterSet characterSetWithCharactersInString:@"MmZzLlHhVvCcSsQqTtAa"] retain];
+    });
+    return _commandCharSet;
+}
+
 #pragma mark Parser stuff!
 
 - (void)_parsePathCommandData:(NSString *)command
                      intoPath:(IJSVGPath *)path
 {
     // invalid command
+    
     if( command == nil || command.length == 0 )
         return;
-    NSRegularExpression * exp = [IJSVGUtils commandNameRegex];
-    __block NSString * previousCommand = nil;
-    __block NSTextCheckingResult * previousMatch = nil;
     
-    [exp enumerateMatchesInString:command
-                          options:0
-                            range:NSMakeRange( 0, command.length )
-                       usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-     {
-         @autoreleasepool {
-             if( previousMatch != nil )
-             {
-                 NSUInteger length = result.range.location - previousMatch.range.location;
-                 NSString * commandString = [command substringWithRange:NSMakeRange(previousMatch.range.location,length)];
-                 [self _parseCommandString:commandString
-                           previousCommand:previousCommand
-                                  intoPath:path];
-                 [previousCommand release], previousCommand = nil;
-                 previousCommand = [commandString copy];
-                 [previousMatch release], previousMatch = nil;
-             }
-         }
-         previousMatch = [result retain];
-     }];
+    NSCharacterSet * set = [[self class] _commandCharSet];
+    NSUInteger len = [command length];
     
-    NSRange range = NSMakeRange(previousMatch.range.location, command.length-previousMatch.range.location);
-    [self _parseCommandString:[command substringWithRange:range]
-              previousCommand:previousCommand
-                     intoPath:path];
+    // allocate memory for the string buffer for reading
+    unichar * buffer = (unichar *)calloc( len+1, sizeof(unichar));
+    [command getCharacters:buffer
+                     range:NSMakeRange(0, len)];
     
-    // memory clean up
-    [previousMatch release], previousMatch = nil;
-    [previousCommand release], previousCommand = nil;
+    NSString * currentCommandString = nil;
+    NSString * previousCommand = nil;
+    
+    unichar * commandBuffer = NULL;
+    int defaultBufferSize = 200;
+    int currentBufferSize = 0;
+    int currentSize = defaultBufferSize;
+    
+    for( int i = 0; i < len; i++ )
+    {
+        unichar currentChar = buffer[i];
+        BOOL atEnd = i == len-1;
+        if( [set characterIsMember:currentChar] || atEnd )
+        {
+            // we are at the end, make sure we have a buffer...
+            if( atEnd )
+            {
+                if( commandBuffer == NULL )
+                    commandBuffer = (unichar *)malloc(sizeof(unichar)*defaultBufferSize);
+                commandBuffer[currentBufferSize++] = currentChar;
+            }
+            
+            // if we have a buffer then add it to the parse command list
+            if( commandBuffer != NULL )
+            {
+                // copy the characters from the buffer into a smaller accurate char buffer
+                currentCommandString = [NSString stringWithCharacters:commandBuffer
+                                                               length:currentBufferSize];
+                
+                // parse the command
+                [self _parseCommandString:currentCommandString
+                          previousCommand:previousCommand
+                                 intoPath:path];
+                previousCommand = [[currentCommandString copy] autorelease];
+                
+                // free the memory used by this command and reset
+                // any temp counters we have been using
+                free(commandBuffer);
+                commandBuffer = NULL;
+                currentBufferSize = 0;
+                currentSize = defaultBufferSize;
+            }
+            
+            // make sure we only allocate the memory if we are not the last character
+            if( !atEnd )
+                commandBuffer = (unichar *)malloc(sizeof(unichar)*defaultBufferSize);
+            else
+                break;
+        }
+        
+        // add the buffer char to the command buffer
+        if( ( currentBufferSize + 1 ) == currentSize )
+        {
+            currentSize += defaultBufferSize;
+            commandBuffer = (unichar *)realloc( commandBuffer, sizeof(unichar)*currentSize);
+        }
+        
+        // append the char
+        if( commandBuffer != NULL )
+            commandBuffer[currentBufferSize++] = currentChar;
+    }
+    
+    // free the buffer
+    free(buffer);
 }
 
 - (void)_parseCommandString:(NSString *)string
@@ -946,7 +1002,12 @@
     CGFloat y1 = [[[element attributeForName:@"y1"] stringValue] floatValue];
     CGFloat x2 = [[[element attributeForName:@"x2"] stringValue] floatValue];
     CGFloat y2 = [[[element attributeForName:@"y2"] stringValue] floatValue];
-    NSString * command = [NSString stringWithFormat:@"M%f %fL%f %f",x1,y1,x2,y2];
+    
+    // use sprintf as its quicker then stringWithFormat...
+    char buffer[50];
+    sprintf( buffer, "M%.2f %.2fL%.2f %.2f",x1,y1,x2,y2);
+    NSString * command = [NSString stringWithCString:buffer
+                                            encoding:NSUTF8StringEncoding];
     [self _parsePathCommandData:command
                        intoPath:path];
 }

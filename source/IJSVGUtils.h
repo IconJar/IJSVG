@@ -18,14 +18,12 @@ CGFloat radians_to_degrees( CGFloat radians);
 CGFloat degrees_to_radians( CGFloat degrees );
 
 + (IJSVGCommandType)typeForCommandString:(NSString *)string;
-+ (NSRegularExpression *)commandNameRegex;
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count;
 + (CGFloat *)parseViewBox:(NSString *)string;
 + (IJSVGWindingRule)windingRuleForString:(NSString *)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString *)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string;
-+ (NSString *)cleanCommandString:(NSString *)string;
 + (void)logParameters:(CGFloat *)param
                 count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString *)string;

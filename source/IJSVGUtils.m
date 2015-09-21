@@ -39,33 +39,6 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return [string isEqualToString:[string uppercaseString]] ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
 }
 
-+ (NSRegularExpression *)commandNameRegex
-{
-    static NSRegularExpression *_commandRegex;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _commandRegex = [[NSRegularExpression alloc] initWithPattern:@"[MmZzLlHhVvCcSsQqTtAa]{1}"
-                                                             options:0
-                                                               error:nil];
-    });
-    return _commandRegex;
-}
-
-+ (NSString *)cleanCommandString:(NSString *)string
-{
-    static NSRegularExpression * _reg = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"e\\-[0-9]+"
-                                                    options:0
-                                                      error:nil];
-    });
-    return [_reg stringByReplacingMatchesInString:string
-                                          options:0
-                                            range:NSMakeRange( 0, string.length )
-                                     withTemplate:@""];
-}
-
 + (NSString *)defURL:(NSString *)string
 {
     static NSRegularExpression * _reg = nil;
