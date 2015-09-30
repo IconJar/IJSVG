@@ -32,6 +32,11 @@ static BOOL _enabled = YES;
     return svg;
 }
 
++ (void)purgeCachedSVGForFileURL:(NSURL *)aURL
+{
+    [_cache removeObjectForKey:aURL];
+}
+
 + (void)cacheSVG:(IJSVG *)svg
          fileURL:(NSURL *)aURL
 {

@@ -19,5 +19,6 @@
 + (void)flushCache;
 + (BOOL)enabled;
 + (void)setEnabled:(BOOL)flag;
++ (void)purgeCachedSVGForFileURL:(NSURL *)aURL;
 
 @end

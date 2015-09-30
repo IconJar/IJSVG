@@ -96,7 +96,8 @@
             *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                  code:IJSVGErrorParsingFile
                                              userInfo:nil] autorelease];
-            [_document release], _document = nil;
+            if( _document != nil )
+                [_document release], _document = nil;
             [self release], self = nil;
             return nil;
         }
@@ -108,8 +109,8 @@
         if( ![self _validateParse:&anError] )
         {
             *error = anError;
-            [_document release], _document = nil;
             [self release], self = nil;
+            [_document release], _document = nil;
             return nil;
         }
         
