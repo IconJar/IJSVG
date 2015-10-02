@@ -47,38 +47,24 @@
                 error:(NSError **)error
              delegate:(id<IJSVGParserDelegate>)delegate
 {
-    return [self initWithFileURL:aURL
-                        encoding:NSUTF8StringEncoding
-                           error:error
-                        delegate:delegate];
-}
-
-- (id)initWithFileURL:(NSURL *)aURL
-             encoding:(NSStringEncoding)encoding
-                error:(NSError **)error
-             delegate:(id<IJSVGParserDelegate>)delegate
-{
     if( ( self = [super init] ) != nil )
     {
-        _delegate = delegate;        
+        _delegate = delegate;
         _glyphs = [[NSMutableArray alloc] init];
         
         // load the document / file, assume its UTF8
+        
         NSError * anError = nil;
-        NSString * str = [[[NSString alloc] initWithContentsOfURL:aURL
-                                                         encoding:encoding
-                                                            error:&anError] autorelease];
+        NSStringEncoding encoding;
+        NSString * str = [NSString stringWithContentsOfFile:aURL.path
+                                               usedEncoding:&encoding
+                                                      error:&anError];
         
         // error grabbing contents from the file :(
         if( anError != nil )
-        {
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorReadingFile
-                                             userInfo:nil] autorelease];
-            [self release], self = nil;
-            return nil;
-        }
-            
+            return [self _handleErrorWithCode:IJSVGErrorReadingFile
+                                        error:error];
+        
         
         // use NSXMLDocument as its the easiest thing to do on OSX
         anError = nil;
@@ -92,19 +78,21 @@
         
         // error parsing the XML document
         if( anError != nil )
-        {
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorParsingFile
-                                             userInfo:nil] autorelease];
-            if( _document != nil )
-                [_document release], _document = nil;
-            [self release], self = nil;
-            return nil;
+            return [self _handleErrorWithCode:IJSVGErrorParsingFile
+                                        error:error];
+        
+        // attempt to parse the file
+        anError = nil;
+        @try {
+            [self _parse];
+        }
+        @catch (NSException *exception) {
+            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
+                                        error:error];
         }
         
-        // where the fun begin...
-        [self _parse];
         
+        // check the actual parsed SVG
         anError = nil;
         if( ![self _validateParse:&anError] )
         {
@@ -120,6 +108,19 @@
         
     }
     return self;
+}
+
+- (void *)_handleErrorWithCode:(NSUInteger)code
+                         error:(NSError **)error
+{
+    if( error )
+        *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                             code:code
+                                         userInfo:nil] autorelease];
+    if( _document != nil )
+        [_document release], _document = nil;
+    [self release], self = nil;
+    return nil;
 }
 
 - (BOOL)_validateParse:(NSError **)error
@@ -407,7 +408,7 @@
     NSXMLNode * displayAttribute = [element attributeForName:@"display"];
     if( [[[displayAttribute stringValue] lowercaseString] isEqualToString:@"none"] )
         node.shouldRender = NO;
- 
+    
 #pragma mark style sheets
     
     // now we need to work out if there is any style...apparently this is a thing now,
@@ -536,7 +537,7 @@
                 continue;
             }
                 
-            // glyph
+                // glyph
             case IJSVGNodeTypeGlyph: {
                 
                 // no path data
@@ -901,63 +902,42 @@ static NSCharacterSet * _commandCharSet = nil;
     NSString * currentCommandString = nil;
     NSString * previousCommand = nil;
     
-    unichar * commandBuffer = NULL;
     int defaultBufferSize = 200;
     int currentBufferSize = 0;
     int currentSize = defaultBufferSize;
     
+    unichar * commandBuffer = NULL;
+    if( len != 0 )
+        commandBuffer = (unichar *)calloc(defaultBufferSize,sizeof(unichar));
+    
     for( int i = 0; i < len; i++ )
     {
         unichar currentChar = buffer[i];
+        unichar nextChar = buffer[i+1];
         BOOL atEnd = i == len-1;
-        if( [set characterIsMember:currentChar] || atEnd )
-        {
-            // we are at the end, make sure we have a buffer...
-            if( atEnd )
-            {
-                if( commandBuffer == NULL )
-                    commandBuffer = (unichar *)malloc(sizeof(unichar)*defaultBufferSize);
-                commandBuffer[currentBufferSize++] = currentChar;
-            }
-            
-            // if we have a buffer then add it to the parse command list
-            if( commandBuffer != NULL )
-            {
-                // copy the characters from the buffer into a smaller accurate char buffer
-                currentCommandString = [NSString stringWithCharacters:commandBuffer
-                                                               length:currentBufferSize];
-                
-                // parse the command
-                [self _parseCommandString:currentCommandString
-                          previousCommand:previousCommand
-                                 intoPath:path];
-                previousCommand = [[currentCommandString copy] autorelease];
-                
-                // free the memory used by this command and reset
-                // any temp counters we have been using
-                free(commandBuffer);
-                commandBuffer = NULL;
-                currentBufferSize = 0;
-                currentSize = defaultBufferSize;
-            }
-            
-            // make sure we only allocate the memory if we are not the last character
-            if( !atEnd )
-                commandBuffer = (unichar *)malloc(sizeof(unichar)*defaultBufferSize);
-            else
-                break;
-        }
-        
-        // add the buffer char to the command buffer
+        BOOL isStartCommand = [set characterIsMember:nextChar];
         if( ( currentBufferSize + 1 ) == currentSize )
         {
             currentSize += defaultBufferSize;
             commandBuffer = (unichar *)realloc( commandBuffer, sizeof(unichar)*currentSize);
         }
-        
-        // append the char
-        if( commandBuffer != NULL )
-            commandBuffer[currentBufferSize++] = currentChar;
+        commandBuffer[currentBufferSize++] = currentChar;
+        if( isStartCommand || atEnd )
+        {
+            currentCommandString = [NSString stringWithCharacters:commandBuffer
+                                                           length:currentBufferSize];
+            [self _parseCommandString:currentCommandString
+                      previousCommand:previousCommand
+                             intoPath:path];
+            previousCommand = [[currentCommandString copy] autorelease];
+            free(commandBuffer);
+            commandBuffer = NULL;
+            if( !atEnd ) {
+                currentBufferSize = 0;
+                currentSize = defaultBufferSize;
+                commandBuffer = (unichar *)calloc(defaultBufferSize,sizeof(unichar));
+            }
+        }
     }
     
     // free the buffer
@@ -1067,10 +1047,10 @@ static NSCharacterSet * _commandCharSet = nil;
     
     // construct a command
     NSMutableString * str = [[[NSMutableString alloc] init] autorelease];
-    [str appendFormat:@"M%f %f L",params[0],params[1]];
+    [str appendFormat:@"M%f,%f L",params[0],params[1]];
     for( NSInteger i = 2; i < count; i+=2 )
     {
-        [str appendFormat:@"%f %f ",params[i],params[i+1]];
+        [str appendFormat:@"%f,%f ",params[i],params[i+1]];
     }
     if( closePath )
         [str appendString:@"z"];
