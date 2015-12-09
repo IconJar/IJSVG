@@ -303,6 +303,35 @@ static NSColor * _baseColor = nil;
                        error:error];
 }
 
+- (NSRect)computeRectDrawingInRect:(NSRect)rect
+                       isValid:(BOOL *)valid
+{
+    // we also need to calculate the viewport so we can clip
+    // the drawing if needed
+    NSRect viewPort = NSZeroRect;
+    viewPort.origin.x = round(rect.size.width/2-(_group.proposedViewSize.width/2)*_clipScale);
+    viewPort.origin.y = round(rect.size.height/2-(_group.proposedViewSize.height/2)*_clipScale);;
+    viewPort.size.width = _group.proposedViewSize.width*_clipScale;
+    viewPort.size.height = _group.proposedViewSize.height*_clipScale;
+    
+    // check the viewport
+    if( NSEqualRects( _group.viewBox, NSZeroRect )
+       || _group.viewBox.size.width <= 0
+       || _group.viewBox.size.height <= 0
+       || NSEqualRects( NSZeroRect, viewPort)
+       || CGRectIsEmpty(viewPort)
+       || CGRectIsNull(viewPort)
+       || viewPort.size.width <= 0
+       || viewPort.size.height <= 0 )
+    {
+        *valid = NO;
+        return NSZeroRect;
+    }
+
+    *valid = YES;
+    return viewPort;
+}
+
 - (BOOL)_drawInRect:(NSRect)rect
             context:(CGContextRef)ref
               error:(NSError **)error
@@ -320,11 +349,19 @@ static NSColor * _baseColor = nil;
         
         // we also need to calculate the viewport so we can clip
         // the drawing if needed
-        NSRect viewPort = NSZeroRect;
-        viewPort.origin.x = round(rect.size.width/2-(_group.proposedViewSize.width/2)*_clipScale);
-        viewPort.origin.y = round(rect.size.height/2-(_group.proposedViewSize.height/2)*_clipScale);;
-        viewPort.size.width = _group.proposedViewSize.width*_clipScale;
-        viewPort.size.height = _group.proposedViewSize.height*_clipScale;
+        BOOL canDraw = NO;
+        NSRect viewPort = [self computeRectDrawingInRect:rect
+                                                 isValid:&canDraw];
+        // check the viewport
+        if( !canDraw )
+        {
+            if( error != NULL )
+                *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                     code:IJSVGErrorDrawing
+                                                 userInfo:nil] autorelease];
+            CGContextRestoreGState(ref);
+            return NO;
+        }
         
         // clip any drawing to the view port
         [[NSBezierPath bezierPathWithRect:viewPort] addClip];

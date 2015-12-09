@@ -13,6 +13,4 @@
 - (void)addQuadCurveToPoint:(NSPoint)aPoint
                controlPoint:(NSPoint)cp;
 
-- (CGPathRef)CGPath;
-
 @end
