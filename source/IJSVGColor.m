@@ -221,6 +221,7 @@ static NSMutableDictionary * _colorTree = nil;
 + (NSColor *)colorFromPredefinedColorName:(NSString *)name
 {
     NSString * hex = nil;
+    name = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     if( ( hex = [_colorTree objectForKey:name] ) == nil )
         return nil;
     return [[self class] colorFromHEXString:hex

@@ -576,28 +576,8 @@ static NSColor * _baseColor = nil;
                 // for this to work, we need to add the clip so when
                 // drawing occurs, it doesnt go outside the path bounds
                 [path.path addClip];
-                
-                // apply any gradient fill transforms
-                for( IJSVGTransform * transform in path.gradientTransforms )
-                {
-                    [IJSVGTransform performTransform:transform
-                                           inContext:ref];
-                }
-                
-                if( [path.fillGradient isKindOfClass:[IJSVGLinearGradient class]] )
-                {
-                    // linear gradient
-                    NSGradient * gradient = [path.fillGradient gradient];;
-                    [gradient drawInBezierPath:path.path
-                                         angle:path.fillGradient.angle];
-                } else if( [path.fillGradient isKindOfClass:[IJSVGRadialGradient class]] )
-                {
-                    // radial gradient
-                    // very rudimentary at the moment
-                    IJSVGRadialGradient * radGrad = (IJSVGRadialGradient *)path.fillGradient;
-                    [radGrad.gradient drawInBezierPath:path.path
-                                relativeCenterPosition:NSZeroPoint];
-                }
+                [path.fillGradient drawInContextRef:ref
+                                               path:path];
             }
             CGContextRestoreGState(ref);
         } else {

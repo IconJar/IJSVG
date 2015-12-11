@@ -10,12 +10,14 @@
 
 @implementation IJSVGGradient
 
-@synthesize gradient;
-@synthesize angle;
+@synthesize gradient, CGGradient;
+@synthesize angle, startPoint, endPoint;
 
 - (void)dealloc
 {
     [gradient release], gradient = nil;
+    if( CGGradient != nil )
+        CGGradientRelease(CGGradient);
     [super dealloc];
 }
 
@@ -23,6 +25,8 @@
 {
     IJSVGGradient * clone = [super copyWithZone:zone];
     clone.gradient = [[self.gradient copy] autorelease];
+    clone.startPoint = self.startPoint;
+    clone.endPoint = self.endPoint;
     return clone;
 }
 
@@ -55,6 +59,15 @@
         NSColor * stopColor = [IJSVGColor colorFromHEXString:[[stop attributeForName:@"stop-color"] stringValue]
                                                        alpha:stopOpacity];
         
+        // no hex, grab it from predefined
+        if( stopColor == nil )
+        {
+            stopColor = [IJSVGColor colorFromPredefinedColorName:[[stop attributeForName:@"stop-color"] stringValue]];
+            if( stopColor != nil && stopOpacity != 1.f )
+                stopColor = [IJSVGColor changeAlphaOnColor:stopColor
+                                                        to:stopOpacity];
+        }
+        
         // add it into the array
         if( stopColor != nil )
             [(NSMutableArray *)colors addObject:stopColor];
@@ -82,6 +95,35 @@
     }
     *someColors = colors;
     return stopsParams;
+}
+
+- (CGGradientRef)CGGradient
+{
+    // store it in the cache
+    if(CGGradient != nil)
+        return CGGradient;
+    
+    // actually create the gradient
+    NSInteger num = self.gradient.numberOfColorStops;
+    CGFloat * locations = malloc(sizeof(CGFloat)*num);
+    CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num, &kCFTypeArrayCallBacks);
+    for( NSInteger i = 0; i < num; i++ )
+    {
+        NSColor * color;
+        [self.gradient getColor:&color
+                       location:&locations[i]
+                        atIndex:i];
+        CFArrayAppendValue(colors, color.CGColor);
+    }
+    CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace, colors, locations);
+    CFRelease(colors);
+    free(locations);
+    return CGGradient = result;
+}
+
+- (void)drawInContextRef:(CGContextRef)ctx
+                    path:(IJSVGPath *)path
+{
 }
 
 @end

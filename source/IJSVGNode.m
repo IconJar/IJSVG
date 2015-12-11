@@ -28,7 +28,6 @@
 @synthesize identifier;
 @synthesize parentNode;
 @synthesize transforms;
-@synthesize gradientTransforms;
 @synthesize windingRule;
 @synthesize def;
 @synthesize fillGradient;
@@ -46,7 +45,6 @@
     [unicode release], unicode = nil;
     [fillGradient release], fillGradient = nil;
     [transforms release], transforms = nil;
-    [gradientTransforms release], gradientTransforms = nil;
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
     [identifier release], identifier = nil;
@@ -127,7 +125,6 @@
     self.usesDefaultFillColor = node.usesDefaultFillColor;
     
     self.transforms = node.transforms;
-    self.gradientTransforms = node.gradientTransforms;
     self.def = node.def;
     self.windingRule = node.windingRule;
     self.lineCapStyle = node.lineCapStyle;

@@ -26,6 +26,8 @@
 @property ( nonatomic, assign ) CGFloat radius;
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
-                     gradient:(IJSVGRadialGradient *)gradient;
+                     gradient:(IJSVGRadialGradient *)gradient
+                   startPoint:(CGPoint *)startPoint
+                     endPoint:(CGPoint *)endPoint;
 
 @end

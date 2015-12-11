@@ -117,8 +117,7 @@
         *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                              code:code
                                          userInfo:nil] autorelease];
-    if( _document != nil )
-        [_document release], _document = nil;
+    [_document release], _document = nil;
     [self release], self = nil;
     return nil;
 }
@@ -130,7 +129,8 @@
         return YES;
     
     // check the viewbox
-    if( NSEqualRects( self.viewBox, NSZeroRect ) )
+    if( NSEqualRects( self.viewBox, NSZeroRect ) ||
+       self.size.width == 0 || self.size.height == 0 )
     {
         if( error != NULL )
             *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
@@ -165,14 +165,23 @@
         // there is no view box so find the width and height
         CGFloat w = [[[svgElement attributeForName:@"width"] stringValue] floatValue];
         CGFloat h = [[[svgElement attributeForName:@"height"] stringValue] floatValue];
+        if( h == 0.f && w != 0.f )
+            h = w;
+        else if( w == 0.f && h != 0.f )
+            w = h;
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
     }
     
+    // parse the width and height....
     CGFloat w = [[[svgElement attributeForName:@"width"] stringValue] floatValue];
     CGFloat h = [[[svgElement attributeForName:@"height"] stringValue] floatValue];
     if( w == 0.f && h == 0.f )
     {
         w = viewBox.size.width;
+        h = viewBox.size.height;
+    } else if( w == 0 && h != 0.f ) {
+        w = viewBox.size.width;
+    } else if( h == 0 && w != 0.f ) {
         h = viewBox.size.height;
     }
     proposedViewSize = NSMakeSize( w, h );
@@ -369,7 +378,7 @@
         if( defID != nil ) {
             IJSVGGradient * grad = (IJSVGGradient *)[node defForID:defID];
             node.fillGradient = grad;
-            node.gradientTransforms = grad.gradientTransforms;
+            grad.transforms = grad.transforms;
         } else {
             // change the fill color over if its allowed
             node.fillColor = [IJSVGColor colorFromString:[fillAttribute stringValue]];
@@ -391,9 +400,9 @@
     {
         NSMutableArray * tran = [[[NSMutableArray alloc] init] autorelease];
         [tran addObjectsFromArray:[IJSVGTransform transformsForString:[gradTransformAttribute stringValue]]];
-        if( node.gradientTransforms != nil )
-            [tran addObjectsFromArray:node.gradientTransforms];
-        node.gradientTransforms = tran;
+        if( node.transforms != nil )
+            [tran addObjectsFromArray:node.transforms];
+        node.transforms = tran;
     }
     
     // winding rule
@@ -437,7 +446,7 @@
                 if( defID != nil ) {
                     IJSVGGradient * grad = (IJSVGGradient *)[node defForID:defID];
                     node.fillGradient = grad;
-                    node.gradientTransforms = grad.gradientTransforms;
+                    node.transforms = grad.transforms;
                 }
             } else {
                 if( [IJSVGColor computeColor:fill] != nil )
@@ -795,21 +804,34 @@
                     IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
                     grad.type = aType;
                     [grad applyPropertiesFromNode:node];
+                    
                     grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                    CGPoint startPoint, endPoint;
                     [IJSVGLinearGradient parseGradient:element
-                                              gradient:grad];
+                                              gradient:grad
+                                            startPoint:&startPoint
+                                              endPoint:&endPoint];
                     [self _parseElementForCommonAttributes:element
                                                       node:grad];
+                    grad.startPoint = startPoint;
+                    grad.endPoint = endPoint;
                     [parentGroup addDef:grad];
                     continue;
                 }
                 
                 IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
                 gradient.type = aType;
+                
+                CGPoint startPoint, endPoint;
                 gradient.gradient = [IJSVGLinearGradient parseGradient:element
-                                                              gradient:gradient];
+                                                              gradient:gradient
+                                                            startPoint:&startPoint
+                                                              endPoint:&endPoint];
+                
                 [self _parseElementForCommonAttributes:element
                                                   node:gradient];
+                gradient.startPoint = startPoint;
+                gradient.endPoint = endPoint;
                 [parentGroup addDef:gradient];
                 continue;
             }
@@ -827,18 +849,30 @@
                     grad.type = aType;
                     [grad applyPropertiesFromNode:node];
                     grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                    
+                    CGPoint startPoint, endPoint;
                     [IJSVGRadialGradient parseGradient:element
-                                              gradient:grad];
+                                              gradient:grad
+                                            startPoint:&startPoint
+                                              endPoint:&endPoint];
                     [self _parseElementForCommonAttributes:element
                                                       node:grad];
+                    grad.startPoint = startPoint;
+                    grad.endPoint = endPoint;
                     [parentGroup addDef:grad];
                     continue;
                 }
                 
                 IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
                 gradient.type = aType;
+                
+                CGPoint startPoint, endPoint;
                 gradient.gradient = [IJSVGRadialGradient parseGradient:element
-                                                              gradient:gradient];
+                                                              gradient:gradient
+                                                            startPoint:&startPoint
+                                                              endPoint:&endPoint];
+                gradient.startPoint = startPoint;
+                gradient.endPoint = endPoint;
                 [self _parseElementForCommonAttributes:element
                                                   node:gradient];
                 [parentGroup addDef:gradient];

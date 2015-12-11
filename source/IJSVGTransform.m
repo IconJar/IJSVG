@@ -21,6 +21,32 @@
     [super dealloc];
 }
 
+- (id)copyWithZone:(NSZone *)zone
+{
+    IJSVGTransform * trans = [[[self class] alloc] init];
+    trans.command = self.command;
+    trans.parameters = (CGFloat*)malloc(sizeof(CGFloat)*self.parameterCount);
+    trans.sort = sort;
+    trans.parameterCount = self.parameterCount;
+    memcpy( trans.parameters, self.parameters, sizeof(CGFloat)*self.parameterCount);
+    return trans;
+}
+
+- (void)recalculateWithBounds:(CGRect)bounds
+{
+    CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
+    switch (self.command) {
+        case IJSVGTransformCommandRotate: {
+            if( self.parameterCount == 1 )
+                return;
+            self.parameters[1] = self.parameters[1]*max;
+            self.parameters[2] = self.parameters[2]*max;
+        }
+        default:
+            return;
+    }
+}
+
 + (IJSVGTransformCommand)commandForCommandString:(NSString *)str
 {
     if( [str isEqualToString:@"matrix"] )
@@ -135,6 +161,16 @@
             case IJSVGTransformCommandRotate: {
                 if( transform.parameterCount == 1 )
                     [at rotateByDegrees:transform.parameters[0]];
+                else {
+                    CGFloat centerX = transform.parameters[1];
+                    CGFloat centerY = transform.parameters[2];
+                    CGFloat angle = transform.parameters[0]*(M_PI/180.f);
+                    [at translateXBy:centerX
+                                 yBy:centerY];
+                    [at rotateByRadians:angle];
+                    [at translateXBy:-1.f*centerX
+                                 yBy:-1.f*centerY];
+                }
                 break;
             }
                 
@@ -187,8 +223,17 @@
         case IJSVGTransformCommandRotate: {
             // these are in radians, not degrees
             if( transform.parameterCount == 1 )
+            {
                 CGContextRotateCTM( context, (transform.parameters[0] / 180) * M_PI);
-            // need support for rotate around a point
+            } else {
+                // need support for rotate around a point
+                CGFloat centerX = transform.parameters[1];
+                CGFloat centerY = transform.parameters[2];
+                CGFloat angle = transform.parameters[0]*(M_PI/180.f);
+                CGContextTranslateCTM(context, centerX, centerY);
+                CGContextRotateCTM(context, angle);
+                CGContextTranslateCTM(context, -1.f*centerX, -1.f*centerY);
+            }
         }
             
         // do nothing
@@ -197,6 +242,59 @@
         }
     }
     
+}
+
+- (CGAffineTransform)CGAffineTransform
+{
+    switch(self.command)
+    {
+        // matrix
+        case IJSVGTransformCommandMatrix: {
+            return CGAffineTransformMake( self.parameters[0],
+                                         self.parameters[1],
+                                         self.parameters[2],
+                                         self.parameters[3],
+                                         self.parameters[4],
+                                         self.parameters[5]);
+        }
+            
+        // translate
+        case IJSVGTransformCommandTranslate: {
+            if(self.parameterCount == 1)
+                return CGAffineTransformMakeTranslation( self.parameters[0], 0 );
+            return CGAffineTransformMakeTranslation(self.parameters[0], self.parameters[1]);
+        }
+            
+        // scale
+        case IJSVGTransformCommandScale: {
+            if(self.parameterCount == 1)
+                return CGAffineTransformMakeScale( self.parameters[0], self.parameters[0]);
+            return CGAffineTransformMakeScale( self.parameters[0], self.parameters[1]);
+        }
+        
+        // rotate
+        case IJSVGTransformCommandRotate: {
+            if(self.parameterCount == 1)
+                return CGAffineTransformMakeRotation((self.parameters[0]/180) * M_PI);
+            else {
+                CGFloat centerX = self.parameters[1];
+                CGFloat centerY = self.parameters[2];
+                CGFloat angle = self.parameters[0]*(M_PI/180.f);
+                CGAffineTransform def = CGAffineTransformIdentity;
+                def = CGAffineTransformTranslate(def, centerX, centerY);
+                def = CGAffineTransformRotate(def, angle);
+                def = CGAffineTransformTranslate(def, -1.f*centerX, -1.f*centerY);
+                return def;
+            }
+            break;
+        }
+            
+        // do nothing
+        case IJSVGTransformCommandNotImplemented: {
+            return CGAffineTransformIdentity;
+        }
+    }
+    return CGAffineTransformIdentity;
 }
 
 @end

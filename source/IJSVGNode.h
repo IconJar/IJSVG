@@ -88,7 +88,6 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     IJSVGNode * parentNode;
     IJSVGGroup * clipPath;
     NSArray * transforms;
-    NSArray * gradientTransforms;
     
     IJSVGWindingRule windingRule;
     IJSVGLineCapStyle lineCapStyle;
@@ -120,7 +119,6 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, assign ) IJSVGLineCapStyle lineCapStyle;
 @property ( nonatomic, assign ) IJSVGLineJoinStyle lineJoinStyle;
 @property ( nonatomic, retain ) NSArray * transforms;
-@property ( nonatomic, retain ) NSArray * gradientTransforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
 @property ( nonatomic, assign ) CGFloat * strokeDashArray;

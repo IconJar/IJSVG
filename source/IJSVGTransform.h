@@ -35,5 +35,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 + (void)performTransform:(IJSVGTransform *)transform
                inContext:(CGContextRef)context;
 + (NSBezierPath *)transformedPath:(IJSVGPath *)path;
+- (CGAffineTransform)CGAffineTransform;
+- (void)recalculateWithBounds:(CGRect)bounds;
 
 @end
