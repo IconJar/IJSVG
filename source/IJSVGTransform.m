@@ -246,30 +246,59 @@
 
 - (CGAffineTransform)CGAffineTransform
 {
+    return [self CGAffineTransformWithModifier:nil];
+}
+
+- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier
+{
     switch(self.command)
     {
         // matrix
         case IJSVGTransformCommandMatrix: {
-            return CGAffineTransformMake( self.parameters[0],
-                                         self.parameters[1],
-                                         self.parameters[2],
-                                         self.parameters[3],
-                                         self.parameters[4],
-                                         self.parameters[5]);
+            CGFloat p0 = self.parameters[0];
+            CGFloat p1 = self.parameters[1];
+            CGFloat p2 = self.parameters[2];
+            CGFloat p3 = self.parameters[3];
+            CGFloat p4 = self.parameters[4];
+            CGFloat p5 = self.parameters[5];
+            if(modifier != nil)
+            {
+                p0 = modifier(0,p0);
+                p1 = modifier(1,p1);
+                p2 = modifier(2,p2);
+                p3 = modifier(2,p3);
+                p4 = modifier(2,p4);
+                p5 = modifier(2,p5);
+            }
+            return CGAffineTransformMake(p0, p1, p2, p3, p4, p5);
         }
             
         // translate
         case IJSVGTransformCommandTranslate: {
+            CGFloat p0 = self.parameters[0];
+            CGFloat p1 = self.parameters[1];
+            if(modifier != nil)
+            {
+                p0 = modifier(0,p0);
+                p1 = modifier(1,p1);
+            }
             if(self.parameterCount == 1)
-                return CGAffineTransformMakeTranslation( self.parameters[0], 0 );
-            return CGAffineTransformMakeTranslation(self.parameters[0], self.parameters[1]);
+                return CGAffineTransformMakeTranslation( p0, 0 );
+            return CGAffineTransformMakeTranslation(p0, p1);
         }
             
         // scale
         case IJSVGTransformCommandScale: {
+            CGFloat p0 = self.parameters[0];
+            CGFloat p1 = self.parameters[1];
+            if(modifier != nil)
+            {
+                p0 = modifier(0,p0);
+                p1 = modifier(1,p1);
+            }
             if(self.parameterCount == 1)
-                return CGAffineTransformMakeScale( self.parameters[0], self.parameters[0]);
-            return CGAffineTransformMakeScale( self.parameters[0], self.parameters[1]);
+                return CGAffineTransformMakeScale( p0, p0);
+            return CGAffineTransformMakeScale( p0, p1);
         }
         
         // rotate
@@ -277,13 +306,20 @@
             if(self.parameterCount == 1)
                 return CGAffineTransformMakeRotation((self.parameters[0]/180) * M_PI);
             else {
-                CGFloat centerX = self.parameters[1];
-                CGFloat centerY = self.parameters[2];
-                CGFloat angle = self.parameters[0]*(M_PI/180.f);
+                CGFloat p0 = self.parameters[0];
+                CGFloat p1 = self.parameters[1];
+                CGFloat p2 = self.parameters[2];
+                if(modifier != nil)
+                {
+                    p0 = modifier(0,p0);
+                    p1 = modifier(1,p1);
+                    p2 = modifier(2,p2);
+                }
+                CGFloat angle = p0*(M_PI/180.f);
                 CGAffineTransform def = CGAffineTransformIdentity;
-                def = CGAffineTransformTranslate(def, centerX, centerY);
+                def = CGAffineTransformTranslate(def, p1, p2);
                 def = CGAffineTransformRotate(def, angle);
-                def = CGAffineTransformTranslate(def, -1.f*centerX, -1.f*centerY);
+                def = CGAffineTransformTranslate(def, -1.f*p1, -1.f*p2);
                 return def;
             }
             break;

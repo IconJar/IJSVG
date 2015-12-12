@@ -35,24 +35,34 @@
                    startPoint:(CGPoint *)startPoint
                      endPoint:(CGPoint *)endPoint
 {
-    // assume its a vertical / horizonal
-    gradient.cx = [[[element attributeForName:@"cx"] stringValue] floatValue]/100;
-    gradient.cy = [[[element attributeForName:@"cy"] stringValue] floatValue]/100;
-    gradient.radius = [[[element attributeForName:@"r"] stringValue] floatValue]/100;
-    gradient.fx = [[[element attributeForName:@"fx"] stringValue] floatValue]/100;
-    gradient.fy = [[[element attributeForName:@"fy"] stringValue] floatValue]/100;
+    // cx defaults to 50% if not specified
+    if( [element attributeForName:@"cx"] )
+        gradient.cx = [[[element attributeForName:@"cx"] stringValue] floatValue]/100;
+    else
+        gradient.cx = .5f;
     
-    // nothing has been specified, make it 50% for everything
-    if( gradient.cx == 0.f && gradient.cy == 0.f
-       && gradient.fx == 0.f && gradient.fy == 0.f
-       && gradient.radius == 0.f )
-    {
-        gradient.cx = .5;
-        gradient.cy = .5;
-        gradient.radius = .5;
-        gradient.fx = .5;
-        gradient.fy = .5;
-    }
+    // cy defaults to 50% is not specified
+    if([element attributeForName:@"cy"])
+        gradient.cy = [[[element attributeForName:@"cy"] stringValue] floatValue]/100;
+    else
+        gradient.cy = .5f;
+    
+    if( [element attributeForName:@"r"] )
+        gradient.radius = [[[element attributeForName:@"r"] stringValue] floatValue]/100;
+    else
+        gradient.radius = .5f;
+    
+    // fx defaults to cx if not specified
+    if( [element attributeForName:@"fx"] != nil )
+        gradient.fx = [[[element attributeForName:@"fx"] stringValue] floatValue]/100;
+    else
+        gradient.fx = gradient.cx;
+    
+    // fy defaults to cy if not specified
+    if( [element attributeForName:@"fy"] != nil )
+        gradient.fy = [[[element attributeForName:@"fx"] stringValue] floatValue]/100;
+    else
+        gradient.fy = gradient.cy;
     
     if( gradient.gradient != nil )
         return nil;
@@ -69,28 +79,70 @@
     return ret;
 }
 
+- (CGFloat)_handleTransform:(IJSVGTransform *)transform
+                     bounds:(CGRect)bounds
+                      index:(NSInteger)index
+                      value:(CGFloat)value
+{
+    // rotate transform, assume its based on percentages
+    // if lower then 0 is specified for 1 or 2
+    CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
+    if( transform.command == IJSVGTransformCommandRotate )
+    {
+        switch(index)
+        {
+            case 1: {
+                if(value<1.f)
+                    return max*value;
+                break;
+            }
+                
+            case 2: {
+                if(value<1.f)
+                    return max*value;
+                break;
+            }
+        }
+    }
+    return value;
+
+}
+
 - (void)drawInContextRef:(CGContextRef)ctx
                     path:(IJSVGPath *)path
 {
-    // apply any transforms to the current context
     CGRect bounds = path.path.bounds;
-    CGContextTranslateCTM( ctx, bounds.origin.x, bounds.origin.y );
-    
     for( IJSVGTransform * transform in self.transforms )
     {
-        transform = [[transform copy] autorelease];
-        [transform recalculateWithBounds:bounds];
-        CGAffineTransform trans = transform.CGAffineTransform;
-        CGContextConcatCTM(ctx, trans);
+        IJSVGTransformParameterModifier modifier = ^CGFloat(NSInteger index, CGFloat value) {
+            return [self _handleTransform:transform
+                                   bounds:bounds
+                                    index:index
+                                    value:value];
+        };
+        CGContextConcatCTM(ctx, [transform CGAffineTransformWithModifier:modifier]);
     }
-
-    CGPoint sp = CGPointMake( bounds.size.width*self.cx, bounds.size.height*self.cy);
-    CGPoint ep = CGPointMake( bounds.size.width*self.fx, bounds.size.height*self.fy);
     
-    // draw the gradient
+    CGPoint sp = self.startPoint;
+    CGPoint ep = self.endPoint;
+    
+    if( self.startPoint.x == .5f )
+        sp.x = bounds.size.width*self.startPoint.x;
+    if(startPoint.y == .5f)
+        sp.y = bounds.size.height*self.startPoint.y;
+    
+    if(self.endPoint.x == .5f)
+        ep.x = bounds.size.width*self.endPoint.x;
+    if(self.endPoint.y == .5f)
+        ep.y = bounds.size.height*self.endPoint.y;
+    
+    CGFloat r = self.radius;
+    if(r == .5f)
+        r = (sp.x>sp.y?sp.x:sp.y);
+    
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
     CGGradientRef grad = self.CGGradient;
-    CGContextDrawRadialGradient(ctx, grad, sp, 0.f, ep, bounds.size.height*self.radius, options);
+    CGContextDrawRadialGradient(ctx, grad, sp, 0.f, ep, r, options);
 }
 
 @end

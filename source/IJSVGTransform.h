@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGUtils.h"
 
+typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
+
 typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
     IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
@@ -36,6 +38,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
                inContext:(CGContextRef)context;
 + (NSBezierPath *)transformedPath:(IJSVGPath *)path;
 - (CGAffineTransform)CGAffineTransform;
+- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
 - (void)recalculateWithBounds:(CGRect)bounds;
 
 @end
