@@ -91,12 +91,7 @@
     {
         switch(index)
         {
-            case 1: {
-                if(value<1.f)
-                    return max*value;
-                break;
-            }
-                
+            case 1:
             case 2: {
                 if(value<1.f)
                     return max*value;
