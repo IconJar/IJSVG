@@ -4,17 +4,11 @@ IJSVG is a Mac OSX 10.7+ COCOA library for rendering SVG's within your COCOA app
 
 Orignaly written for IconJar (in development)
 
-It takes SVG's files and makes pretty pictures like this:
-
-![SVG Example](http://cl.ly/image/0G3S3Q1s271Z/Screen%20Shot%202014-09-02%20at%2018.17.52.png)
-
 It also supports the NSPasteboards writing protocol, an IJSVG object can be put onto the pasteboard and application like Sketch and Photoshop can paste them into the document as vector objects (generated PDF's on the fly).
 
 Example app
 ====
 There is an example application provided, it will generate this test bed for SVG's
-
-![SVG Example App](http://cl.ly/image/2j1T2c351Z22/Screen%20Shot%202014-09-05%20at%2017.50.50.png)
 
 The example screen contains six SVG's rendered in individual views, from left to right.
 * First example shows transforms and colours
@@ -50,9 +44,10 @@ IJSVG does allow you to directly draw the SVG into any focused drawing context f
 * Commands: A, M, L, H, V, C, S, T, Q and Z and full support for multiple parameters of each type
 * Transformations: matrix, rotate (not around a point - currently), translate, scale transformations
 * Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style
-* Filling: fill color, fill mode (winding rules), fill opacity, linear gradients (rudimentary radial gradients)
+* Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients
 * Color: supports all predefined colors from the SVG spec and hex values
 * Caching: has basic caching implemenation
+* CSS: Basic embedded style sheets are support with very basic selectors
 * Switches and foreign objects, there is a delegate you can implement to handle foreign objects, once you say you can handle it, its up to you to handle the SVG as IJSVG will stop parsing the document once you have told it you will handle it
 
 ## Credit
