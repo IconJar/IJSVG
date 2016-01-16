@@ -14,6 +14,8 @@
 @synthesize shouldRender;
 @synthesize type;
 @synthesize name;
+@synthesize classNameList;
+@synthesize className;
 @synthesize unicode;
 @synthesize x;
 @synthesize y;
@@ -50,6 +52,8 @@
     [identifier release], identifier = nil;
     [def release], def = nil;
     [name release], name = nil;
+    [className release], className = nil;
+    [classNameList release], classNameList = nil;
     [super dealloc];
 }
 
@@ -104,6 +108,8 @@
     self.name = node.name;
     self.type = node.type;
     self.unicode = node.unicode;
+    self.className = node.className;
+    self.classNameList = node.classNameList;
     
     self.x = node.x;
     self.y = node.y;

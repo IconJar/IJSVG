@@ -22,4 +22,6 @@
              forProperty:(NSString *)key;
 - (id)property:(NSString *)key;
 
+- (IJSVGStyle *)mergedStyle:(IJSVGStyle *)style;
+
 @end

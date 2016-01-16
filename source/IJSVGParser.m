@@ -40,6 +40,7 @@
 - (void)dealloc
 {
     [_glyphs release], _glyphs = nil;
+    [_styleSheet release], _styleSheet = nil;
     [super dealloc];
 }
 
@@ -170,6 +171,18 @@
         else if( w == 0.f && h != 0.f )
             w = h;
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
+    }
+    
+    // find any stylesheets
+    NSArray * styles = [svgElement nodesForXPath:@"//style"
+                                           error:nil];
+    if(styles.count != 0)
+    {
+        _styleSheet = [[IJSVGStyleSheet alloc] init];
+        for(NSXMLElement * styleElement in styles)
+        {
+            [_styleSheet parseStyleBlock:[styleElement stringValue]];
+        }
     }
     
     // parse the width and height....
@@ -422,11 +435,30 @@
     
     // now we need to work out if there is any style...apparently this is a thing now,
     // people use the style attribute... -_-
-    // style
-    NSXMLNode * styleNode = [element attributeForName:@"style"];
-    if( styleNode != nil )
+    // style sheet...
+    
+    // work out the class name and list of names
+    NSString * nClassName = [[element attributeForName:@"class"] stringValue];
+    if(nClassName != nil)
     {
-        IJSVGStyle * style = [IJSVGStyle parseStyleString:[styleNode stringValue]];
+        node.className = nClassName;
+        node.classNameList = [nClassName componentsSeparatedByString:@" "];
+    }
+    
+    NSXMLNode * styleNode = [element attributeForName:@"style"];
+    IJSVGStyle * sheetStyle = nil;
+    if(_styleSheet != nil)
+        sheetStyle = [_styleSheet styleForNode:node];
+    
+    if( styleNode != nil || sheetStyle != nil )
+    {
+        IJSVGStyle * style = nil;
+        
+        if(styleNode != nil)
+            style = [IJSVGStyle parseStyleString:[styleNode stringValue]];
+        
+        if(sheetStyle != nil)
+            style = [sheetStyle mergedStyle:style];
         
         // actual display
         NSString * display = nil;
