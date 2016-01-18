@@ -10,11 +10,21 @@
 
 @class IJSVGNode;
 
+typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
+    IJSVGStyleSheetSelectorCombinatorDescendant, // space
+    IJSVGStyleSheetSelectorCombinatorDirectDescendant, // >
+    IJSVGStyleSheetSelectorCombinatorPrecededSibling, // ~
+    IJSVGStyleSheetSelectorCombinatorNextSibling // +
+};
+
 @interface IJSVGStyleSheetSelectorRaw : NSObject {
 
     NSString * tag;
     NSString * identifier;
+    
     NSMutableArray * classes;
+    
+    IJSVGStyleSheetSelectorCombinator combinator;
     
 }
 
