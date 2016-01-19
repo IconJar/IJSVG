@@ -16,21 +16,14 @@
 
 <style>
 
-	rect + rect {
-		fill: blue;
-	}
-
-	rect + rect + rect {
+	g rect.bacon {
 		fill: red;
 	}
 
 </style>
 
-
-<g class="test group">
-	<rect id="bacon" x="0" y="0" width="512" height="512"/>
-	<rect width="256" height="256"/>
-	<rect width="128" height="128"/>
+<g class="woop">
+	<rect class="bacon" width="128" height="128"/>
 </g>
 
 </svg>

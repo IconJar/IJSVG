@@ -18,6 +18,18 @@
     [super dealloc];
 }
 
+- (BOOL)combinatorIsGreedy:(IJSVGStyleSheetSelectorCombinator)combinator
+{
+    return combinator == IJSVGStyleSheetSelectorCombinatorDescendant ||
+    combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling;
+}
+
+- (BOOL)isAncestorOperator:(IJSVGStyleSheetSelectorCombinator)combinator
+{
+    return combinator == IJSVGStyleSheetSelectorCombinatorDescendant ||
+    combinator == IJSVGStyleSheetSelectorCombinatorDirectDescendant;
+}
+
 - (IJSVGStyleSheetSelectorCombinator)combinatorForUnichar:(unichar)aChar
 {
     if(aChar == '+')
@@ -35,12 +47,12 @@
     {
         selector = [string copy];
         _rawSelectors = [[NSMutableArray alloc] init];
-        [self compile];
+        [self _compile];
     }
     return self;
 }
 
-- (void)compile
+- (void)_compile
 {
     NSUInteger length = selector.length;
     NSMutableArray * sels = [[[NSMutableArray alloc] init] autorelease];
@@ -148,10 +160,9 @@
     }
     // now its compiled, we need to reverse the selectors
     [_rawSelectors addObjectsFromArray:[sels reverseObjectEnumerator].allObjects];
-    NSLog(@"%@",_rawSelectors);
 }
 
-- (IJSVGNode *)previousNode:(IJSVGNode *)node
+- (IJSVGNode *)_previousNode:(IJSVGNode *)node
 {
     IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
     if([group isKindOfClass:[IJSVGGroup class]] == NO)
@@ -162,7 +173,7 @@
     return group.children[currentIndex-1];
 }
 
-- (IJSVGNode *)nextNode:(IJSVGNode *)node
+- (IJSVGNode *)_nextNode:(IJSVGNode *)node
 {
     IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
     if([group isKindOfClass:[IJSVGGroup class]] == NO)
@@ -173,9 +184,24 @@
     return group.children[currentIndex+1];
 }
 
-- (BOOL)_matchesNode:(IJSVGNode *)node
-         rawSelector:(IJSVGStyleSheetSelectorRaw *)rawSelector
-          combinator:(IJSVGStyleSheetSelectorCombinator)combinator
+- (IJSVGStyleSheetSelectorRaw *)_previousSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
+{
+    NSInteger index = [_rawSelectors indexOfObject:aSelector];
+    if(index == 0)
+        return nil;
+    return _rawSelectors[index-1];
+}
+
+- (IJSVGStyleSheetSelectorRaw *)_nextSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
+{
+    NSInteger index = [_rawSelectors indexOfObject:aSelector];
+    if(index == _rawSelectors.count-1)
+        return nil;
+    return _rawSelectors[index+1];
+}
+
+- (BOOL)_match:(IJSVGNode *)node
+      selector:(IJSVGStyleSheetSelectorRaw *)rawSelector
 {
     // return no if the tag is set but doesnt match the node
     if(rawSelector.tag != nil && [rawSelector.tag isEqualToString:node.name] == NO)
@@ -194,115 +220,80 @@
        [rawSelector.identifier isEqualToString:node.identifier] == NO)
         return NO;
     
-    // if we get here, the rest match, so we need to check any combinator...
-    if(combinator != IJSVGStyleSheetSelectorCombinatorDescendant) {
+    return YES;
+}
+
+- (BOOL)_matches:(IJSVGNode *)aNode
+        selector:(IJSVGStyleSheetSelectorRaw *)rawSelector
+{
+    IJSVGNode * prevNode = aNode;
+    IJSVGStyleSheetSelectorRaw * aSelector = rawSelector;
+    
+    while(aSelector != nil) {
         
-        // the parent node must be of type group in order to actually have children
-        IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
+        IJSVGNode * workingNode = nil;
         
-        // are we actually a group?
-        if([group isKindOfClass:[IJSVGGroup class]]) {
+        // for adjacent node, the content to test against
+        // is the previous sibling
+        if(rawSelector.combinator == IJSVGStyleSheetSelectorCombinatorNextSibling ||
+           rawSelector.combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling) {
+            workingNode = [self _previousNode:prevNode];
+        }
+        
+        // for descedant combinators and child, the element
+        // to test against is the parent node
+        else {
             
-            // work out next and previous
-            IJSVGNode * previousNode = [self previousNode:node];
-            IJSVGNode * nextNode = [self nextNode:node];
-            
-            // work out what to do for each combinator
-            switch (rawSelector.combinator) {
-                    
-                // > direct decendant
-                case IJSVGStyleSheetSelectorCombinatorDirectDescendant: {
-                    if([self _matchesNode:group
-                              rawSelector:[self previousSelector:rawSelector]
-                               combinator:IJSVGStyleSheetSelectorCombinatorDescendant])
-                        return YES;
-                    break;
-                }
-                    
-                // + next sibling
-                case IJSVGStyleSheetSelectorCombinatorNextSibling: {
-                    if( previousNode.type == node.type )
-                        return YES;
-                    break;
-                }
-                    
-                // ~ previous sibling
-                case IJSVGStyleSheetSelectorCombinatorPrecededSibling: {
-                    if( nextNode.type == node.type )
-                        return YES;
-                    break;
-                }
-                    
-                default:
-                    return NO;
+            // find the parent
+            IJSVGGroup * possibleParent = (IJSVGGroup *)prevNode.parentNode;
+            if(possibleParent != nil) {
+                workingNode = possibleParent;
             }
         }
-        return NO;
+        
+        // no node - just kill
+        if(workingNode == nil)
+            return NO;
+        
+        // test the working node against the current selector
+        if([self _match:workingNode
+               selector:aSelector]) {
+
+            // check for greedy
+            IJSVGStyleSheetSelectorRaw * nSelector = [self _nextSelector:rawSelector];
+            
+            if([self combinatorIsGreedy:aSelector.combinator] &&
+               nSelector.combinator != rawSelector.combinator &&
+               (rawSelector.combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling
+                    && [self isAncestorOperator:nSelector.combinator]) == NO) {                   
+                // just do a quick dirty check
+                if([self _matches:workingNode selector:rawSelector]) {
+                    return YES;
+                }
+            }
+            
+            // get the next selector
+            aSelector = [self _nextSelector:aSelector];
+        } else {
+            
+            // is its greedy, if we didnt match, just return NO
+            if([self combinatorIsGreedy:aSelector.combinator] == NO) {
+                return NO;
+            }
+        }
+        prevNode = workingNode;
     }
     return YES;
 }
 
-- (IJSVGStyleSheetSelectorRaw *)previousSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
-{
-    NSInteger index = [_rawSelectors indexOfObject:aSelector];
-    if(index == 0)
-        return nil;
-    return _rawSelectors[--index];
-}
-
-- (IJSVGStyleSheetSelectorRaw *)nextSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
-{
-    NSInteger index = [_rawSelectors indexOfObject:aSelector];
-    if(index == _rawSelectors.count-1)
-        return nil;
-    return _rawSelectors[++index];
-}
 
 - (BOOL)matchesNode:(IJSVGNode *)node
 {
-    // grab the list of remaing selectors
-    IJSVGNode * checkNode = node;
-    for(IJSVGStyleSheetSelectorRaw * rawSelector in _rawSelectors) {
-        
-        BOOL basicMatch = [self _matchesNode:checkNode
-                                 rawSelector:rawSelector
-                                  combinator:IJSVGStyleSheetSelectorCombinatorDescendant];
-        
-        // simple, just return NO
-        if(!basicMatch)
-            return NO;
-        
-        // requires more then just a standard descendant
-        if(rawSelector.combinator != IJSVGStyleSheetSelectorCombinatorDescendant) {
-            
-            basicMatch = [self _matchesNode:checkNode
-                                rawSelector:rawSelector
-                                 combinator:rawSelector.combinator];
-            if(!basicMatch)
-                return NO;
-            
-        } else {
-            
-            IJSVGNode * pNode = checkNode;
-            BOOL found = NO;
-            for(;;) {
-                pNode = pNode.parentNode;
-                if(pNode == nil)
-                    return NO;
-                basicMatch = [self _matchesNode:checkNode
-                                    rawSelector:rawSelector
-                                     combinator:rawSelector.combinator];
-                if(basicMatch) {
-                    found = YES;
-                    break;
-                } else {
-                    return NO;
-                }
-            }
-        }
-        
-    }
-    return YES;
+    IJSVGStyleSheetSelectorRaw * raw = _rawSelectors[0];
+    if([self _match:node selector:raw] &&
+       ([self _matches:node selector:raw] || _rawSelectors.count == 1 ))
+        return YES;
+    return NO;
 }
 
 @end
