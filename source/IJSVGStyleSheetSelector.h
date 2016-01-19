@@ -14,10 +14,13 @@
 @interface IJSVGStyleSheetSelector : NSObject {
     
     NSString * selector;
+    NSUInteger specificity;
 @private
     NSMutableArray * _rawSelectors;
     
 }
+
+@property (nonatomic, assign) NSUInteger specificity;
 
 - (id)initWithSelectorString:(NSString *)string;
 - (BOOL)matchesNode:(IJSVGNode *)node;

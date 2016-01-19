@@ -16,14 +16,30 @@
 
 <style>
 
-	g rect.bacon {
+	line {
+		fill: white;
+		stroke: white;
+		stroke-width: 5;
+	}
+
+	g + g.woop line.willy ~ rect {
+		fill: blue;
+	}
+
+	g + g.woop > rect.bacon#really {
 		fill: red;
 	}
 
+
 </style>
 
+<g>
+</g>
 <g class="woop">
-	<rect class="bacon" width="128" height="128"/>
+	<rect width="512" height="512"/>
+	<line class="willy wonker" id="yerbaby" x1="0" y1="0" x2="512" y2="512"/>
+	<rect width="256" height="256"/>
+	<rect class="bacon" id="really" width="128" height="128"/>
 </g>
 
 </svg>

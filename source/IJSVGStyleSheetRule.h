@@ -22,6 +22,7 @@
 @property (nonatomic, retain) NSArray * selectors;
 @property (nonatomic, retain) IJSVGStyle * style;
 
-- (BOOL)matchesNode:(IJSVGNode *)node;
+- (BOOL)matchesNode:(IJSVGNode *)node
+           selector:(IJSVGStyleSheetSelector **)matchedSelector;
 
 @end
