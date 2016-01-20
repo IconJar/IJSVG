@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
+		59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */ = {isa = PBXBuildFile; fileRef = 59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */; };
 		59459CEC19B906FE00CE493B /* clipped.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59459CEB19B906FE00CE493B /* clipped.svg */; };
 		59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */ = {isa = PBXBuildFile; fileRef = 59459CEE19B9074F00CE493B /* SVGExampleView4.m */; };
 		5948DED51BB2BFE5004156FF /* IJSVGFontConverter.m in Sources */ = {isa = PBXBuildFile; fileRef = 5948DED21BB2BFE5004156FF /* IJSVGFontConverter.m */; };
@@ -72,6 +74,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
+		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
+		59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView6.m; sourceTree = "<group>"; };
 		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
 		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
 		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
@@ -229,6 +234,8 @@
 				59459CEE19B9074F00CE493B /* SVGExampleView4.m */,
 				5986308819BA106D00CF15EA /* SVGExampleView5.h */,
 				5986308919BA106D00CF15EA /* SVGExampleView5.m */,
+				59265CE91C4F843E00F333F0 /* SVGExampleView6.h */,
+				59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */,
 			);
 			path = IJSVGExample;
 			sourceTree = "<group>";
@@ -236,6 +243,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				59265CE71C4F840400F333F0 /* css.svg */,
 				59459CEB19B906FE00CE493B /* clipped.svg */,
 				59F799E119B880CE00096CB7 /* htc_one.svg */,
 				59B93C6E19B7D32C0063E823 /* products.svg */,
@@ -433,6 +441,7 @@
 			files = (
 				59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */,
 				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
+				59265CE81C4F840400F333F0 /* css.svg in Resources */,
 				595665DE19B6309C00D805FF /* test.svg in Resources */,
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
@@ -466,6 +475,7 @@
 				599465DD1C4AA87200A2EEF3 /* IJSVGStyleSheetRule.m in Sources */,
 				5986308A19BA106D00CF15EA /* SVGExampleView5.m in Sources */,
 				59E2645619BA240D008A6FDB /* IJSVGCommandArc.m in Sources */,
+				59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */,
 				599465DC1C4AA87200A2EEF3 /* IJSVGStyleSheet.m in Sources */,
 				59E2645319BA240D008A6FDB /* IJSVGCache.m in Sources */,
 				599465DF1C4AA87200A2EEF3 /* IJSVGStyleSheetSelectorRaw.m in Sources */,

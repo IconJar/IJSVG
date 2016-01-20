@@ -570,7 +570,8 @@
 - (void)_parseElementForCommonAttributes:(NSXMLElement *)element
                                     node:(IJSVGNode *)node
 {
-    [_parsedNodes addObject:@{@"node":node,@"element":element}];
+    [self _postParseElementForCommonAttributes:element
+                                          node:node];
 }
 
 - (void)_parseBlock:(NSXMLElement *)anElement
