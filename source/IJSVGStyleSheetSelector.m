@@ -18,19 +18,13 @@
 
 @synthesize specificity;
 
-- (void)dealloc
-{
-    [selector release], selector = nil;
-    [super dealloc];
-}
-
-- (BOOL)isSiblingCombinator:(IJSVGStyleSheetSelectorCombinator)combinator
+BOOL IJSVGStyleSheetIsSiblingCombinator(IJSVGStyleSheetSelectorCombinator combinator)
 {
     return combinator == IJSVGStyleSheetSelectorCombinatorNextSibling ||
-        combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling;
-}
+    combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling;
+};
 
-- (IJSVGStyleSheetSelectorCombinator)combinatorForUnichar:(unichar)aChar
+IJSVGStyleSheetSelectorCombinator IJSVGStyleSheetCombinatorForUnichar(unichar aChar)
 {
     if(aChar == '+')
         return IJSVGStyleSheetSelectorCombinatorNextSibling;
@@ -39,6 +33,210 @@
     if(aChar == '>')
         return IJSVGStyleSheetSelectorCombinatorDirectDescendant;
     return IJSVGStyleSheetSelectorCombinatorDescendant;
+};
+
+IJSVGNode * IJSVGStyleSheetPreviousNode(IJSVGNode * node)
+{
+    IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
+    if([group isKindOfClass:[IJSVGGroup class]] == NO)
+        return nil;
+    NSInteger currentIndex = [group.children indexOfObject:node];
+    if(currentIndex == 0)
+        return nil;
+    return group.children[currentIndex-1];
+};
+
+IJSVGNode * IJSVGStyleSheetNextNode(IJSVGNode * node)
+{
+    IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
+    if([group isKindOfClass:[IJSVGGroup class]] == NO)
+        return nil;
+    NSInteger currentIndex = [group.children indexOfObject:node];
+    if(currentIndex == group.children.count-1)
+        return nil;
+    return group.children[currentIndex+1];
+};
+
+IJSVGStyleSheetSelectorRaw * IJSVGStyleSheetPreviousSelector(IJSVGStyleSheetSelectorRaw * aSelector, NSArray * _rawSelectors)
+{
+    NSInteger index = [_rawSelectors indexOfObject:aSelector];
+    if(index == 0)
+        return nil;
+    return _rawSelectors[index-1];
+};
+
+IJSVGStyleSheetSelectorRaw * IJSVGStyleSheetNextSelector(IJSVGStyleSheetSelectorRaw * aSelector, NSArray * _rawSelectors)
+{
+    NSInteger index = [_rawSelectors indexOfObject:aSelector];
+    if(index == _rawSelectors.count-1)
+        return nil;
+    return _rawSelectors[index+1];
+};
+
+BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw * rawSelector)
+{
+    // return no if the tag is set but doesnt match the node
+    if(rawSelector.tag != nil && [rawSelector.tag isEqualToString:node.name] == NO)
+        return NO;
+    
+    // check if the classes match the class
+    if(rawSelector.classes.count != 0) {
+        for(NSString * className in rawSelector.classes) {
+            if([node.classNameList containsObject:className] == NO)
+                return NO;
+        }
+    }
+    
+    // check the idenfitier
+    if(rawSelector.identifier != nil &&
+       [rawSelector.identifier isEqualToString:node.identifier] == NO)
+        return NO;
+    
+    return YES;
+};
+
+
+- (BOOL)_matches:(IJSVGNode *)aNode
+        selector:(IJSVGStyleSheetSelectorRaw *)rawSelector
+{
+    IJSVGStyleSheetSelectorRaw * aSelector = rawSelector;
+    
+    // loop until aSelector is nil
+    while(aSelector != nil) {
+        
+        // sibling, so + or ~
+        if(IJSVGStyleSheetIsSiblingCombinator(aSelector.combinator)) {
+            
+            // the +
+            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorNextSibling) {
+                
+                // straight forward again, find the previous sibling
+                // and match it against the next selector in the list
+                IJSVGNode * previousNode = IJSVGStyleSheetPreviousNode(aNode);
+                IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector, _rawSelectors);
+                
+                if(previousNode != nil &&  IJSVGStyleSheetMatchSelector(previousNode, s)) {
+                    // set the new starting selector and node
+                    aSelector = s;
+                    aNode = previousNode;
+                }
+                
+                // didnt match previous element
+                else {
+                    return NO;
+                }
+                
+            }
+            
+            // the ~
+            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling) {
+                
+                IJSVGGroup * parentNode = (IJSVGGroup *)aNode.parentNode;
+                
+                // no parent, just return no
+                if(parentNode == nil) {
+                    return NO;
+                }
+                
+                // grab the children
+                NSArray * nodes = parentNode.children;
+                NSInteger index = [nodes indexOfObject:aNode];
+                
+                // doesnt contain the child
+                if(index == NSNotFound) {
+                    return NO;
+                }
+                
+                // find the next selector
+                IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector,_rawSelectors);
+                BOOL found = NO;
+                for( NSUInteger i = index; index > 0; i-- ) {
+                    
+                    // grab the child node
+                    IJSVGNode * childNode = nodes[i];
+                    
+                    // matches, huzzah!
+                    if(IJSVGStyleSheetMatchSelector(childNode, s)) {
+                        // set the new starting selector and node
+                        found = YES;
+                        aSelector = s;
+                        aNode = childNode;
+                        break;
+                    }
+                }
+                
+                // nothing found
+                if(found == NO) {
+                    return NO;
+                }
+                
+            }
+            
+        }
+        
+        // not a + or a ~
+        else {
+            
+            // can up to the matching parent, if not found, nothing!
+            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDescendant) {
+                // go up the chain until we match a parent that
+                // matches the next selector
+                IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector,_rawSelectors);
+                IJSVGNode * p = aNode;
+                while(p != nil) {
+                    
+                    // set p to current parentNode
+                    p = p.parentNode;
+                    
+                    // p must exist and match the selector
+                    if(p != nil && IJSVGStyleSheetMatchSelector(p, s)) {
+                        // set the new starting selector and node
+                        aSelector = s;
+                        aNode = p;
+                        break;
+                    }
+                    
+                    // no parent match found
+                    else if(p == nil) {
+                        return NO;
+                    }
+                }
+            }
+            
+            // > direct descedant
+            else if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDirectDescendant) {
+                
+                // grab parent
+                IJSVGGroup * parentNode = (IJSVGGroup *)aNode.parentNode;
+                
+                // no parent, just return
+                if(parentNode == nil)
+                    return NO;
+                
+                // really straight forward, just check if the parent
+                // matches the next selector and... contains the node in question
+                IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector,_rawSelectors);
+                if(IJSVGStyleSheetMatchSelector(parentNode, s) &&
+                   [parentNode.children containsObject:aNode]) {
+                    // set the new starting selector and node
+                    aSelector = s;
+                    aNode = parentNode;
+                }
+                
+                // no match found
+                else {
+                    return NO;
+                }
+            }
+        }
+    }
+    return YES;
+}
+
+- (void)dealloc
+{
+    [selector release], selector = nil;
+    [super dealloc];
 }
 
 - (id)initWithSelectorString:(NSString *)string
@@ -143,7 +341,7 @@
         else if ( c == '+' || c == '~' || c == '>' ) {
             
             // set the combinator onto the selector
-            rawSelector.combinator = [self combinatorForUnichar:c];
+            rawSelector.combinator = IJSVGStyleSheetCombinatorForUnichar(c);
             rawSelector.combinatorString = [NSString stringWithFormat:@"%c",c];
             
             // skip until non white space
@@ -184,204 +382,6 @@
     [_rawSelectors addObjectsFromArray:[sels reverseObjectEnumerator].allObjects];
 }
 
-- (IJSVGNode *)_previousNode:(IJSVGNode *)node
-{
-    IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
-    if([group isKindOfClass:[IJSVGGroup class]] == NO)
-        return nil;
-    NSInteger currentIndex = [group.children indexOfObject:node];
-    if(currentIndex == 0)
-        return nil;
-    return group.children[currentIndex-1];
-}
-
-- (IJSVGNode *)_nextNode:(IJSVGNode *)node
-{
-    IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
-    if([group isKindOfClass:[IJSVGGroup class]] == NO)
-        return nil;
-    NSInteger currentIndex = [group.children indexOfObject:node];
-    if(currentIndex == group.children.count-1)
-        return nil;
-    return group.children[currentIndex+1];
-}
-
-- (IJSVGStyleSheetSelectorRaw *)_previousSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
-{
-    NSInteger index = [_rawSelectors indexOfObject:aSelector];
-    if(index == 0)
-        return nil;
-    return _rawSelectors[index-1];
-}
-
-- (IJSVGStyleSheetSelectorRaw *)_nextSelector:(IJSVGStyleSheetSelectorRaw *)aSelector
-{
-    NSInteger index = [_rawSelectors indexOfObject:aSelector];
-    if(index == _rawSelectors.count-1)
-        return nil;
-    return _rawSelectors[index+1];
-}
-
-- (BOOL)_match:(IJSVGNode *)node
-      selector:(IJSVGStyleSheetSelectorRaw *)rawSelector
-{
-    // return no if the tag is set but doesnt match the node
-    if(rawSelector.tag != nil && [rawSelector.tag isEqualToString:node.name] == NO)
-        return NO;
-    
-    // check if the classes match the class
-    if(rawSelector.classes.count != 0) {
-        for(NSString * className in rawSelector.classes) {
-            if([node.classNameList containsObject:className] == NO)
-                return NO;
-        }
-    }
-    
-    // check the idenfitier
-    if(rawSelector.identifier != nil &&
-       [rawSelector.identifier isEqualToString:node.identifier] == NO)
-        return NO;
-    
-    return YES;
-}
-
-- (BOOL)_matches:(IJSVGNode *)aNode
-        selector:(IJSVGStyleSheetSelectorRaw *)rawSelector
-{
-    IJSVGStyleSheetSelectorRaw * aSelector = rawSelector;
-    
-    // loop until aSelector is nil
-    while(aSelector != nil) {
-        
-        // sibling, so + or ~
-        if([self isSiblingCombinator:aSelector.combinator]) {
-            
-            // the +
-            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorNextSibling) {
-                
-                // straight forward again, find the previous sibling
-                // and match it against the next selector in the list
-                IJSVGNode * previousNode = [self _previousNode:aNode];
-                IJSVGStyleSheetSelectorRaw * s = [self _nextSelector:aSelector];
-                
-                if(previousNode != nil && [self _match:previousNode selector:s]) {
-                    // set the new starting selector and node
-                    aSelector = s;
-                    aNode = previousNode;
-                }
-                
-                // didnt match previous element
-                else {
-                    return NO;
-                }
-                
-            }
-            
-            // the ~
-            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling) {
-                
-                IJSVGGroup * parentNode = (IJSVGGroup *)aNode.parentNode;
-                
-                // no parent, just return no
-                if(parentNode == nil) {
-                    return NO;
-                }
-                
-                // grab the children
-                NSArray * nodes = parentNode.children;
-                NSInteger index = [nodes indexOfObject:aNode];
-                
-                // doesnt contain the child
-                if(index == NSNotFound) {
-                    return NO;
-                }
-                
-                // find the next selector
-                IJSVGStyleSheetSelectorRaw * s = [self _nextSelector:aSelector];
-                BOOL found = NO;
-                for( NSUInteger i = index; index > 0; i-- ) {
-                    
-                    // grab the child node
-                    IJSVGNode * childNode = nodes[i];
-                    
-                    // matches, huzzah!
-                    if([self _match:childNode selector:s]) {
-                        // set the new starting selector and node
-                        found = YES;
-                        aSelector = s;
-                        aNode = childNode;
-                        break;
-                    }
-                }
-                
-                // nothing found
-                if(found == NO) {
-                    return NO;
-                }
-                
-            }
-            
-        }
-        
-        // not a + or a ~
-        else {
-            
-            // can up to the matching parent, if not found, nothing!
-            if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDescendant) {
-                // go up the chain until we match a parent that
-                // matches the next selector
-                IJSVGStyleSheetSelectorRaw * s = [self _nextSelector:aSelector];;
-                IJSVGNode * p = aNode;
-                while(p != nil) {
-                    
-                    // set p to current parentNode
-                    p = p.parentNode;
-                    
-                    // p must exist and match the selector
-                    if(p != nil && [self _match:p selector:s]) {
-                        // set the new starting selector and node
-                        aSelector = s;
-                        aNode = p;
-                        break;
-                    }
-                    
-                    // no parent match found
-                    else if(p == nil) {
-                        return NO;
-                    }
-                }
-            }
-            
-            // > direct descedant
-            else if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDirectDescendant) {
-                
-                // grab parent
-                IJSVGGroup * parentNode = (IJSVGGroup *)aNode.parentNode;
-                
-                // no parent, just return
-                if(parentNode == nil)
-                    return NO;
-                
-                // really straight forward, just check if the parent
-                // matches the next selector and... contains the node in question
-                IJSVGStyleSheetSelectorRaw * s = [self _nextSelector:aSelector];
-                if([self _match:parentNode selector:s] &&
-                   [parentNode.children containsObject:aNode]) {
-                    // set the new starting selector and node
-                    aSelector = s;
-                    aNode = parentNode;
-                }
-                
-                // no match found
-                else {
-                    return NO;
-                }
-            }
-        }
-    }
-    return YES;
-}
-
 
 - (BOOL)matchesNode:(IJSVGNode *)node
 {
@@ -390,8 +390,8 @@
     // and the next selector is nil, or the next selector isnt nil
     // and the node then goes up the tree and works itself out with the
     // selectors in question
-    if([self _match:node selector:sel] &&
-       ([self _nextSelector:sel] == nil ||
+    if(IJSVGStyleSheetMatchSelector(node, sel) &&
+       (IJSVGStyleSheetNextSelector(sel,_rawSelectors) == nil ||
         [self _matches:node selector:sel])) {
         return YES;
     }

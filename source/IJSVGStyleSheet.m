@@ -10,7 +10,7 @@
 #import "IJSVGStyle.h"
 #import "IJSVGNode.h"
 
-@interface IJSVGStyleSheetSelectorWrapper : NSObject {
+@interface IJSVGStyleSheetSelectorListItem : NSObject {
     
     IJSVGStyleSheetSelector * selector;
     IJSVGStyleSheetRule * rule;
@@ -22,7 +22,7 @@
 
 @end
 
-@implementation IJSVGStyleSheetSelectorWrapper
+@implementation IJSVGStyleSheetSelectorListItem
 
 @synthesize rule, selector;
 
@@ -167,12 +167,12 @@
         if([rule matchesNode:node selector:&matchedSelector]) {
             
             // make a wrapper for the selector with the rule
-            IJSVGStyleSheetSelectorWrapper * wrapper = [[[IJSVGStyleSheetSelectorWrapper alloc] init] autorelease];
-            wrapper.rule = rule;
-            wrapper.selector = matchedSelector;
+            IJSVGStyleSheetSelectorListItem * listItem = [[[IJSVGStyleSheetSelectorListItem alloc] init] autorelease];
+            listItem.rule = rule;
+            listItem.selector = matchedSelector;
             
             // add it to the array of matches
-            [matchedRules addObject:wrapper];
+            [matchedRules addObject:listItem];
         }
     }
     
@@ -182,8 +182,8 @@
     [matchedRules sortUsingDescriptors:@[sort]];
     
     // combine the rule
-    for(IJSVGStyleSheetSelectorWrapper * wrapper in matchedRules) {
-        style = [style mergedStyle:wrapper.rule.style];
+    for(IJSVGStyleSheetSelectorListItem * listItem in matchedRules) {
+        style = [style mergedStyle:listItem.rule.style];
     }
     
     return style;
