@@ -10,6 +10,31 @@
 #import "IJSVGStyle.h"
 #import "IJSVGNode.h"
 
+@interface IJSVGStyleSheetSelectorListItem : NSObject {
+    
+    IJSVGStyleSheetSelector * selector;
+    IJSVGStyleSheetRule * rule;
+    
+}
+
+@property (nonatomic, retain) IJSVGStyleSheetRule * rule;
+@property (nonatomic, retain) IJSVGStyleSheetSelector * selector;
+
+@end
+
+@implementation IJSVGStyleSheetSelectorListItem
+
+@synthesize rule, selector;
+
+- (void)dealloc
+{
+    [rule release], rule = nil;
+    [selector release], selector = nil;
+    [super dealloc];
+}
+
+@end
+
 @implementation IJSVGStyleSheet
 
 - (void)dealloc
@@ -135,11 +160,32 @@
 - (IJSVGStyle *)styleForNode:(IJSVGNode *)node
 {
     IJSVGStyle * style = [[[IJSVGStyle alloc] init] autorelease];
+    NSMutableArray * matchedRules = [[[NSMutableArray alloc] init] autorelease];
     for(IJSVGStyleSheetRule * rule in _rules)
     {
-        if([rule matchesNode:node])
-            style = [style mergedStyle:rule.style];
+        IJSVGStyleSheetSelector * matchedSelector = nil;
+        if([rule matchesNode:node selector:&matchedSelector]) {
+            
+            // make a wrapper for the selector with the rule
+            IJSVGStyleSheetSelectorListItem * listItem = [[[IJSVGStyleSheetSelectorListItem alloc] init] autorelease];
+            listItem.rule = rule;
+            listItem.selector = matchedSelector;
+            
+            // add it to the array of matches
+            [matchedRules addObject:listItem];
+        }
     }
+    
+    // now we have all the wrappers, we need to sort them
+    // by specificity
+    NSSortDescriptor * sort = [NSSortDescriptor sortDescriptorWithKey:@"selector.specificity" ascending:YES];
+    [matchedRules sortUsingDescriptors:@[sort]];
+    
+    // combine the rule
+    for(IJSVGStyleSheetSelectorListItem * listItem in matchedRules) {
+        style = [style mergedStyle:listItem.rule.style];
+    }
+    
     return style;
 }
 

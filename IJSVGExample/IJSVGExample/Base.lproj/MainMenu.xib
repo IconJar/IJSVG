@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6206.9" systemVersion="14A343f" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
-        <deployment defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6206.9"/>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -673,32 +673,12 @@
             <rect key="contentRect" x="335" y="390" width="556" height="452"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
             <view key="contentView" id="EiT-Mj-1SZ">
-                <rect key="frame" x="0.0" y="-1" width="556" height="452"/>
+                <rect key="frame" x="0.0" y="0.0" width="556" height="452"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView id="hhC-1S-CCX" customClass="SVGView">
-                        <rect key="frame" x="0.0" y="227" width="161" height="225"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    </customView>
-                    <customView id="jOS-l1-voG" customClass="SVGExampleView2">
-                        <rect key="frame" x="395" y="227" width="161" height="225"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMinY="YES"/>
-                    </customView>
-                    <customView id="mxr-zw-MsV" customClass="SVGExampleView1">
-                        <rect key="frame" x="160.5" y="227" width="235.5" height="225"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    </customView>
-                    <customView id="bHV-ou-brV" customClass="SVGExampleView3">
-                        <rect key="frame" x="0.0" y="0.0" width="161" height="228"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
-                    </customView>
-                    <customView id="osq-NY-OyC" customClass="SVGExampleView4">
-                        <rect key="frame" x="160" y="0.0" width="236" height="228"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" heightSizable="YES"/>
-                    </customView>
-                    <customView id="PEb-ng-OIe" customClass="SVGExampleView5">
-                        <rect key="frame" x="395" y="0.0" width="161" height="228"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" heightSizable="YES"/>
+                        <rect key="frame" x="0.0" y="0.0" width="556" height="452"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     </customView>
                 </subviews>
             </view>

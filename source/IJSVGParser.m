@@ -41,6 +41,7 @@
 {
     [_glyphs release], _glyphs = nil;
     [_styleSheet release], _styleSheet = nil;
+    [_parsedNodes release], _parsedNodes = nil;
     [super dealloc];
 }
 
@@ -52,6 +53,7 @@
     {
         _delegate = delegate;
         _glyphs = [[NSMutableArray alloc] init];
+        _parsedNodes = [[NSMutableArray alloc] init];
         
         // load the document / file, assume its UTF8
         
@@ -249,10 +251,19 @@
             intoGroup:self
                   def:NO];
     
+    // now everything has been done we need to compute the style tree
+    for(NSDictionary * dict in _parsedNodes) {
+        [self _postParseElementForCommonAttributes:dict[@"element"]
+                                              node:dict[@"node"]];
+    }
+    
+    // dont need the style sheet or the parsed nodes as this point
+    [_styleSheet release], _styleSheet = nil;
+    [_parsedNodes release], _parsedNodes = nil;
 }
 
-- (void)_parseElementForCommonAttributes:(NSXMLElement *)element
-                                    node:(IJSVGNode *)node
+- (void)_postParseElementForCommonAttributes:(NSXMLElement *)element
+                                        node:(IJSVGNode *)node
 {
     
     // unicode
@@ -556,6 +567,12 @@
     [_glyphs addObject:glyph];
 }
 
+- (void)_parseElementForCommonAttributes:(NSXMLElement *)element
+                                    node:(IJSVGNode *)node
+{
+    [_parsedNodes addObject:@{@"node":node,@"element":element}];
+}
+
 - (void)_parseBlock:(NSXMLElement *)anElement
           intoGroup:(IJSVGGroup*)parentGroup
                 def:(BOOL)flag
@@ -616,12 +633,12 @@
                 group.name = subName;
                 group.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:group];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:group];
-                
-                if( !flag )
-                    [parentGroup addChild:group];
                 
                 // recursively parse blocks
                 [self _parseBlock:element
@@ -641,14 +658,14 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
                                    intoPath:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -663,14 +680,14 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parsePolygon:element
                            intoPath:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -685,14 +702,14 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parsePolyline:element
                             intoPath:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -707,15 +724,15 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseRect:element
                         intoPath:path];
                 
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -730,12 +747,13 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parseLine:element
                         intoPath:path];
-                [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -750,14 +768,14 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parseCircle:element
                           intoPath:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil)
@@ -772,14 +790,14 @@
                 path.name = subName;
                 path.parentNode = parentGroup;
                 
+                if( !flag )
+                    [parentGroup addChild:path];
+                
                 // find common attributes
                 [self _parseElementForCommonAttributes:element
                                                   node:path];
                 [self _parseEllipse:element
                            intoPath:path];
-                
-                if( !flag )
-                    [parentGroup addChild:path];
                 
                 // could be defined
                 if( flag || [element attributeForName:@"id"] != nil )
@@ -800,13 +818,13 @@
                     IJSVGNode * theNode = [[node copy] autorelease];
                     theNode.parentNode = parentGroup;
                     
+                    [parentGroup addChild:theNode];
                     // grab common attributes
                     [self _parseElementForCommonAttributes:element
                                                       node:theNode];
                     
                     // add them
                     [parentGroup addDef:theNode];
-                    [parentGroup addChild:theNode];
                     continue;
                 }
                 

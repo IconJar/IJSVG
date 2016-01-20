@@ -43,6 +43,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     NSXMLDocument * _document;
     NSMutableArray * _glyphs;
     IJSVGStyleSheet * _styleSheet;
+    NSMutableArray * _parsedNodes;
 }
 
 @property ( nonatomic, readonly ) NSRect viewBox;
