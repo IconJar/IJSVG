@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "IJSVGCommand.h"
+#import "IJSVGUnits.h"
 
 @interface IJSVGUtils : NSObject
 

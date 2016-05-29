@@ -42,6 +42,7 @@
     [_glyphs release], _glyphs = nil;
     [_styleSheet release], _styleSheet = nil;
     [_parsedNodes release], _parsedNodes = nil;
+    [_defNodes release], _defNodes = nil;
     [super dealloc];
 }
 
@@ -54,6 +55,7 @@
         _delegate = delegate;
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
+        _defNodes = [[NSMutableDictionary alloc] init];
         
         // load the document / file, assume its UTF8
         
@@ -246,6 +248,23 @@
     
     // the root element is SVG, so iterate over its children
     // recursively
+    
+    // are there any defaults?
+    NSArray * defaults = [svgElement nodesForXPath:@"//defs"
+                                             error:nil];
+    if(defaults.count != 0) {
+        // we have default, we need to store these per ID and remove them from the array
+        for(NSXMLElement * defs in defaults) {
+            // store each object
+            for(NSXMLElement * childDef in defs.children) {
+                NSString * defID = [[childDef attributeForName:@"id"] stringValue];
+                if(defID != nil) {
+                    _defNodes[defID] = childDef;
+                }
+            }
+        }
+    }
+    
     self.name = svgElement.name;
     [self _parseBlock:svgElement
             intoGroup:self
@@ -260,11 +279,19 @@
     // dont need the style sheet or the parsed nodes as this point
     [_styleSheet release], _styleSheet = nil;
     [_parsedNodes release], _parsedNodes = nil;
+    [_defNodes release], _defNodes = nil;
 }
 
 - (void)_postParseElementForCommonAttributes:(NSXMLElement *)element
                                         node:(IJSVGNode *)node
 {
+    
+    // ID
+    NSXMLNode * idAttribute = [element attributeForName:@"id"];
+    if( idAttribute != nil ) {
+        node.identifier = [idAttribute stringValue];
+        _defNodes[node.identifier] = element;
+    }
     
     // unicode
     NSXMLNode * unicodeAttribute = [element attributeForName:@"unicode"];
@@ -308,8 +335,11 @@
     if( clipPathAttribute != nil )
     {
         NSString * clipID = [IJSVGUtils defURL:[clipPathAttribute stringValue]];
-        if( clipID )
-            node.clipPath = (IJSVGGroup *)[node defForID:clipID];
+        if( clipID ) {
+            node.clipPath = (IJSVGGroup *)[self definedObjectForID:clipID
+                                                              node:node
+                                                         fromGroup:nil];
+        }
     }
     
     // any mask?
@@ -320,11 +350,6 @@
         if( maskID )
             node.clipPath = (IJSVGGroup *)[node defForID:maskID];
     }
-    
-    // ID
-    NSXMLNode * idAttribute = [element attributeForName:@"id"];
-    if( idAttribute != nil )
-        node.identifier = [idAttribute stringValue];
     
     // transforms
     NSXMLNode * transformAttribute = [element attributeForName:@"transform"];
@@ -400,9 +425,19 @@
     {
         NSString * defID = [IJSVGUtils defURL:[fillAttribute stringValue]];
         if( defID != nil ) {
-            IJSVGGradient * grad = (IJSVGGradient *)[node defForID:defID];
-            node.fillGradient = grad;
-            grad.transforms = grad.transforms;
+            
+            // find the object
+            id obj = [self definedObjectForID:defID
+                                         node:node
+                                    fromGroup:nil];
+            
+            // fill gradient
+            if([obj isKindOfClass:[IJSVGGradient class]]) {
+                node.fillGradient = (IJSVGGradient *)obj;
+            } else if([obj isKindOfClass:[IJSVGPattern class]]) {
+                node.fillPattern = (IJSVGPattern *)obj;
+            }
+            
         } else {
             // change the fill color over if its allowed
             node.fillColor = [IJSVGColor colorFromString:[fillAttribute stringValue]];
@@ -552,6 +587,27 @@
     
 }
 
+- (id)definedObjectForID:(NSString *)anID
+                    node:(IJSVGNode *)node
+               fromGroup:(IJSVGGroup *)group
+{
+    NSXMLElement * parseElement = _defNodes[anID];
+    if(parseElement != nil) {
+        // parse the element
+        if(group == nil) {
+            group = [[[IJSVGGroup alloc] init] autorelease];
+        }
+        
+        // parse the block
+        [self _parseBaseBlock:parseElement
+                    intoGroup:group
+                          def:NO
+                         node:node];
+        return [group defForID:anID];
+    }
+    return nil;
+}
+
 - (BOOL)isFont
 {
     return [_glyphs count] != 0;
@@ -574,384 +630,388 @@
                                           node:node];
 }
 
+- (void)_parseBaseBlock:(NSXMLElement *)element
+              intoGroup:(IJSVGGroup *)parentGroup
+                    def:(BOOL)flag
+                   node:(IJSVGNode *)currentNode
+{
+    NSString * subName = element.name;
+    IJSVGNodeType aType = [IJSVGNode typeForString:subName];
+    switch( aType )
+    {
+        default:
+        case IJSVGNodeTypeDef:
+        case IJSVGNodeTypeNotFound:
+            break;
+            
+            // glyph
+        case IJSVGNodeTypeGlyph: {
+            
+            // no path data
+            if( [element attributeForName:@"d"] == nil || [[element attributeForName:@"d"] stringValue].length == 0 )
+                break;
+            
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            
+            // pass the commands for it
+            [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
+                               intoPath:path];
+            
+            // check the size...
+            if( NSIsEmptyRect([path path].controlPointBounds) )
+                break;
+            
+            // add the glyph
+            [self addGlyph:path];
+            break;
+        }
+            
+            // group
+        case IJSVGNodeTypeFont:
+        case IJSVGNodeTypeMask:
+        case IJSVGNodeTypeGroup: {
+            IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
+            group.type = aType;
+            group.name = subName;
+            group.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:group];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:group];
+            
+            // recursively parse blocks
+            [self _parseBlock:element
+                    intoGroup:group
+                          def:NO];
+            
+            [parentGroup addDef:group];
+            break;
+        }
+            
+            // path
+        case IJSVGNodeTypePath: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
+                               intoPath:path];
+            
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // polygon
+        case IJSVGNodeTypePolygon: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parsePolygon:element
+                       intoPath:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // polyline
+        case IJSVGNodeTypePolyline: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parsePolyline:element
+                        intoPath:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // rect
+        case IJSVGNodeTypeRect: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseRect:element
+                    intoPath:path];
+            
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // line
+        case IJSVGNodeTypeLine: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            [parentGroup addChild:path];
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parseLine:element
+                    intoPath:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // circle
+        case IJSVGNodeTypeCircle: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parseCircle:element
+                      intoPath:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // ellipse
+        case IJSVGNodeTypeEllipse: {
+            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            path.type = aType;
+            path.name = subName;
+            path.parentNode = parentGroup;
+            
+            if( !flag ) {
+                [parentGroup addChild:path];
+            }
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:path];
+            [self _parseEllipse:element
+                       intoPath:path];
+            [parentGroup addDef:path];
+            break;
+        }
+            
+            // use
+        case IJSVGNodeTypeUse: {
+            
+            NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+            NSString * xlinkID = [xlink substringFromIndex:1];
+            IJSVGNode * node = [self definedObjectForID:xlinkID
+                                                   node:nil
+                                              fromGroup:parentGroup];
+            
+            node.parentNode = parentGroup;
+            if(!flag) {
+                [parentGroup addChild:node];
+            }
+            
+            [self _parseElementForCommonAttributes:element
+                                              node:node];
+            
+            [parentGroup addDef:node];
+            break;
+        }
+            
+            // linear gradient
+        case IJSVGNodeTypeLinearGradient: {
+            
+            NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+            NSString * xlinkID = [xlink substringFromIndex:1];
+            IJSVGNode * node = [parentGroup defForID:xlinkID];
+            if( node != nil ) {
+                // we are a clone
+                IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
+                grad.type = aType;
+                [grad applyPropertiesFromNode:node];
+                
+                grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                CGPoint startPoint, endPoint;
+                [IJSVGLinearGradient parseGradient:element
+                                          gradient:grad
+                                        startPoint:&startPoint
+                                          endPoint:&endPoint];
+                [self _parseElementForCommonAttributes:element
+                                                  node:grad];
+                grad.startPoint = startPoint;
+                grad.endPoint = endPoint;
+                [parentGroup addDef:grad];
+                break;
+            }
+            
+            IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
+            gradient.type = aType;
+            
+            CGPoint startPoint, endPoint;
+            gradient.gradient = [IJSVGLinearGradient parseGradient:element
+                                                          gradient:gradient
+                                                        startPoint:&startPoint
+                                                          endPoint:&endPoint];
+            
+            [self _parseElementForCommonAttributes:element
+                                              node:gradient];
+            gradient.startPoint = startPoint;
+            gradient.endPoint = endPoint;
+            [parentGroup addDef:gradient];
+            break;
+        }
+            
+            // radial gradient
+        case IJSVGNodeTypeRadialGradient: {
+            
+            NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
+            NSString * xlinkID = [xlink substringFromIndex:1];
+            IJSVGNode * node = [parentGroup defForID:xlinkID];
+            if( node != nil )
+            {
+                // we are a clone
+                IJSVGRadialGradient * grad = [[[IJSVGRadialGradient alloc] init] autorelease];
+                grad.type = aType;
+                [grad applyPropertiesFromNode:node];
+                grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
+                
+                CGPoint startPoint, endPoint;
+                [IJSVGRadialGradient parseGradient:element
+                                          gradient:grad
+                                        startPoint:&startPoint
+                                          endPoint:&endPoint];
+                [self _parseElementForCommonAttributes:element
+                                                  node:grad];
+                grad.startPoint = startPoint;
+                grad.endPoint = endPoint;
+                [parentGroup addDef:grad];
+                break;
+            }
+            
+            IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
+            gradient.type = aType;
+            
+            CGPoint startPoint, endPoint;
+            gradient.gradient = [IJSVGRadialGradient parseGradient:element
+                                                          gradient:gradient
+                                                        startPoint:&startPoint
+                                                          endPoint:&endPoint];
+            gradient.startPoint = startPoint;
+            gradient.endPoint = endPoint;
+            [self _parseElementForCommonAttributes:element
+                                              node:gradient];
+            [parentGroup addDef:gradient];
+            break;
+        }
+            
+            // clippath
+        case IJSVGNodeTypeClipPath: {
+            
+            IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
+            group.type = aType;
+            group.name = subName;
+            group.parentNode = parentGroup;
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:group];
+            
+            // recursively parse blocks
+            [self _parseBlock:element
+                    intoGroup:group
+                          def:NO];
+            [parentGroup addDef:group];
+            break;
+        }
+            
+        // pattern
+        case IJSVGNodeTypePattern: {
+            IJSVGPattern * pattern = [[[IJSVGPattern alloc] init] autorelease];
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:pattern];
+            
+            // pattern has children
+            [self _parseBlock:element
+                    intoGroup:pattern
+                          def:NO];
+            
+            [parentGroup addDef:pattern];
+            break;
+        }
+            
+        // image
+        case IJSVGNodeTypeImage: {            
+            IJSVGImage * image = [[[IJSVGImage alloc] init] autorelease];
+            
+            // find common attributes
+            [self _parseElementForCommonAttributes:element
+                                              node:image];
+            
+            // from base64
+            [image loadFromBase64EncodedString:[[element attributeForName:@"xlink:href"] stringValue]];
+            
+            // add to parent
+            [parentGroup addChild:image];
+            [parentGroup addDef:image];
+            break;
+        }
+            
+    }
+}
+
 - (void)_parseBlock:(NSXMLElement *)anElement
           intoGroup:(IJSVGGroup*)parentGroup
                 def:(BOOL)flag
 {
-    for( NSXMLElement * element in [anElement children] )
-    {
-        NSString * subName = element.name;
-        IJSVGNodeType aType = [IJSVGNode typeForString:subName];
-        switch( aType )
-        {
-            default:
-            case IJSVGNodeTypeNotFound:
-                continue;
-                
-                // def
-            case IJSVGNodeTypeDef: {
-                [self _parseBlock:element
-                        intoGroup:parentGroup
-                              def:YES];
-                continue;
-            }
-                
-                // glyph
-            case IJSVGNodeTypeGlyph: {
-                
-                // no path data
-                if( [element attributeForName:@"d"] == nil || [[element attributeForName:@"d"] stringValue].length == 0 )
-                    continue;
-                
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                
-                // pass the commands for it
-                [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
-                                   intoPath:path];
-                
-                // check the size...
-                if( NSIsEmptyRect([path path].controlPointBounds) )
-                    continue;
-                
-                // add the glyph
-                [self addGlyph:path];
-                continue;
-            }
-                
-                // group
-            case IJSVGNodeTypeFont:
-            case IJSVGNodeTypeMask:
-            case IJSVGNodeTypeGroup: {
-                IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
-                group.type = aType;
-                group.name = subName;
-                group.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:group];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:group];
-                
-                // recursively parse blocks
-                [self _parseBlock:element
-                        intoGroup:group
-                              def:NO];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:group];
-                continue;
-            }
-                
-                // path
-            case IJSVGNodeTypePath: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parsePathCommandData:[[element attributeForName:@"d"] stringValue]
-                                   intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // polygon
-            case IJSVGNodeTypePolygon: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parsePolygon:element
-                           intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // polyline
-            case IJSVGNodeTypePolyline: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parsePolyline:element
-                            intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // rect
-            case IJSVGNodeTypeRect: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseRect:element
-                        intoPath:path];
-                
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // line
-            case IJSVGNodeTypeLine: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parseLine:element
-                        intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // circle
-            case IJSVGNodeTypeCircle: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parseCircle:element
-                          intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil)
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // ellipse
-            case IJSVGNodeTypeEllipse: {
-                IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
-                path.type = aType;
-                path.name = subName;
-                path.parentNode = parentGroup;
-                
-                if( !flag )
-                    [parentGroup addChild:path];
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:path];
-                [self _parseEllipse:element
-                           intoPath:path];
-                
-                // could be defined
-                if( flag || [element attributeForName:@"id"] != nil )
-                    [parentGroup addDef:path];
-                continue;
-            }
-                
-                // use
-            case IJSVGNodeTypeUse: {
-                
-                NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
-                NSString * xlinkID = [xlink substringFromIndex:1];
-                IJSVGNode * node = [parentGroup defForID:xlinkID];
-                
-                // could be an alias, aswell as a def...
-                if( [element attributeForName:@"id"] != nil )
-                {
-                    IJSVGNode * theNode = [[node copy] autorelease];
-                    theNode.parentNode = parentGroup;
-                    
-                    [parentGroup addChild:theNode];
-                    // grab common attributes
-                    [self _parseElementForCommonAttributes:element
-                                                      node:theNode];
-                    
-                    // add them
-                    [parentGroup addDef:theNode];
-                    continue;
-                }
-                
-                if( node != nil )
-                {
-                    // copy the node
-                    node = [[node copy] autorelease];
-                    node.parentNode = parentGroup;
-                    
-                    // grab the common attributes
-                    [self _parseElementForCommonAttributes:element
-                                                      node:node];
-                    [parentGroup addChild:node];
-                }
-                continue;
-            }
-                
-                // linear gradient
-            case IJSVGNodeTypeLinearGradient: {
-                
-                NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
-                NSString * xlinkID = [xlink substringFromIndex:1];
-                IJSVGNode * node = [parentGroup defForID:xlinkID];
-                if( node != nil )
-                {
-                    // we are a clone
-                    IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
-                    grad.type = aType;
-                    [grad applyPropertiesFromNode:node];
-                    
-                    grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
-                    CGPoint startPoint, endPoint;
-                    [IJSVGLinearGradient parseGradient:element
-                                              gradient:grad
-                                            startPoint:&startPoint
-                                              endPoint:&endPoint];
-                    [self _parseElementForCommonAttributes:element
-                                                      node:grad];
-                    grad.startPoint = startPoint;
-                    grad.endPoint = endPoint;
-                    [parentGroup addDef:grad];
-                    continue;
-                }
-                
-                IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
-                gradient.type = aType;
-                
-                CGPoint startPoint, endPoint;
-                gradient.gradient = [IJSVGLinearGradient parseGradient:element
-                                                              gradient:gradient
-                                                            startPoint:&startPoint
-                                                              endPoint:&endPoint];
-                
-                [self _parseElementForCommonAttributes:element
-                                                  node:gradient];
-                gradient.startPoint = startPoint;
-                gradient.endPoint = endPoint;
-                [parentGroup addDef:gradient];
-                continue;
-            }
-                
-                // radial gradient
-            case IJSVGNodeTypeRadialGradient: {
-                
-                NSString * xlink = [[element attributeForName:@"xlink:href"] stringValue];
-                NSString * xlinkID = [xlink substringFromIndex:1];
-                IJSVGNode * node = [parentGroup defForID:xlinkID];
-                if( node != nil )
-                {
-                    // we are a clone
-                    IJSVGRadialGradient * grad = [[[IJSVGRadialGradient alloc] init] autorelease];
-                    grad.type = aType;
-                    [grad applyPropertiesFromNode:node];
-                    grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
-                    
-                    CGPoint startPoint, endPoint;
-                    [IJSVGRadialGradient parseGradient:element
-                                              gradient:grad
-                                            startPoint:&startPoint
-                                              endPoint:&endPoint];
-                    [self _parseElementForCommonAttributes:element
-                                                      node:grad];
-                    grad.startPoint = startPoint;
-                    grad.endPoint = endPoint;
-                    [parentGroup addDef:grad];
-                    continue;
-                }
-                
-                IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
-                gradient.type = aType;
-                
-                CGPoint startPoint, endPoint;
-                gradient.gradient = [IJSVGRadialGradient parseGradient:element
-                                                              gradient:gradient
-                                                            startPoint:&startPoint
-                                                              endPoint:&endPoint];
-                gradient.startPoint = startPoint;
-                gradient.endPoint = endPoint;
-                [self _parseElementForCommonAttributes:element
-                                                  node:gradient];
-                [parentGroup addDef:gradient];
-                continue;
-            }
-                
-                // clippath
-            case IJSVGNodeTypeClipPath: {
-                
-                IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
-                group.type = aType;
-                group.name = subName;
-                group.parentNode = parentGroup;
-                
-                // find common attributes
-                [self _parseElementForCommonAttributes:element
-                                                  node:group];
-                
-                // recursively parse blocks
-                [self _parseBlock:element
-                        intoGroup:group
-                              def:NO];
-                
-                // add it as a def
-                [parentGroup addDef:group];
-            }
-                
-        }
+    for( NSXMLElement * element in [anElement children] ) {
+        [self _parseBaseBlock:element
+                    intoGroup:parentGroup
+                          def:flag
+                         node:nil];
     }
 }
 

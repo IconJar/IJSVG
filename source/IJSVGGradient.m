@@ -12,6 +12,7 @@
 
 @synthesize gradient, CGGradient;
 @synthesize angle, startPoint, endPoint;
+@synthesize x1, x2, y1, y2;
 
 - (void)dealloc
 {

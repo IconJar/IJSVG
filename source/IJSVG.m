@@ -580,6 +580,16 @@ static NSColor * _baseColor = nil;
                                                path:path];
             }
             CGContextRestoreGState(ref);
+        } else if(path.fillPattern != nil) {
+            CGContextSaveGState(ref);
+            {
+                // for this to work, we need to add the clip so when
+                // drawing occurs, it doesnt go outside the path bounds
+                [path.path addClip];
+                [path.fillPattern drawInContextRef:ref
+                                              path:path];
+            }
+            CGContextRestoreGState(ref);
         } else {
             // no gradient specified
             // just use the color instead

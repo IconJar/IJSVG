@@ -18,6 +18,11 @@
     CGPoint startPoint;
     CGPoint endPoint;
     
+    IJSVGUnit x1;
+    IJSVGUnit x2;
+    IJSVGUnit y1;
+    IJSVGUnit y2;
+    
 }
 
 @property ( nonatomic, retain ) NSGradient * gradient;
@@ -25,6 +30,10 @@
 @property ( nonatomic, assign ) CGPoint startPoint;
 @property ( nonatomic, assign ) CGPoint endPoint;
 @property ( nonatomic, assign ) CGGradientRef CGGradient;
+@property ( nonatomic, assign ) IJSVGUnit x1;
+@property ( nonatomic, assign ) IJSVGUnit x2;
+@property ( nonatomic, assign ) IJSVGUnit y1;
+@property ( nonatomic, assign ) IJSVGUnit y2;
 
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
                                   colors:(NSArray **)someColors;

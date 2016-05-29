@@ -19,6 +19,8 @@
 #import "IJSVGRadialGradient.h"
 #import "IJSVGError.h"
 #import "IJSVGStyleSheet.h"
+#import "IJSVGPattern.h"
+#import "IJSVGImage.h"
 
 @class IJSVGParser;
 
@@ -44,6 +46,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     NSMutableArray * _glyphs;
     IJSVGStyleSheet * _styleSheet;
     NSMutableArray * _parsedNodes;
+    NSMutableDictionary * _defNodes;
 }
 
 @property ( nonatomic, readonly ) NSRect viewBox;

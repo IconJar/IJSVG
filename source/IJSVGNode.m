@@ -33,6 +33,7 @@
 @synthesize windingRule;
 @synthesize def;
 @synthesize fillGradient;
+@synthesize fillPattern;
 @synthesize clipPath;
 @synthesize lineCapStyle;
 @synthesize lineJoinStyle;
@@ -92,6 +93,10 @@
         return IJSVGNodeTypeClipPath;
     if( [string isEqualToString:@"mask"] )
         return IJSVGNodeTypeMask;
+    if( [string isEqualToString:@"image"] )
+        return IJSVGNodeTypeImage;
+    if([string isEqualToString:@"pattern"])
+        return IJSVGNodeTypePattern;
     return IJSVGNodeTypeNotFound;
 }
 
@@ -117,6 +122,7 @@
     self.height = node.height;
     
     self.fillGradient = node.fillGradient;
+    self.fillPattern = node.fillPattern;
     
     self.fillColor = node.fillColor;
     self.strokeColor = node.strokeColor;
@@ -274,6 +280,22 @@
     if( fillColor == nil && parentNode != nil )
         return parentNode.fillColor;
     return fillColor;
+}
+
+- (IJSVGGradient *)fillGradient
+{
+    if(fillGradient == nil && parentNode != nil) {
+        return parentNode.fillGradient;
+    }
+    return fillGradient;
+}
+
+- (IJSVGPattern *)fillPattern
+{
+    if(fillPattern == nil && parentNode != nil) {
+        return parentNode.fillPattern;
+    }
+    return fillPattern;
 }
 
 @end

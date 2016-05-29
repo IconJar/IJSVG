@@ -12,6 +12,7 @@
 @class IJSVGDef;
 @class IJSVGGradient;
 @class IJSVGGroup;
+@class IJSVGPattern;
 
 typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeGroup,
@@ -30,6 +31,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeFont,
     IJSVGNodeTypeGlyph,
     IJSVGNodeTypeMask,
+    IJSVGNodeTypeImage,
+    IJSVGNodeTypePattern,
     IJSVGNodeTypeNotFound,
 };
 
@@ -69,6 +72,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     CGFloat height;
     
     IJSVGGradient * fillGradient;
+    IJSVGPattern * fillPattern;
     
     BOOL usesDefaultFillColor;
     BOOL shouldRender;
@@ -118,13 +122,14 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) NSColor * strokeColor;
 @property ( nonatomic, copy ) NSString * identifier;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
-@property ( nonatomic, assign ) IJSVGGroup * clipPath;
+@property ( nonatomic, retain ) IJSVGGroup * clipPath;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
 @property ( nonatomic, assign ) IJSVGLineCapStyle lineCapStyle;
 @property ( nonatomic, assign ) IJSVGLineJoinStyle lineJoinStyle;
 @property ( nonatomic, retain ) NSArray * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
+@property ( nonatomic, retain ) IJSVGPattern * fillPattern;
 @property ( nonatomic, assign ) CGFloat * strokeDashArray;
 @property ( nonatomic, assign ) NSInteger strokeDashArrayCount;
 @property ( nonatomic, assign ) CGFloat strokeDashOffset;
