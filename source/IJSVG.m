@@ -180,17 +180,42 @@ static NSColor * _baseColor = nil;
 - (NSImage *)imageWithSize:(NSSize)aSize
 {
     return [self imageWithSize:aSize
+                       flipped:NO
                          error:nil];
 }
 
 - (NSImage *)imageWithSize:(NSSize)aSize
+                     error:(NSError **)error;
+{
+    return [self imageWithSize:aSize
+                       flipped:NO
+                         error:error];
+}
+
+- (NSImage *)imageWithSize:(NSSize)aSize
+                   flipped:(BOOL)flipped
+{
+    return [self imageWithSize:aSize
+                       flipped:flipped
+                         error:nil];
+}
+
+- (NSImage *)imageWithSize:(NSSize)aSize
+                   flipped:(BOOL)flipped
                      error:(NSError **)error
 {
     NSImage * im = [[[NSImage alloc] initWithSize:aSize] autorelease];
     [im lockFocus];
+    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSaveGState(ref);
+    if(flipped) {
+        CGContextTranslateCTM(ref, 0.f, aSize.height);
+        CGContextScaleCTM(ref, 1.f, -1.f);
+    }
     [self drawAtPoint:NSMakePoint( 0.f, 0.f )
                  size:aSize
                 error:error];
+    CGContextRestoreGState(ref);
     [im unlockFocus];
     return im;
 }

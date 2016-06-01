@@ -61,6 +61,8 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 - (NSImage *)imageWithSize:(NSSize)aSize;
 - (NSImage *)imageWithSize:(NSSize)aSize
                      error:(NSError **)error;
+- (NSImage *)imageWithSize:(NSSize)aSize
+                   flipped:(BOOL)flipped;
 - (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)size;
 - (BOOL)drawAtPoint:(NSPoint)point

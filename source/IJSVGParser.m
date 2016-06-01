@@ -347,8 +347,11 @@
     if( maskAttribute != nil )
     {
         NSString * maskID = [IJSVGUtils defURL:[maskAttribute stringValue]];
-        if( maskID )
-            node.clipPath = (IJSVGGroup *)[node defForID:maskID];
+        if( maskID ) {
+            node.clipPath = (IJSVGGroup *)[self definedObjectForID:maskID
+                                                              node:node
+                                                         fromGroup:nil];
+        }
     }
     
     // transforms
@@ -682,7 +685,7 @@
             group.name = subName;
             group.parentNode = parentGroup;
             
-            if( !flag ) {
+            if(!flag) {
                 [parentGroup addChild:group];
             }
             
@@ -847,6 +850,7 @@
             IJSVGNode * node = [self definedObjectForID:xlinkID
                                                    node:nil
                                               fromGroup:parentGroup];
+        
             
             node.parentNode = parentGroup;
             if(!flag) {
@@ -1208,10 +1212,6 @@ static NSCharacterSet * _commandCharSet = nil;
 - (void)_parseRect:(NSXMLElement *)element
           intoPath:(IJSVGPath *)path
 {
-    
-    CGFloat aX = [[[element attributeForName:@"x"] stringValue] floatValue];
-    CGFloat aY = [[[element attributeForName:@"y"] stringValue] floatValue];
-    
     CGFloat aWidth = [IJSVGUtils floatValue:[[element attributeForName:@"width"] stringValue]
                          fallBackForPercent:self.viewBox.size.width];
     CGFloat aHeight = [IJSVGUtils floatValue:[[element attributeForName:@"height"] stringValue]
@@ -1222,11 +1222,7 @@ static NSCharacterSet * _commandCharSet = nil;
     if( [element attributeForName:@"ry"] == nil )
         rY = rX;
     
-    [element removeAttributeForName:@"x"];
-    [element removeAttributeForName:@"y"];
-    [element removeAttributeForName:@"width"];
-    [element removeAttributeForName:@"height"];
-    [path overwritePath:[NSBezierPath bezierPathWithRoundedRect:NSMakeRect( aX, aY, aWidth, aHeight)
+    [path overwritePath:[NSBezierPath bezierPathWithRoundedRect:NSMakeRect( 0.f, 0.f, aWidth, aHeight)
                                                         xRadius:rX
                                                         yRadius:rY]];
 }
