@@ -155,6 +155,10 @@
 {
     NSXMLElement * svgElement = [_document rootElement];
     
+    // parse common attributes on the SVG element
+    [self _parseElementForCommonAttributes:svgElement
+                                      node:self];
+    
     // find the sizebox!
     NSXMLNode * attribute = nil;
     if( ( attribute = [svgElement attributeForName:@"viewBox"] ) != nil )
@@ -850,7 +854,7 @@
             IJSVGNode * node = [self definedObjectForID:xlinkID
                                                    node:nil
                                               fromGroup:parentGroup];
-        
+            
             
             node.parentNode = parentGroup;
             if(!flag) {
@@ -970,7 +974,7 @@
             break;
         }
             
-        // pattern
+            // pattern
         case IJSVGNodeTypePattern: {
             IJSVGPattern * pattern = [[[IJSVGPattern alloc] init] autorelease];
             
@@ -987,8 +991,8 @@
             break;
         }
             
-        // image
-        case IJSVGNodeTypeImage: {            
+            // image
+        case IJSVGNodeTypeImage: {
             IJSVGImage * image = [[[IJSVGImage alloc] init] autorelease];
             
             // find common attributes
@@ -1212,19 +1216,83 @@ static NSCharacterSet * _commandCharSet = nil;
 - (void)_parseRect:(NSXMLElement *)element
           intoPath:(IJSVGPath *)path
 {
-    CGFloat aWidth = [IJSVGUtils floatValue:[[element attributeForName:@"width"] stringValue]
-                         fallBackForPercent:self.viewBox.size.width];
-    CGFloat aHeight = [IJSVGUtils floatValue:[[element attributeForName:@"height"] stringValue]
-                          fallBackForPercent:self.viewBox.size.width];
+    CGFloat aX, aY, aWidth, aHeight;
+    if([self namespacedAttribute:@"x"
+                         element:element] != nil) {
+        
+        // already namespaced, find them
+        aX = [[self namespacedAttribute:@"x"
+                                element:element] floatValue];
+        aY = [[self namespacedAttribute:@"y"
+                                element:element] floatValue];
+        aWidth = [IJSVGUtils floatValue:[self namespacedAttribute:@"width" element:element]
+                     fallBackForPercent:self.viewBox.size.width];
+        aHeight = [IJSVGUtils floatValue:[self namespacedAttribute:@"height" element:element]
+                      fallBackForPercent:self.viewBox.size.height];
+    } else {
+        
+        // reassign X
+        [self applyNamespacedAttribute:@"x"
+                                 value:[[element attributeForName:@"x"] stringValue]
+                               element:element];
+        aX = [[[element attributeForName:@"x"] stringValue] floatValue];
+        
+        // reassign Y
+        [self applyNamespacedAttribute:@"y"
+                                 value:[[element attributeForName:@"y"] stringValue]
+                               element:element];
+        aY = [[[element attributeForName:@"y"] stringValue] floatValue];
+        
+        // reassign width
+        [self applyNamespacedAttribute:@"width"
+                                 value:[[element attributeForName:@"width"] stringValue]
+                               element:element];
+        aWidth = [IJSVGUtils floatValue:[[element attributeForName:@"width"] stringValue]
+                     fallBackForPercent:self.viewBox.size.width];
+        
+        // reassign height
+        [self applyNamespacedAttribute:@"height"
+                                 value:[[element attributeForName:@"height"] stringValue]
+                               element:element];
+        aHeight = [IJSVGUtils floatValue:[[element attributeForName:@"height"] stringValue]
+                      fallBackForPercent:self.viewBox.size.height];
+        
+        // set the namespaced versions as we need to remove the attributes
+        [element removeAttributeForName:@"x"];
+        [element removeAttributeForName:@"y"];
+        [element removeAttributeForName:@"width"];
+        [element removeAttributeForName:@"height"];
+    }
     
     CGFloat rX = [[[element attributeForName:@"rx"] stringValue] floatValue];
     CGFloat rY = [[[element attributeForName:@"ry"] stringValue] floatValue];
     if( [element attributeForName:@"ry"] == nil )
         rY = rX;
     
-    [path overwritePath:[NSBezierPath bezierPathWithRoundedRect:NSMakeRect( 0.f, 0.f, aWidth, aHeight)
+    [path overwritePath:[NSBezierPath bezierPathWithRoundedRect:NSMakeRect( aX, aY, aWidth, aHeight)
                                                         xRadius:rX
                                                         yRadius:rY]];
+}
+
+- (NSString *)namespacedAttribute:(NSString *)key
+                          element:(NSXMLElement *)element
+{
+    key = [NSString stringWithFormat:@"ij-svg:%@",key];
+    if([element attributeForName:key] != nil) {
+        return [[element attributeForName:key] stringValue];
+    }
+    return nil;
+}
+
+- (void)applyNamespacedAttribute:(NSString *)key
+                           value:(NSString *)value
+                         element:(NSXMLElement *)element
+{
+    key = [NSString stringWithFormat:@"ij-svg:%@",key];
+    NSXMLNode * node = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+    node.name = key;
+    node.stringValue= value;
+    [element addAttribute:node];
 }
 
 @end
