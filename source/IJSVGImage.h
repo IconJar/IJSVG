@@ -15,6 +15,7 @@
     
     NSImage * image;
     CGImageRef CGImage;
+    IJSVGPath * imagePath;
     
 }
 

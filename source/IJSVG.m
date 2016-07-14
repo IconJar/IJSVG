@@ -519,10 +519,8 @@ static NSColor * _baseColor = nil;
             // it could be a group or a path
             for( id child in [group children] )
             {
-                if( [child isKindOfClass:[IJSVGPath class]] )
-                {
-                    dispatch_block_t block = ^(void)
-                    {
+                if( [child isKindOfClass:[IJSVGPath class]] ) {
+                    dispatch_block_t block = ^(void) {
                         IJSVGPath * p = (IJSVGPath *)child;
                         if( p.shouldRender )
                             [self _drawPath:p
@@ -543,6 +541,23 @@ static NSColor * _baseColor = nil;
                     [self _drawGroup:child
                                 rect:rect
                              context:context];
+                } else if([child isKindOfClass:[IJSVGImage class]]) {
+                    
+                    // draw the image
+                    dispatch_block_t block = ^(void) {
+                        IJSVGImage * image = (IJSVGImage *)child;
+                        if(image.shouldRender) {
+                            [self _drawImage:image
+                                        rect:rect
+                                     context:context];
+                        }
+                    };
+                    
+                    [self _prepClip:child
+                            context:context
+                          drawBlock:block
+                               rect:rect];
+                    
                 }
             }
             
@@ -579,6 +594,25 @@ static NSColor * _baseColor = nil;
                                inContext:context];
     }
     
+}
+
+- (void)_drawImage:(IJSVGImage *)image
+              rect:(NSRect)rect
+           context:(CGContextRef)ref
+{
+    CGContextSaveGState(ref);
+    {
+        // apply any transforms or defaults
+        [self _applyDefaults:ref
+                        node:image];
+        
+        // draw the actual image
+        [image drawInContextRef:ref
+                           path:nil];
+    };
+    
+    // retsore the graphics state
+    CGContextRestoreGState(ref);
 }
 
 - (void)_drawPath:(IJSVGPath *)path

@@ -854,7 +854,7 @@
             IJSVGNode * node = [self definedObjectForID:xlinkID
                                                    node:nil
                                               fromGroup:parentGroup];
-            
+        
             
             node.parentNode = parentGroup;
             if(!flag) {
@@ -974,7 +974,7 @@
             break;
         }
             
-            // pattern
+        // pattern
         case IJSVGNodeTypePattern: {
             IJSVGPattern * pattern = [[[IJSVGPattern alloc] init] autorelease];
             
@@ -991,8 +991,8 @@
             break;
         }
             
-            // image
-        case IJSVGNodeTypeImage: {
+        // image
+        case IJSVGNodeTypeImage: {            
             IJSVGImage * image = [[[IJSVGImage alloc] init] autorelease];
             
             // find common attributes
@@ -1248,14 +1248,14 @@ static NSCharacterSet * _commandCharSet = nil;
                                  value:[[element attributeForName:@"width"] stringValue]
                                element:element];
         aWidth = [IJSVGUtils floatValue:[[element attributeForName:@"width"] stringValue]
-                     fallBackForPercent:self.viewBox.size.width];
+                             fallBackForPercent:self.viewBox.size.width];
         
         // reassign height
         [self applyNamespacedAttribute:@"height"
                                  value:[[element attributeForName:@"height"] stringValue]
                                element:element];
         aHeight = [IJSVGUtils floatValue:[[element attributeForName:@"height"] stringValue]
-                      fallBackForPercent:self.viewBox.size.height];
+                              fallBackForPercent:self.viewBox.size.height];
         
         // set the namespaced versions as we need to remove the attributes
         [element removeAttributeForName:@"x"];

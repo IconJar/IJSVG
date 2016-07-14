@@ -55,6 +55,8 @@
     [name release], name = nil;
     [className release], className = nil;
     [classNameList release], classNameList = nil;
+    [fillPattern release], fillPattern = nil;
+    [clipPath release], clipPath = nil;
     [super dealloc];
 }
 

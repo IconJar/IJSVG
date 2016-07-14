@@ -15,6 +15,7 @@
 - (void)dealloc
 {
     CGImageRelease(CGImage), CGImage = nil;
+    [imagePath release], imagePath = nil;
     [image release], image = nil;
     [super dealloc];
 }
@@ -32,6 +33,17 @@
     // set the image against the container
     NSImage * anImage = [[[NSImage alloc] initWithData:data] autorelease];
     [self setImage:anImage];
+}
+
+- (IJSVGPath *)path
+{
+    if(imagePath == nil) {
+        // lazy load the path as it might not be needed
+        imagePath = [[IJSVGPath alloc] init];
+        [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, image.size.width, image.size.height)];
+        [imagePath close];
+    }
+    return imagePath;
 }
 
 - (void)setImage:(NSImage *)anImage
@@ -56,6 +68,10 @@
 {
     // run the transforms
     // draw the image
+    if(path == nil) {
+        path = [self path];
+    }
+    
     CGRect rect = path.path.bounds;
     CGRect bounds = CGRectMake( 0.f, 0.f, rect.size.width, rect.size.height);
     
