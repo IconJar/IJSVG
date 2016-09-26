@@ -59,8 +59,6 @@ static BOOL _enabled = YES;
     if( !flag )
     {
         [[self class] flushCache];
-        if( _cache != nil )
-            [_cache release], _cache = nil;
         return;
     }
     

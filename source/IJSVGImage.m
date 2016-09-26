@@ -55,12 +55,16 @@
     
     if(CGImage != nil) {
         CGImageRelease(CGImage);
+        CGImage = nil;
     }
     
     NSRect rect = NSMakeRect( 0.f, 0.f, image.size.width, image.size.height);
     CGImage = [image CGImageForProposedRect:&rect
                                     context:nil
                                       hints:nil];
+    
+    // be sure to retain (some reason this is required in Xcode 8 beta 5?)
+    CGImageRetain(CGImage);
 }
 
 - (void)drawInContextRef:(CGContextRef)context

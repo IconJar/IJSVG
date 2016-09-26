@@ -259,6 +259,13 @@
     if(defaults.count != 0) {
         // we have default, we need to store these per ID and remove them from the array
         for(NSXMLElement * defs in defaults) {
+            
+            // parse the def - this will force
+            // parse any glyphs inside the fonts
+            [self _parseBlock:defs
+                    intoGroup:nil
+                          def:NO];
+            
             // store each object
             for(NSXMLElement * childDef in defs.children) {
                 NSString * defID = [[childDef attributeForName:@"id"] stringValue];
@@ -655,8 +662,10 @@
         case IJSVGNodeTypeGlyph: {
             
             // no path data
-            if( [element attributeForName:@"d"] == nil || [[element attributeForName:@"d"] stringValue].length == 0 )
+            if( [element attributeForName:@"d"] == nil ||
+               [[element attributeForName:@"d"] stringValue].length == 0 ) {
                 break;
+            }
             
             IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
             path.type = aType;
@@ -672,8 +681,9 @@
                                intoPath:path];
             
             // check the size...
-            if( NSIsEmptyRect([path path].controlPointBounds) )
+            if( NSIsEmptyRect([path path].controlPointBounds) ) {
                 break;
+            }
             
             // add the glyph
             [self addGlyph:path];
