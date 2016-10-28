@@ -167,6 +167,51 @@ static NSColor * _baseColor = nil;
     return self;
 }
 
+- (id)initWithSVGString:(NSString *)string
+{
+    return [self initWithSVGString:string
+                             error:nil
+                          delegate:nil];
+}
+
+- (id)initWithSVGString:(NSString *)string
+                  error:(NSError **)error
+{
+    return [self initWithSVGString:string
+                             error:error
+                          delegate:nil];
+}
+
+- (id)initWithSVGString:(NSString *)string
+                  error:(NSError **)error
+               delegate:(id<IJSVGDelegate>)delegate
+{
+    if((self = [super init]) != nil) {
+        // this is basically the same as init with URL just
+        // bypasses the loading of a file
+        NSError * anError = nil;
+        _delegate = delegate;
+        _group = [[IJSVGParser alloc] initWithSVGString:string
+                                                  error:&anError
+                                               delegate:delegate];
+        
+        // something went wrong :(
+        if(_group == nil) {
+            if(error != NULL) {
+                *error = anError;
+            }
+            [self release], self = nil;
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (NSRect)viewBox
+{
+    return _group.viewBox;
+}
+
 - (BOOL)isFont
 {
     return [_group isFont];
@@ -175,6 +220,11 @@ static NSColor * _baseColor = nil;
 - (NSArray *)glyphs
 {
     return [_group glyphs];
+}
+
+- (NSArray<IJSVG *> *)subSVGs:(BOOL)recursive
+{
+    return [_group subSVGs:recursive];
 }
 
 - (NSImage *)imageWithSize:(NSSize)aSize
@@ -580,8 +630,9 @@ static NSColor * _baseColor = nil;
     // the opacity, if its 0, assume its broken
     // so set it to 1.f
     CGFloat opacity = node.opacity;
-    if( opacity == 0.f )
+    if( opacity == 0.f ) {
         opacity = 1.f;
+    }
     
     // scale it
     CGContextSetAlpha( context, opacity );
@@ -615,6 +666,11 @@ static NSColor * _baseColor = nil;
     CGContextRestoreGState(ref);
 }
 
+- (void)_drawWithinNativeViewBox
+{
+    [self drawInRect:_group.viewBox];
+}
+
 - (void)_drawPath:(IJSVGPath *)path
              rect:(NSRect)rect
           context:(CGContextRef)ref
@@ -626,6 +682,18 @@ static NSColor * _baseColor = nil;
         // there could be transforms per path
         [self _applyDefaults:ref
                         node:path];
+        
+        // sub SVG
+        if(path.svg != nil) {
+            CGContextSaveGState(ref);
+            {
+                // draw the sub SVG in context
+                [path.svg _drawInRect:path.svg.viewBox
+                              context:ref
+                                error:nil];
+            }
+            CGContextRestoreGState(ref);
+        }
         
         // fill the path
         if( path.fillGradient != nil )

@@ -41,6 +41,7 @@
 @synthesize strokeDashArray;
 @synthesize strokeDashOffset;
 @synthesize usesDefaultFillColor;
+@synthesize svg;
 
 - (void)dealloc
 {
@@ -57,6 +58,7 @@
     [classNameList release], classNameList = nil;
     [fillPattern release], fillPattern = nil;
     [clipPath release], clipPath = nil;
+    [svg release], svg = nil;
     [super dealloc];
 }
 
@@ -99,6 +101,8 @@
         return IJSVGNodeTypeImage;
     if([string isEqualToString:@"pattern"])
         return IJSVGNodeTypePattern;
+    if([string isEqualToString:@"svg"])
+        return IJSVGNodeTypeSVG;
     return IJSVGNodeTypeNotFound;
 }
 
@@ -175,8 +179,9 @@
         self.windingRule = IJSVGWindingRuleInherit;
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
-        if( flag )
+        if( flag ) {
             def = [[IJSVGDef alloc] init];
+        }
     }
     return self;
 }

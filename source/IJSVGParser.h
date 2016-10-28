@@ -47,10 +47,15 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     IJSVGStyleSheet * _styleSheet;
     NSMutableArray * _parsedNodes;
     NSMutableDictionary * _defNodes;
+    NSMutableArray<IJSVG *> * _svgs;
 }
 
 @property ( nonatomic, readonly ) NSRect viewBox;
 @property ( nonatomic, readonly ) NSSize proposedViewSize;
+
+- (id)initWithSVGString:(NSString *)string
+                  error:(NSError **)error
+               delegate:(id<IJSVGParserDelegate>)delegate;
 
 - (id)initWithFileURL:(NSURL *)aURL
                 error:(NSError **)error
@@ -64,5 +69,6 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 - (NSSize)size;
 - (BOOL)isFont;
 - (NSArray *)glyphs;
+- (NSArray<IJSVG *> *)subSVGs:(BOOL)recursive;
 
 @end

@@ -36,11 +36,21 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 
 + (NSColor *)baseColor;
 - (BOOL)isFont;
+- (NSRect)viewBox;
 - (NSArray *)glyphs;
+- (NSArray<IJSVG *> *)subSVGs:(BOOL)recursive;
 + (void)setBaseColor:(NSColor *)color;
 + (id)svgNamed:(NSString *)string;
 + (id)svgNamed:(NSString *)string
       delegate:(id<IJSVGDelegate>)delegate;
+
+- (id)initWithSVGString:(NSString *)string
+                  error:(NSError **)error
+               delegate:(id<IJSVGDelegate>)delegate;
+
+- (id)initWithSVGString:(NSString *)string;
+- (id)initWithSVGString:(NSString *)string
+                  error:(NSError **)error;
 
 - (id)initWithFile:(NSString *)file;
 - (id)initWithFile:(NSString *)file

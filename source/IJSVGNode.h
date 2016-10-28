@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGStyle.h"
 
+@class IJSVG;
+@class IJSVGGroup;
 @class IJSVGDef;
 @class IJSVGGradient;
 @class IJSVGGroup;
@@ -33,6 +35,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeMask,
     IJSVGNodeTypeImage,
     IJSVGNodeTypePattern,
+    IJSVGNodeTypeSVG,
     IJSVGNodeTypeNotFound,
 };
 
@@ -100,6 +103,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
     IJSVGLineJoinStyle joinStyle;
     
     IJSVGDef * def;
+    IJSVG * svg;
     
 }
 
@@ -133,6 +137,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, assign ) CGFloat * strokeDashArray;
 @property ( nonatomic, assign ) NSInteger strokeDashArrayCount;
 @property ( nonatomic, assign ) CGFloat strokeDashOffset;
+@property ( nonatomic, retain ) IJSVG * svg;
 
 + (IJSVGNodeType)typeForString:(NSString *)string;
 
