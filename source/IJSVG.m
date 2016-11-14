@@ -144,18 +144,21 @@ static NSColor * _baseColor = nil;
         }
     }
     
-    if( ( self = [super init] ) != nil )
-    {
+    if( ( self = [super init] ) != nil ) {
         NSError * anError = nil;
         _delegate = delegate;
+        [self _checkDelegate];
+        
         _group = [[IJSVGParser groupForFileURL:aURL
                                          error:&anError
-                                      delegate:nil] retain];
+                                      delegate:self] retain];
+        
         // something went wrong...
         if( _group == nil )
         {
-            if( error != NULL )
+            if( error != NULL ) {
                 *error = anError;
+            }
             [self release], self = nil;
             return nil;
         }
@@ -191,9 +194,12 @@ static NSColor * _baseColor = nil;
         // bypasses the loading of a file
         NSError * anError = nil;
         _delegate = delegate;
+        [self _checkDelegate];
+        
+        // setup the parser
         _group = [[IJSVGParser alloc] initWithSVGString:string
                                                   error:&anError
-                                               delegate:delegate];
+                                               delegate:self];
         
         // something went wrong :(
         if(_group == nil) {
@@ -205,6 +211,13 @@ static NSColor * _baseColor = nil;
         }
     }
     return self;
+}
+
+- (void)_checkDelegate
+{
+    _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svg:shouldHandleForeignObject:)];
+    _respondsTo.handleForeignObject = [_delegate respondsToSelector:@selector(svg:handleForeignObject:document:)];
+    _respondsTo.shouldHandleSubSVG = [_delegate respondsToSelector:@selector(svg:foundSubSVG:withSVGString:)];
 }
 
 - (NSRect)viewBox
@@ -793,14 +806,23 @@ static NSColor * _baseColor = nil;
 
 #pragma mark IJSVGParserDelegate
 
+- (void)svgParser:(IJSVGParser *)svg
+      foundSubSVG:(IJSVG *)subSVG
+    withSVGString:(NSString *)string
+{
+    if(_delegate != nil && _respondsTo.shouldHandleSubSVG == 1) {
+        [_delegate svg:self
+           foundSubSVG:subSVG
+         withSVGString:string];
+    }
+}
+
 - (BOOL)svgParser:(IJSVGParser *)parser
 shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject
 {
-    if( _delegate == nil )
-        return NO;
-    if( [_delegate respondsToSelector:@selector(svg:shouldHandleForeignObject:)] )
-        return [_delegate svg:self
-    shouldHandleForeignObject:foreignObject];
+    if( _delegate != nil && _respondsTo.shouldHandleForeignObject == 1 ) {
+        return [_delegate svg:self shouldHandleForeignObject:foreignObject];
+    }
     return NO;
 }
 
@@ -808,12 +830,11 @@ shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject
 handleForeignObject:(IJSVGForeignObject *)foreignObject
          document:(NSXMLDocument *)document
 {
-    if( _delegate == nil )
-        return;
-    if( [_delegate respondsToSelector:@selector(svg:handleForeignObject:document:)] )
+    if( _delegate != nil && _respondsTo.handleForeignObject == 1 ) {
         [_delegate svg:self
    handleForeignObject:foreignObject
               document:document];
+    }
 }
 
 @end

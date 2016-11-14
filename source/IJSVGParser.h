@@ -32,6 +32,9 @@ shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject;
 - (void)svgParser:(IJSVGParser *)svg
 handleForeignObject:(IJSVGForeignObject *)foreignObject
    document:(NSXMLDocument *)document;
+- (void)svgParser:(IJSVGParser *)svg
+      foundSubSVG:(IJSVG *)subSVG
+    withSVGString:(NSString *)string;
 
 @end
 
@@ -48,6 +51,12 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     NSMutableArray * _parsedNodes;
     NSMutableDictionary * _defNodes;
     NSMutableArray<IJSVG *> * _svgs;
+    
+    struct {
+        unsigned int shouldHandleForeignObject: 1;
+        unsigned int handleForeignObject: 1;
+        unsigned int handleSubSVG: 1;
+    } _respondsTo;
 }
 
 @property ( nonatomic, readonly ) NSRect viewBox;

@@ -20,10 +20,13 @@ shouldHandleForeignObject:(IJSVGForeignObject *)foreignObject;
 - (void)svg:(IJSVG *)svg
 handleForeignObject:(IJSVGForeignObject *)foreignObject
    document:(NSXMLDocument *)document;
+- (void)svg:(IJSVG *)svg
+foundSubSVG:(IJSVG *)subSVG
+withSVGString:(NSString *)subSVGString;
 
 @end
 
-@interface IJSVG : NSObject <NSPasteboardWriting> {
+@interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
     
 @private
     IJSVGParser * _group;
@@ -31,6 +34,12 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     CGFloat _clipScale;
     NSMutableArray * _colors;
     id<IJSVGDelegate> _delegate;
+    
+    struct {
+        unsigned int shouldHandleForeignObject: 1;
+        unsigned int handleForeignObject: 1;
+        unsigned int shouldHandleSubSVG: 1;
+    } _respondsTo;
     
 }
 

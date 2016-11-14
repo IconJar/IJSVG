@@ -55,6 +55,11 @@
     if( ( self = [super init] ) != nil )
     {
         _delegate = delegate;
+        
+        _respondsTo.handleForeignObject = [_delegate respondsToSelector:@selector(svgParser:handleForeignObject:document:)];
+        _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
+        _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
+        
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
@@ -228,16 +233,14 @@
     if( [switchElements count] != 0 )
     {
         // for performance reasons, ask for this once!
-        BOOL handlesShouldHandle = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
-        BOOL handlesHandle = [_delegate respondsToSelector:@selector(svgParser:handleForeignObject:document:)];
+        BOOL handlesShouldHandle = _respondsTo.shouldHandleForeignObject == 1;
+        BOOL handlesHandle = _respondsTo.handleForeignObject == 1;
         
         // we have a switch, work out what the objects are...
         switchElement = switchElements[0];
         NSXMLElement * child = nil;
-        if( _delegate != nil )
-        {
-            for( child in [switchElement children] )
-            {
+        if( _delegate != nil ) {
+            for( child in [switchElement children] ) {
                 if( [[child name] isEqualToString:@"foreignObject"] )
                 {
                     // create the temp foreign object
@@ -717,9 +720,17 @@
                         
             // work out the SVG
             NSError * error = nil;
-            IJSVG * anSVG = [[IJSVG alloc] initWithSVGString:element.XMLString
+            NSString * SVGString = element.XMLString;
+            IJSVG * anSVG = [[IJSVG alloc] initWithSVGString:SVGString
                                                        error:&error
                                                     delegate:nil];
+            
+            // handle sub SVG
+            if(error == nil && _respondsTo.handleSubSVG == 1) {
+                [_delegate svgParser:self
+                         foundSubSVG:anSVG
+                       withSVGString:SVGString];
+            }
             
             // any error?
             if(anSVG != nil && error == nil) {
