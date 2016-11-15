@@ -47,6 +47,7 @@ withSVGString:(NSString *)subSVGString;
 - (BOOL)isFont;
 - (NSRect)viewBox;
 - (NSArray *)glyphs;
+- (NSString *)identifier;
 - (NSArray<IJSVG *> *)subSVGs:(BOOL)recursive;
 + (void)setBaseColor:(NSColor *)color;
 + (id)svgNamed:(NSString *)string;

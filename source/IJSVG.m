@@ -213,6 +213,11 @@ static NSColor * _baseColor = nil;
     return self;
 }
 
+- (NSString *)identifier
+{
+    return _group.identifier;
+}
+
 - (void)_checkDelegate
 {
     _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svg:shouldHandleForeignObject:)];
