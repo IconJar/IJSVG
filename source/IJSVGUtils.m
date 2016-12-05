@@ -119,13 +119,24 @@ static NSCharacterSet * _invertedCharSet = nil;
         _invertedCharSet = [tSet.invertedSet retain];
     }
     NSArray * pieces = [string componentsSeparatedByCharactersInSet:_invertedCharSet];
-    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*pieces.count);
+    NSInteger defSize = 500;
+    NSInteger size = defSize;
     NSInteger counter = 0;
+    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*size);
     for(NSString * piece in pieces) {
         if(piece.length == 0) {
             continue;
         }
-        floats[counter++] = piece.floatValue;
+        const char * chars = [piece cStringUsingEncoding:NSUTF8StringEncoding];
+        float foundFloat;
+        int offset;
+        while(sscanf(chars, "%f%n", &foundFloat, &offset) > 0) {
+            if(counter+1 == size) {
+                floats = (CGFloat *)realloc(floats, sizeof(CGFloat)*size);
+            }
+            floats[counter++] = foundFloat;
+            chars += offset;
+        }
     }
     *length = counter;
     return floats;
