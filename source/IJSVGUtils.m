@@ -109,36 +109,27 @@ CGFloat degrees_to_radians( CGFloat degrees )
                                          size:count];
 }
 
-static NSCharacterSet * _invertedCharSet = nil;
-
 + (CGFloat *)scanFloatsFromString:(NSString *)string
                              size:(NSInteger *)length
 {
-    if(_invertedCharSet == nil) {
-        NSCharacterSet * tSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789-e."];
-        _invertedCharSet = [tSet.invertedSet retain];
-    }
-    NSArray * pieces = [string componentsSeparatedByCharactersInSet:_invertedCharSet];
     NSInteger defSize = 500;
     NSInteger size = defSize;
-    NSInteger counter = 0;
     CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*size);
-    for(NSString * piece in pieces) {
-        if(piece.length == 0) {
+    NSScanner * scanner = [[[NSScanner alloc] initWithString:string] autorelease];
+    float num = 0;
+    NSInteger i = 0;
+    while( [scanner isAtEnd] == NO ) {
+        if( [scanner scanFloat:&num] ) {
+            if( (i+1) == size ) {
+                size += defSize;
+                floats = (CGFloat *)realloc( floats, sizeof(CGFloat)*size);
+            }
+            floats[i++] = num;
             continue;
         }
-        const char * chars = [piece cStringUsingEncoding:NSUTF8StringEncoding];
-        float foundFloat;
-        int offset;
-        while(sscanf(chars, "%f%n", &foundFloat, &offset) > 0) {
-            if(counter+1 == size) {
-                floats = (CGFloat *)realloc(floats, sizeof(CGFloat)*size);
-            }
-            floats[counter++] = foundFloat;
-            chars += offset;
-        }
+        [scanner setScanLocation:scanner.scanLocation+1];
     }
-    *length = counter;
+    *length = i;
     return floats;
 }
 
