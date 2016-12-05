@@ -32,7 +32,6 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
 
 @interface IJSVGCommand : NSObject {
     NSString * commandString;
-    NSString * string;
     NSString * command;
     CGFloat * parameters;
     NSInteger parameterCount;
@@ -44,7 +43,6 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
     Class<IJSVGCommandProtocol> commandClass;
 }
 
-@property ( nonatomic, copy ) NSString * string;
 @property ( nonatomic, copy ) NSString * commandString;
 @property ( nonatomic, copy ) NSString * command;
 @property ( nonatomic, assign ) CGFloat * parameters;

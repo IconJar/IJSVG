@@ -109,32 +109,25 @@ CGFloat degrees_to_radians( CGFloat degrees )
                                          size:count];
 }
 
+static NSCharacterSet * _invertedCharSet = nil;
+
 + (CGFloat *)scanFloatsFromString:(NSString *)string
                              size:(NSInteger *)length
 {
-    NSInteger defSize = 1000;
-    NSInteger size = defSize;
-    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*size);
-    NSScanner * scanner = [[[NSScanner alloc] initWithString:string] autorelease];
-    float num = 0;
-    NSInteger i = 0;
-    while( [scanner isAtEnd] == NO )
-    {
-        if( [scanner scanFloat:&num] )
-        {
-            if( (i+1) == size )
-            {
-                // if we reach here, we need to reallocate memory...serious amount of floats..
-                // something going on weird in the SVG? - possible...
-                size += defSize;
-                floats = (CGFloat *)realloc( floats, sizeof(CGFloat)*size);
-            }
-            floats[i++] = num;
+    if(_invertedCharSet == nil) {
+        NSCharacterSet * tSet = [NSCharacterSet characterSetWithCharactersInString:@"0123456789-e."];
+        _invertedCharSet = [tSet.invertedSet retain];
+    }
+    NSArray * pieces = [string componentsSeparatedByCharactersInSet:_invertedCharSet];
+    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*pieces.count);
+    NSInteger counter = 0;
+    for(NSString * piece in pieces) {
+        if(piece.length == 0) {
             continue;
         }
-        [scanner setScanLocation:scanner.scanLocation+1];
+        floats[counter++] = piece.floatValue;
     }
-    *length = i;
+    *length = counter;
     return floats;
 }
 

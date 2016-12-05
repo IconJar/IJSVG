@@ -12,7 +12,6 @@
 @implementation IJSVGCommand
 
 @synthesize commandString;
-@synthesize string;
 @synthesize command;
 @synthesize parameterCount;
 @synthesize parameters;
@@ -26,7 +25,6 @@ static NSMutableDictionary * _classes = nil;
 
 - (void)dealloc
 {
-    [string release], string = nil;
     [commandString release], commandString = nil;
     [command release], command = nil;
     [subCommands release], subCommands = nil;
@@ -44,8 +42,7 @@ static NSMutableDictionary * _classes = nil;
         command = [[str substringToIndex:1] copy];
         type = [IJSVGUtils typeForCommandString:self.command];
         commandClass = [[self class] commandClassForCommandLetter:self.command];
-        parameters = [IJSVGUtils commandParameters:str
-                                             count:&parameterCount];
+        parameters = [IJSVGUtils commandParameters:str count:&parameterCount];
         requiredParameters = [self.commandClass requiredParameterCount];
         
         // now work out the sets of parameters we have
@@ -53,30 +50,23 @@ static NSMutableDictionary * _classes = nil;
         // if there is a multiple of commands in a command
         // then we need to work those out...
         NSInteger sets = 1;
-        if( self.requiredParameters != 0 )
+        if( self.requiredParameters != 0 ) {
             sets = self.parameterCount/self.requiredParameters;
+        }
         
         // interate over the sets
-        for( NSInteger i = 0; i < sets; i++ )
-        {
-            NSMutableString * cs = [[[NSMutableString alloc] init] autorelease];
-            [cs appendString:self.command];
-            
+        for( NSInteger i = 0; i < sets; i++ ) {
             // memory for this will be handled by the created subcommand
             CGFloat * subParams = 0;
-            if( self.requiredParameters != 0 )
-            {
+            if( self.requiredParameters != 0 ) {
                 subParams = (CGFloat*)malloc(self.requiredParameters*sizeof(CGFloat));
-                for( NSInteger p = 0; p < self.requiredParameters; p++ )
-                {
+                for( NSInteger p = 0; p < self.requiredParameters; p++ ) {
                     subParams[p] = self.parameters[i*self.requiredParameters+p];
-                    [cs appendFormat:@"%f ",subParams[p]];
                 }
             }
             
             // create a subcommand per set
             IJSVGCommand * c = [[[[self class] alloc] init] autorelease];
-            c.string = cs;
             c.parameterCount = self.requiredParameters;
             c.parameters = subParams;
             c.type = self.type;
