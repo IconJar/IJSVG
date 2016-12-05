@@ -780,6 +780,13 @@
         case IJSVGNodeTypeFont:
         case IJSVGNodeTypeMask:
         case IJSVGNodeTypeGroup: {
+            
+            // skip blank groups
+            if(aType == IJSVGNodeTypeGroup && element.childCount == 0) {
+                break;
+            }
+            
+            // create a new group
             IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
             group.type = aType;
             group.name = subName;
