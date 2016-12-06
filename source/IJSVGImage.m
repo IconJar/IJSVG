@@ -72,6 +72,11 @@
 {
     // run the transforms
     // draw the image
+    if(self.width == 0.f || self.height == 0.f) {
+        return;
+    }
+    
+    // make sure path is set
     if(path == nil) {
         path = [self path];
     }
