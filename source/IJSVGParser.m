@@ -1215,7 +1215,7 @@ static NSCharacterSet * _commandCharSet = nil;
     // there is per command string
     IJSVGCommand * preCommand = nil;
     if( previousCommand ) {
-        preCommand = (IJSVGCommand *)[[previousCommand subCommands] lastObject];
+        preCommand = previousCommand;
     }
     
     // main commands
