@@ -40,7 +40,7 @@
     if(imagePath == nil) {
         // lazy load the path as it might not be needed
         imagePath = [[IJSVGPath alloc] init];
-        [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, image.size.width, image.size.height)];
+        [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, self.width, self.height)];
         [imagePath close];
     }
     return imagePath;
@@ -58,7 +58,7 @@
         CGImage = nil;
     }
     
-    NSRect rect = NSMakeRect( 0.f, 0.f, image.size.width, image.size.height);
+    NSRect rect = NSMakeRect( 0.f, 0.f, self.width, self.height);
     CGImage = [image CGImageForProposedRect:&rect
                                     context:nil
                                       hints:nil];
