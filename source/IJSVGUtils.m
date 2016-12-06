@@ -136,36 +136,32 @@ CGFloat degrees_to_radians( CGFloat degrees )
     
     while(i < sLength) {
         char currentChar = cString[i];
-        bool isHyphen = currentChar == '-';
-        bool isValid = strchr(validChars, currentChar);
-        bool wantsEnd = false;
         
-        // this is a little weird, if there is a float that is directly next to another float
-        // but has a - on the front, we need to break the process and treat it as another float
-        // so basically, if its a -, tell it to parse the previous float, minus 1 from the
-        // current loop index and let it continue on
-        if(isHyphen && i != 0 && buffer != NULL) {
-            wantsEnd = true;
-            i--;
-        } else {
-            
-            // make sure its a valid string
-            if(isValid) {
-                // alloc the buffer if needed
-                if(buffer == NULL) {
-                    buffer = (char *)malloc(sizeof(char)*size);
-                } else if((bufferCount+1) == size) {
-                    // realloc the buffer, incase the string is overflowing the
-                    // allocated memory
-                    size += defSize;
-                    buffer = (char *)realloc(buffer, sizeof(char)*size);
-                }
-                // set the actual char against it
-                buffer[bufferCount++] = currentChar;
-            } else {
-                // if its an invalid char, just stop it
-                wantsEnd = true;
+        // work out next char
+        char nextChar = (char)0;
+        if(i < (sLength-1)) {
+            nextChar = cString[i+1];
+        }
+        
+        bool isValid = strchr(validChars, currentChar);
+        bool wantsEnd = nextChar == '-';
+        
+        // make sure its a valid string
+        if(isValid) {
+            // alloc the buffer if needed
+            if(buffer == NULL) {
+                buffer = (char *)malloc(sizeof(char)*size);
+            } else if((bufferCount+1) == size) {
+                // realloc the buffer, incase the string is overflowing the
+                // allocated memory
+                size += defSize;
+                buffer = (char *)realloc(buffer, sizeof(char)*size);
             }
+            // set the actual char against it
+            buffer[bufferCount++] = currentChar;
+        } else {
+            // if its an invalid char, just stop it
+            wantsEnd = true;
         }
         
         // is at end of string, or wants to be stopped
