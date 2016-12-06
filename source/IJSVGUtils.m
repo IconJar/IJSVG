@@ -112,24 +112,84 @@ CGFloat degrees_to_radians( CGFloat degrees )
 + (CGFloat *)scanFloatsFromString:(NSString *)string
                              size:(NSInteger *)length
 {
-    NSInteger defSize = 500;
+    // default sizes and memory
+    // sizes for the string buffer
+    NSInteger defSize = 50;
     NSInteger size = defSize;
-    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*size);
-    NSScanner * scanner = [[[NSScanner alloc] initWithString:string] autorelease];
-    float num = 0;
+    NSInteger sLength = string.length;
+    
+    // default memory size for the floats
+    NSInteger defFloatSize = 100;
+    NSInteger floatSize = defFloatSize;
+    
     NSInteger i = 0;
-    while( [scanner isAtEnd] == NO ) {
-        if( [scanner scanFloat:&num] ) {
-            if( (i+1) == size ) {
-                size += defSize;
-                floats = (CGFloat *)realloc( floats, sizeof(CGFloat)*size);
+    NSInteger counter = 0;
+    
+    const char * cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
+    const char * validChars = "0123456789e-.";
+    
+    // buffer for the returned floats
+    CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*defFloatSize);
+    
+    char * buffer = NULL;
+    int bufferCount = 0;
+    
+    while(i < sLength) {
+        char currentChar = cString[i];
+        bool isHyphen = currentChar == '-';
+        bool isValid = strchr(validChars, currentChar);
+        bool wantsEnd = false;
+        
+        // this is a little weird, if there is a float that is directly next to another float
+        // but has a - on the front, we need to break the process and treat it as another float
+        // so basically, if its a -, tell it to parse the previous float, minus 1 from the
+        // current loop index and let it continue on
+        if(isHyphen && i != 0 && buffer != NULL) {
+            wantsEnd = true;
+            i--;
+        } else {
+            
+            // make sure its a valid string
+            if(isValid) {
+                // alloc the buffer if needed
+                if(buffer == NULL) {
+                    buffer = (char *)malloc(sizeof(char)*size);
+                } else if((bufferCount+1) == size) {
+                    // realloc the buffer, incase the string is overflowing the
+                    // allocated memory
+                    size += defSize;
+                    buffer = (char *)realloc(buffer, sizeof(char)*size);
+                }
+                // set the actual char against it
+                buffer[bufferCount++] = currentChar;
+            } else {
+                // if its an invalid char, just stop it
+                wantsEnd = true;
             }
-            floats[i++] = num;
-            continue;
         }
-        [scanner setScanLocation:scanner.scanLocation+1];
+        
+        // is at end of string, or wants to be stopped
+        // buffer has to actually exist or its completly
+        // useless and will cause a crash
+        if(buffer != NULL && (wantsEnd || i == sLength-1)) {
+            // make sure there is enough room in the float pool
+            if((counter+1) == floatSize) {
+                floatSize += defFloatSize;
+                floats = (CGFloat *)realloc(floats, sizeof(CGFloat)*floatSize);
+            }
+            
+            // add the float
+            floats[counter++] = atof(buffer);
+            
+            // memory clean and counter resets
+            free(buffer);
+            size = defSize;
+            bufferCount = 0;
+            buffer = NULL;
+        }
+        i++;
     }
-    *length = i;
+    *length = counter;
     return floats;
 }
 
