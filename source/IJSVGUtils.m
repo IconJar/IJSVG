@@ -132,6 +132,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
     CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*defFloatSize);
     
     char * buffer = NULL;
+    bool isDecimal = false;
     int bufferCount = 0;
     
     while(i < sLength) {
@@ -144,13 +145,16 @@ CGFloat degrees_to_radians( CGFloat degrees )
         }
         
         bool isValid = strchr(validChars, currentChar);
-        bool wantsEnd = nextChar == '-';
+        
+        // in order to work out the split, its either because the next char is
+        // a  hyphen, or next char is a decimal and the current number is a decimal
+        bool wantsEnd = nextChar == '-' || (nextChar == '.' && isDecimal);
         
         // make sure its a valid string
         if(isValid) {
             // alloc the buffer if needed
             if(buffer == NULL) {
-                buffer = (char *)malloc(sizeof(char)*size);
+                buffer = (char *)calloc(sizeof(char),size);
             } else if((bufferCount+1) == size) {
                 // realloc the buffer, incase the string is overflowing the
                 // allocated memory
@@ -158,6 +162,9 @@ CGFloat degrees_to_radians( CGFloat degrees )
                 buffer = (char *)realloc(buffer, sizeof(char)*size);
             }
             // set the actual char against it
+            if(currentChar == '.') {
+                isDecimal = true;
+            }
             buffer[bufferCount++] = currentChar;
         } else {
             // if its an invalid char, just stop it
@@ -180,6 +187,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
             // memory clean and counter resets
             free(buffer);
             size = defSize;
+            isDecimal = false;
             bufferCount = 0;
             buffer = NULL;
         }
