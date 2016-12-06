@@ -126,7 +126,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
     NSInteger counter = 0;
     
     const char * cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
-    const char * validChars = "0123456789e-.";
+    const char * validChars = "0123456789eE+-.";
     
     // buffer for the returned floats
     CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*defFloatSize);
@@ -147,8 +147,8 @@ CGFloat degrees_to_radians( CGFloat degrees )
         bool isValid = strchr(validChars, currentChar);
         
         // in order to work out the split, its either because the next char is
-        // a  hyphen, or next char is a decimal and the current number is a decimal
-        bool wantsEnd = nextChar == '-' || (nextChar == '.' && isDecimal);
+        // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
+        bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
         
         // make sure its a valid string
         if(isValid) {
