@@ -235,6 +235,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
 
 - (void)dealloc
 {
+    [_rawSelectors release], _rawSelectors = nil;
     [selector release], selector = nil;
     [super dealloc];
 }
