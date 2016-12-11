@@ -148,7 +148,14 @@ CGFloat degrees_to_radians( CGFloat degrees )
         
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
-        bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
+        bool isE = currentChar == 'e' || currentChar == 'E';
+        bool wantsEnd = nextChar == '-' || nextChar == '+' ||
+            (nextChar == '.' && isDecimal);
+        
+        // could be a float like 5.334e-5 so dont break on the hypen
+        if(wantsEnd && isE && (nextChar == '-' || nextChar == '+')) {
+            wantsEnd = false;
+        }
         
         // make sure its a valid string
         if(isValid) {
