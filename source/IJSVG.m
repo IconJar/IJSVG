@@ -430,60 +430,62 @@ static NSColor * _baseColor = nil;
               error:(NSError **)error
 {
     // prep for draw...
-    CGContextSaveGState(ref);
-    @try {
-        
-        [self _beginDraw:rect];
+    @synchronized (self) {
+        CGContextSaveGState(ref);
+        @try {
             
-        // scale the whole drawing context, but first, we need
-        // to translate the context so its centered
-        CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
-        CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
-        
-        // we also need to calculate the viewport so we can clip
-        // the drawing if needed
-        BOOL canDraw = NO;
-        NSRect viewPort = [self computeRectDrawingInRect:rect
-                                                 isValid:&canDraw];
-        // check the viewport
-        if( !canDraw )
-        {
+            [self _beginDraw:rect];
+                
+            // scale the whole drawing context, but first, we need
+            // to translate the context so its centered
+            CGFloat tX = round(rect.size.width/2-(_group.size.width/2)*_scale);
+            CGFloat tY = round(rect.size.height/2-(_group.size.height/2)*_scale);
+            
+            // we also need to calculate the viewport so we can clip
+            // the drawing if needed
+            BOOL canDraw = NO;
+            NSRect viewPort = [self computeRectDrawingInRect:rect
+                                                     isValid:&canDraw];
+            // check the viewport
+            if( !canDraw )
+            {
+                if( error != NULL )
+                    *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                         code:IJSVGErrorDrawing
+                                                     userInfo:nil] autorelease];
+                CGContextRestoreGState(ref);
+                return NO;
+            }
+            
+            // clip any drawing to the view port
+            [[NSBezierPath bezierPathWithRect:viewPort] addClip];
+            
+            tX -= _group.viewBox.origin.x*_scale;
+            tY -= _group.viewBox.origin.y*_scale;
+            
+            CGContextTranslateCTM( ref, tX, tY );
+            CGContextScaleCTM( ref, _scale, _scale );
+            
+            // apply standard defaults
+            [self _applyDefaults:ref
+                            node:_group];
+            
+            // begin draw
+            [self _drawGroup:_group
+                        rect:rect
+                     context:ref];
+            
+        }
+        @catch (NSException *exception) {
+            // just catch and give back a drawing error to the caller
             if( error != NULL )
                 *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                      code:IJSVGErrorDrawing
                                                  userInfo:nil] autorelease];
-            CGContextRestoreGState(ref);
-            return NO;
         }
-        
-        // clip any drawing to the view port
-        [[NSBezierPath bezierPathWithRect:viewPort] addClip];
-        
-        tX -= _group.viewBox.origin.x*_scale;
-        tY -= _group.viewBox.origin.y*_scale;
-        
-        CGContextTranslateCTM( ref, tX, tY );
-        CGContextScaleCTM( ref, _scale, _scale );
-        
-        // apply standard defaults
-        [self _applyDefaults:ref
-                        node:_group];
-        
-        // begin draw
-        [self _drawGroup:_group
-                    rect:rect
-                 context:ref];
-        
-    }
-    @catch (NSException *exception) {
-        // just catch and give back a drawing error to the caller
-        if( error != NULL )
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorDrawing
-                                             userInfo:nil] autorelease];
-    }
-    @finally {
-        CGContextRestoreGState(ref);
+        @finally {
+            CGContextRestoreGState(ref);
+        }
     }
     return (error == nil);
 }
