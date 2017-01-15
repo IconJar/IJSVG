@@ -42,10 +42,22 @@
 @synthesize strokeDashOffset;
 @synthesize usesDefaultFillColor;
 @synthesize svg;
+@synthesize mask;
+@synthesize units;
+@synthesize contentUnits;
 
 - (void)dealloc
 {
     free(strokeDashArray);
+    [x release], x = nil;
+    [y release], y = nil;
+    [width release], width = nil;
+    [height release], height = nil;
+    [opacity release], opacity = nil;
+    [fillOpacity release], fillOpacity = nil;
+    [strokeOpacity release], strokeOpacity = nil;
+    [strokeWidth release], strokeWidth = nil;
+    [strokeDashOffset release], strokeDashOffset = nil;
     [unicode release], unicode = nil;
     [fillGradient release], fillGradient = nil;
     [transforms release], transforms = nil;
@@ -59,10 +71,12 @@
     [fillPattern release], fillPattern = nil;
     [clipPath release], clipPath = nil;
     [svg release], svg = nil;
+    [mask release], mask = nil;
     [super dealloc];
 }
 
 + (IJSVGNodeType)typeForString:(NSString *)string
+                          kind:(NSXMLNodeKind)kind
 {
     string = [string lowercaseString];
     if( [string isEqualToString:@"defs"] )
@@ -103,6 +117,11 @@
         return IJSVGNodeTypePattern;
     if([string isEqualToString:@"svg"])
         return IJSVGNodeTypeSVG;
+    if([string isEqualToString:@"text"])
+        return IJSVGNodeTypeText;
+    if([string isEqualToString:@"tspan"] || kind == NSXMLTextKind) {
+        return IJSVGNodeTypeTextSpan;
+    }
     return IJSVGNodeTypeNotFound;
 }
 
@@ -133,6 +152,9 @@
     self.fillColor = node.fillColor;
     self.strokeColor = node.strokeColor;
     self.clipPath = node.clipPath;
+    
+    self.units = node.units;
+    self.contentUnits = node.contentUnits;
     
     self.opacity = node.opacity;
     self.strokeWidth = node.strokeWidth;
@@ -170,15 +192,17 @@
 {
     if( ( self = [super init] ) != nil )
     {
-        self.opacity = 0.f;
-        self.fillOpacity = 1.f;
-        self.strokeOpacity = 1.f;
-        self.strokeDashOffset = 0.f;
+        self.opacity = [IJSVGUnitLength unitWithFloat:0.f];
+        self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
         self.shouldRender = YES;
-        self.strokeWidth = IJSVGInheritedFloatValue;
+        self.strokeWidth = [IJSVGUnitLength unitWithFloat:0.f];
         self.windingRule = IJSVGWindingRuleInherit;
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
+        self.units = IJSVGUnitInherit;
+        
         if( flag ) {
             def = [[IJSVGDef alloc] init];
         }
@@ -204,8 +228,9 @@
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    if( windingRule == IJSVGWindingRuleInherit && parentNode != nil )
+    if( windingRule == IJSVGWindingRuleInherit && parentNode != nil ) {
         return parentNode.windingRule;
+    }
     return windingRule;
 }
 
@@ -231,33 +256,32 @@
 
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
-- (CGFloat)opacity
+- (IJSVGUnitLength *)opacity
 {
-    if( opacity == IJSVGInheritedFloatValue && parentNode != nil )
+    if(opacity.inherit && parentNode != nil) {
         return parentNode.opacity;
-    if( opacity != 0.f )
-        return opacity;
-    return 0.f;
-}
-
-- (CGFloat)fillOpacity
-{
-    if( fillOpacity == IJSVGInheritedFloatValue && parentNode != nil )
-        return parentNode.fillOpacity;
-    if( fillOpacity != 0.f )
-        return fillOpacity;
-    return 0.f;
+    }
+    return opacity;
 }
 
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
-- (CGFloat)strokeWidth
+- (IJSVGUnitLength *)fillOpacity
 {
-    if( strokeWidth == IJSVGInheritedFloatValue && parentNode != nil )
+    if(fillOpacity.inherit && parentNode != nil) {
+        return parentNode.fillOpacity;
+    }
+    return fillOpacity;
+}
+
+// these are all recursive, so go up the chain
+// if they dont exist on this specific node
+- (IJSVGUnitLength *)strokeWidth
+{
+    if(strokeWidth.inherit && parentNode != nil) {
         return parentNode.strokeWidth;
-    if( strokeWidth != 0.f )
-        return strokeWidth;
-    return 0;
+    }
+    return strokeWidth;
 }
 
 // these are all recursive, so go up the chain
@@ -271,13 +295,12 @@
     return nil;
 }
 
-- (CGFloat)strokeOpacity
+- (IJSVGUnitLength *)strokeOpacity
 {
-    if( strokeOpacity == IJSVGInheritedFloatValue && parentNode != nil )
+    if(strokeOpacity.inherit && parentNode != nil) {
         return parentNode.strokeOpacity;
-    if( strokeOpacity != 0.f )
-        return strokeOpacity;
-    return 0.f;
+    }
+    return strokeOpacity;
 }
 
 // even though the spec explicity states fill color
@@ -289,6 +312,8 @@
     return fillColor;
 }
 
+// these are all recursive, so go up the chain
+// if they dont exist on this specific node
 - (IJSVGGradient *)fillGradient
 {
     if(fillGradient == nil && parentNode != nil) {
@@ -297,6 +322,8 @@
     return fillGradient;
 }
 
+// these are all recursive, so go up the chain
+// if they dont exist on this specific node
 - (IJSVGPattern *)fillPattern
 {
     if(fillPattern == nil && parentNode != nil) {

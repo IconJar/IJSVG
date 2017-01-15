@@ -9,21 +9,13 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGGradient.h"
 
-@interface IJSVGRadialGradient : IJSVGGradient {
- 
-    CGFloat cx;
-    CGFloat cy;
-    CGFloat fx;
-    CGFloat fy;
-    CGFloat radius;
-    
-}
+@interface IJSVGRadialGradient : IJSVGGradient
 
-@property ( nonatomic, assign ) CGFloat cx;
-@property ( nonatomic, assign ) CGFloat cy;
-@property ( nonatomic, assign ) CGFloat fx;
-@property ( nonatomic, assign ) CGFloat fy;
-@property ( nonatomic, assign ) CGFloat radius;
+@property ( nonatomic, retain ) IJSVGUnitLength * cx;
+@property ( nonatomic, retain ) IJSVGUnitLength * cy;
+@property ( nonatomic, retain ) IJSVGUnitLength * fx;
+@property ( nonatomic, retain ) IJSVGUnitLength * fy;
+@property ( nonatomic, retain ) IJSVGUnitLength * radius;
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGRadialGradient *)gradient

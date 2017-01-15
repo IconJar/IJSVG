@@ -28,5 +28,6 @@
 - (void)close;
 - (NSPoint)currentPoint;
 - (void)overwritePath:(NSBezierPath *)aPath;
+- (CGPathRef)newPathRefByAutoClosingPath:(BOOL)autoClose;
 
 @end

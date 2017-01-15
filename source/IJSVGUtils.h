@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import "IJSVGCommand.h"
-#import "IJSVGUnits.h"
 
 @interface IJSVGUtils : NSObject
 
@@ -25,6 +24,7 @@ CGFloat degrees_to_radians( CGFloat degrees );
 + (IJSVGWindingRule)windingRuleForString:(NSString *)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString *)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string;
++ (IJSVGUnitType)unitTypeForString:(NSString *)string;
 + (void)logParameters:(CGFloat *)param
                 count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString *)string;
@@ -35,5 +35,8 @@ CGFloat degrees_to_radians( CGFloat degrees );
    fallBackForPercent:(CGFloat)viewBox;
 + (CGFloat *)scanFloatsFromString:(NSString *)string
                              size:(NSInteger *)length;
++ (IJSVGFontTraits)fontStyleStringForString:(NSString *)string;
++ (IJSVGFontTraits)fontWeightTraitForString:(NSString *)string
+                                     weight:(CGFloat *)weight;
 
 @end

@@ -40,7 +40,7 @@
     if(imagePath == nil) {
         // lazy load the path as it might not be needed
         imagePath = [[IJSVGPath alloc] init];
-        [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, self.width, self.height)];
+        [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, self.width.value, self.height.value)];
         [imagePath close];
     }
     return imagePath;
@@ -58,7 +58,7 @@
         CGImage = nil;
     }
     
-    NSRect rect = NSMakeRect( 0.f, 0.f, self.width, self.height);
+    NSRect rect = NSMakeRect( 0.f, 0.f, self.width.value, self.height.value);
     CGImage = [image CGImageForProposedRect:&rect
                                     context:nil
                                       hints:nil];
@@ -67,12 +67,17 @@
     CGImageRetain(CGImage);
 }
 
+- (CGImageRef)CGImage
+{
+    return CGImage;
+}
+
 - (void)drawInContextRef:(CGContextRef)context
                     path:(IJSVGPath *)path
 {
     // run the transforms
     // draw the image
-    if(self.width == 0.f || self.height == 0.f) {
+    if(self.width.value == 0.f || self.height.value == 0.f) {
         return;
     }
     

@@ -16,6 +16,16 @@
 @synthesize fy;
 @synthesize radius;
 
+- (void)dealloc
+{
+    [cx release], cx = nil;
+    [cy release], cy = nil;
+    [fx release], fx = nil;
+    [fy release], fy = nil;
+    [radius release], radius = nil;
+    [super dealloc];
+}
+
 - (id)copyWithZone:(NSZone *)zone
 {
     IJSVGRadialGradient * grad = [super copyWithZone:zone];
@@ -36,39 +46,36 @@
                      endPoint:(CGPoint *)endPoint
 {
     // cx defaults to 50% if not specified
-    if( [element attributeForName:@"cx"] )
-        gradient.cx = [[[element attributeForName:@"cx"] stringValue] floatValue]/100;
-    else
-        gradient.cx = .5f;
+    NSDictionary * kv = @{@"cx":@"cx",
+                          @"cy":@"cy",
+                          @"r":@"radius",
+                          @"fx":@"fx"};
     
-    // cy defaults to 50% is not specified
-    if([element attributeForName:@"cy"])
-        gradient.cy = [[[element attributeForName:@"cy"] stringValue] floatValue]/100;
-    else
-        gradient.cy = .5f;
-    
-    if( [element attributeForName:@"r"] )
-        gradient.radius = [[[element attributeForName:@"r"] stringValue] floatValue]/100;
-    else
-        gradient.radius = .5f;
-    
-    // fx defaults to cx if not specified
-    if( [element attributeForName:@"fx"] != nil )
-        gradient.fx = [[[element attributeForName:@"fx"] stringValue] floatValue]/100;
-    else
-        gradient.fx = gradient.cx;
+    for(NSString * key in kv.allKeys) {
+        NSString * str = [element attributeForName:key].stringValue;
+        IJSVGUnitLength * unit = nil;
+        if(str != nil) {
+            unit = [IJSVGUnitLength unitWithPercentageString:str];
+        } else {
+            unit = [IJSVGUnitLength unitWithPercentageFloat:50];
+        }
+        [gradient setValue:unit
+                    forKey:kv[key]];
+    }
     
     // fy defaults to cy if not specified
-    if( [element attributeForName:@"fy"] != nil )
-        gradient.fy = [[[element attributeForName:@"fx"] stringValue] floatValue]/100;
-    else
+    NSString * fy = [element attributeForName:@"fy"].stringValue;
+    if(fy != nil) {
+        gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
+    } else {
         gradient.fy = gradient.cy;
+    }
     
     if( gradient.gradient != nil )
         return nil;
     
-    *startPoint = CGPointMake(gradient.cx, gradient.cy);
-    *endPoint = CGPointMake(gradient.fx, gradient.fy);
+    *startPoint = CGPointMake(gradient.cx.valueAsPercentage, gradient.cy.valueAsPercentage);
+    *endPoint = CGPointMake(gradient.fx.valueAsPercentage, gradient.fy.valueAsPercentage);
     
     NSArray * colors = nil;
     CGFloat * colorStops = [[self class] computeColorStopsFromString:element colors:&colors];
@@ -87,14 +94,13 @@
     // rotate transform, assume its based on percentages
     // if lower then 0 is specified for 1 or 2
     CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
-    if( transform.command == IJSVGTransformCommandRotate )
-    {
-        switch(index)
-        {
+    if( transform.command == IJSVGTransformCommandRotate ) {
+        switch(index) {
             case 1:
             case 2: {
-                if(value<1.f)
-                    return max*value;
+                if(value<1.f) {
+                    return (max*value);
+                }
                 break;
             }
         }
@@ -104,11 +110,10 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                    path:(IJSVGPath *)path
+                    rect:(NSRect)rect
 {
-    CGRect bounds = path.path.bounds;
-    for( IJSVGTransform * transform in self.transforms )
-    {
+    CGRect bounds = rect;
+    for( IJSVGTransform * transform in self.transforms ) {
         IJSVGTransformParameterModifier modifier = ^CGFloat(NSInteger index, CGFloat value) {
             return [self _handleTransform:transform
                                    bounds:bounds
@@ -121,20 +126,28 @@
     CGPoint sp = self.startPoint;
     CGPoint ep = self.endPoint;
     
-    if( self.startPoint.x == .5f )
+    if( self.startPoint.x == .5f ) {
         sp.x = bounds.size.width*self.startPoint.x;
-    if(startPoint.y == .5f)
+    }
+    
+    if(self.startPoint.y == .5f) {
         sp.y = bounds.size.height*self.startPoint.y;
+    }
     
-    if(self.endPoint.x == .5f)
+    if(self.endPoint.x == .5f) {
         ep.x = bounds.size.width*self.endPoint.x;
-    if(self.endPoint.y == .5f)
+    }
+    
+    if(self.endPoint.y == .5f) {
         ep.y = bounds.size.height*self.endPoint.y;
+    }
     
-    CGFloat r = self.radius;
-    if(r == .5f)
+    CGFloat r = self.radius.value;
+    if(r == .5f) {
         r = (sp.x>sp.y?sp.x:sp.y);
+    }
     
+    // actually perform the draw
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
     CGGradientRef grad = self.CGGradient;
     CGContextDrawRadialGradient(ctx, grad, sp, 0.f, ep, r, options);

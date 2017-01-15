@@ -10,14 +10,4 @@
 
 @implementation IJSVGPattern
 
-- (void)drawInContextRef:(CGContextRef)context
-                    path:(IJSVGPath *)path
-{
-    // currently only support images
-    for(IJSVGImage * image in self.children) {
-        [image drawInContextRef:context
-                           path:path];
-    }
-}
-
 @end

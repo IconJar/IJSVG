@@ -19,8 +19,7 @@
 
 - (id)init
 {
-    if( ( self = [super init] ) != nil )
-    {
+    if( ( self = [super init] ) != nil ) {
         _dict = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -56,8 +55,7 @@
     [_reg enumerateMatchesInString:string
                            options:0
                              range:NSMakeRange( 0, string.length )
-                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-     {
+                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
          NSString * key = [string substringWithRange:[result rangeAtIndex:1]];
          NSString * value = [string substringWithRange:[result rangeAtIndex:2]];
          [[self class] computeStyleProperty:key
@@ -83,23 +81,8 @@
 {
     key = [[self class] trimString:key];
     value = [[self class] trimString:value];
-    id val = nil;
-    
-    // is it a color?
-    NSColor * color = [IJSVGColor colorFromString:value];
-    if( color == nil || ![[self allowedColourKeys] containsObject:key] )
-    {
-        // value is numeric, convert to a float
-        val = value;
-        if( [[self class] isNumeric:value] )
-            val = @([value floatValue]);
-    } else
-        val = color;
-    
-    // set the value
-    if( val != nil )
-        [style setPropertyValue:val
-                    forProperty:key];
+    [style setPropertyValue:value
+                forProperty:key];
     
 }
 
@@ -111,8 +94,9 @@
 - (void)setProperties:(NSDictionary *)properties
            replaceAll:(BOOL)flag
 {
-    if(flag)
+    if(flag) {
         [_dict removeAllObjects];
+    }
     [_dict addEntriesFromDictionary:properties];
 }
 

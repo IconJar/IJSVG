@@ -16,6 +16,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
     IJSVGTransformCommandTranslate,
     IJSVGTransformCommandScale,
     IJSVGTransformCommandRotate,
+    IJSVGTransformCommandSkewX,
+    IJSVGTransformCommandSkewY,
     IJSVGTransformCommandNotImplemented
 };
 
@@ -34,11 +36,11 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 @property ( nonatomic, assign ) NSInteger sort;
 
 + (NSArray *)transformsForString:(NSString *)string;
-+ (void)performTransform:(IJSVGTransform *)transform
-               inContext:(CGContextRef)context;
 + (NSBezierPath *)transformedPath:(IJSVGPath *)path;
++ (NSArray<NSString *> *)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform;
 - (CGAffineTransform)CGAffineTransform;
 - (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
+- (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
 - (void)recalculateWithBounds:(CGRect)bounds;
 
 @end

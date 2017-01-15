@@ -21,6 +21,48 @@
 #import "IJSVGStyleSheet.h"
 #import "IJSVGPattern.h"
 #import "IJSVGImage.h"
+#import "IJSVGText.h"
+
+static NSString const * IJSVGAttributeViewBox = @"viewBox";
+static NSString const * IJSVGAttributeID = @"id";
+static NSString const * IJSVGAttributeClass = @"class";
+static NSString const * IJSVGAttributeX = @"x";
+static NSString const * IJSVGAttributeY = @"y";
+static NSString const * IJSVGAttributeWidth = @"width";
+static NSString const * IJSVGAttributeHeight = @"height";
+static NSString const * IJSVGAttributeOpacity = @"opacity";
+static NSString const * IJSVGAttributeStrokeOpacity = @"stroke-opacity";
+static NSString const * IJSVGAttributeStrokeWidth = @"stroke-width";
+static NSString const * IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
+static NSString const * IJSVGAttributeFillOpacity = @"fill-opacity";
+static NSString const * IJSVGAttributeClipPath = @"clip-path";
+static NSString const * IJSVGAttributeMask = @"mask";
+static NSString const * IJSVGAttributeGradientUnits = @"gradientUnits";
+static NSString const * IJSVGAttributeMaskUnits = @"maskUnits";
+static NSString const * IJSVGAttributeMaskContentUnits = @"maskContentUnits";
+static NSString const * IJSVGAttributeTransform = @"transform";
+static NSString const * IJSVGAttributeGradientTransform = @"gradientTransform";
+static NSString const * IJSVGAttributeUnicode = @"unicode";
+static NSString const * IJSVGAttributeStrokeLineCap = @"stroke-linecap";
+static NSString const * IJSVGAttributeLineJoin = @"stroke-linejoin";
+static NSString const * IJSVGAttributeStroke = @"stroke";
+static NSString const * IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
+static NSString const * IJSVGAttributeFill = @"fill";
+static NSString const * IJSVGAttributeFillRule = @"fill-rule";
+static NSString const * IJSVGAttributeDisplay = @"display";
+static NSString const * IJSVGAttributeStyle = @"style";
+static NSString const * IJSVGAttributeD = @"d";
+static NSString const * IJSVGAttributeXLink = @"xlink:href";
+static NSString const * IJSVGAttributeX1 = @"x1";
+static NSString const * IJSVGAttributeX2 = @"x2";
+static NSString const * IJSVGAttributeY1 = @"y1";
+static NSString const * IJSVGAttributeY2 = @"y2";
+static NSString const * IJSVGAttributeRX = @"rx";
+static NSString const * IJSVGAttributeRY = @"ry";
+static NSString const * IJSVGAttributeCX = @"cx";
+static NSString const * IJSVGAttributeCY = @"cy";
+static NSString const * IJSVGAttributeR = @"r";
+static NSString const * IJSVGAttributePoints = @"points";
 
 @class IJSVGParser;
 

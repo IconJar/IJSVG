@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [[IJSVG svgNamed:@"htc_one"] retain];
+    return [[IJSVG svgNamed:@"linecap"] retain];
 }
 
 @end

@@ -20,5 +20,6 @@
 + (BOOL)enabled;
 + (void)setEnabled:(BOOL)flag;
 + (void)purgeCachedSVGForFileURL:(NSURL *)aURL;
++ (void)setEvictItemsAfter:(NSInteger)count;
 
 @end

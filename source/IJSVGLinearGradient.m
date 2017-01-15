@@ -17,28 +17,36 @@
                      endPoint:(CGPoint *)endPoint
 {
     
-    // assume its a vertical / horizonal
-    aGradient.x1 = IJSVGUnitFromString([[element attributeForName:@"x1"] stringValue]);
-    aGradient.x2 = IJSVGUnitFromString([[element attributeForName:@"x2"] stringValue]);
-    aGradient.y1 = IJSVGUnitFromString([[element attributeForName:@"y1"] stringValue]);
-    aGradient.y2 = IJSVGUnitFromString([[element attributeForName:@"y2"] stringValue]);
-//    
-//    *startPoint = CGPointMake(x1, y1);
-//    *endPoint = CGPointMake(x2, y2);
-//    
-//    // horizontal
-//    if( y1 == y2 && x1 != x2 )
-//        aGradient.angle = 0.f;
-//    
-//    // vertical
-//    else if( x1 == x2 && y1 != y2 )
-//        aGradient.angle = 270.f;
-//    
-//    // angles
-//    else if( x1 != x2 && y1 != y2 )
-//        aGradient.angle = [IJSVGUtils angleBetweenPointA:NSMakePoint( x1, y1 )
-//                                                  pointb:NSMakePoint( x2, y2 )];
+    CGFloat px1 = [[element attributeForName:@"x1"] stringValue].floatValue;
+    CGFloat px2 = [[element attributeForName:@"x2"] stringValue].floatValue;
+    CGFloat py1 = [[element attributeForName:@"y1"] stringValue].floatValue;
+    CGFloat py2 = [[element attributeForName:@"y2"] stringValue].floatValue;
     
+    // work out each coord, and work out if its a % or not
+    // annoyingly we need to check them all against each other -_-
+    BOOL isPercent = NO;
+    if(px1 <= 1.f && px2 <= 1.f && py1 <= 1.f && py2 <= 1.f) {
+        isPercent = YES;
+    } else if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
+              (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
+        isPercent = YES;
+    }
+    
+    // assume its a vertical / horizonal
+    if(isPercent == NO) {
+        // just ask unit for the value
+        aGradient.x1 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
+        aGradient.x2 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
+        aGradient.y1 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
+        aGradient.y2 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
+    } else {
+        // make sure its a percent!
+        aGradient.x1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
+        aGradient.x2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
+        aGradient.y1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
+        aGradient.y2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
+    }
+
     // compute the color stops and colours
     NSArray * colors = nil;
     CGFloat * stopsParams = [[self class] computeColorStopsFromString:element
@@ -54,11 +62,18 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                    path:(IJSVGPath *)path
+                    rect:(NSRect)rect
 {
     // grab the start and end point
-    CGPoint aStartPoint = CGPointMake(IJSVGFloatFromUnit(x1, path, YES), IJSVGFloatFromUnit(y1, path, NO));
-    CGPoint aEndPoint = CGPointMake(IJSVGFloatFromUnit(x2, path, YES), IJSVGFloatFromUnit(y2, path, NO));
+    CGPoint aStartPoint = (CGPoint){
+        .x = [self.x1 computeValue:rect.size.width],
+        .y = [self.y1 computeValue:rect.size.height]
+    };
+    
+    CGPoint aEndPoint = (CGPoint){
+        .x = [self.x2 computeValue:rect.size.width],
+        .y = [self.y2 computeValue:rect.size.height]
+    };
     
     // convert the nsgradient to a CGGradient
     CGGradientRef gRef = [self CGGradient];
@@ -70,16 +85,9 @@
         aEndPoint = CGPointApplyAffineTransform(aEndPoint, trans);
     }
     
-    // we need to move the context into the path coordinate space - so save the state!
-    CGContextSaveGState(ctx);
-    CGContextTranslateCTM(ctx, path.path.bounds.origin.x, path.path.bounds.origin.y);
-    
     // draw the gradient
     CGGradientDrawingOptions opt = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
     CGContextDrawLinearGradient(ctx, gRef, aStartPoint, aEndPoint, opt);
-    
-    // restore the state
-    CGContextRestoreGState(ctx);
 }
 
 @end

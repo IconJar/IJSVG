@@ -60,6 +60,22 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return foundID;
 }
 
++ (IJSVGFontTraits)fontWeightTraitForString:(NSString *)string
+                                     weight:(CGFloat *)weight
+{
+    *weight = string.floatValue;
+    if([string isEqualToString:@"bold"])
+        return IJSVGFontTraitBold;
+    return IJSVGFontTraitNone;
+}
+
++ (IJSVGFontTraits)fontStyleStringForString:(NSString *)string
+{
+    if([string isEqualToString:@"italic"])
+        return IJSVGFontTraitItalic;
+    return IJSVGFontTraitNone;
+}
+
 + (IJSVGWindingRule)windingRuleForString:(NSString *)string
 {
     if( [string isEqualToString:@"evenodd"] )
@@ -93,6 +109,14 @@ CGFloat degrees_to_radians( CGFloat degrees )
     if( [string isEqualToString:@"inherit"] )
         return IJSVGLineCapStyleInherit;
     return IJSVGLineCapStyleButt;
+}
+
++ (IJSVGUnitType)unitTypeForString:(NSString *)string
+{
+    if([string isEqualToString:@"userSpaceOnUse"]) {
+        return IJSVGUnitUserSpaceOnUse;
+    }
+    return IJSVGUnitObjectBoundingBox;
 }
 
 + (CGFloat *)commandParameters:(NSString *)command

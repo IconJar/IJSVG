@@ -14,7 +14,4 @@
     
 }
 
-- (void)drawInContextRef:(CGContextRef)ctx
-                    path:(IJSVGPath *)path;
-
 @end

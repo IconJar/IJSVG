@@ -18,8 +18,7 @@
 
 - (id)init
 {
-    if( ( self = [super initWithDef:NO] ) != nil )
-    {
+    if( ( self = [super initWithDef:NO] ) != nil ) {
         _dict = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -27,8 +26,9 @@
 
 - (void)addDef:(IJSVGNode *)aDef
 {
-    if( aDef.identifier == nil )
+    if( aDef.identifier == nil ) {
         return;
+    }
     [_dict setObject:aDef
               forKey:aDef.identifier];
 }

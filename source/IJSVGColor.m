@@ -205,10 +205,10 @@ static NSMutableDictionary * _colorTree = nil;
         CGFloat alpha = 1;
         if( count == 4 )
             alpha = params[3];
-        color = [NSColor colorWithCalibratedRed:params[0]/255
-                                        green:params[1]/255
-                                         blue:params[2]/255
-                                        alpha:alpha];
+        color = [NSColor colorWithDeviceRed:params[0]/255
+                                      green:params[1]/255
+                                       blue:params[2]/255
+                                      alpha:alpha];
         free(params);
         return color;
     }
@@ -226,6 +226,38 @@ static NSMutableDictionary * _colorTree = nil;
         return nil;
     return [[self class] colorFromHEXString:hex
                                       alpha:1.f];
+}
+
++ (NSString *)colorStringFromColor:(NSColor *)color
+{
+    return [self colorStringFromColor:color
+                             forceHex:NO];
+}
+
++ (NSString *)colorStringFromColor:(NSColor *)color
+                          forceHex:(BOOL)forceHex
+{
+    // convert to RGB
+    color = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+    
+    int red = color.redComponent * 0xFF;
+    int green = color.greenComponent * 0xFF;
+    int blue = color.blueComponent * 0xFF;
+    int alpha = (int)(color.alphaComponent*100);
+    
+    // jsut return none
+    if(alpha == 0 && forceHex == NO) {
+        return @"none";
+    }
+    
+    // always return hex unless criteria is met
+    if(forceHex || alpha == 100 ||
+       (red == 0 && green == 0 && blue == 0 && alpha == 0) ||
+       (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
+        // just return hex
+        return [NSString stringWithFormat:@"#%02X%02X%02X",red,green,blue];
+    }
+    return [NSString stringWithFormat:@"rgba(%d, %d, %d, %d)",red, green, blue, alpha];
 }
 
 + (NSString *)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color
@@ -534,10 +566,10 @@ static NSMutableDictionary * _colorTree = nil;
                              to:(CGFloat)alphaValue
 {
     color = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
-    return [NSColor colorWithCalibratedRed:[color redComponent]
-                                     green:[color greenComponent]
-                                      blue:[color blueComponent]
-                                     alpha:alphaValue];
+    return [NSColor colorWithDeviceRed:[color redComponent]
+                                 green:[color greenComponent]
+                                  blue:[color blueComponent]
+                                 alpha:alphaValue];
 }
 
 + (BOOL)isColor:(NSString *)string
@@ -580,10 +612,10 @@ static NSMutableDictionary * _colorTree = nil;
         NSInteger r = (hex>>16) & 0xFF;
         NSInteger g = (hex>>8) & 0xFF;
         NSInteger b = (hex) & 0xFF;
-        return [NSColor colorWithCalibratedRed:r/255.f
-                                         green:g/255.f
-                                          blue:b/255.f
-                                         alpha:alpha];
+        return [NSColor colorWithDeviceRed:r/255.f
+                                     green:g/255.f
+                                      blue:b/255.f
+                                     alpha:alpha];
     }
     return nil;
 }
