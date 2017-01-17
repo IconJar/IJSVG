@@ -58,7 +58,7 @@
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
     if(self.type == IJSVGUnitLengthTypePercentage) {
-        return ((anotherValue/100)*self.value);
+        return ((anotherValue/100.f)*(self.value*100.f));
     }
     return self.value;
 }
@@ -74,6 +74,11 @@
         return [NSString stringWithFormat:@"%g%%",self.value];
     }
     return [NSString stringWithFormat:@"%g",self.value];
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%f%@",self.value,(self.type == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
 }
 
 @end
