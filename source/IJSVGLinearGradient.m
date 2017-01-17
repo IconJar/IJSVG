@@ -42,7 +42,7 @@
     } else {
         // make sure its a percent!
         aGradient.x1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
-        aGradient.x2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
+        aGradient.x2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"1"];
         aGradient.y1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
         aGradient.y2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
     }

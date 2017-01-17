@@ -50,6 +50,7 @@
     unit.value = [string floatValue];
     unit.type = IJSVGUnitLengthTypeNumber;
     if([string hasSuffix:@"%"] == YES) {
+        unit.value /= 100.f;
         unit.type = IJSVGUnitLengthTypePercentage;
     }
     return unit;
