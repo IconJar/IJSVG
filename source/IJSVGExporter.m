@@ -713,6 +713,12 @@ NSString * IJSVGHash(NSString * key) {
         IJSVGApplyAttributesToElement(dict, gradientElement);
     }
     
+    // apply the units
+    if(layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
+        IJSVGApplyAttributesToElement(@{@"gradientUnits":@"userSpaceOnUse"},
+                                      gradientElement);
+    }
+    
     // add the stops
     NSGradient * grad = layer.gradient.gradient;
     NSInteger noStops = grad.numberOfColorStops;
