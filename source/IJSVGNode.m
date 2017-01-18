@@ -34,6 +34,8 @@
 @synthesize def;
 @synthesize fillGradient;
 @synthesize fillPattern;
+@synthesize strokeGradient;
+@synthesize strokePattern;
 @synthesize clipPath;
 @synthesize lineCapStyle;
 @synthesize lineJoinStyle;
@@ -60,6 +62,8 @@
     [strokeDashOffset release], strokeDashOffset = nil;
     [unicode release], unicode = nil;
     [fillGradient release], fillGradient = nil;
+    [strokeGradient release], strokeGradient = nil;
+    [strokePattern release], strokePattern = nil;
     [transforms release], transforms = nil;
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
@@ -148,6 +152,8 @@
     
     self.fillGradient = node.fillGradient;
     self.fillPattern = node.fillPattern;
+    self.strokeGradient = node.strokeGradient;
+    self.strokePattern = node.strokePattern;
     
     self.fillColor = node.fillColor;
     self.strokeColor = node.strokeColor;
@@ -194,10 +200,16 @@
     {
         self.opacity = [IJSVGUnitLength unitWithFloat:0.f];
         self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
-        self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        
         self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
         self.shouldRender = YES;
+        
+        self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.strokeOpacity.inherit = YES;
+        
         self.strokeWidth = [IJSVGUnitLength unitWithFloat:0.f];
+        self.strokeWidth.inherit = YES;
+        
         self.windingRule = IJSVGWindingRuleInherit;
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
@@ -330,6 +342,26 @@
         return parentNode.fillPattern;
     }
     return fillPattern;
+}
+
+// these are all recursive, so go up the chain
+// if they dont exist on this specific node
+- (IJSVGGradient *)strokeGradient
+{
+    if(strokeGradient == nil && parentNode != nil) {
+        return parentNode.strokeGradient;
+    }
+    return strokeGradient;
+}
+
+// these are all recursive, so go up the chain
+// if they dont exist on this specific node
+- (IJSVGPattern *)strokePattern
+{
+    if(strokePattern == nil && parentNode != nil) {
+        return parentNode.strokePattern;
+    }
+    return strokePattern;
 }
 
 @end

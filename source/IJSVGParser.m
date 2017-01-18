@@ -423,7 +423,24 @@
     
     // stroke color
     attr(IJSVGAttributeStroke, ^(NSString * value) {
-        node.strokeColor = [IJSVGColor colorFromString:value];
+        NSString * fillDefID = [IJSVGUtils defURL:value];
+        if(fillDefID != nil) {
+            // find the object
+            id obj = [self definedObjectForID:fillDefID
+                                         node:node
+                                    fromGroup:nil];
+            
+            // what type is it?
+            if([obj isKindOfClass:[IJSVGGradient class]]) {
+                node.strokeGradient = (IJSVGGradient *)obj;
+            } else if([obj isKindOfClass:[IJSVGPattern class]]) {
+                node.strokePattern = (IJSVGPattern *)obj;
+            }
+        } else {
+            // its a color
+            node.strokeColor = [IJSVGColor colorFromString:value];
+        }
+
     });
     
     // stroke dash array
