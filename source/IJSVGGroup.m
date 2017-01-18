@@ -62,7 +62,7 @@
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"%@ - %ld",[super description],self.children.count];
+    return [NSString stringWithFormat:@"%@ - %@",[super description],self.children];
 }
 
 @end
