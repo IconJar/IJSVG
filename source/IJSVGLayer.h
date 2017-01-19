@@ -43,12 +43,16 @@
 @property (nonatomic, assign) IJSVGGradientLayer * gradientFillLayer; \
 @property (nonatomic, assign) IJSVGPatternLayer * patternFillLayer; \
 @property (nonatomic, assign) IJSVGStrokeLayer * strokeLayer; \
+@property (nonatomic, assign) IJSVGGradientLayer * gradientStrokeLayer; \
+@property (nonatomic, assign) IJSVGPatternLayer * patternStrokeLayer; \
 @property (nonatomic, assign) BOOL requiresBackingScaleHelp; \
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 
 #define IJSVG_LAYER_DEFAULT_SYNTHESIZE \
 @synthesize gradientFillLayer; \
 @synthesize patternFillLayer; \
+@synthesize gradientStrokeLayer; \
+@synthesize patternStrokeLayer; \
 @synthesize strokeLayer; \
 @synthesize requiresBackingScaleHelp; \
 @synthesize backingScaleFactor;

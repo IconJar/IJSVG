@@ -379,9 +379,7 @@
            IJSVGAttributeMask:@"mask"}, ^id (NSString * value) {
                NSString * url = [IJSVGUtils defURL:value];
                if(url != nil) {
-                   return [self definedObjectForID:url
-                                              node:node
-                                         fromGroup:nil];
+                   return [self definedObjectForID:url];
                }
                return nil;
            });
@@ -423,7 +421,22 @@
     
     // stroke color
     attr(IJSVGAttributeStroke, ^(NSString * value) {
-        node.strokeColor = [IJSVGColor colorFromString:value];
+        NSString * fillDefID = [IJSVGUtils defURL:value];
+        if(fillDefID != nil) {
+            // find the object
+            id obj = [self definedObjectForID:fillDefID];
+            
+            // what type is it?
+            if([obj isKindOfClass:[IJSVGGradient class]]) {
+                node.strokeGradient = (IJSVGGradient *)obj;
+            } else if([obj isKindOfClass:[IJSVGPattern class]]) {
+                node.strokePattern = (IJSVGPattern *)obj;
+            }
+        } else {
+            // its a color
+            node.strokeColor = [IJSVGColor colorFromString:value];
+        }
+
     });
     
     // stroke dash array
@@ -440,9 +453,7 @@
         NSString * fillDefID = [IJSVGUtils defURL:value];
         if(fillDefID != nil) {
             // find the object
-            id obj = [self definedObjectForID:fillDefID
-                                         node:node
-                                    fromGroup:nil];
+            id obj = [self definedObjectForID:fillDefID];
             
             // what type is it?
             if([obj isKindOfClass:[IJSVGGradient class]]) {
@@ -471,25 +482,19 @@
             node.shouldRender = NO;
         }
     });
-    
 }
 
 - (id)definedObjectForID:(NSString *)anID
-                    node:(IJSVGNode *)node
-               fromGroup:(IJSVGGroup *)group
 {
     NSXMLElement * parseElement = _defNodes[anID];
     if(parseElement != nil) {
         // parse the element
-        if(group == nil) {
-            group = [[[IJSVGGroup alloc] init] autorelease];
-        }
+        IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
         
         // parse the block
         [self _parseBaseBlock:parseElement
                     intoGroup:group
-                          def:NO
-                         node:node];
+                          def:NO];
         return [group defForID:anID];
     }
     return nil;
@@ -559,7 +564,6 @@
 - (void)_parseBaseBlock:(NSXMLElement *)element
               intoGroup:(IJSVGGroup *)parentGroup
                     def:(BOOL)flag
-                   node:(IJSVGNode *)currentNode
 {
     NSString * subName = element.name;
     NSXMLNodeKind nodeKind = element.kind;
@@ -830,10 +834,12 @@
             
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
-            IJSVGNode * node = [self definedObjectForID:xlinkID
-                                                   node:nil
-                                              fromGroup:parentGroup];
-        
+            IJSVGNode * node = [self definedObjectForID:xlinkID];
+            
+            // due to this being a carbon clone, we need to clear the ID
+            if([element attributeForName:(NSString *)IJSVGAttributeID] == nil) {
+                node.identifier = nil;
+            }
             
             node.parentNode = parentGroup;
             if(!flag) {
@@ -1010,8 +1016,7 @@
     for( NSXMLElement * element in [anElement children] ) {
         [self _parseBaseBlock:element
                     intoGroup:parentGroup
-                          def:flag
-                         node:nil];
+                          def:flag];
     }
 }
 

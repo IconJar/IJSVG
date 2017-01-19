@@ -638,6 +638,7 @@ NSString * IJSVGHash(NSString * key) {
 
 - (void)applyPatternFromLayer:(IJSVGPatternLayer *)layer
                   parentLayer:(IJSVGLayer *)parentLayer
+                       stroke:(BOOL)stroke
                     toElement:(NSXMLElement *)element
 {
     // now we need the pattern
@@ -660,17 +661,23 @@ NSString * IJSVGHash(NSString * key) {
     useElement.name = @"use";
     
     // now add the fill
-    dict = @{@"fill":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
-    IJSVGApplyAttributesToElement(dict, element);
-    
-    // fill opacity
-    if(patternLayer.opacity != 1.f) {
-        IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(patternLayer.opacity)}, element);
+    if(stroke == NO) {
+        dict = @{@"fill":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
+        IJSVGApplyAttributesToElement(dict, element);
+        
+        // fill opacity
+        if(patternLayer.opacity != 1.f) {
+            IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(patternLayer.opacity)}, element);
+        }
+    } else {
+        dict = @{@"stroke":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
+        IJSVGApplyAttributesToElement(dict, element);
     }
 }
 
 - (void)applyGradientFromLayer:(IJSVGGradientLayer *)layer
                    parentLayer:(IJSVGLayer *)parentLayer
+                        stroke:(BOOL)stroke
                      toElement:(NSXMLElement *)element
 {
     IJSVGGradient * gradient = layer.gradient;
@@ -704,6 +711,12 @@ NSString * IJSVGHash(NSString * key) {
         
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);
+    }
+    
+    // apply the units
+    if(layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
+        IJSVGApplyAttributesToElement(@{@"gradientUnits":@"userSpaceOnUse"},
+                                      gradientElement);
     }
     
     // add the stops
@@ -768,11 +781,15 @@ NSString * IJSVGHash(NSString * key) {
     }
     
     // add it to the element passed in
-    IJSVGApplyAttributesToElement(@{@"fill":IJSVGHashURL(gradKey)}, element);
-    
-    // fill opacity
-    if(layer.opacity != 1.f) {
-        IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(layer.opacity)}, element);
+    if(stroke == NO) {
+        IJSVGApplyAttributesToElement(@{@"fill":IJSVGHashURL(gradKey)}, element);
+        
+        // fill opacity
+        if(layer.opacity != 1.f) {
+            IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(layer.opacity)}, element);
+        }
+    } else {
+        IJSVGApplyAttributesToElement(@{@"stroke":IJSVGHashURL(gradKey)}, element);
     }
 }
 
@@ -845,6 +862,7 @@ NSString * IJSVGHash(NSString * key) {
     if(layer.gradientFillLayer != nil) {
         [self applyGradientFromLayer:layer.gradientFillLayer
                          parentLayer:(IJSVGLayer *)layer
+                              stroke:NO
                            toElement:e];
     }
     
@@ -852,6 +870,7 @@ NSString * IJSVGHash(NSString * key) {
     if(layer.patternFillLayer != nil) {
         [self applyPatternFromLayer:layer.patternFillLayer
                         parentLayer:(IJSVGLayer *)layer
+                             stroke:NO
                           toElement:e];
     }
     
@@ -865,8 +884,21 @@ NSString * IJSVGHash(NSString * key) {
                 dict[@"stroke-width"] = IJSVGShortFloatString(strokeLayer.lineWidth);
             }
             
-            // stroke color
-            if(strokeLayer.strokeColor != nil) {
+            // stroke gradient
+            if(layer.gradientStrokeLayer != nil) {
+                [self applyGradientFromLayer:layer.gradientStrokeLayer
+                                 parentLayer:(IJSVGPatternLayer *)layer
+                                      stroke:YES
+                                   toElement:e];
+                
+            } else if(layer.patternStrokeLayer != nil) {
+                // stroke pattern
+                [self applyPatternFromLayer:layer.patternStrokeLayer
+                                parentLayer:(IJSVGPatternLayer *)layer
+                                     stroke:YES
+                                  toElement:e];
+            
+            } else if(strokeLayer.strokeColor != nil) {
                 NSColor * strokeColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
                 NSString * strokeColorString = [IJSVGColor colorStringFromColor:strokeColor];
                 
@@ -914,20 +946,6 @@ NSString * IJSVGHash(NSString * key) {
             
         }
     }
-    
-    
-    
-//    // stroke is done by a child layer
-//    if(layer.sublayers.count != 0) {
-//        
-//            // add the pattern sublayer
-//            if([sublayer isKindOfClass:[IJSVGPatternLayer class]]) {
-//                [self applyPatternFromLayer:(IJSVGPatternLayer *)sublayer
-//                                parentLayer:(IJSVGLayer *)layer
-//                                  toElement:e];
-//                break;
-//            }
-//        }
 
     // apply the attributes
     IJSVGApplyAttributesToElement(dict, e);

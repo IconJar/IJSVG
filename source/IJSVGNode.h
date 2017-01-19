@@ -106,6 +106,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
 @property ( nonatomic, retain ) IJSVGPattern * fillPattern;
+@property ( nonatomic, retain ) IJSVGGradient * strokeGradient;
+@property ( nonatomic, retain ) IJSVGPattern * strokePattern;
 @property ( nonatomic, assign ) CGFloat * strokeDashArray;
 @property ( nonatomic, assign ) NSInteger strokeDashArrayCount;
 @property ( nonatomic, retain ) IJSVGUnitLength * strokeDashOffset;
