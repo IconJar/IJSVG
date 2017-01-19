@@ -244,7 +244,7 @@
                                                  fromNode:path];
         
         // reset the node
-        if(path.strokeGradient != nil) {
+        if(self.strokeColor == nil && path.strokeGradient != nil) {
             
             // force reset of the mask colour as we need to use the stroke layer
             // as the mask for the stroke gradient
@@ -263,7 +263,7 @@
             layer.strokeLayer = strokeLayer;
             layer.gradientStrokeLayer = gradLayer;
             
-        } else if(path.strokePattern != nil) {
+        } else if(self.strokeColor == nil && path.strokePattern != nil) {
             
             // force reset of the mask
             strokeLayer.strokeColor = [NSColor blackColor].CGColor;
