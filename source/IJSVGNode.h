@@ -74,6 +74,25 @@ typedef NS_ENUM( NSInteger, IJSVGUnitType) {
     IJSVGUnitInherit
 };
 
+typedef NS_ENUM( NSInteger, IJSVGBlendMode) {
+    IJSVGBlendModeNormal = kCGBlendModeNormal,
+    IJSVGBlendModeMultiply = kCGBlendModeMultiply,
+    IJSVGBlendModeScreen = kCGBlendModeScreen,
+    IJSVGBlendModeOverlay = kCGBlendModeOverlay,
+    IJSVGBlendModeDarken = kCGBlendModeDarken,
+    IJSVGBlendModeLighten = kCGBlendModeLighten,
+    IJSVGBlendModeColorDodge = kCGBlendModeColorDodge,
+    IJSVGBlendModeColorBurn = kCGBlendModeColorBurn,
+    IJSVGBlendModeHardLight = kCGBlendModeHardLight,
+    IJSVGBlendModeSoftLight = kCGBlendModeSoftLight,
+    IJSVGBlendModeDifference = kCGBlendModeDifference,
+    IJSVGBlendModeExclusion = kCGBlendModeExclusion,
+    IJSVGBlendModeHue = kCGBlendModeHue,
+    IJSVGBlendModeSaturation = kCGBlendModeSaturation,
+    IJSVGBlendModeColor = kCGBlendModeColor,
+    IJSVGBlendModeLuminosity = kCGBlendModeLuminosity
+};
+
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying>
@@ -114,6 +133,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) IJSVG * svg;
 @property ( nonatomic, assign ) IJSVGUnitType contentUnits;
 @property ( nonatomic, assign ) IJSVGUnitType units;
+@property ( nonatomic, assign ) IJSVGBlendMode blendMode;
 
 + (IJSVGNodeType)typeForString:(NSString *)string
                           kind:(NSXMLNodeKind)kind;

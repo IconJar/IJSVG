@@ -49,6 +49,7 @@ static NSString const * IJSVGAttributeStroke = @"stroke";
 static NSString const * IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
 static NSString const * IJSVGAttributeFill = @"fill";
 static NSString const * IJSVGAttributeFillRule = @"fill-rule";
+static NSString const * IJSVGAttributeBlendMode = @"mix-blend-mode";
 static NSString const * IJSVGAttributeDisplay = @"display";
 static NSString const * IJSVGAttributeStyle = @"style";
 static NSString const * IJSVGAttributeD = @"d";

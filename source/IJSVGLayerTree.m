@@ -103,6 +103,12 @@
         opacity = 1.f;
     }
     layer.opacity = opacity;
+    
+    // setup the blending mode
+    if(node.blendMode != IJSVGBlendModeNormal) {
+        layer.blendingMode = (CGBlendMode)node.blendMode;
+    }
+    
 }
 
 - (IJSVGLayer *)layerForImage:(IJSVGImage *)image

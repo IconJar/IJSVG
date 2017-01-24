@@ -119,6 +119,99 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return IJSVGUnitObjectBoundingBox;
 }
 
++ (IJSVGBlendMode)blendModeForString:(NSString *)string
+{
+    string = string.lowercaseString;
+    if([string isEqualToString:@"normal"])
+        return IJSVGBlendModeNormal;
+    if([string isEqualToString:@"multiply"])
+        return IJSVGBlendModeMultiply;
+    if([string isEqualToString:@"screen"])
+        return IJSVGBlendModeScreen;
+    if([string isEqualToString:@"overlay"])
+        return IJSVGBlendModeOverlay;
+    if([string isEqualToString:@"darken"])
+        return IJSVGBlendModeDarken;
+    if([string isEqualToString:@"lighten"])
+        return IJSVGBlendModeLighten;
+    if([string isEqualToString:@"color-dodge"])
+        return IJSVGBlendModeColorDodge;
+    if([string isEqualToString:@"color-burn"])
+        return IJSVGBlendModeColorBurn;
+    if([string isEqualToString:@"hard-light"])
+        return IJSVGBlendModeHardLight;
+    if([string isEqualToString:@"soft-light"])
+        return IJSVGBlendModeSoftLight;
+    if([string isEqualToString:@"difference"])
+        return IJSVGBlendModeDifference;
+    if([string isEqualToString:@"exclusion"])
+        return IJSVGBlendModeExclusion;
+    if([string isEqualToString:@"hue"])
+        return IJSVGBlendModeHue;
+    if([string isEqualToString:@"saturation"])
+        return IJSVGBlendModeSaturation;
+    if([string isEqualToString:@"color"])
+        return IJSVGBlendModeColor;
+    if([string isEqualToString:@"luminosity"])
+        return IJSVGBlendModeLuminosity;
+    return IJSVGBlendModeNormal;
+}
+
++ (NSString *)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode
+{
+    switch (blendMode) {
+        case IJSVGBlendModeMultiply: {
+            return @"multiple";
+        }
+        case IJSVGBlendModeScreen: {
+            return @"screen";
+        }
+        case IJSVGBlendModeOverlay: {
+            return @"overlay";
+        }
+        case IJSVGBlendModeDarken: {
+            return @"darken";
+        }
+        case IJSVGBlendModeLighten: {
+            return @"lighten";
+        }
+        case IJSVGBlendModeColorDodge: {
+            return @"color-dodge";
+        }
+        case IJSVGBlendModeColorBurn: {
+            return @"color-burn";
+        }
+        case IJSVGBlendModeHardLight: {
+            return @"hard-light";
+        }
+        case IJSVGBlendModeSoftLight: {
+            return @"soft-light";
+        }
+        case IJSVGBlendModeDifference: {
+            return @"difference";
+        }
+        case IJSVGBlendModeExclusion: {
+            return @"exclusion";
+        }
+        case IJSVGBlendModeHue: {
+            return @"hue";
+        }
+        case IJSVGBlendModeSaturation: {
+            return @"saturation";
+        }
+        case IJSVGBlendModeColor: {
+            return @"color";
+        }
+        case IJSVGBlendModeLuminosity: {
+            return @"luminosity";
+        }
+        case IJSVGBlendModeNormal:
+        default: {
+            return nil;
+        }
+    }
+}
+
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count
 {

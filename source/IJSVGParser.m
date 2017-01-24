@@ -471,6 +471,11 @@
         }
     });
     
+    // blendmode
+    attr(IJSVGAttributeBlendMode, ^(NSString * value) {
+        node.blendMode = [IJSVGUtils blendModeForString:value];
+    });
+    
     // fill rule
     attr(IJSVGAttributeFillRule, ^(NSString * value) {
         node.windingRule = [IJSVGUtils windingRuleForString:value];

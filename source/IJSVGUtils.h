@@ -25,6 +25,9 @@ CGFloat degrees_to_radians( CGFloat degrees );
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString *)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString *)string;
 + (IJSVGUnitType)unitTypeForString:(NSString *)string;
++ (IJSVGBlendMode)blendModeForString:(NSString *)string;
++ (NSString *)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
+
 + (void)logParameters:(CGFloat *)param
                 count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString *)string;

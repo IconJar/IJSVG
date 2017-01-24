@@ -47,6 +47,7 @@
 @synthesize mask;
 @synthesize units;
 @synthesize contentUnits;
+@synthesize blendMode;
 
 - (void)dealloc
 {
@@ -178,6 +179,7 @@
     self.parentNode = node.parentNode;
     
     self.shouldRender = node.shouldRender;
+    self.blendMode = node.blendMode;
     
     // dash array needs physical memory copied
     CGFloat * nStrokeDashArray = (CGFloat *)malloc(node.strokeDashArrayCount*sizeof(CGFloat));
@@ -214,6 +216,8 @@
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
         self.units = IJSVGUnitInherit;
+        
+        self.blendMode = IJSVGBlendModeNormal;
         
         if( flag ) {
             def = [[IJSVGDef alloc] init];

@@ -966,6 +966,15 @@ NSString * IJSVGHash(NSString * key) {
         dict[@"opacity"] = IJSVGShortFloatString(layer.opacity);
     }
     
+    // blendmode - we only every apply a stylesheet blend mode
+    if(layer.blendingMode != kCGBlendModeNormal) {
+        NSString * str = [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)layer.blendingMode];
+        if(str != nil) {
+            dict[@"style"] = [NSString stringWithFormat:@"mix-blend-mode:%@",str];
+        }
+    }
+    
+    
     // add atttributes
     IJSVGApplyAttributesToElement(dict, element);
     

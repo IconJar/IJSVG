@@ -37,7 +37,20 @@
     self.contentsScale = newFactor; \
     self.rasterizationScale = newFactor; \
     [self setNeedsDisplay]; \
-};
+}; \
+\
+- (void)renderInContext:(CGContextRef)ctx \
+{ \
+\
+    if(self.blendingMode != kCGBlendModeNormal) { \
+        CGContextSaveGState(ctx); \
+        CGContextSetBlendMode(ctx, self.blendingMode); \
+        [super renderInContext:ctx]; \
+        CGContextRestoreGState(ctx); \
+        return; \
+    } \
+    [super renderInContext:ctx]; \
+} \
 
 #define IJSVG_LAYER_DEFAULT_PROPERTIES \
 @property (nonatomic, assign) IJSVGGradientLayer * gradientFillLayer; \
@@ -46,7 +59,8 @@
 @property (nonatomic, assign) IJSVGGradientLayer * gradientStrokeLayer; \
 @property (nonatomic, assign) IJSVGPatternLayer * patternStrokeLayer; \
 @property (nonatomic, assign) BOOL requiresBackingScaleHelp; \
-@property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, assign) CGFloat backingScaleFactor; \
+@property (nonatomic, assign) CGBlendMode blendingMode;
 
 #define IJSVG_LAYER_DEFAULT_SYNTHESIZE \
 @synthesize gradientFillLayer; \
@@ -55,7 +69,8 @@
 @synthesize patternStrokeLayer; \
 @synthesize strokeLayer; \
 @synthesize requiresBackingScaleHelp; \
-@synthesize backingScaleFactor;
+@synthesize backingScaleFactor; \
+@synthesize blendingMode;
 
 #define IJSVG_LAYER_DEFAULT_DEALLOC_INSTRUCTIONS \
 IJSVGBeginTransactionLock(); \
