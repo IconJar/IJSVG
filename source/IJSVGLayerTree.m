@@ -109,6 +109,11 @@
         layer.blendingMode = (CGBlendMode)node.blendMode;
     }
     
+    // display?
+    if(node.shouldRender == NO) {
+        layer.hidden = YES;
+    }
+    
 }
 
 - (IJSVGLayer *)layerForImage:(IJSVGImage *)image

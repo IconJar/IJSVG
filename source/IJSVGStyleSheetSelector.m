@@ -257,7 +257,12 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     {
         selector = [string copy];
         _rawSelectors = [[NSMutableArray alloc] init];
-        [self _compile];
+        
+        // failed to compile
+        if([self _compile] == NO) {
+            [self release], self = nil;
+            return nil;
+        }
         [self _calculate];
     }
     return self;
@@ -283,8 +288,15 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     }
 }
 
-- (void)_compile
+- (BOOL)_compile
 {
+    
+    // completely unsupported
+    if([selector characterAtIndex:0] == '@') {
+        return NO;
+    }
+    
+    
     NSUInteger length = selector.length;
     NSMutableArray * sels = [[[NSMutableArray alloc] init] autorelease];
     NSCharacterSet * alphaNumeric = [NSCharacterSet characterSetWithCharactersInString:@"_-abcdefghijklmnopqrstuvwxyz0123456789"];
@@ -397,6 +409,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     }
     // now its compiled, we need to reverse the selectors
     [_rawSelectors addObjectsFromArray:[sels reverseObjectEnumerator].allObjects];
+    return YES;
 }
 
 

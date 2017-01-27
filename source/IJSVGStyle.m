@@ -44,25 +44,39 @@
 
 + (IJSVGStyle *)parseStyleString:(NSString *)string
 {
-    static NSRegularExpression * _reg = nil;
-    static dispatch_once_t onceToken;
-    IJSVGStyle * style = [[[self class] alloc] init];
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z\\-]+)\\:([^;]+)\\;?"
-                                                    options:0
-                                                      error:nil];
-    });
-    [_reg enumerateMatchesInString:string
-                           options:0
-                             range:NSMakeRange( 0, string.length )
-                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-         NSString * key = [string substringWithRange:[result rangeAtIndex:1]];
-         NSString * value = [string substringWithRange:[result rangeAtIndex:2]];
-         [[self class] computeStyleProperty:key
-                                      value:value
-                                      style:style];
-     }];
-    return [style autorelease];
+    IJSVGStyle * style = [[[[self class] alloc] init] autorelease];
+    NSInteger length = string.length;
+    NSInteger index = 0;
+    NSString * key = nil;
+    NSString * value = nil;
+    
+    // iterate over the string - its actually really simple what we need
+    // to do
+    for(NSInteger i = 0; i < length; i++) {
+        unichar c = [string characterAtIndex:i];
+        
+        // find the key
+        if(c == ':') {
+            key = [string substringWithRange:NSMakeRange(index, (i-index))];
+            index = i+1;
+        }
+        
+        // find the value
+        else if(c == ';' || i == (length-1)) {
+            value = [string substringWithRange:NSMakeRange(index, (i-index))];
+            index = i+1;
+        }
+        
+        // set the propery if it actually exists
+        if(key != nil && value != nil) {
+            [self computeStyleProperty:key
+                                 value:value
+                                 style:style];
+            key = nil;
+            value = nil;
+        }
+    }
+    return style;
 }
 
 + (NSString *)trimString:(NSString *)string

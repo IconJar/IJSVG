@@ -71,12 +71,16 @@
         // create a new selector if not found
         if((selector = [_selectors objectForKey:selectorName]) == nil) {
             selector = [[[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName] autorelease];
-            [_selectors setObject:selector
-                           forKey:selectorName];
+            if(selector != nil) {
+                [_selectors setObject:selector
+                               forKey:selectorName];
+            }
         }
         
         // add it to our list
-        [array addObject:selector];
+        if(selector != nil) {
+            [array addObject:selector];
+        }
     }
     return array;
 }
