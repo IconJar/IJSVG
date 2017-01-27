@@ -190,6 +190,10 @@ NSString * IJSVGHash(NSString * key) {
 
 - (void)_cleanup
 {
+    // remove hidden elements
+    if((_options & IJSVGExporterOptionRemoveHiddenElements) != 0) {
+        [self _removeHiddenElements];
+    }
     
     // convert any duplicate paths into use
     if((_options & IJSVGExporterOptionCreateUseForPaths) != 0) {
@@ -236,6 +240,25 @@ NSString * IJSVGHash(NSString * key) {
     [self sortAttributesOnElement:element];
     for(NSXMLElement * child in element.children) {
         [self _sortAttributesOnElement:child];
+    }
+}
+
+- (void)_removeHiddenElements
+{
+    // find any elements where they have a style, but the element itself
+    // must not be in the defs
+    NSArray<NSXMLElement *> * elements = [_dom nodesForXPath:@"//*[@style][not(ancestor::defs)]"
+                                                       error:nil];
+    
+    for(NSXMLElement * element in elements) {
+        // parse the style
+        NSString * styleString = [element attributeForName:@"style"].stringValue;
+        IJSVGStyle * style = [IJSVGStyle parseStyleString:styleString];
+        if([[style property:@"display"] isEqualToString:@"none"]) {
+            // this can be removed!
+            NSXMLElement * parent = (NSXMLElement *)element.parent;
+            [parent removeChildAtIndex:element.index];
+        }
     }
 }
 
@@ -967,11 +990,26 @@ NSString * IJSVGHash(NSString * key) {
     }
     
     // blendmode - we only every apply a stylesheet blend mode
+    NSMutableDictionary * style = [[[NSMutableDictionary alloc] init] autorelease];
     if(layer.blendingMode != kCGBlendModeNormal) {
         NSString * str = [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)layer.blendingMode];
         if(str != nil) {
-            dict[@"style"] = [NSString stringWithFormat:@"mix-blend-mode:%@",str];
+            style[@"mix-blend-mode"] = str;
         }
+    }
+    
+    // hidden?
+    if(layer.isHidden) {
+        style[@"display"] = @"none";
+    }
+    
+    if(style.count != 0) {
+        NSMutableString * styleString = [[[NSMutableString alloc] init] autorelease];
+        for(NSString * styleKey in style.allKeys) {
+            NSString * format = [NSString stringWithFormat:@"%@:%@;",styleKey, style[styleKey]];
+            [styleString appendString:format];
+        }
+        dict[@"style"] = styleString;
     }
     
     
@@ -1041,7 +1079,7 @@ NSString * IJSVGHash(NSString * key) {
     NSArray * instructions = [IJSVGExporterPathInstruction instructionsFromPath:path];
     
     // work out what to do...
-    if((_options & IJSVGExporteroptionCleanupPaths) != 0) {
+    if((_options & IJSVGExporterOptionCleanupPaths) != 0) {
         [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
     }
     return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions];
