@@ -180,8 +180,7 @@
     
     // find the sizebox!
     NSXMLNode * attribute = nil;
-    if( ( attribute = [svgElement attributeForName:(NSString *)IJSVGAttributeViewBox] ) != nil )
-    {
+    if( ( attribute = [svgElement attributeForName:(NSString *)IJSVGAttributeViewBox] ) != nil ) {
         
         // we have a viewbox...
         CGFloat * box = [IJSVGUtils parseViewBox:[attribute stringValue]];
@@ -200,23 +199,10 @@
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
     }
     
-    // find any stylesheets
-    NSArray * styles = [svgElement nodesForXPath:@"//style"
-                                           error:nil];
-    if(styles.count != 0)
-    {
-        _styleSheet = [[IJSVGStyleSheet alloc] init];
-        for(NSXMLElement * styleElement in styles)
-        {
-            [_styleSheet parseStyleBlock:[styleElement stringValue]];
-        }
-    }
-    
     // parse the width and height....
     CGFloat w = [[[svgElement attributeForName:(NSString *)IJSVGAttributeWidth] stringValue] floatValue];
     CGFloat h = [[[svgElement attributeForName:(NSString *)IJSVGAttributeHeight] stringValue] floatValue];
-    if( w == 0.f && h == 0.f )
-    {
+    if( w == 0.f && h == 0.f ) {
         w = viewBox.size.width;
         h = viewBox.size.height;
     } else if( w == 0 && h != 0.f ) {
@@ -226,66 +212,8 @@
     }
     proposedViewSize = NSMakeSize( w, h );
     
-    // find foreign objects...
-    NSXMLElement * switchElement = nil;
-    NSArray * switchElements = [svgElement nodesForXPath:@"switch"
-                                                   error:nil];
-    if( [switchElements count] != 0 )
-    {
-        // for performance reasons, ask for this once!
-        BOOL handlesShouldHandle = _respondsTo.shouldHandleForeignObject == 1;
-        BOOL handlesHandle = _respondsTo.handleForeignObject == 1;
-        
-        // we have a switch, work out what the objects are...
-        switchElement = switchElements[0];
-        NSXMLElement * child = nil;
-        if( _delegate != nil ) {
-            for( child in [switchElement children] ) {
-                if( [[child name] isEqualToString:@"foreignObject"] )
-                {
-                    // create the temp foreign object
-                    IJSVGForeignObject * foreignObject = [[[IJSVGForeignObject alloc] init] autorelease];
-                    
-                    // grab the common attributes
-                    [self _parseElementForCommonAttributes:child
-                                                      node:foreignObject];
-                    foreignObject.requiredExtension = [[child attributeForName:@"requiredExtensions"] stringValue];
-                    
-                    // ask the delegate
-                    if( handlesShouldHandle && [_delegate svgParser:self
-                                          shouldHandleForeignObject:foreignObject] && handlesHandle )
-                    {
-                        [_delegate svgParser:self
-                         handleForeignObject:foreignObject
-                                    document:_document];
-                        break;
-                    }
-                }
-            }
-        }
-        // set the main element to the switch
-        svgElement = switchElement;
-    }
-    
     // the root element is SVG, so iterate over its children
     // recursively
-    
-    // are there any defaults?
-    NSArray * defaults = [svgElement nodesForXPath:@"//defs"
-                                             error:nil];
-    if(defaults.count != 0) {
-        // we have default, we need to store these per ID and remove them from the array
-        for(NSXMLElement * defs in defaults) {
-            // store each object
-            for(NSXMLElement * childDef in defs.children) {
-                NSString * defID = [[childDef attributeForName:@"id"] stringValue];
-                if(defID != nil) {
-                    _defNodes[defID] = childDef;
-                }
-            }
-        }
-    }
-    
     self.name = svgElement.name;
     [self _parseBlock:svgElement
             intoGroup:self
@@ -576,10 +504,35 @@
                                               kind:nodeKind];
     switch( aType ) {
             
+        // do nothing
         default:
-        case IJSVGNodeTypeDef:
-        case IJSVGNodeTypeNotFound:
+        case IJSVGNodeTypeNotFound: {
             break;
+        }
+            
+        // defs
+        case IJSVGNodeTypeDef: {
+            // store each object
+            for(NSXMLElement * childDef in element.children) {
+                NSString * defID = [childDef attributeForName:@"id"].stringValue;
+                if(defID != nil) {
+                    _defNodes[defID] = childDef;
+                }
+            }
+            break;
+        }
+            
+        // style
+        case IJSVGNodeTypeStyle: {
+            // create the sheet
+            if(_styleSheet == nil) {
+                _styleSheet = [[IJSVGStyleSheet alloc] init];
+            }
+            
+            // append the string
+            [_styleSheet parseStyleBlock:element.stringValue];
+            break;
+        }
             
          // sub SVG
         case IJSVGNodeTypeSVG: {

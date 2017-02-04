@@ -84,6 +84,8 @@
                           kind:(NSXMLNodeKind)kind
 {
     string = [string lowercaseString];
+    if([string isEqualToString:@"style"])
+        return IJSVGNodeTypeStyle;
     if( [string isEqualToString:@"defs"] )
         return IJSVGNodeTypeDef;
     if( [string isEqualToString:@"g"] )
