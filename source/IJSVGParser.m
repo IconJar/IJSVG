@@ -514,9 +514,23 @@
         case IJSVGNodeTypeDef: {
             // store each object
             for(NSXMLElement * childDef in element.children) {
-                NSString * defID = [childDef attributeForName:@"id"].stringValue;
-                if(defID != nil) {
-                    _defNodes[defID] = childDef;
+                
+                // is there any stylesheets within this?
+                IJSVGNodeType childType = [IJSVGNode typeForString:childDef.name
+                                                              kind:element.kind];
+                
+                // if it is a style, parse the style
+                if(childType == IJSVGNodeTypeStyle) {
+                    [self _parseBaseBlock:childDef
+                                intoGroup:parentGroup
+                                      def:NO];
+                } else {
+                    
+                    // jsut a default def, continue on
+                    NSString * defID = [childDef attributeForName:@"id"].stringValue;
+                    if(defID != nil) {
+                        _defNodes[defID] = childDef;
+                    }
                 }
             }
             break;
