@@ -621,6 +621,7 @@
         }
             
             // group
+        case IJSVGNodeTypeSwitch:
         case IJSVGNodeTypeFont:
         case IJSVGNodeTypeMask:
         case IJSVGNodeTypeGroup: {
@@ -631,8 +632,10 @@
             group.name = subName;
             group.parentNode = parentGroup;
             
-            // only groups get added to parent, rest is added as a def
-            if(!flag && aType == IJSVGNodeTypeGroup) {
+            // only groups get added to parent, rest is added as a def -
+            // also addition of switches
+            if(!flag && ((aType == IJSVGNodeTypeGroup) ||
+                         (aType == IJSVGNodeTypeSwitch))) {
                 [parentGroup addChild:group];
             }
             

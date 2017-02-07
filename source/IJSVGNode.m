@@ -86,6 +86,8 @@
     string = [string lowercaseString];
     if([string isEqualToString:@"style"])
         return IJSVGNodeTypeStyle;
+    if([string isEqualToString:@"switch"])
+        return IJSVGNodeTypeSwitch;
     if( [string isEqualToString:@"defs"] )
         return IJSVGNodeTypeDef;
     if( [string isEqualToString:@"g"] )
