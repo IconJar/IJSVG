@@ -28,6 +28,9 @@
         // set the contents
         self.contents = (id)imageRef;
         
+        // make sure we say we need help
+        self.requiresBackingScaleHelp = YES;
+        
         // set the frame, simple stuff
         self.frame = (CGRect){
             .origin = CGPointZero,
