@@ -141,6 +141,11 @@
             .height = group.height.value
         }
     };
+    
+    // mask it - forgot groups can have masks too, doh! simple
+    // enough to apply though, recursion ftw!
+    [self maskLayer:groupLayer
+           fromNode:group];
     return groupLayer;
 }
 

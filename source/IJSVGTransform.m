@@ -414,6 +414,7 @@
     
     CGFloat sx = sqrtf(data[0]*data[0] + data[1] * data[1]);
     CGFloat sy = (data[0]*data[3] - data[1]*data[2])/sx;
+    
     CGFloat colSum = data[0]*data[2] + data[1]*data[3];
     CGFloat rowSum = data[0]*data[1] + data[2]*data[3];
     BOOL scaleBefore = rowSum != 0.f || (sx == sy);
@@ -439,8 +440,8 @@
         sy = data[3];
     } else if(colSum == 0.f || (sx == 1.f && sy == 1.f) || scaleBefore == NO) {
         if(scaleBefore == NO) {
-            sx = (data[0] < 0.f ? -1.f : 1.f * sqrtf(data[0] * data[0] + data[2] * data[2]));
-            sy = (data[3] < 0.f ? -1.f : 1.f * sqrtf(data[1] * data[1] + data[3] * data[3]));
+            sx = (data[0] < 0.f ? -1.f : 1.f) * sqrtf(data[0] * data[0] + data[2] * data[2]);
+            sy = (data[3] < 0.f ? -1.f : 1.f) * sqrtf(data[1] * data[1] + data[3] * data[3]);
             NSString * str = nil;
             if(sx == sy) {
                 str = [NSString stringWithFormat:@"scale(%g)",sx];

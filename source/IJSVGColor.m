@@ -257,7 +257,10 @@ static NSMutableDictionary * _colorTree = nil;
         // just return hex
         return [NSString stringWithFormat:@"#%02X%02X%02X",red,green,blue];
     }
-    return [NSString stringWithFormat:@"rgba(%d, %d, %d, %d)",red, green, blue, alpha];
+    
+    // note the %g, CSS alpha is 0 to 1, not 0 - 100, my bad!
+    return [NSString stringWithFormat:@"rgba(%d, %d, %d, %g)",red, green, blue,
+            ((float)alpha/100.f)];
 }
 
 + (NSString *)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color

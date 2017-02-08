@@ -431,7 +431,8 @@ NSString * IJSVGHash(NSString * key) {
     for(NSXMLElement * group in groups) {
     
         // dont do anything due to it being referenced
-        if([group attributeForName:@"id"] != nil) {
+        if([group attributeForName:@"id"] != nil ||
+           [group attributeForName:@"transform"] != nil) {
             continue;
         }
         
@@ -439,6 +440,9 @@ NSString * IJSVGHash(NSString * key) {
             
             // grab the first child as its a loner
             NSXMLElement * child = (NSXMLElement *)group.children[0];
+            if([child attributeForName:@"transform"] != nil) {
+                continue;
+            }
             
            for(NSXMLNode * gAttribute in group.attributes) {
                
@@ -620,6 +624,8 @@ NSString * IJSVGHash(NSString * key) {
     // append the string
     NSArray * transformArray = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform];
     NSString * transformStr = [transformArray componentsJoinedByString:@" "];
+    
+//    transformStr = [NSString stringWithFormat:@"matrix(%g, %g, %g, %g, %g, %g)", transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty];
     
     // apply it to the node
     IJSVGApplyAttributesToElement(@{@"transform":transformStr},element);

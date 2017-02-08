@@ -46,6 +46,12 @@
 
 + (IJSVGUnitLength *)unitWithString:(NSString *)string
 {
+    // just return noting for inherit, node will deal
+    // with the rest
+    if([string isEqualToString:@"inherit"]) {
+        return nil;
+    }
+    
     IJSVGUnitLength * unit = [[[self alloc] init] autorelease];
     unit.value = [string floatValue];
     unit.type = IJSVGUnitLengthTypeNumber;

@@ -369,6 +369,11 @@
     
     // stroke dash array
     attr(IJSVGAttributeStrokeDashArray, ^(NSString * value) {
+        // nothing specified
+        if([value isEqualToString:@"none"]) {
+            node.strokeDashArrayCount = 0;
+            return;
+        }
         NSInteger paramCount = 0;
         CGFloat * params = [IJSVGUtils commandParameters:value
                                                    count:&paramCount];
