@@ -625,8 +625,6 @@ NSString * IJSVGHash(NSString * key) {
     NSArray * transformArray = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform];
     NSString * transformStr = [transformArray componentsJoinedByString:@" "];
     
-//    transformStr = [NSString stringWithFormat:@"matrix(%g, %g, %g, %g, %g, %g)", transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty];
-    
     // apply it to the node
     IJSVGApplyAttributesToElement(@{@"transform":transformStr},element);
 }
