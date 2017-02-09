@@ -71,7 +71,13 @@
         if( stopColor == nil )
         {
             stopColor = [IJSVGColor colorFromPredefinedColorName:[[stop attributeForName:@"stop-color"] stringValue]];
-            if( stopColor != nil && stopOpacity != 1.f ) {
+            
+            // must provide a stop color - if not specified, provide black
+            if(stopColor == nil) {
+                stopColor = [NSColor colorFromHEX:0x000000 alpha:1.f];
+            }
+            
+            if(stopOpacity != 1.f) {
                 stopColor = [IJSVGColor changeAlphaOnColor:stopColor
                                                         to:stopOpacity];
             }
@@ -83,8 +89,7 @@
         }
         
         NSXMLNode * styleAttribute = [stop attributeForName:@"style"];
-        if( styleAttribute != nil )
-        {
+        if( styleAttribute != nil ) {
             IJSVGStyle * style = [IJSVGStyle parseStyleString:[styleAttribute stringValue]];
             NSColor * color = [IJSVGColor colorFromString:[style property:@"stop-color"]];
             
