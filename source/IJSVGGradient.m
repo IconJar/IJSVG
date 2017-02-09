@@ -49,7 +49,7 @@
     for( NSXMLElement * stop in stops )
     {
         // find the offset
-        CGFloat offset = [[[stop attributeForName:@"offset"] stringValue] floatValue];
+        CGFloat offset = [stop attributeForName:@"offset"].stringValue.floatValue;
         if( offset > 1.f ) {
             offset /= 100.f;
         }
@@ -60,53 +60,50 @@
         CGFloat stopOpacity = 1.f;
         NSXMLNode * stopOpacityAttribute = [stop attributeForName:@"stop-opacity"];
         if( stopOpacityAttribute != nil ) {
-            stopOpacity = [[stopOpacityAttribute stringValue] floatValue];
+            stopOpacity = stopOpacityAttribute.stringValue.floatValue;
         }
         
         // find the stop color
-        NSColor * stopColor = [IJSVGColor colorFromHEXString:[[stop attributeForName:@"stop-color"] stringValue]
-                                                       alpha:stopOpacity];
+        NSString * scs = [stop attributeForName:@"stop-color"].stringValue;
+        NSColor * stopColor = [IJSVGColor colorFromString:scs];
+        if(stopColor != nil && stopOpacity != 1.f) {
+            stopColor = [IJSVGColor changeAlphaOnColor:stopColor
+                                                    to:stopOpacity];
+        }
         
-        // no hex, grab it from predefined
-        if( stopColor == nil )
-        {
-            stopColor = [IJSVGColor colorFromPredefinedColorName:[[stop attributeForName:@"stop-color"] stringValue]];
+        // compute any style that there was...
+        NSXMLNode * styleAttribute = [stop attributeForName:@"style"];
+        if( styleAttribute != nil ) {
             
-            // must provide a stop color - if not specified, provide black
-            if(stopColor == nil) {
-                stopColor = [NSColor colorFromHEX:0x000000 alpha:1.f];
+            IJSVGStyle * style = [IJSVGStyle parseStyleString:styleAttribute.stringValue];
+            NSColor * color = [IJSVGColor colorFromString:[style property:@"stop-color"]];
+            
+            // we have a color!
+            if( color != nil ) {
+                // is there a stop opacity?
+                NSString * numberString = nil;
+                if( (numberString = [style property:@"stop-opacity"] ) != nil ) {
+                    color = [IJSVGColor changeAlphaOnColor:color
+                                                        to:numberString.floatValue];
+                } else {
+                    color = [IJSVGColor changeAlphaOnColor:color
+                                                        to:stopOpacity];
+                }
+                stopColor = color;
             }
-            
+        }
+        
+        // default is black
+        if(stopColor == nil) {
+            stopColor = [IJSVGColor colorFromString:@"black"];
             if(stopOpacity != 1.f) {
                 stopColor = [IJSVGColor changeAlphaOnColor:stopColor
                                                         to:stopOpacity];
             }
         }
         
-        // add it into the array
-        if( stopColor != nil ) {
-            [(NSMutableArray *)colors addObject:stopColor];
-        }
-        
-        NSXMLNode * styleAttribute = [stop attributeForName:@"style"];
-        if( styleAttribute != nil ) {
-            IJSVGStyle * style = [IJSVGStyle parseStyleString:[styleAttribute stringValue]];
-            NSColor * color = [IJSVGColor colorFromString:[style property:@"stop-color"]];
-            
-            // we have a color!
-            if( color != nil ) {
-                // is there a stop opacity?
-                NSNumber * number = nil;
-                if( (number = [style property:@"stop-opacity"] ) != nil ) {
-                    color = [IJSVGColor changeAlphaOnColor:color
-                                                        to:[number floatValue]];
-                } else {
-                    color = [IJSVGColor changeAlphaOnColor:color
-                                                        to:stopOpacity];
-                }
-                [(NSMutableArray *)colors addObject:color];
-            }
-        }
+        // add the stop color
+        [(NSMutableArray *)colors addObject:stopColor];
     }
     *someColors = colors;
     return stopsParams;
