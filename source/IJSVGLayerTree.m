@@ -355,6 +355,11 @@
     patternLayer.pattern = [self layerForNode:pattern];
     patternLayer.frame = CGPathGetBoundingBox(layer.path);
     
+    // is there a fill opacity?
+    if(path.fillOpacity.value != 0.f) {
+        patternLayer.opacity = path.fillOpacity.value;
+    }
+    
     // add the mask
     patternLayer.mask = [self layerMaskFromLayer:layer
                                         fromNode:path];
