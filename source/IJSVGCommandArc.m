@@ -75,6 +75,12 @@
     
     angleDelta = (ratio(deltaU, deltaV) <= -1) ? M_PI : (ratio(deltaU, deltaV) >= 1) ? 0 : angleDelta;
     
+    // check for actually numbers, if this is not valid
+    // kill it, blame WWDC 2017 SVG background for this...
+    if(isnan(startAngle) || isnan(angleDelta)) {
+        return;
+    }
+    
     CGFloat radius = MAX(radii.x, radii.y);
     CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) : CGPointMake(radii.x / radii.y, 1);
     
@@ -84,6 +90,7 @@
     [trans scaleXBy:(1/scale.x) yBy:(1/scale.y)];
     
     [path.currentSubpath transformUsingAffineTransform:trans];
+    
     [path.currentSubpath appendBezierPathWithArcWithCenter:NSZeroPoint
                                                     radius:radius
                                                 startAngle:radians_to_degrees(startAngle)
