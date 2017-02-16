@@ -223,6 +223,11 @@
         
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
+        
+        // apply offsets
+        [self applyOffsetsToLayer:gradLayer
+                         fromNode:path.fillGradient];
+        
         layer.gradientFillLayer = gradLayer;
         
     } else if(self.fillColor == nil && path.fillPattern != nil) {
@@ -233,6 +238,11 @@
                                                              fromNode:path];
         // add it
         [layer addSublayer:patternLayer];
+        
+        // apply offsets
+        [self applyOffsetsToLayer:patternLayer
+                         fromNode:path.fillPattern];
+        
         layer.patternFillLayer = patternLayer;
         
     } else {
@@ -342,6 +352,7 @@
                                   -(gradLayer.frame.origin.y))
         };
     }
+    
     return gradLayer;
 }
 
@@ -366,7 +377,41 @@
     
     // display
     [patternLayer setNeedsDisplay];
+    
     return patternLayer;
+}
+
+- (void)applyOffsetsToLayer:(IJSVGLayer *)layer
+                   fromNode:(IJSVGNode *)node
+{
+    // make sure it has a superlayer
+    if(layer.superlayer == nil) {
+        return;
+    }
+    
+    // grab the x and y
+    IJSVGUnitLength * x = nil;
+    IJSVGUnitLength * y = nil;
+    
+    // sort out the rect
+    CGRect rect = layer.superlayer.frame;
+    CGRect frame = layer.frame;
+    
+    // x
+    if((x = node.x) != nil) {
+        frame.origin.x = [x computeValue:rect.size.width];
+    }
+    
+    // y
+    if((y = node.y) != nil) {
+        frame.origin.y = [y computeValue:rect.size.height];
+    }
+    
+    // update the frame
+    if(CGRectEqualToRect(frame, layer.frame) == NO) {
+        layer.frame = frame;
+    }
+    
 }
 
 - (IJSVGStrokeLayer *)strokeLayer:(IJSVGShapeLayer *)layer
