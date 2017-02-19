@@ -37,6 +37,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     
 @private
     IJSVG * _svg;
+    CGSize _size;
     IJSVGExporterOptions _options;
     NSXMLDocument * _dom;
     NSXMLElement * _defElement;
@@ -52,6 +53,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
 @property (nonatomic, copy) NSString * description;
 
 - (id)initWithSVG:(IJSVG *)svg
+             size:(CGSize)size
           options:(IJSVGExporterOptions)options;
 - (NSString *)SVGString;
 - (NSData *)SVGData;

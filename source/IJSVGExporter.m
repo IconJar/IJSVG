@@ -120,10 +120,12 @@ NSString * IJSVGHash(NSString * key) {
 }
 
 - (id)initWithSVG:(IJSVG *)svg
+             size:(CGSize)size
           options:(IJSVGExporterOptions)options
 {
     if((self = [super init]) != nil) {
         _options = options;
+        _size = size;
         _svg = [svg retain];
         
         // clear memory as soon as possible
@@ -157,6 +159,15 @@ NSString * IJSVGHash(NSString * key) {
         @"xmlns": XML_DOC_NS,
         @"xmlns:xlink": XML_DOC_NSXLINK
     };
+    
+    // was there a size set?
+    if(CGSizeEqualToSize(CGSizeZero, _size) == NO &&
+       (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
+        NSMutableDictionary * att = [[attributes mutableCopy] autorelease];
+        att[@"width"] = IJSVGShortFloatString(_size.width);
+        att[@"height"] = IJSVGShortFloatString(_size.height);
+        attributes = [[att copy] autorelease];
+    }
     
     // apply the attributes
     IJSVGApplyAttributesToElement(attributes, root);
