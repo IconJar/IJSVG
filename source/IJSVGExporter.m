@@ -686,9 +686,23 @@ NSString * IJSVGHash(NSString * key) {
                                                fromParent:nil];
     patternElement.name = @"pattern";
     
-    NSDictionary * dict = @{@"id":[NSString stringWithFormat:@"pattern-%ld",(++_patternCount)],
-             @"width":IJSVGShortFloatString(layer.patternNode.width.value),
-             @"height":IJSVGShortFloatString(layer.patternNode.height.value)};
+    NSMutableDictionary * dict = [[[NSMutableDictionary alloc] init] autorelease];
+    dict[@"id"] = [NSString stringWithFormat:@"pattern-%ld",(++_patternCount)];
+    dict[@"width"] = IJSVGShortFloatString(layer.patternNode.width.value);
+    dict[@"height"] = IJSVGShortFloatString(layer.patternNode.height.value);
+    
+    // sort out x and y position
+    IJSVGUnitLength * x = layer.patternNode.x;
+    IJSVGUnitLength * y = layer.patternNode.y;
+    
+    if(x.value != 0) {
+        dict[@"x"] = [layer.patternNode.x stringValue];
+    }
+    
+    if(y.value != 0) {
+        dict[@"y"] = [layer.patternNode.y stringValue];
+    }
+    
     
     IJSVGApplyAttributesToElement(dict, patternElement);
     
@@ -699,17 +713,18 @@ NSString * IJSVGHash(NSString * key) {
     useElement.name = @"use";
     
     // now add the fill
+    NSDictionary * aDict = nil;
     if(stroke == NO) {
-        dict = @{@"fill":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
-        IJSVGApplyAttributesToElement(dict, element);
+        aDict = @{@"fill":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
+        IJSVGApplyAttributesToElement(aDict, element);
         
         // fill opacity
         if(patternLayer.opacity != 1.f) {
             IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(patternLayer.opacity)}, element);
         }
     } else {
-        dict = @{@"stroke":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
-        IJSVGApplyAttributesToElement(dict, element);
+        aDict = @{@"stroke":IJSVGHashURL([patternElement attributeForName:@"id"].stringValue)};
+        IJSVGApplyAttributesToElement(aDict, element);
     }
 }
 
