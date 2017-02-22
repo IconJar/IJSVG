@@ -63,15 +63,20 @@
         
         // find the value
         else if(c == ';' || i == (length-1)) {
-            value = [string substringWithRange:NSMakeRange(index, (i-index))];
+            NSInteger chomp;
+            if(i == (length-1) && c != ';') {
+                chomp = (i-(index-1));
+            } else {
+                chomp = (i-index);
+            }
+            value = [string substringWithRange:NSMakeRange(index, chomp)];
             index = i+1;
         }
         
         // set the propery if it actually exists
         if(key != nil && value != nil) {
-            [self computeStyleProperty:key
-                                 value:value
-                                 style:style];
+            [style setPropertyValue:[[self class] trimString:value]
+                        forProperty:[[self class] trimString:key]];
             key = nil;
             value = nil;
         }
@@ -87,17 +92,6 @@
 + (NSArray *)allowedColourKeys
 {
     return @[@"fill",@"stroke-colour",@"stop-color",@"stroke"];
-}
-
-+ (void)computeStyleProperty:(NSString *)key
-                       value:(NSString *)value
-                       style:(IJSVGStyle *)style
-{
-    key = [[self class] trimString:key];
-    value = [[self class] trimString:value];
-    [style setPropertyValue:value
-                forProperty:key];
-    
 }
 
 + (BOOL)isNumeric:(NSString *)string
