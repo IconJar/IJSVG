@@ -46,6 +46,7 @@ static NSMutableDictionary * _colorTree = nil;
         [_colorTree setObject:@"6495ed" forKey:@"cornflowerblue"];
         [_colorTree setObject:@"fff8dc" forKey:@"cornsilk"];
         [_colorTree setObject:@"dc143c" forKey:@"crimson"];
+        [_colorTree setObject:@"000000" forKey:@"currentcolor"];
         [_colorTree setObject:@"00ffff" forKey:@"cyan"];
         [_colorTree setObject:@"00008b" forKey:@"darkblue"];
         [_colorTree setObject:@"008b8b" forKey:@"darkcyan"];
