@@ -438,7 +438,6 @@
     strokeLayer.lineWidth = lineWidth;
     strokeLayer.lineCap = [self lineCap:path.lineCapStyle];
     strokeLayer.lineJoin = [self lineJoin:path.lineJoinStyle];
-    strokeLayer.miterLimit = lineWidth;
     
     CGFloat strokeOpacity = 1.f;
     if(path.strokeOpacity.value != 0.f) {
