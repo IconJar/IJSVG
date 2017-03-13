@@ -340,6 +340,8 @@
 - (CGRect)correctBounds:(CGRect)bounds
          forStrokedPath:(IJSVGNode *)path
 {
+    // minus half the stroke width from x and y
+    // plus the stroke width to width and height
     CGFloat val = path.strokeWidth.value;
     bounds.origin.x -= (val*.5f);
     bounds.origin.y -= (val*.5f);
