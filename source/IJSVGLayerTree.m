@@ -194,7 +194,7 @@
 }
 
 - (IJSVGShapeLayer *)layerMaskFromLayer:(CAShapeLayer *)layer
-                       fromNode:(IJSVGNode *)node
+                               fromNode:(IJSVGNode *)node
 {
     IJSVGShapeLayer * mask = [[[IJSVGShapeLayer alloc] init] autorelease];
     mask.fillColor = [NSColor blackColor].CGColor;
@@ -267,7 +267,7 @@
         
         // load the stroke layer
         IJSVGStrokeLayer * strokeLayer = [self strokeLayer:layer
-                                                 fromNode:path];
+                                                  fromNode:path];
         
         // reset the node
         BOOL moveStrokeLayer = NO;
@@ -314,7 +314,7 @@
         } else {
             // just add the coloured layer
             [layer addSublayer:strokeLayer];
-            layer.strokeLayer = (IJSVGStrokeLayer *)strokeLayer;
+            layer.strokeLayer = strokeLayer;
         }
         
         // if we required to move the stroke layer
@@ -504,9 +504,12 @@
 - (IJSVGStrokeLayer *)strokeLayer:(IJSVGShapeLayer *)layer
                          fromNode:(IJSVGNode *)path
 {
-    // same as fill, dont use global if the alpha is 0.f
+    // same as fill, dont use global if the alpha is 0.f, but do use it
+    // if there is a pattern or gradient
     NSColor * sColor = path.strokeColor;
-    if(self.strokeColor != nil && (sColor != nil && sColor.alphaComponent != 0.f)) {
+    if(self.strokeColor != nil &&
+       ((sColor != nil && sColor.alphaComponent != 0.f) ||
+            path.strokePattern != nil || path.strokeGradient != nil )) {
         sColor = self.strokeColor;
     }
     
