@@ -31,15 +31,7 @@
 
 - (IJSVG *)svg
 {
-    
-    IJSVG * anSVG = [IJSVG svgNamed:@"test"];
-    IJSVGExporter * exporter = [[IJSVGExporter alloc] initWithSVG:anSVG
-                                                          options:IJSVGExporterOptionAll];
-    
-    [exporter.SVGData writeToFile:@"/users/curtishard/Desktop/omg.svg" atomically:YES];
-    [exporter release];
-    
-    return [anSVG retain];
+    return [IJSVG svgNamed:@"test"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

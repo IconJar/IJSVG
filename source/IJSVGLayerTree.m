@@ -270,6 +270,7 @@
                                                  fromNode:path];
         
         // reset the node
+        BOOL moveStrokeLayer = NO;
         if(self.strokeColor == nil && path.strokeGradient != nil) {
             
             // force reset of the mask colour as we need to use the stroke layer
@@ -277,10 +278,11 @@
             strokeLayer.strokeColor = [NSColor blackColor].CGColor;
             
             // create the gradient
-            IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
-                                                                gradient:path.strokeGradient
-                                                                fromNode:path];
-            // set the mask for it
+            IJSVGGradientLayer * gradLayer = [self gradientStrokeLayerForLayer:layer
+                                                                      gradient:path.strokeGradient
+                                                                      fromNode:path];
+            
+            moveStrokeLayer = YES;
             gradLayer.mask = strokeLayer;
             gradLayer.opacity = strokeLayer.opacity;
             
@@ -295,11 +297,12 @@
             strokeLayer.strokeColor = [NSColor blackColor].CGColor;
             
             // create the pattern
-            IJSVGPatternLayer * patternLayer = [self patternLayerForLayer:layer
-                                                                  pattern:path.strokePattern
-                                                                 fromNode:path];
+            IJSVGPatternLayer * patternLayer = [self patternStrokeLayerForLayer:layer
+                                                                        pattern:path.strokePattern
+                                                                       fromNode:path];
             
             // set the mask for it
+            moveStrokeLayer = YES;
             patternLayer.mask = strokeLayer;
             patternLayer.opacity = strokeLayer.opacity;
             
@@ -313,6 +316,18 @@
             [layer addSublayer:strokeLayer];
             layer.strokeLayer = (IJSVGStrokeLayer *)strokeLayer;
         }
+        
+        // if we required to move the stroke layer
+        // then move it in based on half of what the stroke
+        // width is, as strokes are draw on the center
+        if(moveStrokeLayer) {
+            CGFloat strokeWidth = path.strokeWidth.value;
+            CGRect rect = strokeLayer.frame;
+            rect.origin.x += (strokeWidth*.5f);
+            rect.origin.y += (strokeWidth*.5f);
+            strokeLayer.frame = rect;
+        }
+        
     }
     
     // apply masking
@@ -321,6 +336,51 @@
     
     return (IJSVGLayer *)layer;
 }
+
+- (CGRect)correctBounds:(CGRect)bounds
+         forStrokedPath:(IJSVGNode *)path
+{
+    CGFloat val = path.strokeWidth.value;
+    bounds.origin.x -= (val*.5f);
+    bounds.origin.y -= (val*.5f);
+    bounds.size.width += val;
+    bounds.size.height += val;
+    return bounds;
+}
+
+- (IJSVGGradientLayer *)gradientStrokeLayerForLayer:(IJSVGShapeLayer *)layer
+                                           gradient:(IJSVGGradient *)gradient
+                                           fromNode:(IJSVGNode *)path
+{
+    // the gradient drawing layer
+    IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
+    gradLayer.gradient = gradient;
+    
+    // is there a fill opacity?
+    if(path.fillOpacity.value != 0.f) {
+        gradLayer.opacity = path.fillOpacity.value;
+    }
+    
+    // set the bounds
+    CGRect bounds = CGPathGetBoundingBox(layer.path);
+    bounds = [self correctBounds:bounds forStrokedPath:path];
+    gradLayer.frame = bounds;
+    
+    // display it
+    [gradLayer setNeedsDisplay];
+    
+    if(path.fillGradient.units == IJSVGUnitUserSpaceOnUse) {
+        // move back if needed
+        gradLayer.frame = (CGRect){
+            .size = gradLayer.frame.size,
+            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
+                                  -fabs(gradLayer.frame.origin.y))
+        };
+    }
+    
+    return gradLayer;
+}
+
 
 - (IJSVGGradientLayer *)gradientLayerForLayer:(IJSVGShapeLayer *)layer
                                      gradient:(IJSVGGradient *)gradient
@@ -348,12 +408,37 @@
         // move back if needed
         gradLayer.frame = (CGRect){
             .size = gradLayer.frame.size,
-            .origin = CGPointMake(-(gradLayer.frame.origin.x),
-                                  -(gradLayer.frame.origin.y))
+            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
+                                  -fabs(gradLayer.frame.origin.y))
         };
     }
     
     return gradLayer;
+}
+
+- (IJSVGPatternLayer *)patternStrokeLayerForLayer:(IJSVGShapeLayer *)layer
+                                          pattern:(IJSVGPattern *)pattern
+                                         fromNode:(IJSVGNode *)path
+{
+    // create the pattern, this is actually not as easy as it may seem
+    IJSVGPatternLayer * patternLayer = [[[IJSVGPatternLayer alloc] init] autorelease];
+    patternLayer.patternNode = pattern;
+    patternLayer.pattern = [self layerForNode:pattern];
+    
+    // is there a fill opacity?
+    if(path.fillOpacity.value != 0.f) {
+        patternLayer.opacity = path.fillOpacity.value;
+    }
+    
+    // set the bounds
+    CGRect bounds = CGPathGetBoundingBox(layer.path);
+    bounds = [self correctBounds:bounds forStrokedPath:path];
+    patternLayer.frame = bounds;
+    
+    // display
+    [patternLayer setNeedsDisplay];
+    
+    return patternLayer;
 }
 
 - (IJSVGPatternLayer *)patternLayerForLayer:(IJSVGShapeLayer *)layer

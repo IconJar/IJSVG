@@ -838,7 +838,7 @@
             
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
-            IJSVGNode * node = [parentGroup defForID:xlinkID];
+            IJSVGNode * node = [self definedObjectForID:xlinkID];
             if( node != nil ) {
                 // we are a clone
                 IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
@@ -884,7 +884,7 @@
             
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
-            IJSVGNode * node = [parentGroup defForID:xlinkID];
+            IJSVGNode * node = [self definedObjectForID:xlinkID];
             if( node != nil )
             {
                 // we are a clone
