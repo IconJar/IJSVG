@@ -499,6 +499,42 @@
     }
 }
 
+- (void)parseDefsForElement:(NSXMLElement *)anElement
+{
+    // nothing found
+    if(anElement.childCount == 0) {
+        return;
+    }
+    
+    for(NSXMLElement * element in anElement.children) {
+        // not a def
+        if([IJSVGNode typeForString:element.name
+                               kind:element.kind] != IJSVGNodeTypeDef) {
+            continue;
+        }
+        
+        // store each object
+        for(NSXMLElement * childDef in element.children) {
+            // is there any stylesheets within this?
+            IJSVGNodeType childType = [IJSVGNode typeForString:childDef.name
+                                                          kind:element.kind];
+            
+            // if it is a style, parse the style
+            if(childType == IJSVGNodeTypeStyle) {
+                [self _parseBaseBlock:childDef
+                            intoGroup:self
+                                  def:NO];
+            } else {
+                // just a default def, continue on
+                NSString * defID = [childDef attributeForName:@"id"].stringValue;
+                if(defID != nil) {
+                    _defNodes[defID] = childDef;
+                }
+            }
+        }
+    }
+}
+
 - (void)_parseBaseBlock:(NSXMLElement *)element
               intoGroup:(IJSVGGroup *)parentGroup
                     def:(BOOL)flag
@@ -512,32 +548,6 @@
         // do nothing
         default:
         case IJSVGNodeTypeNotFound: {
-            break;
-        }
-            
-        // defs
-        case IJSVGNodeTypeDef: {
-            // store each object
-            for(NSXMLElement * childDef in element.children) {
-                
-                // is there any stylesheets within this?
-                IJSVGNodeType childType = [IJSVGNode typeForString:childDef.name
-                                                              kind:element.kind];
-                
-                // if it is a style, parse the style
-                if(childType == IJSVGNodeTypeStyle) {
-                    [self _parseBaseBlock:childDef
-                                intoGroup:parentGroup
-                                      def:NO];
-                } else {
-                    
-                    // jsut a default def, continue on
-                    NSString * defID = [childDef attributeForName:@"id"].stringValue;
-                    if(defID != nil) {
-                        _defNodes[defID] = childDef;
-                    }
-                }
-            }
             break;
         }
             
@@ -630,6 +640,9 @@
         case IJSVGNodeTypeFont:
         case IJSVGNodeTypeMask:
         case IJSVGNodeTypeGroup: {
+            
+            // parse the defs
+            [self parseDefsForElement:element];
             
             // create a new group
             IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
@@ -993,6 +1006,10 @@
           intoGroup:(IJSVGGroup*)parentGroup
                 def:(BOOL)flag
 {
+    // parse the defs
+    [self parseDefsForElement:anElement];
+    
+    // parse the children
     for( NSXMLElement * element in [anElement children] ) {
         [self _parseBaseBlock:element
                     intoGroup:parentGroup
