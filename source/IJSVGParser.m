@@ -297,7 +297,7 @@
            IJSVGAttributeOpacity:@"opacity",
            IJSVGAttributeStrokeOpacity:@"strokeOpacity",
            IJSVGAttributeStrokeWidth:@"strokeWidth",
-           IJSVGAttributeStrokeDashArray:@"strokeDashOffset",
+           IJSVGAttributeStrokeDashOffset:@"strokeDashOffset",
            IJSVGAttributeFillOpacity:@"fillOpacity"}, ^id (NSString * value) {
         return [IJSVGUnitLength unitWithString:value];
     });
