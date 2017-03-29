@@ -35,16 +35,16 @@
     // assume its a vertical / horizonal
     if(isPercent == NO) {
         // just ask unit for the value
-        aGradient.x1 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
-        aGradient.x2 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
-        aGradient.y1 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
-        aGradient.y2 = [IJSVGUnitLength unitWithString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
+        aGradient.x1 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
+        aGradient.x2 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
+        aGradient.y1 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
+        aGradient.y2 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
     } else {
         // make sure its a percent!
-        aGradient.x1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
-        aGradient.x2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"1"];
-        aGradient.y1 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
-        aGradient.y2 = [IJSVGUnitLength unitWithPercentageString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
+        aGradient.x1 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
+        aGradient.x2 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"1"];
+        aGradient.y1 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
+        aGradient.y2 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
     }
 
     // compute the color stops and colours
