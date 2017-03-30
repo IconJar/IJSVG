@@ -28,6 +28,7 @@
 
 #define DEFAULT_SHAPE_FILL_COLOR [NSColor blackColor].CGColor
 
+@synthesize viewBox;
 @synthesize fillColor;
 @synthesize strokeColor;
 

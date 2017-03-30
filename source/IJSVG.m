@@ -664,6 +664,7 @@
     // create the renderer and assign default values
     // from this SVG object
     IJSVGLayerTree * renderer = [[[IJSVGLayerTree alloc] init] autorelease];
+    renderer.viewBox = self.viewBox;
     renderer.fillColor = self.fillColor;
     renderer.strokeColor = self.strokeColor;
     
