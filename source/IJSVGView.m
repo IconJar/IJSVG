@@ -14,6 +14,9 @@
 
 - (void)dealloc
 {
+    // make sure we call this, or block may get called for a view
+    // that doesnt exist
+    [SVG prepForDrawingInView:nil];
     [imageName release], imageName = nil;
     [SVG release], SVG = nil;
     [super dealloc];
@@ -38,7 +41,6 @@
     // image was set via IB
     if(imageName != nil) {
         IJSVG * anSVG = [IJSVG svgNamed:imageName];
-        
         // dont need the dom, so clean it
         [anSVG discardDOM];
         self.SVG = anSVG;
@@ -52,12 +54,6 @@
         [SVG release], SVG = nil;
     }
     SVG = [anSVG retain];
-    
-    // make sure we tell the SVG about the scale of the window
-    __block IJSVGView * weakSelf = self;
-    SVG.renderingBackingScaleHelper = ^CGFloat{
-        return weakSelf.window.screen.backingScaleFactor;
-    };
     
     // redisplay ourself!
     [SVG prepForDrawingInView:self];

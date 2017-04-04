@@ -460,7 +460,20 @@
 
 - (void)prepForDrawingInView:(NSView *)view
 {
+    // kill the render
+    if(view == nil) {
+        self.renderingBackingScaleHelper = nil;
+        return;
+    }
+    
+    // construct the layer before drawing
     [self layer];
+    
+    // set the scale
+    __block NSView * weakView = view;
+    self.renderingBackingScaleHelper = ^CGFloat{
+        return weakView.window.screen.backingScaleFactor;
+    };
 }
 
 - (BOOL)drawAtPoint:(NSPoint)point
