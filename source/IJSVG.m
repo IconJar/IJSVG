@@ -458,6 +458,24 @@
     return data;
 }
 
+- (void)prepForDrawingInView:(NSView *)view
+{
+    // kill the render
+    if(view == nil) {
+        self.renderingBackingScaleHelper = nil;
+        return;
+    }
+    
+    // construct the layer before drawing
+    [self layer];
+    
+    // set the scale
+    __block NSView * weakView = view;
+    self.renderingBackingScaleHelper = ^CGFloat{
+        return weakView.window.screen.backingScaleFactor;
+    };
+}
+
 - (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)aSize
 {
@@ -522,6 +540,14 @@
     return viewPort;
 }
 
+- (void)drawInRect:(NSRect)rect
+           context:(CGContextRef)context
+{
+    [self _drawInRect:rect
+              context:context 
+                error:nil];
+}
+
 - (BOOL)_drawInRect:(NSRect)rect
             context:(CGContextRef)ref
               error:(NSError **)error
@@ -565,16 +591,15 @@
             
             // render the layer, its really important we lock
             // the transaction when drawing
-            __block IJSVG * weakSelf = self;
             IJSVGBeginTransactionLock();
             // do we need to update the backing scales on the
             // layers?
-            if(weakSelf.renderingBackingScaleHelper != nil) {
-                [weakSelf _askHelperForBackingScale];
+            if(self.renderingBackingScaleHelper != nil) {
+                [self _askHelperForBackingScale];
             }
             
             // render the layers
-            [weakSelf.layer renderInContext:ref];
+            [self.layer renderInContext:ref];
             IJSVGEndTransactionLock();
         }
         @catch (NSException *exception) {
@@ -664,6 +689,7 @@
     // create the renderer and assign default values
     // from this SVG object
     IJSVGLayerTree * renderer = [[[IJSVGLayerTree alloc] init] autorelease];
+    renderer.viewBox = self.viewBox;
     renderer.fillColor = self.fillColor;
     renderer.strokeColor = self.strokeColor;
     

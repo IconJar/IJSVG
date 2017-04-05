@@ -66,6 +66,7 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 @property (nonatomic, retain) NSColor * fillColor;
 @property (nonatomic, retain) NSColor * strokeColor;
 
+- (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;
 - (NSRect)viewBox;
 - (NSArray *)glyphs;
@@ -135,6 +136,8 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 - (BOOL)drawInRect:(NSRect)rect;
 - (BOOL)drawInRect:(NSRect)rect
              error:(NSError **)error;
+- (void)drawInRect:(NSRect)rect
+           context:(CGContextRef)context;
 
 - (NSData *)PDFData;
 - (NSData *)PDFData:(NSError **)error;

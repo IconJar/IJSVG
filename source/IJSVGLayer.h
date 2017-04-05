@@ -51,6 +51,18 @@
     } \
     [super renderInContext:ctx]; \
 } \
+\
+- (CGPoint)absoluteOrigin \
+{\
+    CGPoint point = CGPointZero; \
+    CALayer * pLayer = self; \
+    while(pLayer != nil) { \
+        point.x += pLayer.frame.origin.x; \
+        point.y += pLayer.frame.origin.y; \
+        pLayer = pLayer.superlayer; \
+    } \
+    return point;\
+}\
 
 #define IJSVG_LAYER_DEFAULT_PROPERTIES \
 @property (nonatomic, assign) IJSVGGradientLayer * gradientFillLayer; \
@@ -60,7 +72,8 @@
 @property (nonatomic, assign) IJSVGPatternLayer * patternStrokeLayer; \
 @property (nonatomic, assign) BOOL requiresBackingScaleHelp; \
 @property (nonatomic, assign) CGFloat backingScaleFactor; \
-@property (nonatomic, assign) CGBlendMode blendingMode;
+@property (nonatomic, assign) CGBlendMode blendingMode; \
+@property (nonatomic, assign) CGPoint absoluteOrigin;
 
 #define IJSVG_LAYER_DEFAULT_SYNTHESIZE \
 @synthesize gradientFillLayer; \

@@ -15,6 +15,7 @@
     
 }
 
+@property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, retain) NSColor * fillColor;
 @property (nonatomic, retain) NSColor * strokeColor;
 
