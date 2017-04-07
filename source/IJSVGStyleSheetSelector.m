@@ -299,7 +299,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     
     NSUInteger length = selector.length;
     NSMutableArray * sels = [[[NSMutableArray alloc] init] autorelease];
-    NSCharacterSet * alphaNumeric = [NSCharacterSet characterSetWithCharactersInString:@"_-abcdefghijklmnopqrstuvwxyz0123456789"];
+    NSCharacterSet * alphaNumeric = [[NSCharacterSet characterSetWithCharactersInString:@"#+.>~ "] invertedSet];
     IJSVGStyleSheetSelectorRaw * rawSelector = [[[IJSVGStyleSheetSelectorRaw alloc] init] autorelease];
     
     for(NSUInteger i = 0; i < length; i++)
