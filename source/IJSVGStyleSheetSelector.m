@@ -296,22 +296,31 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         return NO;
     }
     
+    // keychar lookup
+    char * keychars = "#+.>~ ";
+    NSUInteger aLength = strlen(keychars);
+    BOOL (^isKeyChar)(char anotherChar) = ^(char anotherChar) {
+        for(NSInteger i = 0; i < aLength; i++) {
+            if(keychars[i] == anotherChar) {
+                return YES;
+            }
+        }
+        return NO;
+    };
+    
     
     NSUInteger length = selector.length;
     NSMutableArray * sels = [[[NSMutableArray alloc] init] autorelease];
-    NSCharacterSet * alphaNumeric = [[NSCharacterSet characterSetWithCharactersInString:@"#+.>~ "] invertedSet];
     IJSVGStyleSheetSelectorRaw * rawSelector = [[[IJSVGStyleSheetSelectorRaw alloc] init] autorelease];
     
-    for(NSUInteger i = 0; i < length; i++)
-    {
+    for(NSUInteger i = 0; i < length; i++) {
         unichar c = [selector characterAtIndex:i];
-        
         // beginning of class
         if( c == '.' ) {
             i++;
             for(NSUInteger a = i; a < length; a++ ) {
                 unichar ca = [selector characterAtIndex:a];
-                if([alphaNumeric characterIsMember:ca] == NO || a == length-1) {
+                if(isKeyChar(ca) == YES || a == length-1) {
                     // if at end, add 1 to a so it gets the last character
                     if( a == length-1 ) {
                         a++;
@@ -328,7 +337,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
             i++;
             for(NSUInteger a = i; a < length; a++ ) {
                 unichar ca = [selector characterAtIndex:a];
-                if([alphaNumeric characterIsMember:ca] == NO || a == length-1) {
+                if(isKeyChar(ca) == YES || a == length-1) {
                     // if at end, add 1 to a so it gets the last character
                     if( a == length-1 ) {
                         a++;
@@ -387,7 +396,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         else {
             for( NSUInteger a = i; a < length; a++ ) {
                 unichar ca = [selector characterAtIndex:a];
-                if([alphaNumeric characterIsMember:ca] == NO || a == length-1) {
+                if(isKeyChar(ca) == YES || a == length-1) {
                     if( a == length-1 ) {
                         a++;
                     }
