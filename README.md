@@ -18,7 +18,7 @@ Add all the IJSVG library files into your project, import the IJSVG.h into the f
 #### Step 2 - grab the NSImage from it
     NSImage * svgImage = [svg imageWithSize:NSMakeSize(100.f,100.f)];
   
-#Other ways of drawing
+# Other ways of drawing
 
 IJSVG does allow you to directly draw the SVG into any focused drawing context for example within the drawRect of an NSView...
 
