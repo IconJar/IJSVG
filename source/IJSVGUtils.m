@@ -10,6 +10,18 @@
 
 @implementation IJSVGUtils
 
+BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
+{
+    char * validChars = "MmZzLlHhVvCcSsQqTtAa";
+    NSUInteger length = strlen(validChars);
+    for(NSUInteger i = 0; i < length; i++) {
+        if(aChar == validChars[i]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 CGFloat angle( CGPoint a, CGPoint b ) {
     return [IJSVGUtils angleBetweenPointA:a
                                    pointb:b];

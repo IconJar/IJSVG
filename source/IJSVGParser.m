@@ -1017,17 +1017,6 @@
     }
 }
 
-static NSCharacterSet * _commandCharSet = nil;
-
-+ (NSCharacterSet *)_commandCharSet
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _commandCharSet = [[NSCharacterSet characterSetWithCharactersInString:@"MmZzLlHhVvCcSsQqTtAa"] retain];
-    });
-    return _commandCharSet;
-}
-
 #pragma mark Parser stuff!
 
 - (void)_parsePathCommandData:(NSString *)command
@@ -1039,7 +1028,6 @@ static NSCharacterSet * _commandCharSet = nil;
         return;
     }
     
-    NSCharacterSet * set = [[self class] _commandCharSet];
     NSUInteger len = [command length];
     
     // allocate memory for the string buffer for reading
@@ -1061,7 +1049,7 @@ static NSCharacterSet * _commandCharSet = nil;
         unichar currentChar = buffer[i];
         unichar nextChar = buffer[i+1];
         BOOL atEnd = i == len-1;
-        BOOL isStartCommand = [set characterIsMember:nextChar];
+        BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
         if( ( currentBufferSize + 1 ) == currentSize ) {
             currentSize += defaultBufferSize;
             commandBuffer = (unichar *)realloc( commandBuffer, sizeof(unichar)*currentSize);

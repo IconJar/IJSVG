@@ -18,6 +18,7 @@ CGFloat angle( CGPoint a, CGPoint b );
 CGFloat radians_to_degrees( CGFloat radians);
 CGFloat degrees_to_radians( CGFloat degrees );
 
+BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (IJSVGCommandType)typeForCommandString:(NSString *)string;
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count;
