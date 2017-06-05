@@ -288,11 +288,27 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     }
 }
 
+- (BOOL)validateSelector:(NSString *)string
+{
+    char * invalidChars = "@:;*()[]";
+    NSUInteger length = strlen(invalidChars);
+    NSUInteger sLength = string.length;
+    for(NSUInteger i = 0; i < length; i++) {
+        for(NSUInteger s = 0; s < sLength; s++) {
+            // if found invalid char, just return NO instantly
+            if(invalidChars[i] == [string characterAtIndex:s]) {
+                return NO;
+            }
+        }
+    }
+    return YES;
+}
+
 - (BOOL)_compile
 {
     
     // completely unsupported
-    if([selector characterAtIndex:0] == '@') {
+    if([self validateSelector:selector] == NO) {
         return NO;
     }
     
