@@ -51,6 +51,7 @@ typedef NS_ENUM( NSInteger, IJSVGWindingRule ) {
 };
 
 typedef  NS_ENUM( NSInteger, IJSVGLineCapStyle ) {
+    IJSVGLineCapStyleNone,
     IJSVGLineCapStyleButt,
     IJSVGLineCapStyleRound,
     IJSVGLineCapStyleSquare,
@@ -58,6 +59,7 @@ typedef  NS_ENUM( NSInteger, IJSVGLineCapStyle ) {
 };
 
 typedef NS_ENUM( NSInteger, IJSVGLineJoinStyle ) {
+    IJSVGLineJoinStyleNone,
     IJSVGLineJoinStyleMiter,
     IJSVGLineJoinStyleRound,
     IJSVGLineJoinStyleBevel,

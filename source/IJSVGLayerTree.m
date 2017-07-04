@@ -31,12 +31,24 @@
 @synthesize viewBox;
 @synthesize fillColor;
 @synthesize strokeColor;
+@synthesize strokeWidth;
+@synthesize lineJoinStyle;
+@synthesize lineCapStyle;
 
 - (void)dealloc
 {
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
     [super dealloc];
+}
+
+- (id)init
+{
+    if((self = [super init]) != nil) {
+        self.lineJoinStyle = IJSVGLineJoinStyleNone;
+        self.lineCapStyle = IJSVGLineCapStyleNone;
+    }
+    return self;
 }
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node
@@ -322,10 +334,10 @@
         // then move it in based on half of what the stroke
         // width is, as strokes are draw on the center
         if(moveStrokeLayer) {
-            CGFloat strokeWidth = path.strokeWidth.value;
+            CGFloat layerStrokeWidth = strokeLayer.lineWidth;
             CGRect rect = strokeLayer.frame;
-            rect.origin.x += (strokeWidth*.5f);
-            rect.origin.y += (strokeWidth*.5f);
+            rect.origin.x += (layerStrokeWidth*.5f);
+            rect.origin.y += (layerStrokeWidth*.5f);
             strokeLayer.frame = rect;
         }
         
@@ -521,14 +533,34 @@
     strokeLayer.strokeColor = sColor.CGColor;
     
     CGFloat lineWidth = 1.f;
-    if(path.strokeWidth.value > 0.f) {
+    if(self.strokeWidth > 0.f) {
+        lineWidth = self.strokeWidth;
+    } else if(path.strokeWidth.value > 0.f) {
         lineWidth = path.strokeWidth.value;
+    }
+    
+    // work out line styles
+    IJSVGLineCapStyle lCapStyle;
+    IJSVGLineJoinStyle lJoinStyle;
+    
+    // forced cap style
+    if(self.lineCapStyle != IJSVGLineCapStyleNone) {
+        lCapStyle = self.lineCapStyle;
+    } else {
+        lCapStyle = path.lineCapStyle;
+    }
+    
+    // forced join style
+    if(self.lineJoinStyle != IJSVGLineJoinStyleNone) {
+        lJoinStyle = self.lineJoinStyle;
+    } else {
+        lJoinStyle = path.lineJoinStyle;
     }
     
     // line styles
     strokeLayer.lineWidth = lineWidth;
-    strokeLayer.lineCap = [self lineCap:path.lineCapStyle];
-    strokeLayer.lineJoin = [self lineJoin:path.lineJoinStyle];
+    strokeLayer.lineCap = [self lineCap:lCapStyle];
+    strokeLayer.lineJoin = [self lineJoin:lJoinStyle];
     
     CGFloat strokeOpacity = 1.f;
     if(path.strokeOpacity.value != 0.f) {

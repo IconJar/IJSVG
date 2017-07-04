@@ -14,6 +14,9 @@
 
 @synthesize fillColor;
 @synthesize strokeColor;
+@synthesize strokeWidth;
+@synthesize lineCapStyle;
+@synthesize lineJoinStyle;
 @synthesize renderingBackingScaleHelper;
 
 - (void)dealloc
@@ -666,6 +669,24 @@
     [_layerTree release], _layerTree = nil;
 }
 
+- (void)setStrokeWidth:(CGFloat)aWidth
+{
+    strokeWidth = aWidth;
+    [_layerTree release], _layerTree = nil;
+}
+
+- (void)setLineCapStyle:(IJSVGLineCapStyle)aLineCapStyle
+{
+    lineCapStyle = aLineCapStyle;
+    [_layerTree release], _layerTree = nil;
+}
+
+- (void)setLineJoinStyle:(IJSVGLineJoinStyle)aLineJoinStyle
+{
+    lineJoinStyle = aLineJoinStyle;
+    [_layerTree release], _layerTree = nil;
+}
+
 - (IJSVGLayer *)layerWithTree:(IJSVGLayerTree *)tree
 {
     // clear memory
@@ -692,6 +713,9 @@
     renderer.viewBox = self.viewBox;
     renderer.fillColor = self.fillColor;
     renderer.strokeColor = self.strokeColor;
+    renderer.strokeWidth = self.strokeWidth;
+    renderer.lineCapStyle = self.lineCapStyle;
+    renderer.lineJoinStyle = self.lineJoinStyle;
     
     // return the rendered layer
     return [self layerWithTree:renderer];

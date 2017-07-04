@@ -18,6 +18,9 @@
 @property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, retain) NSColor * fillColor;
 @property (nonatomic, retain) NSColor * strokeColor;
+@property (nonatomic, assign) CGFloat strokeWidth;
+@property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
+@property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node;
 

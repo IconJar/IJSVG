@@ -65,6 +65,9 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 // fillColor, strokeColor, pattern and gradient fill
 @property (nonatomic, retain) NSColor * fillColor;
 @property (nonatomic, retain) NSColor * strokeColor;
+@property (nonatomic, assign) CGFloat strokeWidth;
+@property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
+@property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;
