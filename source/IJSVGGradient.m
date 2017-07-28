@@ -43,7 +43,7 @@
     NSArray * stops = [element nodesForXPath:@"stop"
                                        error:nil];
     
-    NSMutableArray * colors = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray * colors = [[[NSMutableArray alloc] initWithCapacity:stops.count] autorelease];
     CGFloat * stopsParams = (CGFloat *)malloc(stops.count*sizeof(CGFloat));
     NSInteger i = 0;
     for( NSXMLElement * stop in stops )

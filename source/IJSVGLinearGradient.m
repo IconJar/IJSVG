@@ -53,12 +53,12 @@
                                                                colors:&colors];
     
     // create the gradient with the colours
-    NSGradient * grad = [[[NSGradient alloc] initWithColors:colors
+    NSGradient * grad = [[NSGradient alloc] initWithColors:colors
                                                atLocations:stopsParams
-                                                colorSpace:[NSColorSpace genericRGBColorSpace]] autorelease];
+                                                colorSpace:[NSColorSpace genericRGBColorSpace]];
     
     free(stopsParams);
-    return grad;
+    return [grad autorelease];
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
