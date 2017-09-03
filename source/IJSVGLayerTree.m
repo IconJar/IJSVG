@@ -270,7 +270,18 @@
         }
         
         // just set the color
-        layer.fillColor = fColor.CGColor ?: DEFAULT_SHAPE_FILL_COLOR;
+        if(fColor != nil) {
+            layer.fillColor = fColor.CGColor;
+        } else {
+            CGColorRef ref = DEFAULT_SHAPE_FILL_COLOR;
+            if(path.fillOpacity.value != 1.f) {
+                NSColor * color = [NSColor colorWithCGColor:ref];
+                color = [IJSVGColor changeAlphaOnColor:color
+                                                    to:path.fillOpacity.value];
+                ref = color.CGColor;
+            }
+            layer.fillColor = ref;
+        }
     }
     
     // stroke it
