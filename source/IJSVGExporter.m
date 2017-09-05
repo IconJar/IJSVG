@@ -112,6 +112,7 @@ NSString * IJSVGHash(NSString * key) {
 
 - (void)dealloc
 {
+    [_scaledRootNode release], _scaledRootNode = nil;
     [_svg release], _svg = nil;
     [_dom release], _dom = nil;
     [title release], title = nil;
@@ -166,6 +167,33 @@ NSString * IJSVGHash(NSString * key) {
         NSMutableDictionary * att = [[attributes mutableCopy] autorelease];
         att[@"width"] = IJSVGShortFloatString(_size.width);
         att[@"height"] = IJSVGShortFloatString(_size.height);
+        
+        // scale the whole SVG to fit the specified size
+        if((_options & IJSVGExporterOptionScaleToSizeIfNecessary) != 0) {
+            // work out the scale
+            CGFloat scale = MIN(_size.width/viewBox.size.width,
+                                _size.height/viewBox.size.height);
+            
+            // actually do the scale
+            if(scale != 1.f) {
+                NSString * scaleString = [NSString stringWithFormat:@"scale(%g)",scale];
+                NSDictionary * transform = @{@"transform":scaleString};
+                
+                // create the main group and apply transform
+                _scaledRootNode = [[NSXMLElement alloc] initWithName:@"g"];
+                IJSVGApplyAttributesToElement(transform, _scaledRootNode);
+                
+                // add it back onto root
+                [root addChild:_scaledRootNode];
+                
+                // reset the viewbox for the exported SVG
+                att[@"viewBox"] = [NSString stringWithFormat:@"%g %g %g %g",
+                                   viewBox.origin.x, viewBox.origin.y,
+                                   _size.width, _size.height];
+            }
+        }
+        
+        // reset attributes
         attributes = [[att copy] autorelease];
     }
     
@@ -193,7 +221,7 @@ NSString * IJSVGHash(NSString * key) {
     
     // sort out stuff, so here we go...
     [self _recursiveParseFromLayer:_svg.layer
-                       intoElement:_dom.rootElement];
+                       intoElement:(_scaledRootNode?:_dom.rootElement)];
     
     // cleanup
     [self _cleanup];
