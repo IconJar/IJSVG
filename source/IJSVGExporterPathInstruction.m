@@ -64,8 +64,11 @@
                 // move
             case 'M':
             case 'm': {
-                str = [NSString stringWithFormat:@"%c%g,%g",
-                       instruction.instruction,data[0],data[1]];
+                char * buffer;
+                asprintf(&buffer, "%c%g,%g", instruction.instruction, data[0], data[1]);
+                str = [NSString stringWithCString:buffer
+                                         encoding:NSUTF8StringEncoding];
+                free(buffer);
                 [pathData addObject:str];
                 break;
             }
@@ -75,8 +78,11 @@
             case 'v':
             case 'H':
             case 'h': {
-                str = [NSString stringWithFormat:@"%c%g",
-                       instruction.instruction,data[0]];
+                char * buffer;
+                asprintf(&buffer, "%c%g", instruction.instruction, data[0]);
+                str = [NSString stringWithCString:buffer
+                                         encoding:NSUTF8StringEncoding];
+                free(buffer);
                 [pathData addObject:str];
                 break;
             }
@@ -84,8 +90,11 @@
                 // line
             case 'L':
             case 'l': {
-                str = [NSString stringWithFormat:@"%c%g,%g",
-                       instruction.instruction, data[0], data[1]];
+                char * buffer;
+                asprintf(&buffer, "%c%g,%g",instruction.instruction, data[0], data[1]);
+                str = [NSString stringWithCString:buffer
+                                         encoding:NSUTF8StringEncoding];
+                free(buffer);
                 [pathData addObject:str];
                 break;
             }
@@ -93,9 +102,12 @@
                 // curve
             case 'C':
             case 'c': {
-                str = [NSString stringWithFormat:@"%c%g,%g %g,%g %g,%g",
-                       instruction.instruction, data[0], data[1],
-                       data[2], data[3], data[4], data[5]];
+                char * buffer;
+                asprintf(&buffer, "%c%g,%g %g,%g %g,%g", instruction.instruction,
+                         data[0], data[1], data[2], data[3], data[4], data[5]);
+                str = [NSString stringWithCString:buffer
+                                         encoding:NSUTF8StringEncoding];
+                free(buffer);
                 [pathData addObject:str];
                 break;
             }
@@ -103,9 +115,12 @@
                 // quadratic curve
             case 'Q':
             case 'q': {
-                str = [NSString stringWithFormat:@"%c%g,%g %g,%g",
-                       instruction.instruction, data[0], data[1],
-                       data[2], data[3]];
+                char * buffer;
+                asprintf(&buffer, "%c%g,%g %g,%g", instruction.instruction,
+                         data[0], data[1], data[2], data[3]);
+                str = [NSString stringWithCString:buffer
+                                         encoding:NSUTF8StringEncoding];
+                free(buffer);
                 [pathData addObject:str];
                 break;
             }
