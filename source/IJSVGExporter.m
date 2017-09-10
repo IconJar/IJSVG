@@ -145,6 +145,17 @@ NSString * IJSVGHash(NSString * key) {
     return _defElement = [[NSXMLElement alloc] initWithName:@"defs"];
 }
 
+- (NSString *)viewBoxWithRect:(NSRect)rect
+{
+    char * buffer;
+    asprintf(&buffer, "%g %g %g %g", rect.origin.x, rect.origin.y,
+             rect.size.width, rect.size.height);
+    NSString * viewBox = [NSString stringWithCString:buffer
+                                            encoding:NSUTF8StringEncoding];
+    free(buffer);
+    return viewBox;
+}
+
 - (NSXMLElement *)rootNode
 {
     // generates the root document
@@ -153,9 +164,7 @@ NSString * IJSVGHash(NSString * key) {
     // sort out viewbox
     NSRect viewBox = _svg.viewBox;
     NSDictionary * attributes = @{
-        @"viewBox":[NSString stringWithFormat:@"%g %g %g %g",
-                    viewBox.origin.x, viewBox.origin.y,
-                    viewBox.size.width, viewBox.size.height],
+        @"viewBox":[self viewBoxWithRect:viewBox],
         @"version": [NSString stringWithFormat:@"%g",XML_DOC_VERSION],
         @"xmlns": XML_DOC_NS,
         @"xmlns:xlink": XML_DOC_NSXLINK
@@ -164,6 +173,8 @@ NSString * IJSVGHash(NSString * key) {
     // was there a size set?
     if(CGSizeEqualToSize(CGSizeZero, _size) == NO &&
        (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
+        
+        // copy the attributes
         NSMutableDictionary * att = [[attributes mutableCopy] autorelease];
         att[@"width"] = IJSVGShortFloatString(_size.width);
         att[@"height"] = IJSVGShortFloatString(_size.height);
@@ -187,9 +198,10 @@ NSString * IJSVGHash(NSString * key) {
                 [root addChild:_scaledRootNode];
                 
                 // reset the viewbox for the exported SVG
-                att[@"viewBox"] = [NSString stringWithFormat:@"%g %g %g %g",
-                                   viewBox.origin.x, viewBox.origin.y,
-                                   _size.width, _size.height];
+                att[@"viewBox"] = [self viewBoxWithRect:(NSRect){
+                    .origin = NSMakePoint(viewBox.origin.x, viewBox.origin.y),
+                    .size = NSMakeSize(_size.width, _size.height)
+                }];
             }
         }
         
