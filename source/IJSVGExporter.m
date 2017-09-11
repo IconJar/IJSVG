@@ -1133,7 +1133,11 @@ NSString * IJSVGHash(NSString * key) {
 
 - (NSString *)SVGString
 {
-    return [_dom XMLStringWithOptions:NSXMLNodePrettyPrint];
+    NSXMLNodeOptions options = NSXMLNodePrettyPrint;
+    if((_options & IJSVGExporterOptionCompressOutput) != 0) {
+        options = NSXMLNodeOptionsNone;
+    }
+    return [_dom XMLStringWithOptions:options];
 }
 
 - (NSData *)SVGData

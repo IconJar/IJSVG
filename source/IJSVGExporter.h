@@ -24,6 +24,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionCleanupPaths = 1 << 7,
     IJSVGExporterOptionRemoveHiddenElements = 1 << 8,
     IJSVGExporterOptionScaleToSizeIfNecessary = 1 << 9,
+    IJSVGExporterOptionCompressOutput = 1 << 10,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef|
         IJSVGExporterOptionRemoveUselessGroups|
         IJSVGExporterOptionCreateUseForPaths|
@@ -32,7 +33,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionCollapseGroups|
         IJSVGExporterOptionCleanupPaths|
         IJSVGExporterOptionRemoveHiddenElements|
-        IJSVGExporterOptionScaleToSizeIfNecessary
+        IJSVGExporterOptionScaleToSizeIfNecessary|
+        IJSVGExporterOptionCompressOutput
 };
 
 @interface IJSVGExporter : NSObject {
