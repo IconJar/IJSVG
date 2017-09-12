@@ -28,7 +28,8 @@ IJSVG_LAYER_ADD_SUBVIEW_DEFAULT_IMPLEMENTATION
     NSMutableArray * arr = [[[NSMutableArray alloc] init] autorelease];
     for(CALayer * subLayer in layer.sublayers) {
         if(subLayer.sublayers.count != 0) {
-            [arr addObjectsFromArray:[self deepestSublayersOfLayer:(IJSVGLayer *)subLayer]];
+            NSArray * moreLayers = [self deepestSublayersOfLayer:(IJSVGLayer *)subLayer];
+            [arr addObjectsFromArray:moreLayers];
         } else {
             [arr addObject:subLayer];
         }
