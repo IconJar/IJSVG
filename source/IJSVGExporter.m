@@ -197,9 +197,13 @@ NSString * IJSVGHash(NSString * key) {
                 // add it back onto root
                 [root addChild:_scaledRootNode];
                 
+                // compute x and y, dont multiply 0
+                const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * scale);
+                const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
+                
                 // reset the viewbox for the exported SVG
                 att[@"viewBox"] = [self viewBoxWithRect:(NSRect){
-                    .origin = NSMakePoint(viewBox.origin.x, viewBox.origin.y),
+                    .origin = NSMakePoint(x, y),
                     .size = NSMakeSize(_size.width, _size.height)
                 }];
             }
@@ -221,11 +225,6 @@ NSString * IJSVGHash(NSString * key) {
     _dom.version = XML_DOCTYPE_VERSION;
     _dom.characterEncoding = XML_DOC_CHARSET;
     
-    // add generator
-    NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
-    generatorNode.stringValue = XML_DOC_GENERATOR;
-    [_dom.rootElement addChild:generatorNode];
-    
     // add defs in
     [_dom.rootElement addChild:[self defElement]];
     
@@ -237,6 +236,12 @@ NSString * IJSVGHash(NSString * key) {
     
     // cleanup
     [self _cleanup];
+    
+    // add generator
+    NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
+    generatorNode.stringValue = XML_DOC_GENERATOR;
+    [_dom.rootElement insertChild:generatorNode
+                          atIndex:0];
 }
 
 - (void)_cleanup

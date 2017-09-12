@@ -447,10 +447,13 @@
     CGContextScaleCTM( context, 1, -1 );
     CGContextTranslateCTM( context, 0, -box.size.height);
     
-    // draw the icon
-    [self _drawInRect:(NSRect)box
-              context:context
-                error:error];
+    // make sure we set the PDF stuff
+    [self _beginPDF]; {
+        // draw the icon
+        [self _drawInRect:(NSRect)box
+                  context:context
+                    error:error];
+    } [self _endPDF];
     
     CGContextEndPage(context);
     
@@ -459,6 +462,28 @@
     CGContextRelease(context);
     CGDataConsumerRelease(dataConsumer);
     return data;
+}
+
+- (void)_beginPDF
+{
+    // turn on converts masks to PDF's
+    // as PDF context and layer masks dont work
+    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
+        layer.convertMasksToPaths = YES;
+    };
+    [self recursivelyWalkLayer:self.layer
+                     withBlock:block];
+}
+
+- (void)_endPDF
+{
+    // turn of convert masks to paths as not
+    // needed for generic rendering
+    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
+        layer.convertMasksToPaths = NO;
+    };
+    [self recursivelyWalkLayer:self.layer
+                     withBlock:block];
 }
 
 - (void)prepForDrawingInView:(NSView *)view
@@ -632,22 +657,35 @@
         return;
     }
     _lastProposedBackingScale = scale;
-    [self _recursivelySetScale:scale
-                      forLayer:self.layer];
+    
+    // walk the tree
+    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
+        if(layer.requiresBackingScaleHelp == YES) {
+            layer.backingScaleFactor = scale;
+        }
+    };
+    
+    // gogogo
+    [self recursivelyWalkLayer:self.layer
+                     withBlock:block];
+    
 }
 
-- (void)_recursivelySetScale:(CGFloat)scale
-                    forLayer:(IJSVGLayer *)layer
+- (void)recursivelyWalkLayer:(IJSVGLayer *)layer
+                   withBlock:(void (^)(IJSVGLayer * layer))block
 {
-    // update the backing layer scale
-    if(layer.requiresBackingScaleHelp == YES) {
-        layer.backingScaleFactor = scale;
+    // call for layer and mask if there is one
+    block(layer);
+ 
+    // do the mask too!
+    if(layer.mask != nil) {
+        block((IJSVGLayer *)layer.mask);
     }
-    
-    // find the next!
+
+    // sublayers!!
     for(IJSVGLayer * aLayer in layer.sublayers) {
-        [self _recursivelySetScale:scale
-                          forLayer:aLayer];
+        [self recursivelyWalkLayer:aLayer
+                         withBlock:block];
     }
 }
 
