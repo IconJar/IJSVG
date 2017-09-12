@@ -447,13 +447,13 @@
     CGContextScaleCTM( context, 1, -1 );
     CGContextTranslateCTM( context, 0, -box.size.height);
     
-    // make sure we set the PDF stuff
-    [self _beginPDF]; {
+    // make sure we set the masks to path bits n bobs
+    [self _beginVectorDraw]; {
         // draw the icon
         [self _drawInRect:(NSRect)box
                   context:context
                     error:error];
-    } [self _endPDF];
+    } [self _endVectorDraw];
     
     CGContextEndPage(context);
     
@@ -464,7 +464,7 @@
     return data;
 }
 
-- (void)_beginPDF
+- (void)_beginVectorDraw
 {
     // turn on converts masks to PDF's
     // as PDF context and layer masks dont work
@@ -475,7 +475,7 @@
                            withBlock:block];
 }
 
-- (void)_endPDF
+- (void)_endVectorDraw
 {
     // turn of convert masks to paths as not
     // needed for generic rendering
