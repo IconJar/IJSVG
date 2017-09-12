@@ -8,19 +8,50 @@
 
 #import "IJSVGLayer.h"
 #import "IJSVGShapeLayer.h"
+#import "IJSVGGroupLayer.h"
+#import "IJSVG.h"
 
 
 @implementation IJSVGLayer
 
 IJSVG_LAYER_DEFAULT_SYNTHESIZE
 
-#ifndef __clang_analyzer__
 - (void)dealloc
 {
     IJSVG_LAYER_DEFAULT_DEALLOC_INSTRUCTIONS
 }
-#endif
 
 IJSVG_LAYER_ADD_SUBVIEW_DEFAULT_IMPLEMENTATION
+
++ (NSArray *)deepestSublayersOfLayer:(CALayer *)layer
+{
+    NSMutableArray * arr = [[[NSMutableArray alloc] init] autorelease];
+    for(CALayer * subLayer in layer.sublayers) {
+        if(subLayer.sublayers.count != 0) {
+            [arr addObjectsFromArray:[self deepestSublayersOfLayer:(IJSVGLayer *)subLayer]];
+        } else {
+            [arr addObject:subLayer];
+        }
+    }
+    return arr;
+}
+
++ (void)recursivelyWalkLayer:(CALayer *)layer
+                   withBlock:(void (^)(CALayer * layer))block
+{
+    // call for layer and mask if there is one
+    block(layer);
+    
+    // do the mask too!
+    if(layer.mask != nil) {
+        block(layer.mask);
+    }
+    
+    // sublayers!!
+    for(CALayer * aLayer in layer.sublayers) {
+        [self recursivelyWalkLayer:aLayer
+                         withBlock:block];
+    }
+}
 
 @end

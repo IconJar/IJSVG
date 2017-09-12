@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGShapeLayer.h"
+#import "IJSVGGroupLayer.h"
 
 @implementation IJSVGShapeLayer
 

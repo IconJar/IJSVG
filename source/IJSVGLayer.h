@@ -13,6 +13,7 @@
 @class IJSVGGradientLayer;
 @class IJSVGPatternLayer;
 @class IJSVGStrokeLayer;
+@class IJSVGGroupLayer;
 
 #define IJSVG_LAYER_ADD_SUBVIEW_DEFAULT_IMPLEMENTATION \
 - (void)addSublayer:(CALayer *)layer { \
@@ -43,8 +44,7 @@
 { \
    if(self.convertMasksToPaths == YES && self._tempMaskLayer != nil) { \
         CGContextSaveGState(ctx); \
-        [self _clipContext:ctx  \
-             withMaskLayer:_tempMaskLayer];\
+        [self _clipContext:ctx]; \
         [super renderInContext:ctx]; \
         CGContextRestoreGState(ctx); \
         return; \
@@ -52,14 +52,16 @@
    [super renderInContext:ctx]; \
 }\
 \
-- (void)setConvertMasksToPath:(BOOL)flag \
+- (void)setConvertMasksToPaths:(BOOL)flag \
 { \
+\
     if(convertMasksToPaths == flag) { \
         return; \
     } \
     convertMasksToPaths = flag; \
     if(flag == YES) { \
         self._tempMaskLayer = (IJSVGLayer *)self.mask; \
+        self.mask = nil; \
     } else { \
         self.mask = self._tempMaskLayer; \
         [_tempMaskLayer release], _tempMaskLayer = nil; \
@@ -67,8 +69,49 @@
 } \
 \
 - (void)_clipContext:(CGContextRef)ctx  \
-       withMaskLayer:(IJSVGLayer *)layer \
 { \
+    [self applySublayerMaskToContext:ctx \
+                         forSublayer:(IJSVGLayer *)self \
+                          withOffset:CGPointZero]; \
+} \
+\
+- (void)applySublayerMaskToContext:(CGContextRef)context \
+                       forSublayer:(IJSVGLayer *)sublayer \
+                        withOffset:(CGPoint)offset \
+{ \
+    CGPoint layerOffset = offset; \
+    CGAffineTransform sublayerTransform = CATransform3DGetAffineTransform(sublayer.transform); \
+    CGContextConcatCTM( context, CGAffineTransformInvert(sublayerTransform) );\
+    \
+    CALayer * superlayer = self.superlayer; \
+    if ([superlayer isKindOfClass:[IJSVGLayer class]]) { \
+        [(IJSVGLayer *)superlayer applySublayerMaskToContext:context \
+                                                 forSublayer:(IJSVGLayer *)self \
+                                                  withOffset:layerOffset]; \
+    } \
+    \
+    IJSVGShapeLayer * maskingLayer = [self tempMaskingLayer]; \
+    if([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) { \
+        NSArray * subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer]; \
+        for(IJSVGLayer * subLayer in subs) { \
+            [subLayer applySublayerMaskToContext:context \
+                                     forSublayer:(IJSVGLayer *)self \
+                                      withOffset:layerOffset]; \
+        } \
+    } else if ([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) { \
+        CGPathRef maskPath = maskingLayer.path; \
+        CGContextTranslateCTM(context, -layerOffset.x, -layerOffset.y); \
+        CGContextAddPath(context, maskPath);\
+        CGContextClip(context);\
+        CGContextTranslateCTM(context, layerOffset.x, layerOffset.y);\
+    }\
+    \
+    CGContextConcatCTM(context, sublayerTransform);\
+}\
+\
+- (IJSVGShapeLayer *)tempMaskingLayer \
+{ \
+    return (IJSVGShapeLayer *)_tempMaskLayer ?: nil; \
 } \
 \
 - (void)renderInContext:(CGContextRef)ctx \
@@ -96,6 +139,11 @@
 }\
 
 #define IJSVG_LAYER_DEFAULT_PROPERTIES \
+\
+- (void)applySublayerMaskToContext:(CGContextRef)context \
+                       forSublayer:(IJSVGLayer *)sublayer \
+                        withOffset:(CGPoint)offset; \
+\
 @property (nonatomic, assign) IJSVGGradientLayer * gradientFillLayer; \
 @property (nonatomic, assign) IJSVGPatternLayer * patternFillLayer; \
 @property (nonatomic, assign) IJSVGStrokeLayer * strokeLayer; \
@@ -131,5 +179,9 @@ IJSVGEndTransactionLock();
 }
 
 IJSVG_LAYER_DEFAULT_PROPERTIES
+
++ (NSArray *)deepestSublayersOfLayer:(CALayer *)layer;
++ (void)recursivelyWalkLayer:(CALayer *)layer
+                   withBlock:(void (^)(CALayer * layer))block;
 
 @end

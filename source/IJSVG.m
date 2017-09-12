@@ -468,22 +468,22 @@
 {
     // turn on converts masks to PDF's
     // as PDF context and layer masks dont work
-    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
-        layer.convertMasksToPaths = YES;
+    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+        ((IJSVGLayer *)layer).convertMasksToPaths = YES;
     };
-    [self recursivelyWalkLayer:self.layer
-                     withBlock:block];
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
 }
 
 - (void)_endPDF
 {
     // turn of convert masks to paths as not
     // needed for generic rendering
-    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
-        layer.convertMasksToPaths = NO;
+    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+        ((IJSVGLayer *)layer).convertMasksToPaths = NO;
     };
-    [self recursivelyWalkLayer:self.layer
-                     withBlock:block];
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
 }
 
 - (void)prepForDrawingInView:(NSView *)view
@@ -659,34 +659,16 @@
     _lastProposedBackingScale = scale;
     
     // walk the tree
-    void (^block)(IJSVGLayer * layer) = ^void (IJSVGLayer * layer) {
-        if(layer.requiresBackingScaleHelp == YES) {
-            layer.backingScaleFactor = scale;
+    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+        if(((IJSVGLayer *)layer).requiresBackingScaleHelp == YES) {
+            ((IJSVGLayer *)layer).backingScaleFactor = scale;
         }
     };
     
     // gogogo
-    [self recursivelyWalkLayer:self.layer
-                     withBlock:block];
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                        withBlock:block];
     
-}
-
-- (void)recursivelyWalkLayer:(IJSVGLayer *)layer
-                   withBlock:(void (^)(IJSVGLayer * layer))block
-{
-    // call for layer and mask if there is one
-    block(layer);
- 
-    // do the mask too!
-    if(layer.mask != nil) {
-        block((IJSVGLayer *)layer.mask);
-    }
-
-    // sublayers!!
-    for(IJSVGLayer * aLayer in layer.sublayers) {
-        [self recursivelyWalkLayer:aLayer
-                         withBlock:block];
-    }
 }
 
 - (void)setFillColor:(NSColor *)aColor
@@ -784,8 +766,9 @@
 
 - (id)pasteboardPropertyListForType:(NSString *)type
 {
-    if( [type isEqualToString:NSPasteboardTypePDF] )
+    if( [type isEqualToString:NSPasteboardTypePDF] ) {
         return [self PDFData];
+    }
     return nil;
 }
 
