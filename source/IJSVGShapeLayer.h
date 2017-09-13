@@ -8,9 +8,27 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import "IJSVGLayer.h"
+#import "IJSVGUtils.h"
 
-@interface IJSVGShapeLayer : CAShapeLayer
+@interface IJSVGShapeLayer : CAShapeLayer {
+    
+@private
+    IJSVGLayer * _maskingLayer;
+}
 
-IJSVG_LAYER_DEFAULT_PROPERTIES
+@property (nonatomic, assign) IJSVGGradientLayer * gradientFillLayer;
+@property (nonatomic, assign) IJSVGPatternLayer * patternFillLayer;
+@property (nonatomic, assign) IJSVGStrokeLayer * strokeLayer;
+@property (nonatomic, assign) IJSVGGradientLayer * gradientStrokeLayer;
+@property (nonatomic, assign) IJSVGPatternLayer * patternStrokeLayer;
+@property (nonatomic, assign) BOOL requiresBackingScaleHelp;
+@property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, assign) CGBlendMode blendingMode;
+@property (nonatomic, assign) CGPoint absoluteOrigin;
+@property (nonatomic, assign) BOOL convertMasksToPaths;
+
+- (void)applySublayerMaskToContext:(CGContextRef)context
+                       forSublayer:(IJSVGLayer *)sublayer
+                        withOffset:(CGPoint)offset;
 
 @end

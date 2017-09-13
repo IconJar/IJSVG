@@ -7,6 +7,8 @@
 //
 
 #import "IJSVGUtils.h"
+#import "IJSVGLayer.h"
+#import "IJSVGShapeLayer.h"
 
 @implementation IJSVGUtils
 
@@ -20,6 +22,12 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
         }
     }
     return NO;
+}
+
+BOOL IJSVGIsSVGLayer(CALayer * layer)
+{
+    return [layer isKindOfClass:IJSVGLayer.class] ||
+        [layer isKindOfClass:IJSVGShapeLayer.class];
 }
 
 CGFloat angle( CGPoint a, CGPoint b ) {

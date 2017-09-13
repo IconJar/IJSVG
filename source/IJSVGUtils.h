@@ -19,6 +19,7 @@ CGFloat radians_to_degrees( CGFloat radians);
 CGFloat degrees_to_radians( CGFloat degrees );
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
+BOOL IJSVGIsSVGLayer(CALayer * layer);
 + (IJSVGCommandType)typeForCommandString:(NSString *)string;
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count;
