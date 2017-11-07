@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		343A19181FB2212C000652A2 /* IJSVGGradientUnitLength.m in Sources */ = {isa = PBXBuildFile; fileRef = 343A19171FB2212C000652A2 /* IJSVGGradientUnitLength.m */; };
 		591704CC1E2016E400012644 /* IJSVGExporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 591704CB1E2016E400012644 /* IJSVGExporter.m */; };
 		591A13E11E19838F001D1629 /* IJSVGText.m in Sources */ = {isa = PBXBuildFile; fileRef = 591A13E01E19838F001D1629 /* IJSVGText.m */; };
 		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
@@ -90,6 +91,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		343A19161FB2212C000652A2 /* IJSVGGradientUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientUnitLength.h; sourceTree = "<group>"; };
+		343A19171FB2212C000652A2 /* IJSVGGradientUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientUnitLength.m; sourceTree = "<group>"; };
 		591704CA1E2016E400012644 /* IJSVGExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGExporter.h; sourceTree = "<group>"; };
 		591704CB1E2016E400012644 /* IJSVGExporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGExporter.m; sourceTree = "<group>"; };
 		591A13DF1E19838F001D1629 /* IJSVGText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGText.h; sourceTree = "<group>"; };
@@ -392,6 +395,8 @@
 				59E2643C19BA240D008A6FDB /* IJSVGForeignObject.m */,
 				59E2643D19BA240D008A6FDB /* IJSVGGradient.h */,
 				59E2643E19BA240D008A6FDB /* IJSVGGradient.m */,
+				343A19161FB2212C000652A2 /* IJSVGGradientUnitLength.h */,
+				343A19171FB2212C000652A2 /* IJSVGGradientUnitLength.m */,
 				59E2643F19BA240D008A6FDB /* IJSVGGroup.h */,
 				59E2644019BA240D008A6FDB /* IJSVGGroup.m */,
 				59E2644119BA240D008A6FDB /* IJSVGLinearGradient.h */,
@@ -557,6 +562,7 @@
 				5986308A19BA106D00CF15EA /* SVGExampleView5.m in Sources */,
 				59E2645619BA240D008A6FDB /* IJSVGCommandArc.m in Sources */,
 				59E8ABF91E219C860032A80C /* IJSVGMath.m in Sources */,
+				343A19181FB2212C000652A2 /* IJSVGGradientUnitLength.m in Sources */,
 				59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */,
 				5941DAFE1CF9BC9B00B3A911 /* IJSVGPattern.m in Sources */,
 				59E8ABF01E211EDB0032A80C /* IJSVGShapeLayer.m in Sources */,
@@ -676,7 +682,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx10.12;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -712,7 +718,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				SDKROOT = macosx10.12;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};
