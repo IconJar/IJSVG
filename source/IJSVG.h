@@ -46,6 +46,7 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
     CGRect _viewBox;
     CGSize _proposedViewSize;
     CGFloat _lastProposedBackingScale;
+    NSMutableDictionary * _replacementColors;
     
     struct {
         unsigned int shouldHandleForeignObject: 1;
@@ -147,5 +148,12 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 - (NSData *)PDFDataWithRect:(NSRect)rect;
 - (NSData *)PDFDataWithRect:(NSRect)rect
                       error:(NSError **)error;
+
+// colors
+- (NSArray<NSColor *> *)visibleColors;
+- (void)removeReplacementColor:(NSColor *)color;
+- (void)replaceColor:(NSColor *)color
+           withColor:(NSColor *)newColor;
+- (void)removeAllReplacementColors;
 
 @end

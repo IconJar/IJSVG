@@ -21,6 +21,7 @@
 @property (nonatomic, assign) CGFloat strokeWidth;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
+@property (nonatomic, retain) NSDictionary<NSColor *, NSColor *> * replacementColors;
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node;
 

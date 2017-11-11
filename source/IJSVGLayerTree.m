@@ -34,11 +34,13 @@
 @synthesize strokeWidth;
 @synthesize lineJoinStyle;
 @synthesize lineCapStyle;
+@synthesize replacementColors;
 
 - (void)dealloc
 {
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
+    [replacementColors release], replacementColors = nil;
     [super dealloc];
 }
 
@@ -269,6 +271,8 @@
             fColor = self.fillColor;
         }
         
+        fColor = [self proposedColorForColor:fColor];
+        
         // just set the color
         if(fColor != nil) {
             layer.fillColor = fColor.CGColor;
@@ -372,6 +376,23 @@
     bounds.size.width += val;
     bounds.size.height += val;
     return bounds;
+}
+
+- (NSColor *)proposedColorForColor:(NSColor *)color
+{
+    // nothing found, just return color
+    if(replacementColors == nil || replacementColors.count == 0) {
+        return color;
+    }
+    
+    // check the mappings
+    NSColor * found = nil;
+    if((found = replacementColors[color]) != nil) {
+        return found;
+    }
+    
+    // nothing :(
+    return color;
 }
 
 - (IJSVGGradientLayer *)gradientStrokeLayerForLayer:(IJSVGShapeLayer *)layer
@@ -536,6 +557,8 @@
             path.strokePattern != nil || path.strokeGradient != nil )) {
         sColor = self.strokeColor;
     }
+    
+    sColor = [self proposedColorForColor:sColor];
     
     // stroke layer
     IJSVGStrokeLayer * strokeLayer = [[[IJSVGStrokeLayer alloc] init] autorelease];

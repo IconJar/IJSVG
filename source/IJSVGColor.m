@@ -19,6 +19,20 @@ static NSMutableDictionary * _colorTree = nil;
     [[self class] _generateTree];
 }
 
++ (NSColorSpace *)defaultColorSpace
+{
+    return [NSColorSpace deviceRGBColorSpace];
+}
+
++ (NSColor *)computeColorSpace:(NSColor *)color
+{
+    NSColorSpace * space = [self defaultColorSpace];
+    if(color.colorSpace != space) {
+        color = [color colorUsingColorSpace:space];
+    }
+    return color;
+}
+
 + (void)_generateTree
 {
     static dispatch_once_t onceToken;
@@ -239,7 +253,7 @@ static NSMutableDictionary * _colorTree = nil;
                           forceHex:(BOOL)forceHex
 {
     // convert to RGB
-    color = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+    color = [self computeColorSpace:color];
     
     int red = color.redComponent * 0xFF;
     int green = color.greenComponent * 0xFF;
@@ -569,7 +583,7 @@ static NSMutableDictionary * _colorTree = nil;
 + (NSColor *)changeAlphaOnColor:(NSColor *)color
                              to:(CGFloat)alphaValue
 {
-    color = [color colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+    color = [self computeColorSpace:color];
     return [NSColor colorWithDeviceRed:[color redComponent]
                                  green:[color greenComponent]
                                   blue:[color blueComponent]

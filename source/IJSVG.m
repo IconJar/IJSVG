@@ -26,6 +26,7 @@
     [strokeColor release], strokeColor = nil;
     [_group release], _group = nil;
     [_layerTree release], _layerTree = nil;
+    [_replacementColors release], _replacementColors = nil;
     [super dealloc];
 }
 
@@ -260,6 +261,7 @@
             [IJSVGCache cacheSVG:self
                          fileURL:aURL];
         }
+        
     }
 #endif
     return self;
@@ -468,7 +470,7 @@
 {
     // turn on converts masks to PDF's
     // as PDF context and layer masks dont work
-    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+    void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
         ((IJSVGLayer *)layer).convertMasksToPaths = YES;
     };
     [IJSVGLayer recursivelyWalkLayer:self.layer
@@ -479,7 +481,7 @@
 {
     // turn of convert masks to paths as not
     // needed for generic rendering
-    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+    void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
         ((IJSVGLayer *)layer).convertMasksToPaths = NO;
     };
     [IJSVGLayer recursivelyWalkLayer:self.layer
@@ -659,7 +661,7 @@
     _lastProposedBackingScale = scale;
     
     // walk the tree
-    void (^block)(CALayer * layer) = ^void (CALayer * layer) {
+    void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
         if(((IJSVGLayer *)layer).requiresBackingScaleHelp == YES) {
             ((IJSVGLayer *)layer).backingScaleFactor = scale;
         }
@@ -667,7 +669,7 @@
     
     // gogogo
     [IJSVGLayer recursivelyWalkLayer:self.layer
-                        withBlock:block];
+                           withBlock:block];
     
 }
 
@@ -736,9 +738,68 @@
     renderer.strokeWidth = self.strokeWidth;
     renderer.lineCapStyle = self.lineCapStyle;
     renderer.lineJoinStyle = self.lineJoinStyle;
+    renderer.replacementColors = _replacementColors;
     
     // return the rendered layer
     return [self layerWithTree:renderer];
+}
+
+- (NSArray<NSColor *> *)visibleColors
+{
+    // set for the colors
+    NSMutableSet * colors = [[[NSMutableSet alloc] init] autorelease];
+    
+    // block to find colors in stroke and fill
+    void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
+        if([layer isKindOfClass:[IJSVGShapeLayer class]] && isMask == NO) {
+            IJSVGShapeLayer * sLayer = (IJSVGShapeLayer *)layer;
+            NSColor * color = nil;
+            if(sLayer.fillColor != nil) {
+                color = [NSColor colorWithCGColor:sLayer.fillColor];
+                if(color.alphaComponent != 0.f) {
+                    [colors addObject:color];
+                }
+            }
+            if(sLayer.strokeColor != nil) {
+                color = [NSColor colorWithCGColor:sLayer.strokeColor];
+                if(color.alphaComponent != 0.f) {
+                    [colors addObject:color];
+                }
+            }
+        }
+    };
+    
+    // walk
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
+    
+    // return the colours!
+    return colors.allObjects;
+}
+
+- (void)removeAllReplacementColors
+{
+    [_replacementColors release], _replacementColors = nil;
+}
+
+- (void)removeReplacementColor:(NSColor *)color
+{
+    if(_replacementColors == nil) {
+        return;
+    }
+    [_replacementColors removeObjectForKey:[IJSVGColor computeColorSpace:color]];
+}
+
+- (void)replaceColor:(NSColor *)color
+           withColor:(NSColor *)newColor
+{
+    if(_replacementColors == nil) {
+        _replacementColors = [[NSMutableDictionary alloc] init];
+    }
+    color = [IJSVGColor computeColorSpace:color];
+    newColor = [IJSVGColor computeColorSpace:newColor];
+    _replacementColors[color] = newColor;
+    [_layerTree release], _layerTree = nil;
 }
 
 - (void)_beginDraw:(NSRect)rect
