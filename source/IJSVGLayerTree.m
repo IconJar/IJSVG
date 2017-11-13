@@ -26,8 +26,6 @@
 
 @implementation IJSVGLayerTree
 
-#define DEFAULT_SHAPE_FILL_COLOR [NSColor blackColor].CGColor
-
 @synthesize viewBox;
 @synthesize fillColor;
 @synthesize strokeColor;
@@ -271,20 +269,23 @@
             fColor = self.fillColor;
         }
         
+        // anything changed by user?
         fColor = [self proposedColorForColor:fColor];
         
         // just set the color
         if(fColor != nil) {
             layer.fillColor = fColor.CGColor;
         } else {
-            CGColorRef ref = DEFAULT_SHAPE_FILL_COLOR;
+            // use default color
+            NSColor * defColor = [NSColor blackColor];
             if(path.fillOpacity.value != 1.f) {
-                NSColor * color = [NSColor colorWithCGColor:ref];
-                color = [IJSVGColor changeAlphaOnColor:color
-                                                    to:path.fillOpacity.value];
-                ref = color.CGColor;
+                defColor = [IJSVGColor changeAlphaOnColor:defColor
+                                                       to:path.fillOpacity.value];
             }
-            layer.fillColor = ref;
+            
+            // work out if anything was changed by user
+            NSColor * proposedColor = [self proposedColorForColor:defColor];
+            layer.fillColor = proposedColor.CGColor;
         }
     }
     
@@ -387,6 +388,7 @@
     
     // check the mappings
     NSColor * found = nil;
+    color = [IJSVGColor computeColorSpace:color];
     if((found = replacementColors[color]) != nil) {
         return found;
     }
