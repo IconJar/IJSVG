@@ -802,6 +802,17 @@
     [_layerTree release], _layerTree = nil;
 }
 
+- (void)setReplacementColors:(NSDictionary<NSColor *, NSColor *> *)colors
+{
+    if(_replacementColors != nil) {
+        [_replacementColors release], _replacementColors = nil;
+    }
+    for(NSColor * oldColor in colors) {
+        [self replaceColor:oldColor
+                 withColor:colors[oldColor]];
+    }
+}
+
 - (void)_beginDraw:(NSRect)rect
 {
     // in order to correctly fit the the SVG into the

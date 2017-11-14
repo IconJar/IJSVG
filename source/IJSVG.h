@@ -151,6 +151,7 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 
 // colors
 - (NSArray<NSColor *> *)visibleColors;
+- (void)setReplacementColors:(NSDictionary<NSColor *, NSColor *> *)colors;
 - (void)removeReplacementColor:(NSColor *)color;
 - (void)replaceColor:(NSColor *)color
            withColor:(NSColor *)newColor;
