@@ -44,6 +44,7 @@
     [_styleSheet release], _styleSheet = nil;
     [_parsedNodes release], _parsedNodes = nil;
     [_defNodes release], _defNodes = nil;
+    [_baseDefNodes release], _baseDefNodes = nil;
     [_svgs release], _svgs = nil;
     [super dealloc];
 }
@@ -63,6 +64,7 @@
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
+        _baseDefNodes = [[NSMutableDictionary alloc] init];
         _svgs = [[NSMutableArray alloc] init];
         
         // load the document / file, assume its UTF8
@@ -424,7 +426,8 @@
 
 - (id)definedObjectForID:(NSString *)anID
 {
-    NSXMLElement * parseElement = _defNodes[anID];
+    // check base def nodes first, then check rest of document
+    NSXMLElement * parseElement = _baseDefNodes[anID] ?: _defNodes[anID];
     if(parseElement != nil) {
         // parse the element
         IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
@@ -525,10 +528,11 @@
                             intoGroup:self
                                   def:NO];
             } else {
-                // just a default def, continue on
+                // just a default def, continue on, as we are a def element,
+                // store these seperately to the default ID string ones
                 NSString * defID = [childDef attributeForName:@"id"].stringValue;
                 if(defID != nil) {
-                    _defNodes[defID] = childDef;
+                    _baseDefNodes[defID] = childDef;
                 }
             }
         }

@@ -93,6 +93,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     IJSVGStyleSheet * _styleSheet;
     NSMutableArray * _parsedNodes;
     NSMutableDictionary * _defNodes;
+    NSMutableDictionary * _baseDefNodes;
     NSMutableArray<IJSVG *> * _svgs;
     
     struct {
