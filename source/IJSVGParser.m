@@ -522,17 +522,24 @@
             IJSVGNodeType childType = [IJSVGNode typeForString:childDef.name
                                                           kind:element.kind];
             
-            // if it is a style, parse the style
-            if(childType == IJSVGNodeTypeStyle) {
-                [self _parseBaseBlock:childDef
-                            intoGroup:self
-                                  def:NO];
-            } else {
-                // just a default def, continue on, as we are a def element,
-                // store these seperately to the default ID string ones
-                NSString * defID = [childDef attributeForName:@"id"].stringValue;
-                if(defID != nil) {
-                    _baseDefNodes[defID] = childDef;
+            switch(childType) {
+                case IJSVGNodeTypeStyle: {
+                    [self _parseBaseBlock:childDef
+                                intoGroup:self
+                                      def:NO];
+                    break;
+                }
+                case IJSVGNodeTypeNotFound: {
+                    // ignore, this is insanely important - specially if its a comment
+                    break;
+                }
+                default: {
+                    // just a default def, continue on, as we are a def element,
+                    // store these seperately to the default ID string ones
+                    NSString * defID = [childDef attributeForName:@"id"].stringValue;
+                    if(defID != nil) {
+                        _baseDefNodes[defID] = childDef;
+                    }
                 }
             }
         }
