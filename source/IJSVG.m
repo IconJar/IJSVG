@@ -466,6 +466,16 @@
     return data;
 }
 
+- (void)endVectorDraw
+{
+    [self _endVectorDraw];
+}
+
+- (void)beginVectorDraw
+{
+    [self _beginVectorDraw];
+}
+
 - (void)_beginVectorDraw
 {
     // turn on converts masks to PDF's
