@@ -236,9 +236,7 @@ NSString * IJSVGHash(NSString * key) {
                        intoElement:(_scaledRootNode?:_dom.rootElement)];
     
     // cleanup
-    for(NSInteger i = 0; i < 2; i++) {
     [self _cleanup];
-    }
     
     // add generator
     NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
