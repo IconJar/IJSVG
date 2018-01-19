@@ -15,6 +15,7 @@ typedef void (^IJSVGCGPathHandler)(const CGPathElement * pathElement);
 void IJSVGExporterPathCaller(void * info, const CGPathElement * pathElement);
 
 typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
+    IJSVGExporterOptionNone = 1 << 0,
     IJSVGExporterOptionRemoveUselessGroups = 1 << 1,
     IJSVGExporterOptionRemoveUselessDef = 1 << 2,
     IJSVGExporterOptionMoveAttributesToGroup = 1 << 3,

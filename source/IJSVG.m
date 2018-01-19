@@ -9,6 +9,7 @@
 #import "IJSVG.h"
 #import "IJSVGCache.h"
 #import "IJSVGTransaction.h"
+#import "IJSVGExporter.h"
 
 @implementation IJSVG
 
@@ -365,6 +366,14 @@
 - (NSArray<IJSVG *> *)subSVGs:(BOOL)recursive
 {
     return [_group subSVGs:recursive];
+}
+
+- (NSString *)SVGStringWithOptions:(IJSVGExporterOptions)options
+{
+    IJSVGExporter * exporter = [[[IJSVGExporter alloc] initWithSVG:self
+                                                              size:self.viewBox.size
+                                                           options:options] autorelease];
+    return [exporter SVGString];
 }
 
 - (NSImage *)imageWithSize:(NSSize)aSize

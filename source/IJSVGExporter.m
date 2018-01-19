@@ -115,6 +115,7 @@ NSString * IJSVGHash(NSString * key) {
     [_scaledRootNode release], _scaledRootNode = nil;
     [_svg release], _svg = nil;
     [_dom release], _dom = nil;
+    [_defElement release], _defElement = nil;
     [title release], title = nil;
     [description release], description = nil;
     [super dealloc];
@@ -235,7 +236,9 @@ NSString * IJSVGHash(NSString * key) {
                        intoElement:(_scaledRootNode?:_dom.rootElement)];
     
     // cleanup
+    for(NSInteger i = 0; i < 2; i++) {
     [self _cleanup];
+    }
     
     // add generator
     NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];

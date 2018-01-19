@@ -7,18 +7,20 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IJSVG.h"
 
 @interface IJSVGFontConverter : NSObject {
     
 @private
     NSURL * _url;
     NSFont * _font;
-    NSMutableDictionary * _paths;
+    NSMutableDictionary * _svgs;
 }
 
 - (id)initWithFontAtFileURL:(NSURL *)url;
-- (NSDictionary *)paths;
-+ (NSBezierPath *)bezierpathFromCGPath:(CGPathRef)path;
+- (NSDictionary<NSString *, IJSVG *> *)SVGs;
 - (NSFont *)font;
+
++ (IJSVG *)convertPathToSVG:(CGPathRef)path;
 
 @end
