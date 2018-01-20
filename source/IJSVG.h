@@ -74,7 +74,7 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;
 - (NSRect)viewBox;
-- (NSArray *)glyphs;
+- (NSArray<IJSVGPath *> *)glyphs;
 - (NSString *)identifier;
 - (IJSVGLayer *)layer;
 - (IJSVGLayer *)layerWithTree:(IJSVGLayerTree *)tree;

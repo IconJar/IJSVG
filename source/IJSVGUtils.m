@@ -381,4 +381,64 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(ratio(point1, point2));
 }
 
++ (CGPathRef)newFlippedCGPath:(CGPathRef)path
+{
+    CGRect boundingBox = CGPathGetPathBoundingBox(path);
+    CGAffineTransform scale = CGAffineTransformMakeScale(1.f, -1.f);
+    CGAffineTransform translate = CGAffineTransformTranslate(scale, 0.f, boundingBox.size.height);
+    CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &translate);
+    return transformPath;
+}
+
++ (CGPathRef)newCGPathFromBezierPath:(NSBezierPath *)bezPath
+{
+    CGPathRef immutablePath = NULL;
+    // Then draw the path elements.
+    NSInteger numElements = bezPath.elementCount;
+    if (numElements > 0) {
+        CGMutablePathRef    path = CGPathCreateMutable();
+        NSPoint             points[3];
+        BOOL                didClosePath = YES;
+        
+        for (NSInteger i = 0; i < numElements; i++) {
+            switch ([bezPath elementAtIndex:i associatedPoints:points]) {
+                case NSMoveToBezierPathElement: {
+                    CGPathMoveToPoint(path, NULL, points[0].x, points[0].y);
+                    break;
+                }
+                    
+                case NSLineToBezierPathElement: {
+                    CGPathAddLineToPoint(path, NULL, points[0].x, points[0].y);
+                    didClosePath = NO;
+                    break;
+                }
+                    
+                case NSCurveToBezierPathElement: {
+                    CGPathAddCurveToPoint(path, NULL, points[0].x, points[0].y,
+                                          points[1].x, points[1].y,
+                                          points[2].x, points[2].y);
+                    didClosePath = NO;
+                    break;
+                }
+                    
+                case NSClosePathBezierPathElement: {
+                    CGPathCloseSubpath(path);
+                    didClosePath = YES;
+                    break;
+                }
+            }
+        }
+        
+        // Be sure the path is closed or Quartz may not do valid hit detection.
+        if (didClosePath == NO) {
+            CGPathCloseSubpath(path);
+        }
+     
+        // memory clean
+        immutablePath = CGPathCreateCopy(path);
+        CGPathRelease(path);
+    }
+    return immutablePath;
+}
+
 @end

@@ -14,7 +14,7 @@
 
 - (void)dealloc
 {
-    [_svgs release], _svgs = nil;
+    [_transformedPaths release], _transformedPaths = nil;
     [_url release], _url = nil;
     [_font release], _font = nil;
     [super dealloc];
@@ -80,31 +80,36 @@
         CTFontGetGlyphsForCharacters( font, characters, glyphs, count);
         CGPathRef path = CTFontCreatePathForGlyph( font, glyphs[0], NULL );
         if(path != NULL) {
-            // at this point, the path is upside down so we need to transform it!
-            CGRect boundingBox = CGPathGetPathBoundingBox(path);
-            CGAffineTransform scale = CGAffineTransformMakeScale(1.f, -1.f);
-            CGAffineTransform translate = CGAffineTransformTranslate(scale, 0.f, boundingBox.size.height);
-            CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &translate);
-            
             // add SVG to the dictionary
             NSString * key = [NSString stringWithFormat:@"%04x",[charString characterAtIndex:0]];
-            _svgs[key] = [self.class convertPathToSVG:transformPath];
-            
-            // memory clean of transform path
-            CGPathRelease(transformPath);
+            CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:path];
+            _transformedPaths[key] = (id)flippedPath;
+            CGPathRelease(flippedPath);
         }
         CGPathRelease(path);
     }
 }
 
-- (NSDictionary<NSString *,IJSVG *> *)SVGs
+- (void)enumerateUsingBlock:(IJSVGFontConverterEnumerateBlock)block
 {
-    if(_svgs != nil) {
-        return _svgs;
+    if(_transformedPaths == nil) {
+        _transformedPaths = [[NSMutableDictionary alloc] init];
+        [self generateMap];
     }
-    _svgs = [[NSMutableDictionary alloc] init];
-    [self generateMap];
-    return _svgs;
+    
+    for(NSString * key in _transformedPaths.allKeys) {
+        block(key, [self.class convertPathToSVG:(CGPathRef)_transformedPaths[key]]);
+    }
+}
+
++ (IJSVG *)convertIJSVGPathToSVG:(IJSVGPath *)path
+{
+    CGPathRef cgPath = [IJSVGUtils newCGPathFromBezierPath:path.path];
+    CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:cgPath];
+    IJSVG * svg = [self convertPathToSVG:flippedPath];
+    CGPathRelease(flippedPath);
+    CGPathRelease(cgPath);
+    return svg;
 }
 
 + (IJSVG *)convertPathToSVG:(CGPathRef)path

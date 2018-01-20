@@ -358,7 +358,7 @@
     return [_group isFont];
 }
 
-- (NSArray *)glyphs
+- (NSArray<IJSVGPath *> *)glyphs
 {
     return [_group glyphs];
 }

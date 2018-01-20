@@ -9,18 +9,21 @@
 #import <Foundation/Foundation.h>
 #import "IJSVG.h"
 
+typedef void (^IJSVGFontConverterEnumerateBlock)(NSString * unicode, IJSVG * svg);
+
 @interface IJSVGFontConverter : NSObject {
     
 @private
     NSURL * _url;
     NSFont * _font;
-    NSMutableDictionary * _svgs;
+    NSMutableDictionary<NSString *, id> * _transformedPaths;
 }
 
 - (id)initWithFontAtFileURL:(NSURL *)url;
-- (NSDictionary<NSString *, IJSVG *> *)SVGs;
 - (NSFont *)font;
+- (void)enumerateUsingBlock:(IJSVGFontConverterEnumerateBlock)block;
 
++ (IJSVG *)convertIJSVGPathToSVG:(IJSVGPath *)path;
 + (IJSVG *)convertPathToSVG:(CGPathRef)path;
 
 @end

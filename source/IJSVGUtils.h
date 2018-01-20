@@ -45,4 +45,6 @@ BOOL IJSVGIsSVGLayer(CALayer * layer);
 + (IJSVGFontTraits)fontWeightTraitForString:(NSString *)string
                                      weight:(CGFloat *)weight;
 
++ (CGPathRef)newFlippedCGPath:(CGPathRef)path;
++ (CGPathRef)newCGPathFromBezierPath:(NSBezierPath *)bezPath;
 @end
