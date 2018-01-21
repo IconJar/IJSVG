@@ -198,6 +198,8 @@
     CGPathRelease(introPath);
 
     // set the bounds
+    bounds.origin.x += path.x.value;
+    bounds.origin.y += path.y.value;
     layer.frame = bounds;
     
     // basic fill color and rule

@@ -200,26 +200,32 @@ static NSMutableDictionary * _colorTree = nil;
 
 + (NSColor *)colorFromString:(NSString *)string
 {
-    if( [string length] < 3 )
+    NSCharacterSet * set = NSCharacterSet.whitespaceAndNewlineCharacterSet;
+    string = [string stringByTrimmingCharactersInSet:set];
+    
+    if( [string length] < 3 ) {
         return nil;
+    }
  
     string = [string lowercaseString];
     NSColor * color = [[self class] colorFromPredefinedColorName:string];
-    if( color != nil )
+    if( color != nil ) {
         return color;
+    }
     
-    if( [[string lowercaseString] isEqualToString:@"none"] )
+    if( [[string lowercaseString] isEqualToString:@"none"] ) {
         return [NSColor clearColor];
+    }
     
     // is it RGB?
-    if( [[string substringToIndex:3] isEqualToString:@"rgb"] )
-    {
+    if( [[string substringToIndex:3] isEqualToString:@"rgb"] ) {
         NSInteger count = 0;
         CGFloat * params = [IJSVGUtils commandParameters:string
                                                    count:&count];
         CGFloat alpha = 1;
-        if( count == 4 )
+        if( count == 4 ) {
             alpha = params[3];
+        }
         color = [NSColor colorWithDeviceRed:params[0]/255
                                       green:params[1]/255
                                        blue:params[2]/255
