@@ -138,7 +138,6 @@
     frame.origin.x += [node.x computeValue:frame.size.width];
     frame.origin.y += [node.y computeValue:frame.size.height];
     layer.frame = frame;
-    
 }
 
 - (IJSVGLayer *)layerForImage:(IJSVGImage *)image
@@ -157,10 +156,7 @@
         [groupLayer addSublayer:[self layerForNode:node]];
     }
     groupLayer.frame = (CGRect){
-        .origin = (CGPoint){
-            .x = group.x.value,
-            .y = group.y.value
-        },
+        .origin = CGPointZero,
         .size = (CGSize){
             .width = group.width.value,
             .height = group.height.value
