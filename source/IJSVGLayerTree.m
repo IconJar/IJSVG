@@ -91,7 +91,7 @@
     IJSVGLayer * topLayer = nil;
     IJSVGLayer * parentLayer = nil;
     
-    for(IJSVGTransform * transform in transforms.reverseObjectEnumerator) {
+    for(IJSVGTransform * transform in transforms) {
         // make sure we apply the transform to the parent
         // so they stack
         IJSVGGroupLayer * childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
