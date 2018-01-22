@@ -1213,65 +1213,26 @@
 - (void)_parseRect:(NSXMLElement *)element
           intoPath:(IJSVGPath *)path
 {
-    CGFloat aX, aY, aWidth, aHeight;
-    if([self namespacedAttribute:(NSString *)IJSVGAttributeX
-                         element:element] != nil) {
-        
-        // already namespaced, find them
-        aX = [[self namespacedAttribute:(NSString *)IJSVGAttributeX
-                                element:element] floatValue];
-        aY = [[self namespacedAttribute:(NSString *)IJSVGAttributeY
-                                element:element] floatValue];
-        aWidth = [IJSVGUtils floatValue:[self namespacedAttribute:(NSString *)IJSVGAttributeWidth
-                                                          element:element]
-                     fallBackForPercent:self.viewBox.size.width];
-        aHeight = [IJSVGUtils floatValue:[self namespacedAttribute:(NSString *)IJSVGAttributeHeight
-                                                           element:element]
-                      fallBackForPercent:self.viewBox.size.height];
-    } else {
-        
-        // reassign X
-        [self applyNamespacedAttribute:(NSString *)IJSVGAttributeX
-                                 value:[[element attributeForName:(NSString *)IJSVGAttributeX] stringValue]
-                               element:element];
-        aX = [[[element attributeForName:(NSString *)IJSVGAttributeX] stringValue] floatValue];
-        
-        // reassign Y
-        [self applyNamespacedAttribute:(NSString *)IJSVGAttributeY
-                                 value:[[element attributeForName:(NSString *)IJSVGAttributeY] stringValue]
-                               element:element];
-        aY = [[[element attributeForName:(NSString *)IJSVGAttributeY] stringValue] floatValue];
-        
-        // reassign width
-        [self applyNamespacedAttribute:(NSString *)IJSVGAttributeWidth
-                                 value:[[element attributeForName:(NSString *)IJSVGAttributeWidth] stringValue]
-                               element:element];
-        aWidth = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeWidth] stringValue]
-                             fallBackForPercent:self.viewBox.size.width];
-        
-        // reassign height
-        [self applyNamespacedAttribute:(NSString *)IJSVGAttributeHeight
-                                 value:[[element attributeForName:(NSString *)IJSVGAttributeHeight] stringValue]
-                               element:element];
-        aHeight = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeHeight] stringValue]
-                              fallBackForPercent:self.viewBox.size.height];
-        
-        // set the namespaced versions as we need to remove the attributes
-        [element removeAttributeForName:(NSString *)IJSVGAttributeX];
-        [element removeAttributeForName:(NSString *)IJSVGAttributeY];
-        [element removeAttributeForName:(NSString *)IJSVGAttributeWidth];
-        [element removeAttributeForName:(NSString *)IJSVGAttributeHeight];
-    }
     
-    CGFloat rX = [[[element attributeForName:(NSString *)IJSVGAttributeRX] stringValue] floatValue];
-    CGFloat rY = [[[element attributeForName:(NSString *)IJSVGAttributeRY] stringValue] floatValue];
-    if( [element attributeForName:(NSString *)IJSVGAttributeRY] == nil ) {
+    // width and height
+    CGFloat width = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeWidth] stringValue]
+                        fallBackForPercent:self.viewBox.size.width];
+    
+
+    CGFloat height = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeHeight] stringValue]
+                          fallBackForPercent:self.viewBox.size.height];
+    
+    // radius
+    CGFloat rX = [element attributeForName:(NSString *)IJSVGAttributeRX].stringValue.floatValue;
+    CGFloat rY = [element attributeForName:(NSString *)IJSVGAttributeRY].stringValue.floatValue;
+    if([element attributeForName:(NSString *)IJSVGAttributeRY] == nil) {
         rY = rX;
     }
     
-    [path overwritePath:[NSBezierPath bezierPathWithRoundedRect:NSMakeRect( aX, aY, aWidth, aHeight)
-                                                        xRadius:rX
-                                                        yRadius:rY]];
+    NSBezierPath * newPath = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect( 0.f, 0.f, width, height)
+                                                             xRadius:rX
+                                                             yRadius:rY];
+    [path overwritePath:newPath];
 }
 
 - (NSString *)namespacedAttribute:(NSString *)key
