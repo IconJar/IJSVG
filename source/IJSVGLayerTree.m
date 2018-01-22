@@ -67,51 +67,44 @@
         layer = [self layerForImage:(IJSVGImage *)node];
     }
     
-    // create the new layer
-    layer = [self applyTransforms:node.transforms
-                          toLayer:layer];
-    
-    // apply any defaults once its been transformed
+    // apply any basic defaults
     [self applyDefaultsToLayer:layer
                       fromNode:node];
-    return layer;
+    
+    return [self proposedLayerAfterApplyingTransforms:layer
+                                           transforms:node.transforms];
 }
 
-- (IJSVGLayer *)applyTransforms:(NSArray<IJSVGTransform *> *)transforms
-                        toLayer:(IJSVGLayer *)layer
-
+- (IJSVGLayer *)proposedLayerAfterApplyingTransforms:(IJSVGLayer *)layer
+                                       transforms:(NSArray<IJSVGTransform *> *)transforms
 {
-    
-    // do some magic transform
-    if(transforms.count == 0) {
-        return layer;
-    }
-    
     // add any transforms
-    IJSVGLayer * topLayer = nil;
-    IJSVGLayer * parentLayer = nil;
-    
-    for(IJSVGTransform * transform in transforms.reverseObjectEnumerator) {
-        // make sure we apply the transform to the parent
-        // so they stack
-        IJSVGGroupLayer * childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
-        childLayer.affineTransform = transform.CGAffineTransform;
+    if(transforms.count != 0) {
+        IJSVGLayer * topLayer = nil;
+        IJSVGLayer * parentLayer = nil;
         
-        // add it to the parent layer
-        if(parentLayer != nil) {
-            [parentLayer addSublayer:childLayer];
-        } else {
-            // make sure we keep track of the top most layer
-            topLayer = childLayer;
+        for(IJSVGTransform * transform in transforms) {
+            // make sure we apply the transform to the parent
+            // so they stack
+            IJSVGGroupLayer * childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
+            childLayer.affineTransform = transform.CGAffineTransform;
+            
+            // add it to the parent layer
+            if(parentLayer != nil) {
+                [parentLayer addSublayer:childLayer];
+            } else {
+                // make sure we keep track of the top most layer
+                topLayer = childLayer;
+            }
+            
+            // reset parent layer to the new child
+            parentLayer = childLayer;
         }
         
-        // reset parent layer to the new child
-        parentLayer = childLayer;
+        // swap the layer around
+        [parentLayer addSublayer:layer];
+        layer = topLayer;
     }
-    
-    // swap the layer around
-    [parentLayer addSublayer:layer];
-    layer = topLayer;
     return layer;
 }
 
@@ -133,11 +126,6 @@
     if(node.shouldRender == NO) {
         layer.hidden = YES;
     }
-    
-    CGRect frame = layer.frame;
-    frame.origin.x += [node.x computeValue:frame.size.width];
-    frame.origin.y += [node.y computeValue:frame.size.height];
-    layer.frame = frame;
     
 }
 
@@ -210,6 +198,8 @@
     CGPathRelease(introPath);
 
     // set the bounds
+    bounds.origin.x += path.x.value;
+    bounds.origin.y += path.y.value;
     layer.frame = bounds;
     
     // basic fill color and rule
@@ -237,9 +227,6 @@
     
     // garb the basic shape layer
     IJSVGShapeLayer * layer = [self basicLayerForPath:path];
-    BOOL hasStroke = (path.strokeColor != nil ||
-                      path.strokePattern != nil ||
-                      path.strokeGradient != nil);
     
     // any gradient?
     if(self.fillColor == nil && path.fillGradient != nil) {
@@ -290,7 +277,7 @@
         // just set the color
         if(fColor != nil) {
             layer.fillColor = fColor.CGColor;
-        } else if(hasStroke == NO) {
+        } else {
             // use default color
             NSColor * defColor = [NSColor blackColor];
             if(path.fillOpacity.value != 1.f) {
@@ -305,7 +292,9 @@
     }
     
     // stroke it
-    if(hasStroke == YES) {
+    if(path.strokeColor != nil ||
+       path.strokePattern != nil ||
+       path.strokeGradient != nil) {
         
         // load the stroke layer
         IJSVGStrokeLayer * strokeLayer = [self strokeLayer:layer
@@ -562,7 +551,7 @@
 }
 
 - (IJSVGStrokeLayer *)strokeLayer:(IJSVGShapeLayer *)layer
-                         fromNode:(IJSVGPath *)path
+                         fromNode:(IJSVGNode *)path
 {
     // same as fill, dont use global if the alpha is 0.f, but do use it
     // if there is a pattern or gradient
