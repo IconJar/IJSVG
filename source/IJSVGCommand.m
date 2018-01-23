@@ -20,6 +20,7 @@
 @synthesize requiredParameters;
 @synthesize type;
 @synthesize previousCommand;
+@synthesize isSubCommand;
 
 static NSMutableDictionary * _classes = nil;
 
@@ -71,8 +72,9 @@ static NSMutableDictionary * _classes = nil;
             c.parameters = subParams;
             c.type = self.type;
             c.command = self.command;
-            c.previousCommand = [self.subCommands lastObject];
+            c.previousCommand = self.subCommands.lastObject;
             c.commandClass = self.commandClass;
+            c.isSubCommand = i == 0 ? NO : YES;
             
             // add it to our tree
             [self.subCommands addObject:c];
