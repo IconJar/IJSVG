@@ -261,9 +261,6 @@
     void (^atts)(NSDictionary<NSString *, NSString *> *, cap) =
     ^(NSDictionary<NSString *, NSString *>* kv, cap block) {
         for(NSString * key in kv.allKeys) {
-            if([ignoredAttributes containsObject:key]) {
-                return;
-            }
             attr(key, ^(NSString * value) {
                 [node setValue:block(value)
                         forKey:kv[key]];
