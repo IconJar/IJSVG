@@ -178,7 +178,8 @@
     
     // parse common attributes on the SVG element
     [self _parseElementForCommonAttributes:svgElement
-                                      node:self];
+                                      node:self
+                          ignoreAttributes:nil];
     
     // find the sizebox!
     NSXMLNode * attribute = nil;
@@ -224,7 +225,8 @@
     // now everything has been done we need to compute the style tree
     for(NSDictionary * dict in _parsedNodes) {
         [self _postParseElementForCommonAttributes:dict[@"element"]
-                                              node:dict[@"node"]];
+                                              node:dict[@"node"]
+                                  ignoreAttributes:nil];
     }
     
     // dont need the style sheet or the parsed nodes as this point
@@ -235,6 +237,7 @@
 
 - (void)_postParseElementForCommonAttributes:(NSXMLElement *)element
                                         node:(IJSVGNode *)node
+                            ignoreAttributes:(NSArray *)ignoredAttributes
 {
     
     // first of all, compute a style sheet
@@ -244,6 +247,9 @@
     // attribute helpers
     typedef void (^cp)(NSString *);
     void (^attr)(const NSString *, cp) = ^(NSString * key, cp block) {
+        if([ignoredAttributes containsObject:key]) {
+            return;
+        }
         NSString * v = [element attributeForName:key].stringValue
         ?: [style property:key];
         if(v != nil && v.length != 0) {
@@ -255,6 +261,9 @@
     void (^atts)(NSDictionary<NSString *, NSString *> *, cap) =
     ^(NSDictionary<NSString *, NSString *>* kv, cap block) {
         for(NSString * key in kv.allKeys) {
+            if([ignoredAttributes containsObject:key]) {
+                return;
+            }
             attr(key, ^(NSString * value) {
                 [node setValue:block(value)
                         forKey:kv[key]];
@@ -476,9 +485,11 @@
 
 - (void)_parseElementForCommonAttributes:(NSXMLElement *)element
                                     node:(IJSVGNode *)node
+                        ignoreAttributes:(NSArray *)ignoredAttributes
 {
     [self _postParseElementForCommonAttributes:element
-                                          node:node];
+                                          node:node
+                              ignoreAttributes:ignoredAttributes];
 }
 
 - (void)_setupDefaultsForNode:(IJSVGNode *)node
@@ -587,7 +598,8 @@
             // grab common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
                         
             // work out the SVG
             NSError * error = nil;
@@ -632,7 +644,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             
             // pass the commands for it
             [self _parsePathCommandData:[[element attributeForName:(NSString *)IJSVGAttributeD] stringValue]
@@ -673,7 +686,8 @@
             // find common attributes
             [self _setupDefaultsForNode:group];
             [self _parseElementForCommonAttributes:element
-                                              node:group];
+                                              node:group
+                                  ignoreAttributes:nil];
             
             // recursively parse blocks
             [self _parseBlock:element
@@ -699,7 +713,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parsePathCommandData:[[element attributeForName:(NSString *)IJSVGAttributeD] stringValue]
                                intoPath:path];
             
@@ -721,7 +736,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parsePolygon:element
                        intoPath:path];
             [parentGroup addDef:path];
@@ -743,7 +759,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parsePolyline:element
                         intoPath:path];
             [parentGroup addDef:path];
@@ -767,7 +784,8 @@
             
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:@[@"x",@"y"]];
             [parentGroup addDef:path];
             break;
         }
@@ -785,7 +803,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parseLine:element
                     intoPath:path];
             [parentGroup addDef:path];
@@ -807,7 +826,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parseCircle:element
                       intoPath:path];
             [parentGroup addDef:path];
@@ -828,7 +848,8 @@
             // find common attributes
             [self _setupDefaultsForNode:path];
             [self _parseElementForCommonAttributes:element
-                                              node:path];
+                                              node:path
+                                  ignoreAttributes:nil];
             [self _parseEllipse:element
                        intoPath:path];
             [parentGroup addDef:path];
@@ -853,7 +874,8 @@
             }
             
             [self _parseElementForCommonAttributes:element
-                                              node:node];
+                                              node:node
+                                  ignoreAttributes:nil];
             
             [parentGroup addDef:node];
             break;
@@ -880,7 +902,8 @@
                 
                 [self _setupDefaultsForNode:grad];
                 [self _parseElementForCommonAttributes:element
-                                                  node:grad];
+                                                  node:grad
+                                      ignoreAttributes:nil];
                 grad.startPoint = startPoint;
                 grad.endPoint = endPoint;
                 [parentGroup addDef:grad];
@@ -898,7 +921,8 @@
             
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
-                                              node:gradient];
+                                              node:gradient
+                                  ignoreAttributes:nil];
             gradient.startPoint = startPoint;
             gradient.endPoint = endPoint;
             [parentGroup addDef:gradient];
@@ -927,7 +951,8 @@
                 
                 [self _setupDefaultsForNode:grad];
                 [self _parseElementForCommonAttributes:element
-                                                  node:grad];
+                                                  node:grad
+                                      ignoreAttributes:nil];
                 grad.startPoint = startPoint;
                 grad.endPoint = endPoint;
                 [parentGroup addDef:grad];
@@ -947,7 +972,8 @@
             
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
-                                              node:gradient];
+                                              node:gradient
+                                  ignoreAttributes:nil];
             [parentGroup addDef:gradient];
             break;
         }
@@ -964,7 +990,8 @@
             
             // find common attributes
             [self _parseElementForCommonAttributes:element
-                                              node:group];
+                                              node:group
+                                  ignoreAttributes:nil];
             
             // recursively parse blocks
             [self _parseBlock:element
@@ -982,7 +1009,8 @@
             
             // find common attributes
             [self _parseElementForCommonAttributes:element
-                                              node:pattern];
+                                              node:pattern
+                                  ignoreAttributes:nil];
             
             // pattern has children
             [self _parseBlock:element
@@ -1001,7 +1029,8 @@
             
             // find common attributes
             [self _parseElementForCommonAttributes:element
-                                              node:image];
+                                              node:image
+                                  ignoreAttributes:nil];
             
             // from base64
             [image loadFromBase64EncodedString:[[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue]];
@@ -1188,8 +1217,7 @@
     NSInteger count = 0;
     CGFloat * params = [IJSVGUtils commandParameters:points
                                                count:&count];
-    if( (count % 2) != 0 )
-    {
+    if( (count % 2) != 0 ) {
         // error occured, free the params
         free(params);
         return;
@@ -1198,12 +1226,12 @@
     // construct a command
     NSMutableString * str = [[[NSMutableString alloc] init] autorelease];
     [str appendFormat:@"M%f,%f L",params[0],params[1]];
-    for( NSInteger i = 2; i < count; i+=2 )
-    {
+    for( NSInteger i = 2; i < count; i+=2 ) {
         [str appendFormat:@"%f,%f ",params[i],params[i+1]];
     }
-    if( closePath )
+    if( closePath ) {
         [str appendString:@"z"];
+    }
     [self _parsePathCommandData:str
                        intoPath:path];
     free(params);
@@ -1222,6 +1250,11 @@
     CGFloat height = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeHeight] stringValue]
                           fallBackForPercent:self.viewBox.size.height];
     
+    
+    // rect uses x and y as start of path, not move path object -_-
+    CGFloat x = [[element attributeForName:(NSString *)IJSVGAttributeX] stringValue].floatValue;
+    CGFloat y = [[element attributeForName:(NSString *)IJSVGAttributeY] stringValue].floatValue;
+    
     // radius
     CGFloat rX = [element attributeForName:(NSString *)IJSVGAttributeRX].stringValue.floatValue;
     CGFloat rY = [element attributeForName:(NSString *)IJSVGAttributeRY].stringValue.floatValue;
@@ -1229,31 +1262,10 @@
         rY = rX;
     }
     
-    NSBezierPath * newPath = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect( 0.f, 0.f, width, height)
+    NSBezierPath * newPath = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect( x, y, width, height)
                                                              xRadius:rX
                                                              yRadius:rY];
     [path overwritePath:newPath];
-}
-
-- (NSString *)namespacedAttribute:(NSString *)key
-                          element:(NSXMLElement *)element
-{
-    key = [NSString stringWithFormat:@"ij-svg:%@",key];
-    if([element attributeForName:key] != nil) {
-        return [[element attributeForName:key] stringValue];
-    }
-    return nil;
-}
-
-- (void)applyNamespacedAttribute:(NSString *)key
-                           value:(NSString *)value
-                         element:(NSXMLElement *)element
-{
-    key = [NSString stringWithFormat:@"ij-svg:%@",key];
-    NSXMLNode * node = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
-    node.name = key;
-    node.stringValue= value;
-    [element addAttribute:node];
 }
 
 @end
