@@ -1249,8 +1249,10 @@
     
     
     // rect uses x and y as start of path, not move path object -_-
-    CGFloat x = [[element attributeForName:(NSString *)IJSVGAttributeX] stringValue].floatValue;
-    CGFloat y = [[element attributeForName:(NSString *)IJSVGAttributeY] stringValue].floatValue;
+    CGFloat x = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeX] stringValue]
+                    fallBackForPercent:self.viewBox.size.width];
+    CGFloat y = [IJSVGUtils floatValue:[[element attributeForName:(NSString *)IJSVGAttributeY] stringValue]
+                    fallBackForPercent:self.viewBox.size.height];
     
     // radius
     CGFloat rX = [element attributeForName:(NSString *)IJSVGAttributeRX].stringValue.floatValue;
