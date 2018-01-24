@@ -286,7 +286,7 @@
         // just set the color
         if(fColor != nil) {
             layer.fillColor = fColor.CGColor;
-        } else if(hasStroke == NO) {
+        } else {
             // use default color
             NSColor * defColor = [NSColor blackColor];
             if(path.fillOpacity.value != 1.f) {
