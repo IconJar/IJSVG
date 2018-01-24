@@ -85,7 +85,7 @@
     } 
     backingScaleFactor = newFactor; 
     self.contentsScale = newFactor; 
-    self.rasterizationScale = newFactor; 
+    self.rasterizationScale = newFactor;
     [self setNeedsDisplay]; 
 } 
 
