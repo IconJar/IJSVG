@@ -13,6 +13,25 @@
 
 static NSMutableDictionary * _colorTree = nil;
 
+CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness)
+{
+    hue *= (1.f/360.f);
+    hue = (hue - floorf(hue));
+    saturation *= 0.01;
+    lightness *= 0.01;
+    lightness *= 2.f;
+    
+    CGFloat s = saturation * ((lightness < 1.f) ? lightness : (2.f - lightness));
+    CGFloat brightness = (lightness + s) * .5f;
+    if(s != 0.f) {
+        s = (2.f * s) / (lightness + s);
+    }
+    CGFloat * floats = (CGFloat *)malloc(3*sizeof(CGFloat));
+    floats[0] = hue;
+    floats[1] = s;
+    floats[2] = brightness;
+    return floats;
+};
 
 + (void)load
 {
@@ -226,10 +245,33 @@ static NSMutableDictionary * _colorTree = nil;
         if( count == 4 ) {
             alpha = params[3];
         }
-        color = [NSColor colorWithDeviceRed:params[0]/255
-                                      green:params[1]/255
-                                       blue:params[2]/255
+        color = [NSColor colorWithDeviceRed:params[0]/255.f
+                                      green:params[1]/255.f
+                                       blue:params[2]/255.f
                                       alpha:alpha];
+        free(params);
+        return color;
+    }
+    
+    // is it HSL?
+    if([[string substringToIndex:3] isEqualToString:@"hsl"]) {
+        NSInteger count = 0;
+        CGFloat * params = [IJSVGUtils commandParameters:string
+                                                   count:&count];
+        CGFloat alpha = 1;
+        if(count == 4) {
+            alpha = params[3];
+        }
+        
+        // convert HSL to HSB
+        CGFloat * hsb = IJSVGColorCSSHSLToHSB(params[0], params[1], params[2]);
+        color = [NSColor colorWithDeviceHue:hsb[0]
+                                 saturation:hsb[1]
+                                 brightness:hsb[2]
+                                      alpha:alpha];
+        
+        // memory clean!
+        free(hsb);
         free(params);
         return color;
     }

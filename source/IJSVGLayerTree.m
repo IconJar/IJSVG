@@ -73,7 +73,7 @@
     
     // apply any defaults once its been transformed
     [self applyDefaultsToLayer:layer
-                      fromNode:node];
+                      fromNode:node]; 
     return layer;
 }
 

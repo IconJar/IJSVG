@@ -160,6 +160,8 @@ typedef NS_ENUM( NSInteger, IJSVGPredefinedColor ) {
 
 @interface IJSVGColor : NSObject
 
+CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness);
+
 + (NSColor *)computeColorSpace:(NSColor *)color;
 + (NSColorSpace *)defaultColorSpace;
 + (BOOL)isColor:(NSString *)string;
