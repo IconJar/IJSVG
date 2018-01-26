@@ -865,16 +865,32 @@
                 node.identifier = nil;
             }
             
-            node.parentNode = parentGroup;
+            // at this point, we need to create another group!
+            IJSVGGroup * subGroup = [[[IJSVGGroup alloc] init] autorelease];
+            subGroup.parentNode = parentGroup;
+            [subGroup addChild:node];
+            node.parentNode = subGroup;
+            
+            // is there a width and height?
+            CGFloat x = [element attributeForName:(NSString *)IJSVGAttributeX].stringValue.floatValue;
+            CGFloat y = [element attributeForName:(NSString *)IJSVGAttributeY].stringValue.floatValue;
+            
+            // we need to add a transform to the subgroup
+            subGroup.transforms = @[[IJSVGTransform transformByTranslatingX:x y:y]];
+            
             if(!flag) {
-                [parentGroup addChild:node];
+                [parentGroup addChild:subGroup];
             }
             
+            // parse attributes from element onto group - but spec
+            // says ignore x, y, width, height and xlink:href...
             [self _parseElementForCommonAttributes:element
-                                              node:node
-                                  ignoreAttributes:nil];
+                                              node:subGroup
+                                  ignoreAttributes:@[@"x",@"y",@"width",
+                                                     @"height",@"xlink:href"]];
             
-            [parentGroup addDef:node];
+            [subGroup addDef:node];
+            [parentGroup addDef:subGroup];
             break;
         }
             

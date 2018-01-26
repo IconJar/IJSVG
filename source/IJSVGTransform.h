@@ -35,6 +35,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 @property ( nonatomic, assign ) NSInteger parameterCount;
 @property ( nonatomic, assign ) NSInteger sort;
 
++ (NSArray<IJSVGTransform *> *)transformsFromAffineTransform:(CGAffineTransform)affineTransform;
 + (NSArray *)transformsForString:(NSString *)string;
 + (NSBezierPath *)transformedPath:(IJSVGPath *)path;
 + (NSArray<NSString *> *)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform;
@@ -42,5 +43,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 - (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
 - (void)recalculateWithBounds:(CGRect)bounds;
++ (IJSVGTransform *)transformByTranslatingX:(CGFloat)x
+                                          y:(CGFloat)y;
 
 @end

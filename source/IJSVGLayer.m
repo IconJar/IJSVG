@@ -86,7 +86,7 @@
     backingScaleFactor = newFactor; 
     self.contentsScale = newFactor; 
     self.rasterizationScale = newFactor;
-    [self setNeedsDisplay]; 
+    [self setNeedsDisplay];
 } 
 
 - (void)_customRenderInContext:(CGContextRef)ctx 

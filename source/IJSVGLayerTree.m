@@ -67,13 +67,12 @@
         layer = [self layerForImage:(IJSVGImage *)node];
     }
     
+    [self applyDefaultsToLayer:layer fromNode:node];
+    
     // create the new layer
     layer = [self applyTransforms:node.transforms
                           toLayer:layer];
     
-    // apply any defaults once its been transformed
-    [self applyDefaultsToLayer:layer
-                      fromNode:node]; 
     return layer;
 }
 
@@ -143,7 +142,6 @@
 - (IJSVGLayer *)layerForImage:(IJSVGImage *)image
 {
     IJSVGImageLayer * layer = [[[IJSVGImageLayer alloc] initWithCGImage:image.CGImage] autorelease];
-    layer.frame = CGRectMake(0.f, 0.f, image.width.value, image.height.value);
     layer.affineTransform = CGAffineTransformConcat(layer.affineTransform,
                                                     CGAffineTransformMakeScale( 1.f, -1.f));
     return layer;
@@ -746,6 +744,19 @@
         default: {
             return kCAFillRuleNonZero;
         }
+    }
+}
+
++ (void)log:(IJSVGLayer *)layer
+      depth:(NSInteger)depth {
+    NSLog(@"%@%@: %@, Transforms: %@",[@"" stringByPaddingToLength:depth
+                                                        withString:@"\t"
+                                                   startingAtIndex:0],layer,
+          NSStringFromRect(layer.frame),
+          [IJSVGTransform affineTransformToSVGTransformAttributeString:layer.affineTransform]);
+    for(IJSVGLayer * sublayer in layer.sublayers) {
+        [self log:(IJSVGLayer *)sublayer
+            depth:depth++];
     }
 }
 
