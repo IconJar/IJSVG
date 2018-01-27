@@ -45,6 +45,7 @@
     [_parsedNodes release], _parsedNodes = nil;
     [_defNodes release], _defNodes = nil;
     [_baseDefNodes release], _baseDefNodes = nil;
+    [_definedGroups release], _definedGroups = nil;
     [_svgs release], _svgs = nil;
     [super dealloc];
 }
@@ -435,13 +436,15 @@
     // check base def nodes first, then check rest of document
     NSXMLElement * parseElement = _baseDefNodes[anID] ?: _defNodes[anID];
     if(parseElement != nil) {
-        // parse the element
-        IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
-        
         // parse the block
+        IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
         [self _parseBaseBlock:parseElement
                     intoGroup:group
                           def:NO];
+        if(_definedGroups == nil) {
+            _definedGroups = [[NSMutableArray alloc] init];
+        }
+        [_definedGroups addObject:group];
         return [group defForID:anID];
     }
     return nil;

@@ -233,10 +233,12 @@
 - (IJSVGDef *)defForID:(NSString *)anID
 {
     IJSVGDef * aDef = nil;
-    if( (aDef = [def defForID:anID]) != nil )
+    if( (aDef = [def defForID:anID]) != nil ) {
         return aDef;
-    if( parentNode != nil )
+    }
+    if( parentNode != nil ) {
         return [parentNode defForID:anID];
+    }
     return nil;
 }
 
@@ -248,7 +250,7 @@
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    if( windingRule == IJSVGWindingRuleInherit && parentNode != nil ) {
+    if(windingRule == IJSVGWindingRuleInherit && parentNode != nil) {
         return parentNode.windingRule;
     }
     return windingRule;
@@ -256,20 +258,20 @@
 
 - (IJSVGLineCapStyle)lineCapStyle
 {
-    if( lineCapStyle == IJSVGLineCapStyleInherit )
-    {
-        if( parentNode != nil )
+    if( lineCapStyle == IJSVGLineCapStyleInherit ) {
+        if( parentNode != nil ) {
             return parentNode.lineCapStyle;
+        }
     }
     return lineCapStyle;
 }
 
 - (IJSVGLineJoinStyle)lineJoinStyle
 {
-    if( lineJoinStyle == IJSVGLineJoinStyleInherit )
-    {
-        if( parentNode != nil )
+    if( lineJoinStyle == IJSVGLineJoinStyleInherit ) {
+        if( parentNode != nil ) {
             return parentNode.lineJoinStyle;
+        }
     }
     return lineJoinStyle;
 }

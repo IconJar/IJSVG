@@ -144,6 +144,14 @@
     IJSVGImageLayer * layer = [[[IJSVGImageLayer alloc] initWithCGImage:image.CGImage] autorelease];
     layer.affineTransform = CGAffineTransformConcat(layer.affineTransform,
                                                     CGAffineTransformMakeScale( 1.f, -1.f));
+    
+    // make sure we set the width and height correctly,
+    // as this may not be exactly the same as the size of the
+    // given image
+    CGRect frame = layer.frame;
+    frame.size.width = image.width.value;
+    frame.size.height = image.height.value;
+    layer.frame = frame;
     return layer;
 }
 
