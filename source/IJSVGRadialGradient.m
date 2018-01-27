@@ -85,15 +85,11 @@
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = self.radius.value;
     CGPoint startPoint = CGPointZero;
-    CGPoint gradientPoint = CGPointZero;
+    __block CGPoint gradientPoint = CGPointZero;
     
     // transforms
-    CGAffineTransform absTransform = CGAffineTransformMakeTranslation(-absolutePosition.x,
-                                                                      -absolutePosition.y);
-    CGAffineTransform selfTransform = CGAffineTransformIdentity;
-    for(IJSVGTransform * transform in self.transforms) {
-        selfTransform = CGAffineTransformConcat(selfTransform, transform.CGAffineTransform);
-    }
+    CGAffineTransform absTransform = IJSVGAbsoluteTransform(absolutePosition);
+    CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
     if(inUserSpace == YES) {
         startPoint = CGPointMake(self.cx.value, self.cy.value);
@@ -104,18 +100,24 @@
         radius = CGRectGetHeight(rect)/2.f;
     }
     
-    gradientPoint = CGPointApplyAffineTransform(startPoint, selfTransform);
+    gradientPoint = startPoint;
     
-    if(inUserSpace == YES) {
-        gradientPoint = CGPointApplyAffineTransform(startPoint, absTransform);
-        gradientPoint.x -= CGRectGetMinX(parentRect);
-        gradientPoint.y -= CGRectGetMinY(parentRect);
-    }
-    
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
-        kCGGradientDrawsAfterEndLocation;
-    CGContextDrawRadialGradient(ctx, self.CGGradient, gradientPoint, 0, gradientPoint,
-                                radius, options);
+    CGContextSaveGState(ctx); {
+        
+        if(inUserSpace == YES) {
+            gradientPoint.x -= CGRectGetMinX(parentRect);
+            gradientPoint.y -= CGRectGetMinY(parentRect);
+            CGContextConcatCTM(ctx, absTransform);
+        }
+
+        CGContextConcatCTM(ctx, selfTransform);
+        
+        CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+            kCGGradientDrawsAfterEndLocation;
+        CGContextDrawRadialGradient(ctx, self.CGGradient, gradientPoint, 0, gradientPoint,
+                                    radius, options);
+    };
+    CGContextRestoreGState(ctx);
 }
 
 @end

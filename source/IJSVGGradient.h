@@ -22,6 +22,8 @@
 @property ( nonatomic, retain ) IJSVGUnitLength * y1;
 @property ( nonatomic, retain ) IJSVGUnitLength * y2;
 
+CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint);
+
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
                                   colors:(NSArray **)someColors;
 - (CGGradientRef)CGGradient;

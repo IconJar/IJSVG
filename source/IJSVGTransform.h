@@ -9,7 +9,10 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGUtils.h"
 
+@class IJSVGTransform;
+
 typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
+typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform * transform);
 
 typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
     IJSVGTransformCommandMatrix,
@@ -34,6 +37,9 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 @property ( nonatomic, assign ) CGFloat * parameters;
 @property ( nonatomic, assign ) NSInteger parameterCount;
 @property ( nonatomic, assign ) NSInteger sort;
+
+void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransformApplyBlock block);
+CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms);
 
 + (NSArray<IJSVGTransform *> *)transformsFromAffineTransform:(CGAffineTransform)affineTransform;
 + (NSArray *)transformsForString:(NSString *)string;

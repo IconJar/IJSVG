@@ -32,6 +32,11 @@
     IJSVGEndTransactionLock();
 }
 
+CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint) {
+    return CGAffineTransformMakeTranslation(-absolutePoint.x,
+                                            -absolutePoint.y);
+};
+
 
 + (NSArray *)deepestSublayersOfLayer:(CALayer *)layer
 {

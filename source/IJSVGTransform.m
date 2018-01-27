@@ -33,6 +33,22 @@
     return trans;
 }
 
+CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms)
+{
+    __block CGAffineTransform trans = CGAffineTransformIdentity;
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform *transform) {
+        trans = CGAffineTransformConcat(trans, transform.CGAffineTransform);
+    });
+    return trans;
+}
+
+void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransformApplyBlock block)
+{
+    for(IJSVGTransform * transform in transforms) {
+        block(transform);
+    }
+};
+
 + (IJSVGTransform *)transformByTranslatingX:(CGFloat)x
                                           y:(CGFloat)y
 {
