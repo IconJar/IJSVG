@@ -55,9 +55,11 @@
         IJSVGUnitLength * unit = nil;
         if(str != nil) {
             unit = [IJSVGUnitLength unitWithString:str];
-            [gradient setValue:unit
-                        forKey:kv[key]];
+        } else {
+            unit = [IJSVGUnitLength unitWithPercentageFloat:.5f];
         }
+        [gradient setValue:unit
+                    forKey:kv[key]];
     }
   
     if( gradient.gradient != nil ) {
@@ -98,20 +100,44 @@
         rect = CGRectApplyAffineTransform(rect, selfTransform);
         rect = CGRectApplyAffineTransform(rect, absTransform);
         radius = CGRectGetHeight(rect)/2.f;
+    } else {
+        // compute size based on percentages
+        CGFloat x = [self.cx computeValue:CGRectGetWidth(parentRect)];
+        CGFloat y = [self.cy computeValue:CGRectGetHeight(parentRect)];
+        startPoint = CGPointMake(x, y);
+        CGFloat val = MIN(CGRectGetWidth(parentRect),
+                          CGRectGetWidth(parentRect));
+        radius = [self.radius computeValue:val];
     }
     
     gradientPoint = startPoint;
     
-    CGContextSaveGState(ctx); {
-        
+    // make sure we save the context...just incase
+    // we screw it up for something else
+    CGContextSaveGState(ctx);
+    {
         if(inUserSpace == YES) {
             gradientPoint.x -= CGRectGetMinX(parentRect);
             gradientPoint.y -= CGRectGetMinY(parentRect);
             CGContextConcatCTM(ctx, absTransform);
+        } else {
+            // transform if width or height is not equal
+            if(CGRectGetWidth(rect) != CGRectGetHeight(rect)) {
+                CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientPoint.x,
+                                                                        gradientPoint.y);
+                if(CGRectGetWidth(rect) > CGRectGetHeight(rect)) {
+                    tr = CGAffineTransformScale(tr, CGRectGetWidth(rect)/CGRectGetHeight(rect), 1);
+                } else {
+                    tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(rect)/CGRectGetWidth(rect));
+                }
+                tr = CGAffineTransformTranslate(tr, -gradientPoint.x, -gradientPoint.y);
+            }
         }
 
+        // transform the context
         CGContextConcatCTM(ctx, selfTransform);
         
+        // draw the gradient
         CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
             kCGGradientDrawsAfterEndLocation;
         CGContextDrawRadialGradient(ctx, self.CGGradient, gradientPoint, 0, gradientPoint,
