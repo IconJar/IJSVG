@@ -178,16 +178,24 @@
     [self _customRenderInContext:ctx]; 
 } 
 
-- (CGPoint)absoluteOrigin 
+- (CGPoint)absoluteOrigin
 {
-    CGPoint point = CGPointZero; 
-    CALayer * pLayer = self; 
-    while(pLayer != nil) { 
-        point.x += pLayer.frame.origin.x; 
-        point.y += pLayer.frame.origin.y; 
-        pLayer = pLayer.superlayer; 
-    } 
-    return point;
+    return [self.class absoluteFrameOfLayer:self].origin;
+}
+
++ (CGRect)absoluteFrameOfLayer:(IJSVGLayer *)layer
+{
+    CGPoint point = CGPointZero;
+    CGSize size = layer.frame.size;
+    while(layer != nil) {
+        point.x += layer.frame.origin.x;
+        point.y += layer.frame.origin.y;
+        layer = (IJSVGLayer *)layer.superlayer;
+    }
+    return (CGRect){
+        .origin = point,
+        .size = size
+    };
 }
 
 @end
