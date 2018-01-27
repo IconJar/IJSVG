@@ -48,31 +48,21 @@
     // cx defaults to 50% if not specified
     NSDictionary * kv = @{@"cx":@"cx",
                           @"cy":@"cy",
-                          @"r":@"radius",
-                          @"fx":@"fx"};
+                          @"r":@"radius"};
     
     for(NSString * key in kv.allKeys) {
         NSString * str = [element attributeForName:key].stringValue;
         IJSVGUnitLength * unit = nil;
         if(str != nil) {
-            unit = [IJSVGUnitLength unitWithPercentageString:str];
-        } else {
-            unit = [IJSVGUnitLength unitWithPercentageFloat:50];
+            unit = [IJSVGUnitLength unitWithString:str];
+            [gradient setValue:unit
+                        forKey:kv[key]];
         }
-        [gradient setValue:unit
-                    forKey:kv[key]];
     }
-    
-    // fy defaults to cy if not specified
-    NSString * fy = [element attributeForName:@"fy"].stringValue;
-    if(fy != nil) {
-        gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
-    } else {
-        gradient.fy = gradient.cy;
-    }
-    
-    if( gradient.gradient != nil )
+  
+    if( gradient.gradient != nil ) {
         return nil;
+    }
     
     *startPoint = CGPointMake(gradient.cx.valueAsPercentage, gradient.cy.valueAsPercentage);
     *endPoint = CGPointMake(gradient.fx.valueAsPercentage, gradient.fy.valueAsPercentage);
@@ -86,71 +76,46 @@
     return ret;
 }
 
-- (CGFloat)_handleTransform:(IJSVGTransform *)transform
-                     bounds:(CGRect)bounds
-                      index:(NSInteger)index
-                      value:(CGFloat)value
-{
-    // rotate transform, assume its based on percentages
-    // if lower then 0 is specified for 1 or 2
-    CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
-    if( transform.command == IJSVGTransformCommandRotate ) {
-        switch(index) {
-            case 1:
-            case 2: {
-                if(value<1.f) {
-                    return (max*value);
-                }
-                break;
-            }
-        }
-    }
-    return value;
-
-}
-
 - (void)drawInContextRef:(CGContextRef)ctx
-                    rect:(NSRect)rect
+              parentRect:(NSRect)parentRect
+             drawingRect:(NSRect)rect
+        absolutePosition:(CGPoint)absolutePosition
+                viewPort:(CGRect)viewBox
 {
-    CGRect bounds = rect;
-    for( IJSVGTransform * transform in self.transforms ) {
-        IJSVGTransformParameterModifier modifier = ^CGFloat(NSInteger index, CGFloat value) {
-            return [self _handleTransform:transform
-                                   bounds:bounds
-                                    index:index
-                                    value:value];
-        };
-        CGContextConcatCTM(ctx, [transform CGAffineTransformWithModifier:modifier]);
+    BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
+    CGFloat radius = self.radius.value;
+    CGPoint startPoint = CGPointZero;
+    CGPoint gradientPoint = CGPointZero;
+    
+    // transforms
+    CGAffineTransform absTransform = CGAffineTransformMakeTranslation(-absolutePosition.x,
+                                                                      -absolutePosition.y);
+    CGAffineTransform selfTransform = CGAffineTransformIdentity;
+    for(IJSVGTransform * transform in self.transforms) {
+        selfTransform = CGAffineTransformConcat(selfTransform, transform.CGAffineTransform);
     }
     
-    CGPoint sp = self.startPoint;
-    CGPoint ep = self.endPoint;
-    
-    if( self.startPoint.x == .5f ) {
-        sp.x = bounds.size.width*self.startPoint.x;
+    if(inUserSpace == YES) {
+        startPoint = CGPointMake(self.cx.value, self.cy.value);
+        CGRect rect = CGRectMake(startPoint.x, startPoint.y,
+                                 radius*2.f, radius*2.f);
+        rect = CGRectApplyAffineTransform(rect, selfTransform);
+        rect = CGRectApplyAffineTransform(rect, absTransform);
+        radius = CGRectGetHeight(rect)/2.f;
     }
     
-    if(self.startPoint.y == .5f) {
-        sp.y = bounds.size.height*self.startPoint.y;
+    gradientPoint = CGPointApplyAffineTransform(startPoint, selfTransform);
+    
+    if(inUserSpace == YES) {
+        gradientPoint = CGPointApplyAffineTransform(startPoint, absTransform);
+        gradientPoint.x -= CGRectGetMinX(parentRect);
+        gradientPoint.y -= CGRectGetMinY(parentRect);
     }
     
-    if(self.endPoint.x == .5f) {
-        ep.x = bounds.size.width*self.endPoint.x;
-    }
-    
-    if(self.endPoint.y == .5f) {
-        ep.y = bounds.size.height*self.endPoint.y;
-    }
-    
-    CGFloat r = self.radius.value;
-    if(r == .5f) {
-        r = (sp.x>sp.y?sp.x:sp.y);
-    }
-    
-    // actually perform the draw
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
-    CGGradientRef grad = self.CGGradient;
-    CGContextDrawRadialGradient(ctx, grad, sp, 0.f, ep, r, options);
+    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+        kCGGradientDrawsAfterEndLocation;
+    CGContextDrawRadialGradient(ctx, self.CGGradient, gradientPoint, 0, gradientPoint,
+                                radius, options);
 }
 
 @end

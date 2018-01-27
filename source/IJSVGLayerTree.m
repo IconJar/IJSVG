@@ -253,11 +253,6 @@
         
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
-        
-        // apply offsets
-        [self applyOffsetsToLayer:gradLayer
-                         fromNode:path.fillGradient];
-        
         layer.gradientFillLayer = gradLayer;
         
     } else if(self.fillColor == nil && path.fillPattern != nil) {
@@ -456,7 +451,11 @@
     
     // the gradient drawing layer
     IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
-    gradLayer.frame = CGPathGetBoundingBox(((IJSVGShapeLayer *)layer).path);
+    gradLayer.viewBox = self.viewBox;
+    gradLayer.frame = (CGRect) {
+        .origin = CGPointZero,
+        .size = CGPathGetBoundingBox(((IJSVGShapeLayer *)layer).path).size
+    };
     gradLayer.gradient = gradient;
     gradLayer.mask = mask;
     
@@ -467,16 +466,6 @@
     
     // display it
     [gradLayer setNeedsDisplay];
-    
-    if(path.fillGradient.units == IJSVGUnitUserSpaceOnUse) {
-        // move back if needed
-        gradLayer.frame = (CGRect){
-            .size = gradLayer.frame.size,
-            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
-                                  -fabs(gradLayer.frame.origin.y))
-        };
-    }
-    
     return gradLayer;
 }
 

@@ -26,6 +26,9 @@
                                   colors:(NSArray **)someColors;
 - (CGGradientRef)CGGradient;
 - (void)drawInContextRef:(CGContextRef)ctx
-                    rect:(NSRect)rect;
+              parentRect:(NSRect)parentRect
+             drawingRect:(NSRect)rect
+        absolutePosition:(CGPoint)absolutePosition
+                viewPort:(CGRect)viewBox;
 
 @end

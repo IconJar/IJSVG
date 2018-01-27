@@ -10,6 +10,7 @@
 
 @implementation IJSVGGradientLayer
 
+@synthesize viewBox;
 @synthesize gradient;
 
 - (void)dealloc
@@ -36,7 +37,12 @@
     }
     
     // draw the gradient
-    [self.gradient drawInContextRef:ctx rect:self.bounds];
+    NSRect absRect = [IJSVGLayer absoluteFrameOfLayer:self];
+    [self.gradient drawInContextRef:ctx
+                         parentRect:self.frame
+                        drawingRect:self.bounds
+                   absolutePosition:absRect.origin
+                           viewPort:self.viewBox];
 }
 
 @end

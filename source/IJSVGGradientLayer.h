@@ -15,6 +15,7 @@
     
 }
 
+@property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, retain) IJSVGGradient * gradient;
 
 @end

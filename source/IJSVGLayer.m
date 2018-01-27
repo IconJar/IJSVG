@@ -185,11 +185,11 @@
 
 + (CGRect)absoluteFrameOfLayer:(IJSVGLayer *)layer
 {
-    CGPoint point = CGPointZero;
+    CGPoint point = layer.frame.origin;
     CGSize size = layer.frame.size;
-    while(layer != nil) {
-        point.x += layer.frame.origin.x;
-        point.y += layer.frame.origin.y;
+    while(layer.superlayer != nil) {
+        point = [layer convertPoint:point
+                            toLayer:layer.superlayer];
         layer = (IJSVGLayer *)layer.superlayer;
     }
     return (CGRect){

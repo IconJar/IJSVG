@@ -62,7 +62,10 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                    rect:(NSRect)rect
+              parentRect:(NSRect)parentRect
+           drawingBounds:(NSRect)rect
+        absolutePosition:(CGPoint)absolutePosition
+                viewPort:(CGRect)viewBox
 {
     // grab the start and end point
     CGPoint aStartPoint = (CGPoint){

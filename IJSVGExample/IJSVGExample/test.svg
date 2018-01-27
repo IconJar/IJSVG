@@ -1,65 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="470px" height="470px" viewBox="0 0 470 470" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 41.2 (35397) - http://www.bohemiancoding.com/sketch -->
-    <title>icon</title>
-    <desc>Created with Sketch.</desc>
-    <defs>
-    	<linearGradient id="Gradient1">
-      <stop offset="5%" stop-color="white"/>
-      <stop offset="95%" stop-color="blue"/>
-    </linearGradient>
-    <linearGradient id="Gradient2" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="5%" stop-color="red"/>
-      <stop offset="95%" stop-color="orange"/>
-    </linearGradient>
-
-    <pattern id="Pattern" x="0" y="0" width=".25" height=".25">
-      <rect x="0" y="0" width="50" height="50" fill="skyblue"/>
-      <rect x="0" y="0" width="25" height="25" fill="url(#Gradient2)"/>
-      <circle cx="25" cy="25" r="20" fill="url(#Gradient1)" fill-opacity="0.5"/>
-    </pattern>
-
-        <linearGradient x1="50%" y1="100%" x2="50%" y2="-1.11022302e-14%" id="linearGradient-1">
-            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
-            <stop stop-color="#FFFFFF" stop-opacity="0.969231205" offset="100%"></stop>
-        </linearGradient>
-        <circle id="path-2" cx="224" cy="224" r="224"></circle>
-        <filter x="-50%" y="-50%" width="200%" height="200%" filterUnits="objectBoundingBox" id="filter-4">
-            <feOffset dx="0" dy="6" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
-            <feGaussianBlur stdDeviation="5.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
-            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.2 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
-        </filter>
-        <linearGradient x1="50%" y1="0%" x2="50%" y2="100%" id="linearGradient-5">
-            <stop stop-color="#55BFFD" offset="0%"></stop>
-            <stop stop-color="#26A6F0" offset="100%"></stop>
-        </linearGradient>
-        <circle id="path-6" cx="224" cy="224" r="224"></circle>
-        <mask id="mask-7" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="448" height="448" fill="white">
-            <use xlink:href="#path-6"></use>
-        </mask>
-        <mask id="mask-9" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="448" height="448" fill="white">
-            <use xlink:href="#path-6"></use>
-        </mask>
-    </defs>
-    <g id="app-icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="icon_512x512-copy" transform="translate(-21.000000, -27.000000)">
-            <g id="icon" transform="translate(32.000000, 32.000000)">
-                <mask id="mask-3" fill="white">
-                    <use xlink:href="#path-2"></use>
-                </mask>
-                <g id="Base">
-                    <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-2"></use>
-                    <use fill="url(#linearGradient-1)" fill-rule="evenodd" xlink:href="#path-2"></use>
-                    <use fill="#F5FCFF" fill-rule="evenodd" xlink:href="#path-2"></use>
-                </g>
-                <path d="M312.981898,194.27823 C320.167692,194.27823 325.345764,189.373163 325.345764,183.00155 C325.345764,167.709679 287.157479,157.515098 244.438379,157.515098 C239.907566,157.515098 237.965788,156.240775 237.965788,154.329291 C237.965788,147.957678 250.91097,146.683356 250.91097,137.125936 C250.91097,126.931355 238.613048,120.779618 223.07883,120.779618 C207.544612,120.779618 195.24669,126.931355 195.24669,137.125936 C195.24669,146.683356 208.191871,148.59484 208.191871,154.329291 C208.191871,157.515098 205.602834,157.515098 201.71928,157.515098 C159.000181,157.515098 121.459154,168.34684 121.459154,183.00155 C121.459154,189.373163 127.284486,194.27823 133.262013,194.27823 L312.981898,194.27823 Z M327.782546,231.8252 C343.316765,226.090748 340.080469,207.613071 324.512335,207.403843 L297.36137,207.403843 C286.357966,207.613071 269.529229,217.807651 269.529229,243.931265 C269.529229,265.59475 285.063448,277.700815 285.063448,303.824428 C285.063448,329.31088 274.060043,336.319654 255.28953,334.408171 C244.286125,333.133848 235.224498,321.664944 235.224498,310.833202 C235.224498,285.983911 252.053235,289.169718 252.053235,254.125845 C252.053235,219.081974 233.92998,208.250231 218.88749,207.403843 L124.298077,207.403843 C109.008978,208.250231 105.772682,226.72791 121.3069,232.462361 C132.310304,236.285329 130.368527,247.117071 121.3069,253.488685 C105.772682,263.046104 99.3000914,280.24946 101.889128,295.541331 L120.012382,391.752688 C123.895936,410.867527 140.724673,424.885076 160.789704,425.672448 L224.221094,425.672448 L287.652484,425.672448 C307.717515,424.885076 324.546251,410.867527 328.429805,391.752688 L346.55306,295.541331 C349.142097,279.612298 343.316765,262.408943 327.782546,252.851523 C318.72092,247.117071 316.779143,236.285329 327.782546,231.8252 Z" id="Shape" fill="url(#linearGradient-5)" mask="url(#mask-3)"></path>
-                <mask id="mask-8" fill="white">
-                    <use xlink:href="#path-6"></use>
-                </mask>
-                <g id="Base" stroke="url(#Pattern)" mask="url(#mask-7)" stroke-width="60">
-                    <use mask="url(#mask-9)" xlink:href="#path-6"></use>
-                </g>
-            </g>
-        </g>
-    </g>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+     width="595.279px" height="841.89px" viewBox="0 0 595.279 841.89" enable-background="new 0 0 595.279 841.89"
+     xml:space="preserve">
+<radialGradient id="SVGID_1_" cx="229.116" cy="650.3413" r="160.6544" gradientTransform="matrix(0.1736 0.9848 0.4924 -0.0868 -59.0956 137.9539)" gradientUnits="userSpaceOnUse">
+    <stop  offset="0" style="stop-color:#FFFFFF"/>
+    <stop  offset="0.0573" style="stop-color:#CECECE"/>
+    <stop  offset="0.1221" style="stop-color:#9E9E1F"/>
+    <stop  offset="0.1907" style="stop-color:#74D974"/>
+    <stop  offset="0.2638" style="stop-color:#5050D1"/>
+    <stop  offset="0.5767" style="stop-color:#D44033"/>
+    <stop  offset="0.6687" style="stop-color:#D000FF"/>
+    <stop  offset="0.773" style="stop-color:#0C0CE3"/>
+    <stop  offset="0.8528" style="stop-color:#030303"/>
+    <stop  offset="0.9632" style="stop-color:#000000"/>
+</radialGradient>
+<ellipse fill="url(#SVGID_1_)" stroke="#000000" stroke-miterlimit="10" cx="251.667" cy="315.818" rx="185.064" ry="131.819"/>
 </svg>
