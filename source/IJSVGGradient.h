@@ -25,9 +25,8 @@ CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint);
                                   colors:(NSArray **)someColors;
 - (CGGradientRef)CGGradient;
 - (void)drawInContextRef:(CGContextRef)ctx
-              parentRect:(NSRect)parentRect
-             drawingRect:(NSRect)rect
-        absolutePosition:(CGPoint)absolutePosition
+              objectRect:(NSRect)objectRect
+       absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox;
 
 @end

@@ -60,48 +60,40 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              parentRect:(NSRect)parentRect
-             drawingRect:(NSRect)rect
-        absolutePosition:(CGPoint)absolutePosition
+              objectRect:(NSRect)objectRect
+       absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
-    CGAffineTransform absTransform = IJSVGAbsoluteTransform(absolutePosition);
+    CGAffineTransform absTransform = absoluteTransform;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
 #pragma mark User Space On Use
     CGContextSaveGState(ctx);
     {
         if(inUserSpace == YES) {
-            gradientStartPoint = CGPointMake([self.x1 computeValue:CGRectGetWidth(viewBox)],
-                                             [self.y1 computeValue:CGRectGetHeight(viewBox)]);
-            gradientEndPoint = CGPointMake([self.x2 computeValue:CGRectGetWidth(viewBox)],
-                                           [self.y2 computeValue:CGRectGetHeight(viewBox)]);
+            CGFloat width = CGRectGetWidth(viewBox);
+            CGFloat height = CGRectGetHeight(viewBox);
+            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                             [self.y1 computeValue:height]);
             
+            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                           [self.y2 computeValue:height]);
             
             // transform absolute - due to user space
             CGContextConcatCTM(ctx, absTransform);
         } else {
 #pragma mark Object Bounding Box
-            gradientStartPoint = CGPointMake([self.x1 computeValue:CGRectGetWidth(parentRect)],
-                                             [self.y1 computeValue:CGRectGetHeight(parentRect)]);
-            gradientEndPoint = CGPointMake([self.x2 computeValue:CGRectGetWidth(parentRect)],
-                                           [self.y2 computeValue:CGRectGetHeight(parentRect)]);
+            CGFloat width = CGRectGetWidth(objectRect);
+            CGFloat height = CGRectGetHeight(objectRect);
+            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                             [self.y1 computeValue:height]);
+            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                           [self.y2 computeValue:height]);
         }
-        
-        // check rotation
-        CGFloat rotation = atan2(absTransform.b, absTransform.d);
-        if(fabs(rotation) > .01) {
-            CGAffineTransform tr = CGAffineTransformMakeTranslation(.5f, .5f);
-            tr = CGAffineTransformRotate(tr, rotation);
-            tr = CGAffineTransformTranslate(tr, -.5f, -.5f);
-            gradientStartPoint = CGPointApplyAffineTransform(gradientStartPoint, tr);
-            gradientEndPoint = CGPointApplyAffineTransform(gradientEndPoint, tr);
-        }
-        
     
         // transform the context
         CGContextConcatCTM(ctx, selfTransform);

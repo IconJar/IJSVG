@@ -57,6 +57,10 @@
         [gradient setValue:unit
                     forKey:kv[key]];
     }
+    
+    // needs fixing
+    gradient.fx = gradient.cx;
+    gradient.fy = gradient.cy;
   
     if( gradient.gradient != nil ) {
         return nil;
@@ -72,18 +76,18 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              parentRect:(NSRect)parentRect
-             drawingRect:(NSRect)rect
-        absolutePosition:(CGPoint)absolutePosition
+              objectRect:(NSRect)objectRect
+       absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = self.radius.value;
     CGPoint startPoint = CGPointZero;
-    CGPoint gradientPoint = CGPointZero;
+    CGPoint gradientStartPoint = CGPointZero;
+    CGPoint gradientEndPoint = CGPointZero;
     
     // transforms
-    CGAffineTransform absTransform = IJSVGAbsoluteTransform(absolutePosition);
+    CGAffineTransform absTransform = absoluteTransform;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
     CGContextSaveGState(ctx);
@@ -99,35 +103,37 @@
             rect = CGRectApplyAffineTransform(rect, absTransform);
             radius = CGRectGetHeight(rect)/2.f;
             
-            gradientPoint = startPoint;
-            
-            // move it back
-            gradientPoint.x -= CGRectGetMinX(parentRect);
-            gradientPoint.y -= CGRectGetMinY(parentRect);
-            
+            gradientStartPoint = startPoint;
+            gradientEndPoint = CGPointMake(self.fx.value, self.fy.value);
+                        
             // apply the absolute position
             CGContextConcatCTM(ctx, absTransform);
         } else {
 #pragma mark Object Bounding Box
             // compute size based on percentages
-            CGFloat x = [self.cx computeValue:CGRectGetWidth(parentRect)];
-            CGFloat y = [self.cy computeValue:CGRectGetHeight(parentRect)];
+            CGFloat x = [self.cx computeValue:CGRectGetWidth(objectRect)];
+            CGFloat y = [self.cy computeValue:CGRectGetHeight(objectRect)];
             startPoint = CGPointMake(x, y);
-            CGFloat val = MIN(CGRectGetWidth(parentRect), CGRectGetWidth(parentRect));
+            CGFloat val = MIN(CGRectGetWidth(objectRect), CGRectGetHeight(objectRect));
             radius = [self.radius computeValue:val];
             
-            gradientPoint = startPoint;
+            CGFloat ex = [self.fx computeValue:CGRectGetWidth(objectRect)];
+            CGFloat ey = [self.fy computeValue:CGRectGetHeight(objectRect)];
+            
+            gradientEndPoint = CGPointMake(ex, ey);
+            gradientStartPoint = startPoint;
             
             // transform if width or height is not equal
-            if(CGRectGetWidth(rect) != CGRectGetHeight(rect)) {
-                CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientPoint.x,
-                                                                        gradientPoint.y);
-                if(CGRectGetWidth(rect) > CGRectGetHeight(rect)) {
-                    tr = CGAffineTransformScale(tr, CGRectGetWidth(rect)/CGRectGetHeight(rect), 1);
+            if(CGRectGetWidth(objectRect) != CGRectGetHeight(objectRect)) {
+                CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
+                                                                        gradientStartPoint.y);
+                if(CGRectGetWidth(objectRect) > CGRectGetHeight(objectRect)) {
+                    tr = CGAffineTransformScale(tr, CGRectGetWidth(objectRect)/CGRectGetHeight(objectRect), 1);
                 } else {
-                    tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(rect)/CGRectGetWidth(rect));
+                    tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(objectRect)/CGRectGetWidth(objectRect));
                 }
-                tr = CGAffineTransformTranslate(tr, -gradientPoint.x, -gradientPoint.y);
+                tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
+                selfTransform = CGAffineTransformConcat(tr, selfTransform);
             }
         }
 
@@ -138,7 +144,8 @@
         // draw the gradient
         CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
             kCGGradientDrawsAfterEndLocation;
-        CGContextDrawRadialGradient(ctx, self.CGGradient, gradientPoint, 0, gradientPoint,
+        CGContextDrawRadialGradient(ctx, self.CGGradient,
+                                    gradientStartPoint, 0, gradientEndPoint,
                                     radius, options);
     };
     CGContextRestoreGState(ctx);

@@ -190,17 +190,23 @@ CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint) {
 
 + (CGRect)absoluteFrameOfLayer:(IJSVGLayer *)layer
 {
-    CGPoint point = layer.frame.origin;
-    CGSize size = layer.frame.size;
-    while(layer.superlayer != nil) {
-        point = [layer convertPoint:point
-                            toLayer:layer.superlayer];
-        layer = (IJSVGLayer *)layer.superlayer;
+    IJSVGLayer * top = layer;
+    while(top.superlayer != nil) {
+        top = (IJSVGLayer *)top.superlayer;
     }
-    return (CGRect){
-        .origin = point,
-        .size = size
-    };
+    return [layer convertRect:layer.frame
+                      toLayer:top];
+}
+
++ (CGAffineTransform)transformAbsolute:(IJSVGLayer *)layer
+{
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    IJSVGLayer * aLayer = (IJSVGLayer *)layer.superlayer;
+    while(aLayer != nil) {
+        transform = CGAffineTransformConcat(transform, aLayer.affineTransform);
+        aLayer = (IJSVGLayer *)aLayer.superlayer;
+    }
+    return transform;
 }
 
 @end
