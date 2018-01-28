@@ -58,9 +58,27 @@
                     forKey:kv[key]];
     }
     
-    // needs fixing
     gradient.fx = gradient.cx;
     gradient.fy = gradient.cy;
+    
+    // needs fixing
+    NSString * fx = [element attributeForName:@"fx"].stringValue;
+    if(fx != nil) {
+        if(fx.floatValue < 1.f) {
+            gradient.fx = [IJSVGUnitLength unitWithPercentageString:fx];
+        } else {
+            gradient.fx = [IJSVGUnitLength unitWithString:fx];
+        }
+    }
+    
+    NSString * fy = [element attributeForName:@"fy"].stringValue;
+    if(fx != nil) {
+        if(fx.floatValue < 1.f) {
+            gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
+        } else {
+            gradient.fy = [IJSVGUnitLength unitWithString:fy];
+        }
+    }
   
     if( gradient.gradient != nil ) {
         return nil;
