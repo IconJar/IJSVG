@@ -432,11 +432,15 @@
 }
 
 - (id)definedObjectForID:(NSString *)anID
+              xmlElement:(NSXMLElement **)element
 {
     // check base def nodes first, then check rest of document
     NSXMLElement * parseElement = _baseDefNodes[anID] ?: _defNodes[anID];
     if(parseElement != nil) {
         // parse the block
+        if(element != nil && element != NULL) {
+            *element = parseElement;
+        }
         IJSVGGroup * group = [[[IJSVGGroup alloc] init] autorelease];
         [self _parseBaseBlock:parseElement
                     intoGroup:group
@@ -448,6 +452,12 @@
         return [group defForID:anID];
     }
     return nil;
+}
+
+- (id)definedObjectForID:(NSString *)anID
+{
+    return [self definedObjectForID:anID
+                         xmlElement:nil];
 }
 
 - (BOOL)isFont
@@ -902,45 +912,36 @@
             
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
-            IJSVGNode * node = [self definedObjectForID:xlinkID];
+            NSXMLElement * referenceElement;
+            IJSVGNode * node = [self definedObjectForID:xlinkID
+                                             xmlElement:&referenceElement];
             if( node != nil ) {
                 // we are a clone
+                NSXMLElement * elementCopy = [self mergedElement:element
+                                            withReferenceElement:referenceElement];
+                
                 IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
                 grad.type = aType;
-                [grad applyPropertiesFromNode:node];
-                
-                grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
-                CGPoint startPoint, endPoint;
-                [IJSVGLinearGradient parseGradient:element
-                                          gradient:grad
-                                        startPoint:&startPoint
-                                          endPoint:&endPoint];
+                grad.gradient = [IJSVGLinearGradient parseGradient:elementCopy
+                                                          gradient:grad];
                 
                 [self _setupDefaultsForNode:grad];
-                [self _parseElementForCommonAttributes:element
+                [self _parseElementForCommonAttributes:elementCopy
                                                   node:grad
                                       ignoreAttributes:nil];
-                grad.startPoint = startPoint;
-                grad.endPoint = endPoint;
                 [parentGroup addDef:grad];
                 break;
             }
             
             IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
             gradient.type = aType;
-            
-            CGPoint startPoint, endPoint;
             gradient.gradient = [IJSVGLinearGradient parseGradient:element
-                                                          gradient:gradient
-                                                        startPoint:&startPoint
-                                                          endPoint:&endPoint];
+                                                          gradient:gradient];
             
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
                                               node:gradient
                                   ignoreAttributes:nil];
-            gradient.startPoint = startPoint;
-            gradient.endPoint = endPoint;
             [parentGroup addDef:gradient];
             break;
         }
@@ -950,41 +951,32 @@
             
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
-            IJSVGNode * node = [self definedObjectForID:xlinkID];
-            if( node != nil )
-            {
+            NSXMLElement * referenceElement;
+            IJSVGNode * node = [self definedObjectForID:xlinkID
+                                             xmlElement:&referenceElement];
+            if( node != nil ) {
                 // we are a clone
                 IJSVGRadialGradient * grad = [[[IJSVGRadialGradient alloc] init] autorelease];
                 grad.type = aType;
-                [grad applyPropertiesFromNode:node];
-                grad.gradient = [[[(IJSVGGradient *)node gradient] copy] autorelease];
                 
-                CGPoint startPoint, endPoint;
-                [IJSVGRadialGradient parseGradient:element
-                                          gradient:grad
-                                        startPoint:&startPoint
-                                          endPoint:&endPoint];
+                NSXMLElement * elementCopy = [self mergedElement:element
+                                            withReferenceElement:referenceElement];
+                
+                grad.gradient = [IJSVGRadialGradient parseGradient:elementCopy
+                                                          gradient:grad];
                 
                 [self _setupDefaultsForNode:grad];
-                [self _parseElementForCommonAttributes:element
+                [self _parseElementForCommonAttributes:elementCopy
                                                   node:grad
                                       ignoreAttributes:nil];
-                grad.startPoint = startPoint;
-                grad.endPoint = endPoint;
                 [parentGroup addDef:grad];
                 break;
             }
             
             IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
             gradient.type = aType;
-            
-            CGPoint startPoint, endPoint;
             gradient.gradient = [IJSVGRadialGradient parseGradient:element
-                                                          gradient:gradient
-                                                        startPoint:&startPoint
-                                                          endPoint:&endPoint];
-            gradient.startPoint = startPoint;
-            gradient.endPoint = endPoint;
+                                                          gradient:gradient];
             
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
@@ -1058,6 +1050,18 @@
         }
             
     }
+}
+
+- (NSXMLElement *)mergedElement:(NSXMLElement *)element
+           withReferenceElement:(NSXMLElement *)reference
+{
+    NSXMLElement * copy = [[reference copy] autorelease];
+    for(NSXMLNode * attribute in element.attributes) {
+        [copy removeAttributeForName:attribute.name];
+        attribute = [[attribute copy] autorelease];
+        [copy addAttribute:attribute];
+    }
+    return copy;
 }
 
 - (void)_parseBlock:(NSXMLElement *)anElement

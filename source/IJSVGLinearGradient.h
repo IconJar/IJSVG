@@ -12,8 +12,6 @@
 @interface IJSVGLinearGradient : IJSVGGradient
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
-                     gradient:(IJSVGLinearGradient *)aGradient
-                   startPoint:(CGPoint *)startPoint
-                     endPoint:(CGPoint *)endPoint;
+                     gradient:(IJSVGLinearGradient *)aGradient;
 
 @end

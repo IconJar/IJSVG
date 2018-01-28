@@ -11,7 +11,6 @@
 @implementation IJSVGGradient
 
 @synthesize gradient, CGGradient;
-@synthesize angle, startPoint, endPoint;
 @synthesize x1, x2, y1, y2;
 
 - (void)dealloc
@@ -31,8 +30,6 @@
 {
     IJSVGGradient * clone = [super copyWithZone:zone];
     clone.gradient = [[self.gradient copy] autorelease];
-    clone.startPoint = self.startPoint;
-    clone.endPoint = self.endPoint;
     return clone;
 }
 
@@ -40,14 +37,11 @@
                                   colors:(NSArray **)someColors
 {
     // find each stop element
-    NSArray * stops = [element nodesForXPath:@"stop"
-                                       error:nil];
-    
+    NSArray * stops = [element children];
     NSMutableArray * colors = [[[NSMutableArray alloc] initWithCapacity:stops.count] autorelease];
     CGFloat * stopsParams = (CGFloat *)malloc(stops.count*sizeof(CGFloat));
     NSInteger i = 0;
-    for( NSXMLElement * stop in stops )
-    {
+    for( NSXMLElement * stop in stops ) {
         // find the offset
         CGFloat offset = [stop attributeForName:@"offset"].stringValue.floatValue;
         if( offset > 1.f ) {

@@ -34,16 +34,12 @@
     grad.cx = self.cx;
     grad.cy = self.cy;
     grad.radius = self.radius;
-    grad.startPoint = self.startPoint;
-    grad.endPoint = self.endPoint;
     return grad;
 }
 
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGRadialGradient *)gradient
-                   startPoint:(CGPoint *)startPoint
-                     endPoint:(CGPoint *)endPoint
 {
     // cx defaults to 50% if not specified
     NSDictionary * kv = @{@"cx":@"cx",
@@ -66,9 +62,6 @@
         return nil;
     }
     
-    *startPoint = CGPointMake(gradient.cx.valueAsPercentage, gradient.cy.valueAsPercentage);
-    *endPoint = CGPointMake(gradient.fx.valueAsPercentage, gradient.fy.valueAsPercentage);
-    
     NSArray * colors = nil;
     CGFloat * colorStops = [[self class] computeColorStopsFromString:element colors:&colors];
     NSGradient * ret = [[[NSGradient alloc] initWithColors:colors
@@ -87,40 +80,44 @@
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = self.radius.value;
     CGPoint startPoint = CGPointZero;
-    __block CGPoint gradientPoint = CGPointZero;
+    CGPoint gradientPoint = CGPointZero;
     
     // transforms
     CGAffineTransform absTransform = IJSVGAbsoluteTransform(absolutePosition);
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
-    if(inUserSpace == YES) {
-        startPoint = CGPointMake(self.cx.value, self.cy.value);
-        CGRect rect = CGRectMake(startPoint.x, startPoint.y,
-                                 radius*2.f, radius*2.f);
-        rect = CGRectApplyAffineTransform(rect, selfTransform);
-        rect = CGRectApplyAffineTransform(rect, absTransform);
-        radius = CGRectGetHeight(rect)/2.f;
-    } else {
-        // compute size based on percentages
-        CGFloat x = [self.cx computeValue:CGRectGetWidth(parentRect)];
-        CGFloat y = [self.cy computeValue:CGRectGetHeight(parentRect)];
-        startPoint = CGPointMake(x, y);
-        CGFloat val = MIN(CGRectGetWidth(parentRect),
-                          CGRectGetWidth(parentRect));
-        radius = [self.radius computeValue:val];
-    }
-    
-    gradientPoint = startPoint;
-    
-    // make sure we save the context...just incase
-    // we screw it up for something else
     CGContextSaveGState(ctx);
     {
+#pragma mark User Space On Use
         if(inUserSpace == YES) {
+            CGFloat rad = radius*2.f;
+            startPoint = CGPointMake(self.cx.value, self.cy.value);
+            
+            // work out the new radius
+            CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
+            rect = CGRectApplyAffineTransform(rect, selfTransform);
+            rect = CGRectApplyAffineTransform(rect, absTransform);
+            radius = CGRectGetHeight(rect)/2.f;
+            
+            gradientPoint = startPoint;
+            
+            // move it back
             gradientPoint.x -= CGRectGetMinX(parentRect);
             gradientPoint.y -= CGRectGetMinY(parentRect);
+            
+            // apply the absolute position
             CGContextConcatCTM(ctx, absTransform);
         } else {
+#pragma mark Object Bounding Box
+            // compute size based on percentages
+            CGFloat x = [self.cx computeValue:CGRectGetWidth(parentRect)];
+            CGFloat y = [self.cy computeValue:CGRectGetHeight(parentRect)];
+            startPoint = CGPointMake(x, y);
+            CGFloat val = MIN(CGRectGetWidth(parentRect), CGRectGetWidth(parentRect));
+            radius = [self.radius computeValue:val];
+            
+            gradientPoint = startPoint;
+            
             // transform if width or height is not equal
             if(CGRectGetWidth(rect) != CGRectGetHeight(rect)) {
                 CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientPoint.x,
@@ -134,9 +131,10 @@
             }
         }
 
+#pragma mark Default drawing
         // transform the context
         CGContextConcatCTM(ctx, selfTransform);
-        
+    
         // draw the gradient
         CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
             kCGGradientDrawsAfterEndLocation;
