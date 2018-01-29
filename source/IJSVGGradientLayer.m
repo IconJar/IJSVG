@@ -12,6 +12,8 @@
 
 @synthesize viewBox;
 @synthesize gradient;
+@synthesize absoluteTransform;
+@synthesize objectRect;
 
 - (void)dealloc
 {
@@ -37,17 +39,13 @@
     }
     
     // draw the gradient
-    NSRect rect = [IJSVGLayer absoluteFrameOfLayer:self];
-    CGAffineTransform absoluteTransform = [IJSVGLayer transformAbsolute:(IJSVGLayer *)self.superlayer];
-    NSRect frame = self.superlayer.frame;
-    frame.origin = rect.origin;
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
+                                                               -CGRectGetMinY(objectRect));
+    CGAffineTransform transform = CGAffineTransformConcat(absoluteTransform,trans);
     
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(frame),
-                                                               -CGRectGetMinY(frame));
-    absoluteTransform = CGAffineTransformConcat(absoluteTransform, trans);
     [self.gradient drawInContextRef:ctx
-                         objectRect:frame
-                   absoluteTransform:absoluteTransform
+                         objectRect:objectRect
+                  absoluteTransform:transform
                            viewPort:self.viewBox];
 }
 

@@ -181,32 +181,6 @@ CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint) {
         return; 
     } 
     [self _customRenderInContext:ctx]; 
-} 
-
-- (CGPoint)absoluteOrigin
-{
-    return [self.class absoluteFrameOfLayer:self].origin;
-}
-
-+ (CGRect)absoluteFrameOfLayer:(IJSVGLayer *)layer
-{
-    IJSVGLayer * top = layer;
-    while(top.superlayer != nil) {
-        top = (IJSVGLayer *)top.superlayer;
-    }
-    return [layer convertRect:layer.frame
-                      toLayer:top];
-}
-
-+ (CGAffineTransform)transformAbsolute:(IJSVGLayer *)layer
-{
-    CGAffineTransform transform = CGAffineTransformIdentity;
-    IJSVGLayer * aLayer = (IJSVGLayer *)layer.superlayer;
-    while(aLayer != nil) {
-        transform = CGAffineTransformConcat(transform, aLayer.affineTransform);
-        aLayer = (IJSVGLayer *)aLayer.superlayer;
-    }
-    return transform;
 }
 
 @end

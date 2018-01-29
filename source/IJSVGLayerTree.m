@@ -194,16 +194,19 @@
 }
 
 - (IJSVGShapeLayer *)basicLayerForPath:(IJSVGPath *)path
+                   originalBoundingBox:(CGRect *)originalBoundingBox
 {
     // setup path and layer
     IJSVGShapeLayer * layer = [[[IJSVGShapeLayer alloc] init] autorelease];
     CGPathRef introPath = [path newPathRefByAutoClosingPath:NO];
     
-    CGRect bounds = [self correctedBounds:CGPathGetBoundingBox(introPath)];
+    *originalBoundingBox = CGRectIntegral(CGPathGetBoundingBox(introPath));
+    CGRect bounds = [self correctedBounds:*originalBoundingBox];
     
     // zero back the path
     CGAffineTransform trans = CGAffineTransformMakeTranslation(-bounds.origin.x,
                                                                -bounds.origin.y);
+    
     CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(introPath, &trans);
     layer.path = transformedPath;
     
@@ -212,7 +215,7 @@
     CGPathRelease(introPath);
 
     // set the bounds
-    layer.frame = bounds;
+    layer.frame = CGRectIntegral(bounds);
     
     // basic fill color and rule
     layer.fillColor = nil;
@@ -229,6 +232,18 @@
     return mask;
 }
 
+- (CGAffineTransform)absoluteTransform:(IJSVGNode *)node
+{
+    CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
+    node = node.parentNode;
+    while(node != nil) {
+        CGAffineTransform trans = IJSVGConcatTransforms(node.transforms);
+        parentAbsoluteTransform = CGAffineTransformConcat(trans,parentAbsoluteTransform);
+        node = node.parentNode;
+    }
+    return parentAbsoluteTransform;
+}
+
 - (IJSVGLayer *)layerForPath:(IJSVGPath *)path
 {
     // is there a sub SVG?
@@ -238,7 +253,10 @@
     }
     
     // garb the basic shape layer
-    IJSVGShapeLayer * layer = [self basicLayerForPath:path];
+    CGRect originalShapeBounds;
+    IJSVGShapeLayer * layer = [self basicLayerForPath:path
+                                  originalBoundingBox:&originalShapeBounds];
+    
     BOOL hasStroke = (path.strokeColor != nil ||
                       path.strokePattern != nil ||
                       path.strokeGradient != nil);
@@ -249,7 +267,8 @@
         // create the gradient
         IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
                                                             gradient:path.fillGradient
-                                                            fromNode:path];
+                                                            fromNode:path
+                                                          objectRect:originalShapeBounds];
         
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
@@ -444,6 +463,7 @@
 - (IJSVGGradientLayer *)gradientLayerForLayer:(IJSVGShapeLayer *)layer
                                      gradient:(IJSVGGradient *)gradient
                                      fromNode:(IJSVGNode *)path
+                                   objectRect:(CGRect)objectRect
 {
     // add the mask
     IJSVGShapeLayer * mask = [self layerMaskFromLayer:layer
@@ -454,6 +474,9 @@
     gradLayer.viewBox = self.viewBox;
     gradLayer.frame = layer.bounds;
     gradLayer.gradient = gradient;
+    gradLayer.absoluteTransform = [self absoluteTransform:path];
+    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect,
+                                                      gradLayer.absoluteTransform);
     gradLayer.mask = mask;
     
     // is there a fill opacity?
@@ -748,31 +771,6 @@
     for(IJSVGLayer * sublayer in layer.sublayers) {
         [self log:(IJSVGLayer *)sublayer
             depth:depth++];
-    }
-}
-
-+ (void)debug:(IJSVGLayer *)rootLayer
-{
-    NSMutableArray * toAdd = [[[NSMutableArray alloc] init] autorelease];
-    [IJSVGLayer recursivelyWalkLayer:rootLayer
-                           withBlock:^(CALayer *layer, BOOL isMask)
-    {
-        layer.borderColor = NSColor.greenColor.CGColor;
-        layer.borderWidth = 3.f;
-        
-        // add some text
-        NSRect abs = [IJSVGLayer absoluteFrameOfLayer:(IJSVGLayer *)layer];
-        IJSVGShapeLayer * shapeLayer = [[[IJSVGShapeLayer alloc] init] autorelease];
-        NSBezierPath * path = [NSBezierPath bezierPathWithRect:NSMakeRect(abs.origin.x, abs.origin.y,
-                                                                          10.f, 10.f)];
-        CGPathRef nPath = [IJSVGUtils newCGPathFromBezierPath:path];
-        shapeLayer.path = nPath;
-        CGPathRelease(nPath);
-        [toAdd addObject:shapeLayer];
-    }];
-    
-    for(IJSVGShapeLayer * l in toAdd) {
-        [rootLayer addSublayer:l];
     }
 }
 

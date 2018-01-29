@@ -38,6 +38,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
 @property ( nonatomic, assign ) NSInteger parameterCount;
 @property ( nonatomic, assign ) NSInteger sort;
 
+NSString * IJSVGDebugAffineTransform(CGAffineTransform transform);
+NSString * IJSVGDebugTransforms(NSArray<IJSVGTransform *> * transforms);
 void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransformApplyBlock block);
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms);
 

@@ -105,7 +105,6 @@
     CGPoint gradientEndPoint = CGPointZero;
     
     // transforms
-    CGAffineTransform absTransform = absoluteTransform;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
     CGContextSaveGState(ctx);
@@ -118,14 +117,15 @@
             // work out the new radius
             CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
             rect = CGRectApplyAffineTransform(rect, selfTransform);
-            rect = CGRectApplyAffineTransform(rect, absTransform);
+            rect = CGRectApplyAffineTransform(rect, absoluteTransform);
             radius = CGRectGetHeight(rect)/2.f;
             
             gradientStartPoint = startPoint;
             gradientEndPoint = CGPointMake(self.fx.value, self.fy.value);
+            NSLog(@"%@ - %@",self.fx,self.fy);
                         
             // apply the absolute position
-            CGContextConcatCTM(ctx, absTransform);
+            CGContextConcatCTM(ctx, absoluteTransform);
         } else {
 #pragma mark Object Bounding Box
             // compute size based on percentages
@@ -163,7 +163,7 @@
         CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
             kCGGradientDrawsAfterEndLocation;
         CGContextDrawRadialGradient(ctx, self.CGGradient,
-                                    gradientStartPoint, 0, gradientEndPoint,
+                                    gradientEndPoint, 0, gradientStartPoint,
                                     radius, options);
     };
     CGContextRestoreGState(ctx);

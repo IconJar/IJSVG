@@ -882,7 +882,7 @@
             IJSVGGroup * subGroup = [[[IJSVGGroup alloc] init] autorelease];
             subGroup.parentNode = parentGroup;
             [subGroup addChild:node];
-            node.parentNode = subGroup;
+            node.parentNode = parentGroup;
             
             // is there a width and height?
             CGFloat x = [element attributeForName:(NSString *)IJSVGAttributeX].stringValue.floatValue;

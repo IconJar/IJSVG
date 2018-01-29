@@ -33,6 +33,22 @@
     return trans;
 }
 
+NSString * IJSVGDebugAffineTransform(CGAffineTransform transform)
+{
+    NSMutableArray * strings = [[[NSMutableArray alloc] init] autorelease];
+    [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform]];
+    return [strings componentsJoinedByString:@" "];
+}
+
+NSString * IJSVGDebugTransforms(NSArray<IJSVGTransform *> * transforms)
+{
+    NSMutableArray * strings = [[[NSMutableArray alloc] init] autorelease];
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform *transform) {
+        [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform.CGAffineTransform]];
+    });
+    return [strings componentsJoinedByString:@" "];
+}
+
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms)
 {
     __block CGAffineTransform trans = CGAffineTransformIdentity;
@@ -534,6 +550,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
     }
     
     return trans;
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@ %@",[super description],
+            [self.class affineTransformToSVGTransformAttributeString:self.CGAffineTransform]];
 }
 
 
