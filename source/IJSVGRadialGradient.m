@@ -122,7 +122,6 @@
             
             gradientStartPoint = startPoint;
             gradientEndPoint = CGPointMake(self.fx.value, self.fy.value);
-            NSLog(@"%@ - %@",self.fx,self.fy);
                         
             // apply the absolute position
             CGContextConcatCTM(ctx, absoluteTransform);
