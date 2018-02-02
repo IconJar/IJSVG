@@ -19,6 +19,7 @@
 @synthesize lineCapStyle;
 @synthesize lineJoinStyle;
 @synthesize renderingBackingScaleHelper;
+@synthesize renderingEngine;
 
 - (void)dealloc
 {
@@ -28,6 +29,7 @@
     [_group release], _group = nil;
     [_layerTree release], _layerTree = nil;
     [_replacementColors release], _replacementColors = nil;
+    [_quartzRenderer release], _quartzRenderer = nil;
     [super dealloc];
 }
 
@@ -333,6 +335,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
+    renderingEngine = IJSVGRenderingEngineQuartz;
     _lastProposedBackingScale = 1.f;
 }
 
@@ -557,6 +560,7 @@
 
 - (CGFloat)computeBackingScale:(CGFloat)actualScale
 {
+    _backingScale = actualScale;
     return (CGFloat)(_scale + actualScale);
 }
 
@@ -648,7 +652,27 @@
             }
             
             // render the layers
-            [self.layer renderInContext:ref];
+            switch(self.renderingEngine) {
+                // CoreGraphics / Quartz
+                case IJSVGRenderingEngineQuartz: {
+                    if(_quartzRenderer == nil) {
+                        // init the renderer if its not already defined
+                        _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
+                    }
+                    _quartzRenderer.scale = _scale;
+                    _quartzRenderer.backingScale = _backingScale;
+                    _quartzRenderer.viewPort = viewPort;
+                    
+                    // render it
+                    [_quartzRenderer renderLayer:self.layer
+                                       inContext:ref];
+                    break;
+                }
+                // CALayer tree
+                case IJSVGRenderingEngineLayered: {
+                    [self.layer renderInContext:ref];
+                }
+            }
             IJSVGEndTransactionLock();
         }
         @catch (NSException *exception) {
@@ -681,9 +705,7 @@
     
     // walk the tree
     void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
-        if(((IJSVGLayer *)layer).requiresBackingScaleHelp == YES) {
-            ((IJSVGLayer *)layer).backingScaleFactor = scale;
-        }
+        ((IJSVGLayer *)layer).backingScaleFactor = scale;
     };
     
     // gogogo

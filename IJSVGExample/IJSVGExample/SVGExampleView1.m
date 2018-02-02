@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [[IJSVG svgNamed:@"paperplane"] retain];
+    return [[IJSVG svgNamed:@"heart"] retain];
 }
 
 @end
