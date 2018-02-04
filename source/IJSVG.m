@@ -335,7 +335,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    renderingEngine = IJSVGRenderingEngineCoreGraphics;
+    renderingEngine = IJSVGRenderingEngineCoreAnimation;
     _lastProposedBackingScale = 1.f;
 }
 
