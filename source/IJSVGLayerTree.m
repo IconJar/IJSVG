@@ -338,7 +338,8 @@
             // create the gradient
             IJSVGGradientLayer * gradLayer = [self gradientStrokeLayerForLayer:layer
                                                                       gradient:path.strokeGradient
-                                                                      fromNode:path];
+                                                                      fromNode:path
+                                                                    objectRect:originalShapeBounds];
             
             moveStrokeLayer = YES;
             gradLayer.mask = strokeLayer;
@@ -429,10 +430,15 @@
 - (IJSVGGradientLayer *)gradientStrokeLayerForLayer:(IJSVGShapeLayer *)layer
                                            gradient:(IJSVGGradient *)gradient
                                            fromNode:(IJSVGNode *)path
+                                         objectRect:(CGRect)objectRect
 {
     // the gradient drawing layer
     IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
     gradLayer.gradient = gradient;
+    gradLayer.frame = layer.bounds;
+    gradLayer.absoluteTransform = [self absoluteTransform:path];
+    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
+    
     
     // is there a fill opacity?
     if(path.fillOpacity.value != 0.f) {
@@ -446,16 +452,6 @@
     
     // display it
     [gradLayer setNeedsDisplay];
-    
-    if(path.fillGradient.units == IJSVGUnitUserSpaceOnUse) {
-        // move back if needed
-        gradLayer.frame = (CGRect){
-            .size = gradLayer.frame.size,
-            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
-                                  -fabs(gradLayer.frame.origin.y))
-        };
-    }
-    
     return gradLayer;
 }
 
@@ -475,8 +471,7 @@
     gradLayer.frame = layer.bounds;
     gradLayer.gradient = gradient;
     gradLayer.absoluteTransform = [self absoluteTransform:path];
-    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect,
-                                                      gradLayer.absoluteTransform);
+    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
     gradLayer.mask = mask;
     
     // is there a fill opacity?
