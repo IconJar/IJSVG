@@ -335,7 +335,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    renderingEngine = IJSVGRenderingEngineQuartz;
+    renderingEngine = IJSVGRenderingEngineCoreGraphics;
     _lastProposedBackingScale = 1.f;
 }
 
@@ -654,7 +654,7 @@
             // render the layers
             switch(self.renderingEngine) {
                 // CoreGraphics / Quartz
-                case IJSVGRenderingEngineQuartz: {
+                case IJSVGRenderingEngineCoreGraphics: {
                     if(_quartzRenderer == nil) {
                         // init the renderer if its not already defined
                         _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
@@ -669,7 +669,7 @@
                     break;
                 }
                 // CALayer tree
-                case IJSVGRenderingEngineLayered: {
+                case IJSVGRenderingEngineCoreAnimation: {
                     [self.layer renderInContext:ref];
                 }
             }

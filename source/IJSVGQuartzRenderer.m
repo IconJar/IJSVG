@@ -41,11 +41,12 @@
     // is there a mask?!
     if(layer.mask != nil) {
         IJSVGLayer * maskLayer = (IJSVGLayer *)layer.mask;
-        CGSize size;
+        CGRect rect;
         CGImageRef maskImage = [self newMaskedImageForLayer:maskLayer
-                                               proposedSize:&size];
-        CGRect maskRect = CGRectMake(0.f, 0.f, size.width, size.height);
+                                               proposedRect:&rect];
+        CGRect maskRect = CGRectMake(0, 0, rect.size.width, rect.size.height);
         CGContextClipToMask(ctx, maskRect, maskImage);
+        CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
         CGImageRelease(maskImage);
     }
     
@@ -108,22 +109,37 @@
                 IJSVGStrokeLayer * strokeLayer = (IJSVGStrokeLayer *)shape.strokeLayer;
                 if(strokeLayer.strokeColor != nil) {
                     CGContextSaveGState(ctx); {
+                        
+                        // set opacity
+                        CGContextSetAlpha(ctx, strokeLayer.opacity);
+                        
                         CGContextSetLineCap(ctx, [self.class lineCapFromLayer:strokeLayer]);
                         CGContextSetLineJoin(ctx, [self.class lineJoinFromLayer:strokeLayer]);
                         
-                        // make sure width is halfed as its on both sides!
-                        CGContextSetLineWidth(ctx, (strokeLayer.lineWidth*.5));
+                        // are there any line dashes?
+                        NSArray * dash = strokeLayer.lineDashPattern;
+                        CGFloat * lengths = (CGFloat *)malloc(sizeof(CGFloat)*dash.count);
+                        NSInteger i = 0;
+                        for(NSNumber * number in dash) {
+                            lengths[i++] = number.floatValue;
+                        }
+                        CGContextSetLineDash(ctx, strokeLayer.lineDashPhase,
+                                             lengths, dash.count);
+                        free(lengths);
+                        
+                        // get bounding box of the current path
                         CGContextAddPath(ctx, strokeLayer.path);
-                        CGContextReplacePathWithStrokedPath(ctx);
+                        CGContextSetLineWidth(ctx, strokeLayer.lineWidth);
                         CGContextSetStrokeColorWithColor(ctx, strokeLayer.strokeColor);
                         CGContextStrokePath(ctx);
+                        
                     } CGContextRestoreGState(ctx);
                 }
             } else {
                 CGContextSetLineWidth(ctx, 0.f);
                 CGContextStrokePath(ctx);
             }
-            
+        
         } CGContextRestoreGState(ctx);
         
     }
@@ -151,7 +167,7 @@
 
 + (CGRect)findFrameForLayer:(IJSVGLayer *)layer
 {
-    CGRect rect = CGRectZero;
+    CGRect rect = layer.frame;
     return [self _recursivelyFindFrameForLayer:layer
                                           rect:rect];
 }
@@ -179,13 +195,23 @@
     return rect;
 }
 
-- (CGImageRef)newMaskedImageForLayer:(IJSVGLayer *)layer
-                        proposedSize:(CGSize *)proposedSize
+- (CGRect)convertLayerFrame:(CGRect)rect
+{
+    rect.size.width = fabs(rect.origin.x - rect.size.width);
+    rect.size.height = fabs(rect.origin.y - rect.size.height);
+    rect.origin.x = rect.origin.y = 0.f;
+    return rect;
+}
+
+- (CGImageRef)newImageForLayer:(IJSVGLayer *)layer
+                    colorSpace:(CGColorSpaceRef)colorSpace
+                  proposedRect:(CGRect *)proposedRect
 {
     // create color space and new context
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGSize size = [self.class findFrameForLayer:layer].size;
-    *proposedSize = size;
+    NSRect cRect = [self.class findFrameForLayer:layer];
+    NSRect convertedSize = [self convertLayerFrame:cRect];
+    CGSize size = cRect.size;
+    *proposedRect = cRect;
     CGFloat actualScale = self.scale * self.backingScale;
     CGContextRef ctx = CGBitmapContextCreate(NULL, size.width * actualScale,
                                              size.height * actualScale,
@@ -202,8 +228,19 @@
     CGImageRef image = CGBitmapContextCreateImage(ctx);
     
     // clean memory
-    CGColorSpaceRelease(colorSpace);
     CGContextRelease(ctx);
+    return image;
+}
+
+- (CGImageRef)newMaskedImageForLayer:(IJSVGLayer *)layer
+                        proposedRect:(CGRect *)proposedRect
+{
+    // create color space and new context
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGImageRef image = [self newImageForLayer:layer
+                                   colorSpace:colorSpace
+                                 proposedRect:proposedRect];
+    CGColorSpaceRelease(colorSpace);
     return image;
 }
 

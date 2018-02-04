@@ -38,8 +38,8 @@ withSVGString:(NSString *)subSVGString;
 typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 
 typedef NS_ENUM(NSInteger, IJSVGRenderingEngine) {
-    IJSVGRenderingEngineQuartz,
-    IJSVGRenderingEngineLayered
+    IJSVGRenderingEngineCoreGraphics,
+    IJSVGRenderingEngineCoreAnimation
 };
 
 @interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
