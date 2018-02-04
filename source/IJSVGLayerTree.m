@@ -268,7 +268,8 @@
         IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
                                                             gradient:path.fillGradient
                                                             fromNode:path
-                                                          objectRect:originalShapeBounds];
+                                                          objectRect:originalShapeBounds
+                                                          shouldMask:YES];
         
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
@@ -433,25 +434,16 @@
                                          objectRect:(CGRect)objectRect
 {
     // the gradient drawing layer
-    IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
-    gradLayer.gradient = gradient;
-    gradLayer.frame = layer.bounds;
-    gradLayer.absoluteTransform = [self absoluteTransform:path];
-    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
-    
-    
-    // is there a fill opacity?
-    if(path.fillOpacity.value != 0.f) {
-        gradLayer.opacity = path.fillOpacity.value;
-    }
+    IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
+                                                        gradient:gradient
+                                                        fromNode:path
+                                                      objectRect:objectRect
+                                                      shouldMask:NO];
     
     // set the bounds
     CGRect bounds = CGPathGetBoundingBox(layer.path);
     bounds = [self correctBounds:bounds forStrokedPath:path];
     gradLayer.frame = bounds;
-    
-    // display it
-    [gradLayer setNeedsDisplay];
     return gradLayer;
 }
 
@@ -460,11 +452,8 @@
                                      gradient:(IJSVGGradient *)gradient
                                      fromNode:(IJSVGNode *)path
                                    objectRect:(CGRect)objectRect
+                                   shouldMask:(BOOL)shouldMask
 {
-    // add the mask
-    IJSVGShapeLayer * mask = [self layerMaskFromLayer:layer
-                                             fromNode:path];
-    
     // the gradient drawing layer
     IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
     gradLayer.viewBox = self.viewBox;
@@ -472,7 +461,13 @@
     gradLayer.gradient = gradient;
     gradLayer.absoluteTransform = [self absoluteTransform:path];
     gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
-    gradLayer.mask = mask;
+    
+    if(shouldMask == YES) {
+        // add the mask
+        IJSVGShapeLayer * mask = [self layerMaskFromLayer:layer
+                                                 fromNode:path];
+        gradLayer.mask = mask;
+    }
     
     // is there a fill opacity?
     if(path.fillOpacity.value != 0.f) {
