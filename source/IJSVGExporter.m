@@ -648,14 +648,8 @@ NSString * IJSVGHash(NSString * key) {
 - (void)applyTransformToElement:(NSXMLElement *)element
                       fromLayer:(IJSVGLayer *)layer
 {
-    // shape layers should not have any
-    // transforms applied to them... technically...
-    if(layer.class == IJSVGShapeLayer.class) {
-        return;
-    }
-    
     CGAffineTransform transform = layer.affineTransform;
-    if(CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity)) {
+    if(CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity) == YES) {
         return;
     }
     
