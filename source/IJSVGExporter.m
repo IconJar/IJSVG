@@ -648,39 +648,19 @@ NSString * IJSVGHash(NSString * key) {
 - (void)applyTransformToElement:(NSXMLElement *)element
                       fromLayer:(IJSVGLayer *)layer
 {
-    // dont do anything, they are the same
-    CGFloat x = layer.frame.origin.x;
-    CGFloat y = layer.frame.origin.y;
-    
-    // check for x or y..they must be included
-    if(CGAffineTransformEqualToTransform(layer.affineTransform, CGAffineTransformIdentity) &&
-       x == 0.f && y == 0.f) {
+    // shape layers should not have any
+    // transforms applied to them... technically...
+    if(layer.class == IJSVGShapeLayer.class) {
         return;
     }
     
-    // construct the matrix
     CGAffineTransform transform = layer.affineTransform;
-    
-    // was there already x and y transform?
-    BOOL hasXTransform = transform.tx != 0.f;
-    BOOL hasYTransform = transform.ty != 0.f;
-    
-    // move the x and y position
-    if(x != 0.f || y != 0.f) {
-        transform = CGAffineTransformConcat( transform, CGAffineTransformMakeTranslation( x, y ));
-    }
-    
-    // x and y were not given so just transform
-    if(hasXTransform) {
-        transform.tx /= 2.f;
-    }
-    if(hasYTransform) {
-        transform.ty /= 2.f;
+    if(CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity)) {
+        return;
     }
     
     // append the string
-    NSArray * transformArray = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform];
-    NSString * transformStr = [transformArray componentsJoinedByString:@" "];
+    NSString * transformStr = [IJSVGTransform affineTransformToSVGMatrixString:transform];
     
     // apply it to the node
     IJSVGApplyAttributesToElement(@{@"transform":transformStr},element);
@@ -936,10 +916,17 @@ NSString * IJSVGHash(NSString * key) {
     e.name = @"path";
     CGPathRef path = layer.path;
     
+    // copy the path as we want to translate
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(layer.originalPathOrigin.x,
+                                                               layer.originalPathOrigin.y);
+    CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
+    
     NSMutableDictionary * dict = [[[NSMutableDictionary alloc] init] autorelease];
     
     // path
-    dict[@"d"] = [self pathFromCGPath:path];
+    dict[@"d"] = [self pathFromCGPath:transformPath];
+    
+    CGPathRelease(transformPath);
     
     // work out even odd rule
     if([layer.fillRule isEqualToString:kCAFillRuleNonZero] == NO) {

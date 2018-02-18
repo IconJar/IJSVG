@@ -25,6 +25,7 @@
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
+@property (nonatomic, assign) CGPoint originalPathOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context

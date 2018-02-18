@@ -201,6 +201,8 @@
     CGPathRef introPath = [path newPathRefByAutoClosingPath:NO];
     
     *originalBoundingBox = CGRectIntegral(CGPathGetBoundingBox(introPath));
+    layer.originalPathOrigin = (*originalBoundingBox).origin;
+    
     CGRect bounds = [self correctedBounds:*originalBoundingBox];
     
     // zero back the path

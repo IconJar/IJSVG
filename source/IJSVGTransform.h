@@ -47,6 +47,7 @@ CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms);
 + (NSArray *)transformsForString:(NSString *)string;
 + (NSBezierPath *)transformedPath:(IJSVGPath *)path;
 + (NSArray<NSString *> *)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform;
++ (NSString *)affineTransformToSVGMatrixString:(CGAffineTransform)affineTransform;
 - (CGAffineTransform)CGAffineTransform;
 - (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;

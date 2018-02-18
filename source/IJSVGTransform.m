@@ -452,6 +452,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
     return [self transformsForString:[strings componentsJoinedByString:@" "]];
 }
 
++ (NSString *)affineTransformToSVGMatrixString:(CGAffineTransform)transform
+{
+    return [NSString stringWithFormat:@"matrix(%g, %g, %g, %g, %g, %g)",
+            transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty];
+}
+
 // this is an Object-C version of the matrixToTransform method from SVGO
 + (NSArray<NSString *> *)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform
 {
