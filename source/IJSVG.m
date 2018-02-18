@@ -705,7 +705,10 @@
     
     // walk the tree
     void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
-        ((IJSVGLayer *)layer).backingScaleFactor = scale;
+        IJSVGLayer * propLayer = ((IJSVGLayer *)layer);
+        if(propLayer.requiresBackingScaleHelp == YES) {
+            propLayer.backingScaleFactor = scale;
+        }
     };
     
     // gogogo
