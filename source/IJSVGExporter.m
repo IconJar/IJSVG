@@ -118,7 +118,12 @@ NSString * IJSVGShortFloatString(CGFloat f)
 NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 {
     NSString * format = [NSString stringWithFormat:@"%@.%ld%@",@"%",precision,@"f"];
-    return [NSString stringWithFormat:format,f];
+    NSString * ret = [NSString stringWithFormat:format,f];
+    // can it be reduced even more?
+    if(ret.floatValue == (float)ret.integerValue) {
+        ret = [NSString stringWithFormat:@"%ld",ret.integerValue];
+    }
+    return ret;
 };
 
 
