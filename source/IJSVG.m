@@ -336,7 +336,12 @@
 - (void)_setupBasicsFromAnyInitializer
 {
     renderingEngine = IJSVGRenderingEngineCoreAnimation;
-    _lastProposedBackingScale = 1.f;
+    
+    // setup low level backing scale
+    _lastProposedBackingScale = 0.f;
+    self.renderingBackingScaleHelper = ^CGFloat{
+        return 1.f;
+    };
 }
 
 - (NSString *)identifier
@@ -694,12 +699,6 @@
     CGFloat scale = (self.renderingBackingScaleHelper)();
     if(scale < 1.f) {
         scale = 1.f;
-    }
-    
-    // compute backing scale, just incase user forgot :(
-    CGFloat computedScale = [self computeBackingScale:scale];
-    if(computedScale != scale) {
-        scale = computedScale;
     }
     
     // dont do anything, nothing has changed, no point of iterating over

@@ -32,12 +32,6 @@
     IJSVGEndTransactionLock();
 }
 
-CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint) {
-    return CGAffineTransformMakeTranslation(-absolutePoint.x,
-                                            -absolutePoint.y);
-};
-
-
 + (NSArray *)deepestSublayersOfLayer:(CALayer *)layer
 {
     NSMutableArray * arr = [[[NSMutableArray alloc] init] autorelease];
@@ -85,14 +79,14 @@ CGAffineTransform IJSVGAbsoluteTransform(CGPoint absolutePoint) {
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor 
 { 
-    if(self.backingScaleFactor == newFactor) { 
-        return; 
-    } 
-    backingScaleFactor = newFactor; 
-    self.contentsScale = newFactor; 
+    if(self.backingScaleFactor == newFactor) {
+        return;
+    }
+    backingScaleFactor = newFactor;
+    self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
     [self setNeedsDisplay];
-} 
+}
 
 - (void)_customRenderInContext:(CGContextRef)ctx 
 { 

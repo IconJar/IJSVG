@@ -833,24 +833,9 @@ NSString * IJSVGHash(NSString * key) {
     // work out the transform
     NSArray * transforms = layer.gradient.transforms;
     if(transforms.count != 0.f) {
-        CGAffineTransform transform = [self affineTransformFromTransforms:transforms];
-        
-        // work out if there is x and y translate
-        BOOL hasXTransform = transform.tx != 0.f;
-        BOOL hasYTransform = transform.ty != 0.f;
-        
-        // x and y were not given so just transform
-        if(hasXTransform) {
-            transform.tx /= 2.f;
-        }
-        if(hasYTransform) {
-            transform.ty /= 2.f;
-        }
-        
-        // apply the attributes
-        NSArray * transforms = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform];
-        NSString * tString = [transforms componentsJoinedByString:@" "];
-        IJSVGApplyAttributesToElement(@{@"gradientTransform":tString}, gradientElement);
+        CGAffineTransform transform = IJSVGConcatTransforms(transforms);
+        NSString * transformString = [IJSVGTransform affineTransformToSVGMatrixString:transform];
+        IJSVGApplyAttributesToElement(@{@"gradientTransform":transformString}, gradientElement);
     }
     
     // add it to the element passed in
