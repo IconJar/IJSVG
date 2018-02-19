@@ -696,6 +696,12 @@
         scale = 1.f;
     }
     
+    // compute backing scale, just incase user forgot :(
+    CGFloat computedScale = [self computeBackingScale:scale];
+    if(computedScale != scale) {
+        scale = computedScale;
+    }
+    
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!
     if(scale == _lastProposedBackingScale) {
