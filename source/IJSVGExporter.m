@@ -31,6 +31,19 @@
 @synthesize title;
 @synthesize description;
 
+const NSArray * IJSVGShortCharacterArray()
+{
+    static NSArray * _array;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _array = [@[@"a",@"b",@"c",@"d",@"e",@"f",@"g",@"h",@"i",@"j",@"k",@"l",
+                    @"m",@"n",@"o",@"p",@"q",@"r",@"s",@"t",@"u",@"v",@"w",@"x",@"y",@"z",
+                   @"A",@"B",@"C",@"D",@"E",@"F",@"G",@"H",@"I",@"J",@"K",@"L",
+                    @"M",@"N",@"O",@"P",@"Q",@"R",@"S",@"T",@"U",@"V",@"W",@"X",@"Y",@"Z"] retain];
+    });
+    return _array;
+}
+
 const NSArray * IJSVGInheritableAttributes()
 {
     static NSArray * _attributes;
@@ -224,6 +237,19 @@ NSString * IJSVGHash(NSString * key) {
     // apply the attributes
     IJSVGApplyAttributesToElement(attributes, root);
     return root;
+}
+
+- (NSString *)generateID
+{
+    const NSArray * chars = IJSVGShortCharacterArray();
+    if(_idCount < chars.count) {
+        return chars[_idCount++];
+    }
+    
+    if((_idCount % chars.count) == 0) {
+        _shortIdCount++;
+    }
+    return [NSString stringWithFormat:@"%@%ld",chars[(_idCount++ % chars.count)],_shortIdCount];
 }
 
 - (void)_prepare
@@ -495,9 +521,8 @@ NSString * IJSVGHash(NSString * key) {
     for(NSXMLElement * group in groups) {
     
         // dont do anything due to it being referenced
-        if([group attributeForName:@"id"] != nil ||
-           [group attributeForName:@"transform"] != nil) {
-            continue;
+        if([group attributeForName:@"id"] != nil) {
+            return;
         }
         
         if(group.attributes.count != 0 && group.children.count == 1) {
@@ -508,23 +533,20 @@ NSString * IJSVGHash(NSString * key) {
                 continue;
             }
             
-           for(NSXMLNode * gAttribute in group.attributes) {
+            for(NSXMLNode * gAttribute in group.attributes) {
                
                // if it just doesnt have the attriute, just add it
                if([child attributeForName:gAttribute.name] == NO) {
                    // remove first, or throws a wobbly
                    [group removeAttributeForName:gAttribute.name];
                    [child addAttribute:gAttribute];
-                   
                } else if([gAttribute.name isEqualToString:@"transform"]) {
-                   
                    // transform requires concatination
                    NSXMLNode * childTransform = [child attributeForName:@"transform"];
                    childTransform.stringValue = [NSString stringWithFormat:@"%@ %@",
                                                  gAttribute.stringValue, childTransform.stringValue];
                    
                } else if([inheritable containsObject:gAttribute.name] == NO) {
-                   
                    // if its not inheritable, only remove it if its not equal
                    NSXMLNode * aAtt = [child attributeForName:gAttribute.name];
                    if(aAtt == nil || (aAtt != nil && [aAtt.stringValue isEqualToString:gAttribute.stringValue] == NO)) {
@@ -532,7 +554,14 @@ NSString * IJSVGHash(NSString * key) {
                    }
                }
                [group removeAttributeForName:gAttribute.name];
-           }
+            }
+            
+            // remove the group as its useless!
+            if(group.attributes.count == 0) {
+                [child detach];
+                [(NSXMLElement *)group.parent replaceChildAtIndex:group.index
+                                                         withNode:child];
+            }
         }
     }
 }
@@ -584,7 +613,7 @@ NSString * IJSVGHash(NSString * key) {
                 element.name = @"path";
                 
                 NSDictionary * atts = @{@"d":data,
-                                        @"id":[NSString stringWithFormat:@"p%ld",(++_pathCount)]};
+                                        @"id":[self generateID]};
                 IJSVGApplyAttributesToElement(atts, element);
                 
                 // store it against the def
@@ -714,7 +743,7 @@ NSString * IJSVGHash(NSString * key) {
     patternElement.name = @"pattern";
     
     NSMutableDictionary * dict = [[[NSMutableDictionary alloc] init] autorelease];
-    dict[@"id"] = [NSString stringWithFormat:@"pattern-%ld",(++_patternCount)];
+    dict[@"id"] = [self generateID];
     dict[@"width"] = IJSVGShortFloatString(layer.patternNode.width.value);
     dict[@"height"] = IJSVGShortFloatString(layer.patternNode.height.value);
     
@@ -761,7 +790,7 @@ NSString * IJSVGHash(NSString * key) {
                      toElement:(NSXMLElement *)element
 {
     IJSVGGradient * gradient = layer.gradient;
-    NSString * gradKey = [NSString stringWithFormat:@"g%ld",(++_gradCount)];
+    NSString * gradKey = [self generateID];
     NSXMLElement * gradientElement = [[[NSXMLElement alloc] init] autorelease];
     
     // work out linear gradient
@@ -877,7 +906,7 @@ NSString * IJSVGHash(NSString * key) {
     imageElement.name = @"image";
     
     NSMutableDictionary * dict =  [[[NSMutableDictionary alloc] init] autorelease];
-    dict[@"id"] = [NSString stringWithFormat:@"image-%ld",(++_imageCount)];
+    dict[@"id"] = [self generateID];
     dict[@"width"] = IJSVGShortFloatString(layer.frame.size.width);
     dict[@"height"] = IJSVGShortFloatString(layer.frame.size.height);
     dict[@"xlink:href"] = base64String;
@@ -977,6 +1006,10 @@ NSString * IJSVGHash(NSString * key) {
                 // could be none
                 if(strokeColorString != nil) {
                     dict[@"stroke"] = strokeColorString;
+                    if([strokeColorString isEqualToString:@"none"] == YES) {
+                        // remove the stroke width as its completely useless
+                        [dict removeObjectForKey:@"stroke-width"];
+                    }
                 }
             }
             
@@ -1084,7 +1117,7 @@ NSString * IJSVGHash(NSString * key) {
     mask.name = @"mask";
     
     // create the key
-    NSString * maskKey = [NSString stringWithFormat:@"mask-%ld",(++_maskCount)];
+    NSString * maskKey = [self generateID];
     NSMutableDictionary * dict = [[[NSMutableDictionary alloc] init] autorelease];
     dict[@"id"] = maskKey;
     dict[@"maskContentUnits"] = @"userSpaceOnUse";

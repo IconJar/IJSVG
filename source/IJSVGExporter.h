@@ -46,13 +46,9 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptions _options;
     NSXMLDocument * _dom;
     NSXMLElement * _defElement;
-    NSInteger _gradCount;
-    NSInteger _patternCount;
-    NSInteger _imageCount;
-    NSInteger _maskCount;
-    NSInteger _pathCount;
     NSXMLElement * _scaledRootNode;
-    
+    NSInteger _idCount;
+    NSInteger _shortIdCount;
 }
 
 @property (nonatomic, copy) NSString * title;
