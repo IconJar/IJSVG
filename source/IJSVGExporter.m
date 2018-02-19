@@ -102,6 +102,13 @@ NSString * IJSVGShortFloatString(CGFloat f)
     return [NSString stringWithFormat:@"%g",f];
 };
 
+NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
+{
+    NSString * format = [NSString stringWithFormat:@"%@.%ld%@",@"%",precision,@"f"];
+    return [NSString stringWithFormat:format,f];
+};
+
+
 NSString * IJSVGHashURL(NSString * key) {
     return [NSString stringWithFormat:@"url(#%@)",key];
 };
@@ -577,7 +584,7 @@ NSString * IJSVGHash(NSString * key) {
                 element.name = @"path";
                 
                 NSDictionary * atts = @{@"d":data,
-                                        @"id":[NSString stringWithFormat:@"path-%ld",(++_pathCount)]};
+                                        @"id":[NSString stringWithFormat:@"p%ld",(++_pathCount)]};
                 IJSVGApplyAttributesToElement(atts, element);
                 
                 // store it against the def
@@ -754,7 +761,7 @@ NSString * IJSVGHash(NSString * key) {
                      toElement:(NSXMLElement *)element
 {
     IJSVGGradient * gradient = layer.gradient;
-    NSString * gradKey = [NSString stringWithFormat:@"gradient-%ld",(++_gradCount)];
+    NSString * gradKey = [NSString stringWithFormat:@"g%ld",(++_gradCount)];
     NSXMLElement * gradientElement = [[[NSXMLElement alloc] init] autorelease];
     
     // work out linear gradient
@@ -817,7 +824,7 @@ NSString * IJSVGHash(NSString * key) {
         
         // we need to work out the color at this point, annoyingly...
         CGFloat opacity = aColor.alphaComponent;
-        atts[@"stop-opacity"] = [NSString stringWithFormat:@"%g",opacity];
+        atts[@"stop-opacity"] = IJSVGShortFloatStringWithPrecision(opacity, 2);
         
         // att the attributes
         
@@ -844,7 +851,7 @@ NSString * IJSVGHash(NSString * key) {
         
         // fill opacity
         if(layer.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatString(layer.opacity)}, element);
+            IJSVGApplyAttributesToElement(@{@"fill-opacity":IJSVGShortFloatStringWithPrecision(layer.opacity,2)}, element);
         }
     } else {
         IJSVGApplyAttributesToElement(@{@"stroke":IJSVGHashURL(gradKey)}, element);
@@ -1028,7 +1035,7 @@ NSString * IJSVGHash(NSString * key) {
     
     // opacity
     if(layer.opacity != 1.f) {
-        dict[@"opacity"] = IJSVGShortFloatString(layer.opacity);
+        dict[@"opacity"] = IJSVGShortFloatStringWithPrecision(layer.opacity,2);
     }
     
     // blendmode - we only every apply a stylesheet blend mode

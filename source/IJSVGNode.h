@@ -121,6 +121,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) NSColor * strokeColor;
 @property ( nonatomic, copy ) NSString * identifier;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
+@property ( nonatomic, assign ) IJSVGNode * intermediateParentNode;
 @property ( nonatomic, retain ) IJSVGGroup * clipPath;
 @property ( nonatomic, retain ) IJSVGGroup * mask;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;

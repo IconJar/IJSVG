@@ -29,6 +29,7 @@
 @synthesize opacity;
 @synthesize identifier;
 @synthesize parentNode;
+@synthesize intermediateParentNode;
 @synthesize transforms;
 @synthesize windingRule;
 @synthesize def;
@@ -329,8 +330,9 @@
 // must be on the path, it can also be on the
 - (NSColor *)fillColor
 {
-    if( fillColor == nil && parentNode != nil )
+    if( fillColor == nil && parentNode != nil ) {
         return parentNode.fillColor;
+    }
     return fillColor;
 }
 

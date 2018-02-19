@@ -321,7 +321,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     }
     
     // note the %g, CSS alpha is 0 to 1, not 0 - 100, my bad!
-    return [NSString stringWithFormat:@"rgba(%d, %d, %d, %g)",red, green, blue,
+    return [NSString stringWithFormat:@"rgba(%d,%d,%d,%g)",red, green, blue,
             ((float)alpha/100.f)];
 }
 

@@ -237,8 +237,16 @@
 - (CGAffineTransform)absoluteTransform:(IJSVGNode *)node
 {
     CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
+    IJSVGNode * intermediateNode = node.intermediateParentNode;
     node = node.parentNode;
     while(node != nil) {
+        // intermediateParent should be skipped as these are elements
+        // created by use statements and are technically fake elements, but the
+        // spec says use them for the transforms, yolo!
+        if(node == intermediateNode) {
+            node = node.parentNode;
+            continue;
+        }
         CGAffineTransform trans = IJSVGConcatTransforms(node.transforms);
         parentAbsoluteTransform = CGAffineTransformConcat(trans,parentAbsoluteTransform);
         node = node.parentNode;
@@ -296,6 +304,9 @@
         // only use the global if its set and the current colors
         // alpha channel is not 0.f, otherwise its a blank clear color,
         // aka, not filled in
+        
+        
+        
         NSColor * fColor = path.fillColor;
         BOOL hasColor = (fColor.alphaComponent == 0.f || fColor == nil) == NO;
         BOOL hasFill = path.fillPattern != nil || path.fillGradient != nil;
