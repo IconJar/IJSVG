@@ -110,23 +110,6 @@ NSDictionary * IJSVGElementAttributeDictionary(NSXMLElement * element) {
     return dict;
 };
 
-NSString * IJSVGShortFloatString(CGFloat f)
-{
-    return [NSString stringWithFormat:@"%g",f];
-};
-
-NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
-{
-    NSString * format = [NSString stringWithFormat:@"%@.%ld%@",@"%",precision,@"f"];
-    NSString * ret = [NSString stringWithFormat:format,f];
-    // can it be reduced even more?
-    if(ret.floatValue == (float)ret.integerValue) {
-        ret = [NSString stringWithFormat:@"%ld",ret.integerValue];
-    }
-    return ret;
-};
-
-
 NSString * IJSVGHashURL(NSString * key) {
     return [NSString stringWithFormat:@"url(#%@)",key];
 };
@@ -264,9 +247,6 @@ NSString * IJSVGHash(NSString * key) {
     _dom.version = XML_DOCTYPE_VERSION;
     _dom.characterEncoding = XML_DOC_CHARSET;
     
-    // add defs in
-    [_dom.rootElement addChild:[self defElement]];
-    
     // sort out header
     
     // sort out stuff, so here we go...
@@ -275,6 +255,9 @@ NSString * IJSVGHash(NSString * key) {
     
     // cleanup
     [self _cleanup];
+    
+    [_dom.rootElement insertChild:[self defElement]
+                          atIndex:0];
     
     // add generator
     NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
@@ -347,18 +330,12 @@ NSString * IJSVGHash(NSString * key) {
 {
     // find any elements where they have a style, but the element itself
     // must not be in the defs
-    NSArray<NSXMLElement *> * elements = [_dom nodesForXPath:@"//*[@style][not(ancestor::defs)]"
+    NSArray<NSXMLElement *> * elements = [_dom nodesForXPath:@"//*[@display='none']"
                                                        error:nil];
     
     for(NSXMLElement * element in elements) {
-        // parse the style
-        NSString * styleString = [element attributeForName:@"style"].stringValue;
-        IJSVGStyle * style = [IJSVGStyle parseStyleString:styleString];
-        if([[style property:@"display"] isEqualToString:@"none"]) {
-            // this can be removed!
-            NSXMLElement * parent = (NSXMLElement *)element.parent;
-            [parent removeChildAtIndex:element.index];
-        }
+        NSXMLElement * parent = (NSXMLElement *)element.parent;
+        [parent removeChildAtIndex:element.index];
     }
 }
 
@@ -388,7 +365,8 @@ NSString * IJSVGHash(NSString * key) {
     }
 }
 
-- (BOOL)compareElementChildren:(NSXMLElement *)element toElement:(NSXMLElement *)toElement
+- (BOOL)compareElementChildren:(NSXMLElement *)element
+                     toElement:(NSXMLElement *)toElement
 {
     NSArray * childrenA = element.children;
     NSArray * childrenB = toElement.children;

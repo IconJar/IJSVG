@@ -12,6 +12,22 @@
 
 @implementation IJSVGUtils
 
+NSString * IJSVGShortFloatString(CGFloat f)
+{
+    return [NSString stringWithFormat:@"%g",f];
+};
+
+NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
+{
+    NSString * format = [NSString stringWithFormat:@"%@.%ld%@",@"%",precision,@"f"];
+    NSString * ret = [NSString stringWithFormat:format,f];
+    // can it be reduced even more?
+    if(ret.floatValue == (float)ret.integerValue) {
+        ret = [NSString stringWithFormat:@"%ld",ret.integerValue];
+    }
+    return ret;
+};
+
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
     char * validChars = "MmZzLlHhVvCcSsQqTtAa";
