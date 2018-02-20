@@ -324,6 +324,11 @@ NSString * IJSVGHash(NSString * key) {
     if((_options & IJSVGExporterOptionCollapseGroups) != 0) {
         [self _compressGroups];
     }
+    
+    // collapse gradients?
+    if((_options & IJSVGExporterOptionCollapseGradients) != 0) {
+        [self _collapseGradients];
+    }
 }
 
 - (void)_sortAttributesOnElement:(NSXMLElement *)element
@@ -355,6 +360,49 @@ NSString * IJSVGHash(NSString * key) {
             [parent removeChildAtIndex:element.index];
         }
     }
+}
+
+- (void)_collapseGradients
+{
+    NSString * xPath = @"//defs/*[self::linearGradient or self::radialGradient]";
+    NSArray<NSXMLElement *> * gradients = [_dom nodesForXPath:xPath error:nil];
+    for(NSInteger i = 0; i < gradients.count; i++) {
+        if(i != 0) {
+            NSXMLElement * gradientA = gradients[i];
+            NSXMLElement * gradientB = nil;
+            for(NSInteger s = (i - 1); s >= 0; s--) {
+                gradientB = gradients[s];
+                if([self compareElementChildren:gradientA toElement:gradientB] == YES) {
+                    NSString * idString = [gradientB attributeForName:@"id"].stringValue;
+                    if(idString == nil || idString.length == 0) {
+                        idString = [self generateID];
+                        IJSVGApplyAttributesToElement(@{@"id":idString}, gradientB);
+                    }
+                    NSDictionary * atts = @{@"xlink:href":IJSVGHash(idString)};
+                    IJSVGApplyAttributesToElement(atts, gradientA);
+                    [gradientA setChildren:nil];
+                    break;
+                }
+            }
+        }
+    }
+}
+
+- (BOOL)compareElementChildren:(NSXMLElement *)element toElement:(NSXMLElement *)toElement
+{
+    NSArray * childrenA = element.children;
+    NSArray * childrenB = toElement.children;
+    if(childrenA.count != childrenB.count) {
+        return NO;
+    }
+    for(NSInteger i = 0; i < childrenA.count; i++) {
+        NSXMLElement * childA = childrenA[i];
+        NSXMLElement * childB = childrenB[i];
+        if([self compareElement:childA withElement:childB] == NO) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (void)_moveAttributesToGroup
@@ -853,12 +901,20 @@ NSString * IJSVGHash(NSString * key) {
         atts[@"offset"] = [NSString stringWithFormat:@"%g%%",(location*100)];
         
         // add the color
-        atts[@"stop-color"] = [IJSVGColor colorStringFromColor:aColor
-                                                      forceHex:YES];
+        NSString * stopColor = [IJSVGColor colorStringFromColor:aColor
+                                                       forceHex:YES];
+        if([stopColor isEqualToString:@"#000000"] == NO) {
+            atts[@"stop-color"] = stopColor;
+        }
         
         // we need to work out the color at this point, annoyingly...
         CGFloat opacity = aColor.alphaComponent;
-        atts[@"stop-opacity"] = IJSVGShortFloatStringWithPrecision(opacity, 2);
+        
+        // is opacity is equal to 1, no need to add it as spec
+        // defaults opacity to 1 anyway :)
+        if(opacity != 1.f) {
+            atts[@"stop-opacity"] = IJSVGShortFloatStringWithPrecision(opacity, 2);
+        }
         
         // att the attributes
         
