@@ -27,6 +27,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionScaleToSizeIfNecessary = 1 << 9,
     IJSVGExporterOptionCompressOutput = 1 << 10,
     IJSVGExporterOptionCollapseGradients = 1 << 11,
+    IJSVGExporterOptionCreateClasses = 1 << 12,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef|
         IJSVGExporterOptionRemoveUselessGroups|
         IJSVGExporterOptionCreateUseForPaths|

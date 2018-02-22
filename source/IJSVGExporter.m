@@ -284,12 +284,7 @@ NSString * IJSVGHash(NSString * key) {
     if((_options & IJSVGExporterOptionRemoveUselessDef) != 0) {
         [self _cleanDef];
     }
-    
-    // move any possible attributes to its parent group
-    if((_options & IJSVGExporterOptionMoveAttributesToGroup) != 0) {
-        [self _moveAttributesToGroup];
-    }
-    
+        
     // collapse groups
     if((_options & IJSVGExporterOptionCollapseGroups) != 0) {
         [self _collapseGroups];
@@ -314,6 +309,55 @@ NSString * IJSVGHash(NSString * key) {
     if((_options & IJSVGExporterOptionCollapseGradients) != 0) {
         [self _collapseGradients];
     }
+    
+    // create classes?
+    if((_options & IJSVGExporterOptionCreateClasses) != 0) {
+        [self _createClasses];
+    }
+}
+
+- (void)_createClasses
+{
+    const NSArray * inhert = IJSVGInheritableAttributes();
+    NSArray<NSXMLElement *> * elements = [_dom nodesForXPath:@"//*"
+                                                       error:nil];
+    NSMutableDictionary * rules = [[[NSMutableDictionary alloc] init] autorelease];
+    for(NSXMLElement * element in elements) {
+        NSDictionary * inhertEl = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
+                                          inheritableAttributes:inhert];
+        NSString * styles = [self styleSheetRulesFromDictionary:inhertEl];
+        NSString * className = nil;
+        if((className = [rules objectForKey:styles]) == nil) {
+            className = [NSString stringWithFormat:@"%@",[self generateID]];
+            rules[styles] = className;
+        }
+        
+        for(NSString * attributeName in inhertEl) {
+            [element removeAttributeForName:attributeName];
+        }
+        IJSVGApplyAttributesToElement(@{@"class":className},element);
+    }
+    
+    // add styles to dom
+    NSXMLElement * styles = [[[NSXMLElement alloc] initWithName:@"style"] autorelease];
+    NSXMLNode * node = [[[NSXMLNode alloc] initWithKind:NSXMLTextKind] autorelease];
+    
+    NSMutableArray * classes = [[[NSMutableArray alloc] initWithCapacity:rules.count] autorelease];
+    for(NSString * r in rules) {
+        [classes addObject:[NSString stringWithFormat:@".%@%@",rules[r],r]];
+    }
+    node.stringValue = [classes componentsJoinedByString:@""];
+    [styles addChild:node];
+    [_dom.rootElement insertChild:styles atIndex:0];
+}
+
+- (NSString *)styleSheetRulesFromDictionary:(NSDictionary *)dict
+{
+    NSMutableArray * array = [[[NSMutableArray alloc] initWithCapacity:dict.count] autorelease];
+    for(NSString * key in dict.allKeys) {
+        [array addObject:[NSString stringWithFormat:@"%@: %@;",key,dict[key]]];
+    }
+    return [NSString stringWithFormat:@"{%@}",[array componentsJoinedByString:@" "]];
 }
 
 - (void)_sortAttributesOnElement:(NSXMLElement *)element
