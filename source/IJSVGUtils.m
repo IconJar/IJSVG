@@ -269,7 +269,6 @@ CGFloat degrees_to_radians( CGFloat degrees )
     // sizes for the string buffer
     NSInteger defSize = 50;
     NSInteger size = defSize;
-    NSInteger sLength = string.length;
     
     // default memory size for the floats
     NSInteger defFloatSize = 100;
@@ -280,6 +279,8 @@ CGFloat degrees_to_radians( CGFloat degrees )
     
     const char * cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
     const char * validChars = "0123456789eE+-.";
+    
+    NSInteger sLength = strlen(cString);
     
     // buffer for the returned floats
     CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*defFloatSize);
