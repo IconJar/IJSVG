@@ -253,13 +253,21 @@ NSString * IJSVGHash(NSString * key) {
     [self _recursiveParseFromLayer:_svg.layer
                        intoElement:(_scaledRootNode?:_dom.rootElement)];
     
-    if([self defElement].childCount != 0) {
+    // this needs to be added incase it needs to be cleaned
+    NSXMLElement * defNode = [self defElement];
+    if(defNode.childCount != 0) {
         [_dom.rootElement insertChild:[self defElement]
                               atIndex:0];
     }
     
     // cleanup
     [self _cleanup];
+    
+    // could had been removed during cleaning process needs to be added back in!
+    if(defNode.childCount != 0 && defNode.parent == nil) {
+        [_dom.rootElement insertChild:[self defElement]
+                              atIndex:0];
+    }
     
     // add generator
     NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
