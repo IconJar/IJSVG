@@ -437,6 +437,11 @@ NSString * IJSVGHash(NSString * key) {
 - (void)_moveAttributesToGroupWithElement:(NSXMLElement *)parentElement
 {
     
+    const NSArray * excludedNodes = @[@"script",@"style",@"defs"];
+    if([excludedNodes containsObject:parentElement.name] == YES) {
+        return;
+    }
+    
     const NSArray * inheritableAttributes = IJSVGInheritableAttributes();
     
     NSDictionary * intersection = @{};
