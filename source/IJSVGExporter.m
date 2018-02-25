@@ -805,6 +805,9 @@ NSString * IJSVGHash(NSString * key) {
 
 - (NSString *)base64EncodedStringFromCGImage:(CGImageRef)image
 {
+    if(image == nil) {
+        return nil;
+    }
     
     // convert the CGImage into an NSImage
     NSBitmapImageRep * rep = [[[NSBitmapImageRep alloc] initWithCGImage:image] autorelease];
@@ -996,6 +999,9 @@ NSString * IJSVGHash(NSString * key) {
                        fromParent:(NSXMLElement *)parent
 {
     NSString * base64String = [self base64EncodedStringFromCGImage:(CGImageRef)layer.contents];
+    if(base64String == nil || layer.contents == nil) {
+        return nil;
+    }
     
     // image element for the SVG
     NSXMLElement * imageElement = [[[NSXMLElement alloc] init] autorelease];

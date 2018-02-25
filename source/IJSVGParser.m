@@ -404,12 +404,15 @@
                 node.fillPattern = (IJSVGPattern *)obj;
             }
         } else {
-            // its a color
             node.fillColor = [IJSVGColor colorFromString:value];
-            if(node.fillOpacity.value != 1.f) {
-                node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                             to:node.fillOpacity.value];
-            }
+        }
+    });
+    
+    // fill opacity
+    attr(IJSVGAttributeFillOpacity, ^(NSString * value) {
+        if(node.fillOpacity.value != 1.f) {
+            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
+                                                         to:node.fillOpacity.value];
         }
     });
     
@@ -899,7 +902,7 @@
             // parse attributes from element onto group - but spec
             // says ignore x, y, width, height and xlink:href...
             [self _parseElementForCommonAttributes:element
-                                              node:subGroup
+                                              node:node
                                   ignoreAttributes:@[@"x",@"y",@"width",
                                                      @"height",@"xlink:href"]];
             
