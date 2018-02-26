@@ -18,6 +18,9 @@ CGFloat angle( CGPoint a, CGPoint b );
 CGFloat radians_to_degrees( CGFloat radians);
 CGFloat degrees_to_radians( CGFloat degrees );
 
+BOOL IJSVGIsCommonHTMLElementName(NSString * str);
+NSArray * IJSVGCommonHTMLElementNames();
+
 NSString * IJSVGShortFloatString(CGFloat f);
 NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 

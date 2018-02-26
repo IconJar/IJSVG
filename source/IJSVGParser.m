@@ -535,7 +535,7 @@
     
     for(NSXMLElement * element in anElement.children) {
         // not a def
-        if([IJSVGNode typeForString:element.name
+        if([IJSVGNode typeForString:element.localName
                                kind:element.kind] != IJSVGNodeTypeDef) {
             continue;
         }
@@ -543,7 +543,7 @@
         // store each object
         for(NSXMLElement * childDef in element.children) {
             // is there any stylesheets within this?
-            IJSVGNodeType childType = [IJSVGNode typeForString:childDef.name
+            IJSVGNodeType childType = [IJSVGNode typeForString:childDef.localName
                                                           kind:element.kind];
             
             switch(childType) {
@@ -576,7 +576,7 @@
               intoGroup:(IJSVGGroup *)parentGroup
                     def:(BOOL)flag
 {
-    NSString * subName = element.name;
+    NSString * subName = element.localName;
     NSXMLNodeKind nodeKind = element.kind;
     IJSVGNodeType aType = [IJSVGNode typeForString:subName
                                               kind:nodeKind];
