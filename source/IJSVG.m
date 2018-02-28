@@ -575,8 +575,8 @@
     // we also need to calculate the viewport so we can clip
     // the drawing if needed
     NSRect viewPort = NSZeroRect;
-    viewPort.origin.x = round(rect.size.width/2-(_proposedViewSize.width/2)*_clipScale);
-    viewPort.origin.y = round(rect.size.height/2-(_proposedViewSize.height/2)*_clipScale);;
+    viewPort.origin.x = round((rect.size.width/2-(_proposedViewSize.width/2)*_clipScale) + rect.origin.x);
+    viewPort.origin.y = round((rect.size.height/2-(_proposedViewSize.height/2)*_clipScale) + rect.origin.y);
     viewPort.size.width = _proposedViewSize.width*_clipScale;
     viewPort.size.height = _proposedViewSize.height*_clipScale;
     
@@ -616,17 +616,11 @@
         @try {
             
             [self _beginDraw:rect];
-                
-            // scale the whole drawing context, but first, we need
-            // to translate the context so its centered
-            CGFloat tX = round(rect.size.width/2-(_viewBox.size.width/2)*_scale);
-            CGFloat tY = round(rect.size.height/2-(_viewBox.size.height/2)*_scale);
             
             // we also need to calculate the viewport so we can clip
             // the drawing if needed
             BOOL canDraw = NO;
-            NSRect viewPort = [self computeRectDrawingInRect:rect
-                                                     isValid:&canDraw];
+            NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
             // check the viewport
             if( !canDraw ) {
                 if( error != NULL ) {
@@ -640,11 +634,7 @@
             
             // clip to mask
             CGContextClipToRect( ref, viewPort);
-            
-            tX -= (_viewBox.origin.x*_scale);
-            tY -= (_viewBox.origin.y*_scale);
-            
-            CGContextTranslateCTM( ref, tX, tY );
+            CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
             CGContextScaleCTM( ref, _scale, _scale );
             
             // render the layer, its really important we lock
