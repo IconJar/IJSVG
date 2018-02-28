@@ -79,6 +79,7 @@ typedef NS_ENUM(NSInteger, IJSVGRenderingEngine) {
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) IJSVGRenderingEngine renderingEngine;
+@property (nonatomic, assign) BOOL clipToViewport;
 
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;

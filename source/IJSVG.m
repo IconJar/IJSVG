@@ -20,6 +20,7 @@
 @synthesize lineJoinStyle;
 @synthesize renderingBackingScaleHelper;
 @synthesize renderingEngine;
+@synthesize clipToViewport;
 
 - (void)dealloc
 {
@@ -336,6 +337,7 @@
 - (void)_setupBasicsFromAnyInitializer
 {
     renderingEngine = IJSVGRenderingEngineCoreAnimation;
+    self.clipToViewport = YES;
     
     // setup low level backing scale
     _lastProposedBackingScale = 0.f;
@@ -633,7 +635,9 @@
             }
             
             // clip to mask
-            CGContextClipToRect( ref, viewPort);
+            if(self.clipToViewport == YES) {
+                CGContextClipToRect( ref, viewPort);
+            }
             CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
             CGContextScaleCTM( ref, _scale, _scale );
             
