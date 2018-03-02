@@ -28,17 +28,15 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path
 {
-    if( type == IJSVGCommandTypeAbsolute )
-    {
+    if( type == IJSVGCommandTypeAbsolute ) {
         [[path currentSubpath] curveToPoint:NSMakePoint( params[4], params[5])
                               controlPoint1:NSMakePoint( params[0], params[1])
                               controlPoint2:NSMakePoint( params[2], params[3])];
         return;
     }
-    NSPoint point = [[path currentSubpath] currentPoint];
-    [[path currentSubpath] curveToPoint:NSMakePoint( point.x + params[4], point.y + params[5])
-                          controlPoint1:NSMakePoint( point.x + params[0], point.y + params[1])
-                          controlPoint2:NSMakePoint( point.x + params[2], point.y + params[3])];
+    [[path currentSubpath] relativeCurveToPoint:NSMakePoint( params[4], params[5])
+                                  controlPoint1:NSMakePoint( params[0], params[1])
+                                  controlPoint2:NSMakePoint( params[2], params[3])];
     
 }
 

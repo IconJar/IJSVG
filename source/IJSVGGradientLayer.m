@@ -10,7 +10,10 @@
 
 @implementation IJSVGGradientLayer
 
+@synthesize viewBox;
 @synthesize gradient;
+@synthesize absoluteTransform;
+@synthesize objectRect;
 
 - (void)dealloc
 {
@@ -36,7 +39,14 @@
     }
     
     // draw the gradient
-    [self.gradient drawInContextRef:ctx rect:self.bounds];
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
+                                                               -CGRectGetMinY(objectRect));
+    CGAffineTransform transform = CGAffineTransformConcat(absoluteTransform,trans);
+    
+    [self.gradient drawInContextRef:ctx
+                         objectRect:objectRect
+                  absoluteTransform:transform
+                           viewPort:self.viewBox];
 }
 
 @end

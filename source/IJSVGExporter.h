@@ -26,6 +26,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveHiddenElements = 1 << 8,
     IJSVGExporterOptionScaleToSizeIfNecessary = 1 << 9,
     IJSVGExporterOptionCompressOutput = 1 << 10,
+    IJSVGExporterOptionCollapseGradients = 1 << 11,
+    IJSVGExporterOptionCreateClasses = 1 << 12,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef|
         IJSVGExporterOptionRemoveUselessGroups|
         IJSVGExporterOptionCreateUseForPaths|
@@ -35,7 +37,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionCleanupPaths|
         IJSVGExporterOptionRemoveHiddenElements|
         IJSVGExporterOptionScaleToSizeIfNecessary|
-        IJSVGExporterOptionCompressOutput
+        IJSVGExporterOptionCompressOutput|
+        IJSVGExporterOptionCollapseGradients
 };
 
 @interface IJSVGExporter : NSObject {
@@ -46,13 +49,9 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptions _options;
     NSXMLDocument * _dom;
     NSXMLElement * _defElement;
-    NSInteger _gradCount;
-    NSInteger _patternCount;
-    NSInteger _imageCount;
-    NSInteger _maskCount;
-    NSInteger _pathCount;
     NSXMLElement * _scaledRootNode;
-    
+    NSInteger _idCount;
+    NSInteger _shortIdCount;
 }
 
 @property (nonatomic, copy) NSString * title;

@@ -34,48 +34,55 @@
     grad.cx = self.cx;
     grad.cy = self.cy;
     grad.radius = self.radius;
-    grad.startPoint = self.startPoint;
-    grad.endPoint = self.endPoint;
     return grad;
 }
 
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGRadialGradient *)gradient
-                   startPoint:(CGPoint *)startPoint
-                     endPoint:(CGPoint *)endPoint
 {
     // cx defaults to 50% if not specified
     NSDictionary * kv = @{@"cx":@"cx",
                           @"cy":@"cy",
-                          @"r":@"radius",
-                          @"fx":@"fx"};
+                          @"r":@"radius"};
     
     for(NSString * key in kv.allKeys) {
         NSString * str = [element attributeForName:key].stringValue;
         IJSVGUnitLength * unit = nil;
         if(str != nil) {
-            unit = [IJSVGUnitLength unitWithPercentageString:str];
+            unit = [IJSVGUnitLength unitWithString:str];
         } else {
-            unit = [IJSVGUnitLength unitWithPercentageFloat:50];
+            unit = [IJSVGUnitLength unitWithPercentageFloat:.5f];
         }
         [gradient setValue:unit
                     forKey:kv[key]];
     }
     
-    // fy defaults to cy if not specified
-    NSString * fy = [element attributeForName:@"fy"].stringValue;
-    if(fy != nil) {
-        gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
-    } else {
-        gradient.fy = gradient.cy;
+    gradient.fx = gradient.cx;
+    gradient.fy = gradient.cy;
+    
+    // needs fixing
+    NSString * fx = [element attributeForName:@"fx"].stringValue;
+    if(fx != nil) {
+        if(fx.floatValue < 1.f) {
+            gradient.fx = [IJSVGUnitLength unitWithPercentageString:fx];
+        } else {
+            gradient.fx = [IJSVGUnitLength unitWithString:fx];
+        }
     }
     
-    if( gradient.gradient != nil )
+    NSString * fy = [element attributeForName:@"fy"].stringValue;
+    if(fx != nil) {
+        if(fx.floatValue < 1.f) {
+            gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
+        } else {
+            gradient.fy = [IJSVGUnitLength unitWithString:fy];
+        }
+    }
+  
+    if( gradient.gradient != nil ) {
         return nil;
-    
-    *startPoint = CGPointMake(gradient.cx.valueAsPercentage, gradient.cy.valueAsPercentage);
-    *endPoint = CGPointMake(gradient.fx.valueAsPercentage, gradient.fy.valueAsPercentage);
+    }
     
     NSArray * colors = nil;
     CGFloat * colorStops = [[self class] computeColorStopsFromString:element colors:&colors];
@@ -86,71 +93,79 @@
     return ret;
 }
 
-- (CGFloat)_handleTransform:(IJSVGTransform *)transform
-                     bounds:(CGRect)bounds
-                      index:(NSInteger)index
-                      value:(CGFloat)value
+- (void)drawInContextRef:(CGContextRef)ctx
+              objectRect:(NSRect)objectRect
+       absoluteTransform:(CGAffineTransform)absoluteTransform
+                viewPort:(CGRect)viewBox
 {
-    // rotate transform, assume its based on percentages
-    // if lower then 0 is specified for 1 or 2
-    CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
-    if( transform.command == IJSVGTransformCommandRotate ) {
-        switch(index) {
-            case 1:
-            case 2: {
-                if(value<1.f) {
-                    return (max*value);
+    BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
+    CGFloat radius = self.radius.value;
+    CGPoint startPoint = CGPointZero;
+    CGPoint gradientStartPoint = CGPointZero;
+    CGPoint gradientEndPoint = CGPointZero;
+    
+    // transforms
+    CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
+    
+    CGContextSaveGState(ctx);
+    {
+#pragma mark User Space On Use
+        if(inUserSpace == YES) {
+            CGFloat rad = radius*2.f;
+            startPoint = CGPointMake(self.cx.value, self.cy.value);
+            
+            // work out the new radius
+            CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
+            rect = CGRectApplyAffineTransform(rect, selfTransform);
+            rect = CGRectApplyAffineTransform(rect, absoluteTransform);
+            radius = CGRectGetHeight(rect)/2.f;
+            
+            gradientStartPoint = startPoint;
+            gradientEndPoint = CGPointMake(self.fx.value, self.fy.value);
+                        
+            // apply the absolute position
+            CGContextConcatCTM(ctx, absoluteTransform);
+        } else {
+#pragma mark Object Bounding Box
+            // compute size based on percentages
+            CGFloat x = [self.cx computeValue:CGRectGetWidth(objectRect)];
+            CGFloat y = [self.cy computeValue:CGRectGetHeight(objectRect)];
+            startPoint = CGPointMake(x, y);
+            CGFloat val = MIN(CGRectGetWidth(objectRect), CGRectGetHeight(objectRect));
+            radius = [self.radius computeValue:val];
+            
+            CGFloat ex = [self.fx computeValue:CGRectGetWidth(objectRect)];
+            CGFloat ey = [self.fy computeValue:CGRectGetHeight(objectRect)];
+            
+            gradientEndPoint = CGPointMake(ex, ey);
+            gradientStartPoint = startPoint;
+            
+            // transform if width or height is not equal
+            if(CGRectGetWidth(objectRect) != CGRectGetHeight(objectRect)) {
+                CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
+                                                                        gradientStartPoint.y);
+                if(CGRectGetWidth(objectRect) > CGRectGetHeight(objectRect)) {
+                    tr = CGAffineTransformScale(tr, CGRectGetWidth(objectRect)/CGRectGetHeight(objectRect), 1);
+                } else {
+                    tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(objectRect)/CGRectGetWidth(objectRect));
                 }
-                break;
+                tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
+                selfTransform = CGAffineTransformConcat(tr, selfTransform);
             }
         }
-    }
-    return value;
 
-}
-
-- (void)drawInContextRef:(CGContextRef)ctx
-                    rect:(NSRect)rect
-{
-    CGRect bounds = rect;
-    for( IJSVGTransform * transform in self.transforms ) {
-        IJSVGTransformParameterModifier modifier = ^CGFloat(NSInteger index, CGFloat value) {
-            return [self _handleTransform:transform
-                                   bounds:bounds
-                                    index:index
-                                    value:value];
-        };
-        CGContextConcatCTM(ctx, [transform CGAffineTransformWithModifier:modifier]);
-    }
+#pragma mark Default drawing
+        // transform the context
+        CGContextConcatCTM(ctx, selfTransform);
     
-    CGPoint sp = self.startPoint;
-    CGPoint ep = self.endPoint;
-    
-    if( self.startPoint.x == .5f ) {
-        sp.x = bounds.size.width*self.startPoint.x;
-    }
-    
-    if(self.startPoint.y == .5f) {
-        sp.y = bounds.size.height*self.startPoint.y;
-    }
-    
-    if(self.endPoint.x == .5f) {
-        ep.x = bounds.size.width*self.endPoint.x;
-    }
-    
-    if(self.endPoint.y == .5f) {
-        ep.y = bounds.size.height*self.endPoint.y;
-    }
-    
-    CGFloat r = self.radius.value;
-    if(r == .5f) {
-        r = (sp.x>sp.y?sp.x:sp.y);
-    }
-    
-    // actually perform the draw
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
-    CGGradientRef grad = self.CGGradient;
-    CGContextDrawRadialGradient(ctx, grad, sp, 0.f, ep, r, options);
+        // draw the gradient
+        CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+            kCGGradientDrawsAfterEndLocation;
+        CGContextDrawRadialGradient(ctx, self.CGGradient,
+                                    gradientEndPoint, 0, gradientStartPoint,
+                                    radius, options);
+    };
+    CGContextRestoreGState(ctx);
 }
 
 @end

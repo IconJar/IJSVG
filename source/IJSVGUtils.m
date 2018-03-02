@@ -12,6 +12,170 @@
 
 @implementation IJSVGUtils
 
+BOOL IJSVGIsCommonHTMLElementName(NSString * str)
+{
+    str = str.lowercaseString;
+    return [IJSVGCommonHTMLElementNames() containsObject:str];
+};
+
+NSArray * IJSVGCommonHTMLElementNames()
+{
+    static NSArray * names = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        names = [@[@"a",
+                  @"abbr",
+                  @"acronym",
+                  @"abbr",
+                  @"address",
+                  @"applet",
+                  @"embed",
+                  @"object",
+                  @"area",
+                  @"article",
+                  @"aside",
+                  @"audio",
+                  @"b",
+                  @"base",
+                  @"basefont",
+                  @"bdi",
+                  @"bdo",
+                  @"big",
+                  @"blockquote",
+                  @"body",
+                  @"br",
+                  @"button",
+                  @"canvas",
+                  @"caption",
+                  @"center",
+                  @"cite",
+                  @"code",
+                  @"col",
+                  @"colgroup",
+                  @"colgroup",
+                  @"datalist",
+                  @"dd",
+                  @"del",
+                  @"details",
+                  @"dfn",
+                  @"dialog",
+                  @"dir",
+                  @"ul",
+                  @"div",
+                  @"dl",
+                  @"dt",
+                  @"em",
+                  @"embed",
+                  @"fieldset",
+                  @"figcaption",
+                  @"figure",
+                  @"figure",
+                  @"font",
+                  @"footer",
+                  @"form",
+                  @"frame",
+                  @"frameset",
+                  @"h1",
+                  @"h6",
+                  @"head",
+                  @"header",
+                  @"hr",
+                  @"html",
+                  @"i",
+                  @"iframe",
+                  @"img",
+                  @"input",
+                  @"ins",
+                  @"kbd",
+                  @"label",
+                  @"input",
+                  @"legend",
+                  @"fieldset",
+                  @"li",
+                  @"link",
+                  @"main",
+                  @"map",
+                  @"mark",
+                  @"menu",
+                  @"menuitem",
+                  @"meta",
+                  @"meter",
+                  @"nav",
+                  @"noframes",
+                  @"noscript",
+                  @"object",
+                  @"ol",
+                  @"optgroup",
+                  @"option",
+                  @"output",
+                  @"p",
+                  @"param",
+                  @"picture",
+                  @"pre",
+                  @"progress",
+                  @"q",
+                  @"rp",
+                  @"rt",
+                  @"ruby",
+                  @"s",
+                  @"samp",
+                  @"script",
+                  @"section",
+                  @"select",
+                  @"small",
+                  @"source",
+                  @"video",
+                  @"audio",
+                  @"span",
+                  @"strike",
+                  @"del",
+                  @"s",
+                  @"strong",
+                  @"style",
+                  @"sub",
+                  @"summary",
+                  @"details",
+                  @"sup",
+                  @"table",
+                  @"tbody",
+                  @"td",
+                  @"template",
+                  @"textarea",
+                  @"tfoot",
+                  @"th",
+                  @"thead",
+                  @"time",
+                  @"title",
+                  @"tr",
+                  @"track",
+                  @"video",
+                  @"audio",
+                  @"tt",
+                  @"u",
+                  @"ul",
+                  @"var",
+                  @"video",
+                  @"wbr"] retain];
+    });
+    return names;
+};
+
+NSString * IJSVGShortFloatString(CGFloat f)
+{
+    return [NSString stringWithFormat:@"%g",f];
+};
+
+NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
+{
+    NSString * format = [NSString stringWithFormat:@"%@.%ld%@",@"%",precision,@"f"];
+    NSString * ret = [NSString stringWithFormat:format,f];
+    // can it be reduced even more?
+    if(ret.floatValue == (float)ret.integerValue) {
+        ret = [NSString stringWithFormat:@"%ld",ret.integerValue];
+    }
+    return ret;
+};
+
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
     char * validChars = "MmZzLlHhVvCcSsQqTtAa";
@@ -253,7 +417,6 @@ CGFloat degrees_to_radians( CGFloat degrees )
     // sizes for the string buffer
     NSInteger defSize = 50;
     NSInteger size = defSize;
-    NSInteger sLength = string.length;
     
     // default memory size for the floats
     NSInteger defFloatSize = 100;
@@ -264,6 +427,8 @@ CGFloat degrees_to_radians( CGFloat degrees )
     
     const char * cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
     const char * validChars = "0123456789eE+-.";
+    
+    NSInteger sLength = strlen(cString);
     
     // buffer for the returned floats
     CGFloat * floats = (CGFloat *)malloc(sizeof(CGFloat)*defFloatSize);

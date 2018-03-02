@@ -15,6 +15,7 @@
     
 }
 
-
+- (IBAction)switchToCoreGraphics:(id)sender;
+- (IBAction)switchToCoreAnimation:(id)sender;
 
 @end

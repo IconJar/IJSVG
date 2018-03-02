@@ -29,10 +29,6 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath *)path
 {
-    
-    // command was taken from: https://github.com/jmenter/JAMSVGImage/blob/89b375c0c3203355a0c693e3b805458415bf4e29/Classes/JAMSVGImage/Path%20and%20Parser/JAMStyledBezierPathFactory.m
-    // and modified to purpose inside this to be converted into degrees and not radians
-    
     CGPoint radii = CGPointZero;
     CGPoint arcEndPoint = CGPointZero;
     CGPoint arcStartPoint = path.currentPoint;
@@ -46,7 +42,7 @@
     sweepFlag = [currentCommand readBOOL];
     arcEndPoint = [currentCommand readPoint];
     
-    if ( type == IJSVGCommandTypeRelative ) {
+    if (type == IJSVGCommandTypeRelative) {
         arcEndPoint.x += path.currentPoint.x;
         arcEndPoint.y += path.currentPoint.y;
     }
@@ -82,13 +78,19 @@
     }
     
     CGFloat radius = MAX(radii.x, radii.y);
-    CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) : CGPointMake(radii.x / radii.y, 1);
+    CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) :
+        CGPointMake(radii.x / radii.y, 1);
     
     NSAffineTransform * trans = [NSAffineTransform transform];
     [trans translateXBy:-centerPoint.x yBy:-centerPoint.y];
-    [trans rotateByRadians:-xAxisRotation];
-    [trans scaleXBy:(1/scale.x) yBy:(1/scale.y)];
+    [path.currentSubpath transformUsingAffineTransform:trans];
     
+    trans = [NSAffineTransform transform];
+    [trans rotateByRadians:-xAxisRotation];
+    [path.currentSubpath transformUsingAffineTransform:trans];
+    
+    trans = [NSAffineTransform transform];
+    [trans scaleXBy:(1/scale.x) yBy:(1/scale.y)];
     [path.currentSubpath transformUsingAffineTransform:trans];
     
     [path.currentSubpath appendBezierPathWithArcWithCenter:NSZeroPoint
@@ -98,12 +100,16 @@
                                                  clockwise:!sweepFlag];
     
     trans = [NSAffineTransform transform];
-    [trans translateXBy:centerPoint.x yBy:centerPoint.y];
-    [trans rotateByRadians:xAxisRotation];
     [trans scaleXBy:scale.x yBy:scale.y];
     [path.currentSubpath transformUsingAffineTransform:trans];
     
+    trans = [NSAffineTransform transform];
+    [trans rotateByRadians:xAxisRotation];
+    [path.currentSubpath transformUsingAffineTransform:trans];
     
+    trans = [NSAffineTransform transform];
+    [trans translateXBy:centerPoint.x yBy:centerPoint.y];
+    [path.currentSubpath transformUsingAffineTransform:trans];
 }
 
 @end

@@ -13,6 +13,7 @@
 #import "IJSVGGroupLayer.h"
 #import "IJSVGImageLayer.h"
 #import "IJSVGExporter.h"
+#import "IJSVGQuartzRenderer.h"
 
 @class IJSVG;
 
@@ -36,6 +37,11 @@ withSVGString:(NSString *)subSVGString;
 
 typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 
+typedef NS_ENUM(NSInteger, IJSVGRenderingEngine) {
+    IJSVGRenderingEngineCoreGraphics,
+    IJSVGRenderingEngineCoreAnimation
+};
+
 @interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
     
 @private
@@ -47,7 +53,9 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
     CGRect _viewBox;
     CGSize _proposedViewSize;
     CGFloat _lastProposedBackingScale;
+    CGFloat _backingScale;
     NSMutableDictionary * _replacementColors;
+    IJSVGQuartzRenderer * _quartzRenderer;
     
     struct {
         unsigned int shouldHandleForeignObject: 1;
@@ -70,6 +78,8 @@ typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
 @property (nonatomic, assign) CGFloat strokeWidth;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
+@property (nonatomic, assign) IJSVGRenderingEngine renderingEngine;
+@property (nonatomic, assign) BOOL clipToViewport;
 
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;

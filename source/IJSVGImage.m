@@ -22,10 +22,16 @@
 
 - (void)loadFromBase64EncodedString:(NSString *)encodedString
 {
+    if([encodedString hasPrefix:@"data:"]) {
+        encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+"
+                                                                 withString:@""
+                                                                    options:NSRegularExpressionSearch
+                                                                      range:NSMakeRange(0, encodedString.length)];
+    }
     NSURL * URL = [NSURL URLWithString:encodedString];
     NSData * data = [NSData dataWithContentsOfURL:URL];
     
-    // no data, jsut ignore...invalid probably
+    // no data, just ignore...invalid probably
     if(data == nil) {
         return;
     }

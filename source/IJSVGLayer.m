@@ -32,7 +32,6 @@
     IJSVGEndTransactionLock();
 }
 
-
 + (NSArray *)deepestSublayersOfLayer:(CALayer *)layer
 {
     NSMutableArray * arr = [[[NSMutableArray alloc] init] autorelease];
@@ -80,14 +79,14 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor 
 { 
-    if(self.backingScaleFactor == newFactor) { 
-        return; 
-    } 
-    backingScaleFactor = newFactor; 
-    self.contentsScale = newFactor; 
-    self.rasterizationScale = newFactor; 
-    [self setNeedsDisplay]; 
-} 
+    if(self.backingScaleFactor == newFactor) {
+        return;
+    }
+    backingScaleFactor = newFactor;
+    self.contentsScale = newFactor;
+    self.rasterizationScale = newFactor;
+    [self setNeedsDisplay];
+}
 
 - (void)_customRenderInContext:(CGContextRef)ctx 
 { 
@@ -176,18 +175,6 @@
         return; 
     } 
     [self _customRenderInContext:ctx]; 
-} 
-
-- (CGPoint)absoluteOrigin 
-{
-    CGPoint point = CGPointZero; 
-    CALayer * pLayer = self; 
-    while(pLayer != nil) { 
-        point.x += pLayer.frame.origin.x; 
-        point.y += pLayer.frame.origin.y; 
-        pLayer = pLayer.superlayer; 
-    } 
-    return point;
 }
 
 @end

@@ -8,6 +8,7 @@
 
 #import "IJSVGNode.h"
 #import "IJSVGDef.h"
+#import "IJSVGUtils.h"
 
 @implementation IJSVGNode
 
@@ -29,6 +30,7 @@
 @synthesize opacity;
 @synthesize identifier;
 @synthesize parentNode;
+@synthesize intermediateParentNode;
 @synthesize transforms;
 @synthesize windingRule;
 @synthesize def;
@@ -131,6 +133,12 @@
     if([string isEqualToString:@"tspan"] || kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
     }
+    
+    // are we commong HTML? - if so just treat as a group
+    if(IJSVGIsCommonHTMLElementName(string) == YES) {
+        return IJSVGNodeTypeGroup;
+    }
+    
     return IJSVGNodeTypeNotFound;
 }
 
@@ -233,10 +241,12 @@
 - (IJSVGDef *)defForID:(NSString *)anID
 {
     IJSVGDef * aDef = nil;
-    if( (aDef = [def defForID:anID]) != nil )
+    if( (aDef = [def defForID:anID]) != nil ) {
         return aDef;
-    if( parentNode != nil )
+    }
+    if( parentNode != nil ) {
         return [parentNode defForID:anID];
+    }
     return nil;
 }
 
@@ -248,7 +258,7 @@
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    if( windingRule == IJSVGWindingRuleInherit && parentNode != nil ) {
+    if(windingRule == IJSVGWindingRuleInherit && parentNode != nil) {
         return parentNode.windingRule;
     }
     return windingRule;
@@ -256,20 +266,20 @@
 
 - (IJSVGLineCapStyle)lineCapStyle
 {
-    if( lineCapStyle == IJSVGLineCapStyleInherit )
-    {
-        if( parentNode != nil )
+    if( lineCapStyle == IJSVGLineCapStyleInherit ) {
+        if( parentNode != nil ) {
             return parentNode.lineCapStyle;
+        }
     }
     return lineCapStyle;
 }
 
 - (IJSVGLineJoinStyle)lineJoinStyle
 {
-    if( lineJoinStyle == IJSVGLineJoinStyleInherit )
-    {
-        if( parentNode != nil )
+    if( lineJoinStyle == IJSVGLineJoinStyleInherit ) {
+        if( parentNode != nil ) {
             return parentNode.lineJoinStyle;
+        }
     }
     return lineJoinStyle;
 }
@@ -327,8 +337,9 @@
 // must be on the path, it can also be on the
 - (NSColor *)fillColor
 {
-    if( fillColor == nil && parentNode != nil )
+    if( fillColor == nil && parentNode != nil ) {
         return parentNode.fillColor;
+    }
     return fillColor;
 }
 

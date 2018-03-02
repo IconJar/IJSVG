@@ -16,6 +16,7 @@
 @class IJSVGGradient;
 @class IJSVGGroup;
 @class IJSVGPattern;
+@class IJSVGTransform;
 
 typedef NS_ENUM( NSInteger, IJSVGNodeType ) {
     IJSVGNodeTypeGroup,
@@ -120,12 +121,13 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property ( nonatomic, retain ) NSColor * strokeColor;
 @property ( nonatomic, copy ) NSString * identifier;
 @property ( nonatomic, assign ) IJSVGNode * parentNode;
+@property ( nonatomic, assign ) IJSVGNode * intermediateParentNode;
 @property ( nonatomic, retain ) IJSVGGroup * clipPath;
 @property ( nonatomic, retain ) IJSVGGroup * mask;
 @property ( nonatomic, assign ) IJSVGWindingRule windingRule;
 @property ( nonatomic, assign ) IJSVGLineCapStyle lineCapStyle;
 @property ( nonatomic, assign ) IJSVGLineJoinStyle lineJoinStyle;
-@property ( nonatomic, retain ) NSArray * transforms;
+@property ( nonatomic, retain ) NSArray<IJSVGTransform *> * transforms;
 @property ( nonatomic, retain ) IJSVGDef * def;
 @property ( nonatomic, retain ) IJSVGGradient * fillGradient;
 @property ( nonatomic, retain ) IJSVGPattern * fillPattern;

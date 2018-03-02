@@ -33,6 +33,51 @@
     return trans;
 }
 
+NSString * IJSVGDebugAffineTransform(CGAffineTransform transform)
+{
+    NSMutableArray * strings = [[[NSMutableArray alloc] init] autorelease];
+    [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform]];
+    return [strings componentsJoinedByString:@" "];
+}
+
+NSString * IJSVGDebugTransforms(NSArray<IJSVGTransform *> * transforms)
+{
+    NSMutableArray * strings = [[[NSMutableArray alloc] init] autorelease];
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform *transform) {
+        [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform.CGAffineTransform]];
+    });
+    return [strings componentsJoinedByString:@" "];
+}
+
+CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform *> * transforms)
+{
+    __block CGAffineTransform trans = CGAffineTransformIdentity;
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform *transform) {
+        trans = CGAffineTransformConcat(trans, transform.CGAffineTransform);
+    });
+    return trans;
+}
+
+void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransformApplyBlock block)
+{
+    for(IJSVGTransform * transform in transforms) {
+        block(transform);
+    }
+};
+
++ (IJSVGTransform *)transformByTranslatingX:(CGFloat)x
+                                          y:(CGFloat)y
+{
+    IJSVGTransform * transform = [[[self alloc] init] autorelease];
+    transform.command = IJSVGTransformCommandTranslate;
+    transform.parameterCount = 2;
+    CGFloat * params = (CGFloat *)malloc(sizeof(CGFloat)*2);
+    params[0] = x;
+    params[1] = y;
+    transform.parameters = params;
+    return transform;
+}
+
 - (void)recalculateWithBounds:(CGRect)bounds
 {
     CGFloat max = bounds.size.width>bounds.size.height?bounds.size.width:bounds.size.height;
@@ -101,8 +146,9 @@
         {
             NSString * command = [string substringWithRange:[result rangeAtIndex:1]];
             IJSVGTransformCommand commandType = [[self class] commandForCommandString:command];
-            if( commandType == IJSVGTransformCommandNotImplemented )
+            if( commandType == IJSVGTransformCommandNotImplemented ) {
                 return;
+            }
             
             // create the transform
             NSString * params = [string substringWithRange:[result rangeAtIndex:2]];
@@ -400,6 +446,19 @@
     return CGAffineTransformIdentity;
 }
 
++ (NSArray<IJSVGTransform *> *)transformsFromAffineTransform:(CGAffineTransform)affineTransform
+{
+    NSArray * strings = [self affineTransformToSVGTransformAttributeString:affineTransform];
+    return [self transformsForString:[strings componentsJoinedByString:@" "]];
+}
+
++ (NSString *)affineTransformToSVGMatrixString:(CGAffineTransform)transform
+{
+    return [NSString stringWithFormat:@"matrix(%g,%g,%g,%g,%g,%g)",
+            transform.a, transform.b, transform.c, transform.d,
+            transform.tx, transform.ty];
+}
+
 // this is an Object-C version of the matrixToTransform method from SVGO
 + (NSArray<NSString *> *)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform
 {
@@ -498,6 +557,12 @@
     }
     
     return trans;
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@ %@",[super description],
+            [self.class affineTransformToSVGTransformAttributeString:self.CGAffineTransform]];
 }
 
 

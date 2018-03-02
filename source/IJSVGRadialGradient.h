@@ -18,8 +18,6 @@
 @property ( nonatomic, retain ) IJSVGUnitLength * radius;
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
-                     gradient:(IJSVGRadialGradient *)gradient
-                   startPoint:(CGPoint *)startPoint
-                     endPoint:(CGPoint *)endPoint;
+                     gradient:(IJSVGRadialGradient *)gradient;
 
 @end

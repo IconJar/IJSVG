@@ -67,44 +67,50 @@
         layer = [self layerForImage:(IJSVGImage *)node];
     }
     
-    // apply any basic defaults
-    [self applyDefaultsToLayer:layer
-                      fromNode:node];
+    [self applyDefaultsToLayer:layer fromNode:node];
     
-    return [self proposedLayerAfterApplyingTransforms:layer
-                                           transforms:node.transforms];
+    // create the new layer
+    layer = [self applyTransforms:node.transforms
+                          toLayer:layer];
+    
+    return layer;
 }
 
-- (IJSVGLayer *)proposedLayerAfterApplyingTransforms:(IJSVGLayer *)layer
-                                       transforms:(NSArray<IJSVGTransform *> *)transforms
+- (IJSVGLayer *)applyTransforms:(NSArray<IJSVGTransform *> *)transforms
+                        toLayer:(IJSVGLayer *)layer
+
 {
+    
+    // do some magic transform
+    if(transforms.count == 0) {
+        return layer;
+    }
+    
     // add any transforms
-    if(transforms.count != 0) {
-        IJSVGLayer * topLayer = nil;
-        IJSVGLayer * parentLayer = nil;
+    IJSVGLayer * topLayer = nil;
+    IJSVGLayer * parentLayer = nil;
+    
+    for(IJSVGTransform * transform in transforms) {
+        // make sure we apply the transform to the parent
+        // so they stack
+        IJSVGGroupLayer * childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
+        childLayer.affineTransform = transform.CGAffineTransform;
         
-        for(IJSVGTransform * transform in transforms) {
-            // make sure we apply the transform to the parent
-            // so they stack
-            IJSVGGroupLayer * childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
-            childLayer.affineTransform = transform.CGAffineTransform;
-            
-            // add it to the parent layer
-            if(parentLayer != nil) {
-                [parentLayer addSublayer:childLayer];
-            } else {
-                // make sure we keep track of the top most layer
-                topLayer = childLayer;
-            }
-            
-            // reset parent layer to the new child
-            parentLayer = childLayer;
+        // add it to the parent layer
+        if(parentLayer != nil) {
+            [parentLayer addSublayer:childLayer];
+        } else {
+            // make sure we keep track of the top most layer
+            topLayer = childLayer;
         }
         
-        // swap the layer around
-        [parentLayer addSublayer:layer];
-        layer = topLayer;
+        // reset parent layer to the new child
+        parentLayer = childLayer;
     }
+    
+    // swap the layer around
+    [parentLayer addSublayer:layer];
+    layer = topLayer;
     return layer;
 }
 
@@ -127,14 +133,25 @@
         layer.hidden = YES;
     }
     
+    CGRect frame = layer.frame;
+    frame.origin.x += [node.x computeValue:frame.size.width];
+    frame.origin.y += [node.y computeValue:frame.size.height];
+    layer.frame = frame;
 }
 
 - (IJSVGLayer *)layerForImage:(IJSVGImage *)image
 {
     IJSVGImageLayer * layer = [[[IJSVGImageLayer alloc] initWithCGImage:image.CGImage] autorelease];
-    layer.frame = CGRectMake(image.x.value, image.y.value, image.width.value, image.height.value);
     layer.affineTransform = CGAffineTransformConcat(layer.affineTransform,
                                                     CGAffineTransformMakeScale( 1.f, -1.f));
+    
+    // make sure we set the width and height correctly,
+    // as this may not be exactly the same as the size of the
+    // given image
+    CGRect frame = layer.frame;
+    frame.size.width = image.width.value;
+    frame.size.height = image.height.value;
+    layer.frame = frame;
     return layer;
 }
 
@@ -145,10 +162,7 @@
         [groupLayer addSublayer:[self layerForNode:node]];
     }
     groupLayer.frame = (CGRect){
-        .origin = (CGPoint){
-            .x = group.x.value,
-            .y = group.y.value
-        },
+        .origin = CGPointZero,
         .size = (CGSize){
             .width = group.width.value,
             .height = group.height.value
@@ -180,16 +194,21 @@
 }
 
 - (IJSVGShapeLayer *)basicLayerForPath:(IJSVGPath *)path
+                   originalBoundingBox:(CGRect *)originalBoundingBox
 {
     // setup path and layer
     IJSVGShapeLayer * layer = [[[IJSVGShapeLayer alloc] init] autorelease];
     CGPathRef introPath = [path newPathRefByAutoClosingPath:NO];
     
-    CGRect bounds = [self correctedBounds:CGPathGetBoundingBox(introPath)];
+    *originalBoundingBox = CGRectIntegral(CGPathGetBoundingBox(introPath));
+    layer.originalPathOrigin = (*originalBoundingBox).origin;
+    
+    CGRect bounds = [self correctedBounds:*originalBoundingBox];
     
     // zero back the path
     CGAffineTransform trans = CGAffineTransformMakeTranslation(-bounds.origin.x,
                                                                -bounds.origin.y);
+    
     CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(introPath, &trans);
     layer.path = transformedPath;
     
@@ -198,9 +217,7 @@
     CGPathRelease(introPath);
 
     // set the bounds
-    bounds.origin.x += path.x.value;
-    bounds.origin.y += path.y.value;
-    layer.frame = bounds;
+    layer.frame = CGRectIntegral(bounds);
     
     // basic fill color and rule
     layer.fillColor = nil;
@@ -217,6 +234,26 @@
     return mask;
 }
 
+- (CGAffineTransform)absoluteTransform:(IJSVGNode *)node
+{
+    CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
+    IJSVGNode * intermediateNode = node.intermediateParentNode;
+    node = node.parentNode;
+    while(node != nil) {
+        // intermediateParent should be skipped as these are elements
+        // created by use statements and are technically fake elements, but the
+        // spec says use them for the transforms, yolo!
+        if(node == intermediateNode) {
+            node = node.parentNode;
+            continue;
+        }
+        CGAffineTransform trans = IJSVGConcatTransforms(node.transforms);
+        parentAbsoluteTransform = CGAffineTransformConcat(trans,parentAbsoluteTransform);
+        node = node.parentNode;
+    }
+    return parentAbsoluteTransform;
+}
+
 - (IJSVGLayer *)layerForPath:(IJSVGPath *)path
 {
     // is there a sub SVG?
@@ -226,7 +263,13 @@
     }
     
     // garb the basic shape layer
-    IJSVGShapeLayer * layer = [self basicLayerForPath:path];
+    CGRect originalShapeBounds;
+    IJSVGShapeLayer * layer = [self basicLayerForPath:path
+                                  originalBoundingBox:&originalShapeBounds];
+    
+    BOOL hasStroke = (path.strokeColor != nil ||
+                      path.strokePattern != nil ||
+                      path.strokeGradient != nil);
     
     // any gradient?
     if(self.fillColor == nil && path.fillGradient != nil) {
@@ -234,15 +277,12 @@
         // create the gradient
         IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
                                                             gradient:path.fillGradient
-                                                            fromNode:path];
+                                                            fromNode:path
+                                                          objectRect:originalShapeBounds
+                                                          shouldMask:YES];
         
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
-        
-        // apply offsets
-        [self applyOffsetsToLayer:gradLayer
-                         fromNode:path.fillGradient];
-        
         layer.gradientFillLayer = gradLayer;
         
     } else if(self.fillColor == nil && path.fillPattern != nil) {
@@ -264,6 +304,9 @@
         // only use the global if its set and the current colors
         // alpha channel is not 0.f, otherwise its a blank clear color,
         // aka, not filled in
+        
+        
+        
         NSColor * fColor = path.fillColor;
         BOOL hasColor = (fColor.alphaComponent == 0.f || fColor == nil) == NO;
         BOOL hasFill = path.fillPattern != nil || path.fillGradient != nil;
@@ -292,9 +335,7 @@
     }
     
     // stroke it
-    if(path.strokeColor != nil ||
-       path.strokePattern != nil ||
-       path.strokeGradient != nil) {
+    if(hasStroke == YES) {
         
         // load the stroke layer
         IJSVGStrokeLayer * strokeLayer = [self strokeLayer:layer
@@ -311,7 +352,8 @@
             // create the gradient
             IJSVGGradientLayer * gradLayer = [self gradientStrokeLayerForLayer:layer
                                                                       gradient:path.strokeGradient
-                                                                      fromNode:path];
+                                                                      fromNode:path
+                                                                    objectRect:originalShapeBounds];
             
             moveStrokeLayer = YES;
             gradLayer.mask = strokeLayer;
@@ -402,33 +444,19 @@
 - (IJSVGGradientLayer *)gradientStrokeLayerForLayer:(IJSVGShapeLayer *)layer
                                            gradient:(IJSVGGradient *)gradient
                                            fromNode:(IJSVGNode *)path
+                                         objectRect:(CGRect)objectRect
 {
     // the gradient drawing layer
-    IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
-    gradLayer.gradient = gradient;
-    
-    // is there a fill opacity?
-    if(path.fillOpacity.value != 0.f) {
-        gradLayer.opacity = path.fillOpacity.value;
-    }
+    IJSVGGradientLayer * gradLayer = [self gradientLayerForLayer:layer
+                                                        gradient:gradient
+                                                        fromNode:path
+                                                      objectRect:objectRect
+                                                      shouldMask:NO];
     
     // set the bounds
     CGRect bounds = CGPathGetBoundingBox(layer.path);
     bounds = [self correctBounds:bounds forStrokedPath:path];
     gradLayer.frame = bounds;
-    
-    // display it
-    [gradLayer setNeedsDisplay];
-    
-    if(path.fillGradient.units == IJSVGUnitUserSpaceOnUse) {
-        // move back if needed
-        gradLayer.frame = (CGRect){
-            .size = gradLayer.frame.size,
-            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
-                                  -fabs(gradLayer.frame.origin.y))
-        };
-    }
-    
     return gradLayer;
 }
 
@@ -436,34 +464,28 @@
 - (IJSVGGradientLayer *)gradientLayerForLayer:(IJSVGShapeLayer *)layer
                                      gradient:(IJSVGGradient *)gradient
                                      fromNode:(IJSVGNode *)path
+                                   objectRect:(CGRect)objectRect
+                                   shouldMask:(BOOL)shouldMask
 {
-    // add the mask
-    IJSVGShapeLayer * mask = [self layerMaskFromLayer:layer
-                                             fromNode:path];
-    
     // the gradient drawing layer
     IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
-    gradLayer.frame = CGPathGetBoundingBox(((IJSVGShapeLayer *)layer).path);
+    gradLayer.viewBox = self.viewBox;
+    gradLayer.frame = layer.bounds;
     gradLayer.gradient = gradient;
-    gradLayer.mask = mask;
+    gradLayer.absoluteTransform = [self absoluteTransform:path];
+    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
+    
+    if(shouldMask == YES) {
+        // add the mask
+        IJSVGShapeLayer * mask = [self layerMaskFromLayer:layer
+                                                 fromNode:path];
+        gradLayer.mask = mask;
+    }
     
     // is there a fill opacity?
     if(path.fillOpacity.value != 0.f) {
         gradLayer.opacity = path.fillOpacity.value;
     }
-    
-    // display it
-    [gradLayer setNeedsDisplay];
-    
-    if(path.fillGradient.units == IJSVGUnitUserSpaceOnUse) {
-        // move back if needed
-        gradLayer.frame = (CGRect){
-            .size = gradLayer.frame.size,
-            .origin = CGPointMake(-fabs(gradLayer.frame.origin.x),
-                                  -fabs(gradLayer.frame.origin.y))
-        };
-    }
-    
     return gradLayer;
 }
 
@@ -551,7 +573,7 @@
 }
 
 - (IJSVGStrokeLayer *)strokeLayer:(IJSVGShapeLayer *)layer
-                         fromNode:(IJSVGNode *)path
+                         fromNode:(IJSVGPath *)path
 {
     // same as fill, dont use global if the alpha is 0.f, but do use it
     // if there is a pattern or gradient
@@ -739,6 +761,19 @@
         default: {
             return kCAFillRuleNonZero;
         }
+    }
+}
+
++ (void)log:(IJSVGLayer *)layer
+      depth:(NSInteger)depth {
+    NSLog(@"%@%@: %@, Transforms: %@",[@"" stringByPaddingToLength:depth
+                                                        withString:@"\t"
+                                                   startingAtIndex:0],layer,
+          NSStringFromRect(layer.frame),
+          [IJSVGTransform affineTransformToSVGTransformAttributeString:layer.affineTransform]);
+    for(IJSVGLayer * sublayer in layer.sublayers) {
+        [self log:(IJSVGLayer *)sublayer
+            depth:depth++];
     }
 }
 

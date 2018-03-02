@@ -13,8 +13,6 @@
 
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGLinearGradient *)aGradient
-                   startPoint:(CGPoint *)startPoint
-                     endPoint:(CGPoint *)endPoint
 {
     
     CGFloat px1 = [[element attributeForName:@"x1"] stringValue].floatValue;
@@ -25,10 +23,8 @@
     // work out each coord, and work out if its a % or not
     // annoyingly we need to check them all against each other -_-
     BOOL isPercent = NO;
-    if(px1 <= 1.f && px2 <= 1.f && py1 <= 1.f && py2 <= 1.f) {
-        isPercent = YES;
-    } else if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
-              (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
+    if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
+       (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
         isPercent = YES;
     }
     
@@ -62,32 +58,53 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                    rect:(NSRect)rect
+              objectRect:(NSRect)objectRect
+       absoluteTransform:(CGAffineTransform)absoluteTransform
+                viewPort:(CGRect)viewBox
 {
-    // grab the start and end point
-    CGPoint aStartPoint = (CGPoint){
-        .x = [self.x1 computeValue:rect.size.width],
-        .y = [self.y1 computeValue:rect.size.height]
+    BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
+    
+    CGPoint gradientStartPoint = CGPointZero;
+    CGPoint gradientEndPoint = CGPointZero;
+    CGAffineTransform absTransform = absoluteTransform;
+    CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
+    
+#pragma mark User Space On Use
+    CGContextSaveGState(ctx);
+    {
+        if(inUserSpace == YES) {
+            CGFloat width = CGRectGetWidth(viewBox);
+            CGFloat height = CGRectGetHeight(viewBox);
+            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                             [self.y1 computeValue:height]);
+            
+            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                           [self.y2 computeValue:height]);
+            
+            // transform absolute - due to user space
+            CGContextConcatCTM(ctx, absTransform);
+        } else {
+#pragma mark Object Bounding Box
+            CGFloat width = CGRectGetWidth(objectRect);
+            CGFloat height = CGRectGetHeight(objectRect);
+            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                             [self.y1 computeValue:height]);
+            
+            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                           [self.y2 computeValue:height]);
+        }
+    
+        // transform the context
+        CGContextConcatCTM(ctx, selfTransform);
+        
+        // draw the gradient
+        CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+            kCGGradientDrawsAfterEndLocation;
+        
+        CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
+                                    gradientEndPoint, options);
     };
-    
-    CGPoint aEndPoint = (CGPoint){
-        .x = [self.x2 computeValue:rect.size.width],
-        .y = [self.y2 computeValue:rect.size.height]
-    };
-    
-    // convert the nsgradient to a CGGradient
-    CGGradientRef gRef = [self CGGradient];
-    
-    // apply transform for each point
-    for( IJSVGTransform * transform in self.transforms ) {
-        CGAffineTransform trans = transform.CGAffineTransform;
-        aStartPoint = CGPointApplyAffineTransform(aStartPoint, trans);
-        aEndPoint = CGPointApplyAffineTransform(aEndPoint, trans);
-    }
-    
-    // draw the gradient
-    CGGradientDrawingOptions opt = kCGGradientDrawsBeforeStartLocation|kCGGradientDrawsAfterEndLocation;
-    CGContextDrawLinearGradient(ctx, gRef, aStartPoint, aEndPoint, opt);
+    CGContextRestoreGState(ctx);
 }
 
 @end

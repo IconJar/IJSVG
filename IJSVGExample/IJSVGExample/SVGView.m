@@ -29,9 +29,21 @@
     return self;
 }
 
+- (void)switchToCoreGraphics:(id)sender
+{
+    svg.renderingEngine = IJSVGRenderingEngineQuartz;
+    [self setNeedsDisplay:YES];
+}
+
+- (void)switchToCoreAnimation:(id)sender
+{
+    svg.renderingEngine = IJSVGRenderingEngineLayered;
+    [self setNeedsDisplay:YES];
+}
+
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"test"];
+    return [IJSVG svgNamed:@"clipped"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

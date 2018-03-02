@@ -95,6 +95,7 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
     NSMutableDictionary * _defNodes;
     NSMutableDictionary * _baseDefNodes;
     NSMutableArray<IJSVG *> * _svgs;
+    NSMutableArray * _definedGroups;
     
     struct {
         unsigned int shouldHandleForeignObject: 1;

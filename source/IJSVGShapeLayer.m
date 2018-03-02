@@ -20,6 +20,7 @@
 @synthesize backingScaleFactor;
 @synthesize blendingMode;
 @synthesize convertMasksToPaths;
+@synthesize originalPathOrigin;
 
 - (void)dealloc
 {
