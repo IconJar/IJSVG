@@ -678,31 +678,9 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <customView misplaced="YES" id="hhC-1S-CCX" customClass="SVGView">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="385"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES" flexibleMaxY="YES"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="479"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     </customView>
-                    <button verticalHuggingPriority="750" misplaced="YES" id="gpW-KV-dZb">
-                        <rect key="frame" x="14" y="431" width="205" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Render with CoreAnimation" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="b5N-FF-ykt">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="switchToCoreAnimation:" target="hhC-1S-CCX" id="318-qP-1z4"/>
-                        </connections>
-                    </button>
-                    <button verticalHuggingPriority="750" misplaced="YES" id="68n-xB-I0F">
-                        <rect key="frame" x="14" y="398" width="205" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="Render with CoreGraphics" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="Tcq-b5-8Y0">
-                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
-                        </buttonCell>
-                        <connections>
-                            <action selector="switchToCoreGraphics:" target="hhC-1S-CCX" id="gzP-YM-P2p"/>
-                        </connections>
-                    </button>
                 </subviews>
             </view>
             <point key="canvasLocation" x="98" y="496.5"/>

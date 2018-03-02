@@ -11,11 +11,9 @@
 
 @interface SVGView : NSView {
  
+@private
     IJSVG * svg;
     
 }
-
-- (IBAction)switchToCoreGraphics:(id)sender;
-- (IBAction)switchToCoreAnimation:(id)sender;
 
 @end
