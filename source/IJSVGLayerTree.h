@@ -24,7 +24,5 @@
 @property (nonatomic, retain) NSDictionary<NSColor *, NSColor *> * replacementColors;
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node;
-- (IJSVGLayer *)layerForNode:(IJSVGNode *)node
-                  isRootNode:(BOOL)isRoot;
 
 @end
