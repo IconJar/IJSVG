@@ -638,6 +638,13 @@
             if(self.clipToViewport == YES) {
                 CGContextClipToRect( ref, viewPort);
             }
+            
+            // add the origin back onto the viewport
+            viewPort.origin.x -= round((_viewBox.origin.x)*_scale);
+            viewPort.origin.y -= round((_viewBox.origin.y)*_scale);
+            viewPort = CGRectIntegral(viewPort);
+            
+            // transforms
             CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
             CGContextScaleCTM( ref, _scale, _scale );
             

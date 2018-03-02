@@ -906,8 +906,7 @@
                                   ignoreAttributes:@[@"x",@"y",@"width",
                                                      @"height",@"xlink:href"]];
             
-            [subGroup addDef:node];
-            [parentGroup addDef:subGroup];
+            [parentGroup addDef:node];
             break;
         }
             
