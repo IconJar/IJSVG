@@ -603,10 +603,9 @@
          // sub SVG
         case IJSVGNodeTypeSVG: {
             
-            IJSVGPath * path = [[[IJSVGPath alloc] init] autorelease];
+            IJSVGGroup * path = [[[IJSVGGroup alloc] init] autorelease];
             path.type = aType;
             path.name = subName;
-            path.parentNode = parentGroup;
             
             // grab common attributes
             [self _setupDefaultsForNode:path];

@@ -52,6 +52,7 @@
 }
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node
+                  isRootNode:(BOOL)isRoot
 {
     IJSVGLayer * layer = nil;
     
@@ -67,13 +68,21 @@
         layer = [self layerForImage:(IJSVGImage *)node];
     }
     
-    [self applyDefaultsToLayer:layer fromNode:node];
+    if(isRoot == NO) {
+        [self applyDefaultsToLayer:layer fromNode:node];
+    }
     
     // create the new layer
     layer = [self applyTransforms:node.transforms
                           toLayer:layer];
     
     return layer;
+}
+
+- (IJSVGLayer *)layerForNode:(IJSVGNode *)node
+{
+    return [self layerForNode:node
+                   isRootNode:NO];
 }
 
 - (IJSVGLayer *)applyTransforms:(NSArray<IJSVGTransform *> *)transforms
@@ -157,6 +166,12 @@
 
 - (IJSVGLayer *)layerForGroup:(IJSVGGroup *)group
 {
+    
+    // grab the sub layer tree from the SVG
+    if(group.svg != nil) {
+        return [group.svg layerWithTree:self];
+    }
+    
     IJSVGGroupLayer * groupLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
     for(IJSVGNode * node in group.children) {
         [groupLayer addSublayer:[self layerForNode:node]];
@@ -256,13 +271,7 @@
 
 - (IJSVGLayer *)layerForPath:(IJSVGPath *)path
 {
-    // is there a sub SVG?
-    if(path.svg != nil) {
-        // grab the sub layer tree from the SVG
-        return [path.svg layerWithTree:self];
-    }
-    
-    // garb the basic shape layer
+    // grab the basic shape layer
     CGRect originalShapeBounds;
     IJSVGShapeLayer * layer = [self basicLayerForPath:path
                                   originalBoundingBox:&originalShapeBounds];

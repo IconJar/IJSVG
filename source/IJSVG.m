@@ -768,7 +768,8 @@
     
     // force rebuild of the tree
     IJSVGBeginTransactionLock();
-    _layerTree = [[tree layerForNode:_group] retain];
+    _layerTree = [[tree layerForNode:_group
+                          isRootNode:YES] retain];
     
     IJSVGEndTransactionLock();
     return _layerTree;
