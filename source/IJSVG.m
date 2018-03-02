@@ -363,6 +363,11 @@
     return _viewBox;
 }
 
+- (IJSVGGroup *)rootNode
+{
+    return _group;
+}
+
 - (BOOL)isFont
 {
     return [_group isFont];
@@ -768,8 +773,7 @@
     
     // force rebuild of the tree
     IJSVGBeginTransactionLock();
-    _layerTree = [[tree layerForNode:_group
-                          isRootNode:YES] retain];
+    _layerTree = [[tree layerForNode:_group] retain];
     
     IJSVGEndTransactionLock();
     return _layerTree;

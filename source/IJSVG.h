@@ -83,6 +83,7 @@ typedef NS_ENUM(NSInteger, IJSVGRenderingEngine) {
 
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;
+- (IJSVGGroup *)rootNode;
 - (NSRect)viewBox;
 - (NSArray<IJSVGPath *> *)glyphs;
 - (NSString *)identifier;
