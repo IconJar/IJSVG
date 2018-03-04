@@ -13,9 +13,9 @@
 #import "IJSVGGroupLayer.h"
 #import "IJSVGImageLayer.h"
 #import "IJSVGExporter.h"
-#import "IJSVGQuartzRenderer.h"
 
 @class IJSVG;
+@class IJSVGQuartzRenderer;
 
 void IJSVGBeginTransactionLock();
 void IJSVGEndTransactionLock();

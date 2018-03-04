@@ -10,6 +10,7 @@
 #import "IJSVGCache.h"
 #import "IJSVGTransaction.h"
 #import "IJSVGExporter.h"
+#import "IJSVGQuartzRenderer.h"
 
 @implementation IJSVG
 
