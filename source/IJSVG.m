@@ -622,7 +622,6 @@
     @synchronized (self) {
         CGContextSaveGState(ref);
         @try {
-            
             [self _beginDraw:rect];
             
             // we also need to calculate the viewport so we can clip
@@ -630,73 +629,70 @@
             BOOL canDraw = NO;
             NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
             // check the viewport
-            if( !canDraw ) {
+            if( canDraw == NO ) {
                 if( error != NULL ) {
                     *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                          code:IJSVGErrorDrawing
                                                      userInfo:nil] autorelease];
                 }
-                CGContextRestoreGState(ref);
-                return NO;
-            }
-            
-            // clip to mask
-            if(self.clipToViewport == YES) {
-                CGContextClipToRect( ref, viewPort);
-            }
-            
-            // add the origin back onto the viewport
-            viewPort.origin.x -= round((_viewBox.origin.x)*_scale);
-            viewPort.origin.y -= round((_viewBox.origin.y)*_scale);
-            viewPort = CGRectIntegral(viewPort);
-            
-            // transforms
-            CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
-            CGContextScaleCTM( ref, _scale, _scale );
-            
-            // render the layer, its really important we lock
-            // the transaction when drawing
-            IJSVGBeginTransactionLock();
-            // do we need to update the backing scales on the
-            // layers?
-            if(self.renderingBackingScaleHelper != nil) {
-                [self _askHelperForBackingScale];
-            }
-            
-            // render the layers
-            switch(self.renderingEngine) {
-                // CoreGraphics / Quartz
-                case IJSVGRenderingEngineCoreGraphics: {
-                    if(_quartzRenderer == nil) {
-                        // init the renderer if its not already defined
-                        _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
+            } else {
+                // clip to mask
+                if(self.clipToViewport == YES) {
+                    CGContextClipToRect( ref, viewPort);
+                }
+                
+                // add the origin back onto the viewport
+                viewPort.origin.x -= round((_viewBox.origin.x)*_scale);
+                viewPort.origin.y -= round((_viewBox.origin.y)*_scale);
+                viewPort = CGRectIntegral(viewPort);
+                
+                // transforms
+                CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
+                CGContextScaleCTM( ref, _scale, _scale );
+                
+                // render the layer, its really important we lock
+                // the transaction when drawing
+                IJSVGBeginTransactionLock();
+                // do we need to update the backing scales on the
+                // layers?
+                if(self.renderingBackingScaleHelper != nil) {
+                    [self _askHelperForBackingScale];
+                }
+                
+                // render the layers
+                switch(self.renderingEngine) {
+                    // CoreGraphics / Quartz
+                    case IJSVGRenderingEngineCoreGraphics: {
+                        if(_quartzRenderer == nil) {
+                            // init the renderer if its not already defined
+                            _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
+                        }
+                        _quartzRenderer.scale = _scale;
+                        _quartzRenderer.backingScale = _backingScale;
+                        _quartzRenderer.viewPort = viewPort;
+                        
+                        // render it
+                        [_quartzRenderer renderLayer:self.layer
+                                           inContext:ref];
+                        break;
                     }
-                    _quartzRenderer.scale = _scale;
-                    _quartzRenderer.backingScale = _backingScale;
-                    _quartzRenderer.viewPort = viewPort;
-                    
-                    // render it
-                    [_quartzRenderer renderLayer:self.layer
-                                       inContext:ref];
-                    break;
+                    // CALayer tree
+                    case IJSVGRenderingEngineCoreAnimation: {
+                        [self.layer renderInContext:ref];
+                    }
                 }
-                // CALayer tree
-                case IJSVGRenderingEngineCoreAnimation: {
-                    [self.layer renderInContext:ref];
-                }
+                IJSVGEndTransactionLock();
             }
-            IJSVGEndTransactionLock();
         }
         @catch (NSException *exception) {
             // just catch and give back a drawing error to the caller
-            if( error != NULL )
+            if( error != NULL ) {
                 *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                      code:IJSVGErrorDrawing
                                                  userInfo:nil] autorelease];
+            }
         }
-        @finally {
-            CGContextRestoreGState(ref);
-        }
+        CGContextRestoreGState(ref);
     }
     return (error == nil);
 }
