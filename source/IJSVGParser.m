@@ -140,10 +140,11 @@
 - (void *)_handleErrorWithCode:(NSUInteger)code
                          error:(NSError **)error
 {
-    if( error )
+    if( error ) {
         *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                              code:code
                                          userInfo:nil] autorelease];
+    }
     [_document release], _document = nil;
     [self release], self = nil;
     return nil;
@@ -157,12 +158,12 @@
     
     // check the viewbox
     if( NSEqualRects( self.viewBox, NSZeroRect ) ||
-       self.size.width == 0 || self.size.height == 0 )
-    {
-        if( error != NULL )
+       self.size.width == 0 || self.size.height == 0 ) {
+        if( error != NULL ) {
             *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                  code:IJSVGErrorInvalidViewBox
                                              userInfo:nil] autorelease];
+        }
         return NO;
     }
     return YES;
@@ -185,21 +186,19 @@
     // find the sizebox!
     NSXMLNode * attribute = nil;
     if( ( attribute = [svgElement attributeForName:(NSString *)IJSVGAttributeViewBox] ) != nil ) {
-        
         // we have a viewbox...
         CGFloat * box = [IJSVGUtils parseViewBox:[attribute stringValue]];
         viewBox = NSMakeRect( box[0], box[1], box[2], box[3]);
         free(box);
-        
     } else {
-        
         // there is no view box so find the width and height
         CGFloat w = [[[svgElement attributeForName:(NSString *)IJSVGAttributeWidth] stringValue] floatValue];
         CGFloat h = [[[svgElement attributeForName:(NSString *)IJSVGAttributeHeight] stringValue] floatValue];
-        if( h == 0.f && w != 0.f )
+        if( h == 0.f && w != 0.f ) {
             h = w;
-        else if( w == 0.f && h != 0.f )
+        } else if( w == 0.f && h != 0.f ) {
             w = h;
+        }
         viewBox = NSMakeRect( 0.f, 0.f, w, h );
     }
     
@@ -214,7 +213,7 @@
     } else if( h == 0 && w != 0.f ) {
         h = viewBox.size.height;
     }
-    proposedViewSize = NSMakeSize( w, h );
+    proposedViewSize = NSMakeSize(w, h);
     
     // the root element is SVG, so iterate over its children
     // recursively
@@ -880,6 +879,12 @@
             NSString * xlink = [[element attributeForName:(NSString *)IJSVGAttributeXLink] stringValue];
             NSString * xlinkID = [xlink substringFromIndex:1];
             IJSVGNode * node = [self definedObjectForID:xlinkID];
+            
+            // there was no specified link ID, well, not that we could find,
+            // so just break
+            if(node == nil) {
+                break;
+            }
             
             // due to this being a carbon clone, we need to clear the ID
             if([element attributeForName:(NSString *)IJSVGAttributeID] == nil) {
