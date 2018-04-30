@@ -146,6 +146,7 @@
 {
     if( ( self = [self initWithDef:YES] ) != nil )
     {
+        self.opacity = [IJSVGUnitLength unitWithFloat:1];
     }
     return self;
 }

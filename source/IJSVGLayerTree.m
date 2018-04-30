@@ -135,9 +135,6 @@
                     fromNode:(IJSVGNode *)node
 {
     CGFloat opacity = node.opacity.value;
-    if(opacity == 0.f) {
-        opacity = 1.f;
-    }
     layer.opacity = opacity;
     
     // setup the blending mode
