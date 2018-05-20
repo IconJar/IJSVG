@@ -250,8 +250,8 @@
         if([ignoredAttributes containsObject:key]) {
             return;
         }
-        NSString * v = [element attributeForName:key].stringValue
-        ?: [style property:key];
+        NSString * v = [style property:key] ?:
+            [element attributeForName:key].stringValue;
         if(v != nil && v.length != 0) {
             block(v);
         }
