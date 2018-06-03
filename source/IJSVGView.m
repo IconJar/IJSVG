@@ -41,8 +41,6 @@
     // image was set via IB
     if(imageName != nil) {
         IJSVG * anSVG = [IJSVG svgNamed:imageName];
-        // dont need the dom, so clean it
-        [anSVG discardDOM];
         self.SVG = anSVG;
     }
 }
