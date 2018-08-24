@@ -179,6 +179,14 @@ NSString * IJSVGHash(NSString * key) {
                                   @"xmlns:xlink": XML_DOC_NSXLINK
                                   };
     
+    // add on width and height unless specified otherwise
+    if((_options & IJSVGExporterOptionRemoveWidthHeightAttributes) == 0) {
+        NSMutableDictionary * attDict = [[attributes mutableCopy] autorelease];
+        attDict[@"width"] = IJSVGShortFloatString(_size.width);
+        attDict[@"height"] = IJSVGShortFloatString(_size.height);
+        attributes = [[attDict copy] autorelease];
+    }
+    
     // was there a size set?
     if(CGSizeEqualToSize(CGSizeZero, _size) == NO &&
        (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
