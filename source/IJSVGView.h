@@ -11,10 +11,10 @@
 
 IB_DESIGNABLE
 @interface IJSVGView : NSView {
-    
     IBInspectable NSString * imageName;
-    IJSVG * SVG;  
+    IBInspectable NSColor * tintColor;
     
+    IJSVG * SVG;
 }
 
 @property (nonatomic, retain) IJSVG * SVG;

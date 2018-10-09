@@ -41,6 +41,9 @@
     // image was set via IB
     if(imageName != nil) {
         IJSVG * anSVG = [IJSVG svgNamed:imageName];
+        if(tintColor != nil) {
+            anSVG.fillColor = tintColor;
+        }
         self.SVG = anSVG;
     }
 }
