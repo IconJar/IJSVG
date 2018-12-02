@@ -421,7 +421,7 @@
 {
     NSImage * im = [[[NSImage alloc] initWithSize:aSize] autorelease];
     [im lockFocus];
-    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ref);
     if(flipped) {
         CGContextTranslateCTM(ref, 0.f, aSize.height);
@@ -567,7 +567,7 @@
              error:(NSError **)error
 {
     return [self _drawInRect:rect
-                     context:[[NSGraphicsContext currentContext] graphicsPort]
+                     context:[[NSGraphicsContext currentContext] CGContext]
                        error:error];
 }
 
