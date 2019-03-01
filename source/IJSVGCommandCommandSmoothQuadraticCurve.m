@@ -12,12 +12,6 @@
 
 @implementation IJSVGCommandCommandSmoothQuadraticCurve
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"t"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 2;

@@ -10,12 +10,6 @@
 
 @implementation IJSVGCommandLineTo
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"l"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 2;

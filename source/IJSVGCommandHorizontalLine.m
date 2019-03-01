@@ -10,12 +10,6 @@
 
 @implementation IJSVGCommandHorizontalLine
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"h"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 1;

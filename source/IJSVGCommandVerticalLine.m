@@ -10,12 +10,6 @@
 
 @implementation IJSVGCommandVerticalLine
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"v"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 1;

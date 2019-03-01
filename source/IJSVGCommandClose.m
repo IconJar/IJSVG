@@ -10,12 +10,6 @@
 
 @implementation IJSVGCommandClose
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"z"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 0;

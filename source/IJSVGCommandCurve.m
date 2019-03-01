@@ -10,12 +10,6 @@
 
 @implementation IJSVGCommandCurve
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"c"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 6;

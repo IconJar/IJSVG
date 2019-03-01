@@ -60,11 +60,6 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
 + (NSPoint)readCoordinatePair:(CGFloat *)pairs
                         index:(NSInteger)index;
 
-+ (void)registerClass:(Class)aClass
-           forCommand:(NSString *)command;
-+ (NSDictionary *)registeredCommandClasses;
-+ (Class<IJSVGCommandProtocol>)commandClassForCommandLetter:(NSString *)str;
-
 - (CGFloat)readFloat;
 - (NSPoint)readPoint;
 - (BOOL)readBOOL;

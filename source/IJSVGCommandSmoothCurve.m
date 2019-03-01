@@ -12,12 +12,6 @@
 
 @implementation IJSVGCommandSmoothCurve
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"s"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 4;

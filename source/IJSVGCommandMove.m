@@ -12,12 +12,6 @@
 
 @implementation IJSVGCommandMove
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"m"];
-}
-
 + (NSInteger)requiredParameterCount
 {
     return 2;

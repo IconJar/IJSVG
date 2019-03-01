@@ -11,11 +11,6 @@
 
 @implementation IJSVGCommandArc
 
-+ (void)load
-{
-    [IJSVGCommand registerClass:[self class]
-                     forCommand:@"a"];
-}
 
 + (NSInteger)requiredParameterCount
 {

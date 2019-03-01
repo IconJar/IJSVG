@@ -399,8 +399,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
 + (CGFloat *)commandParameters:(NSString *)command
                          count:(NSInteger *)count
 {
-    if( [command isKindOfClass:[NSNumber class]] )
-    {
+    if( [command isKindOfClass:[NSNumber class]] ) {
         CGFloat * ret = (CGFloat *)malloc(1*sizeof(CGFloat));
         ret[0] = [(NSNumber *)command floatValue];
         *count = 1;
