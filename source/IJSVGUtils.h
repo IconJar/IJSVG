@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#include <xlocale.h>
 #import "IJSVGCommand.h"
 #import "IJSVGGradientUnitLength.h"
 

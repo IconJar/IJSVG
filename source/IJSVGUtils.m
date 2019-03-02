@@ -482,7 +482,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
         // is at end of string, or wants to be stopped
         // buffer has to actually exist or its completly
         // useless and will cause a crash
-        if(buffer != NULL && (wantsEnd || i == sLength-1)) {
+        if((buffer != NULL && bufferCount != 0) && (wantsEnd || i == sLength-1)) {
             // make sure there is enough room in the float pool
             if((counter+1) == floatSize) {
                 floatSize += defFloatSize;
@@ -490,16 +490,17 @@ CGFloat degrees_to_radians( CGFloat degrees )
             }
             
             // add the float
-            floats[counter++] = strtod(buffer,NULL);
+            floats[counter++] = strtod_l(buffer, NULL, NULL);
             
             // memory clean and counter resets
-            free(buffer);
-            size = defSize;
+            memset(buffer, '\0', sizeof(*buffer)*size);
             isDecimal = false;
             bufferCount = 0;
-            buffer = NULL;
         }
         i++;
+    }
+    if(buffer != NULL) {
+        free(buffer);
     }
     *length = counter;
     return floats;
