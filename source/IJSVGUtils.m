@@ -490,7 +490,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
             }
             
             // add the float
-            floats[counter++] = atof(buffer);
+            floats[counter++] = strtod(buffer,NULL);
             
             // memory clean and counter resets
             free(buffer);
