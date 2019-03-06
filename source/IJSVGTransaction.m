@@ -10,12 +10,16 @@
 
 void IJSVGBeginTransactionLock() {
     [CATransaction begin];
-    [CATransaction lock];
+    if(@available(macOS 10.14, *)) {} else {
+        [CATransaction lock];
+    }
     [CATransaction setDisableActions:YES];
 };
 
 void IJSVGEndTransactionLock() {
-    [CATransaction unlock];
+    if(@available(macOS 10.14, *)) {} else {
+        [CATransaction unlock];
+    }
     [CATransaction commit];
 };
 
