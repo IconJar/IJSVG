@@ -321,6 +321,9 @@
         BOOL hasFill = path.fillPattern != nil || path.fillGradient != nil;
         if(self.fillColor && (hasFill || hasColor || fColor == nil)) {
             fColor = self.fillColor;
+        } else if(fColor != nil && path.fillOpacity.value != 1.f) {
+            fColor = [IJSVGColor changeAlphaOnColor:fColor
+                                                 to:path.fillOpacity.value];
         }
         
         // anything changed by user?

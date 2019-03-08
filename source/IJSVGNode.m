@@ -215,6 +215,7 @@
     {
         self.opacity = [IJSVGUnitLength unitWithFloat:0.f];
         self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.fillOpacity.inherit = YES;
         
         self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
         self.shouldRender = YES;
