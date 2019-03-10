@@ -179,13 +179,7 @@ NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
     char * validChars = "MmZzLlHhVvCcSsQqTtAa";
-    NSUInteger length = strlen(validChars);
-    for(NSUInteger i = 0; i < length; i++) {
-        if(aChar == validChars[i]) {
-            return YES;
-        }
-    }
-    return NO;
+    return strchr(validChars, aChar) != NULL;
 }
 
 BOOL IJSVGIsSVGLayer(CALayer * layer)
@@ -445,7 +439,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
             nextChar = cString[i+1];
         }
         
-        bool isValid = strchr(validChars, currentChar);
+        bool isValid = strchr(validChars, currentChar) != NULL;
         
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal

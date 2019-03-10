@@ -169,6 +169,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
                           forceHex:(BOOL)forceHex
                     allowShorthand:(BOOL)allowShorthand;
 + (NSString *)colorStringFromColor:(NSColor *)color;
++ (NSColor *)colorFromHEXInteger:(NSInteger)hex;
 + (NSColor *)computeColor:(id)colour;
 + (NSColor *)colorFromString:(NSString *)string;
 + (NSColor *)colorFromHEXString:(NSString *)string

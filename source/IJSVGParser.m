@@ -1106,17 +1106,15 @@
     NSUInteger len = [command length];
     
     // allocate memory for the string buffer for reading
-    unichar * buffer = (unichar *)calloc( len+1, sizeof(unichar));
-    [command getCharacters:buffer
-                     range:NSMakeRange(0, len)];
+    const char * buffer = [command cStringUsingEncoding:NSUTF8StringEncoding];
     
     int defaultBufferSize = 200;
     int currentBufferSize = 0;
     int currentSize = defaultBufferSize;
     
-    unichar * commandBuffer = NULL;
+    char * commandBuffer = NULL;
     if( len != 0 ) {
-        commandBuffer = (unichar *)calloc(defaultBufferSize,sizeof(unichar));
+        commandBuffer = (char *)calloc(defaultBufferSize,sizeof(char));
     }
     
     IJSVGCommand * _currentCommand = nil;
@@ -1127,13 +1125,13 @@
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
         if( ( currentBufferSize + 1 ) == currentSize ) {
             currentSize += defaultBufferSize;
-            commandBuffer = (unichar *)realloc( commandBuffer, sizeof(unichar)*currentSize);
+            commandBuffer = (char *)realloc(commandBuffer, sizeof(char)*currentSize);
         }
         commandBuffer[currentBufferSize++] = currentChar;
         if( isStartCommand || atEnd ) {
-            NSString * commandString = [NSString stringWithCharacters:commandBuffer
-                                                               length:currentBufferSize];
-         
+            NSString * commandString = [NSString stringWithCString:commandBuffer
+                                                          encoding:NSUTF8StringEncoding];
+            
             // previous command is actual subcommand
             IJSVGCommand * previousCommand = [_currentCommand subCommands].lastObject;
             IJSVGCommand * cCommand = [self _parseCommandString:commandString
@@ -1145,19 +1143,15 @@
                 _currentCommand  = cCommand;
             }
             
-            free(commandBuffer);
-            commandBuffer = NULL;
-            
-            if( !atEnd ) {
+            if(atEnd == NO) {
                 currentBufferSize = 0;
-                currentSize = defaultBufferSize;
-                commandBuffer = (unichar *)calloc(defaultBufferSize,sizeof(unichar));
+                memset(commandBuffer,'\0', sizeof(char)*currentSize);
             }
         }
     }
     
     // free the buffer
-    free(buffer);
+    free(commandBuffer);
 }
 
 - (IJSVGCommand *)_parseCommandString:(NSString *)string
