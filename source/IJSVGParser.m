@@ -1112,25 +1112,26 @@
     int currentBufferSize = 0;
     int currentSize = defaultBufferSize;
     
-    char * commandBuffer = NULL;
-    if( len != 0 ) {
-        commandBuffer = (char *)calloc(defaultBufferSize,sizeof(char));
+    unichar * commandBuffer = NULL;
+    if(len != 0) {
+        commandBuffer = (unichar *)calloc(defaultBufferSize,sizeof(unichar));
     }
     
     IJSVGCommand * _currentCommand = nil;
     for( int i = 0; i < len; i++ ) {
         unichar currentChar = buffer[i];
         unichar nextChar = buffer[i+1];
+        
         BOOL atEnd = i == len-1;
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
         if( ( currentBufferSize + 1 ) == currentSize ) {
             currentSize += defaultBufferSize;
-            commandBuffer = (char *)realloc(commandBuffer, sizeof(char)*currentSize);
+            commandBuffer = (unichar *)realloc(commandBuffer, sizeof(unichar)*currentSize);
         }
         commandBuffer[currentBufferSize++] = currentChar;
-        if( isStartCommand || atEnd ) {
-            NSString * commandString = [NSString stringWithCString:commandBuffer
-                                                          encoding:NSUTF8StringEncoding];
+        if(isStartCommand == YES || atEnd == YES) {
+            NSString * commandString = [NSString stringWithCharacters:commandBuffer
+                                                               length:currentBufferSize];
             
             // previous command is actual subcommand
             IJSVGCommand * previousCommand = [_currentCommand subCommands].lastObject;
@@ -1145,7 +1146,7 @@
             
             if(atEnd == NO) {
                 currentBufferSize = 0;
-                memset(commandBuffer,'\0', sizeof(char)*currentSize);
+                memset(commandBuffer,'\0', sizeof(unichar)*currentSize);
             }
         }
     }
