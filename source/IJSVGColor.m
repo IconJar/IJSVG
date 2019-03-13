@@ -656,7 +656,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 
 + (BOOL)isHex:(NSString *)string
 {
-    char * validList = "0123456789ABCDEFabcdef#";
+    const char * validList = "0123456789ABCDEFabcdef#";
     for(NSInteger i = 0; i < string.length; i++) {
         char c = [string characterAtIndex:i];
         if(strchr(validList, c) == NULL) {

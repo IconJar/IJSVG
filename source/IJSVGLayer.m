@@ -26,13 +26,8 @@
 
 - (void)dealloc
 {
-    // im not sure why this lock is needed,
-    // but if its not enabled, it leaks layers like there
-    // is no tomorrow :(
-    IJSVGBeginTransactionLock();
     [_maskingLayer release], _maskingLayer = nil;
     [super dealloc];
-    IJSVGEndTransactionLock();
 }
 
 + (NSArray *)deepestSublayersOfLayer:(CALayer *)layer
@@ -178,6 +173,11 @@
         return; 
     } 
     [self _customRenderInContext:ctx]; 
+}
+
+- (id<CAAction>)actionForKey:(NSString *)event
+{
+    return nil;
 }
 
 @end

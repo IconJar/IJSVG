@@ -25,6 +25,7 @@
 
 - (void)dealloc
 {
+    IJSVGBeginTransactionLock();
     [renderingBackingScaleHelper release], renderingBackingScaleHelper = nil;
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
@@ -33,6 +34,7 @@
     [_replacementColors release], _replacementColors = nil;
     [_quartzRenderer release], _quartzRenderer = nil;
     [super dealloc];
+    IJSVGEndTransactionLock();
 }
 
 + (id)svgNamed:(NSString *)string
@@ -658,29 +660,8 @@
                 if(self.renderingBackingScaleHelper != nil) {
                     [self _askHelperForBackingScale];
                 }
-                
-                // render the layers
-                switch(self.renderingEngine) {
-                    // CoreGraphics / Quartz
-                    case IJSVGRenderingEngineCoreGraphics: {
-                        if(_quartzRenderer == nil) {
-                            // init the renderer if its not already defined
-                            _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
-                        }
-                        _quartzRenderer.scale = _scale;
-                        _quartzRenderer.backingScale = _backingScale;
-                        _quartzRenderer.viewPort = viewPort;
-                        
-                        // render it
-                        [_quartzRenderer renderLayer:self.layer
-                                           inContext:ref];
-                        break;
-                    }
-                    // CALayer tree
-                    case IJSVGRenderingEngineCoreAnimation: {
-                        [self.layer renderInContext:ref];
-                    }
-                }
+            
+                [self.layer renderInContext:ref];
                 IJSVGEndTransactionLock();
             }
         }
@@ -709,6 +690,7 @@
     if(scale == _lastProposedBackingScale) {
         return;
     }
+    
     _lastProposedBackingScale = scale;
     
     // walk the tree
@@ -771,7 +753,6 @@
     // force rebuild of the tree
     IJSVGBeginTransactionLock();
     _layerTree = [[tree layerForNode:_group] retain];
-    
     IJSVGEndTransactionLock();
     return _layerTree;
 }

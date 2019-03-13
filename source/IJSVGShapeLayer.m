@@ -24,10 +24,8 @@
 
 - (void)dealloc
 {
-    IJSVGBeginTransactionLock();
     [_maskingLayer release], _maskingLayer = nil;
     [super dealloc];
-    IJSVGEndTransactionLock();
 }
 
 - (void)addSublayer:(CALayer *)layer {
@@ -153,6 +151,11 @@
         pLayer = pLayer.superlayer;
     }
     return point;
+}
+
+- (id<CAAction>)actionForKey:(NSString *)event
+{
+    return nil;
 }
 
 @end

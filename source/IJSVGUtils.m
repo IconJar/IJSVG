@@ -178,7 +178,7 @@ NSString * IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    char * validChars = "MmZzLlHhVvCcSsQqTtAa";
+    const char * validChars = "MmZzLlHhVvCcSsQqTtAa";
     return strchr(validChars, aChar) != NULL;
 }
 
@@ -408,11 +408,11 @@ CGFloat degrees_to_radians( CGFloat degrees )
 {
     // default sizes and memory
     // sizes for the string buffer
-    NSInteger defSize = 50;
-    NSInteger size = defSize;
+    const NSInteger defFloatSize = 30;
+    const NSInteger defSize = 15;
     
-    // default memory size for the floats
-    NSInteger defFloatSize = 100;
+    // default memory size for the float
+    NSInteger size = defSize;
     NSInteger floatSize = defFloatSize;
     
     NSInteger i = 0;
