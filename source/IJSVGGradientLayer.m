@@ -30,6 +30,37 @@
     return self;
 }
 
+- (void)setGradient:(IJSVGGradient *)newGradient
+{
+    if(gradient != nil) {
+        [gradient release], gradient = nil;
+    }
+    gradient = [newGradient retain];
+    
+    // lets check its alpha properties on the colors
+    BOOL hasAlphaChannel = NO;
+    NSInteger stops = gradient.gradient.numberOfColorStops;
+    for(NSInteger i = 0; i < stops; i++) {
+        NSColor * color = nil;
+        [gradient.gradient getColor:&color
+                           location:NULL
+                            atIndex:i];
+        if(color.alphaComponent != 1.f) {
+            hasAlphaChannel = YES;
+            break;
+        }
+    }
+    self.opaque = hasAlphaChannel == NO;
+}
+
+- (void)setOpacity:(float)opacity
+{
+    if(opacity != 1.f) {
+        self.opaque = NO;
+    }
+    [super setOpacity:opacity];
+}
+
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     switch (self.renderQuality) {
