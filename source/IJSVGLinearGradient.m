@@ -70,41 +70,37 @@
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
 #pragma mark User Space On Use
-    CGContextSaveGState(ctx);
-    {
-        if(inUserSpace == YES) {
-            CGFloat width = CGRectGetWidth(viewBox);
-            CGFloat height = CGRectGetHeight(viewBox);
-            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
-                                             [self.y1 computeValue:height]);
-            
-            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
-                                           [self.y2 computeValue:height]);
-            
-            // transform absolute - due to user space
-            CGContextConcatCTM(ctx, absTransform);
-        } else {
+    if(inUserSpace == YES) {
+        CGFloat width = CGRectGetWidth(viewBox);
+        CGFloat height = CGRectGetHeight(viewBox);
+        gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                         [self.y1 computeValue:height]);
+        
+        gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                       [self.y2 computeValue:height]);
+        
+        // transform absolute - due to user space
+        CGContextConcatCTM(ctx, absTransform);
+    } else {
 #pragma mark Object Bounding Box
-            CGFloat width = CGRectGetWidth(objectRect);
-            CGFloat height = CGRectGetHeight(objectRect);
-            gradientStartPoint = CGPointMake([self.x1 computeValue:width],
-                                             [self.y1 computeValue:height]);
-            
-            gradientEndPoint = CGPointMake([self.x2 computeValue:width],
-                                           [self.y2 computeValue:height]);
-        }
+        CGFloat width = CGRectGetWidth(objectRect);
+        CGFloat height = CGRectGetHeight(objectRect);
+        gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                         [self.y1 computeValue:height]);
+        
+        gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                       [self.y2 computeValue:height]);
+    }
+
+    // transform the context
+    CGContextConcatCTM(ctx, selfTransform);
     
-        // transform the context
-        CGContextConcatCTM(ctx, selfTransform);
-        
-        // draw the gradient
-        CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
-            kCGGradientDrawsAfterEndLocation;
-        
-        CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
-                                    gradientEndPoint, options);
-    };
-    CGContextRestoreGState(ctx);
+    // draw the gradient
+    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+        kCGGradientDrawsAfterEndLocation;
+    
+    CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
+                                gradientEndPoint, options);
 }
 
 @end
