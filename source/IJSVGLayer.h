@@ -8,6 +8,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import "IJSVGTransaction.h"
+#import "IJSVGRendering.h"
 
 @class IJSVGShapeLayer;
 @class IJSVGGradientLayer;
@@ -28,6 +29,7 @@
 @property (nonatomic, assign) IJSVGPatternLayer * patternStrokeLayer;
 @property (nonatomic, assign) BOOL requiresBackingScaleHelp;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;

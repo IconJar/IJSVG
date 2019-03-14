@@ -30,6 +30,7 @@
         
         // make sure we say we need help
         self.requiresBackingScaleHelp = YES;
+        self.shouldRasterize = YES;
         
         // set the frame, simple stuff
         self.frame = (CGRect){

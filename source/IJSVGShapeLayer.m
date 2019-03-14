@@ -21,6 +21,7 @@
 @synthesize blendingMode;
 @synthesize convertMasksToPaths;
 @synthesize originalPathOrigin;
+@synthesize renderQuality;
 
 - (void)dealloc
 {

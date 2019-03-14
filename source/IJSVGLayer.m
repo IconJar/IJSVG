@@ -62,7 +62,8 @@
     }
 }
 
-- (void)addSublayer:(CALayer *)layer {
+- (void)addSublayer:(CALayer *)layer
+{
     if([layer isKindOfClass:[IJSVGLayer class]] == NO && 
        [layer isKindOfClass:[IJSVGShapeLayer class]] == NO) { 
         NSString * r = [NSString stringWithFormat:@"The layer must be an instance of IJSVGLayer, %@ given.", 

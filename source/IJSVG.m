@@ -10,7 +10,6 @@
 #import "IJSVGCache.h"
 #import "IJSVGTransaction.h"
 #import "IJSVGExporter.h"
-#import "IJSVGQuartzRenderer.h"
 
 @implementation IJSVG
 
@@ -20,8 +19,8 @@
 @synthesize lineCapStyle;
 @synthesize lineJoinStyle;
 @synthesize renderingBackingScaleHelper;
-@synthesize renderingEngine;
 @synthesize clipToViewport;
+@synthesize renderQuality;
 
 - (void)dealloc
 {
@@ -339,8 +338,8 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    renderingEngine = IJSVGRenderingEngineCoreAnimation;
     self.clipToViewport = YES;
+    self.renderQuality = IJSVGRenderQualityOptimized;
     
     // setup low level backing scale
     _lastProposedBackingScale = 0.f;
@@ -660,6 +659,22 @@
                 if(self.renderingBackingScaleHelper != nil) {
                     [self _askHelperForBackingScale];
                 }
+                
+                CGInterpolationQuality quality;
+                switch(self.renderQuality) {
+                    case IJSVGRenderQualityLow: {
+                        quality = kCGInterpolationLow;
+                        break;
+                    }
+                    case IJSVGRenderQualityOptimized: {
+                        quality = kCGInterpolationMedium;
+                        break;
+                    }
+                    default: {
+                        quality = kCGInterpolationHigh;
+                    }
+                }
+                CGContextSetInterpolationQuality(ref, quality);
             
                 [self.layer renderInContext:ref];
                 IJSVGEndTransactionLock();
@@ -687,15 +702,18 @@
     
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!
-    if(scale == _lastProposedBackingScale) {
+    if(scale == _lastProposedBackingScale && renderQuality == _lastProposedRenderQuality) {
         return;
     }
     
+    IJSVGRenderQuality quality = self.renderQuality;
     _lastProposedBackingScale = scale;
+    _lastProposedRenderQuality = quality;
     
     // walk the tree
     void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
         IJSVGLayer * propLayer = ((IJSVGLayer *)layer);
+        propLayer.renderQuality = quality;
         if(propLayer.requiresBackingScaleHelp == YES) {
             propLayer.backingScaleFactor = scale;
         }

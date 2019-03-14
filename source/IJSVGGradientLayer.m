@@ -25,8 +25,27 @@
 {
     if((self = [super init]) != nil) {
         self.requiresBackingScaleHelp = YES;
+        self.shouldRasterize = YES;
     }
     return self;
+}
+
+- (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
+{
+    switch (self.renderQuality) {
+        case IJSVGRenderQualityOptimized: {
+            backingScaleFactor = .35f;
+            break;
+        }
+        case IJSVGRenderQualityLow: {
+            backingScaleFactor = .05f;
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    [super setBackingScaleFactor:backingScaleFactor];
 }
 
 - (void)drawInContext:(CGContextRef)ctx
