@@ -803,17 +803,19 @@
     
     // block to find colors in stroke and fill
     void (^block)(CALayer * layer, BOOL isMask) = ^void (CALayer * layer, BOOL isMask) {
-        if([layer isKindOfClass:[IJSVGShapeLayer class]] && isMask == NO) {
+        if([layer isKindOfClass:[IJSVGShapeLayer class]] && isMask == NO && layer.isHidden == NO) {
             IJSVGShapeLayer * sLayer = (IJSVGShapeLayer *)layer;
             NSColor * color = nil;
             if(sLayer.fillColor != nil) {
                 color = [NSColor colorWithCGColor:sLayer.fillColor];
+                color = [IJSVGColor computeColorSpace:color];
                 if(color.alphaComponent != 0.f) {
                     [colors addObject:color];
                 }
             }
             if(sLayer.strokeColor != nil) {
                 color = [NSColor colorWithCGColor:sLayer.strokeColor];
+                color = [IJSVGColor computeColorSpace:color];
                 if(color.alphaComponent != 0.f) {
                     [colors addObject:color];
                 }
