@@ -116,6 +116,18 @@
     
 }
 
++ (BOOL)isDataSVG:(NSData *)data
+{
+    @try {
+        NSError * error;
+        NSXMLDocument * doc = [[[NSXMLDocument alloc] initWithData:data
+                                                           options:0
+                                                             error:&error] autorelease];
+        return doc != nil && error == nil;
+    } @catch(NSException * exception) {}
+    return NO;
+}
+
 - (id)initWithFileURL:(NSURL *)aURL
                 error:(NSError **)error
              delegate:(id<IJSVGParserDelegate>)delegate
