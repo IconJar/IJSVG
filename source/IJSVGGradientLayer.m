@@ -93,11 +93,11 @@
                                                                -CGRectGetMinY(objectRect));
     CGAffineTransform transform = CGAffineTransformConcat(absoluteTransform,trans);
     CGContextSaveGState(ctx);
-    
     [self.gradient drawInContextRef:ctx
                          objectRect:objectRect
                   absoluteTransform:transform
                            viewPort:self.viewBox];
+    CGContextRestoreGState(ctx);
 }
 
 @end
