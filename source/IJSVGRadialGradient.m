@@ -88,7 +88,7 @@
     CGFloat * colorStops = [[self class] computeColorStopsFromString:element colors:&colors];
     NSGradient * ret = [[[NSGradient alloc] initWithColors:colors
                                                atLocations:colorStops
-                                                colorSpace:[NSColorSpace genericRGBColorSpace]] autorelease];
+                                                colorSpace:IJSVGColor.defaultColorSpace] autorelease];
     free(colorStops);
     return ret;
 }

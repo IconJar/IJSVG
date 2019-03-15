@@ -51,7 +51,7 @@
     // create the gradient with the colours
     NSGradient * grad = [[NSGradient alloc] initWithColors:colors
                                                atLocations:stopsParams
-                                                colorSpace:[NSColorSpace genericRGBColorSpace]];
+                                                colorSpace:IJSVGColor.defaultColorSpace];
     
     free(stopsParams);
     return [grad autorelease];

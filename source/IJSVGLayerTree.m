@@ -275,7 +275,6 @@
     CGRect originalShapeBounds;
     IJSVGShapeLayer * layer = [self basicLayerForPath:path
                                   originalBoundingBox:&originalShapeBounds];
-    layer.masksToBounds = YES;
     
     BOOL hasStroke = (path.strokeColor != nil ||
                       path.strokePattern != nil ||
@@ -522,7 +521,6 @@
     
     // display
     [patternLayer setNeedsDisplay];
-    
     return patternLayer;
 }
 
