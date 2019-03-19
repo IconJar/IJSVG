@@ -7,11 +7,16 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "IJSVGParser.h"
 
-NS_ASSUME_NONNULL_BEGIN
+@class IJSVG;
 
-@interface IJSVGImageRep : NSImageRep
+@interface IJSVGImageRep : NSImageRep {
+    
+@private
+    IJSVG * _svg;
+}
+
+@property (nonatomic, readonly) CGRect viewBox;
 
 @end
-
-NS_ASSUME_NONNULL_END

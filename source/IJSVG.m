@@ -675,7 +675,6 @@
                     }
                 }
                 CGContextSetInterpolationQuality(ref, quality);
-            
                 [self.layer renderInContext:ref];
                 IJSVGEndTransactionLock();
             }
