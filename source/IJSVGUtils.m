@@ -214,7 +214,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
 
 + (IJSVGCommandType)typeForCommandString:(NSString *)string
 {
-    return [string isEqualToString:[string uppercaseString]] ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
+    return isupper([string characterAtIndex:0]) ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
 }
 
 + (NSString *)defURL:(NSString *)string

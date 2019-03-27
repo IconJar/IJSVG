@@ -107,6 +107,8 @@ handleForeignObject:(IJSVGForeignObject *)foreignObject
 @property ( nonatomic, readonly ) NSRect viewBox;
 @property ( nonatomic, readonly ) NSSize proposedViewSize;
 
++ (BOOL)isDataSVG:(NSData *)data;
+
 - (id)initWithSVGString:(NSString *)string
                   error:(NSError **)error
                delegate:(id<IJSVGParserDelegate>)delegate;

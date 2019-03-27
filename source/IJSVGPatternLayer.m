@@ -24,6 +24,7 @@
 {
     if((self = [super init]) != nil) {
         self.requiresBackingScaleHelp = YES;
+        self.shouldRasterize = YES;
     }
     return self;
 }
