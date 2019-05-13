@@ -174,6 +174,10 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 + (NSColor *)colorFromString:(NSString *)string;
 + (NSColor *)colorFromHEXString:(NSString *)string
                           alpha:(CGFloat)alpha;
++ (NSColor *)colorFromRString:(NSString *)rString
+                      gString:(NSString *)gString
+                      bString:(NSString *)bString
+                      aString:(NSString *)aString;
 + (NSColor *)colorFromPredefinedColorName:(NSString *)name;
 + (NSString *)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
 + (NSColor *)changeAlphaOnColor:(NSColor *)color

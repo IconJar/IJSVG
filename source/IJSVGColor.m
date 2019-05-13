@@ -213,6 +213,32 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     return nil;
 }
 
++ (NSColor *)colorFromRString:(NSString *)rString
+                      gString:(NSString *)gString
+                      bString:(NSString *)bString
+                      aString:(NSString *)aString
+{
+    return [self colorFromRUnit:[IJSVGUnitLength unitWithString:rString]
+                          gUnit:[IJSVGUnitLength unitWithString:gString]
+                          bUnit:[IJSVGUnitLength unitWithString:bString]
+                          aUnit:[IJSVGUnitLength unitWithString:aString]];
+}
+
++ (NSColor *)colorFromRUnit:(IJSVGUnitLength *)rUnit
+                      gUnit:(IJSVGUnitLength *)gUnit
+                      bUnit:(IJSVGUnitLength *)bUnit
+                      aUnit:(IJSVGUnitLength *)aUnit
+{
+    CGFloat r = rUnit.type == IJSVGUnitLengthTypePercentage ?
+        [rUnit computeValue:255.f]/255.f : [rUnit computeValue:1.f];
+    CGFloat g = gUnit.type == IJSVGUnitLengthTypePercentage ?
+        [gUnit computeValue:255.f]/255.f : [gUnit computeValue:1.f];
+    CGFloat b = bUnit.type == IJSVGUnitLengthTypePercentage ?
+        [bUnit computeValue:255.f]/255.f : [bUnit computeValue:1.f];
+    CGFloat a = [aUnit computeValue:100.f];
+    return [NSColor colorWithDeviceRed:r green:g blue:b alpha:a];
+}
+
 + (NSColor *)colorFromString:(NSString *)string
 {
     NSCharacterSet * set = NSCharacterSet.whitespaceAndNewlineCharacterSet;
@@ -237,19 +263,17 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     
     // is it RGB?
     if( [[string substringToIndex:3] isEqualToString:@"rgb"] ) {
-        NSInteger count = 0;
-        CGFloat * params = [IJSVGUtils commandParameters:string
-                                                   count:&count];
-        CGFloat alpha = 1;
-        if( count == 4 ) {
-            alpha = params[3];
+        NSRange range = [IJSVGUtils rangeOfParentheses:string];
+        NSString * rgbString = [string substringWithRange:range];
+        NSArray * parts = [rgbString componentsSeparatedByChars:","];
+        NSString * alpha = @"100%";
+        if(parts.count == 4) {
+            alpha = parts[3];
         }
-        color = [NSColor colorWithDeviceRed:params[0]/255.f
-                                      green:params[1]/255.f
-                                       blue:params[2]/255.f
-                                      alpha:alpha];
-        free(params);
-        return color;
+        return [self colorFromRString:parts[0]
+                              gString:parts[1]
+                              bString:parts[2]
+                              aString:alpha];
     }
     
     // is it HSL?

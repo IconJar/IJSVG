@@ -47,13 +47,16 @@
 + (IJSVGUnitLength *)unitWithString:(NSString *)string
 {
     // just return noting for inherit, node will deal
-    // with the rest
+    // with the rest...hopefully
+    NSCharacterSet * cSet = NSCharacterSet.whitespaceCharacterSet;
+    string = [string stringByTrimmingCharactersInSet:cSet];
+    
     if([string isEqualToString:@"inherit"]) {
         return nil;
     }
     
     IJSVGUnitLength * unit = [[[self alloc] init] autorelease];
-    unit.value = [string floatValue];
+    unit.value = string.floatValue;
     unit.type = IJSVGUnitLengthTypeNumber;
     if([string hasSuffix:@"%"] == YES) {
         unit.value /= 100.f;

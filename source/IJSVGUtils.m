@@ -217,6 +217,22 @@ CGFloat degrees_to_radians( CGFloat degrees )
     return isupper([string characterAtIndex:0]) ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
 }
 
++ (NSRange)rangeOfParentheses:(NSString *)string
+{
+    NSRange range = NSMakeRange(NSNotFound, 0);
+    const char * characters = string.UTF8String;
+    unsigned long length = strlen(characters);
+    for(NSInteger i = 0; i < length; i++) {
+        char c = characters[i];
+        if(c == '(') {
+            range.location = i + 1;
+        } else if(c == ')') {
+            range.length = i - range.location;
+        }
+    }
+    return range;
+}
+
 + (NSString *)defURL:(NSString *)string
 {
     static NSRegularExpression * _reg = nil;
