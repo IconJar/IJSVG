@@ -10,6 +10,7 @@
 #include <xlocale.h>
 #import "IJSVGCommand.h"
 #import "IJSVGGradientUnitLength.h"
+#import "IJSVGStringAdditions.h"
 
 @interface IJSVGUtils : NSObject
 
