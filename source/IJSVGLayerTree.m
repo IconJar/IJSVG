@@ -606,7 +606,7 @@
     CGFloat lineWidth = 1.f;
     if(self.strokeWidth > 0.f) {
         lineWidth = self.strokeWidth;
-    } else if(path.strokeWidth.value > 0.f) {
+    } else {
         lineWidth = path.strokeWidth.value;
     }
     
