@@ -416,6 +416,12 @@
                          error:nil];
 }
 
+- (NSRect)computeOriginalDrawingFrame
+{
+    return NSMakeRect(0.f, 0.f, _proposedViewSize.width * _clipScale,
+                      _proposedViewSize.height * _clipScale);
+}
+
 - (NSImage *)imageWithSize:(NSSize)aSize
                    flipped:(BOOL)flipped
                      error:(NSError **)error
@@ -434,6 +440,20 @@
     CGContextRestoreGState(ref);
     [im unlockFocus];
     return im;
+}
+
+- (NSImage *)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
+                                           flipped:(BOOL)flipped
+                                             error:(NSError **)error
+{
+    [self _beginDraw:(NSRect) {
+        .origin = CGPointZero,
+        .size = aSize
+    }];
+    NSRect rect = [self computeOriginalDrawingFrame];
+    return [self imageWithSize:rect.size
+                       flipped:flipped
+                         error:error];
 }
 
 - (NSData *)PDFData

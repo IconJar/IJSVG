@@ -140,6 +140,9 @@ withSVGString:(NSString *)subSVGString;
                      error:(NSError **)error;
 - (NSImage *)imageWithSize:(NSSize)aSize
                    flipped:(BOOL)flipped;
+- (NSImage *)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
+                                           flipped:(BOOL)flipped
+                                             error:(NSError **)error;
 - (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)size;
 - (BOOL)drawAtPoint:(NSPoint)point
