@@ -416,8 +416,12 @@
                          error:nil];
 }
 
-- (NSRect)computeOriginalDrawingFrame
+- (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize
 {
+    [self _beginDraw:(NSRect) {
+        .origin = CGPointZero,
+        .size = aSize
+    }];
     return NSMakeRect(0.f, 0.f, _proposedViewSize.width * _clipScale,
                       _proposedViewSize.height * _clipScale);
 }
@@ -446,11 +450,7 @@
                                            flipped:(BOOL)flipped
                                              error:(NSError **)error
 {
-    [self _beginDraw:(NSRect) {
-        .origin = CGPointZero,
-        .size = aSize
-    }];
-    NSRect rect = [self computeOriginalDrawingFrame];
+    NSRect rect = [self computeOriginalDrawingFrameWithSize:aSize];
     return [self imageWithSize:rect.size
                        flipped:flipped
                          error:error];
