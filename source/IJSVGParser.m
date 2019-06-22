@@ -16,7 +16,7 @@
 
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
 {
-    return [[self class] groupForFileURL:aURL
+    return [self.class groupForFileURL:aURL
                                    error:nil
                                 delegate:nil];
 }
@@ -24,7 +24,7 @@
 + (IJSVGParser *)groupForFileURL:(NSURL *)aURL
                         delegate:(id<IJSVGParserDelegate>)delegate
 {
-    return [[self class] groupForFileURL:aURL
+    return [self.class groupForFileURL:aURL
                                    error:nil
                                 delegate:delegate];
 }
@@ -33,7 +33,7 @@
                            error:(NSError **)error
                         delegate:(id<IJSVGParserDelegate>)delegate
 {
-    return [[[[self class] alloc] initWithFileURL:aURL
+    return [[[self.class alloc] initWithFileURL:aURL
                                             error:error
                                          delegate:delegate] autorelease];
 }

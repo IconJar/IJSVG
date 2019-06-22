@@ -24,7 +24,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    IJSVGTransform * trans = [[[self class] alloc] init];
+    IJSVGTransform * trans = [[self.class alloc] init];
     trans.command = self.command;
     trans.parameters = (CGFloat*)malloc(sizeof(CGFloat)*self.parameterCount);
     trans.sort = sort;
@@ -145,20 +145,20 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
                             usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
         {
             NSString * command = [string substringWithRange:[result rangeAtIndex:1]];
-            IJSVGTransformCommand commandType = [[self class] commandForCommandString:command];
+            IJSVGTransformCommand commandType = [self.class commandForCommandString:command];
             if( commandType == IJSVGTransformCommandNotImplemented ) {
                 return;
             }
             
             // create the transform
             NSString * params = [string substringWithRange:[result rangeAtIndex:2]];
-            IJSVGTransform * transform = [[[[self class] alloc] init] autorelease];
+            IJSVGTransform * transform = [[[self.class alloc] init] autorelease];
             NSInteger count = 0;
             transform.command = commandType;
             transform.parameters = [IJSVGUtils commandParameters:params
                                                            count:&count];
             transform.parameterCount = count;
-            transform.sort = [[self class] sortForTransformCommand:commandType];
+            transform.sort = [self.class sortForTransformCommand:commandType];
             [transforms addObject:transform];
         }];
     }

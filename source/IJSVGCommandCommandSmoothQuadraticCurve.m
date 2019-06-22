@@ -40,7 +40,7 @@
                 commandPoint = CGPointMake(-1*(command.parameters[0] + oldPoint.x) + 2*([path currentSubpath].currentPoint.x),
                                            -1*(command.parameters[1] + oldPoint.y) + 2*[path currentSubpath].currentPoint.y);
             }
-        } else if( command.commandClass == [self class] ) {
+        } else if( command.commandClass == self.class ) {
             // smooth quadratic curve
             commandPoint = CGPointMake(-1*(path.lastControlPoint.x) + 2*([path currentSubpath].currentPoint.x),
                                        -1*(path.lastControlPoint.y) + 2*[path currentSubpath].currentPoint.y);

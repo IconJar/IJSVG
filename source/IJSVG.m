@@ -39,14 +39,14 @@
 + (id)svgNamed:(NSString *)string
          error:(NSError **)error
 {
-    return [[self class] svgNamed:string
+    return [self.class svgNamed:string
                             error:error
                          delegate:nil];
 }
 
 + (id)svgNamed:(NSString *)string
 {
-    return [[self class] svgNamed:string
+    return [self.class svgNamed:string
                             error:nil];
 }
 
@@ -54,7 +54,7 @@
       useCache:(BOOL)useCache
       delegate:(id<IJSVGDelegate>)delegate
 {
-    return [[self class] svgNamed:string
+    return [self.class svgNamed:string
                          useCache:useCache
                             error:nil
                          delegate:delegate];
@@ -63,7 +63,7 @@
 + (id)svgNamed:(NSString *)string
       delegate:(id<IJSVGDelegate>)delegate
 {
-    return [[self class] svgNamed:string
+    return [self.class svgNamed:string
                             error:nil
                          delegate:delegate];
 }

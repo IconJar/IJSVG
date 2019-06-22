@@ -27,7 +27,7 @@
     NSPoint firstControl = NSMakePoint( [path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y );
     if( command != nil )
     {
-        if( command.commandClass == [IJSVGCommandCurve class] || command.commandClass == [self class] )
+        if( command.commandClass == [IJSVGCommandCurve class] || command.commandClass == self.class )
         {
             if( command.commandClass == [IJSVGCommandCurve class] )
             {

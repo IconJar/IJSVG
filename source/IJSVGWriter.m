@@ -18,17 +18,17 @@
     [trans scaleXBy:1.f yBy:-1.f];
     [trans translateXBy:0.f yBy:path.controlPointBounds.size.height];
     path = [trans transformBezierPath:path];
-    return [[self class] SVGDocumentStringForBezierPath:path];
+    return [self.class SVGDocumentStringForBezierPath:path];
 }
 
 + (NSString *)SVGDocumentStringForBezierPath:(NSBezierPath *)path
 {
-    return [[self class] SVGDocumentForBezierPath:path].XMLString;
+    return [self.class SVGDocumentForBezierPath:path].XMLString;
 }
 
 + (NSXMLDocument *)SVGDocumentForBezierPath:(NSBezierPath *)path
 {
-    NSXMLElement * root = [[self class] rootElementForPath:path];
+    NSXMLElement * root = [self.class rootElementForPath:path];
     
     // create the path data
     NSXMLElement * p = [[[NSXMLElement alloc] initWithName:@"path"] autorelease];
@@ -36,7 +36,7 @@
     // add the drawing command
     NSXMLNode * n = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
     [n setName:@"d"];
-    [n setStringValue:[[self class] SVGPathStringForBezierPath:path]];
+    [n setStringValue:[self.class SVGPathStringForBezierPath:path]];
     [p addAttribute:n];
     
     // add the drawing path to the root

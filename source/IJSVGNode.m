@@ -204,7 +204,7 @@
 
 - (id)copyWithZone:(NSZone *)zone
 {
-    IJSVGNode * node = [[self class] allocWithZone:zone];
+    IJSVGNode * node = [self.class allocWithZone:zone];
     [node applyPropertiesFromNode:self];
     return node;
 }

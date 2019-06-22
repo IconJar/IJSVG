@@ -415,7 +415,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
         *count = 1;
         return ret;
     }
-    return [[self class] scanFloatsFromString:command
+    return [self.class scanFloatsFromString:command
                                          size:count];
 }
 
@@ -519,7 +519,7 @@ CGFloat degrees_to_radians( CGFloat degrees )
 + (CGFloat *)parseViewBox:(NSString *)string
 {
     NSInteger size = 0;
-    return [[self class] scanFloatsFromString:string
+    return [self.class scanFloatsFromString:string
                                          size:&size];
 }
 

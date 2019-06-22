@@ -28,7 +28,7 @@ static BOOL _enabled = YES;
 
 + (IJSVG *)cachedSVGForFileURL:(NSURL *)aURL
 {
-    if( ![[self class] enabled] || _cache == nil )
+    if( ![self.class enabled] || _cache == nil )
         return nil;
     IJSVG * svg = nil;
     if( ( svg = [_cache objectForKey:aURL] ) == nil )
@@ -53,7 +53,7 @@ static BOOL _enabled = YES;
 {
     _enabled = flag;
     if( !flag ) {
-        [[self class] flushCache];
+        [self.class flushCache];
         return;
     }
     

@@ -50,7 +50,7 @@
         _currentIndex = 0;
         command = [[str substringToIndex:1] copy];
         type = [IJSVGUtils typeForCommandString:self.command];
-        commandClass = [[self class] commandClassForCommandChar:[self.command characterAtIndex:0]];
+        commandClass = [self.class commandClassForCommandChar:[self.command characterAtIndex:0]];
         parameters = [IJSVGUtils commandParameters:str count:&parameterCount];
         requiredParameters = [self.commandClass requiredParameterCount];
         
@@ -77,7 +77,7 @@
             }
             
             // create a subcommand per set
-            IJSVGCommand * c = [[[[self class] alloc] init] autorelease];
+            IJSVGCommand * c = [[[self.class alloc] init] autorelease];
             c.parameterCount = self.requiredParameters;
             c.parameters = subParams;
             c.type = self.type;
