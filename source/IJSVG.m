@@ -339,7 +339,7 @@
 - (void)_setupBasicsFromAnyInitializer
 {
     self.clipToViewport = YES;
-    self.renderQuality = IJSVGRenderQualityOptimized;
+    self.renderQuality = IJSVGRenderQualityFullResolution;
     
     // setup low level backing scale
     _lastProposedBackingScale = 0.f;
@@ -718,6 +718,10 @@
     if(scale < 1.f) {
         scale = 1.f;
     }
+    
+    // make sure we multiple the scale by the scale of the rendered clip
+    // or it will be blurry for gradients and other bitmap drawing
+    scale = (_scale * scale);
     
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!

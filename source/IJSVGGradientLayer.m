@@ -65,11 +65,11 @@
 {
     switch (self.renderQuality) {
         case IJSVGRenderQualityOptimized: {
-            backingScaleFactor = .35f;
+            backingScaleFactor = (backingScaleFactor * .35f);
             break;
         }
         case IJSVGRenderQualityLow: {
-            backingScaleFactor = .05f;
+            backingScaleFactor = (backingScaleFactor * .05f);
             break;
         }
         default: {

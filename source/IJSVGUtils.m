@@ -235,10 +235,18 @@ CGFloat degrees_to_radians( CGFloat degrees )
 
 + (NSString *)defURL:(NSString *)string
 {
+    // insta check for URL
+    NSCharacterSet * set = NSCharacterSet.whitespaceCharacterSet;
+    string = [string stringByTrimmingCharactersInSet:set];
+    NSString * check = [string substringToIndex:3].lowercaseString;
+    if([check isEqualToString:@"url"] == NO) {
+        return nil;
+    }
+    
     static NSRegularExpression * _reg = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"url\\s?\\(\\s?#(.*?)\\)\\;?"
+        _reg = [[NSRegularExpression alloc] initWithPattern:@"url\\(['\"]?([^)]+?)['\"]?\\)"
                                                     options:0
                                                       error:nil];
     });
@@ -246,11 +254,15 @@ CGFloat degrees_to_radians( CGFloat degrees )
     [_reg enumerateMatchesInString:string
                            options:0
                              range:NSMakeRange( 0, string.length )
-                        usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-     {
-         if( ( foundID = [string substringWithRange:[result rangeAtIndex:1]] ) != nil )
+                        usingBlock:^(NSTextCheckingResult *result,
+                                     NSMatchingFlags flags, BOOL *stop) {
+         if((foundID = [string substringWithRange:[result rangeAtIndex:1]]) != nil) {
              *stop = YES;
+         }
      }];
+    if([foundID hasPrefix:@"#"] == YES) {
+        foundID = [foundID substringFromIndex:1];
+    }
     return foundID;
 }
 
