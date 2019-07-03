@@ -699,7 +699,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 + (NSColor *)colorFromHEXInteger:(NSInteger)hex
 {
     return [self computeColorSpace:[NSColor colorWithDeviceRed:((hex >> 16) & 0xFF) / 255.f
-                                                         green:((hex >> 6) & 0xFF) / 255.f
+                                                         green:((hex >> 8) & 0xFF) / 255.f
                                                           blue:(hex & 0xFF) / 255.f
                                                          alpha:1.f]];
 }
