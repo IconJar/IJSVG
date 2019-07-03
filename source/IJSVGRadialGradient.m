@@ -99,7 +99,7 @@
                 viewPort:(CGRect)viewBox
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
-    CGFloat radius = self.radius.value;
+    CGFloat radius = 0.f;
     CGPoint startPoint = CGPointZero;
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
@@ -107,49 +107,39 @@
     // transforms
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
-#pragma mark User Space On Use
+    CGRect boundingBox = inUserSpace ? viewBox : objectRect;
+    
+    // make sure we apply the absolute position to
+    // transform us back into the correct space
     if(inUserSpace == YES) {
-        CGFloat rad = radius*2.f;
-        startPoint = CGPointMake(self.cx.value, self.cy.value);
-        
-        // work out the new radius
-        CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
-        rect = CGRectApplyAffineTransform(rect, selfTransform);
-        rect = CGRectApplyAffineTransform(rect, absoluteTransform);
-        radius = CGRectGetHeight(rect)/2.f;
-        
-        gradientStartPoint = startPoint;
-        gradientEndPoint = CGPointMake(self.fx.value, self.fy.value);
-        
-        // apply the absolute position
         CGContextConcatCTM(ctx, absoluteTransform);
-    } else {
-#pragma mark Object Bounding Box
-        // compute size based on percentages
-        CGFloat x = [self.cx computeValue:CGRectGetWidth(objectRect)];
-        CGFloat y = [self.cy computeValue:CGRectGetHeight(objectRect)];
-        startPoint = CGPointMake(x, y);
-        CGFloat val = MIN(CGRectGetWidth(objectRect), CGRectGetHeight(objectRect));
-        radius = [self.radius computeValue:val];
-        
-        CGFloat ex = [self.fx computeValue:CGRectGetWidth(objectRect)];
-        CGFloat ey = [self.fy computeValue:CGRectGetHeight(objectRect)];
-        
-        gradientEndPoint = CGPointMake(ex, ey);
-        gradientStartPoint = startPoint;
-        
-        // transform if width or height is not equal
-        if(CGRectGetWidth(objectRect) != CGRectGetHeight(objectRect)) {
-            CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
-                                                                    gradientStartPoint.y);
-            if(CGRectGetWidth(objectRect) > CGRectGetHeight(objectRect)) {
-                tr = CGAffineTransformScale(tr, CGRectGetWidth(objectRect)/CGRectGetHeight(objectRect), 1);
-            } else {
-                tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(objectRect)/CGRectGetWidth(objectRect));
-            }
-            tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
-            selfTransform = CGAffineTransformConcat(tr, selfTransform);
+    }
+    
+    
+    // compute size based on percentages
+    CGFloat x = [self.cx computeValue:CGRectGetWidth(boundingBox)];
+    CGFloat y = [self.cy computeValue:CGRectGetHeight(boundingBox)];
+    startPoint = CGPointMake(x, y);
+    CGFloat val = MIN(CGRectGetWidth(boundingBox), CGRectGetHeight(boundingBox));
+    radius = [self.radius computeValue:val];
+    
+    CGFloat ex = [self.fx computeValue:CGRectGetWidth(boundingBox)];
+    CGFloat ey = [self.fy computeValue:CGRectGetHeight(boundingBox)];
+    
+    gradientEndPoint = CGPointMake(ex, ey);
+    gradientStartPoint = startPoint;
+    
+    // transform if width or height is not equal
+    if(CGRectGetWidth(boundingBox) != CGRectGetHeight(boundingBox)) {
+        CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
+                                                                gradientStartPoint.y);
+        if(CGRectGetWidth(boundingBox) > CGRectGetHeight(boundingBox)) {
+            tr = CGAffineTransformScale(tr, CGRectGetWidth(boundingBox)/CGRectGetHeight(boundingBox), 1);
+        } else {
+            tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(boundingBox)/CGRectGetWidth(boundingBox));
         }
+        tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
+        selfTransform = CGAffineTransformConcat(tr, selfTransform);
     }
 
 #pragma mark Default drawing
