@@ -100,6 +100,10 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
         return IJSVGTransformCommandMatrix;
     if( [str isEqualToString:@"translate"] )
         return IJSVGTransformCommandTranslate;
+    if([str isEqualToString:@"translatex"])
+        return IJSVGTransformCommandTranslateX;
+    if([str isEqualToString:@"translatey"])
+        return IJSVGTransformCommandTranslateY;
     if( [str isEqualToString:@"scale"] )
         return IJSVGTransformCommandScale;
     if( [str isEqualToString:@"skewx"])
@@ -120,6 +124,8 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
             return 1;
         case IJSVGTransformCommandMatrix:
             return 2;
+        case IJSVGTransformCommandTranslateX:
+        case IJSVGTransformCommandTranslateY:
         case IJSVGTransformCommandTranslate:
             return -1;
         default:
@@ -133,7 +139,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
     static NSRegularExpression * _reg = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z]+)\\((.*?)\\)"
+        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z]+)\\(([^\\)]+)\\)"
                                                     options:0
                                                       error:nil];
     });
@@ -142,8 +148,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
         [_reg enumerateMatchesInString:string
                                options:0
                                  range:NSMakeRange( 0, string.length )
-                            usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-        {
+                            usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
             NSString * command = [string substringWithRange:[result rangeAtIndex:1]];
             IJSVGTransformCommand commandType = [self.class commandForCommandString:command];
             if( commandType == IJSVGTransformCommandNotImplemented ) {
@@ -228,6 +233,18 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
                                  yBy:transform.parameters[1]];
                 break;
             }
+                
+            // translateX
+            case IJSVGTransformCommandTranslateX: {
+                [at translateXBy:transform.parameters[0] yBy:0.f];
+                break;
+            }
+                
+            // translateY
+            case IJSVGTransformCommandTranslateY: {
+                [at translateXBy:0.f yBy:transform.parameters[0]];
+                break;
+            }
             
             // scale
             case IJSVGTransformCommandScale: {
@@ -282,6 +299,16 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
                 return CGAffineTransformTranslate(identity, self.parameters[0], 0.f);
             }
             return CGAffineTransformTranslate(identity, self.parameters[0], self.parameters[1]);
+        }
+            
+        // translateX
+        case IJSVGTransformCommandTranslateX: {
+            return CGAffineTransformTranslate(identity, self.parameters[0], 0.f);
+        }
+            
+        // translateY
+        case IJSVGTransformCommandTranslateY: {
+            return CGAffineTransformTranslate(identity, 0.f, self.parameters[0]);
         }
         
         // rotate
@@ -359,9 +386,9 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
                 p0 = modifier(0,p0);
                 p1 = modifier(1,p1);
                 p2 = modifier(2,p2);
-                p3 = modifier(2,p3);
-                p4 = modifier(2,p4);
-                p5 = modifier(2,p5);
+                p3 = modifier(3,p3);
+                p4 = modifier(4,p4);
+                p5 = modifier(5,p5);
             }
             return CGAffineTransformMake(p0, p1, p2, p3, p4, p5);
         }
@@ -378,6 +405,24 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
             if(self.parameterCount == 1)
                 return CGAffineTransformMakeTranslation( p0, 0 );
             return CGAffineTransformMakeTranslation(p0, p1);
+        }
+            
+        // translateX
+        case IJSVGTransformCommandTranslateX: {
+            CGFloat p0 = self.parameters[0];
+            if(modifier != nil) {
+                p0 = modifier(0, p0);
+            }
+            return CGAffineTransformMakeTranslation(p0, 0.f);
+        }
+            
+        // translateY
+        case IJSVGTransformCommandTranslateY: {
+            CGFloat p0 = self.parameters[0];
+            if(modifier != nil) {
+                p0 = modifier(0, p0);
+            }
+            return CGAffineTransformMakeTranslation(0.f, p0);
         }
             
         // scale

@@ -17,6 +17,8 @@ typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform * transform);
 typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
     IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
+    IJSVGTransformCommandTranslateX,
+    IJSVGTransformCommandTranslateY,
     IJSVGTransformCommandScale,
     IJSVGTransformCommandRotate,
     IJSVGTransformCommandSkewX,

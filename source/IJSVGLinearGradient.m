@@ -89,7 +89,8 @@
     CGContextConcatCTM(ctx, selfTransform);
     
     // draw the gradient
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+    CGGradientDrawingOptions options =
+        kCGGradientDrawsBeforeStartLocation|
         kCGGradientDrawsAfterEndLocation;
     
     CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,

@@ -120,7 +120,8 @@
     CGFloat x = [self.cx computeValue:CGRectGetWidth(boundingBox)];
     CGFloat y = [self.cy computeValue:CGRectGetHeight(boundingBox)];
     startPoint = CGPointMake(x, y);
-    CGFloat val = MIN(CGRectGetWidth(boundingBox), CGRectGetHeight(boundingBox));
+    CGFloat val = MIN(CGRectGetWidth(boundingBox),
+                      CGRectGetHeight(boundingBox));
     radius = [self.radius computeValue:val];
     
     CGFloat ex = [self.fx computeValue:CGRectGetWidth(boundingBox)];
@@ -129,8 +130,9 @@
     gradientEndPoint = CGPointMake(ex, ey);
     gradientStartPoint = startPoint;
     
-    // transform if width or height is not equal
-    if(CGRectGetWidth(boundingBox) != CGRectGetHeight(boundingBox)) {
+    // transform if width or height is not equal - this can only
+    // be done if we are using objectBoundingBox
+    if(inUserSpace == NO && CGRectGetWidth(boundingBox) != CGRectGetHeight(boundingBox)) {
         CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
                                                                 gradientStartPoint.y);
         if(CGRectGetWidth(boundingBox) > CGRectGetHeight(boundingBox)) {
@@ -147,7 +149,8 @@
     CGContextConcatCTM(ctx, selfTransform);
 
     // draw the gradient
-    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation|
+    CGGradientDrawingOptions options =
+        kCGGradientDrawsBeforeStartLocation|
         kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient,
                                 gradientEndPoint, 0, gradientStartPoint,

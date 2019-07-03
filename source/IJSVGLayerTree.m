@@ -331,7 +331,7 @@
             layer.fillColor = fColor.CGColor;
         } else {
             // use default color
-            NSColor * defColor = [NSColor blackColor];
+            NSColor * defColor = [IJSVGColor computeColorSpace:NSColor.blackColor];
             if(path.fillOpacity.value != 1.f) {
                 defColor = [IJSVGColor changeAlphaOnColor:defColor
                                                        to:path.fillOpacity.value];
@@ -356,7 +356,7 @@
             
             // force reset of the mask colour as we need to use the stroke layer
             // as the mask for the stroke gradient
-            strokeLayer.strokeColor = [NSColor blackColor].CGColor;
+            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.blackColor].CGColor;
             
             // create the gradient
             IJSVGGradientLayer * gradLayer = [self gradientStrokeLayerForLayer:layer
@@ -376,7 +376,7 @@
         } else if(self.strokeColor == nil && path.strokePattern != nil) {
             
             // force reset of the mask
-            strokeLayer.strokeColor = [NSColor blackColor].CGColor;
+            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.blackColor].CGColor;
             
             // create the pattern
             IJSVGPatternLayer * patternLayer = [self patternStrokeLayerForLayer:layer
@@ -681,7 +681,7 @@
         
         // recursive colourize for each item
         [self _recursiveColorLayersFromLayer:maskLayer
-                                   withColor:[NSColor whiteColor].CGColor];
+                                   withColor:[IJSVGColor computeColorSpace:NSColor.whiteColor].CGColor];
         
         // add the mask
         layer.mask = maskLayer;
