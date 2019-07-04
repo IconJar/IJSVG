@@ -230,15 +230,15 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
                       aUnit:(IJSVGUnitLength *)aUnit
 {
     CGFloat r = rUnit.type == IJSVGUnitLengthTypePercentage ?
-        [rUnit computeValue:255.f]/255.f : [rUnit computeValue:1.f];
+        [rUnit computeValue:255.f] : [rUnit computeValue:1.f];
     CGFloat g = gUnit.type == IJSVGUnitLengthTypePercentage ?
-        [gUnit computeValue:255.f]/255.f : [gUnit computeValue:1.f];
+        [gUnit computeValue:255.f] : [gUnit computeValue:1.f];
     CGFloat b = bUnit.type == IJSVGUnitLengthTypePercentage ?
-        [bUnit computeValue:255.f]/255.f : [bUnit computeValue:1.f];
+        [bUnit computeValue:255.f] : [bUnit computeValue:1.f];
     CGFloat a = [aUnit computeValue:100.f];
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:r
-                                                         green:g
-                                                          blue:b
+    return [self computeColorSpace:[NSColor colorWithDeviceRed:(r/255.f)
+                                                         green:(g/255.f)
+                                                          blue:(b/255.f)
                                                          alpha:a]];
 }
 
