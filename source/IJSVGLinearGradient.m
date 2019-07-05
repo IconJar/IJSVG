@@ -22,10 +22,13 @@
     
     // work out each coord, and work out if its a % or not
     // annoyingly we need to check them all against each other -_-
+    // also this will only account if this is objectBoundingBox
     BOOL isPercent = NO;
-    if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
-       (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
-        isPercent = YES;
+    if(aGradient.units == IJSVGUnitObjectBoundingBox) {
+        if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
+           (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
+            isPercent = YES;
+        }
     }
     
     // assume its a vertical / horizonal

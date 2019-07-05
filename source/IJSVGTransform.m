@@ -155,6 +155,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform *> * transforms,  IJSVGTransform
                 return;
             }
             
+        
             // create the transform
             NSString * params = [string substringWithRange:[result rangeAtIndex:2]];
             IJSVGTransform * transform = [[[self.class alloc] init] autorelease];

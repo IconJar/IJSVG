@@ -22,7 +22,7 @@
     if( ( self = [super initWithFrame:frameRect] ) != nil )
     {
         svg = [self svg];
-        svg.renderQuality = IJSVGRenderQualityLow;
+        svg.renderQuality = IJSVGRenderQualityFullResolution;
         svg.renderingBackingScaleHelper = ^{
             return self.window.backingScaleFactor;
         };
@@ -32,7 +32,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"car"];
+    return [IJSVG svgNamed:@"test 2"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

@@ -947,26 +947,24 @@
                 
                 IJSVGLinearGradient * grad = [[[IJSVGLinearGradient alloc] init] autorelease];
                 grad.type = aType;
-                grad.gradient = [IJSVGLinearGradient parseGradient:elementCopy
-                                                          gradient:grad];
-                
                 [self _setupDefaultsForNode:grad];
                 [self _parseElementForCommonAttributes:elementCopy
                                                   node:grad
                                       ignoreAttributes:nil];
+                grad.gradient = [IJSVGLinearGradient parseGradient:elementCopy
+                                                          gradient:grad];
                 [parentGroup addDef:grad];
                 break;
             }
             
             IJSVGLinearGradient * gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
             gradient.type = aType;
-            gradient.gradient = [IJSVGLinearGradient parseGradient:element
-                                                          gradient:gradient];
-            
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
                                               node:gradient
                                   ignoreAttributes:nil];
+            gradient.gradient = [IJSVGLinearGradient parseGradient:element
+                                                          gradient:gradient];
             [parentGroup addDef:gradient];
             break;
         }
@@ -986,27 +984,24 @@
                 
                 NSXMLElement * elementCopy = [self mergedElement:element
                                             withReferenceElement:referenceElement];
-                
-                grad.gradient = [IJSVGRadialGradient parseGradient:elementCopy
-                                                          gradient:grad];
-                
                 [self _setupDefaultsForNode:grad];
                 [self _parseElementForCommonAttributes:elementCopy
                                                   node:grad
                                       ignoreAttributes:nil];
+                grad.gradient = [IJSVGRadialGradient parseGradient:elementCopy
+                                                          gradient:grad];
                 [parentGroup addDef:grad];
                 break;
             }
             
             IJSVGRadialGradient * gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
             gradient.type = aType;
-            gradient.gradient = [IJSVGRadialGradient parseGradient:element
-                                                          gradient:gradient];
-            
             [self _setupDefaultsForNode:gradient];
             [self _parseElementForCommonAttributes:element
                                               node:gradient
                                   ignoreAttributes:nil];
+            gradient.gradient = [IJSVGRadialGradient parseGradient:element
+                                                          gradient:gradient];
             [parentGroup addDef:gradient];
             break;
         }
