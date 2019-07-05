@@ -14,22 +14,10 @@
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGLinearGradient *)aGradient
 {
-    
-    CGFloat px1 = [[element attributeForName:@"x1"] stringValue].floatValue;
-    CGFloat px2 = [[element attributeForName:@"x2"] stringValue].floatValue;
-    CGFloat py1 = [[element attributeForName:@"y1"] stringValue].floatValue;
-    CGFloat py2 = [[element attributeForName:@"y2"] stringValue].floatValue;
-    
     // work out each coord, and work out if its a % or not
     // annoyingly we need to check them all against each other -_-
     // also this will only account if this is objectBoundingBox
-    BOOL isPercent = NO;
-    if(aGradient.units == IJSVGUnitObjectBoundingBox) {
-        if((px1 >= 0.f && px1 <= 1.f) && (px2 >= 0.f && px2 <= 1.f) &&
-           (py1 >= 0.f && py1 <= 1.f) && (py2 >= 0.f && py2 <= 1.f)) {
-            isPercent = YES;
-        }
-    }
+    BOOL isPercent = aGradient.units == IJSVGUnitObjectBoundingBox;
     
     // assume its a vertical / horizonal
     if(isPercent == NO) {
