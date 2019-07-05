@@ -249,24 +249,41 @@
     return mask;
 }
 
+//- (CGAffineTransform)absoluteTransform:(IJSVGNode *)node
+//{
+//    CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
+//    IJSVGNode * intermediateNode = node.intermediateParentNode;
+//    IJSVGNode * parentSVGNode = node;
+//    while(node != nil) {
+//        // intermediateParent should be skipped as these are elements
+//        // created by use statements and are technically fake elements, but the
+//        // spec says use them for the transforms, yolo!
+//        if(node == intermediateNode) {
+//            node = node.parentNode;
+//            continue;
+//        }
+//        CGAffineTransform trans = IJSVGConcatTransforms(node.transforms);
+//        parentAbsoluteTransform = CGAffineTransformConcat(trans,parentAbsoluteTransform);
+//        node = node.parentNode;
+//    }
+//    return parentAbsoluteTransform;
+//}
+
+
+
 - (CGAffineTransform)absoluteTransform:(IJSVGNode *)node
 {
     CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
     IJSVGNode * intermediateNode = node.intermediateParentNode;
-    node = node.parentNode;
-    while(node != nil) {
-        // intermediateParent should be skipped as these are elements
-        // created by use statements and are technically fake elements, but the
-        // spec says use them for the transforms, yolo!
+    IJSVGNode * parentSVGNode = node;
+    while((parentSVGNode = parentSVGNode.parentNode) != nil) {
         if(node == intermediateNode) {
-            node = node.parentNode;
             continue;
         }
-        CGAffineTransform trans = IJSVGConcatTransforms(node.transforms);
-        parentAbsoluteTransform = CGAffineTransformConcat(trans,parentAbsoluteTransform);
-        node = node.parentNode;
+        parentAbsoluteTransform = [self absoluteTransform:parentSVGNode];
     }
-    return parentAbsoluteTransform;
+    return CGAffineTransformConcat(IJSVGConcatTransforms(node.transforms),
+                                   parentAbsoluteTransform);
 }
 
 - (IJSVGLayer *)layerForPath:(IJSVGPath *)path

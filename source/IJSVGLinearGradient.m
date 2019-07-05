@@ -57,7 +57,6 @@
     
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
-    CGAffineTransform absTransform = absoluteTransform;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
     CGRect boundingBox = inUserSpace ? viewBox : objectRect;
@@ -65,7 +64,7 @@
     // make sure we apply the absolute position to
     // transform us back into the correct space
     if(inUserSpace == YES) {
-        CGContextConcatCTM(ctx, absTransform);
+        CGContextConcatCTM(ctx, absoluteTransform);
     }
     
     CGFloat width = CGRectGetWidth(boundingBox);
@@ -86,6 +85,12 @@
     
     CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
                                 gradientEndPoint, options);
+    
+#ifdef IJSVG_DEBUG
+    [self _debugStart:gradientStartPoint
+                  end:gradientEndPoint
+              context:ctx];
+#endif
 }
 
 @end

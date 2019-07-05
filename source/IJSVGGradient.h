@@ -27,4 +27,8 @@
        absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox;
 
+- (void)_debugStart:(CGPoint)startPoint
+                end:(CGPoint)endPoint
+            context:(CGContextRef)ctx;
+
 @end

@@ -144,7 +144,6 @@
         selfTransform = CGAffineTransformConcat(tr, selfTransform);
     }
 
-#pragma mark Default drawing
     // transform the context
     CGContextConcatCTM(ctx, selfTransform);
 
@@ -155,6 +154,12 @@
     CGContextDrawRadialGradient(ctx, self.CGGradient,
                                 gradientEndPoint, 0, gradientStartPoint,
                                 radius, options);
+    
+#ifdef IJSVG_DEBUG_GRADIENTS
+    [self _debugStart:gradientStartPoint
+                  end:gradientEndPoint
+              context:ctx];
+#endif
 }
 
 @end

@@ -134,4 +134,16 @@
 {
 }
 
+- (void)_debugStart:(CGPoint)startPoint
+                end:(CGPoint)endPoint
+            context:(CGContextRef)ctx
+{
+    CGContextSaveGState(ctx);
+    CGContextSetStrokeColorWithColor(ctx, NSColor.blackColor.CGColor);
+    CGContextSetLineWidth(ctx, 1.f);
+    CGContextMoveToPoint(ctx, startPoint.x, startPoint.y);
+    CGContextAddLineToPoint(ctx, endPoint.x, endPoint.y);
+    CGContextStrokePath(ctx);
+}
+
 @end

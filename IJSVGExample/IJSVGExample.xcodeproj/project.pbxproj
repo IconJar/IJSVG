@@ -35,7 +35,7 @@
 		595665DE19B6309C00D805FF /* test.svg in Resources */ = {isa = PBXBuildFile; fileRef = 595665DD19B6309C00D805FF /* test.svg */; };
 		595665E119B630B600D805FF /* SVGView.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665E019B630B600D805FF /* SVGView.m */; };
 		597046A21E24352700A60138 /* IJSVGStrokeLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 597046A11E24352700A60138 /* IJSVGStrokeLayer.m */; };
-		59828C4622CF92AF00F4C444 /* home.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59828C4522CF92AF00F4C444 /* home.svg */; };
+		597AC83322CFD0FC007C0E42 /* home.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597AC83222CFD0FC007C0E42 /* home.svg */; };
 		5986308719BA104800CF15EA /* linecap.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5986308619BA104800CF15EA /* linecap.svg */; };
 		5986308A19BA106D00CF15EA /* SVGExampleView5.m in Sources */ = {isa = PBXBuildFile; fileRef = 5986308919BA106D00CF15EA /* SVGExampleView5.m */; };
 		5986308C19BA180E00CF15EA /* dashed.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5986308B19BA180E00CF15EA /* dashed.svg */; };
@@ -87,13 +87,10 @@
 		59E8ABF31E2167D90032A80C /* IJSVGImageLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 59E8ABF21E2167D90032A80C /* IJSVGImageLayer.m */; };
 		59E8ABF61E2176340032A80C /* IJSVGGroupLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 59E8ABF51E2176340032A80C /* IJSVGGroupLayer.m */; };
 		59E8ABF91E219C860032A80C /* IJSVGMath.m in Sources */ = {isa = PBXBuildFile; fileRef = 59E8ABF81E219C860032A80C /* IJSVGMath.m */; };
-		59E9863322CF6F2300C717DD /* KORDEUTER-logo-white.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59E9863222CF6F2300C717DD /* KORDEUTER-logo-white.svg */; };
 		59EA311622CF395400DAB3B7 /* IJSVGStringAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 59EA310F22CF395400DAB3B7 /* IJSVGStringAdditions.m */; };
 		59EA311722CF395400DAB3B7 /* IJSVGRendering.m in Sources */ = {isa = PBXBuildFile; fileRef = 59EA311022CF395400DAB3B7 /* IJSVGRendering.m */; };
 		59EA311822CF395400DAB3B7 /* IJSVGImageRep.m in Sources */ = {isa = PBXBuildFile; fileRef = 59EA311322CF395400DAB3B7 /* IJSVGImageRep.m */; };
 		59EA311922CF395400DAB3B7 /* IJSVGView.m in Sources */ = {isa = PBXBuildFile; fileRef = 59EA311422CF395400DAB3B7 /* IJSVGView.m */; };
-		59EA311B22CF397A00DAB3B7 /* test2.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59EA311A22CF397A00DAB3B7 /* test2.svg */; };
-		59EA311D22CF437700DAB3B7 /* test 2.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59EA311C22CF437700DAB3B7 /* test 2.svg */; };
 		59F799E219B880CE00096CB7 /* htc_one.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59F799E119B880CE00096CB7 /* htc_one.svg */; };
 /* End PBXBuildFile section */
 
@@ -156,7 +153,7 @@
 		595665E019B630B600D805FF /* SVGView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGView.m; sourceTree = "<group>"; };
 		597046A01E24352700A60138 /* IJSVGStrokeLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStrokeLayer.h; sourceTree = "<group>"; };
 		597046A11E24352700A60138 /* IJSVGStrokeLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStrokeLayer.m; sourceTree = "<group>"; };
-		59828C4522CF92AF00F4C444 /* home.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = home.svg; path = ../../../../../../../../Downloads/home.svg; sourceTree = "<group>"; };
+		597AC83222CFD0FC007C0E42 /* home.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = home.svg; sourceTree = "<group>"; };
 		5986308619BA104800CF15EA /* linecap.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = linecap.svg; sourceTree = "<group>"; };
 		5986308819BA106D00CF15EA /* SVGExampleView5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView5.h; sourceTree = "<group>"; };
 		5986308919BA106D00CF15EA /* SVGExampleView5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView5.m; sourceTree = "<group>"; };
@@ -252,7 +249,6 @@
 		59E8ABF51E2176340032A80C /* IJSVGGroupLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGroupLayer.m; sourceTree = "<group>"; };
 		59E8ABF71E219C860032A80C /* IJSVGMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGMath.h; sourceTree = "<group>"; };
 		59E8ABF81E219C860032A80C /* IJSVGMath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGMath.m; sourceTree = "<group>"; };
-		59E9863222CF6F2300C717DD /* KORDEUTER-logo-white.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = "KORDEUTER-logo-white.svg"; path = "../../../../../../../../Downloads/KORDEUTER-logo-white.svg"; sourceTree = "<group>"; };
 		59EA310E22CF395300DAB3B7 /* IJSVGImageRep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGImageRep.h; sourceTree = "<group>"; };
 		59EA310F22CF395400DAB3B7 /* IJSVGStringAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStringAdditions.m; sourceTree = "<group>"; };
 		59EA311022CF395400DAB3B7 /* IJSVGRendering.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGRendering.m; sourceTree = "<group>"; };
@@ -261,8 +257,6 @@
 		59EA311322CF395400DAB3B7 /* IJSVGImageRep.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGImageRep.m; sourceTree = "<group>"; };
 		59EA311422CF395400DAB3B7 /* IJSVGView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGView.m; sourceTree = "<group>"; };
 		59EA311522CF395400DAB3B7 /* IJSVGStringAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStringAdditions.h; sourceTree = "<group>"; };
-		59EA311A22CF397A00DAB3B7 /* test2.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = test2.svg; path = ../../../../../../../../Downloads/test2.svg; sourceTree = "<group>"; };
-		59EA311C22CF437700DAB3B7 /* test 2.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = "test 2.svg"; path = "../../../../../../../../Desktop/test 2.svg"; sourceTree = "<group>"; };
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -332,10 +326,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				59828C4522CF92AF00F4C444 /* home.svg */,
-				59E9863222CF6F2300C717DD /* KORDEUTER-logo-white.svg */,
-				59EA311C22CF437700DAB3B7 /* test 2.svg */,
-				59EA311A22CF397A00DAB3B7 /* test2.svg */,
+				597AC83222CFD0FC007C0E42 /* home.svg */,
 				59D1E39F202279CA00C54672 /* Group.svg */,
 				590C87F5201FD0D4004A1554 /* car.svg */,
 				590C87F3201FC9E3004A1554 /* radialgradient2.svg */,
@@ -586,13 +577,12 @@
 			files = (
 				59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */,
 				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
-				59EA311B22CF397A00DAB3B7 /* test2.svg in Resources */,
 				590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */,
 				590C87F1201FBF27004A1554 /* AJ_Digital_Camera.svg in Resources */,
 				590C87EF201FA093004A1554 /* NewTux.svg in Resources */,
 				59265CE81C4F840400F333F0 /* css.svg in Resources */,
-				59E9863322CF6F2300C717DD /* KORDEUTER-logo-white.svg in Resources */,
 				595665DE19B6309C00D805FF /* test.svg in Resources */,
+				597AC83322CFD0FC007C0E42 /* home.svg in Resources */,
 				590C87EB201F9888004A1554 /* json.svg in Resources */,
 				59D1E3A0202279CA00C54672 /* Group.svg in Resources */,
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
@@ -601,8 +591,6 @@
 				5986308719BA104800CF15EA /* linecap.svg in Resources */,
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
 				590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */,
-				59828C4622CF92AF00F4C444 /* home.svg in Resources */,
-				59EA311D22CF437700DAB3B7 /* test 2.svg in Resources */,
 				59459CEC19B906FE00CE493B /* clipped.svg in Resources */,
 				590C87F6201FD0D4004A1554 /* car.svg in Resources */,
 				5991A2AB201E310200913E3B /* heart.svg in Resources */,
