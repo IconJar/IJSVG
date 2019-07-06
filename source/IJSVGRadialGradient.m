@@ -50,7 +50,11 @@
         NSString * str = [element attributeForName:key].stringValue;
         IJSVGUnitLength * unit = nil;
         if(str != nil) {
-            unit = [IJSVGUnitLength unitWithString:str];
+            if(gradient.units == IJSVGUnitObjectBoundingBox) {
+                unit = [IJSVGUnitLength unitWithPercentageString:str];
+            } else {
+                unit = [IJSVGUnitLength unitWithString:str];
+            }
         } else {
             unit = [IJSVGUnitLength unitWithPercentageFloat:.5f];
         }
@@ -64,7 +68,7 @@
     // needs fixing
     NSString * fx = [element attributeForName:@"fx"].stringValue;
     if(fx != nil) {
-        if(fx.floatValue < 1.f) {
+        if(gradient.units == IJSVGUnitObjectBoundingBox) {
             gradient.fx = [IJSVGUnitLength unitWithPercentageString:fx];
         } else {
             gradient.fx = [IJSVGUnitLength unitWithString:fx];
@@ -73,7 +77,7 @@
     
     NSString * fy = [element attributeForName:@"fy"].stringValue;
     if(fx != nil) {
-        if(fx.floatValue < 1.f) {
+        if(gradient.units == IJSVGUnitObjectBoundingBox) {
             gradient.fy = [IJSVGUnitLength unitWithPercentageString:fy];
         } else {
             gradient.fy = [IJSVGUnitLength unitWithString:fy];
@@ -152,7 +156,8 @@
         kCGGradientDrawsBeforeStartLocation|
         kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient,
-                                gradientEndPoint, 0, gradientStartPoint,
+                                gradientEndPoint, 0,
+                                gradientStartPoint,
                                 radius, options);
     
 #ifdef IJSVG_DEBUG_GRADIENTS
