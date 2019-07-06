@@ -819,7 +819,7 @@
     return [self layerWithTree:renderer];
 }
 
-- (NSArray<NSColor *> *)visibleColors
+- (NSArray<NSColor *> *)visibleColors:(BOOL *)hasPatternFills
 {
     // set for the colors
     NSMutableSet * colors = [[[NSMutableSet alloc] init] autorelease];
@@ -842,6 +842,10 @@
                 if(color.alphaComponent != 0.f) {
                     [colors addObject:color];
                 }
+            }
+            if(sLayer.patternFillLayer != nil ||
+               sLayer.gradientFillLayer != nil) {
+                *hasPatternFills = YES;
             }
         }
     };

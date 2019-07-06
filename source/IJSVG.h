@@ -163,8 +163,10 @@ withSVGString:(NSString *)subSVGString;
 - (void)beginVectorDraw;
 - (void)endVectorDraw;
 
+- (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize;
+
 // colors
-- (NSArray<NSColor *> *)visibleColors;
+- (NSArray<NSColor *> *)visibleColors:(BOOL *)hasPatternFills;
 - (void)setReplacementColors:(NSDictionary<NSColor *, NSColor *> *)colors;
 - (void)removeReplacementColor:(NSColor *)color;
 - (void)replaceColor:(NSColor *)color
