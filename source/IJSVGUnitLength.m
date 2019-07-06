@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGUnitLength.h"
+#import "IJSVGNode.h"
 
 @implementation IJSVGUnitLength
 
@@ -20,6 +21,15 @@
     unit.value = number;
     unit.type = IJSVGUnitLengthTypeNumber;
     return unit;
+}
+
++ (IJSVGUnitLength *)unitWithString:(NSString *)string
+                       fromUnitType:(IJSVGUnitType)units
+{
+    if(units == IJSVGUnitObjectBoundingBox) {
+        return [self unitWithPercentageString:string];
+    }
+    return [self unitWithString:string];
 }
 
 + (IJSVGUnitLength *)unitWithFloat:(CGFloat)number

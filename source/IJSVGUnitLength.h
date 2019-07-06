@@ -13,6 +13,12 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypePercentage
 };
 
+typedef NS_ENUM( NSInteger, IJSVGUnitType) {
+    IJSVGUnitUserSpaceOnUse,
+    IJSVGUnitObjectBoundingBox,
+    IJSVGUnitInherit
+};
+
 @interface IJSVGUnitLength : NSObject
 
 @property (nonatomic, assign) IJSVGUnitLengthType type;
@@ -25,6 +31,9 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
 + (IJSVGUnitLength *)unitWithPercentageFloat:(CGFloat)number;
 + (IJSVGUnitLength *)unitWithString:(NSString *)string;
 + (IJSVGUnitLength *)unitWithPercentageString:(NSString *)string;
+
++ (IJSVGUnitLength *)unitWithString:(NSString *)string
+                       fromUnitType:(IJSVGUnitType)units;
 
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;

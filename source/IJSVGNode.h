@@ -73,12 +73,6 @@ typedef NS_OPTIONS( NSInteger, IJSVGFontTraits ) {
     IJSVGFontTraitItalic = 1 << 2
 };
 
-typedef NS_ENUM( NSInteger, IJSVGUnitType) {
-    IJSVGUnitUserSpaceOnUse,
-    IJSVGUnitObjectBoundingBox,
-    IJSVGUnitInherit
-};
-
 typedef NS_ENUM( NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeNormal = kCGBlendModeNormal,
     IJSVGBlendModeMultiply = kCGBlendModeMultiply,

@@ -44,7 +44,7 @@
 
 + (instancetype)imageRepWithData:(NSData *)data
 {
-    return [[self alloc] initWithData:data];
+    return [[[self alloc] initWithData:data] autorelease];
 }
 
 - (void)dealloc

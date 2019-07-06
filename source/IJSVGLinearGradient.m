@@ -14,25 +14,15 @@
 + (NSGradient *)parseGradient:(NSXMLElement *)element
                      gradient:(IJSVGLinearGradient *)aGradient
 {
-    // work out each coord, and work out if its a % or not
-    // annoyingly we need to check them all against each other -_-
-    // also this will only account if this is objectBoundingBox
-    BOOL isPercent = aGradient.units == IJSVGUnitObjectBoundingBox;
-    
-    // assume its a vertical / horizonal
-    if(isPercent == NO) {
-        // just ask unit for the value
-        aGradient.x1 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
-        aGradient.x2 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"x2"] stringValue] ?: @"100"];
-        aGradient.y1 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
-        aGradient.y2 = [IJSVGGradientUnitLength unitWithString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
-    } else {
-        // make sure its a percent!
-        aGradient.x1 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"x1"] stringValue] ?: @"0"];
-        aGradient.x2 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"x2"] stringValue] ?: @"1"];
-        aGradient.y1 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"y1"] stringValue] ?: @"0"];
-        aGradient.y2 = [IJSVGGradientUnitLength unitWithPercentageString:[[element attributeForName:@"y2"] stringValue] ?: @"0"];
-    }
+    // just ask unit for the value
+    NSString * x1 = ([element attributeForName:@"x1"].stringValue ?: @"0");
+    NSString * x2 = ([element attributeForName:@"x2"].stringValue ?: @"100%");
+    NSString * y1 = ([element attributeForName:@"y1"].stringValue ?: @"0");
+    NSString * y2 = ([element attributeForName:@"y2"].stringValue ?: @"0");
+    aGradient.x1 = [IJSVGGradientUnitLength unitWithString:x1 fromUnitType:aGradient.units];
+    aGradient.x2 = [IJSVGGradientUnitLength unitWithString:x2 fromUnitType:aGradient.units];
+    aGradient.y1 = [IJSVGGradientUnitLength unitWithString:y1 fromUnitType:aGradient.units];
+    aGradient.y2 = [IJSVGGradientUnitLength unitWithString:y2 fromUnitType:aGradient.units];
 
     // compute the color stops and colours
     NSArray * colors = nil;
