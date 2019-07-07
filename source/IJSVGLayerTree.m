@@ -477,7 +477,8 @@
     gradLayer.frame = layer.bounds;
     gradLayer.gradient = gradient;
     gradLayer.absoluteTransform = [self absoluteTransform:path];
-    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect, gradLayer.absoluteTransform);
+    gradLayer.objectRect = CGRectApplyAffineTransform(objectRect,
+                                                      gradLayer.absoluteTransform);
     
     if(shouldMask == YES) {
         // add the mask

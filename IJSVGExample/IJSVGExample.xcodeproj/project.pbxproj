@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		343A19181FB2212C000652A2 /* IJSVGGradientUnitLength.m in Sources */ = {isa = PBXBuildFile; fileRef = 343A19171FB2212C000652A2 /* IJSVGGradientUnitLength.m */; };
+		59069A2922D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */; };
+		59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2A22D0EE0E004DDEA5 /* test (1).svg */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
 		590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EC201FA08C004A1554 /* intertwingly.svg */; };
 		590C87EF201FA093004A1554 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
@@ -107,6 +109,8 @@
 /* Begin PBXFileReference section */
 		343A19161FB2212C000652A2 /* IJSVGGradientUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientUnitLength.h; sourceTree = "<group>"; };
 		343A19171FB2212C000652A2 /* IJSVGGradientUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientUnitLength.m; sourceTree = "<group>"; };
+		59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = compuserver_msn_Ford_Focus.svg; sourceTree = "<group>"; };
+		59069A2A22D0EE0E004DDEA5 /* test (1).svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "test (1).svg"; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
 		590C87EC201FA08C004A1554 /* intertwingly.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = intertwingly.svg; sourceTree = "<group>"; };
 		590C87EE201FA092004A1554 /* NewTux.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = NewTux.svg; sourceTree = "<group>"; };
@@ -326,6 +330,8 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				59069A2A22D0EE0E004DDEA5 /* test (1).svg */,
+				59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */,
 				597AC83222CFD0FC007C0E42 /* home.svg */,
 				59D1E39F202279CA00C54672 /* Group.svg */,
 				590C87F5201FD0D4004A1554 /* car.svg */,
@@ -579,6 +585,7 @@
 				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
 				590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */,
 				590C87F1201FBF27004A1554 /* AJ_Digital_Camera.svg in Resources */,
+				59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */,
 				590C87EF201FA093004A1554 /* NewTux.svg in Resources */,
 				59265CE81C4F840400F333F0 /* css.svg in Resources */,
 				595665DE19B6309C00D805FF /* test.svg in Resources */,
@@ -588,6 +595,7 @@
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
 				5991A2A9201E30E600913E3B /* gradients.svg in Resources */,
+				59069A2922D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg in Resources */,
 				5986308719BA104800CF15EA /* linecap.svg in Resources */,
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
 				590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */,

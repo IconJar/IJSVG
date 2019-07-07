@@ -113,7 +113,8 @@
     // actually create the gradient
     NSInteger num = self.gradient.numberOfColorStops;
     CGFloat * locations = malloc(sizeof(CGFloat)*num);
-    CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num, &kCFTypeArrayCallBacks);
+    CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
+                                                    &kCFTypeArrayCallBacks);
     for( NSInteger i = 0; i < num; i++ ) {
         NSColor * color;
         [self.gradient getColor:&color
@@ -121,7 +122,8 @@
                         atIndex:i];
         CFArrayAppendValue(colors, color.CGColor);
     }
-    CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace, colors, locations);
+    CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace,
+                                                      colors, locations);
     CFRelease(colors);
     free(locations);
     return CGGradient = result;

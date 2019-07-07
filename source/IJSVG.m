@@ -845,7 +845,9 @@
             }
             if(sLayer.patternFillLayer != nil ||
                sLayer.gradientFillLayer != nil) {
-                *hasPatternFills = YES;
+                if(hasPatternFills != nil) {
+                    *hasPatternFills = YES;
+                }
             }
         }
     };

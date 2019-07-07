@@ -32,7 +32,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"home"];
+    return [IJSVG svgNamed:@"test (1)"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
