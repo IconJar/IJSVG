@@ -117,7 +117,6 @@
 - (IJSVGColorList *)computedColorList
 {
     IJSVGColorList * sheet = [[[IJSVGColorList alloc] init] autorelease];
-    sheet.usageType = IJSVGColorListUsageTypeStop;
     NSInteger num = self.gradient.numberOfColorStops;
     for(NSInteger i = 0; i < num; i++) {
         NSColor * color;

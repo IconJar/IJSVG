@@ -12,15 +12,16 @@
 
 - (void)dealloc
 {
-    [_name release], _name = nil;
-    [_colorTree release], _colorTree = nil;
+    [_replacementColorTree release], _replacementColorTree = nil;
+    [_colors release], _colors = nil;
     [super dealloc];
 }
 
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
-        _colorTree = [[NSMutableDictionary alloc] init];
+        _replacementColorTree = [[NSMutableDictionary alloc] init];
+        _colors = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -28,34 +29,22 @@
 - (id)copyWithZone:(NSZone *)zone
 {
     IJSVGColorList * sheet = [[self.class alloc] init];
-//    [sheet setReplacementColors:[_colorTree.copy autorelease]
-//            clearExistingColors:YES];
+    [sheet setReplacementColors:[_replacementColorTree.copy autorelease]
+            clearExistingColors:YES];
     return sheet;
 }
 
-- (NSMutableDictionary<NSColor *, NSColor *> *)_dictForUsageType:(IJSVGColorListUsageType)type
-{
-    NSMutableDictionary * dict = _colorTree[@(type)];
-    if(dict == nil) {
-        dict = [[[NSMutableDictionary alloc] init] autorelease];
-        _colorTree[@(type)] = dict;
-    }
-    return dict;
-}
-
 - (NSColor *)proposedColorForColor:(NSColor *)color
-                         usageType:(IJSVGColorListUsageType)type
 {
     // nothing found, just return color
-    if(_colorTree == nil || _colorTree.count == 0) {
+    if(_replacementColorTree == nil || _replacementColorTree.count == 0) {
         return color;
     }
     
     // check the mappings
     NSColor * found = nil;
-    NSDictionary * dict = [self _dictForUsageType:type];
     color = [IJSVGColor computeColorSpace:color];
-    if((found = dict[color]) != nil) {
+    if((found = _replacementColorTree[color]) != nil) {
         return found;
     }
     return color;
@@ -63,8 +52,8 @@
 
 - (void)_invalidateColorTree
 {
-    [_colorTree release], _colorTree = nil;
-    _colorTree = [[NSMutableDictionary alloc] init];
+    [_replacementColorTree release], _replacementColorTree = nil;
+    _replacementColorTree = [[NSMutableDictionary alloc] init];
 }
 
 - (void)removeAllReplacementColors
@@ -73,62 +62,51 @@
 }
 
 - (void)removeReplacementColor:(NSColor *)color
-                  forUsageType:(IJSVGColorListUsageType)type
 {
-    if(_colorTree == nil) {
+    if(_replacementColorTree == nil) {
         return;
     }
-    NSMutableDictionary * dict = [self _dictForUsageType:type];
-    [dict removeObjectForKey:[IJSVGColor computeColorSpace:color]];
+    [_replacementColorTree removeObjectForKey:[IJSVGColor computeColorSpace:color]];
 }
 
 - (void)setReplacementColor:(NSColor *)newColor
                    forColor:(NSColor *)color
-                  usageType:(IJSVGColorListUsageType)type
 {
     color = [IJSVGColor computeColorSpace:color];
     newColor = [IJSVGColor computeColorSpace:newColor];
-    NSMutableDictionary * dict = [self _dictForUsageType:type];
-    dict[color] = newColor;
+    _replacementColorTree[color] = newColor;
 }
 
 - (void)setReplacementColors:(NSDictionary<NSColor *, NSColor *> *)colors
-                   usageType:(IJSVGColorListUsageType)usageType
          clearExistingColors:(BOOL)clearExistingColors
 {
     if(clearExistingColors == YES) {
+        [self _invalidateColorTree];
     }
     for(NSColor * oldColor in colors) {
         [self setReplacementColor:colors[oldColor]
-                         forColor:oldColor
-                        usageType:usageType];
+                         forColor:oldColor];
     }
 }
 
-- (NSSet<NSColor *> *)colorsForUsageType:(IJSVGColorListUsageType)type
+- (NSSet<NSColor *> *)colors
 {
-    NSDictionary * dict = [self _dictForUsageType:type];
-    return [NSSet setWithArray:dict.allValues];
+    return [NSSet setWithSet:_colors];
 }
 
 - (void)addColorsFromList:(IJSVGColorList *)sheet
 {
-//    [_colors addObjectsFromArray:sheet.colors.allObjects];
+    [_colors addObjectsFromArray:sheet.colors.allObjects];
 }
 
 - (void)addColor:(NSColor *)color
-    forUsageType:(IJSVGColorListUsageType)type
 {
-    NSMutableDictionary * dict = [self _dictForUsageType:type];
-    color = [IJSVGColor computeColorSpace:color];
-    dict[color] = color;
+    [_colors addObject:[IJSVGColor computeColorSpace:color]];
 }
 
 - (void)removeColor:(NSColor *)color
-       forUsageType:(IJSVGColorListUsageType)type
 {
-    NSMutableDictionary * dict = [self _dictForUsageType:type];
-    [dict removeObjectForKey:[IJSVGColor computeColorSpace:color]];
+    [_colors removeObject:[IJSVGColor computeColorSpace:color]];
 }
 
 
