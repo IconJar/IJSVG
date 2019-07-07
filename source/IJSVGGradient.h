@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGDef.h"
 #import "IJSVGTransform.h"
+#import "IJSVGColorList.h"
 
 @interface IJSVGGradient : IJSVGNode
 
@@ -18,6 +19,7 @@
 @property ( nonatomic, retain ) IJSVGUnitLength * x2;
 @property ( nonatomic, retain ) IJSVGUnitLength * y1;
 @property ( nonatomic, retain ) IJSVGUnitLength * y2;
+@property ( nonatomic, retain) IJSVGColorList * colorSheet;
 
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
                                   colors:(NSArray **)someColors;
@@ -30,5 +32,7 @@
 - (void)_debugStart:(CGPoint)startPoint
                 end:(CGPoint)endPoint
             context:(CGContextRef)ctx;
+
+- (IJSVGColorList *)computedColorList;
 
 @end

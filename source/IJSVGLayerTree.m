@@ -32,13 +32,13 @@
 @synthesize strokeWidth;
 @synthesize lineJoinStyle;
 @synthesize lineCapStyle;
-@synthesize replacementColors;
+@synthesize colorSheet = _colorSheet;
 
 - (void)dealloc
 {
     [fillColor release], fillColor = nil;
     [strokeColor release], strokeColor = nil;
-    [replacementColors release], replacementColors = nil;
+    [_colorSheet release], _colorSheet = nil;
     [super dealloc];
 }
 
@@ -319,7 +319,7 @@
         }
         
         // anything changed by user?
-        fColor = [self proposedColorForColor:fColor];
+        fColor = [_colorSheet proposedColorForColor:fColor];
         
         // just set the color
         if(fColor != nil) {
@@ -333,7 +333,7 @@
             }
             
             // work out if anything was changed by user
-            NSColor * proposedColor = [self proposedColorForColor:defColor];
+            NSColor * proposedColor = [_colorSheet proposedColorForColor:defColor];
             layer.fillColor = proposedColor.CGColor;
         }
     }
@@ -427,24 +427,6 @@
     return bounds;
 }
 
-- (NSColor *)proposedColorForColor:(NSColor *)color
-{
-    // nothing found, just return color
-    if(replacementColors == nil || replacementColors.count == 0) {
-        return color;
-    }
-    
-    // check the mappings
-    NSColor * found = nil;
-    color = [IJSVGColor computeColorSpace:color];
-    if((found = replacementColors[color]) != nil) {
-        return found;
-    }
-    
-    // nothing :(
-    return color;
-}
-
 - (IJSVGGradientLayer *)gradientStrokeLayerForLayer:(IJSVGShapeLayer *)layer
                                            gradient:(IJSVGGradient *)gradient
                                            fromNode:(IJSVGNode *)path
@@ -472,6 +454,7 @@
                                    shouldMask:(BOOL)shouldMask
 {
     // the gradient drawing layer
+    gradient.colorSheet = _colorSheet;
     IJSVGGradientLayer * gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
     gradLayer.viewBox = self.viewBox;
     gradLayer.frame = layer.bounds;
@@ -591,7 +574,7 @@
         sColor = self.strokeColor;
     }
     
-    sColor = [self proposedColorForColor:sColor];
+    sColor = [_colorSheet proposedColorForColor:sColor];
     
     // stroke layer
     IJSVGStrokeLayer * strokeLayer = [[[IJSVGStrokeLayer alloc] init] autorelease];

@@ -14,6 +14,8 @@
 #import "IJSVGImageLayer.h"
 #import "IJSVGExporter.h"
 #import "IJSVGRendering.h"
+#import "IJSVGColorList.h"
+#import "IJSVGGradientLayer.h"
 
 @class IJSVG;
 @class IJSVGQuartzRenderer;
@@ -71,6 +73,7 @@ withSVGString:(NSString *)subSVGString;
 @property (nonatomic, retain) NSColor * fillColor;
 @property (nonatomic, retain) NSColor * strokeColor;
 @property (nonatomic, assign) CGFloat strokeWidth;
+@property (nonatomic, retain) IJSVGColorList * colorList;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
@@ -166,11 +169,5 @@ withSVGString:(NSString *)subSVGString;
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize;
 
 // colors
-- (NSArray<NSColor *> *)visibleColors:(BOOL *)hasPatternFills;
-- (void)setReplacementColors:(NSDictionary<NSColor *, NSColor *> *)colors;
-- (void)removeReplacementColor:(NSColor *)color;
-- (void)replaceColor:(NSColor *)color
-           withColor:(NSColor *)newColor;
-- (void)removeAllReplacementColors;
-
+- (IJSVGColorList *)computedColorList:(BOOL *)hasPatternFills;
 @end

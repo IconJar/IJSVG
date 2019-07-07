@@ -40,7 +40,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 
 + (NSColorSpace *)defaultColorSpace
 {
-    return [NSColorSpace deviceRGBColorSpace];
+    return NSColorSpace.deviceRGBColorSpace;
 }
 
 + (NSColor *)computeColorSpace:(NSColor *)color

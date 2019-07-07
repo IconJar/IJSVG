@@ -12,6 +12,7 @@
 
 @synthesize gradient, CGGradient;
 @synthesize x1, x2, y1, y2;
+@synthesize colorSheet = _colorSheet;
 
 - (void)dealloc
 {
@@ -20,7 +21,8 @@
     [y1 release], y1 = nil;
     [y2 release], y2 = nil;
     [gradient release], gradient = nil;
-    if( CGGradient != nil ) {
+    [_colorSheet release], _colorSheet = nil;
+    if(CGGradient != nil) {
         CGGradientRelease(CGGradient);
     }
     [super dealloc];
@@ -31,6 +33,15 @@
     IJSVGGradient * clone = [super copyWithZone:zone];
     clone.gradient = [[self.gradient copy] autorelease];
     return clone;
+}
+
+- (void)setColorSheet:(IJSVGColorList *)colorSheet
+{
+    [_colorSheet release], _colorSheet = nil;
+    _colorSheet = colorSheet.retain;
+    if(CGGradient != nil) {
+        CGGradientRelease(CGGradient);
+    }
 }
 
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
@@ -103,6 +114,21 @@
     return stopsParams;
 }
 
+- (IJSVGColorList *)computedColorList
+{
+    IJSVGColorList * sheet = [[[IJSVGColorList alloc] init] autorelease];
+    sheet.usageType = IJSVGColorListUsageTypeStop;
+    NSInteger num = self.gradient.numberOfColorStops;
+    for(NSInteger i = 0; i < num; i++) {
+        NSColor * color;
+        [self.gradient getColor:&color
+                       location:nil
+                        atIndex:i];
+        [sheet addColor:color];
+    }
+    return sheet;
+}
+
 - (CGGradientRef)CGGradient
 {
     // store it in the cache
@@ -120,6 +146,9 @@
         [self.gradient getColor:&color
                        location:&locations[i]
                         atIndex:i];
+        if(_colorSheet != nil) {
+            color = [_colorSheet proposedColorForColor:color];
+        }
         CFArrayAppendValue(colors, color.CGColor);
     }
     CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace,

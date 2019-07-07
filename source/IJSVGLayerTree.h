@@ -8,6 +8,7 @@
 
 #import <QuartzCore/QuartzCore.h>
 #import "IJSVGNode.h"
+#import "IJSVGColorList.h"
 
 @class IJSVGLayer;
 
@@ -21,7 +22,7 @@
 @property (nonatomic, assign) CGFloat strokeWidth;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
-@property (nonatomic, retain) NSDictionary<NSColor *, NSColor *> * replacementColors;
+@property (nonatomic, retain) IJSVGColorList * colorSheet;
 
 - (IJSVGLayer *)layerForNode:(IJSVGNode *)node;
 
