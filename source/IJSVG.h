@@ -16,6 +16,7 @@
 #import "IJSVGRendering.h"
 #import "IJSVGColorList.h"
 #import "IJSVGGradientLayer.h"
+#import "IJSVGRenderingStyle.h"
 
 @class IJSVG;
 @class IJSVGQuartzRenderer;
@@ -70,14 +71,9 @@ withSVGString:(NSString *)subSVGString;
 
 // global overwriting rules for when rendering an SVG, this will overide any
 // fillColor, strokeColor, pattern and gradient fill
-@property (nonatomic, retain) NSColor * fillColor;
-@property (nonatomic, retain) NSColor * strokeColor;
-@property (nonatomic, assign) CGFloat strokeWidth;
-@property (nonatomic, retain) IJSVGColorList * colorList;
-@property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
-@property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL clipToViewport;
+@property (nonatomic, retain) IJSVGRenderingStyle * style;
 
 - (void)prepForDrawingInView:(NSView *)view;
 - (BOOL)isFont;
@@ -167,6 +163,7 @@ withSVGString:(NSString *)subSVGString;
 - (void)endVectorDraw;
 
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize;
+- (void)setNeedsDisplay;
 
 // colors
 - (IJSVGColorList *)computedColorList:(BOOL *)hasPatternFills;

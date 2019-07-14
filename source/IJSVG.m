@@ -13,27 +13,20 @@
 
 @implementation IJSVG
 
-@synthesize fillColor;
-@synthesize strokeColor;
-@synthesize strokeWidth;
-@synthesize lineCapStyle;
-@synthesize lineJoinStyle;
 @synthesize renderingBackingScaleHelper;
 @synthesize clipToViewport;
 @synthesize renderQuality;
-@synthesize colorList = _colorList;
+@synthesize style = _style;
 
 - (void)dealloc
 {
     IJSVGBeginTransactionLock();
     [renderingBackingScaleHelper release], renderingBackingScaleHelper = nil;
-    [fillColor release], fillColor = nil;
-    [strokeColor release], strokeColor = nil;
     [_group release], _group = nil;
     [_layerTree release], _layerTree = nil;
     [_replacementColors release], _replacementColors = nil;
     [_quartzRenderer release], _quartzRenderer = nil;
-    [_colorList release], _colorList = nil;
+    [_style release], _style = nil;
     [super dealloc];
     IJSVGEndTransactionLock();
 }
@@ -340,7 +333,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    _colorList = [[IJSVGColorList alloc] init];
+    self.style = [[IJSVGRenderingStyle alloc] init];
     self.clipToViewport = YES;
     self.renderQuality = IJSVGRenderQualityFullResolution;
     
@@ -751,42 +744,6 @@
     
 }
 
-- (void)setFillColor:(NSColor *)aColor
-{
-    if(fillColor != nil) {
-        [fillColor release], fillColor = nil;
-    }
-    fillColor = [aColor retain];
-    [_layerTree release], _layerTree = nil;
-}
-
-- (void)setStrokeColor:(NSColor *)aColor
-{
-    if(strokeColor != nil) {
-        [strokeColor release], strokeColor = nil;
-    }
-    strokeColor = [aColor retain];
-    [_layerTree release], _layerTree = nil;
-}
-
-- (void)setStrokeWidth:(CGFloat)aWidth
-{
-    strokeWidth = aWidth;
-    [_layerTree release], _layerTree = nil;
-}
-
-- (void)setLineCapStyle:(IJSVGLineCapStyle)aLineCapStyle
-{
-    lineCapStyle = aLineCapStyle;
-    [_layerTree release], _layerTree = nil;
-}
-
-- (void)setLineJoinStyle:(IJSVGLineJoinStyle)aLineJoinStyle
-{
-    lineJoinStyle = aLineJoinStyle;
-    [_layerTree release], _layerTree = nil;
-}
-
 - (IJSVGLayer *)layerWithTree:(IJSVGLayerTree *)tree
 {
     // clear memory
@@ -811,21 +768,52 @@
     // from this SVG object
     IJSVGLayerTree * renderer = [[[IJSVGLayerTree alloc] init] autorelease];
     renderer.viewBox = self.viewBox;
-    renderer.fillColor = self.fillColor;
-    renderer.strokeColor = self.strokeColor;
-    renderer.strokeWidth = self.strokeWidth;
-    renderer.lineCapStyle = self.lineCapStyle;
-    renderer.lineJoinStyle = self.lineJoinStyle;
-    renderer.colorSheet = self.colorList;
+    renderer.style = self.style;
     
     // return the rendered layer
     return [self layerWithTree:renderer];
 }
 
-- (void)setColorList:(IJSVGColorList *)colorList
+- (void)setStyle:(IJSVGRenderingStyle *)style
 {
-    [_colorList release], _colorList = nil;
-    _colorList = colorList.retain;
+    [self removeStyleObservers];
+    _style = style.retain;
+    [self addStyleObservers];
+}
+
+- (void)removeStyleObservers
+{
+    for(NSString * propertyName in IJSVGRenderingStyle.observableProperties) {
+        @try {
+            [_style removeObserver:self
+                        forKeyPath:propertyName];
+        } @catch(NSException * e) {}
+    }
+}
+
+- (void)addStyleObservers
+{
+    for(NSString * propertyName in IJSVGRenderingStyle.observableProperties) {
+        [_style addObserver:self
+                 forKeyPath:propertyName
+                    options:0
+                    context:nil];
+    }
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
+                       context:(void *)context
+{
+    // invalidate the tree if a style is set
+    if(object == _style) {
+        [self invalidateLayerTree];
+    }
+}
+
+- (void)setNeedsDisplay
+{
     [self invalidateLayerTree];
 }
 

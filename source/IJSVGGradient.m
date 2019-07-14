@@ -12,7 +12,7 @@
 
 @synthesize gradient, CGGradient;
 @synthesize x1, x2, y1, y2;
-@synthesize colorSheet = _colorSheet;
+@synthesize colorList = _colorList;
 
 - (void)dealloc
 {
@@ -21,7 +21,7 @@
     [y1 release], y1 = nil;
     [y2 release], y2 = nil;
     [gradient release], gradient = nil;
-    [_colorSheet release], _colorSheet = nil;
+    [_colorList release], _colorList = nil;
     if(CGGradient != nil) {
         CGGradientRelease(CGGradient);
     }
@@ -35,10 +35,10 @@
     return clone;
 }
 
-- (void)setColorSheet:(IJSVGColorList *)colorSheet
+- (void)setColorList:(IJSVGColorList *)list
 {
-    [_colorSheet release], _colorSheet = nil;
-    _colorSheet = colorSheet.retain;
+    [_colorList release], _colorList = nil;
+    _colorList = list.retain;
     if(CGGradient != nil) {
         CGGradientRelease(CGGradient);
     }
@@ -145,8 +145,8 @@
         [self.gradient getColor:&color
                        location:&locations[i]
                         atIndex:i];
-        if(_colorSheet != nil) {
-            color = [_colorSheet proposedColorForColor:color];
+        if(_colorList != nil) {
+            color = [_colorList proposedColorForColor:color];
         }
         CFArrayAppendValue(colors, color.CGColor);
     }

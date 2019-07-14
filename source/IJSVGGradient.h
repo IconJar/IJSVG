@@ -19,7 +19,7 @@
 @property ( nonatomic, retain ) IJSVGUnitLength * x2;
 @property ( nonatomic, retain ) IJSVGUnitLength * y1;
 @property ( nonatomic, retain ) IJSVGUnitLength * y2;
-@property ( nonatomic, retain) IJSVGColorList * colorSheet;
+@property ( nonatomic, retain) IJSVGColorList * colorList;
 
 + (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
                                   colors:(NSArray **)someColors;

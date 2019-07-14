@@ -928,7 +928,7 @@ NSString * IJSVGHash(NSString * key) {
     
     // add the stops
     NSGradient * grad = layer.gradient.gradient;
-    IJSVGColorList * sheet = layer.gradient.colorSheet;
+    IJSVGColorList * sheet = layer.gradient.colorList;
     NSInteger noStops = grad.numberOfColorStops;
     for(NSInteger i = 0; i < noStops; i++) {
         
