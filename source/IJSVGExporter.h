@@ -43,6 +43,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionRemoveWidthHeightAttributes
 };
 
+BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
+
 @interface IJSVGExporter : NSObject {
     
 @private

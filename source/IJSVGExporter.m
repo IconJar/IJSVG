@@ -31,6 +31,11 @@
 @synthesize title;
 @synthesize description;
 
+BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option)
+{
+    return (options & option) != 0;
+};
+
 const NSArray * IJSVGShortCharacterArray()
 {
     static NSArray * _array;
