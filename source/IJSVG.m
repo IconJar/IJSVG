@@ -659,9 +659,8 @@
                 }
                 
                 // add the origin back onto the viewport
-                viewPort.origin.x -= round((_viewBox.origin.x)*_scale);
-                viewPort.origin.y -= round((_viewBox.origin.y)*_scale);
-                viewPort = CGRectIntegral(viewPort);
+                viewPort.origin.x -= (_viewBox.origin.x)*_scale;
+                viewPort.origin.y -= (_viewBox.origin.y)*_scale;
                 
                 // transforms
                 CGContextTranslateCTM( ref, viewPort.origin.x, viewPort.origin.y);
