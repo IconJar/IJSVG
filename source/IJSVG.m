@@ -333,7 +333,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    self.style = [[IJSVGRenderingStyle alloc] init];
+    self.style = [[[IJSVGRenderingStyle alloc] init] autorelease];
     self.clipToViewport = YES;
     self.renderQuality = IJSVGRenderQualityFullResolution;
     
@@ -776,6 +776,7 @@
 - (void)setStyle:(IJSVGRenderingStyle *)style
 {
     [self removeStyleObservers];
+    [_style release], _style = nil;
     _style = style.retain;
     [self addStyleObservers];
 }
