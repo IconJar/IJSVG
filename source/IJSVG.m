@@ -78,7 +78,7 @@
          error:(NSError **)error
       delegate:(id<IJSVGDelegate>)delegate
 {
-    NSBundle * bundle = [NSBundle mainBundle];
+    NSBundle * bundle = NSBundle.mainBundle;
     NSString * str = nil;
     NSString * ext = [string pathExtension];
     if( ext == nil || ext.length == 0 ) {
