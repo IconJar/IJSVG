@@ -1048,7 +1048,7 @@ NSString * IJSVGHash(NSString * key) {
 {
     IJSVGColorStringOptions options = IJSVGColorStringOptionDefault;
     if((_options & IJSVGExporterOptionColorAllowRRGGBBAA) != 0) {
-        options |= IJSVGExporterOptionColorAllowRRGGBBAA;
+        options |= IJSVGColorStringOptionAllowRRGGBBAA;
     }
     return options;
 }
