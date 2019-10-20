@@ -29,6 +29,7 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionCollapseGradients = 1 << 11,
     IJSVGExporterOptionCreateClasses = 1 << 12,
     IJSVGExporterOptionRemoveWidthHeightAttributes = 1 << 13,
+    IJSVGExporterOptionColorAllowRRGGBBAA = 1 << 14,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef|
         IJSVGExporterOptionRemoveUselessGroups|
         IJSVGExporterOptionCreateUseForPaths|
@@ -40,7 +41,8 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionScaleToSizeIfNecessary|
         IJSVGExporterOptionCompressOutput|
         IJSVGExporterOptionCollapseGradients|
-        IJSVGExporterOptionRemoveWidthHeightAttributes
+        IJSVGExporterOptionRemoveWidthHeightAttributes|
+        IJSVGExporterOptionColorAllowRRGGBBAA
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);

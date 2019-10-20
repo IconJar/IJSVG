@@ -956,9 +956,9 @@ NSString * IJSVGHash(NSString * key) {
         atts[@"offset"] = [NSString stringWithFormat:@"%g%%",(location*100)];
         
         // add the color
+        IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX|IJSVGColorStringOptionAllowShortHand;
         NSString * stopColor = [IJSVGColor colorStringFromColor:aColor
-                                                       forceHex:YES
-                                                 allowShorthand:YES];
+                                                        options:options];
         if([stopColor isEqualToString:@"#000000"] == NO) {
             atts[@"stop-color"] = stopColor;
         }
@@ -1044,6 +1044,15 @@ NSString * IJSVGHash(NSString * key) {
     return imageElement;
 }
 
+- (IJSVGColorStringOptions)colorOptions
+{
+    IJSVGColorStringOptions options = IJSVGColorStringOptionDefault;
+    if((_options & IJSVGExporterOptionColorAllowRRGGBBAA) != 0) {
+        options |= IJSVGExporterOptionColorAllowRRGGBBAA;
+    }
+    return options;
+}
+
 - (NSXMLElement *)elementForShape:(IJSVGShapeLayer  *)layer
                        fromParent:(NSXMLElement *)parent
 {
@@ -1071,7 +1080,8 @@ NSString * IJSVGHash(NSString * key) {
     // fill color
     if(layer.fillColor != nil) {
         NSColor * fillColor = [NSColor colorWithCGColor:layer.fillColor];
-        NSString * colorString = [IJSVGColor colorStringFromColor:fillColor];
+        NSString * colorString = [IJSVGColor colorStringFromColor:fillColor
+                                                          options:[self colorOptions]];
         
         // could be none
         if(colorString != nil) {
@@ -1121,7 +1131,8 @@ NSString * IJSVGHash(NSString * key) {
                 
             } else if(strokeLayer.strokeColor != nil) {
                 NSColor * strokeColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
-                NSString * strokeColorString = [IJSVGColor colorStringFromColor:strokeColor];
+                NSString * strokeColorString = [IJSVGColor colorStringFromColor:strokeColor
+                                                                        options:[self colorOptions]];
                 
                 // could be none
                 if(strokeColorString != nil) {

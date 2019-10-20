@@ -305,7 +305,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
         return color;
     }
     
-    color = [self.class colorFromHEXString:string alpha:1.f];
+    color = [self.class colorFromHEXString:string];
     return color;
 }
 
@@ -321,14 +321,13 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 
 + (NSString *)colorStringFromColor:(NSColor *)color
 {
+    IJSVGColorStringOptions options = IJSVGColorStringOptionDefault;
     return [self colorStringFromColor:color
-                             forceHex:NO
-                       allowShorthand:YES];
+                              options:options];
 }
 
 + (NSString *)colorStringFromColor:(NSColor *)color
-                          forceHex:(BOOL)forceHex
-                    allowShorthand:(BOOL)allowShorthand
+                           options:(IJSVGColorStringOptions)options
 {
     // convert to RGB
     color = [self computeColorSpace:color];
@@ -338,25 +337,39 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     int blue = color.blueComponent * 0xFF;
     int alpha = (int)(color.alphaComponent*100);
     
+    BOOL forceHex = (options & IJSVGColorStringOptionForceHEX) != 0;
+    BOOL allowShortHand = (options & IJSVGColorStringOptionAllowShortHand) != 0;
+    BOOL allowRRGGBBAA = (options & IJSVGColorStringOptionAllowRRGGBBAA) != 0;
+    
     // jsut return none
     if(alpha == 0 && forceHex == NO) {
         return @"none";
     }
     
     // always return hex unless criteria is met
-    if(forceHex || alpha == 100 ||
+    if(forceHex == YES || allowRRGGBBAA == YES || alpha == 100 ||
        (red == 0 && green == 0 && blue == 0 && alpha == 0) ||
        (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
-        if(allowShorthand == YES) {
+        if(allowShortHand == YES) {
             NSString * r = [NSString stringWithFormat:@"%02X",red];
             NSString * g = [NSString stringWithFormat:@"%02X",green];
             NSString * b = [NSString stringWithFormat:@"%02X",blue];
             if([r characterAtIndex:0] == [r characterAtIndex:1] &&
                [g characterAtIndex:0] == [g characterAtIndex:1] &&
                [b characterAtIndex:0] == [b characterAtIndex:1]) {
+                // allow shorthand alpha
+                if(allowRRGGBBAA == YES && alpha != 100) {
+                    return [NSString stringWithFormat:@"#%c%c%c%02X",[r characterAtIndex:0],
+                            [g characterAtIndex:0],[b characterAtIndex:0],
+                            (int)(color.alphaComponent * 0xFF)];
+                }
                 return [NSString stringWithFormat:@"#%c%c%c",[r characterAtIndex:0],
                         [g characterAtIndex:0],[b characterAtIndex:0]];
             }
+        }
+        if(allowRRGGBBAA == YES && alpha != 100) {
+            return [NSString stringWithFormat:@"#%02X%02X%02X%02X",red,green,
+                    blue,(int)(color.alphaComponent * 0xFF)];
         }
         return [NSString stringWithFormat:@"#%02X%02X%02X",red,green,blue];
     }
@@ -672,9 +685,9 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
                              to:(CGFloat)alphaValue
 {
     color = [self computeColorSpace:color];
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:[color redComponent]
-                                                         green:[color greenComponent]
-                                                          blue:[color blueComponent]
+    return [self computeColorSpace:[NSColor colorWithDeviceRed:color.redComponent
+                                                         green:color.greenComponent
+                                                          blue:color.blueComponent
                                                          alpha:alphaValue]];
 }
 
@@ -696,42 +709,75 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     return YES;
 }
 
++ (unsigned long)lengthOfHEXInteger:(NSUInteger)hex
+{
+    char * buffer;
+    asprintf(&buffer, "%lX", (long)hex);
+    unsigned long length = strlen(buffer);
+    free(buffer);
+    return length;
+}
+
++ (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex
+{
+    return [self lengthOfHEXInteger:hex] == 8;
+}
+
 + (NSColor *)colorFromHEXInteger:(NSInteger)hex
 {
+    CGFloat alpha = 1.f;
+    if([self HEXContainsAlphaComponent:hex] == YES) {
+        alpha = (hex & 0xFF) / 255.f;
+        hex = hex >> 8;
+    }
     return [self computeColorSpace:[NSColor colorWithDeviceRed:((hex >> 16) & 0xFF) / 255.f
                                                          green:((hex >> 8) & 0xFF) / 255.f
                                                           blue:(hex & 0xFF) / 255.f
-                                                         alpha:1.f]];
+                                                         alpha:alpha]];
+}
+
++ (unsigned long)HEXFromArbitraryHexString:(NSString *)aString
+{
+    const char * hexString = [aString cStringUsingEncoding:NSUTF8StringEncoding];
+    return strtoul(hexString, NULL, 16);
 }
 
 + (NSColor *)colorFromHEXString:(NSString *)string
-                          alpha:(CGFloat)alpha
+{
+    return [self colorFromHEXString:string
+             containsAlphaComponent:nil];
+}
+
++ (NSColor *)colorFromHEXString:(NSString *)string
+         containsAlphaComponent:(BOOL *)containsAlphaComponent
 {
     // absolutely no string
-    if( string == nil || string.length == 0 || ![self.class isHex:string] )
+    if( string == nil || string.length == 0 || ![self.class isHex:string] ) {
         return nil;
+    }
     
-    if( [[string substringToIndex:1] isEqualToString:@"#"] )
+    if( [[string substringToIndex:1] isEqualToString:@"#"] ) {
         string = [string substringFromIndex:1];
+    }
     
     // whats the length?
-    if(string.length == 3) {
+    NSUInteger length = string.length;
+    if(length == 3 || length == 4) {
         // shorthand...
         NSMutableString * str = [[[NSMutableString alloc] init] autorelease];
-        for( NSInteger i = 0; i < string.length; i++ )
-        {
-            NSString * sub = [string substringWithRange:NSMakeRange( i, 1)];
+        for( NSInteger i = 0; i < length; i++ ) {
+            NSString * sub = [string substringWithRange:NSMakeRange(i, 1)];
             [str appendFormat:@"%@%@",sub,sub];
         }
         string = str;
     }
     
-    const char * hexString = [string cStringUsingEncoding:NSUTF8StringEncoding];
-    unsigned long hex = strtoul(hexString, NULL, 16);
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:((hex>>16) & 0xFF)/255.f
-                                                         green:((hex>>8) & 0xFF)/255.f
-                                                          blue:(hex & 0xFF)/255.f
-                                                         alpha:alpha]];
+    // now convert rest to hex
+    unsigned long hex = [self HEXFromArbitraryHexString:string];
+    if(containsAlphaComponent != nil) {
+        *containsAlphaComponent = [self HEXContainsAlphaComponent:hex];
+    }
+    return [self colorFromHEXInteger:hex];
 }
 
 @end

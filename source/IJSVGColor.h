@@ -8,6 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
+    IJSVGColorStringOptionNone = 1 << 0,
+    IJSVGColorStringOptionForceHEX = 1 << 1,
+    IJSVGColorStringOptionAllowShortHand = 1 << 2,
+    IJSVGColorStringOptionAllowRRGGBBAA = 1 << 3,
+    IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand
+};
+
 typedef NS_ENUM( NSInteger, IJSVGPredefinedColor ) {
     IJSVGColorAliceblue,
     IJSVGColorAntiquewhite,
@@ -166,14 +174,16 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
 + (NSColorSpace *)defaultColorSpace;
 + (BOOL)isColor:(NSString *)string;
 + (NSString *)colorStringFromColor:(NSColor *)color
-                          forceHex:(BOOL)forceHex
-                    allowShorthand:(BOOL)allowShorthand;
+                           options:(IJSVGColorStringOptions)options;
 + (NSString *)colorStringFromColor:(NSColor *)color;
 + (NSColor *)colorFromHEXInteger:(NSInteger)hex;
 + (NSColor *)computeColor:(id)colour;
 + (NSColor *)colorFromString:(NSString *)string;
++ (NSColor *)colorFromHEXString:(NSString *)string;
 + (NSColor *)colorFromHEXString:(NSString *)string
-                          alpha:(CGFloat)alpha;
+         containsAlphaComponent:(BOOL *)containsAlphaComponent;
++ (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex;
++ (unsigned long)lengthOfHEXInteger:(NSUInteger)hex;
 + (NSColor *)colorFromRString:(NSString *)rString
                       gString:(NSString *)gString
                       bString:(NSString *)bString
