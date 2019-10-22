@@ -356,7 +356,8 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
         if(allowRRGGBBAA == YES) {
             NSString * alphaHexString = [NSString stringWithFormat:@"%02X",
                                          (int)(color.alphaComponent * 0xFF)];
-            if([alphaHexString characterAtIndex:0] != [alphaHexString characterAtIndex:1]) {
+            if([alphaHexString characterAtIndex:0] !=
+               [alphaHexString characterAtIndex:1]) {
                 allowShortHand = NO;
             }
         }
@@ -370,9 +371,11 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
                [b characterAtIndex:0] == [b characterAtIndex:1]) {
                 // allow shorthand alpha
                 if(allowRRGGBBAA == YES && alpha != 100) {
-                    return [NSString stringWithFormat:@"#%c%c%c%02X",[r characterAtIndex:0],
-                            [g characterAtIndex:0],[b characterAtIndex:0],
-                            (int)(color.alphaComponent * 0xFF)];
+                    NSString * a = [NSString stringWithFormat:@"%02X",
+                                    (int)(color.alphaComponent * 0xFF)];
+                    return [NSString stringWithFormat:@"#%c%c%c%c",
+                            [r characterAtIndex:0], [g characterAtIndex:0],
+                            [b characterAtIndex:0], [a characterAtIndex:0]];
                 }
                 return [NSString stringWithFormat:@"#%c%c%c",[r characterAtIndex:0],
                         [g characterAtIndex:0],[b characterAtIndex:0]];
