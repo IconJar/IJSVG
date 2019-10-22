@@ -350,6 +350,17 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     if(forceHex == YES || allowRRGGBBAA == YES || alpha == 100 ||
        (red == 0 && green == 0 && blue == 0 && alpha == 0) ||
        (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
+        
+        // we need to make sure the last 2 chars
+        // are the same or we cant enable shorthand
+        if(allowRRGGBBAA == YES) {
+            NSString * alphaHexString = [NSString stringWithFormat:@"%02X",
+                                         (int)(color.alphaComponent * 0xFF)];
+            if([alphaHexString characterAtIndex:0] != [alphaHexString characterAtIndex:1]) {
+                allowShortHand = NO;
+            }
+        }
+        
         if(allowShortHand == YES) {
             NSString * r = [NSString stringWithFormat:@"%02X",red];
             NSString * g = [NSString stringWithFormat:@"%02X",green];
