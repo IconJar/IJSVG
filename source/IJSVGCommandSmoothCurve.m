@@ -25,14 +25,10 @@
                  path:(IJSVGPath *)path
 {
     NSPoint firstControl = NSMakePoint( [path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y );
-    if( command != nil )
-    {
-        if( command.commandClass == [IJSVGCommandCurve class] || command.commandClass == self.class )
-        {
-            if( command.commandClass == [IJSVGCommandCurve class] )
-            {
-                if( command.type == IJSVGCommandTypeAbsolute )
-                {
+    if( command != nil ) {
+        if( command.class == [IJSVGCommandCurve class] || command.class == self.class ) {
+            if( command.class == [IJSVGCommandCurve class] ) {
+                if( command.type == IJSVGCommandTypeAbsolute ) {
                     firstControl = NSMakePoint(-1*command.parameters[2] + 2*[path currentSubpath].currentPoint.x,
                                                -1*command.parameters[3] + 2*[path currentSubpath].currentPoint.y);
                 } else {
@@ -54,8 +50,7 @@
             }
         }
     }
-    if( type == IJSVGCommandTypeAbsolute )
-    {
+    if( type == IJSVGCommandTypeAbsolute ) {
         [[path currentSubpath] curveToPoint:NSMakePoint( params[2], params[3])
                   controlPoint1:NSMakePoint( firstControl.x, firstControl.y )
                   controlPoint2:NSMakePoint(params[0], params[1])];

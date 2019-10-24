@@ -6,11 +6,11 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandCommandSmoothQuadraticCurve.h"
+#import "IJSVGCommandSmoothQuadraticCurve.h"
 #import "IJSVGUtils.h"
 #import "IJSVGCommandQuadraticCurve.h"
 
-@implementation IJSVGCommandCommandSmoothQuadraticCurve
+@implementation IJSVGCommandSmoothQuadraticCurve
 
 + (NSInteger)requiredParameterCount
 {
@@ -25,13 +25,10 @@
                  path:(IJSVGPath *)path
 {
     NSPoint commandPoint = NSMakePoint( [path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y );
-    if( command != nil )
-    {
-        if( command.commandClass == [IJSVGCommandQuadraticCurve class] )
-        {
+    if( command != nil ) {
+        if( command.class == IJSVGCommandQuadraticCurve.class ) {
             // quadratic curve
-            if( command.type == IJSVGCommandTypeAbsolute )
-            {
+            if( command.type == IJSVGCommandTypeAbsolute ) {
                 commandPoint =  NSMakePoint(-1*command.parameters[0] + 2*[path currentSubpath].currentPoint.x,
                                             -1*command.parameters[1] + 2*[path currentSubpath].currentPoint.y);
             } else {
@@ -40,15 +37,14 @@
                 commandPoint = CGPointMake(-1*(command.parameters[0] + oldPoint.x) + 2*([path currentSubpath].currentPoint.x),
                                            -1*(command.parameters[1] + oldPoint.y) + 2*[path currentSubpath].currentPoint.y);
             }
-        } else if( command.commandClass == self.class ) {
+        } else if(command.class == self.class) {
             // smooth quadratic curve
             commandPoint = CGPointMake(-1*(path.lastControlPoint.x) + 2*([path currentSubpath].currentPoint.x),
                                        -1*(path.lastControlPoint.y) + 2*[path currentSubpath].currentPoint.y);
         }
     }
     path.lastControlPoint = commandPoint;
-    if( type == IJSVGCommandTypeAbsolute )
-    {
+    if( type == IJSVGCommandTypeAbsolute ) {
         [[path currentSubpath] addQuadCurveToPoint:NSMakePoint(params[0], params[1])
                                       controlPoint:commandPoint];
         return;

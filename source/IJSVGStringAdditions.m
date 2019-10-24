@@ -10,7 +10,7 @@
 
 @implementation NSString (IJSVGAdditions)
 
-- (NSArray<NSString *> *)componentsSeparatedByChars:(char *)aChar
+- (NSArray<NSString *> *)ijsvg_componentsSeparatedByChars:(char *)aChar
 {
     NSMutableArray * comp = [[[NSMutableArray alloc] init] autorelease];
     NSInteger length = self.length;
@@ -60,7 +60,7 @@
     return comp;
 }
 
-- (BOOL)containsAlpha
+- (BOOL)ijsvg_containsAlpha
 {
     const char * buffer = self.UTF8String;
     unsigned long length = strlen(buffer);
@@ -72,7 +72,7 @@
     return NO;
 }
 
-- (BOOL)isNumeric
+- (BOOL)ijsvg_isNumeric
 {
     const char * buffer = self.UTF8String;
     unsigned long length = strlen(buffer);
@@ -84,7 +84,7 @@
     return YES;
 }
 
-- (NSArray *)componentsSplitByWhiteSpace
+- (NSArray *)ijsvg_componentsSplitByWhiteSpace
 {
     return [self componentsSeparatedByChars:"\t\n\r "];
 }

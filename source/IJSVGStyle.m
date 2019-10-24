@@ -94,11 +94,6 @@
     return @[@"fill",@"stroke-colour",@"stop-color",@"stroke"];
 }
 
-+ (BOOL)isNumeric:(NSString *)string
-{
-    return [[NSScanner scannerWithString:string] scanFloat:NULL];
-}
-
 - (void)setProperties:(NSDictionary *)properties
            replaceAll:(BOOL)flag
 {

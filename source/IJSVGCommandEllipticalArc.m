@@ -6,11 +6,10 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandArc.h"
+#import "IJSVGCommandEllipticalArc.h"
 #import "IJSVGUtils.h"
 
-@implementation IJSVGCommandArc
-
+@implementation IJSVGCommandEllipticalArc
 
 + (NSInteger)requiredParameterCount
 {

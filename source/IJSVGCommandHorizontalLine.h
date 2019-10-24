@@ -9,6 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGCommand.h"
 
-@interface IJSVGCommandHorizontalLine : NSObject <IJSVGCommandProtocol>
+@interface IJSVGCommandHorizontalLine : IJSVGCommand
 
 @end

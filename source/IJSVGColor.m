@@ -269,7 +269,7 @@ CGFloat * IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightne
     if( [[string substringToIndex:3] isEqualToString:@"rgb"] ) {
         NSRange range = [IJSVGUtils rangeOfParentheses:string];
         NSString * rgbString = [string substringWithRange:range];
-        NSArray * parts = [rgbString componentsSeparatedByChars:","];
+        NSArray * parts = [rgbString ijsvg_componentsSeparatedByChars:","];
         NSString * alpha = @"100%";
         if(parts.count == 4) {
             alpha = parts[3];

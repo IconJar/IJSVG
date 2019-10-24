@@ -1175,14 +1175,16 @@
     }
     
     // main commands
-    IJSVGCommand * command = [[[IJSVGCommand alloc] initWithCommandString:string] autorelease];
-    for( IJSVGCommand * subCommand in [command subCommands] ) {
-        [subCommand.commandClass runWithParams:subCommand.parameters
-                                    paramCount:subCommand.parameterCount
-                                       command:subCommand
-                               previousCommand:preCommand
-                                          type:subCommand.type
-                                          path:path];
+//    Class commandClass = [IJSVGCommand classFor]
+    Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
+    IJSVGCommand * command = (IJSVGCommand *)[[[commandClass alloc] initWithCommandString:string] autorelease];
+    for( IJSVGCommand * subCommand in [command subCommands]) {
+        [command.class runWithParams:subCommand.parameters
+                          paramCount:subCommand.parameterCount
+                             command:subCommand
+                     previousCommand:preCommand
+                                type:subCommand.type
+                                path:path];
         preCommand = subCommand;
     }
     return command;

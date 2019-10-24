@@ -9,6 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGCommand.h"
 
-@interface IJSVGCommandCurve : IJSVGCommand <IJSVGCommandProtocol>
+@interface IJSVGCommandCurve : IJSVGCommand
 
 @end

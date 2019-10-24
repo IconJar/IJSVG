@@ -9,26 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "IJSVGPath.h"
 
+static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;
+
 typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
     IJSVGCommandTypeAbsolute,
     IJSVGCommandTypeRelative
 };
-
-@class IJSVGCommand;
-
-@protocol IJSVGCommandProtocol <NSObject>
-
-@required
-+ (void)runWithParams:(CGFloat *)params
-           paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
-                 type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path;
-
-+ (NSInteger)requiredParameterCount;
-
-@end
 
 @interface IJSVGCommand : NSObject {
     NSString * commandString;
@@ -40,7 +26,6 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
     IJSVGCommandType type;
     IJSVGCommand * previousCommand;
     NSInteger _currentIndex;
-    Class<IJSVGCommandProtocol> commandClass;
     BOOL isSubCommand;
 }
 
@@ -50,15 +35,29 @@ typedef NS_ENUM( NSInteger, IJSVGCommandType ) {
 @property ( nonatomic, assign ) NSInteger parameterCount;
 @property ( nonatomic, assign ) NSInteger requiredParameters;
 @property ( nonatomic, assign ) IJSVGCommandType type;
-@property ( nonatomic, retain ) NSMutableArray * subCommands;
-@property ( nonatomic, assign ) Class<IJSVGCommandProtocol> commandClass;
+@property ( nonatomic, retain ) NSMutableArray<IJSVGCommand *> * subCommands;
 @property ( nonatomic, assign ) IJSVGCommand * previousCommand;
 @property ( nonatomic, assign ) BOOL isSubCommand;
 
-- (id)initWithCommandString:(NSString *)commandString;
-
++ (Class)commandClassForCommandChar:(char)aChar;
++ (NSInteger)requiredParameterCount;
 + (NSPoint)readCoordinatePair:(CGFloat *)pairs
                         index:(NSInteger)index;
++ (void)runWithParams:(CGFloat *)params
+           paramCount:(NSInteger)count
+              command:(IJSVGCommand *)currentCommand
+      previousCommand:(IJSVGCommand *)command
+                 type:(IJSVGCommandType)type
+                 path:(IJSVGPath *)path;
++ (void)parseParams:(CGFloat *)params
+         paramCount:(NSInteger)paramCount
+          intoArray:(NSMutableArray<IJSVGCommand *> *)commands
+      parentCommand:(IJSVGCommand *)parentCommand;
+
+- (id)initWithCommandString:(NSString *)commandString;
+- (IJSVGCommand *)subcommandWithParameters:(CGFloat *)subParams
+                           previousCommand:(IJSVGCommand *)command
+                              isSubcommand:(BOOL)isSubcommand;
 
 - (CGFloat)readFloat;
 - (NSPoint)readPoint;
