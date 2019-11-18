@@ -103,7 +103,8 @@
         _currentIndex = 0;
         command = [[str substringToIndex:1] copy];
         type = [IJSVGUtils typeForCommandString:self.command];
-        parameters = [IJSVGUtils commandParameters:str count:&parameterCount];
+        parameters = [IJSVGUtils commandParameters:str
+                                             count:&parameterCount];
         requiredParameters = [self.class requiredParameterCount];
         
         // check what required params we need
@@ -143,6 +144,10 @@
                 // generate the subcommand
                 IJSVGCommand * command = [self subcommandWithParameters:subParams
                                                         previousCommand:lastCommand];
+                
+                // make sure we assign the last command or hell breaks
+                // lose and the firey demons will run wild, namely, commands will break
+                // if they are multiples of a set
                 lastCommand = command;
                 
                 // add it to our tree
