@@ -129,6 +129,7 @@
             subCommands = [[NSMutableArray alloc] initWithCapacity:sets];
             
             // interate over the sets
+            IJSVGCommand * lastCommand = nil;
             for( NSInteger i = 0; i < sets; i++ ) {
                 // memory for this will be handled by the created subcommand
                 CGFloat * subParams = 0;
@@ -141,11 +142,11 @@
                 
                 // generate the subcommand
                 IJSVGCommand * command = [self subcommandWithParameters:subParams
-                                                        previousCommand:self.subCommands.lastObject
-                                                           isSubcommand:(i == 0)];
+                                                        previousCommand:lastCommand];
+                lastCommand = command;
                 
                 // add it to our tree
-                [self.subCommands addObject:command];
+                [subCommands addObject:command];
             }
         }
     }
@@ -153,8 +154,7 @@
 }
 
 - (IJSVGCommand *)subcommandWithParameters:(CGFloat *)subParams
-                           previousCommand:(IJSVGCommand *)command
-                              isSubcommand:(BOOL)isSubcommand
+                           previousCommand:(IJSVGCommand *)aPreviousCommand
 {
     // create a subcommand per set
     IJSVGCommand * c = [[[self.class alloc] init] autorelease];
@@ -162,8 +162,8 @@
     c.parameters = subParams;
     c.type = self.type;
     c.command = self.command;
-    c.previousCommand = self.subCommands.lastObject;
-    c.isSubCommand = isSubCommand;
+    c.previousCommand = aPreviousCommand;
+    c.isSubCommand = aPreviousCommand != nil;
     return c;
 }
 
