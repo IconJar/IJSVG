@@ -628,8 +628,12 @@
             IJSVGLayer * clip = [self layerForNode:node.clipPath];
             
             // adjust the frame
-            [self adjustLayer:clip
-           toParentLayerFrame:layer];
+            if(node.clipPath.units == IJSVGUnitObjectBoundingBox) {
+                [self adjustLayer:clip
+               toParentLayerFrame:layer];
+            } else {
+                clip.affineTransform = [self absoluteTransform:node];
+            }
             
             // add the layer
             [maskLayer addSublayer:clip];
@@ -643,6 +647,8 @@
             if(node.mask.units == IJSVGUnitObjectBoundingBox) {
                 [self adjustLayer:mask
                toParentLayerFrame:layer];
+            } else {
+                mask.affineTransform = [self absoluteTransform:node];
             }
             
             // add the layer
