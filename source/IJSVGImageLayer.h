@@ -7,6 +7,7 @@
 //
 
 #import <QuartzCore/QuartzCore.h>
+#import <AppKit/AppKit.h>
 #import "IJSVGLayer.h"
 
 @interface IJSVGImageLayer : IJSVGLayer {

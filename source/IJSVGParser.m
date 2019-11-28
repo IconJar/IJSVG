@@ -310,21 +310,21 @@
     }
     
     // floats
-    atts(@{IJSVGAttributeX:@"x",
-           IJSVGAttributeY:@"y",
-           IJSVGAttributeWidth:@"width",
-           IJSVGAttributeHeight:@"height",
-           IJSVGAttributeOpacity:@"opacity",
-           IJSVGAttributeStrokeOpacity:@"strokeOpacity",
-           IJSVGAttributeStrokeWidth:@"strokeWidth",
-           IJSVGAttributeStrokeDashOffset:@"strokeDashOffset",
-           IJSVGAttributeFillOpacity:@"fillOpacity"}, ^id (NSString * value) {
+    atts(@{(NSString *)IJSVGAttributeX:@"x",
+           (NSString *)IJSVGAttributeY:@"y",
+           (NSString *)IJSVGAttributeWidth:@"width",
+           (NSString *)IJSVGAttributeHeight:@"height",
+           (NSString *)IJSVGAttributeOpacity:@"opacity",
+           (NSString *)IJSVGAttributeStrokeOpacity:@"strokeOpacity",
+           (NSString *)IJSVGAttributeStrokeWidth:@"strokeWidth",
+           (NSString *)IJSVGAttributeStrokeDashOffset:@"strokeDashOffset",
+           (NSString *)IJSVGAttributeFillOpacity:@"fillOpacity"}, ^id (NSString * value) {
         return [IJSVGUnitLength unitWithString:value];
     });
     
     // nodes
-    atts(@{IJSVGAttributeClipPath:@"clipPath",
-           IJSVGAttributeMask:@"mask"}, ^id (NSString * value) {
+    atts(@{(NSString *)IJSVGAttributeClipPath:@"clipPath",
+           (NSString *)IJSVGAttributeMask:@"mask"}, ^id (NSString * value) {
                NSString * url = [IJSVGUtils defURL:value];
                if(url != nil) {
                    return [self definedObjectForID:url];
@@ -333,15 +333,15 @@
            });
     
     // units
-    atts(@{IJSVGAttributeGradientUnits:@"units",
-           IJSVGAttributeMaskUnits:@"units",
-           IJSVGAttributeMaskContentUnits:@"contentUnits"}, ^id (NSString * value) {
+    atts(@{(NSString *)IJSVGAttributeGradientUnits:@"units",
+           (NSString *)IJSVGAttributeMaskUnits:@"units",
+           (NSString *)IJSVGAttributeMaskContentUnits:@"contentUnits"}, ^id (NSString * value) {
                return @([IJSVGUtils unitTypeForString:value]);
            });
     
     // transforms
-    atts(@{IJSVGAttributeTransform:@"transforms",
-           IJSVGAttributeGradientTransform:@"transforms"}, ^(NSString * value) {
+    atts(@{(NSString *)IJSVGAttributeTransform:@"transforms",
+           (NSString *)IJSVGAttributeGradientTransform:@"transforms"}, ^(NSString * value) {
                NSMutableArray * tempTransforms = [[[NSMutableArray alloc] init] autorelease];
                [tempTransforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
                if(node.transforms != nil) {

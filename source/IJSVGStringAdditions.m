@@ -86,7 +86,7 @@
 
 - (NSArray *)ijsvg_componentsSplitByWhiteSpace
 {
-    return [self componentsSeparatedByChars:"\t\n\r "];
+    return [self ijsvg_componentsSeparatedByChars:"\t\n\r "];
 }
 
 @end

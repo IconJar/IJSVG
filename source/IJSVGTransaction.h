@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
 
 void IJSVGBeginTransactionLock();
 void IJSVGEndTransactionLock();

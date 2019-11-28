@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
+#import <objc/runtime.h>
 #import "IJSVGNode.h"
 #import "IJSVGColorList.h"
 

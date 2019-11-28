@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #import "IJSVGForeignObject.h"
 #import "IJSVGGroup.h"
 #import "IJSVGPath.h"
