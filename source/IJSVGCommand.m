@@ -89,10 +89,10 @@
 
 - (void)dealloc
 {
-    [commandString release], commandString = nil;
-    [command release], command = nil;
-    [subCommands release], subCommands = nil;
-    free(parameters), parameters = nil;
+    (void)([commandString release]), commandString = nil;
+    (void)([command release]), command = nil;
+    (void)([subCommands release]), subCommands = nil;
+    (void)(free(parameters)), parameters = nil;
     [super dealloc];
 }
 

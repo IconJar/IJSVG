@@ -14,8 +14,8 @@
 
 - (void)dealloc
 {
-    [selectors release], selectors = nil;
-    [style release], style = nil;
+    (void)([selectors release]), selectors = nil;
+    (void)([style release]), style = nil;
     [super dealloc];
 }
 

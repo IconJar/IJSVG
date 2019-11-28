@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)();
+typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)(void);
 
 typedef NS_ENUM(NSInteger, IJSVGRenderQuality) {
     IJSVGRenderQualityFullResolution, // slowest to render

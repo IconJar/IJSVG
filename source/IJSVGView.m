@@ -17,8 +17,8 @@
     // make sure we call this, or block may get called for a view
     // that doesnt exist
     [SVG prepForDrawingInView:nil];
-    [imageName release], imageName = nil;
-    [SVG release], SVG = nil;
+    (void)([imageName release]), imageName = nil;
+    (void)([SVG release]), SVG = nil;
     [super dealloc];
 }
 
@@ -52,7 +52,7 @@
 {
     // memory clean
     if(SVG != nil) {
-        [SVG release], SVG = nil;
+        (void)([SVG release]), SVG = nil;
     }
     SVG = [anSVG retain];
     

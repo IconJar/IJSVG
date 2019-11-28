@@ -17,7 +17,7 @@
 
 - (void)dealloc
 {
-    [gradient release], gradient = nil;
+    (void)([gradient release]), gradient = nil;
     [super dealloc];
 }
 
@@ -33,7 +33,7 @@
 - (void)setGradient:(IJSVGGradient *)newGradient
 {
     if(gradient != nil) {
-        [gradient release], gradient = nil;
+        (void)([gradient release]), gradient = nil;
     }
     gradient = [newGradient retain];
     

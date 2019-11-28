@@ -19,9 +19,9 @@
 
 - (void)dealloc
 {
-    [_fillColor release], _fillColor = nil;
-    [_strokeColor release], _strokeColor = nil;
-    [_colorList release], _colorList = nil;
+    (void)([_fillColor release]), _fillColor = nil;
+    (void)([_strokeColor release]), _strokeColor = nil;
+    (void)([_colorList release]), _colorList = nil;
     [super dealloc];
 }
 

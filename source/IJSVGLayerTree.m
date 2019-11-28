@@ -31,7 +31,7 @@
 
 - (void)dealloc
 {
-    [_style release], _style = nil;
+    (void)([_style release]), _style = nil;
     [super dealloc];
 }
 

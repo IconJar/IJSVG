@@ -18,7 +18,7 @@
 - (void)dealloc
 {
     if(subpath!=nil) {
-        [subpath release], subpath = nil;
+        (void)([subpath release]), subpath = nil;
     }
     [super dealloc];
 }
@@ -57,7 +57,7 @@
 
 - (void)overwritePath:(NSBezierPath *)aPath
 {
-    [subpath release], subpath = nil;
+    (void)([subpath release]), subpath = nil;
     subpath = [aPath retain];
     path = subpath;
 }

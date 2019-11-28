@@ -246,8 +246,8 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
 
 - (void)dealloc
 {
-    [_rawSelectors release], _rawSelectors = nil;
-    [selector release], selector = nil;
+    (void)([_rawSelectors release]), _rawSelectors = nil;
+    (void)([selector release]), selector = nil;
     [super dealloc];
 }
 
@@ -260,7 +260,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         
         // failed to compile
         if([self _compile] == NO) {
-            [self release], self = nil;
+            (void)([self release]), self = nil;
             return nil;
         }
         [self _calculate];

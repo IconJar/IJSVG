@@ -21,12 +21,12 @@
 - (void)dealloc
 {
     IJSVGBeginTransactionLock();
-    [renderingBackingScaleHelper release], renderingBackingScaleHelper = nil;
-    [_group release], _group = nil;
-    [_layerTree release], _layerTree = nil;
-    [_replacementColors release], _replacementColors = nil;
-    [_quartzRenderer release], _quartzRenderer = nil;
-    [_style release], _style = nil;
+    (void)([renderingBackingScaleHelper release]), renderingBackingScaleHelper = nil;
+    (void)([_group release]), _group = nil;
+    (void)([_layerTree release]), _layerTree = nil;
+    (void)([_replacementColors release]), _replacementColors = nil;
+    (void)([_quartzRenderer release]), _quartzRenderer = nil;
+    (void)([_style release]), _style = nil;
     [super dealloc];
     IJSVGEndTransactionLock();
 }
@@ -253,7 +253,7 @@
             if( error != NULL ) {
                 *error = anError;
             }
-            [self release], self = nil;
+            (void)([self release]), self = nil;
             return nil;
         }
         
@@ -307,7 +307,7 @@
             if(error != NULL) {
                 *error = anError;
             }
-            [self release], self = nil;
+            (void)([self release]), self = nil;
             return nil;
         }
     }
@@ -321,7 +321,7 @@
     [self layer];
     
     // now clear memory
-    [_group release], _group = nil;
+    (void)([_group release]), _group = nil;
 }
 
 - (void)_setupBasicInfoFromGroup
@@ -747,7 +747,7 @@
 {
     // clear memory
     if(_layerTree != nil) {
-        [_layerTree release], _layerTree = nil;
+        (void)([_layerTree release]), _layerTree = nil;
     }
     
     // force rebuild of the tree
@@ -776,7 +776,7 @@
 - (void)setStyle:(IJSVGRenderingStyle *)style
 {
     [self removeStyleObservers];
-    [_style release], _style = nil;
+    (void)([_style release]), _style = nil;
     _style = style.retain;
     [self addStyleObservers];
 }
@@ -819,7 +819,7 @@
 
 - (void)invalidateLayerTree
 {
-    [_layerTree release], _layerTree = nil;
+    (void)([_layerTree release]), _layerTree = nil;
 }
 
 - (IJSVGColorList *)computedColorList:(BOOL *)hasPatternFills

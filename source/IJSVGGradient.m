@@ -16,12 +16,12 @@
 
 - (void)dealloc
 {
-    [x1 release], x1 = nil;
-    [x2 release], x2 = nil;
-    [y1 release], y1 = nil;
-    [y2 release], y2 = nil;
-    [gradient release], gradient = nil;
-    [_colorList release], _colorList = nil;
+    (void)([x1 release]), x1 = nil;
+    (void)([x2 release]), x2 = nil;
+    (void)([y1 release]), y1 = nil;
+    (void)([y2 release]), y2 = nil;
+    (void)([gradient release]), gradient = nil;
+    (void)([_colorList release]), _colorList = nil;
     if(CGGradient != nil) {
         CGGradientRelease(CGGradient);
     }
@@ -37,7 +37,7 @@
 
 - (void)setColorList:(IJSVGColorList *)list
 {
-    [_colorList release], _colorList = nil;
+    (void)([_colorList release]), _colorList = nil;
     _colorList = list.retain;
     if(CGGradient != nil) {
         CGGradientRelease(CGGradient);

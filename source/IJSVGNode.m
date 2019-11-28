@@ -54,31 +54,31 @@
 - (void)dealloc
 {
     free(strokeDashArray);
-    [x release], x = nil;
-    [y release], y = nil;
-    [width release], width = nil;
-    [height release], height = nil;
-    [opacity release], opacity = nil;
-    [fillOpacity release], fillOpacity = nil;
-    [strokeOpacity release], strokeOpacity = nil;
-    [strokeWidth release], strokeWidth = nil;
-    [strokeDashOffset release], strokeDashOffset = nil;
-    [unicode release], unicode = nil;
-    [fillGradient release], fillGradient = nil;
-    [strokeGradient release], strokeGradient = nil;
-    [strokePattern release], strokePattern = nil;
-    [transforms release], transforms = nil;
-    [fillColor release], fillColor = nil;
-    [strokeColor release], strokeColor = nil;
-    [identifier release], identifier = nil;
-    [def release], def = nil;
-    [name release], name = nil;
-    [className release], className = nil;
-    [classNameList release], classNameList = nil;
-    [fillPattern release], fillPattern = nil;
-    [clipPath release], clipPath = nil;
-    [svg release], svg = nil;
-    [mask release], mask = nil;
+    (void)([x release]), x = nil;
+    (void)([y release]), y = nil;
+    (void)([width release]), width = nil;
+    (void)([height release]), height = nil;
+    (void)([opacity release]), opacity = nil;
+    (void)([fillOpacity release]), fillOpacity = nil;
+    (void)([strokeOpacity release]), strokeOpacity = nil;
+    (void)([strokeWidth release]), strokeWidth = nil;
+    (void)([strokeDashOffset release]), strokeDashOffset = nil;
+    (void)([unicode release]), unicode = nil;
+    (void)([fillGradient release]), fillGradient = nil;
+    (void)([strokeGradient release]), strokeGradient = nil;
+    (void)([strokePattern release]), strokePattern = nil;
+    (void)([transforms release]), transforms = nil;
+    (void)([fillColor release]), fillColor = nil;
+    (void)([strokeColor release]), strokeColor = nil;
+    (void)([identifier release]), identifier = nil;
+    (void)([def release]), def = nil;
+    (void)([name release]), name = nil;
+    (void)([className release]), className = nil;
+    (void)([classNameList release]), classNameList = nil;
+    (void)([fillPattern release]), fillPattern = nil;
+    (void)([clipPath release]), clipPath = nil;
+    (void)([svg release]), svg = nil;
+    (void)([mask release]), mask = nil;
     [super dealloc];
 }
 

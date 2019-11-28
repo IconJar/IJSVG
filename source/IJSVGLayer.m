@@ -26,7 +26,7 @@
 
 - (void)dealloc
 {
-    [_maskingLayer release], _maskingLayer = nil;
+    (void)([_maskingLayer release]), _maskingLayer = nil;
     [super dealloc];
 }
 
@@ -109,13 +109,13 @@
     convertMasksToPaths = flag; 
     if(flag == YES) {
         if(_maskingLayer != nil){
-            [_maskingLayer release], _maskingLayer = nil;
+            (void)([_maskingLayer release]), _maskingLayer = nil;
         }
         _maskingLayer = [(IJSVGLayer *)self.mask retain];
         self.mask = nil; 
     } else { 
         self.mask = _maskingLayer;
-        [_maskingLayer release], _maskingLayer = nil;
+        (void)([_maskingLayer release]), _maskingLayer = nil;
     } 
 } 
 

@@ -18,7 +18,7 @@ BOOL IJSVGIsCommonHTMLElementName(NSString * str)
     return [IJSVGCommonHTMLElementNames() containsObject:str];
 };
 
-NSArray * IJSVGCommonHTMLElementNames()
+NSArray * IJSVGCommonHTMLElementNames(void)
 {
     static NSArray * names = nil;
     static dispatch_once_t onceToken;

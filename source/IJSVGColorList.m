@@ -12,8 +12,8 @@
 
 - (void)dealloc
 {
-    [_replacementColorTree release], _replacementColorTree = nil;
-    [_colors release], _colors = nil;
+    (void)([_replacementColorTree release]), _replacementColorTree = nil;
+    (void)([_colors release]), _colors = nil;
     [super dealloc];
 }
 
@@ -52,7 +52,7 @@
 
 - (void)_invalidateColorTree
 {
-    [_replacementColorTree release], _replacementColorTree = nil;
+    (void)([_replacementColorTree release]), _replacementColorTree = nil;
     _replacementColorTree = [[NSMutableDictionary alloc] init];
 }
 

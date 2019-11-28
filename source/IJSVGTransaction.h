@@ -9,6 +9,6 @@
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
 
-void IJSVGBeginTransactionLock();
-void IJSVGEndTransactionLock();
+void IJSVGBeginTransactionLock(void);
+void IJSVGEndTransactionLock(void);
 void IJSVGObtainTransactionLock(dispatch_block_t block, BOOL renderOnMainThread);

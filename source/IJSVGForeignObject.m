@@ -14,7 +14,7 @@
 
 - (void)dealloc
 {
-    [requiredExtension release], requiredExtension = nil;
+    (void)([requiredExtension release]), requiredExtension = nil;
     [super dealloc];
 }
 

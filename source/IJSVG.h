@@ -21,8 +21,8 @@
 @class IJSVG;
 @class IJSVGQuartzRenderer;
 
-void IJSVGBeginTransactionLock();
-void IJSVGEndTransactionLock();
+void IJSVGBeginTransactionLock(void);
+void IJSVGEndTransactionLock(void);
 void IJSVGObtainTransactionLock(dispatch_block_t block, BOOL renderOnMainThread);
 
 @protocol IJSVGDelegate <NSObject,IJSVGParserDelegate>

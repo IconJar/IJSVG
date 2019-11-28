@@ -28,8 +28,8 @@
 
 - (void)dealloc
 {
-    [rule release], rule = nil;
-    [selector release], selector = nil;
+    (void)([rule release]), rule = nil;
+    (void)([selector release]), selector = nil;
     [super dealloc];
 }
 
@@ -39,8 +39,8 @@
 
 - (void)dealloc
 {
-    [_selectors release], _selectors = nil;
-    [_rules release], _rules = nil;
+    (void)([_selectors release]), _selectors = nil;
+    (void)([_rules release]), _rules = nil;
     [super dealloc];
 }
 
