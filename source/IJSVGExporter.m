@@ -283,10 +283,12 @@ NSString * IJSVGHash(NSString * key) {
     }
     
     // add generator
-    NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
-    generatorNode.stringValue = XML_DOC_GENERATOR;
-    [_dom.rootElement insertChild:generatorNode
-                          atIndex:0];
+    if((_options & IJSVGExporterOptionRemoveComments) == 0) {
+        NSXMLNode * generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
+        generatorNode.stringValue = XML_DOC_GENERATOR;
+        [_dom.rootElement insertChild:generatorNode
+                              atIndex:0];
+    }
 }
 
 - (void)_cleanup

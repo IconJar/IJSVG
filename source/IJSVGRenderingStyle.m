@@ -38,19 +38,12 @@
 
 + (NSArray<NSString *> *)observableProperties
 {
-    unsigned int count;
-    objc_property_t * properties = class_copyPropertyList(IJSVGRenderingStyle.class,
-                                                          &count);
-    NSMutableArray * names = [[[NSMutableArray alloc] initWithCapacity:count] autorelease];
-    for(int i = 0; i < count; i++) {
-        objc_property_t property = properties[i];
-        const char * name = property_getName(property);
-        NSString * stringName = [NSString stringWithCString:name
-                                                   encoding:NSUTF8StringEncoding];
-        [names addObject:stringName];
+    static NSArray * array = nil;
+    if(array == nil) {
+        array = @[@"lineCapStyle", @"lineJoinStyle", @"lineWidth",
+                  @"colorList", @"fillColor", @"strokeColor"].retain;
     }
-    free(properties);
-    return names;
+    return array;
 }
 
 @end
