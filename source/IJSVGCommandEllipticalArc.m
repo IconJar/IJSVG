@@ -73,15 +73,15 @@
     CGFloat radius = MAX(radii.x, radii.y);
     CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) : CGPointMake(radii.x / radii.y, 1);
 
-    NSAffineTransform* trans = [NSAffineTransform transform];
+    NSAffineTransform* trans = NSAffineTransform.transform;
     [trans translateXBy:-centerPoint.x yBy:-centerPoint.y];
     [path.currentSubpath transformUsingAffineTransform:trans];
 
-    trans = [NSAffineTransform transform];
+    trans = NSAffineTransform.transform;
     [trans rotateByRadians:-xAxisRotation];
     [path.currentSubpath transformUsingAffineTransform:trans];
 
-    trans = [NSAffineTransform transform];
+    trans = NSAffineTransform.transform;
     [trans scaleXBy:(1 / scale.x) yBy:(1 / scale.y)];
     [path.currentSubpath transformUsingAffineTransform:trans];
 
@@ -91,15 +91,15 @@
                                                   endAngle:radians_to_degrees(startAngle + angleDelta)
                                                  clockwise:!sweepFlag];
 
-    trans = [NSAffineTransform transform];
+    trans = NSAffineTransform.transform;
     [trans scaleXBy:scale.x yBy:scale.y];
     [path.currentSubpath transformUsingAffineTransform:trans];
 
-    trans = [NSAffineTransform transform];
+    trans = NSAffineTransform.transform;
     [trans rotateByRadians:xAxisRotation];
     [path.currentSubpath transformUsingAffineTransform:trans];
 
-    trans = [NSAffineTransform transform];
+    trans = NSAffineTransform.transform;
     [trans translateXBy:centerPoint.x yBy:centerPoint.y];
     [path.currentSubpath transformUsingAffineTransform:trans];
 }

@@ -203,7 +203,7 @@
 {
     // setup path and layer
     IJSVGShapeLayer* layer = [[[IJSVGShapeLayer alloc] init] autorelease];
-    CGPathRef introPath = [path newPathRefByAutoClosingPath:NO];
+    CGPathRef introPath = path.CGPath;
 
     *originalBoundingBox = CGRectIntegral(CGPathGetBoundingBox(introPath));
     layer.originalPathOrigin = (*originalBoundingBox).origin;
@@ -219,7 +219,6 @@
 
     // clean up path memory
     CGPathRelease(transformedPath);
-    CGPathRelease(introPath);
 
     // set the bounds
     layer.frame = CGRectIntegral(bounds);

@@ -14,9 +14,14 @@
 @synthesize path;
 @synthesize subpath;
 @synthesize lastControlPoint;
+@synthesize CGPath = _CGPath;
 
 - (void)dealloc
 {
+    if(_CGPath != nil) {
+        CGPathRelease(_CGPath);
+        _CGPath = nil;
+    }
     if (subpath != nil) {
         (void)([subpath release]), subpath = nil;
     }
@@ -26,7 +31,7 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        subpath = [[NSBezierPath bezierPath] retain];
+        subpath = NSBezierPath.bezierPath.retain;
         path = subpath; // for legacy use
     }
     return self;
@@ -54,6 +59,14 @@
     [subpath closePath];
 }
 
+- (CGPathRef)CGPath
+{
+    if(_CGPath == nil) {
+        _CGPath = [self newPathRefByAutoClosingPath:NO];
+    }
+    return _CGPath;
+}
+
 - (void)overwritePath:(NSBezierPath*)aPath
 {
     (void)([subpath release]), subpath = nil;
@@ -64,7 +77,7 @@
 - (CGPathRef)newPathRefByAutoClosingPath:(BOOL)autoClose
 {
     NSInteger i = 0;
-    NSInteger numElements = [self.path elementCount];
+    NSInteger numElements = self.path.elementCount;
     NSBezierPath* bezPath = self.path;
 
     // nothing to return

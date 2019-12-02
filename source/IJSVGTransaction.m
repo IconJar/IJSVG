@@ -33,14 +33,3 @@ void IJSVGEndTransactionLock()
     }
     [CATransaction commit];
 };
-
-void IJSVGObtainTransactionLock(dispatch_block_t block, BOOL renderOnMainThread)
-{
-    IJSVGBeginTransactionLock();
-    if (renderOnMainThread) {
-        dispatch_sync(dispatch_get_main_queue(), block);
-    } else {
-        block();
-    }
-    IJSVGEndTransactionLock();
-};

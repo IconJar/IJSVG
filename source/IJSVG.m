@@ -92,15 +92,13 @@
     __block IJSVGImageLayer* imageLayer = nil;
 
     // make sure we obtain a lock, with whatever we do with layers!
-    IJSVGObtainTransactionLock(
-        ^{
-            // create the layers we require
-            layer = [[[IJSVGGroupLayer alloc] init] autorelease];
-            imageLayer =
-                [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
-            [layer addSublayer:imageLayer];
-        },
-        NO);
+    IJSVGBeginTransactionLock();
+    // create the layers we require
+    layer = [[[IJSVGGroupLayer alloc] init] autorelease];
+    imageLayer =
+        [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
+    [layer addSublayer:imageLayer];
+    IJSVGEndTransactionLock();
 
     // return the initialized SVG
     return [self initWithSVGLayer:layer viewBox:imageLayer.frame];
@@ -707,27 +705,8 @@
 
 - (void)setStyle:(IJSVGRenderingStyle*)style
 {
-    [self removeStyleObservers];
     (void)([_style release]), _style = nil;
     _style = style.retain;
-    [self addStyleObservers];
-}
-
-- (void)removeStyleObservers
-{
-    for (NSString* propertyName in IJSVGRenderingStyle.observableProperties) {
-        @try {
-            [_style removeObserver:self forKeyPath:propertyName];
-        } @catch (NSException* e) {
-        }
-    }
-}
-
-- (void)addStyleObservers
-{
-    for (NSString* propertyName in IJSVGRenderingStyle.observableProperties) {
-        [_style addObserver:self forKeyPath:propertyName options:0 context:nil];
-    }
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath

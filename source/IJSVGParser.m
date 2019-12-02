@@ -199,8 +199,8 @@
         free(box);
     } else {
         // there is no view box so find the width and height
-        CGFloat w = [[[svgElement attributeForName:(NSString*)IJSVGAttributeWidth] stringValue] floatValue];
-        CGFloat h = [[[svgElement attributeForName:(NSString*)IJSVGAttributeHeight] stringValue] floatValue];
+        CGFloat w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue.floatValue;
+        CGFloat h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue.floatValue;
         if (h == 0.f && w != 0.f) {
             h = w;
         } else if (w == 0.f && h != 0.f) {
@@ -210,8 +210,8 @@
     }
 
     // parse the width and height....
-    CGFloat w = [[[svgElement attributeForName:(NSString*)IJSVGAttributeWidth] stringValue] floatValue];
-    CGFloat h = [[[svgElement attributeForName:(NSString*)IJSVGAttributeHeight] stringValue] floatValue];
+    CGFloat w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue.floatValue;
+    CGFloat h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue.floatValue;
     if (w == 0.f && h == 0.f) {
         w = viewBox.size.width;
         h = viewBox.size.height;
@@ -253,11 +253,21 @@
 
     // attribute helpers
     typedef void (^cp)(NSString*);
+
+    // precaching the attributes is alot faster then asking for attribute for
+    // name each time we want to grab a value ... weird
+    NSArray<NSXMLNode*>* origAttributes = element.attributes;
+    NSMutableDictionary<NSString*, NSString*>* attributes = nil;
+    attributes = [[[NSMutableDictionary alloc] initWithCapacity:origAttributes.count] autorelease];
+    for (NSXMLNode* node in origAttributes) {
+        attributes[node.name] = node.stringValue;
+    }
+
     void (^attr)(const NSString*, cp) = ^(NSString* key, cp block) {
         if ([ignoredAttributes containsObject:key]) {
             return;
         }
-        NSString* v = [style property:key] ?: [element attributeForName:key].stringValue;
+        NSString* v = [style property:key] ?: attributes[key];
         if (v != nil && v.length != 0) {
             block(v);
         }
@@ -1187,10 +1197,10 @@
 {
     // convert a line into a command,
     // basically MX1 Y1LX2 Y2
-    CGFloat x1 = [[[element attributeForName:(NSString*)IJSVGAttributeX1] stringValue] floatValue];
-    CGFloat y1 = [[[element attributeForName:(NSString*)IJSVGAttributeY1] stringValue] floatValue];
-    CGFloat x2 = [[[element attributeForName:(NSString*)IJSVGAttributeX2] stringValue] floatValue];
-    CGFloat y2 = [[[element attributeForName:(NSString*)IJSVGAttributeY2] stringValue] floatValue];
+    CGFloat x1 = [element attributeForName:(NSString*)IJSVGAttributeX1].stringValue.floatValue;
+    CGFloat y1 = [element attributeForName:(NSString*)IJSVGAttributeY1].stringValue.floatValue;
+    CGFloat x2 = [element attributeForName:(NSString*)IJSVGAttributeX2].stringValue.floatValue;
+    CGFloat y2 = [element attributeForName:(NSString*)IJSVGAttributeY2].stringValue.floatValue;
 
     // use sprintf as its quicker then stringWithFormat...
     char buffer[50];
@@ -1204,9 +1214,9 @@
 - (void)_parseCircle:(NSXMLElement*)element
             intoPath:(IJSVGPath*)path
 {
-    CGFloat cX = [[[element attributeForName:(NSString*)IJSVGAttributeCX] stringValue] floatValue];
-    CGFloat cY = [[[element attributeForName:(NSString*)IJSVGAttributeCY] stringValue] floatValue];
-    CGFloat r = [[[element attributeForName:(NSString*)IJSVGAttributeR] stringValue] floatValue];
+    CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
+    CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
+    CGFloat r = [element attributeForName:(NSString*)IJSVGAttributeR].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - r, cY - r, r * 2, r * 2);
     [path overwritePath:[NSBezierPath bezierPathWithOvalInRect:rect]];
 }
@@ -1214,10 +1224,10 @@
 - (void)_parseEllipse:(NSXMLElement*)element
              intoPath:(IJSVGPath*)path
 {
-    CGFloat cX = [[[element attributeForName:(NSString*)IJSVGAttributeCX] stringValue] floatValue];
-    CGFloat cY = [[[element attributeForName:(NSString*)IJSVGAttributeCY] stringValue] floatValue];
-    CGFloat rX = [[[element attributeForName:(NSString*)IJSVGAttributeRX] stringValue] floatValue];
-    CGFloat rY = [[[element attributeForName:(NSString*)IJSVGAttributeRY] stringValue] floatValue];
+    CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
+    CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
+    CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
+    CGFloat rY = [element attributeForName:(NSString*)IJSVGAttributeRY].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - rX, cY - rY, rX * 2, rY * 2);
     [path overwritePath:[NSBezierPath bezierPathWithOvalInRect:rect]];
 }

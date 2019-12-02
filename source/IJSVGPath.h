@@ -22,6 +22,7 @@
 @property (nonatomic, readonly) NSBezierPath* path;
 @property (nonatomic, readonly) NSBezierPath* subpath;
 @property (nonatomic, assign) CGPoint lastControlPoint;
+@property (atomic, readonly) CGPathRef CGPath;
 
 - (NSBezierPath*)currentSubpath;
 - (void)close;

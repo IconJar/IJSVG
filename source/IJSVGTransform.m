@@ -176,7 +176,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         return path.path;
     NSBezierPath* cop = [[path.path copy] autorelease];
     for (IJSVGTransform* transform in path.transforms) {
-        NSAffineTransform* at = [NSAffineTransform transform];
+        NSAffineTransform* at = NSAffineTransform.transform;
         switch (transform.command) {
         // matrix
         case IJSVGTransformCommandMatrix: {

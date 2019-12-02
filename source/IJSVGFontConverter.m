@@ -115,16 +115,15 @@
 + (IJSVG*)convertPathToSVG:(CGPathRef)path
 {
     __block IJSVG* svg = nil;
-    IJSVGObtainTransactionLock(^{
-        IJSVGGroupLayer* layer = [[[IJSVGGroupLayer alloc] init] autorelease];
-        IJSVGShapeLayer* shape = [[[IJSVGShapeLayer alloc] init] autorelease];
-        [layer addSublayer:shape];
-        shape.path = path;
-        CGRect box = CGPathGetPathBoundingBox(path);
-        svg = [[IJSVG alloc] initWithSVGLayer:layer
-                                      viewBox:box];
-    },
-        NO);
+    IJSVGBeginTransactionLock();
+    IJSVGGroupLayer* layer = [[[IJSVGGroupLayer alloc] init] autorelease];
+    IJSVGShapeLayer* shape = [[[IJSVGShapeLayer alloc] init] autorelease];
+    [layer addSublayer:shape];
+    shape.path = path;
+    CGRect box = CGPathGetPathBoundingBox(path);
+    svg = [[IJSVG alloc] initWithSVGLayer:layer
+                                  viewBox:box];
+    IJSVGEndTransactionLock();
     return [svg autorelease];
 }
 

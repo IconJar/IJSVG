@@ -14,7 +14,7 @@
 {
     NSBezierPath* path = [node path];
     // we need to flip it
-    NSAffineTransform* trans = [NSAffineTransform transform];
+    NSAffineTransform* trans = NSAffineTransform.transform;
     [trans scaleXBy:1.f yBy:-1.f];
     [trans translateXBy:0.f yBy:path.controlPointBounds.size.height];
     path = [trans transformBezierPath:path];
