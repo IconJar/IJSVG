@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGCommand.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGCommandClose : IJSVGCommand
 

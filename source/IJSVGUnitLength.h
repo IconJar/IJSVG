@@ -13,7 +13,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypePercentage
 };
 
-typedef NS_ENUM( NSInteger, IJSVGUnitType) {
+typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitUserSpaceOnUse,
     IJSVGUnitObjectBoundingBox,
     IJSVGUnitInherit
@@ -25,18 +25,18 @@ typedef NS_ENUM( NSInteger, IJSVGUnitType) {
 @property (nonatomic, assign) CGFloat value;
 @property (nonatomic, assign) BOOL inherit;
 
-+ (IJSVGUnitLength *)unitWithFloat:(CGFloat)number;
-+ (IJSVGUnitLength *)unitWithFloat:(CGFloat)number
-                              type:(IJSVGUnitLengthType)type;
-+ (IJSVGUnitLength *)unitWithPercentageFloat:(CGFloat)number;
-+ (IJSVGUnitLength *)unitWithString:(NSString *)string;
-+ (IJSVGUnitLength *)unitWithPercentageString:(NSString *)string;
++ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number;
++ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
+                             type:(IJSVGUnitLengthType)type;
++ (IJSVGUnitLength*)unitWithPercentageFloat:(CGFloat)number;
++ (IJSVGUnitLength*)unitWithString:(NSString*)string;
++ (IJSVGUnitLength*)unitWithPercentageString:(NSString*)string;
 
-+ (IJSVGUnitLength *)unitWithString:(NSString *)string
-                       fromUnitType:(IJSVGUnitType)units;
++ (IJSVGUnitLength*)unitWithString:(NSString*)string
+                      fromUnitType:(IJSVGUnitType)units;
 
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
-- (NSString *)stringValue;
+- (NSString*)stringValue;
 
 @end

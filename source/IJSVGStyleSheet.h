@@ -6,20 +6,20 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import "IJSVGStyleSheetSelector.h"
 #import "IJSVGStyleSheetRule.h"
+#import "IJSVGStyleSheetSelector.h"
+#import <Foundation/Foundation.h>
 
 @class IJSVGNode;
 
 @interface IJSVGStyleSheet : NSObject {
-    
+
 @private
-    NSMutableDictionary * _selectors;
-    NSMutableArray * _rules;
+    NSMutableDictionary* _selectors;
+    NSMutableArray* _rules;
 }
 
-- (void)parseStyleBlock:(NSString *)string;
-- (IJSVGStyle *)styleForNode:(IJSVGNode *)node;
+- (void)parseStyleBlock:(NSString*)string;
+- (IJSVGStyle*)styleForNode:(IJSVGNode*)node;
 
 @end

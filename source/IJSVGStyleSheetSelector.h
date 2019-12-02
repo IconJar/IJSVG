@@ -6,23 +6,22 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGStyleSheetSelectorRaw.h"
+#import <Foundation/Foundation.h>
 
 @class IJSVGNode;
 
 @interface IJSVGStyleSheetSelector : NSObject {
-    
-    NSString * selector;
+
+    NSString* selector;
     NSUInteger specificity;
 @private
-    NSMutableArray * _rawSelectors;
-    
+    NSMutableArray* _rawSelectors;
 }
 
 @property (nonatomic, assign) NSUInteger specificity;
 
-- (id)initWithSelectorString:(NSString *)string;
-- (BOOL)matchesNode:(IJSVGNode *)node;
+- (id)initWithSelectorString:(NSString*)string;
+- (BOOL)matchesNode:(IJSVGNode*)node;
 
 @end

@@ -9,16 +9,16 @@
 #import "IJSVGCommand.h"
 #import "IJSVGUtils.h"
 
-#import "IJSVGCommandEllipticalArc.h"
-#import "IJSVGCommandMove.h"
 #import "IJSVGCommandClose.h"
 #import "IJSVGCommandCurve.h"
-#import "IJSVGCommandLineTo.h"
-#import "IJSVGCommandVerticalLine.h"
+#import "IJSVGCommandEllipticalArc.h"
 #import "IJSVGCommandHorizontalLine.h"
-#import "IJSVGCommandSmoothCurve.h"
+#import "IJSVGCommandLineTo.h"
+#import "IJSVGCommandMove.h"
 #import "IJSVGCommandQuadraticCurve.h"
+#import "IJSVGCommandSmoothCurve.h"
 #import "IJSVGCommandSmoothQuadraticCurve.h"
+#import "IJSVGCommandVerticalLine.h"
 
 @implementation IJSVGCommand
 
@@ -42,26 +42,26 @@
     return 1;
 }
 
-+ (void)runWithParams:(CGFloat *)params
++ (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path
+                 path:(IJSVGPath*)path
 {
 }
 
-+ (void)parseParams:(CGFloat *)params
++ (void)parseParams:(CGFloat*)params
          paramCount:(NSInteger)paramCount
-          intoArray:(NSMutableArray<IJSVGCommand *> *)commands
-      parentCommand:(IJSVGCommand *)parentCommand
+          intoArray:(NSMutableArray<IJSVGCommand*>*)commands
+      parentCommand:(IJSVGCommand*)parentCommand
 {
 }
 
-+ (NSPoint)readCoordinatePair:(CGFloat *)pairs
++ (NSPoint)readCoordinatePair:(CGFloat*)pairs
                         index:(NSInteger)index
 {
-    return NSMakePoint( pairs[index*2], pairs[index*2+1]);
+    return NSMakePoint(pairs[index * 2], pairs[index * 2 + 1]);
 }
 
 + (void)load
@@ -72,17 +72,27 @@
 + (Class)commandClassForCommandChar:(char)aChar
 {
     aChar = tolower(aChar);
-    switch(aChar) {
-        case 'a': return IJSVGCommandEllipticalArc.class;
-        case 'c': return IJSVGCommandCurve.class;
-        case 'h': return IJSVGCommandHorizontalLine.class;
-        case 'l': return IJSVGCommandLineTo.class;
-        case 'm': return IJSVGCommandMove.class;
-        case 'q': return IJSVGCommandQuadraticCurve.class;
-        case 's': return IJSVGCommandSmoothCurve.class;
-        case 't': return IJSVGCommandSmoothQuadraticCurve.class;
-        case 'v': return IJSVGCommandVerticalLine.class;
-        case 'z': return IJSVGCommandClose.class;
+    switch (aChar) {
+    case 'a':
+        return IJSVGCommandEllipticalArc.class;
+    case 'c':
+        return IJSVGCommandCurve.class;
+    case 'h':
+        return IJSVGCommandHorizontalLine.class;
+    case 'l':
+        return IJSVGCommandLineTo.class;
+    case 'm':
+        return IJSVGCommandMove.class;
+    case 'q':
+        return IJSVGCommandQuadraticCurve.class;
+    case 's':
+        return IJSVGCommandSmoothCurve.class;
+    case 't':
+        return IJSVGCommandSmoothQuadraticCurve.class;
+    case 'v':
+        return IJSVGCommandVerticalLine.class;
+    case 'z':
+        return IJSVGCommandClose.class;
     }
     return nil;
 }
@@ -96,9 +106,9 @@
     [super dealloc];
 }
 
-- (id)initWithCommandString:(NSString *)str
+- (id)initWithCommandString:(NSString*)str
 {
-    if( ( self = [super init] ) != nil ) {
+    if ((self = [super init]) != nil) {
         // work out the basics
         _currentIndex = 0;
         command = [[str substringToIndex:1] copy];
@@ -106,12 +116,12 @@
         parameters = [IJSVGUtils commandParameters:str
                                              count:&parameterCount];
         requiredParameters = [self.class requiredParameterCount];
-        
+
         // check what required params we need
-        if(requiredParameters == IJSVGCustomVariableParameterCount) {
+        if (requiredParameters == IJSVGCustomVariableParameterCount) {
             // looks like we require variable params
             subCommands = [[NSMutableArray alloc] init];
-            
+
             // parse the custom params
             [self.class parseParams:parameters
                          paramCount:parameterCount
@@ -123,33 +133,33 @@
             // if there is a multiple of commands in a command
             // then we need to work those out...
             NSInteger sets = 1;
-            if(self.requiredParameters != 0) {
-                sets = (self.parameterCount/self.requiredParameters);
+            if (self.requiredParameters != 0) {
+                sets = (self.parameterCount / self.requiredParameters);
             }
-            
+
             subCommands = [[NSMutableArray alloc] initWithCapacity:sets];
-            
+
             // interate over the sets
-            IJSVGCommand * lastCommand = nil;
-            for( NSInteger i = 0; i < sets; i++ ) {
+            IJSVGCommand* lastCommand = nil;
+            for (NSInteger i = 0; i < sets; i++) {
                 // memory for this will be handled by the created subcommand
-                CGFloat * subParams = 0;
-                if( self.requiredParameters != 0 ) {
-                    subParams = (CGFloat*)malloc(self.requiredParameters*sizeof(CGFloat));
-                    for( NSInteger p = 0; p < self.requiredParameters; p++ ) {
-                        subParams[p] = self.parameters[i*self.requiredParameters+p];
+                CGFloat* subParams = 0;
+                if (self.requiredParameters != 0) {
+                    subParams = (CGFloat*)malloc(self.requiredParameters * sizeof(CGFloat));
+                    for (NSInteger p = 0; p < self.requiredParameters; p++) {
+                        subParams[p] = self.parameters[i * self.requiredParameters + p];
                     }
                 }
-                
+
                 // generate the subcommand
-                IJSVGCommand * command = [self subcommandWithParameters:subParams
-                                                        previousCommand:lastCommand];
-                
+                IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                       previousCommand:lastCommand];
+
                 // make sure we assign the last command or hell breaks
                 // lose and the firey demons will run wild, namely, commands will break
                 // if they are multiples of a set
                 lastCommand = command;
-                
+
                 // add it to our tree
                 [subCommands addObject:command];
             }
@@ -158,11 +168,11 @@
     return self;
 }
 
-- (IJSVGCommand *)subcommandWithParameters:(CGFloat *)subParams
-                           previousCommand:(IJSVGCommand *)aPreviousCommand
+- (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
+                          previousCommand:(IJSVGCommand*)aPreviousCommand
 {
     // create a subcommand per set
-    IJSVGCommand * c = [[[self.class alloc] init] autorelease];
+    IJSVGCommand* c = [[[self.class alloc] init] autorelease];
     c.parameterCount = self.requiredParameters;
     c.parameters = subParams;
     c.type = self.type;
@@ -182,9 +192,9 @@
 - (NSPoint)readPoint
 {
     CGFloat x = parameters[_currentIndex];
-    CGFloat y = parameters[_currentIndex+1];
-    _currentIndex+=2;
-    return NSMakePoint( x, y );
+    CGFloat y = parameters[_currentIndex + 1];
+    _currentIndex += 2;
+    return NSMakePoint(x, y);
 }
 
 - (BOOL)readBOOL

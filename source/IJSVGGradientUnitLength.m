@@ -10,10 +10,10 @@
 
 @implementation IJSVGGradientUnitLength
 
-- (NSString *)stringValue
+- (NSString*)stringValue
 {
-    if(self.type == IJSVGUnitLengthTypePercentage) {
-        return [NSString stringWithFormat:@"%g",self.value];
+    if (self.type == IJSVGUnitLengthTypePercentage) {
+        return [NSString stringWithFormat:@"%g", self.value];
     }
     return [super stringValue];
 }

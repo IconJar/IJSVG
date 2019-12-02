@@ -11,29 +11,29 @@
 
 @implementation IJSVGLinearGradient
 
-+ (NSGradient *)parseGradient:(NSXMLElement *)element
-                     gradient:(IJSVGLinearGradient *)aGradient
++ (NSGradient*)parseGradient:(NSXMLElement*)element
+                    gradient:(IJSVGLinearGradient*)aGradient
 {
     // just ask unit for the value
-    NSString * x1 = ([element attributeForName:@"x1"].stringValue ?: @"0");
-    NSString * x2 = ([element attributeForName:@"x2"].stringValue ?: @"100%");
-    NSString * y1 = ([element attributeForName:@"y1"].stringValue ?: @"0");
-    NSString * y2 = ([element attributeForName:@"y2"].stringValue ?: @"0");
+    NSString* x1 = ([element attributeForName:@"x1"].stringValue ?: @"0");
+    NSString* x2 = ([element attributeForName:@"x2"].stringValue ?: @"100%");
+    NSString* y1 = ([element attributeForName:@"y1"].stringValue ?: @"0");
+    NSString* y2 = ([element attributeForName:@"y2"].stringValue ?: @"0");
     aGradient.x1 = [IJSVGGradientUnitLength unitWithString:x1 fromUnitType:aGradient.units];
     aGradient.x2 = [IJSVGGradientUnitLength unitWithString:x2 fromUnitType:aGradient.units];
     aGradient.y1 = [IJSVGGradientUnitLength unitWithString:y1 fromUnitType:aGradient.units];
     aGradient.y2 = [IJSVGGradientUnitLength unitWithString:y2 fromUnitType:aGradient.units];
 
     // compute the color stops and colours
-    NSArray * colors = nil;
-    CGFloat * stopsParams = [self.class computeColorStopsFromString:element
-                                                               colors:&colors];
-    
+    NSArray* colors = nil;
+    CGFloat* stopsParams = [self.class computeColorStopsFromString:element
+                                                            colors:&colors];
+
     // create the gradient with the colours
-    NSGradient * grad = [[NSGradient alloc] initWithColors:colors
-                                               atLocations:stopsParams
-                                                colorSpace:IJSVGColor.defaultColorSpace];
-    
+    NSGradient* grad = [[NSGradient alloc] initWithColors:colors
+                                              atLocations:stopsParams
+                                               colorSpace:IJSVGColor.defaultColorSpace];
+
     free(stopsParams);
     return [grad autorelease];
 }
@@ -44,38 +44,36 @@
                 viewPort:(CGRect)viewBox
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
-    
+
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
-    
+
     CGRect boundingBox = inUserSpace ? viewBox : objectRect;
-    
+
     // make sure we apply the absolute position to
     // transform us back into the correct space
-    if(inUserSpace == YES) {
+    if (inUserSpace == YES) {
         CGContextConcatCTM(ctx, absoluteTransform);
     }
-    
+
     CGFloat width = CGRectGetWidth(boundingBox);
     CGFloat height = CGRectGetHeight(boundingBox);
     gradientStartPoint = CGPointMake([self.x1 computeValue:width],
-                                     [self.y1 computeValue:height]);
-    
+        [self.y1 computeValue:height]);
+
     gradientEndPoint = CGPointMake([self.x2 computeValue:width],
-                                   [self.y2 computeValue:height]);
+        [self.y2 computeValue:height]);
 
     // transform the context
     CGContextConcatCTM(ctx, selfTransform);
-    
+
     // draw the gradient
-    CGGradientDrawingOptions options =
-        kCGGradientDrawsBeforeStartLocation|
-        kCGGradientDrawsAfterEndLocation;
-    
+    CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
+
     CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
-                                gradientEndPoint, options);
-    
+        gradientEndPoint, options);
+
 #ifdef IJSVG_DEBUG
     [self _debugStart:gradientStartPoint
                   end:gradientEndPoint

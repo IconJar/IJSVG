@@ -9,24 +9,24 @@
 #import <Foundation/Foundation.h>
 
 @interface IJSVGExporterPathInstruction : NSObject {
-    
+
 @private
     NSInteger _dataCount;
     char _instruction;
-    CGFloat * _data;
+    CGFloat* _data;
 }
 
-+ (NSArray<IJSVGExporterPathInstruction *> *)instructionsFromPath:(CGPathRef)path;
++ (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path;
 
 - (id)initWithInstruction:(char)instruction
                 dataCount:(NSInteger)floatCount;
 
 - (void)setInstruction:(char)newInstruction;
 - (char)instruction;
-- (CGFloat *)data;
+- (CGFloat*)data;
 - (NSInteger)dataLength;
 
-+ (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction *> *)instructions;
-+ (NSString *)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction *> *)instructions;
++ (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
++ (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 
 @end

@@ -18,9 +18,9 @@
     [super dealloc];
 }
 
-- (IJSVGText *)copyWithZone:(NSZone *)zone
+- (IJSVGText*)copyWithZone:(NSZone*)zone
 {
-    IJSVGText * node = [super copyWithZone:zone];
+    IJSVGText* node = [super copyWithZone:zone];
     node.text = self.text;
     return node;
 }

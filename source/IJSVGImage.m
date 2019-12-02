@@ -20,30 +20,30 @@
     [super dealloc];
 }
 
-- (void)loadFromBase64EncodedString:(NSString *)encodedString
+- (void)loadFromBase64EncodedString:(NSString*)encodedString
 {
-    if([encodedString hasPrefix:@"data:"]) {
+    if ([encodedString hasPrefix:@"data:"]) {
         encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+"
                                                                  withString:@""
                                                                     options:NSRegularExpressionSearch
                                                                       range:NSMakeRange(0, encodedString.length)];
     }
-    NSURL * URL = [NSURL URLWithString:encodedString];
-    NSData * data = [NSData dataWithContentsOfURL:URL];
-    
+    NSURL* URL = [NSURL URLWithString:encodedString];
+    NSData* data = [NSData dataWithContentsOfURL:URL];
+
     // no data, just ignore...invalid probably
-    if(data == nil) {
+    if (data == nil) {
         return;
     }
-    
+
     // set the image against the container
-    NSImage * anImage = [[[NSImage alloc] initWithData:data] autorelease];
+    NSImage* anImage = [[[NSImage alloc] initWithData:data] autorelease];
     [self setImage:anImage];
 }
 
-- (IJSVGPath *)path
+- (IJSVGPath*)path
 {
-    if(imagePath == nil) {
+    if (imagePath == nil) {
         // lazy load the path as it might not be needed
         imagePath = [[IJSVGPath alloc] init];
         [imagePath.path appendBezierPathWithRect:NSMakeRect(0.f, 0.f, self.width.value, self.height.value)];
@@ -52,23 +52,23 @@
     return imagePath;
 }
 
-- (void)setImage:(NSImage *)anImage
+- (void)setImage:(NSImage*)anImage
 {
-    if(image != nil) {
+    if (image != nil) {
         (void)([image release]), image = nil;
     }
     image = [anImage retain];
-    
-    if(CGImage != nil) {
+
+    if (CGImage != nil) {
         CGImageRelease(CGImage);
         CGImage = nil;
     }
-    
-    NSRect rect = NSMakeRect( 0.f, 0.f, self.width.value, self.height.value);
+
+    NSRect rect = NSMakeRect(0.f, 0.f, self.width.value, self.height.value);
     CGImage = [image CGImageForProposedRect:&rect
                                     context:nil
                                       hints:nil];
-    
+
     // be sure to retain (some reason this is required in Xcode 8 beta 5?)
     CGImageRetain(CGImage);
 }
@@ -79,29 +79,29 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)context
-                    path:(IJSVGPath *)path
+                    path:(IJSVGPath*)path
 {
     // run the transforms
     // draw the image
-    if(self.width.value == 0.f || self.height.value == 0.f) {
+    if (self.width.value == 0.f || self.height.value == 0.f) {
         return;
     }
-    
+
     // make sure path is set
-    if(path == nil) {
+    if (path == nil) {
         path = [self path];
     }
-    
+
     CGRect rect = path.path.bounds;
-    CGRect bounds = CGRectMake( 0.f, 0.f, rect.size.width, rect.size.height);
-    
+    CGRect bounds = CGRectMake(0.f, 0.f, rect.size.width, rect.size.height);
+
     // save the state of the context
     CGContextSaveGState(context);
     {
         // flip the coordinates
-        CGContextTranslateCTM(context, rect.origin.x, (rect.origin.y)+rect.size.height);
+        CGContextTranslateCTM(context, rect.origin.x, (rect.origin.y) + rect.size.height);
         CGContextScaleCTM(context, 1.f, -1.f);
-        CGContextDrawImage( context, bounds, CGImage);
+        CGContextDrawImage(context, bounds, CGImage);
     }
     CGContextRestoreGState(context);
 }

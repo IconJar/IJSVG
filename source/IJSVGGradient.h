@@ -6,23 +6,23 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "IJSVGColorList.h"
 #import "IJSVGDef.h"
 #import "IJSVGTransform.h"
-#import "IJSVGColorList.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGGradient : IJSVGNode
 
-@property ( nonatomic, retain ) NSGradient * gradient;
-@property ( nonatomic, assign ) CGGradientRef CGGradient;
-@property ( nonatomic, retain ) IJSVGUnitLength * x1;
-@property ( nonatomic, retain ) IJSVGUnitLength * x2;
-@property ( nonatomic, retain ) IJSVGUnitLength * y1;
-@property ( nonatomic, retain ) IJSVGUnitLength * y2;
-@property ( nonatomic, retain) IJSVGColorList * colorList;
+@property (nonatomic, retain) NSGradient* gradient;
+@property (nonatomic, assign) CGGradientRef CGGradient;
+@property (nonatomic, retain) IJSVGUnitLength* x1;
+@property (nonatomic, retain) IJSVGUnitLength* x2;
+@property (nonatomic, retain) IJSVGUnitLength* y1;
+@property (nonatomic, retain) IJSVGUnitLength* y2;
+@property (nonatomic, retain) IJSVGColorList* colorList;
 
-+ (CGFloat *)computeColorStopsFromString:(NSXMLElement *)element
-                                  colors:(NSArray **)someColors;
++ (CGFloat*)computeColorStopsFromString:(NSXMLElement*)element
+                                 colors:(NSArray**)someColors;
 - (CGGradientRef)CGGradient;
 - (void)drawInContextRef:(CGContextRef)ctx
               objectRect:(NSRect)objectRect
@@ -33,6 +33,6 @@
                 end:(CGPoint)endPoint
             context:(CGContextRef)ctx;
 
-- (IJSVGColorList *)computedColorList;
+- (IJSVGColorList*)computedColorList;
 
 @end

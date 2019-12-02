@@ -15,12 +15,12 @@
     return 0;
 }
 
-+ (void)runWithParams:(CGFloat *)params
++ (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path
+                 path:(IJSVGPath*)path
 {
     [path close];
 }

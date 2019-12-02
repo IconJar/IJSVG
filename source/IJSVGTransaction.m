@@ -8,23 +8,27 @@
 
 #import "IJSVGTransaction.h"
 
-void IJSVGBeginTransactionLock() {
-    if(NSThread.isMainThread == YES) {
+void IJSVGBeginTransactionLock()
+{
+    if (NSThread.isMainThread == YES) {
         return;
     }
     [CATransaction begin];
-    if(@available(macOS 10.14, *)) {} else {
+    if (@available(macOS 10.14, *)) {
+    } else {
         [CATransaction lock];
     }
     [CATransaction setDisableActions:YES];
 };
 
-void IJSVGEndTransactionLock() {
-    if(NSThread.isMainThread == YES) {
+void IJSVGEndTransactionLock()
+{
+    if (NSThread.isMainThread == YES) {
         return;
     }
-    
-    if(@available(macOS 10.14, *)) {} else {
+
+    if (@available(macOS 10.14, *)) {
+    } else {
         [CATransaction unlock];
     }
     [CATransaction commit];
@@ -33,7 +37,7 @@ void IJSVGEndTransactionLock() {
 void IJSVGObtainTransactionLock(dispatch_block_t block, BOOL renderOnMainThread)
 {
     IJSVGBeginTransactionLock();
-    if(renderOnMainThread) {
+    if (renderOnMainThread) {
         dispatch_sync(dispatch_get_main_queue(), block);
     } else {
         block();

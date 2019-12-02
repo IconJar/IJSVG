@@ -19,62 +19,62 @@
 
 - (id)init
 {
-    if( ( self = [super init] ) != nil ) {
+    if ((self = [super init]) != nil) {
         _dict = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
 
 - (void)setPropertyValue:(id)value
-             forProperty:(NSString *)key
+             forProperty:(NSString*)key
 {
     [_dict setObject:value
               forKey:key];
 }
 
-- (NSDictionary *)properties
+- (NSDictionary*)properties
 {
     return _dict;
 }
 
-- (id)property:(NSString *)key
+- (id)property:(NSString*)key
 {
     return [_dict objectForKey:key];
 }
 
-+ (IJSVGStyle *)parseStyleString:(NSString *)string
++ (IJSVGStyle*)parseStyleString:(NSString*)string
 {
-    IJSVGStyle * style = [[[self.class alloc] init] autorelease];
+    IJSVGStyle* style = [[[self.class alloc] init] autorelease];
     NSInteger length = string.length;
     NSInteger index = 0;
-    NSString * key = nil;
-    NSString * value = nil;
-    
+    NSString* key = nil;
+    NSString* value = nil;
+
     // iterate over the string - its actually really simple what we need
     // to do
-    for(NSInteger i = 0; i < length; i++) {
+    for (NSInteger i = 0; i < length; i++) {
         unichar c = [string characterAtIndex:i];
-        
+
         // find the key
-        if(c == ':') {
-            key = [string substringWithRange:NSMakeRange(index, (i-index))];
-            index = i+1;
+        if (c == ':') {
+            key = [string substringWithRange:NSMakeRange(index, (i - index))];
+            index = i + 1;
         }
-        
+
         // find the value
-        else if(c == ';' || i == (length-1)) {
+        else if (c == ';' || i == (length - 1)) {
             NSInteger chomp;
-            if(i == (length-1) && c != ';') {
-                chomp = (i-(index-1));
+            if (i == (length - 1) && c != ';') {
+                chomp = (i - (index - 1));
             } else {
-                chomp = (i-index);
+                chomp = (i - index);
             }
             value = [string substringWithRange:NSMakeRange(index, chomp)];
-            index = i+1;
+            index = i + 1;
         }
-        
+
         // set the propery if it actually exists
-        if(key != nil && value != nil) {
+        if (key != nil && value != nil) {
             [style setPropertyValue:[self.class trimString:value]
                         forProperty:[self.class trimString:key]];
             key = nil;
@@ -84,41 +84,41 @@
     return style;
 }
 
-+ (NSString *)trimString:(NSString *)string
++ (NSString*)trimString:(NSString*)string
 {
     return [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
-+ (NSArray *)allowedColourKeys
++ (NSArray*)allowedColourKeys
 {
-    return @[@"fill",@"stroke-colour",@"stop-color",@"stroke"];
+    return @[ @"fill", @"stroke-colour", @"stop-color", @"stroke" ];
 }
 
-- (void)setProperties:(NSDictionary *)properties
+- (void)setProperties:(NSDictionary*)properties
            replaceAll:(BOOL)flag
 {
-    if(flag) {
+    if (flag) {
         [_dict removeAllObjects];
     }
     [_dict addEntriesFromDictionary:properties];
 }
 
-- (NSString *)description
+- (NSString*)description
 {
     return [_dict description];
 }
 
-- (IJSVGStyle *)mergedStyle:(IJSVGStyle *)style
+- (IJSVGStyle*)mergedStyle:(IJSVGStyle*)style
 {
     // create the new style
-    IJSVGStyle * newStyle = [[[IJSVGStyle alloc] init] autorelease];
-    
+    IJSVGStyle* newStyle = [[[IJSVGStyle alloc] init] autorelease];
+
     // grab the current style
-    NSMutableDictionary * dict = [[[self properties] mutableCopy] autorelease];
-    
+    NSMutableDictionary* dict = [[[self properties] mutableCopy] autorelease];
+
     // overwride the style with the new styles
     [dict addEntriesFromDictionary:[style properties]];
-    
+
     // add the styles to the style
     [newStyle setProperties:dict
                  replaceAll:YES];

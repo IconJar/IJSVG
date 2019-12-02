@@ -27,7 +27,7 @@
 
 - (id)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _lineCapStyle = IJSVGLineCapStyleNone;
         _lineJoinStyle = IJSVGLineJoinStyleNone;
         _lineWidth = IJSVGInheritedFloatValue;
@@ -36,12 +36,13 @@
     return self;
 }
 
-+ (NSArray<NSString *> *)observableProperties
++ (NSArray<NSString*>*)observableProperties
 {
-    static NSArray * array = nil;
-    if(array == nil) {
-        array = @[@"lineCapStyle", @"lineJoinStyle", @"lineWidth",
-                  @"colorList", @"fillColor", @"strokeColor"].retain;
+    static NSArray* array = nil;
+    if (array == nil) {
+        array = @[ @"lineCapStyle", @"lineJoinStyle", @"lineWidth",
+            @"colorList", @"fillColor", @"strokeColor" ]
+                    .retain;
     }
     return array;
 }

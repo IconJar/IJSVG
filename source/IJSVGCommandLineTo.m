@@ -15,19 +15,19 @@
     return 2;
 }
 
-+ (void)runWithParams:(CGFloat *)params
++ (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path
+                 path:(IJSVGPath*)path
 {
-    if( type == IJSVGCommandTypeAbsolute ) {
-        [[path currentSubpath] lineToPoint:NSMakePoint( params[0], params[1])];
+    if (type == IJSVGCommandTypeAbsolute) {
+        [[path currentSubpath] lineToPoint:NSMakePoint(params[0], params[1])];
         return;
     }
     NSPoint point = NSMakePoint([path currentSubpath].currentPoint.x + params[0],
-                                [path currentSubpath].currentPoint.y + params[1]);
+        [path currentSubpath].currentPoint.y + params[1]);
     [[path currentSubpath] lineToPoint:point];
 }
 

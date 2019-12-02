@@ -13,6 +13,6 @@
 - (NSArray<NSString *> *)ijsvg_componentsSeparatedByChars:(char *)aChar;
 - (BOOL)ijsvg_isNumeric;
 - (BOOL)ijsvg_containsAlpha;
-- (NSArray *)ijsvg_componentsSplitByWhiteSpace;
+- (NSArray*)ijsvg_componentsSplitByWhiteSpace;
 
 @end

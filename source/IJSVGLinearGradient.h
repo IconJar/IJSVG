@@ -6,12 +6,12 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGGradient.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGLinearGradient : IJSVGGradient
 
-+ (NSGradient *)parseGradient:(NSXMLElement *)element
-                     gradient:(IJSVGLinearGradient *)aGradient;
++ (NSGradient*)parseGradient:(NSXMLElement*)element
+                    gradient:(IJSVGLinearGradient*)aGradient;
 
 @end

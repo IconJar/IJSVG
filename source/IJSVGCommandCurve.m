@@ -15,23 +15,22 @@
     return 6;
 }
 
-+ (void)runWithParams:(CGFloat *)params
++ (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path
+                 path:(IJSVGPath*)path
 {
-    if( type == IJSVGCommandTypeAbsolute ) {
-        [[path currentSubpath] curveToPoint:NSMakePoint( params[4], params[5])
-                              controlPoint1:NSMakePoint( params[0], params[1])
-                              controlPoint2:NSMakePoint( params[2], params[3])];
+    if (type == IJSVGCommandTypeAbsolute) {
+        [[path currentSubpath] curveToPoint:NSMakePoint(params[4], params[5])
+                              controlPoint1:NSMakePoint(params[0], params[1])
+                              controlPoint2:NSMakePoint(params[2], params[3])];
         return;
     }
-    [[path currentSubpath] relativeCurveToPoint:NSMakePoint( params[4], params[5])
-                                  controlPoint1:NSMakePoint( params[0], params[1])
-                                  controlPoint2:NSMakePoint( params[2], params[3])];
-    
+    [[path currentSubpath] relativeCurveToPoint:NSMakePoint(params[4], params[5])
+                                  controlPoint1:NSMakePoint(params[0], params[1])
+                                  controlPoint2:NSMakePoint(params[2], params[3])];
 }
 
 @end

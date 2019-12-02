@@ -6,16 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGNode.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGDef : IJSVGNode {
 
 @private
-    NSMutableDictionary * _dict;
-    
+    NSMutableDictionary* _dict;
 }
 
-- (void)addDef:(IJSVGNode *)aDef;
+- (void)addDef:(IJSVGNode*)aDef;
 
 @end

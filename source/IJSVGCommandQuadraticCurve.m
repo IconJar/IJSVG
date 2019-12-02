@@ -16,17 +16,16 @@
     return 4;
 }
 
-+ (void)runWithParams:(CGFloat *)params
++ (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
-              command:(IJSVGCommand *)currentCommand
-      previousCommand:(IJSVGCommand *)command
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath *)path
+                 path:(IJSVGPath*)path
 {
-    if( type == IJSVGCommandTypeAbsolute )
-    {
-        [[path currentSubpath] addQuadCurveToPoint:NSMakePoint( params[2], params[3])
-                          controlPoint:NSMakePoint( params[0], params[1])];
+    if (type == IJSVGCommandTypeAbsolute) {
+        [[path currentSubpath] addQuadCurveToPoint:NSMakePoint(params[2], params[3])
+                                      controlPoint:NSMakePoint(params[0], params[1])];
         return;
     }
     [[path currentSubpath] addQuadCurveToPoint:NSMakePoint([path currentSubpath].currentPoint.x + params[2], [path currentSubpath].currentPoint.y + params[3])

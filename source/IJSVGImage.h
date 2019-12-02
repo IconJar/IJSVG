@@ -6,22 +6,21 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGNode.h"
+#import <Foundation/Foundation.h>
 
 @class IJSVGPath;
 
 @interface IJSVGImage : IJSVGNode {
-    
-    NSImage * image;
+
+    NSImage* image;
     CGImageRef CGImage;
-    IJSVGPath * imagePath;
-    
+    IJSVGPath* imagePath;
 }
 
 - (CGImageRef)CGImage;
 - (void)drawInContextRef:(CGContextRef)context
-                    path:(IJSVGPath *)path;
-- (void)loadFromBase64EncodedString:(NSString *)encodedString;
+                    path:(IJSVGPath*)path;
+- (void)loadFromBase64EncodedString:(NSString*)encodedString;
 
 @end

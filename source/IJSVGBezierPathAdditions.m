@@ -15,9 +15,9 @@
 {
     CGPoint QP0 = [self currentPoint];
     CGPoint CP3 = QP2;
-    CGPoint CP1 = CGPointMake( QP0.x + ((2.0 / 3.0) * (QP1.x - QP0.x)), QP0.y + ((2.0 / 3.0) * (QP1.y - QP0.y)));
-    CGPoint CP2 = CGPointMake( QP2.x + (2.0 / 3.0) * (QP1.x - QP2.x), QP2.y + (2.0 / 3.0) * (QP1.y - QP2.y) );
-    
+    CGPoint CP1 = CGPointMake(QP0.x + ((2.0 / 3.0) * (QP1.x - QP0.x)), QP0.y + ((2.0 / 3.0) * (QP1.y - QP0.y)));
+    CGPoint CP2 = CGPointMake(QP2.x + (2.0 / 3.0) * (QP1.x - QP2.x), QP2.y + (2.0 / 3.0) * (QP1.y - QP2.y));
+
     [self curveToPoint:CP3
          controlPoint1:CP1
          controlPoint2:CP2];

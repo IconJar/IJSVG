@@ -10,31 +10,38 @@
 
 @implementation IJSVGMath
 
-CGFloat IJSVGMathRad(CGFloat val) {
+CGFloat IJSVGMathRad(CGFloat val)
+{
     return val * M_PI / 180;
 };
 
-CGFloat IJSVGMathDeg(CGFloat val) {
+CGFloat IJSVGMathDeg(CGFloat val)
+{
     return val * 180.f / M_PI;
 };
 
-CGFloat IJSVGMathAcos(CGFloat val) {
+CGFloat IJSVGMathAcos(CGFloat val)
+{
     return IJSVGMathDeg(acosf(val));
 };
 
-CGFloat IJSVGMathSin(CGFloat val) {
+CGFloat IJSVGMathSin(CGFloat val)
+{
     return sinf(IJSVGMathRad(val));
 };
 
-CGFloat IJSVGMathAsin(CGFloat val) {
+CGFloat IJSVGMathAsin(CGFloat val)
+{
     return IJSVGMathDeg(asinf(val));
 };
 
-CGFloat IJSVGMathTan(CGFloat val) {
+CGFloat IJSVGMathTan(CGFloat val)
+{
     return tanf(IJSVGMathRad(val));
 };
 
-CGFloat IJSVGMathAtan(CGFloat val) {
+CGFloat IJSVGMathAtan(CGFloat val)
+{
     return IJSVGMathDeg(atanf(val));
 };
 

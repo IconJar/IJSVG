@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGShapeLayer.h"
 #import "IJSVGGroupLayer.h"
+#import "IJSVGShapeLayer.h"
 
 @implementation IJSVGShapeLayer
 
@@ -29,14 +29,15 @@
     [super dealloc];
 }
 
-- (void)addSublayer:(CALayer *)layer {
-    if([layer isKindOfClass:[IJSVGLayer class]] == NO &&
-       [layer isKindOfClass:[IJSVGShapeLayer class]] == NO) {
-        NSString * r = [NSString stringWithFormat:@"The layer must be an instance of IJSVGLayer, %@ given.",
-                        [layer class]];
-        NSException * exception = [NSException exceptionWithName:@"IJSVGInvalidSublayerException"
-                                                          reason:r
-                                                        userInfo:nil];
+- (void)addSublayer:(CALayer*)layer
+{
+    if ([layer isKindOfClass:[IJSVGLayer class]] == NO &&
+        [layer isKindOfClass:[IJSVGShapeLayer class]] == NO) {
+        NSString* r = [NSString stringWithFormat:@"The layer must be an instance of IJSVGLayer, %@ given.",
+                                [layer class]];
+        NSException* exception = [NSException exceptionWithName:@"IJSVGInvalidSublayerException"
+                                                         reason:r
+                                                       userInfo:nil];
         @throw exception;
     }
     [super addSublayer:layer];
@@ -44,7 +45,7 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if(self.backingScaleFactor == newFactor) {
+    if (self.backingScaleFactor == newFactor) {
         return;
     }
     backingScaleFactor = newFactor;
@@ -55,10 +56,10 @@
 
 - (void)_customRenderInContext:(CGContextRef)ctx
 {
-    if(self.convertMasksToPaths == YES && _maskingLayer != nil) {
+    if (self.convertMasksToPaths == YES && _maskingLayer != nil) {
         CGContextSaveGState(ctx);
         [self applySublayerMaskToContext:ctx
-                             forSublayer:(IJSVGLayer *)self
+                             forSublayer:(IJSVGLayer*)self
                               withOffset:CGPointZero];
         [super renderInContext:ctx];
         CGContextRestoreGState(ctx);
@@ -69,15 +70,15 @@
 
 - (void)setConvertMasksToPaths:(BOOL)flag
 {
-    if(convertMasksToPaths == flag) {
+    if (convertMasksToPaths == flag) {
         return;
     }
     convertMasksToPaths = flag;
-    if(flag == YES) {
-        if(_maskingLayer != nil) {
+    if (flag == YES) {
+        if (_maskingLayer != nil) {
             (void)([_maskingLayer release]), _maskingLayer = nil;
         }
-        _maskingLayer = [(IJSVGLayer *)self.mask retain];
+        _maskingLayer = [(IJSVGLayer*)self.mask retain];
         self.mask = nil;
     } else {
         self.mask = _maskingLayer;
@@ -86,32 +87,32 @@
 }
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
-                       forSublayer:(IJSVGLayer *)sublayer
+                       forSublayer:(IJSVGLayer*)sublayer
                         withOffset:(CGPoint)offset
 {
     // apply any transforms needed
     CGPoint layerOffset = offset;
     CGAffineTransform sublayerTransform = CATransform3DGetAffineTransform(sublayer.transform);
-    CGContextConcatCTM( context, CGAffineTransformInvert(sublayerTransform) );
-    
+    CGContextConcatCTM(context, CGAffineTransformInvert(sublayerTransform));
+
     // walk up the superlayer chain
-    CALayer * superlayer = self.superlayer;
+    CALayer* superlayer = self.superlayer;
     if (IJSVGIsSVGLayer(superlayer) == YES) {
-        [(IJSVGLayer *)superlayer applySublayerMaskToContext:context
-                                                 forSublayer:(IJSVGLayer *)self
-                                                  withOffset:layerOffset];
+        [(IJSVGLayer*)superlayer applySublayerMaskToContext:context
+                                                forSublayer:(IJSVGLayer*)self
+                                                 withOffset:layerOffset];
     }
-    
+
     // grab the masking layer
-    IJSVGShapeLayer * maskingLayer = [self maskingLayer];
-    
+    IJSVGShapeLayer* maskingLayer = [self maskingLayer];
+
     // if its a group we need to get the lowest level children
     // and walk up the chain again
-    if([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
-        NSArray * subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer];
-        for(IJSVGLayer * subLayer in subs) {
+    if ([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
+        NSArray* subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer];
+        for (IJSVGLayer* subLayer in subs) {
             [subLayer applySublayerMaskToContext:context
-                                     forSublayer:(IJSVGLayer *)self
+                                     forSublayer:(IJSVGLayer*)self
                                       withOffset:layerOffset];
         }
     } else if ([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
@@ -125,14 +126,14 @@
     CGContextConcatCTM(context, sublayerTransform);
 }
 
-- (IJSVGShapeLayer *)maskingLayer
+- (IJSVGShapeLayer*)maskingLayer
 {
-    return (IJSVGShapeLayer *)_maskingLayer ?: nil;
+    return (IJSVGShapeLayer*)_maskingLayer ?: nil;
 }
 
 - (void)renderInContext:(CGContextRef)ctx
 {
-    if(self.blendingMode != kCGBlendModeNormal) {
+    if (self.blendingMode != kCGBlendModeNormal) {
         CGContextSaveGState(ctx);
         CGContextSetBlendMode(ctx, self.blendingMode);
         [self _customRenderInContext:ctx];
@@ -145,8 +146,8 @@
 - (CGPoint)absoluteOrigin
 {
     CGPoint point = CGPointZero;
-    CALayer * pLayer = self;
-    while(pLayer != nil) {
+    CALayer* pLayer = self;
+    while (pLayer != nil) {
         point.x += pLayer.frame.origin.x;
         point.y += pLayer.frame.origin.y;
         pLayer = pLayer.superlayer;
@@ -154,7 +155,7 @@
     return point;
 }
 
-- (id<CAAction>)actionForKey:(NSString *)event
+- (id<CAAction>)actionForKey:(NSString*)event
 {
     return nil;
 }

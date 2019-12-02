@@ -18,8 +18,7 @@
 
 - (id)init
 {
-    if( ( self = [super init] ) != nil )
-    {
+    if ((self = [super init]) != nil) {
         children = [[NSMutableArray alloc] init];
     }
     return self;
@@ -30,13 +29,12 @@
     children = [[NSMutableArray alloc] init];
 }
 
-- (id)copyWithZone:(NSZone *)zone
+- (id)copyWithZone:(NSZone*)zone
 {
-    IJSVGGroup * node = [super copyWithZone:zone];
+    IJSVGGroup* node = [super copyWithZone:zone];
     [node prepareFromCopy];
-    
-    for( IJSVGNode * childNode in self.children )
-    {
+
+    for (IJSVGNode* childNode in self.children) {
         childNode = [[childNode copy] autorelease];
         childNode.parentNode = node;
         [node addChild:childNode];
@@ -51,18 +49,18 @@
 
 - (void)addChild:(id)child
 {
-    if( child != nil )
+    if (child != nil)
         [children addObject:child];
 }
 
-- (NSArray *)children
+- (NSArray*)children
 {
     return children;
 }
 
-- (NSString *)description
+- (NSString*)description
 {
-    return [NSString stringWithFormat:@"%@ - %@",[super description],self.children];
+    return [NSString stringWithFormat:@"%@ - %@", [super description], self.children];
 }
 
 @end

@@ -6,15 +6,14 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import <QuartzCore/QuartzCore.h>
-#import <AppKit/AppKit.h>
 #import "IJSVGLayer.h"
+#import <AppKit/AppKit.h>
+#import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGImageLayer : IJSVGLayer {
-    
 }
 
-- (id)initWithImage:(NSImage *)image;
+- (id)initWithImage:(NSImage*)image;
 - (id)initWithCGImage:(CGImageRef)imageRef;
 
 @end

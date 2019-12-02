@@ -6,18 +6,17 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGNode.h"
 #import "IJSVGPath.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGGroup : IJSVGNode {
-    
-    NSMutableArray * children;
-    
+
+    NSMutableArray* children;
 }
 
 - (void)addChild:(id)child;
-- (NSArray *)children;
+- (NSArray*)children;
 - (void)purgeChildren;
 
 @end

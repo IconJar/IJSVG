@@ -23,8 +23,7 @@
 
 - (id)init
 {
-    if( ( self = [super init] ) != nil )
-    {
+    if ((self = [super init]) != nil) {
         classes = [[NSMutableArray alloc] init];
         combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
         combinatorString = @" ";
@@ -32,12 +31,12 @@
     return self;
 }
 
-- (void)addClassName:(NSString *)className
+- (void)addClassName:(NSString*)className
 {
     [classes addObject:className];
 }
 
-- (NSString *)description
+- (NSString*)description
 {
     return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@", combinatorString, tag, classes, identifier];
 }

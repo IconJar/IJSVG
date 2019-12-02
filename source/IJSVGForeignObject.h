@@ -10,7 +10,7 @@
 #import "IJSVGNode.h"
 
 @interface IJSVGForeignObject : IJSVGNode {
-    
+
     NSString * requiredExtension;
     
 }

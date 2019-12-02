@@ -10,11 +10,11 @@
 
 @class IJSVG;
 
-typedef void (^IJSVGCGPathHandler)(const CGPathElement * pathElement);
+typedef void (^IJSVGCGPathHandler)(const CGPathElement* pathElement);
 
-void IJSVGExporterPathCaller(void * info, const CGPathElement * pathElement);
+void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement);
 
-typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
+typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionNone = 1 << 0,
     IJSVGExporterOptionRemoveUselessGroups = 1 << 1,
     IJSVGExporterOptionRemoveUselessDef = 1 << 2,
@@ -31,44 +31,31 @@ typedef NS_OPTIONS( NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveWidthHeightAttributes = 1 << 13,
     IJSVGExporterOptionColorAllowRRGGBBAA = 1 << 14,
     IJSVGExporterOptionRemoveComments = 1 << 15,
-    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef|
-        IJSVGExporterOptionRemoveUselessGroups|
-        IJSVGExporterOptionCreateUseForPaths|
-        IJSVGExporterOptionMoveAttributesToGroup|
-        IJSVGExporterOptionSortAttributes|
-        IJSVGExporterOptionCollapseGroups|
-        IJSVGExporterOptionCleanupPaths|
-        IJSVGExporterOptionRemoveHiddenElements|
-        IJSVGExporterOptionScaleToSizeIfNecessary|
-        IJSVGExporterOptionCompressOutput|
-        IJSVGExporterOptionCollapseGradients|
-        IJSVGExporterOptionRemoveWidthHeightAttributes|
-        IJSVGExporterOptionColorAllowRRGGBBAA|
-        IJSVGExporterOptionRemoveComments
+    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
 
 @interface IJSVGExporter : NSObject {
-    
+
 @private
-    IJSVG * _svg;
+    IJSVG* _svg;
     CGSize _size;
     IJSVGExporterOptions _options;
-    NSXMLDocument * _dom;
-    NSXMLElement * _defElement;
-    NSXMLElement * _scaledRootNode;
+    NSXMLDocument* _dom;
+    NSXMLElement* _defElement;
+    NSXMLElement* _scaledRootNode;
     NSInteger _idCount;
     NSInteger _shortIdCount;
 }
 
-@property (nonatomic, copy) NSString * title;
-@property (nonatomic, copy) NSString * description;
+@property (nonatomic, copy) NSString* title;
+@property (nonatomic, copy) NSString* description;
 
-- (id)initWithSVG:(IJSVG *)svg
+- (id)initWithSVG:(IJSVG*)svg
              size:(CGSize)size
           options:(IJSVGExporterOptions)options;
-- (NSString *)SVGString;
-- (NSData *)SVGData;
+- (NSString*)SVGString;
+- (NSData*)SVGData;
 
 @end

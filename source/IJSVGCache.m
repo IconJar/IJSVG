@@ -12,7 +12,7 @@
 @implementation IJSVGCache
 
 static NSInteger _maxCacheItems = 20;
-static NSCache * _cache = nil;
+static NSCache* _cache = nil;
 static BOOL _enabled = YES;
 
 + (void)load
@@ -26,23 +26,23 @@ static BOOL _enabled = YES;
     [_cache setTotalCostLimit:_maxCacheItems];
 }
 
-+ (IJSVG *)cachedSVGForFileURL:(NSURL *)aURL
++ (IJSVG*)cachedSVGForFileURL:(NSURL*)aURL
 {
-    if( ![self.class enabled] || _cache == nil )
+    if (![self.class enabled] || _cache == nil)
         return nil;
-    IJSVG * svg = nil;
-    if( ( svg = [_cache objectForKey:aURL] ) == nil )
+    IJSVG* svg = nil;
+    if ((svg = [_cache objectForKey:aURL]) == nil)
         return nil;
     return svg;
 }
 
-+ (void)purgeCachedSVGForFileURL:(NSURL *)aURL
++ (void)purgeCachedSVGForFileURL:(NSURL*)aURL
 {
     [_cache removeObjectForKey:aURL];
 }
 
-+ (void)cacheSVG:(IJSVG *)svg
-         fileURL:(NSURL *)aURL
++ (void)cacheSVG:(IJSVG*)svg
+         fileURL:(NSURL*)aURL
 {
     [_cache setObject:svg
                forKey:aURL
@@ -52,13 +52,13 @@ static BOOL _enabled = YES;
 + (void)setEnabled:(BOOL)flag
 {
     _enabled = flag;
-    if( !flag ) {
+    if (!flag) {
         [self.class flushCache];
         return;
     }
-    
+
     // create a new cache if allowed
-    if( _cache == nil ) {
+    if (_cache == nil) {
         _cache = [[NSCache alloc] init];
         [_cache setTotalCostLimit:_maxCacheItems];
     }

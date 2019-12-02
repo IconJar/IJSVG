@@ -6,12 +6,11 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVGGroup.h"
 #import "IJSVGImage.h"
+#import <Foundation/Foundation.h>
 
 @interface IJSVGPattern : IJSVGGroup {
-    
 }
 
 @end

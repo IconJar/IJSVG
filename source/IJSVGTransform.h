@@ -14,7 +14,7 @@
 typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
 typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform * transform);
 
-typedef NS_OPTIONS( NSInteger, IJSVGTransformCommand ) {
+typedef NS_OPTIONS(NSInteger, IJSVGTransformCommand) {
     IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
     IJSVGTransformCommandTranslateX,

@@ -6,20 +6,19 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVG.h"
 #import <Foundation/Foundation.h>
 #import <sys/stat.h>
-#import "IJSVG.h"
 
 @interface IJSVGCache : NSObject {
-    
 }
 
-+ (IJSVG *)cachedSVGForFileURL:(NSURL *)aURL;
-+ (void)cacheSVG:(IJSVG *)svg fileURL:(NSURL *)aURL;
++ (IJSVG*)cachedSVGForFileURL:(NSURL*)aURL;
++ (void)cacheSVG:(IJSVG*)svg fileURL:(NSURL*)aURL;
 + (void)flushCache;
 + (BOOL)enabled;
 + (void)setEnabled:(BOOL)flag;
-+ (void)purgeCachedSVGForFileURL:(NSURL *)aURL;
++ (void)purgeCachedSVGForFileURL:(NSURL*)aURL;
 + (void)setEvictItemsAfter:(NSInteger)count;
 
 @end

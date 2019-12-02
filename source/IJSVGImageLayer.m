@@ -10,7 +10,7 @@
 
 @implementation IJSVGImageLayer
 
-- (id)initWithImage:(NSImage *)image
+- (id)initWithImage:(NSImage*)image
 {
     NSRect rect = (NSRect){
         .origin = NSZeroPoint,
@@ -24,19 +24,19 @@
 
 - (id)initWithCGImage:(CGImageRef)imageRef
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         // set the contents
         self.contents = (id)imageRef;
-        
+
         // make sure we say we need help
         self.requiresBackingScaleHelp = YES;
         self.shouldRasterize = YES;
-        
+
         // set the frame, simple stuff
         self.frame = (CGRect){
             .origin = CGPointZero,
             .size = CGSizeMake(CGImageGetWidth(imageRef),
-                               CGImageGetHeight(imageRef))
+                CGImageGetHeight(imageRef))
         };
     }
     return self;

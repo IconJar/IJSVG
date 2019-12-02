@@ -22,15 +22,15 @@
     [super dealloc];
 }
 
-+ (IJSVGView *)viewWithSVGNamed:(NSString *)name
++ (IJSVGView*)viewWithSVGNamed:(NSString*)name
 {
-    IJSVG * anSVG = [IJSVG svgNamed:name];
+    IJSVG* anSVG = [IJSVG svgNamed:name];
     return [[[self alloc] initWithSVG:anSVG] autorelease];
 }
 
-- (id)initWithSVG:(IJSVG *)anSvg
+- (id)initWithSVG:(IJSVG*)anSvg
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         self.SVG = anSvg;
     }
     return self;
@@ -39,23 +39,23 @@
 - (void)awakeFromNib
 {
     // image was set via IB
-    if(imageName != nil) {
-        IJSVG * anSVG = [IJSVG svgNamed:imageName];
-        if(tintColor != nil) {
+    if (imageName != nil) {
+        IJSVG* anSVG = [IJSVG svgNamed:imageName];
+        if (tintColor != nil) {
             anSVG.style.fillColor = tintColor;
         }
         self.SVG = anSVG;
     }
 }
 
-- (void)setSVG:(IJSVG *)anSVG
+- (void)setSVG:(IJSVG*)anSVG
 {
     // memory clean
-    if(SVG != nil) {
+    if (SVG != nil) {
         (void)([SVG release]), SVG = nil;
     }
     SVG = [anSVG retain];
-    
+
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
     [self setNeedsDisplay:YES];
@@ -69,10 +69,10 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
     // only draw if there is actually an SVG
-    if(self.SVG == nil) {
+    if (self.SVG == nil) {
         return;
     }
-    
+
     // draw the svg
     [self.SVG drawInRect:self.bounds];
 }
