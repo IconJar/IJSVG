@@ -258,7 +258,8 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is simply a clear color, dont fill
-    if ([[string lowercaseString] isEqualToString:@"none"]) {
+    if ([string.lowercaseString isEqualToString:@"none"] ||
+        [string.lowercaseString isEqualToString:@"transparent"]) {
         return [self computeColorSpace:NSColor.clearColor];
     }
 
@@ -309,7 +310,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 + (NSColor*)colorFromPredefinedColorName:(NSString*)name
 {
     NSNumber* hex = nil;
-    name = [name.lowercaseString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    name = [name.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     if ((hex = _colorTree[name]) == nil) {
         return nil;
     }
