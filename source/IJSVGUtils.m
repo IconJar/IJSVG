@@ -176,6 +176,11 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
     return ret;
 };
 
+NSString* IJSVGPointToCommandString(CGPoint point)
+{
+    return [NSString stringWithFormat:@"%@,%@", IJSVGShortFloatString(point.x), IJSVGShortFloatString(point.y)];
+};
+
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
     const char* validChars = "MmZzLlHhVvCcSsQqTtAa";

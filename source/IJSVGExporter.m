@@ -1055,11 +1055,32 @@ NSString* IJSVGHash(NSString* key)
     return options;
 }
 
+- (NSString*)elementNameForPrimitiveType:(IJSVGPrimitivePathType)primitiveType
+{
+    switch (primitiveType) {
+    case IJSVGPrimitivePathTypeRect:
+        return @"rect";
+    case IJSVGPrimitivePathTypePolyLine:
+        return @"polyline";
+    case IJSVGPrimitivePathTypeEllipsis:
+        return @"ellipsis";
+    case IJSVGPrimitivePathTypeCircle:
+        return @"circle";
+    case IJSVGPrimitivePathTypeLine:
+        return @"line";
+    case IJSVGPrimitivePathTypePolygon:
+        return @"polygon";
+    case IJSVGPrimitivePathTypePath:
+    default:
+        return @"path";
+    }
+}
+
 - (NSXMLElement*)elementForShape:(IJSVGShapeLayer*)layer
                       fromParent:(NSXMLElement*)parent
 {
     NSXMLElement* e = [[[NSXMLElement alloc] init] autorelease];
-    e.name = @"path";
+    e.name = [self elementNameForPrimitiveType:layer.primitiveType];
     CGPathRef path = layer.path;
 
     // copy the path as we want to translate
@@ -1070,7 +1091,43 @@ NSString* IJSVGHash(NSString* key)
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
 
     // path
-    dict[@"d"] = [self pathFromCGPath:transformPath];
+    switch (layer.primitiveType) {
+    case IJSVGPrimitivePathTypeRect: {
+        CGRect boundingBox = CGPathGetBoundingBox(transformPath);
+        if (boundingBox.origin.x != 0.f) {
+            dict[@"x"] = IJSVGShortFloatString(boundingBox.origin.x);
+        }
+        if (boundingBox.origin.y != 0.f) {
+            dict[@"y"] = IJSVGShortFloatString(boundingBox.origin.x);
+        }
+        dict[@"width"] = IJSVGShortFloatString(boundingBox.size.width);
+        dict[@"height"] = IJSVGShortFloatString(boundingBox.size.height);
+        break;
+    }
+    case IJSVGPrimitivePathTypePolyLine: {
+        NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
+        IJSVGCGPathHandler callback = ^(const CGPathElement* pathElement) {
+            switch (pathElement->type) {
+            case kCGPathElementMoveToPoint: {
+                [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                break;
+            }
+            case kCGPathElementAddLineToPoint: {
+                [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                break;
+            }
+            default:
+                break;
+            }
+        };
+        CGPathApply(transformPath, callback, IJSVGExporterPathCaller);
+        dict[@"points"] = [points componentsJoinedByString:@" "];
+        break;
+    }
+    case IJSVGPrimitivePathTypePath:
+    default:
+        dict[@"d"] = [self pathFromCGPath:transformPath];
+    }
 
     CGPathRelease(transformPath);
 

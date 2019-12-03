@@ -15,6 +15,7 @@
 @synthesize subpath;
 @synthesize lastControlPoint;
 @synthesize CGPath = _CGPath;
+@synthesize primitiveType = _primitiveType;
 
 - (void)dealloc
 {
@@ -31,6 +32,7 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
+        _primitiveType = IJSVGPrimitivePathTypePath;
         subpath = NSBezierPath.bezierPath.retain;
         path = subpath; // for legacy use
     }

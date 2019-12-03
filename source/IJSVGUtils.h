@@ -23,6 +23,7 @@ CGFloat degrees_to_radians(CGFloat degrees);
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
 NSArray* IJSVGCommonHTMLElementNames(void);
 
+NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 

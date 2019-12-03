@@ -12,6 +12,16 @@
 
 @class IJSVGGroup;
 
+typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
+    IJSVGPrimitivePathTypePath,
+    IJSVGPrimitivePathTypeRect,
+    IJSVGPrimitivePathTypePolygon,
+    IJSVGPrimitivePathTypePolyLine,
+    IJSVGPrimitivePathTypeCircle,
+    IJSVGPrimitivePathTypeEllipsis,
+    IJSVGPrimitivePathTypeLine
+};
+
 @interface IJSVGPath : IJSVGNode {
 
     NSBezierPath* path;
@@ -19,10 +29,11 @@
     CGPoint lastControlPoint;
 }
 
+@property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
 @property (nonatomic, readonly) NSBezierPath* path;
 @property (nonatomic, readonly) NSBezierPath* subpath;
 @property (nonatomic, assign) CGPoint lastControlPoint;
-@property (atomic, readonly) CGPathRef CGPath;
+@property (nonatomic, readonly) CGPathRef CGPath;
 
 - (NSBezierPath*)currentSubpath;
 - (void)close;

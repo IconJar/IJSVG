@@ -22,6 +22,7 @@
 @synthesize convertMasksToPaths;
 @synthesize originalPathOrigin;
 @synthesize renderQuality;
+@synthesize primitiveType;
 
 - (void)dealloc
 {

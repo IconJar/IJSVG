@@ -28,6 +28,7 @@
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, assign) CGPoint originalPathOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;
+@property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer
