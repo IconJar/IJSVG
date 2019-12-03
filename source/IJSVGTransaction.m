@@ -10,26 +10,11 @@
 
 void IJSVGBeginTransactionLock()
 {
-    if (NSThread.isMainThread == YES) {
-        return;
-    }
     [CATransaction begin];
-    if (@available(macOS 10.14, *)) {
-    } else {
-        [CATransaction lock];
-    }
     [CATransaction setDisableActions:YES];
 };
 
 void IJSVGEndTransactionLock()
 {
-    if (NSThread.isMainThread == YES) {
-        return;
-    }
-
-    if (@available(macOS 10.14, *)) {
-    } else {
-        [CATransaction unlock];
-    }
     [CATransaction commit];
 };
