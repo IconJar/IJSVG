@@ -18,7 +18,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
     IJSVGPrimitivePathTypePolygon,
     IJSVGPrimitivePathTypePolyLine,
     IJSVGPrimitivePathTypeCircle,
-    IJSVGPrimitivePathTypeEllipsis,
+    IJSVGPrimitivePathTypeEllipse,
     IJSVGPrimitivePathTypeLine
 };
 

@@ -11,6 +11,7 @@
 @class IJSVG;
 
 typedef void (^IJSVGCGPathHandler)(const CGPathElement* pathElement);
+typedef void (^IJSVGPathElementEnumerationBlock)(const CGPathElement* pathElement, CGPoint currentPoint);
 
 void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement);
 
@@ -35,6 +36,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
+void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlock enumBlock);
 
 @interface IJSVGExporter : NSObject {
 

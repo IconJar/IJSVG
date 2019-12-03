@@ -1226,7 +1226,7 @@
 - (void)_parseEllipse:(NSXMLElement*)element
              intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypeEllipsis;
+    path.primitiveType = IJSVGPrimitivePathTypeEllipse;
     CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
     CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
     CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
@@ -1247,7 +1247,7 @@
 - (void)_parsePolygon:(NSXMLElement*)element
              intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGNodeTypePolygon;
+    path.primitiveType = IJSVGPrimitivePathTypePolygon;
     [self _parsePoly:element
             intoPath:path
            closePath:YES];
