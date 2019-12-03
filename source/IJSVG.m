@@ -20,7 +20,6 @@
 
 - (void)dealloc
 {
-    IJSVGBeginTransactionLock();
     (void)([renderingBackingScaleHelper release]),
         renderingBackingScaleHelper = nil;
     (void)([_group release]), _group = nil;
@@ -29,7 +28,6 @@
     (void)([_quartzRenderer release]), _quartzRenderer = nil;
     (void)([_style release]), _style = nil;
     [super dealloc];
-    IJSVGEndTransactionLock();
 }
 
 + (id)svgNamed:(NSString*)string error:(NSError**)error
