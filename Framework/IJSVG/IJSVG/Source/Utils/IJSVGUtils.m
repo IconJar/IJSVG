@@ -428,12 +428,6 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)commandParameters:(NSString*)command
                         count:(NSInteger*)count
 {
-    if ([command isKindOfClass:[NSNumber class]]) {
-        CGFloat* ret = (CGFloat*)malloc(1 * sizeof(CGFloat));
-        ret[0] = [(NSNumber*)command floatValue];
-        *count = 1;
-        return ret;
-    }
     return [self.class scanFloatsFromString:command
                                        size:count];
 }
@@ -443,8 +437,8 @@ CGFloat degrees_to_radians(CGFloat degrees)
 {
     // default sizes and memory
     // sizes for the string buffer
-    const NSInteger defFloatSize = 30;
-    const NSInteger defSize = 15;
+    const NSInteger defFloatSize = 20;
+    const NSInteger defSize = 10;
 
     // default memory size for the float
     NSInteger size = defSize;

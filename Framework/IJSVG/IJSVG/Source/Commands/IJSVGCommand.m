@@ -120,13 +120,13 @@
         // check what required params we need
         if (requiredParameters == IJSVGCustomVariableParameterCount) {
             // looks like we require variable params
-            subCommands = [[NSMutableArray alloc] init];
-
+            NSMutableArray<IJSVGCommand*>* subCommandArray = [[NSMutableArray alloc] init];
             // parse the custom params
             [self.class parseParams:parameters
                          paramCount:parameterCount
-                          intoArray:subCommands
+                          intoArray:subCommandArray
                       parentCommand:self];
+            subCommands = [subCommandArray.copy autorelease];
         } else {
             // now work out the sets of parameters we have
             // each command could have a series of subcommands
@@ -137,35 +137,50 @@
                 sets = (self.parameterCount / self.requiredParameters);
             }
 
-            subCommands = [[NSMutableArray alloc] initWithCapacity:sets];
+            if (sets == 1) {
+                CGFloat* subParams = [self parametersFromIndexOffset:0];
+                IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                       previousCommand:nil];
+                subCommands = @[ command ].retain;
+            } else {
 
-            // interate over the sets
-            IJSVGCommand* lastCommand = nil;
-            for (NSInteger i = 0; i < sets; i++) {
-                // memory for this will be handled by the created subcommand
-                CGFloat* subParams = 0;
-                if (self.requiredParameters != 0) {
-                    subParams = (CGFloat*)malloc(self.requiredParameters * sizeof(CGFloat));
-                    for (NSInteger p = 0; p < self.requiredParameters; p++) {
-                        subParams[p] = self.parameters[i * self.requiredParameters + p];
-                    }
+                NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
+                subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
+
+                // interate over the sets
+                IJSVGCommand* lastCommand = nil;
+                for (NSInteger i = 0; i < sets; i++) {
+                    // memory for this will be handled by the created subcommand
+                    CGFloat* subParams = [self parametersFromIndexOffset:i];
+
+                    // generate the subcommand
+                    IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                           previousCommand:lastCommand];
+
+                    // make sure we assign the last command or hell breaks
+                    // lose and the firey demons will run wild, namely, commands will break
+                    // if they are multiples of a set
+                    lastCommand = command;
+                    [subCommandArray addObject:command];
                 }
 
-                // generate the subcommand
-                IJSVGCommand* command = [self subcommandWithParameters:subParams
-                                                       previousCommand:lastCommand];
-
-                // make sure we assign the last command or hell breaks
-                // lose and the firey demons will run wild, namely, commands will break
-                // if they are multiples of a set
-                lastCommand = command;
-
-                // add it to our tree
-                [subCommands addObject:command];
+                // store the retained value
+                subCommands = subCommandArray.copy;
             }
         }
     }
     return self;
+}
+
+- (CGFloat*)parametersFromIndexOffset:(NSInteger)index
+{
+    CGFloat* subParams = 0;
+    NSInteger req = self.requiredParameters;
+    if (req != 0) {
+        subParams = (CGFloat*)malloc(req * sizeof(CGFloat));
+        memcpy(subParams, &self.parameters[index * req], sizeof(CGFloat) * req);
+    }
+    return subParams;
 }
 
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
