@@ -133,119 +133,119 @@
 		594CF560238FF46C009B251B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		594CF562238FF473009B251B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		599EB4D2238FF535004CB6BC /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
-		59EB756523905F6B00F5AE63 /* IJSVGLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGLayer.h; path = ../../../../source/IJSVGLayer.h; sourceTree = "<group>"; };
-		59EB756623905F6B00F5AE63 /* IJSVGGradientLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGradientLayer.h; path = ../../../../source/IJSVGGradientLayer.h; sourceTree = "<group>"; };
-		59EB756723905F6B00F5AE63 /* IJSVGStyleSheetRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyleSheetRule.m; path = ../../../../source/IJSVGStyleSheetRule.m; sourceTree = "<group>"; };
-		59EB756823905F6B00F5AE63 /* IJSVGCommandLineTo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandLineTo.h; path = ../../../../source/IJSVGCommandLineTo.h; sourceTree = "<group>"; };
-		59EB756923905F6B00F5AE63 /* IJSVGDef.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGDef.m; path = ../../../../source/IJSVGDef.m; sourceTree = "<group>"; };
+		59EB756523905F6B00F5AE63 /* IJSVGLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGLayer.h; sourceTree = "<group>"; };
+		59EB756623905F6B00F5AE63 /* IJSVGGradientLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientLayer.h; sourceTree = "<group>"; };
+		59EB756723905F6B00F5AE63 /* IJSVGStyleSheetRule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStyleSheetRule.m; sourceTree = "<group>"; };
+		59EB756823905F6B00F5AE63 /* IJSVGCommandLineTo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandLineTo.h; sourceTree = "<group>"; };
+		59EB756923905F6B00F5AE63 /* IJSVGDef.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGDef.m; sourceTree = "<group>"; };
 		59EB756A23905F6B00F5AE63 /* IJSVG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVG.h; path = ../../../../source/IJSVG.h; sourceTree = "<group>"; };
-		59EB756B23905F6B00F5AE63 /* IJSVGText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGText.h; path = ../../../../source/IJSVGText.h; sourceTree = "<group>"; };
-		59EB756C23905F6B00F5AE63 /* IJSVGCommandQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandQuadraticCurve.m; path = ../../../../source/IJSVGCommandQuadraticCurve.m; sourceTree = "<group>"; };
-		59EB756D23905F6C00F5AE63 /* IJSVGCommandVerticalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandVerticalLine.h; path = ../../../../source/IJSVGCommandVerticalLine.h; sourceTree = "<group>"; };
+		59EB756B23905F6B00F5AE63 /* IJSVGText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGText.h; sourceTree = "<group>"; };
+		59EB756C23905F6B00F5AE63 /* IJSVGCommandQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandQuadraticCurve.m; sourceTree = "<group>"; };
+		59EB756D23905F6C00F5AE63 /* IJSVGCommandVerticalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandVerticalLine.h; sourceTree = "<group>"; };
 		59EB756E23905F6C00F5AE63 /* IJSVGWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGWriter.h; path = ../../../../source/IJSVGWriter.h; sourceTree = "<group>"; };
-		59EB756F23905F6C00F5AE63 /* IJSVGStyleSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyleSheet.h; path = ../../../../source/IJSVGStyleSheet.h; sourceTree = "<group>"; };
-		59EB757023905F6C00F5AE63 /* IJSVGCommandSmoothCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandSmoothCurve.h; path = ../../../../source/IJSVGCommandSmoothCurve.h; sourceTree = "<group>"; };
-		59EB757123905F6C00F5AE63 /* IJSVGColorList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGColorList.m; path = ../../../../source/IJSVGColorList.m; sourceTree = "<group>"; };
-		59EB757223905F6C00F5AE63 /* IJSVGRadialGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGRadialGradient.h; path = ../../../../source/IJSVGRadialGradient.h; sourceTree = "<group>"; };
-		59EB757323905F6C00F5AE63 /* IJSVGGradientUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGradientUnitLength.h; path = ../../../../source/IJSVGGradientUnitLength.h; sourceTree = "<group>"; };
-		59EB757423905F6C00F5AE63 /* IJSVGStrokeLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStrokeLayer.m; path = ../../../../source/IJSVGStrokeLayer.m; sourceTree = "<group>"; };
-		59EB757523905F6C00F5AE63 /* IJSVGStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyle.m; path = ../../../../source/IJSVGStyle.m; sourceTree = "<group>"; };
-		59EB757623905F6C00F5AE63 /* IJSVGImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGImage.m; path = ../../../../source/IJSVGImage.m; sourceTree = "<group>"; };
-		59EB757723905F6C00F5AE63 /* IJSVGUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGUnitLength.h; path = ../../../../source/IJSVGUnitLength.h; sourceTree = "<group>"; };
-		59EB757823905F6C00F5AE63 /* IJSVGStringAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStringAdditions.m; path = ../../../../source/IJSVGStringAdditions.m; sourceTree = "<group>"; };
-		59EB757923905F6C00F5AE63 /* IJSVGTransaction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGTransaction.h; path = ../../../../source/IJSVGTransaction.h; sourceTree = "<group>"; };
-		59EB757A23905F6C00F5AE63 /* IJSVGShapeLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGShapeLayer.m; path = ../../../../source/IJSVGShapeLayer.m; sourceTree = "<group>"; };
-		59EB757B23905F6C00F5AE63 /* IJSVGLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGLayer.m; path = ../../../../source/IJSVGLayer.m; sourceTree = "<group>"; };
+		59EB756F23905F6C00F5AE63 /* IJSVGStyleSheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStyleSheet.h; sourceTree = "<group>"; };
+		59EB757023905F6C00F5AE63 /* IJSVGCommandSmoothCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandSmoothCurve.h; sourceTree = "<group>"; };
+		59EB757123905F6C00F5AE63 /* IJSVGColorList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGColorList.m; sourceTree = "<group>"; };
+		59EB757223905F6C00F5AE63 /* IJSVGRadialGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGRadialGradient.h; sourceTree = "<group>"; };
+		59EB757323905F6C00F5AE63 /* IJSVGGradientUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientUnitLength.h; sourceTree = "<group>"; };
+		59EB757423905F6C00F5AE63 /* IJSVGStrokeLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStrokeLayer.m; sourceTree = "<group>"; };
+		59EB757523905F6C00F5AE63 /* IJSVGStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStyle.m; sourceTree = "<group>"; };
+		59EB757623905F6C00F5AE63 /* IJSVGImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGImage.m; sourceTree = "<group>"; };
+		59EB757723905F6C00F5AE63 /* IJSVGUnitLength.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGUnitLength.h; sourceTree = "<group>"; };
+		59EB757823905F6C00F5AE63 /* IJSVGStringAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStringAdditions.m; sourceTree = "<group>"; };
+		59EB757923905F6C00F5AE63 /* IJSVGTransaction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGTransaction.h; sourceTree = "<group>"; };
+		59EB757A23905F6C00F5AE63 /* IJSVGShapeLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGShapeLayer.m; sourceTree = "<group>"; };
+		59EB757B23905F6C00F5AE63 /* IJSVGLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGLayer.m; sourceTree = "<group>"; };
 		59EB757C23905F6C00F5AE63 /* IJSVGFontConverter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGFontConverter.m; path = ../../../../source/IJSVGFontConverter.m; sourceTree = "<group>"; };
 		59EB757D23905F6C00F5AE63 /* IJSVGImageRep.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGImageRep.m; path = ../../../../source/IJSVGImageRep.m; sourceTree = "<group>"; };
-		59EB757E23905F6C00F5AE63 /* IJSVGCommandQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandQuadraticCurve.h; path = ../../../../source/IJSVGCommandQuadraticCurve.h; sourceTree = "<group>"; };
-		59EB757F23905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyleSheetSelectorRaw.h; path = ../../../../source/IJSVGStyleSheetSelectorRaw.h; sourceTree = "<group>"; };
-		59EB758023905F6C00F5AE63 /* IJSVGUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGUtils.m; path = ../../../../source/IJSVGUtils.m; sourceTree = "<group>"; };
-		59EB758123905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyleSheetSelectorRaw.m; path = ../../../../source/IJSVGStyleSheetSelectorRaw.m; sourceTree = "<group>"; };
-		59EB758223905F6C00F5AE63 /* IJSVGGroupLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGroupLayer.m; path = ../../../../source/IJSVGGroupLayer.m; sourceTree = "<group>"; };
-		59EB758323905F6C00F5AE63 /* IJSVGColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGColor.h; path = ../../../../source/IJSVGColor.h; sourceTree = "<group>"; };
+		59EB757E23905F6C00F5AE63 /* IJSVGCommandQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandQuadraticCurve.h; sourceTree = "<group>"; };
+		59EB757F23905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStyleSheetSelectorRaw.h; sourceTree = "<group>"; };
+		59EB758023905F6C00F5AE63 /* IJSVGUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGUtils.m; sourceTree = "<group>"; };
+		59EB758123905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStyleSheetSelectorRaw.m; sourceTree = "<group>"; };
+		59EB758223905F6C00F5AE63 /* IJSVGGroupLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGroupLayer.m; sourceTree = "<group>"; };
+		59EB758323905F6C00F5AE63 /* IJSVGColor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGColor.h; sourceTree = "<group>"; };
 		59EB758423905F6C00F5AE63 /* IJSVGError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGError.h; path = ../../../../source/IJSVGError.h; sourceTree = "<group>"; };
-		59EB758523905F6C00F5AE63 /* IJSVGColor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGColor.m; path = ../../../../source/IJSVGColor.m; sourceTree = "<group>"; };
-		59EB758623905F6C00F5AE63 /* IJSVGDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGDef.h; path = ../../../../source/IJSVGDef.h; sourceTree = "<group>"; };
-		59EB758723905F6C00F5AE63 /* IJSVGCommandHorizontalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandHorizontalLine.m; path = ../../../../source/IJSVGCommandHorizontalLine.m; sourceTree = "<group>"; };
+		59EB758523905F6C00F5AE63 /* IJSVGColor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGColor.m; sourceTree = "<group>"; };
+		59EB758623905F6C00F5AE63 /* IJSVGDef.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGDef.h; sourceTree = "<group>"; };
+		59EB758723905F6C00F5AE63 /* IJSVGCommandHorizontalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandHorizontalLine.m; sourceTree = "<group>"; };
 		59EB758823905F6D00F5AE63 /* IJSVGFontConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGFontConverter.h; path = ../../../../source/IJSVGFontConverter.h; sourceTree = "<group>"; };
 		59EB758923905F6D00F5AE63 /* IJSVGWriter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGWriter.m; path = ../../../../source/IJSVGWriter.m; sourceTree = "<group>"; };
-		59EB758A23905F6D00F5AE63 /* IJSVGPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGPath.m; path = ../../../../source/IJSVGPath.m; sourceTree = "<group>"; };
-		59EB758B23905F6D00F5AE63 /* IJSVGGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGroup.h; path = ../../../../source/IJSVGGroup.h; sourceTree = "<group>"; };
-		59EB758C23905F6D00F5AE63 /* IJSVGPatternLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGPatternLayer.m; path = ../../../../source/IJSVGPatternLayer.m; sourceTree = "<group>"; };
-		59EB758D23905F6D00F5AE63 /* IJSVGRenderingStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGRenderingStyle.m; path = ../../../../source/IJSVGRenderingStyle.m; sourceTree = "<group>"; };
-		59EB758E23905F6D00F5AE63 /* IJSVGBezierPathAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGBezierPathAdditions.m; path = ../../../../source/IJSVGBezierPathAdditions.m; sourceTree = "<group>"; };
-		59EB758F23905F6D00F5AE63 /* IJSVGGradientLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGradientLayer.m; path = ../../../../source/IJSVGGradientLayer.m; sourceTree = "<group>"; };
-		59EB759023905F6D00F5AE63 /* IJSVGLayerTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGLayerTree.m; path = ../../../../source/IJSVGLayerTree.m; sourceTree = "<group>"; };
-		59EB759123905F6D00F5AE63 /* IJSVGCommandVerticalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandVerticalLine.m; path = ../../../../source/IJSVGCommandVerticalLine.m; sourceTree = "<group>"; };
-		59EB759223905F6D00F5AE63 /* IJSVGNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGNode.h; path = ../../../../source/IJSVGNode.h; sourceTree = "<group>"; };
+		59EB758A23905F6D00F5AE63 /* IJSVGPath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGPath.m; sourceTree = "<group>"; };
+		59EB758B23905F6D00F5AE63 /* IJSVGGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGroup.h; sourceTree = "<group>"; };
+		59EB758C23905F6D00F5AE63 /* IJSVGPatternLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGPatternLayer.m; sourceTree = "<group>"; };
+		59EB758D23905F6D00F5AE63 /* IJSVGRenderingStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGRenderingStyle.m; sourceTree = "<group>"; };
+		59EB758E23905F6D00F5AE63 /* IJSVGBezierPathAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGBezierPathAdditions.m; sourceTree = "<group>"; };
+		59EB758F23905F6D00F5AE63 /* IJSVGGradientLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientLayer.m; sourceTree = "<group>"; };
+		59EB759023905F6D00F5AE63 /* IJSVGLayerTree.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGLayerTree.m; sourceTree = "<group>"; };
+		59EB759123905F6D00F5AE63 /* IJSVGCommandVerticalLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandVerticalLine.m; sourceTree = "<group>"; };
+		59EB759223905F6D00F5AE63 /* IJSVGNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGNode.h; sourceTree = "<group>"; };
 		59EB759323905F6D00F5AE63 /* IJSVGCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCache.m; path = ../../../../source/IJSVGCache.m; sourceTree = "<group>"; };
-		59EB759423905F6D00F5AE63 /* IJSVGUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGUtils.h; path = ../../../../source/IJSVGUtils.h; sourceTree = "<group>"; };
-		59EB759523905F6D00F5AE63 /* IJSVGCommandHorizontalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandHorizontalLine.h; path = ../../../../source/IJSVGCommandHorizontalLine.h; sourceTree = "<group>"; };
-		59EB759623905F6D00F5AE63 /* IJSVGNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGNode.m; path = ../../../../source/IJSVGNode.m; sourceTree = "<group>"; };
-		59EB759723905F6D00F5AE63 /* IJSVGShapeLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGShapeLayer.h; path = ../../../../source/IJSVGShapeLayer.h; sourceTree = "<group>"; };
-		59EB759823905F6E00F5AE63 /* IJSVGCommandCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandCurve.m; path = ../../../../source/IJSVGCommandCurve.m; sourceTree = "<group>"; };
-		59EB759923905F6E00F5AE63 /* IJSVGCommandMove.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandMove.m; path = ../../../../source/IJSVGCommandMove.m; sourceTree = "<group>"; };
-		59EB759A23905F6E00F5AE63 /* IJSVGStyleSheetSelector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyleSheetSelector.h; path = ../../../../source/IJSVGStyleSheetSelector.h; sourceTree = "<group>"; };
-		59EB759B23905F6E00F5AE63 /* IJSVGStyleSheetRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyleSheetRule.h; path = ../../../../source/IJSVGStyleSheetRule.h; sourceTree = "<group>"; };
-		59EB759C23905F6E00F5AE63 /* IJSVGCommandCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandCurve.h; path = ../../../../source/IJSVGCommandCurve.h; sourceTree = "<group>"; };
-		59EB759D23905F6E00F5AE63 /* IJSVGPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGPath.h; path = ../../../../source/IJSVGPath.h; sourceTree = "<group>"; };
-		59EB759E23905F6E00F5AE63 /* IJSVGCommandEllipticalArc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandEllipticalArc.h; path = ../../../../source/IJSVGCommandEllipticalArc.h; sourceTree = "<group>"; };
-		59EB759F23905F6E00F5AE63 /* IJSVGLinearGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGLinearGradient.h; path = ../../../../source/IJSVGLinearGradient.h; sourceTree = "<group>"; };
-		59EB75A023905F6E00F5AE63 /* IJSVGCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommand.m; path = ../../../../source/IJSVGCommand.m; sourceTree = "<group>"; };
-		59EB75A123905F6E00F5AE63 /* IJSVGRenderingStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGRenderingStyle.h; path = ../../../../source/IJSVGRenderingStyle.h; sourceTree = "<group>"; };
+		59EB759423905F6D00F5AE63 /* IJSVGUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGUtils.h; sourceTree = "<group>"; };
+		59EB759523905F6D00F5AE63 /* IJSVGCommandHorizontalLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandHorizontalLine.h; sourceTree = "<group>"; };
+		59EB759623905F6D00F5AE63 /* IJSVGNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGNode.m; sourceTree = "<group>"; };
+		59EB759723905F6D00F5AE63 /* IJSVGShapeLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGShapeLayer.h; sourceTree = "<group>"; };
+		59EB759823905F6E00F5AE63 /* IJSVGCommandCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandCurve.m; sourceTree = "<group>"; };
+		59EB759923905F6E00F5AE63 /* IJSVGCommandMove.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandMove.m; sourceTree = "<group>"; };
+		59EB759A23905F6E00F5AE63 /* IJSVGStyleSheetSelector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStyleSheetSelector.h; sourceTree = "<group>"; };
+		59EB759B23905F6E00F5AE63 /* IJSVGStyleSheetRule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStyleSheetRule.h; sourceTree = "<group>"; };
+		59EB759C23905F6E00F5AE63 /* IJSVGCommandCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandCurve.h; sourceTree = "<group>"; };
+		59EB759D23905F6E00F5AE63 /* IJSVGPath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGPath.h; sourceTree = "<group>"; };
+		59EB759E23905F6E00F5AE63 /* IJSVGCommandEllipticalArc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandEllipticalArc.h; sourceTree = "<group>"; };
+		59EB759F23905F6E00F5AE63 /* IJSVGLinearGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGLinearGradient.h; sourceTree = "<group>"; };
+		59EB75A023905F6E00F5AE63 /* IJSVGCommand.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommand.m; sourceTree = "<group>"; };
+		59EB75A123905F6E00F5AE63 /* IJSVGRenderingStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGRenderingStyle.h; sourceTree = "<group>"; };
 		59EB75A223905F6E00F5AE63 /* IJSVG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVG.m; path = ../../../../source/IJSVG.m; sourceTree = "<group>"; };
 		59EB75A323905F6E00F5AE63 /* IJSVGImageRep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGImageRep.h; path = ../../../../source/IJSVGImageRep.h; sourceTree = "<group>"; };
-		59EB75A423905F6E00F5AE63 /* IJSVGStrokeLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStrokeLayer.h; path = ../../../../source/IJSVGStrokeLayer.h; sourceTree = "<group>"; };
-		59EB75A523905F6E00F5AE63 /* IJSVGParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGParser.m; path = ../../../../source/IJSVGParser.m; sourceTree = "<group>"; };
-		59EB75A623905F6F00F5AE63 /* IJSVGRadialGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGRadialGradient.m; path = ../../../../source/IJSVGRadialGradient.m; sourceTree = "<group>"; };
-		59EB75A723905F6F00F5AE63 /* IJSVGParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGParser.h; path = ../../../../source/IJSVGParser.h; sourceTree = "<group>"; };
-		59EB75A823905F6F00F5AE63 /* IJSVGCommandSmoothCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandSmoothCurve.m; path = ../../../../source/IJSVGCommandSmoothCurve.m; sourceTree = "<group>"; };
-		59EB75A923905F6F00F5AE63 /* IJSVGColorList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGColorList.h; path = ../../../../source/IJSVGColorList.h; sourceTree = "<group>"; };
-		59EB75AA23905F6F00F5AE63 /* IJSVGPattern.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGPattern.m; path = ../../../../source/IJSVGPattern.m; sourceTree = "<group>"; };
-		59EB75AB23905F6F00F5AE63 /* IJSVGGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGradient.h; path = ../../../../source/IJSVGGradient.h; sourceTree = "<group>"; };
-		59EB75AC23905F6F00F5AE63 /* IJSVGStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStyle.h; path = ../../../../source/IJSVGStyle.h; sourceTree = "<group>"; };
-		59EB75AD23905F6F00F5AE63 /* IJSVGGroupLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGGroupLayer.h; path = ../../../../source/IJSVGGroupLayer.h; sourceTree = "<group>"; };
-		59EB75AE23905F6F00F5AE63 /* IJSVGCommandLineTo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandLineTo.m; path = ../../../../source/IJSVGCommandLineTo.m; sourceTree = "<group>"; };
-		59EB75AF23905F6F00F5AE63 /* IJSVGCommandMove.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandMove.h; path = ../../../../source/IJSVGCommandMove.h; sourceTree = "<group>"; };
-		59EB75B023905F6F00F5AE63 /* IJSVGTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGTransform.h; path = ../../../../source/IJSVGTransform.h; sourceTree = "<group>"; };
-		59EB75B123905F6F00F5AE63 /* IJSVGMath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGMath.m; path = ../../../../source/IJSVGMath.m; sourceTree = "<group>"; };
-		59EB75B223905F6F00F5AE63 /* IJSVGExporterPathInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGExporterPathInstruction.h; path = ../../../../source/IJSVGExporterPathInstruction.h; sourceTree = "<group>"; };
-		59EB75B323905F6F00F5AE63 /* IJSVGTransaction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGTransaction.m; path = ../../../../source/IJSVGTransaction.m; sourceTree = "<group>"; };
-		59EB75B423905F6F00F5AE63 /* IJSVGTransform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGTransform.m; path = ../../../../source/IJSVGTransform.m; sourceTree = "<group>"; };
-		59EB75B523905F7000F5AE63 /* IJSVGImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGImage.h; path = ../../../../source/IJSVGImage.h; sourceTree = "<group>"; };
-		59EB75B623905F7000F5AE63 /* IJSVGMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGMath.h; path = ../../../../source/IJSVGMath.h; sourceTree = "<group>"; };
-		59EB75B723905F7000F5AE63 /* IJSVGCommandClose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandClose.h; path = ../../../../source/IJSVGCommandClose.h; sourceTree = "<group>"; };
-		59EB75B823905F7000F5AE63 /* IJSVGStringAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGStringAdditions.h; path = ../../../../source/IJSVGStringAdditions.h; sourceTree = "<group>"; };
-		59EB75B923905F7000F5AE63 /* IJSVGGradientUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGradientUnitLength.m; path = ../../../../source/IJSVGGradientUnitLength.m; sourceTree = "<group>"; };
-		59EB75BA23905F7000F5AE63 /* IJSVGUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGUnitLength.m; path = ../../../../source/IJSVGUnitLength.m; sourceTree = "<group>"; };
-		59EB75BB23905F7000F5AE63 /* IJSVGPattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGPattern.h; path = ../../../../source/IJSVGPattern.h; sourceTree = "<group>"; };
-		59EB75BC23905F7000F5AE63 /* IJSVGLayerTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGLayerTree.h; path = ../../../../source/IJSVGLayerTree.h; sourceTree = "<group>"; };
-		59EB75BD23905F7000F5AE63 /* IJSVGExporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGExporter.m; path = ../../../../source/IJSVGExporter.m; sourceTree = "<group>"; };
+		59EB75A423905F6E00F5AE63 /* IJSVGStrokeLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStrokeLayer.h; sourceTree = "<group>"; };
+		59EB75A523905F6E00F5AE63 /* IJSVGParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGParser.m; sourceTree = "<group>"; };
+		59EB75A623905F6F00F5AE63 /* IJSVGRadialGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGRadialGradient.m; sourceTree = "<group>"; };
+		59EB75A723905F6F00F5AE63 /* IJSVGParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGParser.h; sourceTree = "<group>"; };
+		59EB75A823905F6F00F5AE63 /* IJSVGCommandSmoothCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandSmoothCurve.m; sourceTree = "<group>"; };
+		59EB75A923905F6F00F5AE63 /* IJSVGColorList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGColorList.h; sourceTree = "<group>"; };
+		59EB75AA23905F6F00F5AE63 /* IJSVGPattern.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGPattern.m; sourceTree = "<group>"; };
+		59EB75AB23905F6F00F5AE63 /* IJSVGGradient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGradient.h; sourceTree = "<group>"; };
+		59EB75AC23905F6F00F5AE63 /* IJSVGStyle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStyle.h; sourceTree = "<group>"; };
+		59EB75AD23905F6F00F5AE63 /* IJSVGGroupLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGGroupLayer.h; sourceTree = "<group>"; };
+		59EB75AE23905F6F00F5AE63 /* IJSVGCommandLineTo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandLineTo.m; sourceTree = "<group>"; };
+		59EB75AF23905F6F00F5AE63 /* IJSVGCommandMove.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandMove.h; sourceTree = "<group>"; };
+		59EB75B023905F6F00F5AE63 /* IJSVGTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGTransform.h; sourceTree = "<group>"; };
+		59EB75B123905F6F00F5AE63 /* IJSVGMath.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGMath.m; sourceTree = "<group>"; };
+		59EB75B223905F6F00F5AE63 /* IJSVGExporterPathInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGExporterPathInstruction.h; sourceTree = "<group>"; };
+		59EB75B323905F6F00F5AE63 /* IJSVGTransaction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGTransaction.m; sourceTree = "<group>"; };
+		59EB75B423905F6F00F5AE63 /* IJSVGTransform.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGTransform.m; sourceTree = "<group>"; };
+		59EB75B523905F7000F5AE63 /* IJSVGImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGImage.h; sourceTree = "<group>"; };
+		59EB75B623905F7000F5AE63 /* IJSVGMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGMath.h; sourceTree = "<group>"; };
+		59EB75B723905F7000F5AE63 /* IJSVGCommandClose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandClose.h; sourceTree = "<group>"; };
+		59EB75B823905F7000F5AE63 /* IJSVGStringAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStringAdditions.h; sourceTree = "<group>"; };
+		59EB75B923905F7000F5AE63 /* IJSVGGradientUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientUnitLength.m; sourceTree = "<group>"; };
+		59EB75BA23905F7000F5AE63 /* IJSVGUnitLength.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitLength.m; sourceTree = "<group>"; };
+		59EB75BB23905F7000F5AE63 /* IJSVGPattern.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGPattern.h; sourceTree = "<group>"; };
+		59EB75BC23905F7000F5AE63 /* IJSVGLayerTree.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGLayerTree.h; sourceTree = "<group>"; };
+		59EB75BD23905F7000F5AE63 /* IJSVGExporter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGExporter.m; sourceTree = "<group>"; };
 		59EB75BE23905F7000F5AE63 /* IJSVGCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCache.h; path = ../../../../source/IJSVGCache.h; sourceTree = "<group>"; };
-		59EB75BF23905F7000F5AE63 /* IJSVGPatternLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGPatternLayer.h; path = ../../../../source/IJSVGPatternLayer.h; sourceTree = "<group>"; };
-		59EB75C023905F7100F5AE63 /* IJSVGText.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGText.m; path = ../../../../source/IJSVGText.m; sourceTree = "<group>"; };
+		59EB75BF23905F7000F5AE63 /* IJSVGPatternLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGPatternLayer.h; sourceTree = "<group>"; };
+		59EB75C023905F7100F5AE63 /* IJSVGText.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGText.m; sourceTree = "<group>"; };
 		59EB75C123905F7100F5AE63 /* IJSVGView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGView.m; path = ../../../../source/IJSVGView.m; sourceTree = "<group>"; };
-		59EB75C223905F7100F5AE63 /* IJSVGLinearGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGLinearGradient.m; path = ../../../../source/IJSVGLinearGradient.m; sourceTree = "<group>"; };
-		59EB75C323905F7100F5AE63 /* IJSVGBezierPathAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGBezierPathAdditions.h; path = ../../../../source/IJSVGBezierPathAdditions.h; sourceTree = "<group>"; };
-		59EB75C423905F7100F5AE63 /* IJSVGStyleSheetSelector.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyleSheetSelector.m; path = ../../../../source/IJSVGStyleSheetSelector.m; sourceTree = "<group>"; };
-		59EB75C523905F7100F5AE63 /* IJSVGImageLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGImageLayer.m; path = ../../../../source/IJSVGImageLayer.m; sourceTree = "<group>"; };
-		59EB75C623905F7100F5AE63 /* IJSVGCommandClose.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandClose.m; path = ../../../../source/IJSVGCommandClose.m; sourceTree = "<group>"; };
-		59EB75C723905F7100F5AE63 /* IJSVGCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommand.h; path = ../../../../source/IJSVGCommand.h; sourceTree = "<group>"; };
-		59EB75C823905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandSmoothQuadraticCurve.m; path = ../../../../source/IJSVGCommandSmoothQuadraticCurve.m; sourceTree = "<group>"; };
-		59EB75C923905F7200F5AE63 /* IJSVGForeignObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGForeignObject.m; path = ../../../../source/IJSVGForeignObject.m; sourceTree = "<group>"; };
-		59EB75CA23905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandSmoothQuadraticCurve.h; path = ../../../../source/IJSVGCommandSmoothQuadraticCurve.h; sourceTree = "<group>"; };
-		59EB75CB23905F7200F5AE63 /* IJSVGCommandEllipticalArc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandEllipticalArc.m; path = ../../../../source/IJSVGCommandEllipticalArc.m; sourceTree = "<group>"; };
-		59EB75CC23905F7200F5AE63 /* IJSVGGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGroup.m; path = ../../../../source/IJSVGGroup.m; sourceTree = "<group>"; };
+		59EB75C223905F7100F5AE63 /* IJSVGLinearGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGLinearGradient.m; sourceTree = "<group>"; };
+		59EB75C323905F7100F5AE63 /* IJSVGBezierPathAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGBezierPathAdditions.h; sourceTree = "<group>"; };
+		59EB75C423905F7100F5AE63 /* IJSVGStyleSheetSelector.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStyleSheetSelector.m; sourceTree = "<group>"; };
+		59EB75C523905F7100F5AE63 /* IJSVGImageLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGImageLayer.m; sourceTree = "<group>"; };
+		59EB75C623905F7100F5AE63 /* IJSVGCommandClose.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandClose.m; sourceTree = "<group>"; };
+		59EB75C723905F7100F5AE63 /* IJSVGCommand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommand.h; sourceTree = "<group>"; };
+		59EB75C823905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandSmoothQuadraticCurve.m; sourceTree = "<group>"; };
+		59EB75C923905F7200F5AE63 /* IJSVGForeignObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGForeignObject.m; sourceTree = "<group>"; };
+		59EB75CA23905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGCommandSmoothQuadraticCurve.h; sourceTree = "<group>"; };
+		59EB75CB23905F7200F5AE63 /* IJSVGCommandEllipticalArc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGCommandEllipticalArc.m; sourceTree = "<group>"; };
+		59EB75CC23905F7200F5AE63 /* IJSVGGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGroup.m; sourceTree = "<group>"; };
 		59EB75CD23905F7200F5AE63 /* IJSVGView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGView.h; path = ../../../../source/IJSVGView.h; sourceTree = "<group>"; };
-		59EB75CE23905F7200F5AE63 /* IJSVGForeignObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGForeignObject.h; path = ../../../../source/IJSVGForeignObject.h; sourceTree = "<group>"; };
-		59EB75CF23905F7200F5AE63 /* IJSVGExporterPathInstruction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGExporterPathInstruction.m; path = ../../../../source/IJSVGExporterPathInstruction.m; sourceTree = "<group>"; };
-		59EB75D023905F7200F5AE63 /* IJSVGImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGImageLayer.h; path = ../../../../source/IJSVGImageLayer.h; sourceTree = "<group>"; };
-		59EB75D123905F7300F5AE63 /* IJSVGStyleSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGStyleSheet.m; path = ../../../../source/IJSVGStyleSheet.m; sourceTree = "<group>"; };
-		59EB75D223905F7300F5AE63 /* IJSVGGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGGradient.m; path = ../../../../source/IJSVGGradient.m; sourceTree = "<group>"; };
-		59EB75D323905F7300F5AE63 /* IJSVGRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGRendering.h; path = ../../../../source/IJSVGRendering.h; sourceTree = "<group>"; };
-		59EB75D423905F7300F5AE63 /* IJSVGExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IJSVGExporter.h; path = ../../../../source/IJSVGExporter.h; sourceTree = "<group>"; };
-		59EB75D523905F7300F5AE63 /* IJSVGRendering.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = IJSVGRendering.m; path = ../../../../source/IJSVGRendering.m; sourceTree = "<group>"; };
+		59EB75CE23905F7200F5AE63 /* IJSVGForeignObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGForeignObject.h; sourceTree = "<group>"; };
+		59EB75CF23905F7200F5AE63 /* IJSVGExporterPathInstruction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGExporterPathInstruction.m; sourceTree = "<group>"; };
+		59EB75D023905F7200F5AE63 /* IJSVGImageLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGImageLayer.h; sourceTree = "<group>"; };
+		59EB75D123905F7300F5AE63 /* IJSVGStyleSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStyleSheet.m; sourceTree = "<group>"; };
+		59EB75D223905F7300F5AE63 /* IJSVGGradient.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradient.m; sourceTree = "<group>"; };
+		59EB75D323905F7300F5AE63 /* IJSVGRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGRendering.h; sourceTree = "<group>"; };
+		59EB75D423905F7300F5AE63 /* IJSVGExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGExporter.h; sourceTree = "<group>"; };
+		59EB75D523905F7300F5AE63 /* IJSVGRendering.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGRendering.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -263,6 +263,176 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		592ABBE223979F9B00F44380 /* Commands */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75C723905F7100F5AE63 /* IJSVGCommand.h */,
+				59EB75A023905F6E00F5AE63 /* IJSVGCommand.m */,
+				59EB75B723905F7000F5AE63 /* IJSVGCommandClose.h */,
+				59EB75C623905F7100F5AE63 /* IJSVGCommandClose.m */,
+				59EB759C23905F6E00F5AE63 /* IJSVGCommandCurve.h */,
+				59EB759823905F6E00F5AE63 /* IJSVGCommandCurve.m */,
+				59EB759E23905F6E00F5AE63 /* IJSVGCommandEllipticalArc.h */,
+				59EB75CB23905F7200F5AE63 /* IJSVGCommandEllipticalArc.m */,
+				59EB759523905F6D00F5AE63 /* IJSVGCommandHorizontalLine.h */,
+				59EB758723905F6C00F5AE63 /* IJSVGCommandHorizontalLine.m */,
+				59EB756823905F6B00F5AE63 /* IJSVGCommandLineTo.h */,
+				59EB75AE23905F6F00F5AE63 /* IJSVGCommandLineTo.m */,
+				59EB75AF23905F6F00F5AE63 /* IJSVGCommandMove.h */,
+				59EB759923905F6E00F5AE63 /* IJSVGCommandMove.m */,
+				59EB757E23905F6C00F5AE63 /* IJSVGCommandQuadraticCurve.h */,
+				59EB756C23905F6B00F5AE63 /* IJSVGCommandQuadraticCurve.m */,
+				59EB757023905F6C00F5AE63 /* IJSVGCommandSmoothCurve.h */,
+				59EB75A823905F6F00F5AE63 /* IJSVGCommandSmoothCurve.m */,
+				59EB75CA23905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.h */,
+				59EB75C823905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.m */,
+				59EB756D23905F6C00F5AE63 /* IJSVGCommandVerticalLine.h */,
+				59EB759123905F6D00F5AE63 /* IJSVGCommandVerticalLine.m */,
+			);
+			path = Commands;
+			sourceTree = "<group>";
+		};
+		592ABBE323979FBB00F44380 /* Stylesheets */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75AC23905F6F00F5AE63 /* IJSVGStyle.h */,
+				59EB757523905F6C00F5AE63 /* IJSVGStyle.m */,
+				59EB756F23905F6C00F5AE63 /* IJSVGStyleSheet.h */,
+				59EB75D123905F7300F5AE63 /* IJSVGStyleSheet.m */,
+				59EB759B23905F6E00F5AE63 /* IJSVGStyleSheetRule.h */,
+				59EB756723905F6B00F5AE63 /* IJSVGStyleSheetRule.m */,
+				59EB759A23905F6E00F5AE63 /* IJSVGStyleSheetSelector.h */,
+				59EB75C423905F7100F5AE63 /* IJSVGStyleSheetSelector.m */,
+				59EB757F23905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.h */,
+				59EB758123905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.m */,
+			);
+			path = Stylesheets;
+			sourceTree = "<group>";
+		};
+		592ABBE423979FD200F44380 /* Colors */ = {
+			isa = PBXGroup;
+			children = (
+				59EB758323905F6C00F5AE63 /* IJSVGColor.h */,
+				59EB758523905F6C00F5AE63 /* IJSVGColor.m */,
+				59EB75A923905F6F00F5AE63 /* IJSVGColorList.h */,
+				59EB757123905F6C00F5AE63 /* IJSVGColorList.m */,
+			);
+			path = Colors;
+			sourceTree = "<group>";
+		};
+		592ABBE523979FE100F44380 /* Layers */ = {
+			isa = PBXGroup;
+			children = (
+				59EB756623905F6B00F5AE63 /* IJSVGGradientLayer.h */,
+				59EB758F23905F6D00F5AE63 /* IJSVGGradientLayer.m */,
+				59EB75AD23905F6F00F5AE63 /* IJSVGGroupLayer.h */,
+				59EB758223905F6C00F5AE63 /* IJSVGGroupLayer.m */,
+				59EB75D023905F7200F5AE63 /* IJSVGImageLayer.h */,
+				59EB75C523905F7100F5AE63 /* IJSVGImageLayer.m */,
+				59EB756523905F6B00F5AE63 /* IJSVGLayer.h */,
+				59EB757B23905F6C00F5AE63 /* IJSVGLayer.m */,
+				59EB75BF23905F7000F5AE63 /* IJSVGPatternLayer.h */,
+				59EB758C23905F6D00F5AE63 /* IJSVGPatternLayer.m */,
+				59EB757223905F6C00F5AE63 /* IJSVGRadialGradient.h */,
+				59EB75A623905F6F00F5AE63 /* IJSVGRadialGradient.m */,
+				59EB759723905F6D00F5AE63 /* IJSVGShapeLayer.h */,
+				59EB757A23905F6C00F5AE63 /* IJSVGShapeLayer.m */,
+				59EB75A423905F6E00F5AE63 /* IJSVGStrokeLayer.h */,
+				59EB757423905F6C00F5AE63 /* IJSVGStrokeLayer.m */,
+			);
+			path = Layers;
+			sourceTree = "<group>";
+		};
+		592ABBE62397A00C00F44380 /* Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75A723905F6F00F5AE63 /* IJSVGParser.h */,
+				59EB75A523905F6E00F5AE63 /* IJSVGParser.m */,
+			);
+			path = Parsing;
+			sourceTree = "<group>";
+		};
+		592ABBE72397A02900F44380 /* Nodes */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75CE23905F7200F5AE63 /* IJSVGForeignObject.h */,
+				59EB75C923905F7200F5AE63 /* IJSVGForeignObject.m */,
+				59EB758623905F6C00F5AE63 /* IJSVGDef.h */,
+				59EB756923905F6B00F5AE63 /* IJSVGDef.m */,
+				59EB759F23905F6E00F5AE63 /* IJSVGLinearGradient.h */,
+				59EB75C223905F7100F5AE63 /* IJSVGLinearGradient.m */,
+				59EB75AB23905F6F00F5AE63 /* IJSVGGradient.h */,
+				59EB75D223905F7300F5AE63 /* IJSVGGradient.m */,
+				59EB758B23905F6D00F5AE63 /* IJSVGGroup.h */,
+				59EB75CC23905F7200F5AE63 /* IJSVGGroup.m */,
+				59EB75B523905F7000F5AE63 /* IJSVGImage.h */,
+				59EB757623905F6C00F5AE63 /* IJSVGImage.m */,
+				59EB759223905F6D00F5AE63 /* IJSVGNode.h */,
+				59EB759623905F6D00F5AE63 /* IJSVGNode.m */,
+				59EB759D23905F6E00F5AE63 /* IJSVGPath.h */,
+				59EB758A23905F6D00F5AE63 /* IJSVGPath.m */,
+				59EB75BB23905F7000F5AE63 /* IJSVGPattern.h */,
+				59EB75AA23905F6F00F5AE63 /* IJSVGPattern.m */,
+				59EB756B23905F6B00F5AE63 /* IJSVGText.h */,
+				59EB75C023905F7100F5AE63 /* IJSVGText.m */,
+			);
+			path = Nodes;
+			sourceTree = "<group>";
+		};
+		592ABBE82397A06800F44380 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				59EB757323905F6C00F5AE63 /* IJSVGGradientUnitLength.h */,
+				59EB75B923905F7000F5AE63 /* IJSVGGradientUnitLength.m */,
+				59EB75B623905F7000F5AE63 /* IJSVGMath.h */,
+				59EB75B123905F6F00F5AE63 /* IJSVGMath.m */,
+				59EB757923905F6C00F5AE63 /* IJSVGTransaction.h */,
+				59EB75B323905F6F00F5AE63 /* IJSVGTransaction.m */,
+				59EB75B023905F6F00F5AE63 /* IJSVGTransform.h */,
+				59EB75B423905F6F00F5AE63 /* IJSVGTransform.m */,
+				59EB757723905F6C00F5AE63 /* IJSVGUnitLength.h */,
+				59EB75BA23905F7000F5AE63 /* IJSVGUnitLength.m */,
+				59EB759423905F6D00F5AE63 /* IJSVGUtils.h */,
+				59EB758023905F6C00F5AE63 /* IJSVGUtils.m */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		592ABBE92397A08500F44380 /* Exporter */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75D423905F7300F5AE63 /* IJSVGExporter.h */,
+				59EB75BD23905F7000F5AE63 /* IJSVGExporter.m */,
+				59EB75B223905F6F00F5AE63 /* IJSVGExporterPathInstruction.h */,
+				59EB75CF23905F7200F5AE63 /* IJSVGExporterPathInstruction.m */,
+			);
+			path = Exporter;
+			sourceTree = "<group>";
+		};
+		592ABBEA2397A10000F44380 /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75BC23905F7000F5AE63 /* IJSVGLayerTree.h */,
+				59EB759023905F6D00F5AE63 /* IJSVGLayerTree.m */,
+				59EB75D323905F7300F5AE63 /* IJSVGRendering.h */,
+				59EB75D523905F7300F5AE63 /* IJSVGRendering.m */,
+				59EB75A123905F6E00F5AE63 /* IJSVGRenderingStyle.h */,
+				59EB758D23905F6D00F5AE63 /* IJSVGRenderingStyle.m */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		592ABBEB2397A11800F44380 /* Additions */ = {
+			isa = PBXGroup;
+			children = (
+				59EB75C323905F7100F5AE63 /* IJSVGBezierPathAdditions.h */,
+				59EB758E23905F6D00F5AE63 /* IJSVGBezierPathAdditions.m */,
+				59EB75B823905F7000F5AE63 /* IJSVGStringAdditions.h */,
+				59EB757823905F6C00F5AE63 /* IJSVGStringAdditions.m */,
+			);
+			path = Additions;
+			sourceTree = "<group>";
+		};
 		594CF465238FF38E009B251B = {
 			isa = PBXGroup;
 			children = (
@@ -303,115 +473,25 @@
 		59EB756423905F3100F5AE63 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				592ABBEB2397A11800F44380 /* Additions */,
+				592ABBEA2397A10000F44380 /* Rendering */,
+				592ABBE92397A08500F44380 /* Exporter */,
+				592ABBE82397A06800F44380 /* Utils */,
+				592ABBE72397A02900F44380 /* Nodes */,
+				592ABBE62397A00C00F44380 /* Parsing */,
+				592ABBE523979FE100F44380 /* Layers */,
+				592ABBE423979FD200F44380 /* Colors */,
+				592ABBE323979FBB00F44380 /* Stylesheets */,
+				592ABBE223979F9B00F44380 /* Commands */,
 				59EB756A23905F6B00F5AE63 /* IJSVG.h */,
 				59EB75A223905F6E00F5AE63 /* IJSVG.m */,
-				59EB75C323905F7100F5AE63 /* IJSVGBezierPathAdditions.h */,
-				59EB758E23905F6D00F5AE63 /* IJSVGBezierPathAdditions.m */,
 				59EB75BE23905F7000F5AE63 /* IJSVGCache.h */,
 				59EB759323905F6D00F5AE63 /* IJSVGCache.m */,
-				59EB758323905F6C00F5AE63 /* IJSVGColor.h */,
-				59EB758523905F6C00F5AE63 /* IJSVGColor.m */,
-				59EB75A923905F6F00F5AE63 /* IJSVGColorList.h */,
-				59EB757123905F6C00F5AE63 /* IJSVGColorList.m */,
-				59EB75C723905F7100F5AE63 /* IJSVGCommand.h */,
-				59EB75A023905F6E00F5AE63 /* IJSVGCommand.m */,
-				59EB75B723905F7000F5AE63 /* IJSVGCommandClose.h */,
-				59EB75C623905F7100F5AE63 /* IJSVGCommandClose.m */,
-				59EB759C23905F6E00F5AE63 /* IJSVGCommandCurve.h */,
-				59EB759823905F6E00F5AE63 /* IJSVGCommandCurve.m */,
-				59EB759E23905F6E00F5AE63 /* IJSVGCommandEllipticalArc.h */,
-				59EB75CB23905F7200F5AE63 /* IJSVGCommandEllipticalArc.m */,
-				59EB759523905F6D00F5AE63 /* IJSVGCommandHorizontalLine.h */,
-				59EB758723905F6C00F5AE63 /* IJSVGCommandHorizontalLine.m */,
-				59EB756823905F6B00F5AE63 /* IJSVGCommandLineTo.h */,
-				59EB75AE23905F6F00F5AE63 /* IJSVGCommandLineTo.m */,
-				59EB75AF23905F6F00F5AE63 /* IJSVGCommandMove.h */,
-				59EB759923905F6E00F5AE63 /* IJSVGCommandMove.m */,
-				59EB757E23905F6C00F5AE63 /* IJSVGCommandQuadraticCurve.h */,
-				59EB756C23905F6B00F5AE63 /* IJSVGCommandQuadraticCurve.m */,
-				59EB757023905F6C00F5AE63 /* IJSVGCommandSmoothCurve.h */,
-				59EB75A823905F6F00F5AE63 /* IJSVGCommandSmoothCurve.m */,
-				59EB75CA23905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.h */,
-				59EB75C823905F7200F5AE63 /* IJSVGCommandSmoothQuadraticCurve.m */,
-				59EB756D23905F6C00F5AE63 /* IJSVGCommandVerticalLine.h */,
-				59EB759123905F6D00F5AE63 /* IJSVGCommandVerticalLine.m */,
-				59EB758623905F6C00F5AE63 /* IJSVGDef.h */,
-				59EB756923905F6B00F5AE63 /* IJSVGDef.m */,
 				59EB758423905F6C00F5AE63 /* IJSVGError.h */,
-				59EB75D423905F7300F5AE63 /* IJSVGExporter.h */,
-				59EB75BD23905F7000F5AE63 /* IJSVGExporter.m */,
-				59EB75B223905F6F00F5AE63 /* IJSVGExporterPathInstruction.h */,
-				59EB75CF23905F7200F5AE63 /* IJSVGExporterPathInstruction.m */,
 				59EB758823905F6D00F5AE63 /* IJSVGFontConverter.h */,
 				59EB757C23905F6C00F5AE63 /* IJSVGFontConverter.m */,
-				59EB75CE23905F7200F5AE63 /* IJSVGForeignObject.h */,
-				59EB75C923905F7200F5AE63 /* IJSVGForeignObject.m */,
-				59EB75AB23905F6F00F5AE63 /* IJSVGGradient.h */,
-				59EB75D223905F7300F5AE63 /* IJSVGGradient.m */,
-				59EB756623905F6B00F5AE63 /* IJSVGGradientLayer.h */,
-				59EB758F23905F6D00F5AE63 /* IJSVGGradientLayer.m */,
-				59EB757323905F6C00F5AE63 /* IJSVGGradientUnitLength.h */,
-				59EB75B923905F7000F5AE63 /* IJSVGGradientUnitLength.m */,
-				59EB758B23905F6D00F5AE63 /* IJSVGGroup.h */,
-				59EB75CC23905F7200F5AE63 /* IJSVGGroup.m */,
-				59EB75AD23905F6F00F5AE63 /* IJSVGGroupLayer.h */,
-				59EB758223905F6C00F5AE63 /* IJSVGGroupLayer.m */,
-				59EB75B523905F7000F5AE63 /* IJSVGImage.h */,
-				59EB757623905F6C00F5AE63 /* IJSVGImage.m */,
-				59EB75D023905F7200F5AE63 /* IJSVGImageLayer.h */,
-				59EB75C523905F7100F5AE63 /* IJSVGImageLayer.m */,
 				59EB75A323905F6E00F5AE63 /* IJSVGImageRep.h */,
 				59EB757D23905F6C00F5AE63 /* IJSVGImageRep.m */,
-				59EB756523905F6B00F5AE63 /* IJSVGLayer.h */,
-				59EB757B23905F6C00F5AE63 /* IJSVGLayer.m */,
-				59EB75BC23905F7000F5AE63 /* IJSVGLayerTree.h */,
-				59EB759023905F6D00F5AE63 /* IJSVGLayerTree.m */,
-				59EB759F23905F6E00F5AE63 /* IJSVGLinearGradient.h */,
-				59EB75C223905F7100F5AE63 /* IJSVGLinearGradient.m */,
-				59EB75B623905F7000F5AE63 /* IJSVGMath.h */,
-				59EB75B123905F6F00F5AE63 /* IJSVGMath.m */,
-				59EB759223905F6D00F5AE63 /* IJSVGNode.h */,
-				59EB759623905F6D00F5AE63 /* IJSVGNode.m */,
-				59EB75A723905F6F00F5AE63 /* IJSVGParser.h */,
-				59EB75A523905F6E00F5AE63 /* IJSVGParser.m */,
-				59EB759D23905F6E00F5AE63 /* IJSVGPath.h */,
-				59EB758A23905F6D00F5AE63 /* IJSVGPath.m */,
-				59EB75BB23905F7000F5AE63 /* IJSVGPattern.h */,
-				59EB75AA23905F6F00F5AE63 /* IJSVGPattern.m */,
-				59EB75BF23905F7000F5AE63 /* IJSVGPatternLayer.h */,
-				59EB758C23905F6D00F5AE63 /* IJSVGPatternLayer.m */,
-				59EB757223905F6C00F5AE63 /* IJSVGRadialGradient.h */,
-				59EB75A623905F6F00F5AE63 /* IJSVGRadialGradient.m */,
-				59EB75D323905F7300F5AE63 /* IJSVGRendering.h */,
-				59EB75D523905F7300F5AE63 /* IJSVGRendering.m */,
-				59EB75A123905F6E00F5AE63 /* IJSVGRenderingStyle.h */,
-				59EB758D23905F6D00F5AE63 /* IJSVGRenderingStyle.m */,
-				59EB759723905F6D00F5AE63 /* IJSVGShapeLayer.h */,
-				59EB757A23905F6C00F5AE63 /* IJSVGShapeLayer.m */,
-				59EB75B823905F7000F5AE63 /* IJSVGStringAdditions.h */,
-				59EB757823905F6C00F5AE63 /* IJSVGStringAdditions.m */,
-				59EB75A423905F6E00F5AE63 /* IJSVGStrokeLayer.h */,
-				59EB757423905F6C00F5AE63 /* IJSVGStrokeLayer.m */,
-				59EB75AC23905F6F00F5AE63 /* IJSVGStyle.h */,
-				59EB757523905F6C00F5AE63 /* IJSVGStyle.m */,
-				59EB756F23905F6C00F5AE63 /* IJSVGStyleSheet.h */,
-				59EB75D123905F7300F5AE63 /* IJSVGStyleSheet.m */,
-				59EB759B23905F6E00F5AE63 /* IJSVGStyleSheetRule.h */,
-				59EB756723905F6B00F5AE63 /* IJSVGStyleSheetRule.m */,
-				59EB759A23905F6E00F5AE63 /* IJSVGStyleSheetSelector.h */,
-				59EB75C423905F7100F5AE63 /* IJSVGStyleSheetSelector.m */,
-				59EB757F23905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.h */,
-				59EB758123905F6C00F5AE63 /* IJSVGStyleSheetSelectorRaw.m */,
-				59EB756B23905F6B00F5AE63 /* IJSVGText.h */,
-				59EB75C023905F7100F5AE63 /* IJSVGText.m */,
-				59EB757923905F6C00F5AE63 /* IJSVGTransaction.h */,
-				59EB75B323905F6F00F5AE63 /* IJSVGTransaction.m */,
-				59EB75B023905F6F00F5AE63 /* IJSVGTransform.h */,
-				59EB75B423905F6F00F5AE63 /* IJSVGTransform.m */,
-				59EB757723905F6C00F5AE63 /* IJSVGUnitLength.h */,
-				59EB75BA23905F7000F5AE63 /* IJSVGUnitLength.m */,
-				59EB759423905F6D00F5AE63 /* IJSVGUtils.h */,
-				59EB758023905F6C00F5AE63 /* IJSVGUtils.m */,
 				59EB75CD23905F7200F5AE63 /* IJSVGView.h */,
 				59EB75C123905F7100F5AE63 /* IJSVGView.m */,
 				59EB756E23905F6C00F5AE63 /* IJSVGWriter.h */,

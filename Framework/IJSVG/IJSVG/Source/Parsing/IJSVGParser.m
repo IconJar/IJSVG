@@ -1064,7 +1064,8 @@
                               ignoreAttributes:nil];
 
         // from base64
-        [image loadFromBase64EncodedString:[[element attributeForName:(NSString*)IJSVGAttributeXLink] stringValue]];
+        NSString* string = [element attributeForName:(NSString*)IJSVGAttributeXLink].stringValue;
+        [image loadFromBase64EncodedString:string];
 
         // add to parent
         [parentGroup addChild:image];
@@ -1257,18 +1258,23 @@
           intoPath:(IJSVGPath*)path
          closePath:(BOOL)closePath
 {
-    NSString* points = [[element attributeForName:(NSString*)IJSVGAttributePoints] stringValue];
+    NSString* points = [element attributeForName:(NSString*)IJSVGAttributePoints].stringValue;
     NSInteger count = 0;
     CGFloat* params = [IJSVGUtils commandParameters:points
                                               count:&count];
+
+    // error occured, free the params
     if ((count % 2) != 0) {
-        // error occured, free the params
         free(params);
         return;
     }
 
     // construct a command
-    NSMutableString* str = [[[NSMutableString alloc] init] autorelease];
+    NSInteger capacity = count / 2;
+    if (closePath == YES) {
+        capacity += 1;
+    }
+    NSMutableString* str = [[[NSMutableString alloc] initWithCapacity:capacity] autorelease];
     [str appendFormat:@"M%f,%f L", params[0], params[1]];
     for (NSInteger i = 2; i < count; i += 2) {
         [str appendFormat:@"%f,%f ", params[i], params[i + 1]];
@@ -1286,16 +1292,16 @@
 {
     path.primitiveType = IJSVGPrimitivePathTypeRect;
     // width and height
-    CGFloat width = [IJSVGUtils floatValue:[[element attributeForName:(NSString*)IJSVGAttributeWidth] stringValue]
+    CGFloat width = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeWidth].stringValue
                         fallBackForPercent:self.viewBox.size.width];
 
-    CGFloat height = [IJSVGUtils floatValue:[[element attributeForName:(NSString*)IJSVGAttributeHeight] stringValue]
+    CGFloat height = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeHeight].stringValue
                          fallBackForPercent:self.viewBox.size.height];
 
     // rect uses x and y as start of path, not move path object -_-
-    CGFloat x = [IJSVGUtils floatValue:[[element attributeForName:(NSString*)IJSVGAttributeX] stringValue]
+    CGFloat x = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeX].stringValue
                     fallBackForPercent:self.viewBox.size.width];
-    CGFloat y = [IJSVGUtils floatValue:[[element attributeForName:(NSString*)IJSVGAttributeY] stringValue]
+    CGFloat y = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeY].stringValue
                     fallBackForPercent:self.viewBox.size.height];
 
     // radius
