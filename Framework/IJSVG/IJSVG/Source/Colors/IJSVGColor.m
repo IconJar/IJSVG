@@ -264,7 +264,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is it RGB?
-    if ([[string substringToIndex:3] isEqualToString:@"rgb"]) {
+    if ([string hasPrefix:@"rgb"] == YES) {
         NSRange range = [IJSVGUtils rangeOfParentheses:string];
         NSString* rgbString = [string substringWithRange:range];
         NSArray* parts = [rgbString ijsvg_componentsSeparatedByChars:","];
@@ -279,7 +279,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is it HSL?
-    if ([[string substringToIndex:3] isEqualToString:@"hsl"]) {
+    if ([string hasPrefix:@"hsl"]) {
         NSInteger count = 0;
         CGFloat* params = [IJSVGUtils commandParameters:string
                                                   count:&count];
@@ -702,8 +702,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
 + (BOOL)isColor:(NSString*)string
 {
-    return [[string substringToIndex:1] isEqualToString:@"#"] ||
-        [[string substringToIndex:3] isEqualToString:@"rgb"];
+    return [string hasPrefix:@"#"] || [string hasPrefix:@"rgb"];
 }
 
 + (BOOL)isHex:(NSString*)string
@@ -765,7 +764,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         return nil;
     }
 
-    if ([[string substringToIndex:1] isEqualToString:@"#"]) {
+    if ([string hasPrefix:@"#"] == YES) {
         string = [string substringFromIndex:1];
     }
 
