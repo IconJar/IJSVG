@@ -30,20 +30,6 @@
     [super dealloc];
 }
 
-- (void)addSublayer:(CALayer*)layer
-{
-    if ([layer isKindOfClass:[IJSVGLayer class]] == NO &&
-        [layer isKindOfClass:[IJSVGShapeLayer class]] == NO) {
-        NSString* r = [NSString stringWithFormat:@"The layer must be an instance of IJSVGLayer, %@ given.",
-                                [layer class]];
-        NSException* exception = [NSException exceptionWithName:@"IJSVGInvalidSublayerException"
-                                                         reason:r
-                                                       userInfo:nil];
-        @throw exception;
-    }
-    [super addSublayer:layer];
-}
-
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
     if (self.backingScaleFactor == newFactor) {

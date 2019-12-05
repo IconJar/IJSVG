@@ -16,13 +16,10 @@
 #import "IJSVGParser.h"
 #import "IJSVGRendering.h"
 #import "IJSVGRenderingStyle.h"
+#import "IJSVGTransaction.h"
 #import <Foundation/Foundation.h>
 
 @class IJSVG;
-@class IJSVGQuartzRenderer;
-
-void IJSVGBeginTransactionLock(void);
-void IJSVGEndTransactionLock(void);
 
 @protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>
 
@@ -52,7 +49,6 @@ void IJSVGEndTransactionLock(void);
     IJSVGRenderQuality _lastProposedRenderQuality;
     CGFloat _backingScale;
     NSMutableDictionary* _replacementColors;
-    IJSVGQuartzRenderer* _quartzRenderer;
 
     struct {
         unsigned int shouldHandleForeignObject : 1;

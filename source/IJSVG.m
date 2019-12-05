@@ -21,17 +21,14 @@
 - (void)dealloc
 {
     IJSVGBeginTransactionLock();
-    {
-        (void)([renderingBackingScaleHelper release]),
-            renderingBackingScaleHelper = nil;
-        (void)([_group release]), _group = nil;
-        (void)([_layerTree release]), _layerTree = nil;
-        (void)([_replacementColors release]), _replacementColors = nil;
-        (void)([_quartzRenderer release]), _quartzRenderer = nil;
-        (void)([_style release]), _style = nil;
-        [super dealloc];
-    };
+    (void)([renderingBackingScaleHelper release]),
+        renderingBackingScaleHelper = nil;
+    (void)([_group release]), _group = nil;
+    (void)([_layerTree release]), _layerTree = nil;
+    (void)([_replacementColors release]), _replacementColors = nil;
+    (void)([_style release]), _style = nil;
     IJSVGEndTransactionLock();
+    [super dealloc];
 }
 
 + (id)svgNamed:(NSString*)string error:(NSError**)error
@@ -95,13 +92,11 @@
 
     // make sure we obtain a lock, with whatever we do with layers!
     IJSVGBeginTransactionLock();
-    {
-        // create the layers we require
-        layer = [[[IJSVGGroupLayer alloc] init] autorelease];
-        imageLayer =
-            [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
-        [layer addSublayer:imageLayer];
-    };
+    // create the layers we require
+    layer = [[[IJSVGGroupLayer alloc] init] autorelease];
+    imageLayer =
+        [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
+    [layer addSublayer:imageLayer];
     IJSVGEndTransactionLock();
 
     // return the initialized SVG
@@ -448,10 +443,8 @@
 
     // make sure we set the masks to path bits n bobs
     [self _beginVectorDraw];
-    {
-        // draw the icon
-        [self _drawInRect:(NSRect)box context:context error:error];
-    }
+    // draw the icon
+    [self _drawInRect:(NSRect)box context:context error:error];
     [self _endVectorDraw];
 
     CGContextEndPage(context);
