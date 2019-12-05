@@ -8,13 +8,21 @@
 
 #import "IJSVGTransaction.h"
 
-void IJSVGBeginTransactionLock()
+BOOL IJSVGIsMainThread(void) { return NSThread.isMainThread; };
+
+void IJSVGBeginTransactionLock(void)
 {
+    if (IJSVGIsMainThread()) {
+        return;
+    }
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
 };
 
-void IJSVGEndTransactionLock()
+void IJSVGEndTransactionLock(void)
 {
+    if (IJSVGIsMainThread()) {
+        return;
+    }
     [CATransaction commit];
 };

@@ -9,5 +9,6 @@
 #import <Foundation/Foundation.h>
 #import <QuartzCore/QuartzCore.h>
 
+BOOL IJSVGIsMainThread(void);
 void IJSVGBeginTransactionLock(void);
 void IJSVGEndTransactionLock(void);
