@@ -165,25 +165,26 @@
 
 - (id)initWithFilePathURL:(NSURL*)aURL error:(NSError**)error
 {
-    return [self initWithFilePathURL:aURL useCache:YES error:error delegate:nil];
+    return [self initWithFilePathURL:aURL
+                            useCache:YES
+                               error:error
+                            delegate:nil];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL useCache:(BOOL)useCache
 {
-    return
-        [self initWithFilePathURL:aURL
-                         useCache:useCache
-                            error:nil
-                         delegate:nil];
+    return [self initWithFilePathURL:aURL
+                            useCache:useCache
+                               error:nil
+                            delegate:nil];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL delegate:(id<IJSVGDelegate>)delegate
 {
-    return
-        [self initWithFilePathURL:aURL
-                         useCache:YES
-                            error:nil
-                         delegate:delegate];
+    return [self initWithFilePathURL:aURL
+                            useCache:YES
+                               error:nil
+                            delegate:delegate];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL
