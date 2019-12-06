@@ -566,74 +566,71 @@
               error:(NSError**)error
 {
     // prep for draw...
-    @synchronized(self)
-    {
-        CGContextSaveGState(ref);
-        @try {
-            [self _beginDraw:rect];
+    CGContextSaveGState(ref);
+    @try {
+        [self _beginDraw:rect];
 
-            // we also need to calculate the viewport so we can clip
-            // the drawing if needed
-            BOOL canDraw = NO;
-            NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
-            // check the viewport
-            if (canDraw == NO) {
-                if (error != NULL) {
-                    *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                         code:IJSVGErrorDrawing
-                                                     userInfo:nil] autorelease];
-                }
-            } else {
-                // clip to mask
-                if (self.clipToViewport == YES) {
-                    CGContextClipToRect(ref, viewPort);
-                }
-
-                // add the origin back onto the viewport
-                viewPort.origin.x -= (_viewBox.origin.x) * _scale;
-                viewPort.origin.y -= (_viewBox.origin.y) * _scale;
-
-                // transforms
-                CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
-                CGContextScaleCTM(ref, _scale, _scale);
-
-                // render the layer, its really important we lock
-                // the transaction when drawing
-                IJSVGBeginTransactionLock();
-                // do we need to update the backing scales on the
-                // layers?
-                if (self.renderingBackingScaleHelper != nil) {
-                    [self _askHelperForBackingScale];
-                }
-
-                CGInterpolationQuality quality;
-                switch (self.renderQuality) {
-                case IJSVGRenderQualityLow: {
-                    quality = kCGInterpolationLow;
-                    break;
-                }
-                case IJSVGRenderQualityOptimized: {
-                    quality = kCGInterpolationMedium;
-                    break;
-                }
-                default: {
-                    quality = kCGInterpolationHigh;
-                }
-                }
-                CGContextSetInterpolationQuality(ref, quality);
-                [self.layer renderInContext:ref];
-                IJSVGEndTransactionLock();
-            }
-        } @catch (NSException* exception) {
-            // just catch and give back a drawing error to the caller
+        // we also need to calculate the viewport so we can clip
+        // the drawing if needed
+        BOOL canDraw = NO;
+        NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
+        // check the viewport
+        if (canDraw == NO) {
             if (error != NULL) {
                 *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                      code:IJSVGErrorDrawing
                                                  userInfo:nil] autorelease];
             }
+        } else {
+            // clip to mask
+            if (self.clipToViewport == YES) {
+                CGContextClipToRect(ref, viewPort);
+            }
+
+            // add the origin back onto the viewport
+            viewPort.origin.x -= (_viewBox.origin.x) * _scale;
+            viewPort.origin.y -= (_viewBox.origin.y) * _scale;
+
+            // transforms
+            CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
+            CGContextScaleCTM(ref, _scale, _scale);
+
+            // render the layer, its really important we lock
+            // the transaction when drawing
+            IJSVGBeginTransactionLock();
+            // do we need to update the backing scales on the
+            // layers?
+            if (self.renderingBackingScaleHelper != nil) {
+                [self _askHelperForBackingScale];
+            }
+
+            CGInterpolationQuality quality;
+            switch (self.renderQuality) {
+            case IJSVGRenderQualityLow: {
+                quality = kCGInterpolationLow;
+                break;
+            }
+            case IJSVGRenderQualityOptimized: {
+                quality = kCGInterpolationMedium;
+                break;
+            }
+            default: {
+                quality = kCGInterpolationHigh;
+            }
+            }
+            CGContextSetInterpolationQuality(ref, quality);
+            [self.layer renderInContext:ref];
+            IJSVGEndTransactionLock();
         }
-        CGContextRestoreGState(ref);
+    } @catch (NSException* exception) {
+        // just catch and give back a drawing error to the caller
+        if (error != NULL) {
+            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                 code:IJSVGErrorDrawing
+                                             userInfo:nil] autorelease];
+        }
     }
+    CGContextRestoreGState(ref);
     return (error == nil);
 }
 

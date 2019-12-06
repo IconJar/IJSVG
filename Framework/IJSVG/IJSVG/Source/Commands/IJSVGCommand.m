@@ -120,7 +120,7 @@
         // check what required params we need
         if (requiredParameters == IJSVGCustomVariableParameterCount) {
             // looks like we require variable params
-            NSMutableArray<IJSVGCommand*>* subCommandArray = [[NSMutableArray alloc] init];
+            NSMutableArray<IJSVGCommand*>* subCommandArray = [[[NSMutableArray alloc] init] autorelease];
             // parse the custom params
             [self.class parseParams:parameters
                          paramCount:parameterCount
