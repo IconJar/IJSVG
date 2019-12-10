@@ -11,9 +11,26 @@
 
 @implementation IJSVGCommandEllipticalArc
 
+static IJSVGPathDataSequence* _sequence;
+
 + (NSInteger)requiredParameterCount
 {
     return 7;
+}
+
++ (IJSVGPathDataSequence*)pathDataSequence
+{
+    if(_sequence == NULL) {
+        _sequence = (IJSVGPathDataSequence*)malloc(sizeof(IJSVGPathDataSequence) * 7);
+        _sequence[0] = IJSVGPathDataSequenceTypeFloat;
+        _sequence[1] = IJSVGPathDataSequenceTypeFloat;
+        _sequence[2] = IJSVGPathDataSequenceTypeFloat;
+        _sequence[3] = IJSVGPathDataSequenceTypeFlag;
+        _sequence[4] = IJSVGPathDataSequenceTypeFlag;
+        _sequence[5] = IJSVGPathDataSequenceTypeFloat;
+        _sequence[6] = IJSVGPathDataSequenceTypeFloat;
+    }
+    return _sequence;
 }
 
 + (void)runWithParams:(CGFloat*)params

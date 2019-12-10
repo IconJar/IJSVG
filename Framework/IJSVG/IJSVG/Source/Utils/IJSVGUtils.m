@@ -176,6 +176,131 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
     return ret;
 };
 
+CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSequence* _Nullable sequence,
+    NSInteger commandLength, NSInteger* commandsFound)
+{
+    // if no command length, its completely pointless function,
+    // so just return null and set commandsFound to 0, if we dont
+    // we get a arithmetic error later on due to zero
+    if(commandLength == 0) {
+        *commandsFound = 0;
+        return NULL;
+    }
+    
+    // default sizes and memory
+    // sizes for the string buffer
+    const NSInteger defFloatSize = 20;
+    const NSInteger defSize = 10;
+
+    // default memory size for the float
+    NSInteger size = defSize;
+    NSInteger floatSize = defFloatSize;
+
+    NSInteger i = 0;
+    NSInteger counter = 0;
+
+    const char* cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
+    const char* validChars = "0123456789eE+-.";
+
+    NSInteger sLength = strlen(cString);
+
+    // buffer for the returned floats
+    CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * defFloatSize);
+
+    char* buffer = NULL;
+    bool isDecimal = false;
+    int bufferCount = 0;
+
+    while (i < sLength) {
+        char currentChar = cString[i];
+
+        // work out next char
+        char nextChar = (char)0;
+        if (i < (sLength - 1)) {
+            nextChar = cString[i + 1];
+        }
+
+        bool isValid = strchr(validChars, currentChar) != NULL;
+
+        // in order to work out the split, its either because the next char is
+        // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
+        bool isE = currentChar == 'e' || currentChar == 'E';
+        bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
+
+        // work our what the sequence is...
+        IJSVGPathDataSequence seq = IJSVGPathDataSequenceTypeFloat;
+        if (sequence != NULL) {
+            NSInteger seqCounter = (counter % commandLength);
+            seq = sequence[seqCounter];
+        }
+
+        // is a flag, consists of one value
+        // if its invalid, make sure we free the memory
+        // and return null - or hell breaks lose
+        if (isValid == YES && seq == IJSVGPathDataSequenceTypeFlag) {
+            if (bufferCount != 0 || (currentChar != '0' && currentChar != '1')) {
+                if (buffer) {
+                    (void)free(buffer), buffer = nil;
+                }
+                (void)free(floats), floats = nil;
+                return NULL;
+            }
+            wantsEnd = YES;
+        }
+
+        // could be a float like 5.334e-5 so dont break on the hypen
+        if (wantsEnd && isE && (nextChar == '-' || nextChar == '+')) {
+            wantsEnd = false;
+        }
+
+        // make sure its a valid string
+        if (isValid) {
+            // alloc the buffer if needed
+            if (buffer == NULL) {
+                buffer = (char*)calloc(sizeof(char), size);
+            } else if ((bufferCount + 1) == size) {
+                // realloc the buffer, incase the string is overflowing the
+                // allocated memory
+                size += defSize;
+                buffer = (char*)realloc(buffer, sizeof(char) * size);
+            }
+            // set the actual char against it
+            if (currentChar == '.') {
+                isDecimal = true;
+            }
+            buffer[bufferCount++] = currentChar;
+        } else {
+            // if its an invalid char, just stop it
+            wantsEnd = true;
+        }
+
+        // is at end of string, or wants to be stopped
+        // buffer has to actually exist or its completly
+        // useless and will cause a crash
+        if ((buffer != NULL && bufferCount != 0) && (wantsEnd || i == sLength - 1)) {
+            // make sure there is enough room in the float pool
+            if ((counter + 1) == floatSize) {
+                floatSize += defFloatSize;
+                floats = (CGFloat*)realloc(floats, sizeof(CGFloat) * floatSize);
+            }
+
+            // add the float
+            floats[counter++] = strtod_l(buffer, NULL, NULL);
+
+            // memory clean and counter resets
+            memset(buffer, '\0', sizeof(*buffer) * size);
+            isDecimal = false;
+            bufferCount = 0;
+        }
+        i++;
+    }
+    if (buffer != NULL) {
+        free(buffer);
+    }
+    *commandsFound = (NSInteger)round(counter / commandLength);
+    return floats;
+}
+
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
     return [NSString stringWithFormat:@"%@,%@", IJSVGShortFloatString(point.x), IJSVGShortFloatString(point.y)];
@@ -435,97 +560,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
-    // default sizes and memory
-    // sizes for the string buffer
-    const NSInteger defFloatSize = 20;
-    const NSInteger defSize = 10;
-
-    // default memory size for the float
-    NSInteger size = defSize;
-    NSInteger floatSize = defFloatSize;
-
-    NSInteger i = 0;
-    NSInteger counter = 0;
-
-    const char* cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
-    const char* validChars = "0123456789eE+-.";
-
-    NSInteger sLength = strlen(cString);
-
-    // buffer for the returned floats
-    CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * defFloatSize);
-
-    char* buffer = NULL;
-    bool isDecimal = false;
-    int bufferCount = 0;
-
-    while (i < sLength) {
-        char currentChar = cString[i];
-
-        // work out next char
-        char nextChar = (char)0;
-        if (i < (sLength - 1)) {
-            nextChar = cString[i + 1];
-        }
-
-        bool isValid = strchr(validChars, currentChar) != NULL;
-
-        // in order to work out the split, its either because the next char is
-        // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
-        bool isE = currentChar == 'e' || currentChar == 'E';
-        bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
-
-        // could be a float like 5.334e-5 so dont break on the hypen
-        if (wantsEnd && isE && (nextChar == '-' || nextChar == '+')) {
-            wantsEnd = false;
-        }
-
-        // make sure its a valid string
-        if (isValid) {
-            // alloc the buffer if needed
-            if (buffer == NULL) {
-                buffer = (char*)calloc(sizeof(char), size);
-            } else if ((bufferCount + 1) == size) {
-                // realloc the buffer, incase the string is overflowing the
-                // allocated memory
-                size += defSize;
-                buffer = (char*)realloc(buffer, sizeof(char) * size);
-            }
-            // set the actual char against it
-            if (currentChar == '.') {
-                isDecimal = true;
-            }
-            buffer[bufferCount++] = currentChar;
-        } else {
-            // if its an invalid char, just stop it
-            wantsEnd = true;
-        }
-
-        // is at end of string, or wants to be stopped
-        // buffer has to actually exist or its completly
-        // useless and will cause a crash
-        if ((buffer != NULL && bufferCount != 0) && (wantsEnd || i == sLength - 1)) {
-            // make sure there is enough room in the float pool
-            if ((counter + 1) == floatSize) {
-                floatSize += defFloatSize;
-                floats = (CGFloat*)realloc(floats, sizeof(CGFloat) * floatSize);
-            }
-
-            // add the float
-            floats[counter++] = strtod_l(buffer, NULL, NULL);
-
-            // memory clean and counter resets
-            memset(buffer, '\0', sizeof(*buffer) * size);
-            isDecimal = false;
-            bufferCount = 0;
-        }
-        i++;
-    }
-    if (buffer != NULL) {
-        free(buffer);
-    }
-    *length = counter;
-    return floats;
+    return IJSVGParsePathDataSequence(string, NULL, 1, length);
 }
 
 + (CGFloat*)parseViewBox:(NSString*)string

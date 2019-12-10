@@ -16,6 +16,11 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
     IJSVGCommandTypeRelative
 };
 
+typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
+    IJSVGPathDataSequenceTypeFloat,
+    IJSVGPathDataSequenceTypeFlag
+};
+
 @interface IJSVGCommand : NSObject {
     NSString* commandString;
     NSString* command;
@@ -43,6 +48,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 + (NSInteger)requiredParameterCount;
 + (NSPoint)readCoordinatePair:(CGFloat*)pairs
                         index:(NSInteger)index;
++ (IJSVGPathDataSequence*)pathDataSequence;
 + (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
               command:(IJSVGCommand*)currentCommand

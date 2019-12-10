@@ -42,6 +42,11 @@
     return 1;
 }
 
++ (IJSVGPathDataSequence*)pathDataSequence
+{
+    return NULL;
+}
+
 + (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
               command:(IJSVGCommand*)currentCommand
@@ -102,7 +107,9 @@
     (void)([commandString release]), commandString = nil;
     (void)([command release]), command = nil;
     (void)([subCommands release]), subCommands = nil;
-    (void)(free(parameters)), parameters = nil;
+    if (parameters) {
+        (void)(free(parameters)), parameters = nil;
+    }
     [super dealloc];
 }
 
@@ -113,60 +120,40 @@
         _currentIndex = 0;
         command = [[str substringToIndex:1] copy];
         type = [IJSVGUtils typeForCommandString:self.command];
-        parameters = [IJSVGUtils commandParameters:str
-                                             count:&parameterCount];
         requiredParameters = [self.class requiredParameterCount];
+        NSInteger sets = 0;
+        IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
+        parameters = IJSVGParsePathDataSequence(str, sequence, requiredParameters, &sets);
 
-        // check what required params we need
-        if (requiredParameters == IJSVGCustomVariableParameterCount) {
-            // looks like we require variable params
-            NSMutableArray<IJSVGCommand*>* subCommandArray = [[[NSMutableArray alloc] init] autorelease];
-            // parse the custom params
-            [self.class parseParams:parameters
-                         paramCount:parameterCount
-                          intoArray:subCommandArray
-                      parentCommand:self];
-            subCommands = [subCommandArray.copy autorelease];
+        if (sets <= 1) {
+            CGFloat* subParams = [self parametersFromIndexOffset:0];
+            IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                   previousCommand:nil];
+            subCommands = @[ command ].retain;
         } else {
-            // now work out the sets of parameters we have
-            // each command could have a series of subcommands
-            // if there is a multiple of commands in a command
-            // then we need to work those out...
-            NSInteger sets = 1;
-            if (self.requiredParameters != 0) {
-                sets = (self.parameterCount / self.requiredParameters);
-            }
 
-            if (sets == 1) {
-                CGFloat* subParams = [self parametersFromIndexOffset:0];
+            NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
+            subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
+
+            // interate over the sets
+            IJSVGCommand* lastCommand = nil;
+            for (NSInteger i = 0; i < sets; i++) {
+                // memory for this will be handled by the created subcommand
+                CGFloat* subParams = [self parametersFromIndexOffset:i];
+
+                // generate the subcommand
                 IJSVGCommand* command = [self subcommandWithParameters:subParams
-                                                       previousCommand:nil];
-                subCommands = @[ command ].retain;
-            } else {
+                                                       previousCommand:lastCommand];
 
-                NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
-                subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
-
-                // interate over the sets
-                IJSVGCommand* lastCommand = nil;
-                for (NSInteger i = 0; i < sets; i++) {
-                    // memory for this will be handled by the created subcommand
-                    CGFloat* subParams = [self parametersFromIndexOffset:i];
-
-                    // generate the subcommand
-                    IJSVGCommand* command = [self subcommandWithParameters:subParams
-                                                           previousCommand:lastCommand];
-
-                    // make sure we assign the last command or hell breaks
-                    // lose and the firey demons will run wild, namely, commands will break
-                    // if they are multiples of a set
-                    lastCommand = command;
-                    [subCommandArray addObject:command];
-                }
-
-                // store the retained value
-                subCommands = subCommandArray.copy;
+                // make sure we assign the last command or hell breaks
+                // lose and the firey demons will run wild, namely, commands will break
+                // if they are multiples of a set
+                lastCommand = command;
+                [subCommandArray addObject:command];
             }
+
+            // store the retained value
+            subCommands = subCommandArray.copy;
         }
     }
     return self;
