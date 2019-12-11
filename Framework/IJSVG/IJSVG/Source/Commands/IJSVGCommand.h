@@ -12,13 +12,13 @@
 static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;
 
 typedef NS_ENUM(NSInteger, IJSVGCommandType) {
-    IJSVGCommandTypeAbsolute,
-    IJSVGCommandTypeRelative
+    kIJSVGCommandTypeAbsolute,
+    kIJSVGCommandTypeRelative
 };
 
 typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
-    IJSVGPathDataSequenceTypeFloat,
-    IJSVGPathDataSequenceTypeFlag
+    kIJSVGPathDataSequenceTypeFloat,
+    kIJSVGPathDataSequenceTypeFlag
 };
 
 @interface IJSVGCommand : NSObject {

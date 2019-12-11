@@ -11,9 +11,9 @@
 typedef CGFloat (^IJSVGRenderingBackingScaleFactorHelper)(void);
 
 typedef NS_ENUM(NSInteger, IJSVGRenderQuality) {
-    IJSVGRenderQualityFullResolution, // slowest to render
-    IJSVGRenderQualityOptimized, // best of both worlds
-    IJSVGRenderQualityLow // fast rendering
+    kIJSVGRenderQualityFullResolution, // slowest to render
+    kIJSVGRenderQualityOptimized, // best of both worlds
+    kIJSVGRenderQualityLow // fast rendering
 };
 
 @interface IJSVGRendering : NSObject

@@ -28,7 +28,7 @@
     if (command != nil) {
         if (command.class == IJSVGCommandQuadraticCurve.class) {
             // quadratic curve
-            if (command.type == IJSVGCommandTypeAbsolute) {
+            if (command.type == kIJSVGCommandTypeAbsolute) {
                 commandPoint = NSMakePoint(-1 * command.parameters[0] + 2 * [path currentSubpath].currentPoint.x,
                     -1 * command.parameters[1] + 2 * [path currentSubpath].currentPoint.y);
             } else {
@@ -44,7 +44,7 @@
         }
     }
     path.lastControlPoint = commandPoint;
-    if (type == IJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         [[path currentSubpath] addQuadCurveToPoint:NSMakePoint(params[0], params[1])
                                       controlPoint:commandPoint];
         return;

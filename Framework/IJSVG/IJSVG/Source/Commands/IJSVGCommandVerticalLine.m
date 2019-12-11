@@ -22,7 +22,7 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath*)path
 {
-    if (type == IJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         [[path currentSubpath] lineToPoint:NSMakePoint([path currentSubpath].currentPoint.x, params[0])];
         return;
     }

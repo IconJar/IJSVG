@@ -64,11 +64,11 @@
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     switch (self.renderQuality) {
-    case IJSVGRenderQualityOptimized: {
+    case kIJSVGRenderQualityOptimized: {
         backingScaleFactor = (backingScaleFactor * .35f);
         break;
     }
-    case IJSVGRenderQualityLow: {
+    case kIJSVGRenderQualityLow: {
         backingScaleFactor = (backingScaleFactor * .05f);
         break;
     }

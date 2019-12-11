@@ -182,11 +182,11 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
     // if no command length, its completely pointless function,
     // so just return null and set commandsFound to 0, if we dont
     // we get a arithmetic error later on due to zero
-    if(commandLength == 0) {
+    if (commandLength == 0) {
         *commandsFound = 0;
         return NULL;
     }
-    
+
     // default sizes and memory
     // sizes for the string buffer
     const NSInteger defFloatSize = 20;
@@ -199,10 +199,12 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
     NSInteger i = 0;
     NSInteger counter = 0;
 
-    const char* cString = [string cStringUsingEncoding:NSUTF8StringEncoding];
-    const char* validChars = "0123456789eE+-.";
+    const char* cString = string.UTF8String;
+    const char* validChars = "eE+-.";
 
-    NSInteger sLength = strlen(cString);
+    // this is much faster then doing strlen as it doesnt need
+    // to compute the length
+    NSInteger sLength = string.length;
 
     // buffer for the returned floats
     CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * defFloatSize);
@@ -220,7 +222,8 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
             nextChar = cString[i + 1];
         }
 
-        bool isValid = strchr(validChars, currentChar) != NULL;
+        // check for validator
+        bool isValid = (currentChar >= '0' && currentChar <= '9') || strchr(validChars, currentChar) != NULL;
 
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
@@ -228,16 +231,15 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
         bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
 
         // work our what the sequence is...
-        IJSVGPathDataSequence seq = IJSVGPathDataSequenceTypeFloat;
+        IJSVGPathDataSequence seq = kIJSVGPathDataSequenceTypeFloat;
         if (sequence != NULL) {
-            NSInteger seqCounter = (counter % commandLength);
-            seq = sequence[seqCounter];
+            seq = sequence[counter % commandLength];
         }
 
         // is a flag, consists of one value
         // if its invalid, make sure we free the memory
         // and return null - or hell breaks lose
-        if (isValid == YES && seq == IJSVGPathDataSequenceTypeFlag) {
+        if (isValid == YES && seq == kIJSVGPathDataSequenceTypeFlag) {
             if (bufferCount != 0 || (currentChar != '0' && currentChar != '1')) {
                 if (buffer) {
                     (void)free(buffer), buffer = nil;
@@ -346,7 +348,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (IJSVGCommandType)typeForCommandString:(NSString*)string
 {
-    return isupper([string characterAtIndex:0]) ? IJSVGCommandTypeAbsolute : IJSVGCommandTypeRelative;
+    return isupper([string characterAtIndex:0]) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
 }
 
 + (NSRange)rangeOfParentheses:(NSString*)string

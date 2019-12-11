@@ -36,7 +36,7 @@
     }
 
     // actual move to command
-    if (type == IJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         [[path currentSubpath] moveToPoint:NSMakePoint(params[0], params[1])];
         return;
     }

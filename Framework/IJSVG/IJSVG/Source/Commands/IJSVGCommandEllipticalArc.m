@@ -22,13 +22,13 @@ static IJSVGPathDataSequence* _sequence;
 {
     if(_sequence == NULL) {
         _sequence = (IJSVGPathDataSequence*)malloc(sizeof(IJSVGPathDataSequence) * 7);
-        _sequence[0] = IJSVGPathDataSequenceTypeFloat;
-        _sequence[1] = IJSVGPathDataSequenceTypeFloat;
-        _sequence[2] = IJSVGPathDataSequenceTypeFloat;
-        _sequence[3] = IJSVGPathDataSequenceTypeFlag;
-        _sequence[4] = IJSVGPathDataSequenceTypeFlag;
-        _sequence[5] = IJSVGPathDataSequenceTypeFloat;
-        _sequence[6] = IJSVGPathDataSequenceTypeFloat;
+        _sequence[0] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[1] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[2] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[3] = kIJSVGPathDataSequenceTypeFlag;
+        _sequence[4] = kIJSVGPathDataSequenceTypeFlag;
+        _sequence[5] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[6] = kIJSVGPathDataSequenceTypeFloat;
     }
     return _sequence;
 }
@@ -53,7 +53,7 @@ static IJSVGPathDataSequence* _sequence;
     sweepFlag = [currentCommand readBOOL];
     arcEndPoint = [currentCommand readPoint];
 
-    if (type == IJSVGCommandTypeRelative) {
+    if (type == kIJSVGCommandTypeRelative) {
         arcEndPoint.x += path.currentPoint.x;
         arcEndPoint.y += path.currentPoint.y;
     }

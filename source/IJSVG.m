@@ -300,7 +300,7 @@
 {
     self.style = [[[IJSVGRenderingStyle alloc] init] autorelease];
     self.clipToViewport = YES;
-    self.renderQuality = IJSVGRenderQualityFullResolution;
+    self.renderQuality = kIJSVGRenderQualityFullResolution;
 
     // setup low level backing scale
     _lastProposedBackingScale = 0.f;
@@ -606,11 +606,11 @@
 
             CGInterpolationQuality quality;
             switch (self.renderQuality) {
-            case IJSVGRenderQualityLow: {
+            case kIJSVGRenderQualityLow: {
                 quality = kCGInterpolationLow;
                 break;
             }
-            case IJSVGRenderQualityOptimized: {
+            case kIJSVGRenderQualityOptimized: {
                 quality = kCGInterpolationMedium;
                 break;
             }

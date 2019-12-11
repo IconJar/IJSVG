@@ -22,7 +22,7 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath*)path
 {
-    if (type == IJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         [[path currentSubpath] curveToPoint:NSMakePoint(params[4], params[5])
                               controlPoint1:NSMakePoint(params[0], params[1])
                               controlPoint2:NSMakePoint(params[2], params[3])];

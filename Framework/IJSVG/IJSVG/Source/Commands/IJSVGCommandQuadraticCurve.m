@@ -23,7 +23,7 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath*)path
 {
-    if (type == IJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         [[path currentSubpath] addQuadCurveToPoint:NSMakePoint(params[2], params[3])
                                       controlPoint:NSMakePoint(params[0], params[1])];
         return;
