@@ -27,6 +27,7 @@ NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
+IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
 CGFloat* IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSequence* sequence,
     NSInteger commandLength, NSInteger* commandsFound);
 

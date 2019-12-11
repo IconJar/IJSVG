@@ -176,6 +176,14 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
     return ret;
 };
 
+IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length)
+{
+    size_t size = sizeof(IJSVGPathDataSequence) * length;
+    IJSVGPathDataSequence* sequence = (IJSVGPathDataSequence*)malloc(size);
+    memset(sequence, type, size);
+    return sequence;
+};
+
 CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* commandsFound)
 {
