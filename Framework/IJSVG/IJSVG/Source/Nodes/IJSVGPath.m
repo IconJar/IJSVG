@@ -29,7 +29,7 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        _primitiveType = IJSVGPrimitivePathTypePath;
+        _primitiveType = kIJSVGPrimitivePathTypePath;
         _path = NSBezierPath.bezierPath.retain;
     }
     return self;

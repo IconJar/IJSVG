@@ -13,13 +13,13 @@
 @class IJSVGGroup;
 
 typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
-    IJSVGPrimitivePathTypePath,
-    IJSVGPrimitivePathTypeRect,
-    IJSVGPrimitivePathTypePolygon,
-    IJSVGPrimitivePathTypePolyLine,
-    IJSVGPrimitivePathTypeCircle,
-    IJSVGPrimitivePathTypeEllipse,
-    IJSVGPrimitivePathTypeLine
+    kIJSVGPrimitivePathTypePath,
+    kIJSVGPrimitivePathTypeRect,
+    kIJSVGPrimitivePathTypePolygon,
+    kIJSVGPrimitivePathTypePolyLine,
+    kIJSVGPrimitivePathTypeCircle,
+    kIJSVGPrimitivePathTypeEllipse,
+    kIJSVGPrimitivePathTypeLine
 };
 
 @interface IJSVGPath : IJSVGNode {

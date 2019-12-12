@@ -1058,19 +1058,19 @@ NSString* IJSVGHash(NSString* key)
 - (NSString*)elementNameForPrimitiveType:(IJSVGPrimitivePathType)primitiveType
 {
     switch (primitiveType) {
-    case IJSVGPrimitivePathTypeRect:
+    case kIJSVGPrimitivePathTypeRect:
         return @"rect";
-    case IJSVGPrimitivePathTypePolyLine:
+    case kIJSVGPrimitivePathTypePolyLine:
         return @"polyline";
-    case IJSVGPrimitivePathTypeEllipse:
+    case kIJSVGPrimitivePathTypeEllipse:
         return @"ellipse";
-    case IJSVGPrimitivePathTypeCircle:
+    case kIJSVGPrimitivePathTypeCircle:
         return @"circle";
-    case IJSVGPrimitivePathTypeLine:
+    case kIJSVGPrimitivePathTypeLine:
         return @"line";
-    case IJSVGPrimitivePathTypePolygon:
+    case kIJSVGPrimitivePathTypePolygon:
         return @"polygon";
-    case IJSVGPrimitivePathTypePath:
+    case kIJSVGPrimitivePathTypePath:
     default:
         return @"path";
     }
@@ -1092,7 +1092,7 @@ NSString* IJSVGHash(NSString* key)
 
     // path
     switch (layer.primitiveType) {
-    case IJSVGPrimitivePathTypeRect: {
+    case kIJSVGPrimitivePathTypeRect: {
         __block BOOL radiusSet = NO;
         IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
             if (radiusSet == NO && pathElement->type == kCGPathElementAddCurveToPoint) {
@@ -1116,7 +1116,7 @@ NSString* IJSVGHash(NSString* key)
         dict[@"height"] = IJSVGShortFloatString(boundingBox.size.height);
         break;
     }
-    case IJSVGPrimitivePathTypeLine: {
+    case kIJSVGPrimitivePathTypeLine: {
         IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
             switch (pathElement->type) {
             case kCGPathElementMoveToPoint: {
@@ -1135,8 +1135,8 @@ NSString* IJSVGHash(NSString* key)
         });
         break;
     }
-    case IJSVGPrimitivePathTypePolygon:
-    case IJSVGPrimitivePathTypePolyLine: {
+    case kIJSVGPrimitivePathTypePolygon:
+    case kIJSVGPrimitivePathTypePolyLine: {
         NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
         IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
             switch (pathElement->type) {
@@ -1153,13 +1153,13 @@ NSString* IJSVGHash(NSString* key)
             }
         });
         // polygon does not need the move to command
-        if (layer.primitiveType == IJSVGPrimitivePathTypePolygon) {
+        if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
             [points removeLastObject];
         }
         dict[@"points"] = [points componentsJoinedByString:@" "];
         break;
     }
-    case IJSVGPrimitivePathTypeEllipse: {
+    case kIJSVGPrimitivePathTypeEllipse: {
         CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
         dict[@"cx"] = IJSVGShortFloatString(boundingBox.origin.x + boundingBox.size.width / 2.f);
         dict[@"cy"] = IJSVGShortFloatString(boundingBox.origin.y + boundingBox.size.height / 2.f);
@@ -1167,7 +1167,7 @@ NSString* IJSVGHash(NSString* key)
         dict[@"ry"] = IJSVGShortFloatString(boundingBox.size.height / 2.f);
         break;
     }
-    case IJSVGPrimitivePathTypeCircle: {
+    case kIJSVGPrimitivePathTypeCircle: {
         //        IJSVGCGPathHandler callback = ^(const CGPathElement * pathElement) {
         CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
         dict[@"cx"] = IJSVGShortFloatString(boundingBox.origin.x + boundingBox.size.width / 2.f);
@@ -1175,7 +1175,7 @@ NSString* IJSVGHash(NSString* key)
         dict[@"r"] = IJSVGShortFloatString(boundingBox.size.width / 2.f);
         break;
     }
-    case IJSVGPrimitivePathTypePath:
+    case kIJSVGPrimitivePathTypePath:
     default:
         dict[@"d"] = [self pathFromCGPath:transformPath];
     }

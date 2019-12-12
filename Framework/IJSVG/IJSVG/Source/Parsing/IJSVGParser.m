@@ -1198,7 +1198,7 @@
 {
     // convert a line into a command,
     // basically MX1 Y1LX2 Y2
-    path.primitiveType = IJSVGPrimitivePathTypeLine;
+    path.primitiveType = kIJSVGPrimitivePathTypeLine;
     CGFloat x1 = [element attributeForName:(NSString*)IJSVGAttributeX1].stringValue.floatValue;
     CGFloat y1 = [element attributeForName:(NSString*)IJSVGAttributeY1].stringValue.floatValue;
     CGFloat x2 = [element attributeForName:(NSString*)IJSVGAttributeX2].stringValue.floatValue;
@@ -1216,7 +1216,7 @@
 - (void)_parseCircle:(NSXMLElement*)element
             intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypeCircle;
+    path.primitiveType = kIJSVGPrimitivePathTypeCircle;
     CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
     CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
     CGFloat r = [element attributeForName:(NSString*)IJSVGAttributeR].stringValue.floatValue;
@@ -1227,7 +1227,7 @@
 - (void)_parseEllipse:(NSXMLElement*)element
              intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypeEllipse;
+    path.primitiveType = kIJSVGPrimitivePathTypeEllipse;
     CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
     CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
     CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
@@ -1239,7 +1239,7 @@
 - (void)_parsePolyline:(NSXMLElement*)element
               intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypePolyLine;
+    path.primitiveType = kIJSVGPrimitivePathTypePolyLine;
     [self _parsePoly:element
             intoPath:path
            closePath:NO];
@@ -1248,7 +1248,7 @@
 - (void)_parsePolygon:(NSXMLElement*)element
              intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypePolygon;
+    path.primitiveType = kIJSVGPrimitivePathTypePolygon;
     [self _parsePoly:element
             intoPath:path
            closePath:YES];
@@ -1290,7 +1290,7 @@
 - (void)_parseRect:(NSXMLElement*)element
           intoPath:(IJSVGPath*)path
 {
-    path.primitiveType = IJSVGPrimitivePathTypeRect;
+    path.primitiveType = kIJSVGPrimitivePathTypeRect;
     // width and height
     CGFloat width = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeWidth].stringValue
                         fallBackForPercent:self.viewBox.size.width];
