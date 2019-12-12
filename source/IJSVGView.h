@@ -6,20 +6,20 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
 #import "IJSVG.h"
+#import <Cocoa/Cocoa.h>
 
 IB_DESIGNABLE
 @interface IJSVGView : NSView {
-    IBInspectable NSString * imageName;
-    IBInspectable NSColor * tintColor;
-    
-    IJSVG * SVG;
+    IBInspectable NSString* imageName;
+    IBInspectable NSColor* tintColor;
+
+    IJSVG* SVG;
 }
 
-@property (nonatomic, retain) IJSVG * SVG;
+@property (nonatomic, retain) IJSVG* SVG;
 
-+ (IJSVGView *)viewWithSVGNamed:(NSString *)name;
-- (id)initWithSVG:(IJSVG *)anSvg;
++ (IJSVGView*)viewWithSVGNamed:(NSString*)name;
+- (id)initWithSVG:(IJSVG*)anSvg;
 
 @end

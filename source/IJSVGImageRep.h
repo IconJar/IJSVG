@@ -6,15 +6,15 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
 #import "IJSVGParser.h"
+#import <Cocoa/Cocoa.h>
 
 @class IJSVG;
 
 @interface IJSVGImageRep : NSImageRep {
-    
+
 @private
-    IJSVG * _svg;
+    IJSVG* _svg;
 }
 
 @property (nonatomic, readonly) CGRect viewBox;

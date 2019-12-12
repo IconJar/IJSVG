@@ -6,24 +6,24 @@
 //  Copyright (c) 2015 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import "IJSVG.h"
+#import <Foundation/Foundation.h>
 
-typedef void (^IJSVGFontConverterEnumerateBlock)(NSString * unicode, IJSVG * svg);
+typedef void (^IJSVGFontConverterEnumerateBlock)(NSString* unicode, IJSVG* svg);
 
 @interface IJSVGFontConverter : NSObject {
-    
+
 @private
-    NSURL * _url;
-    NSFont * _font;
-    NSMutableDictionary<NSString *, id> * _transformedPaths;
+    NSURL* _url;
+    NSFont* _font;
+    NSMutableDictionary<NSString*, id>* _transformedPaths;
 }
 
-- (id)initWithFontAtFileURL:(NSURL *)url;
-- (NSFont *)font;
+- (id)initWithFontAtFileURL:(NSURL*)url;
+- (NSFont*)font;
 - (void)enumerateUsingBlock:(IJSVGFontConverterEnumerateBlock)block;
 
-+ (IJSVG *)convertIJSVGPathToSVG:(IJSVGPath *)path;
-+ (IJSVG *)convertPathToSVG:(CGPathRef)path;
++ (IJSVG*)convertIJSVGPathToSVG:(IJSVGPath*)path;
++ (IJSVG*)convertPathToSVG:(CGPathRef)path;
 
 @end

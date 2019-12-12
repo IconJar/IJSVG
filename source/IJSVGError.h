@@ -8,9 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-static NSString * const IJSVGErrorDomain = @"IJSVGErrorDomain";
+static NSString* const IJSVGErrorDomain = @"IJSVGErrorDomain";
 
-NS_ENUM(NSInteger) {
+NS_ENUM(NSInteger){
     IJSVGErrorReadingFile,
     IJSVGErrorParsingFile,
     IJSVGErrorParsingSVG,

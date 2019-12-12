@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImageRep.h"
 #import "IJSVG.h"
+#import "IJSVGImageRep.h"
 
 @implementation IJSVGImageRep
 
@@ -18,57 +18,57 @@
     [NSBitmapImageRep registerImageRepClass:self];
 }
 
-+ (BOOL)canInitWithData:(NSData *)data
++ (BOOL)canInitWithData:(NSData*)data
 {
     return [IJSVGParser isDataSVG:data];
 }
 
-+ (NSArray<NSString *> *)imageTypes
++ (NSArray<NSString*>*)imageTypes
 {
-    return @[(NSString *)kUTTypeScalableVectorGraphics, @"svg"];
+    return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
 }
 
-+ (NSArray<NSString *> *)imageUnfilteredTypes
++ (NSArray<NSString*>*)imageUnfilteredTypes
 {
-    return @[(NSString *)kUTTypeScalableVectorGraphics, @"svg"];
+    return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
 }
 
-+ (NSArray<NSImageRep *> *)imageRepsWithData:(NSData *)data
++ (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data
 {
-    IJSVGImageRep * instance = [self imageRepWithData:data];
-    if(instance == nil) {
+    IJSVGImageRep* instance = [self imageRepWithData:data];
+    if (instance == nil) {
         return @[];
     }
-    return @[instance];
+    return @[ instance ];
 }
 
-+ (instancetype)imageRepWithData:(NSData *)data
++ (instancetype)imageRepWithData:(NSData*)data
 {
     return [[[self alloc] initWithData:data] autorelease];
 }
 
 - (void)dealloc
 {
-    [_svg release], _svg = nil;
+    (void)([_svg release]), _svg = nil;
     [super dealloc];
 }
 
-- (instancetype)initWithData:(NSData *)data
+- (instancetype)initWithData:(NSData*)data
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         // grab the string from the data
         // its more then likely UTF-8...
-        NSString * string = [[[NSString alloc] initWithData:data
-                                                   encoding:NSUTF8StringEncoding] autorelease];
-        
+        NSString* string = [[[NSString alloc] initWithData:data
+                                                  encoding:NSUTF8StringEncoding] autorelease];
+
         _svg = [[IJSVG alloc] initWithSVGString:string];
-        
+
         // no valid SVG, just return nil;
-        if(_svg == nil) {
+        if (_svg == nil) {
             [self release];
             return nil;
         }
-        
+
         // set default properties
         self.pixelsWide = _svg.viewBox.size.width;
         self.pixelsHigh = _svg.viewBox.size.height;
