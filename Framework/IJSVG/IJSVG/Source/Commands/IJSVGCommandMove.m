@@ -37,14 +37,14 @@
 
     // actual move to command
     if (type == kIJSVGCommandTypeAbsolute) {
-        [[path currentSubpath] moveToPoint:NSMakePoint(params[0], params[1])];
+        [path.path moveToPoint:NSMakePoint(params[0], params[1])];
         return;
     }
     @try {
-        [[path currentSubpath] relativeMoveToPoint:NSMakePoint(params[0], params[1])];
+        [path.path relativeMoveToPoint:NSMakePoint(params[0], params[1])];
     }
     @catch (NSException* exception) {
-        [[path currentSubpath] moveToPoint:NSMakePoint(params[0], params[1])];
+        [path.path moveToPoint:NSMakePoint(params[0], params[1])];
     }
 }
 

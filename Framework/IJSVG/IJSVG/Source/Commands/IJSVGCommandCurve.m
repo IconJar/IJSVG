@@ -23,14 +23,14 @@
                  path:(IJSVGPath*)path
 {
     if (type == kIJSVGCommandTypeAbsolute) {
-        [[path currentSubpath] curveToPoint:NSMakePoint(params[4], params[5])
-                              controlPoint1:NSMakePoint(params[0], params[1])
-                              controlPoint2:NSMakePoint(params[2], params[3])];
+        [path.path curveToPoint:NSMakePoint(params[4], params[5])
+                  controlPoint1:NSMakePoint(params[0], params[1])
+                  controlPoint2:NSMakePoint(params[2], params[3])];
         return;
     }
-    [[path currentSubpath] relativeCurveToPoint:NSMakePoint(params[4], params[5])
-                                  controlPoint1:NSMakePoint(params[0], params[1])
-                                  controlPoint2:NSMakePoint(params[2], params[3])];
+    [path.path relativeCurveToPoint:NSMakePoint(params[4], params[5])
+                      controlPoint1:NSMakePoint(params[0], params[1])
+                      controlPoint2:NSMakePoint(params[2], params[3])];
 }
 
 @end

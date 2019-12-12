@@ -25,20 +25,15 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @interface IJSVGPath : IJSVGNode {
 
     NSBezierPath* path;
-    NSBezierPath* subpath;
     CGPoint lastControlPoint;
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
-@property (nonatomic, readonly) NSBezierPath* path;
-@property (nonatomic, readonly) NSBezierPath* subpath;
+@property (nonatomic, retain) NSBezierPath* path;
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGPathRef CGPath;
 
-- (NSBezierPath*)currentSubpath;
 - (void)close;
 - (NSPoint)currentPoint;
-- (void)overwritePath:(NSBezierPath*)aPath;
-- (CGPathRef)newPathRefByAutoClosingPath:(BOOL)autoClose;
 
 @end

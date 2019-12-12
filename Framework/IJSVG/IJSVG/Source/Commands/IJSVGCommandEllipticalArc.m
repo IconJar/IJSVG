@@ -92,33 +92,33 @@ static IJSVGPathDataSequence* _sequence;
 
     NSAffineTransform* trans = NSAffineTransform.transform;
     [trans translateXBy:-centerPoint.x yBy:-centerPoint.y];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 
     trans = NSAffineTransform.transform;
     [trans rotateByRadians:-xAxisRotation];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 
     trans = NSAffineTransform.transform;
     [trans scaleXBy:(1 / scale.x) yBy:(1 / scale.y)];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 
-    [path.currentSubpath appendBezierPathWithArcWithCenter:NSZeroPoint
-                                                    radius:radius
-                                                startAngle:radians_to_degrees(startAngle)
-                                                  endAngle:radians_to_degrees(startAngle + angleDelta)
-                                                 clockwise:!sweepFlag];
+    [path.path appendBezierPathWithArcWithCenter:NSZeroPoint
+                                          radius:radius
+                                      startAngle:radians_to_degrees(startAngle)
+                                        endAngle:radians_to_degrees(startAngle + angleDelta)
+                                       clockwise:!sweepFlag];
 
     trans = NSAffineTransform.transform;
     [trans scaleXBy:scale.x yBy:scale.y];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 
     trans = NSAffineTransform.transform;
     [trans rotateByRadians:xAxisRotation];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 
     trans = NSAffineTransform.transform;
     [trans translateXBy:centerPoint.x yBy:centerPoint.y];
-    [path.currentSubpath transformUsingAffineTransform:trans];
+    [path.path transformUsingAffineTransform:trans];
 }
 
 @end

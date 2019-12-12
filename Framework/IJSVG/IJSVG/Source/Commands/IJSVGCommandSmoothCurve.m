@@ -24,41 +24,41 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath*)path
 {
-    NSPoint firstControl = NSMakePoint([path currentSubpath].currentPoint.x, [path currentSubpath].currentPoint.y);
+    NSPoint firstControl = NSMakePoint(path.currentPoint.x, path.currentPoint.y);
     if (command != nil) {
         if (command.class == [IJSVGCommandCurve class] || command.class == self.class) {
             if (command.class == [IJSVGCommandCurve class]) {
                 if (command.type == kIJSVGCommandTypeAbsolute) {
-                    firstControl = NSMakePoint(-1 * command.parameters[2] + 2 * [path currentSubpath].currentPoint.x,
-                        -1 * command.parameters[3] + 2 * [path currentSubpath].currentPoint.y);
+                    firstControl = NSMakePoint(-1 * command.parameters[2] + 2 * path.currentPoint.x,
+                        -1 * command.parameters[3] + 2 * path.currentPoint.y);
                 } else {
-                    NSPoint oldPoint = NSMakePoint([path currentSubpath].currentPoint.x - command.parameters[4],
-                        [path currentSubpath].currentPoint.y - command.parameters[5]);
-                    firstControl = NSMakePoint(-1 * (command.parameters[2] + oldPoint.x) + 2 * [path currentSubpath].currentPoint.x,
-                        -1 * (command.parameters[3] + oldPoint.y) + 2 * [path currentSubpath].currentPoint.y);
+                    NSPoint oldPoint = NSMakePoint(path.currentPoint.x - command.parameters[4],
+                        path.currentPoint.y - command.parameters[5]);
+                    firstControl = NSMakePoint(-1 * (command.parameters[2] + oldPoint.x) + 2 * path.currentPoint.x,
+                        -1 * (command.parameters[3] + oldPoint.y) + 2 * path.currentPoint.y);
                 }
             } else {
                 if (command.type == kIJSVGCommandTypeAbsolute) {
-                    firstControl = NSMakePoint(-1 * command.parameters[0] + 2 * [path currentSubpath].currentPoint.x,
-                        -1 * command.parameters[1] + 2 * [path currentSubpath].currentPoint.y);
+                    firstControl = NSMakePoint(-1 * command.parameters[0] + 2 * path.currentPoint.x,
+                        -1 * command.parameters[1] + 2 * path.currentPoint.y);
                 } else {
-                    NSPoint oldPoint = NSMakePoint([path currentSubpath].currentPoint.x - command.parameters[2],
-                        [path currentSubpath].currentPoint.y - command.parameters[3]);
-                    firstControl = NSMakePoint(-1 * (command.parameters[0] + oldPoint.x) + 2 * [path currentSubpath].currentPoint.x,
-                        -1 * (command.parameters[1] + oldPoint.y) + 2 * [path currentSubpath].currentPoint.y);
+                    NSPoint oldPoint = NSMakePoint(path.currentPoint.x - command.parameters[2],
+                        path.currentPoint.y - command.parameters[3]);
+                    firstControl = NSMakePoint(-1 * (command.parameters[0] + oldPoint.x) + 2 * path.currentPoint.x,
+                        -1 * (command.parameters[1] + oldPoint.y) + 2 * path.currentPoint.y);
                 }
             }
         }
     }
     if (type == kIJSVGCommandTypeAbsolute) {
-        [[path currentSubpath] curveToPoint:NSMakePoint(params[2], params[3])
-                              controlPoint1:NSMakePoint(firstControl.x, firstControl.y)
-                              controlPoint2:NSMakePoint(params[0], params[1])];
+        [path.path curveToPoint:NSMakePoint(params[2], params[3])
+                  controlPoint1:NSMakePoint(firstControl.x, firstControl.y)
+                  controlPoint2:NSMakePoint(params[0], params[1])];
         return;
     }
-    [[path currentSubpath] curveToPoint:NSMakePoint([path currentSubpath].currentPoint.x + params[2], [path currentSubpath].currentPoint.y + params[3])
-                          controlPoint1:NSMakePoint(firstControl.x, firstControl.y)
-                          controlPoint2:NSMakePoint([path currentSubpath].currentPoint.x + params[0], [path currentSubpath].currentPoint.y + params[1])];
+    [path.path curveToPoint:NSMakePoint(path.currentPoint.x + params[2], path.currentPoint.y + params[3])
+              controlPoint1:NSMakePoint(firstControl.x, firstControl.y)
+              controlPoint2:NSMakePoint(path.currentPoint.x + params[0], path.currentPoint.y + params[1])];
 }
 
 @end

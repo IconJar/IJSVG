@@ -1221,7 +1221,7 @@
     CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
     CGFloat r = [element attributeForName:(NSString*)IJSVGAttributeR].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - r, cY - r, r * 2, r * 2);
-    [path overwritePath:[NSBezierPath bezierPathWithOvalInRect:rect]];
+    path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
 }
 
 - (void)_parseEllipse:(NSXMLElement*)element
@@ -1233,7 +1233,7 @@
     CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
     CGFloat rY = [element attributeForName:(NSString*)IJSVGAttributeRY].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - rX, cY - rY, rX * 2, rY * 2);
-    [path overwritePath:[NSBezierPath bezierPathWithOvalInRect:rect]];
+    path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
 }
 
 - (void)_parsePolyline:(NSXMLElement*)element
@@ -1310,11 +1310,9 @@
     if ([element attributeForName:(NSString*)IJSVGAttributeRY] == nil) {
         rY = rX;
     }
-
-    NSBezierPath* newPath = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(x, y, width, height)
-                                                            xRadius:rX
-                                                            yRadius:rY];
-    [path overwritePath:newPath];
+    path.path = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(x, y, width, height)
+                                                xRadius:rX
+                                                yRadius:rY];
 }
 
 @end

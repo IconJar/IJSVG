@@ -172,8 +172,9 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 + (NSBezierPath*)transformedPath:(IJSVGPath*)path
 {
-    if (path.transforms.count == 0)
+    if (path.transforms.count == 0) {
         return path.path;
+    }
     NSBezierPath* cop = [[path.path copy] autorelease];
     for (IJSVGTransform* transform in path.transforms) {
         NSAffineTransform* at = NSAffineTransform.transform;
