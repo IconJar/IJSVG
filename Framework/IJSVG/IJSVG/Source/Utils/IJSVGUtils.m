@@ -318,7 +318,7 @@ NSString* IJSVGPointToCommandString(CGPoint point)
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    const char* validChars = "MmZzLlHhVvCcSsQqTtAa";
+    const char* validChars = "MmZzCcLlSsQqHhVvTtAa";
     return strchr(validChars, aChar) != NULL;
 }
 
