@@ -384,18 +384,48 @@
                   flipped:(BOOL)flipped
                     error:(NSError**)error
 {
-    NSImage* im = [[[NSImage alloc] initWithSize:aSize] autorelease];
-    [im lockFocus];
-    CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
-    CGContextSaveGState(ref);
-    if (flipped) {
+    // setup the drawing rect, this is used for both the intial drawing
+    // and the backing scale helper block
+    NSRect rect = (CGRect){
+        .origin = CGPointZero,
+        .size = (CGSize)aSize
+    };
+    
+    // this is highly important this is setup
+    [self _beginDraw:rect];
+    [self _askHelperForBackingScale];
+
+    CGFloat scale = _lastProposedBackingScale;
+
+    // create the context and colorspace
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ref = CGBitmapContextCreate(NULL, (int)aSize.width * scale,
+        (int)aSize.height * scale, 8, 0, colorSpace,
+        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+
+    // scale the context
+    CGContextScaleCTM(ref, scale, scale);
+
+    if (flipped == YES) {
         CGContextTranslateCTM(ref, 0.f, aSize.height);
         CGContextScaleCTM(ref, 1.f, -1.f);
     }
-    [self drawAtPoint:NSMakePoint(0.f, 0.f) size:aSize error:error];
-    CGContextRestoreGState(ref);
-    [im unlockFocus];
-    return im;
+
+    // draw the SVG into the context
+    [self drawInRect:rect
+             context:ref];
+
+    // create the image from the context
+    CGImageRef imageRef = CGBitmapContextCreateImage(ref);
+    NSImage* image = [[[NSImage alloc] initWithCGImage:imageRef
+                                                  size:aSize] autorelease];
+
+    // release all things!
+    CGImageRelease(imageRef);
+    CGColorSpaceRelease(colorSpace);
+    CGContextRelease(ref);
+
+    return image;
 }
 
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
@@ -636,7 +666,8 @@
 
 - (void)_askHelperForBackingScale
 {
-    CGFloat scale = (self.renderingBackingScaleHelper)();
+    __block CGFloat scale = 1.f;
+    scale = (self.renderingBackingScaleHelper)();
     if (scale < 1.f) {
         scale = 1.f;
     }
