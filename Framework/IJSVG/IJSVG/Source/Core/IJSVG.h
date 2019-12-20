@@ -45,6 +45,7 @@
     IJSVGLayer* _layerTree;
     CGRect _viewBox;
     CGSize _proposedViewSize;
+    CGFloat _backingScaleFactor;
     CGFloat _lastProposedBackingScale;
     IJSVGRenderQuality _lastProposedRenderQuality;
     CGFloat _backingScale;

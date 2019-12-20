@@ -360,17 +360,25 @@
 
 - (NSImage*)imageWithSize:(NSSize)aSize
 {
-    return [self imageWithSize:aSize flipped:NO error:nil];
+    return [self imageWithSize:aSize
+                       flipped:NO
+                         error:nil];
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize error:(NSError**)error;
+- (NSImage*)imageWithSize:(NSSize)aSize
+                    error:(NSError**)error;
 {
-    return [self imageWithSize:aSize flipped:NO error:error];
+    return [self imageWithSize:aSize
+                       flipped:NO
+                         error:error];
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize flipped:(BOOL)flipped
+- (NSImage*)imageWithSize:(NSSize)aSize
+                  flipped:(BOOL)flipped
 {
-    return [self imageWithSize:aSize flipped:flipped error:nil];
+    return [self imageWithSize:aSize
+                       flipped:flipped
+                         error:nil];
 }
 
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize
@@ -390,12 +398,12 @@
         .origin = CGPointZero,
         .size = (CGSize)aSize
     };
-    
+
     // this is highly important this is setup
     [self _beginDraw:rect];
-    [self _askHelperForBackingScale];
 
-    CGFloat scale = _lastProposedBackingScale;
+    // make sure we setup the scale based on the backing scale factor
+    CGFloat scale = [self backindScaleFactor:NULL];
 
     // create the context and colorspace
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -631,7 +639,7 @@
             // do we need to update the backing scales on the
             // layers?
             if (self.renderingBackingScaleHelper != nil) {
-                [self _askHelperForBackingScale];
+                [self backindScaleFactor:nil];
             }
 
             CGInterpolationQuality quality;
@@ -664,13 +672,14 @@
     return (error == nil);
 }
 
-- (void)_askHelperForBackingScale
+- (CGFloat)backindScaleFactor:(CGFloat* _Nullable)proposedBackingScale
 {
     __block CGFloat scale = 1.f;
     scale = (self.renderingBackingScaleHelper)();
     if (scale < 1.f) {
         scale = 1.f;
     }
+    _backingScaleFactor = scale;
 
     // make sure we multiple the scale by the scale of the rendered clip
     // or it will be blurry for gradients and other bitmap drawing
@@ -679,12 +688,15 @@
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!
     if (scale == _lastProposedBackingScale && renderQuality == _lastProposedRenderQuality) {
-        return;
+        return _backingScaleFactor;
     }
 
     IJSVGRenderQuality quality = self.renderQuality;
     _lastProposedBackingScale = scale;
     _lastProposedRenderQuality = quality;
+    if (proposedBackingScale != nil && proposedBackingScale != NULL) {
+        *proposedBackingScale = scale;
+    }
 
     // walk the tree
     void (^block)(CALayer* layer, BOOL isMask) = ^void(CALayer* layer, BOOL isMask) {
@@ -697,6 +709,7 @@
 
     // gogogo
     [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
+    return _backingScaleFactor;
 }
 
 - (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree
