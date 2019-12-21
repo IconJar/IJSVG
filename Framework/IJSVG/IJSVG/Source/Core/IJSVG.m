@@ -388,15 +388,15 @@
         _proposedViewSize.height * _clipScale);
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize
-                  flipped:(BOOL)flipped
-                    error:(NSError**)error
+- (CGImageRef)CGImageRefWithSize:(CGSize)size
+                         flipped:(BOOL)flipped
+                           error:(NSError**)error
 {
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
     NSRect rect = (CGRect){
         .origin = CGPointZero,
-        .size = (CGSize)aSize
+        .size = (CGSize)size
     };
 
     // this is highly important this is setup
@@ -407,33 +407,44 @@
 
     // create the context and colorspace
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ref = CGBitmapContextCreate(NULL, (int)aSize.width * scale,
-        (int)aSize.height * scale, 8, 0, colorSpace,
+    CGContextRef ref = CGBitmapContextCreate(NULL, (int)size.width * scale,
+        (int)size.height * scale, 8, 0, colorSpace,
         kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
 
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
 
     if (flipped == YES) {
-        CGContextTranslateCTM(ref, 0.f, aSize.height);
+        CGContextTranslateCTM(ref, 0.f, size.height);
         CGContextScaleCTM(ref, 1.f, -1.f);
     }
 
     // draw the SVG into the context
-    [self drawInRect:rect
-             context:ref];
+    [self _drawInRect:rect
+              context:ref
+                error:error];
 
     // create the image from the context
     CGImageRef imageRef = CGBitmapContextCreateImage(ref);
-    NSImage* image = [[[NSImage alloc] initWithCGImage:imageRef
-                                                  size:aSize] autorelease];
 
     // release all things!
-    CGImageRelease(imageRef);
     CGColorSpaceRelease(colorSpace);
     CGContextRelease(ref);
+    return imageRef;
+}
 
-    return image;
+- (NSImage*)imageWithSize:(NSSize)aSize
+                  flipped:(BOOL)flipped
+                    error:(NSError**)error
+{
+    CGImageRef ref = [self CGImageRefWithSize:aSize
+                                      flipped:flipped
+                                        error:error];
+
+    NSImage* image = [[NSImage alloc] initWithCGImage:ref
+                                                 size:aSize];
+    CGImageRelease(ref);
+    return image.autorelease;
 }
 
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
