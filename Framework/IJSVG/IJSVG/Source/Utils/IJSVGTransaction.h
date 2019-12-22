@@ -10,5 +10,5 @@
 #import <QuartzCore/QuartzCore.h>
 
 BOOL IJSVGIsMainThread(void);
-void IJSVGBeginTransactionLock(void);
+BOOL IJSVGBeginTransactionLock(void);
 void IJSVGEndTransactionLock(void);

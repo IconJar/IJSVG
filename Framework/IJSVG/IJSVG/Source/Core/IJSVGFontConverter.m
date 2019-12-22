@@ -115,7 +115,7 @@
 + (IJSVG*)convertPathToSVG:(CGPathRef)path
 {
     __block IJSVG* svg = nil;
-    IJSVGBeginTransactionLock();
+    BOOL lockAquired = IJSVGBeginTransactionLock();
     IJSVGGroupLayer* layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     IJSVGShapeLayer* shape = [[[IJSVGShapeLayer alloc] init] autorelease];
     [layer addSublayer:shape];
@@ -123,7 +123,9 @@
     CGRect box = CGPathGetPathBoundingBox(path);
     svg = [[IJSVG alloc] initWithSVGLayer:layer
                                   viewBox:box];
-    IJSVGEndTransactionLock();
+    if (lockAquired == YES) {
+        IJSVGEndTransactionLock();
+    }
     return [svg autorelease];
 }
 

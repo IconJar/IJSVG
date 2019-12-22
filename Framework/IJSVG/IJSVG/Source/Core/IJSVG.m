@@ -20,14 +20,25 @@
 
 - (void)dealloc
 {
-    IJSVGBeginTransactionLock();
+    // this is probably really sketchy but if we are not called
+    // from main thread, we need to lock a transaction
+    // which is really slow, so instead, async the dealloc back to the main
+    // thread and let the main thread deal with deallocing this SVG object
+    if (IJSVGIsMainThread() == NO) {
+        __block id weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf dealloc];
+        });
+        return;
+    }
+
+    // kill any memory that has been around
     (void)([renderingBackingScaleHelper release]),
         renderingBackingScaleHelper = nil;
     (void)([_group release]), _group = nil;
     (void)([_layerTree release]), _layerTree = nil;
     (void)([_replacementColors release]), _replacementColors = nil;
     (void)([_style release]), _style = nil;
-    IJSVGEndTransactionLock();
     [super dealloc];
 }
 
@@ -91,13 +102,15 @@
     __block IJSVGImageLayer* imageLayer = nil;
 
     // make sure we obtain a lock, with whatever we do with layers!
-    IJSVGBeginTransactionLock();
+    BOOL lockAquired = IJSVGBeginTransactionLock();
     // create the layers we require
     layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     imageLayer =
         [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     [layer addSublayer:imageLayer];
-    IJSVGEndTransactionLock();
+    if(lockAquired == YES) {
+        IJSVGEndTransactionLock();
+    }
 
     // return the initialized SVG
     return [self initWithSVGLayer:layer viewBox:imageLayer.frame];
@@ -214,8 +227,9 @@
         [self _checkDelegate];
 
         // create the group
-        _group = [[IJSVGParser groupForFileURL:aURL error:&anError delegate:self]
-            retain];
+        _group = [[IJSVGParser groupForFileURL:aURL
+                                         error:&anError
+                                      delegate:self] retain];
 
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
@@ -646,7 +660,7 @@
 
             // render the layer, its really important we lock
             // the transaction when drawing
-            IJSVGBeginTransactionLock();
+            BOOL lockAquired = IJSVGBeginTransactionLock();
             // do we need to update the backing scales on the
             // layers?
             if (self.renderingBackingScaleHelper != nil) {
@@ -669,7 +683,9 @@
             }
             CGContextSetInterpolationQuality(ref, quality);
             [self.layer renderInContext:ref];
-            IJSVGEndTransactionLock();
+            if (lockAquired == YES) {
+                IJSVGEndTransactionLock();
+            }
         }
     } @catch (NSException* exception) {
         // just catch and give back a drawing error to the caller
@@ -731,9 +747,11 @@
     }
 
     // force rebuild of the tree
-    IJSVGBeginTransactionLock();
+    BOOL lockAquired = IJSVGBeginTransactionLock();
     _layerTree = [[tree layerForNode:_group] retain];
-    IJSVGEndTransactionLock();
+    if (lockAquired == YES) {
+        IJSVGEndTransactionLock();
+    }
     return _layerTree;
 }
 
