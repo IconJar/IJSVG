@@ -184,7 +184,34 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
     return sequence;
 };
 
-CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSequence* _Nullable sequence,
+// for the parser to stick to generic numbers
+// instead of the computers locale
+static locale_t c_locale;
+static int c_locale_initialized = 0;
+locale_t ijsvg_c_locale(void)
+{
+    if (c_locale_initialized == 0) {
+        c_locale_initialized = 1;
+        c_locale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+    }
+    return c_locale;
+}
+
+IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(void)
+{
+    IJSVGParsePathBuffer* buffer = (IJSVGParsePathBuffer*)malloc(sizeof(IJSVGParsePathBufferCreate));
+    buffer->float_buffer = (CGFloat*)malloc(sizeof(CGFloat) * 50);
+    buffer->float_count = 50;
+    return buffer;
+}
+
+void IJSVGParsePathBufferRelease(IJSVGParsePathBuffer* buffer)
+{
+    free(buffer->float_buffer);
+    free(buffer);
+};
+
+CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathBuffer* parseBuffer, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* commandsFound)
 {
     // if no command length, its completely pointless function,
@@ -207,15 +234,14 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
     NSInteger i = 0;
     NSInteger counter = 0;
 
+    locale_t c_locale = ijsvg_c_locale();
+
     const char* cString = string.UTF8String;
     const char* validChars = "eE+-.";
 
     // this is much faster then doing strlen as it doesnt need
     // to compute the length
     NSInteger sLength = string.length;
-
-    // buffer for the returned floats
-    CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * defFloatSize);
 
     char* buffer = NULL;
     bool isDecimal = false;
@@ -252,7 +278,6 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
                 if (buffer) {
                     (void)free(buffer), buffer = nil;
                 }
-                (void)free(floats), floats = nil;
                 return NULL;
             }
             wantsEnd = YES;
@@ -264,7 +289,7 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
         }
 
         // make sure its a valid string
-        if (isValid) {
+        if (isValid == YES) {
             // alloc the buffer if needed
             if (buffer == NULL) {
                 buffer = (char*)calloc(sizeof(char), size);
@@ -289,25 +314,29 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSeq
         // useless and will cause a crash
         if ((buffer != NULL && bufferCount != 0) && (wantsEnd || i == sLength - 1)) {
             // make sure there is enough room in the float pool
-            if ((counter + 1) == floatSize) {
-                floatSize += defFloatSize;
-                floats = (CGFloat*)realloc(floats, sizeof(CGFloat) * floatSize);
+            if ((counter + 1) == parseBuffer->float_count) {
+                parseBuffer->float_count += defFloatSize;
+                parseBuffer->float_buffer = (CGFloat*)realloc(parseBuffer->float_buffer, sizeof(CGFloat) * floatSize);
             }
 
             // add the float
-            floats[counter++] = strtod_l(buffer, NULL, NULL);
+            parseBuffer->float_buffer[counter++] = strtod_l(buffer, NULL, c_locale);
 
             // memory clean and counter resets
-            memset(buffer, '\0', sizeof(*buffer) * size);
+            memset(buffer, '\0', sizeof(*buffer) * bufferCount);
             isDecimal = false;
             bufferCount = 0;
         }
         i++;
     }
     if (buffer != NULL) {
-        free(buffer);
+        (void)free(buffer), buffer = NULL;
     }
     *commandsFound = (NSInteger)round(counter / commandLength);
+    
+    // allocate the new buffer from memory
+    CGFloat * floats = (CGFloat*)malloc(sizeof(CGFloat*)*counter);
+    memcpy(floats, parseBuffer->float_buffer, counter * sizeof(CGFloat));
     return floats;
 }
 
@@ -570,7 +599,10 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
-    return IJSVGParsePathDataSequence(string, NULL, 1, length);
+    IJSVGParsePathBuffer * buffer = IJSVGParsePathBufferCreate();
+    CGFloat * floats = IJSVGParsePathDataSequence(string, buffer, NULL, 1, length);
+    IJSVGParsePathBufferRelease(buffer);
+    return floats;
 }
 
 + (CGFloat*)parseViewBox:(NSString*)string

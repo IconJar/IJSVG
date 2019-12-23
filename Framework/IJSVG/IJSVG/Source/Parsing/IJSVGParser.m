@@ -47,6 +47,9 @@
     (void)([_baseDefNodes release]), _baseDefNodes = nil;
     (void)([_definedGroups release]), _definedGroups = nil;
     (void)([_svgs release]), _svgs = nil;
+    if (_commandBuffer != NULL) {
+        (void)IJSVGParsePathBufferRelease(_commandBuffer), _commandBuffer = nil;
+    }
     [super dealloc];
 }
 
@@ -61,6 +64,7 @@
         _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
+        _commandBuffer = IJSVGParsePathBufferCreate();
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
@@ -240,6 +244,7 @@
     (void)([_styleSheet release]), _styleSheet = nil;
     (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
+    (void)IJSVGParsePathBufferRelease(_commandBuffer), _commandBuffer = NULL;
 }
 
 - (void)_postParseElementForCommonAttributes:(NSXMLElement*)element
@@ -1180,7 +1185,8 @@
     // main commands
     //    Class commandClass = [IJSVGCommand classFor]
     Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
-    IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string] autorelease];
+    IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string
+                                                                                 buffer:_commandBuffer] autorelease];
     for (IJSVGCommand* subCommand in [command subCommands]) {
         [command.class runWithParams:subCommand.parameters
                           paramCount:subCommand.parameterCount

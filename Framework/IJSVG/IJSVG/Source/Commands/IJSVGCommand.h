@@ -60,7 +60,8 @@ typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
           intoArray:(NSMutableArray<IJSVGCommand*>*)commands
       parentCommand:(IJSVGCommand*)parentCommand;
 
-- (id)initWithCommandString:(NSString*)commandString;
+- (id)initWithCommandString:(NSString*)str
+                     buffer:(void*)buffer;
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
                           previousCommand:(IJSVGCommand*)command;
 

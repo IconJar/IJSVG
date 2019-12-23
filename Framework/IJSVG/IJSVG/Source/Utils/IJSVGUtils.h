@@ -12,7 +12,13 @@
 #import <Foundation/Foundation.h>
 #include <xlocale.h>
 
+NS_ASSUME_NONNULL_BEGIN
 @interface IJSVGUtils : NSObject
+
+typedef struct _IJSVGParsePathBuffer {
+    CGFloat* float_buffer;
+    NSInteger float_count;
+} IJSVGParsePathBuffer;
 
 CGFloat magnitude(CGPoint point);
 CGFloat ratio(CGPoint a, CGPoint b);
@@ -22,13 +28,15 @@ CGFloat degrees_to_radians(CGFloat degrees);
 
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
 NSArray* IJSVGCommonHTMLElementNames(void);
+IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(void);
+void IJSVGParsePathBufferRelease(IJSVGParsePathBuffer* buffer);
 
 NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
-CGFloat* IJSVGParsePathDataSequence(NSString* string, IJSVGPathDataSequence* sequence,
+CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathBuffer* parseBuffer, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* commandsFound);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
@@ -62,3 +70,4 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
 + (CGPathRef)newCGPathFromBezierPath:(NSBezierPath*)bezPath;
 @end
+NS_ASSUME_NONNULL_END
