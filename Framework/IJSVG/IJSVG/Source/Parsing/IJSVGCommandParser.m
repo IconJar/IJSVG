@@ -10,6 +10,8 @@
 
 @implementation IJSVGCommandParser
 
+#define VALID_DIGIT(c) ((c) >= '0' && (c) <= '9')
+
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length)
 {
     size_t size = sizeof(IJSVGPathDataSequence) * length;
@@ -17,19 +19,6 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
     memset(sequence, type, size);
     return sequence;
 };
-
-// for the parser to stick to generic numbers
-// instead of the computers locale
-static locale_t c_locale;
-static int c_locale_initialized = 0;
-locale_t ijsvg_c_locale(void)
-{
-    if (c_locale_initialized == 0) {
-        c_locale_initialized = 1;
-        c_locale = newlocale(LC_NUMERIC_MASK, "C", NULL);
-    }
-    return c_locale;
-}
 
 IJSVGParsePathDataStream* IJSVGParsePathDataStreamCreateDefault(void)
 {
@@ -76,8 +65,6 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
     NSInteger i = 0;
     NSInteger counter = 0;
 
-    locale_t c_locale = ijsvg_c_locale();
-
     const char* cString = string.UTF8String;
     const char* validChars = "eE+-.";
 
@@ -99,11 +86,11 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
         }
 
         // check for validator
-        bool isValid = (currentChar >= '0' && currentChar <= '9') || strchr(validChars, currentChar) != NULL;
+        bool isValid = VALID_DIGIT(currentChar) || strchr(validChars, currentChar) != NULL;
 
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
-        bool isE = currentChar == 'e' || currentChar == 'E';
+        bool isE = (currentChar | ('E' ^ 'e')) == 'e';
         bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
 
         // work our what the sequence is...
@@ -159,7 +146,7 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
             }
 
             // add the float
-            stream->floatBuffer[counter++] = strtod_l(stream->charBuffer, NULL, c_locale);
+            stream->floatBuffer[counter++] = (CGFloat)IJSVGParseFloat(stream->charBuffer);
 
             // memory clean and counter resets
             memset(stream->charBuffer, '\0', sizeof(char) * bufferCount);
@@ -179,6 +166,66 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
 
     // return the floats just set into the memory
     return floats;
+}
+
+double IJSVGParseFloat(char* string)
+{
+    int fraction;
+    double sign, value, scale;
+
+    sign = 1.f;
+    if (*string == '-') {
+        sign = -1.f;
+        string += 1;
+    } else if (*string == '+') {
+        string += 1;
+    }
+
+    for (value = 0.f; VALID_DIGIT(*string); string += 1) {
+        value = value * 10.f + (*string - '0');
+    }
+
+    if (*string == '.') {
+        double pow10 = 10.f;
+        string += 1;
+        while (VALID_DIGIT(*string)) {
+            value += (*string - '0') / pow10;
+            pow10 *= 10.f;
+            string += 1;
+        }
+    }
+
+    fraction = 0;
+    scale = 1.f;
+    if ((*string | ('E' ^ 'e')) == 'e') {
+        unsigned int exponent;
+        string += 1;
+        if (*string == '-') {
+            fraction = 1;
+            string += 1;
+        } else if (*string == '+') {
+            string += 1;
+        }
+        for (exponent = 0; VALID_DIGIT(*string); string += 1) {
+            exponent = exponent * 10 + (*string - '0');
+        }
+        if (exponent > 308) {
+            exponent = 308;
+        }
+        while (exponent >= 50) {
+            scale *= 1E50;
+            exponent -= 50;
+        }
+        while (exponent >= 8) {
+            scale *= 1E8;
+            exponent -= 8;
+        }
+        while (exponent > 0) {
+            scale *= 10.f;
+            exponent -= 1;
+        }
+    }
+    return sign * (fraction ? (value / scale) : (value * scale));
 }
 
 @end
