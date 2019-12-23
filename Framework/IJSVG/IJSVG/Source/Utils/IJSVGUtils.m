@@ -199,14 +199,14 @@ locale_t ijsvg_c_locale(void)
 
 IJSVGParsePathBuffer* IJSVGParsePathBufferCreateDefault(void)
 {
-    return IJSVGParsePathBufferCreate(IJSVG_PARSE_PATH_DEFAULT_FLOAT_BUFFER_COUNT,
-        IJSVG_PARSE_PATH_DEFAULT_CHAR_BUFFER_COUNT);
+    return IJSVGParsePathBufferCreate(IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_FLOUT,
+        IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_CHAR);
 }
 
 IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(NSUInteger floatCount, NSUInteger charCount)
 {
-    floatCount = floatCount ?: IJSVG_PARSE_PATH_DEFAULT_FLOAT_BUFFER_COUNT;
-    charCount = charCount ?: IJSVG_PARSE_PATH_DEFAULT_CHAR_BUFFER_COUNT;
+    floatCount = floatCount ?: IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_FLOUT;
+    charCount = charCount ?: IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_CHAR;
     IJSVGParsePathBuffer* buffer = (IJSVGParsePathBuffer*)malloc(sizeof(IJSVGParsePathBuffer));
     buffer->float_buffer = (CGFloat*)malloc(sizeof(CGFloat) * floatCount);
     buffer->float_count = floatCount;
@@ -613,7 +613,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)parseViewBox:(NSString*)string
 {
     IJSVGParsePathBuffer* buffer = IJSVGParsePathBufferCreate(4,
-        IJSVG_PARSE_PATH_DEFAULT_CHAR_BUFFER_COUNT);
+        IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_CHAR);
     NSInteger length = 0;
     CGFloat* floats = IJSVGParsePathDataSequence(string, buffer, NULL, 1, &length);
     IJSVGParsePathBufferRelease(buffer);
