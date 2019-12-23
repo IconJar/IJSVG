@@ -114,7 +114,7 @@
 }
 
 - (id)initWithCommandString:(NSString*)str
-                     buffer:(void*)buffer
+                 dataStream:(IJSVGParsePathDataStream*)dataStream
 {
     if ((self = [super init]) != nil) {
         // work out the basics
@@ -124,7 +124,7 @@
         requiredParameters = [self.class requiredParameterCount];
         NSInteger sets = 0;
         IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
-        parameters = IJSVGParsePathDataSequence(str, buffer, sequence, requiredParameters, &sets);
+        parameters = IJSVGParsePathDataSequence(str, dataStream, sequence, requiredParameters, &sets);
 
         if (sets <= 1) {
             CGFloat* subParams = [self parametersFromIndexOffset:0];

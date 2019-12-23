@@ -10,21 +10,10 @@
 #import "IJSVGGradientUnitLength.h"
 #import "IJSVGStringAdditions.h"
 #import <Foundation/Foundation.h>
-#include <xlocale.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-static NSUInteger const IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_FLOUT = 50;
-static NSUInteger const IJSVG_PARSE_PATH_DEFAULT_BUFFER_COUNT_CHAR = 20;
-
 @interface IJSVGUtils : NSObject
-
-typedef struct _IJSVGParsePathBuffer {
-    CGFloat* float_buffer;
-    NSInteger float_count;
-    char* char_buffer;
-    NSInteger char_count;
-} IJSVGParsePathBuffer;
 
 CGFloat magnitude(CGPoint point);
 CGFloat ratio(CGPoint a, CGPoint b);
@@ -35,17 +24,9 @@ CGFloat degrees_to_radians(CGFloat degrees);
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
 NSArray* IJSVGCommonHTMLElementNames(void);
 
-IJSVGParsePathBuffer* IJSVGParsePathBufferCreateDefault(void);
-IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(NSUInteger floatCount, NSUInteger charCount);
-void IJSVGParsePathBufferRelease(IJSVGParsePathBuffer* buffer);
-
 NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
-
-IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
-CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathBuffer* parseBuffer, IJSVGPathDataSequence* _Nullable sequence,
-    NSInteger commandLength, NSInteger* commandsFound);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 BOOL IJSVGIsSVGLayer(CALayer* layer);

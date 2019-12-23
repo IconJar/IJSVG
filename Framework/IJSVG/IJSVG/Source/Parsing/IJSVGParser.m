@@ -47,8 +47,8 @@
     (void)([_baseDefNodes release]), _baseDefNodes = nil;
     (void)([_definedGroups release]), _definedGroups = nil;
     (void)([_svgs release]), _svgs = nil;
-    if (_commandBuffer != NULL) {
-        (void)IJSVGParsePathBufferRelease(_commandBuffer), _commandBuffer = nil;
+    if (_commandDataStream != NULL) {
+        (void)IJSVGParsePathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
     }
     [super dealloc];
 }
@@ -64,7 +64,7 @@
         _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
-        _commandBuffer = IJSVGParsePathBufferCreateDefault();
+        _commandDataStream = IJSVGParsePathDataStreamCreateDefault();
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
@@ -244,7 +244,7 @@
     (void)([_styleSheet release]), _styleSheet = nil;
     (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
-    (void)IJSVGParsePathBufferRelease(_commandBuffer), _commandBuffer = NULL;
+    (void)IJSVGParsePathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
 }
 
 - (void)_postParseElementForCommonAttributes:(NSXMLElement*)element
@@ -1186,7 +1186,7 @@
     //    Class commandClass = [IJSVGCommand classFor]
     Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
     IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string
-                                                                                 buffer:_commandBuffer] autorelease];
+                                                                             dataStream:_commandDataStream] autorelease];
     for (IJSVGCommand* subCommand in [command subCommands]) {
         [command.class runWithParams:subCommand.parameters
                           paramCount:subCommand.parameterCount

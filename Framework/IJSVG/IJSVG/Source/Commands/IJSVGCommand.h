@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGCommandParser.h"
 #import "IJSVGPath.h"
 #import <Foundation/Foundation.h>
 
@@ -14,11 +15,6 @@ static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;
 typedef NS_ENUM(NSInteger, IJSVGCommandType) {
     kIJSVGCommandTypeAbsolute,
     kIJSVGCommandTypeRelative
-};
-
-typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
-    kIJSVGPathDataSequenceTypeFloat,
-    kIJSVGPathDataSequenceTypeFlag
 };
 
 @interface IJSVGCommand : NSObject {
@@ -61,7 +57,7 @@ typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
       parentCommand:(IJSVGCommand*)parentCommand;
 
 - (id)initWithCommandString:(NSString*)str
-                     buffer:(void*)buffer;
+                 dataStream:(IJSVGParsePathDataStream*)dataStream;
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
                           previousCommand:(IJSVGCommand*)command;
 

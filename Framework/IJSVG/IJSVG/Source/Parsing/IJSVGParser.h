@@ -104,7 +104,7 @@ static NSString const* IJSVGAttributePoints = @"points";
         unsigned int handleSubSVG : 1;
     } _respondsTo;
 
-    IJSVGParsePathBuffer* _commandBuffer;
+    IJSVGParsePathDataStream* _commandDataStream;
 }
 
 @property (nonatomic, readonly) NSRect viewBox;
