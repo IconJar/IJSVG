@@ -24,16 +24,16 @@ typedef struct {
     NSInteger floatCount;
     char* charBuffer;
     NSInteger charCount;
-} IJSVGParsePathDataStream;
+} IJSVGPathDataStream;
 
 @interface IJSVGCommandParser : NSObject
 
-IJSVGParsePathDataStream* IJSVGParsePathDataStreamCreateDefault(void);
-IJSVGParsePathDataStream* IJSVGParsePathDataStramCreate(NSUInteger floatCount, NSUInteger charCount);
-void IJSVGParsePathDataStreamRelease(IJSVGParsePathDataStream* buffer);
+IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void);
+IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount);
+void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer);
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
-CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDataStream* parseBuffer, IJSVGPathDataSequence* _Nullable sequence,
+CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* _Nullable commandsFound);
 
 @end

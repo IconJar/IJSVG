@@ -435,18 +435,18 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
-    IJSVGParsePathDataStream* stream = IJSVGParsePathDataStreamCreateDefault();
-    CGFloat* floats = IJSVGParsePathDataSequence(string, stream, NULL, 1, length);
-    IJSVGParsePathDataStreamRelease(stream);
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(string, stream, NULL, 1, length);
+    IJSVGPathDataStreamRelease(stream);
     return floats;
 }
 
 + (CGFloat*)parseViewBox:(NSString*)string
 {
-    IJSVGParsePathDataStream* stream = IJSVGParsePathDataStramCreate(4,
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(4,
         IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_CHAR);
-    CGFloat* floats = IJSVGParsePathDataSequence(string, stream, NULL, 1, NULL);
-    IJSVGParsePathDataStreamRelease(stream);
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(string, stream, NULL, 1, NULL);
+    IJSVGPathDataStreamRelease(stream);
     return floats;
 }
 

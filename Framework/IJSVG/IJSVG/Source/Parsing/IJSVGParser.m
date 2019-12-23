@@ -48,7 +48,7 @@
     (void)([_definedGroups release]), _definedGroups = nil;
     (void)([_svgs release]), _svgs = nil;
     if (_commandDataStream != NULL) {
-        (void)IJSVGParsePathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
+        (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
     }
     [super dealloc];
 }
@@ -64,7 +64,7 @@
         _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
-        _commandDataStream = IJSVGParsePathDataStreamCreateDefault();
+        _commandDataStream = IJSVGPathDataStreamCreateDefault();
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
@@ -244,7 +244,7 @@
     (void)([_styleSheet release]), _styleSheet = nil;
     (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
-    (void)IJSVGParsePathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
+    (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
 }
 
 - (void)_postParseElementForCommonAttributes:(NSXMLElement*)element

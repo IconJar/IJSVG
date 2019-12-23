@@ -26,17 +26,17 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 // calls as we simple can just reuse the buffer that already exists - this also
 // allows us to specify the default allocation size, so when parsing viewBox we
 // can simply allocate (4*sizeof(CGFloat)) instead of the default 50 slots
-IJSVGParsePathDataStream* IJSVGParsePathDataStreamCreateDefault(void)
+IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void)
 {
-    return IJSVGParsePathDataStramCreate(IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_FLOAT,
+    return IJSVGPathDataStreamCreate(IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_FLOAT,
         IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_CHAR);
 }
 
-IJSVGParsePathDataStream* IJSVGParsePathDataStramCreate(NSUInteger floatCount, NSUInteger charCount)
+IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount)
 {
     floatCount = floatCount ?: IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_FLOAT;
     charCount = charCount ?: IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_CHAR;
-    IJSVGParsePathDataStream* buffer = (IJSVGParsePathDataStream*)malloc(sizeof(IJSVGParsePathDataStream));
+    IJSVGPathDataStream* buffer = (IJSVGPathDataStream*)malloc(sizeof(IJSVGPathDataStream));
     buffer->floatBuffer = (CGFloat*)malloc(sizeof(CGFloat) * floatCount);
     buffer->floatCount = floatCount;
     buffer->charBuffer = (char*)calloc(sizeof(char), charCount);
@@ -44,14 +44,14 @@ IJSVGParsePathDataStream* IJSVGParsePathDataStramCreate(NSUInteger floatCount, N
     return buffer;
 }
 
-void IJSVGParsePathDataStreamRelease(IJSVGParsePathDataStream* buffer)
+void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer)
 {
     free(buffer->charBuffer);
     free(buffer->floatBuffer);
     free(buffer);
 };
 
-CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDataStream* stream,
+CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathDataStream* dataStream,
     IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* _Nullable commandsFound)
 {
     // if no command length, its completely pointless function,
@@ -123,18 +123,18 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
         // make sure its a valid string
         if (isValid == YES) {
             // alloc the buffer if needed
-            if ((bufferCount + 1) == stream->charCount) {
+            if ((bufferCount + 1) == dataStream->charCount) {
                 // realloc the buffer, incase the string is overflowing the
                 // allocated memory
-                stream->charCount += defSize;
-                stream->charBuffer = (char*)realloc(stream->charBuffer,
-                    sizeof(char) * stream->charCount);
+                dataStream->charCount += defSize;
+                dataStream->charBuffer = (char*)realloc(dataStream->charBuffer,
+                    sizeof(char) * dataStream->charCount);
             }
             // set the actual char against it
             if (currentChar == '.') {
                 isDecimal = true;
             }
-            stream->charBuffer[bufferCount++] = currentChar;
+            dataStream->charBuffer[bufferCount++] = currentChar;
         } else {
             // if its an invalid char, just stop it
             wantsEnd = true;
@@ -145,17 +145,17 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
         // useless and will cause a crash
         if (bufferCount != 0 && (wantsEnd || i == sLengthMinusOne)) {
             // make sure there is enough room in the float pool
-            if ((counter + 1) == stream->floatCount) {
-                stream->floatCount += defFloatSize;
-                stream->floatBuffer = (CGFloat*)realloc(stream->floatBuffer,
-                    sizeof(CGFloat) * stream->floatCount);
+            if ((counter + 1) == dataStream->floatCount) {
+                dataStream->floatCount += defFloatSize;
+                dataStream->floatBuffer = (CGFloat*)realloc(dataStream->floatBuffer,
+                    sizeof(CGFloat) * dataStream->floatCount);
             }
 
             // add the float
-            stream->floatBuffer[counter++] = IJSVGParseFloat(stream->charBuffer);
+            dataStream->floatBuffer[counter++] = IJSVGParseFloat(dataStream->charBuffer);
 
             // memory clean and counter resets
-            memset(stream->charBuffer, '\0', sizeof(char) * bufferCount);
+            memset(dataStream->charBuffer, '\0', sizeof(char) * bufferCount);
             isDecimal = false;
             bufferCount = 0;
         }
@@ -168,7 +168,7 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
 
     // allocate the new buffer from memory
     CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * counter);
-    memcpy(floats, stream->floatBuffer, counter * sizeof(CGFloat));
+    memcpy(floats, dataStream->floatBuffer, counter * sizeof(CGFloat));
 
     // return the floats just set into the memory
     return floats;
@@ -240,7 +240,7 @@ CGFloat IJSVGParseFloat(char* buffer)
             exponent -= 1;
         }
     }
-    
+
     // make sure we cast this to a CGFloat before return
     return (CGFloat)(sign * (fraction ? (value / scale) : (value * scale)));
 }
