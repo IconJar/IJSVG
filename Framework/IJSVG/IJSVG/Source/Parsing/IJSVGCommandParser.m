@@ -178,6 +178,7 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
 // that IJSVGParsePathDataSequence produces for each float
 // it does not look or skip white space as the previous method
 // handles this for us
+// inspired and modified from http://www.leapsecond.com/tools/fast_atof.c
 CGFloat IJSVGParseFloat(char* buffer)
 {
     int fraction;
@@ -239,6 +240,8 @@ CGFloat IJSVGParseFloat(char* buffer)
             exponent -= 1;
         }
     }
+    
+    // make sure we cast this to a CGFloat before return
     return (CGFloat)(sign * (fraction ? (value / scale) : (value * scale)));
 }
 
