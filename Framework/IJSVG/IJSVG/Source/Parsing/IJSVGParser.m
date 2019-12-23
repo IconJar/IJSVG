@@ -64,7 +64,7 @@
         _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
-        _commandBuffer = IJSVGParsePathBufferCreate();
+        _commandBuffer = IJSVGParsePathBufferCreateDefault();
         _glyphs = [[NSMutableArray alloc] init];
         _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];

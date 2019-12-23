@@ -13,11 +13,17 @@
 #include <xlocale.h>
 
 NS_ASSUME_NONNULL_BEGIN
+
+static NSUInteger const IJSVG_PARSE_PATH_DEFAULT_FLOAT_BUFFER_COUNT = 50;
+static NSUInteger const IJSVG_PARSE_PATH_DEFAULT_CHAR_BUFFER_COUNT = 20;
+
 @interface IJSVGUtils : NSObject
 
 typedef struct _IJSVGParsePathBuffer {
     CGFloat* float_buffer;
     NSInteger float_count;
+    char* char_buffer;
+    NSInteger char_count;
 } IJSVGParsePathBuffer;
 
 CGFloat magnitude(CGPoint point);
@@ -28,7 +34,9 @@ CGFloat degrees_to_radians(CGFloat degrees);
 
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
 NSArray* IJSVGCommonHTMLElementNames(void);
-IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(void);
+
+IJSVGParsePathBuffer* IJSVGParsePathBufferCreateDefault(void);
+IJSVGParsePathBuffer* IJSVGParsePathBufferCreate(NSUInteger floatCount, NSUInteger charCount);
 void IJSVGParsePathBufferRelease(IJSVGParsePathBuffer* buffer);
 
 NSString* IJSVGPointToCommandString(CGPoint point);
