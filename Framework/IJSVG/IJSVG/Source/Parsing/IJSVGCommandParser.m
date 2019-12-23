@@ -10,7 +10,7 @@
 
 @implementation IJSVGCommandParser
 
-#define VALID_DIGIT(c) ((c) >= '0' && (c) <= '9')
+#define VALID_DIGIT(c) ((c ^ '0') <= 9)
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length)
 {
@@ -20,6 +20,12 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
     return sequence;
 };
 
+// Datastreams work by setting up one stream of bits/memory per SVG
+// so that each SVG has a reusable memory block to read and parse paths into.
+// As its all linear and one SVG per thread, this saves alot of memory allocation
+// calls as we simple can just reuse the buffer that already exists - this also
+// allows us to specify the default allocation size, so when parsing viewBox we
+// can simply allocate (4*sizeof(CGFloat)) instead of the default 50 slots
 IJSVGParsePathDataStream* IJSVGParsePathDataStreamCreateDefault(void)
 {
     return IJSVGParsePathDataStramCreate(IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_FLOAT,
@@ -146,7 +152,7 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
             }
 
             // add the float
-            stream->floatBuffer[counter++] = (CGFloat)IJSVGParseFloat(stream->charBuffer);
+            stream->floatBuffer[counter++] = IJSVGParseFloat(stream->charBuffer);
 
             // memory clean and counter resets
             memset(stream->charBuffer, '\0', sizeof(char) * bufferCount);
@@ -168,46 +174,54 @@ CGFloat* _Nullable IJSVGParsePathDataSequence(NSString* string, IJSVGParsePathDa
     return floats;
 }
 
-double IJSVGParseFloat(char* string)
+// this method is finely tuned to just handle the buffer
+// that IJSVGParsePathDataSequence produces for each float
+// it does not look or skip white space as the previous method
+// handles this for us
+CGFloat IJSVGParseFloat(char* buffer)
 {
     int fraction;
     double sign, value, scale;
 
+    // work out a sign, if any, might not be, who knows
     sign = 1.f;
-    if (*string == '-') {
+    if (*buffer == '-') {
         sign = -1.f;
-        string += 1;
-    } else if (*string == '+') {
-        string += 1;
+        buffer += 1;
+    } else if (*buffer == '+') {
+        buffer += 1;
     }
 
-    for (value = 0.f; VALID_DIGIT(*string); string += 1) {
-        value = value * 10.f + (*string - '0');
+    // get numbers before decimal point or exponent
+    for (value = 0.f; VALID_DIGIT(*buffer); buffer += 1) {
+        value = value * 10.f + (*buffer - '0');
     }
 
-    if (*string == '.') {
+    // get digits after decimal point
+    if (*buffer == '.') {
         double pow10 = 10.f;
-        string += 1;
-        while (VALID_DIGIT(*string)) {
-            value += (*string - '0') / pow10;
+        buffer += 1;
+        while (VALID_DIGIT(*buffer)) {
+            value += (*buffer - '0') / pow10;
             pow10 *= 10.f;
-            string += 1;
+            buffer += 1;
         }
     }
 
+    // handle exponent
     fraction = 0;
     scale = 1.f;
-    if ((*string | ('E' ^ 'e')) == 'e') {
+    if ((*buffer | ('E' ^ 'e')) == 'e') {
         unsigned int exponent;
-        string += 1;
-        if (*string == '-') {
+        buffer += 1;
+        if (*buffer == '-') {
             fraction = 1;
-            string += 1;
-        } else if (*string == '+') {
-            string += 1;
+            buffer += 1;
+        } else if (*buffer == '+') {
+            buffer += 1;
         }
-        for (exponent = 0; VALID_DIGIT(*string); string += 1) {
-            exponent = exponent * 10 + (*string - '0');
+        for (exponent = 0; VALID_DIGIT(*buffer); buffer += 1) {
+            exponent = exponent * 10 + (*buffer - '0');
         }
         if (exponent > 308) {
             exponent = 308;
@@ -225,7 +239,7 @@ double IJSVGParseFloat(char* string)
             exponent -= 1;
         }
     }
-    return sign * (fraction ? (value / scale) : (value * scale));
+    return (CGFloat)(sign * (fraction ? (value / scale) : (value * scale)));
 }
 
 @end
