@@ -124,7 +124,8 @@
         requiredParameters = [self.class requiredParameterCount];
         NSInteger sets = 0;
         IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
-        parameters = IJSVGParsePathDataStreamSequence(str, dataStream, sequence, requiredParameters, &sets);
+        parameters = IJSVGParsePathDataStreamSequence(str.UTF8String, str.length,
+            dataStream, sequence, requiredParameters, &sets);
 
         if (sets <= 1) {
             CGFloat* subParams = [self parametersFromIndexOffset:0];

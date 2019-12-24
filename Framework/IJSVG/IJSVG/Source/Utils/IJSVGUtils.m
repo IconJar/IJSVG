@@ -436,7 +436,8 @@ CGFloat degrees_to_radians(CGFloat degrees)
                             size:(NSInteger*)length
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(string, stream, NULL, 1, length);
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String, string.length,
+        stream, NULL, 1, length);
     IJSVGPathDataStreamRelease(stream);
     return floats;
 }
@@ -445,7 +446,8 @@ CGFloat degrees_to_radians(CGFloat degrees)
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(4,
         IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_CHAR);
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(string, stream, NULL, 1, NULL);
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String,
+        string.length, stream, NULL, 1, NULL);
     IJSVGPathDataStreamRelease(stream);
     return floats;
 }

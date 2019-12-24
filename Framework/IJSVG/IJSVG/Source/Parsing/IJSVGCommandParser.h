@@ -33,7 +33,8 @@ IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger
 void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer);
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
-CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
+CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
+    IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* _Nullable commandsFound);
 
 @end

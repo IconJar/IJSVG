@@ -51,8 +51,9 @@ void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer)
     free(buffer);
 };
 
-CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathDataStream* dataStream,
-    IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* _Nullable commandsFound)
+CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
+    IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
+    NSInteger commandLength, NSInteger* _Nullable commandsFound)
 {
     // if no command length, its completely pointless function,
     // so just return null and set commandsFound to 0, if we dont
@@ -71,12 +72,12 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathD
     NSInteger i = 0;
     NSInteger counter = 0;
 
-    const char* cString = string.UTF8String;
+    const char* cString = commandChars;
     const char* validChars = "eE+-.";
 
     // this is much faster then doing strlen as it doesnt need
     // to compute the length
-    NSInteger sLength = string.length;
+    NSInteger sLength = commandCharLength;
     NSInteger sLengthMinusOne = sLength - 1;
 
     bool isDecimal = false;
@@ -151,17 +152,20 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(NSString* string, IJSVGPathD
                     sizeof(CGFloat) * dataStream->floatCount);
             }
 
-            // add the float
+            // add the float - for performance reasons, we can simply set the
+            // null value of the end of the string instead of nulling out
+            // with memset \0 - huzzah!
+            dataStream->charBuffer[bufferCount] = '\0';
             dataStream->floatBuffer[counter++] = IJSVGParseFloat(dataStream->charBuffer);
 
-            // memory clean and counter resets
-            memset(dataStream->charBuffer, '\0', sizeof(char) * bufferCount);
+            // reset
             isDecimal = false;
             bufferCount = 0;
         }
         i++;
     }
 
+    // set commands found - only if there is one
     if (commandsFound != NULL) {
         *commandsFound = (NSInteger)round(counter / commandLength);
     }
