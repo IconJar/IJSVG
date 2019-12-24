@@ -73,7 +73,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     NSInteger counter = 0;
 
     const char* cString = commandChars;
-    const char* validChars = "eE+-.";
+    const char* validChars = "+-.";
 
     // this is much faster then doing strlen as it doesnt need
     // to compute the length
@@ -93,12 +93,13 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         }
 
         // check for validator
-        bool isValid = VALID_DIGIT(currentChar) || strchr(validChars, currentChar) != NULL;
+        bool isE = (currentChar | ('E' ^ 'e')) == 'e';
+        bool isValid = VALID_DIGIT(currentChar) || isE || strchr(validChars, currentChar) != NULL;
 
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
-        bool isE = (currentChar | ('E' ^ 'e')) == 'e';
-        bool wantsEnd = nextChar == '-' || nextChar == '+' || (nextChar == '.' && isDecimal);
+        bool nIsSign = nextChar == '-' || nextChar == '+';
+        bool wantsEnd = nIsSign || (nextChar == '.' && isDecimal);
 
         // work our what the sequence is...
         IJSVGPathDataSequence seq = kIJSVGPathDataSequenceTypeFloat;
@@ -117,7 +118,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         }
 
         // could be a float like 5.334e-5 so dont break on the hypen
-        if (wantsEnd && isE && (nextChar == '-' || nextChar == '+')) {
+        if (wantsEnd && isE && nIsSign) {
             wantsEnd = false;
         }
 
