@@ -1113,43 +1113,34 @@
                      intoPath:(IJSVGPath*)path
 {
     // invalid command
-
     if (command == nil || command.length == 0) {
         return;
     }
 
-    NSUInteger len = [command length];
-
     // allocate memory for the string buffer for reading
+    NSUInteger len = command.length;
+    NSUInteger lastIndex = len - 1;
     const char* buffer = command.UTF8String;
 
-    int defaultBufferSize = 200;
-    int currentBufferSize = 0;
-    int currentSize = defaultBufferSize;
-
-    unichar* commandBuffer = NULL;
-    if (len != 0) {
-        commandBuffer = (unichar*)malloc(defaultBufferSize * sizeof(unichar));
-    }
-
+    NSInteger start = 0;
     IJSVGCommand* _currentCommand = nil;
-    for (int i = 0; i < len; i++) {
-        
-        unichar nextChar = buffer[i + 1];
-
-        BOOL atEnd = i == len - 1;
+    for (NSInteger i = 0; i < len; i++) {
+        char nextChar = buffer[i + 1];
+        BOOL atEnd = i == lastIndex;
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
-        if ((currentBufferSize + 1) == currentSize) {
-            currentSize += defaultBufferSize;
-            commandBuffer = (unichar*)realloc(commandBuffer, sizeof(unichar) * currentSize);
-        }
-        commandBuffer[currentBufferSize++] = currentChar;
         if (isStartCommand == YES || atEnd == YES) {
-            NSString* commandString = [NSString stringWithCharacters:commandBuffer
-                                                              length:currentBufferSize];
+            // construct the range for the substring
+            NSRange range = (NSRange){
+                .location = start,
+                .length = ((i + 1) - start)
+            };
+            
+            // create the command from the substring
+            NSString* commandString = [command substringWithRange:range];
+            start = i + 1;
 
             // previous command is actual subcommand
-            IJSVGCommand* previousCommand = [_currentCommand subCommands].lastObject;
+            IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
             IJSVGCommand* cCommand = [self _parseCommandString:commandString
                                                previousCommand:previousCommand
                                                       intoPath:path];
@@ -1158,15 +1149,8 @@
             if (cCommand != nil) {
                 _currentCommand = cCommand;
             }
-
-            if (atEnd == NO) {
-                currentBufferSize = 0;
-            }
         }
     }
-
-    // free the buffer
-    free(commandBuffer);
 }
 
 - (IJSVGCommand*)_parseCommandString:(NSString*)string
