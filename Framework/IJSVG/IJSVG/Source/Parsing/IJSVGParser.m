@@ -1134,7 +1134,7 @@
 
     IJSVGCommand* _currentCommand = nil;
     for (int i = 0; i < len; i++) {
-        unichar currentChar = buffer[i];
+        
         unichar nextChar = buffer[i + 1];
 
         BOOL atEnd = i == len - 1;

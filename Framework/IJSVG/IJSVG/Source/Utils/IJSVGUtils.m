@@ -183,8 +183,19 @@ NSString* IJSVGPointToCommandString(CGPoint point)
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    const char* validChars = "MmZzCcLlSsQqHhVvTtAa";
-    return strchr(validChars, aChar) != NULL;
+    if((aChar | ('M' ^ 'm')) == 'm' ||
+       (aChar | ('Z' ^ 'z')) == 'z' ||
+       (aChar | ('C' ^ 'c')) == 'c' ||
+       (aChar | ('L' ^ 'l')) == 'l' ||
+       (aChar | ('S' ^ 's')) == 's' ||
+       (aChar | ('Q' ^ 'q')) == 'q' ||
+       (aChar | ('H' ^ 'h')) == 'h' ||
+       (aChar | ('V' ^ 'v')) == 'v' ||
+       (aChar | ('T' ^ 't')) == 't' ||
+       (aChar | ('A' ^ 'a')) == 'a') {
+        return YES;
+    }
+    return NO;
 }
 
 BOOL IJSVGIsSVGLayer(CALayer* layer)
@@ -445,7 +456,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)parseViewBox:(NSString*)string
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(4,
-        IJSVG_DATA_STREAM_DEFAULT_BUFFER_COUNT_CHAR);
+        IJSVG_STREAM_BUFFER_CHAR);
     CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String,
         string.length, stream, NULL, 1, NULL);
     IJSVGPathDataStreamRelease(stream);

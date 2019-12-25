@@ -10,7 +10,7 @@
 
 @interface NSString (IJSVGAdditions)
 
-- (NSArray<NSString *> *)ijsvg_componentsSeparatedByChars:(char *)aChar;
+- (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar;
 - (BOOL)ijsvg_isNumeric;
 - (BOOL)ijsvg_containsAlpha;
 - (NSArray*)ijsvg_componentsSplitByWhiteSpace;

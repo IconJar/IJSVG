@@ -10,7 +10,7 @@
 
 @implementation NSString (IJSVGAdditions)
 
-- (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(char*)aChar
+- (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar
 {
     NSMutableArray* comp = [[[NSMutableArray alloc] init] autorelease];
     NSInteger length = self.length;
@@ -18,25 +18,13 @@
 
     NSInteger ind = 0;
     BOOL startedString = NO;
-
-    // block for easy comparison
-    NSUInteger aLength = strlen(aChar);
-    BOOL (^charsContainsChar)(char anotherChar) = ^(char anotherChar) {
-        for (NSInteger i = 0; i < aLength; i++) {
-            if (aChar[i] == anotherChar) {
-                return YES;
-            }
-        }
-        return NO;
-    };
+    const char* buffer = self.UTF8String;
 
     for (NSInteger i = 0; i < length; i++) {
-
-        // the char
-        unichar theChar = [self characterAtIndex:i];
+        unichar theChar = buffer[i];
 
         // start the buffer
-        BOOL isEqualToChar = charsContainsChar(theChar);
+        BOOL isEqualToChar = strchr(aChar, theChar) != NULL;
         if (isEqualToChar == NO) {
             startedString = YES;
             chars[ind++] = theChar;
@@ -48,11 +36,10 @@
 
             // append the comp
             [comp addObject:[NSString stringWithCharacters:chars length:ind]];
-            free(chars);
 
             // restart and realloc the memory
             ind = 0;
-            chars = (unichar*)calloc(sizeof(unichar), self.length);
+            chars = memset(chars, '\0', sizeof(unichar) * ind);
         }
     }
     free(chars);
