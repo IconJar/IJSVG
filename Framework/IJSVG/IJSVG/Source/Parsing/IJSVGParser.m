@@ -1121,7 +1121,7 @@
     NSUInteger len = [command length];
 
     // allocate memory for the string buffer for reading
-    const char* buffer = [command cStringUsingEncoding:NSUTF8StringEncoding];
+    const char* buffer = command.UTF8String;
 
     int defaultBufferSize = 200;
     int currentBufferSize = 0;
@@ -1129,7 +1129,7 @@
 
     unichar* commandBuffer = NULL;
     if (len != 0) {
-        commandBuffer = (unichar*)calloc(defaultBufferSize, sizeof(unichar));
+        commandBuffer = (unichar*)malloc(defaultBufferSize * sizeof(unichar));
     }
 
     IJSVGCommand* _currentCommand = nil;
@@ -1161,7 +1161,6 @@
 
             if (atEnd == NO) {
                 currentBufferSize = 0;
-                memset(commandBuffer, '\0', sizeof(unichar) * currentSize);
             }
         }
     }
