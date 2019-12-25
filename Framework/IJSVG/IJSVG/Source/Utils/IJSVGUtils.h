@@ -39,7 +39,7 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string;
 + (IJSVGUnitType)unitTypeForString:(NSString*)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
-+ (NSString*)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
++ (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
 + (NSRange)rangeOfParentheses:(NSString*)string;
 
 + (void)logParameters:(CGFloat*)param
@@ -47,7 +47,7 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGFloat)floatValue:(NSString*)string;
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;
-+ (NSString*)defURL:(NSString*)string;
++ (NSString* _Nullable)defURL:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string
     fallBackForPercent:(CGFloat)viewBox;
 + (CGFloat*)scanFloatsFromString:(NSString*)string
@@ -57,6 +57,5 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
                                      weight:(CGFloat*)weight;
 
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
-+ (CGPathRef)newCGPathFromBezierPath:(NSBezierPath*)bezPath;
 @end
 NS_ASSUME_NONNULL_END

@@ -20,6 +20,13 @@
 
 - (void)dealloc
 {
+    // this can all be called on the background thread to be released
+    (void)([renderingBackingScaleHelper release]),
+        renderingBackingScaleHelper = nil;
+    (void)([_replacementColors release]), _replacementColors = nil;
+    (void)([_style release]), _style = nil;
+    (void)([_group release]), _group = nil;
+    
     // this is probably really sketchy but if we are not called
     // from main thread, we need to lock a transaction
     // which is really slow, so instead, async the dealloc back to the main
@@ -33,12 +40,7 @@
     }
 
     // kill any memory that has been around
-    (void)([renderingBackingScaleHelper release]),
-        renderingBackingScaleHelper = nil;
-    (void)([_group release]), _group = nil;
     (void)([_layerTree release]), _layerTree = nil;
-    (void)([_replacementColors release]), _replacementColors = nil;
-    (void)([_style release]), _style = nil;
     [super dealloc];
 }
 
@@ -108,7 +110,7 @@
     imageLayer =
         [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     [layer addSublayer:imageLayer];
-    if(lockAquired == YES) {
+    if (lockAquired == YES) {
         IJSVGEndTransactionLock();
     }
 
@@ -402,9 +404,9 @@
         _proposedViewSize.height * _clipScale);
 }
 
-- (CGImageRef)CGImageRefWithSize:(CGSize)size
-                         flipped:(BOOL)flipped
-                           error:(NSError**)error
+- (CGImageRef)newCGImageRefWithSize:(CGSize)size
+                            flipped:(BOOL)flipped
+                              error:(NSError**)error
 {
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
@@ -451,9 +453,9 @@
                   flipped:(BOOL)flipped
                     error:(NSError**)error
 {
-    CGImageRef ref = [self CGImageRefWithSize:aSize
-                                      flipped:flipped
-                                        error:error];
+    CGImageRef ref = [self newCGImageRefWithSize:aSize
+                                         flipped:flipped
+                                           error:error];
 
     NSImage* image = [[NSImage alloc] initWithCGImage:ref
                                                  size:aSize];

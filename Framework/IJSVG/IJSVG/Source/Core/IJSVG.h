@@ -137,9 +137,9 @@
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error;
-- (CGImageRef)CGImageRefWithSize:(CGSize)size
-                         flipped:(BOOL)flipped
-                           error:(NSError**)error;
+- (CGImageRef)newCGImageRefWithSize:(CGSize)size
+                            flipped:(BOOL)flipped
+                              error:(NSError**)error;
 
 - (BOOL)drawAtPoint:(NSPoint)point
                size:(NSSize)size;

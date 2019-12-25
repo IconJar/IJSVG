@@ -23,7 +23,7 @@
          controlPoint2:CP2];
 }
 
-- (CGPathRef)CGPathRef:(BOOL)autoClose
+- (CGPathRef)newCGPathRef:(BOOL)autoClose
 {
     NSInteger i = 0;
     NSInteger numElements = self.elementCount;

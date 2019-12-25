@@ -104,7 +104,7 @@
 
 + (IJSVG*)convertIJSVGPathToSVG:(IJSVGPath*)path
 {
-    CGPathRef cgPath = [IJSVGUtils newCGPathFromBezierPath:path.path];
+    CGPathRef cgPath = [path.path newCGPathRef:NO];
     CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:cgPath];
     IJSVG* svg = [self convertPathToSVG:flippedPath];
     CGPathRelease(flippedPath);

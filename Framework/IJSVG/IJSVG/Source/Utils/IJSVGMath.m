@@ -20,6 +20,12 @@ CGFloat IJSVGMathDeg(CGFloat val)
     return val * 180.f / M_PI;
 };
 
+CGFloat IJSVGMathToFixed(CGFloat val, NSInteger decimalPlaces)
+{
+    int p = pow(10, decimalPlaces);
+    return (CGFloat)floor(p * val) / p;
+}
+
 CGFloat IJSVGMathAcos(CGFloat val)
 {
     return IJSVGMathDeg(acosf(val));

@@ -14,6 +14,6 @@
 - (void)addQuadCurveToPoint:(NSPoint)aPoint
                controlPoint:(NSPoint)cp;
 
-- (CGPathRef)CGPathRef:(BOOL)autoClose;
+- (CGPathRef)newCGPathRef:(BOOL)autoClose;
 
 @end

@@ -250,15 +250,14 @@ NSString* IJSVGHash(NSString* key)
     // any transform for the root node?
     if (transforms.count != 0) {
         // concat the transform
-        NSMutableArray<NSString*>* transformStrings = [[[NSMutableArray alloc] init] autorelease];
-        for (IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
-            NSArray<NSString*>* strings = nil;
-            strings = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform.CGAffineTransform];
-            [transformStrings addObjectsFromArray:strings];
-        }
-        NSString* str = [transformStrings componentsJoinedByString:@" "];
+        CGAffineTransform afTransform = IJSVGConcatTransforms(transforms);
         NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
-        IJSVGApplyAttributesToElement(@{ @"transform" : str }, transformedElement);
+        BOOL preferTransform = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
+        NSString * transString = nil;
+        transString = IJSVGTransformAttributeString(afTransform, preferTransform);
+        IJSVGApplyAttributesToElement(
+            @{ @"transform" : transString },
+            transformedElement);
         *nestedRoot = transformedElement;
         [root addChild:transformedElement];
     }
@@ -821,7 +820,8 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // append the string
-    NSString* transformStr = [IJSVGTransform affineTransformToSVGMatrixString:transform];
+    BOOL preferMatrix = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
+    NSString* transformStr = IJSVGTransformAttributeString(transform, preferMatrix);
 
     // apply it to the node
     IJSVGApplyAttributesToElement(@{ @"transform" : transformStr }, element);
@@ -1017,7 +1017,8 @@ NSString* IJSVGHash(NSString* key)
     NSArray* transforms = layer.gradient.transforms;
     if (transforms.count != 0.f) {
         CGAffineTransform transform = IJSVGConcatTransforms(transforms);
-        NSString* transformString = [IJSVGTransform affineTransformToSVGMatrixString:transform];
+        BOOL preferMatrix = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
+        NSString* transformString = IJSVGTransformAttributeString(transform, preferMatrix);
         IJSVGApplyAttributesToElement(@{ @"gradientTransform" : transformString }, gradientElement);
     }
 
@@ -1032,15 +1033,6 @@ NSString* IJSVGHash(NSString* key)
     } else {
         IJSVGApplyAttributesToElement(@{ @"stroke" : IJSVGHashURL(gradKey) }, element);
     }
-}
-
-- (CGAffineTransform)affineTransformFromTransforms:(NSArray<IJSVGTransform*>*)transforms
-{
-    CGAffineTransform t = CGAffineTransformIdentity;
-    for (IJSVGTransform* transform in transforms) {
-        t = CGAffineTransformConcat(t, [transform CGAffineTransform]);
-    }
-    return t;
 }
 
 - (NSXMLElement*)elementForImage:(IJSVGImageLayer*)layer

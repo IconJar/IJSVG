@@ -17,5 +17,6 @@ CGFloat IJSVGMathSin(CGFloat val);
 CGFloat IJSVGMathAsin(CGFloat val);
 CGFloat IJSVGMathTan(CGFloat val);
 CGFloat IJSVGMathAtan(CGFloat val);
+CGFloat IJSVGMathToFixed(CGFloat val, NSInteger decimalPlaces);
 
 @end

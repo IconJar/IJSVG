@@ -38,7 +38,7 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGPath* node = [super copyWithZone:zone];
-    node.path = self.path.copy;
+    node.path = [self.path.copy autorelease];
     return node;
 }
 
@@ -63,7 +63,7 @@
 - (CGPathRef)CGPath
 {
     if (_CGPath == nil) {
-        _CGPath = [_path CGPathRef:NO];
+        _CGPath = [_path newCGPathRef:NO];
     }
     return _CGPath;
 }
