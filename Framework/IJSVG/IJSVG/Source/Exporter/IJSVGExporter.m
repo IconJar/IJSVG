@@ -250,13 +250,15 @@ NSString* IJSVGHash(NSString* key)
     // any transform for the root node?
     if (transforms.count != 0) {
         // concat the transform
-        CGAffineTransform affTransform = CGAffineTransformIdentity;
-        for (IJSVGTransform* transform in transforms) {
-            affTransform = CGAffineTransformConcat(affTransform, transform.CGAffineTransform);
+        NSMutableArray<NSString*>* transformStrings = [[[NSMutableArray alloc] init] autorelease];
+        for (IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
+            NSArray<NSString*>* strings = nil;
+            strings = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform.CGAffineTransform];
+            [transformStrings addObjectsFromArray:strings];
         }
-        NSArray<NSString*>* transformStrings = [IJSVGTransform affineTransformToSVGTransformAttributeString:affTransform];
+        NSString* str = [transformStrings componentsJoinedByString:@" "];
         NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
-        IJSVGApplyAttributesToElement(@{ @"transform" : [transformStrings componentsJoinedByString:@" "] }, transformedElement);
+        IJSVGApplyAttributesToElement(@{ @"transform" : str }, transformedElement);
         *nestedRoot = transformedElement;
         [root addChild:transformedElement];
     }
