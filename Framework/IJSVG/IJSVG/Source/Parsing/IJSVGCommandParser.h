@@ -16,8 +16,8 @@ typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
     kIJSVGPathDataSequenceTypeFlag
 };
 
-static NSUInteger const IJSVG_STREAM_BUFFER_FLOAT = 50;
-static NSUInteger const IJSVG_STREAM_BUFFER_CHAR = 20;
+static NSUInteger const IJSVG_STREAM_FLOAT_BLOCK_SIZE = 50;
+static NSUInteger const IJSVG_STREAM_CHAR_BLOCK_SIZE = 20;
 
 typedef struct {
     CGFloat* floatBuffer;

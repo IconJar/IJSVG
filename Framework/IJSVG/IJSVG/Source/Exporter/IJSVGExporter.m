@@ -130,7 +130,6 @@ NSString* IJSVGHash(NSString* key)
 
 - (void)dealloc
 {
-    (void)([_scaledRootNode release]), _scaledRootNode = nil;
     (void)([_svg release]), _svg = nil;
     (void)([_dom release]), _dom = nil;
     (void)([_defElement release]), _defElement = nil;
@@ -175,7 +174,7 @@ NSString* IJSVGHash(NSString* key)
     return viewBox;
 }
 
-- (NSXMLElement*)rootNode
+- (NSXMLElement*)rootNode:(NSXMLElement**)nestedRoot
 {
     // generates the root document
     NSXMLElement* root = [[[NSXMLElement alloc] initWithName:@"svg"] autorelease];
@@ -198,6 +197,8 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // was there a size set?
+    CGFloat scale = 1.f;
+    NSMutableArray<IJSVGTransform*>* transforms = [[[NSMutableArray alloc] initWithCapacity:2] autorelease];
     if (CGSizeEqualToSize(CGSizeZero, _size) == NO && (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
 
         // copy the attributes
@@ -206,24 +207,19 @@ NSString* IJSVGHash(NSString* key)
         att[@"height"] = IJSVGShortFloatString(_size.height);
 
         // scale the whole SVG to fit the specified size
-        if ((_options & IJSVGExporterOptionScaleToSizeIfNecessary) != 0) {
+        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
             // work out the scale
-            CGFloat scale = MIN(_size.width / viewBox.size.width,
+            scale = MIN(_size.width / viewBox.size.width,
                 _size.height / viewBox.size.height);
 
             // actually do the scale
             if (scale != 1.f) {
-                NSString* scaleString = [NSString stringWithFormat:@"scale(%g)", scale];
-                NSDictionary* transform = @{ @"transform" : scaleString };
+                IJSVGTransform* transform = nil;
+                transform = [IJSVGTransform transformByScaleX:scale
+                                                            y:scale];
+                [transforms addObject:transform];
 
-                // create the main group and apply transform
-                _scaledRootNode = [[NSXMLElement alloc] initWithName:@"g"];
-                IJSVGApplyAttributesToElement(transform, _scaledRootNode);
-
-                // add it back onto root
-                [root addChild:_scaledRootNode];
-
-                // compute x and y, dont multiply 0
+                // compute x and y, don't multiply 0
                 const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * scale);
                 const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
 
@@ -238,8 +234,38 @@ NSString* IJSVGHash(NSString* key)
         attributes = [[att copy] autorelease];
     }
 
+    // do we need to center the svg within the box?
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCenterWithinViewBox) == YES) {
+        CGPoint transformPoint = CGPointMake(_size.width / 2.f - ((viewBox.size.width * scale) / 2.f),
+            _size.height / 2.f - ((viewBox.size.height * scale) / 2.f));
+
+        if (CGPointEqualToPoint(transformPoint, CGPointZero) == NO) {
+            IJSVGTransform* transform = nil;
+            transform = [IJSVGTransform transformByTranslatingX:transformPoint.x
+                                                              y:transformPoint.y];
+            [transforms addObject:transform];
+        }
+    }
+
+    // any transform for the root node?
+    if (transforms.count != 0) {
+        // concat the transform
+        CGAffineTransform affTransform = CGAffineTransformIdentity;
+        for (IJSVGTransform* transform in transforms) {
+            affTransform = CGAffineTransformConcat(affTransform, transform.CGAffineTransform);
+        }
+        NSArray<NSString*>* transformStrings = [IJSVGTransform affineTransformToSVGTransformAttributeString:affTransform];
+        NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
+        IJSVGApplyAttributesToElement(@{ @"transform" : [transformStrings componentsJoinedByString:@" "] }, transformedElement);
+        *nestedRoot = transformedElement;
+        [root addChild:transformedElement];
+    }
+
     // apply the attributes
     IJSVGApplyAttributesToElement(attributes, root);
+    if (*nestedRoot == nil) {
+        *nestedRoot = root;
+    }
     return root;
 }
 
@@ -259,15 +285,15 @@ NSString* IJSVGHash(NSString* key)
 - (void)_prepare
 {
     // create the stand alone DOM
-    _dom = [[NSXMLDocument alloc] initWithRootElement:[self rootNode]];
+    NSXMLElement* nestedRoot = nil;
+    NSXMLElement* rootNode = [self rootNode:&nestedRoot];
+    _dom = [[NSXMLDocument alloc] initWithRootElement:rootNode];
     _dom.version = XML_DOCTYPE_VERSION;
     _dom.characterEncoding = XML_DOC_CHARSET;
 
-    // sort out header
-
     // sort out stuff, so here we go...
     [self _recursiveParseFromLayer:_svg.layer
-                       intoElement:(_scaledRootNode ?: _dom.rootElement)];
+                       intoElement:nestedRoot];
 
     // this needs to be added incase it needs to be cleaned
     NSXMLElement* defNode = [self defElement];

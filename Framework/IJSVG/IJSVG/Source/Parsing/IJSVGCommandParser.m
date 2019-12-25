@@ -16,7 +16,7 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 {
     size_t size = sizeof(IJSVGPathDataSequence) * length;
     IJSVGPathDataSequence* sequence = (IJSVGPathDataSequence*)malloc(size);
-    memset(sequence, type, size);
+    memset(sequence, (int)type, size);
     return sequence;
 };
 
@@ -28,14 +28,14 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 // can simply allocate (4*sizeof(CGFloat)) instead of the default 50 slots
 IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void)
 {
-    return IJSVGPathDataStreamCreate(IJSVG_STREAM_BUFFER_FLOAT,
-        IJSVG_STREAM_BUFFER_CHAR);
+    return IJSVGPathDataStreamCreate(IJSVG_STREAM_FLOAT_BLOCK_SIZE,
+        IJSVG_STREAM_CHAR_BLOCK_SIZE);
 }
 
 IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount)
 {
-    floatCount = floatCount ?: IJSVG_STREAM_BUFFER_FLOAT;
-    charCount = charCount ?: IJSVG_STREAM_BUFFER_CHAR;
+    floatCount = floatCount ?: IJSVG_STREAM_FLOAT_BLOCK_SIZE;
+    charCount = charCount ?: IJSVG_STREAM_CHAR_BLOCK_SIZE;
     IJSVGPathDataStream* buffer = (IJSVGPathDataStream*)malloc(sizeof(IJSVGPathDataStream));
     buffer->floatBuffer = (CGFloat*)malloc(sizeof(CGFloat) * floatCount);
     buffer->floatCount = floatCount;

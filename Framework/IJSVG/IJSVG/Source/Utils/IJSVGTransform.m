@@ -78,13 +78,27 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return transform;
 }
 
++ (IJSVGTransform*)transformByScaleX:(CGFloat)x
+                                   y:(CGFloat)y
+{
+    IJSVGTransform* transform = [[[self alloc] init] autorelease];
+    transform.command = IJSVGTransformCommandScale;
+    transform.parameterCount = 2;
+    CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
+    params[0] = x;
+    params[1] = y;
+    transform.parameters = params;
+    return transform;
+}
+
 - (void)recalculateWithBounds:(CGRect)bounds
 {
     CGFloat max = bounds.size.width > bounds.size.height ? bounds.size.width : bounds.size.height;
     switch (self.command) {
     case IJSVGTransformCommandRotate: {
-        if (self.parameterCount == 1)
+        if (self.parameterCount == 1) {
             return;
+        }
         self.parameters[1] = self.parameters[1] * max;
         self.parameters[2] = self.parameters[2] * max;
     }
@@ -326,10 +340,10 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     // scale
     case IJSVGTransformCommandScale: {
         CGFloat p0 = self.parameters[0];
-        CGFloat p1 = self.parameters[1];
         if (self.parameterCount == 1) {
             return CGAffineTransformScale(identity, p0, p0);
         }
+        CGFloat p1 = self.parameters[1];
         return CGAffineTransformScale(identity, p0, p1);
     }
 
@@ -390,13 +404,14 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     // translate
     case IJSVGTransformCommandTranslate: {
         CGFloat p0 = self.parameters[0];
+        if (self.parameterCount == 1) {
+            return CGAffineTransformMakeTranslation(p0, 0);
+        }
         CGFloat p1 = self.parameters[1];
         if (modifier != nil) {
             p0 = modifier(0, p0);
             p1 = modifier(1, p1);
         }
-        if (self.parameterCount == 1)
-            return CGAffineTransformMakeTranslation(p0, 0);
         return CGAffineTransformMakeTranslation(p0, p1);
     }
 
@@ -421,13 +436,14 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     // scale
     case IJSVGTransformCommandScale: {
         CGFloat p0 = self.parameters[0];
+        if (self.parameterCount == 1) {
+            return CGAffineTransformMakeScale(p0, p0);
+        }
         CGFloat p1 = self.parameters[1];
         if (modifier != nil) {
             p0 = modifier(0, p0);
             p1 = modifier(1, p1);
         }
-        if (self.parameterCount == 1)
-            return CGAffineTransformMakeScale(p0, p0);
         return CGAffineTransformMakeScale(p0, p1);
     }
 
@@ -453,9 +469,9 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
     // rotate
     case IJSVGTransformCommandRotate: {
-        if (self.parameterCount == 1)
+        if (self.parameterCount == 1) {
             return CGAffineTransformMakeRotation((self.parameters[0] / 180) * M_PI);
-        else {
+        } else {
             CGFloat p0 = self.parameters[0];
             CGFloat p1 = self.parameters[1];
             CGFloat p2 = self.parameters[2];

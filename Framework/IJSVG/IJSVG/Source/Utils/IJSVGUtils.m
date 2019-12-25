@@ -456,7 +456,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)parseViewBox:(NSString*)string
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(4,
-        IJSVG_STREAM_BUFFER_CHAR);
+        IJSVG_STREAM_CHAR_BLOCK_SIZE);
     CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String,
         string.length, stream, NULL, 1, NULL);
     IJSVGPathDataStreamRelease(stream);

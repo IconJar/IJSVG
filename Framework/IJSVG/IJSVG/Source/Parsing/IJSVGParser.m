@@ -1121,6 +1121,9 @@
     NSUInteger len = command.length;
     NSUInteger lastIndex = len - 1;
     const char* buffer = command.UTF8String;
+    
+    // make sure we plus 1 for the null byte
+    char* charBuffer = (char*)malloc(sizeof(char) * (len + 1));
 
     NSInteger start = 0;
     IJSVGCommand* _currentCommand = nil;
@@ -1129,15 +1132,17 @@
         BOOL atEnd = i == lastIndex;
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
         if (isStartCommand == YES || atEnd == YES) {
-            // construct the range for the substring
-            NSRange range = (NSRange){
-                .location = start,
-                .length = ((i + 1) - start)
-            };
-            
+
+            // copy memory from current buffer
+            NSInteger index = ((i + 1) - start);
+            memcpy(&charBuffer[0], &buffer[start], sizeof(char) * index);
+            charBuffer[index] = '\0';
+
             // create the command from the substring
-            NSString* commandString = [command substringWithRange:range];
-            start = i + 1;
+            NSString* commandString = [NSString stringWithUTF8String:charBuffer];
+
+            // reset start position
+            start = (i + 1);
 
             // previous command is actual subcommand
             IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
@@ -1151,6 +1156,7 @@
             }
         }
     }
+    free(charBuffer);
 }
 
 - (IJSVGCommand*)_parseCommandString:(NSString*)string
@@ -1170,7 +1176,7 @@
     Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
     IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string
                                                                              dataStream:_commandDataStream] autorelease];
-    for (IJSVGCommand* subCommand in [command subCommands]) {
+    for (IJSVGCommand* subCommand in command.subCommands) {
         [command.class runWithParams:subCommand.parameters
                           paramCount:subCommand.parameterCount
                              command:subCommand
