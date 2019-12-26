@@ -252,9 +252,8 @@ NSString* IJSVGHash(NSString* key)
         // concat the transform
         CGAffineTransform afTransform = IJSVGConcatTransforms(transforms);
         NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
-        BOOL preferTransform = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
-        NSString * transString = nil;
-        transString = IJSVGTransformAttributeString(afTransform, preferTransform);
+        NSString* transString = nil;
+        transString = IJSVGTransformAttributeString(afTransform);
         IJSVGApplyAttributesToElement(
             @{ @"transform" : transString },
             transformedElement);
@@ -820,8 +819,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // append the string
-    BOOL preferMatrix = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
-    NSString* transformStr = IJSVGTransformAttributeString(transform, preferMatrix);
+    NSString* transformStr = IJSVGTransformAttributeString(transform);
 
     // apply it to the node
     IJSVGApplyAttributesToElement(@{ @"transform" : transformStr }, element);
@@ -989,7 +987,9 @@ NSString* IJSVGHash(NSString* key)
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
         NSString* stopColor = [IJSVGColor colorStringFromColor:aColor
                                                        options:options];
-        if ([stopColor isEqualToString:@"#000000"] == NO) {
+        
+        // dont bother adding default
+        if ([stopColor isEqualToString:@"#000"] == NO) {
             atts[@"stop-color"] = stopColor;
         }
 
@@ -1003,7 +1003,6 @@ NSString* IJSVGHash(NSString* key)
         }
 
         // att the attributes
-
         IJSVGApplyAttributesToElement(atts, stop);
 
         // append the stop the gradient
@@ -1017,8 +1016,7 @@ NSString* IJSVGHash(NSString* key)
     NSArray* transforms = layer.gradient.transforms;
     if (transforms.count != 0.f) {
         CGAffineTransform transform = IJSVGConcatTransforms(transforms);
-        BOOL preferMatrix = IJSVGExporterHasOption(_options, IJSVGExporterOptionPreferMatrixForTransforms);
-        NSString* transformString = IJSVGTransformAttributeString(transform, preferMatrix);
+        NSString* transformString = IJSVGTransformAttributeString(transform);
         IJSVGApplyAttributesToElement(@{ @"gradientTransform" : transformString }, gradientElement);
     }
 

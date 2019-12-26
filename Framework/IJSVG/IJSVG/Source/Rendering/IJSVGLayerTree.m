@@ -743,19 +743,4 @@
     }
 }
 
-+ (void)log:(IJSVGLayer*)layer
-      depth:(NSInteger)depth
-{
-    NSLog(@"%@%@: %@, Transforms: %@", [@"" stringByPaddingToLength:depth
-                                                         withString:@"\t"
-                                                    startingAtIndex:0],
-        layer,
-        NSStringFromRect(layer.frame),
-        [IJSVGTransform affineTransformToSVGTransformAttributeString:layer.affineTransform]);
-    for (IJSVGLayer* sublayer in layer.sublayers) {
-        [self log:(IJSVGLayer*)sublayer
-            depth:depth++];
-    }
-}
-
 @end

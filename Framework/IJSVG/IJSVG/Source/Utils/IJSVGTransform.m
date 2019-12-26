@@ -33,22 +33,6 @@
     return trans;
 }
 
-NSString* IJSVGDebugAffineTransform(CGAffineTransform transform)
-{
-    NSMutableArray* strings = [[[NSMutableArray alloc] init] autorelease];
-    [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform]];
-    return [strings componentsJoinedByString:@" "];
-}
-
-NSString* IJSVGDebugTransforms(NSArray<IJSVGTransform*>* transforms)
-{
-    NSMutableArray* strings = [[[NSMutableArray alloc] init] autorelease];
-    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) {
-        [strings addObjectsFromArray:[IJSVGTransform affineTransformToSVGTransformAttributeString:transform.CGAffineTransform]];
-    });
-    return [strings componentsJoinedByString:@" "];
-}
-
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms)
 {
     __block CGAffineTransform trans = CGAffineTransformIdentity;
@@ -58,14 +42,9 @@ CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms)
     return trans;
 }
 
-NSString* IJSVGTransformAttributeString(CGAffineTransform transform, BOOL preferMatrix)
+NSString* IJSVGTransformAttributeString(CGAffineTransform transform)
 {
-    if (preferMatrix == YES) {
-        return [IJSVGTransform affineTransformToSVGMatrixString:transform];
-    }
-    NSArray<NSString*>* transforms = nil;
-    transforms = [IJSVGTransform affineTransformToSVGTransformAttributeString:transform];
-    return [transforms componentsJoinedByString:@" "];
+    return [IJSVGTransform affineTransformToSVGMatrixString:transform];
 }
 
 void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApplyBlock block)
@@ -510,145 +489,25 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 + (NSArray<IJSVGTransform*>*)transformsFromAffineTransform:(CGAffineTransform)affineTransform
 {
-    NSArray* strings = [self affineTransformToSVGTransformAttributeString:affineTransform];
-    return [self transformsForString:[strings componentsJoinedByString:@" "]];
+    NSString* matrix = [self affineTransformToSVGMatrixString:affineTransform];
+    return [self transformsForString:matrix];
 }
 
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
 {
-    return [NSString stringWithFormat:@"matrix(%g,%g,%g,%g,%g,%g)",
-                     transform.a, transform.b, transform.c, transform.d,
-                     transform.tx, transform.ty];
-}
-
-// this is an Object-C version of the matrixToTransform method from SVGO
-+ (NSArray<NSString*>*)affineTransformToSVGTransformAttributeString:(CGAffineTransform)affineTransform
-{
-    const CGFloat data[6] = {
-        affineTransform.a,
-        affineTransform.b,
-        affineTransform.c,
-        affineTransform.d,
-        affineTransform.tx,
-        affineTransform.ty
-    };
-
-    CGFloat sx = +hypotf(data[0], data[1]);
-    CGFloat sy = +(data[0] * data[3] - data[1] * data[2]) / sx;
-
-    CGFloat colSum = data[0] * data[2] + data[1] * data[3];
-    CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
-    BOOL scaleBefore = rowSum != 0.f || (sx == sy);
-
-    NSMutableArray* trans = [[[NSMutableArray alloc] init] autorelease];
-
-    // translate
-    if (data[4] != 0.f || data[5] != 0.f) {
-        NSString* str = nil;
-        if (data[5] == 0.f) {
-            str = [NSString stringWithFormat:@"translate(%@)",
-                            IJSVGShortFloatString(data[4])];
-        } else {
-            str = [NSString stringWithFormat:@"translate(%@,%@)",
-                            IJSVGShortFloatString(data[4]),
-                            IJSVGShortFloatString(data[5])];
-        }
-        [trans addObject:str];
-    }
-
-    // skewX
-    if (data[1] == 0.f && data[2] != 0.f) {
-        NSString* str = [NSString stringWithFormat:@"skewX(%@)",
-                                  IJSVGShortFloatString(IJSVGMathAtan(data[2] / sy))];
-        [trans addObject:str];
-
-        // skewY
-    } else if (data[1] != 0.f && data[2] == 0.f) {
-        NSString* str = [NSString stringWithFormat:@"skewY(%@)",
-                                  IJSVGShortFloatString(IJSVGMathAtan(data[1] / data[0]))];
-        [trans addObject:str];
-        sx = data[0];
-        sy = data[3];
-    } else if (colSum == 0.f || (sx == 1.f && sy == 1.f) || scaleBefore == NO) {
-        if (scaleBefore == NO) {
-            sx = (data[0] < 0.f ? -1.f : 1.f) * hypotf(data[0], data[2]);
-            sy = (data[3] < 0.f ? -1.f : 1.f) * hypotf(data[1], data[3]);
-            NSString* str = nil;
-            if (sx == sy) {
-                str = [NSString stringWithFormat:@"scale(%@)",
-                                IJSVGShortFloatString(sx)];
-            } else {
-                str = [NSString stringWithFormat:@"scale(%@,%@)",
-                                IJSVGShortFloatString(sx),
-                                IJSVGShortFloatString(sy)];
-            }
-            [trans addObject:str];
-        }
-
-        // rotate
-        CGFloat angle = MIN(MAX(-1.f, data[0] / sx), 1.f);
-        CGFloat rotate = IJSVGMathAcos(angle) * (scaleBefore ? 1.f : sy) * (data[1] < 0.f ? -1.f : 1.f);
-        NSString* rotateString = nil;
-        if (rotate != 0.f) {
-            rotateString = [NSString stringWithFormat:@"rotate(%@)",
-                                     IJSVGShortFloatString(rotate)];
-        }
-
-        // skewX
-        if (rowSum != 0.f && colSum != 0.f) {
-            NSString* str = [NSString stringWithFormat:@"skewX(%@)",
-                                      IJSVGShortFloatString(IJSVGMathAtan(colSum / (sx * sx)))];
-            [trans addObject:str];
-        }
-
-        // rotate around center
-        if (rotate != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
-            [trans removeObjectAtIndex:0];
-
-            CGFloat cos = data[0] / sx;
-            CGFloat sin = data[1] / (scaleBefore ? sx : sy);
-            CGFloat x = data[4] * (scaleBefore ? 1.f : sy);
-            CGFloat y = data[5] * (scaleBefore ? 1.f : sx);
-            CGFloat denom = (powf(1.f - cos, 2.f) + powf(sin, 2.f)) * (scaleBefore ? 1.f : sx * sy);
-
-            CGFloat r1 = rotate;
-            CGFloat r2 = ((1.f - cos) * x - sin * y) / denom;
-            CGFloat r3 = ((1.f - cos) * y + sin * x) / denom;
-
-            rotateString = [NSString stringWithFormat:@"rotate(%@,%@,%@)",
-                                     IJSVGShortFloatString(r1),
-                                     IJSVGShortFloatString(r2),
-                                     IJSVGShortFloatString(r3)];
-        }
-
-        if (rotateString != nil) {
-            [trans addObject:rotateString];
-        }
-    } else if (data[1] != 1.f && data[2] != 1.f) {
-        return @[ [self affineTransformToSVGMatrixString:affineTransform] ];
-    }
-
-    // scale
-    if ((scaleBefore && (sx != 1.f || sy != 1.f)) || trans.count == 0) {
-        NSString* str = nil;
-        if (sx == sy) {
-            str = [NSString stringWithFormat:@"scale(%@)",
-                            IJSVGShortFloatString(sx)];
-        } else {
-            str = [NSString stringWithFormat:@"scale(%@,%@)",
-                            IJSVGShortFloatString(sx),
-                            IJSVGShortFloatString(sy)];
-        }
-        [trans addObject:str];
-    }
-
-    return trans;
+    return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
+                     IJSVGShortFloatString(transform.a),
+                     IJSVGShortFloatString(transform.b),
+                     IJSVGShortFloatString(transform.c),
+                     IJSVGShortFloatString(transform.d),
+                     IJSVGShortFloatString(transform.tx),
+                     IJSVGShortFloatString(transform.ty)];
 }
 
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%@ %@", [super description],
-                     [self.class affineTransformToSVGTransformAttributeString:self.CGAffineTransform]];
+                     [self.class affineTransformToSVGMatrixString:self.CGAffineTransform]];
 }
 
 @end

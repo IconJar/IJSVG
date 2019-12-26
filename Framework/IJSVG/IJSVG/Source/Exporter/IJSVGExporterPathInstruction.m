@@ -76,9 +76,24 @@
             [strings addObject:c1];
         }
     }
-    NSString* pathData = [strings componentsJoinedByString:@" "];
+    NSMutableString* pathData = [[[NSMutableString alloc] init] autorelease];
+    for (NSString* pathString in strings) {
+        BOOL isSigned = [pathString characterAtIndex:0] == '-';
+        if (isSigned) {
+            [pathData appendString:pathString];
+        } else if (pathData.length != 0) {
+            [pathData appendFormat:@" %@", pathString];
+        } else {
+            [pathData appendString:pathString];
+        }
+    }
     if (previousInstruction == instruction) {
-        return [NSString stringWithFormat:@" %@", pathData];
+        BOOL isSigned = [pathData characterAtIndex:0] == '-';
+        if (isSigned == YES) {
+            return pathData;
+        } else {
+            return [NSString stringWithFormat:@" %@", pathData];
+        }
     }
     return [NSString stringWithFormat:@"%c%@", instruction, pathData];
 }
