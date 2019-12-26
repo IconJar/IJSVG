@@ -8,6 +8,7 @@
 
 #import "IJSVGExporter.h"
 #import "IJSVGExporterPathInstruction.h"
+#import "IJSVGUtils.h"
 
 @implementation IJSVGExporterPathInstruction
 
@@ -53,85 +54,107 @@
     return _data;
 }
 
++ (NSString*)pathStringWithInstruction:(const char)instruction
+                   previousInstruction:(const char)previousInstruction
+                          instructions:(NSArray<NSArray<NSString*>*>* _Nullable)instructions
+{
+    if (instructions == nil || instructions.count == 0) {
+        return [NSString stringWithFormat:@"%c", instruction];
+    }
+
+    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] init] autorelease];
+    for (NSArray<NSString*>* params in instructions) {
+        NSString* c1 = params[0];
+        if (params.count == 2) {
+            NSString* c2 = params[1];
+            if ([c2 characterAtIndex:0] == '-') {
+                [strings addObject:[NSString stringWithFormat:@"%@%@", c1, c2]];
+            } else {
+                [strings addObject:[NSString stringWithFormat:@"%@ %@", c1, c2]];
+            }
+        } else {
+            [strings addObject:c1];
+        }
+    }
+    NSString* pathData = [strings componentsJoinedByString:@" "];
+    if (previousInstruction == instruction) {
+        return [NSString stringWithFormat:@" %@", pathData];
+    }
+    return [NSString stringWithFormat:@"%c%@", instruction, pathData];
+}
+
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
 {
     NSMutableArray* pathData = [[[NSMutableArray alloc] init] autorelease];
+    char previousInstruction = '\0';
     for (IJSVGExporterPathInstruction* instruction in instructions) {
         CGFloat* data = instruction.data;
-        NSString* str = nil;
-        switch (instruction.instruction) {
+        const char lowerInstruction = tolower(instruction.instruction);
+        switch (lowerInstruction) {
 
-            // move
-        case 'M':
-        case 'm': {
-            char* buffer;
-            asprintf(&buffer, "%c%g,%g", instruction.instruction, data[0], data[1]);
-            str = [NSString stringWithCString:buffer
-                                     encoding:NSUTF8StringEncoding];
-            free(buffer);
-            [pathData addObject:str];
-            break;
-        }
-
-            // vertical and horizonal line
-        case 'V':
-        case 'v':
-        case 'H':
-        case 'h': {
-            char* buffer;
-            asprintf(&buffer, "%c%g", instruction.instruction, data[0]);
-            str = [NSString stringWithCString:buffer
-                                     encoding:NSUTF8StringEncoding];
-            free(buffer);
-            [pathData addObject:str];
-            break;
-        }
-
-            // line
-        case 'L':
+        case 'm':
         case 'l': {
-            char* buffer;
-            asprintf(&buffer, "%c%g,%g", instruction.instruction, data[0], data[1]);
-            str = [NSString stringWithCString:buffer
-                                     encoding:NSUTF8StringEncoding];
-            free(buffer);
-            [pathData addObject:str];
+            NSArray* set = @[
+                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ]
+            ];
+            NSString* string = nil;
+            string = [self pathStringWithInstruction:instruction.instruction
+                                 previousInstruction:previousInstruction
+                                        instructions:set];
+            [pathData addObject:string];
             break;
         }
 
-            // curve
-        case 'C':
+        case 'v':
+        case 'h': {
+            NSArray* set = @[
+                @[ IJSVGShortFloatString(data[0]) ]
+            ];
+            NSString* string = nil;
+            string = [self pathStringWithInstruction:instruction.instruction
+                                 previousInstruction:previousInstruction
+                                        instructions:set];
+            [pathData addObject:string];
+            break;
+        }
+
         case 'c': {
-            char* buffer;
-            asprintf(&buffer, "%c%g,%g %g,%g %g,%g", instruction.instruction,
-                data[0], data[1], data[2], data[3], data[4], data[5]);
-            str = [NSString stringWithCString:buffer
-                                     encoding:NSUTF8StringEncoding];
-            free(buffer);
-            [pathData addObject:str];
+            NSArray* set = @[
+                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ],
+                @[ IJSVGShortFloatString(data[2]), IJSVGShortFloatString(data[3]) ],
+                @[ IJSVGShortFloatString(data[4]), IJSVGShortFloatString(data[5]) ]
+            ];
+            NSString* string = nil;
+            string = [self pathStringWithInstruction:instruction.instruction
+                                 previousInstruction:previousInstruction
+                                        instructions:set];
+            [pathData addObject:string];
             break;
         }
 
-            // quadratic curve
-        case 'Q':
         case 'q': {
-            char* buffer;
-            asprintf(&buffer, "%c%g,%g %g,%g", instruction.instruction,
-                data[0], data[1], data[2], data[3]);
-            str = [NSString stringWithCString:buffer
-                                     encoding:NSUTF8StringEncoding];
-            free(buffer);
-            [pathData addObject:str];
+            NSArray* set = @[
+                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ],
+                @[ IJSVGShortFloatString(data[2]), IJSVGShortFloatString(data[3]) ]
+            ];
+            NSString* string = nil;
+            string = [self pathStringWithInstruction:instruction.instruction
+                                 previousInstruction:previousInstruction
+                                        instructions:set];
+            [pathData addObject:string];
             break;
         }
 
             // close path
-        case 'Z':
         case 'z': {
-            str = [NSString stringWithFormat:@"%c", instruction.instruction];
-            [pathData addObject:str];
+            NSString* string = nil;
+            string = [self pathStringWithInstruction:instruction.instruction
+                                 previousInstruction:previousInstruction
+                                        instructions:nil];
+            [pathData addObject:string];
         }
         }
+        previousInstruction = instruction.instruction;
     }
     return [pathData componentsJoinedByString:@""];
 }
@@ -362,7 +385,7 @@
             }
         }
     }
-    
+
     return instructions;
 }
 

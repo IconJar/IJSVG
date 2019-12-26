@@ -546,21 +546,26 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     if (data[4] != 0.f || data[5] != 0.f) {
         NSString* str = nil;
         if (data[5] == 0.f) {
-            str = [NSString stringWithFormat:@"translate(%g)", data[4]];
+            str = [NSString stringWithFormat:@"translate(%@)",
+                            IJSVGShortFloatString(data[4])];
         } else {
-            str = [NSString stringWithFormat:@"translate(%g, %g)", data[4], data[5]];
+            str = [NSString stringWithFormat:@"translate(%@,%@)",
+                            IJSVGShortFloatString(data[4]),
+                            IJSVGShortFloatString(data[5])];
         }
         [trans addObject:str];
     }
 
     // skewX
     if (data[1] == 0.f && data[2] != 0.f) {
-        NSString* str = [NSString stringWithFormat:@"skewX(%g)", IJSVGMathAtan(data[2] / sy)];
+        NSString* str = [NSString stringWithFormat:@"skewX(%@)",
+                                  IJSVGShortFloatString(IJSVGMathAtan(data[2] / sy))];
         [trans addObject:str];
 
         // skewY
     } else if (data[1] != 0.f && data[2] == 0.f) {
-        NSString* str = [NSString stringWithFormat:@"skewY(%g)", IJSVGMathAtan(data[1] / data[0])];
+        NSString* str = [NSString stringWithFormat:@"skewY(%@)",
+                                  IJSVGShortFloatString(IJSVGMathAtan(data[1] / data[0]))];
         [trans addObject:str];
         sx = data[0];
         sy = data[3];
@@ -570,9 +575,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
             sy = (data[3] < 0.f ? -1.f : 1.f) * hypotf(data[1], data[3]);
             NSString* str = nil;
             if (sx == sy) {
-                str = [NSString stringWithFormat:@"scale(%g)", sx];
+                str = [NSString stringWithFormat:@"scale(%@)",
+                                IJSVGShortFloatString(sx)];
             } else {
-                str = [NSString stringWithFormat:@"scale(%g, %g)", sx, sy];
+                str = [NSString stringWithFormat:@"scale(%@,%@)",
+                                IJSVGShortFloatString(sx),
+                                IJSVGShortFloatString(sy)];
             }
             [trans addObject:str];
         }
@@ -582,12 +590,14 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         CGFloat rotate = IJSVGMathAcos(angle) * (scaleBefore ? 1.f : sy) * (data[1] < 0.f ? -1.f : 1.f);
         NSString* rotateString = nil;
         if (rotate != 0.f) {
-            rotateString = [NSString stringWithFormat:@"rotate(%g)", rotate];
+            rotateString = [NSString stringWithFormat:@"rotate(%@)",
+                                     IJSVGShortFloatString(rotate)];
         }
 
         // skewX
         if (rowSum != 0.f && colSum != 0.f) {
-            NSString* str = [NSString stringWithFormat:@"skewX(%g)", IJSVGMathAtan(colSum / (sx * sx))];
+            NSString* str = [NSString stringWithFormat:@"skewX(%@)",
+                                      IJSVGShortFloatString(IJSVGMathAtan(colSum / (sx * sx)))];
             [trans addObject:str];
         }
 
@@ -605,7 +615,10 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
             CGFloat r2 = ((1.f - cos) * x - sin * y) / denom;
             CGFloat r3 = ((1.f - cos) * y + sin * x) / denom;
 
-            rotateString = [NSString stringWithFormat:@"rotate(%g, %g, %g)", r1, r2, r3];
+            rotateString = [NSString stringWithFormat:@"rotate(%@,%@,%@)",
+                                     IJSVGShortFloatString(r1),
+                                     IJSVGShortFloatString(r2),
+                                     IJSVGShortFloatString(r3)];
         }
 
         if (rotateString != nil) {
@@ -619,9 +632,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     if ((scaleBefore && (sx != 1.f || sy != 1.f)) || trans.count == 0) {
         NSString* str = nil;
         if (sx == sy) {
-            str = [NSString stringWithFormat:@"scale(%g)", sx];
+            str = [NSString stringWithFormat:@"scale(%@)",
+                            IJSVGShortFloatString(sx)];
         } else {
-            str = [NSString stringWithFormat:@"scale(%g, %g)", sx, sy];
+            str = [NSString stringWithFormat:@"scale(%@,%@)",
+                            IJSVGShortFloatString(sx),
+                            IJSVGShortFloatString(sy)];
         }
         [trans addObject:str];
     }

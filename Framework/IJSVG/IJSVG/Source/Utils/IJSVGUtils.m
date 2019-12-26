@@ -160,39 +160,42 @@ NSArray* IJSVGCommonHTMLElementNames(void)
     return names;
 };
 
+NSString* IJSVGShortenFloatString(NSString* string)
+{
+    const char* chars = string.UTF8String;
+    if (chars[0] == '-' && chars[1] == '0') {
+        return [NSString stringWithFormat:@"-%@", [string substringFromIndex:2]];
+    } else if (chars[0] == '0' && chars[1] == '.') {
+        return [string substringFromIndex:1];
+    }
+    return string;
+}
+
 NSString* IJSVGShortFloatString(CGFloat f)
 {
-    return [NSString stringWithFormat:@"%g", f];
+    return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
 };
 
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 {
     NSString* format = [NSString stringWithFormat:@"%@.%ld%@", @"%", precision, @"f"];
     NSString* ret = [NSString stringWithFormat:format, f];
-    // can it be reduced even more?
     if (ret.floatValue == (float)ret.integerValue) {
         ret = [NSString stringWithFormat:@"%ld", ret.integerValue];
     }
-    return ret;
+    return IJSVGShortenFloatString(ret);
 };
 
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
-    return [NSString stringWithFormat:@"%@,%@", IJSVGShortFloatString(point.x), IJSVGShortFloatString(point.y)];
+    return [NSString stringWithFormat:@"%@,%@",
+                     IJSVGShortFloatString(point.x),
+                     IJSVGShortFloatString(point.y)];
 };
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    if((aChar | ('M' ^ 'm')) == 'm' ||
-       (aChar | ('Z' ^ 'z')) == 'z' ||
-       (aChar | ('C' ^ 'c')) == 'c' ||
-       (aChar | ('L' ^ 'l')) == 'l' ||
-       (aChar | ('S' ^ 's')) == 's' ||
-       (aChar | ('Q' ^ 'q')) == 'q' ||
-       (aChar | ('H' ^ 'h')) == 'h' ||
-       (aChar | ('V' ^ 'v')) == 'v' ||
-       (aChar | ('T' ^ 't')) == 't' ||
-       (aChar | ('A' ^ 'a')) == 'a') {
+    if ((aChar | ('M' ^ 'm')) == 'm' || (aChar | ('Z' ^ 'z')) == 'z' || (aChar | ('C' ^ 'c')) == 'c' || (aChar | ('L' ^ 'l')) == 'l' || (aChar | ('S' ^ 's')) == 's' || (aChar | ('Q' ^ 'q')) == 'q' || (aChar | ('H' ^ 'h')) == 'h' || (aChar | ('V' ^ 'v')) == 'v' || (aChar | ('T' ^ 't')) == 't' || (aChar | ('A' ^ 'a')) == 'a') {
         return YES;
     }
     return NO;

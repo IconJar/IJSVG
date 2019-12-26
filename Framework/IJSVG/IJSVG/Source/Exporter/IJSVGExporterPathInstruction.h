@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
 @interface IJSVGExporterPathInstruction : NSObject {
 
 @private
@@ -28,5 +29,9 @@
 
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
++ (NSString*)pathStringWithInstruction:(const char)instruction
+                   previousInstruction:(const char)previousInstruction
+                          instructions:(NSArray<NSArray<NSString*>*>* _Nullable)instructions;
 
 @end
+NS_ASSUME_NONNULL_END
