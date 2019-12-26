@@ -45,7 +45,6 @@
     (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
     (void)([_baseDefNodes release]), _baseDefNodes = nil;
-    (void)([_definedGroups release]), _definedGroups = nil;
     (void)([_svgs release]), _svgs = nil;
     if (_commandDataStream != NULL) {
         (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
@@ -471,10 +470,6 @@
         [self _parseBaseBlock:parseElement
                     intoGroup:group
                           def:NO];
-        if (_definedGroups == nil) {
-            _definedGroups = [[NSMutableArray alloc] init];
-        }
-        [_definedGroups addObject:group];
         return [group defForID:anID];
     }
     return nil;

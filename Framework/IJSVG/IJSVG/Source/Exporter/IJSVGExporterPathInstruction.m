@@ -54,124 +54,140 @@
     return _data;
 }
 
-+ (NSString*)pathStringWithInstruction:(const char)instruction
-                   previousInstruction:(const char)previousInstruction
-                          instructions:(NSArray<NSArray<NSString*>*>* _Nullable)instructions
+IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command)
 {
-    if (instructions == nil || instructions.count == 0) {
-        return [NSString stringWithFormat:@"%c", instruction];
+    IJSVGExporterPathInstructionCommand* copy = NULL;
+    copy = (IJSVGExporterPathInstructionCommand*)malloc(sizeof(IJSVGExporterPathInstructionCommand));
+    copy->instruction = command.instruction;
+    copy->params = command.params;
+    return copy;
+}
+
+void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand* _Nullable command)
+{
+    if (command != NULL) {
+        free(command);
+    }
+}
+
++ (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets
+{
+    IJSVGExporterPathInstructionCommand* lastCommand = NULL;
+    NSMutableString* string = [[[NSMutableString alloc] init] autorelease];
+    char* lastCommandChars = NULL;
+    for (NSValue* value in instructionSets) {
+        // read back the bytes
+        IJSVGExporterPathInstructionCommand command;
+        [value getValue:&command];
+
+        // add on the instruction character only if there is no current command
+        // or the last command is not the same as the current command
+        // if they both are the same, we still need to seperate them via a space
+        if (lastCommand == nil || (lastCommand != nil && lastCommand->instruction != command.instruction)) {
+            [string appendFormat:@"%c", command.instruction];
+        } else {
+            [string appendString:@" "];
+        }
+
+        NSInteger index = 0;
+        for (NSString* dataString in command.params) {
+            const char* chars = dataString.UTF8String;
+
+            // work out if the command is signed and or decimal
+            BOOL isSigned = chars[0] == '-';
+            BOOL isDecimal = chars[0] == '.' || (isSigned == YES && chars[1] == '.');
+
+            // we also need to know if the previous command was a decimal or not
+            BOOL lastWasDecimal = NO;
+            if (lastCommandChars != NULL) {
+                lastWasDecimal = strchr(lastCommandChars, '.') != NULL;
+            }
+
+            // we only need a space if the current command is not signed
+            // a decimal and the previous command was decimal too
+            if (index++ == 0 || isSigned || (isDecimal == YES && lastWasDecimal == YES)) {
+                [string appendString:dataString];
+            } else {
+                [string appendFormat:@" %@", dataString];
+            }
+
+            // store last command chars
+            lastCommandChars = (char*)chars;
+        }
+
+        // store last command
+        IJSVGExporterPathInstructionCommandFree(lastCommand);
+        lastCommand = IJSVGExporterPathInstructionCommandCopy(command);
     }
 
-    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] init] autorelease];
-    for (NSArray<NSString*>* params in instructions) {
-        NSString* c1 = params[0];
-        if (params.count == 2) {
-            NSString* c2 = params[1];
-            if ([c2 characterAtIndex:0] == '-') {
-                [strings addObject:[NSString stringWithFormat:@"%@%@", c1, c2]];
-            } else {
-                [strings addObject:[NSString stringWithFormat:@"%@ %@", c1, c2]];
-            }
-        } else {
-            [strings addObject:c1];
-        }
-    }
-    NSMutableString* pathData = [[[NSMutableString alloc] init] autorelease];
-    for (NSString* pathString in strings) {
-        BOOL isSigned = [pathString characterAtIndex:0] == '-';
-        if (isSigned) {
-            [pathData appendString:pathString];
-        } else if (pathData.length != 0) {
-            [pathData appendFormat:@" %@", pathString];
-        } else {
-            [pathData appendString:pathString];
-        }
-    }
-    if (previousInstruction == instruction) {
-        BOOL isSigned = [pathData characterAtIndex:0] == '-';
-        if (isSigned == YES) {
-            return pathData;
-        } else {
-            return [NSString stringWithFormat:@" %@", pathData];
-        }
-    }
-    return [NSString stringWithFormat:@"%c%@", instruction, pathData];
+    IJSVGExporterPathInstructionCommandFree(lastCommand);
+    return string;
 }
 
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
 {
-    NSMutableArray* pathData = [[[NSMutableArray alloc] init] autorelease];
-    char previousInstruction = '\0';
+    NSMutableArray* pathInstructions = [[[NSMutableArray alloc] init] autorelease];
     for (IJSVGExporterPathInstruction* instruction in instructions) {
         CGFloat* data = instruction.data;
         const char lowerInstruction = tolower(instruction.instruction);
+        NSArray<NSString*>* set = nil;
         switch (lowerInstruction) {
-
         case 'm':
         case 'l': {
-            NSArray* set = @[
-                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ]
+            set = @[
+                IJSVGShortFloatString(data[0]),
+                IJSVGShortFloatString(data[1])
             ];
-            NSString* string = nil;
-            string = [self pathStringWithInstruction:instruction.instruction
-                                 previousInstruction:previousInstruction
-                                        instructions:set];
-            [pathData addObject:string];
             break;
         }
 
         case 'v':
         case 'h': {
-            NSArray* set = @[
-                @[ IJSVGShortFloatString(data[0]) ]
+            set = @[
+                IJSVGShortFloatString(data[0])
             ];
-            NSString* string = nil;
-            string = [self pathStringWithInstruction:instruction.instruction
-                                 previousInstruction:previousInstruction
-                                        instructions:set];
-            [pathData addObject:string];
             break;
         }
 
         case 'c': {
-            NSArray* set = @[
-                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ],
-                @[ IJSVGShortFloatString(data[2]), IJSVGShortFloatString(data[3]) ],
-                @[ IJSVGShortFloatString(data[4]), IJSVGShortFloatString(data[5]) ]
+            set = @[
+                IJSVGShortFloatString(data[0]),
+                IJSVGShortFloatString(data[1]),
+                IJSVGShortFloatString(data[2]),
+                IJSVGShortFloatString(data[3]),
+                IJSVGShortFloatString(data[4]),
+                IJSVGShortFloatString(data[5])
             ];
-            NSString* string = nil;
-            string = [self pathStringWithInstruction:instruction.instruction
-                                 previousInstruction:previousInstruction
-                                        instructions:set];
-            [pathData addObject:string];
             break;
         }
 
         case 'q': {
-            NSArray* set = @[
-                @[ IJSVGShortFloatString(data[0]), IJSVGShortFloatString(data[1]) ],
-                @[ IJSVGShortFloatString(data[2]), IJSVGShortFloatString(data[3]) ]
+            set = @[
+                IJSVGShortFloatString(data[0]),
+                IJSVGShortFloatString(data[1]),
+                IJSVGShortFloatString(data[2]),
+                IJSVGShortFloatString(data[3])
             ];
-            NSString* string = nil;
-            string = [self pathStringWithInstruction:instruction.instruction
-                                 previousInstruction:previousInstruction
-                                        instructions:set];
-            [pathData addObject:string];
             break;
         }
 
             // close path
         case 'z': {
-            NSString* string = nil;
-            string = [self pathStringWithInstruction:instruction.instruction
-                                 previousInstruction:previousInstruction
-                                        instructions:nil];
-            [pathData addObject:string];
+            set = @[];
         }
         }
-        previousInstruction = instruction.instruction;
+
+        // wrap into the command and give to the array
+        IJSVGExporterPathInstructionCommand wrapper;
+        wrapper.instruction = instruction.instruction;
+        wrapper.params = set ?: @[];
+
+        // encode and store
+        NSValue* value = [NSValue valueWithBytes:&wrapper
+                                        objCType:@encode(IJSVGExporterPathInstructionCommand)];
+        [pathInstructions addObject:value];
     }
-    return [pathData componentsJoinedByString:@""];
+    return [self pathStringWithInstructionSet:pathInstructions];
 }
 
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions

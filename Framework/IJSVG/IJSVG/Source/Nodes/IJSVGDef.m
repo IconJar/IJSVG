@@ -18,7 +18,7 @@
 
 - (id)init
 {
-    if ((self = [super initWithDef:NO]) != nil) {
+    if ((self = [super init]) != nil) {
         _dict = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -29,13 +29,12 @@
     if (aDef.identifier == nil) {
         return;
     }
-    [_dict setObject:aDef
-              forKey:aDef.identifier];
+    _dict[aDef.identifier] = aDef;
 }
 
 - (IJSVGDef*)defForID:(NSString*)anID
 {
-    return [_dict objectForKey:anID];
+    return _dict[anID];
 }
 
 @end

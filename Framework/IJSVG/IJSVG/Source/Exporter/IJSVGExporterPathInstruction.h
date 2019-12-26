@@ -9,6 +9,12 @@
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
+
+typedef struct {
+    char instruction;
+    NSArray<NSString*>* params;
+} IJSVGExporterPathInstructionCommand;
+
 @interface IJSVGExporterPathInstruction : NSObject {
 
 @private
@@ -16,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
     char _instruction;
     CGFloat* _data;
 }
+
+IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command);
+void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand* _Nullable command);
 
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path;
 
@@ -29,9 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
-+ (NSString*)pathStringWithInstruction:(const char)instruction
-                   previousInstruction:(const char)previousInstruction
-                          instructions:(NSArray<NSArray<NSString*>*>* _Nullable)instructions;
++ (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets;
 
 @end
 NS_ASSUME_NONNULL_END

@@ -7,7 +7,6 @@
 //
 
 #import "IJSVG.h"
-#import "IJSVGCache.h"
 #import "IJSVGExporter.h"
 #import "IJSVGTransaction.h"
 
@@ -31,13 +30,13 @@
     // from main thread, we need to lock a transaction
     // which is really slow, so instead, async the dealloc back to the main
     // thread and let the main thread deal with deallocing this SVG object
-    if (IJSVGIsMainThread() == NO) {
-        __block id weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf dealloc];
-        });
-        return;
-    }
+//    if (IJSVGIsMainThread() == NO) {
+//        __block id weakSelf = self;
+//        dispatch_async(dispatch_get_main_queue(), ^{
+//            [weakSelf dealloc];
+//        });
+//        return;
+//    }
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -207,18 +206,6 @@
                     error:(NSError**)error
                  delegate:(id<IJSVGDelegate>)delegate
 {
-#ifndef __clang_analyzer__
-
-    // check the cache first
-    if (useCache && [IJSVGCache enabled]) {
-        IJSVG* svg = nil;
-        if ((svg = [IJSVGCache cachedSVGForFileURL:aURL]) != nil) {
-            // have to release, as this was called from an alloc..!
-            [self release];
-            return [svg retain];
-        }
-    }
-
     // create the object
     if ((self = [super init]) != nil) {
         NSError* anError = nil;
@@ -244,13 +231,7 @@
             (void)([self release]), self = nil;
             return nil;
         }
-
-        // cache the file
-        if (useCache && [IJSVGCache enabled]) {
-            [IJSVGCache cacheSVG:self fileURL:aURL];
-        }
     }
-#endif
     return self;
 }
 
