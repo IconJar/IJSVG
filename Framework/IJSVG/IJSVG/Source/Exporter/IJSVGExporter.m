@@ -189,7 +189,7 @@ NSString* IJSVGHash(NSString* key)
     };
 
     // add on width and height unless specified otherwise
-    if ((_options & IJSVGExporterOptionRemoveWidthHeightAttributes) == 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
         NSMutableDictionary* attDict = [[attributes mutableCopy] autorelease];
         attDict[@"width"] = IJSVGShortFloatString(_size.width);
         attDict[@"height"] = IJSVGShortFloatString(_size.height);
@@ -203,11 +203,13 @@ NSString* IJSVGHash(NSString* key)
 
         // copy the attributes
         NSMutableDictionary* att = [[attributes mutableCopy] autorelease];
-        att[@"width"] = IJSVGShortFloatString(_size.width);
-        att[@"height"] = IJSVGShortFloatString(_size.height);
+        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
+            att[@"width"] = IJSVGShortFloatString(_size.width);
+            att[@"height"] = IJSVGShortFloatString(_size.height);
+        }
 
         // work out the scale
-        CGFloat _proposedScale = MIN(_size.width / viewBox.size.width,
+        const CGFloat _proposedScale = MIN(_size.width / viewBox.size.width,
             _size.height / viewBox.size.height);
 
         // actually do the scale
@@ -217,10 +219,12 @@ NSString* IJSVGHash(NSString* key)
             const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
 
             // reset the viewbox for the exported SVG
-            att[@"viewBox"] = [self viewBoxWithRect:(NSRect){
-                                                        .origin = NSMakePoint(x, y),
-                                                        .size = NSMakeSize(_size.width,
-                                                            _size.height) }];
+            NSRect newViewBox = (NSRect){
+                .origin = NSMakePoint(x, y),
+                .size = NSMakeSize(_size.width,
+                    _size.height)
+            };
+            att[@"viewBox"] = [self viewBoxWithRect:newViewBox];
 
             // do we need to scale?
             if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
@@ -228,7 +232,7 @@ NSString* IJSVGHash(NSString* key)
                 transform = [IJSVGTransform transformByScaleX:_proposedScale
                                                             y:_proposedScale];
                 [transforms addObject:transform];
-                
+
                 // reset the scale
                 scale = _proposedScale;
             }
@@ -316,7 +320,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // add generator
-    if ((_options & IJSVGExporterOptionRemoveComments) == 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveComments) == NO) {
         NSXMLNode* generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
         generatorNode.stringValue = XML_DOC_GENERATOR;
         [_dom.rootElement insertChild:generatorNode
@@ -327,52 +331,52 @@ NSString* IJSVGHash(NSString* key)
 - (void)_cleanup
 {
     // remove hidden elements
-    if ((_options & IJSVGExporterOptionRemoveHiddenElements) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveHiddenElements) == YES) {
         [self _removeHiddenElements];
     }
 
     // convert any duplicate paths into use
-    if ((_options & IJSVGExporterOptionCreateUseForPaths) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
         [self _convertUseElements];
     }
 
     // cleanup def
-    if ((_options & IJSVGExporterOptionRemoveUselessDef) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
         [self _cleanDef];
     }
 
     // collapse groups
-    if ((_options & IJSVGExporterOptionCollapseGroups) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups) == YES) {
         [self _collapseGroups];
     }
 
     // clean any blank groups
-    if ((_options & IJSVGExporterOptionRemoveUselessGroups) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessGroups) == YES) {
         [self _cleanEmptyGroups];
     }
 
     // sort attributes
-    if ((_options & IJSVGExporterOptionSortAttributes) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionSortAttributes) == YES) {
         [self _sortAttributesOnElement:_dom.rootElement];
     }
 
     // compress groups together
-    if ((_options & IJSVGExporterOptionCollapseGroups) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups) == YES) {
         [self _compressGroups];
     }
 
     // collapse gradients?
-    if ((_options & IJSVGExporterOptionCollapseGradients) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGradients) == YES) {
         [self _collapseGradients];
     }
 
     // create classes?
-    if ((_options & IJSVGExporterOptionCreateClasses) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateClasses) == YES) {
         [self _createClasses];
     }
 
     // move attributes to group
-    if ((_options & IJSVGExporterOptionMoveAttributesToGroup) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionMoveAttributesToGroup) == YES) {
         [self _moveAttributesToGroupWithElement:_dom.rootElement];
     }
 }
@@ -1071,7 +1075,7 @@ NSString* IJSVGHash(NSString* key)
 - (IJSVGColorStringOptions)colorOptions
 {
     IJSVGColorStringOptions options = IJSVGColorStringOptionDefault;
-    if ((_options & IJSVGExporterOptionColorAllowRRGGBBAA) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionColorAllowRRGGBBAA) == YES) {
         options |= IJSVGColorStringOptionAllowRRGGBBAA;
     }
     return options;
@@ -1407,7 +1411,7 @@ NSString* IJSVGHash(NSString* key)
 - (NSString*)SVGString
 {
     NSXMLNodeOptions options = NSXMLNodePrettyPrint;
-    if ((_options & IJSVGExporterOptionCompressOutput) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressOutput) == YES) {
         options = NSXMLNodeOptionsNone;
     }
     return [_dom XMLStringWithOptions:options];
@@ -1426,7 +1430,7 @@ NSString* IJSVGHash(NSString* key)
     NSArray* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path];
 
     // work out what to do...
-    if ((_options & IJSVGExporterOptionCleanupPaths) != 0) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
         [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
     }
     return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions];
