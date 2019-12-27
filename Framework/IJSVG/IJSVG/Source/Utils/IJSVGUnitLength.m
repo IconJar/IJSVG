@@ -8,6 +8,7 @@
 
 #import "IJSVGNode.h"
 #import "IJSVGUnitLength.h"
+#import "IJSVGUtils.h"
 
 @implementation IJSVGUnitLength
 
@@ -91,14 +92,15 @@
 - (NSString*)stringValue
 {
     if (self.type == IJSVGUnitLengthTypePercentage) {
-        return [NSString stringWithFormat:@"%g%%", (self.value * 100.f)];
+        return [NSString stringWithFormat:@"%@%%", IJSVGShortFloatString(self.value * 100.f)];
     }
-    return [NSString stringWithFormat:@"%g", self.value];
+    return IJSVGShortFloatString(self.value);
 }
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"%f%@", self.value, (self.type == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
+    return [NSString stringWithFormat:@"%f%@",
+                     self.value, (self.type == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
 }
 
 @end

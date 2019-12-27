@@ -87,9 +87,6 @@
 + (id)svgNamed:(NSString*)string;
 + (id)svgNamed:(NSString*)string
       delegate:(id<IJSVGDelegate>)delegate;
-+ (id)svgNamed:(NSString*)string
-      useCache:(BOOL)useCache
-      delegate:(id<IJSVGDelegate>)delegate;
 
 - (id)initWithImage:(NSImage*)image;
 
@@ -104,8 +101,6 @@
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error;
 
-- (id)initWithFile:(NSString*)file
-          useCache:(BOOL)useCache;
 - (id)initWithFile:(NSString*)file;
 - (id)initWithFile:(NSString*)file
              error:(NSError**)error;
@@ -114,19 +109,12 @@
 - (id)initWithFile:(NSString*)file
              error:(NSError**)error
           delegate:(id<IJSVGDelegate>)delegate;
-- (id)initWithFile:(NSString*)file
-          useCache:(BOOL)useCache
-             error:(NSError**)error
-          delegate:(id<IJSVGDelegate>)delegate;
 - (id)initWithFilePathURL:(NSURL*)aURL;
-- (id)initWithFilePathURL:(NSURL*)aURL
-                 useCache:(BOOL)useCache;
 - (id)initWithFilePathURL:(NSURL*)aURL
                     error:(NSError**)error;
 - (id)initWithFilePathURL:(NSURL*)aURL
                  delegate:(id<IJSVGDelegate>)delegate;
 - (id)initWithFilePathURL:(NSURL*)aURL
-                 useCache:(BOOL)useCache
                     error:(NSError**)error
                  delegate:(id<IJSVGDelegate>)delegate;
 - (NSImage*)imageWithSize:(NSSize)aSize;

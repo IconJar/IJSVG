@@ -95,7 +95,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
             // work out if the command is signed and or decimal
             BOOL isSigned = chars[0] == '-';
-            BOOL isDecimal = chars[0] == '.' || (isSigned == YES && chars[1] == '.');
+            BOOL isDecimal = (isSigned == NO && chars[0] == '.') || (isSigned == YES && chars[1] == '.');
 
             // we also need to know if the previous command was a decimal or not
             BOOL lastWasDecimal = NO;

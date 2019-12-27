@@ -25,18 +25,6 @@
     (void)([_replacementColors release]), _replacementColors = nil;
     (void)([_style release]), _style = nil;
     (void)([_group release]), _group = nil;
-    
-    // this is probably really sketchy but if we are not called
-    // from main thread, we need to lock a transaction
-    // which is really slow, so instead, async the dealloc back to the main
-    // thread and let the main thread deal with deallocing this SVG object
-//    if (IJSVGIsMainThread() == NO) {
-//        __block id weakSelf = self;
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            [weakSelf dealloc];
-//        });
-//        return;
-//    }
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -54,29 +42,14 @@
 }
 
 + (id)svgNamed:(NSString*)string
-      useCache:(BOOL)useCache
       delegate:(id<IJSVGDelegate>)delegate
 {
     return [self.class svgNamed:string
-                       useCache:useCache
                           error:nil
                        delegate:delegate];
 }
 
-+ (id)svgNamed:(NSString*)string delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self.class svgNamed:string error:nil delegate:delegate];
-}
-
 + (id)svgNamed:(NSString*)string
-         error:(NSError**)error
-      delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self svgNamed:string useCache:YES error:error delegate:delegate];
-}
-
-+ (id)svgNamed:(NSString*)string
-      useCache:(BOOL)useCache
          error:(NSError**)error
       delegate:(id<IJSVGDelegate>)delegate
 {
@@ -90,7 +63,6 @@
                                 ofType:ext])
         != nil) {
         return [[[self alloc] initWithFile:str
-                                  useCache:useCache
                                      error:error
                                   delegate:delegate] autorelease];
     }
@@ -102,22 +74,19 @@
     __block IJSVGGroupLayer* layer = nil;
     __block IJSVGImageLayer* imageLayer = nil;
 
-    // make sure we obtain a lock, with whatever we do with layers!
-    BOOL lockAquired = IJSVGBeginTransactionLock();
     // create the layers we require
     layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     imageLayer =
         [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     [layer addSublayer:imageLayer];
-    if (lockAquired == YES) {
-        IJSVGEndTransactionLock();
-    }
 
     // return the initialized SVG
-    return [self initWithSVGLayer:layer viewBox:imageLayer.frame];
+    return [self initWithSVGLayer:layer
+                          viewBox:imageLayer.frame];
 }
 
-- (id)initWithSVGLayer:(IJSVGGroupLayer*)group viewBox:(NSRect)viewBox
+- (id)initWithSVGLayer:(IJSVGGroupLayer*)group
+               viewBox:(NSRect)viewBox
 {
     // this completely bypasses passing of files
     if ((self = [super init]) != nil) {
@@ -133,33 +102,9 @@
 
 - (id)initWithFile:(NSString*)file
 {
-    return [self initWithFile:file delegate:nil];
-}
-
-- (id)initWithFile:(NSString*)file useCache:(BOOL)useCache
-{
-    return [self initWithFile:file useCache:useCache error:nil delegate:nil];
-}
-
-- (id)initWithFile:(NSString*)file
-          useCache:(BOOL)useCache
-             error:(NSError**)error
-          delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self initWithFilePathURL:[NSURL fileURLWithPath:file]
-                            useCache:useCache
-                               error:error
-                            delegate:delegate];
-}
-
-- (id)initWithFile:(NSString*)file error:(NSError**)error
-{
-    return [self initWithFile:file error:error delegate:nil];
-}
-
-- (id)initWithFile:(NSString*)file delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self initWithFile:file error:nil delegate:delegate];
+    return [self initWithFile:file
+                        error:nil
+                     delegate:nil];
 }
 
 - (id)initWithFile:(NSString*)file
@@ -167,42 +112,50 @@
           delegate:(id<IJSVGDelegate>)delegate
 {
     return [self initWithFilePathURL:[NSURL fileURLWithPath:file]
-                            useCache:YES
                                error:error
                             delegate:delegate];
 }
 
+- (id)initWithFile:(NSString*)file
+             error:(NSError**)error
+{
+    return [self initWithFile:file
+                        error:error
+                     delegate:nil];
+}
+
+- (id)initWithFile:(NSString*)file
+          delegate:(id<IJSVGDelegate>)delegate
+{
+    return [self initWithFile:file
+                        error:nil
+                     delegate:delegate];
+}
+
 - (id)initWithFilePathURL:(NSURL*)aURL
 {
-    return [self initWithFilePathURL:aURL useCache:YES error:nil delegate:nil];
-}
-
-- (id)initWithFilePathURL:(NSURL*)aURL error:(NSError**)error
-{
     return [self initWithFilePathURL:aURL
-                            useCache:YES
-                               error:error
-                            delegate:nil];
-}
-
-- (id)initWithFilePathURL:(NSURL*)aURL useCache:(BOOL)useCache
-{
-    return [self initWithFilePathURL:aURL
-                            useCache:useCache
                                error:nil
                             delegate:nil];
 }
 
-- (id)initWithFilePathURL:(NSURL*)aURL delegate:(id<IJSVGDelegate>)delegate
+- (id)initWithFilePathURL:(NSURL*)aURL
+                    error:(NSError**)error
 {
     return [self initWithFilePathURL:aURL
-                            useCache:YES
+                               error:error
+                            delegate:nil];
+}
+
+- (id)initWithFilePathURL:(NSURL*)aURL
+                 delegate:(id<IJSVGDelegate>)delegate
+{
+    return [self initWithFilePathURL:aURL
                                error:nil
                             delegate:delegate];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL
-                 useCache:(BOOL)useCache
                     error:(NSError**)error
                  delegate:(id<IJSVGDelegate>)delegate
 {
@@ -237,12 +190,17 @@
 
 - (id)initWithSVGString:(NSString*)string
 {
-    return [self initWithSVGString:string error:nil delegate:nil];
+    return [self initWithSVGString:string
+                             error:nil
+                          delegate:nil];
 }
 
-- (id)initWithSVGString:(NSString*)string error:(NSError**)error
+- (id)initWithSVGString:(NSString*)string
+                  error:(NSError**)error
 {
-    return [self initWithSVGString:string error:error delegate:nil];
+    return [self initWithSVGString:string
+                             error:error
+                          delegate:nil];
 }
 
 - (id)initWithSVGString:(NSString*)string
@@ -469,7 +427,8 @@
     return [self PDFDataWithRect:rect error:nil];
 }
 
-- (NSData*)PDFDataWithRect:(NSRect)rect error:(NSError**)error
+- (NSData*)PDFDataWithRect:(NSRect)rect
+                     error:(NSError**)error
 {
     // create the data for the PDF
     NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
@@ -551,15 +510,21 @@
     };
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point size:(NSSize)aSize
+- (BOOL)drawAtPoint:(NSPoint)point
+               size:(NSSize)aSize
 {
-    return [self drawAtPoint:point size:aSize error:nil];
+    return [self drawAtPoint:point
+                        size:aSize
+                       error:nil];
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point size:(NSSize)aSize error:(NSError**)error
+- (BOOL)drawAtPoint:(NSPoint)point
+               size:(NSSize)aSize
+              error:(NSError**)error
 {
     return
-        [self drawInRect:NSMakeRect(point.x, point.y, aSize.width, aSize.height)
+        [self drawInRect:NSMakeRect(point.x, point.y,
+                             aSize.width, aSize.height)
                    error:error];
 }
 
@@ -568,7 +533,8 @@
     return [self drawInRect:rect error:nil];
 }
 
-- (BOOL)drawInRect:(NSRect)rect error:(NSError**)error
+- (BOOL)drawInRect:(NSRect)rect
+             error:(NSError**)error
 {
     return [self _drawInRect:rect
                      context:[[NSGraphicsContext currentContext] CGContext]
@@ -581,7 +547,8 @@
     return (CGFloat)(_scale + actualScale);
 }
 
-- (NSRect)computeRectDrawingInRect:(NSRect)rect isValid:(BOOL*)valid
+- (NSRect)computeRectDrawingInRect:(NSRect)rect
+                           isValid:(BOOL*)valid
 {
     // we also need to calculate the viewport so we can clip
     // the drawing if needed
@@ -602,7 +569,8 @@
     return viewPort;
 }
 
-- (void)drawInRect:(NSRect)rect context:(CGContextRef)context
+- (void)drawInRect:(NSRect)rect
+           context:(CGContextRef)context
 {
     [self _drawInRect:rect context:context error:nil];
 }
@@ -641,9 +609,6 @@
             CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
             CGContextScaleCTM(ref, _scale, _scale);
 
-            // render the layer, its really important we lock
-            // the transaction when drawing
-            BOOL lockAquired = IJSVGBeginTransactionLock();
             // do we need to update the backing scales on the
             // layers?
             if (self.renderingBackingScaleHelper != nil) {
@@ -666,9 +631,6 @@
             }
             CGContextSetInterpolationQuality(ref, quality);
             [self.layer renderInContext:ref];
-            if (lockAquired == YES) {
-                IJSVGEndTransactionLock();
-            }
         }
     } @catch (NSException* exception) {
         // just catch and give back a drawing error to the caller
@@ -730,11 +692,7 @@
     }
 
     // force rebuild of the tree
-    BOOL lockAquired = IJSVGBeginTransactionLock();
     _layerTree = [[tree layerForNode:_group] retain];
-    if (lockAquired == YES) {
-        IJSVGEndTransactionLock();
-    }
     return _layerTree;
 }
 
@@ -869,7 +827,9 @@
     withSVGString:(NSString*)string
 {
     if (_delegate != nil && _respondsTo.shouldHandleSubSVG == 1) {
-        [_delegate svg:self foundSubSVG:subSVG withSVGString:string];
+        [_delegate svg:self
+              foundSubSVG:subSVG
+            withSVGString:string];
     }
 }
 
@@ -877,7 +837,8 @@
     shouldHandleForeignObject:(IJSVGForeignObject*)foreignObject
 {
     if (_delegate != nil && _respondsTo.shouldHandleForeignObject == 1) {
-        return [_delegate svg:self shouldHandleForeignObject:foreignObject];
+        return [_delegate svg:self
+            shouldHandleForeignObject:foreignObject];
     }
     return NO;
 }
@@ -887,7 +848,9 @@
                document:(NSXMLDocument*)document
 {
     if (_delegate != nil && _respondsTo.handleForeignObject == 1) {
-        [_delegate svg:self handleForeignObject:foreignObject document:document];
+        [_delegate svg:self
+            handleForeignObject:foreignObject
+                       document:document];
     }
 }
 

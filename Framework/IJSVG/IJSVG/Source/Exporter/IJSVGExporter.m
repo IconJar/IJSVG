@@ -206,27 +206,31 @@ NSString* IJSVGHash(NSString* key)
         att[@"width"] = IJSVGShortFloatString(_size.width);
         att[@"height"] = IJSVGShortFloatString(_size.height);
 
-        // scale the whole SVG to fit the specified size
-        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
-            // work out the scale
-            scale = MIN(_size.width / viewBox.size.width,
-                _size.height / viewBox.size.height);
+        // work out the scale
+        CGFloat _proposedScale = MIN(_size.width / viewBox.size.width,
+            _size.height / viewBox.size.height);
 
-            // actually do the scale
-            if (scale != 1.f) {
+        // actually do the scale
+        if (_proposedScale != 1.f) {
+            // compute x and y, don't multiply 0
+            const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * scale);
+            const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
+
+            // reset the viewbox for the exported SVG
+            att[@"viewBox"] = [self viewBoxWithRect:(NSRect){
+                                                        .origin = NSMakePoint(x, y),
+                                                        .size = NSMakeSize(_size.width,
+                                                            _size.height) }];
+
+            // do we need to scale?
+            if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
                 IJSVGTransform* transform = nil;
-                transform = [IJSVGTransform transformByScaleX:scale
-                                                            y:scale];
+                transform = [IJSVGTransform transformByScaleX:_proposedScale
+                                                            y:_proposedScale];
                 [transforms addObject:transform];
-
-                // compute x and y, don't multiply 0
-                const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * scale);
-                const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
-
-                // reset the viewbox for the exported SVG
-                att[@"viewBox"] = [self viewBoxWithRect:(NSRect){
-                                                            .origin = NSMakePoint(x, y),
-                                                            .size = NSMakeSize(_size.width, _size.height) }];
+                
+                // reset the scale
+                scale = _proposedScale;
             }
         }
 
@@ -987,7 +991,7 @@ NSString* IJSVGHash(NSString* key)
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
         NSString* stopColor = [IJSVGColor colorStringFromColor:aColor
                                                        options:options];
-        
+
         // dont bother adding default
         if ([stopColor isEqualToString:@"#000"] == NO) {
             atts[@"stop-color"] = stopColor;
