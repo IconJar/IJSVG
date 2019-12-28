@@ -31,7 +31,7 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 BOOL IJSVGIsSVGLayer(CALayer* layer);
-+ (IJSVGCommandType)typeForCommandString:(NSString*)string;
++ (IJSVGCommandType)typeForCommandChar:(char)commandChar;
 + (CGFloat*)commandParameters:(NSString*)command
                         count:(NSInteger*)count;
 + (CGFloat*)parseViewBox:(NSString*)string;

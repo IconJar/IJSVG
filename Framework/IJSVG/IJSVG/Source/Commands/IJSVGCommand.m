@@ -27,7 +27,6 @@
 @synthesize parameterCount;
 @synthesize parameters;
 @synthesize subCommands;
-@synthesize requiredParameters;
 @synthesize type;
 @synthesize previousCommand;
 @synthesize isSubCommand;
@@ -105,7 +104,6 @@
 - (void)dealloc
 {
     (void)([commandString release]), commandString = nil;
-    (void)([command release]), command = nil;
     (void)([subCommands release]), subCommands = nil;
     if (parameters) {
         (void)(free(parameters)), parameters = nil;
@@ -119,21 +117,21 @@
     if ((self = [super init]) != nil) {
         // work out the basics
         _currentIndex = 0;
-        command = [[str substringToIndex:1] copy];
-        type = [IJSVGUtils typeForCommandString:self.command];
-        requiredParameters = [self.class requiredParameterCount];
+        command = [str characterAtIndex:0];
+        type = [IJSVGUtils typeForCommandChar:command];
         NSInteger sets = 0;
+        NSInteger paramCount = [self.class requiredParameterCount];
         IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
         parameters = IJSVGParsePathDataStreamSequence(str.UTF8String, str.length,
-            dataStream, sequence, requiredParameters, &sets);
+            dataStream, sequence, [self.class requiredParameterCount], &sets);
 
         if (sets <= 1) {
             CGFloat* subParams = [self parametersFromIndexOffset:0];
             IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                        paramCount:paramCount
                                                    previousCommand:nil];
             subCommands = @[ command ].retain;
         } else {
-
             NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
             subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
 
@@ -145,6 +143,7 @@
 
                 // generate the subcommand
                 IJSVGCommand* command = [self subcommandWithParameters:subParams
+                                                            paramCount:paramCount
                                                        previousCommand:lastCommand];
 
                 // make sure we assign the last command or hell breaks
@@ -164,7 +163,7 @@
 - (CGFloat*)parametersFromIndexOffset:(NSInteger)index
 {
     CGFloat* subParams = 0;
-    NSInteger req = self.requiredParameters;
+    NSInteger req = [self.class requiredParameterCount];
     if (req != 0) {
         subParams = (CGFloat*)malloc(req * sizeof(CGFloat));
         memcpy(subParams, &self.parameters[index * req], sizeof(CGFloat) * req);
@@ -173,11 +172,12 @@
 }
 
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
+                               paramCount:(NSInteger)paramCount
                           previousCommand:(IJSVGCommand*)aPreviousCommand
 {
     // create a subcommand per set
     IJSVGCommand* c = [[[self.class alloc] init] autorelease];
-    c.parameterCount = self.requiredParameters;
+    c.parameterCount = paramCount;
     c.parameters = subParams;
     c.type = self.type;
     c.command = self.command;

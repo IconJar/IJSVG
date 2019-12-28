@@ -233,9 +233,9 @@ CGFloat degrees_to_radians(CGFloat degrees)
     return ((degrees) / 180.0 * M_PI);
 }
 
-+ (IJSVGCommandType)typeForCommandString:(NSString*)string
++ (IJSVGCommandType)typeForCommandChar:(char)commandChar
 {
-    return isupper([string characterAtIndex:0]) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
+    return isupper(commandChar) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
 }
 
 + (NSRange)rangeOfParentheses:(NSString*)string
