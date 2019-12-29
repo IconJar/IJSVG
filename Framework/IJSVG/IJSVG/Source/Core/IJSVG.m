@@ -31,14 +31,18 @@
     [super dealloc];
 }
 
-+ (id)svgNamed:(NSString*)string error:(NSError**)error
++ (id)svgNamed:(NSString*)string
+         error:(NSError**)error
 {
-    return [self.class svgNamed:string error:error delegate:nil];
+    return [self.class svgNamed:string
+                          error:error
+                       delegate:nil];
 }
 
 + (id)svgNamed:(NSString*)string
 {
-    return [self.class svgNamed:string error:nil];
+    return [self.class svgNamed:string
+                          error:nil];
 }
 
 + (id)svgNamed:(NSString*)string
