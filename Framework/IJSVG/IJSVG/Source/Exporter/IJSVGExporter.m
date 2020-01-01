@@ -36,7 +36,7 @@ BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option)
     return (options & option) != 0;
 };
 
-const NSArray* IJSVGShortCharacterArray()
+const NSArray* IJSVGShortCharacterArray(void)
 {
     static NSArray* _array;
     static dispatch_once_t onceToken;

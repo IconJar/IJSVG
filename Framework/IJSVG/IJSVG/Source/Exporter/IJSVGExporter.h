@@ -38,6 +38,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
 void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlock enumBlock);
+const NSArray* IJSVGShortCharacterArray(void);
 
 @interface IJSVGExporter : NSObject {
 
