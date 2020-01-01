@@ -63,11 +63,6 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         return NULL;
     }
 
-    // default sizes and memory
-    // sizes for the string buffer
-    const NSInteger defFloatSize = 20;
-    const NSInteger defSize = 10;
-
     // default memory size for the float
     NSInteger i = 0;
     NSInteger counter = 0;
@@ -84,12 +79,13 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     int bufferCount = 0;
 
     while (i < sLength) {
-        char currentChar = cString[i];
+        char currentChar = *cString++;
 
         // work out next char
         char nextChar = (char)0;
         if (i < sLengthMinusOne) {
-            nextChar = cString[i + 1];
+            nextChar = *cString++;
+            cString--;
         }
 
         // check for validator
@@ -128,7 +124,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
             if ((bufferCount + 1) == dataStream->charCount) {
                 // realloc the buffer, incase the string is overflowing the
                 // allocated memory
-                dataStream->charCount += defSize;
+                dataStream->charCount += IJSVG_STREAM_CHAR_BLOCK_SIZE;
                 dataStream->charBuffer = (char*)realloc(dataStream->charBuffer,
                     sizeof(char) * dataStream->charCount);
             }
@@ -148,7 +144,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         if (bufferCount != 0 && (wantsEnd || i == sLengthMinusOne)) {
             // make sure there is enough room in the float pool
             if ((counter + 1) == dataStream->floatCount) {
-                dataStream->floatCount += defFloatSize;
+                dataStream->floatCount += IJSVG_STREAM_FLOAT_BLOCK_SIZE;
                 dataStream->floatBuffer = (CGFloat*)realloc(dataStream->floatBuffer,
                     sizeof(CGFloat) * dataStream->floatCount);
             }
