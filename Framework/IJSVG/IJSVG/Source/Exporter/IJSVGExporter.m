@@ -215,8 +215,8 @@ NSString* IJSVGHash(NSString* key)
         // actually do the scale
         if (_proposedScale != 1.f) {
             // compute x and y, don't multiply 0
-            const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * scale);
-            const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * scale);
+            const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * _proposedScale);
+            const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * _proposedScale);
 
             // reset the viewbox for the exported SVG
             NSRect newViewBox = (NSRect){
@@ -247,6 +247,7 @@ NSString* IJSVGHash(NSString* key)
         CGPoint transformPoint = CGPointMake(_size.width / 2.f - ((viewBox.size.width * scale) / 2.f),
             _size.height / 2.f - ((viewBox.size.height * scale) / 2.f));
 
+        // work out what transform point we need to do, if any
         if (CGPointEqualToPoint(transformPoint, CGPointZero) == NO) {
             IJSVGTransform* transform = nil;
             transform = [IJSVGTransform transformByTranslatingX:transformPoint.x
