@@ -154,4 +154,5 @@
 
 // colors
 - (IJSVGColorList*)computedColorList:(BOOL*)hasPatternFills;
+- (void)performBlock:(dispatch_block_t)block;
 @end

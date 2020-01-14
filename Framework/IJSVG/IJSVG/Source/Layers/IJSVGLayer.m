@@ -25,7 +25,6 @@
 
 - (void)dealloc
 {
-    self.contents = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
     [super dealloc];
 }

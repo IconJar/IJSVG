@@ -20,6 +20,7 @@
 - (void)dealloc
 {
     // this can all be called on the background thread to be released
+    BOOL hasTransaction = IJSVGBeginTransaction();
     (void)([renderingBackingScaleHelper release]),
         renderingBackingScaleHelper = nil;
     (void)([_replacementColors release]), _replacementColors = nil;
@@ -29,6 +30,9 @@
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
     [super dealloc];
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
+    }
 }
 
 + (id)svgNamed:(NSString*)string
@@ -79,10 +83,14 @@
     __block IJSVGImageLayer* imageLayer = nil;
 
     // create the layers we require
+    BOOL hasTransaction = IJSVGBeginTransaction();
     layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     imageLayer =
         [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     [layer addSublayer:imageLayer];
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
+    }
 
     // return the initialized SVG
     return [self initWithSVGLayer:layer
@@ -236,6 +244,15 @@
         }
     }
     return self;
+}
+
+- (void)performBlock:(dispatch_block_t)block
+{
+    BOOL hasTransaction = IJSVGBeginTransaction();
+    block();
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
+    }
 }
 
 - (void)discardDOM
@@ -541,7 +558,7 @@
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
-    if(@available(macOS 10.10, *)) {
+    if (@available(macOS 10.10, *)) {
         currentCGContext = NSGraphicsContext.currentContext.CGContext;
     } else {
         currentCGContext = NSGraphicsContext.currentContext.graphicsPort;
@@ -640,7 +657,11 @@
             }
             }
             CGContextSetInterpolationQuality(ref, quality);
+            BOOL hasTransaction = IJSVGBeginTransaction();
             [self.layer renderInContext:ref];
+            if (hasTransaction == YES) {
+                IJSVGEndTransaction();
+            }
         }
     } @catch (NSException* exception) {
         // just catch and give back a drawing error to the caller
@@ -690,19 +711,27 @@
     };
 
     // gogogo
+    BOOL hasTransaction = IJSVGBeginTransaction();
     [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
+    }
     return _backingScaleFactor;
 }
 
 - (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree
 {
     // clear memory
+    BOOL hasTransaction = IJSVGBeginTransaction();
     if (_layerTree != nil) {
         (void)([_layerTree release]), _layerTree = nil;
     }
 
     // force rebuild of the tree
     _layerTree = [[tree layerForNode:_group] retain];
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
+    }
     return _layerTree;
 }
 

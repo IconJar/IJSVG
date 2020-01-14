@@ -10,13 +10,17 @@
 
 BOOL IJSVGIsMainThread(void) { return NSThread.isMainThread; };
 
-void IJSVGBeginTransactionLock(void)
+BOOL IJSVGBeginTransaction(void)
 {
+    if(IJSVGIsMainThread() == YES) {
+        return NO;
+    }
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
+    return YES;
 };
 
-void IJSVGEndTransactionLock(void)
+void IJSVGEndTransaction(void)
 {
     [CATransaction commit];
 };
