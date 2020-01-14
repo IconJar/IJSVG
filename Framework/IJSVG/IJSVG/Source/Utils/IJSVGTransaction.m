@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGTransaction.h"
+#import <AppKit/AppKit.h>
 
 BOOL IJSVGIsMainThread(void) { return NSThread.isMainThread; };
 
@@ -15,12 +16,13 @@ BOOL IJSVGBeginTransaction(void)
     if(IJSVGIsMainThread() == YES) {
         return NO;
     }
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
+    // use nsanimationcontext as this sets a private flag of 0x4
+    // of the catransaction for background composites
+    [NSAnimationContext beginGrouping];
     return YES;
 };
 
 void IJSVGEndTransaction(void)
 {
-    [CATransaction commit];
+    [NSAnimationContext endGrouping];
 };
