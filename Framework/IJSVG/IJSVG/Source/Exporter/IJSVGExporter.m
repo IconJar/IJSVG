@@ -1475,9 +1475,9 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
         }
     };
     if(@available(macOS 10.13, *)) {
-        CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
-    } else {
         CGPathApplyWithBlock(path, callback);
+    } else {
+        CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
     }
 };
 
