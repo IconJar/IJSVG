@@ -25,12 +25,20 @@
 
 + (NSArray<NSString*>*)imageTypes
 {
-    return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
+    if (@available(macOS 10.10, *)) {
+        return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
+    } else {
+        return @[ @"public.svg-image", @"svg" ];
+    }
 }
 
 + (NSArray<NSString*>*)imageUnfilteredTypes
 {
-    return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
+    if (@available(macOS 10.10, *)) {
+        return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
+    } else {
+        return @[ @"public.svg-image", @"svg" ];
+    }
 }
 
 + (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data

@@ -540,8 +540,14 @@
 - (BOOL)drawInRect:(NSRect)rect
              error:(NSError**)error
 {
+    CGContextRef currentCGContext;
+    if(@available(macOS 10.10, *)) {
+        currentCGContext = NSGraphicsContext.currentContext.CGContext;
+    } else {
+        currentCGContext = NSGraphicsContext.currentContext.graphicsPort;
+    }
     return [self _drawInRect:rect
-                     context:[[NSGraphicsContext currentContext] CGContext]
+                     context:currentCGContext
                        error:error];
 }
 
