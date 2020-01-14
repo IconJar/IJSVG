@@ -88,8 +88,8 @@
     imageLayer =
         [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     [layer addSublayer:imageLayer];
-    if(hasTransaction == YES) {
-    IJSVGEndTransaction();
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
     }
 
     // return the initialized SVG
@@ -250,8 +250,8 @@
 {
     BOOL hasTransaction = IJSVGBeginTransaction();
     block();
-    if(hasTransaction == YES) {
-    IJSVGEndTransaction();
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
     }
 }
 
@@ -659,8 +659,8 @@
             CGContextSetInterpolationQuality(ref, quality);
             BOOL hasTransaction = IJSVGBeginTransaction();
             [self.layer renderInContext:ref];
-            if(hasTransaction == YES) {
-            IJSVGEndTransaction();
+            if (hasTransaction == YES) {
+                IJSVGEndTransaction();
             }
         }
     } @catch (NSException* exception) {
@@ -713,8 +713,8 @@
     // gogogo
     BOOL hasTransaction = IJSVGBeginTransaction();
     [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
-    if(hasTransaction == YES) {
-    IJSVGEndTransaction();
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
     }
     return _backingScaleFactor;
 }
@@ -729,8 +729,8 @@
 
     // force rebuild of the tree
     _layerTree = [[tree layerForNode:_group] retain];
-    if(hasTransaction == YES) {
-    IJSVGEndTransaction();
+    if (hasTransaction == YES) {
+        IJSVGEndTransaction();
     }
     return _layerTree;
 }
