@@ -1446,7 +1446,7 @@ void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement)
 void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlock enumBlock)
 {
     __block CGPoint currentPoint = CGPointZero;
-    CGPathApplyWithBlock(path, ^(const CGPathElement* _Nonnull element) {
+    IJSVGCGPathHandler callback = ^(const CGPathElement* _Nonnull element) {
         switch (element->type) {
         case kCGPathElementMoveToPoint: {
             enumBlock(element, currentPoint);
@@ -1473,7 +1473,12 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
             break;
         }
         }
-    });
+    };
+    if(@available(macOS 10.13, *)) {
+        CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
+    } else {
+        CGPathApplyWithBlock(path, callback);
+    }
 };
 
 - (void)sortAttributesOnElement:(NSXMLElement*)element
