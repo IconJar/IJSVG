@@ -18,11 +18,12 @@ BOOL IJSVGBeginTransaction(void)
     }
     // use nsanimationcontext as this sets a private flag of 0x4
     // of the catransaction for background composites
-    [NSAnimationContext beginGrouping];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
     return YES;
 };
 
 void IJSVGEndTransaction(void)
 {
-    [NSAnimationContext endGrouping];
+    [CATransaction commit];
 };
