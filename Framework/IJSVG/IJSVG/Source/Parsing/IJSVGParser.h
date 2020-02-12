@@ -20,6 +20,7 @@
 #import "IJSVGStyleSheet.h"
 #import "IJSVGText.h"
 #import "IJSVGTransform.h"
+#import "IJSVGUnitRect.h"
 #import "IJSVGUtils.h"
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -85,7 +86,7 @@ static NSString const* IJSVGAttributePoints = @"points";
 @interface IJSVGParser : IJSVGGroup {
 
     NSRect viewBox;
-    NSSize proposedViewSize;
+    IJSVGUnitSize* intrinsicSize;
 
 @private
     id<IJSVGParserDelegate> _delegate;
@@ -107,7 +108,7 @@ static NSString const* IJSVGAttributePoints = @"points";
 }
 
 @property (nonatomic, readonly) NSRect viewBox;
-@property (nonatomic, readonly) NSSize proposedViewSize;
+@property (nonatomic, readonly) IJSVGUnitSize* intrinsicSize;
 
 + (BOOL)isDataSVG:(NSData*)data;
 

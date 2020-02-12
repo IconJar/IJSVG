@@ -12,7 +12,7 @@
 @implementation IJSVGParser
 
 @synthesize viewBox;
-@synthesize proposedViewSize;
+@synthesize intrinsicSize = _intrinsicSize;
 
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
 {
@@ -46,6 +46,7 @@
     (void)([_defNodes release]), _defNodes = nil;
     (void)([_baseDefNodes release]), _baseDefNodes = nil;
     (void)([_svgs release]), _svgs = nil;
+    (void)([_intrinsicSize release]), _intrinsicSize = nil;
     if (_commandDataStream != NULL) {
         (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
     }
@@ -213,17 +214,19 @@
     }
 
     // parse the width and height....
-    CGFloat w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue.floatValue;
-    CGFloat h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue.floatValue;
-    if (w == 0.f && h == 0.f) {
-        w = viewBox.size.width;
-        h = viewBox.size.height;
-    } else if (w == 0 && h != 0.f) {
-        w = viewBox.size.width;
-    } else if (h == 0 && w != 0.f) {
-        h = viewBox.size.height;
+    NSString* w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
+    NSString* h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
+    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithPercentageFloat:100.f];
+    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithPercentageFloat:100.f];
+    if (w != nil) {
+        wl = [IJSVGUnitLength unitWithString:w];
     }
-    proposedViewSize = NSMakeSize(w, h);
+    if (h != nil) {
+        hl = [IJSVGUnitLength unitWithString:h];
+    }
+
+    // store the width and height
+    _intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl height:hl].retain;
 
     // the root element is SVG, so iterate over its children
     // recursively
@@ -1116,7 +1119,7 @@
     NSUInteger len = command.length;
     NSUInteger lastIndex = len - 1;
     const char* buffer = command.UTF8String;
-    
+
     // make sure we plus 1 for the null byte
     char* charBuffer = (char*)malloc(sizeof(char) * (len + 1));
 

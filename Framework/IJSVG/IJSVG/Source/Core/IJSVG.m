@@ -267,9 +267,7 @@
 
 - (void)_setupBasicInfoFromGroup
 {
-    // store the viewbox
     _viewBox = _group.viewBox;
-    _proposedViewSize = _group.proposedViewSize;
 }
 
 - (void)_setupBasicsFromAnyInitializer
@@ -357,11 +355,19 @@
                          error:nil];
 }
 
+- (NSSize)computeSVGSizeWithRenderSize:(NSSize)size
+{
+    IJSVGUnitSize* svgSize = _group.intrinsicSize;
+    return NSMakeSize([svgSize.width computeValue:size.width],
+        [svgSize.height computeValue:size.height]);
+}
+
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize
 {
+    NSSize propSize = [self computeSVGSizeWithRenderSize:aSize];
     [self _beginDraw:(NSRect){ .origin = CGPointZero, .size = aSize }];
-    return NSMakeRect(0.f, 0.f, _proposedViewSize.width * _clipScale,
-        _proposedViewSize.height * _clipScale);
+    return NSMakeRect(0.f, 0.f, propSize.width * _clipScale,
+        propSize.height * _clipScale);
 }
 
 - (CGImageRef)newCGImageRefWithSize:(CGSize)size
@@ -580,11 +586,12 @@
     // we also need to calculate the viewport so we can clip
     // the drawing if needed
     NSRect viewPort = NSZeroRect;
-    viewPort.origin.x = round((rect.size.width / 2 - (_proposedViewSize.width / 2) * _clipScale) + rect.origin.x);
+    NSSize propSize = [self computeSVGSizeWithRenderSize:rect.size];
+    viewPort.origin.x = round((rect.size.width / 2 - (propSize.width / 2) * _clipScale) + rect.origin.x);
     viewPort.origin.y = round(
-        (rect.size.height / 2 - (_proposedViewSize.height / 2) * _clipScale) + rect.origin.y);
-    viewPort.size.width = _proposedViewSize.width * _clipScale;
-    viewPort.size.height = _proposedViewSize.height * _clipScale;
+        (rect.size.height / 2 - (propSize.height / 2) * _clipScale) + rect.origin.y);
+    viewPort.size.width = propSize.width * _clipScale;
+    viewPort.size.height = propSize.height * _clipScale;
 
     // check the viewport
     if (NSEqualRects(_viewBox, NSZeroRect) || _viewBox.size.width <= 0 || _viewBox.size.height <= 0 || NSEqualRects(NSZeroRect, viewPort) || CGRectIsEmpty(viewPort) || CGRectIsNull(viewPort) || viewPort.size.width <= 0 || viewPort.size.height <= 0) {
@@ -835,12 +842,13 @@
     // to transform the paths into our viewbox
     NSSize dest = rect.size;
     NSSize source = _viewBox.size;
-    _clipScale = MIN(dest.width / _proposedViewSize.width,
-        dest.height / _proposedViewSize.height);
+    NSSize propSize = [self computeSVGSizeWithRenderSize:rect.size];
+    _clipScale = MIN(dest.width / propSize.width,
+        dest.height / propSize.height);
 
     // work out the actual scale based on the clip scale
-    CGFloat w = _proposedViewSize.width * _clipScale;
-    CGFloat h = _proposedViewSize.height * _clipScale;
+    CGFloat w = propSize.width * _clipScale;
+    CGFloat h = propSize.height * _clipScale;
     _scale = MIN(w / source.width, h / source.height);
 }
 
