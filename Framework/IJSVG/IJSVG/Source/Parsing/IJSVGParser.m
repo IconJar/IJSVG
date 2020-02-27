@@ -216,11 +216,11 @@
     // parse the width and height....
     NSString* w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
     NSString* h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
-    
+
     // by default just the the width and height from the viewbox unless
     // specified otherwise
-    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithPercentageFloat:viewBox.size.width];
-    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithPercentageFloat:viewBox.size.height];
+    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:viewBox.size.width];
+    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:viewBox.size.height];
     if (w != nil) {
         wl = [IJSVGUnitLength unitWithString:w];
     }
