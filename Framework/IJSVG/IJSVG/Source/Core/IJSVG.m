@@ -16,6 +16,7 @@
 @synthesize clipToViewport;
 @synthesize renderQuality;
 @synthesize style = _style;
+@synthesize intrinsicSize = _intrinsicSize;
 
 - (void)dealloc
 {
@@ -26,6 +27,7 @@
     (void)([_replacementColors release]), _replacementColors = nil;
     (void)([_style release]), _style = nil;
     (void)([_group release]), _group = nil;
+    (void)([_intrinsicSize release]), _intrinsicSize = nil;
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -268,6 +270,7 @@
 - (void)_setupBasicInfoFromGroup
 {
     _viewBox = _group.viewBox;
+    _intrinsicSize = _group.intrinsicSize.retain;
 }
 
 - (void)_setupBasicsFromAnyInitializer
@@ -357,7 +360,7 @@
 
 - (NSSize)computeSVGSizeWithRenderSize:(NSSize)size
 {
-    IJSVGUnitSize* svgSize = _group.intrinsicSize;
+    IJSVGUnitSize* svgSize = _intrinsicSize;
     return NSMakeSize([svgSize.width computeValue:size.width],
         [svgSize.height computeValue:size.height]);
 }
