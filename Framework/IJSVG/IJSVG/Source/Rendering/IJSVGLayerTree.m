@@ -623,8 +623,6 @@
             if (node.clipPath.units == IJSVGUnitObjectBoundingBox) {
                 [self adjustLayer:clip
                     toParentLayerFrame:layer];
-            } else {
-                clip.affineTransform = [self absoluteTransform:node];
             }
 
             // add the layer
@@ -639,8 +637,6 @@
             if (node.mask.units == IJSVGUnitObjectBoundingBox) {
                 [self adjustLayer:mask
                     toParentLayerFrame:layer];
-            } else {
-                mask.affineTransform = [self absoluteTransform:node];
             }
 
             // add the layer
@@ -648,8 +644,9 @@
         }
 
         // recursive colourize for each item
+        NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
         [self _recursiveColorLayersFromLayer:maskLayer
-                                   withColor:[IJSVGColor computeColorSpace:NSColor.whiteColor].CGColor];
+                                   withColor:color.CGColor];
 
         // add the mask
         layer.mask = maskLayer;

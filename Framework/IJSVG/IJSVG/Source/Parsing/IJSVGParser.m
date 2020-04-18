@@ -897,7 +897,7 @@
         // use
     case IJSVGNodeTypeUse: {
 
-        NSString* xlink = [[element attributeForName:(NSString*)IJSVGAttributeXLink] stringValue];
+        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
         NSString* xlinkID = [xlink substringFromIndex:1];
         IJSVGNode* node = [self definedObjectForID:xlinkID];
 
@@ -944,7 +944,7 @@
         // linear gradient
     case IJSVGNodeTypeLinearGradient: {
 
-        NSString* xlink = [[element attributeForName:(NSString*)IJSVGAttributeXLink] stringValue];
+        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
         NSString* xlinkID = [xlink substringFromIndex:1];
         NSXMLElement* referenceElement;
         IJSVGNode* node = [self definedObjectForID:xlinkID
@@ -981,7 +981,7 @@
         // radial gradient
     case IJSVGNodeTypeRadialGradient: {
 
-        NSString* xlink = [[element attributeForName:(NSString*)IJSVGAttributeXLink] stringValue];
+        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
         NSString* xlinkID = [xlink substringFromIndex:1];
         NSXMLElement* referenceElement;
         IJSVGNode* node = [self definedObjectForID:xlinkID
@@ -1070,8 +1070,8 @@
                               ignoreAttributes:nil];
 
         // from base64
-        NSString* string = [element attributeForName:(NSString*)IJSVGAttributeXLink].stringValue;
-        [image loadFromBase64EncodedString:string];
+        NSXMLNode* attributeNode = [self resolveXLinkAttributeForElement:element];
+        [image loadFromBase64EncodedString:attributeNode.stringValue];
 
         // add to parent
         [parentGroup addChild:image];
@@ -1079,6 +1079,17 @@
         break;
     }
     }
+}
+
+- (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
+{
+    NSString* const namespaceURI = @"http://www.w3.org/1999/xlink";
+    NSXMLNode* attributeNode = [element attributeForLocalName:@"href"
+                                                          URI:namespaceURI];
+    if (attributeNode == nil) {
+        attributeNode = [element attributeForName:(NSString*)IJSVGAttributeXLink];
+    }
+    return attributeNode;
 }
 
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
