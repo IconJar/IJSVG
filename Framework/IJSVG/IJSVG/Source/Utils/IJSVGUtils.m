@@ -163,7 +163,7 @@ NSArray* IJSVGCommonHTMLElementNames(void)
 NSString* IJSVGShortenFloatString(NSString* string)
 {
     const char* chars = string.UTF8String;
-    if (chars[0] == '-' && chars[1] == '0') {
+    if (chars[0] == '-' && chars[1] == '0' && strstr(chars, ".") != NULL) {
         return [NSString stringWithFormat:@"-%@", [string substringFromIndex:2]];
     } else if (chars[0] == '0' && chars[1] == '.') {
         return [string substringFromIndex:1];
