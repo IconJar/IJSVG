@@ -11,6 +11,8 @@
 		5919E65823F47FF60051873A /* IJSVGUnitRect.m in Sources */ = {isa = PBXBuildFile; fileRef = 5919E65623F47FF60051873A /* IJSVGUnitRect.m */; };
 		5919E65B23F480330051873A /* IJSVGUnitPoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 5919E65923F480330051873A /* IJSVGUnitPoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5919E65C23F480330051873A /* IJSVGUnitPoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 5919E65A23F480330051873A /* IJSVGUnitPoint.m */; };
+		594A10DA248D7C90001A3181 /* NSImage+IJSVGAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 594A10D8248D7C90001A3181 /* NSImage+IJSVGAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		594A10DB248D7C90001A3181 /* NSImage+IJSVGAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 594A10D9248D7C90001A3181 /* NSImage+IJSVGAdditions.m */; };
 		594CF55F238FF462009B251B /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF55E238FF462009B251B /* AppKit.framework */; };
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
@@ -137,6 +139,8 @@
 		5919E65623F47FF60051873A /* IJSVGUnitRect.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitRect.m; sourceTree = "<group>"; };
 		5919E65923F480330051873A /* IJSVGUnitPoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUnitPoint.h; sourceTree = "<group>"; };
 		5919E65A23F480330051873A /* IJSVGUnitPoint.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitPoint.m; sourceTree = "<group>"; };
+		594A10D8248D7C90001A3181 /* NSImage+IJSVGAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSImage+IJSVGAdditions.h"; sourceTree = "<group>"; };
+		594A10D9248D7C90001A3181 /* NSImage+IJSVGAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSImage+IJSVGAdditions.m"; sourceTree = "<group>"; };
 		594CF46F238FF38E009B251B /* IJSVG.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJSVG.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		594CF473238FF38E009B251B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		594CF55E238FF462009B251B /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -449,6 +453,8 @@
 				59EB758E23905F6D00F5AE63 /* IJSVGBezierPathAdditions.m */,
 				59EB75B823905F7000F5AE63 /* IJSVGStringAdditions.h */,
 				59EB757823905F6C00F5AE63 /* IJSVGStringAdditions.m */,
+				594A10D8248D7C90001A3181 /* NSImage+IJSVGAdditions.h */,
+				594A10D9248D7C90001A3181 /* NSImage+IJSVGAdditions.m */,
 			);
 			path = Additions;
 			sourceTree = "<group>";
@@ -591,6 +597,7 @@
 				59E7CFAF23B148600077D599 /* IJSVGCommandParser.h in Headers */,
 				59EB762823905F7300F5AE63 /* IJSVGCommandClose.h in Headers */,
 				59EB75E423905F7300F5AE63 /* IJSVGGradientUnitLength.h in Headers */,
+				594A10DA248D7C90001A3181 /* NSImage+IJSVGAdditions.h in Headers */,
 				59EB762D23905F7300F5AE63 /* IJSVGLayerTree.h in Headers */,
 				59EB760B23905F7300F5AE63 /* IJSVGStyleSheetSelector.h in Headers */,
 			);
@@ -676,6 +683,7 @@
 				59EB761123905F7300F5AE63 /* IJSVGCommand.m in Sources */,
 				59EB760923905F7300F5AE63 /* IJSVGCommandCurve.m in Sources */,
 				59EB763323905F7300F5AE63 /* IJSVGLinearGradient.m in Sources */,
+				594A10DB248D7C90001A3181 /* NSImage+IJSVGAdditions.m in Sources */,
 				59EB761923905F7300F5AE63 /* IJSVGCommandSmoothCurve.m in Sources */,
 				59EB761323905F7300F5AE63 /* IJSVG.m in Sources */,
 				59EB763623905F7300F5AE63 /* IJSVGImageLayer.m in Sources */,

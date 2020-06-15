@@ -11,8 +11,6 @@
 
 @implementation IJSVGImageRep
 
-@synthesize viewBox = _viewBox;
-
 + (void)load
 {
     [NSBitmapImageRep registerImageRepClass:self];
@@ -107,6 +105,11 @@
 - (CGRect)viewBox
 {
     return _svg.viewBox;
+}
+
+- (IJSVG*)SVG
+{
+    return _svg;
 }
 
 @end

@@ -17,6 +17,9 @@
     IJSVG* _svg;
 }
 
+- (instancetype)initWithData:(NSData*)data;
+
 @property (nonatomic, readonly) CGRect viewBox;
+@property (nonatomic, readonly) IJSVG* SVG;
 
 @end
