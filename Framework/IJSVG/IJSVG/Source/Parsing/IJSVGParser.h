@@ -91,11 +91,10 @@ static NSString const* IJSVGAttributePoints = @"points";
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
-    NSMutableArray* _glyphs;
+    NSMutableArray<IJSVGNode*>* _glyphs;
     IJSVGStyleSheet* _styleSheet;
-    NSMutableArray* _parsedNodes;
-    NSMutableDictionary* _defNodes;
-    NSMutableDictionary* _baseDefNodes;
+    NSMutableDictionary<NSString*, NSXMLElement*>* _defNodes;
+    NSMutableDictionary<NSString*, NSXMLElement*>* _baseDefNodes;
     NSMutableArray<IJSVG*>* _svgs;
 
     struct {

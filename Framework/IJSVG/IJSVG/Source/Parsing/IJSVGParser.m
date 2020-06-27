@@ -42,7 +42,6 @@
 {
     (void)([_glyphs release]), _glyphs = nil;
     (void)([_styleSheet release]), _styleSheet = nil;
-    (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
     (void)([_baseDefNodes release]), _baseDefNodes = nil;
     (void)([_svgs release]), _svgs = nil;
@@ -65,11 +64,7 @@
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
         _commandDataStream = IJSVGPathDataStreamCreateDefault();
-        _glyphs = [[NSMutableArray alloc] init];
-        _parsedNodes = [[NSMutableArray alloc] init];
         _defNodes = [[NSMutableDictionary alloc] init];
-        _baseDefNodes = [[NSMutableDictionary alloc] init];
-        _svgs = [[NSMutableArray alloc] init];
 
         // load the document / file, assume its UTF8
 
@@ -238,16 +233,8 @@
             intoGroup:self
                   def:NO];
 
-    // now everything has been done we need to compute the style tree
-    for (NSDictionary* dict in _parsedNodes) {
-        [self _postParseElementForCommonAttributes:dict[@"element"]
-                                              node:dict[@"node"]
-                                  ignoreAttributes:nil];
-    }
-
     // dont need the style sheet or the parsed nodes as this point
     (void)([_styleSheet release]), _styleSheet = nil;
-    (void)([_parsedNodes release]), _parsedNodes = nil;
     (void)([_defNodes release]), _defNodes = nil;
     (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
 }
@@ -489,25 +476,28 @@
 
 - (BOOL)isFont
 {
-    return [_glyphs count] != 0;
+    return _glyphs != nil && [_glyphs count] != 0;
 }
 
 - (NSArray*)glyphs
 {
-    return _glyphs;
+    return _glyphs ?: @[];
 }
 
 - (void)addSubSVG:(IJSVG*)anSVG
 {
+    if (_svgs == nil) {
+        _svgs = [[NSMutableArray alloc] init];
+    }
     [_svgs addObject:anSVG];
 }
 
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
 {
     if (recursive == NO) {
-        return _svgs;
+        return _svgs ?: @[];
     }
-    NSMutableArray* svgs = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray<IJSVG*>* svgs = [[[NSMutableArray alloc] init] autorelease];
     for (IJSVG* anSVG in svgs) {
         [svgs addObject:anSVG];
         [svgs addObjectsFromArray:[anSVG subSVGs:recursive]];
@@ -517,6 +507,9 @@
 
 - (void)addGlyph:(IJSVGNode*)glyph
 {
+    if (_glyphs == nil) {
+        _glyphs = [[NSMutableArray alloc] init];
+    }
     [_glyphs addObject:glyph];
 }
 
@@ -587,6 +580,9 @@
             default: {
                 // just a default def, continue on, as we are a def element,
                 // store these seperately to the default ID string ones
+                if (_baseDefNodes == nil) {
+                    _baseDefNodes = [[NSMutableDictionary alloc] init];
+                }
                 NSString* defID = [childDef attributeForName:@"id"].stringValue;
                 if (defID != nil) {
                     _baseDefNodes[defID] = childDef;
