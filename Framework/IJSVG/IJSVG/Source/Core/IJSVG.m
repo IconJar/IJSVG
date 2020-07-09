@@ -15,7 +15,7 @@
 @synthesize renderingBackingScaleHelper;
 @synthesize clipToViewport;
 @synthesize renderQuality;
-@synthesize style = _style;
+@synthesize renderingStyle = _renderingStyle;
 @synthesize intrinsicSize = _intrinsicSize;
 
 - (void)dealloc
@@ -25,7 +25,7 @@
     (void)([renderingBackingScaleHelper release]),
         renderingBackingScaleHelper = nil;
     (void)([_replacementColors release]), _replacementColors = nil;
-    (void)([_style release]), _style = nil;
+    (void)([_renderingStyle release]), _renderingStyle = nil;
     (void)([_group release]), _group = nil;
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
 
@@ -275,7 +275,7 @@
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    self.style = [[[IJSVGRenderingStyle alloc] init] autorelease];
+    self.renderingStyle = [[[IJSVGRenderingStyle alloc] init] autorelease];
     self.clipToViewport = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
 
@@ -755,16 +755,16 @@
     // from this SVG object
     IJSVGLayerTree* renderer = [[[IJSVGLayerTree alloc] init] autorelease];
     renderer.viewBox = self.viewBox;
-    renderer.style = self.style;
+    renderer.style = self.renderingStyle;
 
     // return the rendered layer
     return [self layerWithTree:renderer];
 }
 
-- (void)setStyle:(IJSVGRenderingStyle*)style
+- (void)setRenderingStyle:(IJSVGRenderingStyle*)style
 {
-    (void)([_style release]), _style = nil;
-    _style = style.retain;
+    (void)([_renderingStyle release]), _renderingStyle = nil;
+    _renderingStyle = style.retain;
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath
@@ -773,7 +773,7 @@
                        context:(void*)context
 {
     // invalidate the tree if a style is set
-    if (object == _style) {
+    if (object == _renderingStyle) {
         [self invalidateLayerTree];
     }
 }

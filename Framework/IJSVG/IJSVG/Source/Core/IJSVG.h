@@ -67,7 +67,7 @@
 // fillColor, strokeColor, pattern and gradient fill
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL clipToViewport;
-@property (nonatomic, retain) IJSVGRenderingStyle* style;
+@property (nonatomic, retain) IJSVGRenderingStyle* renderingStyle;
 @property (nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
 
 - (void)prepForDrawingInView:(NSView*)view;

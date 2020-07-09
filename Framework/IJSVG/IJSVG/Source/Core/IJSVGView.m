@@ -42,7 +42,7 @@
     if (imageName != nil) {
         IJSVG* anSVG = [IJSVG svgNamed:imageName];
         if (tintColor != nil) {
-            anSVG.style.fillColor = tintColor;
+            anSVG.renderingStyle.fillColor = tintColor;
         }
         self.SVG = anSVG;
     }
