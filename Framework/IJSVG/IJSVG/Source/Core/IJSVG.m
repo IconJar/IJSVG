@@ -282,7 +282,7 @@
     // setup low level backing scale
     _lastProposedBackingScale = 0.f;
     self.renderingBackingScaleHelper = ^CGFloat {
-        return 1.f;
+        return NSScreen.mainScreen.backingScaleFactor;
     };
 }
 
@@ -368,7 +368,7 @@
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize
 {
     NSSize propSize = [self computeSVGSizeWithRenderSize:aSize];
-    [self _beginDraw:(NSRect){ .origin = CGPointZero, .size = aSize }];
+    [self _beginDraw:(NSRect) { .origin = CGPointZero, .size = aSize }];
     return NSMakeRect(0.f, 0.f, propSize.width * _clipScale,
         propSize.height * _clipScale);
 }
@@ -379,7 +379,7 @@
 {
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
-    NSRect rect = (CGRect){
+    NSRect rect = (CGRect) {
         .origin = CGPointZero,
         .size = (CGSize)size
     };
@@ -388,7 +388,7 @@
     [self _beginDraw:rect];
 
     // make sure we setup the scale based on the backing scale factor
-    CGFloat scale = [self backindScaleFactor:NULL];
+    CGFloat scale = [self backingScaleFactor:NULL];
 
     // create the context and colorspace
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -448,7 +448,7 @@
 - (NSData*)PDFData:(NSError**)error
 {
     return [self
-        PDFDataWithRect:(NSRect){ .origin = NSZeroPoint, .size = _viewBox.size }
+        PDFDataWithRect:(NSRect) { .origin = NSZeroPoint, .size = _viewBox.size }
                   error:error];
 }
 
@@ -648,9 +648,7 @@
 
             // do we need to update the backing scales on the
             // layers?
-            if (self.renderingBackingScaleHelper != nil) {
-                [self backindScaleFactor:nil];
-            }
+            [self backingScaleFactor:nil];
 
             CGInterpolationQuality quality;
             switch (self.renderQuality) {
@@ -685,7 +683,7 @@
     return (error == nil);
 }
 
-- (CGFloat)backindScaleFactor:(CGFloat* _Nullable)proposedBackingScale
+- (CGFloat)backingScaleFactor:(CGFloat* _Nullable)proposedBackingScale
 {
     __block CGFloat scale = 1.f;
     scale = (self.renderingBackingScaleHelper)();
