@@ -125,7 +125,7 @@
              error:(NSError**)error
           delegate:(id<IJSVGDelegate>)delegate
 {
-    return [self initWithFilePathURL:[NSURL fileURLWithPath:file]
+    return [self initWithFilePathURL:[NSURL fileURLWithPath:file isDirectory:NO]
                                error:error
                             delegate:delegate];
 }
