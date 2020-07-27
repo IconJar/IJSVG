@@ -101,6 +101,10 @@
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error;
 
+- (id)initWithSVGData:(NSData*)data;
+- (id)initWithSVGData:(NSData*)data
+                error:(NSError**)error;
+
 - (id)initWithFile:(NSString*)file;
 - (id)initWithFile:(NSString*)file
              error:(NSError**)error;

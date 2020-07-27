@@ -75,4 +75,21 @@
     return [self ijsvg_componentsSeparatedByChars:"\t\n\r "];
 }
 
+- (BOOL)ijsvg_isHexString
+{
+    const char* chars = self.UTF8String;
+    unsigned long length = strlen(chars);
+    for(int i = 0; i < length; i++) {
+        char c = chars[i];
+        BOOL flag = ((c == '#') ||
+         (c >= '0' && c <= '9') ||
+         (c >= 'a' && c <= 'f') ||
+         (c >= 'A' && c <= 'F'));
+        if(flag == NO) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 @end

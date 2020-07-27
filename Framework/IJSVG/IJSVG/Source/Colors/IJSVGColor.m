@@ -8,6 +8,7 @@
 
 #import "IJSVGColor.h"
 #import "IJSVGUtils.h"
+#import "IJSVGStringAdditions.h"
 
 @implementation IJSVGColor
 
@@ -707,14 +708,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
 + (BOOL)isHex:(NSString*)string
 {
-    const char* validList = "0123456789ABCDEFabcdef#";
-    for (NSInteger i = 0; i < string.length; i++) {
-        char c = [string characterAtIndex:i];
-        if (strchr(validList, c) == NULL) {
-            return NO;
-        }
-    }
-    return YES;
+    return string.ijsvg_isHexString;
 }
 
 + (unsigned long)lengthOfHEXInteger:(NSUInteger)hex

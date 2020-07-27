@@ -202,6 +202,21 @@
     return self;
 }
 
+- (id)initWithSVGData:(NSData *)data
+{
+    return [self initWithSVGData:data
+                           error:nil];
+}
+
+- (id)initWithSVGData:(NSData *)data
+                error:(NSError **)error
+{
+    NSString* svgString = [[NSString alloc] initWithData:data
+                                                encoding:NSUTF8StringEncoding];
+    return [self initWithSVGString:svgString.autorelease
+                             error:error];
+}
+
 - (id)initWithSVGString:(NSString*)string
 {
     return [self initWithSVGString:string

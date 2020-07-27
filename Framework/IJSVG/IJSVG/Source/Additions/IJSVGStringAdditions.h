@@ -14,5 +14,6 @@
 - (BOOL)ijsvg_isNumeric;
 - (BOOL)ijsvg_containsAlpha;
 - (NSArray*)ijsvg_componentsSplitByWhiteSpace;
+- (BOOL)ijsvg_isHexString;
 
 @end
