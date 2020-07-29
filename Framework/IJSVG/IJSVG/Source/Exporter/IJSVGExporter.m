@@ -181,19 +181,21 @@ NSString* IJSVGHash(NSString* key)
 
     // sort out viewbox
     NSRect viewBox = _svg.viewBox;
-    NSDictionary* attributes = @{
+    NSMutableDictionary* attributes = [[[NSMutableDictionary alloc] initWithDictionary:@{
         @"viewBox" : [self viewBoxWithRect:viewBox],
-        @"version" : [NSString stringWithFormat:@"%g", XML_DOC_VERSION],
-        @"xmlns" : XML_DOC_NS,
-        @"xmlns:xlink" : XML_DOC_NSXLINK
-    };
+        @"xmlns" : XML_DOC_NS
+    }] autorelease];
+    
+    // add on various XML declaritive things
+    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
+        attributes[@"version"] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
+        attributes[@"xmlns:xlink"] = XML_DOC_NSXLINK;
+    }
 
     // add on width and height unless specified otherwise
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-        NSMutableDictionary* attDict = [[attributes mutableCopy] autorelease];
-        attDict[@"width"] = IJSVGShortFloatString(_size.width);
-        attDict[@"height"] = IJSVGShortFloatString(_size.height);
-        attributes = [[attDict copy] autorelease];
+        attributes[@"width"] = IJSVGShortFloatString(_size.width);
+        attributes[@"height"] = IJSVGShortFloatString(_size.height);
     }
 
     // was there a size set?
@@ -202,10 +204,9 @@ NSString* IJSVGHash(NSString* key)
     if (CGSizeEqualToSize(CGSizeZero, _size) == NO && (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
 
         // copy the attributes
-        NSMutableDictionary* att = [[attributes mutableCopy] autorelease];
         if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-            att[@"width"] = IJSVGShortFloatString(_size.width);
-            att[@"height"] = IJSVGShortFloatString(_size.height);
+            attributes[@"width"] = IJSVGShortFloatString(_size.width);
+            attributes[@"height"] = IJSVGShortFloatString(_size.height);
         }
 
         // work out the scale
@@ -224,7 +225,7 @@ NSString* IJSVGHash(NSString* key)
                 .size = NSMakeSize(_size.width,
                     _size.height)
             };
-            att[@"viewBox"] = [self viewBoxWithRect:newViewBox];
+            attributes[@"viewBox"] = [self viewBoxWithRect:newViewBox];
 
             // do we need to scale?
             if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
@@ -237,9 +238,6 @@ NSString* IJSVGHash(NSString* key)
                 scale = _proposedScale;
             }
         }
-
-        // reset attributes
-        attributes = [[att copy] autorelease];
     }
 
     // do we need to center the svg within the box?
@@ -1386,8 +1384,6 @@ NSString* IJSVGHash(NSString* key)
     NSString* maskKey = [self generateID];
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
     dict[@"id"] = maskKey;
-    dict[@"maskContentUnits"] = @"userSpaceOnUse";
-    dict[@"maskUnits"] = @"objectBoundingBox";
 
     if (layer.mask.frame.origin.x != 0.f) {
         dict[@"x"] = IJSVGShortFloatString(layer.mask.frame.origin.x);
@@ -1415,7 +1411,11 @@ NSString* IJSVGHash(NSString* key)
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressOutput) == YES) {
         options = NSXMLNodeOptionsNone;
     }
-    return [_dom XMLStringWithOptions:options];
+    NSString* output = [_dom XMLStringWithOptions:options];
+    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
+        return [output substringFromIndex:38];
+    }
+    return output;
 }
 
 - (NSData*)SVGData
