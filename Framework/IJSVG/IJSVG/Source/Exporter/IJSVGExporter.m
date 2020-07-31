@@ -189,7 +189,6 @@ NSString* IJSVGHash(NSString* key)
     // add on various XML declaritive things
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
         attributes[@"version"] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
-        attributes[@"xmlns:xlink"] = XML_DOC_NSXLINK;
     }
 
     // add on width and height unless specified otherwise
@@ -274,6 +273,20 @@ NSString* IJSVGHash(NSString* key)
         *nestedRoot = root;
     }
     return root;
+}
+
+- (void)applyXLinkToRootElement
+{
+    // simply flag check
+    if(_appliedXLink == YES) {
+        return;
+    }
+    
+    // set and add the attribute onto the rootElement
+    _appliedXLink = YES;
+    NSXMLElement* root = _dom.rootElement;
+    NSString* const attributeName = @"xmlns:xlink";
+    IJSVGApplyAttributesToElement(@{attributeName: XML_DOC_NSXLINK}, root);
 }
 
 - (NSString*)generateID
@@ -467,6 +480,7 @@ NSString* IJSVGHash(NSString* key)
                     }
                     NSDictionary* atts = @{ @"xlink:href" : IJSVGHash(idString) };
                     IJSVGApplyAttributesToElement(atts, gradientA);
+                    [self applyXLinkToRootElement];
                     [gradientA setChildren:nil];
                     break;
                 }
@@ -768,6 +782,7 @@ NSString* IJSVGHash(NSString* key)
             useAttribute.name = @"xlink:href";
             useAttribute.stringValue = IJSVGHash(pathId);
             [use addAttribute:useAttribute];
+            [self applyXLinkToRootElement];
 
             // remove the d attribute
             for (NSXMLNode* attribute in element.attributes) {
@@ -1057,6 +1072,7 @@ NSString* IJSVGHash(NSString* key)
     dict[@"width"] = IJSVGShortFloatString(layer.frame.size.width);
     dict[@"height"] = IJSVGShortFloatString(layer.frame.size.height);
     dict[@"xlink:href"] = base64String;
+    [self applyXLinkToRootElement];
 
     // work out any position
     if (layer.frame.origin.x != 0.f) {

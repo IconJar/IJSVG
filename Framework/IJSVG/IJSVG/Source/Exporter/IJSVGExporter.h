@@ -51,6 +51,7 @@ const NSArray* IJSVGShortCharacterArray(void);
     NSXMLElement* _defElement;
     NSInteger _idCount;
     NSInteger _shortIdCount;
+    BOOL _appliedXLink;
 }
 
 @property (nonatomic, copy) NSString* title;
