@@ -19,9 +19,10 @@ typedef struct {
 
 @private
     NSInteger _dataCount;
-    char _instruction;
     CGFloat* _data;
 }
+
+@property (nonatomic, assign) char instruction;
 
 IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command);
 void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand* _Nullable command);
@@ -31,11 +32,10 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 - (id)initWithInstruction:(char)instruction
                 dataCount:(NSInteger)floatCount;
 
-- (void)setInstruction:(char)newInstruction;
-- (char)instruction;
 - (CGFloat*)data;
 - (NSInteger)dataLength;
 
++ (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions;
 + (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets;

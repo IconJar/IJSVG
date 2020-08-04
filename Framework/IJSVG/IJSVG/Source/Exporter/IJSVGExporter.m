@@ -1449,6 +1449,7 @@ NSString* IJSVGHash(NSString* key)
     // work out what to do...
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
         [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
+        instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions];
     }
     return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions];
 }

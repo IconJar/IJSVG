@@ -12,6 +12,8 @@
 
 @implementation IJSVGExporterPathInstruction
 
+@synthesize instruction = _instruction;
+
 - (void)dealloc
 {
     if (_data != NULL) {
@@ -28,6 +30,7 @@
 
         // only allocate if not zero
         if (floatCount != 0) {
+            _dataCount = floatCount;
             _data = (CGFloat*)calloc(sizeof(CGFloat), floatCount);
         }
     }
@@ -37,16 +40,6 @@
 - (NSInteger)dataLength
 {
     return _dataCount;
-}
-
-- (void)setInstruction:(char)newInstruction
-{
-    _instruction = newInstruction;
-}
-
-- (char)instruction
-{
-    return _instruction;
 }
 
 - (CGFloat*)data
@@ -132,6 +125,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
         const char lowerInstruction = tolower(instruction.instruction);
         NSArray<NSString*>* set = nil;
         switch (lowerInstruction) {
+        case 't':
         case 'm':
         case 'l': {
             set = @[
@@ -161,6 +155,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
             break;
         }
 
+        case 's':
         case 'q': {
             set = @[
                 IJSVGShortFloatString(data[0]),
@@ -188,6 +183,84 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
         [pathInstructions addObject:value];
     }
     return [self pathStringWithInstructionSet:pathInstructions];
+}
+
++ (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+{
+    NSMutableArray<IJSVGExporterPathInstruction*>* nInstructions = [[[NSMutableArray alloc] init] autorelease];
+    IJSVGExporterPathInstruction* lastInstruction = nil;
+    for(IJSVGExporterPathInstruction* instruction in instructions) {
+        lastInstruction = nInstructions.lastObject;
+        if(lastInstruction == nil) {
+            lastInstruction = instruction;
+            [nInstructions addObject:instruction];
+            continue;
+        }
+        if(instruction.instruction == 'c') {
+            if(lastInstruction.instruction == 'c' &&
+               instruction.data[0] == -(lastInstruction.data[2] - lastInstruction.data[4]) &&
+               instruction.data[1] == -(lastInstruction.data[3] - lastInstruction.data[5])) {
+                IJSVGExporterPathInstruction* nInstruction = nil;
+                nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
+                                                                                dataCount:4] autorelease];
+                nInstruction.data[0] = instruction.data[2];
+                nInstruction.data[1] = instruction.data[3];
+                nInstruction.data[2] = instruction.data[4];
+                nInstruction.data[3] = instruction.data[5];
+                [nInstructions addObject:nInstruction];
+                continue;
+            } else if(lastInstruction.instruction == 's' &&
+                      instruction.data[0] == -(lastInstruction.data[0] - lastInstruction.data[2]) &&
+                      instruction.data[1] == -(lastInstruction.data[1] - lastInstruction.data[3])) {
+                IJSVGExporterPathInstruction* nInstruction = nil;
+                nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
+                                                                                dataCount:4] autorelease];
+                nInstruction.data[0] = instruction.data[2];
+                nInstruction.data[1] = instruction.data[3];
+                nInstruction.data[2] = instruction.data[4];
+                nInstruction.data[3] = instruction.data[5];
+                [nInstructions addObject:nInstruction];
+                continue;
+            } else if(lastInstruction.instruction != 'c' &&
+                      lastInstruction.instruction != 's' &&
+                      instruction.data[0] == 0.f &&
+                      instruction.data[1] == 0.f) {
+                IJSVGExporterPathInstruction* nInstruction = nil;
+                nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
+                                                                                dataCount:4] autorelease];
+                nInstruction.data[0] = instruction.data[2];
+                nInstruction.data[1] = instruction.data[3];
+                nInstruction.data[2] = instruction.data[4];
+                nInstruction.data[3] = instruction.data[5];
+                [nInstructions addObject:nInstruction];
+                continue;
+            }
+        } else if(instruction.instruction == 'q') {
+            if(lastInstruction.instruction == 'q' &&
+               instruction.data[0] == (lastInstruction.data[2] - lastInstruction.data[0]) &&
+               instruction.data[1] == (lastInstruction.data[3] - lastInstruction.data[1])) {
+                IJSVGExporterPathInstruction* nInstruction = nil;
+                nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
+                                                                                dataCount:2] autorelease];
+                nInstruction.data[0] = instruction.data[3];
+                nInstruction.data[1] = instruction.data[4];
+                [nInstructions addObject:nInstruction];
+                continue;
+            } else if(lastInstruction.instruction == 't' &&
+                      instruction.data[2] == lastInstruction.data[0] &&
+                      instruction.data[3] == lastInstruction.data[1]) {
+                IJSVGExporterPathInstruction* nInstruction = nil;
+                nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
+                                                                                dataCount:2] autorelease];
+                nInstruction.data[0] = instruction.data[3];
+                nInstruction.data[1] = instruction.data[4];
+                [nInstructions addObject:nInstruction];
+                continue;
+            }
+        }
+        [nInstructions addObject:instruction];
+    }
+    return nInstructions;
 }
 
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
@@ -231,9 +304,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
                 subpathPoint[0] = point[0] += data[0];
                 subpathPoint[1] = point[1] += data[1];
-
             } else if (instruction == 'L' || instruction == 'T') {
-
                 instruction = tolower(instruction);
 
                 data[0] -= point[0];
@@ -241,9 +312,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
                 point[0] += data[0];
                 point[1] += data[1];
-
             } else if (instruction == 'C') {
-
                 instruction = 'c';
 
                 data[0] -= point[0];
@@ -255,9 +324,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
                 point[0] += data[4];
                 point[1] += data[5];
-
             } else if (instruction == 'S' || instruction == 'Q') {
-
                 instruction = tolower(instruction);
 
                 data[0] -= point[0];
@@ -267,31 +334,23 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
                 point[0] += data[2];
                 point[1] += data[3];
-
             } else if (instruction == 'A') {
-
                 instruction = 'a';
-
+                
                 data[5] -= point[0];
                 data[6] -= point[1];
-
+                
                 point[0] += data[5];
                 point[1] += data[6];
-
             } else if (instruction == 'H') {
-
                 instruction = 'h';
-
+                
                 data[0] -= point[0];
-
                 point[0] += data[0];
-
             } else if (instruction == 'V') {
-
                 instruction = 'v';
-
+                
                 data[0] -= point[1];
-
                 point[1] += data[0];
             }
 
@@ -378,6 +437,7 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
             CGPoint controlPoint1 = pathElement->points[0];
             CGPoint controlPoint2 = pathElement->points[1];
             CGPoint point = pathElement->points[2];
+          
             currentPoint = point;
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'C'
                                                                            dataCount:6] autorelease];
