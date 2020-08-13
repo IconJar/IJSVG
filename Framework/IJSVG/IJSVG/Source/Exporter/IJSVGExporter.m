@@ -1130,6 +1130,9 @@ NSString* IJSVGHash(NSString* key)
     CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    BOOL cleanupPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths);
+    BOOL convertArcs = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertArcs);
+    BOOL convertShapesToPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertShapesToPaths);
 
     // path
     switch (layer.primitiveType) {
@@ -1138,88 +1141,302 @@ NSString* IJSVGHash(NSString* key)
         IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
             if (radiusSet == NO && pathElement->type == kCGPathElementAddCurveToPoint) {
                 radiusSet = YES;
-                CGFloat radX = fabs(pathElement->points[0].x - currentPoint.x);
-                CGFloat radY = fabs(pathElement->points[0].y - currentPoint.y);
+                CGFloat radX = IJ_SVG_EXPORT_ROUND(fabs(pathElement->points[2].x - currentPoint.x));
+                CGFloat radY = IJ_SVG_EXPORT_ROUND(fabs(pathElement->points[2].y - currentPoint.y));
+                
                 dict[@"rx"] = IJSVGShortFloatString(radX);
                 if (radX != radY) {
                     dict[@"ry"] = IJSVGShortFloatString(radY);
                 }
             }
         });
+        
         CGRect boundingBox = CGPathGetBoundingBox(transformPath);
-        if (boundingBox.origin.x != 0.f) {
-            dict[@"x"] = IJSVGShortFloatString(boundingBox.origin.x);
+        if(cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
+            // construct array of instructions to do
+            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+            NSMutableArray* instructions = [[[NSMutableArray alloc] initWithCapacity:5] autorelease];
+            
+            // M -> H -> V -> H -> z
+            // M
+            IJSVGExporterPathInstruction* instruction = nil;
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                           dataCount:2] autorelease];
+            instruction.data[0] = boundingBox.origin.x;
+            instruction.data[1] = boundingBox.origin.y;
+            [instructions addObject:instruction];
+            
+            // H
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
+                                                                           dataCount:1] autorelease];
+            instruction.data[0] = boundingBox.origin.x + boundingBox.size.width;
+            [instructions addObject:instruction];
+            
+            // V
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
+                                                                           dataCount:1] autorelease];
+            instruction.data[0] = boundingBox.origin.y + boundingBox.size.height;
+            [instructions addObject:instruction];
+            
+            // H
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
+                                                                           dataCount:1] autorelease];
+            instruction.data[0] = boundingBox.origin.x;
+            [instructions addObject:instruction];
+            
+            // Z
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                           dataCount:0] autorelease];
+            [instructions addObject:instruction];
+            dict[@"d"] = [self pathFromInstructions:instructions];
+        } else {
+            if (boundingBox.origin.x != 0.f) {
+                dict[@"x"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.origin.x));
+            }
+            if (boundingBox.origin.y != 0.f) {
+                dict[@"y"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.origin.y));
+            }
+            dict[@"width"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.size.width));
+            dict[@"height"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.size.height));
         }
-        if (boundingBox.origin.y != 0.f) {
-            dict[@"y"] = IJSVGShortFloatString(boundingBox.origin.y);
-        }
-        dict[@"width"] = IJSVGShortFloatString(boundingBox.size.width);
-        dict[@"height"] = IJSVGShortFloatString(boundingBox.size.height);
         break;
     }
     case kIJSVGPrimitivePathTypeLine: {
-        IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-            switch (pathElement->type) {
-            case kCGPathElementMoveToPoint: {
-                dict[@"x1"] = IJSVGShortFloatString(pathElement->points[0].x);
-                dict[@"y1"] = IJSVGShortFloatString(pathElement->points[0].y);
-                break;
-            }
-            case kCGPathElementAddLineToPoint: {
-                dict[@"x2"] = IJSVGShortFloatString(pathElement->points[0].x);
-                dict[@"y2"] = IJSVGShortFloatString(pathElement->points[0].y);
-                break;
-            }
-            default:
-                break;
-            }
-        });
+        if(cleanupPaths == YES && convertShapesToPaths == YES) {
+            // M -> L
+            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+            instructions = [[[NSMutableArray alloc] initWithCapacity:2] autorelease];
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement *pathElement, CGPoint currentPoint) {
+                switch(pathElement->type) {
+                    case kCGPathElementMoveToPoint: {
+                        IJSVGExporterPathInstruction* instruction = nil;
+                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                       dataCount:2] autorelease];
+                        instruction.data[0] = pathElement->points[0].x;
+                        instruction.data[1] = pathElement->points[0].y;
+                        [instructions addObject:instruction];
+                        break;
+                    }
+                    case kCGPathElementAddLineToPoint: {
+                        IJSVGExporterPathInstruction* instruction = nil;
+                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                       dataCount:2] autorelease];
+                        instruction.data[0] = pathElement->points[0].x;
+                        instruction.data[1] = pathElement->points[0].y;
+                        [instructions addObject:instruction];
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            });
+            dict[@"d"] = [self pathFromInstructions:instructions];
+        } else {
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                switch (pathElement->type) {
+                case kCGPathElementMoveToPoint: {
+                    dict[@"x1"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].x));
+                    dict[@"y1"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].y));
+                    break;
+                }
+                case kCGPathElementAddLineToPoint: {
+                    dict[@"x2"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].x));
+                    dict[@"y2"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].y));
+                    break;
+                }
+                default:
+                    break;
+                }
+            });
+        }
         break;
     }
     case kIJSVGPrimitivePathTypePolygon:
     case kIJSVGPrimitivePathTypePolyLine: {
-        NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
-        IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-            switch (pathElement->type) {
-            case kCGPathElementMoveToPoint: {
-                [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
-                break;
+        if(cleanupPaths == YES && convertShapesToPaths == YES) {
+            // M -> L+
+            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+            instructions = [[[NSMutableArray alloc] init] autorelease];
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement *pathElement, CGPoint currentPoint) {
+                switch(pathElement->type) {
+                    case kCGPathElementMoveToPoint: {
+                        IJSVGExporterPathInstruction* instruction = nil;
+                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                       dataCount:2] autorelease];
+                        instruction.data[0] = pathElement->points[0].x;
+                        instruction.data[1] = pathElement->points[0].y;
+                        [instructions addObject:instruction];
+                        break;
+                    }
+                    case kCGPathElementAddLineToPoint: {
+                        IJSVGExporterPathInstruction* instruction = nil;
+                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                       dataCount:2] autorelease];
+                        instruction.data[0] = pathElement->points[0].x;
+                        instruction.data[1] = pathElement->points[0].y;
+                        [instructions addObject:instruction];
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            });
+            if(layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
+                [instructions removeLastObject];
+                IJSVGExporterPathInstruction* instruction = nil;
+                instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                               dataCount:0] autorelease];
+                [instructions addObject:instruction];
             }
-            case kCGPathElementAddLineToPoint: {
-                [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
-                break;
+            dict[@"d"] = [self pathFromInstructions:instructions];
+        } else {
+            NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                switch (pathElement->type) {
+                case kCGPathElementMoveToPoint: {
+                    pathElement->points[0].x = IJ_SVG_EXPORT_ROUND(pathElement->points[0].x);
+                    pathElement->points[0].y = IJ_SVG_EXPORT_ROUND(pathElement->points[0].y);
+                    [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                    break;
+                }
+                case kCGPathElementAddLineToPoint: {
+                    pathElement->points[0].x = IJ_SVG_EXPORT_ROUND(pathElement->points[0].x);
+                    pathElement->points[0].y = IJ_SVG_EXPORT_ROUND(pathElement->points[0].y);
+                    [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                    break;
+                }
+                default:
+                    break;
+                }
+            });
+            // polygon does not need the move to command
+            if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
+                [points removeLastObject];
             }
-            default:
-                break;
-            }
-        });
-        // polygon does not need the move to command
-        if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
-            [points removeLastObject];
+            dict[@"points"] = [points componentsJoinedByString:@" "];
         }
-        dict[@"points"] = [points componentsJoinedByString:@" "];
         break;
     }
     case kIJSVGPrimitivePathTypeEllipse: {
         CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
-        dict[@"cx"] = IJSVGShortFloatString(boundingBox.origin.x + boundingBox.size.width / 2.f);
-        dict[@"cy"] = IJSVGShortFloatString(boundingBox.origin.y + boundingBox.size.height / 2.f);
-        dict[@"rx"] = IJSVGShortFloatString(boundingBox.size.width / 2.f);
-        dict[@"ry"] = IJSVGShortFloatString(boundingBox.size.height / 2.f);
+        CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
+        CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
+        CGFloat rx = boundingBox.size.width / 2.f;
+        CGFloat ry = boundingBox.size.height / 2.f;
+        
+        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+            // M + A + A +Z
+            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+            instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
+            
+            // M
+            IJSVGExporterPathInstruction* instruction = nil;
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                           dataCount:2] autorelease];
+            instruction.data[0] = cx;
+            instruction.data[1] = cy - ry;
+            [instructions addObject:instruction];
+            
+            // A
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                           dataCount:7] autorelease];
+            instruction.data[0] = rx;
+            instruction.data[1] = ry;
+            instruction.data[2] = 0;
+            instruction.data[3] = 1;
+            instruction.data[4] = 0;
+            instruction.data[5] = cx;
+            instruction.data[6] = cy + ry;
+            [instructions addObject:instruction];
+            
+            // A
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                           dataCount:7] autorelease];
+            instruction.data[0] = rx;
+            instruction.data[1] = ry;
+            instruction.data[2] = 0;
+            instruction.data[3] = 1;
+            instruction.data[4] = 0;
+            instruction.data[5] = cx;
+            instruction.data[6] = cy - ry;
+            [instructions addObject:instruction];
+            
+            // Z
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                           dataCount:0] autorelease];
+            [instructions addObject:instruction];
+            dict[@"d"] = [self pathFromInstructions:instructions];
+        } else {
+            dict[@"cx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cx));
+            dict[@"cy"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cy));
+            dict[@"rx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(rx));
+            dict[@"ry"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(ry));
+        }
         break;
     }
     case kIJSVGPrimitivePathTypeCircle: {
-        //        IJSVGCGPathHandler callback = ^(const CGPathElement * pathElement) {
         CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
-        dict[@"cx"] = IJSVGShortFloatString(boundingBox.origin.x + boundingBox.size.width / 2.f);
-        dict[@"cy"] = IJSVGShortFloatString(boundingBox.origin.y + boundingBox.size.height / 2.f);
-        dict[@"r"] = IJSVGShortFloatString(boundingBox.size.width / 2.f);
+        CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
+        CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
+        CGFloat r = boundingBox.size.width / 2.f;
+        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+            // M + A + A +Z
+            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+            instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
+            
+            // M
+            IJSVGExporterPathInstruction* instruction = nil;
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                           dataCount:2] autorelease];
+            instruction.data[0] = cx;
+            instruction.data[1] = cy - r;
+            [instructions addObject:instruction];
+            
+            // A
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                           dataCount:7] autorelease];
+            instruction.data[0] = r;
+            instruction.data[1] = r;
+            instruction.data[2] = 0;
+            instruction.data[3] = 1;
+            instruction.data[4] = 0;
+            instruction.data[5] = cx;
+            instruction.data[6] = cy + r;
+            [instructions addObject:instruction];
+            
+            // A
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                           dataCount:7] autorelease];
+            instruction.data[0] = r;
+            instruction.data[1] = r;
+            instruction.data[2] = 0;
+            instruction.data[3] = 1;
+            instruction.data[4] = 0;
+            instruction.data[5] = cx;
+            instruction.data[6] = cy - r;
+            [instructions addObject:instruction];
+            
+            // Z
+            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                           dataCount:0] autorelease];
+            [instructions addObject:instruction];
+            dict[@"d"] = [self pathFromInstructions:instructions];
+        } else {
+            dict[@"cx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cx));
+            dict[@"cy"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cy));
+            dict[@"r"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(r));
+        }
         break;
     }
     case kIJSVGPrimitivePathTypePath:
     default:
         dict[@"d"] = [self pathFromCGPath:transformPath];
     }
+
 
     CGPathRelease(transformPath);
 
@@ -1445,10 +1662,17 @@ NSString* IJSVGHash(NSString* key)
 {
     // string to store the path in
     NSArray* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path];
+    return [self pathFromInstructions:instructions];
+}
 
+- (NSString*)pathFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+{
     // work out what to do...
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
         [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
+        [IJSVGExporterPathInstruction convertInstructionsDataToRounded:instructions];
+        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
+        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions];
         instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions];
     }
     return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions];

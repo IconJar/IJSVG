@@ -34,7 +34,9 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveComments = 1 << 15,
     IJSVGExporterOptionCenterWithinViewBox = 1 << 16,
     IJSVGExporterOptionRemoveXMLDeclaration = 1 << 17,
-    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration
+    IJSVGExporterOptionConvertArcs = 1 << 18,
+    IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
+    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);

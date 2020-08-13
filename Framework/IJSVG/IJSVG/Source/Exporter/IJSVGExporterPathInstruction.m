@@ -9,6 +9,7 @@
 #import "IJSVGExporter.h"
 #import "IJSVGExporterPathInstruction.h"
 #import "IJSVGUtils.h"
+#import <math.h>
 
 @implementation IJSVGExporterPathInstruction
 
@@ -17,7 +18,13 @@
 - (void)dealloc
 {
     if (_data != NULL) {
-        free(_data);
+        (void)free(_data), _data = NULL;
+    }
+    if(_base != NULL) {
+        (void)free(_base), _base = NULL;
+    }
+    if(_coords != NULL) {
+        (void)free(_coords), _coords = NULL;
     }
     [super dealloc];
 }
@@ -33,6 +40,10 @@
             _dataCount = floatCount;
             _data = (CGFloat*)calloc(sizeof(CGFloat), floatCount);
         }
+        
+        // setup base and coords
+        _base = (CGFloat*)malloc(sizeof(CGFloat)*2);
+        _coords = (CGFloat*)malloc(sizeof(CGFloat)*2);
     }
     return self;
 }
@@ -45,6 +56,16 @@
 - (CGFloat*)data
 {
     return _data;
+}
+
+- (CGFloat*)base
+{
+    return _base;
+}
+
+- (CGFloat*)coords
+{
+    return _coords;
 }
 
 IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command)
@@ -165,6 +186,19 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
             ];
             break;
         }
+                
+        case 'a': {
+            set = @[
+                IJSVGShortFloatString(data[0]),
+                IJSVGShortFloatString(data[1]),
+                IJSVGShortFloatString(data[2]),
+                IJSVGShortFloatString(data[3]),
+                IJSVGShortFloatString(data[4]),
+                IJSVGShortFloatString(data[5]),
+                IJSVGShortFloatString(data[6]),
+            ];
+            break;
+        }
 
             // close path
         case 'z': {
@@ -185,14 +219,129 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
     return [self pathStringWithInstructionSet:pathInstructions];
 }
 
+CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision)
+{
+    return floorf(pow(10,precision) * number) / pow(10,precision);
+}
+
+void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length)
+{
+    for(NSInteger i = length; i-- > 0;) {
+        CGFloat d = data[i];
+        CGFloat proposed = IJSVGExporterPathFloatToFixed(d, kIJSVGExporterPathInstructionFloatPrecision);
+        if(proposed != d) {
+            CGFloat rounded = +IJSVGExporterPathFloatToFixed(d, kIJSVGExporterPathInstructionFloatPrecision - 1);
+            data[i] = IJSVGExporterPathFloatToFixed(+fabs(rounded - d), kIJSVGExporterPathInstructionFloatPrecision + 1)
+                >= kIJSVGExporterPathInstructionErrorThreshold
+                ? +IJSVGExporterPathFloatToFixed(d, kIJSVGExporterPathInstructionFloatPrecision)
+                : rounded;
+        }
+    }
+}
+
++ (void)convertInstructionsToRoundRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+{
+    CGFloat relSubPoint[2] = {0.f, 0.f};
+    for(IJSVGExporterPathInstruction* instruction in instructions) {
+        char instructionChar = instruction.instruction;
+        NSInteger length = instruction.dataLength;
+        CGFloat* data = instruction.data;
+        if(strchr("mltqsc", instructionChar) != NULL) {
+            for(NSInteger i = length; i--;) {
+                data[i] += instruction.base[i % 2] - relSubPoint[i % 2];
+            }
+        } else if(instructionChar == 'h') {
+            data[0] += instruction.base[0] - relSubPoint[0];
+        } else if(instructionChar == 'v') {
+            data[0] += instruction.base[1] - relSubPoint[1];
+        } else if(instructionChar == 'a') {
+            data[5] += instruction.base[0] - relSubPoint[0];
+            data[5] += instruction.base[1] - relSubPoint[1];
+        }
+        IJSVGExporterPathInstructionRoundData(data, length);
+        if(instructionChar == 'h') {
+            relSubPoint[0] += data[0];
+        } else if(instructionChar == 'v') {
+            relSubPoint[1] += data[0];
+        } else {
+            relSubPoint[0] += data[length - 2];
+            relSubPoint[1] += data[length - 1];
+        }
+        IJSVGExporterPathInstructionRoundData(relSubPoint, 2);
+    }
+}
+
++ (void)convertInstructionsToMixedAbsoluteRelative:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+{
+    IJSVGExporterPathInstruction* prevInstruction = nil;
+    for(IJSVGExporterPathInstruction* instruction in instructions) {
+        if(prevInstruction == nil || instruction.dataLength == 0) {
+            prevInstruction = instruction;
+            continue;
+        }
+        
+        char instructionChar = instruction.instruction;
+        CGFloat* data = instruction.data;
+        NSInteger length = instruction.dataLength;
+        CGFloat* adata = (CGFloat*)malloc(sizeof(CGFloat)*length);
+        memcpy(adata, data, sizeof(CGFloat)*length);
+        
+        if(strchr("mltqsc", instructionChar) != NULL) {
+            for(NSInteger i = length; i--;) {
+                adata[i] += instruction.base[i % 2];
+            }
+        } else if(instructionChar == 'h') {
+            adata[0] += instruction.base[0];
+        } else if(instructionChar == 'v') {
+            adata[0] += instruction.base[1];
+        } else if(instructionChar == 'a') {
+            adata[5] += instruction.base[0];
+            adata[6] += instruction.base[1];
+        }
+        
+        IJSVGExporterPathInstructionRoundData(adata, length);
+        
+        IJSVGExporterPathInstruction* ainstruction = nil;
+        ainstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:instructionChar
+                                                                        dataCount:length] autorelease];
+        memcpy(ainstruction.data, adata, sizeof(CGFloat)*length);
+        
+        // run these through our default string runner
+        // to compare the outputs
+        NSString* orig = [self pathStringFromInstructions:@[instruction]];
+        NSString* comp = [self pathStringFromInstructions:@[ainstruction]];
+        
+        if(comp.length < orig.length &&
+           !(
+             instructionChar == prevInstruction.instruction &&
+             prevInstruction.instruction > 96 &&
+             comp.length == orig.length - 1 &&
+             data[0] < 0.f &&
+             fmod(prevInstruction.data[prevInstruction.dataLength - 1], 1) != 0.f)) {
+                instruction.instruction = toupper(instructionChar);
+                memcpy(data, adata, sizeof(CGFloat)*length);
+        }
+        (void)free(adata), adata = NULL;
+        prevInstruction = instruction;
+    }
+}
+
++ (void)convertInstructionsDataToRounded:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+{
+    for(IJSVGExporterPathInstruction* instruction in instructions) {
+        CGFloat* data = instruction.data;
+        IJSVGExporterPathInstructionRoundData(data, instruction.dataLength);
+    }
+}
+
 + (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions
 {
-    NSMutableArray<IJSVGExporterPathInstruction*>* nInstructions = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray<IJSVGExporterPathInstruction*>* nInstructions = nil;
+    nInstructions = [[[NSMutableArray alloc] initWithCapacity:instructions.count] autorelease];
     IJSVGExporterPathInstruction* lastInstruction = nil;
     for(IJSVGExporterPathInstruction* instruction in instructions) {
         lastInstruction = nInstructions.lastObject;
         if(lastInstruction == nil) {
-            lastInstruction = instruction;
             [nInstructions addObject:instruction];
             continue;
         }
@@ -267,8 +416,9 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 {
     CGFloat point[2] = { 0, 0 };
     CGFloat subpathPoint[2] = { 0, 0 };
+    IJSVGExporterPathInstruction* baseInstruction = nil;
+    IJSVGExporterPathInstruction* prevInstruction = nil;
 
-    NSInteger index = 0;
     for (IJSVGExporterPathInstruction* anInstruction in instructions) {
         char instruction = anInstruction.instruction;
         CGFloat* data = anInstruction.data;
@@ -285,6 +435,8 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
                 if (instruction == 'm') {
                     subpathPoint[0] = point[0];
                     subpathPoint[1] = point[1];
+                    
+                    baseInstruction = anInstruction;
                 }
 
             } else if (instruction == 'h') {
@@ -304,6 +456,8 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 
                 subpathPoint[0] = point[0] += data[0];
                 subpathPoint[1] = point[1] += data[1];
+                
+                baseInstruction = anInstruction;
             } else if (instruction == 'L' || instruction == 'T') {
                 instruction = tolower(instruction);
 
@@ -355,15 +509,32 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
             }
 
             // reset the instruction
-            [anInstruction setInstruction:instruction];
+            anInstruction.instruction = instruction;
+            CGFloat* coords = anInstruction.coords;
+            coords[0] = point[0];
+            coords[1] = point[1];
 
         } else if (instruction == 'Z' || instruction == 'z') {
+            if(baseInstruction != nil) {
+                CGFloat* coords = anInstruction.coords;
+                coords[0] = baseInstruction.coords[0];
+                coords[1] = baseInstruction.coords[1];
+            }
             point[0] = subpathPoint[0];
             point[1] = subpathPoint[1];
         }
+        
+        CGFloat* base = anInstruction.base;
+        if(prevInstruction != nil) {
+            base[0] = prevInstruction.coords[0];
+            base[1] = prevInstruction.coords[1];
+        } else {
+            base[0] = 0.f;
+            base[1] = 0.f;
+        }
 
         // increment index
-        index++;
+        prevInstruction = anInstruction;
     }
 }
 

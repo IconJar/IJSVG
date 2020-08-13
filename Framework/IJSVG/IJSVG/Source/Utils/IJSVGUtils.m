@@ -188,7 +188,7 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
-    return [NSString stringWithFormat:@"%@,%@",
+    return [NSString stringWithFormat:@"%@ %@",
                      IJSVGShortFloatString(point.x),
                      IJSVGShortFloatString(point.y)];
 };
