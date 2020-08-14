@@ -1510,6 +1510,12 @@ NSString* IJSVGHash(NSString* key)
                         [dict removeObjectForKey:@"stroke-width"];
                     }
                 }
+                
+                // is there a stroke opacity? make sure we add that back on if
+                // its not opaque
+                if(strokeLayer.opacity != 0.f) {
+                    dict[@"stroke-opacity"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(strokeLayer.opacity));
+                }
             }
 
             // work out line cap
