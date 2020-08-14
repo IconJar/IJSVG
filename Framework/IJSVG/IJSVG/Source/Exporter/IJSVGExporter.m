@@ -1141,8 +1141,8 @@ NSString* IJSVGHash(NSString* key)
         IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
             if (radiusSet == NO && pathElement->type == kCGPathElementAddCurveToPoint) {
                 radiusSet = YES;
-                CGFloat radX = IJ_SVG_EXPORT_ROUND(fabs(pathElement->points[2].x - currentPoint.x));
-                CGFloat radY = IJ_SVG_EXPORT_ROUND(fabs(pathElement->points[2].y - currentPoint.y));
+                CGFloat radX = fabs(pathElement->points[2].x - currentPoint.x);
+                CGFloat radY = fabs(pathElement->points[2].y - currentPoint.y);
                 
                 dict[@"rx"] = IJSVGShortFloatString(radX);
                 if (radX != radY) {
@@ -1191,13 +1191,13 @@ NSString* IJSVGHash(NSString* key)
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
             if (boundingBox.origin.x != 0.f) {
-                dict[@"x"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.origin.x));
+                dict[@"x"] = IJSVGShortFloatString(boundingBox.origin.x);
             }
             if (boundingBox.origin.y != 0.f) {
-                dict[@"y"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.origin.y));
+                dict[@"y"] = IJSVGShortFloatString(boundingBox.origin.y);
             }
-            dict[@"width"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.size.width));
-            dict[@"height"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(boundingBox.size.height));
+            dict[@"width"] = IJSVGShortFloatString(boundingBox.size.width);
+            dict[@"height"] = IJSVGShortFloatString(boundingBox.size.height);
         }
         break;
     }
@@ -1236,13 +1236,13 @@ NSString* IJSVGHash(NSString* key)
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
-                    dict[@"x1"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].x));
-                    dict[@"y1"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].y));
+                    dict[@"x1"] = IJSVGShortFloatString(pathElement->points[0].x);
+                    dict[@"y1"] = IJSVGShortFloatString(pathElement->points[0].y);
                     break;
                 }
                 case kCGPathElementAddLineToPoint: {
-                    dict[@"x2"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].x));
-                    dict[@"y2"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(pathElement->points[0].y));
+                    dict[@"x2"] = IJSVGShortFloatString(pathElement->points[0].x);
+                    dict[@"y2"] = IJSVGShortFloatString(pathElement->points[0].y);
                     break;
                 }
                 default:
@@ -1296,14 +1296,14 @@ NSString* IJSVGHash(NSString* key)
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
-                    pathElement->points[0].x = IJ_SVG_EXPORT_ROUND(pathElement->points[0].x);
-                    pathElement->points[0].y = IJ_SVG_EXPORT_ROUND(pathElement->points[0].y);
+                    pathElement->points[0].x = pathElement->points[0].x;
+                    pathElement->points[0].y = pathElement->points[0].y;
                     [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
                     break;
                 }
                 case kCGPathElementAddLineToPoint: {
-                    pathElement->points[0].x = IJ_SVG_EXPORT_ROUND(pathElement->points[0].x);
-                    pathElement->points[0].y = IJ_SVG_EXPORT_ROUND(pathElement->points[0].y);
+                    pathElement->points[0].x = pathElement->points[0].x;
+                    pathElement->points[0].y = pathElement->points[0].y;
                     [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
                     break;
                 }
@@ -1370,10 +1370,10 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
-            dict[@"cx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cx));
-            dict[@"cy"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cy));
-            dict[@"rx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(rx));
-            dict[@"ry"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(ry));
+            dict[@"cx"] = IJSVGShortFloatString(cx);
+            dict[@"cy"] = IJSVGShortFloatString(cy);
+            dict[@"rx"] = IJSVGShortFloatString(rx);
+            dict[@"ry"] = IJSVGShortFloatString(ry);
         }
         break;
     }
@@ -1426,9 +1426,9 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
-            dict[@"cx"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cx));
-            dict[@"cy"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(cy));
-            dict[@"r"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(r));
+            dict[@"cx"] = IJSVGShortFloatString(cx);
+            dict[@"cy"] = IJSVGShortFloatString(cy);
+            dict[@"r"] = IJSVGShortFloatString(r);
         }
         break;
     }
@@ -1513,8 +1513,8 @@ NSString* IJSVGHash(NSString* key)
                 
                 // is there a stroke opacity? make sure we add that back on if
                 // its not opaque
-                if(strokeLayer.opacity != 0.f) {
-                    dict[@"stroke-opacity"] = IJSVGShortFloatString(IJ_SVG_EXPORT_ROUND(strokeLayer.opacity));
+                if(strokeLayer.opacity != 1.f) {
+                    dict[@"stroke-opacity"] = IJSVGShortFloatString(strokeLayer.opacity);
                 }
             }
 

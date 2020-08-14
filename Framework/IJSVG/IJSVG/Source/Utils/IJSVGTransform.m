@@ -496,12 +496,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
 {
     return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
-                     IJSVGShortFloatString(transform.a),
-                     IJSVGShortFloatString(transform.b),
-                     IJSVGShortFloatString(transform.c),
-                     IJSVGShortFloatString(transform.d),
-                     IJSVGShortFloatString(transform.tx),
-                     IJSVGShortFloatString(transform.ty)];
+                     IJSVGShortFloatStringUnrounded(transform.a),
+                     IJSVGShortFloatStringUnrounded(transform.b),
+                     IJSVGShortFloatStringUnrounded(transform.c),
+                     IJSVGShortFloatStringUnrounded(transform.d),
+                     IJSVGShortFloatStringUnrounded(transform.tx),
+                     IJSVGShortFloatStringUnrounded(transform.ty)];
 }
 
 - (NSString*)description

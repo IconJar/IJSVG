@@ -9,6 +9,7 @@
 #import "IJSVGLayer.h"
 #import "IJSVGShapeLayer.h"
 #import "IJSVGUtils.h"
+#import "IJSVGExporterPathInstruction.h"
 
 @implementation IJSVGUtils
 
@@ -171,8 +172,14 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
+NSString* IJSVGShortFloatStringUnrounded(CGFloat f)
+{
+    return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
+};
+
 NSString* IJSVGShortFloatString(CGFloat f)
 {
+    f = IJ_SVG_EXPORT_ROUND(f);
     return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
 };
 
