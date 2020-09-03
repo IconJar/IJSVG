@@ -36,7 +36,7 @@ BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option)
     return (options & option) != 0;
 };
 
-const NSArray* IJSVGShortCharacterArray(void)
+const NSArray<NSString*>* IJSVGShortCharacterArray(void)
 {
     static NSArray* _array;
     static dispatch_once_t onceToken;
@@ -142,10 +142,24 @@ NSString* IJSVGHash(NSString* key)
              size:(CGSize)size
           options:(IJSVGExporterOptions)options
 {
+    return [self initWithSVG:svg
+                        size:size
+                     options:options
+        floatingPointOptions:IJSVGFloatingPointOptionsDefault()];
+}
+
+- (id)initWithSVG:(IJSVG*)svg
+                    size:(CGSize)size
+                 options:(IJSVGExporterOptions)options
+    floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
     if ((self = [super init]) != nil) {
         _options = options;
         _size = size;
         _svg = [svg retain];
+
+        // defaults for floating point rounding, if any
+        _floatingPointOptions = floatingPointOptions;
 
         // clear memory as soon as possible
         @autoreleasepool {
@@ -185,16 +199,16 @@ NSString* IJSVGHash(NSString* key)
         @"viewBox" : [self viewBoxWithRect:viewBox],
         @"xmlns" : XML_DOC_NS
     }] autorelease];
-    
+
     // add on various XML declaritive things
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
         attributes[@"version"] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
     }
 
     // add on width and height unless specified otherwise
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-        attributes[@"width"] = IJSVGShortFloatString(_size.width);
-        attributes[@"height"] = IJSVGShortFloatString(_size.height);
+        attributes[@"width"] = IJSVGShortFloatStringWithOptions(_size.width, _floatingPointOptions);
+        attributes[@"height"] = IJSVGShortFloatStringWithOptions(_size.height, _floatingPointOptions);
     }
 
     // was there a size set?
@@ -204,8 +218,8 @@ NSString* IJSVGHash(NSString* key)
 
         // copy the attributes
         if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-            attributes[@"width"] = IJSVGShortFloatString(_size.width);
-            attributes[@"height"] = IJSVGShortFloatString(_size.height);
+            attributes[@"width"] = IJSVGShortFloatStringWithOptions(_size.width, _floatingPointOptions);
+            attributes[@"height"] = IJSVGShortFloatStringWithOptions(_size.height, _floatingPointOptions);
         }
 
         // work out the scale
@@ -219,7 +233,7 @@ NSString* IJSVGHash(NSString* key)
             const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * _proposedScale);
 
             // reset the viewbox for the exported SVG
-            NSRect newViewBox = (NSRect){
+            NSRect newViewBox = (NSRect) {
                 .origin = NSMakePoint(x, y),
                 .size = NSMakeSize(_size.width,
                     _size.height)
@@ -259,7 +273,7 @@ NSString* IJSVGHash(NSString* key)
         CGAffineTransform afTransform = IJSVGConcatTransforms(transforms);
         NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
         NSString* transString = nil;
-        transString = IJSVGTransformAttributeString(afTransform);
+        transString = [self transformAttributeStringForTransform:afTransform];
         IJSVGApplyAttributesToElement(
             @{ @"transform" : transString },
             transformedElement);
@@ -278,15 +292,15 @@ NSString* IJSVGHash(NSString* key)
 - (void)applyXLinkToRootElement
 {
     // simply flag check
-    if(_appliedXLink == YES) {
+    if (_appliedXLink == YES) {
         return;
     }
-    
+
     // set and add the attribute onto the rootElement
     _appliedXLink = YES;
     NSXMLElement* root = _dom.rootElement;
     NSString* const attributeName = @"xmlns:xlink";
-    IJSVGApplyAttributesToElement(@{attributeName: XML_DOC_NSXLINK}, root);
+    IJSVGApplyAttributesToElement(@{ attributeName : XML_DOC_NSXLINK }, root);
 }
 
 - (NSString*)generateID
@@ -832,6 +846,15 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+- (NSString*)transformAttributeStringForTransform:(CGAffineTransform)transform
+{
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRoundTransforms) == YES) {
+        return [IJSVGTransform affineTransformToSVGMatrixString:transform
+                                           floatingPointOptions:_floatingPointOptions];
+    }
+    return [IJSVGTransform affineTransformToSVGMatrixString:transform];
+}
+
 - (void)applyTransformToElement:(NSXMLElement*)element
                       fromLayer:(IJSVGLayer*)layer
 {
@@ -841,7 +864,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // append the string
-    NSString* transformStr = IJSVGTransformAttributeString(transform);
+    NSString* transformStr = [self transformAttributeStringForTransform:transform];
 
     // apply it to the node
     IJSVGApplyAttributesToElement(@{ @"transform" : transformStr }, element);
@@ -898,8 +921,8 @@ NSString* IJSVGHash(NSString* key)
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
     dict[@"id"] = [self generateID];
-    dict[@"width"] = IJSVGShortFloatString(layer.patternNode.width.value);
-    dict[@"height"] = IJSVGShortFloatString(layer.patternNode.height.value);
+    dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
+    dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
 
     // sort out x and y position
     IJSVGUnitLength* x = layer.patternNode.x;
@@ -929,7 +952,9 @@ NSString* IJSVGHash(NSString* key)
 
         // fill opacity
         if (patternLayer.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{ @"fill-opacity" : IJSVGShortFloatString(patternLayer.opacity) }, element);
+            IJSVGApplyAttributesToElement(@{ @"fill-opacity" : IJSVGShortFloatStringWithOptions(patternLayer.opacity,
+                                              _floatingPointOptions) },
+                element);
         }
     } else {
         aDict = @{ @"stroke" : IJSVGHashURL([patternElement attributeForName:@"id"].stringValue) };
@@ -952,10 +977,10 @@ NSString* IJSVGHash(NSString* key)
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
         NSDictionary* dict = @{ @"id" : gradKey,
-            @"x1" : lGradient.x1.stringValue,
-            @"y1" : lGradient.y1.stringValue,
-            @"x2" : lGradient.x2.stringValue,
-            @"y2" : lGradient.y2.stringValue };
+            @"x1" : [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"y1" : [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"x2" : [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"y2" : [lGradient.y2 stringValueWithFloatingPointOptions:_floatingPointOptions] };
 
         // give it the attibutes
         IJSVGApplyAttributesToElement(dict, gradientElement);
@@ -965,11 +990,11 @@ NSString* IJSVGHash(NSString* key)
         IJSVGRadialGradient* rGradient = (IJSVGRadialGradient*)gradient;
         gradientElement.name = @"radialGradient";
         NSDictionary* dict = @{ @"id" : gradKey,
-            @"cx" : rGradient.cx.stringValue,
-            @"cy" : rGradient.cy.stringValue,
-            @"fx" : rGradient.fx.stringValue,
-            @"fy" : rGradient.fy.stringValue,
-            @"r" : rGradient.radius.stringValue };
+            @"cx" : [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"cy" : [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"fx" : [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"fy" : [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"r" : [rGradient.radius stringValueWithFloatingPointOptions:_floatingPointOptions] };
 
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);
@@ -1021,7 +1046,7 @@ NSString* IJSVGHash(NSString* key)
         // is opacity is equal to 1, no need to add it as spec
         // defaults opacity to 1 anyway :)
         if (opacity != 1.f) {
-            atts[@"stop-opacity"] = IJSVGShortFloatStringWithPrecision(opacity, 2);
+            atts[@"stop-opacity"] = IJSVGShortFloatStringWithOptions(opacity, _floatingPointOptions);
         }
 
         // att the attributes
@@ -1038,7 +1063,7 @@ NSString* IJSVGHash(NSString* key)
     NSArray* transforms = layer.gradient.transforms;
     if (transforms.count != 0.f) {
         CGAffineTransform transform = IJSVGConcatTransforms(transforms);
-        NSString* transformString = IJSVGTransformAttributeString(transform);
+        NSString* transformString = [self transformAttributeStringForTransform:transform];
         IJSVGApplyAttributesToElement(@{ @"gradientTransform" : transformString }, gradientElement);
     }
 
@@ -1048,7 +1073,7 @@ NSString* IJSVGHash(NSString* key)
 
         // fill opacity
         if (layer.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{ @"fill-opacity" : IJSVGShortFloatStringWithPrecision(layer.opacity, 2) }, element);
+            IJSVGApplyAttributesToElement(@{ @"fill-opacity" : IJSVGShortFloatStringWithOptions(layer.opacity, _floatingPointOptions) }, element);
         }
     } else {
         IJSVGApplyAttributesToElement(@{ @"stroke" : IJSVGHashURL(gradKey) }, element);
@@ -1069,17 +1094,17 @@ NSString* IJSVGHash(NSString* key)
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
     dict[@"id"] = [self generateID];
-    dict[@"width"] = IJSVGShortFloatString(layer.frame.size.width);
-    dict[@"height"] = IJSVGShortFloatString(layer.frame.size.height);
+    dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.frame.size.width, _floatingPointOptions);
+    dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.frame.size.height, _floatingPointOptions);
     dict[@"xlink:href"] = base64String;
     [self applyXLinkToRootElement];
 
     // work out any position
     if (layer.frame.origin.x != 0.f) {
-        dict[@"x"] = IJSVGShortFloatString(layer.frame.origin.x);
+        dict[@"x"] = IJSVGShortFloatStringWithOptions(layer.frame.origin.x, _floatingPointOptions);
     }
     if (layer.frame.origin.y != 0.f) {
-        dict[@"y"] = IJSVGShortFloatString(layer.frame.origin.y);
+        dict[@"y"] = IJSVGShortFloatStringWithOptions(layer.frame.origin.y, _floatingPointOptions);
     }
 
     // add the attributes
@@ -1143,20 +1168,20 @@ NSString* IJSVGHash(NSString* key)
                 radiusSet = YES;
                 CGFloat radX = fabs(pathElement->points[2].x - currentPoint.x);
                 CGFloat radY = fabs(pathElement->points[2].y - currentPoint.y);
-                
-                dict[@"rx"] = IJSVGShortFloatString(radX);
+
+                dict[@"rx"] = IJSVGShortFloatStringWithOptions(radX, _floatingPointOptions);
                 if (radX != radY) {
-                    dict[@"ry"] = IJSVGShortFloatString(radY);
+                    dict[@"ry"] = IJSVGShortFloatStringWithOptions(radY, _floatingPointOptions);
                 }
             }
         });
-        
+
         CGRect boundingBox = CGPathGetBoundingBox(transformPath);
-        if(cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
+        if (cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
             // construct array of instructions to do
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray* instructions = [[[NSMutableArray alloc] initWithCapacity:5] autorelease];
-            
+
             // M -> H -> V -> H -> z
             // M
             IJSVGExporterPathInstruction* instruction = nil;
@@ -1165,25 +1190,25 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[0] = boundingBox.origin.x;
             instruction.data[1] = boundingBox.origin.y;
             [instructions addObject:instruction];
-            
+
             // H
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
                                                                            dataCount:1] autorelease];
             instruction.data[0] = boundingBox.origin.x + boundingBox.size.width;
             [instructions addObject:instruction];
-            
+
             // V
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
                                                                            dataCount:1] autorelease];
             instruction.data[0] = boundingBox.origin.y + boundingBox.size.height;
             [instructions addObject:instruction];
-            
+
             // H
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
                                                                            dataCount:1] autorelease];
             instruction.data[0] = boundingBox.origin.x;
             [instructions addObject:instruction];
-            
+
             // Z
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
                                                                            dataCount:0] autorelease];
@@ -1191,44 +1216,44 @@ NSString* IJSVGHash(NSString* key)
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
             if (boundingBox.origin.x != 0.f) {
-                dict[@"x"] = IJSVGShortFloatString(boundingBox.origin.x);
+                dict[@"x"] = IJSVGShortFloatStringWithOptions(boundingBox.origin.x, _floatingPointOptions);
             }
             if (boundingBox.origin.y != 0.f) {
-                dict[@"y"] = IJSVGShortFloatString(boundingBox.origin.y);
+                dict[@"y"] = IJSVGShortFloatStringWithOptions(boundingBox.origin.y, _floatingPointOptions);
             }
-            dict[@"width"] = IJSVGShortFloatString(boundingBox.size.width);
-            dict[@"height"] = IJSVGShortFloatString(boundingBox.size.height);
+            dict[@"width"] = IJSVGShortFloatStringWithOptions(boundingBox.size.width, _floatingPointOptions);
+            dict[@"height"] = IJSVGShortFloatStringWithOptions(boundingBox.size.height, _floatingPointOptions);
         }
         break;
     }
     case kIJSVGPrimitivePathTypeLine: {
-        if(cleanupPaths == YES && convertShapesToPaths == YES) {
+        if (cleanupPaths == YES && convertShapesToPaths == YES) {
             // M -> L
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
             instructions = [[[NSMutableArray alloc] initWithCapacity:2] autorelease];
-            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement *pathElement, CGPoint currentPoint) {
-                switch(pathElement->type) {
-                    case kCGPathElementMoveToPoint: {
-                        IJSVGExporterPathInstruction* instruction = nil;
-                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                       dataCount:2] autorelease];
-                        instruction.data[0] = pathElement->points[0].x;
-                        instruction.data[1] = pathElement->points[0].y;
-                        [instructions addObject:instruction];
-                        break;
-                    }
-                    case kCGPathElementAddLineToPoint: {
-                        IJSVGExporterPathInstruction* instruction = nil;
-                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                       dataCount:2] autorelease];
-                        instruction.data[0] = pathElement->points[0].x;
-                        instruction.data[1] = pathElement->points[0].y;
-                        [instructions addObject:instruction];
-                        break;
-                    }
-                    default:
-                        break;
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                switch (pathElement->type) {
+                case kCGPathElementMoveToPoint: {
+                    IJSVGExporterPathInstruction* instruction = nil;
+                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                   dataCount:2] autorelease];
+                    instruction.data[0] = pathElement->points[0].x;
+                    instruction.data[1] = pathElement->points[0].y;
+                    [instructions addObject:instruction];
+                    break;
+                }
+                case kCGPathElementAddLineToPoint: {
+                    IJSVGExporterPathInstruction* instruction = nil;
+                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                   dataCount:2] autorelease];
+                    instruction.data[0] = pathElement->points[0].x;
+                    instruction.data[1] = pathElement->points[0].y;
+                    [instructions addObject:instruction];
+                    break;
+                }
+                default:
+                    break;
                 }
             });
             dict[@"d"] = [self pathFromInstructions:instructions];
@@ -1236,13 +1261,13 @@ NSString* IJSVGHash(NSString* key)
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
-                    dict[@"x1"] = IJSVGShortFloatString(pathElement->points[0].x);
-                    dict[@"y1"] = IJSVGShortFloatString(pathElement->points[0].y);
+                    dict[@"x1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, _floatingPointOptions);
+                    dict[@"y1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, _floatingPointOptions);
                     break;
                 }
                 case kCGPathElementAddLineToPoint: {
-                    dict[@"x2"] = IJSVGShortFloatString(pathElement->points[0].x);
-                    dict[@"y2"] = IJSVGShortFloatString(pathElement->points[0].y);
+                    dict[@"x2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, _floatingPointOptions);
+                    dict[@"y2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, _floatingPointOptions);
                     break;
                 }
                 default:
@@ -1254,36 +1279,36 @@ NSString* IJSVGHash(NSString* key)
     }
     case kIJSVGPrimitivePathTypePolygon:
     case kIJSVGPrimitivePathTypePolyLine: {
-        if(cleanupPaths == YES && convertShapesToPaths == YES) {
+        if (cleanupPaths == YES && convertShapesToPaths == YES) {
             // M -> L+
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
             instructions = [[[NSMutableArray alloc] init] autorelease];
-            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement *pathElement, CGPoint currentPoint) {
-                switch(pathElement->type) {
-                    case kCGPathElementMoveToPoint: {
-                        IJSVGExporterPathInstruction* instruction = nil;
-                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                       dataCount:2] autorelease];
-                        instruction.data[0] = pathElement->points[0].x;
-                        instruction.data[1] = pathElement->points[0].y;
-                        [instructions addObject:instruction];
-                        break;
-                    }
-                    case kCGPathElementAddLineToPoint: {
-                        IJSVGExporterPathInstruction* instruction = nil;
-                        instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                       dataCount:2] autorelease];
-                        instruction.data[0] = pathElement->points[0].x;
-                        instruction.data[1] = pathElement->points[0].y;
-                        [instructions addObject:instruction];
-                        break;
-                    }
-                    default:
-                        break;
+            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                switch (pathElement->type) {
+                case kCGPathElementMoveToPoint: {
+                    IJSVGExporterPathInstruction* instruction = nil;
+                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                   dataCount:2] autorelease];
+                    instruction.data[0] = pathElement->points[0].x;
+                    instruction.data[1] = pathElement->points[0].y;
+                    [instructions addObject:instruction];
+                    break;
+                }
+                case kCGPathElementAddLineToPoint: {
+                    IJSVGExporterPathInstruction* instruction = nil;
+                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                   dataCount:2] autorelease];
+                    instruction.data[0] = pathElement->points[0].x;
+                    instruction.data[1] = pathElement->points[0].y;
+                    [instructions addObject:instruction];
+                    break;
+                }
+                default:
+                    break;
                 }
             });
-            if(layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
+            if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
                 [instructions removeLastObject];
                 IJSVGExporterPathInstruction* instruction = nil;
                 instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
@@ -1325,13 +1350,13 @@ NSString* IJSVGHash(NSString* key)
         CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
         CGFloat rx = boundingBox.size.width / 2.f;
         CGFloat ry = boundingBox.size.height / 2.f;
-        
-        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+
+        if (cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
             // M + A + A +Z
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
             instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
-            
+
             // M
             IJSVGExporterPathInstruction* instruction = nil;
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
@@ -1339,7 +1364,7 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[0] = cx;
             instruction.data[1] = cy - ry;
             [instructions addObject:instruction];
-            
+
             // A
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
                                                                            dataCount:7] autorelease];
@@ -1351,7 +1376,7 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[5] = cx;
             instruction.data[6] = cy + ry;
             [instructions addObject:instruction];
-            
+
             // A
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
                                                                            dataCount:7] autorelease];
@@ -1363,17 +1388,17 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[5] = cx;
             instruction.data[6] = cy - ry;
             [instructions addObject:instruction];
-            
+
             // Z
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
                                                                            dataCount:0] autorelease];
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
-            dict[@"cx"] = IJSVGShortFloatString(cx);
-            dict[@"cy"] = IJSVGShortFloatString(cy);
-            dict[@"rx"] = IJSVGShortFloatString(rx);
-            dict[@"ry"] = IJSVGShortFloatString(ry);
+            dict[@"cx"] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
+            dict[@"cy"] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
+            dict[@"rx"] = IJSVGShortFloatStringWithOptions(rx, _floatingPointOptions);
+            dict[@"ry"] = IJSVGShortFloatStringWithOptions(ry, _floatingPointOptions);
         }
         break;
     }
@@ -1382,12 +1407,12 @@ NSString* IJSVGHash(NSString* key)
         CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
         CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
         CGFloat r = boundingBox.size.width / 2.f;
-        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+        if (cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
             // M + A + A +Z
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
             instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
-            
+
             // M
             IJSVGExporterPathInstruction* instruction = nil;
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
@@ -1395,7 +1420,7 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[0] = cx;
             instruction.data[1] = cy - r;
             [instructions addObject:instruction];
-            
+
             // A
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
                                                                            dataCount:7] autorelease];
@@ -1407,7 +1432,7 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[5] = cx;
             instruction.data[6] = cy + r;
             [instructions addObject:instruction];
-            
+
             // A
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
                                                                            dataCount:7] autorelease];
@@ -1419,16 +1444,16 @@ NSString* IJSVGHash(NSString* key)
             instruction.data[5] = cx;
             instruction.data[6] = cy - r;
             [instructions addObject:instruction];
-            
+
             // Z
             instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
                                                                            dataCount:0] autorelease];
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
-            dict[@"cx"] = IJSVGShortFloatString(cx);
-            dict[@"cy"] = IJSVGShortFloatString(cy);
-            dict[@"r"] = IJSVGShortFloatString(r);
+            dict[@"cx"] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
+            dict[@"cy"] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
+            dict[@"r"] = IJSVGShortFloatStringWithOptions(r, _floatingPointOptions);
         }
         break;
     }
@@ -1436,7 +1461,6 @@ NSString* IJSVGHash(NSString* key)
     default:
         dict[@"d"] = [self pathFromCGPath:transformPath];
     }
-
 
     CGPathRelease(transformPath);
 
@@ -1480,7 +1504,8 @@ NSString* IJSVGHash(NSString* key)
         if ([strokeLayer isKindOfClass:[IJSVGShapeLayer class]]) {
             // stroke
             if (strokeLayer.lineWidth != 0.f) {
-                dict[@"stroke-width"] = IJSVGShortFloatString(strokeLayer.lineWidth);
+                dict[@"stroke-width"] = IJSVGShortFloatStringWithOptions(strokeLayer.lineWidth,
+                    _floatingPointOptions);
             }
 
             // stroke gradient
@@ -1510,11 +1535,12 @@ NSString* IJSVGHash(NSString* key)
                         [dict removeObjectForKey:@"stroke-width"];
                     }
                 }
-                
+
                 // is there a stroke opacity? make sure we add that back on if
                 // its not opaque
-                if(strokeLayer.opacity != 1.f) {
-                    dict[@"stroke-opacity"] = IJSVGShortFloatString(strokeLayer.opacity);
+                if (strokeLayer.opacity != 1.f) {
+                    dict[@"stroke-opacity"] = IJSVGShortFloatStringWithOptions(strokeLayer.opacity,
+                        _floatingPointOptions);
                 }
             }
 
@@ -1546,7 +1572,8 @@ NSString* IJSVGHash(NSString* key)
 
             // work out dash offset...
             if (strokeLayer.lineDashPhase != 0.f) {
-                dict[@"stroke-dashoffset"] = IJSVGShortFloatString(strokeLayer.lineDashPhase);
+                dict[@"stroke-dashoffset"] = IJSVGShortFloatStringWithOptions(strokeLayer.lineDashPhase,
+                    _floatingPointOptions);
             }
 
             // work out dash array
@@ -1572,7 +1599,8 @@ NSString* IJSVGHash(NSString* key)
 
     // opacity
     if (layer.opacity != 1.f) {
-        dict[@"opacity"] = IJSVGShortFloatStringWithPrecision(layer.opacity, 2);
+        dict[@"opacity"] = IJSVGShortFloatStringWithOptions(layer.opacity,
+            _floatingPointOptions);
     }
 
     // blendmode - we only every apply a stylesheet blend mode
@@ -1625,10 +1653,12 @@ NSString* IJSVGHash(NSString* key)
     dict[@"id"] = maskKey;
 
     if (layer.mask.frame.origin.x != 0.f) {
-        dict[@"x"] = IJSVGShortFloatString(layer.mask.frame.origin.x);
+        dict[@"x"] = IJSVGShortFloatStringWithOptions(layer.mask.frame.origin.x,
+            _floatingPointOptions);
     }
     if (layer.mask.frame.origin.y != 0.f) {
-        dict[@"y"] = IJSVGShortFloatString(layer.mask.frame.origin.y);
+        dict[@"y"] = IJSVGShortFloatStringWithOptions(layer.mask.frame.origin.y,
+            _floatingPointOptions);
     }
 
     IJSVGApplyAttributesToElement(dict, mask);
@@ -1651,7 +1681,7 @@ NSString* IJSVGHash(NSString* key)
         options = NSXMLNodeOptionsNone;
     }
     NSString* output = [_dom XMLStringWithOptions:options];
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
         return [output substringFromIndex:38];
     }
     return output;
@@ -1667,7 +1697,8 @@ NSString* IJSVGHash(NSString* key)
 - (NSString*)pathFromCGPath:(CGPathRef)path
 {
     // string to store the path in
-    NSArray* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path];
+    NSArray* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path
+                                                          floatingPointOptions:_floatingPointOptions];
     return [self pathFromInstructions:instructions];
 }
 
@@ -1675,13 +1706,19 @@ NSString* IJSVGHash(NSString* key)
 {
     // work out what to do...
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
-        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
-        [IJSVGExporterPathInstruction convertInstructionsDataToRounded:instructions];
-        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions];
-        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions];
-        instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions];
+        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions
+                                                          floatingPointOptions:_floatingPointOptions];
+        [IJSVGExporterPathInstruction convertInstructionsDataToRounded:instructions
+                                                  floatingPointOptions:_floatingPointOptions];
+        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions
+                                                          floatingPointOptions:_floatingPointOptions];
+        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions
+                                                            floatingPointOptions:_floatingPointOptions];
+        instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions
+                                                          floatingPointOptions:_floatingPointOptions];
     }
-    return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions];
+    return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions
+                                               floatingPointOptions:_floatingPointOptions];
 }
 
 void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement)
@@ -1721,7 +1758,7 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
         }
         }
     };
-    if(@available(macOS 10.13, *)) {
+    if (@available(macOS 10.13, *)) {
         CGPathApplyWithBlock(path, callback);
     } else {
         CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);

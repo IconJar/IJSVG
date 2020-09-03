@@ -8,6 +8,11 @@
 
 #import <Foundation/Foundation.h>
 
+typedef struct {
+    BOOL round;
+    int precision;
+} IJSVGFloatingPointOptions;
+
 typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeNumber,
     IJSVGUnitLengthTypePercentage
@@ -38,5 +43,6 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
 - (NSString*)stringValue;
+- (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options;
 
 @end

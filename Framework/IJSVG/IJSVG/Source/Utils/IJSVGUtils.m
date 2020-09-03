@@ -172,14 +172,29 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
-NSString* IJSVGShortFloatStringUnrounded(CGFloat f)
+IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
-    return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
+    return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
+}
+
+IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision)
+{
+    return (IJSVGFloatingPointOptions) {
+        .round = round,
+        .precision = precision
+    };
+}
+
+NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options)
+{
+    if (options.round == YES) {
+        f = IJSVGExporterPathFloatToFixed(f, options.precision);
+    }
+    return IJSVGShortFloatString(f);
 };
 
 NSString* IJSVGShortFloatString(CGFloat f)
 {
-    f = IJ_SVG_EXPORT_ROUND(f);
     return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
 };
 

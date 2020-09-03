@@ -80,6 +80,8 @@
 - (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options;
+- (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
+             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 - (CGFloat)computeBackingScale:(CGFloat)scale;
 - (void)discardDOM;

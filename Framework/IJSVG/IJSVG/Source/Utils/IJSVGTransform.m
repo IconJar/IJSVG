@@ -184,7 +184,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         switch (transform.command) {
         // matrix
         case IJSVGTransformCommandMatrix: {
-            at.transformStruct = (NSAffineTransformStruct){
+            at.transformStruct = (NSAffineTransformStruct) {
                 .m11 = transform.parameters[0],
                 .m12 = transform.parameters[1],
                 .m21 = transform.parameters[2],
@@ -199,7 +199,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         case IJSVGTransformCommandSkewX: {
             CGFloat degrees = transform.parameters[0];
             CGFloat radians = degrees * M_PI / 180.f;
-            at.transformStruct = (NSAffineTransformStruct){
+            at.transformStruct = (NSAffineTransformStruct) {
                 .m11 = 1.f,
                 .m12 = 0.f,
                 .m21 = tan(radians),
@@ -214,7 +214,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         case IJSVGTransformCommandSkewY: {
             CGFloat degrees = transform.parameters[0];
             CGFloat radians = degrees * M_PI / 180.f;
-            at.transformStruct = (NSAffineTransformStruct){
+            at.transformStruct = (NSAffineTransformStruct) {
                 .m11 = 1.f,
                 .m12 = tan(radians),
                 .m21 = 0.f,
@@ -494,14 +494,26 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 }
 
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
+                         floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
-                     IJSVGShortFloatStringUnrounded(transform.a),
-                     IJSVGShortFloatStringUnrounded(transform.b),
-                     IJSVGShortFloatStringUnrounded(transform.c),
-                     IJSVGShortFloatStringUnrounded(transform.d),
-                     IJSVGShortFloatStringUnrounded(transform.tx),
-                     IJSVGShortFloatStringUnrounded(transform.ty)];
+                     IJSVGShortFloatStringWithOptions(transform.a, floatingPointOptions),
+                     IJSVGShortFloatStringWithOptions(transform.b, floatingPointOptions),
+                     IJSVGShortFloatStringWithOptions(transform.c, floatingPointOptions),
+                     IJSVGShortFloatStringWithOptions(transform.d, floatingPointOptions),
+                     IJSVGShortFloatStringWithOptions(transform.tx, floatingPointOptions),
+                     IJSVGShortFloatStringWithOptions(transform.ty, floatingPointOptions)];
+}
+
++ (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
+{
+    return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
+                     IJSVGShortFloatString(transform.a),
+                     IJSVGShortFloatString(transform.b),
+                     IJSVGShortFloatString(transform.c),
+                     IJSVGShortFloatString(transform.d),
+                     IJSVGShortFloatString(transform.tx),
+                     IJSVGShortFloatString(transform.ty)];
 }
 
 - (NSString*)description

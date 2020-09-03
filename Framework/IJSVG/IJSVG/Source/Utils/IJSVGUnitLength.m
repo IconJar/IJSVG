@@ -92,9 +92,19 @@
 - (NSString*)stringValue
 {
     if (self.type == IJSVGUnitLengthTypePercentage) {
-        return [NSString stringWithFormat:@"%@%%", IJSVGShortFloatString(self.value * 100.f)];
+        return [NSString stringWithFormat:@"%@%%",
+                         IJSVGShortFloatString(self.value * 100.f)];
     }
     return IJSVGShortFloatString(self.value);
+}
+
+- (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
+{
+    if (self.type == IJSVGUnitLengthTypePercentage) {
+        return [NSString stringWithFormat:@"%@%%",
+                         IJSVGShortFloatStringWithOptions(self.value * 100.f, options)];
+    }
+    return IJSVGShortFloatStringWithOptions(self.value, options);
 }
 
 - (NSString*)description

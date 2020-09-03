@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "IJSVGUtils.h"
 
 @class IJSVG;
 
@@ -36,12 +37,13 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveXMLDeclaration = 1 << 17,
     IJSVGExporterOptionConvertArcs = 1 << 18,
     IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
-    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths
+    IJSVGExporterOptionRoundTransforms = 1 << 20,
+    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths | IJSVGExporterOptionRoundTransforms
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
 void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlock enumBlock);
-const NSArray* IJSVGShortCharacterArray(void);
+const NSArray<NSString*>* IJSVGShortCharacterArray(void);
 
 @interface IJSVGExporter : NSObject {
 
@@ -56,12 +58,18 @@ const NSArray* IJSVGShortCharacterArray(void);
     BOOL _appliedXLink;
 }
 
+@property (nonatomic, assign) IJSVGFloatingPointOptions floatingPointOptions;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* description;
 
 - (id)initWithSVG:(IJSVG*)svg
              size:(CGSize)size
           options:(IJSVGExporterOptions)options;
+- (id)initWithSVG:(IJSVG*)svg
+                    size:(CGSize)size
+                 options:(IJSVGExporterOptions)options
+    floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+
 - (NSString*)SVGString;
 - (NSData*)SVGData;
 

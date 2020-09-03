@@ -24,7 +24,10 @@ CGFloat degrees_to_radians(CGFloat degrees);
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
 NSArray* IJSVGCommonHTMLElementNames(void);
 
-NSString* IJSVGShortFloatStringUnrounded(CGFloat f);
+IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
+IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
+
+NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options);
 NSString* IJSVGShortenFloatString(NSString* string);
 NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);

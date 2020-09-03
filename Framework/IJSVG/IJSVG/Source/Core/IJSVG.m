@@ -202,14 +202,14 @@
     return self;
 }
 
-- (id)initWithSVGData:(NSData *)data
+- (id)initWithSVGData:(NSData*)data
 {
     return [self initWithSVGData:data
                            error:nil];
 }
 
-- (id)initWithSVGData:(NSData *)data
-                error:(NSError **)error
+- (id)initWithSVGData:(NSData*)data
+                error:(NSError**)error
 {
     NSString* svgString = [[NSString alloc] initWithData:data
                                                 encoding:NSUTF8StringEncoding];
@@ -343,10 +343,19 @@
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
 {
-    IJSVGExporter* exporter =
-        [[[IJSVGExporter alloc] initWithSVG:self
-                                       size:self.viewBox.size
-                                    options:options] autorelease];
+    IJSVGExporter* exporter = [[[IJSVGExporter alloc] initWithSVG:self
+                                                             size:self.viewBox.size
+                                                          options:options] autorelease];
+    return [exporter SVGString];
+}
+
+- (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
+             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
+    IJSVGExporter* exporter = [[[IJSVGExporter alloc] initWithSVG:self
+                                                             size:self.viewBox.size
+                                                          options:options
+                                             floatingPointOptions:floatingPointOptions] autorelease];
     return [exporter SVGString];
 }
 
