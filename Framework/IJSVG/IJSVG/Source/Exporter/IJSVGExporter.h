@@ -72,5 +72,6 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void);
 
 - (NSString*)SVGString;
 - (NSData*)SVGData;
+- (IJSVG*)SVG:(NSError**)error;
 
 @end

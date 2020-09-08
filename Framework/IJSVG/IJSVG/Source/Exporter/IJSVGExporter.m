@@ -1680,6 +1680,7 @@ NSString* IJSVGHash(NSString* key)
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressOutput) == YES) {
         options = NSXMLNodeOptionsNone;
     }
+    options |= NSXMLNodeCompactEmptyElement;
     NSString* output = [_dom XMLStringWithOptions:options];
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
         return [output substringFromIndex:38];
@@ -1690,6 +1691,12 @@ NSString* IJSVGHash(NSString* key)
 - (NSData*)SVGData
 {
     return [[self SVGString] dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (IJSVG*)SVG:(NSError**)error
+{
+    return [[[IJSVG alloc] initWithSVGString:self.SVGString
+                                       error:error] autorelease];
 }
 
 #pragma mark CGPath stuff
