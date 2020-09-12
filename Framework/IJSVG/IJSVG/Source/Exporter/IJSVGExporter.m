@@ -405,6 +405,42 @@ NSString* IJSVGHash(NSString* key)
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionMoveAttributesToGroup) == YES) {
         [self _moveAttributesToGroupWithElement:_dom.rootElement];
     }
+
+    // any use cleaning
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
+        [self _cleanupUseTransforms];
+    }
+}
+
+- (void)_cleanupUseTransforms
+{
+    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//use"
+                                                     error:nil];
+    for (NSXMLElement* element in elements) {
+        NSString* att = [element attributeForName:@"transform"].stringValue;
+        if (att == nil || [element attributeForName:@"x"] != nil || [element attributeForName:@"y"] != nil) {
+            continue;
+        }
+        
+        // at this point we can move the x and y
+        NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:att];
+        if (transforms.count == 1 && transforms.firstObject.command == IJSVGTransformCommandTranslate) {
+            IJSVGTransform* transform = transforms.firstObject;
+            [element removeAttributeForName:@"transform"];
+            
+            // x
+            NSXMLNode* att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+            att.name = @"x";
+            att.stringValue = IJSVGShortFloatStringWithOptions(transform.parameters[0], _floatingPointOptions);
+            [element addAttribute:att];
+            
+            // y
+            att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+            att.name = @"y";
+            att.stringValue = IJSVGShortFloatStringWithOptions(transform.parameters[1], _floatingPointOptions);
+            [element addAttribute:att];
+        }
+    }
 }
 
 - (void)_createClasses
@@ -523,7 +559,7 @@ NSString* IJSVGHash(NSString* key)
 
 - (void)_moveAttributesToGroupWithElement:(NSXMLElement*)parentElement
 {
-
+// TODO FIX ME
     const NSArray* excludedNodes = @[ @"script", @"style", @"defs" ];
     if ([excludedNodes containsObject:parentElement.name] == YES) {
         return;
@@ -551,9 +587,6 @@ NSString* IJSVGHash(NSString* key)
 
         for (NSString* attributeToRemove in dict.allKeys) {
             [element removeAttributeForName:attributeToRemove];
-        }
-        if (dict != nil) {
-            [grouped addObject:element];
         }
 
         if (dict == nil || counter == size) {
@@ -849,10 +882,10 @@ NSString* IJSVGHash(NSString* key)
 - (NSString*)transformAttributeStringForTransform:(CGAffineTransform)transform
 {
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRoundTransforms) == YES) {
-        return [IJSVGTransform affineTransformToSVGMatrixString:transform
-                                           floatingPointOptions:_floatingPointOptions];
+        return [IJSVGTransform affineTransformToSVGTransformComponentString:transform
+                                                       floatingPointOptions:_floatingPointOptions];
     }
-    return [IJSVGTransform affineTransformToSVGMatrixString:transform];
+    return [IJSVGTransform affineTransformToSVGTransformComponentString:transform];
 }
 
 - (void)applyTransformToElement:(NSXMLElement*)element

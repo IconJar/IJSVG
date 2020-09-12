@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGMath.h"
+#import "IJSVGCommandParser.h"
 
 @implementation IJSVGMath
 

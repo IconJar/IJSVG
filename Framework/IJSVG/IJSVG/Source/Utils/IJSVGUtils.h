@@ -27,6 +27,7 @@ NSArray* IJSVGCommonHTMLElementNames(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
 
+NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* stringToCompress);
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options);
 NSString* IJSVGShortenFloatString(NSString* string);
 NSString* IJSVGPointToCommandString(CGPoint point);

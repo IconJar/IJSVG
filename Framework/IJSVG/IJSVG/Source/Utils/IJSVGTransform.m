@@ -137,7 +137,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return 10;
 }
 
-+ (NSArray*)transformsForString:(NSString*)string
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
 {
     static NSRegularExpression* _reg = nil;
     static dispatch_once_t onceToken;
@@ -493,27 +493,199 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return [self transformsForString:matrix];
 }
 
++ (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform
+                                     floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
+    NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
+    trans = [self filterUselessAffineTransformComponents:trans];
+    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    for (NSDictionary* dict in trans) {
+        NSArray<NSNumber*>* data = dict[@"data"];
+        NSString* method = dict[@"name"];
+        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        for (NSNumber* number in data) {
+            [dataStrings addObject:IJSVGShortFloatStringWithOptions(number.floatValue,
+                                                                    floatingPointOptions)];
+        }
+        [strings addObject:[NSString stringWithFormat:@"%@(%@)", method,
+                                     IJSVGCompressFloatParameterArray(dataStrings)]];
+    }
+    NSString* componentsString = [strings componentsJoinedByString:@" "];
+    NSString* matrixString = [self affineTransformToSVGMatrixString:transform
+                                               floatingPointOptions:floatingPointOptions];
+    return componentsString.length < matrixString.length ? componentsString : matrixString;
+}
+
++ (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform
+{
+    NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
+    trans = [self filterUselessAffineTransformComponents:trans];
+    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    for (NSDictionary* dict in trans) {
+        NSArray<NSNumber*>* data = dict[@"data"];
+        NSString* method = dict[@"name"];
+        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        for (NSNumber* number in data) {
+            [dataStrings addObject:IJSVGShortFloatString(number.floatValue)];
+        }
+        [strings addObject:[NSString stringWithFormat:@"%@(%@)", method,
+                                     IJSVGCompressFloatParameterArray(dataStrings)]];
+    }
+    NSString* componentsString = [strings componentsJoinedByString:@" "];
+    NSString* matrixString = [self affineTransformToSVGMatrixString:transform];
+    return componentsString.length < matrixString.length ? componentsString : matrixString;
+}
+
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
                          floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
-                     IJSVGShortFloatStringWithOptions(transform.a, floatingPointOptions),
-                     IJSVGShortFloatStringWithOptions(transform.b, floatingPointOptions),
-                     IJSVGShortFloatStringWithOptions(transform.c, floatingPointOptions),
-                     IJSVGShortFloatStringWithOptions(transform.d, floatingPointOptions),
-                     IJSVGShortFloatStringWithOptions(transform.tx, floatingPointOptions),
-                     IJSVGShortFloatStringWithOptions(transform.ty, floatingPointOptions)];
+    NSArray<NSString*>* numbers = @[
+        IJSVGShortFloatStringWithOptions(transform.a, floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(transform.b, floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(transform.c, floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(transform.d, floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(transform.tx, floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(transform.ty, floatingPointOptions)
+    ];
+    return [NSString stringWithFormat:@"matrix(%@)", IJSVGCompressFloatParameterArray(numbers)];
 }
 
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
 {
-    return [NSString stringWithFormat:@"matrix(%@ %@ %@ %@ %@ %@)",
-                     IJSVGShortFloatString(transform.a),
-                     IJSVGShortFloatString(transform.b),
-                     IJSVGShortFloatString(transform.c),
-                     IJSVGShortFloatString(transform.d),
-                     IJSVGShortFloatString(transform.tx),
-                     IJSVGShortFloatString(transform.ty)];
+    NSArray<NSString*>* numbers = @[
+        IJSVGShortFloatString(transform.a),
+        IJSVGShortFloatString(transform.b),
+        IJSVGShortFloatString(transform.c),
+        IJSVGShortFloatString(transform.d),
+        IJSVGShortFloatString(transform.tx),
+        IJSVGShortFloatString(transform.ty)
+    ];
+    return [NSString stringWithFormat:@"matrix(%@)",
+                     IJSVGCompressFloatParameterArray(numbers)];
+}
+
++ (NSArray<NSDictionary*>*)filterUselessAffineTransformComponents:(NSArray<NSDictionary*>*)components
+{
+    NSMutableArray* comps = [[[NSMutableArray alloc] initWithCapacity:components.count] autorelease];
+    NSArray<NSString*>* names = @[ @"translate", @"rotate", @"skewX", @"skewY" ];
+    for (NSDictionary* transform in components) {
+        NSString* name = transform[@"name"];
+        NSArray<NSNumber*>* data = transform[@"data"];
+        if ([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) && data[0].floatValue == 0.f) {
+            continue;
+        } else if ([name isEqualToString:@"translate"] && data[0].floatValue == 0.f && data[1].floatValue == 0.f) {
+            continue;
+        } else if ([name isEqualToString:@"scale"] && data[0].floatValue == 1.f && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
+            continue;
+        } else if ([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f && data[3].floatValue == 1.f && !(data[1].floatValue != 0.f || data[2].floatValue != 0.f || data[4].floatValue != 0.f || data[5].floatValue != 0.f)) {
+            continue;
+        }
+        [comps addObject:transform];
+    }
+    return comps;
+}
+
++ (NSArray<NSDictionary*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform
+{
+    const NSUInteger precision = 5;
+    CGFloat data[6] = {
+        IJSVGMathToFixed(transform.a, precision),
+        IJSVGMathToFixed(transform.b, precision),
+        IJSVGMathToFixed(transform.c, precision),
+        IJSVGMathToFixed(transform.d, precision),
+        IJSVGMathToFixed(transform.tx, precision),
+        IJSVGMathToFixed(transform.ty, precision)
+    };
+
+    CGFloat sx = IJSVGMathToFixed(hypotf(data[0], data[1]), precision);
+    CGFloat sy = IJSVGMathToFixed(((data[0] * data[3] - data[1] * data[2]) / sx), precision);
+    CGFloat colSum = data[0] * data[2] + data[1] * data[3];
+    CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
+    BOOL scaleBefore = rowSum != 0.f || sx == sy;
+
+    NSMutableArray* transforms = [[[NSMutableArray alloc] init] autorelease];
+
+    // tx, ty -> translate
+    if (data[4] != 0.f || data[5] != 0.f) {
+        [transforms addObject:@{
+            @"name" : @"translate",
+            @"data" : @[ @(data[4]), @(data[5]) ]
+        }];
+    }
+
+    // [sx, 0, tan(a).sy, sy, 0, 0] -> skewX(a).scale(sx,sy)
+    if (data[1] == 0.f && data[2] != 0.f) {
+        [transforms addObject:@{
+            @"name" : @"skewX",
+            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[2] / sy), precision)) ]
+        }];
+
+        // [sx, sy.tan(a), 0, sy, 0, 0] -> skewX(a).scale(sx, sy)
+    } else if (data[1] != 0.f && data[2] == 0.f) {
+        [transforms addObject:@{
+            @"name" : @"skewY",
+            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[1] / data[0]), precision)) ]
+        }];
+        sx = data[0];
+        sy = data[3];
+    } else if (colSum == 0.f || (sx == 1.f && sy == 1.f) || !scaleBefore) {
+        if (!scaleBefore) {
+            sx = (data[0] < 0.f ? -1.f : 1.f) * hypotf(data[0], data[2]);
+            sy = (data[3] < 0.f ? -1.f : 1.f) * hypotf(data[1], data[3]);
+            if (sx != 1.f || sy != 1.f) {
+                [transforms addObject:@{
+                    @"name" : @"scale",
+                    @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]
+                }];
+            }
+        }
+
+        CGFloat angle = MIN(MAX(-1.f, data[0] / sx), 1.f);
+        NSMutableArray<NSNumber*>* rotate = [[[NSMutableArray alloc] initWithCapacity:3] autorelease];
+        [rotate addObject:@(IJSVGMathToFixed(IJSVGMathAcos(angle), precision) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f : 1.f))];
+
+        if (rotate[0].floatValue != 0.f) {
+            [transforms addObject:@{
+                @"name" : @"rotate",
+                @"data" : rotate
+            }];
+        }
+
+        if (rowSum != 0.f && colSum != 0.f) {
+            [transforms addObject:@{
+                @"name" : @"skewX",
+                @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(colSum / (sx * sx)), precision)) ]
+            }];
+        }
+
+        // rotate can consume translate
+        if (rotate[0].floatValue != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
+            [transforms removeObjectAtIndex:0];
+            CGFloat cos = data[0] / sx;
+            CGFloat sin = data[1] / (scaleBefore ? sx : sy);
+            CGFloat x = data[4] * (scaleBefore ? 1.f : sy);
+            CGFloat y = data[5] * (scaleBefore ? 1.f : sx);
+            CGFloat denom = (powf(1.f - cos, 2.f) + powf(sin, 2.f)) * (scaleBefore ? 1.f : (sx * sy));
+            [rotate addObject:@(((1.f - cos) * x - sin * y) / denom)];
+            [rotate addObject:@(((1.f - cos) * y + sin * x) / denom)];
+        }
+    } else if (data[1] != 0.f || data[2] != 0.f) {
+        NSDictionary* trans = @{
+            @"name" : @"matrix",
+            @"data" : @[ @(data[0]), @(data[1]), @(data[2]), @(data[3]), @(data[4]), @(data[5]) ]
+        };
+        return @[ trans ];
+    }
+
+    if (scaleBefore == YES && ((sx != 1.f || sy != 1.f) || transforms.count == 0)) {
+        NSDictionary* trans = @{
+            @"name" : @"scale",
+            @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]
+        };
+        [transforms addObject:trans];
+    }
+
+    return transforms;
 }
 
 - (NSString*)description
