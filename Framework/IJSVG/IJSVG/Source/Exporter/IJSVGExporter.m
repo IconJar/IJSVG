@@ -104,7 +104,7 @@ const NSArray* IJSVGInheritableAttributes()
     return _attributes;
 }
 
-void IJSVGApplyAttributesToElement(NSDictionary* attributes, NSXMLElement* element)
+void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLElement* element)
 {
     [element setAttributesAsDictionary:attributes];
 };
@@ -421,19 +421,19 @@ NSString* IJSVGHash(NSString* key)
         if (att == nil || [element attributeForName:@"x"] != nil || [element attributeForName:@"y"] != nil) {
             continue;
         }
-        
+
         // at this point we can move the x and y
         NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:att];
         if (transforms.count == 1 && transforms.firstObject.command == IJSVGTransformCommandTranslate) {
             IJSVGTransform* transform = transforms.firstObject;
             [element removeAttributeForName:@"transform"];
-            
+
             // x
             NSXMLNode* att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
             att.name = @"x";
             att.stringValue = IJSVGShortFloatStringWithOptions(transform.parameters[0], _floatingPointOptions);
             [element addAttribute:att];
-            
+
             // y
             att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
             att.name = @"y";
@@ -559,58 +559,104 @@ NSString* IJSVGHash(NSString* key)
 
 - (void)_moveAttributesToGroupWithElement:(NSXMLElement*)parentElement
 {
-// TODO FIX ME
-    const NSArray* excludedNodes = @[ @"script", @"style", @"defs" ];
-    if ([excludedNodes containsObject:parentElement.name] == YES) {
+    const NSArray<NSString*>* excludedElements = @[ @"script", @"style", @"defs" ];
+    if ([excludedElements containsObject:parentElement.name]) {
         return;
     }
 
-    const NSArray* inheritableAttributes = IJSVGInheritableAttributes();
+    const NSArray<NSString*>* inheritableAttributes = IJSVGInheritableAttributes();
+    __block NSDictionary<NSString*, NSString*>* intersection = nil;
+    NSMutableArray<NSXMLElement*>* currentGroup = [[[NSMutableArray alloc] init] autorelease];
 
-    NSDictionary* intersection = @{};
-    NSMutableArray* grouped = [[[NSMutableArray alloc] init] autorelease];
-
-    NSInteger counter = 0;
-    NSInteger size = parentElement.childCount - 1;
-    for (NSXMLElement* element in parentElement.children) {
-
-        NSDictionary* attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
-                                           inheritableAttributes:inheritableAttributes];
-
-        if (intersection.count == 0) {
-            intersection = attributes;
+    BOOL (^createGroupIfRequired)(void) = ^BOOL {
+        // memory clean
+        if (currentGroup.count < 2) {
+            [currentGroup removeAllObjects];
+            intersection = nil;
+            return NO;
         }
 
-        NSDictionary* dict = [self intersectionInheritableAttributes:intersection
-                                                   currentAttributes:attributes
-                                               inheritableAttributes:inheritableAttributes];
+        // at this point we can create a new group and remove all the attributes
+        NSInteger insertIndex = currentGroup.lastObject.index;
+        NSXMLElement* group = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
+        IJSVGApplyAttributesToElement(intersection, group);
 
-        for (NSString* attributeToRemove in dict.allKeys) {
-            [element removeAttributeForName:attributeToRemove];
-        }
-
-        if (dict == nil || counter == size) {
-            if (grouped.count > 1) {
-                NSXMLElement* groupElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
-                NSXMLElement* lastElement = (NSXMLElement*)grouped.lastObject;
-                NSInteger index = lastElement.index;
-                [parentElement replaceChildAtIndex:index withNode:groupElement];
-                for (NSXMLElement* elementToGroup in grouped) {
-                    [elementToGroup detach];
-                    [groupElement addChild:elementToGroup];
+        // add back into the dom
+        [(NSXMLElement*)currentGroup.lastObject.parent replaceChildAtIndex:insertIndex
+                                                                  withNode:group];
+        for (NSXMLElement* child in currentGroup) {
+            @autoreleasepool {
+                NSDictionary<NSString*, NSString*>* childIntersection = nil;
+                NSDictionary<NSString*, NSString*>* childAttributes = nil;
+                childAttributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(child)
+                                          inheritableAttributes:inheritableAttributes];
+                childIntersection = [self intersectionInheritableAttributes:childAttributes
+                                                          currentAttributes:intersection
+                                                      inheritableAttributes:inheritableAttributes];
+                for (NSString* attributeName in childIntersection.allKeys) {
+                    [child removeAttributeForName:attributeName];
                 }
-                IJSVGApplyAttributesToElement(intersection, groupElement);
-            } else {
-                if (grouped.count == 1) {
-                    NSXMLElement* onlyElement = (NSXMLElement*)grouped.lastObject;
-                    IJSVGApplyAttributesToElement(intersection, onlyElement);
+                // move the child to the group
+                [child detach];
+                [group addChild:child];
+            }
+        }
+
+        // memory clean
+        [currentGroup removeAllObjects];
+        intersection = nil;
+
+        return YES;
+    };
+
+    for (NSInteger i = 0; i < parentElement.children.count; i++) {
+        @autoreleasepool {
+            // the current elements attributes that are inheritable
+            NSXMLElement* element = (NSXMLElement*)parentElement.children[i];
+            NSDictionary<NSString*, NSString*>* attributes = nil;
+            attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
+                                 inheritableAttributes:inheritableAttributes];
+
+            if (intersection == nil) {
+                intersection = attributes;
+                [currentGroup addObject:element];
+            }
+
+            NSXMLElement* nextSibling = element;
+            while ((nextSibling = (NSXMLElement*)nextSibling.nextSibling) != nil) {
+                @autoreleasepool {
+                    NSDictionary<NSString*, NSString*>* siblingAttributes = nil;
+                    NSDictionary<NSString*, NSString*>* siblingIntersection = nil;
+                    siblingAttributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(nextSibling)
+                                                inheritableAttributes:inheritableAttributes];
+                    siblingIntersection = [self intersectionInheritableAttributes:intersection
+                                                                currentAttributes:siblingAttributes
+                                                            inheritableAttributes:inheritableAttributes];
+                    if (siblingIntersection == nil) {
+                        createGroupIfRequired();
+                        // make sure we set the index after
+                        // as it could had changed whilst being added
+                        // to a group
+                        i = nextSibling.index - 1;
+                        break;
+                    }
+
+                    // append to current list
+                    [currentGroup addObject:nextSibling];
                 }
             }
-            intersection = @{};
-            [grouped removeAllObjects];
-        }
 
-        counter++;
+            // anything left over
+            createGroupIfRequired();
+        }
+    }
+
+    // perform the recursive calls to all children that are groups
+    // including ones that were just created
+    for (NSXMLElement* element in parentElement.children) {
+        if ([element.name isEqualToString:@"g"]) {
+            [self _moveAttributesToGroupWithElement:element];
+        }
     }
 }
 

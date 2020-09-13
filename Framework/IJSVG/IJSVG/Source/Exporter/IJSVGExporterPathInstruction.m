@@ -89,7 +89,6 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
 {
     IJSVGExporterPathInstructionCommand* lastCommand = NULL;
     NSMutableString* string = [[[NSMutableString alloc] init] autorelease];
-    char* lastCommandChars = NULL;
     for (NSValue* value in instructionSets) {
         // read back the bytes
         IJSVGExporterPathInstructionCommand command;
@@ -104,31 +103,9 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
             [string appendString:@" "];
         }
 
-        NSInteger index = 0;
-        for (NSString* dataString in command.params) {
-            const char* chars = dataString.UTF8String;
-
-            // work out if the command is signed and or decimal
-            BOOL isSigned = chars[0] == '-';
-            BOOL isDecimal = (isSigned == NO && chars[0] == '.') || (isSigned == YES && chars[1] == '.');
-
-            // we also need to know if the previous command was a decimal or not
-            BOOL lastWasDecimal = NO;
-            if (lastCommandChars != NULL) {
-                lastWasDecimal = strchr(lastCommandChars, '.') != NULL;
-            }
-
-            // we only need a space if the current command is not signed
-            // a decimal and the previous command was decimal too
-            if (index++ == 0 || isSigned || (isDecimal == YES && lastWasDecimal == YES)) {
-                [string appendString:dataString];
-            } else {
-                [string appendFormat:@" %@", dataString];
-            }
-
-            // store last command chars
-            lastCommandChars = (char*)chars;
-        }
+        // compresses the floats
+        NSString* compressedFloats = IJSVGCompressFloatParameterArray(command.params);
+        [string appendString:compressedFloats];
 
         // store last command
         IJSVGExporterPathInstructionCommandFree(lastCommand);
