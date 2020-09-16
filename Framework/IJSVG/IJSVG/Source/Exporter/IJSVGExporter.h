@@ -38,12 +38,14 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionConvertArcs = 1 << 18,
     IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
     IJSVGExporterOptionRoundTransforms = 1 << 20,
-    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths | IJSVGExporterOptionRoundTransforms
+    IJSVGExporterOptionRemoveDefaultValues = 1 << 21,
+    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths | IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
 void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlock enumBlock);
 const NSArray<NSString*>* IJSVGShortCharacterArray(void);
+const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
 @interface IJSVGExporter : NSObject {
 

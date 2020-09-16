@@ -49,6 +49,68 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
     return _array;
 }
 
+const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes()
+{
+    static NSDictionary* _defaults;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _defaults = [@ {
+            @"clip" : @"auto",
+            @"clip-path" : @"none",
+            @"clip-rule" : @"nonzero",
+            @"mask" : @"none",
+            @"opacity" : @"1",
+            @"stop-color" : @"#000",
+            @"stop-opacity" : @"1",
+            @"fill-opacity" : @"1",
+            @"fill-rule" : @"nonzero",
+            @"fill" : @"#000",
+            @"stroke" : @"none",
+            @"stroke-width" : @"1",
+            @"stroke-linecap" : @"butt",
+            @"stroke-linejoin" : @"miter",
+            @"stroke-miterlimit" : @"4",
+            @"stroke-dasharray" : @"none",
+            @"stroke-dashoffset" : @"0",
+            @"stroke-opacity" : @"1",
+            @"paint-order" : @"normal",
+            @"vector-effect" : @"none",
+            @"display" : @"inline",
+            @"visibility" : @"visible",
+            @"marker-start" : @"none",
+            @"marker-mid" : @"none",
+            @"marker-end" : @"none",
+            @"color-interpolation" : @"sRGB",
+            @"color-interpolation-filters" : @"linearRGB",
+            @"color-rendering" : @"auto",
+            @"shape-rendering" : @"auto",
+            @"text-rendering" : @"auto",
+            @"image-rendering" : @"auto",
+            @"font-style" : @"normal",
+            @"font-variant" : @"normal",
+            @"font-weight" : @"normal",
+            @"font-stretch" : @"normal",
+            @"font-size" : @"medium",
+            @"font-size-adjust" : @"none",
+            @"kerning" : @"auto",
+            @"letter-spacing" : @"normal",
+            @"word-spacing" : @"normal",
+            @"text-decoration" : @"none",
+            @"text-anchor" : @"start",
+            @"text-overflow" : @"clip",
+            @"writing-mode" : @"lr-tb",
+            @"glyph-orientation-vertical" : @"auto",
+            @"glyph-orientation-horizontal" : @"0deg",
+            @"direction" : @"ltr",
+            @"unicode-bidi" : @"normal",
+            @"dominant-baseline" : @"auto",
+            @"alignment-baseline" : @"baseline",
+            @"baseline-shift" : @"baseline"
+        } retain];
+    });
+    return _defaults;
+}
+
 const NSArray* IJSVGInheritableAttributes()
 {
     static NSArray* _attributes;
@@ -409,6 +471,11 @@ NSString* IJSVGHash(NSString* key)
     // any use cleaning
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
         [self _cleanupUseTransforms];
+    }
+
+    // remove any defaults
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveDefaultValues) == YES) {
+        [self _removeDefaultAttributes];
     }
 }
 
@@ -899,11 +966,72 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+- (NSString*)_computedAttribute:(NSString*)attributeName
+                     forElement:(NSXMLElement*)element
+{
+    NSXMLNode* e = (NSXMLNode*)element;
+    if (e == _dom.rootElement || e == _dom.rootDocument) {
+        return nil;
+    }
+
+    NSXMLElement* el = element;
+    while (el != nil) {
+        NSXMLNode* attribute = [el attributeForName:attributeName];
+        if (attribute != nil) {
+            break;
+        }
+        el = (NSXMLElement*)el.parent;
+        if (el == _dom.rootElement || (NSXMLNode*)el == _dom.rootDocument) {
+            el = nil;
+            break;
+        }
+    }
+
+    NSXMLNode* attribute = [el attributeForName:attributeName];
+    if (attribute) {
+        return attribute.stringValue;
+    }
+    return nil;
+}
+
+- (void)_removeDefaultAttributesOnElement:(NSXMLElement*)element
+{
+    const NSDictionary<NSString*, NSString*>* defaults = IJSVGDefaultAttributes();
+    const NSArray<NSString*>* inheritables = IJSVGInheritableAttributes();
+    if (element.kind == NSXMLElementKind) {
+        NSArray<NSXMLNode*>* attributes = element.attributes;
+        if ([element attributeForName:@"id"] == nil) {
+            for (NSXMLNode* node in attributes) {
+                // no value found in defaults
+                NSString* val = nil;
+                if ((val = defaults[node.name]) == nil) {
+                    continue;
+                }
+                BOOL isInheritable = [inheritables containsObject:node.name];
+                NSString* parentComputed = [self _computedAttribute:node.name
+                                                         forElement:(NSXMLElement*)element.parent];
+                BOOL isDefault = [val isEqualToString:node.stringValue] && (isInheritable == NO || parentComputed == nil);
+                if (isDefault) {
+                    [element removeAttributeForName:node.name];
+                }
+            }
+        }
+    }
+    for (NSXMLElement* childElement in element.children) {
+        [self _removeDefaultAttributesOnElement:childElement];
+    }
+}
+
+- (void)_removeDefaultAttributes
+{
+    [self _removeDefaultAttributesOnElement:_dom.rootElement];
+}
+
 - (void)_recursiveParseFromLayer:(IJSVGLayer*)layer
                      intoElement:(NSXMLElement*)element
 {
     // is a shape
-    if ([layer class] == [IJSVGShapeLayer class]) {
+    if (layer.class == IJSVGShapeLayer.class) {
         NSXMLElement* child = [self elementForShape:(IJSVGShapeLayer*)layer
                                          fromParent:element];
         if (child != nil) {
