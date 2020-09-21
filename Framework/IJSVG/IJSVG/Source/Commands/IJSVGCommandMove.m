@@ -35,17 +35,16 @@
         return;
     }
 
-    // actual move to command
-    if (type == kIJSVGCommandTypeAbsolute) {
+    // actual move to command - do a moveToPoint only
+    // if the type is absolute, or its possible the type is
+    // relative but there is no previous command which means
+    // there is no current point. Asking for current point on an empty
+    // path will result in an exception being thrown
+    if (type == kIJSVGCommandTypeAbsolute || command == nil) {
         [path.path moveToPoint:NSMakePoint(params[0], params[1])];
         return;
     }
-    @try {
-        [path.path relativeMoveToPoint:NSMakePoint(params[0], params[1])];
-    }
-    @catch (NSException* exception) {
-        [path.path moveToPoint:NSMakePoint(params[0], params[1])];
-    }
+    [path.path relativeMoveToPoint:NSMakePoint(params[0], params[1])];
 }
 
 @end

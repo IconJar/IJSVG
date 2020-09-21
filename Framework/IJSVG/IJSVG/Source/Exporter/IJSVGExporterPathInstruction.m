@@ -391,6 +391,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     IJSVGExporterPathInstruction* baseInstruction = nil;
     IJSVGExporterPathInstruction* prevInstruction = nil;
 
+    NSInteger index = 0;
     for (IJSVGExporterPathInstruction* anInstruction in instructions) {
         char instruction = anInstruction.instruction;
         CGFloat* data = anInstruction.data;
@@ -508,6 +509,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         // increment index
         prevInstruction = anInstruction;
     }
+    index++;
 }
 
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
