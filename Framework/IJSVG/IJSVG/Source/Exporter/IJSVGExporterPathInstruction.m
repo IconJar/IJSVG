@@ -508,8 +508,8 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 
         // increment index
         prevInstruction = anInstruction;
+        index++;
     }
-    index++;
 }
 
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
