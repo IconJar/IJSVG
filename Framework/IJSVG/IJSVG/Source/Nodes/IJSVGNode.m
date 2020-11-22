@@ -13,7 +13,7 @@
 @implementation IJSVGNode
 
 @synthesize title;
-@synthesize description;
+@synthesize desc;
 @synthesize shouldRender;
 @synthesize type;
 @synthesize name;
@@ -76,7 +76,7 @@
     (void)([def release]), def = nil;
     (void)([name release]), name = nil;
     (void)([title release]), title = nil;
-    (void)([description release]), description = nil;
+    (void)([desc release]), desc = nil;
     (void)([className release]), className = nil;
     (void)([classNameList release]), classNameList = nil;
     (void)([fillPattern release]), fillPattern = nil;

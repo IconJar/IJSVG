@@ -13,7 +13,7 @@
 @implementation IJSVG
 
 @synthesize title = _title;
-@synthesize description = _description;
+@synthesize desc = _desc;
 @synthesize renderingBackingScaleHelper;
 @synthesize clipToViewport;
 @synthesize renderQuality;
@@ -30,6 +30,8 @@
     (void)([_renderingStyle release]), _renderingStyle = nil;
     (void)([_group release]), _group = nil;
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
+    (void)([_desc release]), _desc = nil;
+    (void)([_title release]), _title = nil;
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
