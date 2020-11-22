@@ -69,6 +69,8 @@
 @property (nonatomic, assign) BOOL clipToViewport;
 @property (nonatomic, retain) IJSVGRenderingStyle* renderingStyle;
 @property (nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
+@property (nonatomic, copy) NSString* title;
+@property (nonatomic, copy) NSString* desc;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;

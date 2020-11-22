@@ -12,6 +12,8 @@
 
 @implementation IJSVG
 
+@synthesize title = _title;
+@synthesize description = _description;
 @synthesize renderingBackingScaleHelper;
 @synthesize clipToViewport;
 @synthesize renderQuality;
@@ -299,6 +301,26 @@
     self.renderingBackingScaleHelper = ^CGFloat {
         return NSScreen.mainScreen.backingScaleFactor;
     };
+}
+
+- (void)setTitle:(NSString*)title
+{
+    _group.title = title;
+}
+
+- (NSString*)title
+{
+    return _group.title;
+}
+
+- (void)setDesc:(NSString*)description
+{
+    _group.desc = description;
+}
+
+- (NSString*)desc
+{
+    return _group.desc;
 }
 
 - (NSString*)identifier

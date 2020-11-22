@@ -447,6 +447,24 @@
             node.shouldRender = NO;
         }
     });
+    
+    // is there a title or desc?
+    for(NSXMLElement* childElement in element.children) {
+        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
+                                                 kind:childElement.kind];
+        switch(type) {
+            case IJSVGNodeTypeTitle: {
+                node.title = childElement.stringValue;
+                break;
+            }
+            case IJSVGNodeTypeDesc: {
+                node.desc = childElement.stringValue;
+                break;
+            }
+            default: {
+            }
+        }
+    }
 }
 
 - (id)definedObjectForID:(NSString*)anID

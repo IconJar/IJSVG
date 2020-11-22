@@ -43,6 +43,8 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeTextSpan,
     IJSVGNodeTypeStyle,
     IJSVGNodeTypeSwitch,
+    IJSVGNodeTypeTitle,
+    IJSVGNodeTypeDesc,
     IJSVGNodeTypeNotFound,
 };
 
@@ -97,6 +99,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying>
 
+@property (nonatomic, copy) NSString* title;
+@property (nonatomic, copy) NSString* desc;
 @property (nonatomic, assign) IJSVGNodeType type;
 @property (nonatomic, copy) NSString* name;
 @property (nonatomic, copy) NSString* className;
