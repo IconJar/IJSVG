@@ -130,6 +130,9 @@
                     error:(NSError**)error;
 - (NSImage*)imageWithSize:(NSSize)aSize
                   flipped:(BOOL)flipped;
+- (NSImage*)imageWithSize:(NSSize)aSize
+                  flipped:(BOOL)flipped
+                    error:(NSError**)error;
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error;
