@@ -69,9 +69,17 @@
     IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
     unit.value = string.floatValue;
     unit.type = IJSVGUnitLengthTypeNumber;
+    
+    // is a %
     if ([string hasSuffix:@"%"] == YES) {
         unit.value /= 100.f;
         unit.type = IJSVGUnitLengthTypePercentage;
+    } else if([string hasSuffix:@"cm"] == YES) {
+        // 1cm = 96px/2.54
+        unit.value *= (96.f / 2.54f);
+    } else if([string hasSuffix:@"mm"] == YES) {
+        // 1mm = 1/10th of 1cm
+        unit.value *= ((96.f / 2.54f) / 10.f);
     }
     return unit;
 }

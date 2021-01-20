@@ -198,8 +198,12 @@
         free(box);
     } else {
         // there is no view box so find the width and height
-        CGFloat w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue.floatValue;
-        CGFloat h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue.floatValue;
+        NSString* wAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
+        NSString* hAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
+        IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithString:wAtt];
+        IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithString:hAtt];
+        CGFloat w = wLength.value;
+        CGFloat h = hLength.value;
         if (h == 0.f && w != 0.f) {
             h = w;
         } else if (w == 0.f && h != 0.f) {

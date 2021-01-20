@@ -142,7 +142,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     static NSRegularExpression* _reg = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z]+)\\(([^\\)]+)\\)"
+        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z]+)(?:[\\s]+)?\\(([^\\)]+)\\)"
                                                     options:0
                                                       error:nil];
     });
