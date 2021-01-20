@@ -15,6 +15,7 @@
 @synthesize value;
 @synthesize type;
 @synthesize inherit;
+@synthesize originalType;
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
@@ -126,6 +127,7 @@
     unit.type = IJSVGUnitLengthTypeNumber;
     
     IJSVGUnitLengthType type = [self typeForString:string];
+    unit.originalType = type;
     switch(type) {
         case IJSVGUnitLengthTypePercentage: {
             unit.value = [self convertUnitValue:unit.value
