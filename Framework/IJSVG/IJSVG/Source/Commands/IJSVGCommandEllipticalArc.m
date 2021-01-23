@@ -44,8 +44,8 @@ static IJSVGPathDataSequence* _sequence;
     CGPoint arcEndPoint = CGPointZero;
     CGPoint arcStartPoint = path.currentPoint;
     CGFloat xAxisRotation = 0;
-    BOOL largeArcFlag = 0;
-    BOOL sweepFlag = 0;
+    BOOL largeArcFlag = NO;
+    BOOL sweepFlag = NO;
 
     radii = [currentCommand readPoint];
     xAxisRotation = [currentCommand readFloat];
@@ -91,15 +91,11 @@ static IJSVGPathDataSequence* _sequence;
     CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) : CGPointMake(radii.x / radii.y, 1);
 
     NSAffineTransform* trans = NSAffineTransform.transform;
-    [trans translateXBy:-centerPoint.x yBy:-centerPoint.y];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
+    [trans translateXBy:-centerPoint.x
+                    yBy:-centerPoint.y];
     [trans rotateByRadians:-xAxisRotation];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans scaleXBy:(1 / scale.x) yBy:(1 / scale.y)];
+    [trans scaleXBy:(1 / scale.x)
+                yBy:(1 / scale.y)];
     [path.path transformUsingAffineTransform:trans];
 
     [path.path appendBezierPathWithArcWithCenter:NSZeroPoint
@@ -109,15 +105,11 @@ static IJSVGPathDataSequence* _sequence;
                                        clockwise:!sweepFlag];
 
     trans = NSAffineTransform.transform;
-    [trans scaleXBy:scale.x yBy:scale.y];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
+    [trans scaleXBy:scale.x
+                yBy:scale.y];
     [trans rotateByRadians:xAxisRotation];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans translateXBy:centerPoint.x yBy:centerPoint.y];
+    [trans translateXBy:centerPoint.x
+                    yBy:centerPoint.y];
     [path.path transformUsingAffineTransform:trans];
 }
 

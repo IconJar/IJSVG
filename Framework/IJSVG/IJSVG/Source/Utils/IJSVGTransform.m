@@ -139,38 +139,63 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
 {
-    static NSRegularExpression* _reg = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"([a-zA-Z]+)(?:[\\s]+)?\\(([^\\)]+)\\)"
-                                                    options:0
-                                                      error:nil];
-    });
-    NSMutableArray* transforms = [[[NSMutableArray alloc] init] autorelease];
-    @autoreleasepool {
-        [_reg enumerateMatchesInString:string
-                               options:0
-                                 range:NSMakeRange(0, string.length)
-                            usingBlock:^(NSTextCheckingResult* result, NSMatchingFlags flags, BOOL* stop) {
-                                NSString* command = [string substringWithRange:[result rangeAtIndex:1]];
-                                IJSVGTransformCommand commandType = [self.class commandForCommandString:command];
-                                if (commandType == IJSVGTransformCommandNotImplemented) {
-                                    return;
-                                }
-
-                                // create the transform
-                                NSString* params = [string substringWithRange:[result rangeAtIndex:2]];
-                                IJSVGTransform* transform = [[[self.class alloc] init] autorelease];
-                                NSInteger count = 0;
-                                transform.command = commandType;
-                                transform.parameters = [IJSVGUtils commandParameters:params
-                                                                               count:&count];
-                                transform.parameterCount = count;
-                                transform.sort = [self.class sortForTransformCommand:commandType];
-                                [transforms addObject:transform];
-                            }];
+    NSMutableArray<IJSVGTransform*>* array = nil;
+    array = [[[NSMutableArray alloc] init] autorelease];
+    
+    // setup the buffer for the string to be stored in
+    const char* charString = string.UTF8String;
+    unsigned long length = strlen(charString);
+    char* buffer = (char*)calloc(sizeof(char), length);
+    int bufferIndex = 0;
+    
+    // each command requires a name and parameters, store for later use
+    NSString* commandName = nil;
+    NSString* params = nil;
+    for(int i = 0; i < length; i++) {
+        char currentChar = charString[i];
+        
+        // white space, ignore and continue
+        if(isspace(currentChar) != 0) {
+            continue;
+        }
+        
+        // start of params - store the command name as its current in the buffer
+        if(currentChar == '(') {
+            commandName = [NSString stringWithUTF8String:buffer];
+            memset(buffer, '\0', bufferIndex);
+            bufferIndex = 0;
+            continue;
+        }
+        
+        // end of params - store the params into the buffer
+        if(currentChar == ')') {
+            params = [NSString stringWithUTF8String:buffer];
+            memset(buffer, '\0', bufferIndex);
+            bufferIndex = 0;
+            
+            // at this point we can just add the command
+            IJSVGTransformCommand commandType = [self.class commandForCommandString:commandName];
+            if(commandType == IJSVGTransformCommandNotImplemented) {
+                continue;
+            }
+            
+            // create a new transform object and parse the parameters
+            NSInteger count = 0;
+            IJSVGTransform* transform = [[[self.class alloc] init] autorelease];
+            transform.command = commandType;
+            transform.sort = [self.class sortForTransformCommand:commandType];
+            transform.parameters = [IJSVGUtils commandParameters:params
+                                                           count:&count];
+            transform.parameterCount = count;
+            
+            // add to the list of transforms to return
+            [array addObject:transform];
+            continue;
+        }
+        buffer[bufferIndex++] = currentChar;
     }
-    return transforms;
+    (void)free(buffer);
+    return array;
 }
 
 + (NSBezierPath*)transformedPath:(IJSVGPath*)path
