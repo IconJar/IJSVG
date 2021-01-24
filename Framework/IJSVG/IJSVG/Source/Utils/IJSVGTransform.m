@@ -146,6 +146,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     const char* charString = string.UTF8String;
     unsigned long length = strlen(charString);
     char* buffer = (char*)calloc(sizeof(char), length);
+    char* originBuffer = buffer;
     int bufferIndex = 0;
     
     // each command requires a name and parameters, store for later use
@@ -154,14 +155,13 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     for(int i = 0; i < length; i++) {
         char currentChar = *charString++;
         
-        // white space, ignore and continue
-        if(isspace(currentChar) != 0) {
-            continue;
-        }
-        
         // start of params - store the command name as its current in the buffer
         if(currentChar == '(') {
+            // rest the pointer to beginning
+            buffer = originBuffer;
+            IJSVGTrimCharBuffer(buffer);
             commandName = [NSString stringWithUTF8String:buffer];
+            // write null up until the limit we reached
             memset(buffer, '\0', bufferIndex);
             bufferIndex = 0;
             continue;
@@ -169,7 +169,10 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         
         // end of params - store the params into the buffer
         if(currentChar == ')') {
+            // rest the pointer to beginning
+            buffer = originBuffer;
             params = [NSString stringWithUTF8String:buffer];
+            // write null up until the limit we reached
             memset(buffer, '\0', bufferIndex);
             bufferIndex = 0;
             
@@ -190,11 +193,19 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
             
             // add to the list of transforms to return
             [array addObject:transform];
+            
+            // reset these values
+            commandName = nil;
+            params = nil;
             continue;
         }
-        buffer[bufferIndex++] = currentChar;
+        
+        // increment the buffer count
+        *buffer++ = currentChar;
+        bufferIndex++;
     }
-    (void)free(buffer);
+    buffer = originBuffer;
+    (void)free(buffer), buffer = NULL;
     return array;
 }
 

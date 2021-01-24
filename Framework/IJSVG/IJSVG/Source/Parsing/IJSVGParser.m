@@ -14,6 +14,35 @@
 @synthesize viewBox;
 @synthesize intrinsicSize = _intrinsicSize;
 
+static NSDictionary* _IJSVGAttributeDictionaryFloats = nil;
+static NSDictionary* _IJSVGAttributeDictionaryNodes = nil;
+static NSDictionary* _IJSVGAttributeDictionaryUnits = nil;
+static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
+
++ (void)load
+{
+    _IJSVGAttributeDictionaryFloats = [@{
+        (NSString*)IJSVGAttributeX : @"x",
+        (NSString*)IJSVGAttributeY : @"y",
+        (NSString*)IJSVGAttributeWidth : @"width",
+        (NSString*)IJSVGAttributeHeight : @"height",
+        (NSString*)IJSVGAttributeOpacity : @"opacity",
+        (NSString*)IJSVGAttributeStrokeOpacity : @"strokeOpacity",
+        (NSString*)IJSVGAttributeStrokeWidth : @"strokeWidth",
+        (NSString*)IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
+        (NSString*)IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
+    _IJSVGAttributeDictionaryNodes = [@{
+        (NSString*)IJSVGAttributeClipPath : @"clipPath",
+        (NSString*)IJSVGAttributeMask : @"mask" } retain];
+    _IJSVGAttributeDictionaryUnits = [@{
+        (NSString*)IJSVGAttributeGradientUnits : @"units",
+        (NSString*)IJSVGAttributeMaskUnits : @"units",
+        (NSString*)IJSVGAttributeMaskContentUnits : @"contentUnits"} retain];
+    _IJSVGAttributeDictionaryTransforms = [@{
+        (NSString*)IJSVGAttributeTransform : @"transforms",
+        (NSString*)IJSVGAttributeGradientTransform : @"transforms" } retain];
+}
+
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
 {
     return [self.class groupForFileURL:aURL
@@ -314,22 +343,13 @@
     }
 
     // floats
-    atts(@{ (NSString*)IJSVGAttributeX : @"x",
-        (NSString*)IJSVGAttributeY : @"y",
-        (NSString*)IJSVGAttributeWidth : @"width",
-        (NSString*)IJSVGAttributeHeight : @"height",
-        (NSString*)IJSVGAttributeOpacity : @"opacity",
-        (NSString*)IJSVGAttributeStrokeOpacity : @"strokeOpacity",
-        (NSString*)IJSVGAttributeStrokeWidth : @"strokeWidth",
-        (NSString*)IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
-        (NSString*)IJSVGAttributeFillOpacity : @"fillOpacity" },
+    atts(_IJSVGAttributeDictionaryFloats,
         ^id(NSString* value) {
             return [IJSVGUnitLength unitWithString:value];
         });
 
     // nodes
-    atts(@{ (NSString*)IJSVGAttributeClipPath : @"clipPath",
-        (NSString*)IJSVGAttributeMask : @"mask" },
+    atts(_IJSVGAttributeDictionaryNodes,
         ^id(NSString* value) {
             NSString* url = [IJSVGUtils defURL:value];
             if (url != nil) {
@@ -339,16 +359,13 @@
         });
 
     // units
-    atts(@{ (NSString*)IJSVGAttributeGradientUnits : @"units",
-        (NSString*)IJSVGAttributeMaskUnits : @"units",
-        (NSString*)IJSVGAttributeMaskContentUnits : @"contentUnits" },
+    atts(_IJSVGAttributeDictionaryUnits,
         ^id(NSString* value) {
             return @([IJSVGUtils unitTypeForString:value]);
         });
 
     // transforms
-    atts(@{ (NSString*)IJSVGAttributeTransform : @"transforms",
-        (NSString*)IJSVGAttributeGradientTransform : @"transforms" },
+    atts(_IJSVGAttributeDictionaryTransforms,
         ^(NSString* value) {
             NSMutableArray* tempTransforms = [[[NSMutableArray alloc] init] autorelease];
             [tempTransforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
@@ -1148,12 +1165,12 @@
     }
 
     // allocate memory for the string buffer for reading
-    NSUInteger len = command.length;
-    NSUInteger lastIndex = len - 1;
     const char* buffer = command.UTF8String;
+    NSUInteger len = strlen(buffer);
+    NSUInteger lastIndex = len - 1;
 
     // make sure we plus 1 for the null byte
-    char* charBuffer = (char*)malloc(sizeof(char) * (len + 1));
+    char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
 
     NSInteger start = 0;
     IJSVGCommand* _currentCommand = nil;
@@ -1165,20 +1182,26 @@
 
             // copy memory from current buffer
             NSInteger index = ((i + 1) - start);
-            memcpy(&charBuffer[0], &buffer[start], sizeof(char) * index);
+            memcpy(&charBuffer[0], &buffer[start], sizeof(char)*index);
             charBuffer[index] = '\0';
 
             // create the command from the substring
-            NSString* commandString = [NSString stringWithUTF8String:charBuffer];
+            unsigned long length = index + 1;
+            size_t mlength = sizeof(char)*length;
+            char* commandString = (char*)malloc(mlength);
+            memcpy(commandString, &charBuffer[0], mlength);
 
             // reset start position
             start = (i + 1);
 
             // previous command is actual subcommand
             IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
-            IJSVGCommand* cCommand = [self _parseCommandString:commandString
-                                               previousCommand:previousCommand
-                                                      intoPath:path];
+            IJSVGCommand* cCommand = [self _parseCommandStringBuffer:commandString
+                                                     previousCommand:previousCommand
+                                                            intoPath:path];
+            
+            // free the memory as at this point, we are done with it
+            (void)free(commandString), commandString = NULL;
 
             // retain the current one
             if (cCommand != nil) {
@@ -1186,12 +1209,12 @@
             }
         }
     }
-    free(charBuffer);
+    (void)free(charBuffer), charBuffer = NULL;
 }
 
-- (IJSVGCommand*)_parseCommandString:(NSString*)string
-                     previousCommand:(IJSVGCommand*)previousCommand
-                            intoPath:(IJSVGPath*)path
+- (IJSVGCommand*)_parseCommandStringBuffer:(const char*)buffer
+                           previousCommand:(IJSVGCommand*)previousCommand
+                                  intoPath:(IJSVGPath*)path
 {
     // work out the last command - the reason this is so long is because the command
     // could be a series of the same commands, so work it out by the number of parameters
@@ -1203,9 +1226,10 @@
 
     // main commands
     //    Class commandClass = [IJSVGCommand classFor]
-    Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
-    IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string
-                                                                             dataStream:_commandDataStream] autorelease];
+    Class commandClass = [IJSVGCommand commandClassForCommandChar:buffer[0]];
+    IJSVGCommand* command = nil;
+    command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandStringBuffer:buffer
+                                                                     dataStream:_commandDataStream] autorelease];
     for (IJSVGCommand* subCommand in command.subCommands) {
         [command.class runWithParams:subCommand.parameters
                           paramCount:subCommand.parameterCount

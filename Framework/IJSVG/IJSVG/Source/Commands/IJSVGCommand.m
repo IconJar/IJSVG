@@ -111,18 +111,18 @@
     [super dealloc];
 }
 
-- (id)initWithCommandString:(NSString*)str
-                 dataStream:(IJSVGPathDataStream*)dataStream
+- (id)initWithCommandStringBuffer:(const char*)str
+                       dataStream:(IJSVGPathDataStream*)dataStream
 {
     if ((self = [super init]) != nil) {
         // work out the basics
         _currentIndex = 0;
-        command = [str characterAtIndex:0];
+        command = str[0];
         type = [IJSVGUtils typeForCommandChar:command];
         NSInteger sets = 0;
         NSInteger paramCount = [self.class requiredParameterCount];
         IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
-        parameters = IJSVGParsePathDataStreamSequence(str.UTF8String, str.length,
+        parameters = IJSVGParsePathDataStreamSequence(str, strlen(str),
             dataStream, sequence, [self.class requiredParameterCount], &sets);
 
         if (sets <= 1) {

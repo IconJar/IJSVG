@@ -13,6 +13,20 @@
 
 @implementation IJSVGUtils
 
+void IJSVGTrimCharBuffer(char* buffer)
+{
+    char* ptr = buffer;
+    unsigned long length = strlen(ptr);
+    while(length-1 > 0 && isspace(ptr[length-1])) {
+        ptr[--length] = '\0';
+    }
+    while(*ptr && isspace(*ptr)) {
+        ++ptr;
+        --length;
+    }
+    memmove(buffer, ptr, length+1);
+}
+
 BOOL IJSVGIsCommonHTMLElementName(NSString* str)
 {
     str = str.lowercaseString;
