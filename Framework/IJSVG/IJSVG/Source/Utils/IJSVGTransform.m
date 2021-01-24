@@ -18,7 +18,7 @@
 
 - (void)dealloc
 {
-    free(parameters);
+    (void)free(parameters);
     [super dealloc];
 }
 
@@ -152,7 +152,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     NSString* commandName = nil;
     NSString* params = nil;
     for(int i = 0; i < length; i++) {
-        char currentChar = charString[i];
+        char currentChar = *charString++;
         
         // white space, ignore and continue
         if(isspace(currentChar) != 0) {
