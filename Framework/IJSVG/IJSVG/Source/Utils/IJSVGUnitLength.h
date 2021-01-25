@@ -15,7 +15,13 @@ typedef struct {
 
 typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeNumber,
-    IJSVGUnitLengthTypePercentage
+    IJSVGUnitLengthTypePercentage,
+    IJSVGUnitLengthTypeCM,
+    IJSVGUnitLengthTypeMM,
+    IJSVGUnitLengthTypeIN,
+    IJSVGUnitLengthTypePT,
+    IJSVGUnitLengthTypePC,
+    IJSVGUnitLengthTypePX
 };
 
 typedef NS_ENUM(NSInteger, IJSVGUnitType) {
@@ -27,6 +33,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 @interface IJSVGUnitLength : NSObject
 
 @property (nonatomic, assign) IJSVGUnitLengthType type;
+@property (nonatomic, assign) IJSVGUnitLengthType originalType;
 @property (nonatomic, assign) CGFloat value;
 @property (nonatomic, assign) BOOL inherit;
 

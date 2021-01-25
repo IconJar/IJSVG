@@ -14,6 +14,35 @@
 @synthesize viewBox;
 @synthesize intrinsicSize = _intrinsicSize;
 
+static NSDictionary* _IJSVGAttributeDictionaryFloats = nil;
+static NSDictionary* _IJSVGAttributeDictionaryNodes = nil;
+static NSDictionary* _IJSVGAttributeDictionaryUnits = nil;
+static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
+
++ (void)load
+{
+    _IJSVGAttributeDictionaryFloats = [@{
+        (NSString*)IJSVGAttributeX : @"x",
+        (NSString*)IJSVGAttributeY : @"y",
+        (NSString*)IJSVGAttributeWidth : @"width",
+        (NSString*)IJSVGAttributeHeight : @"height",
+        (NSString*)IJSVGAttributeOpacity : @"opacity",
+        (NSString*)IJSVGAttributeStrokeOpacity : @"strokeOpacity",
+        (NSString*)IJSVGAttributeStrokeWidth : @"strokeWidth",
+        (NSString*)IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
+        (NSString*)IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
+    _IJSVGAttributeDictionaryNodes = [@{
+        (NSString*)IJSVGAttributeClipPath : @"clipPath",
+        (NSString*)IJSVGAttributeMask : @"mask" } retain];
+    _IJSVGAttributeDictionaryUnits = [@{
+        (NSString*)IJSVGAttributeGradientUnits : @"units",
+        (NSString*)IJSVGAttributeMaskUnits : @"units",
+        (NSString*)IJSVGAttributeMaskContentUnits : @"contentUnits"} retain];
+    _IJSVGAttributeDictionaryTransforms = [@{
+        (NSString*)IJSVGAttributeTransform : @"transforms",
+        (NSString*)IJSVGAttributeGradientTransform : @"transforms" } retain];
+}
+
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
 {
     return [self.class groupForFileURL:aURL
@@ -198,8 +227,12 @@
         free(box);
     } else {
         // there is no view box so find the width and height
-        CGFloat w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue.floatValue;
-        CGFloat h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue.floatValue;
+        NSString* wAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
+        NSString* hAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
+        IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithString:wAtt];
+        IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithString:hAtt];
+        CGFloat w = wLength.value;
+        CGFloat h = hLength.value;
         if (h == 0.f && w != 0.f) {
             h = w;
         } else if (w == 0.f && h != 0.f) {
@@ -310,22 +343,13 @@
     }
 
     // floats
-    atts(@{ (NSString*)IJSVGAttributeX : @"x",
-        (NSString*)IJSVGAttributeY : @"y",
-        (NSString*)IJSVGAttributeWidth : @"width",
-        (NSString*)IJSVGAttributeHeight : @"height",
-        (NSString*)IJSVGAttributeOpacity : @"opacity",
-        (NSString*)IJSVGAttributeStrokeOpacity : @"strokeOpacity",
-        (NSString*)IJSVGAttributeStrokeWidth : @"strokeWidth",
-        (NSString*)IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
-        (NSString*)IJSVGAttributeFillOpacity : @"fillOpacity" },
+    atts(_IJSVGAttributeDictionaryFloats,
         ^id(NSString* value) {
             return [IJSVGUnitLength unitWithString:value];
         });
 
     // nodes
-    atts(@{ (NSString*)IJSVGAttributeClipPath : @"clipPath",
-        (NSString*)IJSVGAttributeMask : @"mask" },
+    atts(_IJSVGAttributeDictionaryNodes,
         ^id(NSString* value) {
             NSString* url = [IJSVGUtils defURL:value];
             if (url != nil) {
@@ -335,16 +359,13 @@
         });
 
     // units
-    atts(@{ (NSString*)IJSVGAttributeGradientUnits : @"units",
-        (NSString*)IJSVGAttributeMaskUnits : @"units",
-        (NSString*)IJSVGAttributeMaskContentUnits : @"contentUnits" },
+    atts(_IJSVGAttributeDictionaryUnits,
         ^id(NSString* value) {
             return @([IJSVGUtils unitTypeForString:value]);
         });
 
     // transforms
-    atts(@{ (NSString*)IJSVGAttributeTransform : @"transforms",
-        (NSString*)IJSVGAttributeGradientTransform : @"transforms" },
+    atts(_IJSVGAttributeDictionaryTransforms,
         ^(NSString* value) {
             NSMutableArray* tempTransforms = [[[NSMutableArray alloc] init] autorelease];
             [tempTransforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
@@ -1135,22 +1156,14 @@
 
 #pragma mark Parser stuff!
 
-- (void)_parsePathCommandData:(NSString*)command
-                     intoPath:(IJSVGPath*)path
+- (void)_parsePathCommandDataBuffer:(const char*)buffer
+                           intoPath:(IJSVGPath*)path
 {
-    // invalid command
-    if (command == nil || command.length == 0) {
-        return;
-    }
-
-    // allocate memory for the string buffer for reading
-    NSUInteger len = command.length;
+    NSUInteger len = strlen(buffer);
     NSUInteger lastIndex = len - 1;
-    const char* buffer = command.UTF8String;
 
     // make sure we plus 1 for the null byte
-    char* charBuffer = (char*)malloc(sizeof(char) * (len + 1));
-
+    char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
     NSInteger start = 0;
     IJSVGCommand* _currentCommand = nil;
     for (NSInteger i = 0; i < len; i++) {
@@ -1161,20 +1174,26 @@
 
             // copy memory from current buffer
             NSInteger index = ((i + 1) - start);
-            memcpy(&charBuffer[0], &buffer[start], sizeof(char) * index);
+            memcpy(&charBuffer[0], &buffer[start], sizeof(char)*index);
             charBuffer[index] = '\0';
 
             // create the command from the substring
-            NSString* commandString = [NSString stringWithUTF8String:charBuffer];
+            unsigned long length = index + 1;
+            size_t mlength = sizeof(char)*length;
+            char* commandString = (char*)malloc(mlength);
+            memcpy(commandString, &charBuffer[0], mlength);
 
             // reset start position
             start = (i + 1);
 
             // previous command is actual subcommand
             IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
-            IJSVGCommand* cCommand = [self _parseCommandString:commandString
-                                               previousCommand:previousCommand
-                                                      intoPath:path];
+            IJSVGCommand* cCommand = [self _parseCommandStringBuffer:commandString
+                                                     previousCommand:previousCommand
+                                                            intoPath:path];
+            
+            // free the memory as at this point, we are done with it
+            (void)free(commandString), commandString = NULL;
 
             // retain the current one
             if (cCommand != nil) {
@@ -1182,12 +1201,26 @@
             }
         }
     }
-    free(charBuffer);
+    (void)free(charBuffer), charBuffer = NULL;
 }
 
-- (IJSVGCommand*)_parseCommandString:(NSString*)string
-                     previousCommand:(IJSVGCommand*)previousCommand
-                            intoPath:(IJSVGPath*)path
+- (void)_parsePathCommandData:(NSString*)command
+                     intoPath:(IJSVGPath*)path
+{
+    // invalid command
+    if (command == nil || command.length == 0) {
+        return;
+    }
+
+    // allocate memory for the string buffer for reading
+    const char* buffer = command.UTF8String;
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
+}
+
+- (IJSVGCommand*)_parseCommandStringBuffer:(const char*)buffer
+                           previousCommand:(IJSVGCommand*)previousCommand
+                                  intoPath:(IJSVGPath*)path
 {
     // work out the last command - the reason this is so long is because the command
     // could be a series of the same commands, so work it out by the number of parameters
@@ -1199,9 +1232,10 @@
 
     // main commands
     //    Class commandClass = [IJSVGCommand classFor]
-    Class commandClass = [IJSVGCommand commandClassForCommandChar:[string characterAtIndex:0]];
-    IJSVGCommand* command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandString:string
-                                                                             dataStream:_commandDataStream] autorelease];
+    Class commandClass = [IJSVGCommand commandClassForCommandChar:buffer[0]];
+    IJSVGCommand* command = nil;
+    command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandStringBuffer:buffer
+                                                                     dataStream:_commandDataStream] autorelease];
     for (IJSVGCommand* subCommand in command.subCommands) {
         [command.class runWithParams:subCommand.parameters
                           paramCount:subCommand.parameterCount
@@ -1226,12 +1260,11 @@
     CGFloat y2 = [element attributeForName:(NSString*)IJSVGAttributeY2].stringValue.floatValue;
 
     // use sprintf as its quicker then stringWithFormat...
-    char buffer[50];
-    sprintf(buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
-    NSString* command = [NSString stringWithCString:buffer
-                                           encoding:NSUTF8StringEncoding];
-    [self _parsePathCommandData:command
-                       intoPath:path];
+    char* buffer;
+    asprintf(&buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
+    (void)free(buffer);
 }
 
 - (void)_parseCircle:(NSXMLElement*)element
@@ -1289,23 +1322,46 @@
         free(params);
         return;
     }
-
-    // construct a command
-    NSInteger capacity = count / 2;
-    if (closePath == YES) {
-        capacity += 1;
+    
+    const int defBufferSize = 5;
+    char* buffer;
+    asprintf(&buffer, "M%f %f L", params[0], params[1]);
+    
+    // compute a default buffer
+    size_t bSize = strlen(buffer);
+    size_t strLength = bSize;
+    
+    // for every pair of coordinates
+    for(int i = 2; i < count; i+= 2) {
+        char* subbuf;
+        asprintf(&subbuf, "%f %f ", params[i], params[i + 1]);
+        size_t sSize = strlen(subbuf);
+        
+        // if the new size of the string is large than the buffer
+        // increase the buffer up another def size
+        if((strLength + sSize + 1) > bSize) {
+            size_t nLength = MAX(sSize, defBufferSize) + 2;
+            buffer = realloc(buffer, sizeof(char)*(bSize+nLength));
+            bSize += nLength;
+        }
+        
+        // append thr string onto the buffer, increment the
+        // string length and free the subbuffer memory
+        strcat(buffer, subbuf);
+        strLength += sSize;
+        (void)free(subbuf), subbuf = NULL;
     }
-    NSMutableString* str = [[[NSMutableString alloc] initWithCapacity:capacity] autorelease];
-    [str appendFormat:@"M%f,%f L", params[0], params[1]];
-    for (NSInteger i = 2; i < count; i += 2) {
-        [str appendFormat:@"%f,%f ", params[i], params[i + 1]];
+    if(closePath == YES) {
+        strcat(buffer, "z");
     }
-    if (closePath) {
-        [str appendString:@"z"];
-    }
-    [self _parsePathCommandData:str
-                       intoPath:path];
-    free(params);
+    
+    // actually perform the parse
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
+    
+    // free the params
+    (void)free(buffer), buffer = NULL;
+    (void)free(params), params = NULL;
 }
 
 - (void)_parseRect:(NSXMLElement*)element

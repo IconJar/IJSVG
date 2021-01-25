@@ -13,6 +13,20 @@
 
 @implementation IJSVGUtils
 
+void IJSVGTrimCharBuffer(char* buffer)
+{
+    char* ptr = buffer;
+    unsigned long length = strlen(ptr);
+    while(length-1 > 0 && isspace(ptr[length-1])) {
+        ptr[--length] = '\0';
+    }
+    while(*ptr && isspace(*ptr)) {
+        ++ptr;
+        --length;
+    }
+    memmove(buffer, ptr, length+1);
+}
+
 BOOL IJSVGIsCommonHTMLElementName(NSString* str)
 {
     str = str.lowercaseString;
@@ -298,7 +312,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
     const char* characters = string.UTF8String;
     unsigned long length = strlen(characters);
     for (NSInteger i = 0; i < length; i++) {
-        char c = characters[i];
+        char c = *characters++;
         if (c == '(') {
             range.location = i + 1;
         } else if (c == ')') {

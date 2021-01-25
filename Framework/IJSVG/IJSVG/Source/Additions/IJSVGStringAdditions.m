@@ -49,9 +49,9 @@
 - (BOOL)ijsvg_containsAlpha
 {
     const char* buffer = self.UTF8String;
-    unsigned long length = strlen(buffer);
-    for (int i = 0; i < length; i++) {
-        if (isalpha(buffer[i])) {
+    char currentChar;
+    while((currentChar = *buffer++) ) {
+        if (isalpha(currentChar)) {
             return YES;
         }
     }
@@ -61,9 +61,9 @@
 - (BOOL)ijsvg_isNumeric
 {
     const char* buffer = self.UTF8String;
-    unsigned long length = strlen(buffer);
-    for (int i = 0; i < length; i++) {
-        if (!isnumber(buffer[i])) {
+    char currentChar;
+    while((currentChar = *buffer++) ) {
+        if (!isnumber(currentChar)) {
             return NO;
         }
     }
@@ -78,9 +78,8 @@
 - (BOOL)ijsvg_isHexString
 {
     const char* chars = self.UTF8String;
-    unsigned long length = strlen(chars);
-    for(int i = 0; i < length; i++) {
-        char c = chars[i];
+    char c;
+    while((c = *chars++)) {
         BOOL flag = ((c == '#') ||
          (c >= '0' && c <= '9') ||
          (c >= 'a' && c <= 'f') ||
