@@ -76,6 +76,9 @@
     if([string hasSuffix:@"pc"] == YES) {
         return IJSVGUnitLengthTypePC;
     }
+    if([string hasSuffix:@"px"] == YES) {
+        return IJSVGUnitLengthTypePX;
+    }
     return IJSVGUnitLengthTypeNumber;
 }
 

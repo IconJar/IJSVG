@@ -1156,22 +1156,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 #pragma mark Parser stuff!
 
-- (void)_parsePathCommandData:(NSString*)command
-                     intoPath:(IJSVGPath*)path
+- (void)_parsePathCommandDataBuffer:(const char*)buffer
+                           intoPath:(IJSVGPath*)path
 {
-    // invalid command
-    if (command == nil || command.length == 0) {
-        return;
-    }
-
-    // allocate memory for the string buffer for reading
-    const char* buffer = command.UTF8String;
     NSUInteger len = strlen(buffer);
     NSUInteger lastIndex = len - 1;
 
     // make sure we plus 1 for the null byte
     char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
-
     NSInteger start = 0;
     IJSVGCommand* _currentCommand = nil;
     for (NSInteger i = 0; i < len; i++) {
@@ -1210,6 +1202,20 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
     }
     (void)free(charBuffer), charBuffer = NULL;
+}
+
+- (void)_parsePathCommandData:(NSString*)command
+                     intoPath:(IJSVGPath*)path
+{
+    // invalid command
+    if (command == nil || command.length == 0) {
+        return;
+    }
+
+    // allocate memory for the string buffer for reading
+    const char* buffer = command.UTF8String;
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
 }
 
 - (IJSVGCommand*)_parseCommandStringBuffer:(const char*)buffer
@@ -1254,12 +1260,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     CGFloat y2 = [element attributeForName:(NSString*)IJSVGAttributeY2].stringValue.floatValue;
 
     // use sprintf as its quicker then stringWithFormat...
-    char buffer[50];
-    sprintf(buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
-    NSString* command = [NSString stringWithCString:buffer
-                                           encoding:NSUTF8StringEncoding];
-    [self _parsePathCommandData:command
-                       intoPath:path];
+    char* buffer;
+    asprintf(&buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
+    (void)free(buffer);
 }
 
 - (void)_parseCircle:(NSXMLElement*)element
@@ -1317,23 +1322,46 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         free(params);
         return;
     }
-
-    // construct a command
-    NSInteger capacity = count / 2;
-    if (closePath == YES) {
-        capacity += 1;
+    
+    const int defBufferSize = 5;
+    char* buffer;
+    asprintf(&buffer, "M%f %f L", params[0], params[1]);
+    
+    // compute a default buffer
+    size_t bSize = strlen(buffer);
+    size_t strLength = bSize;
+    
+    // for every pair of coordinates
+    for(int i = 2; i < count; i+= 2) {
+        char* subbuf;
+        asprintf(&subbuf, "%f %f ", params[i], params[i + 1]);
+        size_t sSize = strlen(subbuf);
+        
+        // if the new size of the string is large than the buffer
+        // increase the buffer up another def size
+        if((strLength + sSize + 1) > bSize) {
+            size_t nLength = MAX(sSize, defBufferSize) + 2;
+            buffer = realloc(buffer, sizeof(char)*(bSize+nLength));
+            bSize += nLength;
+        }
+        
+        // append thr string onto the buffer, increment the
+        // string length and free the subbuffer memory
+        strcat(buffer, subbuf);
+        strLength += sSize;
+        (void)free(subbuf), subbuf = NULL;
     }
-    NSMutableString* str = [[[NSMutableString alloc] initWithCapacity:capacity] autorelease];
-    [str appendFormat:@"M%f,%f L", params[0], params[1]];
-    for (NSInteger i = 2; i < count; i += 2) {
-        [str appendFormat:@"%f,%f ", params[i], params[i + 1]];
+    if(closePath == YES) {
+        strcat(buffer, "z");
     }
-    if (closePath) {
-        [str appendString:@"z"];
-    }
-    [self _parsePathCommandData:str
-                       intoPath:path];
-    free(params);
+    
+    // actually perform the parse
+    [self _parsePathCommandDataBuffer:buffer
+                             intoPath:path];
+    
+    // free the params
+    (void)free(buffer), buffer = NULL;
+    (void)free(params), params = NULL;
 }
 
 - (void)_parseRect:(NSXMLElement*)element

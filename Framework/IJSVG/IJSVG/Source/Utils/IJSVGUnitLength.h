@@ -20,7 +20,8 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeMM,
     IJSVGUnitLengthTypeIN,
     IJSVGUnitLengthTypePT,
-    IJSVGUnitLengthTypePC
+    IJSVGUnitLengthTypePC,
+    IJSVGUnitLengthTypePX
 };
 
 typedef NS_ENUM(NSInteger, IJSVGUnitType) {
