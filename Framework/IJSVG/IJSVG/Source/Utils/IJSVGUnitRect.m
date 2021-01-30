@@ -10,9 +10,6 @@
 
 @implementation IJSVGUnitRect
 
-@synthesize size = _size;
-@synthesize origin = _origin;
-
 - (void)dealloc
 {
     (void)[_size release], _size = nil;

@@ -10,14 +10,14 @@
 
 @implementation IJSVGStyleSheetSelectorRaw
 
-@synthesize classes, identifier, tag, combinator, combinatorString;
+@synthesize classes;
 
 - (void)dealloc
 {
     (void)([classes release]), classes = nil;
-    (void)([identifier release]), identifier = nil;
-    (void)([tag release]), tag = nil;
-    (void)([combinatorString release]), combinatorString = nil;
+    (void)([_identifier release]), _identifier = nil;
+    (void)([_tag release]), _tag = nil;
+    (void)([_combinatorString release]), _combinatorString = nil;
     [super dealloc];
 }
 
@@ -25,8 +25,8 @@
 {
     if ((self = [super init]) != nil) {
         classes = [[NSMutableArray alloc] init];
-        combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
-        combinatorString = @" ";
+        _combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
+        _combinatorString = @" ";
     }
     return self;
 }
@@ -38,7 +38,8 @@
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@", combinatorString, tag, classes, identifier];
+    return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@",
+            _combinatorString, _tag, classes, _identifier];
 }
 
 @end

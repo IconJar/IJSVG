@@ -12,21 +12,24 @@
 
 - (void)dealloc
 {
-    (void)([children release]), children = nil;
+    (void)([_childNodes release]), _childNodes = nil;
     [super dealloc];
 }
 
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        children = [[NSMutableArray alloc] init];
+        _childNodes = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)prepareFromCopy
 {
-    children = [[NSMutableArray alloc] init];
+    if(_childNodes != nil) {
+        (void)[_childNodes release], _childNodes = nil;
+    }
+    _childNodes = [[NSMutableArray alloc] init];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -34,7 +37,7 @@
     IJSVGGroup* node = [super copyWithZone:zone];
     [node prepareFromCopy];
 
-    for (IJSVGNode* childNode in self.children) {
+    for (IJSVGNode* childNode in _childNodes) {
         childNode = [[childNode copy] autorelease];
         childNode.parentNode = node;
         [node addChild:childNode];
@@ -44,23 +47,25 @@
 
 - (void)purgeChildren
 {
-    [children removeAllObjects];
+    [_childNodes removeAllObjects];
 }
 
-- (void)addChild:(id)child
+- (void)addChild:(IJSVGNode*)child
 {
-    if (child != nil)
-        [children addObject:child];
+    if (child != nil) {
+        [_childNodes addObject:child];
+    }
 }
 
-- (NSArray*)children
+- (NSArray<IJSVGNode*>*)childNodes
 {
-    return children;
+    return _childNodes;
 }
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"%@ - %@", [super description], self.children];
+    return [NSString stringWithFormat:@"%@ - %@",
+            [super description], self.childNodes];
 }
 
 @end

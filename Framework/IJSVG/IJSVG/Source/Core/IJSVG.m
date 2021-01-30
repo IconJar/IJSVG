@@ -12,26 +12,21 @@
 
 @implementation IJSVG
 
+// these are explicitly implemented
 @synthesize title = _title;
 @synthesize desc = _desc;
-@synthesize renderingBackingScaleHelper;
-@synthesize clipToViewport;
-@synthesize renderQuality;
-@synthesize renderingStyle = _renderingStyle;
-@synthesize intrinsicSize = _intrinsicSize;
 
 - (void)dealloc
 {
     // this can all be called on the background thread to be released
     BOOL hasTransaction = IJSVGBeginTransaction();
-    (void)([renderingBackingScaleHelper release]),
-        renderingBackingScaleHelper = nil;
+    (void)([_renderingBackingScaleHelper release]), _renderingBackingScaleHelper = nil;
     (void)([_replacementColors release]), _replacementColors = nil;
     (void)([_renderingStyle release]), _renderingStyle = nil;
     (void)([_group release]), _group = nil;
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
-    (void)([_desc release]), _desc = nil;
     (void)([_title release]), _title = nil;
+    (void)([_desc release]), _desc = nil;
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -746,7 +741,7 @@
 
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!
-    if (scale == _lastProposedBackingScale && renderQuality == _lastProposedRenderQuality) {
+    if (scale == _lastProposedBackingScale && _renderQuality == _lastProposedRenderQuality) {
         return _backingScaleFactor;
     }
 

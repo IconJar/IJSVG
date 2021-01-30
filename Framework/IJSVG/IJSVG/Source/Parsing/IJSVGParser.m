@@ -9,10 +9,54 @@
 #import "IJSVG.h"
 #import "IJSVGParser.h"
 
-@implementation IJSVGParser
+NSString* const IJSVGAttributeViewBox = @"viewBox";
+NSString* const IJSVGAttributeID = @"id";
+NSString* const IJSVGAttributeClass = @"class";
+NSString* const IJSVGAttributeX = @"x";
+NSString* const IJSVGAttributeY = @"y";
+NSString* const IJSVGAttributeWidth = @"width";
+NSString* const IJSVGAttributeHeight = @"height";
+NSString* const IJSVGAttributeOpacity = @"opacity";
+NSString* const IJSVGAttributeStrokeOpacity = @"stroke-opacity";
+NSString* const IJSVGAttributeStrokeWidth = @"stroke-width";
+NSString* const IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
+NSString* const IJSVGAttributeFillOpacity = @"fill-opacity";
+NSString* const IJSVGAttributeClipPath = @"clip-path";
+NSString* const IJSVGAttributeMask = @"mask";
+NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
+NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
+NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
+NSString* const IJSVGAttributeTransform = @"transform";
+NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
+NSString* const IJSVGAttributeUnicode = @"unicode";
+NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
+NSString* const IJSVGAttributeLineJoin = @"stroke-linejoin";
+NSString* const IJSVGAttributeStroke = @"stroke";
+NSString* const IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
+NSString* const IJSVGAttributeFill = @"fill";
+NSString* const IJSVGAttributeFillRule = @"fill-rule";
+NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
+NSString* const IJSVGAttributeDisplay = @"display";
+NSString* const IJSVGAttributeStyle = @"style";
+NSString* const IJSVGAttributeD = @"d";
+NSString* const IJSVGAttributeXLink = @"xlink:href";
+NSString* const IJSVGAttributeX1 = @"x1";
+NSString* const IJSVGAttributeX2 = @"x2";
+NSString* const IJSVGAttributeY1 = @"y1";
+NSString* const IJSVGAttributeY2 = @"y2";
+NSString* const IJSVGAttributeRX = @"rx";
+NSString* const IJSVGAttributeRY = @"ry";
+NSString* const IJSVGAttributeCX = @"cx";
+NSString* const IJSVGAttributeCY = @"cy";
+NSString* const IJSVGAttributeR = @"r";
+NSString* const IJSVGAttributeFX = @"fx";
+NSString* const IJSVGAttributeFY = @"fy";
+NSString* const IJSVGAttributePoints = @"points";
+NSString* const IJSVGAttributeOffset = @"offset";
+NSString* const IJSVGAttributeStopColor = @"stop-color";
+NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 
-@synthesize viewBox;
-@synthesize intrinsicSize = _intrinsicSize;
+@implementation IJSVGParser
 
 static NSDictionary* _IJSVGAttributeDictionaryFloats = nil;
 static NSDictionary* _IJSVGAttributeDictionaryNodes = nil;
@@ -22,25 +66,25 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 + (void)load
 {
     _IJSVGAttributeDictionaryFloats = [@{
-        (NSString*)IJSVGAttributeX : @"x",
-        (NSString*)IJSVGAttributeY : @"y",
-        (NSString*)IJSVGAttributeWidth : @"width",
-        (NSString*)IJSVGAttributeHeight : @"height",
-        (NSString*)IJSVGAttributeOpacity : @"opacity",
-        (NSString*)IJSVGAttributeStrokeOpacity : @"strokeOpacity",
-        (NSString*)IJSVGAttributeStrokeWidth : @"strokeWidth",
-        (NSString*)IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
-        (NSString*)IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
+        IJSVGAttributeX : @"x",
+        IJSVGAttributeY : @"y",
+        IJSVGAttributeWidth : @"width",
+        IJSVGAttributeHeight : @"height",
+        IJSVGAttributeOpacity : @"opacity",
+        IJSVGAttributeStrokeOpacity : @"strokeOpacity",
+        IJSVGAttributeStrokeWidth : @"strokeWidth",
+        IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
+        IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
     _IJSVGAttributeDictionaryNodes = [@{
-        (NSString*)IJSVGAttributeClipPath : @"clipPath",
-        (NSString*)IJSVGAttributeMask : @"mask" } retain];
+        IJSVGAttributeClipPath : @"clipPath",
+        IJSVGAttributeMask : @"mask" } retain];
     _IJSVGAttributeDictionaryUnits = [@{
-        (NSString*)IJSVGAttributeGradientUnits : @"units",
-        (NSString*)IJSVGAttributeMaskUnits : @"units",
-        (NSString*)IJSVGAttributeMaskContentUnits : @"contentUnits"} retain];
+        IJSVGAttributeGradientUnits : @"units",
+        IJSVGAttributeMaskUnits : @"units",
+        IJSVGAttributeMaskContentUnits : @"contentUnits"} retain];
     _IJSVGAttributeDictionaryTransforms = [@{
-        (NSString*)IJSVGAttributeTransform : @"transforms",
-        (NSString*)IJSVGAttributeGradientTransform : @"transforms" } retain];
+        IJSVGAttributeTransform : @"transforms",
+        IJSVGAttributeGradientTransform : @"transforms" } retain];
 }
 
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
@@ -206,7 +250,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 - (NSSize)size
 {
-    return viewBox.size;
+    return _viewBox.size;
 }
 
 - (void)_parse
@@ -220,15 +264,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
     // find the sizebox!
     NSXMLNode* attribute = nil;
-    if ((attribute = [svgElement attributeForName:(NSString*)IJSVGAttributeViewBox]) != nil) {
+    if ((attribute = [svgElement attributeForName:IJSVGAttributeViewBox]) != nil) {
         // we have a viewbox...
         CGFloat* box = [IJSVGUtils parseViewBox:[attribute stringValue]];
-        viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
+        _viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
         free(box);
     } else {
         // there is no view box so find the width and height
-        NSString* wAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
-        NSString* hAtt = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
+        NSString* wAtt = [svgElement attributeForName:IJSVGAttributeWidth].stringValue;
+        NSString* hAtt = [svgElement attributeForName:IJSVGAttributeHeight].stringValue;
         IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithString:wAtt];
         IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithString:hAtt];
         CGFloat w = wLength.value;
@@ -238,17 +282,17 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         } else if (w == 0.f && h != 0.f) {
             w = h;
         }
-        viewBox = NSMakeRect(0.f, 0.f, w, h);
+        _viewBox = NSMakeRect(0.f, 0.f, w, h);
     }
 
     // parse the width and height....
-    NSString* w = [svgElement attributeForName:(NSString*)IJSVGAttributeWidth].stringValue;
-    NSString* h = [svgElement attributeForName:(NSString*)IJSVGAttributeHeight].stringValue;
+    NSString* w = [svgElement attributeForName:IJSVGAttributeWidth].stringValue;
+    NSString* h = [svgElement attributeForName:IJSVGAttributeHeight].stringValue;
 
     // by default just the the width and height from the viewbox unless
     // specified otherwise
-    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:viewBox.size.width];
-    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:viewBox.size.height];
+    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:_viewBox.size.width];
+    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:_viewBox.size.height];
     if (w != nil) {
         wl = [IJSVGUnitLength unitWithString:w];
     }
@@ -622,7 +666,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                 if (_baseDefNodes == nil) {
                     _baseDefNodes = [[NSMutableDictionary alloc] init];
                 }
-                NSString* defID = [childDef attributeForName:@"id"].stringValue;
+                NSString* defID = [childDef attributeForName:IJSVGAttributeID].stringValue;
                 if (defID != nil) {
                     _baseDefNodes[defID] = childDef;
                 }
@@ -676,8 +720,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // if its a sub svg, we can remove the attributes for x and y
         // this is required or it could go out of bounds before the exporter
         // hits the layers from the groups :)
-        [element removeAttributeForName:@"x"];
-        [element removeAttributeForName:@"y"];
+        [element removeAttributeForName:IJSVGAttributeX];
+        [element removeAttributeForName:IJSVGAttributeY];
 
         // work out the SVG
         NSError* error = nil;
@@ -709,8 +753,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     case IJSVGNodeTypeGlyph: {
 
         // no path data
-        if ([element attributeForName:(NSString*)IJSVGAttributeD] == nil ||
-            [[element attributeForName:(NSString*)IJSVGAttributeD] stringValue].length == 0) {
+        if ([element attributeForName:IJSVGAttributeD] == nil ||
+            [[element attributeForName:IJSVGAttributeD] stringValue].length == 0) {
             break;
         }
 
@@ -726,7 +770,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                               ignoreAttributes:nil];
 
         // pass the commands for it
-        [self _parsePathCommandData:[[element attributeForName:(NSString*)IJSVGAttributeD] stringValue]
+        [self _parsePathCommandData:[[element attributeForName:IJSVGAttributeD] stringValue]
                            intoPath:path];
 
         // check the size...
@@ -791,7 +835,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [self _parseElementForCommonAttributes:element
                                           node:path
                               ignoreAttributes:nil];
-        [self _parsePathCommandData:[[element attributeForName:(NSString*)IJSVGAttributeD] stringValue]
+        [self _parsePathCommandData:[[element attributeForName:IJSVGAttributeD] stringValue]
                            intoPath:path];
 
         [parentGroup addDef:path];
@@ -860,7 +904,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [self _setupDefaultsForNode:path];
         [self _parseElementForCommonAttributes:element
                                           node:path
-                              ignoreAttributes:@[ @"x", @"y" ]];
+                              ignoreAttributes:@[ IJSVGAttributeX, IJSVGAttributeY ]];
         [parentGroup addDef:path];
         break;
     }
@@ -943,7 +987,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
 
         // due to this being a carbon clone, we need to clear the ID
-        if ([element attributeForName:(NSString*)IJSVGAttributeID] == nil) {
+        if ([element attributeForName:IJSVGAttributeID] == nil) {
             node.identifier = nil;
         }
 
@@ -955,8 +999,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         node.intermediateParentNode = subGroup;
 
         // is there a width and height?
-        CGFloat x = [element attributeForName:(NSString*)IJSVGAttributeX].stringValue.floatValue;
-        CGFloat y = [element attributeForName:(NSString*)IJSVGAttributeY].stringValue.floatValue;
+        CGFloat x = [element attributeForName:IJSVGAttributeX].stringValue.floatValue;
+        CGFloat y = [element attributeForName:IJSVGAttributeY].stringValue.floatValue;
 
         // we need to add a transform to the subgroup
         subGroup.transforms = @[ [IJSVGTransform transformByTranslatingX:x y:y] ];
@@ -969,8 +1013,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // says ignore x, y, width, height and xlink:href...
         [self _parseElementForCommonAttributes:element
                                           node:node
-                              ignoreAttributes:@[ @"x", @"y", @"width",
-                                  @"height", @"xlink:href" ]];
+                              ignoreAttributes:@[IJSVGAttributeX, IJSVGAttributeY,
+                                                 IJSVGAttributeWidth, IJSVGAttributeHeight,
+                                                 IJSVGAttributeXLink]];
 
         [parentGroup addDef:node];
         break;
@@ -1122,7 +1167,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSXMLNode* attributeNode = [element attributeForLocalName:@"href"
                                                           URI:namespaceURI];
     if (attributeNode == nil) {
-        attributeNode = [element attributeForName:(NSString*)IJSVGAttributeXLink];
+        attributeNode = [element attributeForName:IJSVGAttributeXLink];
     }
     return attributeNode;
 }
@@ -1254,10 +1299,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // convert a line into a command,
     // basically MX1 Y1LX2 Y2
     path.primitiveType = kIJSVGPrimitivePathTypeLine;
-    CGFloat x1 = [element attributeForName:(NSString*)IJSVGAttributeX1].stringValue.floatValue;
-    CGFloat y1 = [element attributeForName:(NSString*)IJSVGAttributeY1].stringValue.floatValue;
-    CGFloat x2 = [element attributeForName:(NSString*)IJSVGAttributeX2].stringValue.floatValue;
-    CGFloat y2 = [element attributeForName:(NSString*)IJSVGAttributeY2].stringValue.floatValue;
+    CGFloat x1 = [element attributeForName:IJSVGAttributeX1].stringValue.floatValue;
+    CGFloat y1 = [element attributeForName:IJSVGAttributeY1].stringValue.floatValue;
+    CGFloat x2 = [element attributeForName:IJSVGAttributeX2].stringValue.floatValue;
+    CGFloat y2 = [element attributeForName:IJSVGAttributeY2].stringValue.floatValue;
 
     // use sprintf as its quicker then stringWithFormat...
     char* buffer;
@@ -1271,9 +1316,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             intoPath:(IJSVGPath*)path
 {
     path.primitiveType = kIJSVGPrimitivePathTypeCircle;
-    CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
-    CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
-    CGFloat r = [element attributeForName:(NSString*)IJSVGAttributeR].stringValue.floatValue;
+    CGFloat cX = [element attributeForName:IJSVGAttributeCX].stringValue.floatValue;
+    CGFloat cY = [element attributeForName:IJSVGAttributeCY].stringValue.floatValue;
+    CGFloat r = [element attributeForName:IJSVGAttributeR].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - r, cY - r, r * 2, r * 2);
     path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
 }
@@ -1282,10 +1327,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
              intoPath:(IJSVGPath*)path
 {
     path.primitiveType = kIJSVGPrimitivePathTypeEllipse;
-    CGFloat cX = [element attributeForName:(NSString*)IJSVGAttributeCX].stringValue.floatValue;
-    CGFloat cY = [element attributeForName:(NSString*)IJSVGAttributeCY].stringValue.floatValue;
-    CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
-    CGFloat rY = [element attributeForName:(NSString*)IJSVGAttributeRY].stringValue.floatValue;
+    CGFloat cX = [element attributeForName:IJSVGAttributeCX].stringValue.floatValue;
+    CGFloat cY = [element attributeForName:IJSVGAttributeCY].stringValue.floatValue;
+    CGFloat rX = [element attributeForName:IJSVGAttributeRX].stringValue.floatValue;
+    CGFloat rY = [element attributeForName:IJSVGAttributeRY].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - rX, cY - rY, rX * 2, rY * 2);
     path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
 }
@@ -1312,7 +1357,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
           intoPath:(IJSVGPath*)path
          closePath:(BOOL)closePath
 {
-    NSString* points = [element attributeForName:(NSString*)IJSVGAttributePoints].stringValue;
+    NSString* points = [element attributeForName:IJSVGAttributePoints].stringValue;
     NSInteger count = 0;
     CGFloat* params = [IJSVGUtils commandParameters:points
                                               count:&count];
@@ -1369,22 +1414,22 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     path.primitiveType = kIJSVGPrimitivePathTypeRect;
     // width and height
-    CGFloat width = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeWidth].stringValue
+    CGFloat width = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeWidth].stringValue
                         fallBackForPercent:self.viewBox.size.width];
 
-    CGFloat height = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeHeight].stringValue
+    CGFloat height = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeHeight].stringValue
                          fallBackForPercent:self.viewBox.size.height];
 
     // rect uses x and y as start of path, not move path object -_-
-    CGFloat x = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeX].stringValue
+    CGFloat x = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeX].stringValue
                     fallBackForPercent:self.viewBox.size.width];
-    CGFloat y = [IJSVGUtils floatValue:[element attributeForName:(NSString*)IJSVGAttributeY].stringValue
+    CGFloat y = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeY].stringValue
                     fallBackForPercent:self.viewBox.size.height];
 
     // radius
-    CGFloat rX = [element attributeForName:(NSString*)IJSVGAttributeRX].stringValue.floatValue;
-    CGFloat rY = [element attributeForName:(NSString*)IJSVGAttributeRY].stringValue.floatValue;
-    if ([element attributeForName:(NSString*)IJSVGAttributeRY] == nil) {
+    CGFloat rX = [element attributeForName:IJSVGAttributeRX].stringValue.floatValue;
+    CGFloat rY = [element attributeForName:IJSVGAttributeRY].stringValue.floatValue;
+    if ([element attributeForName:IJSVGAttributeRY] == nil) {
         rY = rX;
     }
     path.path = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(x, y, width, height)

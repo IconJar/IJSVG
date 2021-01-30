@@ -16,8 +16,6 @@
 #define SPECIFICITY_CLASS 10
 #define SPECIFICITY_IDENTIFIER 100
 
-@synthesize specificity;
-
 BOOL IJSVGStyleSheetIsSiblingCombinator(IJSVGStyleSheetSelectorCombinator combinator)
 {
     return combinator == IJSVGStyleSheetSelectorCombinatorNextSibling ||
@@ -43,11 +41,11 @@ IJSVGNode * IJSVGStyleSheetPreviousNode(IJSVGNode * node)
     IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
     if([group isKindOfClass:[IJSVGGroup class]] == NO)
         return nil;
-    NSInteger currentIndex = [group.children indexOfObject:node];
+    NSInteger currentIndex = [group.childNodes indexOfObject:node];
     if(currentIndex == 0) {
         return nil;
     }
-    return group.children[currentIndex-1];
+    return group.childNodes[currentIndex-1];
 };
 
 IJSVGNode * IJSVGStyleSheetNextNode(IJSVGNode * node)
@@ -56,11 +54,11 @@ IJSVGNode * IJSVGStyleSheetNextNode(IJSVGNode * node)
     if([group isKindOfClass:[IJSVGGroup class]] == NO) {
         return nil;
     }
-    NSInteger currentIndex = [group.children indexOfObject:node];
-    if(currentIndex == group.children.count-1) {
+    NSInteger currentIndex = [group.childNodes indexOfObject:node];
+    if(currentIndex == group.childNodes.count-1) {
         return nil;
     }
-    return group.children[currentIndex+1];
+    return group.childNodes[currentIndex+1];
 };
 
 IJSVGStyleSheetSelectorRaw * IJSVGStyleSheetPreviousSelector(IJSVGStyleSheetSelectorRaw * aSelector, NSArray * _rawSelectors)
@@ -149,7 +147,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
                 }
                 
                 // grab the children
-                NSArray * nodes = parentNode.children;
+                NSArray * nodes = parentNode.childNodes;
                 NSInteger index = [nodes indexOfObject:aNode];
                 
                 // doesnt contain the child
@@ -228,7 +226,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
                 // matches the next selector and... contains the node in question
                 IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector,_rawSelectors);
                 if(IJSVGStyleSheetMatchSelector(parentNode, s) &&
-                   [parentNode.children containsObject:aNode]) {
+                   [parentNode.childNodes containsObject:aNode]) {
                     // set the new starting selector and node
                     aSelector = s;
                     aNode = parentNode;
@@ -276,15 +274,15 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         
         // 1 for a tag
         if(rawSelector.tag != nil) {
-            self.specificity += SPECIFICITY_TAG;
+            _specificity += SPECIFICITY_TAG;
         }
         
         // 100 for a id
         if(rawSelector.identifier != nil)
-            self.specificity += SPECIFICITY_IDENTIFIER;
+            _specificity += SPECIFICITY_IDENTIFIER;
         
         // 10 for a class
-        self.specificity += (rawSelector.classes.count*SPECIFICITY_CLASS);
+        _specificity += (rawSelector.classes.count*SPECIFICITY_CLASS);
     }
 }
 

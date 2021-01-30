@@ -10,11 +10,8 @@
 #import "IJSVGNode.h"
 
 @interface IJSVGForeignObject : IJSVGNode {
-
-    NSString * requiredExtension;
-    
 }
 
-@property ( nonatomic, copy ) NSString * requiredExtension;
+@property (nonatomic, copy) NSString* requiredExtension;
 
 @end

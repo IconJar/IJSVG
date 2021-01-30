@@ -7,23 +7,20 @@
 //
 
 #import "IJSVGGradient.h"
+#import "IJSVGParser.h"
 
 @implementation IJSVGGradient
 
-@synthesize gradient, CGGradient;
-@synthesize x1, x2, y1, y2;
-@synthesize colorList = _colorList;
-
 - (void)dealloc
 {
-    (void)([x1 release]), x1 = nil;
-    (void)([x2 release]), x2 = nil;
-    (void)([y1 release]), y1 = nil;
-    (void)([y2 release]), y2 = nil;
-    (void)([gradient release]), gradient = nil;
+    (void)([_x1 release]), _x1 = nil;
+    (void)([_x2 release]), _x2 = nil;
+    (void)([_y1 release]), _y1 = nil;
+    (void)([_y2 release]), _y2 = nil;
+    (void)([_gradient release]), _gradient = nil;
     (void)([_colorList release]), _colorList = nil;
-    if (CGGradient != nil) {
-        CGGradientRelease(CGGradient);
+    if (_CGGradient != nil) {
+        CGGradientRelease(_CGGradient);
     }
     [super dealloc];
 }
@@ -39,8 +36,8 @@
 {
     (void)([_colorList release]), _colorList = nil;
     _colorList = list.retain;
-    if (CGGradient != nil) {
-        CGGradientRelease(CGGradient);
+    if (_CGGradient != nil) {
+        CGGradientRelease(_CGGradient);
     }
 }
 
@@ -54,7 +51,7 @@
     NSInteger i = 0;
     for (NSXMLElement* stop in stops) {
         // find the offset
-        CGFloat offset = [stop attributeForName:@"offset"].stringValue.floatValue;
+        CGFloat offset = [stop attributeForName:IJSVGAttributeOffset].stringValue.floatValue;
         if (offset > 1.f) {
             offset /= 100.f;
         }
@@ -63,13 +60,13 @@
 
         // find the stop opacity
         CGFloat stopOpacity = 1.f;
-        NSXMLNode* stopOpacityAttribute = [stop attributeForName:@"stop-opacity"];
+        NSXMLNode* stopOpacityAttribute = [stop attributeForName:IJSVGAttributeStopOpacity];
         if (stopOpacityAttribute != nil) {
             stopOpacity = stopOpacityAttribute.stringValue.floatValue;
         }
 
         // find the stop color
-        NSString* scs = [stop attributeForName:@"stop-color"].stringValue;
+        NSString* scs = [stop attributeForName:IJSVGAttributeStopColor].stringValue;
         NSColor* stopColor = [IJSVGColor colorFromString:scs];
         if (stopColor != nil && stopOpacity != 1.f) {
             stopColor = [IJSVGColor changeAlphaOnColor:stopColor
@@ -77,17 +74,17 @@
         }
 
         // compute any style that there was...
-        NSXMLNode* styleAttribute = [stop attributeForName:@"style"];
+        NSXMLNode* styleAttribute = [stop attributeForName:IJSVGAttributeStyle];
         if (styleAttribute != nil) {
 
             IJSVGStyle* style = [IJSVGStyle parseStyleString:styleAttribute.stringValue];
-            NSColor* color = [IJSVGColor colorFromString:[style property:@"stop-color"]];
+            NSColor* color = [IJSVGColor colorFromString:[style property:IJSVGAttributeStopColor]];
 
             // we have a color!
             if (color != nil) {
                 // is there a stop opacity?
                 NSString* numberString = nil;
-                if ((numberString = [style property:@"stop-opacity"]) != nil) {
+                if ((numberString = [style property:IJSVGAttributeStopOpacity]) != nil) {
                     color = [IJSVGColor changeAlphaOnColor:color
                                                         to:numberString.floatValue];
                 } else {
@@ -131,8 +128,8 @@
 - (CGGradientRef)CGGradient
 {
     // store it in the cache
-    if (CGGradient != nil) {
-        return CGGradient;
+    if (_CGGradient != nil) {
+        return _CGGradient;
     }
 
     // actually create the gradient
@@ -154,7 +151,7 @@
         colors, locations);
     CFRelease(colors);
     free(locations);
-    return CGGradient = result;
+    return _CGGradient = result;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx

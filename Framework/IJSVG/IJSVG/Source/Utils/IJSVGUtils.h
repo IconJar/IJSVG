@@ -21,6 +21,7 @@ CGFloat angle(CGPoint a, CGPoint b);
 CGFloat radians_to_degrees(CGFloat radians);
 CGFloat degrees_to_radians(CGFloat degrees);
 
+BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2);
 void IJSVGTrimCharBuffer(char* buffer);
 
 BOOL IJSVGIsCommonHTMLElementName(NSString* str);
@@ -60,6 +61,12 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
     fallBackForPercent:(CGFloat)viewBox;
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                             size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                       floatCount:(NSUInteger)floatCount
+                        charCount:(NSUInteger)charCount
+                             size:(NSInteger*)length;
 + (IJSVGFontTraits)fontStyleStringForString:(NSString*)string;
 + (IJSVGFontTraits)fontWeightTraitForString:(NSString*)string
                                      weight:(CGFloat*)weight;

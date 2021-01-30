@@ -10,9 +10,6 @@
 
 @implementation IJSVGUnitSize
 
-@synthesize width = _width;
-@synthesize height = _height;
-
 - (void)dealloc
 {
     (void)[_width release], _width = nil;

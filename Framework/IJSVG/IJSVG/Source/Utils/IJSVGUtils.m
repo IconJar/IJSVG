@@ -13,6 +13,16 @@
 
 @implementation IJSVGUtils
 
+BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
+{
+    size_t slen = strlen(s1);
+    size_t tlen = strlen(s2);
+    if (tlen > slen) {
+        return NO;
+    }
+    return strcmp(s1 + slen - tlen, s2) == 0;
+}
+
 void IJSVGTrimCharBuffer(char* buffer)
 {
     char* ptr = buffer;
@@ -263,7 +273,16 @@ NSString* IJSVGPointToCommandString(CGPoint point)
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    if ((aChar | ('M' ^ 'm')) == 'm' || (aChar | ('Z' ^ 'z')) == 'z' || (aChar | ('C' ^ 'c')) == 'c' || (aChar | ('L' ^ 'l')) == 'l' || (aChar | ('S' ^ 's')) == 's' || (aChar | ('Q' ^ 'q')) == 'q' || (aChar | ('H' ^ 'h')) == 'h' || (aChar | ('V' ^ 'v')) == 'v' || (aChar | ('T' ^ 't')) == 't' || (aChar | ('A' ^ 'a')) == 'a') {
+    if ((aChar | ('M' ^ 'm')) == 'm' ||
+        (aChar | ('Z' ^ 'z')) == 'z' ||
+        (aChar | ('C' ^ 'c')) == 'c' ||
+        (aChar | ('L' ^ 'l')) == 'l' ||
+        (aChar | ('S' ^ 's')) == 's' ||
+        (aChar | ('Q' ^ 'q')) == 'q' ||
+        (aChar | ('H' ^ 'h')) == 'h' ||
+        (aChar | ('V' ^ 'v')) == 'v' ||
+        (aChar | ('T' ^ 't')) == 't' ||
+        (aChar | ('A' ^ 'a')) == 'a') {
         return YES;
     }
     return NO;
@@ -517,8 +536,27 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
+    return [self.class scanFloatsFromCString:string.UTF8String
+                                        size:length];
+}
+
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                             size:(NSInteger*)length
+{
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String, string.length,
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(buffer, strlen(buffer),
+        stream, NULL, 1, length);
+    IJSVGPathDataStreamRelease(stream);
+    return floats;
+}
+
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                       floatCount:(NSUInteger)floatCount
+                        charCount:(NSUInteger)charCount
+                             size:(NSInteger*)length
+{
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(floatCount, charCount);
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(buffer, strlen(buffer),
         stream, NULL, 1, length);
     IJSVGPathDataStreamRelease(stream);
     return floats;

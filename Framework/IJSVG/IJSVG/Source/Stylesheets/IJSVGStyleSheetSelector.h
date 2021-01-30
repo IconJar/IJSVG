@@ -14,7 +14,7 @@
 @interface IJSVGStyleSheetSelector : NSObject {
 
     NSString* selector;
-    NSUInteger specificity;
+    
 @private
     NSMutableArray* _rawSelectors;
 }

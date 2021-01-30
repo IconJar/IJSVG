@@ -10,9 +10,6 @@
 
 @implementation IJSVGUnitPoint
 
-@synthesize x = _x;
-@synthesize y = _y;
-
 - (void)dealloc
 {
     (void)[_x release], _x = nil;

@@ -10,11 +10,9 @@
 
 @implementation IJSVGForeignObject
 
-@synthesize requiredExtension;
-
 - (void)dealloc
 {
-    (void)([requiredExtension release]), requiredExtension = nil;
+    (void)([_requiredExtension release]), _requiredExtension = nil;
     [super dealloc];
 }
 

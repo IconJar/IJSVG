@@ -25,47 +25,53 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
-static NSString const* IJSVGAttributeViewBox = @"viewBox";
-static NSString const* IJSVGAttributeID = @"id";
-static NSString const* IJSVGAttributeClass = @"class";
-static NSString const* IJSVGAttributeX = @"x";
-static NSString const* IJSVGAttributeY = @"y";
-static NSString const* IJSVGAttributeWidth = @"width";
-static NSString const* IJSVGAttributeHeight = @"height";
-static NSString const* IJSVGAttributeOpacity = @"opacity";
-static NSString const* IJSVGAttributeStrokeOpacity = @"stroke-opacity";
-static NSString const* IJSVGAttributeStrokeWidth = @"stroke-width";
-static NSString const* IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
-static NSString const* IJSVGAttributeFillOpacity = @"fill-opacity";
-static NSString const* IJSVGAttributeClipPath = @"clip-path";
-static NSString const* IJSVGAttributeMask = @"mask";
-static NSString const* IJSVGAttributeGradientUnits = @"gradientUnits";
-static NSString const* IJSVGAttributeMaskUnits = @"maskUnits";
-static NSString const* IJSVGAttributeMaskContentUnits = @"maskContentUnits";
-static NSString const* IJSVGAttributeTransform = @"transform";
-static NSString const* IJSVGAttributeGradientTransform = @"gradientTransform";
-static NSString const* IJSVGAttributeUnicode = @"unicode";
-static NSString const* IJSVGAttributeStrokeLineCap = @"stroke-linecap";
-static NSString const* IJSVGAttributeLineJoin = @"stroke-linejoin";
-static NSString const* IJSVGAttributeStroke = @"stroke";
-static NSString const* IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
-static NSString const* IJSVGAttributeFill = @"fill";
-static NSString const* IJSVGAttributeFillRule = @"fill-rule";
-static NSString const* IJSVGAttributeBlendMode = @"mix-blend-mode";
-static NSString const* IJSVGAttributeDisplay = @"display";
-static NSString const* IJSVGAttributeStyle = @"style";
-static NSString const* IJSVGAttributeD = @"d";
-static NSString const* IJSVGAttributeXLink = @"xlink:href";
-static NSString const* IJSVGAttributeX1 = @"x1";
-static NSString const* IJSVGAttributeX2 = @"x2";
-static NSString const* IJSVGAttributeY1 = @"y1";
-static NSString const* IJSVGAttributeY2 = @"y2";
-static NSString const* IJSVGAttributeRX = @"rx";
-static NSString const* IJSVGAttributeRY = @"ry";
-static NSString const* IJSVGAttributeCX = @"cx";
-static NSString const* IJSVGAttributeCY = @"cy";
-static NSString const* IJSVGAttributeR = @"r";
-static NSString const* IJSVGAttributePoints = @"points";
+extern NSString* const IJSVGAttributeViewBox;
+extern NSString* const IJSVGAttributeID;
+extern NSString* const IJSVGAttributeClass;
+extern NSString* const IJSVGAttributeX;
+extern NSString* const IJSVGAttributeY;
+extern NSString* const IJSVGAttributeWidth;
+extern NSString* const IJSVGAttributeHeight;
+extern NSString* const IJSVGAttributeOpacity;
+extern NSString* const IJSVGAttributeStrokeOpacity;
+extern NSString* const IJSVGAttributeStrokeWidth;
+extern NSString* const IJSVGAttributeStrokeDashOffset;
+extern NSString* const IJSVGAttributeFillOpacity;
+extern NSString* const IJSVGAttributeClipPath;
+extern NSString* const IJSVGAttributeMask;
+extern NSString* const IJSVGAttributeGradientUnits;
+extern NSString* const IJSVGAttributeMaskUnits;
+extern NSString* const IJSVGAttributeMaskContentUnits;
+extern NSString* const IJSVGAttributeTransform;
+extern NSString* const IJSVGAttributeGradientTransform;
+extern NSString* const IJSVGAttributeUnicode;
+extern NSString* const IJSVGAttributeStrokeLineCap;
+extern NSString* const IJSVGAttributeLineJoin;
+extern NSString* const IJSVGAttributeStroke;
+extern NSString* const IJSVGAttributeStrokeDashArray;
+extern NSString* const IJSVGAttributeFill;
+extern NSString* const IJSVGAttributeFillRule;
+extern NSString* const IJSVGAttributeBlendMode;
+extern NSString* const IJSVGAttributeDisplay;
+extern NSString* const IJSVGAttributeStyle;
+extern NSString* const IJSVGAttributeD;
+extern NSString* const IJSVGAttributeXLink;
+extern NSString* const IJSVGAttributeX1;
+extern NSString* const IJSVGAttributeX2;
+extern NSString* const IJSVGAttributeY1;
+extern NSString* const IJSVGAttributeY2;
+extern NSString* const IJSVGAttributeRX;
+extern NSString* const IJSVGAttributeRY;
+extern NSString* const IJSVGAttributeCX;
+extern NSString* const IJSVGAttributeCY;
+extern NSString* const IJSVGAttributeR;
+extern NSString* const IJSVGAttributeFX;
+extern NSString* const IJSVGAttributeFY;
+extern NSString* const IJSVGAttributePoints;
+extern NSString* const IJSVGAttributeOffset;
+extern NSString* const IJSVGAttributeStopColor;
+extern NSString* const IJSVGAttributeStopOpacity;
+
 
 @class IJSVGParser;
 
@@ -84,9 +90,6 @@ static NSString const* IJSVGAttributePoints = @"points";
 @end
 
 @interface IJSVGParser : IJSVGGroup {
-
-    NSRect viewBox;
-    IJSVGUnitSize* intrinsicSize;
 
 @private
     id<IJSVGParserDelegate> _delegate;

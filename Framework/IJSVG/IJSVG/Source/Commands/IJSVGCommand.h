@@ -18,16 +18,8 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 };
 
 @interface IJSVGCommand : NSObject {
-    NSString* commandString;
-    char command;
-    CGFloat* parameters;
-    NSInteger parameterCount;
-    NSArray<IJSVGCommand*>* subCommands;
-    NSInteger requiredParameters;
-    IJSVGCommandType type;
-    IJSVGCommand* previousCommand;
+@private
     NSInteger _currentIndex;
-    BOOL isSubCommand;
 }
 
 @property (nonatomic, copy) NSString* commandString;

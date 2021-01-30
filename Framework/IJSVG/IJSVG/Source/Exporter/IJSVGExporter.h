@@ -62,7 +62,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
 @property (nonatomic, assign) IJSVGFloatingPointOptions floatingPointOptions;
 @property (nonatomic, copy) NSString* title;
-@property (nonatomic, copy) NSString* description;
+@property (nonatomic, copy) NSString* desc;
 
 - (id)initWithSVG:(IJSVG*)svg
              size:(CGSize)size

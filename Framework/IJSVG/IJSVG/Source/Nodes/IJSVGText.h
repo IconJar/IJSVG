@@ -9,8 +9,6 @@
 #import "IJSVGGroup.h"
 
 @interface IJSVGText : IJSVGGroup {
-
-    NSString* text;
 }
 
 @property (nonatomic, copy) NSString* text;

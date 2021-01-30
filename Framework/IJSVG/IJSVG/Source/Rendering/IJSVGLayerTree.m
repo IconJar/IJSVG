@@ -26,7 +26,6 @@
 
 @implementation IJSVGLayerTree
 
-@synthesize viewBox;
 @synthesize style = _style;
 
 - (void)dealloc
@@ -164,7 +163,7 @@
     }
 
     IJSVGGroupLayer* groupLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
-    for (IJSVGNode* node in group.children) {
+    for (IJSVGNode* node in group.childNodes) {
         [groupLayer addSublayer:[self layerForNode:node]];
     }
     groupLayer.frame = (CGRect){
@@ -442,7 +441,7 @@
     // the gradient drawing layer
     gradient.colorList = _style.colorList;
     IJSVGGradientLayer* gradLayer = [[[IJSVGGradientLayer alloc] init] autorelease];
-    gradLayer.viewBox = self.viewBox;
+    gradLayer.viewBox = _viewBox;
     gradLayer.frame = layer.bounds;
     gradLayer.gradient = gradient;
     gradLayer.absoluteTransform = [self absoluteTransform:path];

@@ -13,16 +13,6 @@
 
 @implementation IJSVGLayer
 
-@synthesize gradientFillLayer;
-@synthesize patternFillLayer;
-@synthesize gradientStrokeLayer;
-@synthesize patternStrokeLayer;
-@synthesize strokeLayer;
-@synthesize requiresBackingScaleHelp;
-@synthesize backingScaleFactor;
-@synthesize blendingMode;
-@synthesize convertMasksToPaths;
-
 - (void)dealloc
 {
     (void)([_maskingLayer release]), _maskingLayer = nil;
@@ -63,10 +53,10 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if (self.backingScaleFactor == newFactor) {
+    if (_backingScaleFactor == newFactor) {
         return;
     }
-    backingScaleFactor = newFactor;
+    _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
     [self setNeedsDisplay];
@@ -74,7 +64,7 @@
 
 - (void)_customRenderInContext:(CGContextRef)ctx
 {
-    if (self.convertMasksToPaths == YES && _maskingLayer != nil) {
+    if (_convertMasksToPaths == YES && _maskingLayer != nil) {
         CGContextSaveGState(ctx);
         [self applySublayerMaskToContext:ctx
                              forSublayer:(IJSVGLayer*)self
@@ -88,10 +78,10 @@
 
 - (void)setConvertMasksToPaths:(BOOL)flag
 {
-    if (convertMasksToPaths == flag) {
+    if (_convertMasksToPaths == flag) {
         return;
     }
-    convertMasksToPaths = flag;
+    _convertMasksToPaths = flag;
     if (flag == YES) {
         if (_maskingLayer != nil) {
             (void)([_maskingLayer release]), _maskingLayer = nil;
@@ -151,9 +141,9 @@
 
 - (void)renderInContext:(CGContextRef)ctx
 {
-    if (self.blendingMode != kCGBlendModeNormal) {
+    if (_blendingMode != kCGBlendModeNormal) {
         CGContextSaveGState(ctx);
-        CGContextSetBlendMode(ctx, self.blendingMode);
+        CGContextSetBlendMode(ctx, _blendingMode);
         [self _customRenderInContext:ctx];
         CGContextRestoreGState(ctx);
         return;

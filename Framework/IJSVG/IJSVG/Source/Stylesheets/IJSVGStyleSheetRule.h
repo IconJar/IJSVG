@@ -13,9 +13,6 @@
 @class IJSVGNode;
 
 @interface IJSVGStyleSheetRule : NSObject {
-
-    NSArray* selectors;
-    IJSVGStyle* style;
 }
 
 @property (nonatomic, retain) NSArray* selectors;

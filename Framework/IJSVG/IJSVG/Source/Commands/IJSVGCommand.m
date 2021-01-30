@@ -22,15 +22,6 @@
 
 @implementation IJSVGCommand
 
-@synthesize commandString;
-@synthesize command;
-@synthesize parameterCount;
-@synthesize parameters;
-@synthesize subCommands;
-@synthesize type;
-@synthesize previousCommand;
-@synthesize isSubCommand;
-
 + (BOOL)requiresCustomParameterParsing
 {
     return NO;
@@ -103,10 +94,10 @@
 
 - (void)dealloc
 {
-    (void)([commandString release]), commandString = nil;
-    (void)([subCommands release]), subCommands = nil;
-    if (parameters) {
-        (void)(free(parameters)), parameters = nil;
+    (void)([_commandString release]), _commandString = nil;
+    (void)([_subCommands release]), _subCommands = nil;
+    if (_parameters) {
+        (void)(free(_parameters)), _parameters = nil;
     }
     [super dealloc];
 }
@@ -117,12 +108,12 @@
     if ((self = [super init]) != nil) {
         // work out the basics
         _currentIndex = 0;
-        command = str[0];
-        type = [IJSVGUtils typeForCommandChar:command];
+        _command = str[0];
+        _type = [IJSVGUtils typeForCommandChar:_command];
         NSInteger sets = 0;
         NSInteger paramCount = [self.class requiredParameterCount];
         IJSVGPathDataSequence* sequence = [self.class pathDataSequence];
-        parameters = IJSVGParsePathDataStreamSequence(str, strlen(str),
+        _parameters = IJSVGParsePathDataStreamSequence(str, strlen(str),
             dataStream, sequence, [self.class requiredParameterCount], &sets);
 
         if (sets <= 1) {
@@ -130,7 +121,7 @@
             IJSVGCommand* command = [self subcommandWithParameters:subParams
                                                         paramCount:paramCount
                                                    previousCommand:nil];
-            subCommands = @[ command ].retain;
+            _subCommands = @[ command ].retain;
         } else {
             NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
             subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
@@ -154,7 +145,7 @@
             }
 
             // store the retained value
-            subCommands = subCommandArray.copy;
+            _subCommands = subCommandArray.copy;
         }
     }
     return self;
@@ -188,15 +179,15 @@
 
 - (CGFloat)readFloat
 {
-    CGFloat f = parameters[_currentIndex];
+    CGFloat f = _parameters[_currentIndex];
     _currentIndex++;
     return f;
 }
 
 - (NSPoint)readPoint
 {
-    CGFloat x = parameters[_currentIndex];
-    CGFloat y = parameters[_currentIndex + 1];
+    CGFloat x = _parameters[_currentIndex];
+    CGFloat y = _parameters[_currentIndex + 1];
     _currentIndex += 2;
     return NSMakePoint(x, y);
 }

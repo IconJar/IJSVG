@@ -8,6 +8,7 @@
 
 #import "IJSVGLinearGradient.h"
 #import "IJSVGUtils.h"
+#import "IJSVGParser.h"
 
 @implementation IJSVGLinearGradient
 
@@ -15,10 +16,10 @@
                     gradient:(IJSVGLinearGradient*)aGradient
 {
     // just ask unit for the value
-    NSString* x1 = ([element attributeForName:@"x1"].stringValue ?: @"0");
-    NSString* x2 = ([element attributeForName:@"x2"].stringValue ?: @"100%");
-    NSString* y1 = ([element attributeForName:@"y1"].stringValue ?: @"0");
-    NSString* y2 = ([element attributeForName:@"y2"].stringValue ?: @"0");
+    NSString* x1 = ([element attributeForName:IJSVGAttributeX1].stringValue ?: @"0");
+    NSString* x2 = ([element attributeForName:IJSVGAttributeX2].stringValue ?: @"100%");
+    NSString* y1 = ([element attributeForName:IJSVGAttributeY1].stringValue ?: @"0");
+    NSString* y2 = ([element attributeForName:IJSVGAttributeY2].stringValue ?: @"0");
     aGradient.x1 = [IJSVGGradientUnitLength unitWithString:x1 fromUnitType:aGradient.units];
     aGradient.x2 = [IJSVGGradientUnitLength unitWithString:x2 fromUnitType:aGradient.units];
     aGradient.y1 = [IJSVGGradientUnitLength unitWithString:y1 fromUnitType:aGradient.units];

@@ -11,10 +11,7 @@
 
 @implementation IJSVGPath
 
-@synthesize path = _path;
-@synthesize lastControlPoint;
 @synthesize CGPath = _CGPath;
-@synthesize primitiveType = _primitiveType;
 
 - (void)dealloc
 {

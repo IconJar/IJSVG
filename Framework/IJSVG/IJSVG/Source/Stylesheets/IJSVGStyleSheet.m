@@ -11,9 +11,6 @@
 #import "IJSVGStyleSheet.h"
 
 @interface IJSVGStyleSheetSelectorListItem : NSObject {
-
-    IJSVGStyleSheetSelector* selector;
-    IJSVGStyleSheetRule* rule;
 }
 
 @property (nonatomic, retain) IJSVGStyleSheetRule* rule;
@@ -23,12 +20,11 @@
 
 @implementation IJSVGStyleSheetSelectorListItem
 
-@synthesize rule, selector;
 
 - (void)dealloc
 {
-    (void)([rule release]), rule = nil;
-    (void)([selector release]), selector = nil;
+    (void)([_rule release]), _rule = nil;
+    (void)([_selector release]), _selector = nil;
     [super dealloc];
 }
 

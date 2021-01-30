@@ -11,19 +11,6 @@
 
 @implementation IJSVGShapeLayer
 
-@synthesize gradientFillLayer;
-@synthesize patternFillLayer;
-@synthesize gradientStrokeLayer;
-@synthesize patternStrokeLayer;
-@synthesize strokeLayer;
-@synthesize requiresBackingScaleHelp;
-@synthesize backingScaleFactor;
-@synthesize blendingMode;
-@synthesize convertMasksToPaths;
-@synthesize originalPathOrigin;
-@synthesize renderQuality;
-@synthesize primitiveType;
-
 - (void)dealloc
 {
     (void)([_maskingLayer release]), _maskingLayer = nil;
@@ -35,7 +22,7 @@
     if (self.backingScaleFactor == newFactor) {
         return;
     }
-    backingScaleFactor = newFactor;
+    _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
     [self setNeedsDisplay];
@@ -57,10 +44,10 @@
 
 - (void)setConvertMasksToPaths:(BOOL)flag
 {
-    if (convertMasksToPaths == flag) {
+    if (_convertMasksToPaths == flag) {
         return;
     }
-    convertMasksToPaths = flag;
+    _convertMasksToPaths = flag;
     if (flag == YES) {
         if (_maskingLayer != nil) {
             (void)([_maskingLayer release]), _maskingLayer = nil;

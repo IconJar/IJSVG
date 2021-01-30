@@ -10,13 +10,6 @@
 
 @implementation IJSVGRenderingStyle
 
-@synthesize colorList = _colorList;
-@synthesize lineCapStyle = _lineCapStyle;
-@synthesize lineJoinStyle = _lineJoinStyle;
-@synthesize lineWidth = _lineWidth;
-@synthesize fillColor = _fillColor;
-@synthesize strokeColor = _strokeColor;
-
 - (void)dealloc
 {
     (void)([_fillColor release]), _fillColor = nil;

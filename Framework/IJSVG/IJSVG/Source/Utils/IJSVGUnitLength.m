@@ -12,11 +12,6 @@
 
 @implementation IJSVGUnitLength
 
-@synthesize value;
-@synthesize type;
-@synthesize inherit;
-@synthesize originalType;
-
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
     IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
@@ -54,6 +49,32 @@
     IJSVGUnitLength* unit = [self unitWithString:string];
     unit.type = IJSVGUnitLengthTypePercentage;
     return unit;
+}
+
++ (IJSVGUnitLengthType)typeForCString:(const char*)chars
+{
+    if(IJSVGCharBufferHasSuffix((char*)chars, "%")) {
+        return IJSVGUnitLengthTypePercentage;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "cm")) {
+        return IJSVGUnitLengthTypeCM;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "mm")) {
+        return IJSVGUnitLengthTypeMM;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "in")) {
+        return IJSVGUnitLengthTypeIN;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "pt")) {
+        return IJSVGUnitLengthTypePT;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "pc")) {
+        return IJSVGUnitLengthTypePC;
+    }
+    if(IJSVGCharBufferHasSuffix((char*)chars, "px")) {
+        return IJSVGUnitLengthTypePX;
+    }
+    return IJSVGUnitLengthTypeNumber;
 }
 
 + (IJSVGUnitLengthType)typeForString:(NSString*)string
@@ -118,19 +139,39 @@
 {
     // just return noting for inherit, node will deal
     // with the rest...hopefully
-    NSCharacterSet* cSet = NSCharacterSet.whitespaceCharacterSet;
-    string = [string stringByTrimmingCharactersInSet:cSet];
+    const char* chars = string.UTF8String;
+    IJSVGTrimCharBuffer((char*)chars);
 
-    if ([string isEqualToString:@"inherit"]) {
+    // is inherit or just nothing
+    size_t strl = strlen(chars);
+    if (strcmp(chars, "inherit") == 0 || strl == 0) {
         return nil;
     }
-
+    
+    // grab the float value from the string
+    NSInteger length;
+    CGFloat* floats = [IJSVGUtils scanFloatsFromCString:chars
+                                             floatCount:1
+                                              charCount:(NSUInteger)strl
+                                                   size:&length];
+    
+    // not sure how this ended up but nothing returned
+    // even though there should had been
+    if(length == 0) {
+        (void)free(floats), floats = NULL;
+        return nil;
+    }
+    
     IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
-    unit.value = string.floatValue;
+    unit.value = floats[0];
     unit.type = IJSVGUnitLengthTypeNumber;
     
-    IJSVGUnitLengthType type = [self typeForString:string];
+    // memory free
+    (void)(free(floats)), floats = NULL;
+    
+    IJSVGUnitLengthType type = [self typeForCString:chars];
     unit.originalType = type;
+    
     switch(type) {
         case IJSVGUnitLengthTypePercentage: {
             unit.value = [self convertUnitValue:unit.value
@@ -149,7 +190,7 @@
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
     if (self.type == IJSVGUnitLengthTypePercentage) {
-        return ((anotherValue / 100.f) * (self.value * 100.f));
+        return ((anotherValue / 100.f) * (_value * 100.f));
     }
     return self.value;
 }
@@ -170,17 +211,17 @@
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
-    if (self.type == IJSVGUnitLengthTypePercentage) {
+    if (_type == IJSVGUnitLengthTypePercentage) {
         return [NSString stringWithFormat:@"%@%%",
-                         IJSVGShortFloatStringWithOptions(self.value * 100.f, options)];
+                         IJSVGShortFloatStringWithOptions(_value * 100.f, options)];
     }
-    return IJSVGShortFloatStringWithOptions(self.value, options);
+    return IJSVGShortFloatStringWithOptions(_value, options);
 }
 
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%f%@",
-                     self.value, (self.type == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
+                     _value, (_value == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
 }
 
 @end

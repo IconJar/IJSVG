@@ -10,14 +10,9 @@
 
 @implementation IJSVGGradientLayer
 
-@synthesize viewBox;
-@synthesize gradient;
-@synthesize absoluteTransform;
-@synthesize objectRect;
-
 - (void)dealloc
 {
-    (void)([gradient release]), gradient = nil;
+    (void)([_gradient release]), _gradient = nil;
     [super dealloc];
 }
 
@@ -32,17 +27,17 @@
 
 - (void)setGradient:(IJSVGGradient*)newGradient
 {
-    if (gradient != nil) {
-        (void)([gradient release]), gradient = nil;
+    if (_gradient != nil) {
+        (void)([_gradient release]), _gradient = nil;
     }
-    gradient = [newGradient retain];
+    _gradient = [newGradient retain];
 
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;
-    NSInteger stops = gradient.gradient.numberOfColorStops;
+    NSInteger stops = _gradient.gradient.numberOfColorStops;
     for (NSInteger i = 0; i < stops; i++) {
         NSColor* color = nil;
-        [gradient.gradient getColor:&color
+        [_gradient.gradient getColor:&color
                            location:NULL
                             atIndex:i];
         if (color.alphaComponent != 1.f) {
@@ -89,12 +84,12 @@
     }
 
     // draw the gradient
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
-        -CGRectGetMinY(objectRect));
-    CGAffineTransform transform = CGAffineTransformConcat(absoluteTransform, trans);
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
+                                                               -CGRectGetMinY(_objectRect));
+    CGAffineTransform transform = CGAffineTransformConcat(_absoluteTransform, trans);
     CGContextSaveGState(ctx);
     [self.gradient drawInContextRef:ctx
-                         objectRect:objectRect
+                         objectRect:_objectRect
                   absoluteTransform:transform
                            viewPort:self.viewBox];
     CGContextRestoreGState(ctx);

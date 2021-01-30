@@ -7,33 +7,28 @@
 //
 
 #import "IJSVGRadialGradient.h"
+#import "IJSVGParser.h"
 
 @implementation IJSVGRadialGradient
 
-@synthesize cx;
-@synthesize cy;
-@synthesize fx;
-@synthesize fy;
-@synthesize radius;
-
 - (void)dealloc
 {
-    (void)([cx release]), cx = nil;
-    (void)([cy release]), cy = nil;
-    (void)([fx release]), fx = nil;
-    (void)([fy release]), fy = nil;
-    (void)([radius release]), radius = nil;
+    (void)([_cx release]), _cx = nil;
+    (void)([_cy release]), _cy = nil;
+    (void)([_fx release]), _fx = nil;
+    (void)([_fy release]), _fy = nil;
+    (void)([_radius release]), _radius = nil;
     [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGRadialGradient* grad = [super copyWithZone:zone];
-    grad.fx = self.fx;
-    grad.fy = self.fy;
-    grad.cx = self.cx;
-    grad.cy = self.cy;
-    grad.radius = self.radius;
+    grad.fx = _fx;
+    grad.fy = _fy;
+    grad.cx = _cx;
+    grad.cy = _cy;
+    grad.radius = _radius;
     return grad;
 }
 
@@ -41,9 +36,10 @@
                     gradient:(IJSVGRadialGradient*)gradient
 {
     // cx defaults to 50% if not specified
-    NSDictionary* kv = @{ @"cx" : @"cx",
-        @"cy" : @"cy",
-        @"r" : @"radius" };
+    NSDictionary* kv = @{
+        IJSVGAttributeCX : @"cx",
+        IJSVGAttributeCY : @"cy",
+        IJSVGAttributeR : @"radius" };
 
     for (NSString* key in kv.allKeys) {
         NSString* str = [element attributeForName:key].stringValue;
@@ -64,13 +60,13 @@
     gradient.fy = gradient.cy;
 
     // needs fixing
-    NSString* fx = [element attributeForName:@"fx"].stringValue;
+    NSString* fx = [element attributeForName:IJSVGAttributeFX].stringValue;
     if (fx != nil) {
         gradient.fx = [IJSVGUnitLength unitWithString:fx
                                          fromUnitType:gradient.units];
     }
 
-    NSString* fy = [element attributeForName:@"fy"].stringValue;
+    NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
     if (fx != nil) {
         gradient.fy = [IJSVGUnitLength unitWithString:fy
                                          fromUnitType:gradient.units];
@@ -112,15 +108,15 @@
     }
 
     // compute size based on percentages
-    CGFloat x = [self.cx computeValue:CGRectGetWidth(boundingBox)];
-    CGFloat y = [self.cy computeValue:CGRectGetHeight(boundingBox)];
+    CGFloat x = [_cx computeValue:CGRectGetWidth(boundingBox)];
+    CGFloat y = [_cy computeValue:CGRectGetHeight(boundingBox)];
     startPoint = CGPointMake(x, y);
     CGFloat val = MIN(CGRectGetWidth(boundingBox),
         CGRectGetHeight(boundingBox));
-    radius = [self.radius computeValue:val];
+    radius = [_radius computeValue:val];
 
-    CGFloat ex = [self.fx computeValue:CGRectGetWidth(boundingBox)];
-    CGFloat ey = [self.fy computeValue:CGRectGetHeight(boundingBox)];
+    CGFloat ex = [_fx computeValue:CGRectGetWidth(boundingBox)];
+    CGFloat ey = [_fy computeValue:CGRectGetHeight(boundingBox)];
 
     gradientEndPoint = CGPointMake(ex, ey);
     gradientStartPoint = startPoint;

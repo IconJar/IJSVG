@@ -12,11 +12,12 @@
 
 @interface IJSVGGroup : IJSVGNode {
 
-    NSMutableArray* children;
+@private
+    NSMutableArray<IJSVGNode*>* _childNodes;
 }
 
-- (void)addChild:(id)child;
-- (NSArray*)children;
+- (void)addChild:(IJSVGNode*)child;
+- (NSArray<IJSVGNode*>*)childNodes;
 - (void)purgeChildren;
 
 @end

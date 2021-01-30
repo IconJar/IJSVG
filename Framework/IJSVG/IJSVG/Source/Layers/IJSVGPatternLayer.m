@@ -10,13 +10,10 @@
 
 @implementation IJSVGPatternLayer
 
-@synthesize pattern;
-@synthesize patternNode;
-
 - (void)dealloc
 {
-    (void)([pattern release]), pattern = nil;
-    (void)([patternNode release]), patternNode = nil;
+    (void)([_pattern release]), _pattern = nil;
+    (void)([_patternNode release]), _patternNode = nil;
     [super dealloc];
 }
 
@@ -50,8 +47,8 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGRect rect = self.bounds;
     CGPatternRef ref = CGPatternCreate((void*)self, self.bounds,
         CGAffineTransformIdentity,
-        roundf(rect.size.width * self.patternNode.width.value),
-        roundf(rect.size.height * self.patternNode.height.value),
+        roundf(rect.size.width * _patternNode.width.value),
+        roundf(rect.size.height * _patternNode.height.value),
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
 

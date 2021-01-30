@@ -10,12 +10,10 @@
 
 @implementation IJSVGStyleSheetRule
 
-@synthesize selectors, style;
-
 - (void)dealloc
 {
-    (void)([selectors release]), selectors = nil;
-    (void)([style release]), style = nil;
+    (void)([_selectors release]), _selectors = nil;
+    (void)([_style release]), _style = nil;
     [super dealloc];
 }
 
@@ -24,7 +22,7 @@
 {
     // interate over each select and work out if
     // it allows us to be applied
-    for (IJSVGStyleSheetSelector* selector in selectors) {
+    for (IJSVGStyleSheetSelector* selector in _selectors) {
         if ([selector matchesNode:node]) {
             *matchedSelector = selector;
             return YES;

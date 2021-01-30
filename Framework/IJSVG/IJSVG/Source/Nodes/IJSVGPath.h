@@ -23,9 +23,6 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 };
 
 @interface IJSVGPath : IJSVGNode {
-
-    NSBezierPath* path;
-    CGPoint lastControlPoint;
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
