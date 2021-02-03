@@ -48,66 +48,86 @@
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind
 {
-    string = [string lowercaseString];
-    if ([string isEqualToString:@"style"])
+    const char* name = string.UTF8String;
+    if(name == NULL) {
+        return IJSVGNodeTypeNotFound;
+    }
+    IJSVGCharBufferToLower((char*)name);
+    if (strcmp(name, "style") == 0) {
         return IJSVGNodeTypeStyle;
-    if ([string isEqualToString:@"switch"])
+    }
+    if (strcmp(name, "switch") == 0) {
         return IJSVGNodeTypeSwitch;
-    if ([string isEqualToString:@"defs"])
+    }
+    if (strcmp(name, "defs") == 0) {
         return IJSVGNodeTypeDef;
-    if ([string isEqualToString:@"g"])
+    }
+    if (strcmp(name, "g") == 0) {
         return IJSVGNodeTypeGroup;
-    if ([string isEqualToString:@"path"])
+    }
+    if (strcmp(name, "path") == 0) {
         return IJSVGNodeTypePath;
-    if ([string isEqualToString:@"polygon"])
+    }
+    if (strcmp(name, "polygon") == 0) {
         return IJSVGNodeTypePolygon;
-    if ([string isEqualToString:@"polyline"])
+    }
+    if (strcmp(name, "polyline") == 0) {
         return IJSVGNodeTypePolyline;
-    if ([string isEqualToString:@"rect"])
+    }
+    if (strcmp(name, "rect") == 0) {
         return IJSVGNodeTypeRect;
-    if ([string isEqualToString:@"line"])
+    }
+    if (strcmp(name, "line") == 0) {
         return IJSVGNodeTypeLine;
-    if ([string isEqualToString:@"circle"])
+    }
+    if (strcmp(name, "circle") == 0) {
         return IJSVGNodeTypeCircle;
-    if ([string isEqualToString:@"ellipse"])
+    }
+    if (strcmp(name, "ellipse") == 0) {
         return IJSVGNodeTypeEllipse;
-    if ([string isEqualToString:@"use"])
+    }
+    if (strcmp(name, "use") == 0) {
         return IJSVGNodeTypeUse;
-    if ([string isEqualToString:@"lineargradient"])
+    }
+    if (strcmp(name, "lineargradient") == 0) {
         return IJSVGNodeTypeLinearGradient;
-    if ([string isEqualToString:@"radialgradient"])
+    }
+    if (strcmp(name, "radialgradient") == 0) {
         return IJSVGNodeTypeRadialGradient;
-    if ([string isEqualToString:@"glyph"])
+    }
+    if (strcmp(name, "glyph") == 0) {
         return IJSVGNodeTypeGlyph;
-    if ([string isEqualToString:@"font"])
+    }
+    if (strcmp(name, "font") == 0) {
         return IJSVGNodeTypeFont;
-    if ([string isEqualToString:@"clippath"])
+    }
+    if (strcmp(name, "clippath") == 0) {
         return IJSVGNodeTypeClipPath;
-    if ([string isEqualToString:@"mask"])
+    }
+    if (strcmp(name, "mask") == 0) {
         return IJSVGNodeTypeMask;
-    if ([string isEqualToString:@"image"])
+    }
+    if (strcmp(name, "image") == 0) {
         return IJSVGNodeTypeImage;
-    if ([string isEqualToString:@"pattern"])
+    }
+    if (strcmp(name, "pattern") == 0) {
         return IJSVGNodeTypePattern;
-    if ([string isEqualToString:@"svg"])
+    }
+    if (strcmp(name, "svg") == 0) {
         return IJSVGNodeTypeSVG;
-    if ([string isEqualToString:@"text"])
+    }
+    if (strcmp(name, "text") == 0) {
         return IJSVGNodeTypeText;
-    if ([string isEqualToString:@"tspan"] || kind == NSXMLTextKind) {
+    }
+    if (strcmp(name, "tspan") == 0 || kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
     }
-    if([string isEqualToString:@"title"]) {
+    if(strcmp(name, "title") == 0) {
         return IJSVGNodeTypeTitle;
     }
-    if([string isEqualToString:@"desc"]) {
+    if(strcmp(name, "desc") == 0) {
         return IJSVGNodeTypeDesc;
     }
-
-    // are we commong HTML? - if so just treat as a group
-    if (IJSVGIsCommonHTMLElementName(string) == YES) {
-        return IJSVGNodeTypeGroup;
-    }
-
     return IJSVGNodeTypeNotFound;
 }
 

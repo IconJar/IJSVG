@@ -23,9 +23,8 @@ CGFloat degrees_to_radians(CGFloat degrees);
 
 BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2);
 void IJSVGTrimCharBuffer(char* buffer);
-
-BOOL IJSVGIsCommonHTMLElementName(NSString* str);
-NSArray* IJSVGCommonHTMLElementNames(void);
+void IJSVGCharBufferToLower(char* buffer);
+size_t IJSVGCharBufferHash(char* buffer);
 
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);

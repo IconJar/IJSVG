@@ -266,17 +266,20 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSXMLNode* attribute = nil;
     if ((attribute = [svgElement attributeForName:IJSVGAttributeViewBox]) != nil) {
         // we have a viewbox...
-        CGFloat* box = [IJSVGUtils parseViewBox:[attribute stringValue]];
+        CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
         _viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
-        free(box);
+        (void)free(box);
     } else {
         // there is no view box so find the width and height
         NSString* wAtt = [svgElement attributeForName:IJSVGAttributeWidth].stringValue;
         NSString* hAtt = [svgElement attributeForName:IJSVGAttributeHeight].stringValue;
         IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithString:wAtt];
         IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithString:hAtt];
-        CGFloat w = wLength.value;
-        CGFloat h = hLength.value;
+        
+        // its possible wlength or hlength are nil
+        CGFloat w = wLength ? wLength.value : 0.f;
+        CGFloat h = hLength ? hLength.value : 0.f;
+        
         if (h == 0.f && w != 0.f) {
             h = w;
         } else if (w == 0.f && h != 0.f) {

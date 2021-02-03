@@ -139,6 +139,10 @@
 {
     // just return noting for inherit, node will deal
     // with the rest...hopefully
+    if(string == nil) {
+        return nil;
+    }
+    
     const char* chars = string.UTF8String;
     IJSVGTrimCharBuffer((char*)chars);
 

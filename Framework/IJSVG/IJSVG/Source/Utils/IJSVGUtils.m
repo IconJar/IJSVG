@@ -37,153 +37,22 @@ void IJSVGTrimCharBuffer(char* buffer)
     memmove(buffer, ptr, length+1);
 }
 
-BOOL IJSVGIsCommonHTMLElementName(NSString* str)
+void IJSVGCharBufferToLower(char* buffer)
 {
-    str = str.lowercaseString;
-    return [IJSVGCommonHTMLElementNames() containsObject:str];
-};
+    for(char *p = buffer; *p; p++) {
+        *p = tolower(*p);
+    }
+}
 
-NSArray* IJSVGCommonHTMLElementNames(void)
+size_t IJSVGCharBufferHash(char* buffer)
 {
-    static NSArray* names = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        names = [@[ @"a",
-            @"abbr",
-            @"acronym",
-            @"abbr",
-            @"address",
-            @"applet",
-            @"embed",
-            @"object",
-            @"area",
-            @"article",
-            @"aside",
-            @"audio",
-            @"b",
-            @"base",
-            @"basefont",
-            @"bdi",
-            @"bdo",
-            @"big",
-            @"blockquote",
-            @"body",
-            @"br",
-            @"button",
-            @"canvas",
-            @"caption",
-            @"center",
-            @"cite",
-            @"code",
-            @"col",
-            @"colgroup",
-            @"colgroup",
-            @"datalist",
-            @"dd",
-            @"del",
-            @"details",
-            @"dfn",
-            @"dialog",
-            @"dir",
-            @"ul",
-            @"div",
-            @"dl",
-            @"dt",
-            @"em",
-            @"embed",
-            @"fieldset",
-            @"figcaption",
-            @"figure",
-            @"figure",
-            @"font",
-            @"footer",
-            @"form",
-            @"frame",
-            @"frameset",
-            @"h1",
-            @"h6",
-            @"head",
-            @"header",
-            @"hr",
-            @"html",
-            @"i",
-            @"iframe",
-            @"img",
-            @"input",
-            @"ins",
-            @"kbd",
-            @"label",
-            @"input",
-            @"legend",
-            @"fieldset",
-            @"li",
-            @"link",
-            @"main",
-            @"map",
-            @"mark",
-            @"menu",
-            @"menuitem",
-            @"meta",
-            @"meter",
-            @"nav",
-            @"noframes",
-            @"noscript",
-            @"object",
-            @"ol",
-            @"optgroup",
-            @"option",
-            @"output",
-            @"p",
-            @"param",
-            @"picture",
-            @"pre",
-            @"progress",
-            @"q",
-            @"rp",
-            @"rt",
-            @"ruby",
-            @"s",
-            @"samp",
-            @"script",
-            @"section",
-            @"select",
-            @"small",
-            @"source",
-            @"video",
-            @"audio",
-            @"span",
-            @"strike",
-            @"del",
-            @"s",
-            @"strong",
-            @"style",
-            @"sub",
-            @"summary",
-            @"details",
-            @"sup",
-            @"table",
-            @"tbody",
-            @"td",
-            @"template",
-            @"textarea",
-            @"tfoot",
-            @"th",
-            @"thead",
-            @"time",
-            @"title",
-            @"tr",
-            @"track",
-            @"video",
-            @"audio",
-            @"tt",
-            @"u",
-            @"ul",
-            @"var",
-            @"video",
-            @"wbr" ] retain];
-    });
-    return names;
-};
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *buffer++)) {
+        hash = ((hash << 5) + hash) + c;
+    }
+    return hash;
+}
 
 NSString* IJSVGShortenFloatString(NSString* string)
 {
@@ -566,8 +435,9 @@ CGFloat degrees_to_radians(CGFloat degrees)
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(4,
         IJSVG_STREAM_CHAR_BLOCK_SIZE);
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(string.UTF8String,
-        string.length, stream, NULL, 1, NULL);
+    const char* str = string.UTF8String;
+    CGFloat* floats = IJSVGParsePathDataStreamSequence(str, strlen(str),
+                                                       stream, NULL, 1, NULL);
     IJSVGPathDataStreamRelease(stream);
     return floats;
 }
@@ -576,8 +446,9 @@ CGFloat degrees_to_radians(CGFloat degrees)
     fallBackForPercent:(CGFloat)fallBack
 {
     CGFloat val = [string floatValue];
-    if ([string rangeOfString:@"%"].location != NSNotFound)
+    if ([string rangeOfString:@"%"].location != NSNotFound) {
         val = (fallBack * val) / 100;
+    }
     return val;
 }
 
@@ -593,8 +464,9 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (CGFloat)floatValue:(NSString*)string
 {
-    if ([string isEqualToString:@"inherit"])
+    if ([string isEqualToString:@"inherit"]) {
         return IJSVGInheritedFloatValue;
+    }
     return [string floatValue];
 }
 
