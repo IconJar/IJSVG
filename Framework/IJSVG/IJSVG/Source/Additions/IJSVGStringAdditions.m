@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGStringAdditions.h"
+#import "IJSVGUtils.h"
 
 @implementation NSString (IJSVGAdditions)
 
@@ -78,17 +79,7 @@
 - (BOOL)ijsvg_isHexString
 {
     const char* chars = self.UTF8String;
-    char c;
-    while((c = *chars++)) {
-        BOOL flag = ((c == '#') ||
-         (c >= '0' && c <= '9') ||
-         (c >= 'a' && c <= 'f') ||
-         (c >= 'A' && c <= 'F'));
-        if(flag == NO) {
-            return NO;
-        }
-    }
-    return YES;
+    return IJSVGCharBufferIsHEX((char*)chars);
 }
 
 @end

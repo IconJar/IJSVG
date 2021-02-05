@@ -10,8 +10,28 @@
 #import "IJSVGShapeLayer.h"
 #import "IJSVGUtils.h"
 #import "IJSVGExporterPathInstruction.h"
+#import "IJSVGParsing.h"
 
 @implementation IJSVGUtils
+
+BOOL IJSVGCharBufferIsHEX(char* buffer) {
+    char c;
+    while((c = *buffer++)) {
+        BOOL flag = ((c == '#') ||
+         (c >= '0' && c <= '9') ||
+         (c >= 'a' && c <= 'f') ||
+         (c >= 'A' && c <= 'F'));
+        if(flag == NO) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+BOOL IJSVGCharBufferHasPrefix(char *pre, char *str)
+{
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
 
 BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
 {
@@ -212,34 +232,34 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (NSString* _Nullable)defURL:(NSString*)string
 {
-    // insta check for URL
-    NSCharacterSet* set = NSCharacterSet.whitespaceCharacterSet;
-    string = [string stringByTrimmingCharactersInSet:set];
-    NSString* check = [string substringToIndex:3].lowercaseString;
-    if ([check isEqualToString:@"url"] == NO) {
+    const char* str = string.UTF8String;
+    NSUInteger count = 0;
+    IJSVGParsingStringMethod** methods;
+    methods = IJSVGParsingMethodParseString((char*)str, &count);
+    if(count == 0) {
+        IJSVGParsingStringMethodsRelease(methods, count);
         return nil;
     }
-
-    static NSRegularExpression* _reg = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _reg = [[NSRegularExpression alloc] initWithPattern:@"url\\(['\"]?([^)]+?)['\"]?\\)"
-                                                    options:0
-                                                      error:nil];
-    });
-    __block NSString* foundID = nil;
-    [_reg enumerateMatchesInString:string
-                           options:0
-                             range:NSMakeRange(0, string.length)
-                        usingBlock:^(NSTextCheckingResult* result,
-                            NSMatchingFlags flags, BOOL* stop) {
-                            if ((foundID = [string substringWithRange:[result rangeAtIndex:1]]) != nil) {
-                                *stop = YES;
-                            }
-                        }];
-    if ([foundID hasPrefix:@"#"] == YES) {
-        foundID = [foundID substringFromIndex:1];
+    
+    // what type of method is it?
+    IJSVGParsingStringMethod* method = methods[0];
+    IJSVGCharBufferToLower(method->name);
+    if(strcmp(method->name, "url") != 0) {
+        IJSVGParsingStringMethodsRelease(methods, count);
+        return nil;
     }
+    
+    // remove the #
+    char* parameters = method->parameters;
+    if(parameters[0] == '#') {
+        parameters++;
+    }
+    
+    // make the nsstring
+    NSString* foundID = [NSString stringWithUTF8String:parameters];
+    
+    // release the stuff
+    IJSVGParsingStringMethodsRelease(methods, count);
     return foundID;
 }
 

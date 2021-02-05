@@ -21,6 +21,8 @@ CGFloat angle(CGPoint a, CGPoint b);
 CGFloat radians_to_degrees(CGFloat radians);
 CGFloat degrees_to_radians(CGFloat degrees);
 
+BOOL IJSVGCharBufferIsHEX(char* buffer);
+BOOL IJSVGCharBufferHasPrefix(char* pre, char* str);
 BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2);
 void IJSVGTrimCharBuffer(char* buffer);
 void IJSVGCharBufferToLower(char* buffer);

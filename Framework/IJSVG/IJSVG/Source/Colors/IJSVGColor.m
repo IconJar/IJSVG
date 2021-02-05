@@ -9,6 +9,7 @@
 #import "IJSVGColor.h"
 #import "IJSVGUtils.h"
 #import "IJSVGStringAdditions.h"
+#import "IJSVGParsing.h"
 
 @implementation IJSVGColor
 
@@ -250,8 +251,11 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     NSColor* color = nil;
-    string = [string lowercaseString];
-    if ([self.class isHex:string] == NO) {
+    string = string.lowercaseString;
+    
+    // swap over to C for performance
+    char* str = (char*)string.UTF8String;
+    if (IJSVGCharBufferIsHEX(str) == NO) {
         color = [self.class colorFromPredefinedColorName:string];
         if (color != nil) {
             return color;
@@ -259,20 +263,35 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is simply a clear color, dont fill
-    if ([string.lowercaseString isEqualToString:@"none"] ||
-        [string.lowercaseString isEqualToString:@"transparent"]) {
+    if (strcmp(str, "none") == 0 ||
+        strcmp(str, "transparent") == 0) {
         return [self computeColorSpace:NSColor.clearColor];
     }
 
     // is it RGB?
-    if ([string hasPrefix:@"rgb"] == YES) {
-        NSRange range = [IJSVGUtils rangeOfParentheses:string];
-        NSString* rgbString = [string substringWithRange:range];
-        NSArray* parts = [rgbString ijsvg_componentsSeparatedByChars:","];
+    if (IJSVGCharBufferHasPrefix(str, "rgb") == YES) {
+        NSUInteger count = 0;
+        IJSVGParsingStringMethod** methods = NULL;
+        methods = IJSVGParsingMethodParseString(str, &count);
+        IJSVGParsingStringMethod* method = methods[0];
+        
+        // nothing to return, just mem clean and get out of here
+        if(count == 0 || methods == NULL) {
+            if(methods != NULL) {
+                IJSVGParsingStringMethodsRelease(methods, count);
+            }
+            return nil;
+        }
+        
+        // parse the parameters
+        NSString* parameters = [NSString stringWithUTF8String:method->parameters];
+        NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];
         NSString* alpha = @"100%";
         if (parts.count == 4) {
             alpha = parts[3];
         }
+        
+        IJSVGParsingStringMethodsRelease(methods, count);
         return [self colorFromRString:parts[0]
                               gString:parts[1]
                               bString:parts[2]
@@ -280,10 +299,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is it HSL?
-    if ([string hasPrefix:@"hsl"]) {
+    if (IJSVGCharBufferHasPrefix(str, "hsl")) {
         NSInteger count = 0;
-        CGFloat* params = [IJSVGUtils commandParameters:string
-                                                  count:&count];
+        CGFloat* params = [IJSVGUtils scanFloatsFromCString:str
+                                                       size:&count];
         CGFloat alpha = 1;
         if (count == 4) {
             alpha = params[3];
@@ -299,8 +318,8 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         color = [self computeColorSpace:color];
 
         // memory clean!
-        free(hsb);
-        free(params);
+        (void)free(hsb), hsb = NULL;
+        (void)free(params), params = NULL;
         return color;
     }
 
