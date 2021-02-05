@@ -28,7 +28,7 @@ BOOL IJSVGCharBufferIsHEX(char* buffer) {
     return YES;
 }
 
-BOOL IJSVGCharBufferHasPrefix(char *pre, char *str)
+BOOL IJSVGCharBufferHasPrefix(char *str, char *pre)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
 }

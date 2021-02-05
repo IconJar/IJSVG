@@ -243,29 +243,15 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
 + (NSColor*)colorFromString:(NSString*)string
 {
-    NSCharacterSet* set = NSCharacterSet.whitespaceAndNewlineCharacterSet;
-    string = [string stringByTrimmingCharactersInSet:set];
-
-    if ([string length] < 3) {
-        return nil;
-    }
-
-    NSColor* color = nil;
-    string = string.lowercaseString;
-    
     // swap over to C for performance
     char* str = (char*)string.UTF8String;
-    if (IJSVGCharBufferIsHEX(str) == NO) {
-        color = [self.class colorFromPredefinedColorName:string];
-        if (color != nil) {
-            return color;
-        }
+    if(strlen(str) == 0) {
+        return nil;
     }
-
-    // is simply a clear color, dont fill
-    if (strcmp(str, "none") == 0 ||
-        strcmp(str, "transparent") == 0) {
-        return [self computeColorSpace:NSColor.clearColor];
+    
+    IJSVGTrimCharBuffer(str);
+    if (IJSVGCharBufferIsHEX(str) == YES) {
+        return  [self.class colorFromHEXString:string];
     }
 
     // is it RGB?
@@ -279,6 +265,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         if(count == 0 || methods == NULL) {
             if(methods != NULL) {
                 IJSVGParsingStringMethodsRelease(methods, count);
+                methods = NULL;
             }
             return nil;
         }
@@ -292,6 +279,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         }
         
         IJSVGParsingStringMethodsRelease(methods, count);
+        methods = NULL;
         return [self colorFromRString:parts[0]
                               gString:parts[1]
                               bString:parts[2]
@@ -310,10 +298,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
         // convert HSL to HSB
         CGFloat* hsb = IJSVGColorCSSHSLToHSB(params[0], params[1], params[2]);
-        color = [NSColor colorWithDeviceHue:hsb[0]
-                                 saturation:hsb[1]
-                                 brightness:hsb[2]
-                                      alpha:alpha];
+        NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
+                                          saturation:hsb[1]
+                                          brightness:hsb[2]
+                                               alpha:alpha];
 
         color = [self computeColorSpace:color];
 
@@ -322,9 +310,15 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         (void)free(params), params = NULL;
         return color;
     }
-
-    color = [self.class colorFromHEXString:string];
-    return color;
+    
+    // is simply a clear color, dont fill
+    if (strcmp(str, "none") == 0 ||
+        strcmp(str, "transparent") == 0) {
+        return [self computeColorSpace:NSColor.clearColor];
+    }
+    
+    // could return nil
+    return [self.class colorFromPredefinedColorName:string];
 }
 
 + (NSColor*)colorFromPredefinedColorName:(NSString*)name
@@ -773,28 +767,38 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         containsAlphaComponent:(BOOL*)containsAlphaComponent
 {
     // absolutely no string
-    if (string == nil || string.length == 0 || ![self.class isHex:string]) {
+    if(string == nil) {
+        return nil;
+    }
+    
+    char* str = (char*)string.UTF8String;
+    size_t length = strlen(str);
+    if (length == 0 || IJSVGCharBufferIsHEX(str) == NO) {
         return nil;
     }
 
-    if ([string hasPrefix:@"#"] == YES) {
-        string = [string substringFromIndex:1];
+    // remove the hash from the front of the string
+    if(str[0] == '#') {
+        length--;
+        str++;
     }
 
-    // whats the length?
-    NSUInteger length = string.length;
+    unsigned long hex;
+    // we need to work out if its shorthand
+    // if it is, the length needs to be length*2
     if (length == 3 || length == 4) {
-        // shorthand...
-        NSMutableString* str = [[[NSMutableString alloc] init] autorelease];
-        for (NSInteger i = 0; i < length; i++) {
-            NSString* sub = [string substringWithRange:NSMakeRange(i, 1)];
-            [str appendFormat:@"%@%@", sub, sub];
+        char* chars = NULL;
+        chars = (char*)calloc(sizeof(char),length*2+1);
+        for(int i = 0; i < length; i++) {
+            chars[i*2] = chars[i*2+1] = str[i];
         }
-        string = str;
+        hex = strtoul(chars, NULL, 16);
+        (void)free(chars), chars = NULL;
+    } else {
+        hex = strtoul(str, NULL, 16);
     }
-
+    
     // now convert rest to hex
-    unsigned long hex = [self HEXFromArbitraryHexString:string];
     if (containsAlphaComponent != nil) {
         *containsAlphaComponent = [self HEXContainsAlphaComponent:hex];
     }

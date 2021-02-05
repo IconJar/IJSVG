@@ -13,38 +13,15 @@
 
 - (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar
 {
-    NSMutableArray* comp = [[[NSMutableArray alloc] init] autorelease];
-    NSInteger length = self.length;
-    unichar* chars = (unichar*)calloc(sizeof(unichar), self.length);
-
-    NSInteger ind = 0;
-    BOOL startedString = NO;
-    const char* buffer = self.UTF8String;
-
-    for (NSInteger i = 0; i < length; i++) {
-        unichar theChar = buffer[i];
-
-        // start the buffer
-        BOOL isEqualToChar = strchr(aChar, theChar) != NULL;
-        if (isEqualToChar == NO) {
-            startedString = YES;
-            chars[ind++] = theChar;
-        }
-
-        // has started and char is the search char, or its at end
-        if ((startedString == YES && isEqualToChar) || (i == (length - 1) && startedString == YES)) {
-            startedString = NO;
-
-            // append the comp
-            [comp addObject:[NSString stringWithCharacters:chars length:ind]];
-
-            // restart and realloc the memory
-            ind = 0;
-            chars = memset(chars, '\0', sizeof(unichar) * ind);
-        }
+    NSMutableArray<NSString*>* strings = nil;
+    strings = [[[NSMutableArray alloc] init] autorelease];
+    char* chars = (char*)self.UTF8String;
+    char* ptr = strtok(chars, aChar);
+    while(ptr != NULL) {
+        [strings addObject:[NSString stringWithUTF8String:ptr]];
+        ptr = strtok(NULL, aChar);
     }
-    free(chars);
-    return comp;
+    return strings;
 }
 
 - (BOOL)ijsvg_containsAlpha
