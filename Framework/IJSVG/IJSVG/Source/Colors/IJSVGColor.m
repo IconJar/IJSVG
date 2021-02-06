@@ -244,6 +244,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 + (NSColor*)colorFromString:(NSString*)string
 {
     // swap over to C for performance
+    if(string == nil) {
+        return nil;
+    }
+    
     char* str = (char*)string.UTF8String;
     if(strlen(str) == 0) {
         return nil;

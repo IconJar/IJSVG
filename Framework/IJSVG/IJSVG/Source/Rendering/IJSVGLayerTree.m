@@ -166,11 +166,12 @@
     for (IJSVGNode* node in group.childNodes) {
         [groupLayer addSublayer:[self layerForNode:node]];
     }
-    groupLayer.frame = (CGRect){
+    groupLayer.frame = (CGRect) {
         .origin = CGPointZero,
-        .size = (CGSize){
+        .size = (CGSize) {
             .width = group.width.value,
-            .height = group.height.value }
+            .height = group.height.value
+        }
     };
 
     // mask it - forgot groups can have masks too, doh! simple
