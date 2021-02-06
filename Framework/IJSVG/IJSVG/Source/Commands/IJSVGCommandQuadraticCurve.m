@@ -24,12 +24,14 @@
                  path:(IJSVGPath*)path
 {
     if (type == kIJSVGCommandTypeAbsolute) {
-        [path.path addQuadCurveToPoint:NSMakePoint(params[2], params[3])
-                          controlPoint:NSMakePoint(params[0], params[1])];
+        CGPathAddQuadCurveToPoint(path.path, NULL, params[0], params[1],
+                                  params[2], params[3]);
         return;
     }
-    [path.path addQuadCurveToPoint:NSMakePoint(path.currentPoint.x + params[2], path.currentPoint.y + params[3])
-                      controlPoint:NSMakePoint(path.currentPoint.x + params[0], path.currentPoint.y + params[1])];
+    CGPoint currentPoint = path.currentPoint;
+    CGPathAddQuadCurveToPoint(path.path, NULL,
+                              currentPoint.x + params[0], currentPoint.y + params[1],
+                              currentPoint.x + params[2], currentPoint.y + params[3]);
 }
 
 @end

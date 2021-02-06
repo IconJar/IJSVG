@@ -11,15 +11,11 @@
 
 @implementation IJSVGPath
 
-@synthesize CGPath = _CGPath;
-
 - (void)dealloc
 {
-    if (_CGPath != nil) {
-        CGPathRelease(_CGPath);
-        _CGPath = nil;
+    if(_path != NULL) {
+        (void)CGPathRelease(_path), _path = NULL;
     }
-    ((void)[_path release]), _path = nil;
     [super dealloc];
 }
 
@@ -27,7 +23,7 @@
 {
     if ((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
-        _path = NSBezierPath.bezierPath.retain;
+        _path = CGPathCreateMutable();
     }
     return self;
 }
@@ -35,34 +31,38 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGPath* node = [super copyWithZone:zone];
-    node.path = [self.path.copy autorelease];
+    node.path = _path;
     return node;
+}
+
+- (void)setPath:(CGMutablePathRef)path
+{
+    // this will automatically copy any path into a mutable path
+    // regardless of if it was a mutable path to begin with
+    if(_path != NULL) {
+        (void)CGPathRelease(_path), _path = NULL;
+    }
+    _path = CGPathCreateMutableCopy(path);
+}
+
+- (CGRect)pathBoundingBox
+{
+    return CGPathGetPathBoundingBox(_path);
+}
+
+- (CGRect)controlPointBoundingBox
+{
+    return CGPathGetBoundingBox(_path);
 }
 
 - (NSPoint)currentPoint
 {
-    return _path.currentPoint;
+    return CGPathGetCurrentPoint(_path);
 }
 
 - (void)close
 {
-    [_path closePath];
-}
-
-- (void)invlidateCGPath
-{
-    if (_CGPath != nil) {
-        CGPathRelease(_CGPath);
-    }
-    _CGPath = nil;
-}
-
-- (CGPathRef)CGPath
-{
-    if (_CGPath == nil) {
-        _CGPath = [_path newCGPathRef:NO];
-    }
-    return _CGPath;
+    CGPathCloseSubpath(_path);
 }
 
 @end

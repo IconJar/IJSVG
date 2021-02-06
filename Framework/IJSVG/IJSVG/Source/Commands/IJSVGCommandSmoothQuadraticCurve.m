@@ -24,33 +24,34 @@
                  type:(IJSVGCommandType)type
                  path:(IJSVGPath*)path
 {
-    NSPoint commandPoint = NSMakePoint(path.currentPoint.x, path.currentPoint.y);
+    CGPoint currentPoint = path.currentPoint;
+    CGPoint commandPoint = CGPointMake(currentPoint.x, currentPoint.y);
     if (command != nil) {
         if (command.class == IJSVGCommandQuadraticCurve.class) {
             // quadratic curve
             if (command.type == kIJSVGCommandTypeAbsolute) {
-                commandPoint = NSMakePoint(-1 * command.parameters[0] + 2 * path.currentPoint.x,
-                    -1 * command.parameters[1] + 2 * path.currentPoint.y);
+                commandPoint = NSMakePoint(-1 * command.parameters[0] + 2 * currentPoint.x,
+                    -1 * command.parameters[1] + 2 * currentPoint.y);
             } else {
-                NSPoint oldPoint = CGPointMake(path.currentPoint.x - command.parameters[2],
-                    path.currentPoint.y - command.parameters[3]);
-                commandPoint = CGPointMake(-1 * (command.parameters[0] + oldPoint.x) + 2 * (path.currentPoint.x),
-                    -1 * (command.parameters[1] + oldPoint.y) + 2 * path.currentPoint.y);
+                CGPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[2],
+                    currentPoint.y - command.parameters[3]);
+                commandPoint = CGPointMake(-1 * (command.parameters[0] + oldPoint.x) + 2 * (currentPoint.x),
+                    -1 * (command.parameters[1] + oldPoint.y) + 2 * currentPoint.y);
             }
         } else if (command.class == self.class) {
             // smooth quadratic curve
-            commandPoint = CGPointMake(-1 * (path.lastControlPoint.x) + 2 * (path.currentPoint.x),
-                -1 * (path.lastControlPoint.y) + 2 * path.currentPoint.y);
+            commandPoint = CGPointMake(-1 * (path.lastControlPoint.x) + 2 * (currentPoint.x),
+                -1 * (path.lastControlPoint.y) + 2 * currentPoint.y);
         }
     }
     path.lastControlPoint = commandPoint;
     if (type == kIJSVGCommandTypeAbsolute) {
-        [path.path addQuadCurveToPoint:NSMakePoint(params[0], params[1])
-                          controlPoint:commandPoint];
+        CGPathAddQuadCurveToPoint(path.path, NULL, commandPoint.x, commandPoint.y,
+                                  params[0], params[1]);
         return;
     }
-    [path.path addQuadCurveToPoint:NSMakePoint(path.currentPoint.x + params[0], path.currentPoint.y + params[1])
-                      controlPoint:commandPoint];
+    CGPathAddQuadCurveToPoint(path.path, NULL, commandPoint.x, commandPoint.y,
+                              currentPoint.x + params[0], currentPoint.y + params[1]);
 }
 
 @end

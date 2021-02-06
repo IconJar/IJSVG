@@ -94,7 +94,7 @@ extern NSString* const IJSVGAttributeStopOpacity;
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
-    NSMutableArray<IJSVGNode*>* _glyphs;
+    NSMutableArray<IJSVGPath*>* _glyphs;
     IJSVGStyleSheet* _styleSheet;
     NSMutableDictionary<NSString*, NSXMLElement*>* _defNodes;
     NSMutableDictionary<NSString*, NSXMLElement*>* _baseDefNodes;

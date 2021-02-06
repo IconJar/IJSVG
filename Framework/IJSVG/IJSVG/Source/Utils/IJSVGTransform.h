@@ -44,7 +44,6 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform;
 + (NSArray<IJSVGTransform*>*)transformsFromAffineTransform:(CGAffineTransform)affineTransform;
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string;
-+ (NSBezierPath*)transformedPath:(IJSVGPath*)path;
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)affineTransform;
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
                          floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;

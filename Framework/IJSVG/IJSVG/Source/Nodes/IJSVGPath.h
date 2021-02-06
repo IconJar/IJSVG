@@ -26,9 +26,10 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
-@property (nonatomic, retain) NSBezierPath* path;
+@property (nonatomic, assign) CGMutablePathRef path;
 @property (nonatomic, assign) CGPoint lastControlPoint;
-@property (nonatomic, readonly) CGPathRef CGPath;
+@property (nonatomic, readonly) CGRect controlPointBoundingBox;
+@property (nonatomic, readonly) CGRect pathBoundingBox;
 
 - (void)close;
 - (NSPoint)currentPoint;

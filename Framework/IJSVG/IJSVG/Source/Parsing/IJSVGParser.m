@@ -591,7 +591,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     return svgs;
 }
 
-- (void)addGlyph:(IJSVGNode*)glyph
+- (void)addGlyph:(IJSVGPath*)glyph
 {
     if (_glyphs == nil) {
         _glyphs = [[NSMutableArray alloc] init];
@@ -777,10 +777,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                            intoPath:path];
 
         // check the size...
-        if (NSIsEmptyRect([path path].controlPointBounds)) {
+        if (CGRectIsEmpty(path.controlPointBoundingBox) == YES) {
             break;
         }
-
+        
         // add the glyph
         [self addGlyph:path];
         break;
@@ -1322,8 +1322,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     CGFloat cX = [element attributeForName:IJSVGAttributeCX].stringValue.floatValue;
     CGFloat cY = [element attributeForName:IJSVGAttributeCY].stringValue.floatValue;
     CGFloat r = [element attributeForName:IJSVGAttributeR].stringValue.floatValue;
-    NSRect rect = NSMakeRect(cX - r, cY - r, r * 2, r * 2);
-    path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
+    CGRect rect = CGRectMake(cX - r, cY - r, r * 2, r * 2);
+    CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
+    path.path = (CGMutablePathRef)nPath;
+    CGPathRelease(nPath);
 }
 
 - (void)_parseEllipse:(NSXMLElement*)element
@@ -1335,7 +1337,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     CGFloat rX = [element attributeForName:IJSVGAttributeRX].stringValue.floatValue;
     CGFloat rY = [element attributeForName:IJSVGAttributeRY].stringValue.floatValue;
     NSRect rect = NSMakeRect(cX - rX, cY - rY, rX * 2, rY * 2);
-    path.path = [NSBezierPath bezierPathWithOvalInRect:rect];
+    CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
+    path.path = (CGMutablePathRef)nPath;
+    CGPathRelease(nPath);
 }
 
 - (void)_parsePolyline:(NSXMLElement*)element
@@ -1371,7 +1375,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         return;
     }
     
-    const int defBufferSize = 5;
+    const int defBufferSize = 10;
     char* buffer;
     asprintf(&buffer, "M%f %f L", params[0], params[1]);
     
@@ -1399,6 +1403,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         strLength += sSize;
         (void)free(subbuf), subbuf = NULL;
     }
+    
     if(closePath == YES) {
         strcat(buffer, "z");
     }
@@ -1435,9 +1440,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     if ([element attributeForName:IJSVGAttributeRY] == nil) {
         rY = rX;
     }
-    path.path = [NSBezierPath bezierPathWithRoundedRect:NSMakeRect(x, y, width, height)
-                                                xRadius:rX
-                                                yRadius:rY];
+    CGRect rect = CGRectMake(x, y, width, height);
+    CGPathRef nPath = CGPathCreateWithRoundedRect(rect, rX, rY, NULL);
+    path.path = (CGMutablePathRef)nPath;
+    CGPathRelease(nPath);
 }
 
 @end

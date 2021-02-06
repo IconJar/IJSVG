@@ -42,7 +42,8 @@ static IJSVGPathDataSequence* _sequence;
 {
     CGPoint radii = CGPointZero;
     CGPoint arcEndPoint = CGPointZero;
-    CGPoint arcStartPoint = path.currentPoint;
+    CGPoint pathCurrentPoint = path.currentPoint;
+    CGPoint arcStartPoint = pathCurrentPoint;
     CGFloat xAxisRotation = 0;
     BOOL largeArcFlag = 0;
     BOOL sweepFlag = 0;
@@ -54,8 +55,8 @@ static IJSVGPathDataSequence* _sequence;
     arcEndPoint = [currentCommand readPoint];
 
     if (type == kIJSVGCommandTypeRelative) {
-        arcEndPoint.x += path.currentPoint.x;
-        arcEndPoint.y += path.currentPoint.y;
+        arcEndPoint.x += pathCurrentPoint.x;
+        arcEndPoint.y += pathCurrentPoint.y;
     }
 
     xAxisRotation *= M_PI / 180.f;
@@ -88,37 +89,49 @@ static IJSVGPathDataSequence* _sequence;
     }
 
     CGFloat radius = MAX(radii.x, radii.y);
-    CGPoint scale = (radii.x > radii.y) ? CGPointMake(1, radii.y / radii.x) : CGPointMake(radii.x / radii.y, 1);
-
-    NSAffineTransform* trans = NSAffineTransform.transform;
-    [trans translateXBy:-centerPoint.x yBy:-centerPoint.y];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans rotateByRadians:-xAxisRotation];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans scaleXBy:(1 / scale.x) yBy:(1 / scale.y)];
-    [path.path transformUsingAffineTransform:trans];
-
-    [path.path appendBezierPathWithArcWithCenter:NSZeroPoint
-                                          radius:radius
-                                      startAngle:radians_to_degrees(startAngle)
-                                        endAngle:radians_to_degrees(startAngle + angleDelta)
-                                       clockwise:!sweepFlag];
-
-    trans = NSAffineTransform.transform;
-    [trans scaleXBy:scale.x yBy:scale.y];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans rotateByRadians:xAxisRotation];
-    [path.path transformUsingAffineTransform:trans];
-
-    trans = NSAffineTransform.transform;
-    [trans translateXBy:centerPoint.x yBy:centerPoint.y];
-    [path.path transformUsingAffineTransform:trans];
+    CGPoint scale = (radii.x > radii.y)
+        ? CGPointMake(1.f, radii.y / radii.x)
+        : CGPointMake(radii.x / radii.y, 1.f);
+    
+    // translate it
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(-centerPoint.x, -centerPoint.y);
+    CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path.path, &transform);
+    
+    // rotate it
+    transform = CGAffineTransformMakeRotation(-xAxisRotation);
+    CGPathRef rotatedPath = CGPathCreateCopyByTransformingPath(transformPath, &transform);
+    
+    // scale it
+    transform = CGAffineTransformMakeScale((1.f/scale.x), (1.f/scale.y));
+    CGMutablePathRef scaledPath = CGPathCreateMutableCopyByTransformingPath(rotatedPath, &transform);
+    
+    // add the arc
+    CGPathAddArc(scaledPath, NULL, 0.f, 0.f, radius, startAngle,
+                 startAngle + angleDelta, !sweepFlag);
+    
+    // scale
+    transform = CGAffineTransformMakeScale(scale.x, scale.y);
+    CGPathRef rescaledPath = CGPathCreateCopyByTransformingPath(scaledPath, &transform);
+    
+    // rotate
+    transform = CGAffineTransformMakeRotation(xAxisRotation);
+    CGPathRef rerotatePath = CGPathCreateCopyByTransformingPath(rescaledPath, &transform);
+    
+    // translate
+    transform = CGAffineTransformMakeTranslation(centerPoint.x, centerPoint.y);
+    CGPathRef finalPath = CGPathCreateCopyByTransformingPath(rerotatePath, &transform);
+    
+    // set the path back onto the path
+    path.path = (CGMutablePathRef)finalPath;
+    
+    // memory clean
+    (void)CGPathRelease(transformPath), transformPath = NULL;
+    (void)CGPathRelease(rotatedPath), rotatedPath = NULL;
+    (void)CGPathRelease(scaledPath), scaledPath = NULL;
+    (void)CGPathRelease(rescaledPath), rescaledPath = NULL;
+    (void)CGPathRelease(rerotatePath), rerotatePath = NULL;
+    (void)CGPathRelease(finalPath), finalPath = NULL;
+    
 }
 
 @end

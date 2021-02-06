@@ -204,7 +204,7 @@
     // setup path and layer
     IJSVGShapeLayer* layer = [[[IJSVGShapeLayer alloc] init] autorelease];
     layer.primitiveType = path.primitiveType;
-    CGPathRef introPath = path.CGPath;
+    CGPathRef introPath = path.path;
 
     *originalBoundingBox = CGRectIntegral(CGPathGetBoundingBox(introPath));
     layer.originalPathOrigin = (*originalBoundingBox).origin;

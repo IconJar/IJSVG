@@ -41,10 +41,14 @@
     // there is no current point. Asking for current point on an empty
     // path will result in an exception being thrown
     if (type == kIJSVGCommandTypeAbsolute || command == nil) {
-        [path.path moveToPoint:NSMakePoint(params[0], params[1])];
+        CGPathMoveToPoint(path.path, NULL,
+                          params[0], params[1]);
         return;
     }
-    [path.path relativeMoveToPoint:NSMakePoint(params[0], params[1])];
+    CGPoint currentPoint = path.currentPoint;
+    CGPathMoveToPoint(path.path, NULL,
+                      currentPoint.x + params[0],
+                      currentPoint.y + params[1]);
 }
 
 @end

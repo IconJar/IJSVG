@@ -23,10 +23,12 @@
                  path:(IJSVGPath*)path
 {
     if (type == kIJSVGCommandTypeAbsolute) {
-        [path.path lineToPoint:NSMakePoint(params[0], path.currentPoint.y)];
+        CGPathAddLineToPoint(path.path, NULL, params[0], path.currentPoint.y);
         return;
     }
-    [path.path relativeLineToPoint:NSMakePoint(params[0], 0.f)];
+    CGPoint currentPoint = path.currentPoint;
+    CGPathAddLineToPoint(path.path, NULL, currentPoint.x + params[0],
+                         path.currentPoint.y);
 }
 
 @end

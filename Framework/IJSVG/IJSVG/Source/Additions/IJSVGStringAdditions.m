@@ -16,11 +16,18 @@
     NSMutableArray<NSString*>* strings = nil;
     strings = [[[NSMutableArray alloc] init] autorelease];
     char* chars = (char*)self.UTF8String;
-    char* ptr = strtok(chars, aChar);
+    if(chars == NULL || strlen(chars) == 0) {
+        return strings;
+    }
+    char* copy = (char*)calloc(strlen(chars)+1, sizeof(char));
+    char* orig = copy;
+    strcpy(copy, chars);
+    char* ptr = strtok(copy, aChar);
     while(ptr != NULL) {
         [strings addObject:[NSString stringWithUTF8String:ptr]];
         ptr = strtok(NULL, aChar);
     }
+    (void)free(orig), orig = NULL;
     return strings;
 }
 
