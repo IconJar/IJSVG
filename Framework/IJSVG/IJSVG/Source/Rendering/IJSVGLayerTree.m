@@ -699,44 +699,44 @@
 - (NSString*)lineJoin:(IJSVGLineJoinStyle)joinStyle
 {
     switch (joinStyle) {
-    default:
-    case IJSVGLineJoinStyleMiter: {
-        return kCALineJoinMiter;
-    }
-    case IJSVGLineJoinStyleBevel: {
-        return kCALineJoinBevel;
-    }
-    case IJSVGLineJoinStyleRound: {
-        return kCALineJoinRound;
-    }
+        default:
+        case IJSVGLineJoinStyleMiter: {
+            return kCALineJoinMiter;
+        }
+        case IJSVGLineJoinStyleBevel: {
+            return kCALineJoinBevel;
+        }
+        case IJSVGLineJoinStyleRound: {
+            return kCALineJoinRound;
+        }
     }
 }
 
 - (NSString*)lineCap:(IJSVGLineCapStyle)capStyle
 {
     switch (capStyle) {
-    default:
-    case IJSVGLineCapStyleButt: {
-        return kCALineCapButt;
-    }
-    case IJSVGLineCapStyleRound: {
-        return kCALineCapRound;
-    }
-    case IJSVGLineCapStyleSquare: {
-        return kCALineCapSquare;
-    }
+        default:
+        case IJSVGLineCapStyleButt: {
+            return kCALineCapButt;
+        }
+        case IJSVGLineCapStyleRound: {
+            return kCALineCapRound;
+        }
+        case IJSVGLineCapStyleSquare: {
+            return kCALineCapSquare;
+        }
     }
 }
 
 - (NSString*)fillRule:(IJSVGWindingRule)rule
 {
     switch (rule) {
-    case IJSVGWindingRuleEvenOdd: {
-        return kCAFillRuleEvenOdd;
-    }
-    default: {
-        return kCAFillRuleNonZero;
-    }
+        case IJSVGWindingRuleEvenOdd: {
+            return kCAFillRuleEvenOdd;
+        }
+        default: {
+            return kCAFillRuleNonZero;
+        }
     }
 }
 
