@@ -20,7 +20,7 @@
     [super dealloc];
 }
 
-- (void)loadFromBase64EncodedString:(NSString*)encodedString
+- (void)loadFromString:(NSString*)encodedString
 {
     if ([encodedString hasPrefix:@"data:"]) {
         encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+"
@@ -28,8 +28,15 @@
                                                                     options:NSRegularExpressionSearch
                                                                       range:NSMakeRange(0, encodedString.length)];
     }
-    NSURL* URL = [NSURL URLWithString:encodedString];
-    NSData* data = [NSData dataWithContentsOfURL:URL];
+    NSURL* url = [NSURL URLWithString:encodedString];
+    if(url != nil) {
+        [self loadFromURL:url];
+    }
+}
+
+- (void)loadFromURL:(NSURL*)aURL
+{
+    NSData* data = [NSData dataWithContentsOfURL:aURL];
 
     // no data, just ignore...invalid probably
     if (data == nil) {

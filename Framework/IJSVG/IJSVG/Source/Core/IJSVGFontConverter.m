@@ -6,7 +6,6 @@
 //  Copyright (c) 2015 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGBezierPathAdditions.h"
 #import "IJSVGFontConverter.h"
 #import "IJSVGShapeLayer.h"
 

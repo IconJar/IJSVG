@@ -73,59 +73,40 @@
 
 {
     // any x and y?
-    CGFloat x = [node.x computeValue:layer.frame.size.width];
-    CGFloat y = [node.y computeValue:layer.frame.size.height];
+    CGRect frame = layer.bounds;
+    CGFloat x = [node.x computeValue:frame.size.width];
+    CGFloat y = [node.y computeValue:frame.size.height];
 
-    // do some magic transform
+    // no need to do anything if no transform, or x or y == 0
     if (transforms.count == 0 && x == 0.f && y == 0.f) {
         return layer;
     }
 
+    // simply cascade all the transforms onto the identity
+    CGAffineTransform identity = CGAffineTransformIdentity;
     if (x != 0.f || y != 0.f) {
-        // we must add translate to the stack
-        NSMutableArray* trans = nil;
-        if (transforms != nil) {
-            trans = [[transforms mutableCopy] autorelease];
-        } else {
-            trans = [[[NSMutableArray alloc] initWithCapacity:1] autorelease];
-        }
-        [trans addObject:[IJSVGTransform transformByTranslatingX:x y:y]];
-        transforms = trans;
+        identity = CGAffineTransformTranslate(identity, x, y);
     }
-
-    // add any transforms
-    IJSVGLayer* topLayer = nil;
-    IJSVGLayer* parentLayer = nil;
-
-    for (IJSVGTransform* transform in transforms) {
-        // make sure we apply the transform to the parent
-        // so they stack
-        IJSVGGroupLayer* childLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
-        childLayer.affineTransform = transform.CGAffineTransform;
-
-        // add it to the parent layer
-        if (parentLayer != nil) {
-            [parentLayer addSublayer:childLayer];
-        } else {
-            // make sure we keep track of the top most layer
-            topLayer = childLayer;
-        }
-
-        // reset parent layer to the new child
-        parentLayer = childLayer;
+    
+    // this used to be done with each transform being added to its own
+    // group layer, but we can simply use one and then apply
+    // the transforms in reverse order, has same outcome with less memory
+    IJSVGGroupLayer* parentLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
+    for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
+        identity = CGAffineTransformConcat(identity, transform.CGAffineTransform);
     }
-
-    // swap the layer around
+    parentLayer.affineTransform = identity;
     [parentLayer addSublayer:layer];
-    layer = topLayer;
-    return layer;
+    return parentLayer;
 }
 
 - (void)applyDefaultsToLayer:(IJSVGLayer*)layer
                     fromNode:(IJSVGNode*)node
 {
     CGFloat opacity = node.opacity.value;
-    layer.opacity = opacity;
+    if(opacity != 1.f) {
+        layer.opacity = opacity;
+    }
 
     // setup the blending mode
     if (node.blendMode != IJSVGBlendModeNormal) {

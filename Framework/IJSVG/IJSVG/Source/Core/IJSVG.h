@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGBezierPathAdditions.h"
 #import "IJSVGColorList.h"
 #import "IJSVGExporter.h"
 #import "IJSVGGradientLayer.h"

@@ -21,6 +21,7 @@
 - (CGImageRef)CGImage;
 - (void)drawInContextRef:(CGContextRef)context
                     path:(IJSVGPath*)path;
-- (void)loadFromBase64EncodedString:(NSString*)encodedString;
+- (void)loadFromString:(NSString*)encodedString;
+- (void)loadFromURL:(NSURL*)aURL;
 
 @end

@@ -55,6 +55,7 @@ NSString* const IJSVGAttributePoints = @"points";
 NSString* const IJSVGAttributeOffset = @"offset";
 NSString* const IJSVGAttributeStopColor = @"stop-color";
 NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
+NSString* const IJSVGAttributeHref = @"href";
 
 @implementation IJSVGParser
 
@@ -1153,8 +1154,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                               ignoreAttributes:nil];
 
         // from base64
-        NSXMLNode* attributeNode = [self resolveXLinkAttributeForElement:element];
-        [image loadFromBase64EncodedString:attributeNode.stringValue];
+        NSXMLNode* attributeNode = [self resolveXLinkAttributeForElement:element] ?:
+            [element attributeForName:IJSVGAttributeHref];
+        [image loadFromString:attributeNode.stringValue];
 
         // add to parent
         [parentGroup addChild:image];
@@ -1167,7 +1169,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
 {
     NSString* const namespaceURI = @"http://www.w3.org/1999/xlink";
-    NSXMLNode* attributeNode = [element attributeForLocalName:@"href"
+    NSXMLNode* attributeNode = [element attributeForLocalName:IJSVGAttributeHref
                                                           URI:namespaceURI];
     if (attributeNode == nil) {
         attributeNode = [element attributeForName:IJSVGAttributeXLink];

@@ -245,7 +245,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
     IJSVGParsingStringMethod* method = methods[0];
     IJSVGCharBufferToLower(method->name);
     if(strcmp(method->name, "url") != 0) {
-        IJSVGParsingStringMethodsRelease(methods, count);
+        (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
         return nil;
     }
     
@@ -259,7 +259,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
     NSString* foundID = [NSString stringWithUTF8String:parameters];
     
     // release the stuff
-    IJSVGParsingStringMethodsRelease(methods, count);
+    (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
     return foundID;
 }
 

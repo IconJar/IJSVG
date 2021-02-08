@@ -201,7 +201,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 - (CGAffineTransform)CGAffineTransform
 {
-    return [self CGAffineTransformWithModifier:nil];
+    return [self stackIdentity:CGAffineTransformIdentity];
 }
 
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity
