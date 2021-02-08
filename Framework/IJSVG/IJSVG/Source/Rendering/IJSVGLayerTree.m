@@ -603,7 +603,9 @@
 
     // dashing
     strokeLayer.lineDashPhase = path.strokeDashOffset.value;
-    strokeLayer.lineDashPattern = [self lineDashPattern:path];
+    if(path.strokeDashArrayCount != 0.f) {
+        strokeLayer.lineDashPattern = [self lineDashPattern:path];
+    }
 
     return strokeLayer;
 }
@@ -689,11 +691,11 @@
 
 - (NSArray<NSNumber*>*)lineDashPattern:(IJSVGNode*)node
 {
-    NSMutableArray* arr = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* arr = [[[NSMutableArray alloc] initWithCapacity:node.strokeDashArrayCount] autorelease];
     for (NSInteger i = 0; i < node.strokeDashArrayCount; i++) {
         [arr addObject:@((CGFloat)node.strokeDashArray[i])];
     }
-    return [[arr copy] autorelease];
+    return arr;
 }
 
 - (NSString*)lineJoin:(IJSVGLineJoinStyle)joinStyle
