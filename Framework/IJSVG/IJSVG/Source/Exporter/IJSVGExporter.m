@@ -1362,7 +1362,7 @@ NSString* IJSVGHash(NSString* key)
     BOOL cleanupPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths);
     BOOL convertArcs = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertArcs);
     BOOL convertShapesToPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertShapesToPaths);
-
+    
     // path
     switch (layer.primitiveType) {
     case kIJSVGPrimitivePathTypeRect: {
@@ -1513,7 +1513,10 @@ NSString* IJSVGHash(NSString* key)
                 }
             });
             if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
-                [instructions removeLastObject];
+                // remove last one if it was M
+                if(instructions.lastObject.instruction == 'M') {
+                    [instructions removeLastObject];
+                }
                 IJSVGExporterPathInstruction* instruction = nil;
                 instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
                                                                                dataCount:0] autorelease];
@@ -1522,8 +1525,10 @@ NSString* IJSVGHash(NSString* key)
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
             NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
+            __block CGPathElementType type;
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-                switch (pathElement->type) {
+                type = pathElement->type;
+                switch (type) {
                 case kCGPathElementMoveToPoint: {
                     pathElement->points[0].x = pathElement->points[0].x;
                     pathElement->points[0].y = pathElement->points[0].y;
@@ -1541,7 +1546,8 @@ NSString* IJSVGHash(NSString* key)
                 }
             });
             // polygon does not need the move to command
-            if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon) {
+            if (layer.primitiveType == kIJSVGPrimitivePathTypePolygon &&
+                type == kCGPathElementMoveToPoint) {
                 [points removeLastObject];
             }
             dict[@"points"] = [points componentsJoinedByString:@" "];
