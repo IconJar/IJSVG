@@ -20,10 +20,12 @@ BOOL IJSVGBeginTransaction(void)
     // of the catransaction for background composites
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
+    [CATransaction lock];
     return YES;
 };
 
 void IJSVGEndTransaction(void)
 {
+    [CATransaction unlock];
     [CATransaction commit];
 };
