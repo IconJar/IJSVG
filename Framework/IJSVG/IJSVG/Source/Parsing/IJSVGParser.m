@@ -1381,9 +1381,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     char* buffer;
     asprintf(&buffer, "M%f %f L", params[0], params[1]);
     
-    // compute a default buffer
-    size_t bSize = strlen(buffer);
-    size_t strLength = bSize;
+    // compute a default buffer - bSize is strlen + 1 for null byte
+    size_t bSize = strlen(buffer) + 1;
+    size_t strLength = bSize - 1;
     
     // for every pair of coordinates
     for(int i = 2; i < count; i+= 2) {
@@ -1394,18 +1394,19 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // if the new size of the string is large than the buffer
         // increase the buffer up another def size
         if((strLength + sSize + 1) > bSize) {
-            size_t nLength = MAX(sSize, defBufferSize) + 2;
+            size_t nLength = MAX(sSize, defBufferSize) + (closePath ? 2 : 1);
             buffer = realloc(buffer, sizeof(char)*(bSize+nLength));
             bSize += nLength;
         }
         
-        // append thr string onto the buffer, increment the
+        // append the string onto the buffer, increment the
         // string length and free the subbuffer memory
         strcat(buffer, subbuf);
         strLength += sSize;
         (void)free(subbuf), subbuf = NULL;
     }
     
+    // append the close path if required
     if(closePath == YES) {
         strcat(buffer, "z");
     }
