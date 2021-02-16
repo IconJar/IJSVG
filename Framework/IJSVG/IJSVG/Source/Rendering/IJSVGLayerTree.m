@@ -280,9 +280,14 @@
         NSColor* fColor = path.fillColor;
         BOOL hasColor = (fColor.alphaComponent == 0.f || fColor == nil) == NO;
         BOOL hasFill = path.fillPattern != nil || path.fillGradient != nil;
+        
+        // is there an overriding style in the sheet?
         if (_style.fillColor && (hasFill || hasColor || fColor == nil)) {
             fColor = _style.fillColor;
-        } else if (fColor != nil && path.fillOpacity.value != 1.f) {
+        }
+        
+        // if there is a color, change the opacity if required
+        if (fColor != nil && path.fillOpacity.value != 1.f) {
             fColor = [IJSVGColor changeAlphaOnColor:fColor
                                                  to:path.fillOpacity.value];
         }
