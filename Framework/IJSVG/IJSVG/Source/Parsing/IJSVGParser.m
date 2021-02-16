@@ -1392,9 +1392,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         size_t sSize = strlen(subbuf);
         
         // if the new size of the string is large than the buffer
-        // increase the buffer up another def size
-        if((strLength + sSize + 1) > bSize) {
-            size_t nLength = MAX(sSize, defBufferSize) + (closePath ? 2 : 1);
+        // increase the buffer up another def size - note, we always
+        // plus 2 incase the close path needs to be appended on the end
+        if((strLength + sSize + 2) > bSize) {
+            size_t nLength = MAX(sSize, defBufferSize) + 2;
             buffer = realloc(buffer, sizeof(char)*(bSize+nLength));
             bSize += nLength;
         }
