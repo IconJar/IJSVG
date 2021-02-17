@@ -33,6 +33,7 @@ static IJSVGPathDataSequence* _sequence;
     return _sequence;
 }
 
+// modified from https://github.com/SVGKit/SVGKit/blob/880c94a5b77b6f22beb491a7a7e02ace220c32af/Source/Parsers/SVGKPointsAndPathsParser.m
 + (void)runWithParams:(CGFloat*)params
            paramCount:(NSInteger)count
               command:(IJSVGCommand*)currentCommand
@@ -43,95 +44,95 @@ static IJSVGPathDataSequence* _sequence;
     CGPoint radii = CGPointZero;
     CGPoint arcEndPoint = CGPointZero;
     CGPoint pathCurrentPoint = path.currentPoint;
-    CGPoint arcStartPoint = pathCurrentPoint;
-    CGFloat xAxisRotation = 0;
-    BOOL largeArcFlag = 0;
-    BOOL sweepFlag = 0;
-
+    CGFloat xAxisRotation = 0.f;
+    BOOL largeArcFlag = NO;
+    BOOL sweepFlag = NO;
+    
     radii = [currentCommand readPoint];
     xAxisRotation = [currentCommand readFloat];
     largeArcFlag = [currentCommand readBOOL];
     sweepFlag = [currentCommand readBOOL];
     arcEndPoint = [currentCommand readPoint];
+    
+    CGFloat rx = fabs(radii.x);
+    CGFloat ry = fabs(radii.y);
+    
+    xAxisRotation *= M_PI / 180.f;
+    xAxisRotation = fmod(xAxisRotation, 2.f * M_PI);
 
     if (type == kIJSVGCommandTypeRelative) {
         arcEndPoint.x += pathCurrentPoint.x;
         arcEndPoint.y += pathCurrentPoint.y;
     }
-
-    xAxisRotation *= M_PI / 180.f;
-    CGPoint currentPoint = CGPointMake(cos(xAxisRotation) * (arcStartPoint.x - arcEndPoint.x) / 2.0 + sin(xAxisRotation) * (arcStartPoint.y - arcEndPoint.y) / 2.0, -sin(xAxisRotation) * (arcStartPoint.x - arcEndPoint.x) / 2.0 + cos(xAxisRotation) * (arcStartPoint.y - arcEndPoint.y) / 2.0);
-
-    CGFloat radiiAdjustment = pow(currentPoint.x, 2) / pow(radii.x, 2) + pow(currentPoint.y, 2) / pow(radii.y, 2);
-    radii.x *= (radiiAdjustment > 1) ? sqrt(radiiAdjustment) : 1;
-    radii.y *= (radiiAdjustment > 1) ? sqrt(radiiAdjustment) : 1;
-
-    CGFloat sweep = (largeArcFlag == sweepFlag ? -1 : 1) * sqrt(((pow(radii.x, 2) * pow(radii.y, 2)) - (pow(radii.x, 2) * pow(currentPoint.y, 2)) - (pow(radii.y, 2) * pow(currentPoint.x, 2))) / (pow(radii.x, 2) * pow(currentPoint.y, 2) + pow(radii.y, 2) * pow(currentPoint.x, 2)));
-    sweep = (sweep != sweep) ? 0 : sweep;
-    CGPoint preCenterPoint = CGPointMake(sweep * radii.x * currentPoint.y / radii.y, sweep * -radii.y * currentPoint.x / radii.x);
-
-    CGPoint centerPoint = CGPointMake((arcStartPoint.x + arcEndPoint.x) / 2.0 + cos(xAxisRotation) * preCenterPoint.x - sin(xAxisRotation) * preCenterPoint.y, (arcStartPoint.y + arcEndPoint.y) / 2.0 + sin(xAxisRotation) * preCenterPoint.x + cos(xAxisRotation) * preCenterPoint.y);
-
-    CGFloat startAngle = angle(CGPointMake(1, 0), CGPointMake((currentPoint.x - preCenterPoint.x) / radii.x, (currentPoint.y - preCenterPoint.y) / radii.y));
-
-    CGPoint deltaU = CGPointMake((currentPoint.x - preCenterPoint.x) / radii.x,
-        (currentPoint.y - preCenterPoint.y) / radii.y);
-    CGPoint deltaV = CGPointMake((-currentPoint.x - preCenterPoint.x) / radii.x,
-        (-currentPoint.y - preCenterPoint.y) / radii.y);
-    CGFloat angleDelta = (deltaU.x * deltaV.y < deltaU.y * deltaV.x ? -1 : 1) * acos(ratio(deltaU, deltaV));
-
-    angleDelta = (ratio(deltaU, deltaV) <= -1) ? M_PI : (ratio(deltaU, deltaV) >= 1) ? 0 : angleDelta;
-
-    // check for actually numbers, if this is not valid
-    // kill it, blame WWDC 2017 SVG background for this...
-    if (isnan(startAngle) || isnan(angleDelta)) {
+    
+    CGFloat x1 = pathCurrentPoint.x;
+    CGFloat y1 = pathCurrentPoint.y;
+    
+    CGFloat x2 = arcEndPoint.x;
+    CGFloat y2 = arcEndPoint.y;
+    
+    if (rx == 0.f || ry == 0.f) {
+        CGPathAddLineToPoint(path.path, NULL, x2, y2);
         return;
     }
+    
+    CGFloat cosPhi = cos(xAxisRotation);
+    CGFloat sinPhi = sin(xAxisRotation);
+    
+    CGFloat x1p = cosPhi * (x1 - x2) / 2.f + sinPhi * (y1 - y2) / 2.f;
+    CGFloat y1p = -sinPhi * (x1 - x2) / 2.f + cosPhi * (y1 - y2) / 2.f;
+    
+    CGFloat rx_2 = rx * rx;
+    CGFloat ry_2 = ry * ry;
+    CGFloat xp_2 = x1p * x1p;
+    CGFloat yp_2 = y1p * y1p;
 
-    CGFloat radius = MAX(radii.x, radii.y);
-    CGPoint scale = (radii.x > radii.y)
-        ? CGPointMake(1.f, radii.y / radii.x)
-        : CGPointMake(radii.x / radii.y, 1.f);
+    CGFloat delta = xp_2 / rx_2 + yp_2 / ry_2;
     
-    // translate it
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(-centerPoint.x, -centerPoint.y);
-    CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path.path, &transform);
+    if (delta > 1.f) {
+        rx *= sqrt(delta);
+        ry *= sqrt(delta);
+        rx_2 = rx * rx;
+        ry_2 = ry * ry;
+    }
     
-    // rotate it
-    transform = CGAffineTransformMakeRotation(-xAxisRotation);
-    CGPathRef rotatedPath = CGPathCreateCopyByTransformingPath(transformPath, &transform);
+    CGFloat sign = (largeArcFlag == sweepFlag) ? -1.f : 1.f;
+    CGFloat numerator = MAX(0.f, rx_2 * ry_2 - rx_2 * yp_2 - ry_2 * xp_2);
+    CGFloat denom = rx_2 * yp_2 + ry_2 * xp_2;
+    CGFloat lhs = denom == 0.f ? 0.f : sign * sqrt(numerator / denom);
     
-    // scale it
-    transform = CGAffineTransformMakeScale((1.f/scale.x), (1.f/scale.y));
-    CGMutablePathRef scaledPath = CGPathCreateMutableCopyByTransformingPath(rotatedPath, &transform);
+    CGFloat cxp = lhs * (rx * y1p) / ry;
+    CGFloat cyp = lhs * -((ry * x1p) / rx);
     
-    // add the arc
-    CGPathAddArc(scaledPath, NULL, 0.f, 0.f, radius, startAngle,
-                 startAngle + angleDelta, !sweepFlag);
+    CGFloat cx = cosPhi * cxp + -sinPhi * cyp + (x1 + x2) / 2.f;
+    CGFloat cy = cxp * sinPhi + cyp * cosPhi + (y1 + y2) / 2.f;
+
+    CGAffineTransform transform = CGAffineTransformMakeScale(1.f / rx, 1.f / ry);
+    transform = CGAffineTransformRotate(transform, -xAxisRotation);
+    transform = CGAffineTransformTranslate(transform, -cx, -cy);
     
-    // scale
-    transform = CGAffineTransformMakeScale(scale.x, scale.y);
-    CGPathRef rescaledPath = CGPathCreateCopyByTransformingPath(scaledPath, &transform);
+    CGPoint arcPt1 = CGPointApplyAffineTransform(CGPointMake(x1, y1), transform);
+    CGPoint arcPt2 = CGPointApplyAffineTransform(CGPointMake(x2, y2), transform);
+        
+    CGFloat startAngle = atan2(arcPt1.y, arcPt1.x);
+    CGFloat endAngle = atan2(arcPt2.y, arcPt2.x);
     
-    // rotate
-    transform = CGAffineTransformMakeRotation(xAxisRotation);
-    CGPathRef rerotatePath = CGPathCreateCopyByTransformingPath(rescaledPath, &transform);
+    CGFloat angleDelta = endAngle - startAngle;;
     
-    // translate
-    transform = CGAffineTransformMakeTranslation(centerPoint.x, centerPoint.y);
-    CGPathRef finalPath = CGPathCreateCopyByTransformingPath(rerotatePath, &transform);
+    if (sweepFlag == YES) {
+        if (angleDelta < 0.f) {
+            angleDelta += 2.f * M_PI;
+        }
+    } else if (angleDelta > 0.f) {
+        angleDelta = angleDelta - 2.f * M_PI;
+    }
     
-    // set the path back onto the path
-    path.path = (CGMutablePathRef)finalPath;
-    
-    // memory clean
-    (void)CGPathRelease(transformPath), transformPath = NULL;
-    (void)CGPathRelease(rotatedPath), rotatedPath = NULL;
-    (void)CGPathRelease(scaledPath), scaledPath = NULL;
-    (void)CGPathRelease(rescaledPath), rescaledPath = NULL;
-    (void)CGPathRelease(rerotatePath), rerotatePath = NULL;
-    (void)CGPathRelease(finalPath), finalPath = NULL;
-    
+    transform = CGAffineTransformMakeTranslation(cx, cy);
+    transform = CGAffineTransformRotate(transform, xAxisRotation);
+    transform = CGAffineTransformScale(transform, rx, ry);
+
+    CGPathAddRelativeArc(path.path, &transform, 0.f, 0.f, 1.f,
+                         startAngle, angleDelta);
 }
 
 @end

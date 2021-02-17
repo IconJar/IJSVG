@@ -202,4 +202,16 @@
     _currentIndex = 0;
 }
 
+- (NSString *)description
+{
+    NSMutableString* str = [[[NSMutableString alloc] init] autorelease];
+    [str appendFormat:@"%c ",_command];
+    NSMutableArray* args = [[[NSMutableArray alloc] initWithCapacity:_parameterCount] autorelease];
+    for(int i = 0; i < _parameterCount; i++) {
+        [args addObject:[NSString stringWithFormat:@"%f",_parameters[i]]];
+    }
+    [str appendString:[args componentsJoinedByString:@", "]];
+    return str;
+}
+
 @end
