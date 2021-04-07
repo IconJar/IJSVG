@@ -124,6 +124,13 @@
 - (id)initWithFilePathURL:(NSURL*)aURL
                     error:(NSError**)error
                  delegate:(id<IJSVGDelegate>)delegate;
+
+- (id)initWithDataAssetNamed:(NSDataAssetName)name
+                       error:(NSError**)error;
+- (id)initWithDataAssetNamed:(NSDataAssetName)name
+                      bundle:(NSBundle*)bundle
+                       error:(NSError**)error;
+
 - (NSImage*)imageWithSize:(NSSize)aSize;
 - (NSImage*)imageWithSize:(NSSize)aSize
                     error:(NSError**)error;

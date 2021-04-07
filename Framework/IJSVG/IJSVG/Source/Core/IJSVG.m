@@ -69,11 +69,34 @@
         ext = @"svg";
     }
     if ((str = [bundle pathForResource:[string stringByDeletingPathExtension]
-                                ofType:ext])
-        != nil) {
+                                ofType:ext]) != nil) {
         return [[[self alloc] initWithFile:str
                                      error:error
                                   delegate:delegate] autorelease];
+    }
+    
+    // check the asset catalogues
+    return [[[self alloc] initWithDataAssetNamed:string
+                                           error:error] autorelease];
+}
+
+- (id)initWithDataAssetNamed:(NSDataAssetName)name
+                       error:(NSError**)error
+{
+    return [self initWithDataAssetNamed:name
+                                 bundle:NSBundle.mainBundle
+                                  error:error];
+}
+
+- (id)initWithDataAssetNamed:(NSDataAssetName)name
+                      bundle:(NSBundle*)bundle
+                       error:(NSError**)error
+{
+    NSDataAsset* dataAsset = [[[NSDataAsset alloc] initWithName:name
+                                                         bundle:bundle] autorelease];
+    if(dataAsset != nil) {
+        return [[self initWithSVGData:dataAsset.data
+                                error:error] autorelease];
     }
     return nil;
 }
@@ -640,7 +663,14 @@
     viewPort.size.height = propSize.height * _clipScale;
 
     // check the viewport
-    if (NSEqualRects(_viewBox, NSZeroRect) || _viewBox.size.width <= 0 || _viewBox.size.height <= 0 || NSEqualRects(NSZeroRect, viewPort) || CGRectIsEmpty(viewPort) || CGRectIsNull(viewPort) || viewPort.size.width <= 0 || viewPort.size.height <= 0) {
+    if (NSEqualRects(_viewBox, NSZeroRect) ||
+        _viewBox.size.width <= 0 ||
+        _viewBox.size.height <= 0 ||
+        NSEqualRects(NSZeroRect, viewPort) ||
+        CGRectIsEmpty(viewPort) ||
+        CGRectIsNull(viewPort) ||
+        viewPort.size.width <= 0 ||
+        viewPort.size.height <= 0) {
         *valid = NO;
         return NSZeroRect;
     }
@@ -852,7 +882,8 @@
             }
 
             // check for any patterns
-            if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil || sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
+            if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil ||
+                sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
                 if (hasPatternFills != nil && *hasPatternFills != YES) {
                     *hasPatternFills = YES;
                 }
