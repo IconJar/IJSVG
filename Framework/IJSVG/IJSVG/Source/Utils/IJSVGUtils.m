@@ -314,6 +314,42 @@ CGFloat degrees_to_radians(CGFloat degrees)
     return IJSVGLineCapStyleButt;
 }
 
++ (IJSVGLineCapStyle)lineCapStyleForCGLineCap:(CGLineCap)lineCap
+{
+    switch(lineCap) {
+        case kCGLineCapButt: {
+            return IJSVGLineCapStyleButt;
+        }
+        case kCGLineCapRound: {
+            return IJSVGLineCapStyleRound;
+        }
+        case kCGLineCapSquare: {
+            return IJSVGLineCapStyleSquare;
+        }
+        default: {
+            return IJSVGLineCapStyleInherit;
+        }
+    }
+}
+
++ (IJSVGLineJoinStyle)lineJoinStyleForCGLineJoin:(CGLineJoin)lineJoin
+{
+    switch(lineJoin) {
+        case kCGLineJoinRound: {
+            return IJSVGLineJoinStyleRound;
+        }
+        case kCGLineJoinMiter: {
+            return IJSVGLineJoinStyleMiter;
+        }
+        case kCGLineJoinBevel: {
+            return IJSVGLineJoinStyleBevel;
+        }
+        default: {
+            return IJSVGLineJoinStyleInherit;
+        }
+    }
+}
+
 + (IJSVGUnitType)unitTypeForString:(NSString*)string
 {
     if ([string isEqualToString:@"userSpaceOnUse"]) {

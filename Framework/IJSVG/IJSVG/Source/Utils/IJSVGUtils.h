@@ -47,6 +47,8 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string;
++ (IJSVGLineJoinStyle)lineJoinStyleForCGLineJoin:(CGLineJoin)lineJoin;
++ (IJSVGLineCapStyle)lineCapStyleForCGLineCap:(CGLineCap)lineCap;
 + (IJSVGUnitType)unitTypeForString:(NSString*)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
