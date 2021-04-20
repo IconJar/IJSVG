@@ -22,7 +22,6 @@
     if ((self = [super init]) != nil) {
         _replacementColorTree = [[NSMutableDictionary alloc] init];
         _colors = [[NSMutableSet alloc] init];
-        _types = IJSVGColorListTypeNone;
     }
     return self;
 }
@@ -90,18 +89,32 @@
     }
 }
 
-- (NSSet<NSColor*>*)colors
+- (NSSet<IJSVGColorType*>*)colors
 {
     return [NSSet setWithSet:_colors];
 }
 
 - (void)addColorsFromList:(IJSVGColorList*)sheet
 {
-    [_colors addObjectsFromArray:sheet.colors.allObjects];
+    for(IJSVGColorType* color in sheet.colors) {
+        [self addColor:color];
+    }
 }
 
 - (void)addColor:(IJSVGColorType*)color
 {
+    // we just need to update its bit mask
+    if([_colors containsObject:color] == YES) {
+        void (^handler)(IJSVGColorType * _Nonnull obj, BOOL * _Nonnull stop) =
+        ^(IJSVGColorType * _Nonnull obj, BOOL * _Nonnull stop) {
+            if([obj isEqual:color] == YES) {
+                obj.flags |= color.flags;
+                *stop = YES;
+            }
+        };
+        [_colors enumerateObjectsUsingBlock:handler];
+        return;
+    }
     [_colors addObject:color];
 }
 

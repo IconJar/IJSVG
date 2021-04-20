@@ -21,9 +21,9 @@
 @class IJSVG;
 
 typedef NS_OPTIONS(NSInteger, IJSVGMatchPropertiesMask) {
-    IJSVGMatchPropertyNone,
-    IJSVGMatchPropertyContainsMaskedElement,
-    IJSVGMatchPropertyContainsStrokedElement
+    IJSVGMatchPropertyNone = 0,
+    IJSVGMatchPropertyContainsMaskedElement = 1 << 0,
+    IJSVGMatchPropertyContainsStrokedElement = 1 << 1
 };
 
 @protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>

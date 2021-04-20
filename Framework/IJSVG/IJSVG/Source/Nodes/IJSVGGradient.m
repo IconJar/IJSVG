@@ -72,7 +72,6 @@
 - (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
-    sheet.types |= IJSVGColorListTypeStopColor;
     NSInteger num = self.gradient.numberOfColorStops;
     for (NSInteger i = 0; i < num; i++) {
         NSColor* color;
@@ -80,7 +79,7 @@
                        location:nil
                         atIndex:i];
         IJSVGColorType* type = [IJSVGColorType typeWithColor:color
-                                                        mask:IJSVGColorTypeMaskStop];
+                                                        flags:IJSVGColorTypeFlagStop];
         [sheet addColor:type];
     }
     return sheet;

@@ -17,11 +17,11 @@
 }
 
 + (IJSVGColorType*)typeWithColor:(NSColor*)color
-                            mask:(IJSVGColorTypeMask)mask
+                           flags:(IJSVGColorTypeFlags)mask
 {
     IJSVGColorType* type = [[[self alloc] init] autorelease];
     type.color = color;
-    type.mask = mask;
+    type.flags = mask;
     return type;
 }
 

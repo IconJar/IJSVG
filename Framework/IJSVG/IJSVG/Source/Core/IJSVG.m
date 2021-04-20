@@ -882,9 +882,8 @@
            color.alphaComponent != 0.f) {
             IJSVGColorType* type = nil;
             type = [IJSVGColorType typeWithColor:color
-                                            mask:IJSVGColorTypeMaskFill];
+                                            flags:IJSVGColorTypeFlagFill];
             [sheet addColor:type];
-            sheet.types |= IJSVGColorListTypeFill;
         }
         
         // stroke color
@@ -893,9 +892,8 @@
            color.alphaComponent != 0.f) {
             IJSVGColorType* type = nil;
             type = [IJSVGColorType typeWithColor:color
-                                            mask:IJSVGColorTypeMaskStroke];
+                                            flags:IJSVGColorTypeFlagStroke];
             [sheet addColor:type];
-            sheet.types |= IJSVGColorListTypeStroke;
         }
         
         // fill gradient
@@ -909,12 +907,6 @@
         if((gradient = node.strokeGradient) != nil) {
             IJSVGColorList* list = gradient.colorList;
             [sheet addColorsFromList:list];
-            sheet.types |= IJSVGColorListTypeStopColor;
-        }
-        
-        // any patterns?
-        if(node.fillPattern != nil || node.strokePattern != nil) {
-            sheet.types |= IJSVGColorListTypePatterns;
         }
     };
     
@@ -929,7 +921,7 @@
             if([node isKindOfClass:IJSVGPath.class] == YES) {
                 IJSVGColorType* type = nil;
                 type = [IJSVGColorType typeWithColor:[IJSVGColor colorFromHEXInteger:0x000000]
-                                                mask:IJSVGColorTypeMaskFill];
+                                                flags:IJSVGColorTypeFlagFill];
                 [sheet addColor:type];
                 *stop = YES;
             }

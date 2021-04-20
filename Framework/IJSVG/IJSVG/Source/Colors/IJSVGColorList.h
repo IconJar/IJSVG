@@ -10,14 +10,6 @@
 #import "IJSVGColorType.h"
 #import <Foundation/Foundation.h>
 
-typedef NS_OPTIONS(NSInteger, IJSVGColorListTypes) {
-    IJSVGColorListTypeNone,
-    IJSVGColorListTypeFill,
-    IJSVGColorListTypeStroke,
-    IJSVGColorListTypeStopColor,
-    IJSVGColorListTypePatterns
-};
-
 @interface IJSVGColorList : NSObject <NSCopying> {
 
 @private
@@ -25,7 +17,6 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorListTypes) {
     NSMutableSet<IJSVGColorType*>* _colors;
 }
 
-@property (nonatomic, assign) IJSVGColorListTypes types;
 @property (nonatomic, assign, readonly) NSUInteger count;
 
 - (NSColor*)proposedColorForColor:(NSColor*)color;
