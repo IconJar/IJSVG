@@ -67,7 +67,7 @@
 
 - (BOOL)isStroked
 {
-    return self.strokeColor != nil ||
+    return (self.strokeColor != nil && self.strokeColor.alphaComponent != 0.f) ||
         self.strokePattern != nil ||
         self.strokeGradient != nil;
 }
