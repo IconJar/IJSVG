@@ -880,7 +880,10 @@
         if((color = node.fillColor) != nil &&
            (color = [IJSVGColor computeColorSpace:color]) != nil &&
            color.alphaComponent != 0.f) {
-            [sheet addColor:color];
+            IJSVGColorType* type = nil;
+            type = [IJSVGColorType typeWithColor:color
+                                            mask:IJSVGColorTypeMaskFill];
+            [sheet addColor:type];
             sheet.types |= IJSVGColorListTypeFill;
         }
         
@@ -888,7 +891,10 @@
         if((color = node.strokeColor) != nil &&
            (color = [IJSVGColor computeColorSpace:color]) != nil &&
            color.alphaComponent != 0.f) {
-            [sheet addColor:color];
+            IJSVGColorType* type = nil;
+            type = [IJSVGColorType typeWithColor:color
+                                            mask:IJSVGColorTypeMaskStroke];
+            [sheet addColor:type];
             sheet.types |= IJSVGColorListTypeStroke;
         }
         
@@ -921,8 +927,10 @@
                                               BOOL* allowChildNodes,
                                               BOOL* stop) {
             if([node isKindOfClass:IJSVGPath.class] == YES) {
-                [sheet addColor:[IJSVGColor colorFromHEXInteger:0x000000]];
-                sheet.types |= IJSVGColorListTypeFill;
+                IJSVGColorType* type = nil;
+                type = [IJSVGColorType typeWithColor:[IJSVGColor colorFromHEXInteger:0x000000]
+                                                mask:IJSVGColorTypeMaskFill];
+                [sheet addColor:type];
                 *stop = YES;
             }
         };

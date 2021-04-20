@@ -100,14 +100,14 @@
     [_colors addObjectsFromArray:sheet.colors.allObjects];
 }
 
-- (void)addColor:(NSColor*)color
+- (void)addColor:(IJSVGColorType*)color
 {
-    [_colors addObject:[IJSVGColor computeColorSpace:color]];
+    [_colors addObject:color];
 }
 
-- (void)removeColor:(NSColor*)color
+- (void)removeColor:(IJSVGColorType*)color
 {
-    [_colors removeObject:[IJSVGColor computeColorSpace:color]];
+    [_colors removeObject:color];
 }
 
 - (NSUInteger)count

@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGColor.h"
+#import "IJSVGColorType.h"
 #import <Foundation/Foundation.h>
 
 typedef NS_OPTIONS(NSInteger, IJSVGColorListTypes) {
@@ -21,7 +22,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorListTypes) {
 
 @private
     NSMutableDictionary<NSColor*, NSColor*>* _replacementColorTree;
-    NSMutableSet<NSColor*>* _colors;
+    NSMutableSet<IJSVGColorType*>* _colors;
 }
 
 @property (nonatomic, assign) IJSVGColorListTypes types;
@@ -36,7 +37,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorListTypes) {
          clearExistingColors:(BOOL)clearExistingColors;
 
 - (void)addColorsFromList:(IJSVGColorList*)sheet;
-- (NSSet<NSColor*>*)colors;
-- (void)addColor:(NSColor*)color;
+- (NSSet<IJSVGColorType*>*)colors;
+- (void)addColor:(IJSVGColorType*)color;
 
 @end

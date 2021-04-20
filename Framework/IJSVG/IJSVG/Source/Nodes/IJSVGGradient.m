@@ -69,77 +69,6 @@
     return stopsParams;
 }
 
-//+ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
-//                      element:(NSXMLElement*)element
-//                       colors:(NSArray**)someColors
-//{
-//    // find each stop element
-//    NSArray* stops = [element children];
-//    NSMutableArray* colors = [[[NSMutableArray alloc] initWithCapacity:stops.count] autorelease];
-//    CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
-//    NSInteger i = 0;
-//    for (NSXMLElement* stop in stops) {
-//        // find the offset
-//        CGFloat offset = [stop attributeForName:IJSVGAttributeOffset].stringValue.floatValue;
-//        if (offset > 1.f) {
-//            offset /= 100.f;
-//        }
-//
-//        stopsParams[i++] = offset;
-//
-//        // find the stop opacity
-//        CGFloat stopOpacity = 1.f;
-//        NSXMLNode* stopOpacityAttribute = [stop attributeForName:IJSVGAttributeStopOpacity];
-//        if (stopOpacityAttribute != nil) {
-//            stopOpacity = stopOpacityAttribute.stringValue.floatValue;
-//        }
-//
-//        // find the stop color
-//        NSString* scs = [stop attributeForName:IJSVGAttributeStopColor].stringValue;
-//        NSColor* stopColor = [IJSVGColor colorFromString:scs];
-//        if (stopColor != nil && stopOpacity != 1.f) {
-//            stopColor = [IJSVGColor changeAlphaOnColor:stopColor
-//                                                    to:stopOpacity];
-//        }
-//
-//        // compute any style that there was...
-//        NSXMLNode* styleAttribute = [stop attributeForName:IJSVGAttributeStyle];
-//        if (styleAttribute != nil) {
-//
-//            IJSVGStyle* style = [IJSVGStyle parseStyleString:styleAttribute.stringValue];
-//            NSColor* color = [IJSVGColor colorFromString:[style property:IJSVGAttributeStopColor]];
-//
-//            // we have a color!
-//            if (color != nil) {
-//                // is there a stop opacity?
-//                NSString* numberString = nil;
-//                if ((numberString = [style property:IJSVGAttributeStopOpacity]) != nil) {
-//                    color = [IJSVGColor changeAlphaOnColor:color
-//                                                        to:numberString.floatValue];
-//                } else {
-//                    color = [IJSVGColor changeAlphaOnColor:color
-//                                                        to:stopOpacity];
-//                }
-//                stopColor = color;
-//            }
-//        }
-//
-//        // default is black
-//        if (stopColor == nil) {
-//            stopColor = [IJSVGColor colorFromString:@"black"];
-//            if (stopOpacity != 1.f) {
-//                stopColor = [IJSVGColor changeAlphaOnColor:stopColor
-//                                                        to:stopOpacity];
-//            }
-//        }
-//
-//        // add the stop color
-//        [(NSMutableArray*)colors addObject:stopColor];
-//    }
-//    *someColors = colors;
-//    return stopsParams;
-//}
-
 - (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
@@ -150,7 +79,9 @@
         [self.gradient getColor:&color
                        location:nil
                         atIndex:i];
-        [sheet addColor:color];
+        IJSVGColorType* type = [IJSVGColorType typeWithColor:color
+                                                        mask:IJSVGColorTypeMaskStop];
+        [sheet addColor:type];
     }
     return sheet;
 }
