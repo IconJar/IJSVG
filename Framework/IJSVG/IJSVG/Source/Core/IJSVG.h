@@ -20,6 +20,12 @@
 
 @class IJSVG;
 
+typedef NS_OPTIONS(NSInteger, IJSVGMatchPropertiesMask) {
+    IJSVGMatchPropertyNone,
+    IJSVGMatchPropertyContainsMaskedElement,
+    IJSVGMatchPropertyContainsStrokedElement
+};
+
 @protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>
 
 @optional
@@ -170,6 +176,9 @@
 - (void)setNeedsDisplay;
 
 // colors
-- (IJSVGColorList*)computedColorList:(BOOL*)hasPatternFills;
+- (IJSVGColorList*)colorList;
 - (void)performBlock:(dispatch_block_t)block;
+
+// matching
+- (BOOL)matchesPropertiesWithMask:(IJSVGMatchPropertiesMask)mask;
 @end

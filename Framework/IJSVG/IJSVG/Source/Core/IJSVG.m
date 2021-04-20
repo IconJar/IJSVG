@@ -572,20 +572,24 @@
 {
     // turn on converts masks to PDF's
     // as PDF context and layer masks dont work
-    void (^block)(CALayer* layer, BOOL isMask) = ^void(CALayer* layer, BOOL isMask) {
+    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
         ((IJSVGLayer*)layer).convertMasksToPaths = YES;
     };
-    [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
 }
 
 - (void)_endVectorDraw
 {
     // turn of convert masks to paths as not
     // needed for generic rendering
-    void (^block)(CALayer* layer, BOOL isMask) = ^void(CALayer* layer, BOOL isMask) {
+    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
         ((IJSVGLayer*)layer).convertMasksToPaths = NO;
     };
-    [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
 }
 
 - (void)prepForDrawingInView:(NSView*)view
@@ -783,7 +787,8 @@
     }
 
     // walk the tree
-    void (^block)(CALayer* layer, BOOL isMask) = ^void(CALayer* layer, BOOL isMask) {
+    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
         IJSVGLayer* propLayer = ((IJSVGLayer*)layer);
         propLayer.renderQuality = quality;
         if (propLayer.requiresBackingScaleHelp == YES) {
@@ -859,54 +864,71 @@
     (void)([_layerTree release]), _layerTree = nil;
 }
 
-- (IJSVGColorList*)computedColorList:(BOOL*)hasPatternFills
+- (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
-    void (^block)(CALayer* layer, BOOL isMask) = ^void(CALayer* layer,
-        BOOL isMask) {
-        if ([layer isKindOfClass:[IJSVGShapeLayer class]] && isMask == NO && layer.isHidden == NO) {
-            IJSVGShapeLayer* sLayer = (IJSVGShapeLayer*)layer;
-            NSColor* color = nil;
-            if (sLayer.fillColor != nil) {
-                color = [NSColor colorWithCGColor:sLayer.fillColor];
-                if (color.alphaComponent != 0.f) {
-                    [sheet addColor:color];
-                }
-            }
-            if (sLayer.strokeColor != nil) {
-                color = [NSColor colorWithCGColor:sLayer.strokeColor];
-                color = [IJSVGColor computeColorSpace:color];
-                if (color.alphaComponent != 0.f) {
-                    [sheet addColor:color];
-                }
-            }
-
-            // check for any patterns
-            if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil ||
-                sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
-                if (hasPatternFills != nil && *hasPatternFills != YES) {
-                    *hasPatternFills = YES;
-                }
-
-                // add any colors from gradients
-                IJSVGGradientLayer* gradLayer = nil;
-                IJSVGGradientLayer* gradStrokeLayer = nil;
-                if ((gradLayer = sLayer.gradientFillLayer) != nil) {
-                    IJSVGColorList* gradSheet = gradLayer.gradient.computedColorList;
-                    [sheet addColorsFromList:gradSheet];
-                }
-                if ((gradStrokeLayer = sLayer.gradientStrokeLayer) != nil) {
-                    IJSVGColorList* gradSheet = gradStrokeLayer.gradient.computedColorList;
-                    [sheet addColorsFromList:gradSheet];
-                }
-            }
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes,
+                                     BOOL* stop) {
+        // dont do anything if not told to render
+        if(node.shouldRender == NO) {
+            *allowChildNodes = NO;
+            return;
+        }
+        
+        // fill color
+        NSColor* color;
+        if((color = node.fillColor) != nil &&
+           (color = [IJSVGColor computeColorSpace:color]) != nil &&
+           color.alphaComponent != 0.f) {
+            [sheet addColor:color];
+            sheet.types |= IJSVGColorListTypeFill;
+        }
+        
+        // stroke color
+        if((color = node.strokeColor) != nil &&
+           (color = [IJSVGColor computeColorSpace:color]) != nil &&
+           color.alphaComponent != 0.f) {
+            [sheet addColor:color];
+            sheet.types |= IJSVGColorListTypeStroke;
+        }
+        
+        // fill gradient
+        IJSVGGradient* gradient;
+        if((gradient = node.fillGradient) != nil) {
+            IJSVGColorList* list = gradient.colorList;
+            [sheet addColorsFromList:list];
+        }
+        
+        // stroke gradient
+        if((gradient = node.strokeGradient) != nil) {
+            IJSVGColorList* list = gradient.colorList;
+            [sheet addColorsFromList:list];
+            sheet.types |= IJSVGColorListTypeStopColor;
+        }
+        
+        // any patterns?
+        if(node.fillPattern != nil || node.strokePattern != nil) {
+            sheet.types |= IJSVGColorListTypePatterns;
         }
     };
-
-    // walk
-    [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
-
-    // return the colours!
+    
+    [IJSVGNode walkNodeTree:_group
+                    handler:handler];
+    
+    // is it blank? - check for pathed nodes
+    if(sheet.count == 0) {
+        IJSVGNodeWalkHandler checkHandler = ^(IJSVGNode* node,
+                                              BOOL* allowChildNodes,
+                                              BOOL* stop) {
+            if([node isKindOfClass:IJSVGPath.class] == YES) {
+                [sheet addColor:[IJSVGColor colorFromHEXInteger:0x000000]];
+                sheet.types |= IJSVGColorListTypeFill;
+                *stop = YES;
+            }
+        };
+        [IJSVGNode walkNodeTree:_group
+                        handler:checkHandler];
+    }
     return sheet;
 }
 
@@ -974,6 +996,45 @@
             handleForeignObject:foreignObject
                        document:document];
     }
+}
+
+#pragma mark matching
+
+- (BOOL)matchesPropertiesWithMask:(IJSVGMatchPropertiesMask)mask
+{
+    __block IJSVGMatchPropertiesMask matchedMask = IJSVGMatchPropertyNone;
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes,
+                                     BOOL* stop) {
+        // dont compute nodes that are not designed
+        // to be rendered
+        if(node.shouldRender == NO) {
+            *allowChildNodes = NO;
+            return;
+        }
+        
+        // check for stroke
+        IJSVGPath* path = (IJSVGPath*)node;
+        if((mask & IJSVGMatchPropertyContainsStrokedElement) != 0 &&
+           [node isKindOfClass:IJSVGPath.class] == YES &&
+           path.isStroked == YES) {
+            matchedMask |= IJSVGMatchPropertyContainsStrokedElement;
+        }
+        
+        // check for mask
+        if((mask & IJSVGMatchPropertyContainsMaskedElement) != 0 &&
+           node.mask != nil) {
+            matchedMask |= IJSVGMatchPropertyContainsMaskedElement;
+        }
+        
+        // simply check if masks equal, if they are, stop this loop
+        // and return the evaluation
+        if(matchedMask == mask) {
+            *stop = YES;
+        }
+    };
+    [IJSVGNode walkNodeTree:_group
+                    handler:handler];
+    return matchedMask == mask;
 }
 
 @end

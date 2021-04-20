@@ -29,6 +29,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
+@property (nonatomic, assign, readonly) BOOL isStroked;
 
 - (void)close;
 - (NSPoint)currentPoint;

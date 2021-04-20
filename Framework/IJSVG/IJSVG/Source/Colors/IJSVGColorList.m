@@ -22,6 +22,7 @@
     if ((self = [super init]) != nil) {
         _replacementColorTree = [[NSMutableDictionary alloc] init];
         _colors = [[NSMutableSet alloc] init];
+        _types = IJSVGColorListTypeNone;
     }
     return self;
 }
@@ -107,6 +108,11 @@
 - (void)removeColor:(NSColor*)color
 {
     [_colors removeObject:[IJSVGColor computeColorSpace:color]];
+}
+
+- (NSUInteger)count
+{
+    return _colors.count;
 }
 
 @end

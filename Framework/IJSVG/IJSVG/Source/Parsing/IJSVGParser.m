@@ -480,7 +480,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         if (fillDefID != nil) {
             // find the object
             id obj = [self definedObjectForID:fillDefID];
-
             // what type is it?
             if ([obj isKindOfClass:[IJSVGGradient class]]) {
                 node.fillGradient = (IJSVGGradient*)obj;
@@ -514,6 +513,25 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     attr(IJSVGAttributeDisplay, ^(NSString* value) {
         if ([value.lowercaseString isEqualToString:@"none"]) {
             node.shouldRender = NO;
+        }
+    });
+    
+    // offset
+    attr(IJSVGAttributeOffset, ^(NSString* value) {
+        node.offset = [IJSVGUnitLength unitWithString:value];
+    });
+    
+    // stop-opacity
+    attr(IJSVGAttributeStopOpacity, ^(NSString* value) {
+        node.fillOpacity = [IJSVGUnitLength unitWithString:value];
+    });
+    
+    // stop-color
+    attr(IJSVGAttributeStopColor, ^(NSString* value) {
+        node.fillColor = [IJSVGColor colorFromString:value];
+        if(node.fillOpacity.value != 1.f) {
+            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
+                                                         to:node.fillOpacity.value];
         }
     });
     
@@ -1024,6 +1042,18 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [parentGroup addDef:node];
         break;
     }
+     
+        // stop color
+    case IJSVGNodeTypeStop: {
+        IJSVGNode* node = [[[IJSVGNode alloc] init] autorelease];
+        node.type = IJSVGNodeTypeStop;
+        [self _setupDefaultsForNode:node];
+        [self _parseElementForCommonAttributes:element
+                                          node:node
+                              ignoreAttributes:nil];
+        [parentGroup addChild:node];
+        break;
+    }
 
         // linear gradient
     case IJSVGNodeTypeLinearGradient: {
@@ -1044,6 +1074,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             [self _parseElementForCommonAttributes:elementCopy
                                               node:grad
                                   ignoreAttributes:nil];
+            [self _parseBlock:elementCopy
+                    intoGroup:grad
+                          def:NO];
             grad.gradient = [IJSVGLinearGradient parseGradient:elementCopy
                                                       gradient:grad];
             [parentGroup addDef:grad];
@@ -1056,6 +1089,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [self _parseElementForCommonAttributes:element
                                           node:gradient
                               ignoreAttributes:nil];
+        [self _parseBlock:element
+                intoGroup:gradient
+                      def:NO];
         gradient.gradient = [IJSVGLinearGradient parseGradient:element
                                                       gradient:gradient];
         [parentGroup addDef:gradient];
@@ -1081,6 +1117,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             [self _parseElementForCommonAttributes:elementCopy
                                               node:grad
                                   ignoreAttributes:nil];
+            [self _parseBlock:elementCopy
+                    intoGroup:grad
+                          def:NO];
             grad.gradient = [IJSVGRadialGradient parseGradient:elementCopy
                                                       gradient:grad];
             [parentGroup addDef:grad];
@@ -1093,6 +1132,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [self _parseElementForCommonAttributes:element
                                           node:gradient
                               ignoreAttributes:nil];
+        [self _parseBlock:element
+                intoGroup:gradient
+                      def:NO];
         gradient.gradient = [IJSVGRadialGradient parseGradient:element
                                                       gradient:gradient];
         [parentGroup addDef:gradient];
