@@ -111,6 +111,7 @@
 
 + (IJSVG*)convertPathToSVG:(CGPathRef)path
 {
+    IJSVGBeginTransaction();
     __block IJSVG* svg = nil;
     IJSVGGroupLayer* layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     IJSVGShapeLayer* shape = [[[IJSVGShapeLayer alloc] init] autorelease];
@@ -119,6 +120,7 @@
     CGRect box = CGPathGetPathBoundingBox(path);
     svg = [[IJSVG alloc] initWithSVGLayer:layer
                                   viewBox:box];
+    IJSVGEndTransaction();
     return [svg autorelease];
 }
 
