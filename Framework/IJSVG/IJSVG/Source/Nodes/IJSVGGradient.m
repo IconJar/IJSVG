@@ -85,6 +85,11 @@
     return sheet;
 }
 
+- (IJSVGColorList*)computedColorList
+{
+    return _privateColorList;
+}
+
 - (CGGradientRef)CGGradient
 {
     // store it in the cache

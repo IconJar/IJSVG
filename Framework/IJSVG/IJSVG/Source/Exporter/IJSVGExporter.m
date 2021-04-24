@@ -1212,7 +1212,7 @@ NSString* IJSVGHash(NSString* key)
 
     // add the stops
     NSGradient* grad = layer.gradient.gradient;
-    IJSVGColorList* sheet = layer.gradient.colorList;
+    IJSVGColorList* sheet = layer.gradient.computedColorList;
     NSInteger noStops = grad.numberOfColorStops;
     for (NSInteger i = 0; i < noStops; i++) {
 

@@ -118,6 +118,11 @@
     [_colors addObject:color];
 }
 
+- (NSDictionary<NSColor*,NSColor*>*)replacementColors
+{
+    return _replacementColorTree;
+}
+
 - (void)removeColor:(IJSVGColorType*)color
 {
     [_colors removeObject:color];

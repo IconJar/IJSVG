@@ -36,5 +36,6 @@
             context:(CGContextRef)ctx;
 
 - (IJSVGColorList*)colorList;
+- (IJSVGColorList*)computedColorList;
 
 @end

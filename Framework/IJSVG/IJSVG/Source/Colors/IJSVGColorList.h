@@ -30,5 +30,6 @@
 - (void)addColorsFromList:(IJSVGColorList*)sheet;
 - (NSSet<IJSVGColorType*>*)colors;
 - (void)addColor:(IJSVGColorType*)color;
+- (NSDictionary<NSColor*, NSColor*>*)replacementColors;
 
 @end
