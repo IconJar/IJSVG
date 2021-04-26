@@ -6,7 +6,7 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUnitLength.h"
+#import <IJSVG/IJSVGUnitLength.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGUnitSize : NSObject

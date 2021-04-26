@@ -6,22 +6,22 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
-#import "IJSVGCommand.h"
-#import "IJSVGDef.h"
-#import "IJSVGError.h"
-#import "IJSVGForeignObject.h"
-#import "IJSVGGroup.h"
-#import "IJSVGImage.h"
-#import "IJSVGLinearGradient.h"
-#import "IJSVGPath.h"
-#import "IJSVGPattern.h"
-#import "IJSVGRadialGradient.h"
-#import "IJSVGStyleSheet.h"
-#import "IJSVGText.h"
-#import "IJSVGTransform.h"
-#import "IJSVGUnitRect.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGCommand.h>
+#import <IJSVG/IJSVGDef.h>
+#import <IJSVG/IJSVGError.h>
+#import <IJSVG/IJSVGForeignObject.h>
+#import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGPattern.h>
+#import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGStyleSheet.h>
+#import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGUtils.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 

@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
+#import <IJSVG/IJSVGColor.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGStyle : NSObject {

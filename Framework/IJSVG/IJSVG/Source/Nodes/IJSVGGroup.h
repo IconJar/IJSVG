@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
-#import "IJSVGPath.h"
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGPath.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGGroup : IJSVGNode {

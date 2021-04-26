@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyle.h"
-#import "IJSVGUnitLength.h"
+#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGUnitLength.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 

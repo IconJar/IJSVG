@@ -6,8 +6,8 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyleSheetRule.h"
-#import "IJSVGStyleSheetSelector.h"
+#import <IJSVG/IJSVGStyleSheetRule.h>
+#import <IJSVG/IJSVGStyleSheetSelector.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGNode;

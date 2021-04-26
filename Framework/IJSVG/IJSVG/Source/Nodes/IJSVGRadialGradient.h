@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGradient.h"
+#import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGRadialGradient : IJSVGGradient

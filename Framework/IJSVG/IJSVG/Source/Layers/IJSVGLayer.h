@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGRendering.h"
-#import "IJSVGTransaction.h"
+#import <IJSVG/IJSVGRendering.h>
+#import <IJSVG/IJSVGTransaction.h>
 #import <QuartzCore/QuartzCore.h>
 
 @class IJSVGShapeLayer;

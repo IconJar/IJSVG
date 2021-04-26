@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGUtils.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGTransform;

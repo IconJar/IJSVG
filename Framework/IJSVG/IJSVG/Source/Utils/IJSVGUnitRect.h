@@ -6,8 +6,8 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUnitPoint.h"
-#import "IJSVGUnitSize.h"
+#import <IJSVG/IJSVGUnitPoint.h>
+#import <IJSVG/IJSVGUnitSize.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGUnitRect : NSObject

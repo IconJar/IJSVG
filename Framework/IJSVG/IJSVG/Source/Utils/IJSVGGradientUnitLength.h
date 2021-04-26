@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUnitLength.h"
+#import <IJSVG/IJSVGUnitLength.h>
 
 @interface IJSVGGradientUnitLength : IJSVGUnitLength
 

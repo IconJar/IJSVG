@@ -6,16 +6,16 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColorList.h"
-#import "IJSVGExporter.h"
-#import "IJSVGGradientLayer.h"
-#import "IJSVGGroupLayer.h"
-#import "IJSVGImageLayer.h"
-#import "IJSVGLayerTree.h"
-#import "IJSVGParser.h"
-#import "IJSVGRendering.h"
-#import "IJSVGRenderingStyle.h"
-#import "IJSVGTransaction.h"
+#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGExporter.h>
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGImageLayer.h>
+#import <IJSVG/IJSVGLayerTree.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGRendering.h>
+#import <IJSVG/IJSVGRenderingStyle.h>
+#import <IJSVG/IJSVGTransaction.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVG;

@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
-#import "IJSVGColorType.h"
+#import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGColorType.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGColorList : NSObject <NSCopying> {

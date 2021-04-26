@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
+#import <IJSVG/IJSVGNode.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGGroup;
