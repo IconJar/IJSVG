@@ -65,4 +65,11 @@
     CGPathCloseSubpath(_path);
 }
 
+- (BOOL)isStroked
+{
+    return (self.strokeColor != nil && self.strokeColor.alphaComponent != 0.f) ||
+        self.strokePattern != nil ||
+        self.strokeGradient != nil;
+}
+
 @end

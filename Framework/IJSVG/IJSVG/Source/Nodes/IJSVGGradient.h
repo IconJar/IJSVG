@@ -6,12 +6,13 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColorList.h"
-#import "IJSVGDef.h"
-#import "IJSVGTransform.h"
+#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGDef.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGGroup.h>
 #import <Foundation/Foundation.h>
 
-@interface IJSVGGradient : IJSVGNode
+@interface IJSVGGradient : IJSVGGroup
 
 @property (nonatomic, retain) NSGradient* gradient;
 @property (nonatomic, assign) CGGradientRef CGGradient;
@@ -21,8 +22,9 @@
 @property (nonatomic, retain) IJSVGUnitLength* y2;
 @property (nonatomic, retain) IJSVGColorList* colorList;
 
-+ (CGFloat*)computeColorStopsFromString:(NSXMLElement*)element
-                                 colors:(NSArray**)someColors;
++ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
+                       colors:(NSArray**)someColors;
+
 - (CGGradientRef)CGGradient;
 - (void)drawInContextRef:(CGContextRef)ctx
               objectRect:(NSRect)objectRect
@@ -33,6 +35,7 @@
                 end:(CGPoint)endPoint
             context:(CGContextRef)ctx;
 
+- (IJSVGColorList*)colorList;
 - (IJSVGColorList*)computedColorList;
 
 @end

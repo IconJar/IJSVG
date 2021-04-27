@@ -89,24 +89,48 @@
     }
 }
 
-- (NSSet<NSColor*>*)colors
+- (NSSet<IJSVGColorType*>*)colors
 {
     return [NSSet setWithSet:_colors];
 }
 
 - (void)addColorsFromList:(IJSVGColorList*)sheet
 {
-    [_colors addObjectsFromArray:sheet.colors.allObjects];
+    for(IJSVGColorType* color in sheet.colors) {
+        [self addColor:color];
+    }
 }
 
-- (void)addColor:(NSColor*)color
+- (void)addColor:(IJSVGColorType*)color
 {
-    [_colors addObject:[IJSVGColor computeColorSpace:color]];
+    // we just need to update its bit mask
+    if([_colors containsObject:color] == YES) {
+        void (^handler)(IJSVGColorType * _Nonnull obj, BOOL * _Nonnull stop) =
+        ^(IJSVGColorType * _Nonnull obj, BOOL * _Nonnull stop) {
+            if([obj isEqual:color] == YES) {
+                obj.flags |= color.flags;
+                *stop = YES;
+            }
+        };
+        [_colors enumerateObjectsUsingBlock:handler];
+        return;
+    }
+    [_colors addObject:color];
 }
 
-- (void)removeColor:(NSColor*)color
+- (NSDictionary<NSColor*,NSColor*>*)replacementColors
 {
-    [_colors removeObject:[IJSVGColor computeColorSpace:color]];
+    return _replacementColorTree;
+}
+
+- (void)removeColor:(IJSVGColorType*)color
+{
+    [_colors removeObject:color];
+}
+
+- (NSUInteger)count
+{
+    return _colors.count;
 }
 
 @end

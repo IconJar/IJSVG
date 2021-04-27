@@ -6,15 +6,18 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
+#import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGColorType.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGColorList : NSObject <NSCopying> {
 
 @private
     NSMutableDictionary<NSColor*, NSColor*>* _replacementColorTree;
-    NSMutableSet<NSColor*>* _colors;
+    NSMutableSet<IJSVGColorType*>* _colors;
 }
+
+@property (nonatomic, assign, readonly) NSUInteger count;
 
 - (NSColor*)proposedColorForColor:(NSColor*)color;
 - (void)removeAllReplacementColors;
@@ -25,7 +28,8 @@
          clearExistingColors:(BOOL)clearExistingColors;
 
 - (void)addColorsFromList:(IJSVGColorList*)sheet;
-- (NSSet<NSColor*>*)colors;
-- (void)addColor:(NSColor*)color;
+- (NSSet<IJSVGColorType*>*)colors;
+- (void)addColor:(IJSVGColorType*)color;
+- (NSDictionary<NSColor*, NSColor*>*)replacementColors;
 
 @end

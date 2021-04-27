@@ -6,11 +6,12 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyle.h"
-#import "IJSVGUnitLength.h"
+#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGUnitLength.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+@class IJSVGNode;
 @class IJSVG;
 @class IJSVGGroup;
 @class IJSVGDef;
@@ -18,6 +19,8 @@
 @class IJSVGGroup;
 @class IJSVGPattern;
 @class IJSVGTransform;
+
+typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
 typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeGroup,
@@ -45,6 +48,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeSwitch,
     IJSVGNodeTypeTitle,
     IJSVGNodeTypeDesc,
+    IJSVGNodeTypeStop,
     IJSVGNodeTypeNotFound,
 };
 
@@ -116,6 +120,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property (nonatomic, retain) IJSVGUnitLength* fillOpacity;
 @property (nonatomic, retain) IJSVGUnitLength* strokeOpacity;
 @property (nonatomic, retain) IJSVGUnitLength* strokeWidth;
+@property (nonatomic, retain) IJSVGUnitLength* offset;
 @property (nonatomic, retain) NSColor* fillColor;
 @property (nonatomic, retain) NSColor* strokeColor;
 @property (nonatomic, copy) NSString* identifier;
@@ -139,6 +144,9 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
+
++ (void)walkNodeTree:(IJSVGNode*)node
+            handler:(IJSVGNodeWalkHandler)handler;
 
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind;

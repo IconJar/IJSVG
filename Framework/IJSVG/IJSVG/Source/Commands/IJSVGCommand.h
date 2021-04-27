@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandParser.h"
-#import "IJSVGPath.h"
+#import <IJSVG/IJSVGCommandParser.h>
+#import <IJSVG/IJSVGPath.h>
 #import <Foundation/Foundation.h>
 
 static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;

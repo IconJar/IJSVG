@@ -9,6 +9,7 @@
 #import "IJSVGDef.h"
 #import "IJSVGNode.h"
 #import "IJSVGUtils.h"
+#import "IJSVGGroup.h"
 
 @implementation IJSVGNode
 
@@ -20,6 +21,7 @@
     (void)([_width release]), _width = nil;
     (void)([_height release]), _height = nil;
     (void)([_opacity release]), _opacity = nil;
+    (void)([_offset release]), _offset = nil;
     (void)([_fillOpacity release]), _fillOpacity = nil;
     (void)([_strokeOpacity release]), _strokeOpacity = nil;
     (void)([_strokeWidth release]), _strokeWidth = nil;
@@ -95,6 +97,9 @@
     if (strcmp(name, "radialgradient") == 0) {
         return IJSVGNodeTypeRadialGradient;
     }
+    if(strcmp(name, "stop") == 0) {
+        return IJSVGNodeTypeStop;
+    }
     if (strcmp(name, "glyph") == 0) {
         return IJSVGNodeTypeGlyph;
     }
@@ -137,6 +142,50 @@
         self.opacity = [IJSVGUnitLength unitWithFloat:1];
     }
     return self;
+}
+
++ (void)walkNodeTree:(IJSVGNode*)node
+             handler:(IJSVGNodeWalkHandler)handler
+{
+    BOOL allowChildNodes = YES;
+    BOOL stop = NO;
+    [self _walkNodeTree:node
+                handler:handler
+        allowChildNodes:&allowChildNodes
+                   stop:&stop];
+}
+
++ (void)_walkNodeTree:(IJSVGNode*)node
+              handler:(IJSVGNodeWalkHandler)handler
+      allowChildNodes:(BOOL*)allowChildNodes
+                 stop:(BOOL*)stop
+{
+    // run the handler and instantly stop
+    // if stop is set
+    handler(node, allowChildNodes, stop);
+    if(*stop == YES) {
+        return;
+    }
+    
+    // child nodes only work for nodes
+    // that are type group
+    if(*allowChildNodes == NO ||
+       [node isKindOfClass:IJSVGGroup.class] == NO) {
+        *allowChildNodes = YES;
+        return;
+    }
+    
+    // iterate over the childnodes
+    IJSVGGroup* group = (IJSVGGroup*)node;
+    for(IJSVGNode* childNode in group.childNodes) {
+        [self _walkNodeTree:childNode
+                    handler:handler
+            allowChildNodes:allowChildNodes
+                       stop:stop];
+        if(*stop == YES) {
+            return;
+        }
+    }
 }
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node

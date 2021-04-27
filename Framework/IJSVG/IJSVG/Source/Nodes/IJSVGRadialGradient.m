@@ -77,7 +77,9 @@
     }
 
     NSArray* colors = nil;
-    CGFloat* colorStops = [self.class computeColorStopsFromString:element colors:&colors];
+    CGFloat* colorStops = [self.class computeColorStops:gradient
+                                                 colors:&colors];
+    
     NSGradient* ret = [[[NSGradient alloc] initWithColors:colors
                                               atLocations:colorStops
                                                colorSpace:IJSVGColor.defaultColorSpace] autorelease];

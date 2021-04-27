@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "IJSVGNode.h"
+#import <IJSVG/IJSVGNode.h>
 
 @interface IJSVGForeignObject : IJSVGNode {
 }

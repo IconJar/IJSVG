@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
+#import <IJSVG/IJSVGNode.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGGroup;
@@ -29,6 +29,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
+@property (nonatomic, assign, readonly) BOOL isStroked;
 
 - (void)close;
 - (NSPoint)currentPoint;

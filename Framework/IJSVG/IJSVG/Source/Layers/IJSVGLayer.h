@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGRendering.h"
-#import "IJSVGTransaction.h"
+#import <IJSVG/IJSVGRendering.h>
+#import <IJSVG/IJSVGTransaction.h>
 #import <QuartzCore/QuartzCore.h>
 
 @class IJSVGShapeLayer;
@@ -36,7 +36,7 @@
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer*)layer
-                   withBlock:(void (^)(CALayer* layer, BOOL isMask))block;
+                   withBlock:(void (^)(CALayer* layer, BOOL isMask, BOOL* stop))block;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGUtils.h>
 
 @class IJSVG;
 

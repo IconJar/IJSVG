@@ -13,21 +13,23 @@
 
 - (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar
 {
-    NSMutableArray<NSString*>* strings = nil;
-    strings = [[[NSMutableArray alloc] init] autorelease];
     char* chars = (char*)self.UTF8String;
     if(chars == NULL || strlen(chars) == 0) {
-        return strings;
+        return @[];
     }
-    char* copy = (char*)calloc(strlen(chars)+1, sizeof(char));
-    char* orig = copy;
-    strcpy(copy, chars);
-    char* ptr = strtok(copy, aChar);
+    NSMutableArray<NSString*>* strings = nil;
+    strings = [[[NSMutableArray alloc] init] autorelease];
+    char* copy = strdup(chars);
+    char* spt = NULL;
+    char* ptr = strtok_r(copy, aChar, &spt);
     while(ptr != NULL) {
-        [strings addObject:[NSString stringWithUTF8String:ptr]];
-        ptr = strtok(NULL, aChar);
+        NSString* possibleString = nil;
+        if((possibleString = [NSString stringWithUTF8String:ptr]) != nil) {
+            [strings addObject:possibleString];
+        }
+        ptr = strtok_r(NULL, aChar, &spt);
     }
-    (void)free(orig), orig = NULL;
+    (void)free(copy), copy = NULL;
     return strings;
 }
 

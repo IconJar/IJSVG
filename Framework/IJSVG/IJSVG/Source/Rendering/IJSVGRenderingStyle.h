@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColorList.h"
-#import "IJSVGNode.h"
+#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGNode.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>

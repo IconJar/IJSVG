@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroup.h"
+#import <IJSVG/IJSVGGroup.h>
 
 @interface IJSVGText : IJSVGGroup {
 }

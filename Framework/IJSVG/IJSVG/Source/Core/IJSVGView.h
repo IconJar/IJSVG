@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
+#import <IJSVG/IJSVG.h>
 #import <Cocoa/Cocoa.h>
 
 IB_DESIGNABLE

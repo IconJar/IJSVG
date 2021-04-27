@@ -6,7 +6,7 @@
 //  Copyright (c) 2015 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
+#import <IJSVG/IJSVG.h>
 #import <Foundation/Foundation.h>
 
 typedef void (^IJSVGFontConverterEnumerateBlock)(NSString* unicode, IJSVG* svg);

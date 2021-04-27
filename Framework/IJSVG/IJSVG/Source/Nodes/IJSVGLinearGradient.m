@@ -27,8 +27,8 @@
 
     // compute the color stops and colours
     NSArray* colors = nil;
-    CGFloat* stopsParams = [self.class computeColorStopsFromString:element
-                                                            colors:&colors];
+    CGFloat* stopsParams = [self.class computeColorStops:aGradient
+                                                  colors:&colors];
 
     // create the gradient with the colours
     NSGradient* grad = [[NSGradient alloc] initWithColors:colors

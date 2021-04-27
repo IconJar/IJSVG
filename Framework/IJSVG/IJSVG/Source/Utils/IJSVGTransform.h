@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGUtils.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGTransform;
@@ -14,7 +14,7 @@
 typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
 typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform* transform);
 
-typedef NS_OPTIONS(NSInteger, IJSVGTransformCommand) {
+typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
     IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
     IJSVGTransformCommandTranslateX,

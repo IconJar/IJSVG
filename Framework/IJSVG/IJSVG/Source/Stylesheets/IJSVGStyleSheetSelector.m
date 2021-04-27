@@ -278,8 +278,9 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         }
         
         // 100 for a id
-        if(rawSelector.identifier != nil)
+        if(rawSelector.identifier != nil) {
             _specificity += SPECIFICITY_IDENTIFIER;
+        }
         
         // 10 for a class
         _specificity += (rawSelector.classes.count*SPECIFICITY_CLASS);

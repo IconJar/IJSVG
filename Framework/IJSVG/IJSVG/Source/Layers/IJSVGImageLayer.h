@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGLayer.h"
+#import <IJSVG/IJSVGLayer.h>
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
 

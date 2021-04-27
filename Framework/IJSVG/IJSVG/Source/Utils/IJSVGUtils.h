@@ -6,9 +6,9 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommand.h"
-#import "IJSVGGradientUnitLength.h"
-#import "IJSVGStringAdditions.h"
+#import <IJSVG/IJSVGCommand.h>
+#import <IJSVG/IJSVGGradientUnitLength.h>
+#import <IJSVG/IJSVGStringAdditions.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN

@@ -46,7 +46,7 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
     return _array;
 }
 
-const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes()
+const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
 {
     static NSDictionary* _defaults;
     static dispatch_once_t onceToken;
@@ -108,7 +108,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes()
     return _defaults;
 }
 
-const NSArray* IJSVGInheritableAttributes()
+const NSArray* IJSVGInheritableAttributes(void)
 {
     static NSArray* _attributes;
     static dispatch_once_t onceToken;
@@ -1212,7 +1212,7 @@ NSString* IJSVGHash(NSString* key)
 
     // add the stops
     NSGradient* grad = layer.gradient.gradient;
-    IJSVGColorList* sheet = layer.gradient.colorList;
+    IJSVGColorList* sheet = layer.gradient.computedColorList;
     NSInteger noStops = grad.numberOfColorStops;
     for (NSInteger i = 0; i < noStops; i++) {
 
