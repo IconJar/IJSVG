@@ -20,7 +20,8 @@ static IJSVGPathDataSequence* _sequence;
 
 + (IJSVGPathDataSequence*)pathDataSequence
 {
-    if(_sequence == NULL) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         _sequence = (IJSVGPathDataSequence*)malloc(sizeof(IJSVGPathDataSequence) * 7);
         _sequence[0] = kIJSVGPathDataSequenceTypeFloat;
         _sequence[1] = kIJSVGPathDataSequenceTypeFloat;
@@ -29,7 +30,7 @@ static IJSVGPathDataSequence* _sequence;
         _sequence[4] = kIJSVGPathDataSequenceTypeFlag;
         _sequence[5] = kIJSVGPathDataSequenceTypeFloat;
         _sequence[6] = kIJSVGPathDataSequenceTypeFloat;
-    }
+    });
     return _sequence;
 }
 
