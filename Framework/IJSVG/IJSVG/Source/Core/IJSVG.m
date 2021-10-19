@@ -867,68 +867,69 @@
 - (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
-    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes,
-                                     BOOL* stop) {
-        // dont do anything if not told to render
-        if(node.shouldRender == NO) {
-            *allowChildNodes = NO;
+    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
+        
+        // dont do anything
+        if(([layer isKindOfClass:IJSVGShapeLayer.class] && isMask == NO &&
+            layer.isHidden == NO) == false) {
             return;
         }
         
+          
+        // compute
+        IJSVGShapeLayer* sLayer = (IJSVGShapeLayer*)layer;
+        NSColor* color = nil;
+
         // fill color
-        NSColor* color;
-        if((color = node.fillColor) != nil &&
-           (color = [IJSVGColor computeColorSpace:color]) != nil &&
-           color.alphaComponent != 0.f) {
-            IJSVGColorType* type = nil;
-            type = [IJSVGColorType typeWithColor:color
-                                            flags:IJSVGColorTypeFlagFill];
-            [sheet addColor:type];
+        if (sLayer.fillColor != nil) {
+            color = [NSColor colorWithCGColor:sLayer.fillColor];
+            color = [IJSVGColor computeColorSpace:color];
+            if (color.alphaComponent != 0.f) {
+                IJSVGColorType* type = nil;
+                type = [IJSVGColorType typeWithColor:color
+                                               flags:IJSVGColorTypeFlagFill];
+                [sheet addColor:type];
+            }
         }
-        
+
         // stroke color
-        if((color = node.strokeColor) != nil &&
-           (color = [IJSVGColor computeColorSpace:color]) != nil &&
-           color.alphaComponent != 0.f) {
-            IJSVGColorType* type = nil;
-            type = [IJSVGColorType typeWithColor:color
-                                            flags:IJSVGColorTypeFlagStroke];
-            [sheet addColor:type];
+        if (sLayer.strokeColor != nil) {
+            color = [NSColor colorWithCGColor:sLayer.strokeColor];
+            color = [IJSVGColor computeColorSpace:color];
+            if (color.alphaComponent != 0.f) {
+                IJSVGColorType* type = nil;
+                type = [IJSVGColorType typeWithColor:color
+                                               flags:IJSVGColorTypeFlagStroke];
+                [sheet addColor:type];
+            }
         }
-        
-        // fill gradient
-        IJSVGGradient* gradient;
-        if((gradient = node.fillGradient) != nil) {
-            IJSVGColorList* list = gradient.colorList;
-            [sheet addColorsFromList:list];
-        }
-        
-        // stroke gradient
-        if((gradient = node.strokeGradient) != nil) {
-            IJSVGColorList* list = gradient.colorList;
-            [sheet addColorsFromList:list];
+
+        // check for any patterns or strokes
+        if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil ||
+           sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
+            
+           // add any colors from gradients
+            IJSVGGradientLayer* gradLayer = nil;
+            IJSVGGradientLayer* gradStrokeLayer = nil;
+            
+            // gradient fill
+            if ((gradLayer = sLayer.gradientFillLayer) != nil) {
+                IJSVGColorList* gradSheet = gradLayer.gradient.computedColorList;
+                [sheet addColorsFromList:gradSheet];
+            }
+            
+            // gradient stroke layers
+            if ((gradStrokeLayer = sLayer.gradientStrokeLayer) != nil) {
+                IJSVGColorList* gradSheet = gradStrokeLayer.gradient.computedColorList;
+                [sheet addColorsFromList:gradSheet];
+            }
         }
     };
     
-    [IJSVGNode walkNodeTree:_group
-                    handler:handler];
-    
-    // is it blank? - check for pathed nodes
-    if(sheet.count == 0) {
-        IJSVGNodeWalkHandler checkHandler = ^(IJSVGNode* node,
-                                              BOOL* allowChildNodes,
-                                              BOOL* stop) {
-            if([node isKindOfClass:IJSVGPath.class] == YES) {
-                IJSVGColorType* type = nil;
-                type = [IJSVGColorType typeWithColor:[IJSVGColor colorFromHEXInteger:0x000000]
-                                                flags:IJSVGColorTypeFlagFill];
-                [sheet addColor:type];
-                *stop = YES;
-            }
-        };
-        [IJSVGNode walkNodeTree:_group
-                        handler:checkHandler];
-    }
+    // gogogo!
+    [IJSVGLayer recursivelyWalkLayer:self.layer
+                           withBlock:block];
     return sheet;
 }
 
