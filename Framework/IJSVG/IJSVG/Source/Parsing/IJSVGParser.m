@@ -56,6 +56,7 @@ NSString* const IJSVGAttributeOffset = @"offset";
 NSString* const IJSVGAttributeStopColor = @"stop-color";
 NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 NSString* const IJSVGAttributeHref = @"href";
+NSString* const IJSVGAttributeOverflow = @"overflow";
 
 @implementation IJSVGParser
 
@@ -535,6 +536,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
     });
     
+    // overflow
+    attr(IJSVGAttributeOverflow, ^(NSString* value) {
+        if([value.lowercaseString isEqualToString:@"hidden"]) {
+            node.overflowVisibility = IJSVGOverflowVisibilityHidden;
+        } else {
+            node.overflowVisibility = IJSVGOverflowVisibilityVisible;
+        }
+    });
+    
     // is there a title or desc?
     for(NSXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
@@ -632,7 +642,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     switch (node.type) {
     // mask
     case IJSVGNodeTypeMask: {
+        node.overflowVisibility = IJSVGOverflowVisibilityHidden;
         node.units = IJSVGUnitObjectBoundingBox;
+        break;
+    }
+            
+    // clippath
+    case IJSVGNodeTypeClipPath: {
+        node.units = IJSVGUnitObjectBoundingBox;
+        node.overflowVisibility = IJSVGOverflowVisibilityHidden;
         break;
     }
 

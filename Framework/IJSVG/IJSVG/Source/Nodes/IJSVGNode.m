@@ -233,6 +233,7 @@
 
     self.shouldRender = node.shouldRender;
     self.blendMode = node.blendMode;
+    self.overflowVisibility = node.overflowVisibility;
 
     // dash array needs physical memory copied
     CGFloat* nStrokeDashArray = (CGFloat*)malloc(node.strokeDashArrayCount * sizeof(CGFloat));
@@ -271,6 +272,7 @@
         self.units = IJSVGUnitInherit;
 
         self.blendMode = IJSVGBlendModeNormal;
+        self.overflowVisibility = IJSVGOverflowVisibilityVisible;
 
         if (flag == YES) {
             _def = [[IJSVGDef alloc] init];

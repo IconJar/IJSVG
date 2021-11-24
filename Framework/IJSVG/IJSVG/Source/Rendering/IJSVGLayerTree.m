@@ -604,13 +604,13 @@
         IJSVGGroupLayer* maskLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
 
         // add clip mask
-        if (node.clipPath != nil) {
+        if (node.clipPath != nil && node.clipPath.overflowVisibility == IJSVGOverflowVisibilityHidden) {
             IJSVGLayer* clip = [self layerForNode:node.clipPath];
 
             // adjust the frame
             if (node.clipPath.units == IJSVGUnitObjectBoundingBox) {
                 [self adjustLayer:clip
-                    toParentLayerFrame:layer];
+               toParentLayerFrame:layer];
             }
 
             // add the layer
@@ -618,26 +618,27 @@
         }
 
         // add the actual mask
-        if (node.mask != nil) {
+        if (node.mask != nil && node.mask.overflowVisibility == IJSVGOverflowVisibilityHidden) {
             IJSVGLayer* mask = [self layerForNode:node.mask];
 
             // only move if bounding box
             if (node.mask.units == IJSVGUnitObjectBoundingBox) {
                 [self adjustLayer:mask
-                    toParentLayerFrame:layer];
+               toParentLayerFrame:layer];
             }
 
             // add the layer
             [maskLayer addSublayer:mask];
         }
 
-        // recursive colourize for each item
-        NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
-        [self _recursiveColorLayersFromLayer:maskLayer
-                                   withColor:color.CGColor];
-
         // add the mask
-        layer.mask = maskLayer;
+        if(maskLayer.sublayers.count != 0) {
+            // recursive colourize for each item
+            NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
+            [self _recursiveColorLayersFromLayer:maskLayer
+                                       withColor:color.CGColor];
+            layer.mask = maskLayer;
+        }
     }
 }
 

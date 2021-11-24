@@ -99,6 +99,11 @@ typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeLuminosity = kCGBlendModeLuminosity
 };
 
+typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
+    IJSVGOverflowVisibilityHidden,
+    IJSVGOverflowVisibilityVisible
+};
+
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying>
@@ -144,6 +149,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
+@property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
 
 + (void)walkNodeTree:(IJSVGNode*)node
             handler:(IJSVGNodeWalkHandler)handler;

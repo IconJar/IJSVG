@@ -72,6 +72,7 @@ extern NSString* const IJSVGAttributeOffset;
 extern NSString* const IJSVGAttributeStopColor;
 extern NSString* const IJSVGAttributeStopOpacity;
 extern NSString* const IJSVGAttributeHref;
+extern NSString* const IJSVGAttributeOverflow;
 
 
 @class IJSVGParser;
