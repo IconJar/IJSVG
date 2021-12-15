@@ -50,6 +50,11 @@
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind
 {
+    // possible fix for older os's that complain
+    if(string == nil || kind == NSXMLCommentKind) {
+        return IJSVGNodeTypeNotFound;
+    }
+    
     const char* name = string.UTF8String;
     if(name == NULL) {
         return IJSVGNodeTypeNotFound;
