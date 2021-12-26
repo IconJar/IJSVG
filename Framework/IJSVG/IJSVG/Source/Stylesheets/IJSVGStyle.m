@@ -91,7 +91,7 @@
 
 + (NSArray*)allowedColourKeys
 {
-    return @[ @"fill", @"stroke-colour", @"stop-color", @"stroke" ];
+    return @[ @"fill", @"stroke-color", @"stop-color", @"stroke" ];
 }
 
 - (void)setProperties:(NSDictionary*)properties

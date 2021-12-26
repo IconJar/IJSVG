@@ -87,7 +87,11 @@
 
 - (IJSVGColorList*)computedColorList
 {
-    return _privateColorList;
+    IJSVGColorList* list = self.colorList;
+    if(_privateColorList != nil) {
+        [list addColorsFromList:_privateColorList];
+    }
+    return list;
 }
 
 - (CGGradientRef)CGGradient
