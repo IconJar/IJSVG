@@ -915,13 +915,13 @@
             
             // gradient fill
             if ((gradLayer = sLayer.gradientFillLayer) != nil) {
-                IJSVGColorList* gradSheet = gradLayer.gradient.computedColorList;
+                IJSVGColorList* gradSheet = gradLayer.gradient.colorList;
                 [sheet addColorsFromList:gradSheet];
             }
             
             // gradient stroke layers
             if ((gradStrokeLayer = sLayer.gradientStrokeLayer) != nil) {
-                IJSVGColorList* gradSheet = gradStrokeLayer.gradient.computedColorList;
+                IJSVGColorList* gradSheet = gradStrokeLayer.gradient.colorList;
                 [sheet addColorsFromList:gradSheet];
             }
         }
