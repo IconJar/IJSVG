@@ -201,15 +201,16 @@ NSString* IJSVGHash(NSString* key)
              size:(CGSize)size
           options:(IJSVGExporterOptions)options
 {
+    IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
     return [self initWithSVG:svg
                         size:size
                      options:options
-        floatingPointOptions:IJSVGFloatingPointOptionsDefault()];
+        floatingPointOptions:fpo];
 }
 
 - (id)initWithSVG:(IJSVG*)svg
-                    size:(CGSize)size
-                 options:(IJSVGExporterOptions)options
+             size:(CGSize)size
+          options:(IJSVGExporterOptions)options
     floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     if ((self = [super init]) != nil) {
@@ -219,13 +220,15 @@ NSString* IJSVGHash(NSString* key)
 
         // defaults for floating point rounding, if any
         _floatingPointOptions = floatingPointOptions;
-
-        // clear memory as soon as possible
-        @autoreleasepool {
-            [self _prepare];
-        }
     }
     return self;
+}
+
+- (void)setDelegate:(id<IJSVGExporterDelegate>)delegate
+{
+    _delegate = delegate;
+    _respondsTo.identifierForElement = [delegate respondsToSelector:@selector(svgExporter:identifierForElement:type:defaultID:)];
+    _respondsTo.stringForColor = [delegate respondsToSelector:@selector(svgExporter:stringForColor:flags:options:)];
 }
 
 - (NSXMLElement*)defElement
@@ -375,8 +378,15 @@ NSString* IJSVGHash(NSString* key)
     return [NSString stringWithFormat:@"%@%ld", chars[(_idCount++ % chars.count)], _shortIdCount];
 }
 
-- (void)_prepare
+- (void)_generateDOMDocument
 {
+    _idCount = 0;
+    _shortIdCount = 0;
+    _appliedXLink = NO;
+    (void)[_dom release], _dom = nil;
+    (void)[_defElement release], _defElement = nil;
+    
+    
     // create the stand alone DOM
     NSXMLElement* nestedRoot = nil;
     NSXMLElement* rootNode = [self rootNode:&nestedRoot];
@@ -589,7 +599,7 @@ NSString* IJSVGHash(NSString* key)
                 if ([self compareElementChildren:gradientA toElement:gradientB] == YES) {
                     NSString* idString = [gradientB attributeForName:@"id"].stringValue;
                     if (idString == nil || idString.length == 0) {
-                        idString = [self generateID];
+                        idString = [self identifierForElement:gradientA];
                         IJSVGApplyAttributesToElement(@{ @"id" : idString }, gradientB);
                     }
                     NSDictionary* atts = @{ @"xlink:href" : IJSVGHash(idString) };
@@ -920,7 +930,7 @@ NSString* IJSVGHash(NSString* key)
                 element.name = @"path";
 
                 NSDictionary* atts = @{ @"d" : data,
-                    @"id" : [self generateID] };
+                    @"id" : [self identifierForElement:element] };
                 IJSVGApplyAttributesToElement(atts, element);
 
                 // store it against the def
@@ -1124,7 +1134,7 @@ NSString* IJSVGHash(NSString* key)
     patternElement.name = @"pattern";
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
-    dict[@"id"] = [self generateID];
+    dict[@"id"] = [self identifierForElement:patternElement];
     dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
     dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
 
@@ -1172,7 +1182,6 @@ NSString* IJSVGHash(NSString* key)
                      toElement:(NSXMLElement*)element
 {
     IJSVGGradient* gradient = layer.gradient;
-    NSString* gradKey = [self generateID];
     NSXMLElement* gradientElement = [[[NSXMLElement alloc] init] autorelease];
 
     // work out linear gradient
@@ -1180,7 +1189,7 @@ NSString* IJSVGHash(NSString* key)
 
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
-        NSDictionary* dict = @{ @"id" : gradKey,
+        NSDictionary* dict = @{
             @"x1" : [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"y1" : [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"x2" : [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
@@ -1193,7 +1202,7 @@ NSString* IJSVGHash(NSString* key)
         // assume radial
         IJSVGRadialGradient* rGradient = (IJSVGRadialGradient*)gradient;
         gradientElement.name = @"radialGradient";
-        NSDictionary* dict = @{ @"id" : gradKey,
+        NSDictionary* dict = @{
             @"cx" : [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"cy" : [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"fx" : [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
@@ -1203,6 +1212,10 @@ NSString* IJSVGHash(NSString* key)
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);
     }
+    
+    // apply the identifier
+    NSString* gradKey = [self identifierForElement:gradientElement];
+    IJSVGApplyAttributesToElement(@{@"id": gradKey}, gradientElement);
 
     // apply the units
     if (layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
@@ -1236,9 +1249,9 @@ NSString* IJSVGHash(NSString* key)
 
         // add the color
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
-        NSString* stopColor = [IJSVGColor colorStringFromColor:aColor
-                                                       options:options];
-
+        NSString* stopColor = [self colorStringForColor:aColor
+                                                   flag:IJSVGColorTypeFlagStop
+                                                options:options];
         // dont bother adding default
         if ([stopColor isEqualToString:@"#000"] == NO) {
             atts[@"stop-color"] = stopColor;
@@ -1297,7 +1310,7 @@ NSString* IJSVGHash(NSString* key)
     imageElement.name = @"image";
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
-    dict[@"id"] = [self generateID];
+    dict[@"id"] = [self identifierForElement:imageElement];
     dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.frame.size.width, _floatingPointOptions);
     dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.frame.size.height, _floatingPointOptions);
     dict[@"xlink:href"] = base64String;
@@ -1682,8 +1695,9 @@ NSString* IJSVGHash(NSString* key)
     // fill color
     if (layer.fillColor != nil) {
         NSColor* fillColor = [NSColor colorWithCGColor:layer.fillColor];
-        NSString* colorString = [IJSVGColor colorStringFromColor:fillColor
-                                                         options:[self colorOptions]];
+        NSString* colorString = [self colorStringForColor:fillColor
+                                                     flag:IJSVGColorTypeFlagFill
+                                                  options:[self colorOptions]];
 
         // could be none
         if (colorString != nil) {
@@ -1734,8 +1748,9 @@ NSString* IJSVGHash(NSString* key)
 
             } else if (strokeLayer.strokeColor != nil) {
                 NSColor* strokeColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
-                NSString* strokeColorString = [IJSVGColor colorStringFromColor:strokeColor
-                                                                       options:[self colorOptions]];
+                NSString* strokeColorString = [self colorStringForColor:strokeColor
+                                                                   flag:IJSVGColorTypeFlagStroke
+                                                                options:[self colorOptions]];
 
                 // could be none
                 if (strokeColorString != nil) {
@@ -1858,7 +1873,7 @@ NSString* IJSVGHash(NSString* key)
     mask.name = @"mask";
 
     // create the key
-    NSString* maskKey = [self generateID];
+    NSString* maskKey = [self identifierForElement:mask];
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
     dict[@"id"] = maskKey;
 
@@ -1884,6 +1899,16 @@ NSString* IJSVGHash(NSString* key)
     [[self defElement] addChild:mask];
 }
 
+- (NSXMLDocument*)_dom
+{
+    if(_dom == nil) {
+        @autoreleasepool {
+            [self _generateDOMDocument];
+        }
+    }
+    return _dom;
+}
+
 - (NSString*)SVGString
 {
     NSXMLNodeOptions options = NSXMLNodePrettyPrint;
@@ -1891,7 +1916,7 @@ NSString* IJSVGHash(NSString* key)
         options = NSXMLNodeOptionsNone;
     }
     options |= NSXMLNodeCompactEmptyElement;
-    NSString* output = [_dom XMLStringWithOptions:options];
+    NSString* output = [[self _dom] XMLStringWithOptions:options];
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
         return [output substringFromIndex:38];
     }
@@ -2037,6 +2062,47 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
     for (NSXMLNode* attribute in sorted) {
         [element addAttribute:attribute];
     }
+}
+
+#pragma mark Delegate calling methods
+
+- (NSString*)identifierForElement:(NSXMLElement* _Nullable)element
+{
+    NSString* identifier = nil;
+    if(_respondsTo.identifierForElement == 1) {
+        __weak id weakSelf = self;
+        NSString* (^block)(void) = ^NSString*(void) {
+            return [weakSelf generateID];
+        };
+        IJSVGNodeType type = [IJSVGNode typeForString:element.localName
+                                                 kind:element.kind];
+        identifier = [_delegate svgExporter:self
+                       identifierForElement:element
+                                       type:type
+                                  defaultID:block];
+        if(identifier != nil) {
+            return identifier;
+        }
+    }
+    return [self generateID];
+}
+
+- (NSString*)colorStringForColor:(NSColor*)color
+                            flag:(IJSVGColorTypeFlags)flag
+                         options:(IJSVGColorStringOptions)options
+{
+    NSString* colorString = nil;
+    if(_respondsTo.stringForColor == 1) {
+        colorString = [_delegate svgExporter:self
+                              stringForColor:color
+                                       flags:flag
+                                     options:options];
+        if(colorString != nil) {
+            return colorString;
+        }
+    }
+    return [IJSVGColor colorStringFromColor:color
+                                    options:options];
 }
 
 @end
