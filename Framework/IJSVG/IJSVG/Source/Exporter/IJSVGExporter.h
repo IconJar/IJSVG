@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGColorType.h>
 
 @class IJSVG;
 @class IJSVGExporter;
@@ -97,8 +98,8 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
 @property (nonatomic, assign) id<IJSVGExporterDelegate> delegate;
 @property (nonatomic, assign) IJSVGFloatingPointOptions floatingPointOptions;
-@property (nonatomic, copy) NSString* title;
-@property (nonatomic, copy) NSString* desc;
+@property (nonatomic, copy, nullable) NSString* title;
+@property (nonatomic, copy, nullable) NSString* desc;
 
 - (id)initWithSVG:(IJSVG*)svg
              size:(CGSize)size

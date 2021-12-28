@@ -2093,6 +2093,7 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
 {
     NSString* colorString = nil;
     if(_respondsTo.stringForColor == 1) {
+        color = [IJSVGColor computeColorSpace:color];
         colorString = [_delegate svgExporter:self
                               stringForColor:color
                                        flags:flag
