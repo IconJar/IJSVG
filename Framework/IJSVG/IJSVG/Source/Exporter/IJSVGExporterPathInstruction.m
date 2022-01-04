@@ -364,16 +364,16 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
                                                                                 dataCount:2] autorelease];
-                nInstruction.data[0] = instruction.data[3];
-                nInstruction.data[1] = instruction.data[4];
+                nInstruction.data[0] = instruction.data[2];
+                nInstruction.data[1] = instruction.data[3];
                 [nInstructions addObject:nInstruction];
                 continue;
             } else if (lastInstruction.instruction == 't' && instruction.data[2] == lastInstruction.data[0] && instruction.data[3] == lastInstruction.data[1]) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
                                                                                 dataCount:2] autorelease];
-                nInstruction.data[0] = instruction.data[3];
-                nInstruction.data[1] = instruction.data[4];
+                nInstruction.data[0] = instruction.data[2];
+                nInstruction.data[1] = instruction.data[3];
                 [nInstructions addObject:nInstruction];
                 continue;
             }
