@@ -11,9 +11,12 @@
 #import "IJSVGStringAdditions.h"
 #import "IJSVGParsing.h"
 
+NSString* const IJSVGColorCurrentColorName = @"currentColor";
+
 @implementation IJSVGColor
 
 static NSDictionary* _colorTree = nil;
+
 
 CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness)
 {

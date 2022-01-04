@@ -167,6 +167,8 @@ typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
     IJSVGColorYellowgreen
 };
 
+extern NSString* const IJSVGColorCurrentColorName;
+
 @interface IJSVGColor : NSObject
 
 CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness);

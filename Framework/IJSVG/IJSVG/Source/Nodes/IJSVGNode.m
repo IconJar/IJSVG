@@ -55,11 +55,10 @@
         return IJSVGNodeTypeNotFound;
     }
     
-    const char* name = string.UTF8String;
+    const char* name = string.lowercaseString.UTF8String;
     if(name == NULL) {
         return IJSVGNodeTypeNotFound;
     }
-    IJSVGCharBufferToLower((char*)name);
     if (strcmp(name, "style") == 0) {
         return IJSVGNodeTypeStyle;
     }
