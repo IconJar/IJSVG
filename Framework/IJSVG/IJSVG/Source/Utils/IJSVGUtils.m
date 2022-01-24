@@ -43,8 +43,23 @@ BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
     return strcmp(s1 + slen - tlen, s2) == 0;
 }
 
-void IJSVGTrimCharBuffer(char* buffer)
+char* IJSVGTimmedCharBufferCreate(const char* buffer)
 {
+    unsigned long start = 0;
+    unsigned long length = strlen(buffer);
+    while(length-1 > 0 && isspace(buffer[length-1])) {
+        length--;
+    }
+    while(isspace(buffer[start])) {
+        start++;
+    }
+    char* chars = (char*)malloc(sizeof(char)*((length-start)+1) ?: sizeof(char));
+    memcpy(chars, &buffer[start], length-start);
+    chars[length] = '\0';
+    return chars;
+}
+
+void IJSVGTrimCharBuffer(char* buffer) {
     char* ptr = buffer;
     unsigned long length = strlen(ptr);
     while(length-1 > 0 && isspace(ptr[length-1])) {
@@ -235,7 +250,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
     const char* str = string.UTF8String;
     NSUInteger count = 0;
     IJSVGParsingStringMethod** methods;
-    methods = IJSVGParsingMethodParseString((char*)str, &count);
+    methods = IJSVGParsingMethodParseString(str, &count);
     if(count == 0) {
         IJSVGParsingStringMethodsRelease(methods, count);
         return nil;

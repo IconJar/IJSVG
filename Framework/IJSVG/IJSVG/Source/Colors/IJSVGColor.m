@@ -251,14 +251,15 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         return nil;
     }
     
-    char* str = (char*)string.UTF8String;
-    if(strlen(str) == 0) {
+    const char* oString = string.UTF8String;
+    if(strlen(oString) == 0) {
         return nil;
     }
     
-    IJSVGTrimCharBuffer(str);
+    char* str = IJSVGTimmedCharBufferCreate(oString);
     if (IJSVGCharBufferIsHEX(str) == YES) {
-        return  [self.class colorFromHEXString:string];
+        (void)free(str), str = NULL;
+        return [self.class colorFromHEXString:string];
     }
 
     // is it RGB?
@@ -267,6 +268,9 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         IJSVGParsingStringMethod** methods = NULL;
         methods = IJSVGParsingMethodParseString(str, &count);
         IJSVGParsingStringMethod* method = methods[0];
+        
+        // memory clean for the string
+        (void)free(str), str = NULL;
         
         // nothing to return, just mem clean and get out of here
         if(count == 0 || methods == NULL) {
@@ -313,6 +317,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         color = [self computeColorSpace:color];
 
         // memory clean!
+        (void)free(str), str = NULL;
         (void)free(hsb), hsb = NULL;
         (void)free(params), params = NULL;
         return color;
@@ -321,10 +326,12 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     // is simply a clear color, dont fill
     if (strcmp(str, "none") == 0 ||
         strcmp(str, "transparent") == 0) {
+        (void)free(str), str = NULL;
         return [self computeColorSpace:NSColor.clearColor];
     }
     
     // could return nil
+    (void)free(str), str = NULL;
     return [self.class colorFromPredefinedColorName:string];
 }
 
