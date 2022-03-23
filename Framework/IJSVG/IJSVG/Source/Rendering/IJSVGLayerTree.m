@@ -217,6 +217,7 @@
     IJSVGShapeLayer* mask = [[[IJSVGShapeLayer alloc] init] autorelease];
     mask.fillColor = [NSColor blackColor].CGColor;
     mask.path = layer.path;
+    mask.fillRule = layer.fillRule;
     return mask;
 }
 
