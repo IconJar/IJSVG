@@ -39,10 +39,10 @@ void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
     (void)free(methods), methods = NULL;
 }
 
-IJSVGParsingStringMethod** IJSVGParsingMethodParseString(char* string,
+IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                                                          NSUInteger* count)
 {
-    char* charString = string;
+    const char* charString = string;
     unsigned long length = strlen(string);
     char* buffer = (char*)calloc(sizeof(char), length);
     char* originBuffer = buffer;

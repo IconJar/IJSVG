@@ -24,6 +24,7 @@ CGFloat degrees_to_radians(CGFloat degrees);
 BOOL IJSVGCharBufferIsHEX(char* buffer);
 BOOL IJSVGCharBufferHasPrefix(char* pre, char* str);
 BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2);
+char* IJSVGTimmedCharBufferCreate(const char* buffer);
 void IJSVGTrimCharBuffer(char* buffer);
 void IJSVGCharBufferToLower(char* buffer);
 size_t IJSVGCharBufferHash(char* buffer);

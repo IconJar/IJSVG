@@ -15,7 +15,7 @@ typedef struct {
 
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void);
 void IJSVGParsingStringMethodRelease(IJSVGParsingStringMethod* stringMethod);
-IJSVGParsingStringMethod** IJSVGParsingMethodParseString(char* string,
+IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                                                          NSUInteger* count);
 void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
                                       NSUInteger count);

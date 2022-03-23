@@ -143,12 +143,12 @@
         return nil;
     }
     
-    const char* chars = string.UTF8String;
-    IJSVGTrimCharBuffer((char*)chars);
+    char* chars = IJSVGTimmedCharBufferCreate(string.UTF8String);
 
     // is inherit or just nothing
     size_t strl = strlen(chars);
     if (strcmp(chars, "inherit") == 0 || strl == 0) {
+        (void)free(chars), chars = NULL;
         return nil;
     }
     
@@ -158,7 +158,6 @@
                                              floatCount:1
                                               charCount:(NSUInteger)strl
                                                    size:&length];
-    
     // not sure how this ended up but nothing returned
     // even though there should had been
     if(length == 0) {
@@ -170,11 +169,13 @@
     unit.value = floats[0];
     unit.type = IJSVGUnitLengthTypeNumber;
     
-    // memory free
-    (void)(free(floats)), floats = NULL;
     
     IJSVGUnitLengthType type = [self typeForCString:chars];
     unit.originalType = type;
+    
+    // memory free
+    (void)(free(floats)), floats = NULL;
+    (void)free(chars), chars = NULL;
     
     switch(type) {
         case IJSVGUnitLengthTypePercentage: {

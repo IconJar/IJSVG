@@ -171,9 +171,8 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     const char* charString = string.UTF8String;
     IJSVGParsingStringMethod** methods = NULL;
     NSUInteger count = 0;
-    methods = IJSVGParsingMethodParseString((char*)charString, &count);
+    methods = IJSVGParsingMethodParseString(charString, &count);
     for(int i = 0; i < count; i++) {
-        
         IJSVGParsingStringMethod* method = methods[i];
         IJSVGTransformCommand commandType;
         commandType = [self.class commandForCommandCString:method->name];
