@@ -37,18 +37,35 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // holder for callback
     static const CGPatternCallbacks callbacks = { 0, &IJSVGPatternDrawingCallBack, NULL };
+    BOOL inUserSpace = self.patternNode.contentUnits == IJSVGUnitUserSpaceOnUse;
 
     // create base pattern space
     CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
     CGContextSetFillColorSpace(ctx, patternSpace);
     CGColorSpaceRelease(patternSpace);
+    
+    CGRect rect = self.bounds;
+    CGRect boundingBox = inUserSpace ? _viewBox : _objectRect;
+    
+    IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithFloat:_patternNode.width.value
+                                                         type:IJSVGUnitLengthTypePercentage];
+    IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithFloat:_patternNode.height.value
+                                                         type:IJSVGUnitLengthTypePercentage];
+    
+    CGFloat width = [wLength computeValue:rect.size.width];
+    CGFloat height = [hLength computeValue:rect.size.height];
+
+    // make sure we apply the absolute position to
+    // transform us back into the correct space
+    if (inUserSpace == YES) {
+        CGContextConcatCTM(ctx, _absoluteTransform);
+    }
 
     // create the pattern
-    CGRect rect = self.bounds;
-    CGPatternRef ref = CGPatternCreate((void*)self, self.bounds,
+    CGPatternRef ref = CGPatternCreate((void*)self, rect,
         CGAffineTransformIdentity,
-        roundf(rect.size.width * _patternNode.width.value),
-        roundf(rect.size.height * _patternNode.height.value),
+        width,
+        height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
 

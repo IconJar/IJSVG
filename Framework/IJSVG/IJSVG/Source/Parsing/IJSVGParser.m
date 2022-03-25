@@ -24,6 +24,7 @@ NSString* const IJSVGAttributeFillOpacity = @"fill-opacity";
 NSString* const IJSVGAttributeClipPath = @"clip-path";
 NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
+NSString* const IJSVGAttributePatternContentUnits = @"patternContentUnits";
 NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
@@ -83,7 +84,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     _IJSVGAttributeDictionaryUnits = [@{
         IJSVGAttributeGradientUnits : @"units",
         IJSVGAttributeMaskUnits : @"units",
-        IJSVGAttributeMaskContentUnits : @"contentUnits"} retain];
+        IJSVGAttributeMaskContentUnits : @"contentUnits",
+        IJSVGAttributePatternContentUnits : @"contentUnits"
+    } retain];
     _IJSVGAttributeDictionaryTransforms = [@{
         IJSVGAttributeTransform : @"transforms",
         IJSVGAttributeGradientTransform : @"transforms" } retain];

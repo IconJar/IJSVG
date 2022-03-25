@@ -40,6 +40,7 @@ extern NSString* const IJSVGAttributeFillOpacity;
 extern NSString* const IJSVGAttributeClipPath;
 extern NSString* const IJSVGAttributeMask;
 extern NSString* const IJSVGAttributeGradientUnits;
+extern NSString* const IJSVGAttributePatternContentUnits;
 extern NSString* const IJSVGAttributeMaskUnits;
 extern NSString* const IJSVGAttributeMaskContentUnits;
 extern NSString* const IJSVGAttributeTransform;

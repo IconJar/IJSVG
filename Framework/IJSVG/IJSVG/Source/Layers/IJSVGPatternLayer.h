@@ -14,5 +14,8 @@
 
 @property (nonatomic, retain) IJSVGLayer* pattern;
 @property (nonatomic, retain) IJSVGPattern* patternNode;
+@property (nonatomic, assign) CGAffineTransform absoluteTransform;
+@property (nonatomic, assign) CGRect objectRect;
+@property (nonatomic, assign) CGRect viewBox;
 
 @end

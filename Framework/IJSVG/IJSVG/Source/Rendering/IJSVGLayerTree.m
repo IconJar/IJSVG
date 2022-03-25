@@ -264,7 +264,8 @@
         // create the pattern, this is actually not as easy as it may seem
         IJSVGPatternLayer* patternLayer = [self patternLayerForLayer:layer
                                                              pattern:path.fillPattern
-                                                            fromNode:path];
+                                                            fromNode:path
+                                                          objectRect:originalShapeBounds];
         // add it
         [layer addSublayer:patternLayer];
 
@@ -351,7 +352,8 @@
             // create the pattern
             IJSVGPatternLayer* patternLayer = [self patternStrokeLayerForLayer:layer
                                                                        pattern:path.strokePattern
-                                                                      fromNode:path];
+                                                                      fromNode:path
+                                                                    objectRect:originalShapeBounds];
 
             // set the mask for it
             moveStrokeLayer = YES;
@@ -447,6 +449,9 @@
     if (path.fillOpacity.value != 0.f) {
         gradLayer.opacity = path.fillOpacity.value;
     }
+    
+    // display
+    [gradLayer setNeedsDisplay];
     gradLayer.masksToBounds = YES;
     return gradLayer;
 }
@@ -454,10 +459,15 @@
 - (IJSVGPatternLayer*)patternStrokeLayerForLayer:(IJSVGShapeLayer*)layer
                                          pattern:(IJSVGPattern*)pattern
                                         fromNode:(IJSVGNode*)path
+                                      objectRect:(CGRect)objectRect
 {
     // create the pattern, this is actually not as easy as it may seem
     IJSVGPatternLayer* patternLayer = [[[IJSVGPatternLayer alloc] init] autorelease];
     patternLayer.patternNode = pattern;
+    patternLayer.viewBox = _viewBox;
+    patternLayer.absoluteTransform = [self absoluteTransform:path];
+    patternLayer.objectRect = CGRectApplyAffineTransform(objectRect,
+                                                         patternLayer.absoluteTransform);
     patternLayer.pattern = [self layerForNode:pattern];
 
     // is there a fill opacity?
@@ -479,12 +489,17 @@
 - (IJSVGPatternLayer*)patternLayerForLayer:(IJSVGShapeLayer*)layer
                                    pattern:(IJSVGPattern*)pattern
                                   fromNode:(IJSVGNode*)path
+                                objectRect:(CGRect)objectRect
 {
     // create the pattern, this is actually not as easy as it may seem
     IJSVGPatternLayer* patternLayer = [[[IJSVGPatternLayer alloc] init] autorelease];
     patternLayer.patternNode = pattern;
     patternLayer.pattern = [self layerForNode:pattern];
     patternLayer.frame = CGPathGetBoundingBox(layer.path);
+    patternLayer.absoluteTransform = [self absoluteTransform:path];
+    patternLayer.viewBox = _viewBox;
+    patternLayer.objectRect = CGRectApplyAffineTransform(objectRect,
+                                                         patternLayer.absoluteTransform);
 
     // is there a fill opacity?
     if (path.fillOpacity.value != 0.f) {
