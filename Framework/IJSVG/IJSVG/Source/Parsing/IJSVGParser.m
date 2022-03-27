@@ -333,9 +333,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
 }
 
-- (void)_postParseElementForCommonAttributes:(NSXMLElement*)element
-                                        node:(IJSVGNode*)node
-                            ignoreAttributes:(NSArray*)ignoredAttributes
+- (void)_parseElementForCommonAttributes:(NSXMLElement*)element
+                                    node:(IJSVGNode*)node
+                         referencingNode:(IJSVGNode*)referencingNode
+                              parentNode:(IJSVGNode*)parentNode
+                       ignoredAttributes:(NSArray*)ignoredAttributes
 {
 
     // first of all, compute a style sheet
@@ -437,7 +439,16 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             }
             return tempTransforms;
         });
-
+    
+    // if we are object bounding box, each transform needs
+    // converting to whatever the % values are
+    if(referencingNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+        CGRect bounds = parentNode.renderableNode.bounds;
+        for(IJSVGTransform* transform in node.transforms) {
+            [transform applyContentBoundingBoxUnits:bounds];
+        }
+    }
+    
 #pragma mark attributes that require custom rules
 
     // unicode
@@ -597,7 +608,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         IJSVGGroup* group = [[[IJSVGGroup alloc] init] autorelease];
         [self _parseBaseBlock:parseElement
                     intoGroup:group
-             referencingNode:groupNode
+              referencingNode:groupNode
          renderableParentNode:parentNode
                           def:NO];
         return [group defForID:anID];
@@ -658,9 +669,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                                     node:(IJSVGNode*)node
                         ignoreAttributes:(NSArray*)ignoredAttributes
 {
-    [self _postParseElementForCommonAttributes:element
-                                          node:node
-                              ignoreAttributes:ignoredAttributes];
+    [self _parseElementForCommonAttributes:element
+                                      node:node
+                           referencingNode:nil
+                                parentNode:nil
+                         ignoredAttributes:ignoredAttributes];
 }
 
 - (void)_setupDefaultsForNode:(IJSVGNode*)node
@@ -984,7 +997,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [self _setupDefaultsForNode:path];
         [self _parseElementForCommonAttributes:element
                                           node:path
-                              ignoreAttributes:@[ IJSVGAttributeX, IJSVGAttributeY ]];
+                               referencingNode:referencingNode
+                                    parentNode:parentNode
+                             ignoredAttributes:@[ IJSVGAttributeX, IJSVGAttributeY ]];
         [parentGroup addDef:path];
         break;
     }
@@ -1098,7 +1113,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // says ignore x, y, width, height and xlink:href...
         [self _parseElementForCommonAttributes:element
                                           node:node
-                              ignoreAttributes:@[IJSVGAttributeX, IJSVGAttributeY,
+                               referencingNode:node
+                                    parentNode:parentNode
+                            ignoredAttributes:@[IJSVGAttributeX, IJSVGAttributeY,
                                                  IJSVGAttributeWidth, IJSVGAttributeHeight,
                                                  IJSVGAttributeXLink]];
 
@@ -1272,7 +1289,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // find common attributes
         [self _parseElementForCommonAttributes:element
                                           node:image
-                              ignoreAttributes:nil];
+                               referencingNode:referencingNode
+                                    parentNode:parentNode
+                             ignoredAttributes:nil];
 
         // from base64
         NSXMLNode* attributeNode = [self resolveXLinkAttributeForElement:element] ?:

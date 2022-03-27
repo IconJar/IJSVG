@@ -198,6 +198,19 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return transforms;
 }
 
+- (void)applyContentBoundingBoxUnits:(CGRect)bounds
+{
+    switch(self.command) {
+        case IJSVGTransformCommandTranslate: {
+            self.parameters[0] *= bounds.size.width;
+            self.parameters[1] *= bounds.size.height;
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 - (CGAffineTransform)CGAffineTransform
 {
     return [self stackIdentity:CGAffineTransformIdentity];

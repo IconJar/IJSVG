@@ -24,7 +24,6 @@
         _image = image.retain;
         self.requiresBackingScaleHelp = YES;
         self.shouldRasterize = YES;
-        self.backgroundColor = NSColor.blueColor.CGColor;
     }
     return self;
 }
@@ -47,13 +46,13 @@
     _transformLayer.frame = CGRectMake(-((imageBounds.size.width / 2.f) - (bounds.size.width / 2.f)),
                                        -((imageBounds.size.height / 2.f) - (bounds.size.height / 2.f)),
                                        imageBounds.size.width, imageBounds.size.height);
-    _transformLayer.backgroundColor = NSColor.purpleColor.CGColor;
+//    _transformLayer.backgroundColor = NSColor.purpleColor.CGColor;
     CGAffineTransform transform = CGAffineTransformMakeScale(1.f, -1.f);
     _transformLayer.affineTransform = transform;
     
     if(_imageLayer == nil) {
         _imageLayer = [IJSVGLayer layer].retain;
-        _imageLayer.backgroundColor = NSColor.redColor.CGColor;
+//        _imageLayer.backgroundColor = NSColor.redColor.CGColor;
         CGRect bounds = _image.intrinsicBounds;
         _imageLayer.frame = bounds;
         _imageLayer.affineTransform = _image.intrinsicTransform;
