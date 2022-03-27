@@ -12,6 +12,12 @@
 
 @implementation IJSVGUnitLength
 
++ (IJSVGUnitLength*)zeroUnitLength
+{
+    return [self unitWithFloat:0.f
+                          type:IJSVGUnitLengthTypeNumber];
+}
+
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
     IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
@@ -190,6 +196,16 @@
             break;
     }
     return unit;
+}
+
+- (IJSVGUnitLength*)lengthByMatchingPercentage
+{
+    if(self.type != IJSVGUnitLengthTypePercentage && self.value <= 1.f) {
+        return [self.class unitWithFloat:self.value
+                                    type:IJSVGUnitLengthTypePercentage];
+    }
+    return [self.class unitWithFloat:self.value
+                                type:self.type];
 }
 
 - (CGFloat)computeValue:(CGFloat)anotherValue

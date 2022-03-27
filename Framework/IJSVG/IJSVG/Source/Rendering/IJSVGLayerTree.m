@@ -121,10 +121,7 @@
 
 - (IJSVGLayer*)layerForImage:(IJSVGImage*)image
 {
-    IJSVGImageLayer* layer = [[[IJSVGImageLayer alloc] initWithCGImage:image.CGImage] autorelease];
-    layer.affineTransform = CGAffineTransformConcat(layer.affineTransform,
-        CGAffineTransformMakeScale(1.f, -1.f));
-
+    IJSVGImageLayer* layer = [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
     // make sure we set the width and height correctly,
     // as this may not be exactly the same as the size of the
     // given image
@@ -132,6 +129,7 @@
     frame.size.width = image.width.value;
     frame.size.height = image.height.value;
     layer.frame = frame;
+    [layer setNeedsLayout];
     return layer;
 }
 
@@ -267,11 +265,6 @@
                                                             fromNode:path];
         // add it
         [layer addSublayer:patternLayer];
-
-        // apply offsets
-        [self applyOffsetsToLayer:patternLayer
-                         fromNode:path.fillPattern];
-
         layer.patternFillLayer = patternLayer;
 
     } else {

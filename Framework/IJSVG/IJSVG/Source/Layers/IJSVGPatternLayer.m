@@ -29,8 +29,14 @@
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // reassign the layer
-    IJSVGPatternLayer* layer = (IJSVGPatternLayer*)info;
-    [layer.pattern renderInContext:ctx];
+    NSDictionary* dictionary = (NSDictionary*)info;
+    IJSVGLayer* layer = dictionary[@"patternLayer"];
+    NSValue* sizeValue = dictionary[@"size"];
+    CGSize size = sizeValue.sizeValue;
+    CGContextSaveGState(ctx);
+    CGContextClipToRect(ctx, CGRectMake(0.f, 0.f, size.width, size.height));
+    [layer renderInContext:ctx];
+    CGContextSaveGState(ctx);
 };
 
 - (void)drawInContext:(CGContextRef)ctx
@@ -42,13 +48,41 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
     CGContextSetFillColorSpace(ctx, patternSpace);
     CGColorSpaceRelease(patternSpace);
+    
+    CGRect rect = self.bounds;
+    
+    IJSVGUnitLength* wLength = _patternNode.width;
+    IJSVGUnitLength* hLength = _patternNode.height;
+    
+    if(self.patternNode.units == IJSVGUnitObjectBoundingBox ||
+       self.patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+        wLength = wLength.lengthByMatchingPercentage;
+        hLength = hLength.lengthByMatchingPercentage;
+    }
+    
+    CGFloat width = [wLength computeValue:rect.size.width];
+    CGFloat height = [hLength computeValue:rect.size.height];
+        
+    // transform us back into the correct space
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
+        transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
+                                                     -CGRectGetMinY(_objectRect));
+        transform = CGAffineTransformConcat(_absoluteTransform, transform);
+    }
+
+    // transform the X and Y shift
+    transform = CGAffineTransformTranslate(transform,
+                                           [_patternNode.x computeValue:rect.size.width],
+                                           [_patternNode.y computeValue:rect.size.height]);
 
     // create the pattern
-    CGRect rect = self.bounds;
-    CGPatternRef ref = CGPatternCreate((void*)self, self.bounds,
-        CGAffineTransformIdentity,
-        roundf(rect.size.width * _patternNode.width.value),
-        roundf(rect.size.height * _patternNode.height.value),
+    NSDictionary* info = @{
+        @"patternLayer": self.pattern,
+        @"size": [NSValue valueWithSize:CGSizeMake(width, height)]
+    };
+    CGPatternRef ref = CGPatternCreate((void*)info, rect,
+        transform, width, height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
 

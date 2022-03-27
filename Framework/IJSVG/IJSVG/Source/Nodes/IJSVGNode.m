@@ -274,6 +274,7 @@
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
         self.units = IJSVGUnitInherit;
+        self.contentUnits = IJSVGUnitInherit;
 
         self.blendMode = IJSVGBlendModeNormal;
         self.overflowVisibility = IJSVGOverflowVisibilityVisible;
@@ -295,6 +296,14 @@
         return [_parentNode defForID:anID];
     }
     return nil;
+}
+
+- (IJSVGNode*)renderableNode
+{
+    if(self.renderable == YES) {
+        return self;
+    }
+    return _parentNode.renderableNode;
 }
 
 - (void)addDef:(IJSVGNode*)aDef
@@ -428,6 +437,22 @@
         return _parentNode.strokePattern;
     }
     return _strokePattern;
+}
+
+- (IJSVGUnitType)units
+{
+    if(_units == IJSVGUnitInherit && _parentNode != nil) {
+        return _parentNode.units;
+    }
+    return _units;
+}
+
+- (IJSVGUnitType)contentUnits
+{
+    if(_contentUnits == IJSVGUnitInherit && _parentNode != nil) {
+        return _parentNode.contentUnits;
+    }
+    return _contentUnits;
 }
 
 @end

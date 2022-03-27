@@ -108,6 +108,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying>
 
+@property (nonatomic, assign) BOOL renderable;
+@property (nonatomic, assign, readonly) CGRect bounds;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, assign) IJSVGNodeType type;
@@ -161,5 +163,6 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 - (id)initWithDef:(BOOL)flag;
 - (void)addDef:(IJSVGNode*)aDef;
 - (IJSVGDef*)defForID:(NSString*)anID;
+- (IJSVGNode*)renderableNode;
 
 @end
