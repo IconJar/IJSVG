@@ -14,6 +14,7 @@
 {
     (void)[_image release], _image = nil;
     (void)[_imageLayer release], _imageLayer = nil;
+    (void)[_transformLayer release], _transformLayer = nil;
     [super dealloc];
 }
 
@@ -24,20 +25,39 @@
         self.requiresBackingScaleHelp = YES;
         self.shouldRasterize = YES;
         self.backgroundColor = NSColor.blueColor.CGColor;
-        [self reloadContent];
     }
     return self;
 }
 
+- (void)layoutSublayers
+{
+    [super layoutSublayers];
+    [self reloadContent];
+}
+
 - (void)reloadContent
 {
+    if(_transformLayer == nil) {
+        _transformLayer = [IJSVGLayer layer].retain;
+        [self addSublayer:_transformLayer];
+    }
+
+    CGRect imageBounds = _image.intrinsicBounds;
+    CGRect bounds = self.bounds;
+    _transformLayer.frame = CGRectMake(-((imageBounds.size.width / 2.f) - (bounds.size.width / 2.f)),
+                                       -((imageBounds.size.height / 2.f) - (bounds.size.height / 2.f)),
+                                       imageBounds.size.width, imageBounds.size.height);
+    _transformLayer.backgroundColor = NSColor.purpleColor.CGColor;
+    CGAffineTransform transform = CGAffineTransformMakeScale(1.f, -1.f);
+    _transformLayer.affineTransform = transform;
+    
     if(_imageLayer == nil) {
-        _imageLayer = [[IJSVGLayer layer] retain];
+        _imageLayer = [IJSVGLayer layer].retain;
         _imageLayer.backgroundColor = NSColor.redColor.CGColor;
         CGRect bounds = _image.intrinsicBounds;
         _imageLayer.frame = bounds;
-//        _imageLayer.anchorPoint = CGPointMake(0.f, 0.f);
-        [self addSublayer:_imageLayer];
+        _imageLayer.affineTransform = _image.intrinsicTransform;
+        [_transformLayer addSublayer:_imageLayer];
     }
 
     _imageLayer.contents = (id)_image.CGImage;

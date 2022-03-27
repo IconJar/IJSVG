@@ -14,6 +14,7 @@
 @interface IJSVGImageLayer : IJSVGLayer {
     
 @private
+    IJSVGLayer* _transformLayer;
     IJSVGLayer* _imageLayer;
 }
 
