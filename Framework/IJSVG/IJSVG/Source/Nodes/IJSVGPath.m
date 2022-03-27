@@ -24,8 +24,14 @@
     if ((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
         _path = CGPathCreateMutable();
+        self.renderable = YES;
     }
     return self;
+}
+
+- (CGRect)bounds
+{
+    return self.pathBoundingBox;
 }
 
 - (id)copyWithZone:(NSZone*)zone

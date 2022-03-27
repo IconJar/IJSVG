@@ -29,15 +29,20 @@
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // reassign the layer
-    IJSVGPatternLayer* layer = (IJSVGPatternLayer*)info;
-    [layer.pattern renderInContext:ctx];
+    NSDictionary* dictionary = (NSDictionary*)info;
+    IJSVGLayer* layer = dictionary[@"patternLayer"];
+    NSValue* sizeValue = dictionary[@"size"];
+    CGSize size = sizeValue.sizeValue;
+    CGContextSaveGState(ctx);
+    CGContextClipToRect(ctx, CGRectMake(0.f, 0.f, size.width, size.height));
+    [layer renderInContext:ctx];
+    CGContextSaveGState(ctx);
 };
 
 - (void)drawInContext:(CGContextRef)ctx
 {
     // holder for callback
     static const CGPatternCallbacks callbacks = { 0, &IJSVGPatternDrawingCallBack, NULL };
-    BOOL inUserSpace = self.patternNode.contentUnits == IJSVGUnitUserSpaceOnUse;
 
     // create base pattern space
     CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
@@ -45,27 +50,39 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGColorSpaceRelease(patternSpace);
     
     CGRect rect = self.bounds;
-    CGRect boundingBox = inUserSpace ? _viewBox : _objectRect;
     
-    IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithFloat:_patternNode.width.value
-                                                         type:IJSVGUnitLengthTypePercentage];
-    IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithFloat:_patternNode.height.value
-                                                         type:IJSVGUnitLengthTypePercentage];
+    IJSVGUnitLength* wLength = _patternNode.width;
+    IJSVGUnitLength* hLength = _patternNode.height;
+    
+    if(self.patternNode.units == IJSVGUnitObjectBoundingBox ||
+       self.patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+        wLength = wLength.lengthByMatchingPercentage;
+        hLength = hLength.lengthByMatchingPercentage;
+    }
     
     CGFloat width = [wLength computeValue:rect.size.width];
     CGFloat height = [hLength computeValue:rect.size.height];
-
-    // make sure we apply the absolute position to
+        
     // transform us back into the correct space
-    if (inUserSpace == YES) {
-        CGContextConcatCTM(ctx, _absoluteTransform);
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
+        transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
+                                                     -CGRectGetMinY(_objectRect));
+        transform = CGAffineTransformConcat(_absoluteTransform, transform);
     }
 
+    // transform the X and Y shift
+    transform = CGAffineTransformTranslate(transform,
+                                           [_patternNode.x computeValue:rect.size.width],
+                                           [_patternNode.y computeValue:rect.size.height]);
+
     // create the pattern
-    CGPatternRef ref = CGPatternCreate((void*)self, rect,
-        CGAffineTransformIdentity,
-        width,
-        height,
+    NSDictionary* info = @{
+        @"patternLayer": self.pattern,
+        @"size": [NSValue valueWithSize:CGSizeMake(width, height)]
+    };
+    CGPatternRef ref = CGPatternCreate((void*)info, rect,
+        transform, width, height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
 

@@ -20,6 +20,14 @@
     [super dealloc];
 }
 
+- (instancetype)init
+{
+    if((self = [super init]) != nil) {
+        self.renderable = YES;
+    }
+    return self;
+}
+
 - (void)loadFromString:(NSString*)encodedString
 {
     if ([encodedString hasPrefix:@"data:"]) {
@@ -66,18 +74,19 @@
         (void)([image release]), image = nil;
     }
     image = [anImage retain];
+    _intrinsicSize = (CGSize)image.size;
+    
 
     if (CGImage != nil) {
         CGImageRelease(CGImage);
         CGImage = nil;
     }
 
-    NSRect rect = NSMakeRect(0.f, 0.f, self.width.value, self.height.value);
+    NSRect rect = NSMakeRect(0.f, 0.f, _intrinsicSize.width, _intrinsicSize.height);
     CGImage = [image CGImageForProposedRect:&rect
                                     context:nil
                                       hints:nil];
 
-    // be sure to retain (some reason this is required in Xcode 8 beta 5?)
     CGImageRetain(CGImage);
 }
 
@@ -86,32 +95,25 @@
     return CGImage;
 }
 
-- (void)drawInContextRef:(CGContextRef)context
-                    path:(IJSVGPath*)path
+- (CGRect)intrinsicBounds
 {
-    // run the transforms
-    // draw the image
-    if (self.width.value == 0.f || self.height.value == 0.f) {
-        return;
-    }
+    CGRect rect = CGRectZero;
+    rect.size.width = self.intrinsicSize.width;
+    rect.size.height = self.intrinsicSize.height;
+    return rect;
+}
 
-    // make sure path is set
-    if (path == nil) {
-        path = [self path];
-    }
+- (CGAffineTransform)intrinsicTransform
+{
+    CGFloat widthRatio = self.width.value / _intrinsicSize.width;
+    CGFloat heightRatio = self.height.value / _intrinsicSize.height;
+    return CGAffineTransformMakeScale(widthRatio, heightRatio);
+}
 
-    CGRect rect = path.pathBoundingBox;
-    CGRect bounds = CGRectMake(0.f, 0.f, rect.size.width, rect.size.height);
-
-    // save the state of the context
-    CGContextSaveGState(context);
-    {
-        // flip the coordinates
-        CGContextTranslateCTM(context, rect.origin.x, (rect.origin.y) + rect.size.height);
-        CGContextScaleCTM(context, 1.f, -1.f);
-        CGContextDrawImage(context, bounds, CGImage);
-    }
-    CGContextRestoreGState(context);
+- (CGRect)bounds
+{
+    return CGRectMake(0.f, 0.f, self.width.value,
+                      self.height.value);
 }
 
 @end
