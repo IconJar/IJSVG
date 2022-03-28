@@ -12,8 +12,6 @@
 @class IJSVGPath;
 
 @interface IJSVGImage : IJSVGNode {
-
-    NSImage* image;
     CGImageRef CGImage;
     IJSVGPath* imagePath;
 }
@@ -21,6 +19,7 @@
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;
 @property (nonatomic, readonly) CGAffineTransform intrinsicTransform;
+@property (nonatomic, retain) NSImage* image;
 
 - (CGImageRef)CGImage;
 - (void)loadFromString:(NSString*)encodedString;

@@ -23,7 +23,7 @@
     (void)([_renderingBackingScaleHelper release]), _renderingBackingScaleHelper = nil;
     (void)([_replacementColors release]), _replacementColors = nil;
     (void)([_renderingStyle release]), _renderingStyle = nil;
-    (void)([_group release]), _group = nil;
+    (void)([_rootNode release]), _rootNode = nil;
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
     (void)([_title release]), _title = nil;
     (void)([_desc release]), _desc = nil;
@@ -107,10 +107,13 @@
     __block IJSVGImageLayer* imageLayer = nil;
 
     // create the layers we require
+    IJSVGImage* imageNode = [[[IJSVGImage alloc] init] autorelease];
+    imageNode.image = image;
+    
     BOOL hasTransaction = IJSVGBeginTransaction();
     layer = [[[IJSVGGroupLayer alloc] init] autorelease];
     imageLayer =
-        [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
+        [[[IJSVGImageLayer alloc] initWithImage:imageNode] autorelease];
     [layer addSublayer:imageLayer];
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
@@ -205,15 +208,15 @@
         [self _checkDelegate];
 
         // create the group
-        _group = [[IJSVGParser groupForFileURL:aURL
-                                         error:&anError
-                                      delegate:self] retain];
-
+        IJSVGParser* parser = [IJSVGParser groupForFileURL:aURL
+                                                      error:&anError
+                                                   delegate:self];
+        _rootNode = parser.rootNode.retain;
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong...
-        if (_group == nil) {
+        if (_rootNode == nil) {
             if (error != NULL) {
                 *error = anError;
             }
@@ -266,15 +269,16 @@
         [self _checkDelegate];
 
         // setup the parser
-        _group = [[IJSVGParser alloc] initWithSVGString:string
-                                                  error:&anError
-                                               delegate:self];
+        IJSVGParser* parser = [[[IJSVGParser alloc] initWithSVGString:string
+                                                                error:&anError
+                                                             delegate:self] autorelease];
+        _rootNode = parser.rootNode.retain;
 
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong :(
-        if (_group == nil) {
+        if (_rootNode == nil) {
             if (error != NULL) {
                 *error = anError;
             }
@@ -294,20 +298,10 @@
     }
 }
 
-- (void)discardDOM
-{
-    // if we discard, we can no longer create a tree, so lets create tree
-    // upfront before we kill anything
-    [self layer];
-
-    // now clear memory
-    (void)([_group release]), _group = nil;
-}
-
 - (void)_setupBasicInfoFromGroup
 {
-    _viewBox = _group.viewBox;
-    _intrinsicSize = _group.intrinsicSize.retain;
+    _viewBox = _rootNode.viewBox;
+    _intrinsicSize = _rootNode.intrinsicSize.retain;
 }
 
 - (void)_setupBasicsFromAnyInitializer
@@ -325,37 +319,32 @@
 
 - (void)setTitle:(NSString*)title
 {
-    _group.title = title;
+    _rootNode.title = title;
 }
 
 - (NSString*)title
 {
-    return _group.title;
+    return _rootNode.title;
 }
 
 - (void)setDesc:(NSString*)description
 {
-    _group.desc = description;
+    _rootNode.desc = description;
 }
 
 - (NSString*)desc
 {
-    return _group.desc;
+    return _rootNode.desc;
 }
 
 - (NSString*)identifier
 {
-    return _group.identifier;
+    return _rootNode.identifier;
 }
 
 - (void)_checkDelegate
 {
-    _respondsTo.shouldHandleForeignObject =
-        [_delegate respondsToSelector:@selector(svg:shouldHandleForeignObject:)];
-    _respondsTo.handleForeignObject = [_delegate
-        respondsToSelector:@selector(svg:handleForeignObject:document:)];
-    _respondsTo.shouldHandleSubSVG =
-        [_delegate respondsToSelector:@selector(svg:foundSubSVG:withSVGString:)];
+    _respondsTo.shouldHandleSubSVG = [_delegate respondsToSelector:@selector(svg:foundSubSVG:withSVGString:)];
 }
 
 - (NSRect)viewBox
@@ -365,22 +354,22 @@
 
 - (IJSVGGroup*)rootNode
 {
-    return _group;
+    return _rootNode;
 }
 
 - (BOOL)isFont
 {
-    return [_group isFont];
+    return [_rootNode isFont];
 }
 
 - (NSArray<IJSVGPath*>*)glyphs
 {
-    return [_group glyphs];
+    return [_rootNode glyphs];
 }
 
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
 {
-    return [_group subSVGs:recursive];
+    return [_rootNode subSVGs:recursive];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
@@ -814,7 +803,7 @@
     }
 
     // force rebuild of the tree
-    _layerTree = [[tree layerForNode:_group] retain];
+    _layerTree = [[tree layerForNode:_rootNode] retain];
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
     }
@@ -978,27 +967,6 @@
     }
 }
 
-- (BOOL)svgParser:(IJSVGParser*)parser
-    shouldHandleForeignObject:(IJSVGForeignObject*)foreignObject
-{
-    if (_delegate != nil && _respondsTo.shouldHandleForeignObject == 1) {
-        return [_delegate svg:self
-            shouldHandleForeignObject:foreignObject];
-    }
-    return NO;
-}
-
-- (void)svgParser:(IJSVGParser*)parser
-    handleForeignObject:(IJSVGForeignObject*)foreignObject
-               document:(NSXMLDocument*)document
-{
-    if (_delegate != nil && _respondsTo.handleForeignObject == 1) {
-        [_delegate svg:self
-            handleForeignObject:foreignObject
-                       document:document];
-    }
-}
-
 #pragma mark matching
 
 - (BOOL)matchesPropertiesWithMask:(IJSVGMatchPropertiesMask)mask
@@ -1033,7 +1001,7 @@
             *stop = YES;
         }
     };
-    [IJSVGNode walkNodeTree:_group
+    [IJSVGNode walkNodeTree:_rootNode
                     handler:handler];
     return matchedMask == mask;
 }

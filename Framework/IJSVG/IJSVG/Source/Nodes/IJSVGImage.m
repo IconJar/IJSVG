@@ -16,7 +16,7 @@
 {
     (void)(CGImageRelease(CGImage)), CGImage = nil;
     (void)([imagePath release]), imagePath = nil;
-    (void)([image release]), image = nil;
+    (void)([_image release]), _image = nil;
     [super dealloc];
 }
 
@@ -70,12 +70,11 @@
 
 - (void)setImage:(NSImage*)anImage
 {
-    if (image != nil) {
-        (void)([image release]), image = nil;
+    if (_image != nil) {
+        (void)([_image release]), _image = nil;
     }
-    image = [anImage retain];
-    _intrinsicSize = (CGSize)image.size;
-    
+    _image = [anImage retain];
+    _intrinsicSize = (CGSize)_image.size;
 
     if (CGImage != nil) {
         CGImageRelease(CGImage);
@@ -83,9 +82,9 @@
     }
 
     NSRect rect = NSMakeRect(0.f, 0.f, _intrinsicSize.width, _intrinsicSize.height);
-    CGImage = [image CGImageForProposedRect:&rect
-                                    context:nil
-                                      hints:nil];
+    CGImage = [_image CGImageForProposedRect:&rect
+                                     context:nil
+                                       hints:nil];
 
     CGImageRetain(CGImage);
 }
@@ -112,7 +111,8 @@
 
 - (CGRect)bounds
 {
-    return CGRectMake(0.f, 0.f, self.width.value,
+    return CGRectMake(0.f, 0.f,
+                      self.width.value,
                       self.height.value);
 }
 

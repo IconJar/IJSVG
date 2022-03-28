@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGGroupLayer.h>
@@ -29,21 +30,16 @@ typedef NS_OPTIONS(NSInteger, IJSVGMatchPropertiesMask) {
 @protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>
 
 @optional
-- (BOOL)svg:(IJSVG*)svg
-    shouldHandleForeignObject:(IJSVGForeignObject*)foreignObject;
 - (void)svg:(IJSVG*)svg
-    handleForeignObject:(IJSVGForeignObject*)foreignObject
-               document:(NSXMLDocument*)document;
-- (void)svg:(IJSVG*)svg
-      foundSubSVG:(IJSVG*)subSVG
-    withSVGString:(NSString*)subSVGString;
+foundSubSVG:(IJSVG*)subSVG
+withSVGString:(NSString*)subSVGString;
 
 @end
 
 @interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
 
 @private
-    IJSVGParser* _group;
+    IJSVGRootNode* _rootNode;
     CGFloat _scale;
     CGFloat _clipScale;
     id<IJSVGDelegate> _delegate;
@@ -56,8 +52,6 @@ typedef NS_OPTIONS(NSInteger, IJSVGMatchPropertiesMask) {
     NSMutableDictionary* _replacementColors;
 
     struct {
-        unsigned int shouldHandleForeignObject : 1;
-        unsigned int handleForeignObject : 1;
         unsigned int shouldHandleSubSVG : 1;
     } _respondsTo;
 }
@@ -91,7 +85,6 @@ typedef NS_OPTIONS(NSInteger, IJSVGMatchPropertiesMask) {
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 - (CGFloat)computeBackingScale:(CGFloat)scale;
-- (void)discardDOM;
 
 + (id)svgNamed:(NSString*)string;
 + (id)svgNamed:(NSString*)string

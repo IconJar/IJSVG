@@ -19,6 +19,7 @@
 @class IJSVGGroup;
 @class IJSVGPattern;
 @class IJSVGTransform;
+@class IJSVGRootNode;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -50,6 +51,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeDesc,
     IJSVGNodeTypeStop,
     IJSVGNodeTypeNotFound,
+    IJSVGNodeTypeUnknown,
 };
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {

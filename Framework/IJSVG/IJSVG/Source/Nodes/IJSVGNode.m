@@ -137,7 +137,7 @@
     if(strcmp(name, "desc") == 0) {
         return IJSVGNodeTypeDesc;
     }
-    return IJSVGNodeTypeNotFound;
+    return IJSVGNodeTypeUnknown;
 }
 
 - (id)init

@@ -81,37 +81,28 @@ extern NSString* const IJSVGAttributeOverflow;
 @protocol IJSVGParserDelegate <NSObject>
 
 @optional
-- (BOOL)svgParser:(IJSVGParser*)svg
-    shouldHandleForeignObject:(IJSVGForeignObject*)foreignObject;
-- (void)svgParser:(IJSVGParser*)svg
-    handleForeignObject:(IJSVGForeignObject*)foreignObject
-               document:(NSXMLDocument*)document;
 - (void)svgParser:(IJSVGParser*)svg
       foundSubSVG:(IJSVG*)subSVG
     withSVGString:(NSString*)string;
 
 @end
 
-@interface IJSVGParser : IJSVGGroup {
+@interface IJSVGParser : NSObject {
 
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
 
     struct {
-        unsigned int shouldHandleForeignObject : 1;
-        unsigned int handleForeignObject : 1;
         unsigned int handleSubSVG : 1;
     } _respondsTo;
 
     IJSVGPathDataStream* _commandDataStream;
-    
     IJSVGStyleSheet* _styleSheet;
     NSMutableDictionary<NSString*, NSXMLElement*>* _detachedElements;
 }
 
-@property (nonatomic, readonly) NSRect viewBox;
-@property (nonatomic, readonly) IJSVGUnitSize* intrinsicSize;
+@property (nonatomic, retain, readonly) IJSVGRootNode* rootNode;
 
 + (BOOL)isDataSVG:(NSData*)data;
 
@@ -128,9 +119,5 @@ extern NSString* const IJSVGAttributeOverflow;
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
                           error:(NSError**)error
                        delegate:(id<IJSVGParserDelegate>)delegate;
-- (NSSize)size;
-- (BOOL)isFont;
-- (NSArray*)glyphs;
-- (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
 
 @end

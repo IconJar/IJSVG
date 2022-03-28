@@ -121,8 +121,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (void)dealloc
 {
     (void)([_detachedElements release]), _detachedElements = nil;
+    (void)([_rootNode release]), _rootNode = nil;
     (void)([_styleSheet release]), _styleSheet = nil;
-    (void)([_intrinsicSize release]), _intrinsicSize = nil;
     if (_commandDataStream != NULL) {
         (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
     }
@@ -136,11 +136,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     if ((self = [super init]) != nil) {
         _delegate = delegate;
 
-        _respondsTo.handleForeignObject = [_delegate respondsToSelector:@selector(svgParser:handleForeignObject:document:)];
-        _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
-
-        // load the document / file, assume its UTF8
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -160,13 +156,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
         // attempt to parse the file
         anError = nil;
-        @try {
+//        @try {
             [self begin];
-        }
-        @catch (NSException* exception) {
-            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
-                                        error:error];
-        }
+//        }
+//        @catch (NSException* exception) {
+//            NSLog(@"%@",exception);
+//            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
+//                                        error:error];
+//        }
 
         // check the actual parsed SVG
         anError = nil;
@@ -234,12 +231,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (BOOL)_validateParse:(NSError**)error
 {
     // check is font
-    if (self.isFont) {
-        return YES;
-    }
+//    if (self.isFont) {
+//        return YES;
+//    }
 
     // check the viewbox
-    if (NSEqualRects(self.viewBox, NSZeroRect) || self.size.width == 0 || self.size.height == 0) {
+    if (NSEqualRects(_rootNode.viewBox, NSZeroRect) ||
+        _rootNode.bounds.size.width == 0 ||
+        _rootNode.bounds.size.height == 0) {
         if (error != NULL) {
             *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
                                                  code:IJSVGErrorInvalidViewBox
@@ -250,32 +249,19 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     return YES;
 }
 
-- (NSSize)size
-{
-    return _viewBox.size;
-}
-
-- (CGRect)bounds
-{
-    return _viewBox;
-}
-
-- (BOOL)isFont
-{
-    return NO;
-}
-
 - (void)begin {
     // setup basics to begin with
+    _rootNode = [[IJSVGRootNode alloc] init];
     _styleSheet = [[IJSVGStyleSheet alloc] init];
     _commandDataStream = IJSVGPathDataStreamCreateDefault();
     _detachedElements = [[NSMutableDictionary alloc] init];
     [self computeAttributesFromElement:_document.rootElement
-                                onNode:self
+                                onNode:_rootNode
                      ignoredAttributes:nil];
-    [self computeViewBox:_document.rootElement];
+    [self computeViewBox:_document.rootElement
+                  onNode:_rootNode];
     [self computeElement:_document.rootElement
-              parentNode:self];
+              parentNode:_rootNode];
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -293,37 +279,38 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 }
 
 - (void)computeViewBox:(NSXMLElement*)element
+                onNode:(IJSVGRootNode*)rootNode
 {
     NSXMLNode* attribute = nil;
     if ((attribute = [element attributeForName:IJSVGAttributeViewBox]) != nil) {
         CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
-        _viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
+        rootNode.viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
         (void)free(box);
     } else {
         // its possible wlength or hlength are nil
-        CGFloat w = self.width.value;
-        CGFloat h = self.height.value;
+        CGFloat w = _rootNode.width.value;
+        CGFloat h = _rootNode.height.value;
         
         if (h == 0.f && w != 0.f) {
             h = w;
         } else if (w == 0.f && h != 0.f) {
             w = h;
         }
-        _viewBox = NSMakeRect(0.f, 0.f, w, h);
+        rootNode.viewBox = NSMakeRect(0.f, 0.f, w, h);
     }
 
-    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:_viewBox.size.width];
-    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:_viewBox.size.height];
+    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:rootNode.viewBox.size.width];
+    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:rootNode.viewBox.size.height];
     if ([element attributeForName:IJSVGAttributeWidth] != nil) {
-        wl = self.width;
+        wl = _rootNode.width;
     }
     if ([element attributeForName:IJSVGAttributeHeight] != nil) {
-        hl = self.height;
+        hl = _rootNode.height;
     }
 
     // store the width and height
-    _intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
-                                           height:hl].retain;
+    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
+                                                   height:hl];
 }
 
 - (void)computeAttributesFromElement:(NSXMLElement*)element
@@ -581,7 +568,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                          parentNode:node];
             break;
         }
-        case IJSVGNodeTypeNotFound:
+            
+        // we can treat unkown element as groups, as some people
+        // thought it was a good idea to stick HTML within the markup
+        case IJSVGNodeTypeUnknown:
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element
                                         parentNode:node];
