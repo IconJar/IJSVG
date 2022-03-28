@@ -97,11 +97,6 @@ extern NSString* const IJSVGAttributeOverflow;
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
-    NSMutableArray<IJSVGPath*>* _glyphs;
-    IJSVGStyleSheet* _styleSheet;
-    NSMutableDictionary<NSString*, NSXMLElement*>* _defNodes;
-    NSMutableDictionary<NSString*, NSXMLElement*>* _baseDefNodes;
-    NSMutableArray<IJSVG*>* _svgs;
 
     struct {
         unsigned int shouldHandleForeignObject : 1;
@@ -110,6 +105,9 @@ extern NSString* const IJSVGAttributeOverflow;
     } _respondsTo;
 
     IJSVGPathDataStream* _commandDataStream;
+    
+    IJSVGStyleSheet* _styleSheet;
+    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedElements;
 }
 
 @property (nonatomic, readonly) NSRect viewBox;

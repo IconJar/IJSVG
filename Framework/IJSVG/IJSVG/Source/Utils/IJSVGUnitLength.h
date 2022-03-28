@@ -49,6 +49,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
                       fromUnitType:(IJSVGUnitType)units;
 
+- (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type;
 - (IJSVGUnitLength*)lengthByMatchingPercentage;
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;

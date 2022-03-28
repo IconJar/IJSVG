@@ -198,6 +198,12 @@
     return unit;
 }
 
+- (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type
+{
+    return [self.class unitWithFloat:self.value
+                                type:type];
+}
+
 - (IJSVGUnitLength*)lengthByMatchingPercentage
 {
     if(self.type != IJSVGUnitLengthTypePercentage && self.value <= 1.f) {

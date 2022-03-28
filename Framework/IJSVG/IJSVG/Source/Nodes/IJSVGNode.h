@@ -109,6 +109,7 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @interface IJSVGNode : NSObject <NSCopying>
 
 @property (nonatomic, assign) BOOL renderable;
+@property (nonatomic, assign) BOOL adoptable;
 @property (nonatomic, assign, readonly) CGRect bounds;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
@@ -160,9 +161,10 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
                           kind:(NSXMLNodeKind)kind;
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
-- (id)initWithDef:(BOOL)flag;
-- (void)addDef:(IJSVGNode*)aDef;
-- (IJSVGDef*)defForID:(NSString*)anID;
-- (IJSVGNode*)renderableNode;
+
+- (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds;
+- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode**)referencingNode;
+
+- (instancetype)detach;
 
 @end

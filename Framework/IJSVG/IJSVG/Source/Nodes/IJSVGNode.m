@@ -194,6 +194,7 @@
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
+    self.renderable = node.renderable;
     self.title = node.title;
     self.desc = node.desc;
     
@@ -284,31 +285,6 @@
         }
     }
     return self;
-}
-
-- (IJSVGDef*)defForID:(NSString*)anID
-{
-    IJSVGDef* aDef = nil;
-    if ((aDef = [_def defForID:anID]) != nil) {
-        return aDef;
-    }
-    if (_parentNode != nil) {
-        return [_parentNode defForID:anID];
-    }
-    return nil;
-}
-
-- (IJSVGNode*)renderableNode
-{
-    if(self.renderable == YES) {
-        return self;
-    }
-    return _parentNode.renderableNode;
-}
-
-- (void)addDef:(IJSVGNode*)aDef
-{
-    [_def addDef:aDef];
 }
 
 // winding rule can inherit..
@@ -453,6 +429,29 @@
         return _parentNode.contentUnits;
     }
     return _contentUnits;
+}
+
+- (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds
+{
+    IJSVGNode* node = nil;
+    IJSVGUnitType type = [self contentUnitsWithReferencingNode:&node];
+    *bounds = node.parentNode.bounds;
+    return type;
+}
+
+- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode**)referencingNode
+{
+    if(_contentUnits == IJSVGUnitInherit && _parentNode != nil) {
+        return [_parentNode contentUnitsWithReferencingNode:referencingNode];
+    }
+    *referencingNode = self;
+    return _contentUnits;
+}
+
+- (instancetype)detach
+{
+    self.parentNode = nil;
+    return self;
 }
 
 @end

@@ -1137,6 +1137,8 @@ NSString* IJSVGHash(NSString* key)
     dict[@"id"] = [self identifierForElement:patternElement];
     dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
     dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
+    dict[@"patternUnits"] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox" : @"userSpaceOnUse";
+    dict[@"patternContentUnits"] = layer.patternNode.contentUnits == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox" : @"userSpaceOnUse";
 
     // sort out x and y position
     IJSVGUnitLength* x = layer.patternNode.x;

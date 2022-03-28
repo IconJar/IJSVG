@@ -198,8 +198,12 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return transforms;
 }
 
-- (void)applyContentBoundingBoxUnits:(CGRect)bounds
+- (void)applyBounds:(CGRect)bounds
+   withContentUnits:(IJSVGUnitType)contentUnits
 {
+    if(contentUnits != IJSVGUnitObjectBoundingBox) {
+        return;
+    }
     switch(self.command) {
         case IJSVGTransformCommandTranslate: {
             self.parameters[0] *= bounds.size.width;
@@ -208,7 +212,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         }
         default:
             break;
-    }
+    }    
 }
 
 - (CGAffineTransform)CGAffineTransform
