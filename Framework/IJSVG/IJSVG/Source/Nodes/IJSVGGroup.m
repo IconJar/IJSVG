@@ -57,6 +57,15 @@
     }
 }
 
+- (CGRect)bounds
+{
+    CGRect rect = CGRectZero;
+    for(IJSVGNode* node in self.childNodes) {
+        rect = CGRectUnion(rect, node.bounds);
+    }
+    return rect;
+}
+
 - (NSArray<IJSVGNode*>*)childNodes
 {
     return _childNodes;

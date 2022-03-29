@@ -145,13 +145,9 @@
     for (IJSVGNode* node in group.childNodes) {
         [groupLayer addSublayer:[self layerForNode:node]];
     }
-    groupLayer.frame = (CGRect) {
-        .origin = CGPointZero,
-        .size = (CGSize) {
-            .width = group.width.value,
-            .height = group.height.value
-        }
-    };
+    
+    // set the frame from the model
+    groupLayer.frame = CGRectMake(0.f, 0.f, group.width.value, group.height.value);
 
     // mask it - forgot groups can have masks too, doh! simple
     // enough to apply though, recursion ftw!
