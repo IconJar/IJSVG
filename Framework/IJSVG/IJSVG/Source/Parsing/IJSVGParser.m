@@ -445,22 +445,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
                                                      referencingElement:element
                                                         referencingNode:node];
-            switch(object.type) {
-                case IJSVGNodeTypePattern: {
-                    node.strokePattern = (IJSVGPattern*)object;
-                    break;
-                }
-                case IJSVGNodeTypeLinearGradient:
-                case IJSVGNodeTypeRadialGradient: {
-                    node.strokeGradient = (IJSVGGradient*)object;
-                    break;
-                }
-                default:
-                    break;
-            }
+            node.stroke = object;
             return;
         }
-        node.strokeColor = [IJSVGColor colorFromString:value];
+        NSColor* color = [IJSVGColor colorFromString:value];
+        node.stroke = [IJSVGColorNode colorNodeWithColor:color];
     });
 
     // stroke dash array
@@ -485,29 +474,19 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
                                                      referencingElement:element
                                                         referencingNode:node];
-            switch(object.type) {
-                case IJSVGNodeTypePattern: {
-                    node.fillPattern = (IJSVGPattern*)object;
-                    break;
-                }
-                case IJSVGNodeTypeLinearGradient:
-                case IJSVGNodeTypeRadialGradient: {
-                    node.fillGradient = (IJSVGGradient*)object;
-                    break;
-                }
-                default:
-                    break;
-            }
+            node.fill = object;
             return;
         }
-        node.fillColor = [IJSVGColor colorFromString:value];
+        NSColor* color = [IJSVGColor colorFromString:value];
+        node.fill = [IJSVGColorNode colorNodeWithColor:color];
     });
     
     // fill opacity
     IJSVGAttributeParse(IJSVGAttributeFillOpacity, ^(NSString* value) {
-        if (node.fillOpacity.value != 1.f) {
-            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                         to:node.fillOpacity.value];
+        if (node.fillOpacity.value != 1.f && [node.fill isKindOfClass:IJSVGColorNode.class]) {
+            IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
+            colorNode.color = [IJSVGColor changeAlphaOnColor:colorNode.color
+                                                          to:node.fillOpacity.value];
         }
     });
 
@@ -540,11 +519,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     // stop-color
     IJSVGAttributeParse(IJSVGAttributeStopColor, ^(NSString* value) {
-        node.fillColor = [IJSVGColor colorFromString:value];
+        NSColor* color = [IJSVGColor colorFromString:value];
         if(node.fillOpacity.value != 1.f) {
-            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                         to:node.fillOpacity.value];
+            color = [IJSVGColor changeAlphaOnColor:color
+                                                to:node.fillOpacity.value];
         }
+        node.fill = [IJSVGColorNode colorNodeWithColor:color];
     });
     
     // overflow
@@ -555,6 +535,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;
         }
     });
+    
+    // once we have done everything we can compute traits!
+    [node computeTraits];
 }
 
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
@@ -773,6 +756,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.units = IJSVGUnitObjectBoundingBox;
     node.type = IJSVGNodeTypeLinearGradient;
     node.name = element.localName;
+    [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
         NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
@@ -799,6 +783,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.units = IJSVGUnitObjectBoundingBox;
     node.type = IJSVGNodeTypeRadialGradient;
     node.name = element.localName;
+    [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
         NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
@@ -893,7 +878,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
     [self parsePolyPoints:pointsString
                  intoPath:node
-                closePath:YES];
+                closePath:NO];
     
     return node;
 }
@@ -1147,6 +1132,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.parentNode = parentNode;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
+    [node addTraits:IJSVGNodeTraitPaintable];
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];

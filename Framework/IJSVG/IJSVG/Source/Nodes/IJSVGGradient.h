@@ -6,11 +6,11 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGColorList.h>
 #import <IJSVG/IJSVGDef.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
-#import <Foundation/Foundation.h>
 
 @interface IJSVGGradient : IJSVGGroup
 

@@ -20,14 +20,6 @@
     [super dealloc];
 }
 
-- (instancetype)init
-{
-    if((self = [super init]) != nil) {
-        self.renderable = YES;
-    }
-    return self;
-}
-
 - (void)loadFromString:(NSString*)encodedString
 {
     if ([encodedString hasPrefix:@"data:"]) {

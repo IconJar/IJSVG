@@ -6,8 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroup.h"
-#import "IJSVGPath.h"
+#import <IJSVG/IJSVGPath.h>
 
 @implementation IJSVGPath
 
@@ -24,7 +23,6 @@
     if ((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
         _path = CGPathCreateMutable();
-        self.renderable = YES;
     }
     return self;
 }
@@ -71,11 +69,23 @@
     CGPathCloseSubpath(_path);
 }
 
-- (BOOL)isStroked
+#pragma mark Traits
+
+- (void)computeTraits
 {
-    return (self.strokeColor != nil && self.strokeColor.alphaComponent != 0.f) ||
-        self.strokePattern != nil ||
-        self.strokeGradient != nil;
+    if(self.stroke != nil) {
+        // by default we can just add this on
+        [self addTraits:IJSVGNodeTraitStroked];
+        
+        // if we detect the stroke was a color, we need to check its alpha
+        // component to then remove the trait if its 0.f
+        if([self.stroke isKindOfClass:IJSVGColorNode.class] == YES) {
+            IJSVGColorNode* strokeColor = (IJSVGColorNode*)self.stroke;
+            if(strokeColor.color.alphaComponent == 0.f) {
+                [self removeTraits:IJSVGNodeTraitStroked];
+            }
+        }
+    }
 }
 
 @end

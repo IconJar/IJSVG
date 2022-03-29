@@ -209,7 +209,7 @@
                               fromNode:(IJSVGNode*)node
 {
     IJSVGShapeLayer* mask = [[[IJSVGShapeLayer alloc] init] autorelease];
-    mask.fillColor = [NSColor blackColor].CGColor;
+    mask.fillColor = NSColor.whiteColor.CGColor;
     mask.path = layer.path;
     mask.fillRule = layer.fillRule;
     return mask;
@@ -237,14 +237,10 @@
     IJSVGShapeLayer* layer = [self basicLayerForPath:path
                                  originalBoundingBox:&originalShapeBounds];
 
-    BOOL hasStroke = (path.strokeColor != nil || path.strokePattern != nil || path.strokeGradient != nil);
-
-    // any gradient?
-    if (_style.fillColor == nil && path.fillGradient != nil) {
-
+    if(_style.fillColor == nil && [path.fill isKindOfClass:IJSVGGradient.class]) {
         // create the gradient
         IJSVGGradientLayer* gradLayer = [self gradientLayerForLayer:layer
-                                                           gradient:path.fillGradient
+                                                           gradient:(IJSVGGradient*)path.fill
                                                            fromNode:path
                                                          objectRect:originalShapeBounds
                                                          shouldMask:YES];
@@ -252,25 +248,23 @@
         // add the gradient and set it against the layer
         [layer addSublayer:gradLayer];
         layer.gradientFillLayer = gradLayer;
-
-    } else if (_style.fillColor == nil && path.fillPattern != nil) {
-
+    } else if(_style.fillColor == nil && [path.fill isKindOfClass:IJSVGPattern.class]) {
         // create the pattern, this is actually not as easy as it may seem
         IJSVGPatternLayer* patternLayer = [self patternLayerForLayer:layer
-                                                             pattern:path.fillPattern
+                                                             pattern:(IJSVGPattern*)path.fill
                                                             fromNode:path
                                                           objectRect:originalShapeBounds];
         // add it
         [layer addSublayer:patternLayer];
         layer.patternFillLayer = patternLayer;
-
     } else {
         // only use the global if its set and the current colors
         // alpha channel is not 0.f, otherwise its a blank clear color,
         // aka, not filled in
-        NSColor* fColor = path.fillColor;
-        BOOL hasColor = (fColor.alphaComponent == 0.f || fColor == nil) == NO;
-        BOOL hasFill = path.fillPattern != nil || path.fillGradient != nil;
+        IJSVGNode* nodeColor = path.fill;
+        NSColor* fColor = [nodeColor isKindOfClass:IJSVGColorNode.class] ? ((IJSVGColorNode*)nodeColor).color : nil;
+        BOOL hasColor = [fColor isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)fColor).color.alphaComponent != 0.f;
+        BOOL hasFill = fColor != nil;
         
         // is there an overriding style in the sheet?
         if (_style.fillColor && (hasFill || hasColor || fColor == nil)) {
@@ -288,7 +282,7 @@
 
         // just set the color
         if (fColor != nil) {
-            layer.fillColor = fColor.CGColor;
+            layer.fillColor = ((NSColor*)fColor).CGColor;
         } else {
             // use default color
             NSColor* defColor = [IJSVGColor computeColorSpace:NSColor.blackColor];
@@ -304,7 +298,7 @@
     }
 
     // stroke it
-    if (hasStroke == YES) {
+    if ([path matchesTraits:IJSVGNodeTraitStroked] == YES) {
 
         // load the stroke layer
         IJSVGStrokeLayer* strokeLayer = [self strokeLayer:layer
@@ -312,15 +306,14 @@
 
         // reset the node
         BOOL moveStrokeLayer = NO;
-        if (_style.strokeColor == nil && path.strokeGradient != nil) {
-
+        if(_style.strokeColor == nil && [path.stroke isKindOfClass:IJSVGGradient.class]) {
             // force reset of the mask colour as we need to use the stroke layer
             // as the mask for the stroke gradient
-            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.blackColor].CGColor;
+            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.whiteColor].CGColor;
 
             // create the gradient
             IJSVGGradientLayer* gradLayer = [self gradientStrokeLayerForLayer:layer
-                                                                     gradient:path.strokeGradient
+                                                                     gradient:(IJSVGGradient*)path.stroke
                                                                      fromNode:path
                                                                    objectRect:originalShapeBounds];
 
@@ -333,14 +326,13 @@
             layer.strokeLayer = strokeLayer;
             layer.gradientStrokeLayer = gradLayer;
 
-        } else if (_style.strokeColor == nil && path.strokePattern != nil) {
-
+        } else if(_style.strokeColor == nil && [path.stroke isKindOfClass:IJSVGPattern.class]) {
             // force reset of the mask
-            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.blackColor].CGColor;
+            strokeLayer.strokeColor = [IJSVGColor computeColorSpace:NSColor.whiteColor].CGColor;
 
             // create the pattern
             IJSVGPatternLayer* patternLayer = [self patternStrokeLayerForLayer:layer
-                                                                       pattern:path.strokePattern
+                                                                       pattern:(IJSVGPattern*)path.stroke
                                                                       fromNode:path
                                                                     objectRect:originalShapeBounds];
 
@@ -353,7 +345,6 @@
             [layer addSublayer:patternLayer];
             layer.strokeLayer = strokeLayer;
             layer.patternStrokeLayer = (IJSVGPatternLayer*)patternLayer;
-
         } else {
             // just add the coloured layer
             [layer addSublayer:strokeLayer];
@@ -543,8 +534,10 @@
 {
     // same as fill, dont use global if the alpha is 0.f, but do use it
     // if there is a pattern or gradient
-    NSColor* sColor = path.strokeColor;
-    if (_style.strokeColor != nil && ((sColor != nil && sColor.alphaComponent != 0.f) || path.strokePattern != nil || path.strokeGradient != nil)) {
+    NSColor* sColor = [path.stroke isKindOfClass:IJSVGColorNode.class] ?
+        ((IJSVGColorNode*)(path.stroke)).color : NSColor.blackColor;
+    
+    if (_style.strokeColor != nil && [path matchesTraits:IJSVGNodeTraitStroked]) {
         sColor = _style.strokeColor;
     }
 
@@ -611,6 +604,15 @@
         // add clip mask
         if (node.clipPath != nil && node.clipPath.overflowVisibility == IJSVGOverflowVisibilityHidden) {
             IJSVGLayer* clip = [self layerForNode:node.clipPath];
+            
+            // for clup paths to work, we need to set all their contents to white
+            for(IJSVGShapeLayer* subLayer in clip.sublayers) {
+                if([subLayer isKindOfClass:IJSVGShapeLayer.class] == NO) {
+                    [subLayer removeFromSuperlayer];
+                    continue;
+                }
+                subLayer.fillColor = NSColor.whiteColor.CGColor;
+            }
 
             // adjust the frame
             if (node.clipPath.units == IJSVGUnitObjectBoundingBox) {
@@ -639,10 +641,16 @@
         // add the mask
         if(maskLayer.sublayers.count != 0) {
             // recursive colourize for each item
-            NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
-            [self _recursiveColorLayersFromLayer:maskLayer
-                                       withColor:color.CGColor];
+//            NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
+//            [self _recursiveColorLayersFromLayer:maskLayer
+//                                       withColor:color.CGColor];
+//            CIFilter* filter = [CIFilter filterWithName:@"CIColorInvert"];
+//            [filter setDefaults];
+//            maskLayer.filters = @[filter];
+//            [layer addS]
+            maskLayer.contentsScale = layer.backingScaleFactor;
             layer.mask = maskLayer;
+//            [layer addSublayer:maskLayer];
         }
     }
 }

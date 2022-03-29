@@ -985,7 +985,7 @@
         IJSVGPath* path = (IJSVGPath*)node;
         if((mask & IJSVGMatchPropertyContainsStrokedElement) != 0 &&
            [node isKindOfClass:IJSVGPath.class] == YES &&
-           path.isStroked == YES) {
+           [path matchesTraits:IJSVGNodeTraitStroked] == YES) {
             matchedMask |= IJSVGMatchPropertyContainsStrokedElement;
         }
         

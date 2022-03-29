@@ -6,12 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGDef.h"
-#import "IJSVGNode.h"
-#import "IJSVGUtils.h"
-#import "IJSVGGroup.h"
+#import <IJSVG/IJSVGDef.h>
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGNode
+
+@synthesize fill = _fill;
+@synthesize stroke = _stroke;
 
 - (void)dealloc
 {
@@ -27,12 +30,9 @@
     (void)([_strokeWidth release]), _strokeWidth = nil;
     (void)([_strokeDashOffset release]), _strokeDashOffset = nil;
     (void)([_unicode release]), _unicode = nil;
-    (void)([_fillGradient release]), _fillGradient = nil;
-    (void)([_strokeGradient release]), _strokeGradient = nil;
-    (void)([_strokePattern release]), _strokePattern = nil;
+    (void)([_fill release]), _fill = nil;
+    (void)([_stroke release]), _stroke = nil;
     (void)([_transforms release]), _transforms = nil;
-    (void)([_fillColor release]), _fillColor = nil;
-    (void)([_strokeColor release]), _strokeColor = nil;
     (void)([_identifier release]), _identifier = nil;
     (void)([_def release]), _def = nil;
     (void)([_name release]), _name = nil;
@@ -40,7 +40,6 @@
     (void)([_desc release]), _desc = nil;
     (void)([_className release]), _className = nil;
     (void)([_classNameList release]), _classNameList = nil;
-    (void)([_fillPattern release]), _fillPattern = nil;
     (void)([_clipPath release]), _clipPath = nil;
     (void)([_svg release]), _svg = nil;
     (void)([_mask release]), _mask = nil;
@@ -140,14 +139,6 @@
     return IJSVGNodeTypeUnknown;
 }
 
-- (id)init
-{
-    if ((self = [self initWithDef:YES]) != nil) {
-        self.opacity = [IJSVGUnitLength unitWithFloat:1];
-    }
-    return self;
-}
-
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler
 {
@@ -192,9 +183,37 @@
     }
 }
 
+- (id)init
+{
+    if ((self = [super init]) != nil) {
+        self.opacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.fillOpacity.inherit = YES;
+
+        self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
+        self.shouldRender = YES;
+
+        self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
+        self.strokeOpacity.inherit = YES;
+
+        self.strokeWidth = [IJSVGUnitLength unitWithFloat:1.f];
+        self.strokeWidth.inherit = YES;
+
+        self.windingRule = IJSVGWindingRuleInherit;
+        self.lineCapStyle = IJSVGLineCapStyleInherit;
+        self.lineJoinStyle = IJSVGLineJoinStyleInherit;
+        self.units = IJSVGUnitInherit;
+        self.contentUnits = IJSVGUnitInherit;
+
+        self.blendMode = IJSVGBlendModeNormal;
+        self.overflowVisibility = IJSVGOverflowVisibilityVisible;
+    }
+    return self;
+}
+
+
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
-    self.renderable = node.renderable;
     self.title = node.title;
     self.desc = node.desc;
     
@@ -209,13 +228,8 @@
     self.width = node.width;
     self.height = node.height;
 
-    self.fillGradient = node.fillGradient;
-    self.fillPattern = node.fillPattern;
-    self.strokeGradient = node.strokeGradient;
-    self.strokePattern = node.strokePattern;
-
-    self.fillColor = node.fillColor;
-    self.strokeColor = node.strokeColor;
+    self.fill = node.fill;
+    self.stroke = node.stroke;
     self.clipPath = node.clipPath;
 
     self.units = node.units;
@@ -255,36 +269,18 @@
     return node;
 }
 
-- (id)initWithDef:(BOOL)flag
+- (void)setFill:(IJSVGNode*)fill
 {
-    if ((self = [super init]) != nil) {
-        self.opacity = [IJSVGUnitLength unitWithFloat:0.f];
-        self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
-        self.fillOpacity.inherit = YES;
+    NSAssert([fill matchesTraits:IJSVGNodeTraitPaintable] || fill == nil, @"Fill must a paintable node.");
+    (void)[_fill release], _fill = nil;
+    _fill = [fill retain];
+}
 
-        self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
-        self.shouldRender = YES;
-
-        self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
-        self.strokeOpacity.inherit = YES;
-
-        self.strokeWidth = [IJSVGUnitLength unitWithFloat:1.f];
-        self.strokeWidth.inherit = YES;
-
-        self.windingRule = IJSVGWindingRuleInherit;
-        self.lineCapStyle = IJSVGLineCapStyleInherit;
-        self.lineJoinStyle = IJSVGLineJoinStyleInherit;
-        self.units = IJSVGUnitInherit;
-        self.contentUnits = IJSVGUnitInherit;
-
-        self.blendMode = IJSVGBlendModeNormal;
-        self.overflowVisibility = IJSVGOverflowVisibilityVisible;
-
-        if (flag == YES) {
-            _def = [[IJSVGDef alloc] init];
-        }
-    }
-    return self;
+- (void)setStroke:(IJSVGNode*)stroke
+{
+    NSAssert([stroke matchesTraits:IJSVGNodeTraitPaintable]|| stroke == nil, @"Stroke must be a paintable node.");
+    (void)[_stroke release], _stroke = nil;
+    _stroke = [stroke retain];
 }
 
 // winding rule can inherit..
@@ -348,13 +344,12 @@
 
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
-- (NSColor*)strokeColor
+- (id)stroke
 {
-    if (_strokeColor != nil)
-        return _strokeColor;
-    if (_strokeColor == nil && _parentNode != nil)
-        return _parentNode.strokeColor;
-    return nil;
+    if (_stroke == nil && _parentNode != nil) {
+        return _parentNode.stroke;
+    }
+    return _stroke;
 }
 
 - (IJSVGUnitLength*)strokeOpacity
@@ -367,52 +362,12 @@
 
 // even though the spec explicity states fill color
 // must be on the path, it can also be on the
-- (NSColor*)fillColor
+- (id)fill
 {
-    if (_fillColor == nil && _parentNode != nil) {
-        return _parentNode.fillColor;
+    if (_fill == nil && _parentNode != nil) {
+        return _parentNode.fill;
     }
-    return _fillColor;
-}
-
-// these are all recursive, so go up the chain
-// if they dont exist on this specific node
-- (IJSVGGradient*)fillGradient
-{
-    if (_fillGradient == nil && _parentNode != nil) {
-        return _parentNode.fillGradient;
-    }
-    return _fillGradient;
-}
-
-// these are all recursive, so go up the chain
-// if they dont exist on this specific node
-- (IJSVGPattern*)fillPattern
-{
-    if (_fillPattern == nil && _parentNode != nil) {
-        return _parentNode.fillPattern;
-    }
-    return _fillPattern;
-}
-
-// these are all recursive, so go up the chain
-// if they dont exist on this specific node
-- (IJSVGGradient*)strokeGradient
-{
-    if (_strokeGradient == nil && _parentNode != nil) {
-        return _parentNode.strokeGradient;
-    }
-    return _strokeGradient;
-}
-
-// these are all recursive, so go up the chain
-// if they dont exist on this specific node
-- (IJSVGPattern*)strokePattern
-{
-    if (_strokePattern == nil && _parentNode != nil) {
-        return _parentNode.strokePattern;
-    }
-    return _strokePattern;
+    return _fill;
 }
 
 - (IJSVGUnitType)units
@@ -446,6 +401,26 @@
     }
     *referencingNode = self;
     return _contentUnits;
+}
+
+- (void)addTraits:(IJSVGNodeTraits)traits
+{
+    _traits |= traits;
+}
+
+- (void)removeTraits:(IJSVGNodeTraits)traits
+{
+    _traits = _traits & ~traits;
+}
+
+- (BOOL)matchesTraits:(IJSVGNodeTraits)traits
+{
+    return (_traits & traits) == traits;
+}
+
+- (void)computeTraits
+{
+    // by default this does nothing
 }
 
 - (instancetype)detach

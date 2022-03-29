@@ -23,6 +23,11 @@
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
+typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
+    IJSVGNodeTraitStroked = 1 << 0,
+    IJSVGNodeTraitPaintable = 1 << 1
+};
+
 typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeGroup,
     IJSVGNodeTypePath,
@@ -110,8 +115,10 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 @interface IJSVGNode : NSObject <NSCopying>
 
-@property (nonatomic, assign) BOOL renderable;
+void IJSVGAssertPaintableObject(id object);
+
 @property (nonatomic, assign) BOOL adoptable;
+@property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
@@ -131,8 +138,8 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property (nonatomic, retain) IJSVGUnitLength* strokeOpacity;
 @property (nonatomic, retain) IJSVGUnitLength* strokeWidth;
 @property (nonatomic, retain) IJSVGUnitLength* offset;
-@property (nonatomic, retain) NSColor* fillColor;
-@property (nonatomic, retain) NSColor* strokeColor;
+@property (nonatomic, retain) IJSVGNode* fill;
+@property (nonatomic, retain) IJSVGNode* stroke;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, assign) IJSVGNode* parentNode;
 @property (nonatomic, assign) IJSVGNode* intermediateParentNode;
@@ -143,10 +150,6 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, retain) NSArray<IJSVGTransform*>* transforms;
 @property (nonatomic, retain) IJSVGDef* def;
-@property (nonatomic, retain) IJSVGGradient* fillGradient;
-@property (nonatomic, retain) IJSVGPattern* fillPattern;
-@property (nonatomic, retain) IJSVGGradient* strokeGradient;
-@property (nonatomic, retain) IJSVGPattern* strokePattern;
 @property (nonatomic, assign) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, retain) IJSVGUnitLength* strokeDashOffset;
@@ -168,5 +171,10 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 - (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode**)referencingNode;
 
 - (instancetype)detach;
+
+- (void)addTraits:(IJSVGNodeTraits)traits;
+- (void)removeTraits:(IJSVGNodeTraits)traits;
+- (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
+- (void)computeTraits;
 
 @end

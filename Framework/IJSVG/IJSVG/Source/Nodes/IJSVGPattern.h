@@ -6,8 +6,8 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGGroup.h>
 #import <Foundation/Foundation.h>
 
 @interface IJSVGPattern : IJSVGGroup {
