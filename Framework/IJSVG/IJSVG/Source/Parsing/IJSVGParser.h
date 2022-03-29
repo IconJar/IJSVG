@@ -99,7 +99,7 @@ extern NSString* const IJSVGAttributeOverflow;
 
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
-    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedElements;
+    NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;
 }
 
 @property (nonatomic, retain, readonly) IJSVGRootNode* rootNode;

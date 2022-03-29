@@ -254,7 +254,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     _rootNode = [[IJSVGRootNode alloc] init];
     _styleSheet = [[IJSVGStyleSheet alloc] init];
     _commandDataStream = IJSVGPathDataStreamCreateDefault();
-    _detachedElements = [[NSMutableDictionary alloc] init];
+    _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
+                                                  valueOptions:NSPointerFunctionsStrongMemory
+                                                      capacity:0];
     [self computeAttributesFromElement:_document.rootElement
                                 onNode:_rootNode
                      ignoredAttributes:nil];
@@ -357,7 +359,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // identifier
     IJSVGAttributeParse(IJSVGAttributeID, ^(NSString* value) {
         node.identifier = value;
-        [self detachElement:element withIdentifier:value];
+        [self detachElement:element
+             withIdentifier:value
+                 parentNode:node.parentNode ?: _rootNode];
     });
     
     // class list
@@ -693,25 +697,46 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 #pragma mark Detaching nodes
 - (void)detachElement:(NSXMLElement*)element
        withIdentifier:(NSString*)identifier
+           parentNode:(IJSVGNode*)parentNode
 {
     element = [element.copy autorelease];
     [element detach];
     
     // its important that we remove the ID attribute
     [element removeAttributeForName:IJSVGAttributeID];
-    _detachedElements[identifier] = element;
+    
+    NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
+    if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
+        scopedDetachedElements = [[[NSMutableDictionary alloc] init] autorelease];
+        [_detachedElements setObject:scopedDetachedElements forKey:parentNode];
+    }
+    scopedDetachedElements[identifier] = element;
 }
 
 - (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
+                                    parentNode:(IJSVGNode*)parentNode
 {
-    return [[_detachedElements[identifier] copy] autorelease];
+    // cant go up the chain if there is no parent node
+    IJSVGNode* node = parentNode;
+    NSDictionary<NSString*, NSXMLElement*>* detachedNodes = nil;
+    while(node != nil) {
+        if((detachedNodes = [_detachedElements objectForKey:node]) != nil) {
+            NSXMLElement* element = detachedNodes[identifier];
+            if(element != nil) {
+                return element;
+            }
+        }
+        node = node.parentNode;
+    }
+    return [_detachedElements objectForKey:_rootNode][identifier];
 }
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                              referencingElement:(NSXMLElement*)element
                                 referencingNode:(IJSVGNode*)node
 {
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier
+                                                             parentNode:node];
     if(detachedElement == nil) {
         return nil;
     }
@@ -750,7 +775,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.name = element.localName;
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                                 parentNode:parentNode];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -775,7 +801,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.name = element.localName;
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                                 parentNode:parentNode];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1097,7 +1124,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         return nil;
     }
     
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID
+                                                             parentNode:parentNode];
     
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* elementWithoutXLink = [element.copy autorelease];
@@ -1176,7 +1204,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
         if(identifier != nil) {
             [self detachElement:childElement
-                 withIdentifier:identifier];
+                 withIdentifier:identifier
+                     parentNode:parentNode];
         }
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
