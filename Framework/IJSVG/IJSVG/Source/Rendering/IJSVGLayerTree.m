@@ -142,13 +142,15 @@
     }
 
     IJSVGGroupLayer* groupLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
-    for (IJSVGNode* node in group.childNodes) {
+    for (IJSVGNode* node in group.children) {
         [groupLayer addSublayer:[self layerForNode:node]];
     }
     
     // set the frame from the model
     groupLayer.frame = CGRectMake(0.f, 0.f, group.width.value, group.height.value);
-
+    groupLayer.borderWidth = 1.f;
+    groupLayer.borderColor = NSColor.greenColor.CGColor;
+    
     // mask it - forgot groups can have masks too, doh! simple
     // enough to apply though, recursion ftw!
     [self maskLayer:groupLayer

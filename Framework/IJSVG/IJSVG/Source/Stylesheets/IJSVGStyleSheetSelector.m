@@ -41,11 +41,11 @@ IJSVGNode * IJSVGStyleSheetPreviousNode(IJSVGNode * node)
     IJSVGGroup * group = (IJSVGGroup *)node.parentNode;
     if([group isKindOfClass:[IJSVGGroup class]] == NO)
         return nil;
-    NSInteger currentIndex = [group.childNodes indexOfObject:node];
+    NSInteger currentIndex = [group.children indexOfObject:node];
     if(currentIndex == 0) {
         return nil;
     }
-    return group.childNodes[currentIndex-1];
+    return group.children[currentIndex-1];
 };
 
 IJSVGNode * IJSVGStyleSheetNextNode(IJSVGNode * node)
@@ -54,11 +54,11 @@ IJSVGNode * IJSVGStyleSheetNextNode(IJSVGNode * node)
     if([group isKindOfClass:[IJSVGGroup class]] == NO) {
         return nil;
     }
-    NSInteger currentIndex = [group.childNodes indexOfObject:node];
-    if(currentIndex == group.childNodes.count-1) {
+    NSInteger currentIndex = [group.children indexOfObject:node];
+    if(currentIndex == group.children.count-1) {
         return nil;
     }
-    return group.childNodes[currentIndex+1];
+    return group.children[currentIndex+1];
 };
 
 IJSVGStyleSheetSelectorRaw * IJSVGStyleSheetPreviousSelector(IJSVGStyleSheetSelectorRaw * aSelector, NSArray * _rawSelectors)
@@ -147,7 +147,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
                 }
                 
                 // grab the children
-                NSArray * nodes = parentNode.childNodes;
+                NSArray * nodes = parentNode.children;
                 NSInteger index = [nodes indexOfObject:aNode];
                 
                 // doesnt contain the child
@@ -226,7 +226,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
                 // matches the next selector and... contains the node in question
                 IJSVGStyleSheetSelectorRaw * s = IJSVGStyleSheetNextSelector(aSelector,_rawSelectors);
                 if(IJSVGStyleSheetMatchSelector(parentNode, s) &&
-                   [parentNode.childNodes containsObject:aNode]) {
+                   [parentNode.children containsObject:aNode]) {
                     // set the new starting selector and node
                     aSelector = s;
                     aNode = parentNode;

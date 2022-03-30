@@ -12,24 +12,24 @@
 
 - (void)dealloc
 {
-    (void)([_childNodes release]), _childNodes = nil;
+    (void)([_children release]), _children = nil;
     [super dealloc];
 }
 
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        _childNodes = [[NSMutableArray alloc] init];
+        _children = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
 - (void)prepareFromCopy
 {
-    if(_childNodes != nil) {
-        (void)[_childNodes release], _childNodes = nil;
+    if(_children != nil) {
+        (void)[_children release], _children = nil;
     }
-    _childNodes = [[NSMutableArray alloc] init];
+    _children = [[NSMutableArray alloc] init];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -37,7 +37,7 @@
     IJSVGGroup* node = [super copyWithZone:zone];
     [node prepareFromCopy];
 
-    for (IJSVGNode* childNode in _childNodes) {
+    for (IJSVGNode* childNode in _children) {
         childNode = [[childNode copy] autorelease];
         childNode.parentNode = node;
         [node addChild:childNode];
@@ -45,36 +45,41 @@
     return node;
 }
 
-- (void)purgeChildren
-{
-    [_childNodes removeAllObjects];
-}
-
 - (void)addChild:(IJSVGNode*)child
 {
-    if (child != nil) {
-        [_childNodes addObject:child];
+    if(child == nil || (child.parentNode == self && [_children containsObject:child])) {
+        return;
     }
+    child.parentNode = self;
+    [_children addObject:child];
+}
+
+- (void)removeChild:(IJSVGNode*)child
+{
+    if(child.parentNode == self) {
+        [child detach];
+    }
+    [_children removeObject:child];
 }
 
 - (CGRect)bounds
 {
     CGRect rect = CGRectZero;
-    for(IJSVGNode* node in self.childNodes) {
+    for(IJSVGNode* node in self.children) {
         rect = CGRectUnion(rect, node.bounds);
     }
     return rect;
 }
 
-- (NSArray<IJSVGNode*>*)childNodes
+- (NSArray<IJSVGNode*>*)children
 {
-    return _childNodes;
+    return _children;
 }
 
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%@ - %@",
-            [super description], self.childNodes];
+            [super description], self.children];
 }
 
 @end

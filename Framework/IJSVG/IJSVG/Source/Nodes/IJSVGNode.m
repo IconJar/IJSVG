@@ -172,7 +172,7 @@
     
     // iterate over the childnodes
     IJSVGGroup* group = (IJSVGGroup*)node;
-    for(IJSVGNode* childNode in group.childNodes) {
+    for(IJSVGNode* childNode in group.children) {
         [self _walkNodeTree:childNode
                     handler:handler
             allowChildNodes:allowChildNodes

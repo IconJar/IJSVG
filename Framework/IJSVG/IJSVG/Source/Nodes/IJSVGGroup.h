@@ -13,11 +13,11 @@
 @interface IJSVGGroup : IJSVGNode {
 
 @private
-    NSMutableArray<IJSVGNode*>* _childNodes;
+    NSMutableArray<IJSVGNode*>* _children;
 }
 
+@property (nonatomic, readonly) NSArray<IJSVGNode*>* children;
+
 - (void)addChild:(IJSVGNode*)child;
-- (NSArray<IJSVGNode*>*)childNodes;
-- (void)purgeChildren;
 
 @end
