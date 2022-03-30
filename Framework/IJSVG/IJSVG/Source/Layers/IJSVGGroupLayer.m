@@ -10,4 +10,17 @@
 
 @implementation IJSVGGroupLayer
 
+- (CGRect)computedFrame
+{
+    CGRect bounds = CGRectNull;
+    for(IJSVGLayer* layer in self.sublayers) {
+        if(CGRectIsNull(bounds)) {
+            bounds = layer.computedFrame;
+        } else {
+            bounds = CGRectUnion(bounds, layer.computedFrame);
+        }
+    }
+    return bounds;
+}
+
 @end

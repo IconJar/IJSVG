@@ -10,7 +10,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <QuartzCore/QuartzCore.h>
 
-@interface IJSVGShapeLayer : CAShapeLayer {
+@interface IJSVGShapeLayer : CAShapeLayer <IJSVGDrawableLayer> {
 
 @private
     IJSVGLayer* _maskingLayer;
@@ -29,6 +29,8 @@
 @property (nonatomic, assign) CGPoint originalPathOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
+@property (nonatomic, readonly) CGRect computedFrame;
+@property (nonatomic, retain) IJSVGLayer* clipLayer;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

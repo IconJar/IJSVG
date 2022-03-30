@@ -15,8 +15,21 @@
 @class IJSVGPatternLayer;
 @class IJSVGStrokeLayer;
 @class IJSVGGroupLayer;
+@class IJSVGLayer;
 
-@interface IJSVGLayer : CALayer {
+@protocol IJSVGDrawableLayer <NSObject>
+
+@required
+@property (nonatomic, assign) CGBlendMode blendingMode;
+@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, readonly) CGPoint absoluteOrigin;
+@property (nonatomic, readonly) CGRect computedFrame;
+
+- (void)performRenderInContext:(CGContextRef)ctx;
+
+@end
+
+@interface IJSVGLayer : CALayer <IJSVGDrawableLayer> {
 
 @private
     IJSVGLayer* _maskingLayer;
@@ -33,6 +46,8 @@
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;
+@property (nonatomic, readonly) CGRect computedFrame;
+@property (nonatomic, retain) IJSVGLayer* clipLayer;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer*)layer
@@ -41,5 +56,22 @@
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer
                         withOffset:(CGPoint)offset;
+
++ (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
+          inContext:(CGContextRef)ctx;
+
++ (void)applyBlendingMode:(CGBlendMode)blendMode
+                toContext:(CGContextRef)ctx
+             drawingBlock:(dispatch_block_t)drawingBlock;
+
++ (void)clipContextWithClip:(CALayer<IJSVGDrawableLayer>*)clipLayer
+                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                  inContext:(CGContextRef)ctx
+               drawingBlock:(dispatch_block_t)drawingBlock;
+
++ (void)clipContextWithMask:(CALayer<IJSVGDrawableLayer>*)maskLayer
+                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                  inContext:(CGContextRef)context
+               drawingBlock:(dispatch_block_t)drawingBlock;
 
 @end

@@ -153,6 +153,9 @@
     // enough to apply though, recursion ftw!
     [self maskLayer:groupLayer
            fromNode:group];
+    
+    [self clipLayer:groupLayer
+           fromNode:group];
     return groupLayer;
 }
 
@@ -365,6 +368,9 @@
 
     // apply masking
     [self maskLayer:(IJSVGLayer*)layer
+           fromNode:path];
+    
+    [self clipLayer:(IJSVGLayer*)layer
            fromNode:path];
 
     return (IJSVGLayer*)layer;
@@ -594,38 +600,23 @@
     return strokeLayer;
 }
 
+- (void)clipLayer:(IJSVGLayer*)layer
+         fromNode:(IJSVGNode*)node
+{
+    if(node.clipPath != nil) {
+        layer.clipLayer = [self layerForNode:node.clipPath];
+    }
+}
+
 - (void)maskLayer:(IJSVGLayer*)layer
          fromNode:(IJSVGNode*)node
 {
     // any clippath?
-    if (node.clipPath != nil || node.mask != nil) {
+    if (node.mask != nil) {
         IJSVGGroupLayer* maskLayer = [[[IJSVGGroupLayer alloc] init] autorelease];
 
-        // add clip mask
-        if (node.clipPath != nil && node.clipPath.overflowVisibility == IJSVGOverflowVisibilityHidden) {
-            IJSVGLayer* clip = [self layerForNode:node.clipPath];
-            
-            // for clup paths to work, we need to set all their contents to white
-            for(IJSVGShapeLayer* subLayer in clip.sublayers) {
-                if([subLayer isKindOfClass:IJSVGShapeLayer.class] == NO) {
-                    [subLayer removeFromSuperlayer];
-                    continue;
-                }
-                subLayer.fillColor = NSColor.whiteColor.CGColor;
-            }
-
-            // adjust the frame
-            if (node.clipPath.units == IJSVGUnitObjectBoundingBox) {
-                [self adjustLayer:clip
-               toParentLayerFrame:layer];
-            }
-
-            // add the layer
-            [maskLayer addSublayer:clip];
-        }
-
         // add the actual mask
-        if (node.mask != nil && node.mask.overflowVisibility == IJSVGOverflowVisibilityHidden) {
+        if (node.mask.overflowVisibility == IJSVGOverflowVisibilityHidden) {
             IJSVGLayer* mask = [self layerForNode:node.mask];
 
             // only move if bounding box
@@ -640,17 +631,8 @@
 
         // add the mask
         if(maskLayer.sublayers.count != 0) {
-            // recursive colourize for each item
-//            NSColor* color = [IJSVGColor computeColorSpace:NSColor.whiteColor];
-//            [self _recursiveColorLayersFromLayer:maskLayer
-//                                       withColor:color.CGColor];
-//            CIFilter* filter = [CIFilter filterWithName:@"CIColorInvert"];
-//            [filter setDefaults];
-//            maskLayer.filters = @[filter];
-//            [layer addS]
             maskLayer.contentsScale = layer.backingScaleFactor;
             layer.mask = maskLayer;
-//            [layer addSublayer:maskLayer];
         }
     }
 }

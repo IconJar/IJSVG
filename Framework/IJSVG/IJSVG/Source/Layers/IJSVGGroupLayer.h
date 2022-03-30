@@ -12,4 +12,6 @@
 
 @interface IJSVGGroupLayer : IJSVGLayer
 
+@property (nonatomic, readonly) CGRect computedFrame;
+
 @end
