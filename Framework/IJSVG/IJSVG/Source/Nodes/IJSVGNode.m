@@ -34,7 +34,6 @@
     (void)([_stroke release]), _stroke = nil;
     (void)([_transforms release]), _transforms = nil;
     (void)([_identifier release]), _identifier = nil;
-    (void)([_def release]), _def = nil;
     (void)([_name release]), _name = nil;
     (void)([_title release]), _title = nil;
     (void)([_desc release]), _desc = nil;
@@ -241,10 +240,8 @@
     self.strokeOpacity = node.strokeOpacity;
 
     self.identifier = node.identifier;
-    self.usesDefaultFillColor = node.usesDefaultFillColor;
 
     self.transforms = node.transforms;
-    self.def = node.def;
     self.windingRule = node.windingRule;
     self.lineCapStyle = node.lineCapStyle;
     self.lineJoinStyle = node.lineJoinStyle;
