@@ -20,10 +20,14 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        self.requiresBackingScaleHelp = YES;
         self.shouldRasterize = YES;
     }
     return self;
+}
+
+- (BOOL)requiresBackingScaleHelp
+{
+    return YES;
 }
 
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)

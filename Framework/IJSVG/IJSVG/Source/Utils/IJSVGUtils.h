@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -76,5 +77,10 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
                                      weight:(CGFloat*)weight;
 
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
+
++ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
++ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
++ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule;
+
 @end
 NS_ASSUME_NONNULL_END

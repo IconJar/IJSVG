@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGRenderingStyle.h>
 #import <QuartzCore/QuartzCore.h>
 
+#define IJSVG_DRAWABLE_LAYER CALayer<IJSVGDrawableLayer>*
+
 @class IJSVGLayer;
 
 @interface IJSVGLayerTree : NSObject {
@@ -18,6 +20,6 @@
 @property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, retain) IJSVGRenderingStyle* style;
 
-- (IJSVGLayer*)layerForNode:(IJSVGNode*)node;
+- (IJSVG_DRAWABLE_LAYER)drawableLayerForNode:(IJSVGNode*)node;
 
 @end

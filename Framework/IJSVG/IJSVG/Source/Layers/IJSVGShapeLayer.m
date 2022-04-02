@@ -14,13 +14,9 @@
 - (void)dealloc
 {
     (void)([_clipLayer release]), _clipLayer = nil;
+    (void)([_maskLayer release]), _maskLayer = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
     [super dealloc];
-}
-
-- (CGRect)computedFrame
-{
-    return [self absoluteFrame];
 }
 
 - (CGRect)absoluteFrame
@@ -33,7 +29,7 @@
 
 - (BOOL)requiresBackingScaleHelp
 {
-    return self.mask != nil;
+    return _maskLayer != nil || _clipLayer != nil;
 }
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
@@ -44,36 +40,23 @@
     _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
-    if(self.mask != nil) {
-        self.mask.contentsScale = newFactor;
-        self.mask.rasterizationScale = newFactor;
-        [self.mask setNeedsDisplay];
-    }
+    
+    // make sure its applied to any mask or clipPath
+    _maskLayer.backingScaleFactor = newFactor;
+    _clipLayer.backingScaleFactor = newFactor;
+    
     [self setNeedsDisplay];
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-//    if (self.convertMasksToPaths == YES && _maskingLayer != nil) {
-//        CGContextSaveGState(ctx);
-//        [self applySublayerMaskToContext:ctx
-//                             forSublayer:(IJSVGLayer*)self
-//                              withOffset:CGPointZero];
-//        [super renderInContext:ctx];
-//        CGContextRestoreGState(ctx);
-//        return;
-//    }
-//    [super renderInContext:ctx];
-    if(self.mask != nil) {
-        IJSVGLayer* mask = self.mask;
-        self.mask = nil;
-        [IJSVGLayer clipContextWithMask:mask
+    if(_maskLayer != nil) {
+        [IJSVGLayer clipContextWithMask:_maskLayer
                                 toLayer:self
                               inContext:ctx
                            drawingBlock:^{
             [super renderInContext:ctx];
         }];
-        self.mask = mask;
         return;
     }
     [super renderInContext:ctx];

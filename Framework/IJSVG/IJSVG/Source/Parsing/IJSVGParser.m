@@ -415,7 +415,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
         return transforms;
     });
-    
+//
     // we need to change how transforms work if our unit space is not userSpaceOnUse
     for(IJSVGTransform* transform in node.transforms) {
         [transform applyBounds:computedBounds

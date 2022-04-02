@@ -18,6 +18,7 @@
 #import "IJSVGRadialGradient.h"
 #import "IJSVGShapeLayer.h"
 #import "IJSVGStrokeLayer.h"
+#import "IJSVGTransformLayer.h"
 
 @implementation IJSVGExporter
 
@@ -1050,10 +1051,12 @@ NSString* IJSVGHash(NSString* key)
         if (child != nil) {
             [element addChild:child];
         }
-    } else if ([layer isKindOfClass:[IJSVGGroupLayer class]]) {
+    } else if ([layer isKindOfClass:[IJSVGGroupLayer class]] ||
+               [layer isKindOfClass:IJSVGTransformLayer.class]) {
         // assume its probably a group?
         NSXMLElement* child = [self elementForGroup:layer
                                          fromParent:element];
+        
         if (child != nil) {
             [element addChild:child];
         }
@@ -1369,8 +1372,8 @@ NSString* IJSVGHash(NSString* key)
     CGPathRef path = layer.path;
 
     // copy the path as we want to translate
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(layer.originalPathOrigin.x,
-        layer.originalPathOrigin.y);
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(layer.frame.origin.x,
+        layer.frame.origin.y);
     CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
 
     NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];

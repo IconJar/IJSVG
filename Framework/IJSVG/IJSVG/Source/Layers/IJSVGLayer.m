@@ -16,6 +16,7 @@
 - (void)dealloc
 {
     (void)([_clipLayer release]), _clipLayer = nil;
+    (void)([_maskLayer release]), _maskLayer = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
     [super dealloc];
 }
@@ -107,14 +108,14 @@
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock
 {    
-    CGContextSaveGState(ctx);
-    CGRect bounds = layer.bounds;
+    CGRect bounds = layer.frame;
     CGFloat scale = layer.contentsScale;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL, bounds.size.width * scale,
                                                           bounds.size.height * scale, 8, 0,
                                                           colorSpace, kCGImageAlphaNone);
-    
+        
+    CGContextSaveGState(ctx);
     CGContextScaleCTM(offscreenContext, scale, scale);
     CGContextTranslateCTM(offscreenContext, maskLayer.frame.origin.x, maskLayer.frame.origin.y);
 
@@ -157,13 +158,13 @@
         return;
     }
 
-    // do the mask too!
-    if (layer.mask != nil) {
-        block(layer.mask, YES, &stop);
-        if(stop == YES) {
-            return;
-        }
-    }
+//    // do the mask too!
+//    if (layer.mask != nil) {
+//        block(layer.mask, YES, &stop);
+//        if(stop == YES) {
+//            return;
+//        }
+//    }
 
     // sublayers!!
     for (CALayer* aLayer in layer.sublayers) {
@@ -174,45 +175,30 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
+    NSLog(@"%f",newFactor);
     if (_backingScaleFactor == newFactor) {
         return;
     }
     _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
-    if(self.mask != nil) {
-        self.mask.contentsScale = newFactor;
-        self.mask.rasterizationScale = newFactor;
-        [self.mask setNeedsDisplay];
-    }
+    
+    // make sure its applied to any mask or clipPath
+    _maskLayer.backingScaleFactor = newFactor;
+    _clipLayer.backingScaleFactor = newFactor;
+    
     [self setNeedsDisplay];
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-//    if (_convertMasksToPaths == YES && _maskingLayer != nil) {
-//        CGContextSaveGState(ctx);
-//        [self applySublayerMaskToContext:ctx
-//                             forSublayer:(IJSVGLayer*)self
-//                              withOffset:CGPointZero];
-//        [super renderInContext:ctx];
-//        CGContextRestoreGState(ctx);
-//        return;
-//    }
-//    if(CGRectEqualToRect(self.bounds, CGRectZero)) {
-//        [super renderInContext:ctx];
-//        return;
-//    }
-    if(self.mask != nil) {
-        IJSVGLayer* mask = self.mask;
-        self.mask = nil;
-        [self.class clipContextWithMask:mask
+    if(_maskLayer != nil) {
+        [self.class clipContextWithMask:_maskLayer
                                 toLayer:self
                               inContext:ctx
                            drawingBlock:^{
             [super renderInContext:ctx];
         }];
-        self.mask = mask;
         return;
     }
     [super renderInContext:ctx];
@@ -274,6 +260,11 @@
         CGContextTranslateCTM(context, layerOffset.x, layerOffset.y);
     }
     CGContextConcatCTM(context, sublayerTransform);
+}
+
+- (BOOL)requiresBackingScaleHelp
+{
+    return _maskLayer != nil || _clipLayer != nil;
 }
 
 - (IJSVGShapeLayer*)maskingLayer

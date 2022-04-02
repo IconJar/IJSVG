@@ -339,6 +339,15 @@
     return _strokeWidth;
 }
 
+- (NSArray<NSNumber*>*)lineDashPattern
+{
+    NSMutableArray* arr = [[[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount] autorelease];
+    for (NSInteger i = 0; i < self.strokeDashArrayCount; i++) {
+        [arr addObject:@((CGFloat)self.strokeDashArray[i])];
+    }
+    return arr;
+}
+
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
 - (id)stroke

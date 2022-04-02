@@ -22,10 +22,14 @@
 {
     if((self = [super init]) != nil) {
         _image = image.retain;
-        self.requiresBackingScaleHelp = YES;
         self.shouldRasterize = YES;
     }
     return self;
+}
+
+- (BOOL)requiresBackingScaleHelp
+{
+    return YES;
 }
 
 - (void)layoutSublayers

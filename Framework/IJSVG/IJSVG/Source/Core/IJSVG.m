@@ -794,7 +794,7 @@
     return _backingScaleFactor;
 }
 
-- (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree
+- (IJSVG_DRAWABLE_LAYER)layerWithTree:(IJSVGLayerTree*)tree
 {
     // clear memory
     BOOL hasTransaction = IJSVGBeginTransaction();
@@ -803,14 +803,14 @@
     }
 
     // force rebuild of the tree
-    _layerTree = [[tree layerForNode:_rootNode] retain];
+    _layerTree = [[tree drawableLayerForNode:_rootNode] retain];
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
     }
     return _layerTree;
 }
 
-- (IJSVGLayer*)layer
+- (IJSVG_DRAWABLE_LAYER)layer
 {
     if (_layerTree != nil) {
         return _layerTree;

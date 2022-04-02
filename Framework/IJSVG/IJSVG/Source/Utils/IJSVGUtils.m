@@ -556,4 +556,50 @@ CGFloat degrees_to_radians(CGFloat degrees)
     return transformPath;
 }
 
+#pragma mark CG conversions
+
++ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle
+{
+    switch (joinStyle) {
+        default:
+        case IJSVGLineJoinStyleMiter: {
+            return kCALineJoinMiter;
+        }
+        case IJSVGLineJoinStyleBevel: {
+            return kCALineJoinBevel;
+        }
+        case IJSVGLineJoinStyleRound: {
+            return kCALineJoinRound;
+        }
+    }
+}
+
++ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle
+{
+    switch (capStyle) {
+        default:
+        case IJSVGLineCapStyleButt: {
+            return kCALineCapButt;
+        }
+        case IJSVGLineCapStyleRound: {
+            return kCALineCapRound;
+        }
+        case IJSVGLineCapStyleSquare: {
+            return kCALineCapSquare;
+        }
+    }
+}
+
++ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule
+{
+    switch (rule) {
+        case IJSVGWindingRuleEvenOdd: {
+            return kCAFillRuleEvenOdd;
+        }
+        default: {
+            return kCAFillRuleNonZero;
+        }
+    }
+}
+
 @end

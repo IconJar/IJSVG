@@ -21,8 +21,8 @@
 @property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
 @property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
 @property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
-@property (nonatomic, assign) BOOL requiresBackingScaleHelp;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
@@ -30,7 +30,8 @@
 @property (nonatomic, assign) BOOL convertMasksToPaths;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
 @property (nonatomic, readonly) CGRect computedFrame;
-@property (nonatomic, retain) IJSVGLayer* clipLayer;
+@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer
