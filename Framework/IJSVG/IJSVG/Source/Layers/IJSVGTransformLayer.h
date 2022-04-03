@@ -15,5 +15,6 @@
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
 @property (nonatomic, readonly) CGRect computedFrame;
+@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* referencedLayer;
 
 @end

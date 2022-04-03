@@ -32,6 +32,9 @@
 @property (nonatomic, readonly) CGRect computedFrame;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
+@property (nonatomic, readonly) CGRect absoluteFrame;
+@property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

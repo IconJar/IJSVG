@@ -10,6 +10,7 @@
 #import "IJSVGGroupLayer.h"
 #import "IJSVGLayer.h"
 #import "IJSVGShapeLayer.h"
+#import "IJSVGTransformLayer.h"
 
 @implementation IJSVGLayer
 
@@ -17,8 +18,45 @@
 {
     (void)([_clipLayer release]), _clipLayer = nil;
     (void)([_maskLayer release]), _maskLayer = nil;
+    (void)([_clipRule release]), _clipRule = nil;
+    (void)([_fillRule release]), _fillRule = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
     [super dealloc];
+}
+
+- (CAShapeLayerFillRule)fillRule
+{
+    return kCAFillRuleNonZero;
+}
+
+- (CAShapeLayerFillRule)clipRule
+{
+    if(_clipRule == nil) {
+        return self.fillRule;
+    }
+    return _clipRule;
+}
+
++ (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer
+{
+    CGAffineTransform identity = CGAffineTransformIdentity;
+    CALayer* parentLayer = layer;
+    while((parentLayer = parentLayer.superlayer) != nil) {
+        if([parentLayer isKindOfClass:IJSVGTransformLayer.class] == YES) {
+            identity = [self absoluteTransformForLayer:parentLayer];
+            break;
+        }
+    }
+    return CGAffineTransformConcat(layer.affineTransform, identity);
+}
+
++ (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.superlayer;
+    while(parentLayer.superlayer != nil) {
+        parentLayer = (CALayer<IJSVGDrawableLayer>*)parentLayer.superlayer;
+    }
+    return parentLayer;
 }
 
 + (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -64,6 +102,13 @@
               transform:(CGAffineTransform)transform
               inContext:(CGContextRef)ctx
 {
+    if([layer isKindOfClass:IJSVGShapeLayer.class]) {
+        [self clipContextWithShapeLayer:(IJSVGShapeLayer*)layer
+                              transform:transform
+                              inContext:ctx];
+        return;
+    }
+    
     for(CALayer<IJSVGDrawableLayer>* drawableLayer in layer.sublayers) {
         CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
                                                                   drawableLayer.affineTransform);
@@ -76,17 +121,27 @@
             continue;
         }
         IJSVGShapeLayer* shapeLayer = (IJSVGShapeLayer*)drawableLayer;
-        
-        // Shape layers paths are reset back to 0,0 origin, so in order to be
-        // correct path, we need to shift it back to where it belongs.
-        drawTransform = CGAffineTransformTranslate(transform,
-                                               shapeLayer.frame.origin.x,
-                                               shapeLayer.frame.origin.y);
-        CGPathRef path = CGPathCreateCopyByTransformingPath(shapeLayer.path,
-                                                            &drawTransform);
-        CGContextAddPath(ctx, path);
-        CGPathRelease(path);
+        [self clipContextWithShapeLayer:shapeLayer
+                              transform:transform
+                              inContext:ctx];
     }
+}
+
++ (void)clipContextWithShapeLayer:(IJSVGShapeLayer*)shapeLayer
+                        transform:(CGAffineTransform)transform
+                        inContext:(CGContextRef)ctx
+{
+    CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
+                                                              shapeLayer.affineTransform);
+    // Shape layers paths are reset back to 0,0 origin, so in order to be
+    // correct path, we need to shift it back to where it belongs.
+    drawTransform = CGAffineTransformTranslate(transform,
+                                           shapeLayer.frame.origin.x,
+                                           shapeLayer.frame.origin.y);
+    CGPathRef path = CGPathCreateCopyByTransformingPath(shapeLayer.path,
+                                                        &drawTransform);
+    CGContextAddPath(ctx, path);
+    CGPathRelease(path);
 }
 
 + (void)clipContextWithClip:(CALayer<IJSVGDrawableLayer>*)clipLayer
@@ -98,7 +153,11 @@
     [self recursivelyClip:clipLayer
                 transform:CGAffineTransformIdentity
                 inContext:ctx];
-    CGContextClip(ctx);
+    if([layer.clipRule isEqualToString:kCAFillRuleEvenOdd]) {
+        CGContextEOClip(ctx);
+    } else {
+        CGContextClip(ctx);
+    }
     drawingBlock();
     CGContextRestoreGState(ctx);
 }
@@ -132,6 +191,26 @@
     drawingBlock();
     
     CGContextRestoreGState(ctx);
+}
+
++ (CGRect)absoluteFrameForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    return (CGRect) {
+      .origin = [self absoluteOriginForLayer:layer],
+      .size = layer.frame.size
+    };
+}
+
++ (CGPoint)absoluteOriginForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    CGPoint point = CGPointZero;
+    CALayer* pLayer = layer;
+    while (pLayer != nil) {
+        point.x += pLayer.frame.origin.x;
+        point.y += pLayer.frame.origin.y;
+        pLayer = pLayer.superlayer;
+    }
+    return point;
 }
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer
@@ -175,7 +254,6 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    NSLog(@"%f",newFactor);
     if (_backingScaleFactor == newFactor) {
         return;
     }
@@ -262,6 +340,16 @@
     CGContextConcatCTM(context, sublayerTransform);
 }
 
+- (CALayer<IJSVGDrawableLayer>*)rootLayer
+{
+    return [self.class rootLayerForLayer:self];
+}
+
+- (CGAffineTransform)absoluteTransform
+{
+    return [IJSVGLayer absoluteTransformForLayer:self];
+}
+
 - (BOOL)requiresBackingScaleHelp
 {
     return _maskLayer != nil || _clipLayer != nil;
@@ -281,6 +369,11 @@
 - (id<CAAction>)actionForKey:(NSString*)event
 {
     return nil;
+}
+
+- (CGRect)absoluteFrame
+{
+    return [self.class absoluteFrameForLayer:self];
 }
 
 @end

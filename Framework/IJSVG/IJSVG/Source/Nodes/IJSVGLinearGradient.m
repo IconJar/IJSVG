@@ -24,12 +24,12 @@
     aGradient.x2 = [IJSVGGradientUnitLength unitWithString:x2 fromUnitType:aGradient.units];
     aGradient.y1 = [IJSVGGradientUnitLength unitWithString:y1 fromUnitType:aGradient.units];
     aGradient.y2 = [IJSVGGradientUnitLength unitWithString:y2 fromUnitType:aGradient.units];
-
+    
     // compute the color stops and colours
     NSArray* colors = nil;
     CGFloat* stopsParams = [self.class computeColorStops:aGradient
                                                   colors:&colors];
-
+    
     // create the gradient with the colours
     NSGradient* grad = [[NSGradient alloc] initWithColors:colors
                                               atLocations:stopsParams
@@ -51,7 +51,7 @@
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
 
     CGRect boundingBox = inUserSpace ? viewBox : objectRect;
-
+    
     // make sure we apply the absolute position to
     // transform us back into the correct space
     if (inUserSpace == YES) {
@@ -65,7 +65,7 @@
 
     gradientEndPoint = CGPointMake([self.x2 computeValue:width],
         [self.y2 computeValue:height]);
-
+    
     // transform the context
     CGContextConcatCTM(ctx, selfTransform);
 

@@ -16,13 +16,9 @@
     [super dealloc];
 }
 
-- (id)init
+- (BOOL)requiresBackingScaleHelp
 {
-    if ((self = [super init]) != nil) {
-        self.requiresBackingScaleHelp = YES;
-//        self.shouldRasterize = YES;
-    }
-    return self;
+    return YES;
 }
 
 - (void)setGradient:(IJSVGGradient*)newGradient
@@ -84,14 +80,17 @@
     }
 
     // draw the gradient
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
-                                                               -CGRectGetMinY(_objectRect));
-    CGAffineTransform transform = CGAffineTransformConcat(_absoluteTransform, trans);
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.superlayer;
+    CGRect objectRect = layer.frame;
+    CGAffineTransform absoluteTransform = _absoluteTransform;//[IJSVGLayer absoluteTransformForLayer:self];
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
+                                                               -CGRectGetMinY(objectRect));
+    CGAffineTransform absTransform = CGAffineTransformConcat(absoluteTransform, trans);
     CGContextSaveGState(ctx);
     [self.gradient drawInContextRef:ctx
-                         objectRect:_objectRect
-                  absoluteTransform:transform
-                           viewPort:self.viewBox];
+                         objectRect:objectRect
+                  absoluteTransform:absTransform
+                           viewPort:_viewBox];
     CGContextRestoreGState(ctx);
 }
 

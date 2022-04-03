@@ -13,7 +13,29 @@
 @synthesize backingScaleFactor;
 @synthesize renderQuality;
 @synthesize requiresBackingScaleHelp;
-@synthesize maskLayer;
+@synthesize maskLayer = _maskLayer;
+@synthesize fillRule = _fillRule;
+@synthesize clipRule = _clipRule;
+@synthesize absoluteFrame;
+
+- (void)dealloc
+{
+    (void)[_maskLayer release], _maskLayer = nil;
+    (void)[_fillRule release], _fillRule = nil;
+    (void)[_clipRule release], _clipRule = nil;
+    (void)[_clipLayer release], _clipLayer = nil;
+    [super dealloc];
+}
+
+- (CALayer<IJSVGDrawableLayer> *)referencedLayer
+{
+    return self.sublayers.firstObject;
+}
+
+- (CALayer<IJSVGDrawableLayer>*)rootLayer
+{
+    return [IJSVGLayer rootLayerForLayer:self];
+}
 
 - (BOOL)requiresBackingScaleHelp
 {

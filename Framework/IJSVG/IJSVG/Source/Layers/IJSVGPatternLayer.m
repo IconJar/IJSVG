@@ -72,7 +72,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
         transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
                                                      -CGRectGetMinY(_objectRect));
-        transform = CGAffineTransformConcat(_absoluteTransform, transform);
+//        transform = CGAffineTransformConcat(self.absoluteTransform, transform);
     }
 
     // transform the X and Y shift

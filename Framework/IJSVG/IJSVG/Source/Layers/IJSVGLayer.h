@@ -27,10 +27,15 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, copy) CAShapeLayerFillRule clipRule;
+@property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
+@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
+@property (nonatomic, readonly) CGRect absoluteFrame;
+//@property (nonatomic, readonly) CGAffineTransform absoluteTransform;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
@@ -54,7 +59,11 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, assign) BOOL convertMasksToPaths;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, copy) CAShapeLayerFillRule clipRule;
+@property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
+@property (nonatomic, readonly) CGRect absoluteFrame;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer*)layer
@@ -80,5 +89,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                   inContext:(CGContextRef)context
                drawingBlock:(dispatch_block_t)drawingBlock;
+
++ (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
++ (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer;
++ (CGRect)absoluteFrameForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
 @end

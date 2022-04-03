@@ -14,10 +14,9 @@
 @interface IJSVGGradientLayer : IJSVGLayer {
 }
 
-@property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, retain) IJSVGGradient* gradient;
+@property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, assign) CGAffineTransform absoluteTransform;
-@property (nonatomic, assign) CGRect objectRect;
 
 @end
 

@@ -764,7 +764,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
-
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];

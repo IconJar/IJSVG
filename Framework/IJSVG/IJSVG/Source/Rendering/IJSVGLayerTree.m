@@ -66,7 +66,7 @@
 
 - (IJSVG_DRAWABLE_LAYER)drawableBasicLayerForPathNode:(IJSVGPath*)node
 {
-    IJSVGShapeLayer* layer = [IJSVGShapeLayer new];
+    IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
     [self applyTransformedPathToShapeLayer:layer
                                   fromNode:node];
@@ -95,6 +95,8 @@
     
     // color the shape
     id fill = node.fill;
+    
+    // generic fill color
     if([fill isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
         NSColor* color = colorNode.color;
@@ -107,6 +109,10 @@
         
         // set the color against the layer
         layer.fillColor = color.CGColor;
+    } else if([node.fill isKindOfClass:IJSVGGradient.class]) {
+        IJSVG_DRAWABLE_LAYER gradientLayer = [self drawableGradientLayerForPathNode:node
+                                                                              layer:layer];
+        [layer addSublayer:gradientLayer];
     } else {
         layer.fillColor = NSColor.blackColor.CGColor;
     }
@@ -195,7 +201,7 @@
 
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForRootNode:(IJSVGRootNode*)node
 {
-    IJSVGGroupLayer* layer = [IJSVGGroupLayer new];
+    IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
     layer.frame = CGRectMake(0.f, 0.f,
                              node.viewBox.size.width,
                              node.viewBox.size.height);
@@ -216,7 +222,7 @@
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForGroupNode:(IJSVGNode*)node
                                         sublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)sublayers
 {
-    IJSVGGroupLayer* layer = [IJSVGGroupLayer new];
+    IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
     layer.borderColor = NSColor.purpleColor.CGColor;
     layer.borderWidth = 1.f;
     CGRect rect = [self calculateFrameForSublayers:sublayers];
@@ -245,6 +251,28 @@
     return layers;
 }
 
+#pragma mark Gradients and Patterns
+
+- (IJSVG_DRAWABLE_LAYER)drawableGradientLayerForPathNode:(IJSVGPath*)node
+                                                   layer:(IJSVG_DRAWABLE_LAYER)layer
+{
+    // gradient fill
+    IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
+    gradientLayer.gradient = (IJSVGGradient*)node.fill;
+    gradientLayer.frame = layer.bounds;
+    gradientLayer.absoluteTransform = [self absoluteTransformForNode:node];
+    gradientLayer.viewBox = _viewBox;
+    
+    // we must clip the fill to the path that we are drawing in, its simply just a matter
+    // of asking the tree for a path based on the layer passed in, but then moving
+    // it back to our current coordinate space
+    IJSVG_DRAWABLE_LAYER clipLayer = [self drawableBasicLayerForPathNode:node];
+    gradientLayer.clipRule = layer.fillRule;
+    gradientLayer.clipLayer = clipLayer;
+    clipLayer.frame = clipLayer.bounds;
+    return gradientLayer;
+}
+
 #pragma mark Bounds Calculation
 
 - (CGRect)calculateFrameForSublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)layers
@@ -268,6 +296,17 @@
     return rect;
 }
 
+- (CGAffineTransform)absoluteTransformForNode:(IJSVGNode*)node
+{
+   CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
+   IJSVGNode* parentSVGNode = node;
+   while ((parentSVGNode = parentSVGNode.parentNode) != nil) {
+       parentAbsoluteTransform = [self absoluteTransformForNode:parentSVGNode];
+   }
+   return CGAffineTransformConcat(IJSVGConcatTransforms(node.transforms),
+       parentAbsoluteTransform);
+}
+
 #pragma mark Defaults
 
 - (void)applyDefaultsToLayer:(IJSVG_DRAWABLE_LAYER)layer
@@ -280,6 +319,7 @@
     
     // add the clip mask if any
     if(node.clipPath != nil) {
+        layer.clipRule = layer.fillRule;
         layer.clipLayer = [self drawableLayerForNode:node.clipPath];
     }
     
@@ -326,7 +366,7 @@
     // this used to be done with each transform being added to its own
     // group layer, but we can simply use one and then apply
     // the transforms in reverse order, has same outcome with less memory
-    IJSVG_DRAWABLE_LAYER parentLayer = [IJSVGTransformLayer layer];
+    IJSVGTransformLayer* parentLayer = [IJSVGTransformLayer layer];
     for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
         identity = CGAffineTransformConcat(identity,
                                            transform.CGAffineTransform);

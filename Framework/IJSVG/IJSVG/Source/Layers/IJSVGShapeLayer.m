@@ -16,15 +16,23 @@
     (void)([_clipLayer release]), _clipLayer = nil;
     (void)([_maskLayer release]), _maskLayer = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
+    (void)([_clipRule release]), _clipRule = nil;
     [super dealloc];
+}
+
+- (CALayer<IJSVGDrawableLayer> *)rootLayer
+{
+    return [IJSVGLayer rootLayerForLayer:self];
 }
 
 - (CGRect)absoluteFrame
 {
-    return (CGRect) {
-      .origin = self.absoluteOrigin,
-      .size = self.frame.size
-    };
+    return [IJSVGLayer absoluteFrameForLayer:self];
+}
+
+- (CGAffineTransform)absoluteTransform
+{
+    return [IJSVGLayer absoluteTransformForLayer:self];
 }
 
 - (BOOL)requiresBackingScaleHelp
@@ -129,18 +137,6 @@
 {
     [IJSVGLayer renderLayer:(IJSVGLayer*)self
                   inContext:ctx];
-}
-
-- (CGPoint)absoluteOrigin
-{
-    CGPoint point = CGPointZero;
-    CALayer* pLayer = self;
-    while (pLayer != nil) {
-        point.x += pLayer.frame.origin.x;
-        point.y += pLayer.frame.origin.y;
-        pLayer = pLayer.superlayer;
-    }
-    return point;
 }
 
 - (id<CAAction>)actionForKey:(NSString*)event

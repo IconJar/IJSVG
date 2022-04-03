@@ -54,6 +54,7 @@
     NSInteger i = 0;
     for(IJSVGNode* stopNode in stops) {
         NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
+        NSLog(@"%@",color);
         CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
