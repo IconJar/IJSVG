@@ -17,6 +17,13 @@
 @class IJSVGGroupLayer;
 @class IJSVGLayer;
 
+typedef NS_ENUM(NSUInteger, IJSVGLayerFillType) {
+    IJSVGLayerFillTypeColor,
+    IJSVGLayerFillTypePattern,
+    IJSVGLayerFillTypeGradient,
+    IJSVGLayerFillTypeUnknown
+};
+
 typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
     IJSVGLayerTraitGroup
 };
@@ -64,6 +71,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
+
++ (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer*)layer

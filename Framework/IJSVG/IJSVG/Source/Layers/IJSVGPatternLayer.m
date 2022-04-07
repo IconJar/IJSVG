@@ -8,6 +8,12 @@
 
 #import "IJSVGPatternLayer.h"
 
+@interface IJSVGPatternLayer ()
+
+@property (nonatomic, assign, readonly) CGSize cellSize;
+
+@end
+
 @implementation IJSVGPatternLayer
 
 - (void)dealloc
@@ -33,15 +39,18 @@
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // reassign the layer
-    NSDictionary* dictionary = (NSDictionary*)info;
-    IJSVGLayer* layer = dictionary[@"patternLayer"];
-    NSValue* sizeValue = dictionary[@"size"];
-    CGSize size = sizeValue.sizeValue;
+    IJSVGPatternLayer* layer = (IJSVGPatternLayer*)info;
+    CGSize size = layer.cellSize;
     CGContextSaveGState(ctx);
     CGContextClipToRect(ctx, CGRectMake(0.f, 0.f, size.width, size.height));
-    [layer renderInContext:ctx];
+    [layer.pattern renderInContext:ctx];
     CGContextSaveGState(ctx);
 };
+
+- (CALayer<IJSVGDrawableLayer>*)referencingLayer
+{
+    return _referencingLayer ?: self.superlayer;
+}
 
 - (void)drawInContext:(CGContextRef)ctx
 {
@@ -66,13 +75,16 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     
     CGFloat width = [wLength computeValue:rect.size.width];
     CGFloat height = [hLength computeValue:rect.size.height];
+    _cellSize = CGSizeMake(width, height);
+    
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
         
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
     if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
-                                                     -CGRectGetMinY(_objectRect));
-//        transform = CGAffineTransformConcat(self.absoluteTransform, transform);
+        transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(layer.frame),
+                                                     -CGRectGetMinY(layer.frame));
+        transform = CGAffineTransformConcat(layer.affineTransform, transform);
     }
 
     // transform the X and Y shift
@@ -81,11 +93,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                                            [_patternNode.y computeValue:rect.size.height]);
 
     // create the pattern
-    NSDictionary* info = @{
-        @"patternLayer": self.pattern,
-        @"size": [NSValue valueWithSize:CGSizeMake(width, height)]
-    };
-    CGPatternRef ref = CGPatternCreate((void*)info, rect,
+    CGPatternRef ref = CGPatternCreate((void*)self, rect,
         transform, width, height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);

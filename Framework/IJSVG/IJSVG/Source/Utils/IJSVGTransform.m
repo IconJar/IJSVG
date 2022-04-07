@@ -207,7 +207,9 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     switch(self.command) {
         case IJSVGTransformCommandTranslate: {
             self.parameters[0] *= bounds.size.width;
-            self.parameters[1] *= bounds.size.height;
+            if(self.parameterCount == 2) {
+                self.parameters[1] *= bounds.size.height;
+            }
             break;
         }
         default:

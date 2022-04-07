@@ -12,9 +12,8 @@
 
 @interface IJSVGPatternLayer : IJSVGLayer
 
-@property (nonatomic, retain) IJSVGLayer* pattern;
+@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* pattern;
 @property (nonatomic, retain) IJSVGPattern* patternNode;
-@property (nonatomic, assign) CGRect objectRect;
-@property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 @end

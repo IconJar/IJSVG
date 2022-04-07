@@ -6,24 +6,24 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGGradient.h"
-#import "IJSVGGradientLayer.h"
-#import "IJSVGGroup.h"
-#import "IJSVGGroupLayer.h"
-#import "IJSVGImage.h"
-#import "IJSVGImageLayer.h"
-#import "IJSVGLayer.h"
-#import "IJSVGLayerTree.h"
-#import "IJSVGPath.h"
-#import "IJSVGPattern.h"
-#import "IJSVGPatternLayer.h"
-#import "IJSVGShapeLayer.h"
-#import "IJSVGStrokeLayer.h"
-#import "IJSVGText.h"
-#import "IJSVGTransform.h"
-#import "IJSVGUtils.h"
-#import "IJSVGTransformLayer.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGImageLayer.h>
+#import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGLayerTree.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGPattern.h>
+#import <IJSVG/IJSVGPatternLayer.h>
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGStrokeLayer.h>
+#import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGTransformLayer.h>
 
 @implementation IJSVGLayerTree
 
@@ -90,36 +90,65 @@
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
-    layer.borderColor = NSColor.blueColor.CGColor;
-    layer.borderWidth = 1.f;
+    
+    if(NSProcessInfo.processInfo.environment[@"IJSVG_SHOW_BORDERS"]) {
+        layer.borderColor = NSColor.blueColor.CGColor;
+        layer.borderWidth = 1.f;
+    }
     
     // color the shape
     id fill = node.fill;
     
     // generic fill color
-    if([fill isKindOfClass:IJSVGColorNode.class]) {
-        IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
-        NSColor* color = colorNode.color;
-        
-        // change the fill color opacity if required
-        if(node.fillOpacity.value != 1.f) {
-            color = [IJSVGColor changeAlphaOnColor:color
-                                                to:node.fillOpacity.value];
+    switch([IJSVGLayer fillTypeForFill:fill]) {
+        // just a generic fill color
+        case IJSVGLayerFillTypeColor: {
+            IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
+            NSColor* color = colorNode.color;
+            
+            // change the fill color opacity if required
+            if(node.fillOpacity.value != 1.f) {
+                color = [IJSVGColor changeAlphaOnColor:color
+                                                    to:node.fillOpacity.value];
+            }
+            
+            // set the color against the layer
+            layer.fillColor = color.CGColor;
+            break;
+        }
+            
+        // pattern fill
+        case IJSVGLayerFillTypePattern: {
+            IJSVG_DRAWABLE_LAYER patternLayer = [self drawablePatternLayerForPathNode:node
+                                                                              pattern:(IJSVGPattern*)node.fill
+                                                                                layer:layer];
+            [layer addSublayer:patternLayer];
+            break;
         }
         
-        // set the color against the layer
-        layer.fillColor = color.CGColor;
-    } else if([node.fill isKindOfClass:IJSVGGradient.class]) {
-        IJSVG_DRAWABLE_LAYER gradientLayer = [self drawableGradientLayerForPathNode:node
-                                                                              layer:layer];
-        [layer addSublayer:gradientLayer];
-    } else {
-        layer.fillColor = NSColor.blackColor.CGColor;
+        // gradient fill
+        case IJSVGLayerFillTypeGradient: {
+            IJSVG_DRAWABLE_LAYER gradientLayer = [self drawableGradientLayerForPathNode:node
+                                                                               gradient:(IJSVGGradient*)node.fill
+                                                                                  layer:layer];
+            [layer addSublayer:gradientLayer];
+            break;
+        }
+            
+        // unknown
+        default: {
+            layer.fillColor = NSColor.blackColor.CGColor;
+            break;
+        }
     }
     
+        
     // stroke the path
     if([node matchesTraits:IJSVGNodeTraitStroked]) {
-        IJSVG_DRAWABLE_LAYER strokeLayer = [self drawableStrokedLayerForPathNode:node];
+        // its highly likely that the stroke layer is larger than the layer its being
+        // drawing into, so we need to increase the layer size to match or any groups
+        // that this is inside wont be the correct frame
+        IJSVGShapeLayer* strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
         CGSize difference = CGSizeMake((strokeLayer.frame.size.width - layer.frame.size.width) / 2.f,
                                        (strokeLayer.frame.size.height - layer.frame.size.height) / 2.f);
         layer.frame = CGRectInset(layer.frame, -difference.width, -difference.height);
@@ -129,7 +158,42 @@
         CGRect strokeLayerFrame = strokeLayer.frame;
         strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = 0.f;
         strokeLayer.frame = strokeLayerFrame;
-        [layer addSublayer:strokeLayer];
+        
+        // we need to work out what type of fill we need for the layer
+        switch([IJSVGLayer fillTypeForFill:node.stroke]) {
+            // patterns
+            case IJSVGLayerFillTypePattern: {
+                IJSVGPatternLayer* patternLayer = nil;
+                patternLayer = [self drawableBasicPatternLayerForLayer:strokeLayer
+                                                               pattern:(IJSVGPattern*)node.stroke];
+                patternLayer.referencingLayer = layer;
+                patternLayer.frame = strokeLayer.frame;
+                strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
+                patternLayer.maskLayer = strokeLayer;
+                [layer addSublayer:patternLayer];
+                break;
+            }
+                
+            // gradients
+            case IJSVGLayerFillTypeGradient: {
+                IJSVGGradientLayer* gradientLayer = nil;
+                gradientLayer = [self drawableBasicGradientLayerForLayer:strokeLayer
+                                                                gradient:(IJSVGGradient*)node.stroke];
+                gradientLayer.referencingLayer = layer;
+                gradientLayer.frame = strokeLayer.frame;
+                strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
+                gradientLayer.maskLayer = strokeLayer;
+                [layer addSublayer:gradientLayer];
+                break;
+            }
+                
+            // generic
+            default: {
+                [layer addSublayer:strokeLayer];
+                break;
+            }
+        }
+        
     }
     
     return layer;
@@ -253,15 +317,24 @@
 
 #pragma mark Gradients and Patterns
 
-- (IJSVG_DRAWABLE_LAYER)drawableGradientLayerForPathNode:(IJSVGPath*)node
-                                                   layer:(IJSVG_DRAWABLE_LAYER)layer
+- (IJSVGGradientLayer*)drawableBasicGradientLayerForLayer:(IJSVG_DRAWABLE_LAYER)layer
+                                                 gradient:(IJSVGGradient*)gradient
 {
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
-    gradientLayer.gradient = (IJSVGGradient*)node.fill;
+    gradientLayer.gradient = gradient;
     gradientLayer.frame = layer.bounds;
-    gradientLayer.absoluteTransform = [self absoluteTransformForNode:node];
     gradientLayer.viewBox = _viewBox;
+    return gradientLayer;
+}
+
+- (IJSVG_DRAWABLE_LAYER)drawableGradientLayerForPathNode:(IJSVGPath*)node
+                                                gradient:(IJSVGGradient*)gradient
+                                                   layer:(IJSVG_DRAWABLE_LAYER)layer
+{
+    // gradient fill
+    IJSVGGradientLayer* gradientLayer = [self drawableBasicGradientLayerForLayer:layer
+                                                                        gradient:gradient];
     
     // we must clip the fill to the path that we are drawing in, its simply just a matter
     // of asking the tree for a path based on the layer passed in, but then moving
@@ -271,6 +344,35 @@
     gradientLayer.clipLayer = clipLayer;
     clipLayer.frame = clipLayer.bounds;
     return gradientLayer;
+}
+
+- (IJSVGPatternLayer*)drawableBasicPatternLayerForLayer:(IJSVG_DRAWABLE_LAYER)layer
+                                                pattern:(IJSVGPattern*)pattern
+{
+    // pattern fill
+    IJSVGPatternLayer* patternLayer = [IJSVGPatternLayer layer];
+    patternLayer.patternNode = pattern;
+    patternLayer.frame = layer.bounds;
+    patternLayer.pattern = [self drawableLayerForNode:patternLayer.patternNode];
+    return patternLayer;
+}
+
+- (IJSVG_DRAWABLE_LAYER)drawablePatternLayerForPathNode:(IJSVGPath*)node
+                                                pattern:(IJSVGPattern*)pattern
+                                                  layer:(IJSVG_DRAWABLE_LAYER)layer
+{
+    // pattern fill
+    IJSVGPatternLayer* patternLayer = [self drawableBasicPatternLayerForLayer:layer
+                                                                      pattern:pattern];
+    
+    // we must clip the fill to the path that we are drawing in, its simply just a matter
+    // of asking the tree for a path based on the layer passed in, but then moving
+    // it back to our current coordinate space
+    IJSVG_DRAWABLE_LAYER clipLayer = [self drawableBasicLayerForPathNode:node];
+    patternLayer.clipRule = layer.fillRule;
+    patternLayer.clipLayer = clipLayer;
+    clipLayer.frame = clipLayer.bounds;
+    return patternLayer;
 }
 
 #pragma mark Bounds Calculation
@@ -367,7 +469,7 @@
     // group layer, but we can simply use one and then apply
     // the transforms in reverse order, has same outcome with less memory
     IJSVGTransformLayer* parentLayer = [IJSVGTransformLayer layer];
-    for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
+    for(IJSVGTransform* transform in transforms) {
         identity = CGAffineTransformConcat(identity,
                                            transform.CGAffineTransform);
     }

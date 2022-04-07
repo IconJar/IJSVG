@@ -70,6 +70,11 @@
     [super setBackingScaleFactor:backingScaleFactor];
 }
 
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
+    return _referencingLayer ?: self.superlayer;
+}
+
 - (void)drawInContext:(CGContextRef)ctx
 {
     [super drawInContext:ctx];
@@ -80,9 +85,9 @@
     }
 
     // draw the gradient
-    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.superlayer;
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     CGRect objectRect = layer.frame;
-    CGAffineTransform absoluteTransform = _absoluteTransform;//[IJSVGLayer absoluteTransformForLayer:self];
+    CGAffineTransform absoluteTransform = layer.affineTransform;
     CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
                                                                -CGRectGetMinY(objectRect));
     CGAffineTransform absTransform = CGAffineTransformConcat(absoluteTransform, trans);

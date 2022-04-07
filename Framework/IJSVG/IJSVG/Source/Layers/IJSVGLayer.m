@@ -37,15 +37,26 @@
     return _clipRule;
 }
 
++ (IJSVGLayerFillType)fillTypeForFill:(id)fill
+{
+    if([fill isKindOfClass:IJSVGColorNode.class]) {
+        return IJSVGLayerFillTypeColor;
+    }
+    if([fill isKindOfClass:IJSVGGradient.class]) {
+        return IJSVGLayerFillTypeGradient;
+    }
+    if([fill isKindOfClass:IJSVGPattern.class]) {
+        return IJSVGLayerFillTypePattern;
+    }
+    return IJSVGLayerFillTypeUnknown;
+}
+
 + (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer
 {
     CGAffineTransform identity = CGAffineTransformIdentity;
     CALayer* parentLayer = layer;
     while((parentLayer = parentLayer.superlayer) != nil) {
-        if([parentLayer isKindOfClass:IJSVGTransformLayer.class] == YES) {
-            identity = [self absoluteTransformForLayer:parentLayer];
-            break;
-        }
+        identity = CGAffineTransformConcat(identity, parentLayer.affineTransform);
     }
     return CGAffineTransformConcat(layer.affineTransform, identity);
 }
@@ -167,22 +178,20 @@
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock
 {    
-    CGRect bounds = layer.frame;
-    CGFloat scale = layer.contentsScale;
+    CGRect bounds = layer.bounds;
+    CGFloat scale = layer.backingScaleFactor;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGContextRef offscreenContext = CGBitmapContextCreate(NULL, bounds.size.width * scale,
-                                                          bounds.size.height * scale, 8, 0,
+    CGContextRef offscreenContext = CGBitmapContextCreate(NULL, ceilf(bounds.size.width * scale),
+                                                          ceilf(bounds.size.height * scale), 8, 0,
                                                           colorSpace, kCGImageAlphaNone);
-        
+            
     CGContextSaveGState(ctx);
     CGContextScaleCTM(offscreenContext, scale, scale);
     CGContextTranslateCTM(offscreenContext, maskLayer.frame.origin.x, maskLayer.frame.origin.y);
 
     [maskLayer renderInContext:offscreenContext];
     CGImageRef maskImage = CGBitmapContextCreateImage(offscreenContext);
-    CGContextClipToMask(ctx, CGRectMake(0.f, 0.f,
-                                        bounds.size.width,
-                                        bounds.size.height), maskImage);
+    CGContextClipToMask(ctx, bounds, maskImage);
     
     CGImageRelease(maskImage);
     CGContextRelease(offscreenContext);
