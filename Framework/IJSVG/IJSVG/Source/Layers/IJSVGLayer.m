@@ -56,9 +56,9 @@
     CGAffineTransform identity = CGAffineTransformIdentity;
     CALayer* parentLayer = layer;
     while((parentLayer = parentLayer.superlayer) != nil) {
-        identity = CGAffineTransformConcat(identity, parentLayer.affineTransform);
+        identity = [self absoluteTransformForLayer:parentLayer];
     }
-    return CGAffineTransformConcat(layer.affineTransform, identity);
+    return CGAffineTransformConcat(identity, layer.affineTransform);
 }
 
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer

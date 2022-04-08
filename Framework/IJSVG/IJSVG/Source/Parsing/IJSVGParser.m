@@ -53,6 +53,7 @@ NSString* const IJSVGAttributeCY = @"cy";
 NSString* const IJSVGAttributeR = @"r";
 NSString* const IJSVGAttributeFX = @"fx";
 NSString* const IJSVGAttributeFY = @"fy";
+NSString* const IJSVGAttributeFR = @"fr";
 NSString* const IJSVGAttributePoints = @"points";
 NSString* const IJSVGAttributeOffset = @"offset";
 NSString* const IJSVGAttributeStopColor = @"stop-color";
@@ -535,9 +536,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;
         }
     });
-    
-    // once we have done everything we can compute traits!
-    [node computeTraits];
 }
 
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
@@ -664,6 +662,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             [(IJSVGGroup*)node addChild:computedNode];
         }
     }
+    // once we have done everything we can compute traits!
+    [computedNode computeTraits];
     return computedNode;
 }
 

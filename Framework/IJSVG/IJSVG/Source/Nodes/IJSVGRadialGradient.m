@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGRadialGradient.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGRadialGradient
 
@@ -17,7 +17,8 @@
     (void)([_cy release]), _cy = nil;
     (void)([_fx release]), _fx = nil;
     (void)([_fy release]), _fy = nil;
-    (void)([_radius release]), _radius = nil;
+    (void)([_fr release]), _fr = nil;
+    (void)([_r release]), _r = nil;
     [super dealloc];
 }
 
@@ -26,9 +27,10 @@
     IJSVGRadialGradient* grad = [super copyWithZone:zone];
     grad.fx = _fx;
     grad.fy = _fy;
+    grad.fr = _fr;
     grad.cx = _cx;
     grad.cy = _cy;
-    grad.radius = _radius;
+    grad.r = _r;
     return grad;
 }
 
@@ -39,7 +41,7 @@
     NSDictionary* kv = @{
         IJSVGAttributeCX : @"cx",
         IJSVGAttributeCY : @"cy",
-        IJSVGAttributeR : @"radius" };
+        IJSVGAttributeR : @"r" };
 
     for (NSString* key in kv.allKeys) {
         NSString* str = [element attributeForName:key].stringValue;
@@ -54,6 +56,15 @@
         [gradient setValue:unit
                     forKey:kv[key]];
     }
+    
+    // fr
+    NSString* fr = [element attributeForName:IJSVGAttributeFR].stringValue;
+    if(fr != nil) {
+        gradient.fr = [IJSVGUnitLength unitWithString:fr
+                                         fromUnitType:gradient.units];
+    } else {
+        gradient.fr = [IJSVGUnitLength unitWithPercentageFloat:0.f];
+    }
 
     // fx and fy are the same unless specified otherwise
     gradient.fx = gradient.cx;
@@ -67,7 +78,7 @@
     }
 
     NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
-    if (fx != nil) {
+    if (fy != nil) {
         gradient.fy = [IJSVGUnitLength unitWithString:fy
                                          fromUnitType:gradient.units];
     }
@@ -92,6 +103,7 @@
        absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox
 {
+    CGContextSaveGState(ctx);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = 0.f;
     CGPoint startPoint = CGPointZero;
@@ -102,39 +114,42 @@
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
 
     CGRect boundingBox = inUserSpace ? viewBox : objectRect;
-
-    // make sure we apply the absolute position to
-    // transform us back into the correct space
-    if (inUserSpace == YES) {
-        CGContextConcatCTM(ctx, absoluteTransform);
-    }
-
+    
     // compute size based on percentages
-    CGFloat x = [_cx computeValue:CGRectGetWidth(boundingBox)];
-    CGFloat y = [_cy computeValue:CGRectGetHeight(boundingBox)];
-    startPoint = CGPointMake(x, y);
-    CGFloat val = MIN(CGRectGetWidth(boundingBox),
-        CGRectGetHeight(boundingBox));
-    radius = [_radius computeValue:val];
+    CGFloat width = CGRectGetWidth(boundingBox);
+    CGFloat height = CGRectGetHeight(boundingBox);
+    CGFloat cx = [_cx computeValue:width];
+    CGFloat cy = [_cy computeValue:height];
+    startPoint = CGPointMake(cx, cy);
+    CGFloat val = MIN(width, height);
+    radius = [_r computeValue:val];
+    CGFloat focalRadius = [_fr computeValue:val];
 
-    CGFloat ex = [_fx computeValue:CGRectGetWidth(boundingBox)];
-    CGFloat ey = [_fy computeValue:CGRectGetHeight(boundingBox)];
+    CGFloat fx = [_fx computeValue:width];
+    CGFloat fy = [_fy computeValue:height];
 
-    gradientEndPoint = CGPointMake(ex, ey);
+    gradientEndPoint = CGPointMake(fx, fy);
     gradientStartPoint = startPoint;
 
     // transform if width or height is not equal - this can only
     // be done if we are using objectBoundingBox
-    if (inUserSpace == NO && CGRectGetWidth(boundingBox) != CGRectGetHeight(boundingBox)) {
+    if (inUserSpace == NO && width != height) {
         CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
             gradientStartPoint.y);
-        if (CGRectGetWidth(boundingBox) > CGRectGetHeight(boundingBox)) {
-            tr = CGAffineTransformScale(tr, CGRectGetWidth(boundingBox) / CGRectGetHeight(boundingBox), 1);
+        if (width > height) {
+            tr = CGAffineTransformScale(tr, width / height, 1.f);
         } else {
-            tr = CGAffineTransformScale(tr, 1.f, CGRectGetHeight(boundingBox) / CGRectGetWidth(boundingBox));
+            tr = CGAffineTransformScale(tr, 1.f, height / width);
         }
         tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
         selfTransform = CGAffineTransformConcat(tr, selfTransform);
+    } else if(inUserSpace == YES) {
+        CGFloat rad = 2.f * radius;
+        CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
+        rect = CGRectApplyAffineTransform(rect, selfTransform);
+        rect = CGRectApplyAffineTransform(rect, absoluteTransform);
+        radius = CGRectGetHeight(rect) / 2.f;
+        CGContextConcatCTM(ctx, absoluteTransform);
     }
 
     // transform the context
@@ -143,9 +158,10 @@
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient,
-        gradientEndPoint, 0,
+        gradientEndPoint, focalRadius,
         gradientStartPoint,
         radius, options);
+    CGContextRestoreGState(ctx);
 
 #ifdef IJSVG_DEBUG_GRADIENTS
     [self _debugStart:gradientStartPoint

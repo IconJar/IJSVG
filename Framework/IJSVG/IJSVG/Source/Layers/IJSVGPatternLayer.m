@@ -82,9 +82,11 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
     if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        transform = CGAffineTransformMakeTranslation(-CGRectGetMinX(layer.frame),
-                                                     -CGRectGetMinY(layer.frame));
-        transform = CGAffineTransformConcat(layer.affineTransform, transform);
+        CGRect frame = layer.frame;
+        transform = [IJSVGLayer absoluteTransformForLayer:layer];
+        transform = CGAffineTransformTranslate(transform,
+                                               -CGRectGetMinX(frame),
+                                               -CGRectGetMinY(frame));
     }
 
     // transform the X and Y shift

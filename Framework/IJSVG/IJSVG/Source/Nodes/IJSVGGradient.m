@@ -54,7 +54,6 @@
     NSInteger i = 0;
     for(IJSVGNode* stopNode in stops) {
         NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
-        NSLog(@"%@",color);
         CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
@@ -101,7 +100,7 @@
 
     // actually create the gradient
     NSInteger num = self.gradient.numberOfColorStops;
-    CGFloat* locations = malloc(sizeof(CGFloat) * num);
+    CGFloat* locations = (CGFloat*)malloc(sizeof(CGFloat) * num);
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
         &kCFTypeArrayCallBacks);
     for (NSInteger i = 0; i < num; i++) {
@@ -114,7 +113,7 @@
         }
         CFArrayAppendValue(colors, color.CGColor);
     }
-    CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace,
+    CGGradientRef result = CGGradientCreateWithColors(_gradient.colorSpace.CGColorSpace,
         colors, locations);
     CFRelease(colors);
     free(locations);

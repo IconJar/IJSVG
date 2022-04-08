@@ -67,6 +67,7 @@ extern NSString* const IJSVGAttributeRY;
 extern NSString* const IJSVGAttributeCX;
 extern NSString* const IJSVGAttributeCY;
 extern NSString* const IJSVGAttributeR;
+extern NSString* const IJSVGAttributeFR;
 extern NSString* const IJSVGAttributeFX;
 extern NSString* const IJSVGAttributeFY;
 extern NSString* const IJSVGAttributePoints;

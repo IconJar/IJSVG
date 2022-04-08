@@ -23,6 +23,7 @@
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
 typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
+    IJSVGNodeTraitNone = 0,
     IJSVGNodeTraitStroked = 1 << 0,
     IJSVGNodeTraitPaintable = 1 << 1
 };

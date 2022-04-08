@@ -86,15 +86,16 @@
 
     // draw the gradient
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
-    CGRect objectRect = layer.frame;
-    CGAffineTransform absoluteTransform = layer.affineTransform;
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(objectRect),
-                                                               -CGRectGetMinY(objectRect));
-    CGAffineTransform absTransform = CGAffineTransformConcat(absoluteTransform, trans);
+    CGRect objectRect = layer.bounds;
+    CGRect objectFrame = layer.frame;
+    CGAffineTransform affine = [IJSVGLayer absoluteTransformForLayer:layer];
+    affine = CGAffineTransformTranslate(affine,
+                                        -CGRectGetMinX(objectFrame),
+                                        -CGRectGetMinY(objectFrame));
     CGContextSaveGState(ctx);
     [self.gradient drawInContextRef:ctx
                          objectRect:objectRect
-                  absoluteTransform:absTransform
+                  absoluteTransform:affine
                            viewPort:_viewBox];
     CGContextRestoreGState(ctx);
 }

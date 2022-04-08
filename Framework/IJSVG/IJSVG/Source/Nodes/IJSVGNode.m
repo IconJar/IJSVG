@@ -350,7 +350,7 @@
 
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
-- (id)stroke
+- (IJSVGNode*)stroke
 {
     if (_stroke == nil && _parentNode != nil) {
         return _parentNode.stroke;
@@ -368,7 +368,7 @@
 
 // even though the spec explicity states fill color
 // must be on the path, it can also be on the
-- (id)fill
+- (IJSVGNode*)fill
 {
     if (_fill == nil && _parentNode != nil) {
         return _parentNode.fill;

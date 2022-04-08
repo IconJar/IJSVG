@@ -15,7 +15,8 @@
 @property (nonatomic, retain) IJSVGUnitLength* cy;
 @property (nonatomic, retain) IJSVGUnitLength* fx;
 @property (nonatomic, retain) IJSVGUnitLength* fy;
-@property (nonatomic, retain) IJSVGUnitLength* radius;
+@property (nonatomic, retain) IJSVGUnitLength* fr;
+@property (nonatomic, retain) IJSVGUnitLength* r;
 
 + (NSGradient*)parseGradient:(NSXMLElement*)element
                     gradient:(IJSVGRadialGradient*)gradient;

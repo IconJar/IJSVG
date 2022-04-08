@@ -64,7 +64,7 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableBasicLayerForPathNode:(IJSVGPath*)node
+- (IJSVG_DRAWABLE_LAYER) drawableBasicLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
@@ -78,7 +78,8 @@
 - (void)applyTransformedPathToShapeLayer:(CAShapeLayer*)layer
                                 fromNode:(IJSVGPath*)node
 {
-    CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
+    CGRect pathBounds = CGPathGetBoundingBox(node.path);
+    pathBounds = CGRectIntegral(pathBounds);
     CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
                                                                    -pathBounds.origin.y);
     CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
@@ -91,15 +92,24 @@
 {
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
     
-    if(NSProcessInfo.processInfo.environment[@"IJSVG_SHOW_BORDERS"]) {
-        layer.borderColor = NSColor.blueColor.CGColor;
-        layer.borderWidth = 1.f;
-    }
-    
     // color the shape
     id fill = node.fill;
     
+    // stroke the path
+    IJSVGStrokeLayer* strokeLayer = nil;
+    CGSize strokeDifference = CGSizeZero;
+    if([node matchesTraits:IJSVGNodeTraitStroked]) {
+        // its highly likely that the stroke layer is larger than the layer its being
+        // drawing into, so we need to increase the layer size to match or any groups
+        // that this is inside wont be the correct frame
+        strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
+        strokeDifference = CGSizeMake((strokeLayer.frame.size.width - layer.frame.size.width) / 2.f,
+                                      (strokeLayer.frame.size.height - layer.frame.size.height) / 2.f);
+        layer.frame = CGRectInset(layer.frame, -strokeDifference.width, -strokeDifference.height);
+    }
+    
     // generic fill color
+    IJSVG_DRAWABLE_LAYER fillLayer = nil;
     switch([IJSVGLayer fillTypeForFill:fill]) {
         // just a generic fill color
         case IJSVGLayerFillTypeColor: {
@@ -119,19 +129,17 @@
             
         // pattern fill
         case IJSVGLayerFillTypePattern: {
-            IJSVG_DRAWABLE_LAYER patternLayer = [self drawablePatternLayerForPathNode:node
-                                                                              pattern:(IJSVGPattern*)node.fill
-                                                                                layer:layer];
-            [layer addSublayer:patternLayer];
+            fillLayer = [self drawablePatternLayerForPathNode:node
+                                                      pattern:(IJSVGPattern*)node.fill
+                                                        layer:layer];
             break;
         }
         
         // gradient fill
         case IJSVGLayerFillTypeGradient: {
-            IJSVG_DRAWABLE_LAYER gradientLayer = [self drawableGradientLayerForPathNode:node
-                                                                               gradient:(IJSVGGradient*)node.fill
-                                                                                  layer:layer];
-            [layer addSublayer:gradientLayer];
+            fillLayer = [self drawableGradientLayerForPathNode:node
+                                                      gradient:(IJSVGGradient*)node.fill
+                                                         layer:layer];
             break;
         }
             
@@ -142,18 +150,21 @@
         }
     }
     
+    if(fillLayer != nil) {
+        fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
+                                                                   strokeDifference.width,
+                                                                   strokeDifference.height);
+        [layer addSublayer:fillLayer];
+    }
+    
         
     // stroke the path
-    if([node matchesTraits:IJSVGNodeTraitStroked]) {
+    if(strokeLayer != nil) {
         // its highly likely that the stroke layer is larger than the layer its being
         // drawing into, so we need to increase the layer size to match or any groups
         // that this is inside wont be the correct frame
-        IJSVGShapeLayer* strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
-        CGSize difference = CGSizeMake((strokeLayer.frame.size.width - layer.frame.size.width) / 2.f,
-                                       (strokeLayer.frame.size.height - layer.frame.size.height) / 2.f);
-        layer.frame = CGRectInset(layer.frame, -difference.width, -difference.height);
-        layer.borderColor = NSColor.greenColor.CGColor;
-        layer.borderWidth = 1.f;
+//        layer.borderColor = NSColor.greenColor.CGColor;
+//        layer.borderWidth = 1.f;
         
         CGRect strokeLayerFrame = strokeLayer.frame;
         strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = 0.f;
@@ -256,8 +267,8 @@
     CGPathRef path = CGPathCreateCopyByTransformingPath(layer.path, &transform);
     layer.frame = frame;
     layer.path = path;
-    layer.borderColor = NSColor.redColor.CGColor;
-    layer.borderWidth = 1.f;
+//    layer.borderColor = NSColor.redColor.CGColor;
+//    layer.borderWidth = 1.f;
     CGPathRelease(path);
     
     return layer;
@@ -287,8 +298,8 @@
                                         sublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
-    layer.borderColor = NSColor.purpleColor.CGColor;
-    layer.borderWidth = 1.f;
+//    layer.borderColor = NSColor.purpleColor.CGColor;
+//    layer.borderWidth = 1.f;
     CGRect rect = [self calculateFrameForSublayers:sublayers];
     layer.frame = rect;
     CGAffineTransform translate = CGAffineTransformMakeTranslation(-rect.origin.x,

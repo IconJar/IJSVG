@@ -1212,7 +1212,8 @@ NSString* IJSVGHash(NSString* key)
             @"cy" : [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"fx" : [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
             @"fy" : [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions],
-            @"r" : [rGradient.radius stringValueWithFloatingPointOptions:_floatingPointOptions] };
+            @"r" : [rGradient.r stringValueWithFloatingPointOptions:_floatingPointOptions],
+            @"fr" : [rGradient.fr stringValueWithFloatingPointOptions:_floatingPointOptions] };
 
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);

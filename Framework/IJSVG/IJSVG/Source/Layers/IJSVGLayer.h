@@ -42,7 +42,6 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
-//@property (nonatomic, readonly) CGAffineTransform absoluteTransform;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
