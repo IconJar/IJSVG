@@ -133,25 +133,37 @@
 
     // transform if width or height is not equal - this can only
     // be done if we are using objectBoundingBox
-    if (inUserSpace == NO && width != height) {
-        CGAffineTransform tr = CGAffineTransformMakeTranslation(gradientStartPoint.x,
-            gradientStartPoint.y);
-        if (width > height) {
-            tr = CGAffineTransformScale(tr, width / height, 1.f);
-        } else {
-            tr = CGAffineTransformScale(tr, 1.f, height / width);
-        }
-        tr = CGAffineTransformTranslate(tr, -gradientStartPoint.x, -gradientStartPoint.y);
-        selfTransform = CGAffineTransformConcat(tr, selfTransform);
-    } else if(inUserSpace == YES) {
+    if(inUserSpace == YES) {
         CGFloat rad = 2.f * radius;
         CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
         rect = CGRectApplyAffineTransform(rect, selfTransform);
         rect = CGRectApplyAffineTransform(rect, absoluteTransform);
         radius = CGRectGetHeight(rect) / 2.f;
         CGContextConcatCTM(ctx, absoluteTransform);
+    } else if(width != height) {
+        CGAffineTransform transform = CGAffineTransformIdentity;
+        CGAffineTransform invert = CGAffineTransformIdentity;
+        CGPoint invPoint = CGPointZero;
+        CGFloat* radiusScale;
+        if(width > height) {
+            transform = CGAffineTransformMakeScale(1.f, height / width);
+            radiusScale = &invPoint.y;
+        } else {
+            transform = CGAffineTransformMakeScale(width / height, 1.f);
+            radiusScale = &invPoint.x;
+        }
+        invert = CGAffineTransformInvert(transform);
+        invPoint.x = invert.a;
+        invPoint.y = invert.d;
+        gradientStartPoint.x *= invPoint.x;
+        gradientStartPoint.y *= invPoint.y;
+        gradientEndPoint.x *= invPoint.x;
+        gradientEndPoint.y *= invPoint.y;
+        radius *= *radiusScale;
+        focalRadius *= *radiusScale;
+        selfTransform = CGAffineTransformConcat(transform, selfTransform);
     }
-
+    
     // transform the context
     CGContextConcatCTM(ctx, selfTransform);
 
@@ -163,11 +175,11 @@
         radius, options);
     CGContextRestoreGState(ctx);
 
-#ifdef IJSVG_DEBUG_GRADIENTS
-    [self _debugStart:gradientStartPoint
-                  end:gradientEndPoint
-              context:ctx];
-#endif
+//#ifdef IJSVG_DEBUG_GRADIENTS
+//    [self _debugStart:gradientStartPoint
+//                  end:gradientEndPoint
+//              context:ctx];
+//#endif
 }
 
 @end

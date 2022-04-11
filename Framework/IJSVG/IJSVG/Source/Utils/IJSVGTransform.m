@@ -201,20 +201,23 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 - (void)applyBounds:(CGRect)bounds
    withContentUnits:(IJSVGUnitType)contentUnits
 {
-//    if(contentUnits != IJSVGUnitObjectBoundingBox) {
-//        return;
-//    }
-//    switch(self.command) {
-//        case IJSVGTransformCommandTranslate: {
-//            self.parameters[0] *= bounds.size.width;
-//            if(self.parameterCount == 2) {
-//                self.parameters[1] *= bounds.size.height;
-//            }
-//            break;
-//        }
-//        default:
-//            break;
-//    }    
+    if(contentUnits != IJSVGUnitObjectBoundingBox) {
+        return;
+    }
+    
+    switch(self.command) {
+        case IJSVGTransformCommandTranslate: {
+            NSLog(@"%f",self.parameters[0]);
+            self.parameters[0] *= bounds.size.width;
+            NSLog(@"%f - %@",self.parameters[0],self.description);
+            if(self.parameterCount == 2) {
+                self.parameters[1] *= bounds.size.height;
+            }
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 - (CGAffineTransform)CGAffineTransform

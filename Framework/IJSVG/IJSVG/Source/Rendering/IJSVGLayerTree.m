@@ -78,7 +78,7 @@
 - (void)applyTransformedPathToShapeLayer:(CAShapeLayer*)layer
                                 fromNode:(IJSVGPath*)node
 {
-    CGRect pathBounds = CGPathGetBoundingBox(node.path);
+    CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
     pathBounds = CGRectIntegral(pathBounds);
     CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
                                                                    -pathBounds.origin.y);
@@ -480,7 +480,7 @@
     // group layer, but we can simply use one and then apply
     // the transforms in reverse order, has same outcome with less memory
     IJSVGTransformLayer* parentLayer = [IJSVGTransformLayer layer];
-    for(IJSVGTransform* transform in transforms) {
+    for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
         identity = CGAffineTransformConcat(identity,
                                            transform.CGAffineTransform);
     }
