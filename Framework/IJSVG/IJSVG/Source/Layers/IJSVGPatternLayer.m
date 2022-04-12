@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGPatternLayer.h"
+#import "IJSVGTransform.h"
 
 @interface IJSVGPatternLayer ()
 
@@ -49,7 +50,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 
 - (CALayer<IJSVGDrawableLayer>*)referencingLayer
 {
-    return _referencingLayer ?: self.superlayer;
+    return [super referencingLayer] ?: self.superlayer;
 }
 
 - (void)drawInContext:(CGContextRef)ctx
@@ -62,7 +63,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGContextSetFillColorSpace(ctx, patternSpace);
     CGColorSpaceRelease(patternSpace);
     
-    CGRect rect = self.bounds;
+    CGRect rect = self.boundingBox;
     
     IJSVGUnitLength* wLength = _patternNode.width;
     IJSVGUnitLength* hLength = _patternNode.height;
@@ -89,11 +90,12 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                                                -CGRectGetMinY(frame));
     }
 
+    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
     // transform the X and Y shift
     transform = CGAffineTransformTranslate(transform,
                                            [_patternNode.x computeValue:rect.size.width],
                                            [_patternNode.y computeValue:rect.size.height]);
-
+    
     // create the pattern
     CGPatternRef ref = CGPatternCreate((void*)self, rect,
         transform, width, height,

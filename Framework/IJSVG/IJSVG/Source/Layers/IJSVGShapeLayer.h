@@ -10,7 +10,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <QuartzCore/QuartzCore.h>
 
-@interface IJSVGShapeLayer : CAShapeLayer <IJSVGDrawableLayer> {
+@interface IJSVGShapeLayer : CAShapeLayer <IJSVGDrawableLayer, IJSVGPathableLayer> {
 
 @private
     IJSVGLayer* _maskingLayer;
@@ -34,6 +34,9 @@
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
+@property (nonatomic, assign) CGRect boundingBox;
+@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
+@property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context

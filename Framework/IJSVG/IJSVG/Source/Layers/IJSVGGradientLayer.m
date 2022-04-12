@@ -72,7 +72,7 @@
 
 - (CALayer<IJSVGDrawableLayer> *)referencingLayer
 {
-    return _referencingLayer ?: self.superlayer;
+    return [super referencingLayer] ?: self.superlayer;
 }
 
 - (void)drawInContext:(CGContextRef)ctx
@@ -86,7 +86,7 @@
 
     // draw the gradient
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
-    CGRect objectRect = layer.bounds;
+    CGRect objectRect = layer.boundingBox;
     CGRect objectFrame = layer.frame;
     CGAffineTransform affine = [IJSVGLayer absoluteTransformForLayer:layer];
     affine = CGAffineTransformTranslate(affine,

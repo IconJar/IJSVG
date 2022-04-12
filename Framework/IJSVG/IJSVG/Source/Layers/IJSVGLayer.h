@@ -28,6 +28,13 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
     IJSVGLayerTraitGroup
 };
 
+@protocol IJSVGPathableLayer <NSObject>
+
+@required
+@property (nonatomic, assign) CGPathRef path;
+
+@end
+
 @protocol IJSVGDrawableLayer <NSObject>
 
 @required
@@ -42,6 +49,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
+@property (nonatomic, assign) CGRect boundingBox;
+@property (nonatomic, readonly) CGRect strokeBoundingBox;
+@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
@@ -70,6 +80,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
+@property (nonatomic, assign) CGRect boundingBox;
+@property (nonatomic, readonly) CGRect strokeBoundingBox;
+@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 

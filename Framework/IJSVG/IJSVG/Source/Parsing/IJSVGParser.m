@@ -26,6 +26,7 @@ NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
 NSString* const IJSVGAttributePatternUnits = @"patternUnits";
 NSString* const IJSVGAttributePatternContentUnits = @"patternContentUnits";
+NSString* const IJSVGAttributePatternTransform = @"patternTransform";
 NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
@@ -92,7 +93,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     } retain];
     _IJSVGAttributeDictionaryTransforms = [@{
         IJSVGAttributeTransform : @"transforms",
-        IJSVGAttributeGradientTransform : @"transforms" } retain];
+        IJSVGAttributeGradientTransform : @"transforms",
+        IJSVGAttributePatternTransform : @"transforms"
+    } retain];
 }
 
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
@@ -1043,6 +1046,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     IJSVGUnitLength* rX = [IJSVGUnitLength unitWithString:rXString];
     IJSVGUnitLength* rY = [IJSVGUnitLength unitWithString:rYString];
     
+    
     if(contentUnitType == IJSVGUnitObjectBoundingBox) {
         bounds = proposedBounds;
         width = [width lengthWithUnitType:IJSVGUnitLengthTypePercentage];
@@ -1134,6 +1138,13 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
     [node addTraits:IJSVGNodeTraitPaintable];
+    NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
+    if(xLinkID != nil) {
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                                 parentNode:parentNode];
+        element = [self mergedElement:element
+                 withReferenceElement:detachedElement];
+    }
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];

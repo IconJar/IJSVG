@@ -51,11 +51,11 @@
     return IJSVGLayerFillTypeUnknown;
 }
 
-+ (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer
++ (CGAffineTransform)absoluteTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGAffineTransform identity = CGAffineTransformIdentity;
-    CALayer* parentLayer = layer;
-    while((parentLayer = parentLayer.superlayer) != nil) {
+    CALayer<IJSVGDrawableLayer>* parentLayer = layer;
+    while((parentLayer = parentLayer.referencingLayer) != nil) {
         identity = [self absoluteTransformForLayer:parentLayer];
     }
     return CGAffineTransformConcat(identity, layer.affineTransform);
@@ -63,9 +63,9 @@
 
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
-    CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.superlayer;
-    while(parentLayer.superlayer != nil) {
-        parentLayer = (CALayer<IJSVGDrawableLayer>*)parentLayer.superlayer;
+    CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.referencingLayer;
+    while(parentLayer.referencingLayer != nil) {
+        parentLayer = (CALayer<IJSVGDrawableLayer>*)parentLayer.referencingLayer;
     }
     return parentLayer;
 }
@@ -213,11 +213,11 @@
 + (CGPoint)absoluteOriginForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGPoint point = CGPointZero;
-    CALayer* pLayer = layer;
+    CALayer<IJSVGDrawableLayer>* pLayer = layer;
     while (pLayer != nil) {
         point.x += pLayer.frame.origin.x;
         point.y += pLayer.frame.origin.y;
-        pLayer = pLayer.superlayer;
+        pLayer = pLayer.referencingLayer;
     }
     return point;
 }
@@ -383,6 +383,21 @@
 - (CGRect)absoluteFrame
 {
     return [self.class absoluteFrameForLayer:self];
+}
+
+- (CGRect)boundingBox
+{
+    return self.frame;
+}
+
+- (CGRect)strokeBoundingBox
+{
+    return self.frame;
+}
+
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
+    return _referencingLayer ?: self.superlayer;
 }
 
 @end

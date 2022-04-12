@@ -35,6 +35,11 @@
     return [IJSVGLayer absoluteTransformForLayer:self];
 }
 
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
+    return _referencingLayer ?: self.superlayer;
+}
+
 - (BOOL)requiresBackingScaleHelp
 {
     return _maskLayer != nil || _clipLayer != nil;

@@ -17,6 +17,8 @@
 @synthesize fillRule = _fillRule;
 @synthesize clipRule = _clipRule;
 @synthesize absoluteFrame;
+@synthesize boundingBox;
+@synthesize strokeBoundingBox;
 
 - (void)dealloc
 {
@@ -30,6 +32,10 @@
 - (CALayer<IJSVGDrawableLayer> *)referencedLayer
 {
     return self.sublayers.firstObject;
+}
+
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer {
+    return _referencingLayer ?: self.superlayer;
 }
 
 - (CALayer<IJSVGDrawableLayer>*)rootLayer

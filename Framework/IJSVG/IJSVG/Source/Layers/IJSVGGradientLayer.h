@@ -15,7 +15,6 @@
 }
 
 @property (nonatomic, retain) IJSVGGradient* gradient;
-@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, assign) CGRect viewBox;
 
 @end

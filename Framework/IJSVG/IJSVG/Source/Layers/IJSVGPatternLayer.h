@@ -14,6 +14,5 @@
 
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* pattern;
 @property (nonatomic, retain) IJSVGPattern* patternNode;
-@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 @end

@@ -75,16 +75,24 @@
     return layer;
 }
 
-- (void)applyTransformedPathToShapeLayer:(CAShapeLayer*)layer
+- (void)applyTransformedPathToShapeLayer:(CALayer<IJSVGPathableLayer, IJSVGDrawableLayer>*)layer
                                 fromNode:(IJSVGPath*)node
 {
     CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
     pathBounds = CGRectIntegral(pathBounds);
+    
+    // this will move the path back to a 0 origin as we actually set the origin
+    // with the layer instead (which we can then move around)
     CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
                                                                    -pathBounds.origin.y);
     CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
     layer.frame = pathBounds;
     layer.path = transformedPath;
+    
+    // note that we store the bounding box at this point, as it can be modified later
+    // with strokes, however, SVG spec defined bounding box is the path without strokes
+    // and without control points.
+    layer.boundingBox = pathBounds;
     CGPathRelease(transformedPath);
 }
 
@@ -105,7 +113,14 @@
         strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
         strokeDifference = CGSizeMake((strokeLayer.frame.size.width - layer.frame.size.width) / 2.f,
                                       (strokeLayer.frame.size.height - layer.frame.size.height) / 2.f);
-        layer.frame = CGRectInset(layer.frame, -strokeDifference.width, -strokeDifference.height);
+
+        // make sure we update the bounding box as it has changed
+        layer.frame = CGRectIntegral(CGRectInset(layer.frame,
+                                                 -strokeDifference.width,
+                                                 -strokeDifference.height));
+        layer.boundingBox = CGRectIntegral(CGRectInset(layer.boundingBox,
+                                                       strokeDifference.width,
+                                                       strokeDifference.height));
     }
     
     // generic fill color
@@ -154,6 +169,7 @@
         fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
                                                                    strokeDifference.width,
                                                                    strokeDifference.height);
+        NSLog(@"%@",fillLayer);
         [layer addSublayer:fillLayer];
     }
     
@@ -364,7 +380,10 @@
     IJSVGPatternLayer* patternLayer = [IJSVGPatternLayer layer];
     patternLayer.patternNode = pattern;
     patternLayer.frame = layer.bounds;
-    patternLayer.pattern = [self drawableLayerForNode:patternLayer.patternNode];
+    
+    CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:patternLayer.patternNode];
+    patternFill.referencingLayer = patternLayer;
+    patternLayer.pattern = patternFill;
     return patternLayer;
 }
 
