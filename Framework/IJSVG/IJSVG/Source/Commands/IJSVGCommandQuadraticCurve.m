@@ -21,15 +21,15 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddQuadCurveToPoint(path.path, NULL, params[0], params[1],
+        CGPathAddQuadCurveToPoint(path, NULL, params[0], params[1],
                                   params[2], params[3]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathAddQuadCurveToPoint(path.path, NULL,
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathAddQuadCurveToPoint(path, NULL,
                               currentPoint.x + params[0], currentPoint.y + params[1],
                               currentPoint.x + params[2], currentPoint.y + params[3]);
 }

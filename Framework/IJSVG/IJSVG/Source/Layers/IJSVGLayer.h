@@ -51,7 +51,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
+@property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
+@property (nonatomic, readonly) NSArray<CALayer<IJSVGDrawableLayer>*>* debugLayers;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
@@ -81,6 +83,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
+@property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
@@ -114,5 +117,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 + (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer;
 + (CGRect)absoluteFrameForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
++ (CGRect)calculateFrameForSublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)layers;
+
++ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
 @end

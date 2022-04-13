@@ -64,7 +64,7 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER) drawableBasicLayerForPathNode:(IJSVGPath*)node
+- (IJSVG_DRAWABLE_LAYER)drawableBasicLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
@@ -79,7 +79,7 @@
                                 fromNode:(IJSVGPath*)node
 {
     CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
-    pathBounds = CGRectIntegral(pathBounds);
+    pathBounds = pathBounds;
     
     // this will move the path back to a 0 origin as we actually set the origin
     // with the layer instead (which we can then move around)
@@ -105,22 +105,18 @@
     
     // stroke the path
     IJSVGStrokeLayer* strokeLayer = nil;
-    CGSize strokeDifference = CGSizeZero;
+    CGFloat strokeWidthDifference = 0.f;
     if([node matchesTraits:IJSVGNodeTraitStroked]) {
         // its highly likely that the stroke layer is larger than the layer its being
         // drawing into, so we need to increase the layer size to match or any groups
         // that this is inside wont be the correct frame
         strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
-        strokeDifference = CGSizeMake((strokeLayer.frame.size.width - layer.frame.size.width) / 2.f,
-                                      (strokeLayer.frame.size.height - layer.frame.size.height) / 2.f);
+        strokeWidthDifference = strokeLayer.lineWidth * .5f;
 
         // make sure we update the bounding box as it has changed
-        layer.frame = CGRectIntegral(CGRectInset(layer.frame,
-                                                 -strokeDifference.width,
-                                                 -strokeDifference.height));
-        layer.boundingBox = CGRectIntegral(CGRectInset(layer.boundingBox,
-                                                       strokeDifference.width,
-                                                       strokeDifference.height));
+        layer.frame = CGRectInset(layer.frame,
+                                  -strokeWidthDifference,
+                                  -strokeWidthDifference);
     }
     
     // generic fill color
@@ -167,9 +163,8 @@
     
     if(fillLayer != nil) {
         fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
-                                                                   strokeDifference.width,
-                                                                   strokeDifference.height);
-        NSLog(@"%@",fillLayer);
+                                                                   strokeWidthDifference,
+                                                                   strokeWidthDifference);
         [layer addSublayer:fillLayer];
     }
     
@@ -183,7 +178,7 @@
 //        layer.borderWidth = 1.f;
         
         CGRect strokeLayerFrame = strokeLayer.frame;
-        strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = 0.f;
+        strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = strokeWidthDifference;
         strokeLayer.frame = strokeLayerFrame;
         
         // we need to work out what type of fill we need for the layer
@@ -194,7 +189,10 @@
                 patternLayer = [self drawableBasicPatternLayerForLayer:strokeLayer
                                                                pattern:(IJSVGPattern*)node.stroke];
                 patternLayer.referencingLayer = layer;
-                patternLayer.frame = strokeLayer.frame;
+                patternLayer.frame = CGRectInset(strokeLayer.frame,
+                                                 -strokeWidthDifference,
+                                                 -strokeWidthDifference);
+                
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 patternLayer.maskLayer = strokeLayer;
                 [layer addSublayer:patternLayer];
@@ -207,7 +205,10 @@
                 gradientLayer = [self drawableBasicGradientLayerForLayer:strokeLayer
                                                                 gradient:(IJSVGGradient*)node.stroke];
                 gradientLayer.referencingLayer = layer;
-                gradientLayer.frame = strokeLayer.frame;
+                gradientLayer.frame = CGRectInset(strokeLayer.frame,
+                                                  -strokeWidthDifference,
+                                                  -strokeWidthDifference);
+                
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 gradientLayer.maskLayer = strokeLayer;
                 [layer addSublayer:gradientLayer];
@@ -275,17 +276,17 @@
     }
     
     // lets resize the layer as we have computed everything at this point
-    CGFloat increase = layer.lineWidth / 2.f;
-    frame = CGRectInset(frame, -increase, -increase);
+//    CGFloat increase = layer.lineWidth / 2.f;
+////    frame = CGRectInset(frame, -increase, -increase);
     
     // now we know what to do, we need to transform the path
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
-    CGPathRef path = CGPathCreateCopyByTransformingPath(layer.path, &transform);
+//    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
+//    CGPathRef path = CGPathCreateCopyByTransformingPath(layer.path, &transform);
     layer.frame = frame;
-    layer.path = path;
+    layer.path = layer.path;
 //    layer.borderColor = NSColor.redColor.CGColor;
 //    layer.borderWidth = 1.f;
-    CGPathRelease(path);
+//    CGPathRelease(path);
     
     return layer;
 }
@@ -316,7 +317,7 @@
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
 //    layer.borderColor = NSColor.purpleColor.CGColor;
 //    layer.borderWidth = 1.f;
-    CGRect rect = [self calculateFrameForSublayers:sublayers];
+    CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
     layer.frame = rect;
     CGAffineTransform translate = CGAffineTransformMakeTranslation(-rect.origin.x,
                                                                    -rect.origin.y);
@@ -350,7 +351,7 @@
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
     gradientLayer.gradient = gradient;
-    gradientLayer.frame = layer.bounds;
+    gradientLayer.frame = layer.boundingBoxBounds;
     gradientLayer.viewBox = _viewBox;
     return gradientLayer;
 }
@@ -379,9 +380,9 @@
     // pattern fill
     IJSVGPatternLayer* patternLayer = [IJSVGPatternLayer layer];
     patternLayer.patternNode = pattern;
-    patternLayer.frame = layer.bounds;
+    patternLayer.frame = layer.boundingBoxBounds;
     
-    CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:patternLayer.patternNode];
+    CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:pattern];
     patternFill.referencingLayer = patternLayer;
     patternLayer.pattern = patternFill;
     return patternLayer;
@@ -402,41 +403,8 @@
     patternLayer.clipRule = layer.fillRule;
     patternLayer.clipLayer = clipLayer;
     clipLayer.frame = clipLayer.bounds;
+    [patternLayer setNeedsDisplay];
     return patternLayer;
-}
-
-#pragma mark Bounds Calculation
-
-- (CGRect)calculateFrameForSublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)layers
-{
-    CGRect rect = CGRectNull;
-    for(IJSVG_DRAWABLE_LAYER layer in layers) {
-        CGRect layerFrame = layer.frame;
-        // if we are a transform layer, we can just apply its transform
-        // to its sublayers and keep going down the tree
-        if([layer isKindOfClass:IJSVGTransformLayer.class]) {
-            CGRect frame = [self calculateFrameForSublayers:layer.sublayers];
-            frame = CGRectApplyAffineTransform(frame, layer.affineTransform);
-            layerFrame = frame;
-        }
-        if(CGRectIsNull(rect)) {
-            rect = layerFrame;
-            continue;
-        }
-        rect = CGRectUnion(rect, layerFrame);
-    }
-    return rect;
-}
-
-- (CGAffineTransform)absoluteTransformForNode:(IJSVGNode*)node
-{
-   CGAffineTransform parentAbsoluteTransform = CGAffineTransformIdentity;
-   IJSVGNode* parentSVGNode = node;
-   while ((parentSVGNode = parentSVGNode.parentNode) != nil) {
-       parentAbsoluteTransform = [self absoluteTransformForNode:parentSVGNode];
-   }
-   return CGAffineTransformConcat(IJSVGConcatTransforms(node.transforms),
-       parentAbsoluteTransform);
 }
 
 #pragma mark Defaults

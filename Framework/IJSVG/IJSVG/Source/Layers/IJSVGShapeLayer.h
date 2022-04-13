@@ -35,6 +35,7 @@
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
+@property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;

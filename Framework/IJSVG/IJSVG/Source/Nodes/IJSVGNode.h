@@ -120,6 +120,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) BOOL adoptable;
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
+@property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, assign) IJSVGNodeType type;

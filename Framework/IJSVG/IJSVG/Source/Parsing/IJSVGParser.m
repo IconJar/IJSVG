@@ -539,6 +539,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;
         }
     });
+    
+    // viewBox because this somehow is a thing
+    IJSVGAttributeParse(IJSVGAttributeViewBox, ^(NSString* value) {
+        CGFloat* floats = [IJSVGUtils parseViewBox:value];
+        node.viewBox = CGRectMake(floats[0], floats[1],
+                                  floats[2], floats[3]);
+        free(floats);
+    });
 }
 
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
@@ -828,8 +836,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.parentNode = parentNode;
     
     NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
-    [self parsePathCommandData:pathData
-                      intoPath:node];
+
+    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:pathData.UTF8String
+                                                                    dataStream:_commandDataStream];
+    CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:commands];
+    node.path = path;
+    CGPathRelease(path);
 
     [self computeAttributesFromElement:element
                                 onNode:node
@@ -860,8 +872,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // use sprintf as its quicker then stringWithFormat...
     char* buffer;
     asprintf(&buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
-    [self parsePathCommandDataBuffer:buffer
-                            intoPath:node];
+    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
+                                                                    dataStream:_commandDataStream];
+    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
+    node.path = nPath;
+    CGPathRelease(nPath);
+    
     (void)free(buffer);
     return node;
 }
@@ -1305,107 +1321,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         strcat(buffer, "z");
     }
     
-    // actually perform the parse
-    [self parsePathCommandDataBuffer:buffer
-                            intoPath:path];
+    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
+                                                                    dataStream:_commandDataStream];
+    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
+    path.path = nPath;
+    CGPathRelease(nPath);
     
     // free the params
     (void)free(buffer), buffer = NULL;
     (void)free(params), params = NULL;
 }
-
-
-- (void)parsePathCommandDataBuffer:(const char*)buffer
-                          intoPath:(IJSVGPath*)path
-{
-    NSUInteger len = strlen(buffer);
-    NSUInteger lastIndex = len - 1;
-
-    // make sure we plus 1 for the null byte
-    char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
-    NSInteger start = 0;
-    IJSVGCommand* _currentCommand = nil;
-    for (NSInteger i = 0; i < len; i++) {
-        char nextChar = buffer[i + 1];
-        BOOL atEnd = i == lastIndex;
-        BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
-        if (isStartCommand == YES || atEnd == YES) {
-
-            // copy memory from current buffer
-            NSInteger index = ((i + 1) - start);
-            memcpy(&charBuffer[0], &buffer[start], sizeof(char)*index);
-            charBuffer[index] = '\0';
-
-            // create the command from the substring
-            unsigned long length = index + 1;
-            size_t mlength = sizeof(char)*length;
-            char* commandString = (char*)malloc(mlength);
-            memcpy(commandString, &charBuffer[0], mlength);
-
-            // reset start position
-            start = (i + 1);
-
-            // previous command is actual subcommand
-            IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
-            IJSVGCommand* cCommand = [self parseCommandStringBuffer:commandString
-                                                    previousCommand:previousCommand
-                                                           intoPath:path];
-            
-            // free the memory as at this point, we are done with it
-            (void)free(commandString), commandString = NULL;
-
-            // retain the current one
-            if (cCommand != nil) {
-                _currentCommand = cCommand;
-            }
-        }
-    }
-    (void)free(charBuffer), charBuffer = NULL;
-}
-
-- (void)parsePathCommandData:(NSString*)command
-                    intoPath:(IJSVGPath*)path
-{
-    // invalid command
-    if (command == nil || command.length == 0) {
-        return;
-    }
-
-    // allocate memory for the string buffer for reading
-    const char* buffer = command.UTF8String;
-    [self parsePathCommandDataBuffer:buffer
-                            intoPath:path];
-}
-
-- (IJSVGCommand*)parseCommandStringBuffer:(const char*)buffer
-                          previousCommand:(IJSVGCommand*)previousCommand
-                                 intoPath:(IJSVGPath*)path
-{
-    // work out the last command - the reason this is so long is because the command
-    // could be a series of the same commands, so work it out by the number of parameters
-    // there is per command string
-    IJSVGCommand* preCommand = nil;
-    if (previousCommand) {
-        preCommand = previousCommand;
-    }
-
-    // main commands
-    //    Class commandClass = [IJSVGCommand classFor]
-    Class commandClass = [IJSVGCommand commandClassForCommandChar:buffer[0]];
-    IJSVGCommand* command = nil;
-    command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandStringBuffer:buffer
-                                                                     dataStream:_commandDataStream] autorelease];
-    for (IJSVGCommand* subCommand in command.subCommands) {
-        [command.class runWithParams:subCommand.parameters
-                          paramCount:subCommand.parameterCount
-                             command:subCommand
-                     previousCommand:preCommand
-                                type:subCommand.type
-                                path:path];
-        preCommand = subCommand;
-    }
-    return command;
-}
-
 
 @end

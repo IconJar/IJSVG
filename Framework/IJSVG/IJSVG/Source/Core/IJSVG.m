@@ -807,6 +807,7 @@
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
     }
+        
     return _layerTree;
 }
 

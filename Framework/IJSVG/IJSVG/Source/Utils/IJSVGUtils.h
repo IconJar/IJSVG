@@ -29,6 +29,7 @@ char* IJSVGTimmedCharBufferCreate(const char* buffer);
 void IJSVGTrimCharBuffer(char* buffer);
 void IJSVGCharBufferToLower(char* buffer);
 size_t IJSVGCharBufferHash(char* buffer);
+CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);

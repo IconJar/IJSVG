@@ -261,6 +261,45 @@
     }
 }
 
++ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    [self logLayer:layer
+             depth:0];
+}
+
++ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
+           depth:(NSUInteger)depth
+{
+    NSLog(@"%@ %@",[@"" stringByPaddingToLength:depth
+                                    withString:@"- - "
+                               startingAtIndex:0],  layer.debugDescription);
+    for(CALayer<IJSVGDrawableLayer>* sublayer in layer.debugLayers) {
+        [self logLayer:sublayer
+                 depth:depth+1];
+    }
+}
+
++ (CGRect)calculateFrameForSublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)layers
+{
+    CGRect rect = CGRectNull;
+    for(IJSVG_DRAWABLE_LAYER layer in layers) {
+        CGRect layerFrame = layer.frame;
+        // if we are a transform layer, we can just apply its transform
+        // to its sublayers and keep going down the tree
+        if([layer isKindOfClass:IJSVGTransformLayer.class]) {
+            CGRect frame = [self calculateFrameForSublayers:layer.sublayers];
+            frame = CGRectApplyAffineTransform(frame, layer.affineTransform);
+            layerFrame = frame;
+        }
+        if(CGRectIsNull(rect)) {
+            rect = layerFrame;
+            continue;
+        }
+        rect = CGRectUnion(rect, layerFrame);
+    }
+    return rect;
+}
+
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
     if (_backingScaleFactor == newFactor) {
@@ -390,6 +429,14 @@
     return self.frame;
 }
 
+- (CGRect)boundingBoxBounds
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = self.boundingBox.size
+    };
+}
+
 - (CGRect)strokeBoundingBox
 {
     return self.frame;
@@ -398,6 +445,11 @@
 - (CALayer<IJSVGDrawableLayer> *)referencingLayer
 {
     return _referencingLayer ?: self.superlayer;
+}
+
+-(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
+{
+    return self.sublayers;
 }
 
 @end

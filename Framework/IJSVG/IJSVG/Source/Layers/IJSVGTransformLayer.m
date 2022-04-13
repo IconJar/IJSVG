@@ -18,6 +18,7 @@
 @synthesize clipRule = _clipRule;
 @synthesize absoluteFrame;
 @synthesize boundingBox;
+@synthesize boundingBoxBounds;
 @synthesize strokeBoundingBox;
 
 - (void)dealloc
@@ -48,9 +49,20 @@
     return YES;
 }
 
+- (void)renderInContext:(CGContextRef)ctx
+{
+    [IJSVGLayer renderLayer:self
+                  inContext:ctx];
+}
+
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    // do nothing, this does nothing as a group
+    [super renderInContext:ctx];
+}
+
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
+{
+    return self.sublayers;
 }
 
 @end

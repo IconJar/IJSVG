@@ -9,5 +9,4 @@
 #import "IJSVGPattern.h"
 
 @implementation IJSVGPattern
-
 @end

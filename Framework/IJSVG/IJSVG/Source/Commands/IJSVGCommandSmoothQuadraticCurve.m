@@ -22,9 +22,10 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    CGPoint currentPoint = path.currentPoint;
+    CGPoint lastControlPoint = IJSVGPathGetLastQuadraticCommandPoint(path);
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
     CGPoint commandPoint = CGPointMake(currentPoint.x, currentPoint.y);
     if (command != nil) {
         if (command.class == IJSVGCommandQuadraticCurve.class) {
@@ -40,17 +41,17 @@
             }
         } else if (command.class == self.class) {
             // smooth quadratic curve
-            commandPoint = CGPointMake(-1 * (path.lastControlPoint.x) + 2 * (currentPoint.x),
-                -1 * (path.lastControlPoint.y) + 2 * currentPoint.y);
+            commandPoint = CGPointMake(-1 * (lastControlPoint.x) + 2 * (currentPoint.x),
+                -1 * (lastControlPoint.y) + 2 * currentPoint.y);
         }
     }
-    path.lastControlPoint = commandPoint;
+//    path.lastControlPoint = commandPoint;
     if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddQuadCurveToPoint(path.path, NULL, commandPoint.x, commandPoint.y,
+        CGPathAddQuadCurveToPoint(path, NULL, commandPoint.x, commandPoint.y,
                                   params[0], params[1]);
         return;
     }
-    CGPathAddQuadCurveToPoint(path.path, NULL, commandPoint.x, commandPoint.y,
+    CGPathAddQuadCurveToPoint(path, NULL, commandPoint.x, commandPoint.y,
                               currentPoint.x + params[0], currentPoint.y + params[1]);
 }
 

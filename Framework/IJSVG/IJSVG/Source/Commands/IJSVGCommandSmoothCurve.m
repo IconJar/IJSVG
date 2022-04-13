@@ -22,9 +22,9 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    CGPoint currentPoint = path.currentPoint;
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
     CGPoint firstControl = CGPointMake(currentPoint.x, currentPoint.y);
     if (command != nil) {
         if (command.class == [IJSVGCommandCurve class] || command.class == self.class) {
@@ -52,11 +52,11 @@
         }
     }
     if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddCurveToPoint(path.path, NULL, firstControl.x, firstControl.y,
+        CGPathAddCurveToPoint(path, NULL, firstControl.x, firstControl.y,
                               params[0], params[1], params[2], params[3]);
         return;
     }
-    CGPathAddCurveToPoint(path.path, NULL, firstControl.x, firstControl.y,
+    CGPathAddCurveToPoint(path, NULL, firstControl.x, firstControl.y,
                           currentPoint.x + params[0], currentPoint.y + params[1],
                           currentPoint.x + params[2], currentPoint.y + params[3]);
 }

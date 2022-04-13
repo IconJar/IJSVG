@@ -20,9 +20,9 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    [path close];
+    CGPathCloseSubpath(path);
 }
 
 @end

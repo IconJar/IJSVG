@@ -18,7 +18,7 @@
 
 - (CGRect)bounds
 {
-    return CGRectMake(0.f, 0.f, _viewBox.size.width, _viewBox.size.height);
+    return CGRectMake(0.f, 0.f, self.viewBox.size.width, self.viewBox.size.height);
 }
 
 @end

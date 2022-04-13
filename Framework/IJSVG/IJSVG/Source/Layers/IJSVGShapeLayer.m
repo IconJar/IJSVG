@@ -40,6 +40,14 @@
     return _referencingLayer ?: self.superlayer;
 }
 
+- (CGRect)boundingBoxBounds
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = self.boundingBox.size
+    };
+}
+
 - (BOOL)requiresBackingScaleHelp
 {
     return _maskLayer != nil || _clipLayer != nil;
@@ -147,6 +155,11 @@
 - (id<CAAction>)actionForKey:(NSString*)event
 {
     return nil;
+}
+
+-(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
+{
+    return self.sublayers;
 }
 
 @end

@@ -192,6 +192,27 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
     return NO;
 }
 
+void IJSVGPathGetLastQuadraticCommandPointEnumerationCallback(void *info, const CGPathElement *element)
+{
+    // this will just iterate over the path and keep changing the point
+    // when we come across a quad curve, we cant break when we find one as we
+    // dont know when the last one is.
+    CGPoint* point = (CGPoint*)info;
+    if(element->type == kCGPathElementAddQuadCurveToPoint) {
+        CGPoint curvePoint = element->points[0];
+        point->x = curvePoint.x;
+        point->y = curvePoint.y;
+    }
+}
+
+CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path)
+{
+    CGPoint point = CGPointZero;
+    CGPathApply(path, &point,
+                IJSVGPathGetLastQuadraticCommandPointEnumerationCallback);
+    return point;
+}
+
 BOOL IJSVGIsSVGLayer(CALayer* layer)
 {
     return [layer isKindOfClass:IJSVGLayer.class] ||

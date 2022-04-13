@@ -12,6 +12,7 @@
 @interface IJSVGPatternLayer ()
 
 @property (nonatomic, assign, readonly) CGSize cellSize;
+@property (nonatomic, assign) CGAffineTransform cellTransform;
 
 @end
 
@@ -22,14 +23,6 @@
     (void)([_pattern release]), _pattern = nil;
     (void)([_patternNode release]), _patternNode = nil;
     [super dealloc];
-}
-
-- (id)init
-{
-    if ((self = [super init]) != nil) {
-        self.shouldRasterize = YES;
-    }
-    return self;
 }
 
 - (BOOL)requiresBackingScaleHelp
@@ -43,7 +36,10 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGPatternLayer* layer = (IJSVGPatternLayer*)info;
     CGSize size = layer.cellSize;
     CGContextSaveGState(ctx);
-    CGContextClipToRect(ctx, CGRectMake(0.f, 0.f, size.width, size.height));
+    CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
+    CGContextClipToRect(ctx, rect);
+//    CGContextSetStrokeColorWithColor(ctx,NSColor.blueColor.CGColor);
+//    CGContextStrokeRect(ctx, rect);
     [layer.pattern renderInContext:ctx];
     CGContextSaveGState(ctx);
 };
@@ -63,7 +59,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGContextSetFillColorSpace(ctx, patternSpace);
     CGColorSpaceRelease(patternSpace);
     
-    CGRect rect = self.boundingBox;
+    CGRect rect = self.referencingLayer.boundingBoxBounds;
     
     IJSVGUnitLength* wLength = _patternNode.width;
     IJSVGUnitLength* hLength = _patternNode.height;
@@ -83,7 +79,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
     if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        CGRect frame = layer.frame;
+        CGRect frame = layer.boundingBox;
         transform = [IJSVGLayer absoluteTransformForLayer:layer];
         transform = CGAffineTransformTranslate(transform,
                                                -CGRectGetMinX(frame),
@@ -96,8 +92,14 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                                            [_patternNode.x computeValue:rect.size.width],
                                            [_patternNode.y computeValue:rect.size.height]);
     
+    
+    if(CGRectEqualToRect(_patternNode.viewBox, CGRectZero) == NO) {
+// TODO: sort out viewbox for patterns, i have no idea what I am doing...
+    }
+        
     // create the pattern
-    CGPatternRef ref = CGPatternCreate((void*)self, rect,
+    CGRect selfBounds = self.boundingBoxBounds;
+    CGPatternRef ref = CGPatternCreate((void*)self, selfBounds,
         transform, width, height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
@@ -108,7 +110,12 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGPatternRelease(ref);
 
     // fill it
-    CGContextFillRect(ctx, rect);
+    CGContextFillRect(ctx, selfBounds);
+}
+
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
+{
+    return @[self.pattern];
 }
 
 @end

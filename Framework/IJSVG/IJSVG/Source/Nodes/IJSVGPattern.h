@@ -11,6 +11,7 @@
 #import <Foundation/Foundation.h>
 
 @interface IJSVGPattern : IJSVGGroup {
+
 }
 
 @end

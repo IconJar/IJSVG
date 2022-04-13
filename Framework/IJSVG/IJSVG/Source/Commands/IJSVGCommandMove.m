@@ -21,7 +21,7 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     // move to's allow more then one move to, but if there are more then one,
     // we need to run the line to instead...who knew!
@@ -41,12 +41,12 @@
     // there is no current point. Asking for current point on an empty
     // path will result in an exception being thrown
     if (type == kIJSVGCommandTypeAbsolute || command == nil) {
-        CGPathMoveToPoint(path.path, NULL,
+        CGPathMoveToPoint(path, NULL,
                           params[0], params[1]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathMoveToPoint(path.path, NULL,
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathMoveToPoint(path, NULL,
                       currentPoint.x + params[0],
                       currentPoint.y + params[1]);
 }

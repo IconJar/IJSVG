@@ -12,7 +12,6 @@
 
 @interface IJSVGRootNode : IJSVGGroup
 
-@property (nonatomic, assign) NSRect viewBox;
 @property (nonatomic, retain) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;
 

@@ -20,14 +20,14 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddLineToPoint(path.path, NULL, params[0], params[1]);
+        CGPathAddLineToPoint(path, NULL, params[0], params[1]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathAddLineToPoint(path.path, NULL, currentPoint.x + params[0],
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathAddLineToPoint(path, NULL, currentPoint.x + params[0],
                          currentPoint.y + params[1]);
 }
 

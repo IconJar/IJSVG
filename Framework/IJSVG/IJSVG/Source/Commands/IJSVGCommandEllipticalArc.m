@@ -40,11 +40,11 @@ static IJSVGPathDataSequence* _sequence;
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     CGPoint radii = CGPointZero;
     CGPoint arcEndPoint = CGPointZero;
-    CGPoint pathCurrentPoint = path.currentPoint;
+    CGPoint pathCurrentPoint = CGPathGetCurrentPoint(path);
     CGFloat xAxisRotation = 0.f;
     BOOL largeArcFlag = NO;
     BOOL sweepFlag = NO;
@@ -73,7 +73,7 @@ static IJSVGPathDataSequence* _sequence;
     CGFloat y2 = arcEndPoint.y;
     
     if (rx == 0.f || ry == 0.f) {
-        CGPathAddLineToPoint(path.path, NULL, x2, y2);
+        CGPathAddLineToPoint(path, NULL, x2, y2);
         return;
     }
     
@@ -132,7 +132,7 @@ static IJSVGPathDataSequence* _sequence;
     transform = CGAffineTransformRotate(transform, xAxisRotation);
     transform = CGAffineTransformScale(transform, rx, ry);
 
-    CGPathAddRelativeArc(path.path, &transform, 0.f, 0.f, 1.f,
+    CGPathAddRelativeArc(path, &transform, 0.f, 0.f, 1.f,
                          startAngle, angleDelta);
 }
 
