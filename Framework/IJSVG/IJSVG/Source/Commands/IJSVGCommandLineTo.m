@@ -31,4 +31,15 @@
                          currentPoint.y + params[1]);
 }
 
+- (void)convertToUnits:(IJSVGUnitType)units
+           boundingBox:(CGRect)boundingBox
+{
+    if(units == IJSVGUnitObjectBoundingBox) {
+        self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]] computeValue:boundingBox.size.width];
+        self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]] computeValue:boundingBox.size.height];
+    }
+    [super convertToUnits:units
+              boundingBox:boundingBox];
+}
+
 @end

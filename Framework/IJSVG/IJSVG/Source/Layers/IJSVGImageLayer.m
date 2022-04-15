@@ -22,7 +22,6 @@
 {
     if((self = [super init]) != nil) {
         _image = image.retain;
-        self.shouldRasterize = YES;
     }
     return self;
 }
@@ -41,7 +40,7 @@
 - (void)reloadContent
 {
     if(_transformLayer == nil) {
-        _transformLayer = [IJSVGLayer layer].retain;
+        _transformLayer = [IJSVGTransformLayer layer].retain;
         [self addSublayer:_transformLayer];
     }
 

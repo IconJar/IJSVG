@@ -7,6 +7,19 @@
 //
 
 #import "IJSVGPattern.h"
+#import "IJSVGUnitRect.h"
 
 @implementation IJSVGPattern
+
+- (instancetype)init
+{
+    if((self = [super init]) != nil) {
+        self.viewBox = nil;
+        self.viewBoxAlignment = IJSVGViewBoxAlignmentXMidYMid;
+        self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
+    }
+    return self;
+}
+
+
 @end

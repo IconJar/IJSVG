@@ -30,7 +30,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitInherit
 };
 
-@interface IJSVGUnitLength : NSObject
+@interface IJSVGUnitLength : NSObject <NSCopying>
 
 @property (nonatomic, assign) IJSVGUnitLengthType type;
 @property (nonatomic, assign) IJSVGUnitLengthType originalType;

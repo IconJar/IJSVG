@@ -26,4 +26,28 @@
     return point;
 }
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGUnitPoint* point = [[self.class alloc] init];
+    point.x = [_x.copy autorelease];
+    point.y = [_y.copy autorelease];
+    return point;
+}
+
+- (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType
+{
+    _x.type = _y.type = lengthType;
+}
+
+- (CGPoint)computeValue:(CGSize)size
+{
+    return CGPointMake([_x computeValue:size.width],
+                       [_y computeValue:size.height]);
+}
+
+- (CGPoint)value
+{
+    return [self computeValue:CGSizeZero];
+}
+
 @end

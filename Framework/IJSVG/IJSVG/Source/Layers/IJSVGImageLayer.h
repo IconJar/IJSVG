@@ -8,13 +8,14 @@
 
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGTransformLayer.h>
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGImageLayer : IJSVGLayer {
     
 @private
-    IJSVGLayer* _transformLayer;
+    IJSVGTransformLayer* _transformLayer;
     IJSVGLayer* _imageLayer;
 }
 

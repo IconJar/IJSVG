@@ -198,6 +198,16 @@
     return unit;
 }
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGUnitLength* length = [[IJSVGUnitLength alloc] init];
+    length.value = self.value;
+    length.type = self.type;
+    length.originalType = self.originalType;
+    length.inherit = self.inherit;
+    return length;
+}
+
 - (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type
 {
     return [self.class unitWithFloat:self.value

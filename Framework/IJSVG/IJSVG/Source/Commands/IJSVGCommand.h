@@ -22,7 +22,6 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
     NSInteger _currentIndex;
 }
 
-@property (nonatomic, copy) NSString* commandString;
 @property (nonatomic, assign) char command;
 @property (nonatomic, assign) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;
@@ -47,15 +46,22 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
           intoArray:(NSMutableArray<IJSVGCommand*>*)commands
       parentCommand:(IJSVGCommand*)parentCommand;
 
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer;
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
                                           dataStream:(IJSVGPathDataStream*)dataStream;
 + (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands;
+
++ (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands
+                                   toUnits:(IJSVGUnitType)unitType
+                                    bounds:(CGRect)bounds;
 
 - (id)initWithCommandStringBuffer:(const char*)str
                        dataStream:(IJSVGPathDataStream*)dataStream;
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
                                paramCount:(NSInteger)paramCount
                           previousCommand:(IJSVGCommand*)command;
+- (void)convertToUnits:(IJSVGUnitType)units
+           boundingBox:(CGRect)boundingBox;
 - (IJSVGCommand*)commandByConvertingToUnits:(IJSVGUnitType)unitType
                                 boundingBox:(CGRect)boundingBox;
 

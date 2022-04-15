@@ -133,8 +133,19 @@
                                                     to:node.fillOpacity.value];
             }
             
-            // set the color against the layer
-            layer.fillColor = color.CGColor;
+            // set the color against the layer — we cant just use fill layer due to how
+            // the stroke is position within the frame, we have to create another
+            // layer to draw the colour into!
+            IJSVGShapeLayer* shape = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
+            shape.fillColor = color.CGColor;
+            CGRect shapeRect = shape.frame;
+            
+            // reset back to 0, later on this will move in enough for the stroke
+            // to be half over the edge
+            shapeRect.origin.x = 0.f;
+            shapeRect.origin.y = 0.f;
+            shape.frame = shapeRect;
+            fillLayer = shape;
             break;
         }
             
@@ -294,9 +305,12 @@
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForRootNode:(IJSVGRootNode*)node
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
+    layer.viewBox = node.viewBox;
+    layer.viewBoxAlignment = node.viewBoxAlignment;
+    layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
     layer.frame = CGRectMake(0.f, 0.f,
-                             node.viewBox.size.width,
-                             node.viewBox.size.height);
+                             node.viewBox.size.width.value,
+                             node.viewBox.size.height.value);
     NSArray<IJSVG_DRAWABLE_LAYER>* layers = [self drawableLayersForNodes:node.children];
     for(IJSVG_DRAWABLE_LAYER drawableLayer in layers) {
         [layer addSublayer:drawableLayer];
@@ -315,18 +329,30 @@
                                         sublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
-//    layer.borderColor = NSColor.purpleColor.CGColor;
-//    layer.borderWidth = 1.f;
-    CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
-    layer.frame = rect;
-    CGAffineTransform translate = CGAffineTransformMakeTranslation(-rect.origin.x,
-                                                                   -rect.origin.y);
-    for(IJSVG_DRAWABLE_LAYER sublayer in sublayers) {
-        CGAffineTransform transform = sublayer.affineTransform;
-        transform = CGAffineTransformConcat(transform, translate);
-        sublayer.affineTransform = transform;
-        [layer addSublayer:sublayer];
+    layer.viewBox = node.viewBox;
+    layer.viewBoxAlignment = node.viewBoxAlignment;
+    layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
+    
+    // does the group have an intrisic size?
+    if(node.width != nil || node.height != nil) {
+        // the X and Y will be set by a transform later
+        layer.frame = CGRectMake(0.f, 0.f,
+                                 node.width.value,
+                                 node.height.value);
+        layer.sublayers = sublayers;
+    } else {
+        CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
+        layer.frame = rect;
+        CGAffineTransform identity = CGAffineTransformMakeTranslation(-rect.origin.x,
+                                                                      -rect.origin.y);
+        for(IJSVG_DRAWABLE_LAYER sublayer in sublayers) {
+            CGAffineTransform transform = sublayer.affineTransform;
+            transform = CGAffineTransformConcat(transform, identity);
+            sublayer.affineTransform = transform;
+            [layer addSublayer:sublayer];
+        }
     }
+    
     return layer;
 }
 

@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGUnitLength.h>
+#import <IJSVG/IJSVGViewBox.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
@@ -19,6 +20,7 @@
 @class IJSVGPattern;
 @class IJSVGTransform;
 @class IJSVGRootNode;
+@class IJSVGUnitRect;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -120,7 +122,9 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) BOOL adoptable;
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
-@property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, retain) IJSVGUnitRect* viewBox;
+@property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
+@property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, assign) IJSVGNodeType type;

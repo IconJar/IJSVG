@@ -10,12 +10,24 @@
 #import <IJSVG/IJSVGUnitSize.h>
 #import <Foundation/Foundation.h>
 
-@interface IJSVGUnitRect : NSObject
+@interface IJSVGUnitRect : NSObject <NSCopying>
 
 @property (nonatomic, retain) IJSVGUnitSize* size;
 @property (nonatomic, retain) IJSVGUnitPoint* origin;
+@property (nonatomic, readonly) BOOL isZeroRect;
+@property (nonatomic, readonly) CGRect value;
 
++ (IJSVGUnitRect*)rectWithCGRect:(CGRect)rect;
 + (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin
                             size:(IJSVGUnitSize*)size;
++ (IJSVGUnitRect*)rectWithX:(CGFloat)x
+                          y:(CGFloat)y
+                      width:(CGFloat)width
+                     height:(CGFloat)height;
+
+- (CGRect)computeValue:(CGSize)size;
+
+- (IJSVGUnitRect*)copyByConvertingToUnitsLengthType:(IJSVGUnitLengthType)type;
+- (void)convertUnitsLengthType:(IJSVGUnitLengthType)type;
 
 @end

@@ -10,6 +10,12 @@
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <QuartzCore/QuartzCore.h>
 
-@interface IJSVGGroupLayer : IJSVGLayer
+@interface IJSVGGroupLayer : IJSVGLayer {
+    
+}
+
+@property (nonatomic, retain) IJSVGUnitRect* viewBox;
+@property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
+@property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
 
 @end

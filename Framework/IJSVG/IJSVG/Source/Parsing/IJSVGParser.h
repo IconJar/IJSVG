@@ -27,6 +27,7 @@
 #import <Foundation/Foundation.h>
 
 extern NSString* const IJSVGAttributeViewBox;
+extern NSString* const IJSVGAttributePreserveAspectRatio;
 extern NSString* const IJSVGAttributeID;
 extern NSString* const IJSVGAttributeClass;
 extern NSString* const IJSVGAttributeX;

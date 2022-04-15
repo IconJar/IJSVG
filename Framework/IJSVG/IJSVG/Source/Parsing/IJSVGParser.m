@@ -6,10 +6,13 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGUnitPoint.h>
 
 NSString* const IJSVGAttributeViewBox = @"viewBox";
+NSString* const IJSVGAttributePreserveAspectRatio = @"preserveAspectRatio";
 NSString* const IJSVGAttributeID = @"id";
 NSString* const IJSVGAttributeClass = @"class";
 NSString* const IJSVGAttributeX = @"x";
@@ -240,7 +243,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 //    }
 
     // check the viewbox
-    if (NSEqualRects(_rootNode.viewBox, NSZeroRect) ||
+    if (_rootNode.viewBox.isZeroRect ||
         _rootNode.bounds.size.width == 0 ||
         _rootNode.bounds.size.height == 0) {
         if (error != NULL) {
@@ -290,7 +293,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSXMLNode* attribute = nil;
     if ((attribute = [element attributeForName:IJSVGAttributeViewBox]) != nil) {
         CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
-        rootNode.viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
+        rootNode.viewBox = [IJSVGUnitRect rectWithX:box[0] y:box[1]
+                                              width:box[2] height:box[3]];
         (void)free(box);
     } else {
         // its possible wlength or hlength are nil
@@ -302,11 +306,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         } else if (w == 0.f && h != 0.f) {
             w = h;
         }
-        rootNode.viewBox = NSMakeRect(0.f, 0.f, w, h);
+        rootNode.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
+                                              width:w height:h];
     }
 
-    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:rootNode.viewBox.size.width];
-    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:rootNode.viewBox.size.height];
+    IJSVGUnitLength* wl = rootNode.viewBox.size.width;
+    IJSVGUnitLength* hl = rootNode.viewBox.size.height;
     if ([element attributeForName:IJSVGAttributeWidth] != nil) {
         wl = _rootNode.width;
     }
@@ -543,9 +548,25 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // viewBox because this somehow is a thing
     IJSVGAttributeParse(IJSVGAttributeViewBox, ^(NSString* value) {
         CGFloat* floats = [IJSVGUtils parseViewBox:value];
-        node.viewBox = CGRectMake(floats[0], floats[1],
-                                  floats[2], floats[3]);
+        IJSVGUnitLength* x = [IJSVGUnitLength unitWithFloat:floats[0]];
+        IJSVGUnitLength* y = [IJSVGUnitLength unitWithFloat:floats[1]];
+        IJSVGUnitLength* width = [IJSVGUnitLength unitWithFloat:floats[2]];
+        IJSVGUnitLength* height = [IJSVGUnitLength unitWithFloat:floats[3]];
+        IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
+                                                    height:height];
+        IJSVGUnitPoint* origin = [IJSVGUnitPoint pointWithX:x y:y];
+        node.viewBox = [IJSVGUnitRect rectWithOrigin:origin
+                                                size:size];
         free(floats);
+    });
+    
+    // preserveAspectRatio
+    IJSVGAttributeParse(IJSVGAttributePreserveAspectRatio, ^(NSString* value) {
+        IJSVGViewBoxMeetOrSlice meetOrSlice;
+        IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value
+                                                               meetOrSlice:&meetOrSlice];
+        node.viewBoxAlignment = alignment;
+        node.viewBoxMeetOrSlice = meetOrSlice;
     });
 }
 
@@ -568,9 +589,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // we can treat unkown element as groups, as some people
         // thought it was a good idea to stick HTML within the markup
         case IJSVGNodeTypeUnknown:
+        case IJSVGNodeTypeSVG:
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element
-                                        parentNode:node];
+                                        parentNode:node
+                                          nodeType:nodeType];
             break;
         }
         case IJSVGNodeTypePath: {
@@ -982,9 +1005,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     CGRect computedBounds = CGRectZero;
     IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
     
     NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
     NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
@@ -1008,15 +1028,21 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
     node.path = (CGMutablePathRef)nPath;
     CGPathRelease(nPath);
+    
+    [self computeAttributesFromElement:element
+                                onNode:node
+                     ignoredAttributes:nil];
+    
     return node;
 }
 
 - (IJSVGNode*)parseGroupElement:(NSXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
+                       nodeType:(IJSVGNodeType)nodeType
 {
     IJSVGGroup* node = [[[IJSVGGroup alloc] init] autorelease];
     node.adoptable = YES;
-    node.type = IJSVGNodeTypeGroup;
+    node.type = nodeType;
     node.name = element.localName;
     node.parentNode = parentNode;
     [self computeAttributesFromElement:element
@@ -1256,7 +1282,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSXMLNode* attributeNode = [element attributeForLocalName:IJSVGAttributeHref
                                                           URI:namespaceURI];
     if (attributeNode == nil) {
-        attributeNode = [element attributeForName:IJSVGAttributeXLink];
+        attributeNode = [element attributeForName:IJSVGAttributeHref];
+        if(attributeNode == nil) {
+            attributeNode = [element attributeForName:IJSVGAttributeXLink];
+        }
     }
     return attributeNode;
 }
@@ -1323,6 +1352,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
                                                                     dataStream:_commandDataStream];
+    
+    CGRect bounds;
+    if([path contentUnitsWithReferencingNodeBounds:&bounds] == IJSVGUnitObjectBoundingBox) {
+        commands = [IJSVGCommand convertCommands:commands
+                                         toUnits:IJSVGUnitObjectBoundingBox
+                                          bounds:bounds];
+    }
+    
     CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
     path.path = nPath;
     CGPathRelease(nPath);

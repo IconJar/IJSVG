@@ -111,6 +111,15 @@
 }
 
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
+{
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    NSArray<IJSVGCommand*>* commands = [self commandsForDataCharacters:buffer
+                                                            dataStream:stream];
+    IJSVGPathDataStreamRelease(stream);
+    return commands;
+}
+
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
                                           dataStream:(IJSVGPathDataStream*)dataStream
 {
     NSMutableArray<IJSVGCommand*>* commands = [[[NSMutableArray alloc] init] autorelease];
@@ -156,9 +165,22 @@
     return commands;
 }
 
++ (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands
+                                   toUnits:(IJSVGUnitType)unitType
+                                    bounds:(CGRect)bounds
+{
+    NSMutableArray<IJSVGCommand*>* newCommands = nil;
+    newCommands = [[[NSMutableArray alloc] initWithCapacity:commands.count] autorelease];
+    for(IJSVGCommand* command in commands) {
+        IJSVGCommand* nCommand = [command commandByConvertingToUnits:unitType
+                                                         boundingBox:bounds];
+        [newCommands addObject:nCommand];
+    }
+    return newCommands;
+}
+
 - (void)dealloc
 {
-    (void)([_commandString release]), _commandString = nil;
     (void)([_subCommands release]), _subCommands = nil;
     if (_parameters) {
         (void)(free(_parameters)), _parameters = nil;
@@ -227,15 +249,20 @@
     command.type = self.type;
     command.command = self.command;
     command.isSubCommand = self.isSubCommand;
-    size_t memsize = sizeof(CGFloat)*[self.class requiredParameterCount];
+    command.parameterCount = self.parameterCount;
+    size_t memsize = sizeof(CGFloat)*self.parameterCount;
     command.parameters = (CGFloat*)malloc(memsize);
     memcpy(command.parameters, self.parameters, memsize);
     
+    
     IJSVGCommand* lastCommand = nil;
-    NSMutableArray<IJSVGCommand*>* subcommands = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray<IJSVGCommand*>* subcommands = nil;
+    subcommands = [[[NSMutableArray alloc] initWithCapacity:self.subCommands.count] autorelease];
     for(IJSVGCommand* subcommand in self.subCommands) {
         IJSVGCommand* subCopy = [[subcommand copy] autorelease];
         subCopy.previousCommand = lastCommand;
+        subCopy.isSubCommand = lastCommand != nil;
+        [subcommands addObject:subCopy];
     }
     command.subCommands = subcommands;
     return command;
@@ -295,7 +322,6 @@
 - (void)convertToUnits:(IJSVGUnitType)units
            boundingBox:(CGRect)boundingBox
 {
-    
     for(IJSVGCommand* command in _subCommands) {
         [command convertToUnits:units
                     boundingBox:boundingBox];
@@ -320,7 +346,7 @@
     IJSVGCommand* copy = self.copy;
     [copy convertToUnits:unitType
              boundingBox:boundingBox];
-    return copy;
+    return [copy autorelease];
 }
 
 @end

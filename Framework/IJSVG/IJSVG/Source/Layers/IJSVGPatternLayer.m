@@ -6,13 +6,16 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGPatternLayer.h"
-#import "IJSVGTransform.h"
+#import <IJSVG/IJSVGPatternLayer.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGViewBox.h>
 
 @interface IJSVGPatternLayer ()
 
 @property (nonatomic, assign, readonly) CGSize cellSize;
-@property (nonatomic, assign) CGAffineTransform cellTransform;
+@property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, assign) CGRect patternBoundingBox;
 
 @end
 
@@ -38,9 +41,15 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGContextSaveGState(ctx);
     CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
     CGContextClipToRect(ctx, rect);
-//    CGContextSetStrokeColorWithColor(ctx,NSColor.blueColor.CGColor);
-//    CGContextStrokeRect(ctx, rect);
-    [layer.pattern renderInContext:ctx];
+    [IJSVGViewBox drawViewBox:layer.viewBox
+                       inRect:rect
+                contentBounds:layer.patternBoundingBox
+                    alignment:layer.patternNode.viewBoxAlignment
+                  meetOrSlice:layer.patternNode.viewBoxMeetOrSlice
+                    inContext:ctx
+                 drawingBlock:^{
+        [layer.pattern renderInContext:ctx];
+    }];
     CGContextSaveGState(ctx);
 };
 
@@ -92,9 +101,32 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                                            [_patternNode.x computeValue:rect.size.width],
                                            [_patternNode.y computeValue:rect.size.height]);
     
-    
-    if(CGRectEqualToRect(_patternNode.viewBox, CGRectZero) == NO) {
-// TODO: sort out viewbox for patterns, i have no idea what I am doing...
+    // who knew that patterns have viewBoxes? Not me, but here is an implementation
+    // of it anyway
+    if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
+        if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
+            IJSVGUnitRect* viewBox = [[_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage] autorelease];
+            _patternBoundingBox = [IJSVGLayer calculateFrameForSublayers:@[_pattern]];
+            
+//            // values at this poit need to be decimal based as they are
+//            // bounding box, I think this is correct (not sure...)
+            viewBox.origin.x.value /= 100.f;
+            viewBox.origin.y.value /= 100.f;
+            viewBox.size.width.value /= 100.f;
+            viewBox.size.height.value /= 100.f;
+//
+//            // work out the transform
+            CGRect transformedRect = [viewBox computeValue:rect.size];
+            _viewBox = transformedRect;
+//            CGAffineTransform viewBoxTransform;
+//            CGFloat ratio = MAX(transformedRect.size.width / patternCellBounds.size.width,
+//                                transformedRect.size.height / patternCellBounds.size.height);
+//            viewBoxTransform = CGAffineTransformMakeScale(ratio, ratio);
+//            viewBoxTransform = CGAffineTransformTranslate(viewBoxTransform,
+//                                                          -transformedRect.origin.x,
+//                                                          -transformedRect.origin.y);
+//            _cellTransform = viewBoxTransform;
+        }
     }
         
     // create the pattern

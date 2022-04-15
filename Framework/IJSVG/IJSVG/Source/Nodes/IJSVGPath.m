@@ -74,7 +74,6 @@
 - (void)computeTraits
 {
     if(self.stroke != nil) {
-        NSLog(@"%@",@"stroke");
         // by default we can just add this on
         [self addTraits:IJSVGNodeTraitStroked];
         

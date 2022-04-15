@@ -42,6 +42,7 @@
     (void)([_clipPath release]), _clipPath = nil;
     (void)([_svg release]), _svg = nil;
     (void)([_mask release]), _mask = nil;
+    (void)([_viewBox release]), _viewBox = nil;
     [super dealloc];
 }
 
@@ -221,6 +222,10 @@
     self.unicode = node.unicode;
     self.className = node.className;
     self.classNameList = node.classNameList;
+    
+    self.viewBox = node.viewBox;
+    self.viewBoxAlignment = node.viewBoxAlignment;
+    self.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
 
     self.x = node.x;
     self.y = node.y;

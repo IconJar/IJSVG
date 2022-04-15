@@ -18,7 +18,7 @@
 
 - (CGRect)bounds
 {
-    return CGRectMake(0.f, 0.f, self.viewBox.size.width, self.viewBox.size.height);
+    return [self.viewBox computeValue:CGSizeZero];
 }
 
 @end

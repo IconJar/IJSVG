@@ -300,7 +300,7 @@
 
 - (void)_setupBasicInfoFromGroup
 {
-    _viewBox = _rootNode.viewBox;
+    _viewBox = [_rootNode.viewBox computeValue:CGSizeZero];
     _intrinsicSize = _rootNode.intrinsicSize.retain;
 }
 

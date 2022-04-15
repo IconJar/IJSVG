@@ -26,4 +26,29 @@
     return size;
 }
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGUnitSize* size = [[self.class alloc] init];
+    size.width = [_width.copy autorelease];
+    size.height = [_height.copy autorelease];
+    return size;
+}
+
+- (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType
+{
+    _width.type = _height.type = lengthType;
+}
+
+- (CGSize)computeValue:(CGSize)size
+{
+    return CGSizeMake([_width computeValue:size.width],
+                      [_height computeValue:size.height]);
+}
+
+- (CGSize)value
+{
+    return [self computeValue:CGSizeZero];
+}
+
+
 @end
