@@ -64,6 +64,7 @@
         if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
             break;
         }
+        
     }
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
@@ -71,8 +72,8 @@
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.referencingLayer;
-    while(parentLayer.referencingLayer != nil &&
-          [parentLayer isKindOfClass:IJSVGRootLayer.class] == NO) {
+    while([parentLayer isKindOfClass:IJSVGRootLayer.class] == NO &&
+          parentLayer.referencingLayer != nil) {
         parentLayer = (CALayer<IJSVGDrawableLayer>*)parentLayer.referencingLayer;
     }
     return parentLayer;

@@ -70,6 +70,7 @@ withSVGString:(NSString*)subSVGString;
 @property (nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
+@property (nonatomic, retain) IJSVGRootLayer* layer;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;
@@ -77,7 +78,6 @@ withSVGString:(NSString*)subSVGString;
 - (NSRect)viewBox;
 - (NSArray<IJSVGPath*>*)glyphs;
 - (NSString*)identifier;
-- (IJSVGLayer*)layer;
 - (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options;

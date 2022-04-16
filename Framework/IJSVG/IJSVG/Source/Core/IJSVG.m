@@ -27,6 +27,7 @@
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
     (void)([_title release]), _title = nil;
     (void)([_desc release]), _desc = nil;
+    (void)([_layer release]), _layer = nil;
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -678,75 +679,101 @@
     [self _drawInRect:rect context:context error:nil];
 }
 
+//- (BOOL)_drawInRect:(NSRect)rect
+//            context:(CGContextRef)ref
+//              error:(NSError**)error
+//{
+//    // prep for draw...
+//    CGContextSaveGState(ref);
+//    @try {
+//        [self _beginDraw:rect];
+//
+//        // we also need to calculate the viewport so we can clip
+//        // the drawing if needed
+//        BOOL canDraw = NO;
+//        NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
+//        // check the viewport
+//        if (canDraw == NO) {
+//            if (error != NULL) {
+//                *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+//                                                     code:IJSVGErrorDrawing
+//                                                 userInfo:nil] autorelease];
+//            }
+//        } else {
+//            // clip to mask
+//            if (self.clipToViewport == YES) {
+//                CGContextClipToRect(ref, viewPort);
+//            }
+//
+//            // add the origin back onto the viewport
+//            viewPort.origin.x -= (_viewBox.origin.x) * _scale;
+//            viewPort.origin.y -= (_viewBox.origin.y) * _scale;
+//
+//            // transforms
+//            CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
+//            CGContextScaleCTM(ref, _scale, _scale);
+//
+//            // do we need to update the backing scales on the
+//            // layers?
+//            [self backingScaleFactor:nil];
+//
+//            CGInterpolationQuality quality;
+//            switch (self.renderQuality) {
+//            case kIJSVGRenderQualityLow: {
+//                quality = kCGInterpolationLow;
+//                break;
+//            }
+//            case kIJSVGRenderQualityOptimized: {
+//                quality = kCGInterpolationMedium;
+//                break;
+//            }
+//            default: {
+//                quality = kCGInterpolationHigh;
+//            }
+//            }
+//            CGContextSetInterpolationQuality(ref, quality);
+//            BOOL hasTransaction = IJSVGBeginTransaction();
+//            [self.layer renderInContext:ref];
+//            if (hasTransaction == YES) {
+//                IJSVGEndTransaction();
+//            }
+//        }
+//    } @catch (NSException* exception) {
+//        // just catch and give back a drawing error to the caller
+//        if (error != NULL) {
+//            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
+//                                                 code:IJSVGErrorDrawing
+//                                             userInfo:nil] autorelease];
+//        }
+//    }
+//    CGContextRestoreGState(ref);
+//    return (error == nil);
+//}
+
 - (BOOL)_drawInRect:(NSRect)rect
             context:(CGContextRef)ref
               error:(NSError**)error
 {
-    // prep for draw...
     CGContextSaveGState(ref);
-    @try {
-        [self _beginDraw:rect];
-
-        // we also need to calculate the viewport so we can clip
-        // the drawing if needed
-        BOOL canDraw = NO;
-        NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
-        // check the viewport
-        if (canDraw == NO) {
-            if (error != NULL) {
-                *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                     code:IJSVGErrorDrawing
-                                                 userInfo:nil] autorelease];
-            }
-        } else {
-            // clip to mask
-            if (self.clipToViewport == YES) {
-                CGContextClipToRect(ref, viewPort);
-            }
-
-            // add the origin back onto the viewport
-            viewPort.origin.x -= (_viewBox.origin.x) * _scale;
-            viewPort.origin.y -= (_viewBox.origin.y) * _scale;
-
-            // transforms
-            CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
-            CGContextScaleCTM(ref, _scale, _scale);
-
-            // do we need to update the backing scales on the
-            // layers?
-            [self backingScaleFactor:nil];
-
-            CGInterpolationQuality quality;
-            switch (self.renderQuality) {
-            case kIJSVGRenderQualityLow: {
-                quality = kCGInterpolationLow;
-                break;
-            }
-            case kIJSVGRenderQualityOptimized: {
-                quality = kCGInterpolationMedium;
-                break;
-            }
-            default: {
-                quality = kCGInterpolationHigh;
-            }
-            }
-            CGContextSetInterpolationQuality(ref, quality);
-            BOOL hasTransaction = IJSVGBeginTransaction();
-            [self.layer renderInContext:ref];
-            if (hasTransaction == YES) {
-                IJSVGEndTransaction();
-            }
-        }
-    } @catch (NSException* exception) {
-        // just catch and give back a drawing error to the caller
-        if (error != NULL) {
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorDrawing
-                                             userInfo:nil] autorelease];
-        }
+    if(_layer != nil) {
+        (void)[_layer release], _layer = nil;
     }
+    
+    // make sure we setup a transaction
+    IJSVGBeginTransaction();
+    
+    // create a new tree view the current viewport we are trying to
+    // render into, this effects how the viewbox aspect ratio's work
+    CGFloat backingScale = [self backingScaleFactor:NULL];
+    IJSVGLayerTree* tree = [[[IJSVGLayerTree alloc] initWithViewPortRect:rect
+                                                            backingScale:backingScale] autorelease];
+    
+    // grab the layer and make sure we set the backing scale factor onto it
+    _layer = [[tree rootLayerForRootNode:_rootNode] retain];
+    [_layer renderInContext:ref];
+    IJSVGEndTransaction();
     CGContextRestoreGState(ref);
-    return (error == nil);
+    return YES;
 }
 
 - (CGFloat)backingScaleFactor:(CGFloat* _Nullable)proposedBackingScale
@@ -760,7 +787,7 @@
 
     // make sure we multiple the scale by the scale of the rendered clip
     // or it will be blurry for gradients and other bitmap drawing
-    scale = (_scale * scale);
+//    scale = (_scale * scale);
 
     // dont do anything, nothing has changed, no point of iterating over
     // every layer for no reason!
@@ -781,6 +808,7 @@
         IJSVGLayer* propLayer = ((IJSVGLayer*)layer);
         propLayer.renderQuality = quality;
         if (propLayer.requiresBackingScaleHelp == YES) {
+            NSLog(@"%@",propLayer);
             propLayer.backingScaleFactor = scale;
         }
     };
@@ -794,38 +822,38 @@
     return _backingScaleFactor;
 }
 
-- (IJSVG_DRAWABLE_LAYER)layerWithTree:(IJSVGLayerTree*)tree
-{
-    // clear memory
-    BOOL hasTransaction = IJSVGBeginTransaction();
-    if (_layerTree != nil) {
-        (void)([_layerTree release]), _layerTree = nil;
-    }
-
-    // force rebuild of the tree
-    _layerTree = [[tree drawableLayerForNode:_rootNode] retain];
-    if (hasTransaction == YES) {
-        IJSVGEndTransaction();
-    }
-        
-    return _layerTree;
-}
-
-- (IJSVG_DRAWABLE_LAYER)layer
-{
-    if (_layerTree != nil) {
-        return _layerTree;
-    }
-
-    // create the renderer and assign default values
-    // from this SVG object
-    IJSVGLayerTree* renderer = [[[IJSVGLayerTree alloc] init] autorelease];
-    renderer.viewBox = self.viewBox;
-    renderer.style = self.renderingStyle;
-
-    // return the rendered layer
-    return [self layerWithTree:renderer];
-}
+//- (IJSVG_DRAWABLE_LAYER)layerWithTree:(IJSVGLayerTree*)tree
+//{
+//    // clear memory
+//    BOOL hasTransaction = IJSVGBeginTransaction();
+//    if (_layerTree != nil) {
+//        (void)([_layerTree release]), _layerTree = nil;
+//    }
+//
+//    // force rebuild of the tree
+//    _layerTree = [[tree drawableLayerForNode:_rootNode] retain];
+//    if (hasTransaction == YES) {
+//        IJSVGEndTransaction();
+//    }
+//
+//    return _layerTree;
+//}
+//
+//- (IJSVG_DRAWABLE_LAYER)layer
+//{
+//    if (_layerTree != nil) {
+//        return _layerTree;
+//    }
+//
+//    // create the renderer and assign default values
+//    // from this SVG object
+//    IJSVGLayerTree* renderer = [[[IJSVGLayerTree alloc] init] autorelease];
+//    renderer.viewBox = self.viewBox;
+//    renderer.style = self.renderingStyle;
+//
+//    // return the rendered layer
+//    return [self layerWithTree:renderer];
+//}
 
 - (void)setRenderingStyle:(IJSVGRenderingStyle*)style
 {

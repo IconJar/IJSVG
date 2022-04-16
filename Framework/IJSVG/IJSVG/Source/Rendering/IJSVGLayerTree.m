@@ -32,6 +32,7 @@
 
 - (void)dealloc
 {
+    (void)([_viewPortStack release]), _viewPortStack = nil;
     (void)([_style release]), _style = nil;
     [super dealloc];
 }
@@ -42,6 +43,39 @@
         NSLog(@"================== SVG");
     }
     return self;
+}
+
+- (id)initWithViewPortRect:(CGRect)viewPort
+              backingScale:(CGFloat)scale
+{
+    if((self = [super init]) != nil) {
+        _viewPortStack = [[NSMutableArray alloc] init];
+        _backingScale = scale;
+        [self pushViewPort:viewPort];
+    }
+    return self;
+}
+
+- (void)pushViewPort:(CGRect)viewPort
+{
+    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(viewPort)];
+    [_viewPortStack addObject:value];
+}
+
+- (CGRect)viewPort
+{
+    NSValue* value = _viewPortStack.lastObject;
+    return (CGRect)NSRectToCGRect(value.rectValue);
+}
+
+- (void)popViewPort
+{
+    [_viewPortStack removeLastObject];
+}
+
+- (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode
+{
+    return (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
 }
 
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForNode:(IJSVGNode*)node {
@@ -309,12 +343,22 @@
     layer.viewBox = node.viewBox;
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
-//    layer.borderColor = NSColor.redColor.CGColor;
-//    layer.borderWidth = 1.f;
-    layer.frame = CGRectMake(0.f, 0.f,
-                             node.intrinsicSize.width.value,
-                             node.intrinsicSize.height.value);
+    layer.backingScaleFactor = _backingScale;
+    
+    // we are the top most SVG, not a nested one,
+    // we can simply use the viewport given to us
+    CGRect frame = CGRectZero;
+    if(_viewPortStack.count == 1) {
+        frame.size = self.viewPort.size;
+    } else {
+        frame = CGRectMake(0.f, 0.f,
+                           node.intrinsicSize.width.value,
+                           node.intrinsicSize.height.value);
+    }
+    layer.frame = frame;
+    [self pushViewPort:layer.frame];
     layer.sublayers = [self drawableLayersForNodes:node.children];
+    [self popViewPort];
     return layer;
 }
 
@@ -363,9 +407,11 @@
 {
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
+    gradientLayer.backingScaleFactor = _backingScale;
     gradientLayer.gradient = gradient;
     gradientLayer.frame = layer.boundingBoxBounds;
-    gradientLayer.viewBox = _viewBox;
+    gradientLayer.viewBox = self.viewPort;
+    [gradientLayer setNeedsDisplay];
     return gradientLayer;
 }
 
@@ -398,6 +444,7 @@
     CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:pattern];
     patternFill.referencingLayer = patternLayer;
     patternLayer.pattern = patternFill;
+    [patternLayer setNeedsDisplay];
     return patternLayer;
 }
 

@@ -31,6 +31,8 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
 
 @interface IJSVGViewBox : NSObject
 
+typedef void (^IJSVGViewBoxDrawingBlock)(CGSize scale);
+
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
                                 meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
@@ -41,6 +43,6 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
           alignment:(IJSVGViewBoxAlignment)alignment
         meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
           inContext:(CGContextRef)ctx
-       drawingBlock:(dispatch_block_t)block;
+       drawingBlock:(IJSVGViewBoxDrawingBlock)block;
 
 @end

@@ -7,7 +7,6 @@
 //
 
 #import "SVGView.h"
-#import "IJSVGExporter.h"
 
 @implementation SVGView
 
@@ -21,8 +20,8 @@
 {
     if( ( self = [super initWithFrame:frameRect] ) != nil )
     {
-        svg = [self svg];
-        svg.renderQuality = IJSVGRenderQualityFullResolution;
+        svg = [self svg].retain;
+        svg.renderQuality = kIJSVGRenderQualityFullResolution;
         svg.renderingBackingScaleHelper = ^{
             return self.window.backingScaleFactor;
         };
@@ -32,7 +31,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"test (1)"];
+    return [IJSVG svgNamed:@"home"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

@@ -13,13 +13,20 @@
 #define IJSVG_DRAWABLE_LAYER CALayer<IJSVGDrawableLayer>*
 
 @class IJSVGLayer;
+@class IJSVGRootLayer;
+@class IJSVGRootNode;
 
 @interface IJSVGLayerTree : NSObject {
+@private
+    NSMutableArray<NSValue*>* _viewPortStack;
 }
 
 @property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, assign) CGFloat backingScale;
 @property (nonatomic, retain) IJSVGRenderingStyle* style;
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForNode:(IJSVGNode*)node;
+- (id)initWithViewPortRect:(CGRect)viewPort
+              backingScale:(CGFloat)scale;
+- (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 
 @end

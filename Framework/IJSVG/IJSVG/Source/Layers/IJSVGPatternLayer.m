@@ -50,7 +50,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                     alignment:alignment
                   meetOrSlice:meetOrSlice
                     inContext:ctx
-                 drawingBlock:^{
+                 drawingBlock:^(CGSize size) {
         [layer.pattern renderInContext:ctx];
     }];
     CGContextSaveGState(ctx);

@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGGradientLayer.h"
+#import <IJSVG/IJSVGRootLayer.h>
 
 @implementation IJSVGGradientLayer
 
@@ -93,10 +94,14 @@
                                         -CGRectGetMinX(objectFrame),
                                         -CGRectGetMinY(objectFrame));
     CGContextSaveGState(ctx);
+    
+    IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
+    CGRect bounds = [rootNode.viewBox computeValue:CGSizeZero];
+    
     [self.gradient drawInContextRef:ctx
                          objectRect:objectRect
                   absoluteTransform:affine
-                           viewPort:_viewBox];
+                           viewPort:bounds];
     CGContextRestoreGState(ctx);
 }
 

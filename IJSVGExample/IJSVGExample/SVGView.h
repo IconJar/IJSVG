@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "IJSVG.h"
+#import <IJSVG/IJSVG.h>
 
 @interface SVGView : NSView {
  

@@ -13,4 +13,10 @@
 
 @implementation IJSVGGroupLayer
 
+- (void)dealloc
+{
+    (void)[_viewBox release], _viewBox = nil;
+    [super dealloc];
+}
+
 @end
