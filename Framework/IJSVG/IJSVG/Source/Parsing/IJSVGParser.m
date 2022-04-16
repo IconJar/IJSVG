@@ -258,19 +258,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 - (void)begin {
     // setup basics to begin with
-    _rootNode = [[IJSVGRootNode alloc] init];
     _styleSheet = [[IJSVGStyleSheet alloc] init];
     _commandDataStream = IJSVGPathDataStreamCreateDefault();
     _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
                                                   valueOptions:NSPointerFunctionsStrongMemory
-                                                      capacity:0];
-    [self computeAttributesFromElement:_document.rootElement
-                                onNode:_rootNode
-                     ignoredAttributes:nil];
-    [self computeViewBox:_document.rootElement
-                  onNode:_rootNode];
-    [self computeElement:_document.rootElement
-              parentNode:_rootNode];
+                                                      capacity:1];
+    _rootNode = [[IJSVGRootNode alloc] init];
+    [self parseSVGElement:_document.rootElement
+                 ontoNode:_rootNode
+               parentNode:nil];
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -287,41 +283,54 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     }
 }
 
-- (void)computeViewBox:(NSXMLElement*)element
-                onNode:(IJSVGRootNode*)rootNode
+- (void)computeViewBoxForRootNode:(IJSVGRootNode*)node
 {
-    NSXMLNode* attribute = nil;
-    if ((attribute = [element attributeForName:IJSVGAttributeViewBox]) != nil) {
-        CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
-        rootNode.viewBox = [IJSVGUnitRect rectWithX:box[0] y:box[1]
-                                              width:box[2] height:box[3]];
-        (void)free(box);
-    } else {
-        // its possible wlength or hlength are nil
-        CGFloat w = _rootNode.width.value;
-        CGFloat h = _rootNode.height.value;
+//    NSXMLNode* attribute = nil;
+//    if () {
+//        CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
+//        rootNode.viewBox = [IJSVGUnitRect rectWithX:box[0] y:box[1]
+//                                              width:box[2] height:box[3]];
+//        (void)free(box);
+//    } else {
+//        // its possible wlength or hlength are nil
+//        CGFloat w = _rootNode.width.value;
+//        CGFloat h = _rootNode.height.value;
+//
+//        if (h == 0.f && w != 0.f) {
+//            h = w;
+//        } else if (w == 0.f && h != 0.f) {
+//            w = h;
+//        }
+//        rootNode.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
+//                                              width:w height:h];
+//    }
+    
+    if(node.viewBox == nil) {
+        CGFloat width = node.width.value;
+        CGFloat height = node.height.value;
         
-        if (h == 0.f && w != 0.f) {
-            h = w;
-        } else if (w == 0.f && h != 0.f) {
-            w = h;
+        if(height == 0.f && width != 0.f) {
+            height = width;
+        } else if(width == 0.f && height != 0.f) {
+            width = height;
         }
-        rootNode.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
-                                              width:w height:h];
+        node.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
+                                          width:width
+                                         height:height];
     }
 
-    IJSVGUnitLength* wl = rootNode.viewBox.size.width;
-    IJSVGUnitLength* hl = rootNode.viewBox.size.height;
-    if ([element attributeForName:IJSVGAttributeWidth] != nil) {
-        wl = _rootNode.width;
+    IJSVGUnitLength* wl = node.viewBox.size.width;
+    IJSVGUnitLength* hl = node.viewBox.size.height;
+    if (node.width != nil) {
+        wl = node.width;
     }
-    if ([element attributeForName:IJSVGAttributeHeight] != nil) {
-        hl = _rootNode.height;
+    if (node.height != nil) {
+        hl = node.height;
     }
 
     // store the width and height
-    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
-                                                   height:hl];
+    node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
+                                               height:hl];
 }
 
 - (void)computeAttributesFromElement:(NSXMLElement*)element
@@ -548,15 +557,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // viewBox because this somehow is a thing
     IJSVGAttributeParse(IJSVGAttributeViewBox, ^(NSString* value) {
         CGFloat* floats = [IJSVGUtils parseViewBox:value];
-        IJSVGUnitLength* x = [IJSVGUnitLength unitWithFloat:floats[0]];
-        IJSVGUnitLength* y = [IJSVGUnitLength unitWithFloat:floats[1]];
-        IJSVGUnitLength* width = [IJSVGUnitLength unitWithFloat:floats[2]];
-        IJSVGUnitLength* height = [IJSVGUnitLength unitWithFloat:floats[3]];
-        IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
-                                                    height:height];
-        IJSVGUnitPoint* origin = [IJSVGUnitPoint pointWithX:x y:y];
-        node.viewBox = [IJSVGUnitRect rectWithOrigin:origin
-                                                size:size];
+        node.viewBox = [IJSVGUnitRect rectWithX:floats[0]
+                                              y:floats[1]
+                                          width:floats[2]
+                                         height:floats[3]];
         free(floats);
     });
     
@@ -589,11 +593,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         // we can treat unkown element as groups, as some people
         // thought it was a good idea to stick HTML within the markup
         case IJSVGNodeTypeUnknown:
-        case IJSVGNodeTypeSVG:
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element
                                         parentNode:node
                                           nodeType:nodeType];
+            break;
+        }
+        case IJSVGNodeTypeSVG: {
+            computedNode = [self parseSVGElement:element
+                                      parentNode:node];
             break;
         }
         case IJSVGNodeTypePath: {
@@ -1052,6 +1060,36 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // recursively compute children
     [self computeElement:element
               parentNode:node];
+    return node;
+}
+
+- (void)parseSVGElement:(NSXMLElement*)element
+               ontoNode:(IJSVGRootNode*)node
+             parentNode:(IJSVGNode*)parentNode
+{
+    node.adoptable = YES;
+    node.type = IJSVGNodeTypeSVG;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    [self computeAttributesFromElement:element
+                                onNode:node
+                     ignoredAttributes:nil];
+
+    // make sure we compute the viewbox
+    [self computeViewBoxForRootNode:node];
+    
+    // recursively compute children
+    [self computeElement:element
+              parentNode:node];
+}
+
+- (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
+                   parentNode:(IJSVGNode*)parentNode
+{
+    IJSVGRootNode* node = [[[IJSVGRootNode alloc] init] autorelease];
+    [self parseSVGElement:element
+                 ontoNode:node
+               parentNode:parentNode];
     return node;
 }
 

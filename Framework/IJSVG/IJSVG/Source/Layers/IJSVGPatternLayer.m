@@ -15,7 +15,6 @@
 
 @property (nonatomic, assign, readonly) CGSize cellSize;
 @property (nonatomic, assign) CGRect viewBox;
-@property (nonatomic, assign) CGRect patternBoundingBox;
 
 @end
 
@@ -41,11 +40,15 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGContextSaveGState(ctx);
     CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
     CGContextClipToRect(ctx, rect);
-    [IJSVGViewBox drawViewBox:layer.viewBox
+    
+    IJSVGViewBoxAlignment alignment = layer.patternNode.viewBoxAlignment;
+    IJSVGViewBoxMeetOrSlice meetOrSlice = layer.patternNode.viewBoxMeetOrSlice;
+    CGRect viewBox = layer.viewBox;
+    
+    [IJSVGViewBox drawViewBox:viewBox
                        inRect:rect
-                contentBounds:layer.patternBoundingBox
-                    alignment:layer.patternNode.viewBoxAlignment
-                  meetOrSlice:layer.patternNode.viewBoxMeetOrSlice
+                    alignment:alignment
+                  meetOrSlice:meetOrSlice
                     inContext:ctx
                  drawingBlock:^{
         [layer.pattern renderInContext:ctx];
@@ -106,26 +109,17 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
         if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
             IJSVGUnitRect* viewBox = [[_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage] autorelease];
-            _patternBoundingBox = [IJSVGLayer calculateFrameForSublayers:@[_pattern]];
             
-//            // values at this poit need to be decimal based as they are
-//            // bounding box, I think this is correct (not sure...)
-            viewBox.origin.x.value /= 100.f;
-            viewBox.origin.y.value /= 100.f;
-            viewBox.size.width.value /= 100.f;
-            viewBox.size.height.value /= 100.f;
+            // values at this poit need to be decimal based as they are
+            // bounding box, I think this is correct (not sure...)
+//            viewBox.origin.x.value /= 100.f;
+//            viewBox.origin.y.value /= 100.f;
+//            viewBox.size.width.value /= 100.f;
+//            viewBox.size.height.value /= 100.f;
 //
 //            // work out the transform
             CGRect transformedRect = [viewBox computeValue:rect.size];
             _viewBox = transformedRect;
-//            CGAffineTransform viewBoxTransform;
-//            CGFloat ratio = MAX(transformedRect.size.width / patternCellBounds.size.width,
-//                                transformedRect.size.height / patternCellBounds.size.height);
-//            viewBoxTransform = CGAffineTransformMakeScale(ratio, ratio);
-//            viewBoxTransform = CGAffineTransformTranslate(viewBoxTransform,
-//                                                          -transformedRect.origin.x,
-//                                                          -transformedRect.origin.y);
-//            _cellTransform = viewBoxTransform;
         }
     }
         

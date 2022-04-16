@@ -11,6 +11,7 @@
 #import "IJSVGLayer.h"
 #import "IJSVGShapeLayer.h"
 #import "IJSVGTransformLayer.h"
+#import "IJSVGRootLayer.h"
 
 @implementation IJSVGLayer
 
@@ -57,6 +58,12 @@
     CALayer<IJSVGDrawableLayer>* parentLayer = layer;
     while((parentLayer = parentLayer.referencingLayer) != nil) {
         identity = [self absoluteTransformForLayer:parentLayer];
+        
+        // only go up until we find a root layer, at that point, we know
+        // we can stop looking
+        if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
+            break;
+        }
     }
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
@@ -64,7 +71,8 @@
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.referencingLayer;
-    while(parentLayer.referencingLayer != nil) {
+    while(parentLayer.referencingLayer != nil &&
+          [parentLayer isKindOfClass:IJSVGRootLayer.class] == NO) {
         parentLayer = (CALayer<IJSVGDrawableLayer>*)parentLayer.referencingLayer;
     }
     return parentLayer;

@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGRootLayer.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGImageLayer.h>
 #import <IJSVG/IJSVGLayer.h>
@@ -304,17 +305,16 @@
 
 - (IJSVG_DRAWABLE_LAYER)drawableLayerForRootNode:(IJSVGRootNode*)node
 {
-    IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
+    IJSVGRootLayer* layer = [IJSVGRootLayer layer];
     layer.viewBox = node.viewBox;
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
+//    layer.borderColor = NSColor.redColor.CGColor;
+//    layer.borderWidth = 1.f;
     layer.frame = CGRectMake(0.f, 0.f,
-                             node.viewBox.size.width.value,
-                             node.viewBox.size.height.value);
-    NSArray<IJSVG_DRAWABLE_LAYER>* layers = [self drawableLayersForNodes:node.children];
-    for(IJSVG_DRAWABLE_LAYER drawableLayer in layers) {
-        [layer addSublayer:drawableLayer];
-    }
+                             node.intrinsicSize.width.value,
+                             node.intrinsicSize.height.value);
+    layer.sublayers = [self drawableLayersForNodes:node.children];
     return layer;
 }
 
@@ -329,28 +329,15 @@
                                         sublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
-    layer.viewBox = node.viewBox;
-    layer.viewBoxAlignment = node.viewBoxAlignment;
-    layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
-    
-    // does the group have an intrisic size?
-    if(node.width != nil || node.height != nil) {
-        // the X and Y will be set by a transform later
-        layer.frame = CGRectMake(0.f, 0.f,
-                                 node.width.value,
-                                 node.height.value);
-        layer.sublayers = sublayers;
-    } else {
-        CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
-        layer.frame = rect;
-        CGAffineTransform identity = CGAffineTransformMakeTranslation(-rect.origin.x,
-                                                                      -rect.origin.y);
-        for(IJSVG_DRAWABLE_LAYER sublayer in sublayers) {
-            CGAffineTransform transform = sublayer.affineTransform;
-            transform = CGAffineTransformConcat(transform, identity);
-            sublayer.affineTransform = transform;
-            [layer addSublayer:sublayer];
-        }
+    CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
+    layer.frame = rect;
+    CGAffineTransform identity = CGAffineTransformMakeTranslation(-rect.origin.x,
+                                                                  -rect.origin.y);
+    for(IJSVG_DRAWABLE_LAYER sublayer in sublayers) {
+        CGAffineTransform transform = sublayer.affineTransform;
+        transform = CGAffineTransformConcat(transform, identity);
+        sublayer.affineTransform = transform;
+        [layer addSublayer:sublayer];
     }
     
     return layer;

@@ -38,7 +38,6 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
 
 + (void)drawViewBox:(CGRect)viewBox
              inRect:(CGRect)drawingRect
-      contentBounds:(CGRect)bounds
           alignment:(IJSVGViewBoxAlignment)alignment
         meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
           inContext:(CGContextRef)ctx

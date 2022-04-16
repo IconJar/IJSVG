@@ -20,6 +20,8 @@
 		594CF55F238FF462009B251B /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF55E238FF462009B251B /* AppKit.framework */; };
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
+		5978C46A280A241200D25296 /* IJSVGRootLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5978C468280A241200D25296 /* IJSVGRootLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5978C46B280A241200D25296 /* IJSVGRootLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5978C469280A241200D25296 /* IJSVGRootLayer.m */; };
 		599EB4D3238FF570004CB6BC /* libobjc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 599EB4D2238FF535004CB6BC /* libobjc.tbd */; };
 		59A24EBC23F480EA0090C374 /* IJSVGUnitSize.h in Headers */ = {isa = PBXBuildFile; fileRef = 59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59A24EBD23F480EA0090C374 /* IJSVGUnitSize.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */; };
@@ -158,6 +160,8 @@
 		594CF55E238FF462009B251B /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		594CF560238FF46C009B251B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		594CF562238FF473009B251B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		5978C468280A241200D25296 /* IJSVGRootLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGRootLayer.h; sourceTree = "<group>"; };
+		5978C469280A241200D25296 /* IJSVGRootLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRootLayer.m; sourceTree = "<group>"; };
 		599EB4D2238FF535004CB6BC /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
 		59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUnitSize.h; sourceTree = "<group>"; };
 		59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitSize.m; sourceTree = "<group>"; };
@@ -373,6 +377,8 @@
 				59EB757423905F6C00F5AE63 /* IJSVGStrokeLayer.m */,
 				590EB7A227F637EF0047CECF /* IJSVGTransformLayer.h */,
 				590EB7A327F637EF0047CECF /* IJSVGTransformLayer.m */,
+				5978C468280A241200D25296 /* IJSVGRootLayer.h */,
+				5978C469280A241200D25296 /* IJSVGRootLayer.m */,
 			);
 			path = Layers;
 			sourceTree = "<group>";
@@ -626,6 +632,7 @@
 				59EB762D23905F7300F5AE63 /* IJSVGLayerTree.h in Headers */,
 				59FDBF0027F3454800AF7038 /* IJSVGColorNode.h in Headers */,
 				590EB7A427F637EF0047CECF /* IJSVGTransformLayer.h in Headers */,
+				5978C46A280A241200D25296 /* IJSVGRootLayer.h in Headers */,
 				59F9EAF82808BB5F00188ACB /* IJSVGViewBox.h in Headers */,
 				59EB760B23905F7300F5AE63 /* IJSVGStyleSheetSelector.h in Headers */,
 			);
@@ -736,6 +743,7 @@
 				59EB75F323905F7300F5AE63 /* IJSVGGroupLayer.m in Sources */,
 				591A3E4E25CC91F800AD45B7 /* IJSVGParsing.m in Sources */,
 				5919E65823F47FF60051873A /* IJSVGUnitRect.m in Sources */,
+				5978C46B280A241200D25296 /* IJSVGRootLayer.m in Sources */,
 				59EB762523905F7300F5AE63 /* IJSVGTransform.m in Sources */,
 				59EB760023905F7300F5AE63 /* IJSVGGradientLayer.m in Sources */,
 				59EB762B23905F7300F5AE63 /* IJSVGUnitLength.m in Sources */,

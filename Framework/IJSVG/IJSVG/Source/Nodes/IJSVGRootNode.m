@@ -16,6 +16,15 @@
     [super dealloc];
 }
 
+- (instancetype)init
+{
+    if((self = [super init]) != nil) {
+        self.viewBoxAlignment = IJSVGViewBoxAlignmentXMidYMid;
+        self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
+    }
+    return self;
+}
+
 - (CGRect)bounds
 {
     return [self.viewBox computeValue:CGSizeZero];
