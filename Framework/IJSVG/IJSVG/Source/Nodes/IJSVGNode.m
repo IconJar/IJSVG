@@ -440,4 +440,9 @@
     return self;
 }
 
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@ %@ %@",self.name,self.classNameList,self.identifier];
+}
+
 @end

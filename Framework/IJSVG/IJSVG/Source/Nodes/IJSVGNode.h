@@ -119,7 +119,6 @@ static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 
 void IJSVGAssertPaintableObject(id object);
 
-@property (nonatomic, assign) BOOL adoptable;
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
 @property (nonatomic, retain) IJSVGUnitRect* viewBox;

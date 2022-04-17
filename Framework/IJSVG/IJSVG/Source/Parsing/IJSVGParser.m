@@ -401,8 +401,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     if(styleSheet != nil) {
         nodeStyle = [styleSheet mergedStyle:nodeStyle];
     }
-    
-    
+        
     // floating point numbers
     IJSVGAttributesParse(_IJSVGAttributeDictionaryFloats, ^id (NSString* value) {
         return [IJSVGUnitLength unitWithString:value];
@@ -496,6 +495,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
+        NSLog(@"%@",color);
         node.fill = [IJSVGColorNode colorNodeWithColor:color];
     });
     
@@ -698,13 +698,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             break;
     }
     
-    // append to its parent
-    if(computedNode != nil && computedNode.adoptable == YES) {
-        if([node isKindOfClass:IJSVGGroup.class]) {
-            [(IJSVGGroup*)node addChild:computedNode];
-        }
-    }
-    
     // once we have done everything we can compute traits — this has to be done
     // at this point due to needing to be within the parent node tree
     [computedNode computeTraits];
@@ -801,6 +794,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.type = IJSVGNodeTypeLinearGradient;
     node.name = element.localName;
     [node addTraits:IJSVGNodeTraitPaintable];
+    
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
         NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
@@ -808,6 +802,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
+    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -827,6 +822,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.type = IJSVGNodeTypeRadialGradient;
     node.name = element.localName;
     [node addTraits:IJSVGNodeTraitPaintable];
+    
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
         NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
@@ -834,6 +830,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
+    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -850,7 +847,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     IJSVGNode* node = [[[IJSVGNode alloc] init] autorelease];
     node.type = IJSVGNodeTypeStop;
     node.name = element.localName;
-    node.adoptable = YES;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -861,10 +863,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                     parentNode:(IJSVGNode*)parentNode
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
-    node.adoptable = YES;
     node.type = IJSVGNodeTypePath;
     node.name = element.localName;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
 
@@ -885,9 +891,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
     node.type = IJSVGNodeTypeLine;
-    node.adoptable = YES;
     node.primitiveType = kIJSVGPrimitivePathTypeLine;
     node.parentNode = parentNode;
+    node.name = element.localName;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     [self computeAttributesFromElement:element
                                 onNode:node
@@ -918,9 +929,13 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
     node.type = IJSVGNodeTypePolyline;
-    node.adoptable = YES;
     node.primitiveType = kIJSVGPrimitivePathTypePolyLine;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     [self computeAttributesFromElement:element
                                 onNode:node
@@ -939,9 +954,13 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
     node.type = IJSVGNodeTypePolygon;
-    node.adoptable = YES;
     node.primitiveType = kIJSVGPrimitivePathTypePolygon;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     [self computeAttributesFromElement:element
                                 onNode:node
@@ -960,9 +979,13 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
     node.name = element.localName;
-    node.adoptable = YES;
     node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
     node.type = IJSVGNodeTypeEllipse;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     CGRect computedBounds = CGRectZero;
     IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
@@ -1007,9 +1030,13 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
     node.name = element.localName;
-    node.adoptable = YES;
     node.primitiveType = kIJSVGPrimitivePathTypeCircle;
     node.type = IJSVGNodeTypeCircle;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     CGRect computedBounds = CGRectZero;
     IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
@@ -1049,10 +1076,14 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                        nodeType:(IJSVGNodeType)nodeType
 {
     IJSVGGroup* node = [[[IJSVGGroup alloc] init] autorelease];
-    node.adoptable = YES;
     node.type = nodeType;
     node.name = element.localName;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -1067,10 +1098,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                ontoNode:(IJSVGRootNode*)node
              parentNode:(IJSVGNode*)parentNode
 {
-    node.adoptable = YES;
     node.type = IJSVGNodeTypeSVG;
     node.name = element.localName;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -1097,11 +1133,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                     parentNode:(IJSVGNode*)parentNode
 {
     IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
-    node.adoptable = YES;
     node.type = IJSVGNodeTypeRect;
     node.primitiveType = kIJSVGPrimitivePathTypeRect;
     node.name = element.localName;
     node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     CGRect bounds = parentNode.bounds;
     CGRect proposedBounds = CGRectZero;
@@ -1163,26 +1203,30 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     CGRect bounds = CGRectZero;
     IJSVGUnitType units = [parentNode contentUnitsWithReferencingNodeBounds:&bounds];
-    IJSVGImage* image = [[[IJSVGImage alloc] init] autorelease];
-    image.adoptable = YES;
-    image.type = IJSVGNodeTypeImage;
-    image.name = element.localName;
-    image.parentNode = parentNode;
+    IJSVGImage* node = [[[IJSVGImage alloc] init] autorelease];
+    node.type = IJSVGNodeTypeImage;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
     
     [self computeAttributesFromElement:element
-                                onNode:image
+                                onNode:node
                      ignoredAttributes:nil];
     
     // load image from base64
     NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
     
     if(units == IJSVGUnitObjectBoundingBox) {
-        image.width = [IJSVGUnitLength unitWithFloat:image.width.value*bounds.size.width];
-        image.height = [IJSVGUnitLength unitWithFloat:image.height.value*bounds.size.height];
+        node.width = [IJSVGUnitLength unitWithFloat:node.width.value*bounds.size.width];
+        node.height = [IJSVGUnitLength unitWithFloat:node.height.value*bounds.size.height];
     }
     
-    [image loadFromString:dataNode.stringValue];
-    return image;
+    [node loadFromString:dataNode.stringValue];
+    return node;
 }
 
 - (IJSVGNode*)parseUseElement:(NSXMLElement*)element
@@ -1211,7 +1255,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                        parentNode:(IJSVGNode*)parentNode
 {
     IJSVGPattern* node = [[[IJSVGPattern alloc] init] autorelease];
-    node.adoptable = NO;
     node.type = IJSVGNodeTypePattern;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1240,7 +1283,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.type = IJSVGNodeTypeClipPath;
     node.name = element.localName;
     node.parentNode = parentNode;
-    node.adoptable = NO;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
@@ -1261,7 +1303,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     node.type = IJSVGNodeTypeMask;
     node.name = element.localName;
     node.parentNode = parentNode;
-    node.adoptable = NO;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
