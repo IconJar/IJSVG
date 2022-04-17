@@ -291,7 +291,7 @@
 + (CGRect)calculateFrameForSublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)layers
 {
     CGRect rect = CGRectNull;
-    for(IJSVG_DRAWABLE_LAYER layer in layers) {
+    for(CALayer<IJSVGDrawableLayer>* layer in layers) {
         CGRect layerFrame = layer.frame;
         // if we are a transform layer, we can just apply its transform
         // to its sublayers and keep going down the tree

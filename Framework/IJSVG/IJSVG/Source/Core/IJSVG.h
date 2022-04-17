@@ -43,7 +43,7 @@ withSVGString:(NSString*)subSVGString;
     CGFloat _scale;
     CGFloat _clipScale;
     id<IJSVGDelegate> _delegate;
-    IJSVG_DRAWABLE_LAYER _layerTree;
+    CALayer<IJSVGDrawableLayer>* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScaleFactor;
     CGFloat _lastProposedBackingScale;

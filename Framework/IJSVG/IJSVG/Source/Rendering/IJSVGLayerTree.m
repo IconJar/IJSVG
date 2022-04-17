@@ -78,8 +78,8 @@
     return (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForNode:(IJSVGNode*)node {
-    IJSVG_DRAWABLE_LAYER layer = nil;
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node {
+    CALayer<IJSVGDrawableLayer>* layer = nil;
     if([node isKindOfClass:IJSVGPath.class]) {
         layer = [self drawableLayerForPathNode:(IJSVGPath*)node];
     } else if([node isKindOfClass:IJSVGRootNode.class]) {
@@ -99,7 +99,7 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableBasicLayerForPathNode:(IJSVGPath*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableBasicLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
@@ -131,7 +131,7 @@
     CGPathRelease(transformedPath);
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForPathNode:(IJSVGPath*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
     
@@ -155,7 +155,7 @@
     }
     
     // generic fill color
-    IJSVG_DRAWABLE_LAYER fillLayer = nil;
+    CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     switch([IJSVGLayer fillTypeForFill:fill]) {
         // just a generic fill color
         case IJSVGLayerFillTypeColor: {
@@ -273,7 +273,7 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableStrokedLayerForPathNode:(IJSVGPath*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableStrokedLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGStrokeLayer* layer = [IJSVGStrokeLayer layer];
     [self applyTransformedPathToShapeLayer:layer
@@ -337,7 +337,7 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForRootNode:(IJSVGRootNode*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForRootNode:(IJSVGRootNode*)node
 {
     IJSVGRootLayer* layer = [IJSVGRootLayer layer];
     layer.viewBox = node.viewBox;
@@ -362,22 +362,22 @@
     return layer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForGroupNode:(IJSVGGroup*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForGroupNode:(IJSVGGroup*)node
 {
-    NSArray<IJSVG_DRAWABLE_LAYER>* layers = [self drawableLayersForNodes:node.children];
+    NSArray<CALayer<IJSVGDrawableLayer>*>* layers = [self drawableLayersForNodes:node.children];
     return [self drawableLayerForGroupNode:node
                                  sublayers:layers];
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableLayerForGroupNode:(IJSVGNode*)node
-                                        sublayers:(NSArray<IJSVG_DRAWABLE_LAYER>*)sublayers
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForGroupNode:(IJSVGNode*)node
+                                        sublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
     CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
     layer.frame = rect;
     CGAffineTransform identity = CGAffineTransformMakeTranslation(-rect.origin.x,
                                                                   -rect.origin.y);
-    for(IJSVG_DRAWABLE_LAYER sublayer in sublayers) {
+    for(CALayer<IJSVGDrawableLayer>* sublayer in sublayers) {
         CGAffineTransform transform = sublayer.affineTransform;
         transform = CGAffineTransformConcat(transform, identity);
         sublayer.affineTransform = transform;
@@ -387,12 +387,12 @@
     return layer;
 }
 
-- (NSArray<IJSVG_DRAWABLE_LAYER>*)drawableLayersForNodes:(NSArray<IJSVGNode*>*)nodes
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSArray<IJSVGNode*>*)nodes
 {
-    NSMutableArray<IJSVG_DRAWABLE_LAYER>* layers = nil;
+    NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
     layers = [[[NSMutableArray alloc] initWithCapacity:nodes.count] autorelease];
     for(IJSVGNode* node in nodes) {
-        IJSVG_DRAWABLE_LAYER layer = [self drawableLayerForNode:node];
+        CALayer<IJSVGDrawableLayer>* layer = [self drawableLayerForNode:node];
         if(layer != nil) {
             [layers addObject:layer];
         }
@@ -402,7 +402,7 @@
 
 #pragma mark Gradients and Patterns
 
-- (IJSVGGradientLayer*)drawableBasicGradientLayerForLayer:(IJSVG_DRAWABLE_LAYER)layer
+- (IJSVGGradientLayer*)drawableBasicGradientLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                                  gradient:(IJSVGGradient*)gradient
 {
     // gradient fill
@@ -415,9 +415,9 @@
     return gradientLayer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawableGradientLayerForPathNode:(IJSVGPath*)node
+- (CALayer<IJSVGDrawableLayer>*)drawableGradientLayerForPathNode:(IJSVGPath*)node
                                                 gradient:(IJSVGGradient*)gradient
-                                                   layer:(IJSVG_DRAWABLE_LAYER)layer
+                                                   layer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [self drawableBasicGradientLayerForLayer:layer
@@ -426,14 +426,14 @@
     // we must clip the fill to the path that we are drawing in, its simply just a matter
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
-    IJSVG_DRAWABLE_LAYER clipLayer = [self drawableBasicLayerForPathNode:node];
+    CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableBasicLayerForPathNode:node];
     gradientLayer.clipRule = layer.fillRule;
     gradientLayer.clipLayer = clipLayer;
     clipLayer.frame = clipLayer.bounds;
     return gradientLayer;
 }
 
-- (IJSVGPatternLayer*)drawableBasicPatternLayerForLayer:(IJSVG_DRAWABLE_LAYER)layer
+- (IJSVGPatternLayer*)drawableBasicPatternLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                                 pattern:(IJSVGPattern*)pattern
 {
     // pattern fill
@@ -448,9 +448,9 @@
     return patternLayer;
 }
 
-- (IJSVG_DRAWABLE_LAYER)drawablePatternLayerForPathNode:(IJSVGPath*)node
+- (CALayer<IJSVGDrawableLayer>*)drawablePatternLayerForPathNode:(IJSVGPath*)node
                                                 pattern:(IJSVGPattern*)pattern
-                                                  layer:(IJSVG_DRAWABLE_LAYER)layer
+                                                  layer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     // pattern fill
     IJSVGPatternLayer* patternLayer = [self drawableBasicPatternLayerForLayer:layer
@@ -459,7 +459,7 @@
     // we must clip the fill to the path that we are drawing in, its simply just a matter
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
-    IJSVG_DRAWABLE_LAYER clipLayer = [self drawableBasicLayerForPathNode:node];
+    CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableBasicLayerForPathNode:node];
     patternLayer.clipRule = layer.fillRule;
     patternLayer.clipLayer = clipLayer;
     clipLayer.frame = clipLayer.bounds;
@@ -469,7 +469,7 @@
 
 #pragma mark Defaults
 
-- (void)applyDefaultsToLayer:(IJSVG_DRAWABLE_LAYER)layer
+- (void)applyDefaultsToLayer:(CALayer<IJSVGDrawableLayer>*)layer
                     fromNode:(IJSVGNode*)node
 {
     // mask the layer
@@ -502,8 +502,8 @@
 
 #pragma mark Transforms
 
-- (IJSVG_DRAWABLE_LAYER)applyTransforms:(NSArray<IJSVGTransform*>*)transforms
-                                toLayer:(IJSVG_DRAWABLE_LAYER)layer
+- (CALayer<IJSVGDrawableLayer>*)applyTransforms:(NSArray<IJSVGTransform*>*)transforms
+                                toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                fromNode:(IJSVGNode*)node
 
 {

@@ -10,8 +10,6 @@
 #import <IJSVG/IJSVGRenderingStyle.h>
 #import <QuartzCore/QuartzCore.h>
 
-#define IJSVG_DRAWABLE_LAYER CALayer<IJSVGDrawableLayer>*
-
 @class IJSVGLayer;
 @class IJSVGRootLayer;
 @class IJSVGRootNode;

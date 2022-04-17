@@ -822,7 +822,7 @@
     return _backingScaleFactor;
 }
 
-//- (IJSVG_DRAWABLE_LAYER)layerWithTree:(IJSVGLayerTree*)tree
+//- (CALayer<IJSVGDrawableLayer>*)layerWithTree:(IJSVGLayerTree*)tree
 //{
 //    // clear memory
 //    BOOL hasTransaction = IJSVGBeginTransaction();
@@ -839,7 +839,7 @@
 //    return _layerTree;
 //}
 //
-//- (IJSVG_DRAWABLE_LAYER)layer
+//- (CALayer<IJSVGDrawableLayer>*)layer
 //{
 //    if (_layerTree != nil) {
 //        return _layerTree;
