@@ -495,7 +495,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
-        NSLog(@"%@",color);
         node.fill = [IJSVGColorNode colorNodeWithColor:color];
     });
     
