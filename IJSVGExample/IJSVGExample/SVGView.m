@@ -31,7 +31,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"home"];
+    return [IJSVG svgNamed:@"NewTux"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

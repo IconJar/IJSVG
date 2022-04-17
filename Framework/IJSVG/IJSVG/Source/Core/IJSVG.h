@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGRootLayer.h>
 #import <IJSVG/IJSVGImageLayer.h>
 #import <IJSVG/IJSVGLayerTree.h>
 #import <IJSVG/IJSVGParser.h>
@@ -43,11 +44,8 @@ withSVGString:(NSString*)subSVGString;
     CGFloat _scale;
     CGFloat _clipScale;
     id<IJSVGDelegate> _delegate;
-    CALayer<IJSVGDrawableLayer>* _layerTree;
+    IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
-    CGFloat _backingScaleFactor;
-    CGFloat _lastProposedBackingScale;
-    IJSVGRenderQuality _lastProposedRenderQuality;
     CGFloat _backingScale;
     NSMutableDictionary* _replacementColors;
 
@@ -70,7 +68,8 @@ withSVGString:(NSString*)subSVGString;
 @property (nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
-@property (nonatomic, retain) IJSVGRootLayer* layer;
+@property (nonatomic, retain) IJSVGLayerTree* layerTree;
+@property (nonatomic, retain) IJSVGRootLayer* rootLayer;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;
@@ -78,13 +77,10 @@ withSVGString:(NSString*)subSVGString;
 - (NSRect)viewBox;
 - (NSArray<IJSVGPath*>*)glyphs;
 - (NSString*)identifier;
-- (IJSVGLayer*)layerWithTree:(IJSVGLayerTree*)tree;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-
-- (CGFloat)computeBackingScale:(CGFloat)scale;
 
 + (id)svgNamed:(NSString*)string;
 + (id)svgNamed:(NSString*)string
@@ -161,9 +157,6 @@ withSVGString:(NSString*)subSVGString;
 - (NSData*)PDFDataWithRect:(NSRect)rect;
 - (NSData*)PDFDataWithRect:(NSRect)rect
                      error:(NSError**)error;
-
-- (void)beginVectorDraw;
-- (void)endVectorDraw;
 
 - (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize;
 - (void)setNeedsDisplay;

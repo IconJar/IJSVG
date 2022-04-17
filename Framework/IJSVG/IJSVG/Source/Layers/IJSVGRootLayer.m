@@ -35,13 +35,38 @@
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     [super setBackingScaleFactor:backingScaleFactor];
+    if(_disableBackingScalePropagation == YES) {
+        return;
+    }
+    [self propagateBackingScalePropertiesToSublayers];
+}
+
+- (void)propagateBackingScalePropertiesToSublayers
+{
+    __block IJSVGRootLayer* weakSelf = self;
     for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
         [IJSVGLayer recursivelyWalkLayer:layer
-                               withBlock:^(CALayer *layer, BOOL isMask, BOOL *stop) {
+                               withBlock:^(CALayer *layer, BOOL *stop) {
             IJSVGLayer* propLayer = (IJSVGLayer<IJSVGDrawableLayer>*)layer;
-            propLayer.backingScaleFactor = backingScaleFactor;
+            propLayer.renderQuality = weakSelf.renderQuality;
+            propLayer.backingScaleFactor = weakSelf.backingScaleFactor;
         }];
     }
+}
+
+- (void)renderInContext:(CGContextRef)ctx
+               viewPort:(CGRect)viewPort
+           backingScale:(CGFloat)backingScale
+                quality:(IJSVGRenderQuality)quality
+{
+    CGRect frame = viewPort;
+    self.frame = frame;
+    _disableBackingScalePropagation = YES;
+    self.backingScaleFactor = backingScale;
+    self.renderQuality = quality;
+    _disableBackingScalePropagation = NO;
+    [self propagateBackingScalePropertiesToSublayers];
+    [self renderInContext:ctx];
 }
 
 @end

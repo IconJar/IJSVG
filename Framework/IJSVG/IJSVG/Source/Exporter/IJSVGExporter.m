@@ -396,7 +396,7 @@ NSString* IJSVGHash(NSString* key)
     _dom.characterEncoding = XML_DOC_CHARSET;
 
     // sort out stuff, so here we go...
-    [self _recursiveParseFromLayer:_svg.layer
+    [self _recursiveParseFromLayer:_svg.rootLayer
                        intoElement:nestedRoot];
 
     // this needs to be added incase it needs to be cleaned

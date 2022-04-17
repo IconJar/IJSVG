@@ -27,7 +27,7 @@
     (void)([_intrinsicSize release]), _intrinsicSize = nil;
     (void)([_title release]), _title = nil;
     (void)([_desc release]), _desc = nil;
-    (void)([_layer release]), _layer = nil;
+    (void)([_rootLayer release]), _rootLayer = nil;
 
     // kill any memory that has been around
     (void)([_layerTree release]), _layerTree = nil;
@@ -131,7 +131,6 @@
     // this completely bypasses passing of files
     if ((self = [super init]) != nil) {
         // keep the layer tree
-        _layerTree = [group retain];
         _viewBox = viewBox;
 
         // any setups
@@ -312,7 +311,6 @@
     self.renderQuality = kIJSVGRenderQualityFullResolution;
 
     // setup low level backing scale
-    _lastProposedBackingScale = 0.f;
     self.renderingBackingScaleHelper = ^CGFloat {
         return NSScreen.mainScreen.backingScaleFactor;
     };
@@ -444,7 +442,7 @@
     [self _beginDraw:rect];
 
     // make sure we setup the scale based on the backing scale factor
-    CGFloat scale = [self backingScaleFactor:NULL];
+    CGFloat scale = [self backingScaleFactor];
 
     // create the context and colorspace
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -534,10 +532,10 @@
     CGContextTranslateCTM(context, 0, -box.size.height);
 
     // make sure we set the masks to path bits n bobs
-    [self _beginVectorDraw];
+//    [self _beginVectorDraw];
     // draw the icon
     [self _drawInRect:(NSRect)box context:context error:error];
-    [self _endVectorDraw];
+//    [self _endVectorDraw];
 
     CGContextEndPage(context);
 
@@ -548,39 +546,39 @@
     return data;
 }
 
-- (void)endVectorDraw
-{
-    [self _endVectorDraw];
-}
+//- (void)endVectorDraw
+//{
+//    [self _endVectorDraw];
+//}
+//
+//- (void)beginVectorDraw
+//{
+//    [self _beginVectorDraw];
+//}
 
-- (void)beginVectorDraw
-{
-    [self _beginVectorDraw];
-}
-
-- (void)_beginVectorDraw
-{
-    // turn on converts masks to PDF's
-    // as PDF context and layer masks dont work
-    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
-        ((IJSVGLayer*)layer).convertMasksToPaths = YES;
-    };
-    [IJSVGLayer recursivelyWalkLayer:self.layer
-                           withBlock:block];
-}
-
-- (void)_endVectorDraw
-{
-    // turn of convert masks to paths as not
-    // needed for generic rendering
-    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
-        ((IJSVGLayer*)layer).convertMasksToPaths = NO;
-    };
-    [IJSVGLayer recursivelyWalkLayer:self.layer
-                           withBlock:block];
-}
+//- (void)_beginVectorDraw
+//{
+//    // turn on converts masks to PDF's
+//    // as PDF context and layer masks dont work
+//    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+//    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
+//        ((IJSVGLayer*)layer).convertMasksToPaths = YES;
+//    };
+//    [IJSVGLayer recursivelyWalkLayer:self.layer
+//                           withBlock:block];
+//}
+//
+//- (void)_endVectorDraw
+//{
+//    // turn of convert masks to paths as not
+//    // needed for generic rendering
+//    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
+//    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
+//        ((IJSVGLayer*)layer).convertMasksToPaths = NO;
+//    };
+//    [IJSVGLayer recursivelyWalkLayer:self.layer
+//                           withBlock:block];
+//}
 
 - (void)prepForDrawingInView:(NSView*)view
 {
@@ -591,7 +589,7 @@
     }
 
     // construct the layer before drawing
-    [self layer];
+    [self rootLayer];
 
     // set the scale
     __block NSView* weakView = view;
@@ -635,12 +633,6 @@
     return [self _drawInRect:rect
                      context:currentCGContext
                        error:error];
-}
-
-- (CGFloat)computeBackingScale:(CGFloat)actualScale
-{
-    _backingScale = actualScale;
-    return (CGFloat)(_scale + actualScale);
 }
 
 - (NSRect)computeRectDrawingInRect:(NSRect)rect
@@ -755,105 +747,43 @@
               error:(NSError**)error
 {
     CGContextSaveGState(ref);
-    if(_layer != nil) {
-        (void)[_layer release], _layer = nil;
-    }
-    
     // make sure we setup a transaction
     IJSVGBeginTransaction();
-    
-    // create a new tree view the current viewport we are trying to
-    // render into, this effects how the viewbox aspect ratio's work
-    CGFloat backingScale = [self backingScaleFactor:NULL];
-    IJSVGLayerTree* tree = [[[IJSVGLayerTree alloc] initWithViewPortRect:rect
-                                                            backingScale:backingScale] autorelease];
-    
-    // grab the layer and make sure we set the backing scale factor onto it
-    _layer = [[tree rootLayerForRootNode:_rootNode] retain];
-    [_layer renderInContext:ref];
+    CGFloat backingScale = [self backingScaleFactor];
+    [self.rootLayer renderInContext:ref
+                           viewPort:rect
+                       backingScale:backingScale
+                            quality:_renderQuality];    
     IJSVGEndTransaction();
     CGContextRestoreGState(ref);
     return YES;
 }
 
-- (CGFloat)backingScaleFactor:(CGFloat* _Nullable)proposedBackingScale
+- (IJSVGLayerTree*)layerTree
+{
+    if(_layerTree == nil) {
+        _layerTree = [[IJSVGLayerTree alloc] init];
+    }
+    return _layerTree;
+}
+
+- (IJSVGRootLayer*)rootLayer
+{
+    if(_rootLayer == nil) {
+        _rootLayer = [self.layerTree rootLayerForRootNode:_rootNode].retain;
+    }
+    return _rootLayer;
+}
+
+- (CGFloat)backingScaleFactor
 {
     __block CGFloat scale = 1.f;
     scale = (self.renderingBackingScaleHelper)();
     if (scale < 1.f) {
         scale = 1.f;
     }
-    _backingScaleFactor = scale;
-
-    // make sure we multiple the scale by the scale of the rendered clip
-    // or it will be blurry for gradients and other bitmap drawing
-//    scale = (_scale * scale);
-
-    // dont do anything, nothing has changed, no point of iterating over
-    // every layer for no reason!
-    if (scale == _lastProposedBackingScale && _renderQuality == _lastProposedRenderQuality) {
-        return _backingScaleFactor;
-    }
-
-    IJSVGRenderQuality quality = self.renderQuality;
-    _lastProposedBackingScale = scale;
-    _lastProposedRenderQuality = quality;
-    if (proposedBackingScale != nil && proposedBackingScale != NULL) {
-        *proposedBackingScale = scale;
-    }
-
-    // walk the tree
-    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
-        IJSVGLayer* propLayer = ((IJSVGLayer*)layer);
-        propLayer.renderQuality = quality;
-        if (propLayer.requiresBackingScaleHelp == YES) {
-            NSLog(@"%@",propLayer);
-            propLayer.backingScaleFactor = scale;
-        }
-    };
-
-    // gogogo
-    BOOL hasTransaction = IJSVGBeginTransaction();
-    [IJSVGLayer recursivelyWalkLayer:self.layer withBlock:block];
-    if (hasTransaction == YES) {
-        IJSVGEndTransaction();
-    }
-    return _backingScaleFactor;
+    return _backingScale = scale;
 }
-
-//- (CALayer<IJSVGDrawableLayer>*)layerWithTree:(IJSVGLayerTree*)tree
-//{
-//    // clear memory
-//    BOOL hasTransaction = IJSVGBeginTransaction();
-//    if (_layerTree != nil) {
-//        (void)([_layerTree release]), _layerTree = nil;
-//    }
-//
-//    // force rebuild of the tree
-//    _layerTree = [[tree drawableLayerForNode:_rootNode] retain];
-//    if (hasTransaction == YES) {
-//        IJSVGEndTransaction();
-//    }
-//
-//    return _layerTree;
-//}
-//
-//- (CALayer<IJSVGDrawableLayer>*)layer
-//{
-//    if (_layerTree != nil) {
-//        return _layerTree;
-//    }
-//
-//    // create the renderer and assign default values
-//    // from this SVG object
-//    IJSVGLayerTree* renderer = [[[IJSVGLayerTree alloc] init] autorelease];
-//    renderer.viewBox = self.viewBox;
-//    renderer.style = self.renderingStyle;
-//
-//    // return the rendered layer
-//    return [self layerWithTree:renderer];
-//}
 
 - (void)setRenderingStyle:(IJSVGRenderingStyle*)style
 {
@@ -885,12 +815,12 @@
 - (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
-    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
+    void (^block)(CALayer* layer, BOOL* stop) =
+    ^void(CALayer* layer, BOOL* stop) {
         
         // dont do anything
-        if(([layer isKindOfClass:IJSVGShapeLayer.class] && isMask == NO &&
-            layer.isHidden == NO) == false) {
+        if(([layer isKindOfClass:IJSVGShapeLayer.class] &&
+            layer.isHidden == NO) == NO) {
             return;
         }
         
@@ -946,7 +876,7 @@
     };
     
     // gogogo!
-    [IJSVGLayer recursivelyWalkLayer:self.layer
+    [IJSVGLayer recursivelyWalkLayer:self.rootLayer
                            withBlock:block];
     return sheet;
 }

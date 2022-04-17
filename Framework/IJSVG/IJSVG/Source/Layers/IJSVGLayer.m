@@ -246,22 +246,14 @@
 }
 
 + (void)recursivelyWalkLayer:(CALayer*)layer
-                   withBlock:(void (^)(CALayer* layer, BOOL isMask, BOOL* stop))block
+                   withBlock:(void (^)(CALayer* layer, BOOL* stop))block
 {
     // call for layer and mask if there is one
     BOOL stop = NO;
-    block(layer, NO, &stop);
+    block(layer, &stop);
     if(stop == YES) {
         return;
     }
-
-//    // do the mask too!
-//    if (layer.mask != nil) {
-//        block(layer.mask, YES, &stop);
-//        if(stop == YES) {
-//            return;
-//        }
-//    }
 
     // sublayers!!
     for (CALayer* aLayer in layer.sublayers) {

@@ -91,7 +91,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer*)layer
-                   withBlock:(void (^)(CALayer* layer, BOOL isMask, BOOL* stop))block;
+                   withBlock:(void (^)(CALayer* layer, BOOL* stop))block;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

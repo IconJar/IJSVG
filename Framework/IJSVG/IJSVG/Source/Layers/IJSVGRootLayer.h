@@ -8,6 +8,16 @@
 
 #import <IJSVG/IJSVG.h>
 
-@interface IJSVGRootLayer : IJSVGGroupLayer
+@interface IJSVGRootLayer : IJSVGGroupLayer {
+    
+@private
+    BOOL _disableBackingScalePropagation;
+    
+}
+
+- (void)renderInContext:(CGContextRef)ctx
+               viewPort:(CGRect)viewPort
+           backingScale:(CGFloat)backingScale
+                quality:(IJSVGRenderQuality)quality;
 
 @end
