@@ -699,7 +699,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     // once we have done everything we can compute traits — this has to be done
     // at this point due to needing to be within the parent node tree
-    [computedNode computeTraits];
+    if(computedNode != nil) {
+        [computedNode computeTraits];
+    }
     return computedNode;
 }
 
