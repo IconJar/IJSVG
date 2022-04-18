@@ -25,6 +25,14 @@
     [super dealloc];
 }
 
+- (instancetype)init
+{
+    if((self = [super init]) != nil) {
+        _boundingBox = CGRectNull;
+    }
+    return self;
+}
+
 - (CAShapeLayerFillRule)fillRule
 {
     return kCAFillRuleNonZero;
@@ -188,6 +196,7 @@
                drawingBlock:(dispatch_block_t)drawingBlock
 {    
     CGRect bounds = layer.bounds;
+    CGRect maskFrame = maskLayer.frame;
     CGFloat scale = layer.backingScaleFactor;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL, ceilf(bounds.size.width * scale),
@@ -196,17 +205,21 @@
             
     CGContextSaveGState(ctx);
     CGContextScaleCTM(offscreenContext, scale, scale);
-    CGContextTranslateCTM(offscreenContext, maskLayer.frame.origin.x, maskLayer.frame.origin.y);
+    CGContextTranslateCTM(offscreenContext, maskFrame.origin.x, maskFrame.origin.y);
 
     [maskLayer renderInContext:offscreenContext];
     CGImageRef maskImage = CGBitmapContextCreateImage(offscreenContext);
     CGContextClipToMask(ctx, bounds, maskImage);
     
+    drawingBlock();
+    
+//    CGContextSetAlpha(ctx, .5f);
+//    CGContextDrawImage(ctx, bounds, maskImage);
+    
     CGImageRelease(maskImage);
     CGContextRelease(offscreenContext);
     CGColorSpaceRelease(colorSpace);
     
-    drawingBlock();
     
     CGContextRestoreGState(ctx);
 }
@@ -245,8 +258,8 @@
     return arr;
 }
 
-+ (void)recursivelyWalkLayer:(CALayer*)layer
-                   withBlock:(void (^)(CALayer* layer, BOOL* stop))block
++ (void)recursivelyWalkLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                   withBlock:(void (^)(CALayer<IJSVGDrawableLayer>* layer, BOOL* stop))block
 {
     // call for layer and mask if there is one
     BOOL stop = NO;
@@ -256,7 +269,7 @@
     }
 
     // sublayers!!
-    for (CALayer* aLayer in layer.sublayers) {
+    for (CALayer<IJSVGDrawableLayer>* aLayer in layer.sublayers) {
         [self recursivelyWalkLayer:aLayer
                          withBlock:block];
     }
@@ -271,9 +284,11 @@
 + (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
            depth:(NSUInteger)depth
 {
-    NSLog(@"%@ %@",[@"" stringByPaddingToLength:depth
+    NSLog(@"%@ %@ frame: %@ transform: %@",[@"" stringByPaddingToLength:depth
                                     withString:@"- - "
-                               startingAtIndex:0],  layer.debugDescription);
+                               startingAtIndex:0],  layer,
+          NSStringFromRect(layer.frame),
+          [IJSVGTransform affineTransformToSVGTransformComponentString:layer.affineTransform]);
     for(CALayer<IJSVGDrawableLayer>* sublayer in layer.debugLayers) {
         [self logLayer:sublayer
                  depth:depth+1];
@@ -287,7 +302,7 @@
         CGRect layerFrame = layer.frame;
         // if we are a transform layer, we can just apply its transform
         // to its sublayers and keep going down the tree
-        if([layer isKindOfClass:IJSVGTransformLayer.class]) {
+        if([layer isKindOfClass:IJSVGTransformLayer.class] == YES) {
             CGRect frame = [self calculateFrameForSublayers:layer.sublayers];
             frame = CGRectApplyAffineTransform(frame, layer.affineTransform);
             layerFrame = frame;
@@ -306,6 +321,7 @@
     if (_backingScaleFactor == newFactor) {
         return;
     }
+    
     _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
@@ -427,7 +443,7 @@
 
 - (CGRect)boundingBox
 {
-    return self.frame;
+    return CGRectIsNull(_boundingBox) == NO ? _boundingBox : self.frame;
 }
 
 - (CGRect)boundingBoxBounds

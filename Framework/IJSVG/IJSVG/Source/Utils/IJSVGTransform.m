@@ -207,9 +207,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     
     switch(self.command) {
         case IJSVGTransformCommandTranslate: {
-            NSLog(@"%f",self.parameters[0]);
             self.parameters[0] *= bounds.size.width;
-            NSLog(@"%f - %@",self.parameters[0],self.description);
             if(self.parameterCount == 2) {
                 self.parameters[1] *= bounds.size.height;
             }
@@ -627,7 +625,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%@ %@", [super description],
-                     [self.class affineTransformToSVGMatrixString:self.CGAffineTransform]];
+                     [self.class affineTransformToSVGTransformComponentString:self.CGAffineTransform]];
 }
 
 @end

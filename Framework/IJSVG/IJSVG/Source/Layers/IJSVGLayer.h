@@ -90,8 +90,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
-+ (void)recursivelyWalkLayer:(CALayer*)layer
-                   withBlock:(void (^)(CALayer* layer, BOOL* stop))block;
++ (void)recursivelyWalkLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                   withBlock:(void (^)(CALayer<IJSVGDrawableLayer>* layer, BOOL* stop))block;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

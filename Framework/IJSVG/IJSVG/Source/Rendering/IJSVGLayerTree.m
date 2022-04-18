@@ -373,10 +373,13 @@
                                         sublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
-    CGRect rect = [IJSVGLayer calculateFrameForSublayers:sublayers];
-    layer.frame = rect;
-    CGAffineTransform identity = CGAffineTransformMakeTranslation(-rect.origin.x,
-                                                                  -rect.origin.y);
+    layer.frame = [IJSVGLayer calculateFrameForSublayers:sublayers];
+    layer.boundingBox = [IJSVGLayer calculateFrameForSublayers:sublayers];
+    layer.sublayers = sublayers;
+    
+    CGAffineTransform identity = CGAffineTransformMakeTranslation(-layer.frame.origin.x,
+                                                                  -layer.frame.origin.y);
+    
     for(CALayer<IJSVGDrawableLayer>* sublayer in sublayers) {
         CGAffineTransform transform = sublayer.affineTransform;
         transform = CGAffineTransformConcat(transform, identity);
@@ -503,8 +506,8 @@
 #pragma mark Transforms
 
 - (CALayer<IJSVGDrawableLayer>*)applyTransforms:(NSArray<IJSVGTransform*>*)transforms
-                                toLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                               fromNode:(IJSVGNode*)node
+                                        toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                       fromNode:(IJSVGNode*)node
 
 {
     // any x and y?

@@ -108,18 +108,9 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // of it anyway
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
         if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
-            IJSVGUnitRect* viewBox = [[_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage] autorelease];
-            
-            // values at this poit need to be decimal based as they are
-            // bounding box, I think this is correct (not sure...)
-//            viewBox.origin.x.value /= 100.f;
-//            viewBox.origin.y.value /= 100.f;
-//            viewBox.size.width.value /= 100.f;
-//            viewBox.size.height.value /= 100.f;
-//
-//            // work out the transform
-            CGRect transformedRect = [viewBox computeValue:rect.size];
-            _viewBox = transformedRect;
+            IJSVGUnitRect* viewBox = nil;
+            viewBox = [[_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage] autorelease];
+            _viewBox = [viewBox computeValue:rect.size];
         }
     }
         

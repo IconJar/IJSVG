@@ -55,9 +55,10 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if (self.backingScaleFactor == newFactor) {
+    if (_backingScaleFactor == newFactor) {
         return;
     }
+        
     _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;

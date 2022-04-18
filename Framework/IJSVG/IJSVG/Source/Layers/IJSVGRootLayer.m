@@ -46,8 +46,7 @@
     __block IJSVGRootLayer* weakSelf = self;
     for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
         [IJSVGLayer recursivelyWalkLayer:layer
-                               withBlock:^(CALayer *layer, BOOL *stop) {
-            IJSVGLayer* propLayer = (IJSVGLayer<IJSVGDrawableLayer>*)layer;
+                               withBlock:^(CALayer<IJSVGDrawableLayer>* propLayer, BOOL *stop) {
             propLayer.renderQuality = weakSelf.renderQuality;
             propLayer.backingScaleFactor = weakSelf.backingScaleFactor;
         }];

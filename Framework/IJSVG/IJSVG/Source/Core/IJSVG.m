@@ -746,16 +746,18 @@
             context:(CGContextRef)ref
               error:(NSError**)error
 {
+    BOOL transaction = IJSVGBeginTransaction();
     CGContextSaveGState(ref);
     // make sure we setup a transaction
-    IJSVGBeginTransaction();
     CGFloat backingScale = [self backingScaleFactor];
     [self.rootLayer renderInContext:ref
                            viewPort:rect
                        backingScale:backingScale
                             quality:_renderQuality];    
-    IJSVGEndTransaction();
     CGContextRestoreGState(ref);
+    if(transaction) {
+        IJSVGEndTransaction();
+    }
     return YES;
 }
 

@@ -13,7 +13,6 @@
 
 @interface IJSVGImage : IJSVGNode {
     CGImageRef CGImage;
-    IJSVGPath* imagePath;
 }
 
 @property (nonatomic, readonly) CGSize intrinsicSize;

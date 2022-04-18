@@ -92,6 +92,7 @@
 		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
 		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
 		59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView6.m; sourceTree = "<group>"; };
+		5934D504280C933300BEF20F /* IJSVGExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IJSVGExample.entitlements; sourceTree = "<group>"; };
 		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
 		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
 		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
@@ -171,6 +172,7 @@
 		5956657919B62F4600D805FF /* IJSVGExample */ = {
 			isa = PBXGroup;
 			children = (
+				5934D504280C933300BEF20F /* IJSVGExample.entitlements */,
 				5956657E19B62F4600D805FF /* AppDelegate.h */,
 				5956657F19B62F4600D805FF /* AppDelegate.m */,
 				5956658119B62F4600D805FF /* Images.xcassets */,
@@ -523,6 +525,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -534,6 +537,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";

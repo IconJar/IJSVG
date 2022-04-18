@@ -15,7 +15,6 @@
 - (void)dealloc
 {
     (void)(CGImageRelease(CGImage)), CGImage = nil;
-    (void)([imagePath release]), imagePath = nil;
     (void)([_image release]), _image = nil;
     [super dealloc];
 }
@@ -48,18 +47,6 @@
     [self setImage:anImage];
 }
 
-- (IJSVGPath*)path
-{
-    if (imagePath == nil) {
-        // lazy load the path as it might not be needed
-        imagePath = [[IJSVGPath alloc] init];
-        CGRect rect = CGRectMake(0.f, 0.f, self.width.value, self.height.value);
-        CGPathAddRect(imagePath.path, NULL, rect);
-        [imagePath close];
-    }
-    return imagePath;
-}
-
 - (void)setImage:(NSImage*)anImage
 {
     if (_image != nil) {
@@ -89,8 +76,8 @@
 - (CGRect)intrinsicBounds
 {
     CGRect rect = CGRectZero;
-    rect.size.width = self.intrinsicSize.width;
-    rect.size.height = self.intrinsicSize.height;
+    rect.size.width = _intrinsicSize.width;
+    rect.size.height = _intrinsicSize.height;
     return rect;
 }
 

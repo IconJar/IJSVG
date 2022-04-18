@@ -14,7 +14,6 @@
 {
     (void)[_image release], _image = nil;
     (void)[_imageLayer release], _imageLayer = nil;
-    (void)[_transformLayer release], _transformLayer = nil;
     [super dealloc];
 }
 
@@ -39,27 +38,15 @@
 
 - (void)reloadContent
 {
-    if(_transformLayer == nil) {
-        _transformLayer = [IJSVGTransformLayer layer].retain;
-        [self addSublayer:_transformLayer];
-    }
-
-    CGRect imageBounds = _image.intrinsicBounds;
-    CGRect bounds = self.bounds;
-    _transformLayer.frame = CGRectMake(-((imageBounds.size.width / 2.f) - (bounds.size.width / 2.f)),
-                                       -((imageBounds.size.height / 2.f) - (bounds.size.height / 2.f)),
-                                       imageBounds.size.width, imageBounds.size.height);
-    CGAffineTransform transform = CGAffineTransformMakeScale(1.f, -1.f);
-    _transformLayer.affineTransform = transform;
-    
     if(_imageLayer == nil) {
         _imageLayer = [IJSVGLayer layer].retain;
-        CGRect bounds = _image.intrinsicBounds;
-        _imageLayer.frame = bounds;
-        _imageLayer.affineTransform = _image.intrinsicTransform;
-        [_transformLayer addSublayer:_imageLayer];
+        _imageLayer.contentsGravity = kCAGravityResize;
+        _imageLayer.backgroundColor = NSColor.redColor.CGColor;
+        [self addSublayer:_imageLayer];
     }
 
+    _imageLayer.frame = self.bounds;
+    _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
     _imageLayer.contents = (id)_image.CGImage;
     [self setNeedsDisplay];
 }

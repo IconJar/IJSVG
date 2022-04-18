@@ -31,7 +31,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"NewTux"];
+    return [IJSVG svgNamed:@"AJ_Digital_Camera"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
