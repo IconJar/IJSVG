@@ -29,6 +29,7 @@
 {
     if((self = [super init]) != nil) {
         _boundingBox = CGRectNull;
+        _outerBoundingBox = CGRectNull;
     }
     return self;
 }
@@ -194,34 +195,36 @@
                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock
-{    
-    CGRect bounds = layer.bounds;
-    CGRect maskFrame = maskLayer.frame;
-    CGFloat scale = layer.backingScaleFactor;
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGContextRef offscreenContext = CGBitmapContextCreate(NULL, ceilf(bounds.size.width * scale),
-                                                          ceilf(bounds.size.height * scale), 8, 0,
-                                                          colorSpace, kCGImageAlphaNone);
-            
+{
     CGContextSaveGState(ctx);
-    CGContextScaleCTM(offscreenContext, scale, scale);
-    CGContextTranslateCTM(offscreenContext, maskFrame.origin.x, maskFrame.origin.y);
-
-    [maskLayer renderInContext:offscreenContext];
-    CGImageRef maskImage = CGBitmapContextCreateImage(offscreenContext);
+    CGRect bounds = layer.outerBoundingBox;
+    CGFloat scale = layer.backingScaleFactor;
+    CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
+                                                scale:scale];
     CGContextClipToMask(ctx, bounds, maskImage);
-    
     drawingBlock();
-    
-//    CGContextSetAlpha(ctx, .5f);
-//    CGContextDrawImage(ctx, bounds, maskImage);
-    
     CGImageRelease(maskImage);
+    CGContextRestoreGState(ctx);
+}
+
++ (CGImageRef)newMaskImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                             scale:(CGFloat)scale
+{
+    CGRect frame = layer.outerBoundingBox;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
+                                                          ceilf(frame.size.width * scale),
+                                                          ceilf(frame.size.height * scale),
+                                                          8, 0, colorSpace, kCGImageAlphaNone);
+            
+    CGContextSaveGState(offscreenContext);
+    CGContextScaleCTM(offscreenContext, scale, scale);
+    CGContextTranslateCTM(offscreenContext, -frame.origin.x, -frame.origin.y);
+    [layer renderInContext:offscreenContext];
+    CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
     CGContextRelease(offscreenContext);
     CGColorSpaceRelease(colorSpace);
-    
-    
-    CGContextRestoreGState(ctx);
+    return image;
 }
 
 + (CGRect)absoluteFrameForLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -299,7 +302,7 @@
 {
     CGRect rect = CGRectNull;
     for(CALayer<IJSVGDrawableLayer>* layer in layers) {
-        CGRect layerFrame = layer.frame;
+        CGRect layerFrame = layer.outerBoundingBox;
         // if we are a transform layer, we can just apply its transform
         // to its sublayers and keep going down the tree
         if([layer isKindOfClass:IJSVGTransformLayer.class] == YES) {
@@ -446,6 +449,19 @@
     return CGRectIsNull(_boundingBox) == NO ? _boundingBox : self.frame;
 }
 
+- (CGRect)outerBoundingBox
+{
+    return CGRectIsNull(_outerBoundingBox) == NO ? _outerBoundingBox : self.frame;
+}
+
+- (CGRect)outerBoundingBoxBounds
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = self.outerBoundingBox.size
+    };
+}
+
 - (CGRect)boundingBoxBounds
 {
     return (CGRect) {
@@ -456,7 +472,7 @@
 
 - (CGRect)strokeBoundingBox
 {
-    return self.frame;
+    return self.boundingBox;
 }
 
 - (CALayer<IJSVGDrawableLayer> *)referencingLayer

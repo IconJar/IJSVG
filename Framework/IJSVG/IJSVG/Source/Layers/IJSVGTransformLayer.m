@@ -20,6 +20,7 @@
 @synthesize boundingBox;
 @synthesize boundingBoxBounds;
 @synthesize strokeBoundingBox;
+@synthesize outerBoundingBox;
 
 - (void)dealloc
 {

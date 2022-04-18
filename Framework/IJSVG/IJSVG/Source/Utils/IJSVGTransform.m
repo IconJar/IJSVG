@@ -50,6 +50,16 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     }
 };
 
+BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
+{
+    if(transform.tx != 0.f || transform.ty != 0.f) {
+        CGFloat scaleX = sqrt(pow(transform.a, 2.f) + pow(transform.c, 2.f));
+        CGFloat scaleY = sqrt(pow(transform.b, 2.f) + pow(transform.d, 2.f));
+        return scaleX != 1.f || scaleY != 1.f;
+    }
+    return NO;
+}
+
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
                                          y:(CGFloat)y
 {

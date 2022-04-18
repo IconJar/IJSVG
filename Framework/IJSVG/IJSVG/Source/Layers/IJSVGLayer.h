@@ -52,6 +52,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
+@property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, readonly) NSArray<CALayer<IJSVGDrawableLayer>*>* debugLayers;
 
@@ -85,6 +86,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
+@property (nonatomic, assign) CGRect outerBoundingBox;
+@property (nonatomic, readonly) CGRect outerBoundingBoxBounds;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;

@@ -40,7 +40,6 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
-        NSLog(@"================== SVG");
     }
     return self;
 }
@@ -122,6 +121,7 @@
                                                                    -pathBounds.origin.y);
     CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
     layer.frame = pathBounds;
+    layer.outerBoundingBox = pathBounds;
     layer.path = transformedPath;
     
     // note that we store the bounding box at this point, as it can be modified later
@@ -152,6 +152,8 @@
         layer.frame = CGRectInset(layer.frame,
                                   -strokeWidthDifference,
                                   -strokeWidthDifference);
+        layer.strokeBoundingBox = layer.frame;
+        layer.outerBoundingBox = layer.frame;
     }
     
     // generic fill color
@@ -370,23 +372,12 @@
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForGroupNode:(IJSVGNode*)node
-                                        sublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)sublayers
+                                                sublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)sublayers
 {
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
-    layer.frame = [IJSVGLayer calculateFrameForSublayers:sublayers];
     layer.boundingBox = [IJSVGLayer calculateFrameForSublayers:sublayers];
-    layer.sublayers = sublayers;
-    
-    CGAffineTransform identity = CGAffineTransformMakeTranslation(-layer.frame.origin.x,
-                                                                  -layer.frame.origin.y);
-    
-    for(CALayer<IJSVGDrawableLayer>* sublayer in sublayers) {
-        CGAffineTransform transform = sublayer.affineTransform;
-        transform = CGAffineTransformConcat(transform, identity);
-        sublayer.affineTransform = transform;
-        [layer addSublayer:sublayer];
-    }
-    
+    layer.outerBoundingBox = layer.boundingBox;
+    layer.sublayers = sublayers;    
     return layer;
 }
 
