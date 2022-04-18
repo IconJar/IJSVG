@@ -34,6 +34,7 @@
 {
     [super layoutSublayers];
     [self reloadContent];
+    [self setNeedsDisplay];
 }
 
 - (void)reloadContent
@@ -41,13 +42,12 @@
     if(_imageLayer == nil) {
         _imageLayer = [IJSVGLayer layer].retain;
         _imageLayer.contentsGravity = kCAGravityResize;
+        _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
+        _imageLayer.contents = (id)_image.CGImage;
         [self addSublayer:_imageLayer];
     }
 
     _imageLayer.frame = self.bounds;
-    _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
-    _imageLayer.contents = (id)_image.CGImage;
-    [self setNeedsDisplay];
 }
 
 @end

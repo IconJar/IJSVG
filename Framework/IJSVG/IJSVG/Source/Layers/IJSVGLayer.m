@@ -210,12 +210,25 @@
 + (CGImageRef)newMaskImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
                              scale:(CGFloat)scale
 {
-    CGRect frame = layer.outerBoundingBox;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGImageRef ref = [self newImageForLayer:layer
+                                 colorSpace:colorSpace
+                                 bitmapInfo:kCGImageAlphaNone
+                                      scale:scale];
+    CGColorSpaceRelease(colorSpace);
+    return ref;
+}
+
++ (CGImageRef)newImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                    colorSpace:(CGColorSpaceRef)colorSpace
+                    bitmapInfo:(uint32_t)bitmapInfo
+                         scale:(CGFloat)scale
+{
+    CGRect frame = layer.outerBoundingBox;
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width * scale),
                                                           ceilf(frame.size.height * scale),
-                                                          8, 0, colorSpace, kCGImageAlphaNone);
+                                                          8, 0, colorSpace, bitmapInfo);
             
     CGContextSaveGState(offscreenContext);
     CGContextScaleCTM(offscreenContext, scale, scale);
@@ -223,7 +236,6 @@
     [layer renderInContext:offscreenContext];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
     CGContextRelease(offscreenContext);
-    CGColorSpaceRelease(colorSpace);
     return image;
 }
 

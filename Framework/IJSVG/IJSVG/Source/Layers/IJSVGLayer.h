@@ -100,6 +100,14 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
                        forSublayer:(IJSVGLayer*)sublayer
                         withOffset:(CGPoint)offset;
 
++ (CGImageRef)newMaskImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                             scale:(CGFloat)scale;
+
++ (CGImageRef)newImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                    colorSpace:(CGColorSpaceRef)colorSpace
+                    bitmapInfo:(uint32_t)bitmapInfo
+                         scale:(CGFloat)scale;
+
 + (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
           inContext:(CGContextRef)ctx;
 
