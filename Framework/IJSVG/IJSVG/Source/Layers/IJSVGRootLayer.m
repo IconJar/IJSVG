@@ -64,7 +64,6 @@
     self.backingScaleFactor = backingScale;
     self.renderQuality = quality;
     _disableBackingScalePropagation = NO;
-    [self propagateBackingScalePropertiesToSublayers];
     [self renderInContext:ctx];
 }
 

@@ -10,11 +10,4 @@
 
 @implementation IJSVGStrokeLayer
 
-- (CGRect)outerBoundingBox
-{
-    return CGRectMake(-self.lineWidth / 2.f, -self.lineWidth / 2.f,
-                      self.boundingBox.size.width + self.lineWidth,
-                      self.boundingBox.size.height + self.lineWidth);
-}
-
 @end

@@ -78,7 +78,8 @@
     return (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
 }
 
-- (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node {
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
+{
     CALayer<IJSVGDrawableLayer>* layer = nil;
     if([node isKindOfClass:IJSVGPath.class]) {
         layer = [self drawableLayerForPathNode:(IJSVGPath*)node];
@@ -233,9 +234,9 @@
 //        layer.borderColor = NSColor.greenColor.CGColor;
 //        layer.borderWidth = 1.f;
         
-        CGRect strokeLayerFrame = strokeLayer.frame;
-        strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = strokeWidthDifference;
-        strokeLayer.frame = strokeLayerFrame;
+//        CGRect strokeLayerFrame = strokeLayer.frame;
+//        strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = strokeWidthDifference;
+//        strokeLayer.frame = strokeLayerFrame;
         
         // we need to work out what type of fill we need for the layer
         switch([IJSVGLayer fillTypeForFill:node.stroke]) {
@@ -245,26 +246,17 @@
                 patternLayer = [self drawableBasicPatternLayerForLayer:strokeLayer
                                                                pattern:(IJSVGPattern*)node.stroke];
                 patternLayer.referencingLayer = layer;
-                patternLayer.frame = CGRectInset(strokeLayer.frame,
-                                                 -strokeWidthDifference,
-                                                 -strokeWidthDifference);
-                
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 patternLayer.maskLayer = strokeLayer;
                 [layer addSublayer:patternLayer];
                 break;
             }
-                
-            // gradients
+//            // gradients
             case IJSVGLayerFillTypeGradient: {
                 IJSVGGradientLayer* gradientLayer = nil;
                 gradientLayer = [self drawableBasicGradientLayerForLayer:strokeLayer
                                                                 gradient:(IJSVGGradient*)node.stroke];
                 gradientLayer.referencingLayer = layer;
-                gradientLayer.frame = CGRectInset(strokeLayer.frame,
-                                                  -strokeWidthDifference,
-                                                  -strokeWidthDifference);
-                
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 gradientLayer.maskLayer = strokeLayer;
                 [layer addSublayer:gradientLayer];
@@ -291,9 +283,6 @@
     
     // reset the frame back to zero
     CGRect frame = layer.frame;
-    frame.origin.x = 0.f;
-    frame.origin.y = 0.f;
-    layer.frame = frame;
     
     // compute the color
     NSColor* strokeColor = NSColor.blackColor;
@@ -332,17 +321,21 @@
     }
     
     // lets resize the layer as we have computed everything at this point
-//    CGFloat increase = layer.lineWidth / 2.f;
-////    frame = CGRectInset(frame, -increase, -increase);
+    CGFloat increase = layer.lineWidth / 2.f;
+    frame = CGRectInset(frame, -increase, -increase);
     
     // now we know what to do, we need to transform the path
-//    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
-//    CGPathRef path = CGPathCreateCopyByTransformingPath(layer.path, &transform);
-    layer.frame = frame;
-    layer.path = layer.path;
-//    layer.borderColor = NSColor.redColor.CGColor;
-//    layer.borderWidth = 1.f;
-//    CGPathRelease(path);
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
+    CGPathRef path = CGPathCreateCopyByTransformingPath(layer.path, &transform);
+    
+    // make sure we reset this back to zero
+    layer.frame = (CGRect) {
+        .origin = CGPointZero,
+        .size = frame.size
+    };
+    layer.outerBoundingBox = layer.frame;
+    layer.path = path;
+    CGPathRelease(path);
     
     return layer;
 }
@@ -385,7 +378,7 @@
     IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
     layer.boundingBox = [IJSVGLayer calculateFrameForSublayers:sublayers];
     layer.outerBoundingBox = layer.boundingBox;
-    layer.sublayers = sublayers;    
+    layer.sublayers = sublayers;
     return layer;
 }
 
@@ -411,7 +404,7 @@
     IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
     gradientLayer.backingScaleFactor = _backingScale;
     gradientLayer.gradient = gradient;
-    gradientLayer.frame = layer.boundingBoxBounds;
+    gradientLayer.frame = layer.bounds;
     gradientLayer.viewBox = self.viewPort;
     [gradientLayer setNeedsDisplay];
     return gradientLayer;
@@ -441,7 +434,10 @@
     // pattern fill
     IJSVGPatternLayer* patternLayer = [IJSVGPatternLayer layer];
     patternLayer.patternNode = pattern;
-    patternLayer.frame = layer.boundingBoxBounds;
+    patternLayer.frame = (CGRect) {
+        .origin = CGPointZero,
+        .size = layer.outerBoundingBox.size
+    };
     
     CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:pattern];
     patternFill.referencingLayer = patternLayer;

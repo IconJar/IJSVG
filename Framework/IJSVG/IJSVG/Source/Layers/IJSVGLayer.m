@@ -220,11 +220,12 @@
                drawingBlock:(dispatch_block_t)drawingBlock
 {
     CGContextSaveGState(ctx);
-    CGRect bounds = layer.outerBoundingBox;
     CGFloat scale = layer.backingScaleFactor;
+    CGRect rect = layer.innerBoundingBox;
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
                                                 scale:scale];
-    CGContextClipToMask(ctx, bounds, maskImage);
+
+    CGContextClipToMask(ctx, rect, maskImage);
     drawingBlock();
     CGImageRelease(maskImage);
     CGContextRestoreGState(ctx);
@@ -249,12 +250,14 @@
 {
     
     CGRect frame = layer.outerBoundingBox;
+    CGRect bounds = layer.innerBoundingBox;
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width * scale),
                                                           ceilf(frame.size.height * scale),
                                                           8, 0, colorSpace, bitmapInfo);
     CGContextConcatCTM(offscreenContext, [self absoluteTransformForLayer:layer]);
     CGContextScaleCTM(offscreenContext, scale, scale);
+    CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x, -bounds.origin.y));
     [IJSVGLayer renderLayer:layer
                   inContext:offscreenContext];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
@@ -370,8 +373,6 @@
     // make sure its applied to any mask or clipPath
     _maskLayer.backingScaleFactor = newFactor;
     _clipLayer.backingScaleFactor = newFactor;
-    
-    [self setNeedsDisplay];
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx
