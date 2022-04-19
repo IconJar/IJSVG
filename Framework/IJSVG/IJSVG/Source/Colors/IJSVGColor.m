@@ -244,6 +244,12 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                                                          alpha:a]];
 }
 
++ (BOOL)isNoneOrTransparent:(NSString*)string
+{
+    const char* str = string.lowercaseString.UTF8String;
+    return strcmp(str, "none") == 0 || strcmp(str, "transparent") == 0;
+}
+
 + (NSColor*)colorFromString:(NSString*)string
 {
     // swap over to C for performance
@@ -327,7 +333,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     if (strcmp(str, "none") == 0 ||
         strcmp(str, "transparent") == 0) {
         (void)free(str), str = NULL;
-        return [self computeColorSpace:NSColor.clearColor];
+        return nil;
     }
     
     // could return nil

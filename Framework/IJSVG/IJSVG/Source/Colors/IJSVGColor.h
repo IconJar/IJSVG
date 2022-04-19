@@ -181,6 +181,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 + (NSString*)colorStringFromColor:(NSColor*)color;
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex;
 + (NSColor*)computeColor:(id)colour;
++ (BOOL)isNoneOrTransparent:(NSString*)string;
 + (NSColor*)colorFromString:(NSString*)string;
 + (NSColor*)colorFromHEXString:(NSString*)string;
 + (NSColor*)colorFromHEXString:(NSString*)string
