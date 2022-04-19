@@ -19,4 +19,9 @@
     [super dealloc];
 }
 
+- (CGRect)innerBoundingBox
+{
+    return self.outerBoundingBox;
+}
+
 @end

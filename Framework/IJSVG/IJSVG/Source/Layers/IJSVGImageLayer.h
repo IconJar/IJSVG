@@ -9,13 +9,14 @@
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGTransformLayer.h>
+#import <IJSVG/IJSVGBasicLayer.h>
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGImageLayer : IJSVGLayer {
     
 @private
-    IJSVGLayer* _imageLayer;
+    CALayer* _imageLayer;
 }
 
 @property (nonatomic, retain) IJSVGImage* image;

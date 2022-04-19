@@ -17,6 +17,7 @@
 
 - (void)dealloc
 {
+    (void)([_filter release]), _filter = nil;
     (void)([_clipLayer release]), _clipLayer = nil;
     (void)([_maskLayer release]), _maskLayer = nil;
     (void)([_clipRule release]), _clipRule = nil;
@@ -61,6 +62,22 @@
     return IJSVGLayerFillTypeUnknown;
 }
 
++ (void)applyAbsoluteTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                             toContext:(CGContextRef)ctx
+{
+    CALayer<IJSVGDrawableLayer>* parentLayer = layer;
+    while((parentLayer = parentLayer.referencingLayer) != nil) {
+        CGContextConcatCTM(ctx, parentLayer.affineTransform);
+        
+        // only go up until we find a root layer, at that point, we know
+        // we can stop looking
+        if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
+            break;
+        }
+    }
+    CGContextConcatCTM(ctx, layer.affineTransform);
+}
+
 + (CGAffineTransform)absoluteTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGAffineTransform identity = CGAffineTransformIdentity;
@@ -72,8 +89,7 @@
         // we can stop looking
         if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
             break;
-        }
-        
+        }   
     }
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
@@ -88,8 +104,8 @@
     return parentLayer;
 }
 
-+ (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
-          inContext:(CGContextRef)ctx
++ (void)performBasicRenderOfLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                        inContext:(CGContextRef)ctx
 {
     dispatch_block_t drawingBlock = ^{
         [layer performRenderInContext:ctx];
@@ -107,6 +123,13 @@
                         inContext:ctx
                      drawingBlock:drawingBlock];
     }];
+}
+
++ (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
+          inContext:(CGContextRef)ctx
+{
+    [self performBasicRenderOfLayer:layer
+                          inContext:ctx];
 }
 
 + (void)applyBlendingMode:(CGBlendMode)blendMode
@@ -224,17 +247,20 @@
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale
 {
+    
     CGRect frame = layer.outerBoundingBox;
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width * scale),
                                                           ceilf(frame.size.height * scale),
                                                           8, 0, colorSpace, bitmapInfo);
-            
-    CGContextSaveGState(offscreenContext);
+    CGContextConcatCTM(offscreenContext, [self absoluteTransformForLayer:layer]);
     CGContextScaleCTM(offscreenContext, scale, scale);
-    CGContextTranslateCTM(offscreenContext, -frame.origin.x, -frame.origin.y);
-    [layer renderInContext:offscreenContext];
+    [IJSVGLayer renderLayer:layer
+                  inContext:offscreenContext];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
+    NSImage* prev = [[[NSImage alloc] initWithCGImage:image
+                                                 size:NSMakeSize(CGImageGetWidth(image), CGImageGetHeight(image))] autorelease];
+    
     CGContextRelease(offscreenContext);
     return image;
 }
@@ -273,8 +299,8 @@
     return arr;
 }
 
-+ (void)recursivelyWalkLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                   withBlock:(void (^)(CALayer<IJSVGDrawableLayer>* layer, BOOL* stop))block
++ (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
+                   withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block
 {
     // call for layer and mask if there is one
     BOOL stop = NO;
@@ -284,7 +310,7 @@
     }
 
     // sublayers!!
-    for (CALayer<IJSVGDrawableLayer>* aLayer in layer.sublayers) {
+    for (CALayer<IJSVGBasicLayer>* aLayer in layer.sublayers) {
         [self recursivelyWalkLayer:aLayer
                          withBlock:block];
     }
@@ -466,19 +492,19 @@
     return CGRectIsNull(_outerBoundingBox) == NO ? _outerBoundingBox : self.frame;
 }
 
-- (CGRect)outerBoundingBoxBounds
-{
-    return (CGRect) {
-        .origin = CGPointZero,
-        .size = self.outerBoundingBox.size
-    };
-}
-
 - (CGRect)boundingBoxBounds
 {
     return (CGRect) {
         .origin = CGPointZero,
         .size = self.boundingBox.size
+    };
+}
+
+- (CGRect)innerBoundingBox
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = self.outerBoundingBox.size
     };
 }
 

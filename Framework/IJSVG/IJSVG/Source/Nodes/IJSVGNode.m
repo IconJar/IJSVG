@@ -43,6 +43,7 @@
     (void)([_svg release]), _svg = nil;
     (void)([_mask release]), _mask = nil;
     (void)([_viewBox release]), _viewBox = nil;
+    (void)([_filter release]), _filter = nil;
     [super dealloc];
 }
 
@@ -135,6 +136,12 @@
     }
     if(strcmp(name, "desc") == 0) {
         return IJSVGNodeTypeDesc;
+    }
+    if(strcmp(name, "filter") == 0) {
+        return IJSVGNodeTypeFilter;
+    }
+    if(strcmp(name, "fegaussianblur") == 0) {
+        return IJSVGNodeTypeFilterEffect;
     }
     return IJSVGNodeTypeUnknown;
 }
@@ -442,7 +449,8 @@
 
 - (NSString *)description
 {
-    return [NSString stringWithFormat:@"%@ %@ %@",self.name,self.classNameList,self.identifier];
+    return [NSString stringWithFormat:@"%@ %@ %@ %@",NSStringFromClass(self.class),
+            self.name,self.classNameList,self.identifier];
 }
 
 @end

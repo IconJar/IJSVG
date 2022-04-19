@@ -16,6 +16,7 @@
 @class IJSVGStrokeLayer;
 @class IJSVGGroupLayer;
 @class IJSVGLayer;
+@class IJSVGFilter;
 
 typedef NS_ENUM(NSUInteger, IJSVGLayerFillType) {
     IJSVGLayerFillTypeColor,
@@ -35,7 +36,15 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @end
 
-@protocol IJSVGDrawableLayer <NSObject>
+@protocol IJSVGBasicLayer <NSObject>
+@required
+@property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
+@property (nonatomic, readonly) NSArray<CALayer<IJSVGBasicLayer>*>* debugLayers;
+
+@end
+
+@protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer>
 
 @required
 @property (nonatomic, assign) CGBlendMode blendingMode;
@@ -44,8 +53,6 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
-@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
-@property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
@@ -53,8 +60,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CGRect outerBoundingBox;
+@property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
-@property (nonatomic, readonly) NSArray<CALayer<IJSVGDrawableLayer>*>* debugLayers;
+@property (nonatomic, retain) IJSVGFilter* filter;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
@@ -81,20 +89,21 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, retain) IJSVGFilter* filter;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, assign) CGRect outerBoundingBox;
-@property (nonatomic, readonly) CGRect outerBoundingBoxBounds;
+@property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
-+ (void)recursivelyWalkLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                   withBlock:(void (^)(CALayer<IJSVGDrawableLayer>* layer, BOOL* stop))block;
++ (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
+                   withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

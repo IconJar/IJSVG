@@ -64,6 +64,10 @@ NSString* const IJSVGAttributeStopColor = @"stop-color";
 NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 NSString* const IJSVGAttributeHref = @"href";
 NSString* const IJSVGAttributeOverflow = @"overflow";
+NSString* const IJSVGAttributeFilter = @"filter";
+NSString* const IJSVGAttributeStdDeviation = @"stdDeviation";
+NSString* const IJSVGAttributeIn = @"in";
+NSString* const IJSVGAttributeEdgeMode = @"edgeMode";
 
 @implementation IJSVGParser
 
@@ -466,7 +470,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
-        node.stroke = [IJSVGColorNode colorNodeWithColor:color];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        }
+        node.stroke = colorNode;
     });
 
     // stroke dash array
@@ -495,7 +503,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
-        node.fill = [IJSVGColorNode colorNodeWithColor:color];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        }
+        node.fill = colorNode;
     });
     
     // fill opacity
@@ -537,11 +549,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // stop-color
     IJSVGAttributeParse(IJSVGAttributeStopColor, ^(NSString* value) {
         NSColor* color = [IJSVGColor colorFromString:value];
-        if(node.fillOpacity.value != 1.f) {
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        } else if(node.fillOpacity.value != 1.f) {
             color = [IJSVGColor changeAlphaOnColor:color
                                                 to:node.fillOpacity.value];
+            colorNode.color = color;
         }
-        node.fill = [IJSVGColorNode colorNodeWithColor:color];
+        node.fill = colorNode;
     });
     
     // overflow
@@ -571,6 +587,39 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         node.viewBoxAlignment = alignment;
         node.viewBoxMeetOrSlice = meetOrSlice;
     });
+    
+    // filters
+    IJSVGAttributeParse(IJSVGAttributeFilter, ^(NSString* value) {
+        NSString* filterIdentifier = [IJSVGUtils defURL:value];
+        if(filterIdentifier != nil) {
+            IJSVGNode* filter = [self computeDetachedNodeWithIdentifier:filterIdentifier
+                                                     referencingElement:element
+                                                        referencingNode:node];
+            node.filter = (IJSVGFilter*)filter;
+        }
+    });
+    
+    if(node.type == IJSVGNodeTypeFilterEffect) {
+        IJSVGFilterEffect* effect = (IJSVGFilterEffect*)node;
+                
+        // in
+        IJSVGAttributeParse(IJSVGAttributeIn, ^(NSString* value) {
+            effect.source = [IJSVGFilterEffect sourceForString:value];
+            if(effect.source == IJSVGFilterEffectSourcePrimitiveReference) {
+                effect.primitiveReference = value;
+            }
+        });
+        
+        // edge mode
+        IJSVGAttributeParse(IJSVGAttributeEdgeMode, ^(NSString* value) {
+            effect.edgeMode = [IJSVGFilterEffect edgeModeForString:value];
+        });
+        
+        // deviation
+        IJSVGAttributeParse(IJSVGAttributeStdDeviation, ^(NSString* value) {
+            effect.stdDeviation = [IJSVGUnitLength unitWithString:value];
+        });
+    }
 }
 
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
@@ -693,6 +742,16 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                         parentNode:node];
             break;
         }
+        case IJSVGNodeTypeFilter: {
+            computedNode = [self parseFilterElement:element
+                                         parentNode:node];
+            break;
+        }
+        case IJSVGNodeTypeFilterEffect: {
+            computedNode = [self parseFilterEffectElement:element
+                                               parentNode:node];
+            break;
+        }
         default:
             break;
     }
@@ -785,6 +844,44 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                parentNode:(IJSVGNode*)parentNode
 {
     [_styleSheet parseStyleBlock:element.stringValue];
+}
+
+- (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
+                      parentNode:(IJSVGNode*)parentNode
+{
+    IJSVGFilter* node = [[[IJSVGFilter alloc] init] autorelease];
+    node.type = IJSVGNodeTypeFilter;
+    node.name = element.localName;
+    
+    [self computeAttributesFromElement:element
+                                onNode:node
+                     ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    return node;
+}
+
+- (IJSVGNode*)parseFilterEffectElement:(NSXMLElement*)element
+                            parentNode:(IJSVGNode*)parentNode
+{
+    Class effectClass = [IJSVGFilterEffect effectClassForElementName:element.localName];
+    IJSVGFilterEffect* node = [[[effectClass alloc] init] autorelease];
+    node.type = IJSVGNodeTypeFilterEffect;
+    node.name = element.localName;
+
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    [self computeAttributesFromElement:element
+                                onNode:node
+                     ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    return node;
 }
 
 - (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element

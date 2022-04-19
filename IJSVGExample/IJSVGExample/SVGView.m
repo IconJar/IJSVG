@@ -31,7 +31,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"AJ_Digital_Camera"];
+    return [IJSVG svgNamed:@"heart"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

@@ -25,6 +25,7 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTransformLayer.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 
 @implementation IJSVGLayerTree
 
@@ -91,6 +92,9 @@
     if(layer != nil) {
         [self applyDefaultsToLayer:layer
                           fromNode:node];
+        layer = [self applyFilter:node.filter
+                          toLayer:layer
+                         fromNode:node];
         return [self applyTransforms:node.transforms
                              toLayer:layer
                             fromNode:node];
@@ -164,10 +168,14 @@
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
             NSColor* color = colorNode.color;
             
-            // change the fill color opacity if required
-            if(node.fillOpacity.value != 1.f) {
-                color = [IJSVGColor changeAlphaOnColor:color
-                                                    to:node.fillOpacity.value];
+            if(colorNode.isNoneOrTransparent == YES) {
+                color = nil;
+            } else {
+                // change the fill color opacity if required
+                if(node.fillOpacity.value != 1.f) {
+                    color = [IJSVGColor changeAlphaOnColor:color
+                                                        to:node.fillOpacity.value];
+                }
             }
             
             // set the color against the layer — we cant just use fill layer due to how
@@ -410,8 +418,8 @@
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableGradientLayerForPathNode:(IJSVGPath*)node
-                                                gradient:(IJSVGGradient*)gradient
-                                                   layer:(CALayer<IJSVGDrawableLayer>*)layer
+                                                        gradient:(IJSVGGradient*)gradient
+                                                           layer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [self drawableBasicGradientLayerForLayer:layer
@@ -492,6 +500,23 @@
     if (node.shouldRender == NO) {
         layer.hidden = YES;
     }
+}
+
+#pragma mark Filters
+
+- (CALayer<IJSVGDrawableLayer>*)applyFilter:(IJSVGFilter*)filter
+                                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                   fromNode:(IJSVGNode*)node
+{
+    if(filter == nil) {
+        return layer;
+    }
+    IJSVGFilterLayer* filterLayer = [IJSVGFilterLayer layer];
+    filterLayer.filter = filter;
+    filterLayer.frame = layer.frame;
+    filterLayer.sublayer = layer;
+    layer.referencingLayer = filterLayer;
+    return filterLayer;
 }
 
 #pragma mark Transforms

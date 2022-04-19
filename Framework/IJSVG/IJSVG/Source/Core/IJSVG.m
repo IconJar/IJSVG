@@ -750,6 +750,7 @@
     CGContextSaveGState(ref);
     // make sure we setup a transaction
     CGFloat backingScale = [self backingScaleFactor];
+    [IJSVGLayer logLayer:self.rootLayer];
     [self.rootLayer renderInContext:ref
                            viewPort:rect
                        backingScale:backingScale

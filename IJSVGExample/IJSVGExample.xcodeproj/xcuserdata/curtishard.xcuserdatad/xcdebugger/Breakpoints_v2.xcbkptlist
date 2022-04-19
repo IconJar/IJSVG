@@ -23,17 +23,65 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "22FC47C6-0C8B-4BF3-95A6-4AF1D5B32C95"
+            uuid = "E61BCC14-B76D-4B97-AAC2-B1B74A2831C3"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../Framework/IJSVG/IJSVG/Source/Nodes/IJSVGFilter.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "37"
+            endingLineNumber = "37"
+            landmarkName = "-newImageByApplyFilterToLayer:scale:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D6A4091A-4817-4EC8-8742-E3EEC54B2DB9"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../Framework/IJSVG/IJSVG/Source/Layers/IJSVGLayer.m"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "200"
-            endingLineNumber = "200"
-            landmarkName = "+clipContextWithMask:toLayer:inContext:drawingBlock:"
+            startingLineNumber = "264"
+            endingLineNumber = "264"
+            landmarkName = "+newImageForLayer:colorSpace:bitmapInfo:scale:"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "D6A4091A-4817-4EC8-8742-E3EEC54B2DB9 - bea5ee4d2e88b7c6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "+[IJSVGLayer newImageForLayer:colorSpace:bitmapInfo:scale:]"
+                  moduleName = "IJSVG"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/curtishard/Documents/git/Iconjar-mac/OSX/IconJar/vendor/IJSVG/Framework/IJSVG/IJSVG/Source/Layers/IJSVGLayer.m"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "264"
+                  endingLineNumber = "264"
+                  offsetFromSymbolStart = "424">
+               </Location>
+               <Location
+                  uuid = "D6A4091A-4817-4EC8-8742-E3EEC54B2DB9 - bea5ee4d2e88b7c6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "+[IJSVGLayer newImageForLayer:colorSpace:bitmapInfo:scale:]"
+                  moduleName = "IJSVG"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/curtishard/Documents/git/Iconjar-mac/OSX/IconJar/vendor/IJSVG/Framework/IJSVG/IJSVG/Source/Layers/IJSVGLayer.m"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "264"
+                  endingLineNumber = "264"
+                  offsetFromSymbolStart = "328">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

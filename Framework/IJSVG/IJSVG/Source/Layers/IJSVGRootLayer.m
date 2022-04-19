@@ -18,7 +18,7 @@
         IJSVGViewBoxDrawingBlock drawingBlock = ^(CGSize size) {
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
-            weakSelf.backingScaleFactor *= MAX(size.width, size.height);
+            weakSelf.backingScaleFactor *= MIN(size.width, size.height);
             [super performRenderInContext:ctx];
         };
         [IJSVGViewBox drawViewBox:viewBox

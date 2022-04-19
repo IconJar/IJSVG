@@ -40,7 +40,7 @@
 - (void)reloadContent
 {
     if(_imageLayer == nil) {
-        _imageLayer = [IJSVGLayer layer].retain;
+        _imageLayer = [IJSVGBasicLayer layer].retain;
         _imageLayer.contentsGravity = kCAGravityResize;
         _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
         _imageLayer.contents = (id)_image.CGImage;

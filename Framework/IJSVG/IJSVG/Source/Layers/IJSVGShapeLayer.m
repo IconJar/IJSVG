@@ -13,6 +13,7 @@
 
 - (void)dealloc
 {
+    (void)([_filter release]), _filter = nil;
     (void)([_clipLayer release]), _clipLayer = nil;
     (void)([_maskLayer release]), _maskLayer = nil;
     (void)([_maskingLayer release]), _maskingLayer = nil;
@@ -46,6 +47,11 @@
         .origin = CGPointZero,
         .size = self.boundingBox.size
     };
+}
+
+- (CGRect)innerBoundingBox
+{
+    return self.bounds;
 }
 
 - (BOOL)requiresBackingScaleHelp

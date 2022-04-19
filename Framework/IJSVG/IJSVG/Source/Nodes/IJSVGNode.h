@@ -21,6 +21,7 @@
 @class IJSVGTransform;
 @class IJSVGRootNode;
 @class IJSVGUnitRect;
+@class IJSVGFilter;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -58,6 +59,8 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeDesc,
     IJSVGNodeTypeStop,
     IJSVGNodeTypeNotFound,
+    IJSVGNodeTypeFilter,
+    IJSVGNodeTypeFilterEffect,
     IJSVGNodeTypeUnknown,
 };
 
@@ -151,6 +154,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, retain) NSArray<IJSVGTransform*>* transforms;
+@property (nonatomic, retain) IJSVGFilter* filter;
 @property (nonatomic, assign) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;
