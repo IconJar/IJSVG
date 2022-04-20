@@ -11,9 +11,9 @@
 
 @implementation IJSVGShapeLayer
 
-- (CALayer<IJSVGDrawableLayer> *)rootLayer
+- (id<CAAction>)actionForKey:(NSString*)event
 {
-    return [IJSVGLayer rootLayerForLayer:self];
+    return nil;
 }
 
 - (CGRect)absoluteFrame
@@ -80,21 +80,6 @@
     [super renderInContext:ctx];
 }
 
-- (void)setConvertMasksToPaths:(BOOL)flag
-{
-    if (_convertMasksToPaths == flag) {
-        return;
-    }
-    _convertMasksToPaths = flag;
-    if (flag == YES) {
-        _maskingLayer = (IJSVGLayer*)self.mask;
-        self.mask = nil;
-    } else {
-        self.mask = _maskingLayer;
-        _maskingLayer = nil;
-    }
-}
-
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer
                         withOffset:(CGPoint)offset
@@ -144,11 +129,6 @@
 {
     [IJSVGLayer renderLayer:(IJSVGLayer*)self
                   inContext:ctx];
-}
-
-- (id<CAAction>)actionForKey:(NSString*)event
-{
-    return nil;
 }
 
 -(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers

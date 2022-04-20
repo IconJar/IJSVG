@@ -13,8 +13,8 @@
 @interface IJSVGStyleSheetSelectorListItem : NSObject {
 }
 
-@property (nonatomic, retain) IJSVGStyleSheetRule* rule;
-@property (nonatomic, retain) IJSVGStyleSheetSelector* selector;
+@property (nonatomic, strong) IJSVGStyleSheetRule* rule;
+@property (nonatomic, strong) IJSVGStyleSheetSelector* selector;
 
 @end
 

@@ -24,6 +24,11 @@
     return self;
 }
 
+- (id<CAAction>)actionForKey:(NSString*)event
+{
+    return nil;
+}
+
 - (CAShapeLayerFillRule)fillRule
 {
     return kCAFillRuleNonZero;
@@ -388,21 +393,6 @@
     [super renderInContext:ctx];
 }
 
-- (void)setConvertMasksToPaths:(BOOL)flag
-{
-    if (_convertMasksToPaths == flag) {
-        return;
-    }
-    _convertMasksToPaths = flag;
-    if (flag == YES) {
-        _maskingLayer = (IJSVGLayer*)self.mask;
-        self.mask = nil;
-    } else {
-        self.mask = _maskingLayer;
-        _maskingLayer = nil;
-    }
-}
-
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer
                         withOffset:(CGPoint)offset
@@ -443,11 +433,6 @@
     CGContextConcatCTM(context, sublayerTransform);
 }
 
-- (CALayer<IJSVGDrawableLayer>*)rootLayer
-{
-    return [self.class rootLayerForLayer:self];
-}
-
 - (CGAffineTransform)absoluteTransform
 {
     return [IJSVGLayer absoluteTransformForLayer:self];
@@ -467,11 +452,6 @@
 {
     [IJSVGLayer renderLayer:self
                   inContext:ctx];
-}
-
-- (id<CAAction>)actionForKey:(NSString*)event
-{
-    return nil;
 }
 
 - (CGRect)absoluteFrame
@@ -503,11 +483,6 @@
         .origin = CGPointZero,
         .size = self.outerBoundingBox.size
     };
-}
-
-- (CGRect)strokeBoundingBox
-{
-    return self.boundingBox;
 }
 
 - (CALayer<IJSVGDrawableLayer> *)referencingLayer

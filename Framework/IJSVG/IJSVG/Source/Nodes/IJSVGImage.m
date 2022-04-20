@@ -55,7 +55,9 @@
         CGImage = nil;
     }
 
-    NSRect rect = NSMakeRect(0.f, 0.f, _intrinsicSize.width, _intrinsicSize.height);
+    CGRect rect = CGRectMake(0.f, 0.f,
+                             _intrinsicSize.width,
+                             _intrinsicSize.height);
     CGImage = [_image CGImageForProposedRect:&rect
                                      context:nil
                                        hints:nil];
@@ -74,13 +76,6 @@
     rect.size.width = _intrinsicSize.width;
     rect.size.height = _intrinsicSize.height;
     return rect;
-}
-
-- (CGAffineTransform)intrinsicTransform
-{
-    CGFloat widthRatio = self.width.value / _intrinsicSize.width;
-    CGFloat heightRatio = self.height.value / _intrinsicSize.height;
-    return CGAffineTransformMakeScale(widthRatio, heightRatio);
 }
 
 - (CGRect)bounds

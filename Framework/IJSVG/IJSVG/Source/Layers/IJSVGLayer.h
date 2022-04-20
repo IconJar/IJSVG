@@ -37,6 +37,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @end
 
 @protocol IJSVGBasicLayer <NSObject>
+
 @required
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, readonly) BOOL requiresBackingScale;
@@ -49,21 +50,19 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @required
 @property (nonatomic, assign) CGBlendMode blendingMode;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
 @property (nonatomic, readonly) BOOL requiresBackingScale;
-@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
-@property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
-@property (nonatomic, retain) IJSVGFilter* filter;
+@property (nonatomic, strong) IJSVGFilter* filter;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
@@ -85,17 +84,14 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
-@property (nonatomic, assign) BOOL convertMasksToPaths;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
-@property (nonatomic, retain) IJSVGFilter* filter;
-@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
+@property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
-@property (nonatomic, readonly) CGRect strokeBoundingBox;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;

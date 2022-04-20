@@ -27,7 +27,7 @@ typedef NS_ENUM(NSInteger, IJSVGFilterEffectEdgeMode) {
 @interface IJSVGFilterEffect : IJSVGGroup
 
 @property (nonatomic, assign) IJSVGFilterEffectSource source;
-@property (nonatomic, retain) IJSVGUnitLength* stdDeviation;
+@property (nonatomic, strong) IJSVGUnitLength* stdDeviation;
 @property (nonatomic, assign) IJSVGFilterEffectEdgeMode edgeMode;
 @property (nonatomic, copy) NSString* primitiveReference;
 

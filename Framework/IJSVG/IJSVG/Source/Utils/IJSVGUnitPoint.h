@@ -11,8 +11,8 @@
 
 @interface IJSVGUnitPoint : NSObject <NSCopying>
 
-@property (nonatomic, retain) IJSVGUnitLength* x;
-@property (nonatomic, retain) IJSVGUnitLength* y;
+@property (nonatomic, strong) IJSVGUnitLength* x;
+@property (nonatomic, strong) IJSVGUnitLength* y;
 @property (nonatomic, readonly) CGPoint value;
 
 + (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x

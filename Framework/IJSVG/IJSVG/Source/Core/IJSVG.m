@@ -657,7 +657,9 @@
 - (void)drawInRect:(NSRect)rect
            context:(CGContextRef)context
 {
-    [self _drawInRect:rect context:context error:nil];
+    [self _drawInRect:rect
+              context:context
+                error:nil];
 }
 
 //- (BOOL)_drawInRect:(NSRect)rect
@@ -732,20 +734,36 @@
 //}
 
 - (BOOL)_drawInRect:(NSRect)rect
-            context:(CGContextRef)ref
+            context:(CGContextRef)ctx
               error:(NSError**)error
 {
     BOOL transaction = IJSVGBeginTransaction();
-    CGContextSaveGState(ref);
+    CGContextSaveGState(ctx);
     // make sure we setup a transaction
     CGFloat backingScale = [self backingScaleFactor];
 //    [IJSVGLayer logLayer:self.rootLayer];
-    [self.rootLayer renderInContext:ref
-                           viewPort:rect
-                       backingScale:backingScale
-                            quality:_renderQuality];
-    CGContextRestoreGState(ref);
-    if(transaction) {
+    CGInterpolationQuality quality;
+    switch (_renderQuality) {
+        case kIJSVGRenderQualityLow: {
+            quality = kCGInterpolationLow;
+            break;
+        }
+        case kIJSVGRenderQualityOptimized: {
+            quality = kCGInterpolationMedium;
+            break;
+        }
+        default: {
+            quality = kCGInterpolationHigh;
+        }
+    }
+    CGContextSetInterpolationQuality(ctx, quality);
+    IJSVGRootLayer* rootLayer = self.rootLayer;
+    [rootLayer renderInContext:ctx
+                      viewPort:rect
+                  backingScale:backingScale
+                       quality:_renderQuality];
+    CGContextRestoreGState(ctx);
+    if(transaction == YES) {
         IJSVGEndTransaction();
     }
     return YES;

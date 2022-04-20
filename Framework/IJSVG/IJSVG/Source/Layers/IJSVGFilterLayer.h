@@ -18,6 +18,6 @@
     
 }
 
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* sublayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* sublayer;
 
 @end

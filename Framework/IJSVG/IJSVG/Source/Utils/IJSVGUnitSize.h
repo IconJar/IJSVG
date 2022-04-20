@@ -11,8 +11,8 @@
 
 @interface IJSVGUnitSize : NSObject <NSCopying>
 
-@property (nonatomic, retain) IJSVGUnitLength* width;
-@property (nonatomic, retain) IJSVGUnitLength* height;
+@property (nonatomic, strong) IJSVGUnitLength* width;
+@property (nonatomic, strong) IJSVGUnitLength* height;
 @property (nonatomic, readonly) CGSize value;
 
 + (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width

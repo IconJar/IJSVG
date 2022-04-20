@@ -12,7 +12,7 @@
 
 @interface IJSVGPatternLayer : IJSVGLayer
 
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* pattern;
-@property (nonatomic, retain) IJSVGPattern* patternNode;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* pattern;
+@property (nonatomic, strong) IJSVGPattern* patternNode;
 
 @end

@@ -19,10 +19,14 @@
 @synthesize absoluteFrame;
 @synthesize boundingBox;
 @synthesize boundingBoxBounds;
-@synthesize strokeBoundingBox;
 @synthesize outerBoundingBox;
 @synthesize filter = _filter;
 @synthesize innerBoundingBox;
+
+- (id<CAAction>)actionForKey:(NSString*)event
+{
+    return nil;
+}
 
 - (CALayer<IJSVGDrawableLayer> *)referencedLayer
 {
@@ -31,11 +35,6 @@
 
 - (CALayer<IJSVGDrawableLayer> *)referencingLayer {
     return _referencingLayer ?: self.superlayer;
-}
-
-- (CALayer<IJSVGDrawableLayer>*)rootLayer
-{
-    return [IJSVGLayer rootLayerForLayer:self];
 }
 
 - (void)renderInContext:(CGContextRef)ctx

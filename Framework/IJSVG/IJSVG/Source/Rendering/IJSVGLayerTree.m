@@ -150,7 +150,6 @@
         layer.frame = CGRectInset(layer.frame,
                                   -strokeWidthDifference,
                                   -strokeWidthDifference);
-        layer.strokeBoundingBox = layer.frame;
         layer.outerBoundingBox = layer.frame;
     }
     

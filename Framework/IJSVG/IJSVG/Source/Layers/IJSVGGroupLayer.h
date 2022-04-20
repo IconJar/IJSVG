@@ -14,7 +14,7 @@
     
 }
 
-@property (nonatomic, retain) IJSVGUnitRect* viewBox;
+@property (nonatomic, strong) IJSVGUnitRect* viewBox;
 @property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
 @property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
 

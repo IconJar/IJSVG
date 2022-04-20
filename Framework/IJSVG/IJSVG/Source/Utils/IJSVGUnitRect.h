@@ -12,8 +12,8 @@
 
 @interface IJSVGUnitRect : NSObject <NSCopying>
 
-@property (nonatomic, retain) IJSVGUnitSize* size;
-@property (nonatomic, retain) IJSVGUnitPoint* origin;
+@property (nonatomic, strong) IJSVGUnitSize* size;
+@property (nonatomic, strong) IJSVGUnitPoint* origin;
 @property (nonatomic, readonly) BOOL isZeroRect;
 @property (nonatomic, readonly) CGRect value;
 

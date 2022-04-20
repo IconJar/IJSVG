@@ -17,7 +17,7 @@ IB_DESIGNABLE
     IJSVG* SVG;
 }
 
-@property (nonatomic, retain) IJSVG* SVG;
+@property (nonatomic, strong) IJSVG* SVG;
 
 + (IJSVGView*)viewWithSVGNamed:(NSString*)name;
 - (id)initWithSVG:(IJSVG*)anSvg;

@@ -19,7 +19,7 @@
     CALayer* _imageLayer;
 }
 
-@property (nonatomic, retain) IJSVGImage* image;
+@property (nonatomic, strong) IJSVGImage* image;
 
 - (id)initWithImage:(IJSVGImage*)image;
 

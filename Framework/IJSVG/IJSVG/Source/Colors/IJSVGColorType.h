@@ -21,7 +21,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorTypeFlags) {
     
 }
 
-@property (nonatomic, retain) NSColor* color;
+@property (nonatomic, strong) NSColor* color;
 @property (nonatomic, assign) IJSVGColorTypeFlags flags;
 
 + (IJSVGColorType*)typeWithColor:(NSColor*)color

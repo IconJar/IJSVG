@@ -112,7 +112,7 @@ extern NSString* const IJSVGAttributeEdgeMode;
     NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;
 }
 
-@property (nonatomic, retain, readonly) IJSVGRootNode* rootNode;
+@property (nonatomic, strong, readonly) IJSVGRootNode* rootNode;
 
 + (BOOL)isDataSVG:(NSData*)data;
 

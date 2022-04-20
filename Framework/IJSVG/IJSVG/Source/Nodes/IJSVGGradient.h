@@ -14,13 +14,13 @@
 
 @interface IJSVGGradient : IJSVGGroup
 
-@property (nonatomic, retain) NSGradient* gradient;
+@property (nonatomic, strong) NSGradient* gradient;
 @property (nonatomic, assign) CGGradientRef CGGradient;
-@property (nonatomic, retain) IJSVGUnitLength* x1;
-@property (nonatomic, retain) IJSVGUnitLength* x2;
-@property (nonatomic, retain) IJSVGUnitLength* y1;
-@property (nonatomic, retain) IJSVGUnitLength* y2;
-@property (nonatomic, retain) IJSVGColorList* colorList;
+@property (nonatomic, strong) IJSVGUnitLength* x1;
+@property (nonatomic, strong) IJSVGUnitLength* x2;
+@property (nonatomic, strong) IJSVGUnitLength* y1;
+@property (nonatomic, strong) IJSVGUnitLength* y2;
+@property (nonatomic, strong) IJSVGColorList* colorList;
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors;

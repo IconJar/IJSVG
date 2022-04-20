@@ -15,6 +15,11 @@
 @synthesize renderQuality;
 @synthesize debugLayers;
 
+- (id<CAAction>)actionForKey:(NSString*)event
+{
+    return nil;
+}
+
 
 - (void)performRenderInContext:(CGContextRef)ctx {
 }

@@ -27,20 +27,16 @@
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, assign) CGPoint originalPathOrigin;
-@property (nonatomic, assign) BOOL convertMasksToPaths;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
-@property (nonatomic, readonly) CGRect computedFrame;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* clipLayer;
-@property (nonatomic, retain) CALayer<IJSVGDrawableLayer>* maskLayer;
-@property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, readonly) CGRect boundingBoxBounds;
-@property (nonatomic, retain) IJSVGFilter* filter;
+@property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
-@property (nonatomic, assign) CGRect strokeBoundingBox;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context

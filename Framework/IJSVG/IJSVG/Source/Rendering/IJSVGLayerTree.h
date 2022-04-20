@@ -21,7 +21,7 @@
 
 @property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, assign) CGFloat backingScale;
-@property (nonatomic, retain) IJSVGRenderingStyle* style;
+@property (nonatomic, strong) IJSVGRenderingStyle* style;
 
 - (id)initWithViewPortRect:(CGRect)viewPort
               backingScale:(CGFloat)scale;

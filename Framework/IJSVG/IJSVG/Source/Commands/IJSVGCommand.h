@@ -26,7 +26,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 @property (nonatomic, assign) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;
 @property (nonatomic, assign) IJSVGCommandType type;
-@property (nonatomic, retain) NSArray<IJSVGCommand*>* subCommands;
+@property (nonatomic, strong) NSArray<IJSVGCommand*>* subCommands;
 @property (nonatomic, assign) IJSVGCommand* previousCommand;
 @property (nonatomic, assign) BOOL isSubCommand;
 

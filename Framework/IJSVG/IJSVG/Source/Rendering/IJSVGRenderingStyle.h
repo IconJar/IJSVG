@@ -17,9 +17,9 @@
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) CGFloat lineWidth;
-@property (nonatomic, retain) IJSVGColorList* colorList;
-@property (nonatomic, retain) NSColor* fillColor;
-@property (nonatomic, retain) NSColor* strokeColor;
+@property (nonatomic, strong) IJSVGColorList* colorList;
+@property (nonatomic, strong) NSColor* fillColor;
+@property (nonatomic, strong) NSColor* strokeColor;
 
 + (NSArray<NSString*>*)observableProperties;
 
