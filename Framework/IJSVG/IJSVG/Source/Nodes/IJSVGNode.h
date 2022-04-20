@@ -61,6 +61,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeNotFound,
     IJSVGNodeTypeFilter,
     IJSVGNodeTypeFilterEffect,
+    IJSVGNodeTypeForeignObject,
     IJSVGNodeTypeUnknown,
 };
 

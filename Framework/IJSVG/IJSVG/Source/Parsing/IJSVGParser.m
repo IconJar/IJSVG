@@ -134,9 +134,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     (void)([_detachedElements release]), _detachedElements = nil;
     (void)([_rootNode release]), _rootNode = nil;
     (void)([_styleSheet release]), _styleSheet = nil;
-    if (_commandDataStream != NULL) {
-        (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
-    }
     [super dealloc];
 }
 
@@ -263,7 +260,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (void)begin {
     // setup basics to begin with
     _styleSheet = [[IJSVGStyleSheet alloc] init];
-    _commandDataStream = IJSVGPathDataStreamCreateDefault();
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    _commandDataStream = manager.pathDataStream;
     _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
                                                   valueOptions:NSPointerFunctionsStrongMemory
                                                       capacity:1];
@@ -289,26 +287,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 - (void)computeViewBoxForRootNode:(IJSVGRootNode*)node
 {
-//    NSXMLNode* attribute = nil;
-//    if () {
-//        CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
-//        rootNode.viewBox = [IJSVGUnitRect rectWithX:box[0] y:box[1]
-//                                              width:box[2] height:box[3]];
-//        (void)free(box);
-//    } else {
-//        // its possible wlength or hlength are nil
-//        CGFloat w = _rootNode.width.value;
-//        CGFloat h = _rootNode.height.value;
-//
-//        if (h == 0.f && w != 0.f) {
-//            h = w;
-//        } else if (w == 0.f && h != 0.f) {
-//            w = h;
-//        }
-//        rootNode.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
-//                                              width:w height:h];
-//    }
-    
     if(node.viewBox == nil) {
         CGFloat width = node.width.value;
         CGFloat height = node.height.value;
@@ -632,6 +610,11 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     IJSVGNode* computedNode = nil;
     switch(nodeType) {
+        case IJSVGNodeTypeForeignObject: {
+            // do nothing for foreign objects, we dont support them
+            break;
+        }
+            
         case IJSVGNodeTypeStyle: {
             [self parseStyleElement:element
                          parentNode:node];

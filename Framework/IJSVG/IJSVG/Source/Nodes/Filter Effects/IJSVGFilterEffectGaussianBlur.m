@@ -7,12 +7,26 @@
 //
 
 #import "IJSVGFilterEffectGaussianBlur.h"
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGFilterEffectGaussianBlur
 
++ (CIFilter*)sharedFilter
+{
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    NSString* key = @"CIFilterGaussianBlur";
+    CIFilter* filter = nil;
+    if((filter = [manager userInfoObjectForKey:key]) == nil) {
+        filter = [CIFilter filterWithName:@"CIGaussianBlur"];
+        [manager setUserInfoObject:filter
+                            forKey:key];
+    }
+    return filter;
+}
+
 - (CIImage*)processImage:(CIImage*)image
 {
-    CIFilter* filter = [CIFilter filterWithName:@"CIGaussianBlur"];
+    CIFilter* filter = [self.class sharedFilter];
     [filter setDefaults];
     [filter setValue:image forKey:kCIInputImageKey];
     [filter setValue:@(self.stdDeviation.value) forKey:kCIInputRadiusKey];

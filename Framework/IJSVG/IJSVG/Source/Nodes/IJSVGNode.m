@@ -137,6 +137,9 @@
     if(strcmp(name, "desc") == 0) {
         return IJSVGNodeTypeDesc;
     }
+    if(strcmp(name, "foreignobject") == 0) {
+        return IJSVGNodeTypeForeignObject;
+    }
     if(strcmp(name, "filter") == 0) {
         return IJSVGNodeTypeFilter;
     }

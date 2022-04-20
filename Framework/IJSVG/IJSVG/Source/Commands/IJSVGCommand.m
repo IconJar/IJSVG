@@ -19,6 +19,7 @@
 #import "IJSVGCommandSmoothCurve.h"
 #import "IJSVGCommandSmoothQuadraticCurve.h"
 #import "IJSVGCommandVerticalLine.h"
+#import "IJSVGThreadManager.h"
 
 @implementation IJSVGCommand
 
@@ -112,10 +113,9 @@
 
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
 {
-    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
     NSArray<IJSVGCommand*>* commands = [self commandsForDataCharacters:buffer
-                                                            dataStream:stream];
-    IJSVGPathDataStreamRelease(stream);
+                                                            dataStream:manager.pathDataStream];
     return commands;
 }
 

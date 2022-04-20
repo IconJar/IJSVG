@@ -231,12 +231,6 @@
         // its highly likely that the stroke layer is larger than the layer its being
         // drawing into, so we need to increase the layer size to match or any groups
         // that this is inside wont be the correct frame
-//        layer.borderColor = NSColor.greenColor.CGColor;
-//        layer.borderWidth = 1.f;
-        
-//        CGRect strokeLayerFrame = strokeLayer.frame;
-//        strokeLayerFrame.origin.x = strokeLayerFrame.origin.y = strokeWidthDifference;
-//        strokeLayer.frame = strokeLayerFrame;
         
         // we need to work out what type of fill we need for the layer
         switch([IJSVGLayer fillTypeForFill:node.stroke]) {
@@ -251,7 +245,7 @@
                 [layer addSublayer:patternLayer];
                 break;
             }
-//            // gradients
+            // gradients
             case IJSVGLayerFillTypeGradient: {
                 IJSVGGradientLayer* gradientLayer = nil;
                 gradientLayer = [self drawableBasicGradientLayerForLayer:strokeLayer

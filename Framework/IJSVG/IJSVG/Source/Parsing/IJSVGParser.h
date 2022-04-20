@@ -25,6 +25,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVG/IJSVGThreadManager.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 

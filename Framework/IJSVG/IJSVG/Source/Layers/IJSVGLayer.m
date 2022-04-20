@@ -261,9 +261,6 @@
     [IJSVGLayer renderLayer:layer
                   inContext:offscreenContext];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
-    NSImage* prev = [[[NSImage alloc] initWithCGImage:image
-                                                 size:NSMakeSize(CGImageGetWidth(image), CGImageGetHeight(image))] autorelease];
-    
     CGContextRelease(offscreenContext);
     return image;
 }

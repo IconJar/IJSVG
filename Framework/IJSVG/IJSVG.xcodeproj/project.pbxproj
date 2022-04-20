@@ -33,6 +33,8 @@
 		599EB4D3238FF570004CB6BC /* libobjc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 599EB4D2238FF535004CB6BC /* libobjc.tbd */; };
 		59A24EBC23F480EA0090C374 /* IJSVGUnitSize.h in Headers */ = {isa = PBXBuildFile; fileRef = 59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59A24EBD23F480EA0090C374 /* IJSVGUnitSize.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */; };
+		59AC865A2810156B00CD5685 /* IJSVGThreadManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 59AC86582810156B00CD5685 /* IJSVGThreadManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		59AC865B2810156B00CD5685 /* IJSVGThreadManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 59AC86592810156B00CD5685 /* IJSVGThreadManager.m */; };
 		59E7CFAF23B148600077D599 /* IJSVGCommandParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 59E7CFAD23B148600077D599 /* IJSVGCommandParser.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59E7CFB023B148600077D599 /* IJSVGCommandParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 59E7CFAE23B148600077D599 /* IJSVGCommandParser.m */; };
 		59EB75D623905F7300F5AE63 /* IJSVGLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 59EB756523905F6B00F5AE63 /* IJSVGLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -183,6 +185,8 @@
 		599EB4D2238FF535004CB6BC /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
 		59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUnitSize.h; sourceTree = "<group>"; };
 		59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitSize.m; sourceTree = "<group>"; };
+		59AC86582810156B00CD5685 /* IJSVGThreadManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGThreadManager.h; sourceTree = "<group>"; };
+		59AC86592810156B00CD5685 /* IJSVGThreadManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGThreadManager.m; sourceTree = "<group>"; };
 		59E7CFAD23B148600077D599 /* IJSVGCommandParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandParser.h; path = IJSVG/Source/Parsing/IJSVGCommandParser.h; sourceTree = SOURCE_ROOT; };
 		59E7CFAE23B148600077D599 /* IJSVGCommandParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = IJSVGCommandParser.m; path = IJSVG/Source/Parsing/IJSVGCommandParser.m; sourceTree = SOURCE_ROOT; };
 		59EB756523905F6B00F5AE63 /* IJSVGLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGLayer.h; sourceTree = "<group>"; };
@@ -490,6 +494,8 @@
 				591A3E4C25CC91F800AD45B7 /* IJSVGParsing.m */,
 				59F9EAF62808BB5F00188ACB /* IJSVGViewBox.h */,
 				59F9EAF72808BB5F00188ACB /* IJSVGViewBox.m */,
+				59AC86582810156B00CD5685 /* IJSVGThreadManager.h */,
+				59AC86592810156B00CD5685 /* IJSVGThreadManager.m */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -675,6 +681,7 @@
 				595BA91C280EB29B00AD1C89 /* IJSVGFilterLayer.h in Headers */,
 				590AA096280DE668002BBE12 /* IJSVGFilterEffectGaussianBlur.h in Headers */,
 				590EB7A427F637EF0047CECF /* IJSVGTransformLayer.h in Headers */,
+				59AC865A2810156B00CD5685 /* IJSVGThreadManager.h in Headers */,
 				5978C46A280A241200D25296 /* IJSVGRootLayer.h in Headers */,
 				59F9EAF82808BB5F00188ACB /* IJSVGViewBox.h in Headers */,
 				59EB760B23905F7300F5AE63 /* IJSVGStyleSheetSelector.h in Headers */,
@@ -756,6 +763,7 @@
 				59EB763923905F7300F5AE63 /* IJSVGCommandSmoothQuadraticCurve.m in Sources */,
 				59EB75D823905F7300F5AE63 /* IJSVGStyleSheetRule.m in Sources */,
 				590AA092280DDDA3002BBE12 /* IJSVGFilterEffect.m in Sources */,
+				59AC865B2810156B00CD5685 /* IJSVGThreadManager.m in Sources */,
 				59EB75FB23905F7300F5AE63 /* IJSVGPath.m in Sources */,
 				590AA097280DE668002BBE12 /* IJSVGFilterEffectGaussianBlur.m in Sources */,
 				59F36509262F1ABB00BCE3FD /* IJSVGColorType.m in Sources */,

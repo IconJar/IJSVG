@@ -9,6 +9,7 @@
 #import "IJSVGFilter.h"
 #import "IJSVGFilterEffect.h"
 #import "IJSVGLayer.h"
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGFilter
 
@@ -18,22 +19,26 @@
     IJSVGFilter* filter = layer.filter;
     layer.filter = nil;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    uint32_t info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
     CGImageRef originalImage = [IJSVGLayer newImageForLayer:layer
                                                  colorSpace:colorSpace
-                                                 bitmapInfo:kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little
+                                                 bitmapInfo:info
                                                       scale:1.f];
     CIImage* image = [CIImage imageWithCGImage:originalImage];
     CGColorSpaceRelease(colorSpace);
     CGImageRelease(originalImage);
+    
     for(IJSVGFilterEffect* effect in self.children) {
         image = [effect processImage:image];
     }
-    CIContext* context = [CIContext context];
+    
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    CIContext* context = manager.CIContext;
     CGImageRef outputImage = [context createCGImage:image
                                            fromRect:image.extent];
-    NSImage* nimage = [[[NSImage alloc] initWithCGImage:outputImage
-                                                   size:NSMakeSize(CGImageGetWidth(outputImage),
-                                                                   CGImageGetHeight(outputImage))] autorelease];
+//    NSImage* nimage = [[[NSImage alloc] initWithCGImage:outputImage
+//                                                   size:NSMakeSize(CGImageGetWidth(outputImage),
+//                                                                   CGImageGetHeight(outputImage))] autorelease];
     layer.filter = filter;
     return outputImage;
 }

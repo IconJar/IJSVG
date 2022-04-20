@@ -18,8 +18,7 @@
 
 - (id)initWithFrame:(NSRect)frameRect
 {
-    if( ( self = [super initWithFrame:frameRect] ) != nil )
-    {
+    if( ( self = [super initWithFrame:frameRect] ) != nil ) {
         svg = [self svg].retain;
         svg.renderQuality = kIJSVGRenderQualityFullResolution;
         svg.renderingBackingScaleHelper = ^{
@@ -31,7 +30,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"heart"];
+    return [IJSVG svgNamed:@"car"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
