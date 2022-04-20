@@ -10,11 +10,6 @@
 
 @implementation IJSVGColorNode
 
-- (void)dealloc
-{
-    (void)_color, _color = nil;
-}
-
 + (IJSVGNode*)colorNodeWithColor:(NSColor *)color
 {
     return [[self alloc] initWithColor:color];

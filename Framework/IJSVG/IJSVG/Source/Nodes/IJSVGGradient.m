@@ -23,7 +23,7 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGGradient* clone = [super copyWithZone:zone];
-    clone.gradient = [self.gradient copy];
+    clone.gradient = self.gradient.copy;
     return clone;
 }
 
@@ -36,7 +36,7 @@
     }
 }
 
-+ (CGFloat *)computeColorStops:(IJSVGGradient*)gradient
++ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                         colors:(NSArray**)someColors
 {
     NSArray<IJSVGNode*>* stops = gradient.children;

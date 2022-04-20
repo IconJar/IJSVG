@@ -25,14 +25,19 @@
     return self;
 }
 
+- (BOOL)requiresBackingScale
+{
+    return YES;
+}
+
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     // we are responsible for recursively calling the sublayer
     // with the new backing scale factor
-    [IJSVGLayer recursivelyWalkLayer:_sublayer
-                           withBlock:^(CALayer<IJSVGDrawableLayer>* layer, BOOL *stop) {
-        layer.backingScaleFactor = backingScaleFactor;
-    }];
+    [IJSVGLayer setBackingScaleFactor:backingScaleFactor
+                        renderQuality:self.renderQuality
+                   recursivelyToLayer:_sublayer];
+    
     BOOL needsChange = self.backingScaleFactor != backingScaleFactor;
     [super setBackingScaleFactor:backingScaleFactor];
     if(needsChange == YES) {

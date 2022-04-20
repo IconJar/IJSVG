@@ -22,7 +22,7 @@
 @property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
 @property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
-@property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
+@property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;

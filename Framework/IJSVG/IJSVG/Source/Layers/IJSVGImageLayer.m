@@ -18,7 +18,7 @@
     return self;
 }
 
-- (BOOL)requiresBackingScaleHelp
+- (BOOL)requiresBackingScale
 {
     return YES;
 }

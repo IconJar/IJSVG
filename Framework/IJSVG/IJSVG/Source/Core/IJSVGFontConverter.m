@@ -14,7 +14,7 @@
 - (id)initWithFontAtFileURL:(NSURL*)url
 {
     if ((self = [super init]) != nil) {
-        _url = [url copy];
+        _url = url.copy;
 
         // load the font
         CGDataProviderRef dataProvider = CGDataProviderCreateWithURL((CFURLRef)_url);
@@ -22,7 +22,7 @@
         CTFontRef font = CTFontCreateWithGraphicsFont(fontRef, 30.f, NULL, NULL);
 
         // toll free bridge between NSFont at CTFont :)
-        _font = [(__bridge NSFont*)font copy];
+        _font = ((__bridge NSFont*)font).copy;
         CGFontRelease(fontRef);
         CGDataProviderRelease(dataProvider);
         CFRelease(font);

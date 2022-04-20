@@ -305,6 +305,19 @@
     }
 }
 
++ (void)setBackingScaleFactor:(CGFloat)scale
+                renderQuality:(IJSVGRenderQuality)quality
+           recursivelyToLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    [self recursivelyWalkLayer:layer
+                     withBlock:^(CALayer<IJSVGBasicLayer>*sublayer, BOOL *stop) {
+        if(sublayer.requiresBackingScale == YES) {
+            sublayer.backingScaleFactor = scale;
+        }
+        sublayer.renderQuality = quality;
+    }];
+}
+
 + (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     [self logLayer:layer
@@ -440,7 +453,7 @@
     return [IJSVGLayer absoluteTransformForLayer:self];
 }
 
-- (BOOL)requiresBackingScaleHelp
+- (BOOL)requiresBackingScale
 {
     return _maskLayer != nil || _clipLayer != nil;
 }

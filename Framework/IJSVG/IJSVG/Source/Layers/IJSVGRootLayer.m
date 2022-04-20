@@ -18,7 +18,11 @@
         IJSVGViewBoxDrawingBlock drawingBlock = ^(CGSize size) {
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
-            weakSelf.backingScaleFactor *= MIN(size.width, size.height);
+            CGFloat nScale = MIN(size.width, size.height);
+            nScale += weakSelf.backingScaleFactor;
+            weakSelf.backingScaleFactor += nScale;
+            
+            // perform the actual render now we have computed backing scale
             [super performRenderInContext:ctx];
         };
         [IJSVGViewBox drawViewBox:viewBox
@@ -34,6 +38,8 @@
 
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
+    // get nearest .5f
+    backingScaleFactor = round(backingScaleFactor * 2.f) / 2.f;
     [super setBackingScaleFactor:backingScaleFactor];
     if(_disableBackingScalePropagation == YES) {
         return;
@@ -43,13 +49,10 @@
 
 - (void)propagateBackingScalePropertiesToSublayers
 {
-    __weak IJSVGRootLayer* weakSelf = self;
     for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
-        [IJSVGLayer recursivelyWalkLayer:layer
-                               withBlock:^(CALayer<IJSVGDrawableLayer>* propLayer, BOOL *stop) {
-            propLayer.renderQuality = weakSelf.renderQuality;
-            propLayer.backingScaleFactor = weakSelf.backingScaleFactor;
-        }];
+        [IJSVGLayer setBackingScaleFactor:self.backingScaleFactor
+                            renderQuality:self.renderQuality
+                       recursivelyToLayer:layer];
     }
 }
 

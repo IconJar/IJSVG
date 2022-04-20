@@ -246,7 +246,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
 {
     if((self = [super init]) != nil)
     {
-        selector = [string copy];
+        selector = string.copy;
         _rawSelectors = [[NSMutableArray alloc] init];
         
         // failed to compile

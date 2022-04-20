@@ -221,10 +221,6 @@
         
     // stroke the path
     if(strokeLayer != nil) {
-        // its highly likely that the stroke layer is larger than the layer its being
-        // drawing into, so we need to increase the layer size to match or any groups
-        // that this is inside wont be the correct frame
-        
         // we need to work out what type of fill we need for the layer
         switch([IJSVGLayer fillTypeForFill:node.stroke]) {
             // patterns

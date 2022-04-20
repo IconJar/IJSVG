@@ -11,6 +11,7 @@
 @implementation IJSVGBasicLayer
 
 @synthesize backingScaleFactor;
+@synthesize requiresBackingScale;
 @synthesize renderQuality;
 @synthesize debugLayers;
 

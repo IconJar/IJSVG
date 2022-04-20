@@ -14,7 +14,7 @@
 
 - (void)dealloc
 {
-    (void)free(_parameters);
+    (void)free(_parameters), _parameters = NULL;
 }
 
 - (id)copyWithZone:(NSZone*)zone

@@ -20,7 +20,7 @@
 
 @implementation IJSVGPatternLayer
 
-- (BOOL)requiresBackingScaleHelp
+- (BOOL)requiresBackingScale
 {
     return YES;
 }

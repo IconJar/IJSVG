@@ -11,16 +11,6 @@
 
 @implementation IJSVGRadialGradient
 
-- (void)dealloc
-{
-    (void)(_cx), _cx = nil;
-    (void)(_cy), _cy = nil;
-    (void)(_fx), _fx = nil;
-    (void)(_fy), _fy = nil;
-    (void)(_fr), _fr = nil;
-    (void)(_r), _r = nil;
-}
-
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGRadialGradient* grad = [super copyWithZone:zone];

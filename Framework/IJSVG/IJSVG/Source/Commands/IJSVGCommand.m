@@ -256,7 +256,7 @@
     NSMutableArray<IJSVGCommand*>* subcommands = nil;
     subcommands = [[NSMutableArray alloc] initWithCapacity:self.subCommands.count];
     for(IJSVGCommand* subcommand in self.subCommands) {
-        IJSVGCommand* subCopy = [subcommand copy];
+        IJSVGCommand* subCopy = subcommand.copy;
         subCopy.previousCommand = lastCommand;
         subCopy.isSubCommand = lastCommand != nil;
         [subcommands addObject:subCopy];

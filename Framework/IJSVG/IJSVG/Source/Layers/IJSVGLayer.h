@@ -39,6 +39,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @protocol IJSVGBasicLayer <NSObject>
 @required
 @property (nonatomic, assign) CGFloat backingScaleFactor;
+@property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, readonly) NSArray<CALayer<IJSVGBasicLayer>*>* debugLayers;
 
@@ -53,7 +54,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
-@property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
+@property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* rootLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
@@ -79,7 +80,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
 @property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
 @property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
-@property (nonatomic, readonly) BOOL requiresBackingScaleHelp;
+@property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
@@ -104,6 +105,10 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
 + (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
                    withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block;
+
++ (void)setBackingScaleFactor:(CGFloat)scale
+                renderQuality:(IJSVGRenderQuality)quality
+           recursivelyToLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

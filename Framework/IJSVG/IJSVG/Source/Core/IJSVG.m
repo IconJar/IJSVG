@@ -20,15 +20,6 @@
 {
     // this can all be called on the background thread to be released
     BOOL hasTransaction = IJSVGBeginTransaction();
-    (void)(_renderingBackingScaleHelper), _renderingBackingScaleHelper = nil;
-    (void)(_replacementColors), _replacementColors = nil;
-    (void)(_renderingStyle), _renderingStyle = nil;
-    (void)(_rootNode), _rootNode = nil;
-    (void)(_intrinsicSize), _intrinsicSize = nil;
-    (void)(_title), _title = nil;
-    (void)(_desc), _desc = nil;
-    (void)(_rootLayer), _rootLayer = nil;
-
     // kill any memory that has been around
     (void)(_layerTree), _layerTree = nil;
     if (hasTransaction == YES) {
@@ -609,10 +600,9 @@
                size:(NSSize)aSize
               error:(NSError**)error
 {
-    return
-        [self drawInRect:NSMakeRect(point.x, point.y,
-                             aSize.width, aSize.height)
-                   error:error];
+    return [self drawInRect:NSMakeRect(point.x, point.y,
+                                       aSize.width, aSize.height)
+                      error:error];
 }
 
 - (BOOL)drawInRect:(NSRect)rect
@@ -781,9 +771,7 @@
 {
     __block CGFloat scale = 1.f;
     scale = (self.renderingBackingScaleHelper)();
-    if (scale < 1.f) {
-        scale = 1.f;
-    }
+    scale = MAX(1.f, scale);
     return _backingScale = scale;
 }
 

@@ -108,7 +108,7 @@
     IJSVGStyle* newStyle = [[IJSVGStyle alloc] init];
 
     // grab the current style
-    NSMutableDictionary* dict = [[self properties] mutableCopy];
+    NSMutableDictionary* dict = [self properties].mutableCopy;
 
     // overwride the style with the new styles
     [dict addEntriesFromDictionary:[style properties]];

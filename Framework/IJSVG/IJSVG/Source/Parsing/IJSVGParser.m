@@ -800,10 +800,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
           withReferenceElement:(NSXMLElement*)reference
 {
-    NSXMLElement* copy = [reference copy];
+    NSXMLElement* copy = reference.copy;
     for (__strong NSXMLNode* attribute in element.attributes) {
         [copy removeAttributeForName:attribute.name];
-        attribute = [attribute copy];
+        attribute = attribute.copy;
         [copy addAttribute:attribute];
     }
     return copy;

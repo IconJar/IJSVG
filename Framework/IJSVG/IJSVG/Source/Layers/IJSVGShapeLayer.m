@@ -44,7 +44,7 @@
     return self.bounds;
 }
 
-- (BOOL)requiresBackingScaleHelp
+- (BOOL)requiresBackingScale
 {
     return _maskLayer != nil || _clipLayer != nil;
 }

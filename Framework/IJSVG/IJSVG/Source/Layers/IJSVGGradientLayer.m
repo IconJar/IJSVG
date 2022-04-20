@@ -11,7 +11,7 @@
 
 @implementation IJSVGGradientLayer
 
-- (BOOL)requiresBackingScaleHelp
+- (BOOL)requiresBackingScale
 {
     return YES;
 }

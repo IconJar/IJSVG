@@ -12,7 +12,7 @@
 
 @synthesize backingScaleFactor;
 @synthesize renderQuality;
-@synthesize requiresBackingScaleHelp;
+@synthesize requiresBackingScale;
 @synthesize maskLayer = _maskLayer;
 @synthesize fillRule = _fillRule;
 @synthesize clipRule = _clipRule;
@@ -36,11 +36,6 @@
 - (CALayer<IJSVGDrawableLayer>*)rootLayer
 {
     return [IJSVGLayer rootLayerForLayer:self];
-}
-
-- (BOOL)requiresBackingScaleHelp
-{
-    return YES;
 }
 
 - (void)renderInContext:(CGContextRef)ctx

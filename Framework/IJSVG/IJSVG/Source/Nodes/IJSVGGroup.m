@@ -10,11 +10,6 @@
 
 @implementation IJSVGGroup
 
-- (void)dealloc
-{
-    (void)(_children), _children = nil;
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {
@@ -37,7 +32,7 @@
     [node prepareFromCopy];
 
     for (__strong IJSVGNode* childNode in _children) {
-        childNode = [childNode copy];
+        childNode = childNode.copy;
         childNode.parentNode = node;
         [node addChild:childNode];
     }

@@ -12,14 +12,6 @@
 
 @synthesize classes;
 
-- (void)dealloc
-{
-    (void)(classes), classes = nil;
-    (void)(_identifier), _identifier = nil;
-    (void)(_tag), _tag = nil;
-    (void)(_combinatorString), _combinatorString = nil;
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {
