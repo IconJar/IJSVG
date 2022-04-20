@@ -36,9 +36,6 @@
     CIContext* context = manager.CIContext;
     CGImageRef outputImage = [context createCGImage:image
                                            fromRect:image.extent];
-//    NSImage* nimage = [[[NSImage alloc] initWithCGImage:outputImage
-//                                                   size:NSMakeSize(CGImageGetWidth(outputImage),
-//                                                                   CGImageGetHeight(outputImage))] autorelease];
     layer.filter = filter;
     return outputImage;
 }

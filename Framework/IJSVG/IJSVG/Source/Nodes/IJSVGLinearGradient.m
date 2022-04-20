@@ -36,7 +36,7 @@
                                                colorSpace:IJSVGColor.defaultColorSpace];
 
     free(stopsParams);
-    return [grad autorelease];
+    return grad;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx

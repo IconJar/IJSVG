@@ -15,7 +15,6 @@
 - (void)dealloc
 {
     (void)free(_parameters);
-    [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -63,7 +62,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
                                          y:(CGFloat)y
 {
-    IJSVGTransform* transform = [[[self alloc] init] autorelease];
+    IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandTranslate;
     transform.parameterCount = 2;
     CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
@@ -76,7 +75,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (IJSVGTransform*)transformByScaleX:(CGFloat)x
                                    y:(CGFloat)y
 {
-    IJSVGTransform* transform = [[[self alloc] init] autorelease];
+    IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandScale;
     transform.parameterCount = 2;
     CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
@@ -176,7 +175,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
 {
     NSMutableArray<IJSVGTransform*>* transforms = nil;
-    transforms = [[[NSMutableArray alloc] init] autorelease];
+    transforms = [[NSMutableArray alloc] init];
     
     const char* charString = string.UTF8String;
     IJSVGParsingStringMethod** methods = NULL;
@@ -193,7 +192,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         
         // create a new transform object and parse the parameters
         NSInteger count = 0;
-        IJSVGTransform* transform = [[[self.class alloc] init] autorelease];
+        IJSVGTransform* transform = [[self.class alloc] init];
         transform.command = commandType;
         transform.sort = [self.class sortForTransformCommand:commandType];
         transform.parameters = [IJSVGUtils scanFloatsFromCString:method->parameters
@@ -442,11 +441,11 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 {
     NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
     trans = [self filterUselessAffineTransformComponents:trans];
-    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:trans.count];
     for (NSDictionary* dict in trans) {
         NSArray<NSNumber*>* data = dict[@"data"];
         NSString* method = dict[@"name"];
-        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
             [dataStrings addObject:IJSVGShortFloatStringWithOptions(number.floatValue,
                                                                     floatingPointOptions)];
@@ -464,11 +463,11 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 {
     NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
     trans = [self filterUselessAffineTransformComponents:trans];
-    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:trans.count];
     for (NSDictionary* dict in trans) {
         NSArray<NSNumber*>* data = dict[@"data"];
         NSString* method = dict[@"name"];
-        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
             [dataStrings addObject:IJSVGShortFloatString(number.floatValue)];
         }
@@ -510,7 +509,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
 + (NSArray<NSDictionary*>*)filterUselessAffineTransformComponents:(NSArray<NSDictionary*>*)components
 {
-    NSMutableArray* comps = [[[NSMutableArray alloc] initWithCapacity:components.count] autorelease];
+    NSMutableArray* comps = [[NSMutableArray alloc] initWithCapacity:components.count];
     NSArray<NSString*>* names = @[ @"translate", @"rotate", @"skewX", @"skewY" ];
     for (NSDictionary* transform in components) {
         NSString* name = transform[@"name"];
@@ -547,7 +546,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
     BOOL scaleBefore = rowSum != 0.f || sx == sy;
 
-    NSMutableArray* transforms = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* transforms = [[NSMutableArray alloc] init];
 
     // tx, ty -> translate
     if (data[4] != 0.f || data[5] != 0.f) {
@@ -585,7 +584,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         }
 
         CGFloat angle = MIN(MAX(-1.f, data[0] / sx), 1.f);
-        NSMutableArray<NSNumber*>* rotate = [[[NSMutableArray alloc] initWithCapacity:3] autorelease];
+        NSMutableArray<NSNumber*>* rotate = [[NSMutableArray alloc] initWithCapacity:3];
         [rotate addObject:@(IJSVGMathToFixed(IJSVGMathAcos(angle), precision) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f : 1.f))];
 
         if (rotate[0].floatValue != 0.f) {

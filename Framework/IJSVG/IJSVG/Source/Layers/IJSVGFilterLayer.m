@@ -13,9 +13,7 @@
 
 - (void)dealloc
 {
-    (void)[_sublayer release], _sublayer = nil;
     (void)CGImageRelease(_image), _image = nil;
-    [super dealloc];
 }
 
 - (instancetype)init
@@ -59,7 +57,7 @@
     _hostingLayer.frame = CGRectMake(frame.origin.x + (frame.size.width / 2.f - width / 2.f),
                                      frame.origin.y + (frame.size.height / 2.f - height / 2.f),
                                      width, height);
-    _hostingLayer.contents = (id)_image;
+    _hostingLayer.contents = (__bridge id)_image;
 }
 
 - (NSArray<CALayer<IJSVGBasicLayer>*>*)debugLayers

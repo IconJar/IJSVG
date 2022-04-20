@@ -15,9 +15,9 @@ static NSDictionary<NSString*, Class>* _elementClassMap = nil;
 
 + (void)load
 {
-    _elementClassMap = [@{
+    _elementClassMap = @{
         @"fegaussianblur": IJSVGFilterEffectGaussianBlur.class
-    } retain];
+    };
 }
 
 + (Class)effectClassForElementName:(NSString*)name
@@ -69,13 +69,6 @@ static NSDictionary<NSString*, Class>* _elementClassMap = nil;
         return IJSVGFilterEffectEdgeModeDuplicate;
     }
     return IJSVGFilterEffectEdgeModeNone;
-}
-
-- (void)dealloc
-{
-    (void)[_primitiveReference release], _primitiveReference = nil;
-    (void)[_stdDeviation release], _stdDeviation = nil;
-    [super dealloc];
 }
 
 - (CIImage*)processImage:(CIImage*)image

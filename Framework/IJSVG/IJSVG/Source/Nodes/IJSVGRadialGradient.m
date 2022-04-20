@@ -13,13 +13,12 @@
 
 - (void)dealloc
 {
-    (void)([_cx release]), _cx = nil;
-    (void)([_cy release]), _cy = nil;
-    (void)([_fx release]), _fx = nil;
-    (void)([_fy release]), _fy = nil;
-    (void)([_fr release]), _fr = nil;
-    (void)([_r release]), _r = nil;
-    [super dealloc];
+    (void)(_cx), _cx = nil;
+    (void)(_cy), _cy = nil;
+    (void)(_fx), _fx = nil;
+    (void)(_fy), _fy = nil;
+    (void)(_fr), _fr = nil;
+    (void)(_r), _r = nil;
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -91,9 +90,9 @@
     CGFloat* colorStops = [self.class computeColorStops:gradient
                                                  colors:&colors];
     
-    NSGradient* ret = [[[NSGradient alloc] initWithColors:colors
+    NSGradient* ret = [[NSGradient alloc] initWithColors:colors
                                               atLocations:colorStops
-                                               colorSpace:IJSVGColor.defaultColorSpace] autorelease];
+                                               colorSpace:IJSVGColor.defaultColorSpace];
     free(colorStops);
     return ret;
 }

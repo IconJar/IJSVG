@@ -31,13 +31,6 @@
 
 @synthesize style = _style;
 
-- (void)dealloc
-{
-    (void)([_viewPortStack release]), _viewPortStack = nil;
-    (void)([_style release]), _style = nil;
-    [super dealloc];
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {
@@ -379,7 +372,7 @@
 - (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSArray<IJSVGNode*>*)nodes
 {
     NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
-    layers = [[[NSMutableArray alloc] initWithCapacity:nodes.count] autorelease];
+    layers = [[NSMutableArray alloc] initWithCapacity:nodes.count];
     for(IJSVGNode* node in nodes) {
         CALayer<IJSVGDrawableLayer>* layer = [self drawableLayerForNode:node];
         if(layer != nil) {
@@ -549,16 +542,16 @@
 
 - (IJSVGLayer*)drawableLayerForImageNode:(IJSVGImage*)image
 {
-   IJSVGImageLayer* layer = [[[IJSVGImageLayer alloc] initWithImage:image] autorelease];
-   // make sure we set the width and height correctly,
-   // as this may not be exactly the same as the size of the
-   // given image
-   CGRect frame = layer.frame;
-   frame.size.width = image.width.value;
-   frame.size.height = image.height.value;
-   layer.frame = frame;
-   [layer setNeedsLayout];
-   return layer;
+    IJSVGImageLayer* layer = [[IJSVGImageLayer alloc] initWithImage:image];
+    // make sure we set the width and height correctly,
+    // as this may not be exactly the same as the size of the
+    // given image
+    CGRect frame = layer.frame;
+    frame.size.width = image.width.value;
+    frame.size.height = image.height.value;
+    layer.frame = frame;
+    [layer setNeedsLayout];
+    return layer;
 }
 
 @end

@@ -955,7 +955,7 @@
 		594CF478238FF38E009B251B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CODE_SIGN_STYLE = Automatic;
@@ -983,7 +983,7 @@
 		594CF479238FF38E009B251B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_COMMA = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CODE_SIGN_STYLE = Automatic;

@@ -20,18 +20,17 @@
 {
     // this can all be called on the background thread to be released
     BOOL hasTransaction = IJSVGBeginTransaction();
-    (void)([_renderingBackingScaleHelper release]), _renderingBackingScaleHelper = nil;
-    (void)([_replacementColors release]), _replacementColors = nil;
-    (void)([_renderingStyle release]), _renderingStyle = nil;
-    (void)([_rootNode release]), _rootNode = nil;
-    (void)([_intrinsicSize release]), _intrinsicSize = nil;
-    (void)([_title release]), _title = nil;
-    (void)([_desc release]), _desc = nil;
-    (void)([_rootLayer release]), _rootLayer = nil;
+    (void)(_renderingBackingScaleHelper), _renderingBackingScaleHelper = nil;
+    (void)(_replacementColors), _replacementColors = nil;
+    (void)(_renderingStyle), _renderingStyle = nil;
+    (void)(_rootNode), _rootNode = nil;
+    (void)(_intrinsicSize), _intrinsicSize = nil;
+    (void)(_title), _title = nil;
+    (void)(_desc), _desc = nil;
+    (void)(_rootLayer), _rootLayer = nil;
 
     // kill any memory that has been around
-    (void)([_layerTree release]), _layerTree = nil;
-    [super dealloc];
+    (void)(_layerTree), _layerTree = nil;
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
     }
@@ -71,14 +70,14 @@
     }
     if ((str = [bundle pathForResource:[string stringByDeletingPathExtension]
                                 ofType:ext]) != nil) {
-        return [[[self alloc] initWithFile:str
+        return [[self alloc] initWithFile:str
                                      error:error
-                                  delegate:delegate] autorelease];
+                                  delegate:delegate];
     }
     
     // check the asset catalogues
-    return [[[self alloc] initWithDataAssetNamed:string
-                                           error:error] autorelease];
+    return [[self alloc] initWithDataAssetNamed:string
+                                           error:error];
 }
 
 - (id)initWithDataAssetNamed:(NSDataAssetName)name
@@ -93,11 +92,11 @@
                       bundle:(NSBundle*)bundle
                        error:(NSError**)error
 {
-    NSDataAsset* dataAsset = [[[NSDataAsset alloc] initWithName:name
-                                                         bundle:bundle] autorelease];
+    NSDataAsset* dataAsset = [[NSDataAsset alloc] initWithName:name
+                                                         bundle:bundle];
     if(dataAsset != nil) {
-        return [[self initWithSVGData:dataAsset.data
-                                error:error] autorelease];
+        return [self initWithSVGData:dataAsset.data
+                                error:error];
     }
     return nil;
 }
@@ -108,13 +107,13 @@
     __block IJSVGImageLayer* imageLayer = nil;
 
     // create the layers we require
-    IJSVGImage* imageNode = [[[IJSVGImage alloc] init] autorelease];
+    IJSVGImage* imageNode = [[IJSVGImage alloc] init];
     imageNode.image = image;
     
     BOOL hasTransaction = IJSVGBeginTransaction();
-    layer = [[[IJSVGGroupLayer alloc] init] autorelease];
+    layer = [[IJSVGGroupLayer alloc] init];
     imageLayer =
-        [[[IJSVGImageLayer alloc] initWithImage:imageNode] autorelease];
+        [[IJSVGImageLayer alloc] initWithImage:imageNode];
     [layer addSublayer:imageLayer];
     if (hasTransaction == YES) {
         IJSVGEndTransaction();
@@ -211,7 +210,7 @@
         IJSVGParser* parser = [IJSVGParser groupForFileURL:aURL
                                                       error:&anError
                                                    delegate:self];
-        _rootNode = parser.rootNode.retain;
+        _rootNode = parser.rootNode;
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -220,7 +219,7 @@
             if (error != NULL) {
                 *error = anError;
             }
-            (void)([self release]), self = nil;
+            (void)(self), self = nil;
             return nil;
         }
     }
@@ -238,7 +237,7 @@
 {
     NSString* svgString = [[NSString alloc] initWithData:data
                                                 encoding:NSUTF8StringEncoding];
-    return [self initWithSVGString:svgString.autorelease
+    return [self initWithSVGString:svgString
                              error:error];
 }
 
@@ -269,10 +268,10 @@
         [self _checkDelegate];
 
         // setup the parser
-        IJSVGParser* parser = [[[IJSVGParser alloc] initWithSVGString:string
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
                                                                 error:&anError
-                                                             delegate:self] autorelease];
-        _rootNode = parser.rootNode.retain;
+                                                             delegate:self];
+        _rootNode = parser.rootNode;
 
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
@@ -282,7 +281,7 @@
             if (error != NULL) {
                 *error = anError;
             }
-            (void)([self release]), self = nil;
+            (void)(self), self = nil;
             return nil;
         }
     }
@@ -301,12 +300,12 @@
 - (void)_setupBasicInfoFromGroup
 {
     _viewBox = [_rootNode.viewBox computeValue:CGSizeZero];
-    _intrinsicSize = _rootNode.intrinsicSize.retain;
+    _intrinsicSize = _rootNode.intrinsicSize;
 }
 
 - (void)_setupBasicsFromAnyInitializer
 {
-    self.renderingStyle = [[[IJSVGRenderingStyle alloc] init] autorelease];
+    self.renderingStyle = [[IJSVGRenderingStyle alloc] init];
     self.clipToViewport = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
 
@@ -358,34 +357,34 @@
 
 - (BOOL)isFont
 {
-    return [_rootNode isFont];
+    return NO;//[_rootNode isFont];
 }
 
 - (NSArray<IJSVGPath*>*)glyphs
 {
-    return [_rootNode glyphs];
+    return @[];//[_rootNode glyphs];
 }
 
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
 {
-    return [_rootNode subSVGs:recursive];
+    return @[];//[_rootNode subSVGs:recursive];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
 {
-    IJSVGExporter* exporter = [[[IJSVGExporter alloc] initWithSVG:self
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:self
                                                              size:self.viewBox.size
-                                                          options:options] autorelease];
+                                                          options:options];
     return [exporter SVGString];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    IJSVGExporter* exporter = [[[IJSVGExporter alloc] initWithSVG:self
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:self
                                                              size:self.viewBox.size
                                                           options:options
-                                             floatingPointOptions:floatingPointOptions] autorelease];
+                                             floatingPointOptions:floatingPointOptions];
     return [exporter SVGString];
 }
 
@@ -483,7 +482,7 @@
     NSImage* image = [[NSImage alloc] initWithCGImage:ref
                                                  size:aSize];
     CGImageRelease(ref);
-    return image.autorelease;
+    return image;
 }
 
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
@@ -515,7 +514,7 @@
                      error:(NSError**)error
 {
     // create the data for the PDF
-    NSMutableData* data = [[[NSMutableData alloc] init] autorelease];
+    NSMutableData* data = [[NSMutableData alloc] init];
 
     // assign the data to the consumer
     CGDataConsumerRef dataConsumer = CGDataConsumerCreateWithCFData((CFMutableDataRef)data);
@@ -592,7 +591,7 @@
     [self rootLayer];
 
     // set the scale
-    __block NSView* weakView = view;
+    __weak NSView* weakView = view;
     self.renderingBackingScaleHelper = ^CGFloat {
         return weakView.window.screen.backingScaleFactor;
     };
@@ -754,7 +753,7 @@
     [self.rootLayer renderInContext:ref
                            viewPort:rect
                        backingScale:backingScale
-                            quality:_renderQuality];    
+                            quality:_renderQuality];
     CGContextRestoreGState(ref);
     if(transaction) {
         IJSVGEndTransaction();
@@ -773,7 +772,7 @@
 - (IJSVGRootLayer*)rootLayer
 {
     if(_rootLayer == nil) {
-        _rootLayer = [self.layerTree rootLayerForRootNode:_rootNode].retain;
+        _rootLayer = [self.layerTree rootLayerForRootNode:_rootNode];
     }
     return _rootLayer;
 }
@@ -790,8 +789,7 @@
 
 - (void)setRenderingStyle:(IJSVGRenderingStyle*)style
 {
-    (void)([_renderingStyle release]), _renderingStyle = nil;
-    _renderingStyle = style.retain;
+    _renderingStyle = style;
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath
@@ -812,12 +810,12 @@
 
 - (void)invalidateLayerTree
 {
-    (void)([_layerTree release]), _layerTree = nil;
+    (void)(_layerTree), _layerTree = nil;
 }
 
 - (IJSVGColorList*)colorList
 {
-    IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
+    IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
     void (^block)(CALayer* layer, BOOL* stop) =
     ^void(CALayer* layer, BOOL* stop) {
         

@@ -11,14 +11,6 @@
 
 @implementation IJSVGFontConverter
 
-- (void)dealloc
-{
-    (void)([_transformedPaths release]), _transformedPaths = nil;
-    (void)([_url release]), _url = nil;
-    (void)([_font release]), _font = nil;
-    [super dealloc];
-}
-
 - (id)initWithFontAtFileURL:(NSURL*)url
 {
     if ((self = [super init]) != nil) {
@@ -30,7 +22,7 @@
         CTFontRef font = CTFontCreateWithGraphicsFont(fontRef, 30.f, NULL, NULL);
 
         // toll free bridge between NSFont at CTFont :)
-        _font = [(NSFont*)font copy];
+        _font = [(__bridge NSFont*)font copy];
         CGFontRelease(fontRef);
         CGDataProviderRelease(dataProvider);
         CFRelease(font);
@@ -46,7 +38,7 @@
 - (NSArray*)allCharacters
 {
     NSCharacterSet* charSet = _font.coveredCharacterSet;
-    NSMutableArray* array = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* array = [[NSMutableArray alloc] init];
     NSStringEncoding encoding = NSUTF32LittleEndianStringEncoding;
     for (int plane = 0; plane <= 16; plane++) {
         if ([charSet hasMemberInPlane:plane]) {
@@ -54,9 +46,9 @@
             for (c = plane << 16; c < (plane + 1) << 16; c++) {
                 if ([charSet longCharacterIsMember:c]) {
                     UTF32Char c1 = NSSwapHostIntToLittle(c);
-                    [array addObject:[[[NSString alloc] initWithBytes:&c1
-                                                               length:4
-                                                             encoding:encoding] autorelease]];
+                    [array addObject:[[NSString alloc] initWithBytes:&c1
+                                                              length:4
+                                                            encoding:encoding]];
                 }
             }
         }
@@ -66,7 +58,7 @@
 
 - (void)generateMap
 {
-    CTFontRef font = (CTFontRef)_font;
+    CTFontRef font = (__bridge CTFontRef)_font;
     for (NSString* charString in [self allCharacters]) {
         // get the characters in each char
         NSUInteger count = charString.length;
@@ -82,7 +74,7 @@
             // add SVG to the dictionary
             NSString* key = [NSString stringWithFormat:@"%04x", [charString characterAtIndex:0]];
             CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:path];
-            _transformedPaths[key] = (id)flippedPath;
+            _transformedPaths[key] = (__bridge id)flippedPath;
             CGPathRelease(flippedPath);
         }
         CGPathRelease(path);
@@ -113,15 +105,15 @@
 {
     IJSVGBeginTransaction();
     __block IJSVG* svg = nil;
-    IJSVGGroupLayer* layer = [[[IJSVGGroupLayer alloc] init] autorelease];
-    IJSVGShapeLayer* shape = [[[IJSVGShapeLayer alloc] init] autorelease];
+    IJSVGGroupLayer* layer = [[IJSVGGroupLayer alloc] init];
+    IJSVGShapeLayer* shape = [[IJSVGShapeLayer alloc] init];
     [layer addSublayer:shape];
     shape.path = path;
     CGRect box = CGPathGetPathBoundingBox(path);
     svg = [[IJSVG alloc] initWithSVGLayer:layer
                                   viewBox:box];
     IJSVGEndTransaction();
-    return [svg autorelease];
+    return svg;
 }
 
 @end

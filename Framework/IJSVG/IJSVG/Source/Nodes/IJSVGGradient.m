@@ -15,29 +15,21 @@
 
 - (void)dealloc
 {
-    (void)([_x1 release]), _x1 = nil;
-    (void)([_x2 release]), _x2 = nil;
-    (void)([_y1 release]), _y1 = nil;
-    (void)([_y2 release]), _y2 = nil;
-    (void)([_gradient release]), _gradient = nil;
-    (void)([_privateColorList release]), _privateColorList = nil;
     if (_CGGradient != nil) {
         CGGradientRelease(_CGGradient);
     }
-    [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGGradient* clone = [super copyWithZone:zone];
-    clone.gradient = [[self.gradient copy] autorelease];
+    clone.gradient = [self.gradient copy];
     return clone;
 }
 
 - (void)setColorList:(IJSVGColorList*)list
 {
-    (void)([_privateColorList release]), _privateColorList = nil;
-    _privateColorList = list.retain;
+    _privateColorList = list;
     if (_CGGradient != nil) {
         CGGradientRelease(_CGGradient);
         _CGGradient = nil;
@@ -48,7 +40,7 @@
                         colors:(NSArray**)someColors
 {
     NSArray<IJSVGNode*>* stops = gradient.children;
-    NSMutableArray* colors = [[[NSMutableArray alloc] initWithCapacity:stops.count] autorelease];
+    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
     CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
     
     NSInteger i = 0;
@@ -72,7 +64,7 @@
 
 - (IJSVGColorList*)colorList
 {
-    IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
+    IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
     NSInteger num = self.gradient.numberOfColorStops;
     for (NSInteger i = 0; i < num; i++) {
         NSColor* color;

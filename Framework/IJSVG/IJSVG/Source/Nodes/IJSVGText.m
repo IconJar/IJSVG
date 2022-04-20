@@ -10,12 +10,6 @@
 
 @implementation IJSVGText
 
-- (void)dealloc
-{
-    (void)([_text release]), _text = nil;
-    [super dealloc];
-}
-
 - (IJSVGText*)copyWithZone:(NSZone*)zone
 {
     IJSVGText* node = [super copyWithZone:zone];

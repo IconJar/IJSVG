@@ -14,11 +14,10 @@
 
 - (void)dealloc
 {
-    (void)([classes release]), classes = nil;
-    (void)([_identifier release]), _identifier = nil;
-    (void)([_tag release]), _tag = nil;
-    (void)([_combinatorString release]), _combinatorString = nil;
-    [super dealloc];
+    (void)(classes), classes = nil;
+    (void)(_identifier), _identifier = nil;
+    (void)(_tag), _tag = nil;
+    (void)(_combinatorString), _combinatorString = nil;
 }
 
 - (id)init

@@ -20,7 +20,7 @@
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = number;
     unit.type = IJSVGUnitLengthTypeNumber;
     return unit;
@@ -38,7 +38,7 @@
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
                              type:(IJSVGUnitLengthType)type
 {
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = number;
     unit.type = type;
     return unit;
@@ -171,7 +171,7 @@
         return nil;
     }
     
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = floats[0];
     unit.type = IJSVGUnitLengthTypeNumber;
     

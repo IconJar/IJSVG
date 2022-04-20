@@ -20,13 +20,6 @@
 
 @implementation IJSVGPatternLayer
 
-- (void)dealloc
-{
-    (void)([_pattern release]), _pattern = nil;
-    (void)([_patternNode release]), _patternNode = nil;
-    [super dealloc];
-}
-
 - (BOOL)requiresBackingScaleHelp
 {
     return YES;
@@ -35,7 +28,7 @@
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // reassign the layer
-    IJSVGPatternLayer* layer = (IJSVGPatternLayer*)info;
+    IJSVGPatternLayer* layer = (__bridge IJSVGPatternLayer*)info;
     CGSize size = layer.cellSize;
     CGContextSaveGState(ctx);
     CGRect rect = CGRectMake(0.f, 0.f, size.width, size.height);
@@ -109,7 +102,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
         if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
             IJSVGUnitRect* viewBox = nil;
-            viewBox = [[_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage] autorelease];
+            viewBox = [_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
             _viewBox = [viewBox computeValue:rect.size];
         }
     }

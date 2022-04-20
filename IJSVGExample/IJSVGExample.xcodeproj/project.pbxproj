@@ -23,7 +23,7 @@
 		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
 		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
 		5956658519B62F4600D805FF /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 5956658319B62F4600D805FF /* MainMenu.xib */; };
-		5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956659019B62F4700D805FF /* IJSVGExampleTests.m */; };
+		5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956659019B62F4700D805FF /* IJSVGExampleTests.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		595665DE19B6309C00D805FF /* test.svg in Resources */ = {isa = PBXBuildFile; fileRef = 595665DD19B6309C00D805FF /* test.svg */; };
 		595665E119B630B600D805FF /* SVGView.m in Sources */ = {isa = PBXBuildFile; fileRef = 595665E019B630B600D805FF /* SVGView.m */; };
 		597AC83322CFD0FC007C0E42 /* home.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597AC83222CFD0FC007C0E42 /* home.svg */; };
@@ -450,7 +450,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -492,7 +492,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = NO;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
 				CLANG_WARN_CONSTANT_CONVERSION = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
@@ -525,6 +525,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
@@ -537,6 +538,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
@@ -549,6 +551,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
@@ -569,6 +572,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",

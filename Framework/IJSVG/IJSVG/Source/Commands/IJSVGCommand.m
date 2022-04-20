@@ -122,7 +122,7 @@
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
                                           dataStream:(IJSVGPathDataStream*)dataStream
 {
-    NSMutableArray<IJSVGCommand*>* commands = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray<IJSVGCommand*>* commands = [[NSMutableArray alloc] init];
     NSUInteger len = strlen(buffer);
     NSUInteger lastIndex = len - 1;
 
@@ -152,8 +152,8 @@
             // previous command is actual subcommand
             Class commandClass = [IJSVGCommand commandClassForCommandChar:commandString[0]];
             IJSVGCommand* command = nil;
-            command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandStringBuffer:commandString
-                                                                             dataStream:dataStream] autorelease];
+            command = (IJSVGCommand*)[[commandClass alloc] initWithCommandStringBuffer:commandString
+                                                                            dataStream:dataStream];
             
             [commands addObject:command];
             
@@ -170,7 +170,7 @@
                                     bounds:(CGRect)bounds
 {
     NSMutableArray<IJSVGCommand*>* newCommands = nil;
-    newCommands = [[[NSMutableArray alloc] initWithCapacity:commands.count] autorelease];
+    newCommands = [[NSMutableArray alloc] initWithCapacity:commands.count];
     for(IJSVGCommand* command in commands) {
         IJSVGCommand* nCommand = [command commandByConvertingToUnits:unitType
                                                          boundingBox:bounds];
@@ -181,11 +181,9 @@
 
 - (void)dealloc
 {
-    (void)([_subCommands release]), _subCommands = nil;
     if (_parameters) {
         (void)(free(_parameters)), _parameters = nil;
     }
-    [super dealloc];
 }
 
 - (id)initWithCommandStringBuffer:(const char*)str
@@ -207,10 +205,10 @@
             IJSVGCommand* command = [self subcommandWithParameters:subParams
                                                         paramCount:paramCount
                                                    previousCommand:nil];
-            _subCommands = @[ command ].retain;
+            _subCommands = @[ command ];
         } else {
             NSMutableArray<IJSVGCommand*>* subCommandArray = nil;
-            subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets].autorelease;
+            subCommandArray = [[NSMutableArray alloc] initWithCapacity:sets];
 
             // interate over the sets
             IJSVGCommand* lastCommand = nil;
@@ -239,8 +237,7 @@
 
 - (void)setSubCommands:(NSArray<IJSVGCommand*>*)subCommands
 {
-    (void)[_subCommands release], _subCommands = nil;
-    _subCommands = subCommands.retain;
+    _subCommands = subCommands;
 }
 
 - (id)copyWithZone:(NSZone *)zone
@@ -257,9 +254,9 @@
     
     IJSVGCommand* lastCommand = nil;
     NSMutableArray<IJSVGCommand*>* subcommands = nil;
-    subcommands = [[[NSMutableArray alloc] initWithCapacity:self.subCommands.count] autorelease];
+    subcommands = [[NSMutableArray alloc] initWithCapacity:self.subCommands.count];
     for(IJSVGCommand* subcommand in self.subCommands) {
-        IJSVGCommand* subCopy = [[subcommand copy] autorelease];
+        IJSVGCommand* subCopy = [subcommand copy];
         subCopy.previousCommand = lastCommand;
         subCopy.isSubCommand = lastCommand != nil;
         [subcommands addObject:subCopy];
@@ -284,7 +281,7 @@
                           previousCommand:(IJSVGCommand*)aPreviousCommand
 {
     // create a subcommand per set
-    IJSVGCommand* c = [[[self.class alloc] init] autorelease];
+    IJSVGCommand* c = [[self.class alloc] init];
     c.parameterCount = paramCount;
     c.parameters = subParams;
     c.type = self.type;
@@ -330,9 +327,9 @@
 
 - (NSString *)description
 {
-    NSMutableString* str = [[[NSMutableString alloc] init] autorelease];
+    NSMutableString* str = [[NSMutableString alloc] init];
     [str appendFormat:@"%c ",_command];
-    NSMutableArray* args = [[[NSMutableArray alloc] initWithCapacity:_parameterCount] autorelease];
+    NSMutableArray* args = [[NSMutableArray alloc] initWithCapacity:_parameterCount];
     for(int i = 0; i < _parameterCount; i++) {
         [args addObject:[NSString stringWithFormat:@"%f",_parameters[i]]];
     }
@@ -346,7 +343,7 @@
     IJSVGCommand* copy = self.copy;
     [copy convertToUnits:unitType
              boundingBox:boundingBox];
-    return [copy autorelease];
+    return copy;
 }
 
 @end

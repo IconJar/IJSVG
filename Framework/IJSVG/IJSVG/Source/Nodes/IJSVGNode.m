@@ -19,32 +19,6 @@
 - (void)dealloc
 {
     (void)free(_strokeDashArray), _strokeDashArray = NULL;
-    (void)([_x release]), _x = nil;
-    (void)([_y release]), _y = nil;
-    (void)([_width release]), _width = nil;
-    (void)([_height release]), _height = nil;
-    (void)([_opacity release]), _opacity = nil;
-    (void)([_offset release]), _offset = nil;
-    (void)([_fillOpacity release]), _fillOpacity = nil;
-    (void)([_strokeOpacity release]), _strokeOpacity = nil;
-    (void)([_strokeWidth release]), _strokeWidth = nil;
-    (void)([_strokeDashOffset release]), _strokeDashOffset = nil;
-    (void)([_unicode release]), _unicode = nil;
-    (void)([_fill release]), _fill = nil;
-    (void)([_stroke release]), _stroke = nil;
-    (void)([_transforms release]), _transforms = nil;
-    (void)([_identifier release]), _identifier = nil;
-    (void)([_name release]), _name = nil;
-    (void)([_title release]), _title = nil;
-    (void)([_desc release]), _desc = nil;
-    (void)([_className release]), _className = nil;
-    (void)([_classNameList release]), _classNameList = nil;
-    (void)([_clipPath release]), _clipPath = nil;
-    (void)([_svg release]), _svg = nil;
-    (void)([_mask release]), _mask = nil;
-    (void)([_viewBox release]), _viewBox = nil;
-    (void)([_filter release]), _filter = nil;
-    [super dealloc];
 }
 
 + (IJSVGNodeType)typeForString:(NSString*)string
@@ -284,15 +258,13 @@
 - (void)setFill:(IJSVGNode*)fill
 {
     NSAssert([fill matchesTraits:IJSVGNodeTraitPaintable] || fill == nil, @"Fill must a paintable node.");
-    (void)[_fill release], _fill = nil;
-    _fill = [fill retain];
+    _fill = fill;
 }
 
 - (void)setStroke:(IJSVGNode*)stroke
 {
     NSAssert([stroke matchesTraits:IJSVGNodeTraitPaintable]|| stroke == nil, @"Stroke must be a paintable node.");
-    (void)[_stroke release], _stroke = nil;
-    _stroke = [stroke retain];
+    _stroke = stroke;
 }
 
 // winding rule can inherit..
@@ -356,7 +328,7 @@
 
 - (NSArray<NSNumber*>*)lineDashPattern
 {
-    NSMutableArray* arr = [[[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount] autorelease];
+    NSMutableArray* arr = [[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount];
     for (NSInteger i = 0; i < self.strokeDashArrayCount; i++) {
         [arr addObject:@((CGFloat)self.strokeDashArray[i])];
     }

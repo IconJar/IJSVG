@@ -12,13 +12,12 @@
 
 - (void)dealloc
 {
-    (void)[_color release], _color = nil;
-    [super dealloc];
+    (void)_color, _color = nil;
 }
 
 + (IJSVGNode*)colorNodeWithColor:(NSColor *)color
 {
-    return [[[self alloc] initWithColor:color] autorelease];
+    return [[self alloc] initWithColor:color];
 }
 
 - (id)initWithColor:(NSColor*)color {

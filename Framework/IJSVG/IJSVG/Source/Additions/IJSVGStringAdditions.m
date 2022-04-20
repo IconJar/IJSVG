@@ -18,7 +18,7 @@
         return @[];
     }
     NSMutableArray<NSString*>* strings = nil;
-    strings = [[[NSMutableArray alloc] init] autorelease];
+    strings = [[NSMutableArray alloc] init];
     char* copy = strdup(chars);
     char* spt = NULL;
     char* ptr = strtok_r(copy, aChar, &spt);

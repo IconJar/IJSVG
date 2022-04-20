@@ -10,13 +10,6 @@
 
 @implementation IJSVGStyleSheetRule
 
-- (void)dealloc
-{
-    (void)([_selectors release]), _selectors = nil;
-    (void)([_style release]), _style = nil;
-    [super dealloc];
-}
-
 - (BOOL)matchesNode:(IJSVGNode*)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector
 {

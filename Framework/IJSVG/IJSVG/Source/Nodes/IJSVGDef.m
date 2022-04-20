@@ -10,12 +10,6 @@
 
 @implementation IJSVGDef
 
-- (void)dealloc
-{
-    (void)([_dict release]), _dict = nil;
-    [super dealloc];
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {

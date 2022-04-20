@@ -11,12 +11,12 @@
 
 @interface IJSVGRadialGradient : IJSVGGradient
 
-@property (nonatomic, retain) IJSVGUnitLength* cx;
-@property (nonatomic, retain) IJSVGUnitLength* cy;
-@property (nonatomic, retain) IJSVGUnitLength* fx;
-@property (nonatomic, retain) IJSVGUnitLength* fy;
-@property (nonatomic, retain) IJSVGUnitLength* fr;
-@property (nonatomic, retain) IJSVGUnitLength* r;
+@property (nonatomic, strong) IJSVGUnitLength* cx;
+@property (nonatomic, strong) IJSVGUnitLength* cy;
+@property (nonatomic, strong) IJSVGUnitLength* fx;
+@property (nonatomic, strong) IJSVGUnitLength* fy;
+@property (nonatomic, strong) IJSVGUnitLength* fr;
+@property (nonatomic, strong) IJSVGUnitLength* r;
 
 + (NSGradient*)parseGradient:(NSXMLElement*)element
                     gradient:(IJSVGRadialGradient*)gradient;

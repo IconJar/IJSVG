@@ -10,14 +10,6 @@
 
 @implementation IJSVGRenderingStyle
 
-- (void)dealloc
-{
-    (void)([_fillColor release]), _fillColor = nil;
-    (void)([_strokeColor release]), _strokeColor = nil;
-    (void)([_colorList release]), _colorList = nil;
-    [super dealloc];
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {
@@ -34,8 +26,7 @@
     static NSArray* array = nil;
     if (array == nil) {
         array = @[ @"lineCapStyle", @"lineJoinStyle", @"lineWidth",
-            @"colorList", @"fillColor", @"strokeColor" ]
-                    .retain;
+            @"colorList", @"fillColor", @"strokeColor" ];
     }
     return array;
 }

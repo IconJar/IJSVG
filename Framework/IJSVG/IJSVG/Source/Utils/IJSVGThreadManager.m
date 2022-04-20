@@ -32,7 +32,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     NSMapTable* map = [self mapTable];
     @synchronized (map) {
         if((manager = [map objectForKey:thread]) == nil) {
-            manager = [[[self alloc] initWithThread:thread] autorelease];
+            manager = [[self alloc] initWithThread:thread];
             [map setObject:manager forKey:thread];
         }
     }
@@ -46,20 +46,16 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (void)dealloc
 {
-    (void)[_userInfo release], _userInfo = nil;
-    (void)[_thread release], _thread = nil;
-    (void)[_CIContext release], _CIContext = nil;
     if(_pathDataStream != NULL) {
         (void)IJSVGPathDataStreamRelease(_pathDataStream), _pathDataStream = NULL;
     }
-    [super dealloc];
 }
 
 - (id)initWithThread:(NSThread*)thread
 {
     if((self = [super init]) != nil) {
         // store the thread
-        _thread = thread.retain;
+        _thread = thread;
         
         // listen for teardown of the thread
         NSNotificationCenter* center = NSNotificationCenter.defaultCenter;
@@ -103,7 +99,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
         // management
         _CIContext = [CIContext contextWithOptions:@{
             kCIImageColorSpace: NSNull.null
-        }].retain;
+        }];
     }
     return _CIContext;
 }

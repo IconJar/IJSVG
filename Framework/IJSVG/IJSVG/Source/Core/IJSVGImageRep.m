@@ -50,13 +50,7 @@
 
 + (instancetype)imageRepWithData:(NSData*)data
 {
-    return [[[self alloc] initWithData:data] autorelease];
-}
-
-- (void)dealloc
-{
-    (void)([_svg release]), _svg = nil;
-    [super dealloc];
+    return [[self alloc] initWithData:data];
 }
 
 - (instancetype)initWithData:(NSData*)data
@@ -64,14 +58,13 @@
     if ((self = [super init]) != nil) {
         // grab the string from the data
         // its more then likely UTF-8...
-        NSString* string = [[[NSString alloc] initWithData:data
-                                                  encoding:NSUTF8StringEncoding] autorelease];
+        NSString* string = [[NSString alloc] initWithData:data
+                                                 encoding:NSUTF8StringEncoding];
 
         _svg = [[IJSVG alloc] initWithSVGString:string];
 
         // no valid SVG, just return nil;
         if (_svg == nil) {
-            [self release];
             return nil;
         }
 

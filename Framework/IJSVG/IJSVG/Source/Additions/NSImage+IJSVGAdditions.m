@@ -36,14 +36,14 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image)
         != nil) {
 
         // work out if we can get the data
-        NSData* data = [[[NSData alloc] initWithContentsOfFile:str] autorelease];
+        NSData* data = [[NSData alloc] initWithContentsOfFile:str];
         if (data == nil) {
             return nil;
         }
 
         // grab the image rep
-        IJSVGImageRep* rep = [[[IJSVGImageRep alloc] initWithData:data] autorelease];
-        NSImage* image = [[[NSImage alloc] init] autorelease];
+        IJSVGImageRep* rep = [[IJSVGImageRep alloc] initWithData:data];
+        NSImage* image = [[NSImage alloc] init];
         [image addRepresentation:rep];
         return image;
     }

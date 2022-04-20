@@ -16,7 +16,7 @@
     NSMutableArray<IJSVGNode*>* _children;
 }
 
-@property (nonatomic, readonly) NSArray<IJSVGNode*>* children;
+@property (weak, nonatomic, readonly) NSArray<IJSVGNode*>* children;
 
 - (void)addChild:(IJSVGNode*)child;
 

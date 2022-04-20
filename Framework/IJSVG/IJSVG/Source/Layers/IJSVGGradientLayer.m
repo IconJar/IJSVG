@@ -11,12 +11,6 @@
 
 @implementation IJSVGGradientLayer
 
-- (void)dealloc
-{
-    (void)([_gradient release]), _gradient = nil;
-    [super dealloc];
-}
-
 - (BOOL)requiresBackingScaleHelp
 {
     return YES;
@@ -24,10 +18,7 @@
 
 - (void)setGradient:(IJSVGGradient*)newGradient
 {
-    if (_gradient != nil) {
-        (void)([_gradient release]), _gradient = nil;
-    }
-    _gradient = [newGradient retain];
+    _gradient = newGradient;
 
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;

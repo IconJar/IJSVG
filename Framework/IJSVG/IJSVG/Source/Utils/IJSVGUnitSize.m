@@ -10,17 +10,10 @@
 
 @implementation IJSVGUnitSize
 
-- (void)dealloc
-{
-    (void)[_width release], _width = nil;
-    (void)[_height release], _height = nil;
-    [super dealloc];
-}
-
 + (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
                          height:(IJSVGUnitLength*)height
 {
-    IJSVGUnitSize* size = [[[self alloc] init] autorelease];
+    IJSVGUnitSize* size = [[self alloc] init];
     size.width = width;
     size.height = height;
     return size;
@@ -29,8 +22,8 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitSize* size = [[self.class alloc] init];
-    size.width = [_width.copy autorelease];
-    size.height = [_height.copy autorelease];
+    size.width = _width.copy;
+    size.height = _height.copy;
     return size;
 }
 

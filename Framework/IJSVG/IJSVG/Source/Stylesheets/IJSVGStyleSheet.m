@@ -21,23 +21,9 @@
 @implementation IJSVGStyleSheetSelectorListItem
 
 
-- (void)dealloc
-{
-    (void)([_rule release]), _rule = nil;
-    (void)([_selector release]), _selector = nil;
-    [super dealloc];
-}
-
 @end
 
 @implementation IJSVGStyleSheet
-
-- (void)dealloc
-{
-    (void)([_selectors release]), _selectors = nil;
-    (void)([_rules release]), _rules = nil;
-    [super dealloc];
-}
 
 - (id)init
 {
@@ -50,20 +36,20 @@
 
 - (NSArray*)selectorsWithSelectorString:(NSString*)string
 {
-    NSMutableArray* array = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* array = [[NSMutableArray alloc] init];
 
     // split the string by the comma, as it could be multiple
     NSArray* comp = [string componentsSeparatedByString:@","];
     NSCharacterSet* whiteSpaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
 
     // create a selector or reuse one already being used
-    for (NSString* selectorName in comp) {
+    for (__strong NSString* selectorName in comp) {
         selectorName = [selectorName stringByTrimmingCharactersInSet:whiteSpaceCharSet];
         IJSVGStyleSheetSelector* selector = nil;
 
         // create a new selector if not found
         if ((selector = [_selectors objectForKey:selectorName]) == nil) {
-            selector = [[[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName] autorelease];
+            selector = [[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName];
             if (selector != nil) {
                 [_selectors setObject:selector
                                forKey:selectorName];
@@ -146,7 +132,7 @@
 {
     // append the rule onto the list within
     // this style sheet
-    IJSVGStyleSheetRule* aRule = [[[IJSVGStyleSheetRule alloc] init] autorelease];
+    IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = [IJSVGStyle parseStyleString:rule];
     aRule.selectors = selectors;
     [_rules addObject:aRule];
@@ -154,15 +140,15 @@
 
 - (IJSVGStyle*)styleForNode:(IJSVGNode*)node
 {
-    IJSVGStyle* style = [[[IJSVGStyle alloc] init] autorelease];
-    NSMutableArray* matchedRules = [[[NSMutableArray alloc] init] autorelease];
+    IJSVGStyle* style = [[IJSVGStyle alloc] init];
+    NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
     for (IJSVGStyleSheetRule* rule in _rules) {
         IJSVGStyleSheetSelector* matchedSelector = nil;
         if ([rule matchesNode:node selector:&matchedSelector]) {
 
             // make a wrapper for the selector with the rule
             IJSVGStyleSheetSelectorListItem* listItem = nil;
-            listItem = [[[IJSVGStyleSheetSelectorListItem alloc] init] autorelease];
+            listItem = [[IJSVGStyleSheetSelectorListItem alloc] init];
             listItem.rule = rule;
             listItem.selector = matchedSelector;
 

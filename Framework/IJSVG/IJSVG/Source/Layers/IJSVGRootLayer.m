@@ -14,7 +14,7 @@
 {
     if(self.viewBox != nil) {
         CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
-        __block IJSVGRootLayer* weakSelf = self;
+        __weak IJSVGRootLayer* weakSelf = self;
         IJSVGViewBoxDrawingBlock drawingBlock = ^(CGSize size) {
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
@@ -43,7 +43,7 @@
 
 - (void)propagateBackingScalePropertiesToSublayers
 {
-    __block IJSVGRootLayer* weakSelf = self;
+    __weak IJSVGRootLayer* weakSelf = self;
     for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
         [IJSVGLayer recursivelyWalkLayer:layer
                                withBlock:^(CALayer<IJSVGDrawableLayer>* propLayer, BOOL *stop) {

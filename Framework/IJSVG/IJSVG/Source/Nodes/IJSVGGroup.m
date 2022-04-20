@@ -12,8 +12,7 @@
 
 - (void)dealloc
 {
-    (void)([_children release]), _children = nil;
-    [super dealloc];
+    (void)(_children), _children = nil;
 }
 
 - (id)init
@@ -27,7 +26,7 @@
 - (void)prepareFromCopy
 {
     if(_children != nil) {
-        (void)[_children release], _children = nil;
+        (void)_children, _children = nil;
     }
     _children = [[NSMutableArray alloc] init];
 }
@@ -37,8 +36,8 @@
     IJSVGGroup* node = [super copyWithZone:zone];
     [node prepareFromCopy];
 
-    for (IJSVGNode* childNode in _children) {
-        childNode = [[childNode copy] autorelease];
+    for (__strong IJSVGNode* childNode in _children) {
+        childNode = [childNode copy];
         childNode.parentNode = node;
         [node addChild:childNode];
     }

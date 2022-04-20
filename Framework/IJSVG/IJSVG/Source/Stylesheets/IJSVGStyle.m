@@ -11,12 +11,6 @@
 
 @implementation IJSVGStyle
 
-- (void)dealloc
-{
-    (void)([_dict release]), _dict = nil;
-    [super dealloc];
-}
-
 - (id)init
 {
     if ((self = [super init]) != nil) {
@@ -44,7 +38,7 @@
 
 + (IJSVGStyle*)parseStyleString:(NSString*)string
 {
-    IJSVGStyle* style = [[[self.class alloc] init] autorelease];
+    IJSVGStyle* style = [[self.class alloc] init];
     NSInteger length = string.length;
     NSInteger index = 0;
     NSString* key = nil;
@@ -111,10 +105,10 @@
 - (IJSVGStyle*)mergedStyle:(IJSVGStyle*)style
 {
     // create the new style
-    IJSVGStyle* newStyle = [[[IJSVGStyle alloc] init] autorelease];
+    IJSVGStyle* newStyle = [[IJSVGStyle alloc] init];
 
     // grab the current style
-    NSMutableDictionary* dict = [[[self properties] mutableCopy] autorelease];
+    NSMutableDictionary* dict = [[self properties] mutableCopy];
 
     // overwride the style with the new styles
     [dict addEntriesFromDictionary:[style properties]];

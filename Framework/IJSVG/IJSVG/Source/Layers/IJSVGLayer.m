@@ -15,17 +15,6 @@
 
 @implementation IJSVGLayer
 
-- (void)dealloc
-{
-    (void)([_filter release]), _filter = nil;
-    (void)([_clipLayer release]), _clipLayer = nil;
-    (void)([_maskLayer release]), _maskLayer = nil;
-    (void)([_clipRule release]), _clipRule = nil;
-    (void)([_fillRule release]), _fillRule = nil;
-    (void)([_maskingLayer release]), _maskingLayer = nil;
-    [super dealloc];
-}
-
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
@@ -287,7 +276,7 @@
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer
 {
-    NSMutableArray* arr = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* arr = [[NSMutableArray alloc] init];
     for (CALayer* subLayer in layer.sublayers) {
         if (subLayer.sublayers.count != 0) {
             NSArray* moreLayers = [self deepestSublayersOfLayer:(IJSVGLayer*)subLayer];
@@ -393,14 +382,11 @@
     }
     _convertMasksToPaths = flag;
     if (flag == YES) {
-        if (_maskingLayer != nil) {
-            (void)([_maskingLayer release]), _maskingLayer = nil;
-        }
-        _maskingLayer = [(IJSVGLayer*)self.mask retain];
+        _maskingLayer = (IJSVGLayer*)self.mask;
         self.mask = nil;
     } else {
         self.mask = _maskingLayer;
-        (void)([_maskingLayer release]), _maskingLayer = nil;
+        _maskingLayer = nil;
     }
 }
 

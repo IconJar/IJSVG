@@ -17,15 +17,12 @@
     // make sure we call this, or block may get called for a view
     // that doesnt exist
     [SVG prepForDrawingInView:nil];
-    (void)([imageName release]), imageName = nil;
-    (void)([SVG release]), SVG = nil;
-    [super dealloc];
 }
 
 + (IJSVGView*)viewWithSVGNamed:(NSString*)name
 {
     IJSVG* anSVG = [IJSVG svgNamed:name];
-    return [[[self alloc] initWithSVG:anSVG] autorelease];
+    return [[self alloc] initWithSVG:anSVG];
 }
 
 - (id)initWithSVG:(IJSVG*)anSvg
@@ -51,10 +48,7 @@
 - (void)setSVG:(IJSVG*)anSVG
 {
     // memory clean
-    if (SVG != nil) {
-        (void)([SVG release]), SVG = nil;
-    }
-    SVG = [anSVG retain];
+    SVG = anSVG;
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];

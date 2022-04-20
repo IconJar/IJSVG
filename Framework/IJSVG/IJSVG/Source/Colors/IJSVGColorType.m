@@ -10,16 +10,10 @@
 
 @implementation IJSVGColorType
 
-- (void)dealloc
-{
-    (void)[_color release], _color = nil;
-    [super dealloc];
-}
-
 + (IJSVGColorType*)typeWithColor:(NSColor*)color
                            flags:(IJSVGColorTypeFlags)mask
 {
-    IJSVGColorType* type = [[[self alloc] init] autorelease];
+    IJSVGColorType* type = [[self alloc] init];
     type.color = color;
     type.flags = mask;
     return type;

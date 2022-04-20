@@ -12,7 +12,7 @@
     
 }
 
-@property (nonatomic, retain) NSColor* color;
+@property (nonatomic, strong) NSColor* color;
 @property (nonatomic, assign) BOOL isNoneOrTransparent;
 
 + (IJSVGNode*)colorNodeWithColor:(NSColor*)color;

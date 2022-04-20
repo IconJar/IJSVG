@@ -64,12 +64,12 @@ withSVGString:(NSString*)subSVGString;
 // fillColor, strokeColor, pattern and gradient fill
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL clipToViewport;
-@property (nonatomic, retain) IJSVGRenderingStyle* renderingStyle;
-@property (nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
+@property (nonatomic, strong) IJSVGRenderingStyle* renderingStyle;
+@property (weak, nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
-@property (nonatomic, retain) IJSVGLayerTree* layerTree;
-@property (nonatomic, retain) IJSVGRootLayer* rootLayer;
+@property (nonatomic, strong) IJSVGLayerTree* layerTree;
+@property (nonatomic, strong) IJSVGRootLayer* rootLayer;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;

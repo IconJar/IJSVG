@@ -24,16 +24,6 @@
 @synthesize filter = _filter;
 @synthesize innerBoundingBox;
 
-- (void)dealloc
-{
-    (void)[_filter release], _filter = nil;
-    (void)[_maskLayer release], _maskLayer = nil;
-    (void)[_fillRule release], _fillRule = nil;
-    (void)[_clipRule release], _clipRule = nil;
-    (void)[_clipLayer release], _clipLayer = nil;
-    [super dealloc];
-}
-
 - (CALayer<IJSVGDrawableLayer> *)referencedLayer
 {
     return self.sublayers.firstObject;

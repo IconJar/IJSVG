@@ -10,17 +10,10 @@
 
 @implementation IJSVGUnitRect
 
-- (void)dealloc
-{
-    (void)[_size release], _size = nil;
-    (void)[_origin release], _origin = nil;
-    [super dealloc];
-}
-
 + (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin
                             size:(IJSVGUnitSize*)size
 {
-    IJSVGUnitRect* rect = [[[self alloc] init] autorelease];
+    IJSVGUnitRect* rect = [[self alloc] init];
     rect.origin = origin;
     rect.size = size;
     return rect;
@@ -50,8 +43,8 @@
 - (id)copyWithZone:(NSZone *)zone
 {
     IJSVGUnitRect* rect = [[self.class alloc] init];
-    rect.size = [_size.copy autorelease];
-    rect.origin = [_origin.copy autorelease];
+    rect.size = _size.copy;
+    rect.origin = _origin.copy;
     return rect;
 }
 

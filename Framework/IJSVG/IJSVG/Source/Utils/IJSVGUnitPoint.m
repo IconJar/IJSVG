@@ -10,17 +10,10 @@
 
 @implementation IJSVGUnitPoint
 
-- (void)dealloc
-{
-    (void)[_x release], _x = nil;
-    (void)[_y release], _y = nil;
-    [super dealloc];
-}
-
 + (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x
                             y:(IJSVGUnitLength*)y
 {
-    IJSVGUnitPoint* point = [[[self alloc] init] autorelease];
+    IJSVGUnitPoint* point = [[self alloc] init];
     point.x = x;
     point.y = y;
     return point;
@@ -29,8 +22,8 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitPoint* point = [[self.class alloc] init];
-    point.x = [_x.copy autorelease];
-    point.y = [_y.copy autorelease];
+    point.x = _x.copy;
+    point.y = _y.copy;
     return point;
 }
 

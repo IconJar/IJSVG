@@ -10,17 +10,10 @@
 
 @implementation IJSVGImageLayer
 
-- (void)dealloc
-{
-    (void)[_image release], _image = nil;
-    (void)[_imageLayer release], _imageLayer = nil;
-    [super dealloc];
-}
-
 - (id)initWithImage:(IJSVGImage*)image
 {
     if((self = [super init]) != nil) {
-        _image = image.retain;
+        _image = image;
     }
     return self;
 }
@@ -40,7 +33,7 @@
 - (void)reloadContent
 {
     if(_imageLayer == nil) {
-        _imageLayer = [IJSVGBasicLayer layer].retain;
+        _imageLayer = [IJSVGBasicLayer layer];
         _imageLayer.contentsGravity = kCAGravityResize;
         _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
         _imageLayer.contents = (id)_image.CGImage;

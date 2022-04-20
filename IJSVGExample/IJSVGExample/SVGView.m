@@ -10,19 +10,15 @@
 
 @implementation SVGView
 
-- (void)dealloc
-{
-    [svg release], svg = nil;
-    [super dealloc];
-}
-
 - (id)initWithFrame:(NSRect)frameRect
 {
     if( ( self = [super initWithFrame:frameRect] ) != nil ) {
-        svg = [self svg].retain;
+        svg = [self svg];
         svg.renderQuality = kIJSVGRenderQualityFullResolution;
+        
+        __weak SVGView* weakSelf = self;
         svg.renderingBackingScaleHelper = ^{
-            return self.window.backingScaleFactor;
+            return weakSelf.window.backingScaleFactor;
         };
     }
     return self;

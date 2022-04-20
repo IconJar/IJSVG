@@ -15,7 +15,6 @@
     if(_path != NULL) {
         (void)CGPathRelease(_path), _path = NULL;
     }
-    [super dealloc];
 }
 
 - (id)init

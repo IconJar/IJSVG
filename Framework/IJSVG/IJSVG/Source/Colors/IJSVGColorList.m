@@ -10,13 +10,6 @@
 
 @implementation IJSVGColorList
 
-- (void)dealloc
-{
-    (void)([_replacementColorTree release]), _replacementColorTree = nil;
-    (void)([_colors release]), _colors = nil;
-    [super dealloc];
-}
-
 - (instancetype)init
 {
     if ((self = [super init]) != nil) {
@@ -29,7 +22,7 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGColorList* sheet = [[self.class alloc] init];
-    [sheet setReplacementColors:[_replacementColorTree.copy autorelease]
+    [sheet setReplacementColors:_replacementColorTree.copy
             clearExistingColors:YES];
     return sheet;
 }
@@ -52,7 +45,6 @@
 
 - (void)_invalidateColorTree
 {
-    (void)([_replacementColorTree release]), _replacementColorTree = nil;
     _replacementColorTree = [[NSMutableDictionary alloc] init];
 }
 

@@ -39,10 +39,10 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
     static NSArray* _array;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _array = [@[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l",
+        _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l",
             @"m", @"n", @"o", @"p", @"q", @"r", @"s", @"t", @"u", @"v", @"w", @"x", @"y", @"z",
             @"A", @"B", @"C", @"D", @"E", @"F", @"G", @"H", @"I", @"J", @"K", @"L",
-            @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ] retain];
+            @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ];
     });
     return _array;
 }
@@ -52,7 +52,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
     static NSDictionary* _defaults;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _defaults = [@ {
+        _defaults = @{
             @"clip" : @"auto",
             @"clip-path" : @"none",
             @"clip-rule" : @"nonzero",
@@ -104,7 +104,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
             @"dominant-baseline" : @"auto",
             @"alignment-baseline" : @"baseline",
             @"baseline-shift" : @"baseline"
-        } retain];
+        };
     });
     return _defaults;
 }
@@ -114,7 +114,7 @@ const NSArray* IJSVGInheritableAttributes(void)
     static NSArray* _attributes;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _attributes = [@[
+        _attributes = @[
             @"clip-rule",
             @"color",
             @"color-interpolation",
@@ -159,7 +159,7 @@ const NSArray* IJSVGInheritableAttributes(void)
             @"white-space",
             @"word-spacing",
             @"writing-mode"
-        ] retain];
+        ];
     });
     return _attributes;
 }
@@ -171,7 +171,7 @@ void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLEleme
 
 NSDictionary* IJSVGElementAttributeDictionary(NSXMLElement* element)
 {
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSXMLNode* attribute in element.attributes) {
         dict[attribute.name] = attribute.stringValue;
     }
@@ -186,16 +186,6 @@ NSString* IJSVGHashURL(NSString* key)
 NSString* IJSVGHash(NSString* key)
 {
     return [@"#" stringByAppendingString:key];
-}
-
-- (void)dealloc
-{
-    (void)([_svg release]), _svg = nil;
-    (void)([_dom release]), _dom = nil;
-    (void)([_defElement release]), _defElement = nil;
-    (void)([_title release]), _title = nil;
-    (void)([_desc release]), _desc = nil;
-    [super dealloc];
 }
 
 - (id)initWithSVG:(IJSVG*)svg
@@ -217,7 +207,7 @@ NSString* IJSVGHash(NSString* key)
     if ((self = [super init]) != nil) {
         _options = options;
         _size = size;
-        _svg = [svg retain];
+        _svg = svg;
 
         // defaults for floating point rounding, if any
         _floatingPointOptions = floatingPointOptions;
@@ -254,14 +244,14 @@ NSString* IJSVGHash(NSString* key)
 - (NSXMLElement*)rootNode:(NSXMLElement**)nestedRoot
 {
     // generates the root document
-    NSXMLElement* root = [[[NSXMLElement alloc] initWithName:@"svg"] autorelease];
+    NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
 
     // sort out viewbox
     NSRect viewBox = _svg.viewBox;
-    NSMutableDictionary* attributes = [[[NSMutableDictionary alloc] initWithDictionary:@{
+    NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
         @"viewBox" : [self viewBoxWithRect:viewBox],
         @"xmlns" : XML_DOC_NS
-    }] autorelease];
+    }];
 
     // add on various XML declaritive things
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
@@ -276,7 +266,7 @@ NSString* IJSVGHash(NSString* key)
 
     // was there a size set?
     CGFloat scale = 1.f;
-    NSMutableArray<IJSVGTransform*>* transforms = [[[NSMutableArray alloc] initWithCapacity:2] autorelease];
+    NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] initWithCapacity:2];
     if (CGSizeEqualToSize(CGSizeZero, _size) == NO && (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
 
         // copy the attributes
@@ -334,7 +324,7 @@ NSString* IJSVGHash(NSString* key)
     if (transforms.count != 0) {
         // concat the transform
         CGAffineTransform afTransform = IJSVGConcatTransforms(transforms);
-        NSXMLElement* transformedElement = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
+        NSXMLElement* transformedElement = [[NSXMLElement alloc] initWithName:@"g"];
         NSString* transString = nil;
         transString = [self transformAttributeStringForTransform:afTransform];
         IJSVGApplyAttributesToElement(
@@ -384,8 +374,8 @@ NSString* IJSVGHash(NSString* key)
     _idCount = 0;
     _shortIdCount = 0;
     _appliedXLink = NO;
-    (void)[_dom release], _dom = nil;
-    (void)[_defElement release], _defElement = nil;
+    _dom = nil;
+    _defElement = nil;
     
     
     // create the stand alone DOM
@@ -417,7 +407,7 @@ NSString* IJSVGHash(NSString* key)
 
     // add generator
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveComments) == NO) {
-        NSXMLNode* generatorNode = [[[NSXMLNode alloc] initWithKind:NSXMLCommentKind] autorelease];
+        NSXMLNode* generatorNode = [[NSXMLNode alloc] initWithKind:NSXMLCommentKind];
         generatorNode.stringValue = XML_DOC_GENERATOR;
         [_dom.rootElement insertChild:generatorNode
                               atIndex:0];
@@ -504,13 +494,13 @@ NSString* IJSVGHash(NSString* key)
             [element removeAttributeForName:@"transform"];
 
             // x
-            NSXMLNode* att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+            NSXMLNode* att = [[NSXMLNode alloc] initWithKind:NSXMLAttributeKind];
             att.name = @"x";
             att.stringValue = IJSVGShortFloatStringWithOptions(transform.parameters[0], _floatingPointOptions);
             [element addAttribute:att];
 
             // y
-            att = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+            att = [[NSXMLNode alloc] initWithKind:NSXMLAttributeKind];
             att.name = @"y";
             att.stringValue = IJSVGShortFloatStringWithOptions(transform.parameters[1], _floatingPointOptions);
             [element addAttribute:att];
@@ -523,7 +513,7 @@ NSString* IJSVGHash(NSString* key)
     const NSArray* inhert = IJSVGInheritableAttributes();
     NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//*"
                                                      error:nil];
-    NSMutableDictionary* rules = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* rules = [[NSMutableDictionary alloc] init];
     for (NSXMLElement* element in elements) {
         NSDictionary* inhertEl = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
                                          inheritableAttributes:inhert];
@@ -541,10 +531,10 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // add styles to dom
-    NSXMLElement* styles = [[[NSXMLElement alloc] initWithName:@"style"] autorelease];
-    NSXMLNode* node = [[[NSXMLNode alloc] initWithKind:NSXMLTextKind] autorelease];
+    NSXMLElement* styles = [[NSXMLElement alloc] initWithName:@"style"];
+    NSXMLNode* node = [[NSXMLNode alloc] initWithKind:NSXMLTextKind];
 
-    NSMutableArray* classes = [[[NSMutableArray alloc] initWithCapacity:rules.count] autorelease];
+    NSMutableArray* classes = [[NSMutableArray alloc] initWithCapacity:rules.count];
     for (NSString* r in rules) {
         [classes addObject:[NSString stringWithFormat:@".%@%@", rules[r], r]];
     }
@@ -555,7 +545,7 @@ NSString* IJSVGHash(NSString* key)
 
 - (NSString*)styleSheetRulesFromDictionary:(NSDictionary*)dict
 {
-    NSMutableArray* array = [[[NSMutableArray alloc] initWithCapacity:dict.count] autorelease];
+    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:dict.count];
     for (NSString* key in dict.allKeys) {
         [array addObject:[NSString stringWithFormat:@"%@: %@;", key, dict[key]]];
     }
@@ -641,7 +631,7 @@ NSString* IJSVGHash(NSString* key)
 
     const NSArray<NSString*>* inheritableAttributes = IJSVGInheritableAttributes();
     __block NSDictionary<NSString*, NSString*>* intersection = nil;
-    NSMutableArray<NSXMLElement*>* currentGroup = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray<NSXMLElement*>* currentGroup = [[NSMutableArray alloc] init];
 
     BOOL (^createGroupIfRequired)(void) = ^BOOL {
         // memory clean
@@ -653,7 +643,7 @@ NSString* IJSVGHash(NSString* key)
 
         // at this point we can create a new group and remove all the attributes
         NSInteger insertIndex = currentGroup.lastObject.index;
-        NSXMLElement* group = [[[NSXMLElement alloc] initWithName:@"g"] autorelease];
+        NSXMLElement* group = [[NSXMLElement alloc] initWithName:@"g"];
         IJSVGApplyAttributesToElement(intersection, group);
 
         // add back into the dom
@@ -738,7 +728,7 @@ NSString* IJSVGHash(NSString* key)
 - (NSDictionary*)intersectableAttributes:(NSDictionary*)atts
                    inheritableAttributes:(const NSArray*)inheritable
 {
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in atts.allKeys) {
         if ([inheritable containsObject:key]) {
             dict[key] = atts[key];
@@ -751,7 +741,7 @@ NSString* IJSVGHash(NSString* key)
                                  currentAttributes:(NSDictionary*)currentAttributes
                              inheritableAttributes:(const NSArray*)inheritableAtts
 {
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in newAttributes.allKeys) {
         // make sure they are the same and
         // they are inheritable
@@ -909,12 +899,12 @@ NSString* IJSVGHash(NSString* key)
         NSArray* paths = [_dom nodesForXPath:@"//path"
                                        error:nil];
 
-        NSCountedSet* set = [[[NSCountedSet alloc] init] autorelease];
+        NSCountedSet* set = [[NSCountedSet alloc] init];
         for (NSXMLElement* element in paths) {
             [set addObject:[element attributeForName:@"d"].stringValue];
         }
 
-        NSMutableDictionary* defs = [[[NSMutableDictionary alloc] init] autorelease];
+        NSMutableDictionary* defs = [[NSMutableDictionary alloc] init];
 
         // now actually compute them
         for (NSXMLElement* element in paths) {
@@ -927,7 +917,7 @@ NSString* IJSVGHash(NSString* key)
             NSXMLElement* defParentElement = nil;
             if ((defParentElement = [defs objectForKey:data]) == nil) {
                 // create the def
-                NSXMLElement* element = [[[NSXMLElement alloc] init] autorelease];
+                NSXMLElement* element = [[NSXMLElement alloc] init];
                 element.name = @"path";
 
                 NSDictionary* atts = @{ @"d" : data,
@@ -940,13 +930,13 @@ NSString* IJSVGHash(NSString* key)
             }
 
             // we know at this point, we need to swap out the path to a use
-            NSXMLElement* use = [[[NSXMLElement alloc] init] autorelease];
+            NSXMLElement* use = [[NSXMLElement alloc] init];
             use.name = @"use";
 
             // grab the id
             NSString* pathId = [defParentElement attributeForName:@"id"].stringValue;
 
-            NSXMLNode* useAttribute = [[[NSXMLNode alloc] initWithKind:NSXMLAttributeKind] autorelease];
+            NSXMLNode* useAttribute = [[NSXMLNode alloc] initWithKind:NSXMLAttributeKind];
             useAttribute.name = @"xlink:href";
             useAttribute.stringValue = IJSVGHash(pathId);
             [use addAttribute:useAttribute];
@@ -1091,7 +1081,7 @@ NSString* IJSVGHash(NSString* key)
                       fromParent:(NSXMLElement*)parent
 {
     // create the element
-    NSXMLElement* e = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* e = [[NSXMLElement alloc] init];
     e.name = @"g";
 
     // stick defaults
@@ -1114,7 +1104,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // convert the CGImage into an NSImage
-    NSBitmapImageRep* rep = [[[NSBitmapImageRep alloc] initWithCGImage:image] autorelease];
+    NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
 
     // work out the data
     NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG
@@ -1136,7 +1126,7 @@ NSString* IJSVGHash(NSString* key)
                                               fromParent:nil];
     patternElement.name = @"pattern";
 
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[@"id"] = [self identifierForElement:patternElement];
     dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
     dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
@@ -1160,7 +1150,7 @@ NSString* IJSVGHash(NSString* key)
     [[self defElement] addChild:patternElement];
 
     // now the use statement
-    NSXMLElement* useElement = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* useElement = [[NSXMLElement alloc] init];
     useElement.name = @"use";
 
     // now add the fill
@@ -1187,7 +1177,7 @@ NSString* IJSVGHash(NSString* key)
                      toElement:(NSXMLElement*)element
 {
     IJSVGGradient* gradient = layer.gradient;
-    NSXMLElement* gradientElement = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* gradientElement = [[NSXMLElement alloc] init];
 
     // work out linear gradient
     if ([gradient isKindOfClass:[IJSVGLinearGradient class]]) {
@@ -1247,10 +1237,10 @@ NSString* IJSVGHash(NSString* key)
         }
 
         // create the stop element
-        NSXMLElement* stop = [[[NSXMLElement alloc] init] autorelease];
+        NSXMLElement* stop = [[NSXMLElement alloc] init];
         stop.name = @"stop";
 
-        NSMutableDictionary* atts = [[[NSMutableDictionary alloc] init] autorelease];
+        NSMutableDictionary* atts = [[NSMutableDictionary alloc] init];
         atts[@"offset"] = [NSString stringWithFormat:@"%g%%", (location * 100)];
 
         // add the color
@@ -1312,10 +1302,10 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // image element for the SVG
-    NSXMLElement* imageElement = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* imageElement = [[NSXMLElement alloc] init];
     imageElement.name = @"image";
 
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[@"id"] = [self identifierForElement:imageElement];
     dict[@"width"] = IJSVGShortFloatStringWithOptions(layer.frame.size.width, _floatingPointOptions);
     dict[@"height"] = IJSVGShortFloatStringWithOptions(layer.frame.size.height, _floatingPointOptions);
@@ -1368,7 +1358,7 @@ NSString* IJSVGHash(NSString* key)
 - (NSXMLElement*)elementForShape:(IJSVGShapeLayer*)layer
                       fromParent:(NSXMLElement*)parent
 {
-    NSXMLElement* e = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* e = [[NSXMLElement alloc] init];
     e.name = [self elementNameForPrimitiveType:layer.primitiveType];
     CGPathRef path = layer.path;
 
@@ -1377,7 +1367,7 @@ NSString* IJSVGHash(NSString* key)
         layer.frame.origin.y);
     CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
 
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     BOOL cleanupPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths);
     BOOL convertArcs = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertArcs);
     BOOL convertShapesToPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertShapesToPaths);
@@ -1392,9 +1382,9 @@ NSString* IJSVGHash(NSString* key)
                 CGFloat radX = fabs(pathElement->points[2].x - currentPoint.x);
                 CGFloat radY = fabs(pathElement->points[2].y - currentPoint.y);
 
-                dict[@"rx"] = IJSVGShortFloatStringWithOptions(radX, _floatingPointOptions);
+                dict[@"rx"] = IJSVGShortFloatStringWithOptions(radX, self->_floatingPointOptions);
                 if (radX != radY) {
-                    dict[@"ry"] = IJSVGShortFloatStringWithOptions(radY, _floatingPointOptions);
+                    dict[@"ry"] = IJSVGShortFloatStringWithOptions(radY, self->_floatingPointOptions);
                 }
             }
         });
@@ -1403,38 +1393,38 @@ NSString* IJSVGHash(NSString* key)
         if (cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
             // construct array of instructions to do
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray* instructions = [[[NSMutableArray alloc] initWithCapacity:5] autorelease];
+            NSMutableArray* instructions = [[NSMutableArray alloc] initWithCapacity:5];
 
             // M -> H -> V -> H -> z
             // M
             IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                           dataCount:2] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                          dataCount:2];
             instruction.data[0] = boundingBox.origin.x;
             instruction.data[1] = boundingBox.origin.y;
             [instructions addObject:instruction];
 
             // H
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
-                                                                           dataCount:1] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
+                                                                          dataCount:1];
             instruction.data[0] = boundingBox.origin.x + boundingBox.size.width;
             [instructions addObject:instruction];
 
             // V
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
-                                                                           dataCount:1] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
+                                                                          dataCount:1];
             instruction.data[0] = boundingBox.origin.y + boundingBox.size.height;
             [instructions addObject:instruction];
 
             // H
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
-                                                                           dataCount:1] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
+                                                                          dataCount:1];
             instruction.data[0] = boundingBox.origin.x;
             [instructions addObject:instruction];
 
             // Z
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                           dataCount:0] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                          dataCount:0];
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
@@ -1454,13 +1444,13 @@ NSString* IJSVGHash(NSString* key)
             // M -> L
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[[NSMutableArray alloc] initWithCapacity:2] autorelease];
+            instructions = [[NSMutableArray alloc] initWithCapacity:2];
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
                     IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                   dataCount:2] autorelease];
+                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                  dataCount:2];
                     instruction.data[0] = pathElement->points[0].x;
                     instruction.data[1] = pathElement->points[0].y;
                     [instructions addObject:instruction];
@@ -1468,8 +1458,8 @@ NSString* IJSVGHash(NSString* key)
                 }
                 case kCGPathElementAddLineToPoint: {
                     IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                   dataCount:2] autorelease];
+                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                  dataCount:2];
                     instruction.data[0] = pathElement->points[0].x;
                     instruction.data[1] = pathElement->points[0].y;
                     [instructions addObject:instruction];
@@ -1484,13 +1474,13 @@ NSString* IJSVGHash(NSString* key)
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
-                    dict[@"x1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, _floatingPointOptions);
-                    dict[@"y1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, _floatingPointOptions);
+                    dict[@"x1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
+                    dict[@"y1"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
                     break;
                 }
                 case kCGPathElementAddLineToPoint: {
-                    dict[@"x2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, _floatingPointOptions);
-                    dict[@"y2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, _floatingPointOptions);
+                    dict[@"x2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
+                    dict[@"y2"] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
                     break;
                 }
                 default:
@@ -1506,13 +1496,13 @@ NSString* IJSVGHash(NSString* key)
             // M -> L+
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[[NSMutableArray alloc] init] autorelease];
+            instructions = [[NSMutableArray alloc] init];
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 switch (pathElement->type) {
                 case kCGPathElementMoveToPoint: {
                     IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                   dataCount:2] autorelease];
+                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                                  dataCount:2];
                     instruction.data[0] = pathElement->points[0].x;
                     instruction.data[1] = pathElement->points[0].y;
                     [instructions addObject:instruction];
@@ -1520,8 +1510,8 @@ NSString* IJSVGHash(NSString* key)
                 }
                 case kCGPathElementAddLineToPoint: {
                     IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                   dataCount:2] autorelease];
+                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
+                                                                                  dataCount:2];
                     instruction.data[0] = pathElement->points[0].x;
                     instruction.data[1] = pathElement->points[0].y;
                     [instructions addObject:instruction];
@@ -1537,13 +1527,13 @@ NSString* IJSVGHash(NSString* key)
                     [instructions removeLastObject];
                 }
                 IJSVGExporterPathInstruction* instruction = nil;
-                instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                               dataCount:0] autorelease];
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                              dataCount:0];
                 [instructions addObject:instruction];
             }
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
-            NSMutableArray<NSString*>* points = [[[NSMutableArray alloc] init] autorelease];
+            NSMutableArray<NSString*>* points = [[NSMutableArray alloc] init];
             __block CGPathElementType type;
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
                 type = pathElement->type;
@@ -1584,19 +1574,19 @@ NSString* IJSVGHash(NSString* key)
             // M + A + A +Z
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
+            instructions = [[NSMutableArray alloc] initWithCapacity:4];
 
             // M
             IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                           dataCount:2] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                          dataCount:2];
             instruction.data[0] = cx;
             instruction.data[1] = cy - ry;
             [instructions addObject:instruction];
 
             // A
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                           dataCount:7] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                          dataCount:7];
             instruction.data[0] = rx;
             instruction.data[1] = ry;
             instruction.data[2] = 0;
@@ -1607,8 +1597,8 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
 
             // A
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                           dataCount:7] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                          dataCount:7];
             instruction.data[0] = rx;
             instruction.data[1] = ry;
             instruction.data[2] = 0;
@@ -1619,8 +1609,8 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
 
             // Z
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                           dataCount:0] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                          dataCount:0];
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
@@ -1640,19 +1630,19 @@ NSString* IJSVGHash(NSString* key)
             // M + A + A +Z
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
             NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[[NSMutableArray alloc] initWithCapacity:4] autorelease];
+            instructions = [[NSMutableArray alloc] initWithCapacity:4];
 
             // M
             IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                           dataCount:2] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
+                                                                          dataCount:2];
             instruction.data[0] = cx;
             instruction.data[1] = cy - r;
             [instructions addObject:instruction];
 
             // A
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                           dataCount:7] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                          dataCount:7];
             instruction.data[0] = r;
             instruction.data[1] = r;
             instruction.data[2] = 0;
@@ -1663,8 +1653,8 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
 
             // A
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                           dataCount:7] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
+                                                                          dataCount:7];
             instruction.data[0] = r;
             instruction.data[1] = r;
             instruction.data[2] = 0;
@@ -1675,8 +1665,8 @@ NSString* IJSVGHash(NSString* key)
             [instructions addObject:instruction];
 
             // Z
-            instruction = [[[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                           dataCount:0] autorelease];
+            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
+                                                                          dataCount:0];
             [instructions addObject:instruction];
             dict[@"d"] = [self pathFromInstructions:instructions];
         } else {
@@ -1826,7 +1816,7 @@ NSString* IJSVGHash(NSString* key)
 - (void)applyDefaultsToElement:(NSXMLElement*)element
                      fromLayer:(IJSVGLayer*)layer
 {
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
 
     // opacity
     if (layer.opacity != 1.f) {
@@ -1835,7 +1825,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // blendmode - we only every apply a stylesheet blend mode
-    NSMutableDictionary* style = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* style = [[NSMutableDictionary alloc] init];
     if (layer.blendingMode != kCGBlendModeNormal) {
         NSString* str = [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)layer.blendingMode];
         if (str != nil) {
@@ -1849,7 +1839,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     if (style.count != 0) {
-        NSMutableString* styleString = [[[NSMutableString alloc] init] autorelease];
+        NSMutableString* styleString = [[NSMutableString alloc] init];
         for (NSString* styleKey in style.allKeys) {
             NSString* format = [NSString stringWithFormat:@"%@:%@;", styleKey, style[styleKey]];
             [styleString appendString:format];
@@ -1875,12 +1865,12 @@ NSString* IJSVGHash(NSString* key)
                  fromLayer:(IJSVGLayer*)layer
 {
     // create the element
-    NSXMLElement* mask = [[[NSXMLElement alloc] init] autorelease];
+    NSXMLElement* mask = [[NSXMLElement alloc] init];
     mask.name = @"mask";
 
     // create the key
     NSString* maskKey = [self identifierForElement:mask];
-    NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[@"id"] = maskKey;
 
     if (layer.mask.frame.origin.x != 0.f) {
@@ -1936,8 +1926,8 @@ NSString* IJSVGHash(NSString* key)
 
 - (IJSVG*)SVG:(NSError**)error
 {
-    return [[[IJSVG alloc] initWithSVGString:self.SVGString
-                                       error:error] autorelease];
+    return [[IJSVG alloc] initWithSVGString:self.SVGString
+                                      error:error];
 }
 
 #pragma mark CGPath stuff
@@ -1971,7 +1961,7 @@ NSString* IJSVGHash(NSString* key)
 
 void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement)
 {
-    IJSVGCGPathHandler handler = (IJSVGCGPathHandler)info;
+    IJSVGCGPathHandler handler = (__bridge IJSVGCGPathHandler)info;
     handler(pathElement);
 };
 

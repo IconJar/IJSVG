@@ -61,7 +61,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _colorTree = [@{
+        _colorTree = @{
             @"aliceblue" : @(0xf0f8ff),
             @"antiquewhite" : @(0xfaebd7),
             @"aqua" : @(0x00ffff),
@@ -207,7 +207,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
             @"whitesmoke" : @(0xf5f5f5),
             @"yellow" : @(0xffff00),
             @"yellowgreen" : @(0x9acd32)
-        } retain];
+        };
     });
 }
 

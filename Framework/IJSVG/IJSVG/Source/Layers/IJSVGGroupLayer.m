@@ -13,12 +13,6 @@
 
 @implementation IJSVGGroupLayer
 
-- (void)dealloc
-{
-    (void)[_viewBox release], _viewBox = nil;
-    [super dealloc];
-}
-
 - (CGRect)innerBoundingBox
 {
     return self.outerBoundingBox;

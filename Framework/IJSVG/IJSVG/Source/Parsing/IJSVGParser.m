@@ -78,7 +78,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 + (void)load
 {
-    _IJSVGAttributeDictionaryFloats = [@{
+    _IJSVGAttributeDictionaryFloats = @{
         IJSVGAttributeX : @"x",
         IJSVGAttributeY : @"y",
         IJSVGAttributeWidth : @"width",
@@ -87,22 +87,22 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         IJSVGAttributeStrokeOpacity : @"strokeOpacity",
         IJSVGAttributeStrokeWidth : @"strokeWidth",
         IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
-        IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
-    _IJSVGAttributeDictionaryNodes = [@{
+        IJSVGAttributeFillOpacity : @"fillOpacity" };
+    _IJSVGAttributeDictionaryNodes = @{
         IJSVGAttributeClipPath : @"clipPath",
-        IJSVGAttributeMask : @"mask" } retain];
-    _IJSVGAttributeDictionaryUnits = [@{
+        IJSVGAttributeMask : @"mask" };
+    _IJSVGAttributeDictionaryUnits = @{
         IJSVGAttributeGradientUnits : @"units",
         IJSVGAttributeMaskUnits : @"units",
         IJSVGAttributePatternUnits : @"units",
         IJSVGAttributeMaskContentUnits : @"contentUnits",
         IJSVGAttributePatternContentUnits : @"contentUnits"
-    } retain];
-    _IJSVGAttributeDictionaryTransforms = [@{
+    };
+    _IJSVGAttributeDictionaryTransforms = @{
         IJSVGAttributeTransform : @"transforms",
         IJSVGAttributeGradientTransform : @"transforms",
         IJSVGAttributePatternTransform : @"transforms"
-    } retain];
+    };
 }
 
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
@@ -124,17 +124,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                           error:(NSError**)error
                        delegate:(id<IJSVGParserDelegate>)delegate
 {
-    return [[[self.class alloc] initWithFileURL:aURL
+    return [[self.class alloc] initWithFileURL:aURL
                                           error:error
-                                       delegate:delegate] autorelease];
-}
-
-- (void)dealloc
-{
-    (void)([_detachedElements release]), _detachedElements = nil;
-    (void)([_rootNode release]), _rootNode = nil;
-    (void)([_styleSheet release]), _styleSheet = nil;
-    [super dealloc];
+                                       delegate:delegate];
 }
 
 - (id)initWithSVGString:(NSString*)string
@@ -177,14 +169,12 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         anError = nil;
         if (![self _validateParse:&anError]) {
             *error = anError;
-            (void)([_document release]), _document = nil;
-            (void)([self release]), self = nil;
             return nil;
         }
 
         // we have actually finished with the document at this point
         // so just get rid of it
-        (void)([_document release]), _document = nil;
+        _document = nil;
     }
     return self;
 }
@@ -193,9 +183,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     @try {
         NSError* error;
-        NSXMLDocument* doc = [[[NSXMLDocument alloc] initWithData:data
-                                                          options:0
-                                                            error:&error] autorelease];
+        NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
+                                                        options:0
+                                                           error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
     }
@@ -227,12 +217,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                         error:(NSError**)error
 {
     if (error) {
-        *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                             code:code
-                                         userInfo:nil] autorelease];
+        *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                            code:code
+                                        userInfo:nil];
     }
-    (void)([_document release]), _document = nil;
-    (void)([self release]), self = nil;
     return nil;
 }
 
@@ -248,9 +236,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         _rootNode.bounds.size.width == 0 ||
         _rootNode.bounds.size.height == 0) {
         if (error != NULL) {
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorInvalidViewBox
-                                             userInfo:nil] autorelease];
+            *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                code:IJSVGErrorInvalidViewBox
+                                            userInfo:nil];
         }
         return NO;
     }
@@ -326,7 +314,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     CGRect computedBounds = CGRectZero;
     IJSVGUnitType unitType = [node contentUnitsWithReferencingNodeBounds:&computedBounds];
     NSMutableDictionary<NSString*, NSString*>* attributes = nil;
-    attributes = [[[NSMutableDictionary alloc] initWithCapacity:element.attributes.count] autorelease];
+    attributes = [[NSMutableDictionary alloc] initWithCapacity:element.attributes.count];
     for(NSXMLNode* attributeNode in element.attributes) {
         attributes[attributeNode.name] = attributeNode.stringValue;
     }
@@ -361,7 +349,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         node.identifier = value;
         [self detachElement:element
              withIdentifier:value
-                 parentNode:node.parentNode ?: _rootNode];
+                 parentNode:node.parentNode ?: self->_rootNode];
     });
     
     // class list
@@ -407,7 +395,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     // transforms
     IJSVGAttributesParse(_IJSVGAttributeDictionaryTransforms, ^id (NSString* value) {
-        NSMutableArray<IJSVGTransform*>* transforms = [[[NSMutableArray alloc] init] autorelease];
+        NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
         [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
         if(node.transforms != nil) {
             [transforms addObjectsFromArray:node.transforms];
@@ -762,7 +750,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
        withIdentifier:(NSString*)identifier
            parentNode:(IJSVGNode*)parentNode
 {
-    element = [element.copy autorelease];
+    element = element.copy;
     [element detach];
     
     // its important that we remove the ID attribute
@@ -770,7 +758,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     
     NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
     if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
-        scopedDetachedElements = [[[NSMutableDictionary alloc] init] autorelease];
+        scopedDetachedElements = [[NSMutableDictionary alloc] init];
         [_detachedElements setObject:scopedDetachedElements forKey:parentNode];
     }
     scopedDetachedElements[identifier] = element;
@@ -812,10 +800,10 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
           withReferenceElement:(NSXMLElement*)reference
 {
-    NSXMLElement* copy = [[reference copy] autorelease];
-    for (NSXMLNode* attribute in element.attributes) {
+    NSXMLElement* copy = [reference copy];
+    for (__strong NSXMLNode* attribute in element.attributes) {
         [copy removeAttributeForName:attribute.name];
-        attribute = [[attribute copy] autorelease];
+        attribute = [attribute copy];
         [copy addAttribute:attribute];
     }
     return copy;
@@ -832,7 +820,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGFilter* node = [[[IJSVGFilter alloc] init] autorelease];
+    IJSVGFilter* node = [[IJSVGFilter alloc] init];
     node.type = IJSVGNodeTypeFilter;
     node.name = element.localName;
     
@@ -849,7 +837,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                             parentNode:(IJSVGNode*)parentNode
 {
     Class effectClass = [IJSVGFilterEffect effectClassForElementName:element.localName];
-    IJSVGFilterEffect* node = [[[effectClass alloc] init] autorelease];
+    IJSVGFilterEffect* node = [[effectClass alloc] init];
     node.type = IJSVGNodeTypeFilterEffect;
     node.name = element.localName;
 
@@ -870,7 +858,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGLinearGradient* node = [[[IJSVGLinearGradient alloc] init] autorelease];
+    IJSVGLinearGradient* node = [[IJSVGLinearGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
     node.type = IJSVGNodeTypeLinearGradient;
     node.name = element.localName;
@@ -898,7 +886,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseRadialGradientElement:(NSXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGRadialGradient* node = [[[IJSVGRadialGradient alloc] init] autorelease];
+    IJSVGRadialGradient* node = [[IJSVGRadialGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
     node.type = IJSVGNodeTypeRadialGradient;
     node.name = element.localName;
@@ -925,7 +913,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseStopElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGNode* node = [[[IJSVGNode alloc] init] autorelease];
+    IJSVGNode* node = [[IJSVGNode alloc] init];
     node.type = IJSVGNodeTypeStop;
     node.name = element.localName;
     
@@ -943,7 +931,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parsePathElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePath;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -970,7 +958,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseLineElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypeLine;
     node.primitiveType = kIJSVGPrimitivePathTypeLine;
     node.parentNode = parentNode;
@@ -1008,7 +996,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parsePolyLineElement:(NSXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolyline;
     node.primitiveType = kIJSVGPrimitivePathTypePolyLine;
     node.parentNode = parentNode;
@@ -1033,7 +1021,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parsePolygonElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolygon;
     node.primitiveType = kIJSVGPrimitivePathTypePolygon;
     node.parentNode = parentNode;
@@ -1058,7 +1046,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseEllipseElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
     node.type = IJSVGNodeTypeEllipse;
@@ -1109,7 +1097,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseCircleElement:(NSXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypeCircle;
     node.type = IJSVGNodeTypeCircle;
@@ -1156,7 +1144,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                      parentNode:(IJSVGNode*)parentNode
                        nodeType:(IJSVGNodeType)nodeType
 {
-    IJSVGGroup* node = [[[IJSVGGroup alloc] init] autorelease];
+    IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = nodeType;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1203,7 +1191,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGRootNode* node = [[[IJSVGRootNode alloc] init] autorelease];
+    IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
     [self parseSVGElement:element
                  ontoNode:node
                parentNode:parentNode];
@@ -1213,7 +1201,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseRectElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPath* node = [[[IJSVGPath alloc] init] autorelease];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypeRect;
     node.primitiveType = kIJSVGPrimitivePathTypeRect;
     node.name = element.localName;
@@ -1284,7 +1272,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     CGRect bounds = CGRectZero;
     IJSVGUnitType units = [parentNode contentUnitsWithReferencingNodeBounds:&bounds];
-    IJSVGImage* node = [[[IJSVGImage alloc] init] autorelease];
+    IJSVGImage* node = [[IJSVGImage alloc] init];
     node.type = IJSVGNodeTypeImage;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1323,7 +1311,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                                                              parentNode:parentNode];
     
     // its important that we remove the xlink attribute or hell breaks loose
-    NSXMLElement* elementWithoutXLink = [element.copy autorelease];
+    NSXMLElement* elementWithoutXLink = element.copy;
     [elementWithoutXLink removeAttributeForName:IJSVGAttributeXLink];
     NSXMLElement* shadowElement = [self mergedElement:elementWithoutXLink
                                  withReferenceElement:detachedElement];
@@ -1335,7 +1323,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGPattern* node = [[[IJSVGPattern alloc] init] autorelease];
+    IJSVGPattern* node = [[IJSVGPattern alloc] init];
     node.type = IJSVGNodeTypePattern;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1360,7 +1348,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseClipPathElement:(NSXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGGroup* node = [[[IJSVGGroup alloc] init] autorelease];
+    IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = IJSVGNodeTypeClipPath;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1380,7 +1368,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 - (IJSVGNode*)parseMaskElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
 {
-    IJSVGGroup* node = [[[IJSVGGroup alloc] init] autorelease];
+    IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = IJSVGNodeTypeMask;
     node.name = element.localName;
     node.parentNode = parentNode;

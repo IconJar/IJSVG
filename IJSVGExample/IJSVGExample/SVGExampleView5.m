@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [[IJSVG svgNamed:@"dashed"] retain];
+    return [IJSVG svgNamed:@"dashed"];
 }
 
 @end

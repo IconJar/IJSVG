@@ -11,16 +11,6 @@
 
 @implementation IJSVGShapeLayer
 
-- (void)dealloc
-{
-    (void)([_filter release]), _filter = nil;
-    (void)([_clipLayer release]), _clipLayer = nil;
-    (void)([_maskLayer release]), _maskLayer = nil;
-    (void)([_maskingLayer release]), _maskingLayer = nil;
-    (void)([_clipRule release]), _clipRule = nil;
-    [super dealloc];
-}
-
 - (CALayer<IJSVGDrawableLayer> *)rootLayer
 {
     return [IJSVGLayer rootLayerForLayer:self];
@@ -97,14 +87,11 @@
     }
     _convertMasksToPaths = flag;
     if (flag == YES) {
-        if (_maskingLayer != nil) {
-            (void)([_maskingLayer release]), _maskingLayer = nil;
-        }
-        _maskingLayer = [(IJSVGLayer*)self.mask retain];
+        _maskingLayer = (IJSVGLayer*)self.mask;
         self.mask = nil;
     } else {
         self.mask = _maskingLayer;
-        (void)([_maskingLayer release]), _maskingLayer = nil;
+        _maskingLayer = nil;
     }
 }
 

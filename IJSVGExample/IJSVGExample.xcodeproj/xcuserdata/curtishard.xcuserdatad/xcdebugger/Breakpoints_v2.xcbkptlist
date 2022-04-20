@@ -14,8 +14,8 @@
             filePath = "../Framework/IJSVG/IJSVG/Source/Layers/IJSVGGradientLayer.m"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "102"
-            endingLineNumber = "102"
+            startingLineNumber = "93"
+            endingLineNumber = "93"
             landmarkName = "-drawInContext:"
             landmarkType = "7">
          </BreakpointContent>

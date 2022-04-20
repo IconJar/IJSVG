@@ -242,13 +242,6 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     return YES;
 }
 
-- (void)dealloc
-{
-    (void)([_rawSelectors release]), _rawSelectors = nil;
-    (void)([selector release]), selector = nil;
-    [super dealloc];
-}
-
 - (id)initWithSelectorString:(NSString *)string
 {
     if((self = [super init]) != nil)
@@ -258,7 +251,6 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         
         // failed to compile
         if([self _compile] == NO) {
-            (void)([self release]), self = nil;
             return nil;
         }
         [self _calculate];
@@ -325,8 +317,8 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     
     
     NSUInteger length = selector.length;
-    NSMutableArray * sels = [[[NSMutableArray alloc] init] autorelease];
-    IJSVGStyleSheetSelectorRaw * rawSelector = [[[IJSVGStyleSheetSelectorRaw alloc] init] autorelease];
+    NSMutableArray * sels = [[NSMutableArray alloc] init];
+    IJSVGStyleSheetSelectorRaw * rawSelector = [[IJSVGStyleSheetSelectorRaw alloc] init];
     
     for(NSUInteger i = 0; i < length; i++) {
         unichar c = [selector characterAtIndex:i];
@@ -384,7 +376,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
             
             // reset the raw selector
             if(!(i == length-1)) {
-                rawSelector = [[[IJSVGStyleSheetSelectorRaw alloc] init] autorelease];
+                rawSelector = [[IJSVGStyleSheetSelectorRaw alloc] init];
             }
         }
         

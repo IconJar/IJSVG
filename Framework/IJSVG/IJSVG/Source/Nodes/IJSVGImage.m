@@ -15,8 +15,6 @@
 - (void)dealloc
 {
     (void)(CGImageRelease(CGImage)), CGImage = nil;
-    (void)([_image release]), _image = nil;
-    [super dealloc];
 }
 
 - (void)loadFromString:(NSString*)encodedString
@@ -43,16 +41,13 @@
     }
 
     // set the image against the container
-    NSImage* anImage = [[[NSImage alloc] initWithData:data] autorelease];
+    NSImage* anImage = [[NSImage alloc] initWithData:data];
     [self setImage:anImage];
 }
 
 - (void)setImage:(NSImage*)anImage
 {
-    if (_image != nil) {
-        (void)([_image release]), _image = nil;
-    }
-    _image = [anImage retain];
+    _image = anImage;
     _intrinsicSize = (CGSize)_image.size;
 
     if (CGImage != nil) {

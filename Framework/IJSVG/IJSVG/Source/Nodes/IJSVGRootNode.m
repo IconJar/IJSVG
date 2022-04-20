@@ -10,12 +10,6 @@
 
 @implementation IJSVGRootNode
 
-- (void)dealloc
-{
-    (void)[_intrinsicSize release], _intrinsicSize = nil;
-    [super dealloc];
-}
-
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
