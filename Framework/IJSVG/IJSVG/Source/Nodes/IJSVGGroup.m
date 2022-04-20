@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroup.h"
+#import <IJSVG/IJSVGGroup.h>
 
 @implementation IJSVGGroup
 

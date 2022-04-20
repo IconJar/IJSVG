@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColorNode.h"
+#import <IJSVG/IJSVGColorNode.h>
 
 @implementation IJSVGColorNode
 

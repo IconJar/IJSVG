@@ -6,8 +6,8 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImageRep.h"
-#import "NSImage+IJSVGAdditions.h"
+#import <IJSVG/IJSVGImageRep.h>
+#import <IJSVG/NSImage+IJSVGAdditions.h>
 
 IJSVG* IJSVGGetFromNSImage(NSImage* image)
 {

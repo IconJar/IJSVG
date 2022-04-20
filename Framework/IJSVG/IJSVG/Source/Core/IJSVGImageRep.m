@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGImageRep.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGImageRep.h>
 
 @implementation IJSVGImageRep
 

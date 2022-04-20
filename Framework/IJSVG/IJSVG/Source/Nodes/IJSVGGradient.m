@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGradient.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGGradient
 

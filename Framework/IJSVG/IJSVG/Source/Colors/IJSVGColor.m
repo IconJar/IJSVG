@@ -6,10 +6,10 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
-#import "IJSVGUtils.h"
-#import "IJSVGStringAdditions.h"
-#import "IJSVGParsing.h"
+#import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGParsing.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 

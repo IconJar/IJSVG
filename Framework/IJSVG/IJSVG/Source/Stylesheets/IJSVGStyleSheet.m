@@ -6,9 +6,9 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
-#import "IJSVGStyle.h"
-#import "IJSVGStyleSheet.h"
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGStyleSheet.h>
 
 @interface IJSVGStyleSheetSelectorListItem : NSObject {
 }

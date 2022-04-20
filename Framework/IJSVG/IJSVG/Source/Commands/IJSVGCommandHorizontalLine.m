@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandHorizontalLine.h"
+#import <IJSVG/IJSVGCommandHorizontalLine.h>
 
 @implementation IJSVGCommandHorizontalLine
 

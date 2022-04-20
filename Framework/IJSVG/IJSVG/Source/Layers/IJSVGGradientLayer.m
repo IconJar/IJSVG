@@ -6,7 +6,7 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGradientLayer.h"
+#import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
 
 @implementation IJSVGGradientLayer
@@ -47,17 +47,17 @@
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     switch (self.renderQuality) {
-    case kIJSVGRenderQualityOptimized: {
-        backingScaleFactor = (backingScaleFactor * .35f);
-        break;
-    }
-    case kIJSVGRenderQualityLow: {
-        backingScaleFactor = (backingScaleFactor * .05f);
-        break;
-    }
-    default: {
-        break;
-    }
+        case kIJSVGRenderQualityOptimized: {
+            backingScaleFactor = (backingScaleFactor * .35f);
+            break;
+        }
+        case kIJSVGRenderQualityLow: {
+            backingScaleFactor = (backingScaleFactor * .05f);
+            break;
+        }
+        default: {
+            break;
+        }
     }
     [super setBackingScaleFactor:backingScaleFactor];
 }

@@ -6,9 +6,9 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGMath.h"
-#import "IJSVGTransform.h"
-#import "IJSVGParsing.h"
+#import <IJSVG/IJSVGMath.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGParsing.h>
 
 @implementation IJSVGTransform
 

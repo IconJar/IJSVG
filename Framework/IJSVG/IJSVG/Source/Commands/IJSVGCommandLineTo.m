@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandLineTo.h"
+#import <IJSVG/IJSVGCommandLineTo.h>
 
 @implementation IJSVGCommandLineTo
 

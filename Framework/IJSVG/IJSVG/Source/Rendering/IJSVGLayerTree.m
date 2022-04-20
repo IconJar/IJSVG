@@ -233,6 +233,7 @@
                 [layer addSublayer:patternLayer];
                 break;
             }
+                
             // gradients
             case IJSVGLayerFillTypeGradient: {
                 IJSVGGradientLayer* gradientLayer = nil;

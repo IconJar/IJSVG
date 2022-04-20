@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandQuadraticCurve.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGCommandQuadraticCurve.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGCommandQuadraticCurve
 

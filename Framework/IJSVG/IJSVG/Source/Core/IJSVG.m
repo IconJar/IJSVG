@@ -6,9 +6,9 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGExporter.h"
-#import "IJSVGTransaction.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGExporter.h>
+#import <IJSVG/IJSVGTransaction.h>
 
 @implementation IJSVG
 

@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTransformLayer.h"
+#import <IJSVG/IJSVGTransformLayer.h>
 
 @implementation IJSVGTransformLayer
 

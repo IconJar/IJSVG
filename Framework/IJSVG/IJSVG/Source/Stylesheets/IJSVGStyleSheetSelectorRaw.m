@@ -6,7 +6,7 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyleSheetSelectorRaw.h"
+#import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 
 @implementation IJSVGStyleSheetSelectorRaw
 

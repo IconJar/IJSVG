@@ -6,11 +6,11 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGLayer.h"
-#import "IJSVGShapeLayer.h"
-#import "IJSVGUtils.h"
-#import "IJSVGExporterPathInstruction.h"
-#import "IJSVGParsing.h"
+#import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGExporterPathInstruction.h>
+#import <IJSVG/IJSVGParsing.h>
 
 @implementation IJSVGUtils
 

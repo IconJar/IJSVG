@@ -6,9 +6,9 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGFilter.h"
-#import "IJSVGFilterEffect.h"
-#import "IJSVGLayer.h"
+#import <IJSVG/IJSVGFilter.h>
+#import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGFilter
@@ -23,7 +23,7 @@
     CGImageRef originalImage = [IJSVGLayer newImageForLayer:layer
                                                  colorSpace:colorSpace
                                                  bitmapInfo:info
-                                                      scale:1.f];
+                                                      scale:scale];
     CIImage* image = [CIImage imageWithCGImage:originalImage];
     CGColorSpaceRelease(colorSpace);
     CGImageRelease(originalImage);

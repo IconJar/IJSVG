@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGDef.h"
+#import <IJSVG/IJSVGDef.h>
 
 @implementation IJSVGDef
 

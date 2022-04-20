@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStrokeLayer.h"
+#import <IJSVG/IJSVGStrokeLayer.h>
 
 @implementation IJSVGStrokeLayer
 

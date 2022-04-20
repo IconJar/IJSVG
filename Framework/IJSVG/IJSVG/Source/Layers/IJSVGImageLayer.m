@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImageLayer.h"
+#import <IJSVG/IJSVGImageLayer.h>
 
 @implementation IJSVGImageLayer
 

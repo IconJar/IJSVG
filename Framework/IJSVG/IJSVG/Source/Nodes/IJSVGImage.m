@@ -6,9 +6,9 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImage.h"
-#import "IJSVGPath.h"
-#import "IJSVGTransform.h"
+#import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGTransform.h>
 
 @implementation IJSVGImage
 

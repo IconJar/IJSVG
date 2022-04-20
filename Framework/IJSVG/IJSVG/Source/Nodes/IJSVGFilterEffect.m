@@ -6,8 +6,8 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGFilterEffect.h"
-#import "IJSVGFilterEffectGaussianBlur.h"
+#import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVG/IJSVGFilterEffectGaussianBlur.h>
 
 @implementation IJSVGFilterEffect
 

@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGView.h"
+#import <IJSVG/IJSVGView.h>
 
 @implementation IJSVGView
 

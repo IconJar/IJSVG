@@ -6,19 +6,19 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGExporter.h"
-#import "IJSVGExporterPathInstruction.h"
-#import "IJSVGGradientLayer.h"
-#import "IJSVGGroupLayer.h"
-#import "IJSVGImageLayer.h"
-#import "IJSVGLinearGradient.h"
-#import "IJSVGMath.h"
-#import "IJSVGPatternLayer.h"
-#import "IJSVGRadialGradient.h"
-#import "IJSVGShapeLayer.h"
-#import "IJSVGStrokeLayer.h"
-#import "IJSVGTransformLayer.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGExporter.h>
+#import <IJSVG/IJSVGExporterPathInstruction.h>
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGImageLayer.h>
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGMath.h>
+#import <IJSVG/IJSVGPatternLayer.h>
+#import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGStrokeLayer.h>
+#import <IJSVG/IJSVGTransformLayer.h>
 
 @implementation IJSVGExporter
 

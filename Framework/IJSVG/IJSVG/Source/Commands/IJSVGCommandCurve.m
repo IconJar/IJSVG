@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandCurve.h"
+#import <IJSVG/IJSVGCommandCurve.h>
 
 @implementation IJSVGCommandCurve
 

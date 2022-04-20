@@ -6,8 +6,8 @@
 //  Copyright (c) 2015 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGFontConverter.h"
-#import "IJSVGShapeLayer.h"
+#import <IJSVG/IJSVGFontConverter.h>
+#import <IJSVG/IJSVGShapeLayer.h>
 
 @implementation IJSVGFontConverter
 

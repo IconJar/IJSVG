@@ -6,20 +6,19 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommand.h"
-#import "IJSVGUtils.h"
-
-#import "IJSVGCommandClose.h"
-#import "IJSVGCommandCurve.h"
-#import "IJSVGCommandEllipticalArc.h"
-#import "IJSVGCommandHorizontalLine.h"
-#import "IJSVGCommandLineTo.h"
-#import "IJSVGCommandMove.h"
-#import "IJSVGCommandQuadraticCurve.h"
-#import "IJSVGCommandSmoothCurve.h"
-#import "IJSVGCommandSmoothQuadraticCurve.h"
-#import "IJSVGCommandVerticalLine.h"
-#import "IJSVGThreadManager.h"
+#import <IJSVG/IJSVGCommand.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGCommandClose.h>
+#import <IJSVG/IJSVGCommandCurve.h>
+#import <IJSVG/IJSVGCommandEllipticalArc.h>
+#import <IJSVG/IJSVGCommandHorizontalLine.h>
+#import <IJSVG/IJSVGCommandLineTo.h>
+#import <IJSVG/IJSVGCommandMove.h>
+#import <IJSVG/IJSVGCommandQuadraticCurve.h>
+#import <IJSVG/IJSVGCommandSmoothCurve.h>
+#import <IJSVG/IJSVGCommandSmoothQuadraticCurve.h>
+#import <IJSVG/IJSVGCommandVerticalLine.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGCommand
 

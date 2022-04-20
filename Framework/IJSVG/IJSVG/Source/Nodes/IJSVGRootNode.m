@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGRootNode.h"
+#import <IJSVG/IJSVGRootNode.h>
 
 @implementation IJSVGRootNode
 

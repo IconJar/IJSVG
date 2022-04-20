@@ -6,7 +6,7 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUnitSize.h"
+#import <IJSVG/IJSVGUnitSize.h>
 
 @implementation IJSVGUnitSize
 

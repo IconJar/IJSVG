@@ -6,12 +6,12 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGGroupLayer.h"
-#import "IJSVGLayer.h"
-#import "IJSVGShapeLayer.h"
-#import "IJSVGTransformLayer.h"
-#import "IJSVGRootLayer.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGTransformLayer.h>
+#import <IJSVG/IJSVGRootLayer.h>
 
 @implementation IJSVGLayer
 

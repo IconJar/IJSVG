@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandLineTo.h"
-#import "IJSVGCommandMove.h"
+#import <IJSVG/IJSVGCommandLineTo.h>
+#import <IJSVG/IJSVGCommandMove.h>
 
 @implementation IJSVGCommandMove
 

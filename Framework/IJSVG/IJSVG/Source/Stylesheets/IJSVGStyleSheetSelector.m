@@ -6,9 +6,9 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyleSheetSelector.h"
-#import "IJSVGNode.h"
-#import "IJSVGGroup.h"
+#import <IJSVG/IJSVGStyleSheetSelector.h>
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGGroup.h>
 
 @implementation IJSVGStyleSheetSelector
 

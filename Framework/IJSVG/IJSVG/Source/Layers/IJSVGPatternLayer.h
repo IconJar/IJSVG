@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGLayer.h"
-#import "IJSVGPattern.h"
+#import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGPattern.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGPatternLayer : IJSVGLayer

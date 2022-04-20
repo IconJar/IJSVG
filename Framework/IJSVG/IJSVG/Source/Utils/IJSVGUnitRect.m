@@ -6,7 +6,7 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGUnitRect.h"
+#import <IJSVG/IJSVGUnitRect.h>
 
 @implementation IJSVGUnitRect
 

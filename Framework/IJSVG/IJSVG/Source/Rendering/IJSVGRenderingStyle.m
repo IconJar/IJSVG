@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGRenderingStyle.h"
+#import <IJSVG/IJSVGRenderingStyle.h>
 
 @implementation IJSVGRenderingStyle
 

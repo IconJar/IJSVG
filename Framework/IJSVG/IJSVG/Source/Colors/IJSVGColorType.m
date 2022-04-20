@@ -6,7 +6,7 @@
 //  Copyright © 2021 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColorType.h"
+#import <IJSVG/IJSVGColorType.h>
 
 @implementation IJSVGColorType
 

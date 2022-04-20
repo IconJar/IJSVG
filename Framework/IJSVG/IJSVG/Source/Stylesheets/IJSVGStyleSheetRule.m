@@ -6,7 +6,7 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyleSheetRule.h"
+#import <IJSVG/IJSVGStyleSheetRule.h>
 
 @implementation IJSVGStyleSheetRule
 

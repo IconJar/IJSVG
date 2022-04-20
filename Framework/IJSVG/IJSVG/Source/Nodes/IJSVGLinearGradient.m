@@ -6,9 +6,9 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGLinearGradient.h"
-#import "IJSVGUtils.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGLinearGradient
 

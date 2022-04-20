@@ -6,9 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGExporter.h"
-#import "IJSVGExporterPathInstruction.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGExporter.h>
+#import <IJSVG/IJSVGExporterPathInstruction.h>
+#import <IJSVG/IJSVGUtils.h>
 #import <math.h>
 
 @implementation IJSVGExporterPathInstruction

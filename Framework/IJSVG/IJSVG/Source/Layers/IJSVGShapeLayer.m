@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroupLayer.h"
-#import "IJSVGShapeLayer.h"
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGShapeLayer.h>
 
 @implementation IJSVGShapeLayer
 

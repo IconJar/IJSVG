@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyle.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGStyle
 

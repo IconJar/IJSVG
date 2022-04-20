@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGFilterLayer.h"
+#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransform.h>
 
 @implementation IJSVGFilterLayer

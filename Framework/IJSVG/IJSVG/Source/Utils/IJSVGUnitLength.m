@@ -6,9 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
-#import "IJSVGUnitLength.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGUnitLength.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGUnitLength
 

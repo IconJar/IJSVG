@@ -6,8 +6,8 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGPattern.h"
-#import "IJSVGUnitRect.h"
+#import <IJSVG/IJSVGPattern.h>
+#import <IJSVG/IJSVGUnitRect.h>
 
 @implementation IJSVGPattern
 

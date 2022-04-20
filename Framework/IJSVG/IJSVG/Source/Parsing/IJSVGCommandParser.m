@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandParser.h"
+#import <IJSVG/IJSVGCommandParser.h>
 
 @implementation IJSVGCommandParser
 

@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandEllipticalArc.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGCommandEllipticalArc.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGCommandEllipticalArc
 

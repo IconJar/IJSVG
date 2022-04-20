@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStringAdditions.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation NSString (IJSVGAdditions)
 

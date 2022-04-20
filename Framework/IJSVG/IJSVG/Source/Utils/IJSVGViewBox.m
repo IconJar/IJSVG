@@ -6,8 +6,8 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGViewBox.h"
-#import "IJSVGStringAdditions.h"
+#import <IJSVG/IJSVGViewBox.h>
+#import <IJSVG/IJSVGStringAdditions.h>
 
 @implementation IJSVGViewBox
 
