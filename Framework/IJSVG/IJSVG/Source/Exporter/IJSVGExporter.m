@@ -1219,55 +1219,55 @@ NSString* IJSVGHash(NSString* key)
             gradientElement);
     }
 
-    // add the stops
-    NSGradient* grad = layer.gradient.gradient;
-    IJSVGColorList* sheet = layer.gradient.computedColorList;
-    NSInteger noStops = grad.numberOfColorStops;
-    for (NSInteger i = 0; i < noStops; i++) {
-
-        // grab each color from the gradient
-        NSColor* aColor = nil;
-        CGFloat location;
-        [grad getColor:&aColor
-              location:&location
-               atIndex:i];
-
-        if (sheet != nil) {
-            aColor = [sheet proposedColorForColor:aColor];
-        }
-
-        // create the stop element
-        NSXMLElement* stop = [[NSXMLElement alloc] init];
-        stop.name = @"stop";
-
-        NSMutableDictionary* atts = [[NSMutableDictionary alloc] init];
-        atts[@"offset"] = [NSString stringWithFormat:@"%g%%", (location * 100)];
-
-        // add the color
-        IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
-        NSString* stopColor = [self colorStringForColor:aColor
-                                                   flag:IJSVGColorTypeFlagStop
-                                                options:options];
-        // dont bother adding default
-        if ([stopColor isEqualToString:@"#000"] == NO) {
-            atts[@"stop-color"] = stopColor;
-        }
-
-        // we need to work out the color at this point, annoyingly...
-        CGFloat opacity = aColor.alphaComponent;
-
-        // is opacity is equal to 1, no need to add it as spec
-        // defaults opacity to 1 anyway :)
-        if (opacity != 1.f) {
-            atts[@"stop-opacity"] = IJSVGShortFloatStringWithOptions(opacity, _floatingPointOptions);
-        }
-
-        // att the attributes
-        IJSVGApplyAttributesToElement(atts, stop);
-
-        // append the stop the gradient
-        [gradientElement addChild:stop];
-    }
+//    // add the stops
+//    NSGradient* grad = layer.gradient.gradient;
+//    IJSVGColorList* sheet = layer.gradient.computedColorList;
+//    NSInteger noStops = grad.numberOfColorStops;
+//    for (NSInteger i = 0; i < noStops; i++) {
+//
+//        // grab each color from the gradient
+//        NSColor* aColor = nil;
+//        CGFloat location;
+//        [grad getColor:&aColor
+//              location:&location
+//               atIndex:i];
+//
+//        if (sheet != nil) {
+//            aColor = [sheet proposedColorForColor:aColor];
+//        }
+//
+//        // create the stop element
+//        NSXMLElement* stop = [[NSXMLElement alloc] init];
+//        stop.name = @"stop";
+//
+//        NSMutableDictionary* atts = [[NSMutableDictionary alloc] init];
+//        atts[@"offset"] = [NSString stringWithFormat:@"%g%%", (location * 100)];
+//
+//        // add the color
+//        IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
+//        NSString* stopColor = [self colorStringForColor:aColor
+//                                                   flag:IJSVGColorTypeFlagStop
+//                                                options:options];
+//        // dont bother adding default
+//        if ([stopColor isEqualToString:@"#000"] == NO) {
+//            atts[@"stop-color"] = stopColor;
+//        }
+//
+//        // we need to work out the color at this point, annoyingly...
+//        CGFloat opacity = aColor.alphaComponent;
+//
+//        // is opacity is equal to 1, no need to add it as spec
+//        // defaults opacity to 1 anyway :)
+//        if (opacity != 1.f) {
+//            atts[@"stop-opacity"] = IJSVGShortFloatStringWithOptions(opacity, _floatingPointOptions);
+//        }
+//
+//        // att the attributes
+//        IJSVGApplyAttributesToElement(atts, stop);
+//
+//        // append the stop the gradient
+//        [gradientElement addChild:stop];
+//    }
 
     // append it to the defs
     [[self defElement] addChild:gradientElement];

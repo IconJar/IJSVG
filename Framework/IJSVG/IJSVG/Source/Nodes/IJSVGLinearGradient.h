@@ -11,7 +11,7 @@
 
 @interface IJSVGLinearGradient : IJSVGGradient
 
-+ (NSGradient*)parseGradient:(NSXMLElement*)element
-                    gradient:(IJSVGLinearGradient*)aGradient;
++ (void)parseGradient:(NSXMLElement*)element
+             gradient:(IJSVGLinearGradient*)aGradient;
 
 @end

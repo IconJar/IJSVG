@@ -18,7 +18,7 @@
 @property (nonatomic, strong) IJSVGUnitLength* fr;
 @property (nonatomic, strong) IJSVGUnitLength* r;
 
-+ (NSGradient*)parseGradient:(NSXMLElement*)element
-                    gradient:(IJSVGRadialGradient*)gradient;
++ (void)parseGradient:(NSXMLElement*)element
+             gradient:(IJSVGRadialGradient*)gradient;
 
 @end

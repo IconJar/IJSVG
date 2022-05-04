@@ -12,8 +12,8 @@
 
 @implementation IJSVGLinearGradient
 
-+ (NSGradient*)parseGradient:(NSXMLElement*)element
-                    gradient:(IJSVGLinearGradient*)aGradient
++ (void)parseGradient:(NSXMLElement*)element
+             gradient:(IJSVGLinearGradient*)aGradient
 {
     // just ask unit for the value
     NSString* x1 = ([element attributeForName:IJSVGAttributeX1].stringValue ?: @"0");
@@ -29,14 +29,9 @@
     NSArray* colors = nil;
     CGFloat* stopsParams = [self.class computeColorStops:aGradient
                                                   colors:&colors];
-    
-    // create the gradient with the colours
-    NSGradient* grad = [[NSGradient alloc] initWithColors:colors
-                                              atLocations:stopsParams
-                                               colorSpace:IJSVGColor.defaultColorSpace];
-
-    free(stopsParams);
-    return grad;
+    aGradient.colors = colors;
+    aGradient.locations = stopsParams;
+    aGradient.numberOfStops = colors.count;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
@@ -74,12 +69,6 @@
 
     CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
         gradientEndPoint, options);
-
-#ifdef IJSVG_DEBUG
-    [self _debugStart:gradientStartPoint
-                  end:gradientEndPoint
-              context:ctx];
-#endif
 }
 
 @end

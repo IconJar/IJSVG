@@ -15,24 +15,39 @@
 
 - (void)dealloc
 {
-    if (_CGGradient != nil) {
-        CGGradientRelease(_CGGradient);
+    if(_locations != NULL) {
+        (void)free(_locations), _locations = NULL;
+    }
+    if (_CGGradient != NULL) {
+        (void)CGGradientRelease(_CGGradient), _CGGradient = NULL;
     }
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGGradient* clone = [super copyWithZone:zone];
-    clone.gradient = self.gradient.copy;
+    clone.numberOfStops = self.numberOfStops;
+    clone.colors = clone.colors.copy;
+    size_t length = sizeof(CGFloat)*self.numberOfStops;
+    clone.locations = (CGFloat*)malloc(length);
+    memcpy(clone.locations, self.locations, length);
     return clone;
+}
+
+- (void)setLocations:(CGFloat*)locations
+{
+    if(_locations != NULL) {
+        (void)free(_locations), _locations = NULL;
+    }
+    _locations = locations;
 }
 
 - (void)setColorList:(IJSVGColorList*)list
 {
     _privateColorList = list;
-    if (_CGGradient != nil) {
+    if (_CGGradient != NULL) {
         CGGradientRelease(_CGGradient);
-        _CGGradient = nil;
+        _CGGradient = NULL;
     }
 }
 
@@ -65,16 +80,16 @@
 - (IJSVGColorList*)colorList
 {
     IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
-    NSInteger num = self.gradient.numberOfColorStops;
-    for (NSInteger i = 0; i < num; i++) {
-        NSColor* color;
-        [self.gradient getColor:&color
-                       location:nil
-                        atIndex:i];
-        IJSVGColorType* type = [IJSVGColorType typeWithColor:color
-                                                        flags:IJSVGColorTypeFlagStop];
-        [sheet addColor:type];
-    }
+//    NSInteger num = self.gradient.numberOfColorStops;
+//    for (NSInteger i = 0; i < num; i++) {
+//        NSColor* color;
+//        [self.gradient getColor:&color
+//                       location:nil
+//                        atIndex:i];
+//        IJSVGColorType* type = [IJSVGColorType typeWithColor:color
+//                                                        flags:IJSVGColorTypeFlagStop];
+//        [sheet addColor:type];
+//    }
     return sheet;
 }
 
@@ -91,22 +106,22 @@
     }
 
     // actually create the gradient
-    NSInteger num = self.gradient.numberOfColorStops;
+    NSInteger num = self.numberOfStops;
     CGFloat* locations = (CGFloat*)malloc(sizeof(CGFloat) * num);
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
         &kCFTypeArrayCallBacks);
-    for (NSInteger i = 0; i < num; i++) {
-        NSColor* color;
-        [self.gradient getColor:&color
-                       location:&locations[i]
-                        atIndex:i];
-        if (_privateColorList != nil) {
-            color = [_privateColorList proposedColorForColor:color];
-        }
+    for (NSColor* color in _colors) {
+//        NSColor* color;
+//        [self.gradient getColor:&color
+//                       location:&locations[i]
+//                        atIndex:i];
+//        if (_privateColorList != nil) {
+//            color = [_privateColorList proposedColorForColor:color];
+//        }
         CFArrayAppendValue(colors, color.CGColor);
     }
-    CGGradientRef result = CGGradientCreateWithColors(_gradient.colorSpace.CGColorSpace,
-        colors, locations);
+    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
+        colors, _locations);
     CFRelease(colors);
     free(locations);
     return _CGGradient = result;
@@ -117,18 +132,6 @@
        absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox
 {
-}
-
-- (void)_debugStart:(CGPoint)startPoint
-                end:(CGPoint)endPoint
-            context:(CGContextRef)ctx
-{
-    CGContextSaveGState(ctx);
-    CGContextSetStrokeColorWithColor(ctx, NSColor.blackColor.CGColor);
-    CGContextSetLineWidth(ctx, 1.f);
-    CGContextMoveToPoint(ctx, startPoint.x, startPoint.y);
-    CGContextAddLineToPoint(ctx, endPoint.x, endPoint.y);
-    CGContextStrokePath(ctx);
 }
 
 @end

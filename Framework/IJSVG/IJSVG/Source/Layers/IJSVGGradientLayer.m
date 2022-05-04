@@ -22,12 +22,7 @@
 
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;
-    NSInteger stops = _gradient.gradient.numberOfColorStops;
-    for (NSInteger i = 0; i < stops; i++) {
-        NSColor* color = nil;
-        [_gradient.gradient getColor:&color
-                           location:NULL
-                            atIndex:i];
+    for (NSColor* color in newGradient.colors) {
         if (color.alphaComponent != 1.f) {
             hasAlphaChannel = YES;
             break;

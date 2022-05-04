@@ -23,8 +23,8 @@
     return grad;
 }
 
-+ (NSGradient*)parseGradient:(NSXMLElement*)element
-                    gradient:(IJSVGRadialGradient*)gradient
++ (void)parseGradient:(NSXMLElement*)element
+             gradient:(IJSVGRadialGradient*)gradient
 {
     // cx defaults to 50% if not specified
     NSDictionary* kv = @{
@@ -72,19 +72,12 @@
                                          fromUnitType:gradient.units];
     }
 
-    if (gradient.gradient != nil) {
-        return nil;
-    }
-
     NSArray* colors = nil;
     CGFloat* colorStops = [self.class computeColorStops:gradient
                                                  colors:&colors];
-    
-    NSGradient* ret = [[NSGradient alloc] initWithColors:colors
-                                              atLocations:colorStops
-                                               colorSpace:IJSVGColor.defaultColorSpace];
-    free(colorStops);
-    return ret;
+    gradient.locations = colorStops;
+    gradient.colors = colors;
+    gradient.numberOfStops = colors.count;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
@@ -163,12 +156,6 @@
         gradientStartPoint,
         radius, options);
     CGContextRestoreGState(ctx);
-
-//#ifdef IJSVG_DEBUG_GRADIENTS
-//    [self _debugStart:gradientStartPoint
-//                  end:gradientEndPoint
-//              context:ctx];
-//#endif
 }
 
 @end

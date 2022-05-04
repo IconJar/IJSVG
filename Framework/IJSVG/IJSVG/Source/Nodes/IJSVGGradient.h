@@ -14,7 +14,9 @@
 
 @interface IJSVGGradient : IJSVGGroup
 
-@property (nonatomic, strong) NSGradient* gradient;
+@property (nonatomic, strong) NSArray<NSColor*>* colors;
+@property (nonatomic, assign) CGFloat* locations;
+@property (nonatomic, assign) NSUInteger numberOfStops;
 @property (nonatomic, assign) CGGradientRef CGGradient;
 @property (nonatomic, strong) IJSVGUnitLength* x1;
 @property (nonatomic, strong) IJSVGUnitLength* x2;
@@ -30,10 +32,6 @@
               objectRect:(NSRect)objectRect
        absoluteTransform:(CGAffineTransform)absoluteTransform
                 viewPort:(CGRect)viewBox;
-
-- (void)_debugStart:(CGPoint)startPoint
-                end:(CGPoint)endPoint
-            context:(CGContextRef)ctx;
 
 - (IJSVGColorList*)colorList;
 - (IJSVGColorList*)computedColorList;

@@ -877,9 +877,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                      ignoredAttributes:nil];
     [self computeElement:element
               parentNode:node];
-    
-    node.gradient = [IJSVGLinearGradient parseGradient:element
-                                              gradient:node];
+    [IJSVGLinearGradient parseGradient:element
+                              gradient:node];
     return node;
 }
 
@@ -905,8 +904,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                      ignoredAttributes:nil];
     [self computeElement:element
               parentNode:node];
-    node.gradient = [IJSVGRadialGradient parseGradient:element
-                                              gradient:node];
+    [IJSVGRadialGradient parseGradient:element
+                              gradient:node];
     return node;
 }
 
@@ -921,7 +920,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
-    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
