@@ -33,7 +33,8 @@
     return self.sublayers.firstObject;
 }
 
-- (CALayer<IJSVGDrawableLayer> *)referencingLayer {
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
     return _referencingLayer ?: self.superlayer;
 }
 

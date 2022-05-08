@@ -8,7 +8,6 @@
 
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGColorList.h>
-#import <IJSVG/IJSVGDef.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
 

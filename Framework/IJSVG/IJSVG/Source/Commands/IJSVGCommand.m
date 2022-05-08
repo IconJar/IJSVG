@@ -118,17 +118,24 @@
     return commands;
 }
 
-+ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)unsafeBuffer
                                           dataStream:(IJSVGPathDataStream*)dataStream
 {
     NSMutableArray<IJSVGCommand*>* commands = [[NSMutableArray alloc] init];
-    NSUInteger len = strlen(buffer);
+    NSUInteger len = strlen(unsafeBuffer);
     NSUInteger lastIndex = len - 1;
+    
+    // we need to trim the buffer first as any given string given to us
+    // could be unsafe and have random whitespace at the extremes.
+    size_t bufferLength = sizeof(char)*(len + 1);
+    char* buffer = (char*)malloc(bufferLength);
+    memcpy(buffer, unsafeBuffer, bufferLength);
+    IJSVGTrimCharBuffer(buffer);
 
     // make sure we plus 1 for the null byte
     char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
     NSInteger start = 0;
-    for (NSInteger i = 0; i < len; i++) {
+    for (NSInteger i = start; i < len; i++) {
         char nextChar = buffer[i + 1];
         BOOL atEnd = i == lastIndex;
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
@@ -161,6 +168,7 @@
         }
     }
     (void)free(charBuffer), charBuffer = NULL;
+    (void)free(buffer), buffer = NULL;
     return commands;
 }
 

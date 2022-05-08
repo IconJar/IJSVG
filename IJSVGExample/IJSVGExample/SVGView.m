@@ -26,7 +26,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"car"];
+    return [IJSVG svgNamed:@"canonical"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

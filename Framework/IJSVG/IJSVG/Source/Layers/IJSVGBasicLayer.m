@@ -21,7 +21,8 @@
 }
 
 
-- (void)performRenderInContext:(CGContextRef)ctx {
+- (void)performRenderInContext:(CGContextRef)ctx
+{
 }
 
 

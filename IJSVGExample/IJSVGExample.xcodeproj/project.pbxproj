@@ -7,6 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5901B73D282818CA00290525 /* contour_hatching.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B730282818CA00290525 /* contour_hatching.svg */; };
+		5901B73E282818CA00290525 /* canonical.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B731282818CA00290525 /* canonical.svg */; };
+		5901B73F282818CA00290525 /* clipping.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B732282818CA00290525 /* clipping.svg */; };
+		5901B740282818CA00290525 /* hand.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B733282818CA00290525 /* hand.svg */; };
+		5901B741282818CA00290525 /* mask.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B734282818CA00290525 /* mask.svg */; };
+		5901B742282818CA00290525 /* transistor.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B735282818CA00290525 /* transistor.svg */; };
+		5901B743282818CA00290525 /* clipper_edge.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B736282818CA00290525 /* clipper_edge.svg */; };
+		5901B744282818CA00290525 /* RoundIcons_FreeSet-25.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B737282818CA00290525 /* RoundIcons_FreeSet-25.svg */; };
+		5901B745282818CA00290525 /* contour_colorbar.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B738282818CA00290525 /* contour_colorbar.svg */; };
+		5901B746282818CA00290525 /* shape.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B739282818CA00290525 /* shape.svg */; };
+		5901B747282818CA00290525 /* pcolormesh.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B73A282818CA00290525 /* pcolormesh.svg */; };
+		5901B748282818CA00290525 /* noscale.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B73B282818CA00290525 /* noscale.svg */; };
+		5901B749282818CA00290525 /* poison.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B73C282818CA00290525 /* poison.svg */; };
 		59069A2922D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */; };
 		59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2A22D0EE0E004DDEA5 /* test (1).svg */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
@@ -81,6 +94,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5901B730282818CA00290525 /* contour_hatching.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = contour_hatching.svg; sourceTree = "<group>"; };
+		5901B731282818CA00290525 /* canonical.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = canonical.svg; sourceTree = "<group>"; };
+		5901B732282818CA00290525 /* clipping.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = clipping.svg; sourceTree = "<group>"; };
+		5901B733282818CA00290525 /* hand.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = hand.svg; sourceTree = "<group>"; };
+		5901B734282818CA00290525 /* mask.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = mask.svg; sourceTree = "<group>"; };
+		5901B735282818CA00290525 /* transistor.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = transistor.svg; sourceTree = "<group>"; };
+		5901B736282818CA00290525 /* clipper_edge.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = clipper_edge.svg; sourceTree = "<group>"; };
+		5901B737282818CA00290525 /* RoundIcons_FreeSet-25.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "RoundIcons_FreeSet-25.svg"; sourceTree = "<group>"; };
+		5901B738282818CA00290525 /* contour_colorbar.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = contour_colorbar.svg; sourceTree = "<group>"; };
+		5901B739282818CA00290525 /* shape.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = shape.svg; sourceTree = "<group>"; };
+		5901B73A282818CA00290525 /* pcolormesh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = pcolormesh.svg; sourceTree = "<group>"; };
+		5901B73B282818CA00290525 /* noscale.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = noscale.svg; sourceTree = "<group>"; };
+		5901B73C282818CA00290525 /* poison.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = poison.svg; sourceTree = "<group>"; };
 		59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = compuserver_msn_Ford_Focus.svg; sourceTree = "<group>"; };
 		59069A2A22D0EE0E004DDEA5 /* test (1).svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "test (1).svg"; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
@@ -199,6 +225,19 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				5901B731282818CA00290525 /* canonical.svg */,
+				5901B736282818CA00290525 /* clipper_edge.svg */,
+				5901B732282818CA00290525 /* clipping.svg */,
+				5901B738282818CA00290525 /* contour_colorbar.svg */,
+				5901B730282818CA00290525 /* contour_hatching.svg */,
+				5901B733282818CA00290525 /* hand.svg */,
+				5901B734282818CA00290525 /* mask.svg */,
+				5901B73B282818CA00290525 /* noscale.svg */,
+				5901B73A282818CA00290525 /* pcolormesh.svg */,
+				5901B73C282818CA00290525 /* poison.svg */,
+				5901B737282818CA00290525 /* RoundIcons_FreeSet-25.svg */,
+				5901B739282818CA00290525 /* shape.svg */,
+				5901B735282818CA00290525 /* transistor.svg */,
 				59069A2A22D0EE0E004DDEA5 /* test (1).svg */,
 				59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */,
 				597AC83222CFD0FC007C0E42 /* home.svg */,
@@ -358,8 +397,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */,
+				5901B741282818CA00290525 /* mask.svg in Resources */,
+				5901B740282818CA00290525 /* hand.svg in Resources */,
 				5956658219B62F4600D805FF /* Images.xcassets in Resources */,
 				590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */,
+				5901B73E282818CA00290525 /* canonical.svg in Resources */,
+				5901B747282818CA00290525 /* pcolormesh.svg in Resources */,
 				590C87F1201FBF27004A1554 /* AJ_Digital_Camera.svg in Resources */,
 				59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */,
 				590C87EF201FA093004A1554 /* NewTux.svg in Resources */,
@@ -368,17 +411,26 @@
 				597AC83322CFD0FC007C0E42 /* home.svg in Resources */,
 				590C87EB201F9888004A1554 /* json.svg in Resources */,
 				59D1E3A0202279CA00C54672 /* Group.svg in Resources */,
+				5901B745282818CA00290525 /* contour_colorbar.svg in Resources */,
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
 				5991A2A9201E30E600913E3B /* gradients.svg in Resources */,
+				5901B742282818CA00290525 /* transistor.svg in Resources */,
+				5901B744282818CA00290525 /* RoundIcons_FreeSet-25.svg in Resources */,
 				59069A2922D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg in Resources */,
 				5986308719BA104800CF15EA /* linecap.svg in Resources */,
+				5901B73F282818CA00290525 /* clipping.svg in Resources */,
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
+				5901B746282818CA00290525 /* shape.svg in Resources */,
+				5901B749282818CA00290525 /* poison.svg in Resources */,
 				590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */,
 				59459CEC19B906FE00CE493B /* clipped.svg in Resources */,
 				590C87F6201FD0D4004A1554 /* car.svg in Resources */,
 				5991A2AB201E310200913E3B /* heart.svg in Resources */,
 				5986308C19BA180E00CF15EA /* dashed.svg in Resources */,
+				5901B743282818CA00290525 /* clipper_edge.svg in Resources */,
+				5901B748282818CA00290525 /* noscale.svg in Resources */,
+				5901B73D282818CA00290525 /* contour_hatching.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

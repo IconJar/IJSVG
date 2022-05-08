@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"heart"];
+    return [IJSVG svgNamed:@"conical"];
 }
 
 @end
