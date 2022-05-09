@@ -133,7 +133,7 @@
     IJSVGTrimCharBuffer(buffer);
 
     // make sure we plus 1 for the null byte
-    char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
+    char* charBuffer = (char*)malloc(bufferLength);
     NSInteger start = 0;
     for (NSInteger i = start; i < len; i++) {
         char nextChar = buffer[i + 1];
@@ -157,11 +157,20 @@
 
             // previous command is actual subcommand
             Class commandClass = [IJSVGCommand commandClassForCommandChar:commandString[0]];
-            IJSVGCommand* command = nil;
-            command = (IJSVGCommand*)[[commandClass alloc] initWithCommandStringBuffer:commandString
-                                                                            dataStream:dataStream];
-            
-            [commands addObject:command];
+            if(commandClass != nil) {
+                IJSVGCommand* command = nil;
+                command = (IJSVGCommand*)[[commandClass alloc] initWithCommandStringBuffer:commandString
+                                                                                dataStream:dataStream];
+                
+                [commands addObject:command];
+            }
+#if DEBUG
+            else {
+                // if we get here then the command buffer is invalid, nothing we can
+                // do about it, just invalid data.
+                NSLog(@"\"%s\" is not a valid command instruction set", commandString);
+            }
+#endif
             
             // free the memory as at this point, we are done with it
             (void)free(commandString), commandString = NULL;

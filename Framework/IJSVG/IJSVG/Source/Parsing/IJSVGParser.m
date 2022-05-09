@@ -269,7 +269,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
             continue;
         }
         [self parseDefElement:childElement
-                   parentNode:parentNode];
+                   parentNode:_rootNode];
     }
 }
 
@@ -680,7 +680,7 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
         case IJSVGNodeTypeDef: {
             [self parseDefElement:element
-                       parentNode:node];
+                       parentNode:_rootNode];
             break;
         }
         case IJSVGNodeTypeUse: {
@@ -759,7 +759,8 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
     if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
         scopedDetachedElements = [[NSMutableDictionary alloc] init];
-        [_detachedElements setObject:scopedDetachedElements forKey:parentNode];
+        [_detachedElements setObject:scopedDetachedElements
+                              forKey:parentNode];
     }
     scopedDetachedElements[identifier] = element;
 }
@@ -939,11 +940,15 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         [group addChild:node];
     }
     
+    CGMutablePathRef path = NULL;
     NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
-
-    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:pathData.UTF8String
-                                                                    dataStream:_commandDataStream];
-    CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:commands];
+    if(pathData != nil) {
+        NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:pathData.UTF8String
+                                                                        dataStream:_commandDataStream];
+        path = [IJSVGCommand newPathForCommandsArray:commands];
+    } else {
+        path = CGPathCreateMutable();
+    }
     node.path = path;
     CGPathRelease(path);
 

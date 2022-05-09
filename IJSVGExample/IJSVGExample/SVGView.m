@@ -26,7 +26,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"canonical"];
+    return [IJSVG svgNamed:@"errorbar_basic"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

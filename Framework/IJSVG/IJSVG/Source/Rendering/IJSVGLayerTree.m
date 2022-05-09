@@ -100,8 +100,10 @@
 {
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
-    [self applyTransformedPathToShapeLayer:layer
-                                  fromNode:node];
+    if(CGPathIsEmpty(node.path) == NO) {
+        [self applyTransformedPathToShapeLayer:layer
+                                      fromNode:node];
+    }
     layer.fillColor = nil;
     layer.fillRule = [IJSVGUtils CGFillRuleForWindingRule:node.windingRule];
     return layer;
