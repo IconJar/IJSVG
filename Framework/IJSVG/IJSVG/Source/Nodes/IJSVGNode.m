@@ -24,7 +24,7 @@
                           kind:(NSXMLNodeKind)kind
 {
     // possible fix for older os's that complain
-    if(string == nil || kind == NSXMLCommentKind) {
+    if(string == nil || kind != NSXMLElementKind) {
         return IJSVGNodeTypeNotFound;
     }
     

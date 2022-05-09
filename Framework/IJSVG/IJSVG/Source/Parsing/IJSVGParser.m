@@ -1392,15 +1392,17 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
              parentNode:(IJSVGNode*)parentNode
 {
     for(NSXMLElement* childElement in element.children) {
-        NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
-        if(identifier != nil) {
-            [self detachElement:childElement
-                 withIdentifier:identifier
-                     parentNode:parentNode];
-        }
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         // we always want style elements to be passed
+        if(type != IJSVGNodeTypeNotFound) {
+            NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
+            if(identifier != nil) {
+                [self detachElement:childElement
+                     withIdentifier:identifier
+                         parentNode:parentNode];
+            }
+        }
         switch(type) {
             case IJSVGNodeTypeStyle: {
                 [self parseElement:childElement
