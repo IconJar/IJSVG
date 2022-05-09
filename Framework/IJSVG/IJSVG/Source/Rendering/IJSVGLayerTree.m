@@ -489,7 +489,7 @@
                                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                    fromNode:(IJSVGNode*)node
 {
-    if(filter == nil) {
+    if(filter == nil || filter.valid == NO) {
         return layer;
     }
     IJSVGFilterLayer* filterLayer = [IJSVGFilterLayer layer];

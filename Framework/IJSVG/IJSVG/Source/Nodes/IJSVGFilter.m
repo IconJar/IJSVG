@@ -13,6 +13,11 @@
 
 @implementation IJSVGFilter
 
+- (BOOL)valid
+{
+    return self.children.count != 0;
+}
+
 - (CGImageRef)newImageByApplyFilterToLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                      scale:(CGFloat)scale
 {
@@ -38,6 +43,14 @@
                                            fromRect:image.extent];
     layer.filter = filter;
     return outputImage;
+}
+
+- (void)addChild:(IJSVGNode*)child
+{
+    if([child isKindOfClass:IJSVGFilter.class] == NO) {
+        return;
+    }
+    [super addChild:child];
 }
 
 @end

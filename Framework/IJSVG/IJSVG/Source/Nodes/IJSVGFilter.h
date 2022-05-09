@@ -14,4 +14,6 @@
 - (CGImageRef)newImageByApplyFilterToLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                      scale:(CGFloat)scale;
 
+@property (nonatomic, readonly) BOOL valid;
+
 @end
