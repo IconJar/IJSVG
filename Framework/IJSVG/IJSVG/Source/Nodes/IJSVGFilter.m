@@ -47,7 +47,7 @@
 
 - (void)addChild:(IJSVGNode*)child
 {
-    if([child isKindOfClass:IJSVGFilter.class] == NO) {
+    if([child isKindOfClass:IJSVGFilterEffect.class] == NO) {
         return;
     }
     [super addChild:child];
