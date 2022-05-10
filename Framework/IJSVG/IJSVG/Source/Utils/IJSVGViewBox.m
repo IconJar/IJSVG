@@ -234,7 +234,7 @@ CGSize IJSVGViewBoxComputeXMaxYMin(CGContextRef ctx, CGRect viewBox,
     transform = CGAffineTransformConcat(transform, CGAffineTransformMakeScale(ratio, ratio));
     
     // translate it
-    CGAffineTransform translate = CGAffineTransformMakeTranslation(drawingRect.size.width - viewBox.size.width,
+    CGAffineTransform translate = CGAffineTransformMakeTranslation(drawingRect.size.width - (viewBox.size.width * ratio),
                                                                    0.f);
     transform = CGAffineTransformConcat(transform, translate);
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
@@ -258,7 +258,7 @@ CGSize IJSVGViewBoxComputeXMinYMax(CGContextRef ctx, CGRect viewBox,
     
     // translate it
     CGAffineTransform translate = CGAffineTransformMakeTranslation(0.f,
-                                                                   drawingRect.size.height - viewBox.size.height);
+                                                                   drawingRect.size.height - (viewBox.size.height * ratio));
     transform = CGAffineTransformConcat(transform, translate);
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
@@ -280,8 +280,8 @@ CGSize IJSVGViewBoxComputeXMaxYMax(CGContextRef ctx, CGRect viewBox,
     transform = CGAffineTransformConcat(transform, CGAffineTransformMakeScale(ratio, ratio));
     
     // translate it
-    CGAffineTransform translate = CGAffineTransformMakeTranslation(drawingRect.size.width - viewBox.size.width,
-                                                                   drawingRect.size.height - viewBox.size.height);
+    CGAffineTransform translate = CGAffineTransformMakeTranslation(drawingRect.size.width - (viewBox.size.width * ratio),
+                                                                   drawingRect.size.height - (viewBox.size.height * ratio));
     transform = CGAffineTransformConcat(transform, translate);
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
