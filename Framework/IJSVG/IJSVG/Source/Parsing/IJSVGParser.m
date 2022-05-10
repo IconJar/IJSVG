@@ -75,6 +75,7 @@ static NSDictionary* _IJSVGAttributeDictionaryFloats = nil;
 static NSDictionary* _IJSVGAttributeDictionaryNodes = nil;
 static NSDictionary* _IJSVGAttributeDictionaryUnits = nil;
 static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
+static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 + (void)load
 {
@@ -103,6 +104,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         IJSVGAttributeGradientTransform : @"transforms",
         IJSVGAttributePatternTransform : @"transforms"
     };
+    _IJSVGUseElementOverwritingAttributes = @[IJSVGAttributeX, IJSVGAttributeY,
+                                              IJSVGAttributeWidth, IJSVGAttributeHeight,
+                                              IJSVGAttributeHref];
 }
 
 + (IJSVGParser*)groupForFileURL:(NSURL*)aURL
@@ -1310,23 +1314,40 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         return nil;
     }
     
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID
-                                                             parentNode:parentNode];
     
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* elementWithoutXLink = element.copy;
     [elementWithoutXLink removeAttributeForName:IJSVGAttributeXLink];
+    
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID
+                                                             parentNode:parentNode];
+    
+    [self removeAttributes:_IJSVGUseElementOverwritingAttributes
+               fromElement:detachedElement
+          comparingElement:element];
     
     IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:elementWithoutXLink
                                                  parentNode:parentNode
                                                    nodeType:IJSVGNodeTypeUse];
         
     IJSVGNode* shadowNode = [self parseElement:detachedElement
-                                    parentNode:parentNode];
+                                    parentNode:node];
     if(shadowNode != nil) {
         [node addChild:shadowNode];
     }
     return node;
+}
+
+- (void)removeAttributes:(NSArray<NSString*>*)attributes
+             fromElement:(NSXMLElement*)element
+        comparingElement:(NSXMLElement*)comparingElement
+{
+    for(NSString* collpaseAttribute in attributes) {
+        if([element attributeForName:collpaseAttribute] != nil &&
+           [comparingElement attributeForName:collpaseAttribute] != nil) {
+            [element removeAttributeForName:collpaseAttribute];
+        }
+    }
 }
 
 - (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
