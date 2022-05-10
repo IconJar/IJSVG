@@ -207,7 +207,12 @@
             
         // unknown
         default: {
-            layer.fillColor = NSColor.blackColor.CGColor;
+            NSColor* fillColor = NSColor.blackColor;
+            if(node.fillOpacity.value != 1.f) {
+                fillColor = [IJSVGColor changeAlphaOnColor:fillColor
+                                                        to:node.fillOpacity.value];
+            }
+            layer.fillColor = fillColor.CGColor;
             break;
         }
     }
