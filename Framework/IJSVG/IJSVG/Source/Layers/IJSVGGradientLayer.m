@@ -74,11 +74,7 @@
     // draw the gradient
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     CGRect objectRect = layer.boundingBox;
-    CGRect objectFrame = layer.frame;
-    CGAffineTransform affine = [IJSVGLayer absoluteTransformForLayer:layer];
-    affine = CGAffineTransformTranslate(affine,
-                                        -CGRectGetMinX(objectFrame),
-                                        -CGRectGetMinY(objectFrame));
+    CGAffineTransform affine = [IJSVGLayer userSpaceTransformForLayer:layer];
     CGContextSaveGState(ctx);
     
     IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];

@@ -462,8 +462,15 @@
     
     // add the clip mask if any
     if(node.clipPath != nil) {
+        CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableLayerForNode:node.clipPath];
+        if(node.clipPath.contentUnits == IJSVGUnitUserSpaceOnUse) {
+            // we need to transform this back to original position
+            CGAffineTransform transform = clipLayer.affineTransform;
+            CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:layer];
+            clipLayer.affineTransform = CGAffineTransformConcat(transform, userSpaceTransform);
+        }
         layer.clipRule = layer.fillRule;
-        layer.clipLayer = [self drawableLayerForNode:node.clipPath];
+        layer.clipLayer = clipLayer;
     }
     
     // setup the opacity

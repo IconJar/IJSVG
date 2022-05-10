@@ -88,6 +88,16 @@
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
 
++ (CGAffineTransform)userSpaceTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    CGRect absolutePosition = layer.frame;
+    CGAffineTransform transform = CGAffineTransformConcat(layer.affineTransform,
+                                                          [self absoluteTransformForLayer:layer]);
+    return CGAffineTransformTranslate(transform,
+                                      -CGRectGetMinX(absolutePosition),
+                                      -CGRectGetMinY(absolutePosition));
+}
+
 + (CALayer<IJSVGDrawableLayer>*)rootLayerForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CALayer<IJSVGDrawableLayer>* parentLayer = (CALayer<IJSVGDrawableLayer>*)layer.referencingLayer;
@@ -197,7 +207,7 @@
 {
     CGContextSaveGState(ctx);
     [self recursivelyClip:clipLayer
-                transform:CGAffineTransformIdentity
+                transform:clipLayer.affineTransform
                 inContext:ctx];
     if([layer.clipRule isEqualToString:kCAFillRuleEvenOdd]) {
         CGContextEOClip(ctx);

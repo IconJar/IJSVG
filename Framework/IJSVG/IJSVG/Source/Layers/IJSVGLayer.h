@@ -139,6 +139,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 + (CGAffineTransform)absoluteTransformForLayer:(CALayer*)layer;
 + (CGRect)absoluteFrameForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 + (CGRect)calculateFrameForSublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)layers;
++ (CGAffineTransform)userSpaceTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
 + (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
