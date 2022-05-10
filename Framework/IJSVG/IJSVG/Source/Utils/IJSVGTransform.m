@@ -266,7 +266,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
         identity = CGAffineTransformTranslate(identity, p1, p2);
         identity = CGAffineTransformRotate(identity, angle);
-        return CGAffineTransformTranslate(identity, -1.f * p1, -1.f * p2);
+        return CGAffineTransformTranslate(identity, -p1, -p2);
     }
 
     // scale
@@ -304,125 +304,6 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         return CGAffineTransformMake(1.f, tan(radians), 0.f, 1.f, 0.f, 0.f);
     }
 
-    case IJSVGTransformCommandNotImplemented: {
-        return CGAffineTransformIdentity;
-    }
-    }
-    return CGAffineTransformIdentity;
-}
-
-- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier
-{
-    switch (_command) {
-    // matrix
-    case IJSVGTransformCommandMatrix: {
-        CGFloat p0 = _parameters[0];
-        CGFloat p1 = _parameters[1];
-        CGFloat p2 = _parameters[2];
-        CGFloat p3 = _parameters[3];
-        CGFloat p4 = _parameters[4];
-        CGFloat p5 = _parameters[5];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-            p2 = modifier(2, p2);
-            p3 = modifier(3, p3);
-            p4 = modifier(4, p4);
-            p5 = modifier(5, p5);
-        }
-        return CGAffineTransformMake(p0, p1, p2, p3, p4, p5);
-    }
-
-    // translate
-    case IJSVGTransformCommandTranslate: {
-        CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeTranslation(p0, 0);
-        }
-        CGFloat p1 = _parameters[1];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-        }
-        return CGAffineTransformMakeTranslation(p0, p1);
-    }
-
-    // translateX
-    case IJSVGTransformCommandTranslateX: {
-        CGFloat p0 = _parameters[0];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-        }
-        return CGAffineTransformMakeTranslation(p0, 0.f);
-    }
-
-    // translateY
-    case IJSVGTransformCommandTranslateY: {
-        CGFloat p0 = _parameters[0];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-        }
-        return CGAffineTransformMakeTranslation(0.f, p0);
-    }
-
-    // scale
-    case IJSVGTransformCommandScale: {
-        CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeScale(p0, p0);
-        }
-        CGFloat p1 = _parameters[1];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-        }
-        return CGAffineTransformMakeScale(p0, p1);
-    }
-
-    // skewX
-    case IJSVGTransformCommandSkewX: {
-        CGFloat degrees = _parameters[0];
-        if (modifier != nil) {
-            degrees = modifier(0, degrees);
-        }
-        CGFloat radians = degrees * M_PI / 180.f;
-        return CGAffineTransformMake(1.f, 0.f, tan(radians), 1.f, 0.f, 0.f);
-    }
-
-    // skewY
-    case IJSVGTransformCommandSkewY: {
-        CGFloat degrees = _parameters[0];
-        if (modifier != nil) {
-            degrees = modifier(0, degrees);
-        }
-        CGFloat radians = degrees * M_PI / 180.f;
-        return CGAffineTransformMake(1.f, tan(radians), 0.f, 1.f, 0.f, 0.f);
-    }
-
-    // rotate
-    case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeRotation((_parameters[0] / 180) * M_PI);
-        } else {
-            CGFloat p0 = _parameters[0];
-            CGFloat p1 = _parameters[1];
-            CGFloat p2 = _parameters[2];
-            if (modifier != nil) {
-                p0 = modifier(0, p0);
-                p1 = modifier(1, p1);
-                p2 = modifier(2, p2);
-            }
-            CGFloat angle = p0 * (M_PI / 180.f);
-            CGAffineTransform def = CGAffineTransformIdentity;
-            def = CGAffineTransformTranslate(def, p1, p2);
-            def = CGAffineTransformRotate(def, angle);
-            def = CGAffineTransformTranslate(def, -1.f * p1, -1.f * p2);
-            return def;
-        }
-        break;
-    }
-
-    // do nothing
     case IJSVGTransformCommandNotImplemented: {
         return CGAffineTransformIdentity;
     }

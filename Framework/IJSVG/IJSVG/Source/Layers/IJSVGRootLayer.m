@@ -16,6 +16,8 @@
         CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
         __weak IJSVGRootLayer* weakSelf = self;
         IJSVGViewBoxDrawingBlock drawingBlock = ^(CGSize size) {
+            CGContextSaveGState(ctx);
+            CGContextClipToRect(ctx,viewBox);
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
             CGFloat nScale = MIN(size.width, size.height);
@@ -24,6 +26,7 @@
             
             // perform the actual render now we have computed backing scale
             [super performRenderInContext:ctx];
+            CGContextRestoreGState(ctx);
         };
         [IJSVGViewBox drawViewBox:viewBox
                            inRect:self.boundingBoxBounds

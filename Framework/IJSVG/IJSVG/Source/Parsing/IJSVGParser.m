@@ -1316,11 +1316,17 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* elementWithoutXLink = element.copy;
     [elementWithoutXLink removeAttributeForName:IJSVGAttributeXLink];
-    NSXMLElement* shadowElement = [self mergedElement:elementWithoutXLink
-                                 withReferenceElement:detachedElement];
     
-    return [self parseElement:shadowElement
-                   parentNode:parentNode];
+    IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:elementWithoutXLink
+                                                 parentNode:parentNode
+                                                   nodeType:IJSVGNodeTypeUse];
+        
+    IJSVGNode* shadowNode = [self parseElement:detachedElement
+                                    parentNode:parentNode];
+    if(shadowNode != nil) {
+        [node addChild:shadowNode];
+    }
+    return node;
 }
 
 - (IJSVGNode*)parsePatternElement:(NSXMLElement*)element

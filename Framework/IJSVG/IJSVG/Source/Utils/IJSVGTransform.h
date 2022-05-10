@@ -51,7 +51,6 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 - (void)applyBounds:(CGRect)bounds
    withContentUnits:(IJSVGUnitType)contentUnits;
 - (CGAffineTransform)CGAffineTransform;
-- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
 - (void)recalculateWithBounds:(CGRect)bounds;
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
