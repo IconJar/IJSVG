@@ -275,7 +275,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             continue;
         }
         [self parseDefElement:childElement
-                   parentNode:_rootNode];
+                   parentNode:_rootNode
+                    recursive:YES];
     }
 }
 
@@ -598,7 +599,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                                  kind:nodeKind];
         
     [self parseDefElement:element
-               parentNode:node];
+               parentNode:node
+                recursive:NO];
     
     IJSVGNode* computedNode = nil;
     switch(nodeType) {
@@ -685,7 +687,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         }
         case IJSVGNodeTypeDef: {
             [self parseDefElement:element
-                       parentNode:_rootNode];
+                       parentNode:_rootNode
+                        recursive:YES];
             break;
         }
         case IJSVGNodeTypeUse: {
@@ -1169,7 +1172,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     }
     
     [self parseDefElement:element
-               parentNode:node];
+               parentNode:node
+                recursive:NO];
     
     [self computeAttributesFromElement:element
                                 onNode:node
@@ -1406,6 +1410,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (void)parseDefElement:(NSXMLElement*)element
              parentNode:(IJSVGNode*)parentNode
+              recursive:(BOOL)recursive
 {
     for(NSXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
@@ -1418,6 +1423,10 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                      withIdentifier:identifier];
             }
         }
+        
+        // defiend elements are not presentable, we only want to grab the ID's
+        // and detach those elements ready for parsing by other elements, or
+        // find styles that can be added to the style sheet
         switch(type) {
             case IJSVGNodeTypeStyle: {
                 [self parseElement:childElement
@@ -1426,6 +1435,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             }
             default:
                 break;
+        }
+        
+        // only run this if recursive or it can be slow or incorrect
+        // when parsing the tree with ids that are the same
+        if(childElement.childCount != 0 && recursive == YES) {
+            [self parseDefElement:childElement
+                       parentNode:parentNode
+                        recursive:recursive];
         }
     }
 }
