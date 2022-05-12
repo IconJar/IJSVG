@@ -39,6 +39,7 @@ NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
 NSString* const IJSVGAttributeLineJoin = @"stroke-linejoin";
 NSString* const IJSVGAttributeStroke = @"stroke";
 NSString* const IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
+NSString* const IJSVGAttributeStrokeMiterLimit = @"stroke-miterlimit";
 NSString* const IJSVGAttributeFill = @"fill";
 NSString* const IJSVGAttributeFillRule = @"fill-rule";
 NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
@@ -88,6 +89,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         IJSVGAttributeStrokeOpacity : @"strokeOpacity",
         IJSVGAttributeStrokeWidth : @"strokeWidth",
         IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
+        IJSVGAttributeStrokeMiterLimit : @"strokeMiterLimit",
         IJSVGAttributeFillOpacity : @"fillOpacity" };
     _IJSVGAttributeDictionaryNodes = @{
         IJSVGAttributeClipPath : @"clipPath",
@@ -352,8 +354,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     IJSVGAttributeParse(IJSVGAttributeID, ^(NSString* value) {
         node.identifier = value;
         [self detachElement:element
-             withIdentifier:value
-                 parentNode:node.parentNode ?: self->_rootNode];
+             withIdentifier:value];
     });
     
     // class list
@@ -386,7 +387,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* identifier = [IJSVGUtils defURL:value];
         if(identifier != nil) {
             return [self computeDetachedNodeWithIdentifier:identifier
-                                        referencingElement:element
                                            referencingNode:node];
         }
         return nil;
@@ -434,7 +434,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                     referencingElement:element
                                                         referencingNode:node];
             node.stroke = object;
             return;
@@ -467,7 +466,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                     referencingElement:element
                                                         referencingNode:node];
             node.fill = object;
             return;
@@ -563,7 +561,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* filterIdentifier = [IJSVGUtils defURL:value];
         if(filterIdentifier != nil) {
             IJSVGNode* filter = [self computeDetachedNodeWithIdentifier:filterIdentifier
-                                                     referencingElement:element
                                                         referencingNode:node];
             node.filter = (IJSVGFilter*)filter;
         }
@@ -599,6 +596,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     NSXMLNodeKind nodeKind = element.kind;
     IJSVGNodeType nodeType = [IJSVGNode typeForString:name
                                                  kind:nodeKind];
+    
+    [self parseDefElement:element
+               parentNode:node];
     
     IJSVGNode* computedNode = nil;
     switch(nodeType) {
@@ -752,7 +752,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 #pragma mark Detaching nodes
 - (void)detachElement:(NSXMLElement*)element
        withIdentifier:(NSString*)identifier
-           parentNode:(IJSVGNode*)parentNode
 {
     element = element.copy;
     [element detach];
@@ -761,6 +760,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     [element removeAttributeForName:IJSVGAttributeID];
     
     NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
+    IJSVGNode* parentNode = _rootNode;
     if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
         scopedDetachedElements = [[NSMutableDictionary alloc] init];
         [_detachedElements setObject:scopedDetachedElements
@@ -770,29 +770,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 }
 
 - (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
-                                    parentNode:(IJSVGNode*)parentNode
 {
-    // cant go up the chain if there is no parent node
-    IJSVGNode* node = parentNode;
-    NSDictionary<NSString*, NSXMLElement*>* detachedNodes = nil;
-    while(node != nil) {
-        if((detachedNodes = [_detachedElements objectForKey:node]) != nil) {
-            NSXMLElement* element = detachedNodes[identifier];
-            if(element != nil) {
-                return element;
-            }
-        }
-        node = node.parentNode;
-    }
-    return [_detachedElements objectForKey:_rootNode][identifier];
+    NSXMLElement* element = [_detachedElements objectForKey:_rootNode][identifier];
+    return element.copy;
 }
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
-                             referencingElement:(NSXMLElement*)element
                                 referencingNode:(IJSVGNode*)node
 {
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier
-                                                             parentNode:node];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
     if(detachedElement == nil) {
         return nil;
     }
@@ -871,8 +857,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                                 parentNode:parentNode];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -898,8 +883,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                                 parentNode:parentNode];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1183,6 +1167,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
+    [self parseDefElement:element
+               parentNode:node];
+    
     [self computeAttributesFromElement:element
                                 onNode:node
                      ignoredAttributes:nil];
@@ -1314,19 +1301,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         return nil;
     }
     
-    
     // its important that we remove the xlink attribute or hell breaks loose
-    NSXMLElement* elementWithoutXLink = element.copy;
-    [elementWithoutXLink removeAttributeForName:IJSVGAttributeXLink];
-    
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID
-                                                             parentNode:parentNode];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
     
     [self removeAttributes:_IJSVGUseElementOverwritingAttributes
                fromElement:detachedElement
           comparingElement:element];
     
-    IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:elementWithoutXLink
+    IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:element
                                                  parentNode:parentNode
                                                    nodeType:IJSVGNodeTypeUse];
         
@@ -1362,8 +1344,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                                 parentNode:parentNode];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1426,8 +1407,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
             if(identifier != nil) {
                 [self detachElement:childElement
-                     withIdentifier:identifier
-                         parentNode:parentNode];
+                     withIdentifier:identifier];
             }
         }
         switch(type) {

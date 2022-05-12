@@ -173,6 +173,7 @@
         self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
         self.fillOpacity.inherit = YES;
 
+        self.strokeDashArrayCount = IJSVGInheritedIntegerValue;
         self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
         self.shouldRender = YES;
 
@@ -226,6 +227,7 @@
     self.strokeWidth = node.strokeWidth;
     self.fillOpacity = node.fillOpacity;
     self.strokeOpacity = node.strokeOpacity;
+    self.strokeMiterLimit = node.strokeMiterLimit;
 
     self.identifier = node.identifier;
 
@@ -344,6 +346,30 @@
     return _stroke;
 }
 
+- (CGFloat*)strokeDashArray
+{
+    if(_strokeDashArray == NULL && _parentNode != nil) {
+        return _parentNode.strokeDashArray;
+    }
+    return _strokeDashArray;
+}
+
+- (NSInteger)strokeDashArrayCount
+{
+    if(_strokeDashArrayCount == IJSVGInheritedIntegerValue && _parentNode != nil) {
+        return _parentNode.strokeDashArrayCount;
+    }
+    return _strokeDashArrayCount;
+}
+
+- (IJSVGUnitLength *)strokeDashOffset
+{
+    if(_strokeDashOffset == nil && _parentNode != nil) {
+        return _parentNode.strokeDashOffset;
+    }
+    return _strokeDashOffset;
+}
+
 - (IJSVGUnitLength*)strokeOpacity
 {
     if (_strokeOpacity.inherit && _parentNode != nil) {
@@ -376,6 +402,14 @@
         return _parentNode.contentUnits;
     }
     return _contentUnits;
+}
+
+- (IJSVGUnitLength*)strokeMiterLimit
+{
+    if(_strokeMiterLimit == nil && _parentNode != nil) {
+        return _parentNode.strokeMiterLimit;
+    }
+    return _strokeMiterLimit;
 }
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds

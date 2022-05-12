@@ -54,6 +54,7 @@ extern NSString* const IJSVGAttributeStrokeLineCap;
 extern NSString* const IJSVGAttributeLineJoin;
 extern NSString* const IJSVGAttributeStroke;
 extern NSString* const IJSVGAttributeStrokeDashArray;
+extern NSString* const IJSVGAttributeStrokeMiterLimit;
 extern NSString* const IJSVGAttributeFill;
 extern NSString* const IJSVGAttributeFillRule;
 extern NSString* const IJSVGAttributeBlendMode;

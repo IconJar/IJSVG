@@ -118,6 +118,7 @@ typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
 };
 
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
+static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
 
 @interface IJSVGNode : NSObject <NSCopying>
 
@@ -154,6 +155,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
+@property (nonatomic, strong) IJSVGUnitLength* strokeMiterLimit;
 @property (nonatomic, strong) NSArray<IJSVGTransform*>* transforms;
 @property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, assign) CGFloat* strokeDashArray;

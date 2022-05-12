@@ -264,6 +264,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     
     char* str = IJSVGTimmedCharBufferCreate(oString);
     if (IJSVGCharBufferIsHEX(str) == YES) {
+        string = [NSString stringWithUTF8String:str];
         (void)free(str), str = NULL;
         return [self.class colorFromHEXString:string];
     }

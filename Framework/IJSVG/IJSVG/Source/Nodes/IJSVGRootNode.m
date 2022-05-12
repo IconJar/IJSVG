@@ -15,6 +15,10 @@
     if((self = [super init]) != nil) {
         self.viewBoxAlignment = IJSVGViewBoxAlignmentXMidYMid;
         self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
+        self.lineCapStyle = IJSVGLineCapStyleButt;
+        self.lineJoinStyle = IJSVGLineJoinStyleMiter;
+        self.strokeMiterLimit = [IJSVGUnitLength unitWithFloat:4.f];
+        self.strokeDashArrayCount = 0;
     }
     return self;
 }

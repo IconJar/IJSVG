@@ -286,8 +286,7 @@
     layer.strokeColor = strokeColor.CGColor;
     
     // work out line width
-    CGFloat lineWidth = 1.f;
-    lineWidth = node.strokeWidth.value;
+    CGFloat lineWidth = node.strokeWidth.value;
     
     // work out line styles
     IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
@@ -297,6 +296,7 @@
     layer.lineWidth = lineWidth;
     layer.lineCap = [IJSVGUtils CGLineCapForCapStyle:lineCapStyle];
     layer.lineJoin = [IJSVGUtils CGLineJoinForJoinStyle:lineJoinStyle];
+    layer.miterLimit = node.strokeMiterLimit.value;
     
     CGFloat strokeOpacity = 1.f;
     if(node.strokeOpacity.value != 0.f) {
@@ -306,13 +306,14 @@
     
     // dashing
     layer.lineDashPhase = node.strokeDashOffset.value;
-    if(node.strokeDashArrayCount != 0.f) {
+    if(node.strokeDashArrayCount != 0) {
         layer.lineDashPattern = node.lineDashPattern;
     }
     
     // lets resize the layer as we have computed everything at this point
     CGFloat increase = layer.lineWidth / 2.f;
     frame = CGRectInset(frame, -increase, -increase);
+    
     
     // now we know what to do, we need to transform the path
     CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);

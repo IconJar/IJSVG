@@ -49,11 +49,11 @@ static IJSVGPathDataSequence* _sequence;
     BOOL largeArcFlag = NO;
     BOOL sweepFlag = NO;
     
-    radii = [currentCommand readPoint];
-    xAxisRotation = [currentCommand readFloat];
-    largeArcFlag = [currentCommand readBOOL];
-    sweepFlag = [currentCommand readBOOL];
-    arcEndPoint = [currentCommand readPoint];
+    radii = currentCommand.readPoint;
+    xAxisRotation = currentCommand.readFloat;
+    largeArcFlag = currentCommand.readBOOL;
+    sweepFlag = currentCommand.readBOOL;
+    arcEndPoint = currentCommand.readPoint;
     
     CGFloat rx = fabs(radii.x);
     CGFloat ry = fabs(radii.y);
