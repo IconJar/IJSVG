@@ -596,7 +596,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     NSXMLNodeKind nodeKind = element.kind;
     IJSVGNodeType nodeType = [IJSVGNode typeForString:name
                                                  kind:nodeKind];
-    
+        
     [self parseDefElement:element
                parentNode:node];
     
@@ -616,6 +616,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         // we can treat unkown element as groups, as some people
         // thought it was a good idea to stick HTML within the markup
         case IJSVGNodeTypeUnknown:
+        case IJSVGNodeTypeSwitch:
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element
                                         parentNode:node
@@ -1304,10 +1305,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
     
-    [self removeAttributes:_IJSVGUseElementOverwritingAttributes
-               fromElement:detachedElement
-          comparingElement:element];
-    
+//    IJSVGNodeType type = [IJSVGNode typeForString:detachedElement.localName
+//                                             kind:detachedElement.kind];
+//    if(type != IJSVGNodeTypeUse) {
+//        [self replaceAttributes:_IJSVGUseElementOverwritingAttributes
+//                      onElement:detachedElement
+//                    fromElement:element];
+//    }
+
     IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:element
                                                  parentNode:parentNode
                                                    nodeType:IJSVGNodeTypeUse];
@@ -1320,14 +1325,17 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     return node;
 }
 
-- (void)removeAttributes:(NSArray<NSString*>*)attributes
-             fromElement:(NSXMLElement*)element
-        comparingElement:(NSXMLElement*)comparingElement
+- (void)replaceAttributes:(NSArray<NSString*>*)attributes
+                onElement:(NSXMLElement*)onElement
+              fromElement:(NSXMLElement*)fromElement
 {
     for(NSString* collpaseAttribute in attributes) {
-        if([element attributeForName:collpaseAttribute] != nil &&
-           [comparingElement attributeForName:collpaseAttribute] != nil) {
-            [element removeAttributeForName:collpaseAttribute];
+        NSXMLNode* attribute = nil;
+        if((attribute = [fromElement attributeForName:collpaseAttribute]) != nil &&
+           [onElement attributeForName:collpaseAttribute] != nil) {
+            [attribute detach];
+            [onElement removeAttributeForName:collpaseAttribute];
+            [onElement addAttribute:attribute];
         }
     }
 }

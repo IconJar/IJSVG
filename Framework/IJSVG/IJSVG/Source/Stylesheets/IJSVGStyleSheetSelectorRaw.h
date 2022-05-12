@@ -11,6 +11,7 @@
 @class IJSVGNode;
 
 typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
+    IJSVGStyleSheetSelectorCombinatorWildcard, // *
     IJSVGStyleSheetSelectorCombinatorDescendant, // space
     IJSVGStyleSheetSelectorCombinatorDirectDescendant, // >
     IJSVGStyleSheetSelectorCombinatorPrecededSibling, // ~

@@ -159,9 +159,10 @@
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     switch([IJSVGLayer fillTypeForFill:fill]) {
         // just a generic fill color
+        default:
         case IJSVGLayerFillTypeColor: {
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
-            NSColor* color = colorNode.color;
+            NSColor* color = colorNode.color ?: NSColor.blackColor;
             
             if(colorNode.isNoneOrTransparent == YES) {
                 color = nil;
@@ -202,17 +203,6 @@
             fillLayer = [self drawableGradientLayerForPathNode:node
                                                       gradient:(IJSVGGradient*)node.fill
                                                          layer:layer];
-            break;
-        }
-            
-        // unknown
-        default: {
-            NSColor* fillColor = NSColor.blackColor;
-            if(node.fillOpacity.value != 1.f) {
-                fillColor = [IJSVGColor changeAlphaOnColor:fillColor
-                                                        to:node.fillOpacity.value];
-            }
-            layer.fillColor = fillColor.CGColor;
             break;
         }
     }
