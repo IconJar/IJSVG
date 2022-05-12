@@ -306,7 +306,7 @@
     
     // dashing
     layer.lineDashPhase = node.strokeDashOffset.value;
-    if(node.strokeDashArrayCount != 0) {
+    if(node.strokeDashArrayCount != IJSVGInheritedIntegerValue) {
         layer.lineDashPattern = node.lineDashPattern;
     }
     
