@@ -122,6 +122,13 @@
     return IJSVGNodeTypeUnknown;
 }
 
++ (BOOL)typeIsAShape:(IJSVGNodeType)type
+{
+    return type == IJSVGNodeTypePath || type == IJSVGNodeTypeRect ||
+        type == IJSVGNodeTypeCircle || type == IJSVGNodeTypeEllipse ||
+    type == IJSVGNodeTypePolygon || type == IJSVGNodeTypePolyline;
+}
+
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler
 {
@@ -429,6 +436,15 @@
     return _contentUnits;
 }
 
+- (IJSVGNodeTraits)traits
+{
+    if(_computedTraits == NO) {
+        _computedTraits = YES;
+        [self computeTraits];
+    }
+    return _traits;
+}
+
 - (void)addTraits:(IJSVGNodeTraits)traits
 {
     _traits |= traits;
@@ -441,7 +457,7 @@
 
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits
 {
-    return (_traits & traits) == traits;
+    return (self.traits & traits) == traits;
 }
 
 - (void)computeTraits
@@ -459,6 +475,12 @@
 {
     return [NSString stringWithFormat:@"%@ %@ %@ %@",NSStringFromClass(self.class),
             self.name,self.classNameList,self.identifier];
+}
+
+- (BOOL)detachedFromParentNode
+{
+    return self.type == IJSVGNodeTypeClipPath ||
+        self.type == IJSVGNodeTypeMask;
 }
 
 @end

@@ -56,6 +56,13 @@
     [_children removeObject:child];
 }
 
+- (void)addChildren:(NSArray<IJSVGNode*>*)children
+{
+    for(IJSVGNode* node in children) {
+        [self addChild:node];
+    }
+}
+
 - (CGRect)bounds
 {
     CGRect rect = CGRectZero;

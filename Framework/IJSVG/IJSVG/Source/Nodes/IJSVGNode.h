@@ -120,7 +120,10 @@ typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
 
-@interface IJSVGNode : NSObject <NSCopying>
+@interface IJSVGNode : NSObject <NSCopying> {
+@private
+    BOOL _computedTraits;
+}
 
 void IJSVGAssertPaintableObject(id object);
 
@@ -167,12 +170,14 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
+@property (nonatomic, readonly) BOOL detachedFromParentNode;
 
 + (void)walkNodeTree:(IJSVGNode*)node
             handler:(IJSVGNodeWalkHandler)handler;
 
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind;
++ (BOOL)typeIsAShape:(IJSVGNodeType)type;
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
 

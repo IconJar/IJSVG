@@ -468,7 +468,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
                                                         referencingNode:node];
-            node.fill = object;
+            node.fill = object.detach;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
@@ -735,11 +735,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             break;
     }
     
-    // once we have done everything we can compute traits — this has to be done
-    // at this point due to needing to be within the parent node tree
-    if(computedNode != nil) {
-        [computedNode computeTraits];
-    }
     return computedNode;
 }
 
@@ -1385,6 +1380,13 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     [self computeElement:element
               parentNode:node];
+    
+    if(node.clipPath != nil) {
+        IJSVGGroup* clipPath = node.clipPath;
+        node.clipPath = nil;
+        [node addChildren:clipPath.children];
+    }
+    
     return node;
 }
 

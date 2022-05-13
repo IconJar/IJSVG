@@ -117,18 +117,22 @@
     
     // this will move the path back to a 0 origin as we actually set the origin
     // with the layer instead (which we can then move around)
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
-                                                                   -pathBounds.origin.y);
-    CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
-    layer.frame = pathBounds;
-    layer.outerBoundingBox = pathBounds;
-    layer.path = transformedPath;
+    if(pathBounds.origin.x != 0.f || pathBounds.origin.y != 0.f) {
+        CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
+                                                                       -pathBounds.origin.y);
+        CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
+        layer.path = transformedPath;
+        CGPathRelease(transformedPath);
+    } else {
+        layer.path = node.path;
+    }
     
     // note that we store the bounding box at this point, as it can be modified later
     // with strokes, however, SVG spec defined bounding box is the path without strokes
     // and without control points.
+    layer.frame = pathBounds;
+    layer.outerBoundingBox = pathBounds;
     layer.boundingBox = pathBounds;
-    CGPathRelease(transformedPath);
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node

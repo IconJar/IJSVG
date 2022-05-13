@@ -19,5 +19,6 @@
 @property (weak, nonatomic, readonly) NSArray<IJSVGNode*>* children;
 
 - (void)addChild:(IJSVGNode*)child;
+- (void)addChildren:(NSArray<IJSVGNode*>*)children;
 
 @end
