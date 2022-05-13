@@ -1372,6 +1372,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     node.parentNode = parentNode;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
+    node.windingRule = IJSVGWindingRuleNonZero;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
     
     [self computeAttributesFromElement:element

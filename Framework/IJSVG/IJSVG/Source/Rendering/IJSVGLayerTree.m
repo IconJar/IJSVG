@@ -114,7 +114,7 @@
 {
     CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
     pathBounds = pathBounds;
-    
+
     // this will move the path back to a 0 origin as we actually set the origin
     // with the layer instead (which we can then move around)
     if(pathBounds.origin.x != 0.f || pathBounds.origin.y != 0.f) {
@@ -469,7 +469,7 @@
             CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:layer];
             clipLayer.affineTransform = CGAffineTransformConcat(transform, userSpaceTransform);
         }
-        layer.clipRule = layer.fillRule;
+        layer.clipRule = clipLayer.fillRule;
         layer.clipLayer = clipLayer;
     }
     
