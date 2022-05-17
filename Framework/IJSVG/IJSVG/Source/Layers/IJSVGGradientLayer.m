@@ -73,7 +73,7 @@
 
     // draw the gradient
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
-    CGRect objectRect = layer.boundingBox;
+    CGRect objectRect = layer.boundingBoxBounds;
     CGAffineTransform affine = [IJSVGLayer userSpaceTransformForLayer:layer];
     CGContextSaveGState(ctx);
     

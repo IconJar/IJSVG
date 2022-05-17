@@ -107,7 +107,6 @@
 
     // actually create the gradient
     NSInteger num = self.numberOfStops;
-    CGFloat* locations = (CGFloat*)malloc(sizeof(CGFloat) * num);
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
         &kCFTypeArrayCallBacks);
     for (NSColor* color in _colors) {
@@ -123,7 +122,6 @@
     CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
         colors, _locations);
     CFRelease(colors);
-    free(locations);
     return _CGGradient = result;
 }
 

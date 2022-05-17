@@ -49,21 +49,26 @@
     
     // make sure we apply the absolute position to
     // transform us back into the correct space
-    if (inUserSpace == YES) {
-        CGContextConcatCTM(ctx, absoluteTransform);
-    }
-
     CGFloat width = CGRectGetWidth(boundingBox);
     CGFloat height = CGRectGetHeight(boundingBox);
-    gradientStartPoint = CGPointMake([self.x1 computeValue:width],
-        [self.y1 computeValue:height]);
-
-    gradientEndPoint = CGPointMake([self.x2 computeValue:width],
-        [self.y2 computeValue:height]);
     
-    // transform the context
+    if (inUserSpace == YES) {
+        CGContextConcatCTM(ctx, absoluteTransform);
+    } else {
+        width = 1.f;
+        height = 1.f;
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(boundingBox.size.width,
+                                                           boundingBox.size.height));
+    }
+    
+    gradientStartPoint = CGPointMake([self.x1 computeValue:width],
+                                     [self.y1 computeValue:height]);
+    gradientEndPoint = CGPointMake([self.x2 computeValue:width],
+                                     [self.y2 computeValue:height]);
+    
+    // apply the gradient transform if there is one
     CGContextConcatCTM(ctx, selfTransform);
-
+    
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
 
