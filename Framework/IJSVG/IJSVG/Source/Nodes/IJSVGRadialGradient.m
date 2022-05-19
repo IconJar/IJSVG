@@ -98,8 +98,16 @@
     CGRect boundingBox = inUserSpace ? viewBox : objectRect;
     
     // compute size based on percentages
-    CGFloat width = CGRectGetWidth(boundingBox);
-    CGFloat height = CGRectGetHeight(boundingBox);
+    CGFloat width = 0.f;
+    CGFloat height = 0.f;
+    if(inUserSpace == YES) {
+        width = CGRectGetWidth(boundingBox);
+        height = CGRectGetHeight(boundingBox);
+    } else {
+        width = 1.f;
+        height = 1.f;
+    }
+    
     CGFloat cx = [_cx computeValue:width];
     CGFloat cy = [_cy computeValue:height];
     startPoint = CGPointMake(cx, cy);
@@ -121,28 +129,9 @@
         rect = CGRectApplyAffineTransform(rect, absoluteTransform);
         radius = CGRectGetHeight(rect) / 2.f;
         CGContextConcatCTM(ctx, absoluteTransform);
-    } else if(width != height) {
-        CGAffineTransform transform = CGAffineTransformIdentity;
-        CGAffineTransform invert = CGAffineTransformIdentity;
-        CGPoint invPoint = CGPointZero;
-        CGFloat* radiusScale;
-        if(width > height) {
-            transform = CGAffineTransformMakeScale(1.f, height / width);
-            radiusScale = &invPoint.y;
-        } else {
-            transform = CGAffineTransformMakeScale(width / height, 1.f);
-            radiusScale = &invPoint.x;
-        }
-        invert = CGAffineTransformInvert(transform);
-        invPoint.x = invert.a;
-        invPoint.y = invert.d;
-        gradientStartPoint.x *= invPoint.x;
-        gradientStartPoint.y *= invPoint.y;
-        gradientEndPoint.x *= invPoint.x;
-        gradientEndPoint.y *= invPoint.y;
-        radius *= *radiusScale;
-        focalRadius *= *radiusScale;
-        selfTransform = CGAffineTransformConcat(transform, selfTransform);
+    } else {
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(CGRectGetWidth(boundingBox),
+                                                           CGRectGetHeight(boundingBox)));
     }
     
     // transform the context
