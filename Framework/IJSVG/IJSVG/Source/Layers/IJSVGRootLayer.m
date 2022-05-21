@@ -65,6 +65,20 @@
                 quality:(IJSVGRenderQuality)quality
 {
     CGRect frame = viewPort;
+    IJSVGUnitSize* size = nil;
+    
+    // The SVG might have an intrinsic size against it, if so, we need to use
+    // that instead of the viewPort size to make sure we obey the render correctly.
+    if((size = self.intrinsicSize) != nil) {
+        CGFloat width = 0.f;
+        CGFloat height = 0.f;
+        if((width = [size.width computeValue:frame.size.width]) != 0.f) {
+            frame.size.width = width;
+        }
+        if((height = [size.height computeValue:frame.size.height]) != 0.f) {
+            frame.size.height = height;
+        }
+    }
     self.frame = frame;
     _disableBackingScalePropagation = YES;
     self.backingScaleFactor = backingScale;

@@ -158,7 +158,7 @@
                                   -strokeWidthDifference);
         layer.outerBoundingBox = layer.frame;
     }
-    
+        
     // generic fill color
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     switch([IJSVGLayer fillTypeForFill:fill]) {
@@ -207,6 +207,7 @@
             fillLayer = [self drawableGradientLayerForPathNode:node
                                                       gradient:(IJSVGGradient*)node.fill
                                                          layer:layer];
+            
             break;
         }
     }
@@ -329,6 +330,7 @@
 {
     IJSVGRootLayer* layer = [IJSVGRootLayer layer];
     layer.viewBox = node.viewBox;
+    layer.intrinsicSize = node.intrinsicSize;
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
     layer.backingScaleFactor = _backingScale;

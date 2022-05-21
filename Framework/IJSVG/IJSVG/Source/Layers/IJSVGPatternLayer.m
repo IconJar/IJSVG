@@ -84,15 +84,11 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
     if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        CGRect frame = layer.boundingBox;
-        transform = [IJSVGLayer absoluteTransformForLayer:layer];
-        transform = CGAffineTransformTranslate(transform,
-                                               -CGRectGetMinX(frame),
-                                               -CGRectGetMinY(frame));
+        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
     }
-
-    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
+    
     // transform the X and Y shift
+    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
     transform = CGAffineTransformTranslate(transform,
                                            [_patternNode.x computeValue:rect.size.width],
                                            [_patternNode.y computeValue:rect.size.height]);

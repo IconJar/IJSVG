@@ -524,7 +524,9 @@
     // make sure we set the masks to path bits n bobs
 //    [self _beginVectorDraw];
     // draw the icon
-    [self _drawInRect:(NSRect)box context:context error:error];
+    [self _drawInRect:(NSRect)box
+              context:context
+                error:error];
 //    [self _endVectorDraw];
 
     CGContextEndPage(context);
