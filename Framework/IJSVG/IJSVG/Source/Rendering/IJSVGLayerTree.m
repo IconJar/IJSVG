@@ -170,12 +170,6 @@
             
             if(colorNode.isNoneOrTransparent == YES) {
                 color = nil;
-            } else {
-                // change the fill color opacity if required
-                if(node.fillOpacity.value != 1.f) {
-                    color = [IJSVGColor changeAlphaOnColor:color
-                                                        to:node.fillOpacity.value];
-                }
             }
             
             // set the color against the layer — we cant just use fill layer due to how
@@ -213,6 +207,9 @@
     }
     
     if(fillLayer != nil) {
+        if(node.fillOpacity.value != 1.f) {
+            fillLayer.opacity = node.fillOpacity.value;
+        }
         fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
                                                                    strokeWidthDifference,
                                                                    strokeWidthDifference);
