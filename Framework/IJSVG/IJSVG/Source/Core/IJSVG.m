@@ -763,7 +763,8 @@
     [rootLayer renderInContext:ctx
                       viewPort:rect
                   backingScale:backingScale
-                       quality:_renderQuality];
+                       quality:_renderQuality
+           ignoreIntrinsicSize:_ignoreIntrinsicSize];
     CGContextRestoreGState(ctx);
     if(transaction == YES) {
         IJSVGEndTransaction();

@@ -70,6 +70,7 @@ withSVGString:(NSString*)subSVGString;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, strong) IJSVGLayerTree* layerTree;
 @property (nonatomic, strong) IJSVGRootLayer* rootLayer;
+@property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;

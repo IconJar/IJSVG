@@ -91,9 +91,9 @@
 + (CGAffineTransform)userSpaceTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGRect absolutePosition = layer.frame;
-    CGAffineTransform transform = CGAffineTransformConcat(layer.affineTransform,
-                                                          [self absoluteTransformForLayer:layer]);
-    return CGAffineTransformTranslate(transform,
+//    CGAffineTransform transform = CGAffineTransformConcat(layer.affineTransform,
+//                                                          [self absoluteTransformForLayer:layer]);
+    return CGAffineTransformTranslate(CGAffineTransformIdentity,
                                       -CGRectGetMinX(absolutePosition),
                                       -CGRectGetMinY(absolutePosition));
 }
@@ -226,9 +226,11 @@
     CGContextSaveGState(ctx);
     CGFloat scale = layer.backingScaleFactor;
     CGRect rect = layer.innerBoundingBox;
+    CGRect maskRect = maskLayer.boundingBox;
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
                                                 scale:scale];
-
+    rect = CGRectMake(rect.origin.x, rect.origin.y,
+                      maskRect.size.width, maskRect.size.height);
     CGContextClipToMask(ctx, rect, maskImage);
     drawingBlock();
     CGImageRelease(maskImage);

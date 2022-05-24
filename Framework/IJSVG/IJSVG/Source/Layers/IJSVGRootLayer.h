@@ -18,6 +18,7 @@
 - (void)renderInContext:(CGContextRef)ctx
                viewPort:(CGRect)viewPort
            backingScale:(CGFloat)backingScale
-                quality:(IJSVGRenderQuality)quality;
+                quality:(IJSVGRenderQuality)quality
+    ignoreIntrinsicSize:(BOOL)ignoreIntrinsicSize;
 
 @end

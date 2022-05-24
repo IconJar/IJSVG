@@ -66,13 +66,20 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     
     CGRect rect = self.referencingLayer.boundingBoxBounds;
     
+    // get the bounds, we need these as when we render we might need to swap
+    // the coordinates over to objectBoundingBox
+    IJSVGUnitLength* xLength = _patternNode.x;
+    IJSVGUnitLength* yLength = _patternNode.y;
     IJSVGUnitLength* wLength = _patternNode.width;
     IJSVGUnitLength* hLength = _patternNode.height;
-    
+        
+    // actually do the swap if required
     if(self.patternNode.units == IJSVGUnitObjectBoundingBox ||
        self.patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
         wLength = wLength.lengthByMatchingPercentage;
         hLength = hLength.lengthByMatchingPercentage;
+        xLength = xLength.lengthByMatchingPercentage;
+        yLength = yLength.lengthByMatchingPercentage;
     }
     
     CGFloat width = [wLength computeValue:rect.size.width];
@@ -83,24 +90,20 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
         
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
-    if (self.patternNode.units == IJSVGUnitUserSpaceOnUse) {
+    if (_patternNode.units == IJSVGUnitUserSpaceOnUse) {
         transform = [IJSVGLayer userSpaceTransformForLayer:layer];
     }
     
     // transform the X and Y shift
     transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
     transform = CGAffineTransformTranslate(transform,
-                                           [_patternNode.x computeValue:rect.size.width],
-                                           [_patternNode.y computeValue:rect.size.height]);
+                                           [xLength computeValue:rect.size.width],
+                                           [yLength computeValue:rect.size.height]);
     
     // who knew that patterns have viewBoxes? Not me, but here is an implementation
     // of it anyway
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
-        if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
-            IJSVGUnitRect* viewBox = nil;
-            viewBox = [_patternNode.viewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
-            _viewBox = [viewBox computeValue:rect.size];
-        }
+        _viewBox = [_patternNode.viewBox computeValue:rect.size];
     }
         
     // create the pattern
