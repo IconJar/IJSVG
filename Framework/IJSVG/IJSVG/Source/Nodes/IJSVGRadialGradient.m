@@ -126,8 +126,6 @@
     if(inUserSpace == YES) {
         CGFloat rad = 2.f * radius;
         CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
-        rect = CGRectApplyAffineTransform(rect, selfTransform);
-        rect = CGRectApplyAffineTransform(rect, absoluteTransform);
         radius = CGRectGetHeight(rect) / 2.f;
         CGContextConcatCTM(ctx, absoluteTransform);
     } else {
