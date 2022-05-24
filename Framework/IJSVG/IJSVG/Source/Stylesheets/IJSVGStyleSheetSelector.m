@@ -22,8 +22,15 @@ BOOL IJSVGStyleSheetIsSiblingCombinator(IJSVGStyleSheetSelectorCombinator combin
     combinator == IJSVGStyleSheetSelectorCombinatorPrecededSibling;
 };
 
+BOOL IJSVGStyleSheetCharIsCombinator(unichar aChar) {
+    return strchr("*>+~", aChar) != NULL;
+}
+
 IJSVGStyleSheetSelectorCombinator IJSVGStyleSheetCombinatorForUnichar(unichar aChar)
 {
+    if(aChar == '*') {
+        return IJSVGStyleSheetSelectorCombinatorWildcard;
+    }
     if(aChar == '+') {
         return IJSVGStyleSheetSelectorCombinatorNextSibling;
     }
@@ -111,6 +118,10 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     
     // loop until aSelector is nil
     while(aSelector != nil) {
+        
+        if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorWildcard) {
+            return YES;
+        }
         
         // sibling, so + or ~
         if(IJSVGStyleSheetIsSiblingCombinator(aSelector.combinator)) {
@@ -281,7 +292,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
 
 - (BOOL)validateSelector:(NSString *)string
 {
-    char * invalidChars = "@:;*()[]";
+    char * invalidChars = "@:;()[]";
     NSUInteger length = strlen(invalidChars);
     NSUInteger sLength = string.length;
     for(NSUInteger i = 0; i < length; i++) {
@@ -304,7 +315,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
     }
     
     // keychar lookup
-    char * keychars = "#+.>~ ";
+    char * keychars = "#+.>~* ";
     NSUInteger aLength = strlen(keychars);
     BOOL (^isKeyChar)(char anotherChar) = ^(char anotherChar) {
         for(NSInteger i = 0; i < aLength; i++) {
@@ -357,7 +368,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         }
         
         // white space or end of string
-        else if ( c == ' ' || i == length-1 ) {
+        else if ( c == ' ' || (i == length-1 && IJSVGStyleSheetCharIsCombinator(c) == NO)) {
             
             // add the current parsed selector into the list
             if(rawSelector != nil) {
@@ -381,7 +392,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         }
         
         // combinator
-        else if ( c == '+' || c == '~' || c == '>' ) {
+        else if (IJSVGStyleSheetCharIsCombinator(c) == YES) {
             
             // set the combinator onto the selector
             rawSelector.combinator = IJSVGStyleSheetCombinatorForUnichar(c);
