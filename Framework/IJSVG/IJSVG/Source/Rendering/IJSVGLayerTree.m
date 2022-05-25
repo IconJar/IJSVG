@@ -161,7 +161,8 @@
         
     // generic fill color
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
-    switch([IJSVGLayer fillTypeForFill:fill]) {
+    IJSVGLayerFillType fillType = [IJSVGLayer fillTypeForFill:fill];
+    switch(fillType) {
         // just a generic fill color
         default:
         case IJSVGLayerFillTypeColor: {
@@ -207,7 +208,9 @@
     }
     
     if(fillLayer != nil) {
-        if(node.fillOpacity.value != 1.f) {
+        // fill opacity is precalculated for its colour when the type is fillColor,
+        // for fills such as gradients and patterns, just reduce the opacity down
+        if(fillType != IJSVGLayerFillTypeColor && node.fillOpacity.value != 1.f) {
             fillLayer.opacity = node.fillOpacity.value;
         }
         fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
