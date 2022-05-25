@@ -226,11 +226,11 @@
     CGContextSaveGState(ctx);
     CGFloat scale = layer.backingScaleFactor;
     CGRect rect = layer.innerBoundingBox;
-    CGRect maskRect = maskLayer.boundingBox;
-    CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
-                                                scale:scale];
+    CGRect maskRect = maskLayer.outerBoundingBox;
     rect = CGRectMake(rect.origin.x, rect.origin.y,
                       maskRect.size.width, maskRect.size.height);
+    CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
+                                                scale:scale];
     CGContextClipToMask(ctx, rect, maskImage);
     drawingBlock();
     CGImageRelease(maskImage);
