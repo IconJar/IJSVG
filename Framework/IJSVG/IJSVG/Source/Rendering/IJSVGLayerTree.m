@@ -459,17 +459,20 @@
 {
     // mask the layer
     if(node.mask != nil) {
-        layer.maskLayer = [self drawableLayerForNode:node.mask];
+        CALayer<IJSVGDrawableLayer>* maskLayer = [self drawableLayerForNode:node.mask];
+        if(node.clipPath.contentUnits == IJSVGUnitUserSpaceOnUse) {
+            [IJSVGLayer transformLayer:maskLayer
+                intoUserSpaceUnitsFrom:layer];
+        }
+        layer.maskLayer = maskLayer;
     }
     
     // add the clip mask if any
     if(node.clipPath != nil) {
         CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableLayerForNode:node.clipPath];
         if(node.clipPath.contentUnits == IJSVGUnitUserSpaceOnUse) {
-            // we need to transform this back to original position
-            CGAffineTransform transform = clipLayer.affineTransform;
-            CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:layer];
-            clipLayer.affineTransform = CGAffineTransformConcat(transform, userSpaceTransform);
+            [IJSVGLayer transformLayer:clipLayer
+                intoUserSpaceUnitsFrom:layer];
         }
         layer.clipRule = clipLayer.fillRule;
         layer.clipLayer = clipLayer;

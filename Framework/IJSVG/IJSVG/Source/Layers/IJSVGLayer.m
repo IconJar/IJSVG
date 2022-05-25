@@ -88,11 +88,17 @@
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
 
++ (void)transformLayer:(CALayer<IJSVGDrawableLayer>*)layer
+intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
+{
+    CGAffineTransform transform = layer.affineTransform;
+    CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:fromLayer];
+    layer.affineTransform = CGAffineTransformConcat(transform, userSpaceTransform);
+}
+
 + (CGAffineTransform)userSpaceTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGRect absolutePosition = layer.frame;
-//    CGAffineTransform transform = CGAffineTransformConcat(layer.affineTransform,
-//                                                          [self absoluteTransformForLayer:layer]);
     return CGAffineTransformTranslate(CGAffineTransformIdentity,
                                       -CGRectGetMinX(absolutePosition),
                                       -CGRectGetMinY(absolutePosition));
@@ -229,6 +235,7 @@
     CGRect maskRect = maskLayer.outerBoundingBox;
     rect = CGRectMake(rect.origin.x, rect.origin.y,
                       maskRect.size.width, maskRect.size.height);
+    rect = CGRectApplyAffineTransform(rect, maskLayer.affineTransform);
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
                                                 scale:scale];
     CGContextClipToMask(ctx, rect, maskImage);
@@ -261,7 +268,7 @@
                                                           ceilf(frame.size.width * scale),
                                                           ceilf(frame.size.height * scale),
                                                           8, 0, colorSpace, bitmapInfo);
-    CGContextConcatCTM(offscreenContext, [self absoluteTransformForLayer:layer]);
+//    CGContextConcatCTM(offscreenContext, [self absoluteTransformForLayer:layer]);
     CGContextScaleCTM(offscreenContext, scale, scale);
     CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x, -bounds.origin.y));
     [IJSVGLayer renderLayer:layer
