@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGRootNode.h>
 
 @implementation IJSVGNode
 
@@ -198,6 +199,9 @@
 
         self.blendMode = IJSVGBlendModeNormal;
         self.overflowVisibility = IJSVGOverflowVisibilityVisible;
+        
+        // peform basic init
+        [self setDefaults];
     }
     return self;
 }
@@ -465,6 +469,10 @@
     // by default this does nothing
 }
 
+- (void)setDefaults
+{
+}
+
 - (instancetype)detach
 {
     self.parentNode = nil;
@@ -481,6 +489,18 @@
 {
     return self.type == IJSVGNodeTypeClipPath ||
         self.type == IJSVGNodeTypeMask;
+}
+
+- (IJSVGRootNode*)rootNode
+{
+    IJSVGNode* parent = self;
+    while([parent isKindOfClass:IJSVGRootNode.class] == NO) {
+        parent = parent.parentNode;
+        if(parent == nil) {
+            return nil;
+        }
+    }
+    return (IJSVGRootNode*)parent;
 }
 
 @end

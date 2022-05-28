@@ -22,6 +22,7 @@
 @class IJSVGRootNode;
 @class IJSVGUnitRect;
 @class IJSVGFilter;
+@class IJSVGMask;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -154,7 +155,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, assign) IJSVGNode* parentNode;
 @property (nonatomic, strong) IJSVGGroup* clipPath;
-@property (nonatomic, strong) IJSVGGroup* mask;
+@property (nonatomic, strong) IJSVGMask* mask;
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
@@ -171,6 +172,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
+@property (nonatomic, readonly) IJSVGRootNode* rootNode;
+
 
 + (void)walkNodeTree:(IJSVGNode*)node
             handler:(IJSVGNodeWalkHandler)handler;
@@ -179,6 +182,7 @@ void IJSVGAssertPaintableObject(id object);
                           kind:(NSXMLNodeKind)kind;
 + (BOOL)typeIsAShape:(IJSVGNodeType)type;
 
+- (void)setDefaults;
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds;

@@ -46,7 +46,15 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @end
 
-@protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer>
+@protocol IJSVGMaskingLayer <NSObject>
+
+@required
+@property (nonatomic, assign) CGRect maskingBoundingBox;
+@property (nonatomic, assign) CGRect maskingClippingRect;
+
+@end
+
+@protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer, IJSVGMaskingLayer>
 
 @required
 @property (nonatomic, assign) CGBlendMode blendingMode;
@@ -68,7 +76,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @end
 
-@interface IJSVGLayer : CALayer <IJSVGDrawableLayer> {
+
+
+@interface IJSVGLayer : CALayer <IJSVGDrawableLayer, IJSVGMaskingLayer> {
 
 @private
     IJSVGLayer* _maskingLayer;
@@ -95,6 +105,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
+@property (nonatomic, assign) CGRect maskingBoundingBox;
+@property (nonatomic, assign) CGRect maskingClippingRect;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
@@ -130,7 +142,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock;
 
-+ (void)clipContextWithMask:(CALayer<IJSVGDrawableLayer>*)maskLayer
++ (void)clipContextWithMask:(CALayer<IJSVGMaskingLayer>*)maskLayer
                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                   inContext:(CGContextRef)context
                drawingBlock:(dispatch_block_t)drawingBlock;

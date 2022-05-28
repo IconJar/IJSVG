@@ -23,8 +23,6 @@
 @property (nonatomic, assign) CGFloat backingScale;
 @property (nonatomic, strong) IJSVGRenderingStyle* style;
 
-- (id)initWithViewPortRect:(CGRect)viewPort
-              backingScale:(CGFloat)scale;
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 
 @end

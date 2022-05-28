@@ -11,7 +11,7 @@
 #import <IJSVG/IJSVGUnitRect.h>
 #import <QuartzCore/QuartzCore.h>
 
-@interface IJSVGGroupLayer : IJSVGLayer {
+@interface IJSVGGroupLayer : IJSVGLayer <IJSVGMaskingLayer> {
     
 }
 

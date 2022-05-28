@@ -251,7 +251,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     return YES;
 }
 
-- (void)begin {
+- (void)begin
+{
     // setup basics to begin with
     _styleSheet = [[IJSVGStyleSheet alloc] init];
     IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
@@ -260,9 +261,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                                   valueOptions:NSPointerFunctionsStrongMemory
                                                       capacity:1];
     _rootNode = [[IJSVGRootNode alloc] init];
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     [self parseSVGElement:_document.rootElement
                  ontoNode:_rootNode
-               parentNode:nil];
+               parentNode:nil
+         postProcessBlock:&postProcessBlock];
+    if(postProcessBlock != nil) {
+        postProcessBlock();
+    }
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -310,9 +316,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                                height:hl];
 }
 
-- (void)computeAttributesFromElement:(NSXMLElement*)element
-                              onNode:(IJSVGNode*)node
-                   ignoredAttributes:(NSArray<NSString*>*)ignoredAttributes
+- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
+                                                         onNode:(IJSVGNode*)node
+                                              ignoredAttributes:(NSArray<NSString*>*)ignoredAttributes
 {
     IJSVGStyle* styleSheet = nil;
     __block IJSVGStyle* nodeStyle = nil;
@@ -384,14 +390,16 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     });
     
     // nodes
-    IJSVGAttributesParse(_IJSVGAttributeDictionaryNodes, ^id (NSString* value) {
-        NSString* identifier = [IJSVGUtils defURL:value];
-        if(identifier != nil) {
-            return [self computeDetachedNodeWithIdentifier:identifier
-                                           referencingNode:node];
-        }
-        return nil;
-    });
+    IJSVGNodeParserPostProcessBlock postProcessBlock = ^{
+        IJSVGAttributesParse(_IJSVGAttributeDictionaryNodes, ^id (NSString* value) {
+            NSString* identifier = [IJSVGUtils defURL:value];
+            if(identifier != nil) {
+                return [self computeDetachedNodeWithIdentifier:identifier
+                                               referencingNode:node];
+            }
+            return nil;
+        });
+    };
     
     // units
     IJSVGAttributesParse(_IJSVGAttributeDictionaryUnits, ^id (NSString* value) {
@@ -588,6 +596,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             effect.stdDeviation = [IJSVGUnitLength unitWithString:value];
         });
     }
+    
+    return postProcessBlock;
 }
 
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
@@ -602,6 +612,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                parentNode:node
                 recursive:NO];
     
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     IJSVGNode* computedNode = nil;
     switch(nodeType) {
         case IJSVGNodeTypeForeignObject: {
@@ -622,67 +633,80 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element
                                         parentNode:node
-                                          nodeType:nodeType];
+                                          nodeType:nodeType
+                                  postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeSVG: {
             computedNode = [self parseSVGElement:element
-                                      parentNode:node];
+                                      parentNode:node
+                                postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypePath: {
             computedNode = [self parsePathElement:element
-                                       parentNode:node];
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeCircle: {
             computedNode = [self parseCircleElement:element
-                                         parentNode:node];
+                                         parentNode:node
+                                   postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeEllipse: {
             computedNode = [self parseEllipseElement:element
-                                          parentNode:node];
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeRect: {
             computedNode = [self parseRectElement:element
-                                       parentNode:node];
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypePolygon: {
             computedNode = [self parsePolygonElement:element
-                                          parentNode:node];
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypePolyline: {
             computedNode = [self parsePolyLineElement:element
-                                           parentNode:node];
+                                           parentNode:node
+                                     postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeLine: {
             computedNode = [self parseLineElement:element
-                                       parentNode:node];
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeImage: {
             computedNode = [self parseImageElement:element
-                                        parentNode:node];
+                                        parentNode:node
+                                  postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypePattern: {
             computedNode = [self parsePatternElement:element
-                                          parentNode:node];
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeClipPath: {
             computedNode = [self parseClipPathElement:element
-                                           parentNode:node];
+                                           parentNode:node
+                                     postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeMask: {
             computedNode = [self parseMaskElement:element
-                                       parentNode:node];
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeDef: {
@@ -693,46 +717,59 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         }
         case IJSVGNodeTypeUse: {
             computedNode = [self parseUseElement:element
-                                      parentNode:node];
+                                      parentNode:node
+                                postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeLinearGradient: {
             computedNode = [self parseLinearGradientElement:element
-                                                 parentNode:node];
+                                                 parentNode:node
+                                           postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeRadialGradient: {
             computedNode = [self parseRadialGradientElement:element
-                                                 parentNode:node];
+                                                 parentNode:node
+                                           postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeStop: {
             computedNode = [self parseStopElement:element
-                                       parentNode:node];
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeTitle: {
             [self parseTitleElement:element
-                         parentNode:node];
+                         parentNode:node
+                   postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeDesc: {
             [self parseDescElement:element
-                        parentNode:node];
+                        parentNode:node
+                  postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeFilter: {
             computedNode = [self parseFilterElement:element
-                                         parentNode:node];
+                                         parentNode:node
+                                   postProcessBlock:&postProcessBlock];
             break;
         }
         case IJSVGNodeTypeFilterEffect: {
             computedNode = [self parseFilterEffectElement:element
-                                               parentNode:node];
+                                               parentNode:node
+                                         postProcessBlock:&postProcessBlock];
             break;
         }
         default:
             break;
+    }
+    
+    // some nodes require post processing once their tree has been worked out
+    if(postProcessBlock != nil) {
+        postProcessBlock();
     }
     
     return computedNode;
@@ -809,14 +846,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
+                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGFilter* node = [[IJSVGFilter alloc] init];
     node.type = IJSVGNodeTypeFilter;
     node.name = element.localName;
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     [self computeElement:element
               parentNode:node];
@@ -825,6 +863,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseFilterEffectElement:(NSXMLElement*)element
                             parentNode:(IJSVGNode*)parentNode
+                      postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     Class effectClass = [IJSVGFilterEffect effectClassForElementName:element.localName];
     IJSVGFilterEffect* node = [[effectClass alloc] init];
@@ -836,9 +875,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     [self computeElement:element
               parentNode:node];
@@ -847,6 +886,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
+                        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGLinearGradient* node = [[IJSVGLinearGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
@@ -861,9 +901,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                  withReferenceElement:detachedElement];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     [self computeElement:element
               parentNode:node];
     [IJSVGLinearGradient parseGradient:element
@@ -873,6 +913,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseRadialGradientElement:(NSXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
+                        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGRadialGradient* node = [[IJSVGRadialGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
@@ -887,9 +928,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                  withReferenceElement:detachedElement];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     [self computeElement:element
               parentNode:node];
     [IJSVGRadialGradient parseGradient:element
@@ -899,6 +940,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseStopElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGNode* node = [[IJSVGNode alloc] init];
     node.type = IJSVGNodeTypeStop;
@@ -908,14 +950,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     return node;
 }
 
 - (IJSVGNode*)parsePathElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePath;
@@ -939,14 +982,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     node.path = path;
     CGPathRelease(path);
 
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     return node;
 }
 
 - (IJSVGNode*)parseLineElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypeLine;
@@ -959,9 +1003,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     // convert a line into a command,
     // basically MX1 Y1LX2 Y2
@@ -985,6 +1029,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parsePolyLineElement:(NSXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
+                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolyline;
@@ -996,9 +1041,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                        ignoredAttributes:nil];
     
     NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
     [self parsePolyPoints:pointsString
@@ -1010,6 +1055,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parsePolygonElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolygon;
@@ -1021,9 +1067,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
     [self parsePolyPoints:pointsString
@@ -1035,6 +1081,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseEllipseElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.name = element.localName;
@@ -1048,9 +1095,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     CGRect computedBounds = CGRectZero;
     IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
     NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
@@ -1086,6 +1133,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseCircleElement:(NSXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
+                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.name = element.localName;
@@ -1123,9 +1171,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     node.path = (CGMutablePathRef)nPath;
     CGPathRelease(nPath);
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     return node;
 }
@@ -1133,6 +1181,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (IJSVGNode*)parseGroupElement:(NSXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
                        nodeType:(IJSVGNodeType)nodeType
+               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = nodeType;
@@ -1143,9 +1192,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     // recursively compute children
     [self computeElement:element
@@ -1156,6 +1205,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (void)parseSVGElement:(NSXMLElement*)element
                ontoNode:(IJSVGRootNode*)node
              parentNode:(IJSVGNode*)parentNode
+       postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     node.type = IJSVGNodeTypeSVG;
     node.name = element.localName;
@@ -1170,9 +1220,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                parentNode:node
                 recursive:NO];
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
 
     // make sure we compute the viewbox
     [self computeViewBoxForRootNode:node];
@@ -1184,16 +1234,19 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
+             postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
     [self parseSVGElement:element
                  ontoNode:node
-               parentNode:parentNode];
+               parentNode:parentNode
+         postProcessBlock:postProcessBlock];
     return node;
 }
 
 - (IJSVGNode*)parseRectElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypeRect;
@@ -1229,9 +1282,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     IJSVGUnitLength* rX = [IJSVGUnitLength unitWithString:rXString];
     IJSVGUnitLength* rY = [IJSVGUnitLength unitWithString:rYString];
     
-    
+    bounds = proposedBounds;
     if(contentUnitType == IJSVGUnitObjectBoundingBox) {
-        bounds = proposedBounds;
         width = [width lengthWithUnitType:IJSVGUnitLengthTypePercentage];
         height = [height lengthWithUnitType:IJSVGUnitLengthTypePercentage];
         x = [x lengthWithUnitType:IJSVGUnitLengthTypePercentage];
@@ -1239,7 +1291,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         rX = [rX lengthWithUnitType:IJSVGUnitLengthTypePercentage];
         rY = [rY lengthWithUnitType:IJSVGUnitLengthTypePercentage];
     }
-    
     
     if(rY == nil) {
         rY = rX;
@@ -1255,14 +1306,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     CGPathRelease(nPath);
     
     NSArray<NSString*>* ignoredAttributes = @[IJSVGAttributeX, IJSVGAttributeY];
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:ignoredAttributes];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:ignoredAttributes];
     return node;
 }
 
 - (IJSVGNode*)parseImageElement:(NSXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
+               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     CGRect bounds = CGRectZero;
     IJSVGUnitType units = [parentNode contentUnitsWithReferencingNodeBounds:&bounds];
@@ -1276,9 +1328,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         [group addChild:node];
     }
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     // load image from base64
     NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
@@ -1294,6 +1346,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseUseElement:(NSXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
+             postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     NSString* xlink = [self resolveXLinkAttributeForElement:element].stringValue;
     NSString* xlinkID = [xlink substringFromIndex:1];
@@ -1303,18 +1356,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
-    
-//    IJSVGNodeType type = [IJSVGNode typeForString:detachedElement.localName
-//                                             kind:detachedElement.kind];
-//    if(type != IJSVGNodeTypeUse) {
-//        [self replaceAttributes:_IJSVGUseElementOverwritingAttributes
-//                      onElement:detachedElement
-//                    fromElement:element];
-//    }
 
     IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:element
                                                  parentNode:parentNode
-                                                   nodeType:IJSVGNodeTypeUse];
+                                                   nodeType:IJSVGNodeTypeUse
+                                           postProcessBlock:postProcessBlock];
         
     IJSVGNode* shadowNode = [self parseElement:detachedElement
                                     parentNode:node];
@@ -1341,6 +1387,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPattern* node = [[IJSVGPattern alloc] init];
     node.type = IJSVGNodeTypePattern;
@@ -1355,9 +1402,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     [self computeElement:element
               parentNode:node];
     return node;
@@ -1365,6 +1412,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseClipPathElement:(NSXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
+                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = IJSVGNodeTypeClipPath;
@@ -1375,9 +1423,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     node.windingRule = IJSVGWindingRuleNonZero;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     [self computeElement:element
               parentNode:node];
@@ -1393,8 +1441,13 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (IJSVGNode*)parseMaskElement:(NSXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    IJSVGMask* node = [[IJSVGMask alloc] init];
+    node.x = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
+    node.y = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
+    node.width = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
+    node.height = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
     node.type = IJSVGNodeTypeMask;
     node.name = element.localName;
     node.parentNode = parentNode;
@@ -1402,9 +1455,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
     
-    [self computeAttributesFromElement:element
-                                onNode:node
-                     ignoredAttributes:nil];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
     
     [self computeElement:element
               parentNode:node];
@@ -1452,12 +1505,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (void)parseTitleElement:(NSXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
+         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     parentNode.title = element.stringValue;
 }
 
 - (void)parseDescElement:(NSXMLElement*)element
-               parentNode:(IJSVGNode*)parentNode
+              parentNode:(IJSVGNode*)parentNode
+        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     parentNode.desc = element.stringValue;
 }

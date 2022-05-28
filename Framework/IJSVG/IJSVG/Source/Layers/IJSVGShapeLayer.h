@@ -38,6 +38,8 @@
 @property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
+@property (nonatomic, assign) CGRect maskingBoundingBox;
+@property (nonatomic, assign) CGRect maskingClippingRect;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

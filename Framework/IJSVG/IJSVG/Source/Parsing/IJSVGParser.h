@@ -16,6 +16,7 @@
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
+#import <IJSVG/IJSVGMask.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGText.h>
@@ -27,6 +28,8 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
+
+typedef void (^IJSVGNodeParserPostProcessBlock)(void);
 
 extern NSString* const IJSVGAttributeViewBox;
 extern NSString* const IJSVGAttributePreserveAspectRatio;

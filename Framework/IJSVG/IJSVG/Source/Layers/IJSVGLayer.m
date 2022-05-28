@@ -98,7 +98,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
 + (CGAffineTransform)userSpaceTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
-    CGRect absolutePosition = layer.frame;
+    CGRect absolutePosition = layer.outerBoundingBox;
     return CGAffineTransformTranslate(CGAffineTransformIdentity,
                                       -CGRectGetMinX(absolutePosition),
                                       -CGRectGetMinY(absolutePosition));
@@ -231,14 +231,11 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     CGContextSaveGState(ctx);
     CGFloat scale = layer.backingScaleFactor;
-    CGRect rect = layer.innerBoundingBox;
-    CGRect maskRect = maskLayer.outerBoundingBox;
-    rect = CGRectMake(rect.origin.x, rect.origin.y,
-                      maskRect.size.width, maskRect.size.height);
-    rect = CGRectApplyAffineTransform(rect, maskLayer.affineTransform);
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
                                                 scale:scale];
-    CGContextClipToMask(ctx, rect, maskImage);
+    
+    CGContextClipToRect(ctx, maskLayer.maskingClippingRect);
+    CGContextClipToMask(ctx, maskLayer.maskingBoundingBox, maskImage);
     drawingBlock();
     CGImageRelease(maskImage);
     CGContextRestoreGState(ctx);
@@ -268,9 +265,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                                           ceilf(frame.size.width * scale),
                                                           ceilf(frame.size.height * scale),
                                                           8, 0, colorSpace, bitmapInfo);
-//    CGContextConcatCTM(offscreenContext, [self absoluteTransformForLayer:layer]);
     CGContextScaleCTM(offscreenContext, scale, scale);
-    CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x, -bounds.origin.y));
+    CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x,
+                                                                          -bounds.origin.y));
     [IJSVGLayer renderLayer:layer
                   inContext:offscreenContext];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);

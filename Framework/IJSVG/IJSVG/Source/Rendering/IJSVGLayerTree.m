@@ -34,17 +34,7 @@
 - (id)init
 {
     if ((self = [super init]) != nil) {
-    }
-    return self;
-}
-
-- (id)initWithViewPortRect:(CGRect)viewPort
-              backingScale:(CGFloat)scale
-{
-    if((self = [super init]) != nil) {
         _viewPortStack = [[NSMutableArray alloc] init];
-        _backingScale = scale;
-        [self pushViewPort:viewPort];
     }
     return self;
 }
@@ -231,7 +221,13 @@
                                                                pattern:(IJSVGPattern*)node.stroke];
                 patternLayer.referencingLayer = layer;
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
-                patternLayer.maskLayer = strokeLayer;
+                
+                // use the mask as this will have default values
+                // that are needed for calculations
+                IJSVGMask* mask = [[IJSVGMask alloc] init];
+                patternLayer.maskLayer = [self maskLayerFromNode:mask
+                                                referencingLayer:patternLayer
+                                                       fromLayer:strokeLayer];
                 [layer addSublayer:patternLayer];
                 break;
             }
@@ -243,7 +239,13 @@
                                                                 gradient:(IJSVGGradient*)node.stroke];
                 gradientLayer.referencingLayer = layer;
                 strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
-                gradientLayer.maskLayer = strokeLayer;
+                
+                // use the mask as this will have default values
+                // that are needed for calculations
+                IJSVGMask* mask = [[IJSVGMask alloc] init];
+                gradientLayer.maskLayer = [self maskLayerFromNode:mask
+                                                 referencingLayer:gradientLayer
+                                                        fromLayer:strokeLayer];
                 [layer addSublayer:gradientLayer];
                 break;
             }
@@ -452,6 +454,66 @@
     return patternLayer;
 }
 
+- (CALayer<IJSVGDrawableLayer>*)maskLayerFromNode:(IJSVGMask*)mask
+                                 referencingLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                        fromLayer:(CALayer<IJSVGDrawableLayer>*)fromLayer
+
+{
+    IJSVGMask* maskNode = mask;
+    CALayer<IJSVGDrawableLayer>* maskLayer = nil;
+    maskLayer = fromLayer ?: (CALayer<IJSVGDrawableLayer>*)[self drawableLayerForNode:maskNode];
+    CGRect viewPort = maskNode.units == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
+    CGFloat width = CGRectGetWidth(viewPort);
+    CGFloat height = CGRectGetHeight(viewPort);
+    CGRect rect = CGRectZero;
+    IJSVGUnitLength* xUnit = maskNode.x;
+    IJSVGUnitLength* yUnit = maskNode.y;
+    IJSVGUnitLength* widthUnit = maskNode.width;
+    IJSVGUnitLength* heightUnit = maskNode.height;
+    
+    // infer the fact that object bounding box must be % values of
+    // the box its being drawn into
+    if(maskNode.units == IJSVGUnitObjectBoundingBox) {
+        xUnit = [xUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        yUnit = [yUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        widthUnit = [widthUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        heightUnit = [heightUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+    }
+    
+    // calculate the rect, rect is the clipping rect
+    rect.origin.x = [xUnit computeValue:width];
+    rect.origin.y = [yUnit computeValue:height];
+    rect.size.width = [widthUnit computeValue:width];
+    rect.size.height = [heightUnit computeValue:height];
+    
+    // calculate the actual masking bounds, maskingBounds is
+    // is the rect that the final mask is transformed into
+    CGRect layerBounds = layer.innerBoundingBox;
+    CGRect maskBounds = maskLayer.outerBoundingBox;
+    CGRect maskingBounds = layerBounds;
+    rect.origin.x += layerBounds.origin.x;
+    rect.origin.y += layerBounds.origin.y;
+    
+    maskingBounds.size.width = maskBounds.size.width;
+    maskingBounds.size.height = maskBounds.size.height;
+    
+    CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    if(maskNode.contentUnits == IJSVGUnitUserSpaceOnUse) {
+        maskingBounds.origin.x += maskBounds.origin.x;
+        maskingBounds.origin.y += maskBounds.origin.y;
+        maskingBounds = CGRectApplyAffineTransform(maskingBounds, userSpaceTransform);
+    }
+    
+    if(maskNode.units == IJSVGUnitUserSpaceOnUse) {
+        rect = CGRectApplyAffineTransform(rect, userSpaceTransform);
+    }
+    
+    maskLayer.maskingBoundingBox = maskingBounds;
+    maskLayer.maskingClippingRect = rect;
+    maskLayer.referencingLayer = layer;
+    return maskLayer;
+}
+
 #pragma mark Defaults
 
 - (void)applyDefaultsToLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -459,12 +521,9 @@
 {
     // mask the layer
     if(node.mask != nil) {
-        CALayer<IJSVGDrawableLayer>* maskLayer = [self drawableLayerForNode:node.mask];
-        if(node.clipPath.contentUnits == IJSVGUnitUserSpaceOnUse) {
-            [IJSVGLayer transformLayer:maskLayer
-                intoUserSpaceUnitsFrom:layer];
-        }
-        layer.maskLayer = maskLayer;
+        layer.maskLayer = [self maskLayerFromNode:node.mask
+                                 referencingLayer:layer
+                                        fromLayer:nil];
     }
     
     // add the clip mask if any

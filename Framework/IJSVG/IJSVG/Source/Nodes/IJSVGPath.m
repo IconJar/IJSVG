@@ -50,12 +50,12 @@
 
 - (CGRect)pathBoundingBox
 {
-    return CGPathGetPathBoundingBox(_path);
+    return CGPathGetBoundingBox(_path);
 }
 
 - (CGRect)controlPointBoundingBox
 {
-    return CGPathGetBoundingBox(_path);
+    return CGPathGetPathBoundingBox(_path);
 }
 
 - (NSPoint)currentPoint
