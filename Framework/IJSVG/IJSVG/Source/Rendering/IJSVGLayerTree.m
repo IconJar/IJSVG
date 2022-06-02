@@ -336,11 +336,11 @@
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
     layer.backingScaleFactor = _backingScale;
-    
+        
     // we are the top most SVG, not a nested one,
     // we can simply use the viewport given to us
     CGRect frame = CGRectZero;
-    if(_viewPortStack.count == 1) {
+    if(node.rootNode == nil) {
         frame.size = self.viewPort.size;
     } else {
         frame = CGRectMake(0.f, 0.f,
@@ -436,8 +436,8 @@
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawablePatternLayerForPathNode:(IJSVGPath*)node
-                                                pattern:(IJSVGPattern*)pattern
-                                                  layer:(CALayer<IJSVGDrawableLayer>*)layer
+                                                        pattern:(IJSVGPattern*)pattern
+                                                          layer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     // pattern fill
     IJSVGPatternLayer* patternLayer = [self drawableBasicPatternLayerForLayer:layer
@@ -514,6 +514,13 @@
     return maskLayer;
 }
 
+- (CALayer<IJSVGDrawableLayer>*)clipLayerFromNode:(IJSVGClipPath*)node
+                                 referencingLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                        fromLayer:(CALayer<IJSVGDrawableLayer>*)fromLayer
+{
+    return nil;
+}
+
 #pragma mark Defaults
 
 - (void)applyDefaultsToLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -528,11 +535,13 @@
     
     // add the clip mask if any
     if(node.clipPath != nil) {
-        CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableLayerForNode:node.clipPath];
-        if(node.clipPath.contentUnits == IJSVGUnitUserSpaceOnUse) {
-            [IJSVGLayer transformLayer:clipLayer
-                intoUserSpaceUnitsFrom:layer];
-        }
+        CALayer<IJSVGDrawableLayer>* clipLayer = nil;
+        clipLayer = [self clipLayerFromNode:node.clipPath
+                           referencingLayer:layer
+                                  fromLayer:nil];
+        
+        // we need to make sure the clipping rules persist
+        // down to the layer
         layer.clipRule = clipLayer.fillRule;
         layer.clipLayer = clipLayer;
     }

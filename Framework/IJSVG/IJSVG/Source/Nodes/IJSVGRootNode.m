@@ -28,4 +28,17 @@
     return [self.viewBox computeValue:CGSizeZero];
 }
 
+- (IJSVGRootNode *)rootNode
+{
+    IJSVGRootNode* rootNode = nil;
+    if((rootNode = [super rootNode]) == self) {
+        IJSVGNode* parent = self.parentNode;
+        if([parent isKindOfClass:IJSVGRootNode.class]) {
+            return (IJSVGRootNode*)parent;
+        }
+        return parent.rootNode;
+    }
+    return rootNode;
+}
+
 @end
