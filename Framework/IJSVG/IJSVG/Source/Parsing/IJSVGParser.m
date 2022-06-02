@@ -1414,14 +1414,10 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                         parentNode:(IJSVGNode*)parentNode
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    IJSVGClipPath* node = [[IJSVGClipPath alloc] init];
     node.type = IJSVGNodeTypeClipPath;
     node.name = element.localName;
     node.parentNode = parentNode;
-    node.units = IJSVGUnitObjectBoundingBox;
-    node.contentUnits = IJSVGUnitUserSpaceOnUse;
-    node.windingRule = IJSVGWindingRuleNonZero;
-    node.overflowVisibility = IJSVGOverflowVisibilityHidden;
     
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
@@ -1431,7 +1427,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
               parentNode:node];
     
     if(node.clipPath != nil) {
-        IJSVGGroup* clipPath = node.clipPath;
+        IJSVGClipPath* clipPath = node.clipPath;
         node.clipPath = nil;
         [node addChildren:clipPath.children];
     }
@@ -1444,16 +1440,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGMask* node = [[IJSVGMask alloc] init];
-    node.x = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
-    node.y = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
-    node.width = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
-    node.height = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
     node.type = IJSVGNodeTypeMask;
     node.name = element.localName;
     node.parentNode = parentNode;
-    node.units = IJSVGUnitObjectBoundingBox;
-    node.contentUnits = IJSVGUnitUserSpaceOnUse;
-    node.overflowVisibility = IJSVGOverflowVisibilityHidden;
     
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node

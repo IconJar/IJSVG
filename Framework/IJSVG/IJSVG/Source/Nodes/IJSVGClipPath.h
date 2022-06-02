@@ -6,12 +6,8 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGGroup.h>
 
-NS_ASSUME_NONNULL_BEGIN
-
-@interface IJSVGClipPath : IJSVGNode
+@interface IJSVGClipPath : IJSVGGroup
 
 @end
-
-NS_ASSUME_NONNULL_END

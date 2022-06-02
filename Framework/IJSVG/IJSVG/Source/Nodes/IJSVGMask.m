@@ -13,6 +13,7 @@
 
 - (void)setDefaults
 {
+    [super setDefaults];
     self.x = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
     self.y = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
     self.width = [IJSVGUnitLength unitWithPercentageFloat:1.2f];

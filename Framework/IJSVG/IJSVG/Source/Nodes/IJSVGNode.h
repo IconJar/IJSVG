@@ -23,6 +23,7 @@
 @class IJSVGUnitRect;
 @class IJSVGFilter;
 @class IJSVGMask;
+@class IJSVGClipPath;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -154,7 +155,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong) IJSVGNode* stroke;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, assign) IJSVGNode* parentNode;
-@property (nonatomic, strong) IJSVGGroup* clipPath;
+@property (nonatomic, strong) IJSVGClipPath* clipPath;
 @property (nonatomic, strong) IJSVGMask* mask;
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
