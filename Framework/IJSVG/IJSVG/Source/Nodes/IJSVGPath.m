@@ -7,8 +7,30 @@
 //
 
 #import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGGroup.h>
 
 @implementation IJSVGPath
+
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
+                             transform:(CGAffineTransform)transform
+                                toPath:(CGMutablePathRef)mutPath
+{
+    for(IJSVGPath* pathNode in nodes) {
+        // just a pathed node
+        if([pathNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
+            CGPathAddPath(mutPath, &transform, pathNode.path);
+            continue;
+        }
+        
+        // could be a use group
+        if([pathNode isKindOfClass:IJSVGGroup.class] == YES) {
+            IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
+            [self recursivelyAddPathedNodesPaths:useGroup.children
+                                       transform:transform
+                                          toPath:mutPath];
+        }
+    }
+}
 
 - (void)dealloc
 {

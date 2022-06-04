@@ -407,7 +407,7 @@
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
     gradientLayer.clipRule = layer.fillRule;
-    gradientLayer.clipPath = CGPathCreateCopy(((IJSVGShapeLayer*)layer).path);
+    gradientLayer.clipPath = ((IJSVGShapeLayer*)layer).path;
     return gradientLayer;
 }
 
@@ -441,7 +441,7 @@
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
     patternLayer.clipRule = layer.fillRule;
-    patternLayer.clipPath = CGPathCreateCopy(((IJSVGShapeLayer*)layer).path);
+    patternLayer.clipPath = ((IJSVGShapeLayer*)layer).path;
     [patternLayer setNeedsDisplay];
     return patternLayer;
 }
@@ -537,8 +537,8 @@
     return layers;
 }
 
-- (CGPathRef)clipPathFromNode:(IJSVGClipPath*)node
-                    fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
+- (CGPathRef)newClipPathFromNode:(IJSVGClipPath*)node
+                       fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGMutablePathRef mPath = CGPathCreateMutable();
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -551,23 +551,9 @@
     transform = CGAffineTransformConcat(transform, layerTransform);
     IJSVGClipPath* clipPath = node;
     while(clipPath != nil) {
-        for(IJSVGPath* pathNode in clipPath.children) {
-            // just a pathed node
-            if([pathNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
-                CGPathAddPath(mPath, &transform, pathNode.path);
-                continue;
-            }
-            
-            // could be a use group
-            if(pathNode.type == IJSVGNodeTypeUse) {
-                IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
-                for(IJSVGPath* childNode in useGroup.children) {
-                    if([childNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
-                        CGPathAddPath(mPath, &transform, childNode.path);
-                    }
-                }
-            }
-        }
+        [IJSVGPath recursivelyAddPathedNodesPaths:clipPath.children
+                                        transform:transform
+                                           toPath:mPath];
         clipPath = clipPath.clipPath;
     }
     return mPath;
@@ -588,8 +574,10 @@
     // add the clip mask if any
     if(node.clipPath != nil) {
         IJSVGClipPath* clipPath = node.clipPath;
-        layer.clipPath = [self clipPathFromNode:clipPath
-                                      fromLayer:layer];
+        CGPathRef path = [self newClipPathFromNode:clipPath
+                                         fromLayer:layer];
+        layer.clipPath = path;
+        CGPathRelease(path);
         layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:clipPath.windingRule];
     }
     

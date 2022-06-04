@@ -56,6 +56,14 @@
     return _maskLayer != nil || (_clipLayers != nil && _clipLayers.count != 0);
 }
 
+- (void)setClipPath:(CGPathRef)clipPath
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+    _clipPath = CGPathRetain(clipPath);
+}
+
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
     if (_backingScaleFactor == newFactor) {

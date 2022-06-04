@@ -27,13 +27,13 @@
 @synthesize maskingClippingRect;
 @synthesize clippingBoundingBox;
 @synthesize clippingTransform;
-@synthesize clipPath;
+@synthesize clipPath = _clipPath;
 @synthesize clipPathTransform;
 
 - (void)dealloc
 {
-    if(clipPath != NULL) {
-        CGPathRelease(clipPath);
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
     }
 }
 
@@ -67,6 +67,14 @@
 - (NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
 {
     return self.sublayers;
+}
+
+- (void)setClipPath:(CGPathRef)clipPath
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+    _clipPath = CGPathRetain(clipPath);
 }
 
 @end

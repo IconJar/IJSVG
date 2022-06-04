@@ -128,7 +128,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     CGContextSaveGState(ctx);
     CGContextAddPath(ctx, path);
-    if(rule == kCAFillRuleEvenOdd) {
+    if([rule isEqualToString:kCAFillRuleEvenOdd] == YES) {
         CGContextEOClip(ctx);
     } else {
         CGContextClip(ctx);
@@ -633,6 +633,14 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 -(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
 {
     return self.sublayers;
+}
+
+- (void)setClipPath:(CGPathRef)clipPath
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+    _clipPath = CGPathRetain(clipPath);
 }
 
 @end
