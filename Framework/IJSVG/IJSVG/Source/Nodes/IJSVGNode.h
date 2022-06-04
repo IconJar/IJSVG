@@ -30,7 +30,8 @@ typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOO
 typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
     IJSVGNodeTraitNone = 0,
     IJSVGNodeTraitStroked = 1 << 0,
-    IJSVGNodeTraitPaintable = 1 << 1
+    IJSVGNodeTraitPaintable = 1 << 1,
+    IJSVGNodeTraitPathed = 1 << 2
 };
 
 typedef NS_ENUM(NSInteger, IJSVGNodeType) {
@@ -184,6 +185,7 @@ void IJSVGAssertPaintableObject(id object);
 + (BOOL)typeIsAShape:(IJSVGNodeType)type;
 
 - (void)setDefaults;
+- (void)postProcess;
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds;

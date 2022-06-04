@@ -20,5 +20,8 @@
 
 - (void)addChild:(IJSVGNode*)child;
 - (void)addChildren:(NSArray<IJSVGNode*>*)children;
+- (void)removeChild:(IJSVGNode*)child;
+- (void)removeChildren:(NSArray<IJSVGNode*>*)children;
+- (BOOL)childrenMatchTraits:(IJSVGNodeTraits)traits;
 
 @end

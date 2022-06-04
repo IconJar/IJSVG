@@ -26,6 +26,7 @@
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     uint32_t info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
     CGImageRef originalImage = [IJSVGLayer newImageForLayer:layer
+                                                    options:IJSVGLayerDrawingOptionNone
                                                  colorSpace:colorSpace
                                                  bitmapInfo:info
                                                       scale:scale];

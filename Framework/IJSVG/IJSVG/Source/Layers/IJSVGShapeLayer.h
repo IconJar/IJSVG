@@ -29,6 +29,7 @@
 @property (nonatomic, assign) CGPoint originalPathOrigin;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
@@ -40,6 +41,8 @@
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, assign) CGRect maskingBoundingBox;
 @property (nonatomic, assign) CGRect maskingClippingRect;
+@property (nonatomic, assign) CGRect clippingBoundingBox;
+@property (nonatomic, assign) CGAffineTransform clippingTransform;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

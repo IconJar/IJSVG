@@ -10,6 +10,7 @@
 
 @implementation IJSVGTransformLayer
 
+@synthesize clipLayers;
 @synthesize backingScaleFactor;
 @synthesize renderQuality;
 @synthesize requiresBackingScale;
@@ -24,6 +25,8 @@
 @synthesize innerBoundingBox;
 @synthesize maskingBoundingBox;
 @synthesize maskingClippingRect;
+@synthesize clippingBoundingBox;
+@synthesize clippingTransform;
 
 - (id<CAAction>)actionForKey:(NSString*)event
 {
@@ -43,7 +46,8 @@
 - (void)renderInContext:(CGContextRef)ctx
 {
     [IJSVGLayer renderLayer:self
-                  inContext:ctx];
+                  inContext:ctx
+                    options:IJSVGLayerDrawingOptionNone];
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx

@@ -63,6 +63,23 @@
     }
 }
 
+- (void)removeChildren:(NSArray<IJSVGNode*>*)children
+{
+    for(IJSVGNode* node in children) {
+        [self removeChild:node];
+    }
+}
+
+- (BOOL)childrenMatchTraits:(IJSVGNodeTraits)traits
+{
+    for(IJSVGNode* node in _children) {
+        if([node matchesTraits:traits] == NO) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (CGRect)bounds
 {
     CGRect rect = CGRectZero;

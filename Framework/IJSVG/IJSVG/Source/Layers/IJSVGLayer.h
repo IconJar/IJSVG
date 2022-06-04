@@ -18,6 +18,11 @@
 @class IJSVGLayer;
 @class IJSVGFilter;
 
+typedef NS_OPTIONS(NSUInteger, IJSVGLayerDrawingOptions) {
+    IJSVGLayerDrawingOptionNone = 0,
+    IJSVGLayerDrawingOptionIgnoreClipping = 1 << 1
+};
+
 typedef NS_ENUM(NSUInteger, IJSVGLayerFillType) {
     IJSVGLayerFillTypeColor,
     IJSVGLayerFillTypePattern,
@@ -26,7 +31,7 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerFillType) {
 };
 
 typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
-    IJSVGLayerTraitGroup
+    IJSVGLayerTraitGroup = 1 << 1
 };
 
 @protocol IJSVGPathableLayer <NSObject>
@@ -54,11 +59,20 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @end
 
-@protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer, IJSVGMaskingLayer>
+@protocol IJSVGClippingLayer <NSObject>
+
+@required
+@property (nonatomic, assign) CGRect clippingBoundingBox;
+@property (nonatomic, assign) CGAffineTransform clippingTransform;
+
+@end
+
+@protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer, IJSVGMaskingLayer, IJSVGClippingLayer>
 
 @required
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
@@ -95,6 +109,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
+@property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
@@ -107,6 +122,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, assign) CGRect maskingBoundingBox;
 @property (nonatomic, assign) CGRect maskingClippingRect;
+@property (nonatomic, assign) CGRect clippingBoundingBox;
+@property (nonatomic, assign) CGAffineTransform clippingTransform;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
@@ -123,24 +140,33 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
                         withOffset:(CGPoint)offset;
 
 + (CGImageRef)newMaskImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                           options:(IJSVGLayerDrawingOptions)options
                              scale:(CGFloat)scale;
 
 + (CGImageRef)newImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                       options:(IJSVGLayerDrawingOptions)options
+                    colorSpace:(CGColorSpaceRef)colorSpace
+                    bitmapInfo:(uint32_t)bitmapInfo
+                         scale:(CGFloat)scale;
+
++ (CGImageRef)newImageWithSize:(CGSize)size
+                     drawBlock:(void (^)(CGContextRef context))drawBlock
                     colorSpace:(CGColorSpaceRef)colorSpace
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale;
 
 + (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
-          inContext:(CGContextRef)ctx;
+          inContext:(CGContextRef)ctx
+            options:(IJSVGLayerDrawingOptions)options;
 
 + (void)applyBlendingMode:(CGBlendMode)blendMode
                 toContext:(CGContextRef)ctx
              drawingBlock:(dispatch_block_t)drawingBlock;
 
-+ (void)clipContextWithClip:(CALayer<IJSVGDrawableLayer>*)clipLayer
-                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                  inContext:(CGContextRef)ctx
-               drawingBlock:(dispatch_block_t)drawingBlock;
++ (void)clipContextWithClipLayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)clipLayers
+                          toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                        inContext:(CGContextRef)ctx
+                     drawingBlock:(dispatch_block_t)drawingBlock;
 
 + (void)clipContextWithMask:(CALayer<IJSVGMaskingLayer>*)maskLayer
                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer

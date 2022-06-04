@@ -267,6 +267,10 @@
     return node;
 }
 
+- (void)postProcess
+{
+}
+
 - (void)setFill:(IJSVGNode*)fill
 {
     NSAssert([fill matchesTraits:IJSVGNodeTraitPaintable] || fill == nil, @"Fill must a paintable node.");

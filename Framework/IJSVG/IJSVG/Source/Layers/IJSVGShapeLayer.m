@@ -46,7 +46,7 @@
 
 - (BOOL)requiresBackingScale
 {
-    return _maskLayer != nil || _clipLayer != nil;
+    return _maskLayer != nil || (_clipLayers != nil && _clipLayers.count != 0);
 }
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
@@ -61,7 +61,10 @@
     
     // make sure its applied to any mask or clipPath
     _maskLayer.backingScaleFactor = newFactor;
-    _clipLayer.backingScaleFactor = newFactor;
+    
+    for(CALayer<IJSVGDrawableLayer>* clipLayer in _clipLayers) {
+        clipLayer.backingScaleFactor = newFactor;
+    }
     
     [self setNeedsDisplay];
 }
@@ -128,7 +131,8 @@
 - (void)renderInContext:(CGContextRef)ctx
 {
     [IJSVGLayer renderLayer:(IJSVGLayer*)self
-                  inContext:ctx];
+                  inContext:ctx
+                    options:IJSVGLayerDrawingOptionNone];
 }
 
 -(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers

@@ -269,6 +269,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     if(postProcessBlock != nil) {
         postProcessBlock();
     }
+    [_rootNode postProcess];
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -324,8 +325,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     __block IJSVGStyle* nodeStyle = nil;
     
     // precache the attributes, this is quicker than asking for it each time
-    CGRect computedBounds = CGRectZero;
-    IJSVGUnitType unitType = [node contentUnitsWithReferencingNodeBounds:&computedBounds];
     NSMutableDictionary<NSString*, NSString*>* attributes = nil;
     attributes = [[NSMutableDictionary alloc] initWithCapacity:element.attributes.count];
     for(NSXMLNode* attributeNode in element.attributes) {
@@ -349,7 +348,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     typedef id (^IJSVGAttributeComputableParseBlock)(NSString*);
     void (^IJSVGAttributesParse)(NSDictionary<NSString*, NSString*>*, IJSVGAttributeComputableParseBlock) =
     ^(NSDictionary<NSString*, NSString*>* dictionary, IJSVGAttributeComputableParseBlock parseBlock) {
-        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key,
+                                                        NSString * _Nonnull obj,
+                                                        BOOL * _Nonnull stop) {
             IJSVGAttributeParse(key, ^(NSString* value) {
                 [node setValue:parseBlock(value)
                         forKey:obj];
@@ -772,6 +773,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         postProcessBlock();
     }
     
+    // perform any post processing
+    [computedNode postProcess];
+    
     return computedNode;
 }
 
@@ -781,7 +785,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     [self computeDefsForElement:element
                      parentNode:node];
     for(NSXMLElement* childElement in element.children) {
-        [self parseElement:childElement parentNode:node];
+        [self parseElement:childElement
+                parentNode:node];
     }
 }
 
@@ -1425,12 +1430,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     [self computeElement:element
               parentNode:node];
-    
-    if(node.clipPath != nil) {
-        IJSVGClipPath* clipPath = node.clipPath;
-        node.clipPath = nil;
-        [node addChildren:clipPath.children];
-    }
     
     return node;
 }

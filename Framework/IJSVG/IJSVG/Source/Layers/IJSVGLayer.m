@@ -83,7 +83,7 @@
         // we can stop looking
         if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
             break;
-        }   
+        }
     }
     return CGAffineTransformConcat(identity, layer.affineTransform);
 }
@@ -116,6 +116,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
 + (void)performBasicRenderOfLayer:(CALayer<IJSVGDrawableLayer>*)layer
                         inContext:(CGContextRef)ctx
+                          options:(IJSVGLayerDrawingOptions)options
 {
     dispatch_block_t drawingBlock = ^{
         [layer performRenderInContext:ctx];
@@ -124,22 +125,26 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                   toContext:ctx
                drawingBlock:^{
         // we need to clip first
-        if(layer.clipLayer == nil) {
+        IJSVGLayerDrawingOptions opt = IJSVGLayerDrawingOptionIgnoreClipping;
+        BOOL ignoreClipping = (options & opt) == opt;
+        if(ignoreClipping == YES || layer.clipLayers == nil) {
             drawingBlock();
             return;
         }
-        [self clipContextWithClip:layer.clipLayer
-                          toLayer:layer
-                        inContext:ctx
-                     drawingBlock:drawingBlock];
+        [self clipContextWithClipLayers:layer.clipLayers
+                                toLayer:layer
+                              inContext:ctx
+                           drawingBlock:drawingBlock];
     }];
 }
 
 + (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
           inContext:(CGContextRef)ctx
+            options:(IJSVGLayerDrawingOptions)options
 {
     [self performBasicRenderOfLayer:layer
-                          inContext:ctx];
+                          inContext:ctx
+                            options:options];
 }
 
 + (void)applyBlendingMode:(CGBlendMode)blendMode
@@ -156,71 +161,134 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     drawingBlock();
 }
 
-/// Shape layers are the only thing we can clip, as they contain a path, however
-/// the layer passed to us from a clip could have groups contained with in it that
-/// have transforms on them, so simply recursively iterate over them and concat
-/// their transforms down to the path and clip at the end with the path.
-+ (void)recursivelyClip:(CALayer<IJSVGDrawableLayer>*)layer
-              transform:(CGAffineTransform)transform
-              inContext:(CGContextRef)ctx
+///// Shape layers are the only thing we can clip, as they contain a path, however
+///// the layer passed to us from a clip could have groups contained with in it that
+///// have transforms on them, so simply recursively iterate over them and concat
+///// their transforms down to the path and clip at the end with the path.
+//+ (void)recursivelyClip:(CALayer<IJSVGDrawableLayer>*)layer
+//              transform:(CGAffineTransform)transform
+//              inContext:(CGContextRef)ctx
+//{
+//    if([layer isKindOfClass:IJSVGShapeLayer.class]) {
+//        [self clipContextWithShapeLayer:(IJSVGShapeLayer*)layer
+//                              transform:transform
+//                              inContext:ctx];
+//        return;
+//    }
+//
+//    for(CALayer<IJSVGDrawableLayer>* drawableLayer in layer.sublayers) {
+//        CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
+//                                                                  drawableLayer.affineTransform);
+//
+//        // If its not a shape layer, just go down the tree until we find one
+//        if([drawableLayer isKindOfClass:IJSVGShapeLayer.class] == NO) {
+//            [self recursivelyClip:drawableLayer
+//                        transform:drawTransform
+//                        inContext:ctx];
+//            continue;
+//        }
+//        IJSVGShapeLayer* shapeLayer = (IJSVGShapeLayer*)drawableLayer;
+//        [self clipContextWithShapeLayer:shapeLayer
+//                              transform:transform
+//                              inContext:ctx];
+//    }
+//}
+//
+//+ (void)clipContextWithShapeLayer:(IJSVGShapeLayer*)shapeLayer
+//                        transform:(CGAffineTransform)transform
+//                        inContext:(CGContextRef)ctx
+//{
+//    CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
+//                                                              shapeLayer.affineTransform);
+//    // Shape layers paths are reset back to 0,0 origin, so in order to be
+//    // correct path, we need to shift it back to where it belongs.
+//    drawTransform = CGAffineTransformTranslate(transform,
+//                                           shapeLayer.frame.origin.x,
+//                                           shapeLayer.frame.origin.y);
+//    CGPathRef path = CGPathCreateCopyByTransformingPath(shapeLayer.path,
+//                                                        &drawTransform);
+//    CGContextAddPath(ctx, path);
+//    CGPathRelease(path);
+//}
+//
+//+ (void)clipContextWithClip:(CALayer<IJSVGDrawableLayer>*)clipLayer
+//                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+//                  inContext:(CGContextRef)ctx
+//               drawingBlock:(dispatch_block_t)drawingBlock
+//{
+//    CGContextSaveGState(ctx);
+//    [self recursivelyClip:clipLayer
+//                transform:clipLayer.affineTransform
+//                inContext:ctx];
+//    if([layer.clipRule isEqualToString:kCAFillRuleEvenOdd]) {
+//        CGContextEOClip(ctx);
+//    } else {
+//        CGContextClip(ctx);
+//    }
+//    drawingBlock();
+//    CGContextRestoreGState(ctx);
+//}
+
++ (void)clipContextWithClipLayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)clipLayers
+                          toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                        inContext:(CGContextRef)ctx
+                     drawingBlock:(dispatch_block_t)drawingBlock
 {
-    if([layer isKindOfClass:IJSVGShapeLayer.class]) {
-        [self clipContextWithShapeLayer:(IJSVGShapeLayer*)layer
-                              transform:transform
-                              inContext:ctx];
+    CGContextSaveGState(ctx);
+    const CGFloat maskTolerance = .5f;
+    const CGFloat scale = layer.backingScaleFactor;
+    CGRect rect = layer.clippingBoundingBox;
+    
+    // weed out the no empty clipPaths
+    if(CGRectEqualToRect(rect, CGRectZero) == YES) {
+        drawingBlock();
         return;
     }
     
-    for(CALayer<IJSVGDrawableLayer>* drawableLayer in layer.sublayers) {
-        CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
-                                                                  drawableLayer.affineTransform);
-        
-        // If its not a shape layer, just go down the tree until we find one
-        if([drawableLayer isKindOfClass:IJSVGShapeLayer.class] == NO) {
-            [self recursivelyClip:drawableLayer
-                        transform:drawTransform
-                        inContext:ctx];
-            continue;
+    CGSize size = CGSizeMake(CGRectGetWidth(rect),
+                             CGRectGetHeight(rect));
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    void (^drawBlock)(CGContextRef maskCtx) = ^(CGContextRef maskCtx) {
+        CGImageRef maskImage = NULL;
+        for(CALayer<IJSVGDrawableLayer>* clipLayer in clipLayers) {
+            CGContextSaveGState(maskCtx);
+            CGRect layerRect = clipLayer.outerBoundingBox;
+            layerRect = CGRectApplyAffineTransform(layerRect, layer.clippingTransform);
+            CGImageRef layerMask = [self newMaskImageForLayer:clipLayer
+                                                      options:IJSVGLayerDrawingOptionIgnoreClipping
+                                                        scale:scale];
+            if(maskImage != NULL) {
+                CGRect maskRect = CGRectInset(rect, -maskTolerance, -maskTolerance);
+                CGContextClipToMask(maskCtx, maskRect, maskImage);
+            }
+            CGContextDrawImage(maskCtx, layerRect, layerMask);
+            CGImageRelease(layerMask);
+            if(maskImage != NULL) {
+                CGImageRelease(maskImage);
+            }
+            maskImage = CGBitmapContextCreateImage(maskCtx);
+            CGContextRestoreGState(maskCtx);
         }
-        IJSVGShapeLayer* shapeLayer = (IJSVGShapeLayer*)drawableLayer;
-        [self clipContextWithShapeLayer:shapeLayer
-                              transform:transform
-                              inContext:ctx];
-    }
-}
-
-+ (void)clipContextWithShapeLayer:(IJSVGShapeLayer*)shapeLayer
-                        transform:(CGAffineTransform)transform
-                        inContext:(CGContextRef)ctx
-{
-    CGAffineTransform drawTransform = CGAffineTransformConcat(transform,
-                                                              shapeLayer.affineTransform);
-    // Shape layers paths are reset back to 0,0 origin, so in order to be
-    // correct path, we need to shift it back to where it belongs.
-    drawTransform = CGAffineTransformTranslate(transform,
-                                           shapeLayer.frame.origin.x,
-                                           shapeLayer.frame.origin.y);
-    CGPathRef path = CGPathCreateCopyByTransformingPath(shapeLayer.path,
-                                                        &drawTransform);
-    CGContextAddPath(ctx, path);
-    CGPathRelease(path);
-}
-
-+ (void)clipContextWithClip:(CALayer<IJSVGDrawableLayer>*)clipLayer
-                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                  inContext:(CGContextRef)ctx
-               drawingBlock:(dispatch_block_t)drawingBlock
-{
-    CGContextSaveGState(ctx);
-    [self recursivelyClip:clipLayer
-                transform:clipLayer.affineTransform
-                inContext:ctx];
-    if([layer.clipRule isEqualToString:kCAFillRuleEvenOdd]) {
-        CGContextEOClip(ctx);
-    } else {
-        CGContextClip(ctx);
-    }
+        CGImageRelease(maskImage);
+    };
+    
+    CGImageRef image = [self newImageWithSize:size
+                                    drawBlock:drawBlock
+                                   colorSpace:colorSpace
+                                   bitmapInfo:kCGImageAlphaNone
+                                        scale:scale];
+    
+    // we need to transform the mask rect back based on the inner bounding
+    // box of the layer, as this could be a group layer that inner box is
+    // not at 0,0.
+    CGRect layerRect = layer.innerBoundingBox;
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMinX(layerRect),
+                                                                   CGRectGetMinY(layerRect));
+    rect = CGRectApplyAffineTransform(rect, transform);
+    CGContextClipToMask(ctx, CGRectIntegral(rect), image);
     drawingBlock();
+    CGImageRelease(image);
+    CGColorSpaceRelease(colorSpace);
     CGContextRestoreGState(ctx);
 }
 
@@ -232,8 +300,8 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     CGContextSaveGState(ctx);
     CGFloat scale = layer.backingScaleFactor;
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
+                                              options:IJSVGLayerDrawingOptionNone
                                                 scale:scale];
-    
     CGContextClipToRect(ctx, maskLayer.maskingClippingRect);
     CGContextClipToMask(ctx, maskLayer.maskingBoundingBox, maskImage);
     drawingBlock();
@@ -242,10 +310,12 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 }
 
 + (CGImageRef)newMaskImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                           options:(IJSVGLayerDrawingOptions)options
                              scale:(CGFloat)scale
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
     CGImageRef ref = [self newImageForLayer:layer
+                                    options:options
                                  colorSpace:colorSpace
                                  bitmapInfo:kCGImageAlphaNone
                                       scale:scale];
@@ -253,23 +323,41 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     return ref;
 }
 
-+ (CGImageRef)newImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
++ (CGImageRef)newImageWithSize:(CGSize)size
+                     drawBlock:(void (^)(CGContextRef context))drawBlock
                     colorSpace:(CGColorSpaceRef)colorSpace
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale
 {
-    
+    CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
+                                                          ceilf(size.width*scale),
+                                                          ceilf(size.height*scale),
+                                                          8, 0, colorSpace, bitmapInfo);
+    CGContextScaleCTM(offscreenContext, scale, scale);
+    drawBlock(offscreenContext);
+    CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
+    CGContextRelease(offscreenContext);
+    return image;
+}
+
++ (CGImageRef)newImageForLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                       options:(IJSVGLayerDrawingOptions)options
+                    colorSpace:(CGColorSpaceRef)colorSpace
+                    bitmapInfo:(uint32_t)bitmapInfo
+                         scale:(CGFloat)scale
+{
     CGRect frame = layer.outerBoundingBox;
     CGRect bounds = layer.innerBoundingBox;
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
-                                                          ceilf(frame.size.width * scale),
-                                                          ceilf(frame.size.height * scale),
+                                                          ceilf(frame.size.width*scale),
+                                                          ceilf(frame.size.height*scale),
                                                           8, 0, colorSpace, bitmapInfo);
     CGContextScaleCTM(offscreenContext, scale, scale);
     CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x,
                                                                           -bounds.origin.y));
     [IJSVGLayer renderLayer:layer
-                  inContext:offscreenContext];
+                  inContext:offscreenContext
+                    options:options];
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
     CGContextRelease(offscreenContext);
     return image;
@@ -392,7 +480,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     
     // make sure its applied to any mask or clipPath
     _maskLayer.backingScaleFactor = newFactor;
-    _clipLayer.backingScaleFactor = newFactor;
+//    _clipLayer.backingScaleFactor = newFactor;
+    for(CALayer<IJSVGDrawableLayer>* clipLayer in _clipLayers) {
+        clipLayer.backingScaleFactor = newFactor;
+    }
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx
@@ -456,7 +547,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
 - (BOOL)requiresBackingScale
 {
-    return _maskLayer != nil || _clipLayer != nil;
+    return _maskLayer != nil || (_clipLayers != nil && _clipLayers.count != 0);
 }
 
 - (IJSVGShapeLayer*)maskingLayer
@@ -467,7 +558,8 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 - (void)renderInContext:(CGContextRef)ctx
 {
     [IJSVGLayer renderLayer:self
-                  inContext:ctx];
+                  inContext:ctx
+                    options:IJSVGLayerDrawingOptionNone];
 }
 
 - (CGRect)absoluteFrame

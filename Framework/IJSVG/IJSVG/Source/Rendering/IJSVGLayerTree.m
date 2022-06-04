@@ -514,11 +514,35 @@
     return maskLayer;
 }
 
-- (CALayer<IJSVGDrawableLayer>*)clipLayerFromNode:(IJSVGClipPath*)node
-                                 referencingLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                                        fromLayer:(CALayer<IJSVGDrawableLayer>*)fromLayer
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)clipLayersFromNode:(IJSVGClipPath*)node
+                                            referencingLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                                   fromLayer:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
-    return nil;
+    NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
+    layers = [[NSMutableArray alloc] init];
+    IJSVGClipPath* refClipPath = node;
+    IJSVGGroupLayer* groupLayer = nil;
+    while(refClipPath != nil) {
+        groupLayer = (IJSVGGroupLayer*)[self drawableLayerForNode:refClipPath];
+        if(groupLayer != nil) {
+            groupLayer.referencingLayer = layer;
+            [layers addObject:groupLayer];
+        }
+        refClipPath = refClipPath.clipPath;
+    }
+    CGRect clippingRect = [IJSVGLayer calculateFrameForSublayers:layers];
+    CGAffineTransform userSpaceTransform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    CGAffineTransform clippingTransform = CGAffineTransformIdentity;
+    if(node.contentUnits == IJSVGUnitUserSpaceOnUse) {
+        clippingRect = CGRectApplyAffineTransform(clippingRect, userSpaceTransform);
+        clippingTransform = userSpaceTransform;
+    }
+    CGAffineTransform ident = CGAffineTransformMakeTranslation(-CGRectGetMinX(clippingRect),
+                                                               -CGRectGetMinY(clippingRect));
+    clippingTransform = CGAffineTransformConcat(clippingTransform, ident);
+    layer.clippingTransform = clippingTransform;
+    layer.clippingBoundingBox = clippingRect;
+    return layers;
 }
 
 #pragma mark Defaults
@@ -535,15 +559,11 @@
     
     // add the clip mask if any
     if(node.clipPath != nil) {
-        CALayer<IJSVGDrawableLayer>* clipLayer = nil;
-        clipLayer = [self clipLayerFromNode:node.clipPath
-                           referencingLayer:layer
-                                  fromLayer:nil];
-        
-        // we need to make sure the clipping rules persist
-        // down to the layer
-        layer.clipRule = clipLayer.fillRule;
-        layer.clipLayer = clipLayer;
+        NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers = nil;
+        clipLayers = [self clipLayersFromNode:node.clipPath
+                             referencingLayer:layer
+                                    fromLayer:nil];
+        layer.clipLayers = clipLayers;
     }
     
     // setup the opacity
@@ -625,8 +645,8 @@
     // as this may not be exactly the same as the size of the
     // given image
     CGRect frame = layer.frame;
-    frame.size.width = image.width.value;
-    frame.size.height = image.height.value;
+    frame.size.width = ceilf(image.width.value);
+    frame.size.height = ceilf(image.height.value);
     layer.frame = frame;
     [layer setNeedsLayout];
     return layer;

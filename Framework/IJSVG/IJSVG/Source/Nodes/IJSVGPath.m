@@ -26,6 +26,11 @@
     return self;
 }
 
+- (void)setDefaults
+{
+    [self addTraits:IJSVGNodeTraitPathed];
+}
+
 - (CGRect)bounds
 {
     return self.pathBoundingBox;
