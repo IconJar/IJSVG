@@ -121,23 +121,37 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     return parentLayer;
 }
 
++ (void)clipContext:(CGContextRef)ctx
+               path:(CGPathRef)path
+               rule:(CAShapeLayerFillRule)rule
+       drawingBlock:(dispatch_block_t)block
+{
+    CGContextSaveGState(ctx);
+    CGContextAddPath(ctx, path);
+    if(rule == kCAFillRuleEvenOdd) {
+        CGContextEOClip(ctx);
+    } else {
+        CGContextClip(ctx);
+    }
+    block();
+    CGContextRestoreGState(ctx);
+}
+
 + (void)performBasicRenderOfLayer:(CALayer<IJSVGDrawableLayer>*)layer
                         inContext:(CGContextRef)ctx
                           options:(IJSVGLayerDrawingOptions)options
 {
     dispatch_block_t drawingBlock = ^{
-        CGContextSaveGState(ctx);
-        IJSVGLayerDrawingOptions opt = IJSVGLayerDrawingOptionIgnoreClipping;
-        if((options & opt) != opt && layer.clipPath != NULL) {
-            CGContextAddPath(ctx, layer.clipPath);
-            if(layer.clipRule == kCAFillRuleEvenOdd) {
-                CGContextEOClip(ctx);
-            } else {
-                CGContextClip(ctx);
-            }
+        if(layer.clipPath != NULL) {
+            [self clipContext:ctx
+                         path:layer.clipPath
+                         rule:layer.clipRule
+                 drawingBlock:^{
+                [layer performRenderInContext:ctx];
+            }];
+            return;
         }
         [layer performRenderInContext:ctx];
-        CGContextRestoreGState(ctx);
     };
     [self applyBlendingMode:layer.blendingMode
                   toContext:ctx

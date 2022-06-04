@@ -340,13 +340,9 @@
     // we are the top most SVG, not a nested one,
     // we can simply use the viewport given to us
     CGRect frame = CGRectZero;
-    if(node.rootNode == nil) {
-        frame.size = self.viewPort.size;
-    } else {
-        frame = CGRectMake(0.f, 0.f,
-                           node.intrinsicSize.width.value,
-                           node.intrinsicSize.height.value);
-    }
+    frame = CGRectMake(0.f, 0.f,
+                       node.intrinsicSize.width.value,
+                       node.intrinsicSize.height.value);
     layer.frame = frame;
     [self pushViewPort:layer.frame];
     layer.sublayers = [self drawableLayersForNodes:node.children];
