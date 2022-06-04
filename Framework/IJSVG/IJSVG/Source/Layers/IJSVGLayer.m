@@ -317,7 +317,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMinX(layerRect),
                                                                    CGRectGetMinY(layerRect));
     rect = CGRectApplyAffineTransform(rect, transform);
-    CGContextClipToMask(ctx, CGRectIntegral(rect), image);
+    CGContextClipToMask(ctx, rect, image);
     drawingBlock();
     CGImageRelease(image);
     CGColorSpaceRelease(colorSpace);
