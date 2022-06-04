@@ -11,6 +11,13 @@
 
 @implementation IJSVGShapeLayer
 
+- (void)dealloc
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+}
+
 - (id<CAAction>)actionForKey:(NSString*)event
 {
     return nil;

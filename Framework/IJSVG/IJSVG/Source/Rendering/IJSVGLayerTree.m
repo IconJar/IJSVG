@@ -410,10 +410,8 @@
     // we must clip the fill to the path that we are drawing in, its simply just a matter
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
-    CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableBasicLayerForPathNode:node];
     gradientLayer.clipRule = layer.fillRule;
-    gradientLayer.clipLayer = clipLayer;
-    clipLayer.frame = clipLayer.bounds;
+    gradientLayer.clipPath = CGPathCreateCopy(((IJSVGShapeLayer*)layer).path);
     return gradientLayer;
 }
 
@@ -446,10 +444,8 @@
     // we must clip the fill to the path that we are drawing in, its simply just a matter
     // of asking the tree for a path based on the layer passed in, but then moving
     // it back to our current coordinate space
-    CALayer<IJSVGDrawableLayer>* clipLayer = [self drawableBasicLayerForPathNode:node];
     patternLayer.clipRule = layer.fillRule;
-    patternLayer.clipLayer = clipLayer;
-    clipLayer.frame = clipLayer.bounds;
+    patternLayer.clipPath = CGPathCreateCopy(((IJSVGShapeLayer*)layer).path);
     [patternLayer setNeedsDisplay];
     return patternLayer;
 }

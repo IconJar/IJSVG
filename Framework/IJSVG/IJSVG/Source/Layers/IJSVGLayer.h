@@ -64,6 +64,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @required
 @property (nonatomic, assign) CGRect clippingBoundingBox;
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
+@property (nonatomic, assign) CGPathRef clipPath;
+@property (nonatomic, assign) CGAffineTransform clipPathTransform;
 
 @end
 
@@ -71,7 +73,6 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 
 @required
 @property (nonatomic, assign) CGBlendMode blendingMode;
-@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
@@ -108,7 +109,6 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) CGPoint absoluteOrigin;
-@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
@@ -124,6 +124,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGRect maskingClippingRect;
 @property (nonatomic, assign) CGRect clippingBoundingBox;
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
+@property (nonatomic, assign) CGPathRef clipPath;
+@property (nonatomic, assign) CGAffineTransform clipPathTransform;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 

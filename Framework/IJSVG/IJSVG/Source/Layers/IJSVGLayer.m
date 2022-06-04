@@ -15,6 +15,13 @@
 
 @implementation IJSVGLayer
 
+- (void)dealloc
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+}
+
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
@@ -119,7 +126,18 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                           options:(IJSVGLayerDrawingOptions)options
 {
     dispatch_block_t drawingBlock = ^{
+        CGContextSaveGState(ctx);
+        IJSVGLayerDrawingOptions opt = IJSVGLayerDrawingOptionIgnoreClipping;
+        if((options & opt) != opt && layer.clipPath != NULL) {
+            CGContextAddPath(ctx, layer.clipPath);
+            if(layer.clipRule == kCAFillRuleEvenOdd) {
+                CGContextEOClip(ctx);
+            } else {
+                CGContextClip(ctx);
+            }
+        }
         [layer performRenderInContext:ctx];
+        CGContextRestoreGState(ctx);
     };
     [self applyBlendingMode:layer.blendingMode
                   toContext:ctx

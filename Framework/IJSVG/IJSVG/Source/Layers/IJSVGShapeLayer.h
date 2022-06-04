@@ -43,6 +43,8 @@
 @property (nonatomic, assign) CGRect maskingClippingRect;
 @property (nonatomic, assign) CGRect clippingBoundingBox;
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
+@property (nonatomic, assign) CGPathRef clipPath;
+@property (nonatomic, assign) CGAffineTransform clipPathTransform;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

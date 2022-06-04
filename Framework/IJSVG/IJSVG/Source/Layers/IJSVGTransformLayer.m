@@ -27,6 +27,15 @@
 @synthesize maskingClippingRect;
 @synthesize clippingBoundingBox;
 @synthesize clippingTransform;
+@synthesize clipPath;
+@synthesize clipPathTransform;
+
+- (void)dealloc
+{
+    if(clipPath != NULL) {
+        CGPathRelease(clipPath);
+    }
+}
 
 - (id<CAAction>)actionForKey:(NSString*)event
 {
