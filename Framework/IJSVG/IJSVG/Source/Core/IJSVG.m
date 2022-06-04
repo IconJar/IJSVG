@@ -299,11 +299,6 @@
     self.renderingStyle = [[IJSVGRenderingStyle alloc] init];
     self.clipToViewport = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
-
-    // setup low level backing scale
-    self.renderingBackingScaleHelper = ^CGFloat {
-        return NSScreen.mainScreen.backingScaleFactor;
-    };
 }
 
 - (void)setTitle:(NSString*)title
@@ -791,7 +786,9 @@
 - (CGFloat)backingScaleFactor
 {
     __block CGFloat scale = 1.f;
-    scale = (self.renderingBackingScaleHelper)();
+    if(self.renderingBackingScaleHelper != nil) {
+        scale = (self.renderingBackingScaleHelper)();
+    }
     scale = MAX(1.f, scale);
     return _backingScale = scale;
 }
