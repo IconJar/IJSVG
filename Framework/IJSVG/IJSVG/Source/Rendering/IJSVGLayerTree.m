@@ -537,6 +537,42 @@
     return layers;
 }
 
+- (CGPathRef)clipPathFromNode:(IJSVGClipPath*)node
+                    fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    CGMutablePathRef mPath = CGPathCreateMutable();
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    if(node.contentUnits == IJSVGUnitUserSpaceOnUse) {
+        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    }
+    CGRect layerRect = layer.innerBoundingBox;
+    CGAffineTransform layerTransform = CGAffineTransformMakeTranslation(CGRectGetMinX(layerRect),
+                                                                        CGRectGetMinY(layerRect));
+    transform = CGAffineTransformConcat(transform, layerTransform);
+    IJSVGClipPath* clipPath = node;
+    while(clipPath != nil) {
+        for(IJSVGPath* pathNode in clipPath.children) {
+            // just a pathed node
+            if([pathNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
+                CGPathAddPath(mPath, &transform, pathNode.path);
+                continue;
+            }
+            
+            // could be a use group
+            if(pathNode.type == IJSVGNodeTypeUse) {
+                IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
+                for(IJSVGPath* childNode in useGroup.children) {
+                    if([childNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
+                        CGPathAddPath(mPath, &transform, childNode.path);
+                    }
+                }
+            }
+        }
+        clipPath = clipPath.clipPath;
+    }
+    return mPath;
+}
+
 #pragma mark Defaults
 
 - (void)applyDefaultsToLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -551,11 +587,10 @@
     
     // add the clip mask if any
     if(node.clipPath != nil) {
-        NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers = nil;
-        clipLayers = [self clipLayersFromNode:node.clipPath
-                             referencingLayer:layer
-                                    fromLayer:nil];
-        layer.clipLayers = clipLayers;
+        IJSVGClipPath* clipPath = node.clipPath;
+        layer.clipPath = [self clipPathFromNode:clipPath
+                                      fromLayer:layer];
+        layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:clipPath.windingRule];
     }
     
     // setup the opacity

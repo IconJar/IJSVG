@@ -1268,6 +1268,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     CGRect proposedBounds = CGRectZero;
     IJSVGUnitType contentUnitType = [parentNode contentUnitsWithReferencingNodeBounds:&proposedBounds];
     
+    // could not compute a value, so just use the bounds
+    if(contentUnitType == IJSVGUnitInherit) {
+        proposedBounds = bounds;
+    }
+    
     NSString* widthString = [element attributeForName:IJSVGAttributeWidth].stringValue;
     NSString* heightString = [element attributeForName:IJSVGAttributeHeight].stringValue;
     NSString* xString = [element attributeForName:IJSVGAttributeX].stringValue;
