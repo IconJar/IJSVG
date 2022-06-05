@@ -22,7 +22,7 @@
             // we know how scale this will be drawn at
             CGFloat nScale = MIN(size.width, size.height);
             nScale += weakSelf.backingScaleFactor;
-            weakSelf.backingScaleFactor += nScale;
+            weakSelf.backingScaleFactor = nScale;
             
             // perform the actual render now we have computed backing scale
             [super performRenderInContext:ctx];

@@ -299,6 +299,12 @@
     self.renderingStyle = [[IJSVGRenderingStyle alloc] init];
     self.clipToViewport = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
+    self.renderingBackingScaleHelper = ^CGFloat{
+        if(NSScreen.mainScreen != nil) {
+            return NSScreen.mainScreen.backingScaleFactor;
+        }
+        return 1.f;
+    };
 }
 
 - (void)setTitle:(NSString*)title
