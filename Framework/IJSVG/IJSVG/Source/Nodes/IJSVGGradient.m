@@ -126,9 +126,8 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              objectRect:(NSRect)objectRect
-       absoluteTransform:(CGAffineTransform)absoluteTransform
-                viewPort:(CGRect)viewBox
+                  bounds:(NSRect)objectRect
+               transform:(CGAffineTransform)absoluteTransform
 {
 }
 

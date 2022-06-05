@@ -81,9 +81,8 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              objectRect:(NSRect)objectRect
-       absoluteTransform:(CGAffineTransform)absoluteTransform
-                viewPort:(CGRect)viewBox
+                  bounds:(NSRect)objectRect
+               transform:(CGAffineTransform)absoluteTransform
 {
     CGContextSaveGState(ctx);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
@@ -91,11 +90,10 @@
     CGPoint startPoint = CGPointZero;
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
+    CGRect boundingBox = objectRect;
 
     // transforms
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
-
-    CGRect boundingBox = inUserSpace ? viewBox : objectRect;
     
     // compute size based on percentages
     CGFloat width = 0.f;

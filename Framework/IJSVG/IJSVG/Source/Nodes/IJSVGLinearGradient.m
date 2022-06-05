@@ -35,17 +35,15 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              objectRect:(NSRect)objectRect
-       absoluteTransform:(CGAffineTransform)absoluteTransform
-                viewPort:(CGRect)viewBox
+                  bounds:(NSRect)objectRect
+               transform:(CGAffineTransform)absoluteTransform
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
 
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
     CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
-
-    CGRect boundingBox = inUserSpace ? viewBox : objectRect;
+    CGRect boundingBox = objectRect;
     
     // make sure we apply the absolute position to
     // transform us back into the correct space

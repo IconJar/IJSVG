@@ -71,20 +71,21 @@
         return;
     }
 
-    // draw the gradient
+    // perform the draw
+    CGRect bounds = CGRectZero;
+    CGAffineTransform transform = CGAffineTransformIdentity;
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
-    CGRect objectRect = layer.boundingBoxBounds;
-    CGAffineTransform affine = [IJSVGLayer userSpaceTransformForLayer:layer];
-    CGContextSaveGState(ctx);
-    
-    IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
-    CGRect bounds = [rootNode.viewBox computeValue:CGSizeZero];
+    if(self.gradient.units == IJSVGUnitUserSpaceOnUse) {
+        IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
+        bounds = [rootNode.viewBox computeValue:CGSizeZero];
+        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    } else {
+        bounds = layer.boundingBoxBounds;
+    }
     
     [self.gradient drawInContextRef:ctx
-                         objectRect:objectRect
-                  absoluteTransform:affine
-                           viewPort:bounds];
-    CGContextRestoreGState(ctx);
+                             bounds:bounds
+                          transform:transform];
 }
 
 @end
