@@ -14,6 +14,7 @@
 {
     if((self = [super init]) != nil) {
         _image = image;
+        [self setNeedsDisplay];
     }
     return self;
 }
@@ -23,24 +24,23 @@
     return YES;
 }
 
-- (void)layoutSublayers
+- (void)drawInContext:(CGContextRef)ctx
 {
-    [super layoutSublayers];
-    [self reloadContent];
-    [self setNeedsDisplay];
-}
-
-- (void)reloadContent
-{
-    if(_imageLayer == nil) {
-        _imageLayer = [IJSVGBasicLayer layer];
-        _imageLayer.contentsGravity = kCAGravityResize;
-        _imageLayer.affineTransform = CGAffineTransformMakeScale(1.f, -1.f);
-        _imageLayer.contents = (id)_image.CGImage;
-        [self addSublayer:_imageLayer];
-    }
-
-    _imageLayer.frame = self.bounds;
+    CGImageRef image = _image.CGImage;
+    CGRect imageDrawRect = _image.intrinsicBounds;
+    CGRect currentBounds = self.bounds;
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGSize scale) {
+        // image will be upside down, so just translate it back on itself
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
+        CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
+        CGContextDrawImage(ctx, imageDrawRect, image);
+    };
+    [IJSVGViewBox drawViewBox:_image.intrinsicBounds
+                       inRect:currentBounds
+                    alignment:_image.viewBoxAlignment
+                  meetOrSlice:_image.viewBoxMeetOrSlice
+                    inContext:ctx
+                 drawingBlock:drawBlock];
 }
 
 @end

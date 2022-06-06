@@ -17,6 +17,13 @@
     (void)(CGImageRelease(CGImage)), CGImage = nil;
 }
 
+- (void)setDefaults
+{
+    [super setDefaults];
+    self.viewBoxAlignment = IJSVGViewBoxAlignmentXMidYMid;
+    self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
+}
+
 - (void)loadFromString:(NSString*)encodedString
 {
     if ([encodedString hasPrefix:@"data:"]) {
