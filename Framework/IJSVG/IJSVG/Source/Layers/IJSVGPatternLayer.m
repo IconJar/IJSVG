@@ -98,7 +98,11 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // who knew that patterns have viewBoxes? Not me, but here is an implementation
     // of it anyway
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
-        _viewBox = [_patternNode.viewBox computeValue:rect.size];
+        IJSVGUnitRect* nViewBox = _patternNode.viewBox;
+        if(_patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+            nViewBox = [nViewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
+        }
+        _viewBox = [nViewBox computeValue:rect.size];
     }
         
     // create the pattern
