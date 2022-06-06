@@ -83,5 +83,8 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 + (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule;
 
++ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap;
++ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin;
+
 @end
 NS_ASSUME_NONNULL_END

@@ -623,4 +623,26 @@ CGFloat degrees_to_radians(CGFloat degrees)
     }
 }
 
++ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap
+{
+    if([lineCap isEqualToString:kCALineCapButt]) {
+        return kCGLineCapButt;
+    }
+    if([lineCap isEqualToString:kCALineCapRound]) {
+        return kCGLineCapRound;
+    }
+    return kCGLineCapSquare;
+}
+
++ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin
+{
+    if([lineJoin isEqualToString:kCALineJoinBevel]) {
+        return kCGLineJoinBevel;
+    }
+    if([lineJoin isEqualToString:kCALineJoinMiter]) {
+        return kCGLineJoinMiter;
+    }
+    return kCGLineJoinRound;
+}
+
 @end

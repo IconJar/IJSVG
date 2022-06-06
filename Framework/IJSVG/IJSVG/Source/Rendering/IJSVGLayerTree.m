@@ -125,6 +125,33 @@
     layer.boundingBox = pathBounds;
 }
 
+- (CGPathRef)newPathFromStrokeLayer:(IJSVGShapeLayer*)shapeLayer
+{
+    CGLineCap lineCap = [IJSVGUtils CGLineCapForCALineCap:shapeLayer.lineCap];
+    CGLineJoin lineJoin = [IJSVGUtils CGLineJoinForCALineJoin:shapeLayer.lineJoin];
+    CGPathRef dashedPath = NULL;
+    if(shapeLayer.lineDashPattern != nil && shapeLayer.lineDashPattern.count != 0.f) {
+        NSUInteger count = shapeLayer.lineDashPattern.count;
+        CGFloat* lengths = (CGFloat*)malloc(sizeof(CGFloat)*count);
+        NSUInteger i = 0;
+        for(NSNumber* number in shapeLayer.lineDashPattern) {
+            lengths[i++] = (CGFloat)number.floatValue;
+        }
+        dashedPath = CGPathCreateCopyByDashingPath(shapeLayer.path, NULL,
+                                                   shapeLayer.lineDashPhase,
+                                                   lengths, count);
+        (void)free(lengths), lengths = NULL;
+    }
+    CGPathRef path = dashedPath ?: shapeLayer.path;
+    CGPathRef newPath = CGPathCreateCopyByStrokingPath(path, NULL, shapeLayer.lineWidth,
+                                                       lineCap, lineJoin,
+                                                       shapeLayer.miterLimit);
+    if(dashedPath != NULL) {
+        CGPathRelease(dashedPath);
+    }
+    return newPath;
+}
+
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
@@ -220,14 +247,11 @@
                 patternLayer = [self drawableBasicPatternLayerForLayer:strokeLayer
                                                                pattern:(IJSVGPattern*)node.stroke];
                 patternLayer.referencingLayer = layer;
-                strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 
-                // use the mask as this will have default values
-                // that are needed for calculations
-                IJSVGMask* mask = [[IJSVGMask alloc] init];
-                patternLayer.maskLayer = [self maskLayerFromNode:mask
-                                                referencingLayer:patternLayer
-                                                       fromLayer:strokeLayer];
+                // clip the drawing to a stroked path
+                CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
+                patternLayer.clipPath = path;
+                CGPathRelease(path);
                 [layer addSublayer:patternLayer];
                 break;
             }
@@ -238,14 +262,11 @@
                 gradientLayer = [self drawableBasicGradientLayerForLayer:strokeLayer
                                                                 gradient:(IJSVGGradient*)node.stroke];
                 gradientLayer.referencingLayer = layer;
-                strokeLayer.strokeColor = NSColor.whiteColor.CGColor;
                 
-                // use the mask as this will have default values
-                // that are needed for calculations
-                IJSVGMask* mask = [[IJSVGMask alloc] init];
-                gradientLayer.maskLayer = [self maskLayerFromNode:mask
-                                                 referencingLayer:gradientLayer
-                                                        fromLayer:strokeLayer];
+                // clip the drawing to a stroked path
+                CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
+                gradientLayer.clipPath = path;
+                CGPathRelease(path);
                 [layer addSublayer:gradientLayer];
                 break;
             }
