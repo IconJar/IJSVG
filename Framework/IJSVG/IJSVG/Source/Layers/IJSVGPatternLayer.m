@@ -59,7 +59,8 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGContextSetFillColorSpace(ctx, patternSpace);
     CGColorSpaceRelease(patternSpace);
     
-    CGRect rect = self.referencingLayer.boundingBoxBounds;
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
+    CGRect rect = layer.boundingBoxBounds;
     
     // get the bounds, we need these as when we render we might need to swap
     // the coordinates over to objectBoundingBox
@@ -81,7 +82,6 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGFloat height = [hLength computeValue:rect.size.height];
     _cellSize = CGSizeMake(width, height);
     
-    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
         
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
