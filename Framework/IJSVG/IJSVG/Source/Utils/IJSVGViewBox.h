@@ -38,6 +38,10 @@ typedef void (^IJSVGViewBoxDrawingBlock)(CGSize scale);
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
 + (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string;
 
+void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox,
+                      IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice,
+                      IJSVGViewBoxDrawingBlock block);
+
 + (void)drawViewBox:(CGRect)viewBox
              inRect:(CGRect)drawingRect
           alignment:(IJSVGViewBoxAlignment)alignment

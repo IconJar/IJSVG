@@ -35,12 +35,9 @@
         CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
         CGContextDrawImage(ctx, imageDrawRect, image);
     };
-    [IJSVGViewBox drawViewBox:_image.intrinsicBounds
-                       inRect:currentBounds
-                    alignment:_image.viewBoxAlignment
-                  meetOrSlice:_image.viewBoxMeetOrSlice
-                    inContext:ctx
-                 drawingBlock:drawBlock];
+    IJSVGContextDrawViewBox(ctx, _image.intrinsicBounds, currentBounds,
+                     _image.viewBoxAlignment, _image.viewBoxMeetOrSlice,
+                     drawBlock);
 }
 
 @end

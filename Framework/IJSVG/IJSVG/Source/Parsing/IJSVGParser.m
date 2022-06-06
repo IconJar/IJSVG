@@ -417,12 +417,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         return transforms;
     });
 
-//    // we need to change how transforms work if our unit space is not userSpaceOnUse
-//    for(IJSVGTransform* transform in node.transforms) {
-//        [transform applyBounds:computedBounds
-//              withContentUnits:unitType];
-//    }
-    
     // unicode
     IJSVGAttributeParse(IJSVGAttributeUnicode, ^(NSString* value) {
         node.unicode = [NSString stringWithFormat:@"%04x", [value characterAtIndex:0]];

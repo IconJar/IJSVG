@@ -313,6 +313,17 @@ CGSize IJSVGViewBoxComputeNone(CGContextRef ctx, CGRect viewBox,
     return CGSizeMake(width, height);
 }
 
+void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox,
+                      IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice,
+                      IJSVGViewBoxDrawingBlock block) {
+    [IJSVGViewBox drawViewBox:viewBox
+                       inRect:boundingBox
+                    alignment:alignment
+                  meetOrSlice:meetOrSlice
+                    inContext:ctx
+                 drawingBlock:block];
+}
+
 + (void)drawViewBox:(CGRect)viewBox
              inRect:(CGRect)drawingRect
           alignment:(IJSVGViewBoxAlignment)alignment

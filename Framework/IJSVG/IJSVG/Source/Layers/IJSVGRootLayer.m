@@ -28,12 +28,10 @@
             [super performRenderInContext:ctx];
             CGContextRestoreGState(ctx);
         };
-        [IJSVGViewBox drawViewBox:viewBox
-                           inRect:self.boundingBoxBounds
-                        alignment:self.viewBoxAlignment
-                      meetOrSlice:self.viewBoxMeetOrSlice
-                        inContext:ctx
-                     drawingBlock:drawingBlock];
+        
+        IJSVGContextDrawViewBox(ctx, viewBox, self.boundingBoxBounds,
+                                self.viewBoxAlignment, self.viewBoxMeetOrSlice,
+                                drawingBlock);
         return;
     }
     [super performRenderInContext:ctx];
