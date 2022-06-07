@@ -14,9 +14,6 @@
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGImageLayer : IJSVGLayer {
-    
-@private
-    CALayer* _imageLayer;
 }
 
 @property (nonatomic, strong) IJSVGImage* image;

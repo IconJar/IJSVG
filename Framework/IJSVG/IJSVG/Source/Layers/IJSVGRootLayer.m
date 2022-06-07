@@ -15,12 +15,11 @@
     if(self.viewBox != nil) {
         CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
         __weak IJSVGRootLayer* weakSelf = self;
-        IJSVGViewBoxDrawingBlock drawingBlock = ^(CGSize size) {
+        IJSVGViewBoxDrawingBlock drawingBlock = ^(CGRect computedRect, CGFloat scale[]) {
             CGContextSaveGState(ctx);
-            CGContextClipToRect(ctx,viewBox);
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
-            CGFloat nScale = MIN(size.width, size.height);
+            CGFloat nScale = MIN(scale[0], scale[1]);
             nScale += weakSelf.backingScaleFactor;
             weakSelf.backingScaleFactor = nScale;
             

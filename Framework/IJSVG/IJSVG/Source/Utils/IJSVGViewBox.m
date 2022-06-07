@@ -85,12 +85,18 @@
     return IJSVGViewBoxAlignmentUnknown;
 }
 
-CGSize IJSVGViewBoxComputeXMidYMid(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMidYMid(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -103,17 +109,21 @@ CGSize IJSVGViewBoxComputeXMidYMid(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMinYMid(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMinYMid(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -126,17 +136,21 @@ CGSize IJSVGViewBoxComputeXMinYMid(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMaxYMid(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMaxYMid(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -149,17 +163,21 @@ CGSize IJSVGViewBoxComputeXMaxYMid(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMidYMin(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMidYMin(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -172,17 +190,21 @@ CGSize IJSVGViewBoxComputeXMidYMin(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMinYMin(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMinYMin(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -194,17 +216,21 @@ CGSize IJSVGViewBoxComputeXMinYMin(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMidYMax(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMidYMax(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -217,17 +243,21 @@ CGSize IJSVGViewBoxComputeXMidYMax(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMaxYMin(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMaxYMin(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -240,17 +270,21 @@ CGSize IJSVGViewBoxComputeXMaxYMin(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMinYMax(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMinYMax(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -263,17 +297,21 @@ CGSize IJSVGViewBoxComputeXMinYMax(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeXMaxYMax(CGContextRef ctx, CGRect viewBox,
-                                 CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectXMaxYMax(CGRect viewBox, CGRect drawingRect,
+                                       IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                       CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
     CGFloat ratio = meetOrSlice == IJSVGViewBoxMeetOrSliceMeet ? MIN(width, height) : MAX(width, height);
+    
+    if(scale != NULL) {
+        scale[0] = ratio;
+        scale[1] = ratio;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -286,16 +324,20 @@ CGSize IJSVGViewBoxComputeXMaxYMax(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * ratio),
                                                  -(viewBox.origin.y * ratio));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(ratio, ratio);
+    return CGRectApplyAffineTransform(drawingRect, transform);
 }
 
-CGSize IJSVGViewBoxComputeNone(CGContextRef ctx, CGRect viewBox,
-                             CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGRect IJSVGViewBoxComputeRectNone(CGRect viewBox, CGRect drawingRect,
+                                   IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                   CGFloat* scale)
 {
     CGFloat width = drawingRect.size.width / viewBox.size.width;
     CGFloat height = drawingRect.size.height / viewBox.size.height;
+    
+    if(scale != NULL) {
+        scale[0] = width;
+        scale[1] = height;
+    }
     
     // scale the viewBox into the drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
@@ -308,9 +350,30 @@ CGSize IJSVGViewBoxComputeNone(CGContextRef ctx, CGRect viewBox,
     translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * width),
                                                  -(viewBox.origin.y * height));
     transform = CGAffineTransformConcat(transform, translate);
-    CGContextConcatCTM(ctx, transform);
-    
-    return CGSizeMake(width, height);
+    return CGRectApplyAffineTransform(drawingRect, transform);
+}
+
+CGRect IJSVGContextViewBoxConcatNone(CGContextRef ctx, CGRect viewBox,
+                                     CGRect drawingRect, IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                     CGFloat* scale)
+{
+    CGFloat ratioX = 1.f;
+    CGFloat ratioY = 1.f;
+    CGRect rect = IJSVGViewBoxComputeRectNone(viewBox, drawingRect, meetOrSlice, scale);
+    CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
+    CGContextScaleCTM(ctx, ratioX, ratioY);
+    return rect;
+}
+
+CGRect IJSVGContextViewBoxConcat(CGContextRef ctx, IJSVGViewBoxComputeRectFunction function,
+                                 CGRect viewBox, CGRect drawingRect,
+                                 IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                 CGFloat* scale)
+{
+    CGRect rect = function(viewBox, drawingRect, meetOrSlice, scale);
+    CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
+    CGContextScaleCTM(ctx, scale[0], scale[1]);
+    return rect;
 }
 
 void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox,
@@ -324,6 +387,56 @@ void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBo
                  drawingBlock:block];
 }
 
+CGRect IJSVGViewBoxComputeRect(CGRect viewBox, CGRect drawingRect, IJSVGViewBoxAlignment alignment,
+                               IJSVGViewBoxMeetOrSlice meetOrSlice, CGFloat* scale)
+{
+    switch(alignment) {
+        default:
+        case IJSVGViewBoxAlignmentUnknown:
+        case IJSVGViewBoxAlignmentXMidYMid: {
+            return IJSVGViewBoxComputeRectXMidYMid(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentNone: {
+            return IJSVGViewBoxComputeRectNone(viewBox, drawingRect,
+                                               meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMaxYMax: {
+            return IJSVGViewBoxComputeRectXMaxYMax(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMaxYMid: {
+            return IJSVGViewBoxComputeRectXMaxYMid(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMaxYMin: {
+            return IJSVGViewBoxComputeRectXMaxYMin(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMidYMax: {
+            return IJSVGViewBoxComputeRectXMidYMax(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMidYMin: {
+            return IJSVGViewBoxComputeRectXMidYMin(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMinYMax: {
+            return IJSVGViewBoxComputeRectXMinYMin(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMinYMid: {
+            return IJSVGViewBoxComputeRectXMinYMid(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+        case IJSVGViewBoxAlignmentXMinYMin: {
+            return IJSVGViewBoxComputeRectXMinYMin(viewBox, drawingRect,
+                                                   meetOrSlice, scale);
+        }
+    }
+    return CGRectNull;
+}
+
 + (void)drawViewBox:(CGRect)viewBox
              inRect:(CGRect)drawingRect
           alignment:(IJSVGViewBoxAlignment)alignment
@@ -334,7 +447,6 @@ void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBo
     // this is equal to none, dont do anything fancy
     if(CGRectIsNull(viewBox) == YES ||
        CGRectEqualToRect(viewBox, CGRectZero) == YES) {
-        block(CGSizeMake(1.f, 1.f));
         return;
     }
     
@@ -342,51 +454,78 @@ void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBo
     if(meetOrSlice == IJSVGViewBoxMeetOrSliceSlice) {
         CGContextClipToRect(ctx, drawingRect);
     }
-    CGSize scale = CGSizeZero;
+    
+    // init the scaler
+    CGFloat* scale = (CGFloat*)malloc(sizeof(CGFloat)*2);
+    scale[0] = 1.f;
+    scale[1] = 1.f;
+    
+    CGRect computedRect = CGRectNull;
     switch(alignment) {
         case IJSVGViewBoxAlignmentNone: {
-            scale = IJSVGViewBoxComputeNone(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectNone,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentUnknown:
         case IJSVGViewBoxAlignmentXMidYMid: {
-            scale = IJSVGViewBoxComputeXMidYMid(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMidYMid,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMinYMid: {
-            scale = IJSVGViewBoxComputeXMinYMid(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMinYMid,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMaxYMid: {
-            scale = IJSVGViewBoxComputeXMaxYMid(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMaxYMid,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMidYMin: {
-            scale = IJSVGViewBoxComputeXMidYMin(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMidYMin,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMidYMax: {
-            scale = IJSVGViewBoxComputeXMidYMax(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMidYMax,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMinYMin: {
-            scale = IJSVGViewBoxComputeXMinYMin(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMinYMin,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMaxYMin: {
-            scale = IJSVGViewBoxComputeXMaxYMin(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMaxYMin,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMinYMax: {
-            scale = IJSVGViewBoxComputeXMinYMax(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMinYMax,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
         case IJSVGViewBoxAlignmentXMaxYMax: {
-            scale = IJSVGViewBoxComputeXMaxYMax(ctx, viewBox, drawingRect, meetOrSlice);
+            computedRect = IJSVGContextViewBoxConcat(ctx, &IJSVGViewBoxComputeRectXMaxYMax,
+                                                     viewBox, drawingRect, meetOrSlice,
+                                                     scale);
             break;
         }
     }
-    block(scale);
+    block(computedRect, scale);
+    free(scale);
     CGContextRestoreGState(ctx);
 }
 

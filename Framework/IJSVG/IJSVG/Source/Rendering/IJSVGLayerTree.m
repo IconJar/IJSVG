@@ -364,9 +364,6 @@
     frame = CGRectMake(0.f, 0.f,
                        node.intrinsicSize.width.value,
                        node.intrinsicSize.height.value);
-    
-    
-    
     layer.frame = frame;
     [self pushViewPort:layer.frame];
     layer.sublayers = [self drawableLayersForNodes:node.children];

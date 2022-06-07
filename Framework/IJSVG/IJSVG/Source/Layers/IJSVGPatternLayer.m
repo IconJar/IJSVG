@@ -37,7 +37,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGViewBoxAlignment alignment = layer.patternNode.viewBoxAlignment;
     IJSVGViewBoxMeetOrSlice meetOrSlice = layer.patternNode.viewBoxMeetOrSlice;
     CGRect viewBox = layer.viewBox;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGSize scale) {
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGRect computedRect, CGFloat scale[]) {
         [layer.pattern renderInContext:ctx];
     };
     IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);

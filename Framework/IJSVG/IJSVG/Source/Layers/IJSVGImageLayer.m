@@ -29,7 +29,7 @@
     CGImageRef image = _image.CGImage;
     CGRect imageDrawRect = _image.intrinsicBounds;
     CGRect currentBounds = self.bounds;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGSize scale) {
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGRect computedRect, CGFloat scale[]) {
         // image will be upside down, so just translate it back on itself
         CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
         CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));

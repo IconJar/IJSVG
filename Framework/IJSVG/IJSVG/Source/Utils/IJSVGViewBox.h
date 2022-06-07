@@ -29,14 +29,21 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
     IJSVGViewBoxMeetOrSliceSlice,
 };
 
+typedef CGRect (*IJSVGViewBoxComputeRectFunction)(CGRect viewBox, CGRect drawingRect,
+                                                  IJSVGViewBoxMeetOrSlice meetOrSlice,
+                                                  CGFloat* scale);
+
 @interface IJSVGViewBox : NSObject
 
-typedef void (^IJSVGViewBoxDrawingBlock)(CGSize scale);
+typedef void (^IJSVGViewBoxDrawingBlock)(CGRect computedRect, CGFloat scale[]);
 
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
                                 meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
 + (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string;
+
+CGRect IJSVGViewBoxComputeRect(CGRect viewBox, CGRect drawingRect, IJSVGViewBoxAlignment alignment,
+                               IJSVGViewBoxMeetOrSlice meetOrSlice, CGFloat* scale);
 
 void IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox,
                       IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice,
