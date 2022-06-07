@@ -95,6 +95,10 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
                                            [xLength computeValue:rect.size.width],
                                            [yLength computeValue:rect.size.height]);
     
+    // its possible that this layer is shifted inwards due to a stroke on the
+    // parent layer
+    transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
+    
     // who knew that patterns have viewBoxes? Not me, but here is an implementation
     // of it anyway
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {

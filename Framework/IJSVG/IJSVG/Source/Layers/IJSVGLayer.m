@@ -183,14 +183,14 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                 toContext:(CGContextRef)ctx
              drawingBlock:(dispatch_block_t)drawingBlock
 {
-    if (blendMode != kCGBlendModeNormal) {
-        CGContextSaveGState(ctx);
-        CGContextSetBlendMode(ctx, blendMode);
+    if (blendMode == kCGBlendModeNormal) {
         drawingBlock();
-        CGContextRestoreGState(ctx);
         return;
     }
+    CGContextSaveGState(ctx);
+    CGContextSetBlendMode(ctx, blendMode);
     drawingBlock();
+    CGContextRestoreGState(ctx);
 }
 
 ///// Shape layers are the only thing we can clip, as they contain a path, however

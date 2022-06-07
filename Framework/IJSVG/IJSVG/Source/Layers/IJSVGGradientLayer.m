@@ -83,6 +83,10 @@
         bounds = layer.boundingBoxBounds;
     }
     
+    // its possible that this layer is shifted inwards due to a stroke on the
+    // parent layer
+    transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
+    
     [self.gradient drawInContextRef:ctx
                              bounds:bounds
                           transform:transform];
