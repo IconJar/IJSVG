@@ -198,4 +198,7 @@ void IJSVGAssertPaintableObject(id object);
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
 
+- (instancetype)parentNodeMatchingClass:(Class)class;
+- (instancetype)rootNodeMatchingClass:(Class)class;
+
 @end

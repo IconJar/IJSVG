@@ -22,25 +22,6 @@
     return self;
 }
 
-- (IJSVGPattern*)rootPattern
-{
-    IJSVGRootNode* rootNode = self.rootNode;
-    IJSVGNode* parentNode = self.parentNode;
-    IJSVGPattern* parentPattern = nil;
-    while(parentNode != nil) {
-        if(parentNode == rootNode || parentNode == nil) {
-            break;
-        }
-        // actual check the type, if it Pattern, just store
-        // reference to it and keep going up the chain
-        if([parentNode isKindOfClass:IJSVGPattern.class]) {
-            parentPattern = (IJSVGPattern*)parentNode;
-        }
-        parentNode = parentNode.parentNode;
-    }
-    return parentPattern;
-}
-
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds
 {
     // as far as I can tell, units are inherited, so we need to go to the root
@@ -48,7 +29,7 @@
     // units as the actual units, but the bounds are based on the units of current
     // units defined on this node... wtf?!
     IJSVGNode* node = nil;
-    IJSVGPattern* parentPattern = [self rootPattern];
+    IJSVGPattern* parentPattern = [self rootNodeMatchingClass:self.class];
     IJSVGUnitType units = [self contentUnitsWithReferencingNode:&node];
     if(units == IJSVGUnitUserSpaceOnUse) {
         *bounds = node.rootNode.bounds;

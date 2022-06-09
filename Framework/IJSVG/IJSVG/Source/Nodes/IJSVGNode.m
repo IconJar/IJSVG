@@ -507,4 +507,31 @@
     return (IJSVGRootNode*)parent;
 }
 
+- (instancetype)parentNodeMatchingClass:(Class)class
+{
+    IJSVGNode* parent = self.parentNode;
+    if([parent isKindOfClass:class] == YES) {
+        return parent;
+    }
+    return [parent parentNodeMatchingClass:class];
+}
+
+- (instancetype)rootNodeMatchingClass:(Class)class
+{
+    IJSVGRootNode* rootNode = self.rootNode;
+    IJSVGNode* parentNode = self.parentNode;
+    IJSVGNode* foundNode = nil;
+    while(parentNode != nil) {
+        // break on root node or if its matching
+        if(parentNode == rootNode || parentNode == nil) {
+            break;
+        }
+        if([parentNode isKindOfClass:class] == YES) {
+            foundNode = parentNode;
+        }
+        parentNode = parentNode.parentNode;
+    }
+    return foundNode;
+}
+
 @end
