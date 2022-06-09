@@ -107,6 +107,9 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
             nViewBox = [nViewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
         }
         _viewBox = [nViewBox computeValue:rect.size];
+    } else {
+        // no viewbox is assigned, so just map it 1:1 with its cellSize
+        _viewBox = CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height);
     }
         
     // create the pattern
