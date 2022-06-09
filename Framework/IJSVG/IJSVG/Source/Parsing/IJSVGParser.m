@@ -25,6 +25,7 @@ NSString* const IJSVGAttributeStrokeWidth = @"stroke-width";
 NSString* const IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
 NSString* const IJSVGAttributeFillOpacity = @"fill-opacity";
 NSString* const IJSVGAttributeClipPath = @"clip-path";
+NSString* const IJSVGAttributeClipPathUnits = @"clipPathUnits";
 NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
 NSString* const IJSVGAttributePatternUnits = @"patternUnits";
@@ -98,6 +99,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         IJSVGAttributeGradientUnits : @"units",
         IJSVGAttributeMaskUnits : @"units",
         IJSVGAttributePatternUnits : @"units",
+        IJSVGAttributeClipPathUnits: @"contentUnits",
         IJSVGAttributeMaskContentUnits : @"contentUnits",
         IJSVGAttributePatternContentUnits : @"contentUnits"
     };

@@ -82,9 +82,13 @@
 
 - (CGRect)bounds
 {
-    CGRect rect = CGRectZero;
+    CGRect rect = CGRectNull;
     for(IJSVGNode* node in self.children) {
-        rect = CGRectUnion(rect, node.bounds);
+        if(CGRectIsNull(rect)) {
+            rect = node.bounds;
+        } else {
+            rect = CGRectUnion(rect, node.bounds);
+        }
     }
     return rect;
 }

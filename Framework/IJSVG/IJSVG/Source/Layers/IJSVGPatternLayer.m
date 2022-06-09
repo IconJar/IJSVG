@@ -25,6 +25,14 @@
     return YES;
 }
 
+- (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
+{
+    [super setBackingScaleFactor:backingScaleFactor];
+    [IJSVGLayer setBackingScaleFactor:backingScaleFactor
+                        renderQuality:self.renderQuality
+                   recursivelyToLayer:self.pattern];
+}
+
 void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // reassign the layer
@@ -38,7 +46,9 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGViewBoxMeetOrSlice meetOrSlice = layer.patternNode.viewBoxMeetOrSlice;
     CGRect viewBox = layer.viewBox;
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGRect computedRect, CGFloat scale[]) {
-        [layer.pattern renderInContext:ctx];
+        [IJSVGLayer renderLayer:layer.pattern
+                      inContext:ctx
+                        options:IJSVGLayerDrawingOptionNone];
     };
     IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
     CGContextSaveGState(ctx);
@@ -70,8 +80,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGUnitLength* hLength = _patternNode.height;
         
     // actually do the swap if required
-    if(self.patternNode.units == IJSVGUnitObjectBoundingBox ||
-       self.patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+    if(self.patternNode.units == IJSVGUnitObjectBoundingBox) {
         wLength = wLength.lengthByMatchingPercentage;
         hLength = hLength.lengthByMatchingPercentage;
         xLength = xLength.lengthByMatchingPercentage;

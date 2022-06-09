@@ -20,7 +20,7 @@
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
             CGFloat nScale = MIN(scale[0], scale[1]);
-            nScale += weakSelf.backingScaleFactor;
+            nScale *= weakSelf.backingScaleFactor;
             weakSelf.backingScaleFactor = nScale;
             
             // perform the actual render now we have computed backing scale
