@@ -45,12 +45,13 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGViewBoxAlignment alignment = layer.patternNode.viewBoxAlignment;
     IJSVGViewBoxMeetOrSlice meetOrSlice = layer.patternNode.viewBoxMeetOrSlice;
     CGRect viewBox = layer.viewBox;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGRect computedRect, CGFloat scale[]) {
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
         [IJSVGLayer renderLayer:layer.pattern
                       inContext:ctx
                         options:IJSVGLayerDrawingOptionNone];
     };
-    IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
+    IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice,
+                            drawBlock);
     CGContextSaveGState(ctx);
 };
 

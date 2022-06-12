@@ -15,7 +15,7 @@
     if(self.viewBox != nil) {
         CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
         __weak IJSVGRootLayer* weakSelf = self;
-        IJSVGViewBoxDrawingBlock drawingBlock = ^(CGRect computedRect, CGFloat scale[]) {
+        IJSVGViewBoxDrawingBlock drawingBlock = ^(CGFloat scale[]) {
             CGContextSaveGState(ctx);
             // we have to make sure we set the backing scale factor once
             // we know how scale this will be drawn at
@@ -29,8 +29,8 @@
         };
         
         IJSVGContextDrawViewBox(ctx, viewBox, self.boundingBoxBounds,
-                                self.viewBoxAlignment, self.viewBoxMeetOrSlice,
-                                drawingBlock);
+                                self.viewBoxAlignment,
+                                self.viewBoxMeetOrSlice, drawingBlock);
         return;
     }
     [super performRenderInContext:ctx];

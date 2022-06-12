@@ -29,15 +29,15 @@
     CGImageRef image = _image.CGImage;
     CGRect imageDrawRect = _image.intrinsicBounds;
     CGRect currentBounds = self.bounds;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGRect computedRect, CGFloat scale[]) {
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
         // image will be upside down, so just translate it back on itself
         CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
         CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
         CGContextDrawImage(ctx, imageDrawRect, image);
     };
-    IJSVGContextDrawViewBox(ctx, _image.intrinsicBounds, currentBounds,
-                     _image.viewBoxAlignment, _image.viewBoxMeetOrSlice,
-                     drawBlock);
+    IJSVGContextDrawViewBox(ctx, imageDrawRect, currentBounds,
+                            _image.viewBoxAlignment,
+                            _image.viewBoxMeetOrSlice, drawBlock);
 }
 
 @end

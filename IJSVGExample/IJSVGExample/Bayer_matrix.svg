@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="270" viewBox="0 .5 16 10" stroke-dasharray="1">
+<circle fill="#0F0" r="99"/>
+<path stroke="#00F" d="m1,1h15m0,2H1m0,2h15m0,2H1m0,2h15"/>
+<path stroke="#F00" d="m0,2h15m0,2H0m0,2h15m0,2H0m0,2h15"/>
+</svg>
