@@ -238,18 +238,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 //    if (self.isFont) {
 //        return YES;
 //    }
-
-    // check the viewbox
-    if (_rootNode.viewBox.isZeroRect ||
-        _rootNode.bounds.size.width == 0 ||
-        _rootNode.bounds.size.height == 0) {
-        if (error != NULL) {
-            *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                code:IJSVGErrorInvalidViewBox
-                                            userInfo:nil];
-        }
-        return NO;
-    }
     return YES;
 }
 
@@ -300,6 +288,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         } else if(width == 0.f && height != 0.f) {
             width = height;
         }
+        // nothing we can do, its a nil viewBox and has
+        // no width or height
+        if(width == 0.f && height == 0.f) {
+            return;
+        }
         node.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
                                           width:width
                                          height:height];
@@ -335,15 +328,17 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
     // helper for setting an attribute
     typedef void (^IJSVGAttributeParseBlock)(NSString*);
-    void (^IJSVGAttributeParse)(const NSString*, IJSVGAttributeParseBlock) =
+    BOOL (^IJSVGAttributeParse)(const NSString*, IJSVGAttributeParseBlock) =
     ^(NSString* key, IJSVGAttributeParseBlock parseBlock) {
         if([ignoredAttributes containsObject:key] == YES) {
-            return;
+            return NO;
         }
         NSString* value = [nodeStyle property:key] ?: attributes[key];
         if(value != nil && value.length != 0) {
             parseBlock(value);
+            return YES;
         }
+        return NO;
     };
     
     // helper for settings attributes
@@ -486,11 +481,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     // fill opacity
     IJSVGAttributeParse(IJSVGAttributeFillOpacity, ^(NSString* value) {
-        if (node.fillOpacity.value != 1.f && [node.fill isKindOfClass:IJSVGColorNode.class]) {
-            IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
-            colorNode.color = [IJSVGColor changeAlphaOnColor:colorNode.color
-                                                          to:node.fillOpacity.value];
-        }
+        node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     });
 
     // blendmode

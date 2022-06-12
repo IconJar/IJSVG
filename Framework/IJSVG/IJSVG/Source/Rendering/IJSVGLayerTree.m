@@ -227,7 +227,7 @@
     if(fillLayer != nil) {
         // fill opacity is precalculated for its colour when the type is fillColor,
         // for fills such as gradients and patterns, just reduce the opacity down
-        if(fillType != IJSVGLayerFillTypeColor && node.fillOpacity.value != 1.f) {
+        if(node.fillOpacity.value != 1.f) {
             fillLayer.opacity = node.fillOpacity.value;
         }
         fillLayer.affineTransform = CGAffineTransformTranslate(fillLayer.affineTransform,
@@ -304,7 +304,7 @@
     layer.strokeColor = strokeColor.CGColor;
     
     // work out line width
-    CGFloat lineWidth = node.strokeWidth.value;
+    CGFloat lineWidth = [node.strokeWidth computeValue:frame.size.width];
     
     // work out line styles
     IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
