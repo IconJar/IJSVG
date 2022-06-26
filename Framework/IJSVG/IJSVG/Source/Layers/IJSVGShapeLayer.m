@@ -150,9 +150,49 @@
                     options:IJSVGLayerDrawingOptionNone];
 }
 
+- (NSMapTable<NSNumber*,CALayer<IJSVGDrawableLayer>*>*)layerUsageMapTable
+{
+    if(_layerUsageMapTable == nil) {
+        _layerUsageMapTable = IJSVGLayerDefaultUsageMapTable();
+    }
+    return _layerUsageMapTable;
+}
+
+- (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
+    forUsageType:(IJSVGLayerUsageType)type
+{
+    [self.layerUsageMapTable setObject:layer
+                                forKey:@(type)];
+}
+
+- (CALayer<IJSVGDrawableLayer>*)layerForUsageType:(IJSVGLayerUsageType)type
+{
+    return [self.layerUsageMapTable objectForKey:@(type)];
+}
+
 -(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
 {
     return self.sublayers;
+}
+
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return YES;
+}
+
+- (void)addTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits |= traits;
+}
+
+- (void)removeTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits = _layerTraits & ~traits;
+}
+
+- (BOOL)matchesTraits:(IJSVGLayerTraits)traits
+{
+    return (_layerTraits & traits) == traits;
 }
 
 @end

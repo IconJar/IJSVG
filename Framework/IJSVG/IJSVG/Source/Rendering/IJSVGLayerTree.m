@@ -168,6 +168,8 @@
         // that this is inside wont be the correct frame
         strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
         strokeWidthDifference = strokeLayer.lineWidth * .5f;
+        [layer setLayer:strokeLayer
+           forUsageType:IJSVGLayerUsageTypeStroke];
 
         // make sure we update the bounding box as it has changed
         layer.frame = CGRectInset(layer.frame,
@@ -179,10 +181,12 @@
     // generic fill color
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     IJSVGLayerFillType fillType = [IJSVGLayer fillTypeForFill:fill];
+    IJSVGLayerUsageType fillUsageType = IJSVGLayerUsageTypeFillGeneric;
     switch(fillType) {
         // just a generic fill color
         default:
         case IJSVGLayerFillTypeColor: {
+            fillUsageType = IJSVGLayerUsageTypeFillGeneric;
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
             NSColor* color = colorNode.color ?: NSColor.blackColor;
             
@@ -208,6 +212,7 @@
             
         // pattern fill
         case IJSVGLayerFillTypePattern: {
+            fillUsageType = IJSVGLayerUsageTypeFillPattern;
             fillLayer = [self drawablePatternLayerForPathNode:node
                                                       pattern:(IJSVGPattern*)node.fill
                                                         layer:layer];
@@ -216,6 +221,7 @@
         
         // gradient fill
         case IJSVGLayerFillTypeGradient: {
+            fillUsageType = IJSVGLayerUsageTypeFillGradient;
             fillLayer = [self drawableGradientLayerForPathNode:node
                                                       gradient:(IJSVGGradient*)node.fill
                                                          layer:layer];
@@ -227,6 +233,7 @@
     if(fillLayer != nil) {
         // fill opacity is precalculated for its colour when the type is fillColor,
         // for fills such as gradients and patterns, just reduce the opacity down
+        [layer addTraits:IJSVGLayerTraitFilled];
         if(node.fillOpacity.value != 1.f) {
             fillLayer.opacity = node.fillOpacity.value;
         }
@@ -234,12 +241,15 @@
                                                                    strokeWidthDifference,
                                                                    strokeWidthDifference);
         [layer addSublayer:fillLayer];
+        [layer setLayer:fillLayer
+           forUsageType:fillUsageType];
     }
     
         
     // stroke the path
     if(strokeLayer != nil) {
         // we need to work out what type of fill we need for the layer
+        [layer addTraits:IJSVGLayerTraitStroked];
         switch([IJSVGLayer fillTypeForFill:node.stroke]) {
             // patterns
             case IJSVGLayerFillTypePattern: {
@@ -252,6 +262,8 @@
                 CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
                 patternLayer.clipPath = path;
                 CGPathRelease(path);
+                [layer setLayer:patternLayer
+                   forUsageType:IJSVGLayerUsageTypeStrokePattern];
                 [layer addSublayer:patternLayer];
                 break;
             }
@@ -267,12 +279,16 @@
                 CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
                 gradientLayer.clipPath = path;
                 CGPathRelease(path);
+                [layer setLayer:gradientLayer
+                   forUsageType:IJSVGLayerUsageTypeStrokeGradient];
                 [layer addSublayer:gradientLayer];
                 break;
             }
                 
             // generic
             default: {
+                [layer setLayer:strokeLayer
+                   forUsageType:IJSVGLayerUsageTypeStrokeGeneric];
                 [layer addSublayer:strokeLayer];
                 break;
             }
@@ -361,7 +377,7 @@
     // we are the top most SVG, not a nested one,
     // we can simply use the viewport given to us
     CGRect frame = CGRectZero;
-    frame = CGRectMake(0.f, 0.f,
+    frame = CGRectMake(node.x.value, node.y.value,
                        node.intrinsicSize.width.value,
                        node.intrinsicSize.height.value);
     layer.frame = frame;
@@ -645,8 +661,13 @@
 {
     // any x and y?
     CGRect frame = layer.bounds;
-    CGFloat x = [node.x computeValue:frame.size.width];
-    CGFloat y = [node.y computeValue:frame.size.height];
+    CGFloat x = 0.f;
+    CGFloat y = 0.f;
+    
+    if(layer.treatImplicitOriginAsTransform == YES) {
+        x = [node.x computeValue:frame.size.width];
+        y = [node.y computeValue:frame.size.height];
+    }
 
     // no need to do anything if no transform, or x or y == 0
     if (transforms.count == 0 && x == 0.f && y == 0.f) {

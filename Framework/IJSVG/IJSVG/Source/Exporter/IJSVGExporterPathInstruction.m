@@ -11,6 +11,9 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <math.h>
 
+@implementation IJSVGExporterPathInstructionCommand
+@end
+
 @implementation IJSVGExporterPathInstruction
 
 @synthesize instruction = _instruction;
@@ -67,36 +70,18 @@
     return _coords;
 }
 
-IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command)
-{
-    IJSVGExporterPathInstructionCommand* copy = NULL;
-    copy = (IJSVGExporterPathInstructionCommand*)malloc(sizeof(IJSVGExporterPathInstructionCommand));
-    copy->instruction = command.instruction;
-    copy->params = command.params;
-    return copy;
-}
-
-void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand* _Nullable command)
-{
-    if (command != NULL) {
-        free(command);
-    }
-}
-
-+ (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets
++ (NSString*)pathStringWithInstructionSet:(NSArray<IJSVGExporterPathInstructionCommand*>*)instructionSets
                      floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     IJSVGExporterPathInstructionCommand* lastCommand = NULL;
     NSMutableString* string = [[NSMutableString alloc] init];
-    for (NSValue* value in instructionSets) {
+    for (IJSVGExporterPathInstructionCommand* command in instructionSets) {
         // read back the bytes
-        IJSVGExporterPathInstructionCommand command;
-        [value getValue:&command];
 
         // add on the instruction character only if there is no current command
         // or the last command is not the same as the current command
         // if they both are the same, we still need to seperate them via a space
-        if (lastCommand == nil || (lastCommand != nil && lastCommand->instruction != command.instruction)) {
+        if (lastCommand == nil || (lastCommand != nil && lastCommand.instruction != command.instruction)) {
             [string appendFormat:@"%c", command.instruction];
         } else {
             [string appendString:@" "];
@@ -107,11 +92,8 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
         [string appendString:compressedFloats];
 
         // store last command
-        IJSVGExporterPathInstructionCommandFree(lastCommand);
-        lastCommand = IJSVGExporterPathInstructionCommandCopy(command);
+        lastCommand = command;
     }
-
-    IJSVGExporterPathInstructionCommandFree(lastCommand);
     return string;
 }
 
@@ -185,14 +167,11 @@ void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand
         }
 
         // wrap into the command and give to the array
-        IJSVGExporterPathInstructionCommand wrapper;
-        wrapper.instruction = instruction.instruction;
-        wrapper.params = set ?: @[];
-
-        // encode and store
-        NSValue* value = [NSValue valueWithBytes:&wrapper
-                                        objCType:@encode(IJSVGExporterPathInstructionCommand)];
-        [pathInstructions addObject:value];
+        IJSVGExporterPathInstructionCommand* wrapperCommand = nil;
+        wrapperCommand = [[IJSVGExporterPathInstructionCommand alloc] init];
+        wrapperCommand.instruction = instruction.instruction;
+        wrapperCommand.params = set ?: @[];
+        [pathInstructions addObject:wrapperCommand];
     }
     return [self pathStringWithInstructionSet:pathInstructions
                          floatingPointOptions:floatingPointOptions];

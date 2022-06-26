@@ -28,7 +28,7 @@
             CGContextRestoreGState(ctx);
         };
         
-        IJSVGContextDrawViewBox(ctx, viewBox, self.boundingBoxBounds,
+        IJSVGContextDrawViewBox(ctx, viewBox, IJSVGLayerGetBoundingBoxBounds(self),
                                 self.viewBoxAlignment,
                                 self.viewBoxMeetOrSlice, drawingBlock);
         return;
@@ -83,6 +83,11 @@
     self.renderQuality = quality;
     _disableBackingScalePropagation = NO;
     [self renderInContext:ctx];
+}
+
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return NO;
 }
 
 @end

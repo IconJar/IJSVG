@@ -80,7 +80,7 @@
         bounds = [rootNode.viewBox computeValue:CGSizeZero];
         transform = [IJSVGLayer userSpaceTransformForLayer:layer];
     } else {
-        bounds = layer.boundingBoxBounds;
+        bounds = IJSVGLayerGetBoundingBoxBounds(layer);
     }
     
     // its possible that this layer is shifted inwards due to a stroke on the

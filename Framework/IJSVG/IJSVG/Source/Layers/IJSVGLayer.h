@@ -18,6 +18,12 @@
 @class IJSVGLayer;
 @class IJSVGFilter;
 
+typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
+    IJSVGLayerTraitNone = 0,
+    IJSVGLayerTraitFilled = 1 << 1,
+    IJSVGLayerTraitStroked = 1 << 2
+};
+
 typedef NS_OPTIONS(NSUInteger, IJSVGLayerDrawingOptions) {
     IJSVGLayerDrawingOptionNone = 0,
     IJSVGLayerDrawingOptionIgnoreClipping = 1 << 1
@@ -30,8 +36,14 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerFillType) {
     IJSVGLayerFillTypeUnknown
 };
 
-typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
-    IJSVGLayerTraitGroup = 1 << 1
+typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
+    IJSVGLayerUsageTypeFillGeneric,
+    IJSVGLayerUsageTypeFillPattern,
+    IJSVGLayerUsageTypeFillGradient,
+    IJSVGLayerUsageTypeStrokeGeneric,
+    IJSVGLayerUsageTypeStrokePattern,
+    IJSVGLayerUsageTypeStrokeGradient,
+    IJSVGLayerUsageTypeStroke
 };
 
 @protocol IJSVGPathableLayer <NSObject>
@@ -72,38 +84,49 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @protocol IJSVGDrawableLayer <NSObject, IJSVGBasicLayer, IJSVGMaskingLayer, IJSVGClippingLayer>
 
 @required
+@property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
 @property (nonatomic, copy) CAShapeLayerFillRule clipRule;
 @property (nonatomic, copy) CAShapeLayerFillRule fillRule;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
-@property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
-@property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, readonly) IJSVGLayerTraits layerTraits;
+@property (nonatomic, readonly) NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* layerUsageMapTable;
 
 - (void)performRenderInContext:(CGContextRef)ctx;
 
+- (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
+    forUsageType:(IJSVGLayerUsageType)type;
+- (CALayer<IJSVGDrawableLayer>*)layerForUsageType:(IJSVGLayerUsageType)type;
+
+- (void)addTraits:(IJSVGLayerTraits)traits;
+- (void)removeTraits:(IJSVGLayerTraits)traits;
+- (BOOL)matchesTraits:(IJSVGLayerTraits)traits;
+
 @end
 
-
+CGRect IJSVGLayerGetBoundingBoxBounds(CALayer<IJSVGDrawableLayer>* drawableLayer);
+NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTable(void);
 
 @interface IJSVGLayer : CALayer <IJSVGDrawableLayer, IJSVGMaskingLayer> {
 
 @private
     IJSVGLayer* _maskingLayer;
+    NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* _layerUsageMapTable;
 }
 
-@property (nonatomic, assign) IJSVGGradientLayer* gradientFillLayer;
-@property (nonatomic, assign) IJSVGPatternLayer* patternFillLayer;
-@property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
-@property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
-@property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
+//@property (nonatomic, assign) IJSVGGradientLayer* gradientFillLayer;
+//@property (nonatomic, assign) IJSVGPatternLayer* patternFillLayer;
+//@property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
+//@property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
+//@property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
 @property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
@@ -116,7 +139,6 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, readonly) CGRect absoluteFrame;
 @property (nonatomic, assign) CGRect boundingBox;
-@property (nonatomic, readonly) CGRect boundingBoxBounds;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
@@ -126,6 +148,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
 @property (nonatomic, assign) CGPathRef clipPath;
 @property (nonatomic, assign) CGAffineTransform clipPathTransform;
+@property (nonatomic, readonly) IJSVGLayerTraits layerTraits;
 
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 

@@ -10,15 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef struct {
-    char instruction;
-    NSArray<NSString*>* params;
-} IJSVGExporterPathInstructionCommand;
+@interface IJSVGExporterPathInstructionCommand : NSObject {
+}
 
-typedef struct {
-    CGPoint center;
-    CGFloat radius;
-} IJSVGExporterPathInstructionCircle;
+@property (nonatomic, assign) char instruction;
+@property (nonatomic, strong) NSArray<NSString*>* params;
+
+@end
 
 @interface IJSVGExporterPathInstruction : NSObject {
 
@@ -33,8 +31,6 @@ typedef struct {
 
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSVGFloatingPointOptions options);
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
-IJSVGExporterPathInstructionCommand* IJSVGExporterPathInstructionCommandCopy(IJSVGExporterPathInstructionCommand command);
-void IJSVGExporterPathInstructionCommandFree(IJSVGExporterPathInstructionCommand* _Nullable command);
 
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
                                            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;

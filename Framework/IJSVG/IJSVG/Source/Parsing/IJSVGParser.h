@@ -49,6 +49,7 @@ extern NSString* const IJSVGAttributeClipPath;
 extern NSString* const IJSVGAttributeClipPathUnits;
 extern NSString* const IJSVGAttributeMask;
 extern NSString* const IJSVGAttributeGradientUnits;
+extern NSString* const IJSVGAttributePatternUnits;
 extern NSString* const IJSVGAttributePatternContentUnits;
 extern NSString* const IJSVGAttributeMaskUnits;
 extern NSString* const IJSVGAttributeMaskContentUnits;
@@ -56,7 +57,7 @@ extern NSString* const IJSVGAttributeTransform;
 extern NSString* const IJSVGAttributeGradientTransform;
 extern NSString* const IJSVGAttributeUnicode;
 extern NSString* const IJSVGAttributeStrokeLineCap;
-extern NSString* const IJSVGAttributeLineJoin;
+extern NSString* const IJSVGAttributeStrokeLineJoin;
 extern NSString* const IJSVGAttributeStroke;
 extern NSString* const IJSVGAttributeStrokeDashArray;
 extern NSString* const IJSVGAttributeStrokeMiterLimit;
@@ -89,6 +90,7 @@ extern NSString* const IJSVGAttributeFilter;
 extern NSString* const IJSVGAttributeStdDeviation;
 extern NSString* const IJSVGAttributeIn;
 extern NSString* const IJSVGAttributeEdgeMode;
+extern NSString* const IJSVGAttributeMarker;
 
 
 @class IJSVGParser;

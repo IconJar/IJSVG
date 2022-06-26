@@ -13,6 +13,22 @@
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
 
+CGRect IJSVGLayerGetBoundingBoxBounds(CALayer<IJSVGDrawableLayer>* drawableLayer)
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = drawableLayer.boundingBox.size
+    };
+}
+
+NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTable(void)
+{
+    return [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory
+                                     valueOptions:NSPointerFunctionsWeakMemory
+                                         capacity:3];
+}
+
+
 @implementation IJSVGLayer
 
 - (void)dealloc
@@ -641,6 +657,46 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
         CGPathRelease(_clipPath);
     }
     _clipPath = CGPathRetain(clipPath);
+}
+
+- (NSMapTable<NSNumber*,CALayer<IJSVGDrawableLayer>*>*)layerUsageMapTable
+{
+    if(_layerUsageMapTable == nil) {
+        _layerUsageMapTable = IJSVGLayerDefaultUsageMapTable();
+    }
+    return _layerUsageMapTable;
+}
+
+- (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
+    forUsageType:(IJSVGLayerUsageType)type
+{
+    [self.layerUsageMapTable setObject:layer
+                                forKey:@(type)];
+}
+
+- (CALayer<IJSVGDrawableLayer>*)layerForUsageType:(IJSVGLayerUsageType)type
+{
+    return [self.layerUsageMapTable objectForKey:@(type)];
+}
+
+- (void)addTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits |= traits;
+}
+
+- (void)removeTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits = _layerTraits & ~traits;
+}
+
+- (BOOL)matchesTraits:(IJSVGLayerTraits)traits
+{
+    return (_layerTraits & traits) == traits;
+}
+
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return YES;
 }
 
 @end

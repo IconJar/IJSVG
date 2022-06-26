@@ -71,7 +71,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGColorSpaceRelease(patternSpace);
     
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
-    CGRect rect = layer.boundingBoxBounds;
+    CGRect rect = IJSVGLayerGetBoundingBoxBounds(layer);
     
     // get the bounds, we need these as when we render we might need to swap
     // the coordinates over to objectBoundingBox
@@ -123,7 +123,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     }
         
     // create the pattern
-    CGRect selfBounds = self.boundingBoxBounds;
+    CGRect selfBounds = IJSVGLayerGetBoundingBoxBounds(self);
     CGPatternRef ref = CGPatternCreate((void*)self, selfBounds,
         transform, width, height,
         kCGPatternTilingConstantSpacing,

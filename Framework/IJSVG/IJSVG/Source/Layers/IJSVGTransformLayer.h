@@ -9,12 +9,16 @@
 #import <QuartzCore/QuartzCore.h>
 #import <IJSVG/IJSVGLayer.h>
 
-@interface IJSVGTransformLayer : CATransformLayer <IJSVGDrawableLayer>
+@interface IJSVGTransformLayer : CATransformLayer <IJSVGDrawableLayer> {
+@private
+    NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* _layerUsageMapTable;
+}
 
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
 @property (nonatomic, readonly) CGPoint absoluteOrigin;
 @property (nonatomic, readonly) CALayer<IJSVGDrawableLayer>* referencedLayer;
 @property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
+@property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 
 @end

@@ -14,13 +14,14 @@
 
 @private
     IJSVGLayer* _maskingLayer;
+    NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* _layerUsageMapTable;
 }
 
-@property (nonatomic, assign) IJSVGGradientLayer* gradientFillLayer;
-@property (nonatomic, assign) IJSVGPatternLayer* patternFillLayer;
-@property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
-@property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
-@property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
+//@property (nonatomic, assign) IJSVGGradientLayer* gradientFillLayer;
+//@property (nonatomic, assign) IJSVGPatternLayer* patternFillLayer;
+//@property (nonatomic, assign) IJSVGStrokeLayer* strokeLayer;
+//@property (nonatomic, assign) IJSVGGradientLayer* gradientStrokeLayer;
+//@property (nonatomic, assign) IJSVGPatternLayer* patternStrokeLayer;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, readonly) BOOL requiresBackingScale;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
@@ -45,6 +46,8 @@
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
 @property (nonatomic, assign) CGPathRef clipPath;
 @property (nonatomic, assign) CGAffineTransform clipPathTransform;
+@property (nonatomic, assign) IJSVGLayerTraits layerTraits;
+@property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

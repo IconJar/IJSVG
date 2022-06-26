@@ -37,7 +37,7 @@ NSString* const IJSVGAttributeTransform = @"transform";
 NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
 NSString* const IJSVGAttributeUnicode = @"unicode";
 NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
-NSString* const IJSVGAttributeLineJoin = @"stroke-linejoin";
+NSString* const IJSVGAttributeStrokeLineJoin = @"stroke-linejoin";
 NSString* const IJSVGAttributeStroke = @"stroke";
 NSString* const IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
 NSString* const IJSVGAttributeStrokeMiterLimit = @"stroke-miterlimit";
@@ -70,6 +70,7 @@ NSString* const IJSVGAttributeFilter = @"filter";
 NSString* const IJSVGAttributeStdDeviation = @"stdDeviation";
 NSString* const IJSVGAttributeIn = @"in";
 NSString* const IJSVGAttributeEdgeMode = @"edgeMode";
+NSString* const IJSVGAttributeMarker = @"marker";
 
 @implementation IJSVGParser
 
@@ -425,7 +426,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     });
 
     // line join
-    IJSVGAttributeParse(IJSVGAttributeLineJoin, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeStrokeLineJoin, ^(NSString* value) {
         node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value];
     });
     
