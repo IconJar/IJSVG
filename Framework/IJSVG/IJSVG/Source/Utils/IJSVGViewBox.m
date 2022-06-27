@@ -11,6 +11,61 @@
 
 @implementation IJSVGViewBox
 
++ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment
+                          meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
+{
+    NSString* str = nil;
+    switch(alignment) {
+        default:
+        case IJSVGViewBoxAlignmentUnknown: {
+            return nil;
+        }
+        case IJSVGViewBoxAlignmentNone: {
+            return @"none";
+        }
+        case IJSVGViewBoxAlignmentXMinYMin: {
+            str = @"xMinYMin";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMidYMin: {
+            str = @"xMidYMin";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMaxYMin: {
+            str = @"xMaxYMin";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMinYMid: {
+            str = @"xMinYMid";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMidYMid: {
+            str = @"xMidYMid";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMaxYMid: {
+            str = @"xMaxYMid";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMinYMax: {
+            str = @"xMinYMax";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMidYMax: {
+            str = @"xMidYMax";
+            break;
+        }
+        case IJSVGViewBoxAlignmentXMaxYMax: {
+            str = @"xMaxYMax";
+            break;
+        }
+    }
+    if(meetOrSlice == IJSVGViewBoxMeetOrSliceMeet) {
+        return str;
+    }
+    return [str stringByAppendingString:@" slice"];
+}
+
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
                                 meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice
 {

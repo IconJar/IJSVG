@@ -173,8 +173,9 @@ void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLEleme
 
 NSDictionary<NSString*, NSString*>* IJSVGElementAttributeDictionary(NSXMLElement* element)
 {
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-    for (NSXMLNode* attribute in element.attributes) {
+    NSArray* atts = element.attributes;
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] initWithCapacity:atts.count];
+    for (NSXMLNode* attribute in atts) {
         dict[attribute.name] = attribute.stringValue;
     }
     return dict;
@@ -241,61 +242,6 @@ NSString* IJSVGHash(NSString* key)
                                            encoding:NSUTF8StringEncoding];
     free(buffer);
     return viewBox;
-}
-
-- (NSString*)viewBoxAlignment:(IJSVGViewBoxAlignment)alignment
-                  meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
-{
-    NSString* str = nil;
-    switch(alignment) {
-        default:
-        case IJSVGViewBoxAlignmentUnknown: {
-            return nil;
-        }
-        case IJSVGViewBoxAlignmentNone: {
-            return @"none";
-        }
-        case IJSVGViewBoxAlignmentXMinYMin: {
-            str = @"xMinYMin";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMidYMin: {
-            str = @"xMidYMin";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMaxYMin: {
-            str = @"xMaxYMin";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMinYMid: {
-            str = @"xMinYMid";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMidYMid: {
-            str = @"xMidYMid";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMaxYMid: {
-            str = @"xMaxYMid";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMinYMax: {
-            str = @"xMinYMax";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMidYMax: {
-            str = @"xMidYMax";
-            break;
-        }
-        case IJSVGViewBoxAlignmentXMaxYMax: {
-            str = @"xMaxYMax";
-            break;
-        }
-    }
-    if(meetOrSlice == IJSVGViewBoxMeetOrSliceMeet) {
-        return str;
-    }
-    return [str stringByAppendingString:@" slice"];
 }
 
 - (NSXMLElement*)rootNode:(NSXMLElement**)nestedRoot
@@ -390,9 +336,9 @@ NSString* IJSVGHash(NSString* key)
         NSXMLElement* transformedElement = [[NSXMLElement alloc] initWithName:@"g"];
         NSString* transString = nil;
         transString = [self transformAttributeStringForTransform:afTransform];
-        IJSVGApplyAttributesToElement(
-            @{ IJSVGAttributeTransform: transString },
-            transformedElement);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeTransform: transString
+        }, transformedElement);
         *nestedRoot = transformedElement;
         [root addChild:transformedElement];
     }
@@ -416,7 +362,9 @@ NSString* IJSVGHash(NSString* key)
     _appliedXLink = YES;
     NSXMLElement* root = _dom.rootElement;
     NSString* const attributeName = @"xmlns:xlink";
-    IJSVGApplyAttributesToElement(@{ attributeName: XML_DOC_NSXLINK }, root);
+    IJSVGApplyAttributesToElement(@{
+        attributeName: XML_DOC_NSXLINK
+    }, root);
 }
 
 - (NSString*)generateID
@@ -450,7 +398,7 @@ NSString* IJSVGHash(NSString* key)
 
     // sort out stuff, so here we go...
     for(NSXMLElement* childLayer in _svg.rootLayer.sublayers) {
-        [self _recursiveParseFromLayer:(IJSVGLayer*)childLayer
+        [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)childLayer
                            intoElement:nestedRoot];
     }
 
@@ -593,7 +541,10 @@ NSString* IJSVGHash(NSString* key)
         for (NSString* attributeName in inhertEl) {
             [element removeAttributeForName:attributeName];
         }
-        IJSVGApplyAttributesToElement(@{ @"class": className }, element);
+        
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeClass: className
+        }, element);
     }
 
     // add styles to dom
@@ -657,7 +608,9 @@ NSString* IJSVGHash(NSString* key)
                     NSString* idString = [gradientB attributeForName:IJSVGAttributeID].stringValue;
                     if (idString == nil || idString.length == 0) {
                         idString = [self identifierForElement:gradientA];
-                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeID: idString }, gradientB);
+                        IJSVGApplyAttributesToElement(@{
+                            IJSVGAttributeID: idString
+                        }, gradientB);
                     }
                     NSDictionary* atts = @{ @"xlink:href": IJSVGHash(idString) };
                     IJSVGApplyAttributesToElement(atts, gradientA);
@@ -1094,7 +1047,7 @@ NSString* IJSVGHash(NSString* key)
     [self _removeDefaultAttributesOnElement:_dom.rootElement];
 }
 
-- (NSXMLElement*)elementForLayer:(IJSVGLayer*)layer
+- (NSXMLElement*)elementForLayer:(CALayer<IJSVGDrawableLayer>*)layer
                       fromParent:(NSXMLElement*)element
 {
     // root layer
@@ -1131,7 +1084,7 @@ NSString* IJSVGHash(NSString* key)
     return nil;
 }
 
-- (void)_recursiveParseFromLayer:(IJSVGLayer*)layer
+- (void)_recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)layer
                      intoElement:(NSXMLElement*)element
 {
     NSXMLElement* el = [self elementForLayer:layer
@@ -1151,7 +1104,7 @@ NSString* IJSVGHash(NSString* key)
 }
 
 - (void)applyTransformToElement:(NSXMLElement*)element
-                      fromLayer:(IJSVGLayer*)layer
+                      fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     CGAffineTransform transform = layer.affineTransform;
     if (CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity) == YES) {
@@ -1162,10 +1115,12 @@ NSString* IJSVGHash(NSString* key)
     NSString* transformStr = [self transformAttributeStringForTransform:transform];
 
     // apply it to the node
-    IJSVGApplyAttributesToElement(@{ IJSVGAttributeTransform: transformStr }, element);
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeTransform: transformStr
+    }, element);
 }
 
-- (NSXMLElement*)elementForGroup:(IJSVGLayer*)layer
+- (NSXMLElement*)elementForGroup:(CALayer<IJSVGDrawableLayer>*)layer
                       fromParent:(NSXMLElement*)parent
 {
     // create the element
@@ -1177,7 +1132,7 @@ NSString* IJSVGHash(NSString* key)
                        fromLayer:layer];
 
     // add group children
-    for (IJSVGLayer* childLayer in layer.sublayers) {
+    for (CALayer<IJSVGDrawableLayer>* childLayer in layer.sublayers) {
         [self _recursiveParseFromLayer:childLayer
                            intoElement:e];
     }
@@ -1189,14 +1144,15 @@ NSString* IJSVGHash(NSString* key)
                    toElement:(NSXMLElement*)element
 {
     CGSize parentSize = layer.superlayer.frame.size;
-    NSMutableDictionary<NSString*, NSString*>* attributes = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* attributes = nil;
+    attributes = [[NSMutableDictionary alloc] init];
     if(layer.viewBox != nil) {
         CGRect viewBox = [layer.viewBox computeValue:parentSize];
         attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     }
     
-    NSString* aspectRatio = [self viewBoxAlignment:layer.viewBoxAlignment
-                                       meetOrSlice:layer.viewBoxMeetOrSlice];
+    NSString* aspectRatio = [IJSVGViewBox aspectRatioWithAlignment:layer.viewBoxAlignment
+                                                       meetOrSlice:layer.viewBoxMeetOrSlice];
     if(aspectRatio != nil) {
         attributes[IJSVGAttributePreserveAspectRatio] = aspectRatio;
     }
@@ -1204,8 +1160,10 @@ NSString* IJSVGHash(NSString* key)
     IJSVGUnitSize* size = layer.intrinsicSize;
     if(size != nil) {
         CGSize computedSize = [size computeValue:parentSize];
-        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(computedSize.width, _floatingPointOptions);
-        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(computedSize.height, _floatingPointOptions);
+        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(computedSize.width,
+                                                                           _floatingPointOptions);
+        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(computedSize.height,
+                                                                            _floatingPointOptions);
     }
     
     IJSVGApplyAttributesToElement(attributes, element);
@@ -1239,7 +1197,7 @@ NSString* IJSVGHash(NSString* key)
                      toElement:element];
 
     // add group children
-    for (IJSVGLayer* childLayer in layer.sublayers) {
+    for (CALayer<IJSVGDrawableLayer>* childLayer in layer.sublayers) {
         [self _recursiveParseFromLayer:childLayer
                            intoElement:element];
     }
@@ -1266,7 +1224,7 @@ NSString* IJSVGHash(NSString* key)
 }
 
 - (void)applyPatternFromLayer:(IJSVGPatternLayer*)layer
-                  parentLayer:(IJSVGLayer*)parentLayer
+                  parentLayer:(CALayer<IJSVGDrawableLayer>*)parentLayer
                        stroke:(BOOL)stroke
                     toElement:(NSXMLElement*)element
 {
@@ -1335,7 +1293,7 @@ NSString* IJSVGHash(NSString* key)
 }
 
 - (void)applyGradientFromLayer:(IJSVGGradientLayer*)layer
-                   parentLayer:(IJSVGLayer*)parentLayer
+                   parentLayer:(CALayer<IJSVGDrawableLayer>*)parentLayer
                         stroke:(BOOL)stroke
                      toElement:(NSXMLElement*)element
 {
@@ -1374,12 +1332,15 @@ NSString* IJSVGHash(NSString* key)
     
     // apply the identifier
     NSString* gradKey = [self identifierForElement:gradientElement];
-    IJSVGApplyAttributesToElement(@{IJSVGAttributeID: gradKey}, gradientElement);
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeID: gradKey
+    }, gradientElement);
 
     // apply the units
     if (layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientUnits: @"userSpaceOnUse" },
-            gradientElement);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeGradientUnits: @"userSpaceOnUse"
+        }, gradientElement);
     }
 
     // add the stops
@@ -1435,26 +1396,35 @@ NSString* IJSVGHash(NSString* key)
     if (transforms.count != 0.f) {
         CGAffineTransform transform = IJSVGConcatTransforms(transforms);
         NSString* transformString = [self transformAttributeStringForTransform:transform];
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientTransform: transformString }, gradientElement);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeGradientTransform: transformString
+        }, gradientElement);
     }
 
     // add it to the element passed in
     if (stroke == NO) {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill: IJSVGHashURL(gradKey) }, element);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeFill: IJSVGHashURL(gradKey)
+        }, element);
 
         // fill opacity
         if (layer.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(layer.opacity, _floatingPointOptions) }, element);
+            IJSVGApplyAttributesToElement(@{
+                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(layer.opacity,
+                    _floatingPointOptions)
+            }, element);
         }
     } else {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStroke: IJSVGHashURL(gradKey) }, element);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeStroke: IJSVGHashURL(gradKey)
+        }, element);
     }
 }
 
 - (NSXMLElement*)elementForFilter:(IJSVGFilterLayer*)layer
                        fromParent:(NSXMLElement*)parent
 {
-    [self _recursiveParseFromLayer:(IJSVGLayer*)layer.sublayer
+    [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)layer.sublayer
                        intoElement:parent];
     return nil;
 }
@@ -1889,7 +1859,7 @@ NSString* IJSVGHash(NSString* key)
     IJSVGGradientLayer* gradientLayer = (IJSVGGradientLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeFillGradient];
     if (gradientLayer != nil) {
         [self applyGradientFromLayer:gradientLayer
-                         parentLayer:(IJSVGLayer*)layer
+                         parentLayer:(CALayer<IJSVGDrawableLayer>*)layer
                               stroke:NO
                            toElement:e];
     }
@@ -1898,7 +1868,7 @@ NSString* IJSVGHash(NSString* key)
     IJSVGPatternLayer* patternLayer = (IJSVGPatternLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeFillPattern];
     if (patternLayer != nil) {
         [self applyPatternFromLayer:patternLayer
-                        parentLayer:(IJSVGLayer*)layer
+                        parentLayer:(CALayer<IJSVGDrawableLayer>*)layer
                              stroke:NO
                           toElement:e];
     }
@@ -1909,14 +1879,14 @@ NSString* IJSVGHash(NSString* key)
         // stroke gradient
         if ((strokeLayer = (IJSVGShapeLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
             [self applyGradientFromLayer:(IJSVGGradientLayer*)strokeLayer
-                             parentLayer:(IJSVGLayer*)layer
+                             parentLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                   stroke:YES
                                toElement:e];
 
         } else if ((strokeLayer = (IJSVGShapeLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
             // stroke pattern
             [self applyPatternFromLayer:(IJSVGPatternLayer*)strokeLayer
-                            parentLayer:(IJSVGLayer*)layer
+                            parentLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                  stroke:YES
                               toElement:e];
 
@@ -1995,12 +1965,12 @@ NSString* IJSVGHash(NSString* key)
 
     // apple defaults
     [self applyDefaultsToElement:e
-                       fromLayer:(IJSVGLayer*)layer];
+                       fromLayer:(CALayer<IJSVGDrawableLayer>*)layer];
     return e;
 }
 
 - (void)applyDefaultsToElement:(NSXMLElement*)element
-                     fromLayer:(IJSVGLayer*)layer
+                     fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
 
@@ -2054,13 +2024,13 @@ NSString* IJSVGHash(NSString* key)
 }
 
 - (void)applyClipToElement:(NSXMLElement*)element
-                 fromLayer:(IJSVGLayer*)layer
+                 fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     
 }
 
 - (void)applyMaskToElement:(NSXMLElement*)element
-                 fromLayer:(IJSVGLayer*)layer
+                 fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     // create the element
     NSXMLElement* mask = [[NSXMLElement alloc] init];
@@ -2071,7 +2041,7 @@ NSString* IJSVGHash(NSString* key)
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = maskKey;
 
-    IJSVGLayer* maskLayer = (IJSVGLayer*)layer.maskLayer;
+    CALayer<IJSVGDrawableLayer>* maskLayer = (CALayer<IJSVGDrawableLayer>*)layer.maskLayer;
     CGRect maskFrame = maskLayer.frame;
     if (maskFrame.origin.x != 0.f) {
         dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(maskFrame.origin.x,
@@ -2085,7 +2055,7 @@ NSString* IJSVGHash(NSString* key)
     IJSVGApplyAttributesToElement(dict, mask);
 
     // add the cool stuff
-    [self _recursiveParseFromLayer:(IJSVGLayer*)maskLayer
+    [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)maskLayer
                        intoElement:mask];
 
     // add mask id to element

@@ -36,6 +36,8 @@ typedef CGAffineTransform (*IJSVGViewBoxComputeTransformFunction)(CGRect viewBox
 
 typedef void (^IJSVGViewBoxDrawingBlock)(CGFloat scale[]);
 
++ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment
+                          meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice;
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
                                 meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
