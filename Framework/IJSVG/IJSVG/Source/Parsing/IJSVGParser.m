@@ -26,6 +26,7 @@ NSString* const IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
 NSString* const IJSVGAttributeFillOpacity = @"fill-opacity";
 NSString* const IJSVGAttributeClipPath = @"clip-path";
 NSString* const IJSVGAttributeClipPathUnits = @"clipPathUnits";
+NSString* const IJSVGAttributeClipRule = @"clip-rule";
 NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
 NSString* const IJSVGAttributePatternUnits = @"patternUnits";
@@ -494,6 +495,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     IJSVGAttributeParse(IJSVGAttributeFillRule, ^(NSString* value) {
         node.windingRule = [IJSVGUtils windingRuleForString:value];
     });
+    
+    // clip rule
+//    IJSVGAttributeParse(IJSVGAttributeClipRule, ^(NSString* value) {
+////        node.clip
+//    })
 
     // display
     IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {

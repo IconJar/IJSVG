@@ -47,6 +47,7 @@ extern NSString* const IJSVGAttributeStrokeDashOffset;
 extern NSString* const IJSVGAttributeFillOpacity;
 extern NSString* const IJSVGAttributeClipPath;
 extern NSString* const IJSVGAttributeClipPathUnits;
+extern NSString* const IJSVGAttributeClipRule;
 extern NSString* const IJSVGAttributeMask;
 extern NSString* const IJSVGAttributeGradientUnits;
 extern NSString* const IJSVGAttributePatternUnits;

@@ -2026,7 +2026,41 @@ NSString* IJSVGHash(NSString* key)
 - (void)applyClipToElement:(NSXMLElement*)element
                  fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
+    // create the element
+    NSXMLElement* clip = [[NSXMLElement alloc] init];
+    clip.name = @"clipPath";
     
+    // create the key
+    NSString* clipKey = [self identifierForElement:clip];
+    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    dict[IJSVGAttributeID] = clipKey;
+    
+    // convert the path back to userSpaceOnUse
+    CGPathRef clipPath = layer.clipPath;
+    CGRect boundingBox = layer.outerBoundingBox;
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    transform = CGAffineTransformMakeTranslation(CGRectGetMinX(boundingBox),
+                                                 CGRectGetMinY(boundingBox));
+    clipPath = CGPathCreateCopyByTransformingPath(clipPath, &transform);
+    
+    // create the path
+    NSXMLElement* path = [[NSXMLElement alloc] init];
+    path.name = @"path";
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeD: [self pathFromCGPath:clipPath],
+    }, path);
+    [clip addChild:path];
+    CGPathRelease(clipPath);
+
+    IJSVGApplyAttributesToElement(dict, clip);
+
+    // add clip id to element
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeClipPath: IJSVGHashURL(clipKey)
+    }, element);
+
+    // add it defs
+    [[self defElement] addChild:clip];
 }
 
 - (void)applyMaskToElement:(NSXMLElement*)element
