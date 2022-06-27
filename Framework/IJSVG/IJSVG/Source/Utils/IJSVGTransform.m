@@ -411,18 +411,17 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
 + (NSArray<NSDictionary*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform
 {
-    const NSUInteger precision = 5;
     CGFloat data[6] = {
-        IJSVGMathToFixed(transform.a, precision),
-        IJSVGMathToFixed(transform.b, precision),
-        IJSVGMathToFixed(transform.c, precision),
-        IJSVGMathToFixed(transform.d, precision),
-        IJSVGMathToFixed(transform.tx, precision),
-        IJSVGMathToFixed(transform.ty, precision)
+        transform.a,
+        transform.b,
+        transform.c,
+        transform.d,
+        transform.tx,
+        transform.ty
     };
 
-    CGFloat sx = IJSVGMathToFixed(hypotf(data[0], data[1]), precision);
-    CGFloat sy = IJSVGMathToFixed(((data[0] * data[3] - data[1] * data[2]) / sx), precision);
+    CGFloat sx = hypotf(data[0], data[1]);
+    CGFloat sy = ((data[0] * data[3] - data[1] * data[2]) / sx);
     CGFloat colSum = data[0] * data[2] + data[1] * data[3];
     CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
     BOOL scaleBefore = rowSum != 0.f || sx == sy;
@@ -441,14 +440,14 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     if (data[1] == 0.f && data[2] != 0.f) {
         [transforms addObject:@{
             @"name" : @"skewX",
-            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[2] / sy), precision)) ]
+            @"data" : @[ @(IJSVGMathAtan(data[2] / sy))]
         }];
 
         // [sx, sy.tan(a), 0, sy, 0, 0] -> skewX(a).scale(sx, sy)
     } else if (data[1] != 0.f && data[2] == 0.f) {
         [transforms addObject:@{
             @"name" : @"skewY",
-            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[1] / data[0]), precision)) ]
+            @"data" : @[ @(IJSVGMathAtan(data[1] / data[0]))]
         }];
         sx = data[0];
         sy = data[3];
@@ -466,7 +465,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
         CGFloat angle = MIN(MAX(-1.f, data[0] / sx), 1.f);
         NSMutableArray<NSNumber*>* rotate = [[NSMutableArray alloc] initWithCapacity:3];
-        [rotate addObject:@(IJSVGMathToFixed(IJSVGMathAcos(angle), precision) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f : 1.f))];
+        [rotate addObject:@(IJSVGMathAcos(angle) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f: 1.f))];
 
         if (rotate[0].floatValue != 0.f) {
             [transforms addObject:@{
@@ -478,7 +477,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         if (rowSum != 0.f && colSum != 0.f) {
             [transforms addObject:@{
                 @"name" : @"skewX",
-                @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(colSum / (sx * sx)), precision)) ]
+                @"data" : @[ @(IJSVGMathAtan(colSum / (sx * sx)))]
             }];
         }
 

@@ -641,6 +641,7 @@
                                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                    fromNode:(IJSVGNode*)node
 {
+    return layer;
     if(filter == nil || filter.valid == NO) {
         return layer;
     }

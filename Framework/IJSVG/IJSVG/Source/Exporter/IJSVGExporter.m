@@ -18,6 +18,7 @@
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGStrokeLayer.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGParser.h>
 
@@ -54,57 +55,57 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _defaults = @{
-            @"clip" : @"auto",
-            @"clip-path" : @"none",
-            @"clip-rule" : @"nonzero",
-            @"mask" : @"none",
-            @"opacity" : @"1",
-            @"stop-color" : @"#000",
-            @"stop-opacity" : @"1",
-            @"fill-opacity" : @"1",
-            @"fill-rule" : @"nonzero",
-            @"fill" : @"#000",
-            @"stroke" : @"none",
-            @"stroke-width" : @"1",
-            @"stroke-linecap" : @"butt",
-            @"stroke-linejoin" : @"miter",
-            @"stroke-miterlimit" : @"4",
-            @"stroke-dasharray" : @"none",
-            @"stroke-dashoffset" : @"0",
-            @"stroke-opacity" : @"1",
-            @"paint-order" : @"normal",
-            @"vector-effect" : @"none",
-            @"display" : @"inline",
-            @"visibility" : @"visible",
-            @"marker-start" : @"none",
-            @"marker-mid" : @"none",
-            @"marker-end" : @"none",
-            @"color-interpolation" : @"sRGB",
-            @"color-interpolation-filters" : @"linearRGB",
-            @"color-rendering" : @"auto",
-            @"shape-rendering" : @"auto",
-            @"text-rendering" : @"auto",
-            @"image-rendering" : @"auto",
-            @"font-style" : @"normal",
-            @"font-variant" : @"normal",
-            @"font-weight" : @"normal",
-            @"font-stretch" : @"normal",
-            @"font-size" : @"medium",
-            @"font-size-adjust" : @"none",
-            @"kerning" : @"auto",
-            @"letter-spacing" : @"normal",
-            @"word-spacing" : @"normal",
-            @"text-decoration" : @"none",
-            @"text-anchor" : @"start",
-            @"text-overflow" : @"clip",
-            @"writing-mode" : @"lr-tb",
-            @"glyph-orientation-vertical" : @"auto",
-            @"glyph-orientation-horizontal" : @"0deg",
-            @"direction" : @"ltr",
-            @"unicode-bidi" : @"normal",
-            @"dominant-baseline" : @"auto",
-            @"alignment-baseline" : @"baseline",
-            @"baseline-shift" : @"baseline"
+            @"clip": @"auto",
+            @"clip-path": @"none",
+            @"clip-rule": @"nonzero",
+            @"mask": @"none",
+            @"opacity": @"1",
+            @"stop-color": @"#000",
+            @"stop-opacity": @"1",
+            @"fill-opacity": @"1",
+            @"fill-rule": @"nonzero",
+            @"fill": @"#000",
+            @"stroke": @"none",
+            @"stroke-width": @"1",
+            @"stroke-linecap": @"butt",
+            @"stroke-linejoin": @"miter",
+            @"stroke-miterlimit": @"4",
+            @"stroke-dasharray": @"none",
+            @"stroke-dashoffset": @"0",
+            @"stroke-opacity": @"1",
+            @"paint-order": @"normal",
+            @"vector-effect": @"none",
+            @"display": @"inline",
+            @"visibility": @"visible",
+            @"marker-start": @"none",
+            @"marker-mid": @"none",
+            @"marker-end": @"none",
+            @"color-interpolation": @"sRGB",
+            @"color-interpolation-filters": @"linearRGB",
+            @"color-rendering": @"auto",
+            @"shape-rendering": @"auto",
+            @"text-rendering": @"auto",
+            @"image-rendering": @"auto",
+            @"font-style": @"normal",
+            @"font-variant": @"normal",
+            @"font-weight": @"normal",
+            @"font-stretch": @"normal",
+            @"font-size": @"medium",
+            @"font-size-adjust": @"none",
+            @"kerning": @"auto",
+            @"letter-spacing": @"normal",
+            @"word-spacing": @"normal",
+            @"text-decoration": @"none",
+            @"text-anchor": @"start",
+            @"text-overflow": @"clip",
+            @"writing-mode": @"lr-tb",
+            @"glyph-orientation-vertical": @"auto",
+            @"glyph-orientation-horizontal": @"0deg",
+            @"direction": @"ltr",
+            @"unicode-bidi": @"normal",
+            @"dominant-baseline": @"auto",
+            @"alignment-baseline": @"baseline",
+            @"baseline-shift": @"baseline"
         };
     });
     return _defaults;
@@ -170,7 +171,7 @@ void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLEleme
     [element setAttributesAsDictionary:attributes];
 };
 
-NSDictionary* IJSVGElementAttributeDictionary(NSXMLElement* element)
+NSDictionary<NSString*, NSString*>* IJSVGElementAttributeDictionary(NSXMLElement* element)
 {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSXMLNode* attribute in element.attributes) {
@@ -311,8 +312,8 @@ NSString* IJSVGHash(NSString* key)
     // sort out viewbox
     NSRect viewBox = _svg.viewBox;
     NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
-        IJSVGAttributeViewBox : [self viewBoxWithRect:viewBox],
-        @"xmlns" : XML_DOC_NS
+        IJSVGAttributeViewBox: [self viewBoxWithRect:viewBox],
+        @"xmlns": XML_DOC_NS
     }];
 
     // add on various XML declaritive things
@@ -344,8 +345,8 @@ NSString* IJSVGHash(NSString* key)
         // actually do the scale
         if (_proposedScale != 1.f) {
             // compute x and y, don't multiply 0
-            const CGFloat x = viewBox.origin.x == 0.f ? 0.f : (viewBox.origin.x * _proposedScale);
-            const CGFloat y = viewBox.origin.y == 0.f ? 0.f : (viewBox.origin.y * _proposedScale);
+            const CGFloat x = viewBox.origin.x == 0.f ? 0.f: (viewBox.origin.x * _proposedScale);
+            const CGFloat y = viewBox.origin.y == 0.f ? 0.f: (viewBox.origin.y * _proposedScale);
 
             // reset the viewbox for the exported SVG
             NSRect newViewBox = (NSRect) {
@@ -390,7 +391,7 @@ NSString* IJSVGHash(NSString* key)
         NSString* transString = nil;
         transString = [self transformAttributeStringForTransform:afTransform];
         IJSVGApplyAttributesToElement(
-            @{ IJSVGAttributeTransform : transString },
+            @{ IJSVGAttributeTransform: transString },
             transformedElement);
         *nestedRoot = transformedElement;
         [root addChild:transformedElement];
@@ -415,7 +416,7 @@ NSString* IJSVGHash(NSString* key)
     _appliedXLink = YES;
     NSXMLElement* root = _dom.rootElement;
     NSString* const attributeName = @"xmlns:xlink";
-    IJSVGApplyAttributesToElement(@{ attributeName : XML_DOC_NSXLINK }, root);
+    IJSVGApplyAttributesToElement(@{ attributeName: XML_DOC_NSXLINK }, root);
 }
 
 - (NSString*)generateID
@@ -592,7 +593,7 @@ NSString* IJSVGHash(NSString* key)
         for (NSString* attributeName in inhertEl) {
             [element removeAttributeForName:attributeName];
         }
-        IJSVGApplyAttributesToElement(@{ @"class" : className }, element);
+        IJSVGApplyAttributesToElement(@{ @"class": className }, element);
     }
 
     // add styles to dom
@@ -656,9 +657,9 @@ NSString* IJSVGHash(NSString* key)
                     NSString* idString = [gradientB attributeForName:IJSVGAttributeID].stringValue;
                     if (idString == nil || idString.length == 0) {
                         idString = [self identifierForElement:gradientA];
-                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : idString }, gradientB);
+                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeID: idString }, gradientB);
                     }
-                    NSDictionary* atts = @{ @"xlink:href" : IJSVGHash(idString) };
+                    NSDictionary* atts = @{ @"xlink:href": IJSVGHash(idString) };
                     IJSVGApplyAttributesToElement(atts, gradientA);
                     [self applyXLinkToRootElement];
                     [gradientA setChildren:nil];
@@ -944,7 +945,8 @@ NSString* IJSVGHash(NSString* key)
            withElement:(NSXMLElement*)anotherElement
 {
     // not a matching element
-    if ([element.name isEqualToString:anotherElement.name] == NO || element.attributes.count != anotherElement.attributes.count) {
+    if ([element.name isEqualToString:anotherElement.name] == NO ||
+        element.attributes.count != anotherElement.attributes.count) {
         return NO;
     }
 
@@ -986,8 +988,8 @@ NSString* IJSVGHash(NSString* key)
                 element.name = @"path";
 
                 NSDictionary* atts = @{
-                    IJSVGAttributeD : data,
-                    IJSVGAttributeID : [self identifierForElement:element]
+                    IJSVGAttributeD: data,
+                    IJSVGAttributeID: [self identifierForElement:element]
                 };
                 IJSVGApplyAttributesToElement(atts, element);
 
@@ -1092,36 +1094,50 @@ NSString* IJSVGHash(NSString* key)
     [self _removeDefaultAttributesOnElement:_dom.rootElement];
 }
 
+- (NSXMLElement*)elementForLayer:(IJSVGLayer*)layer
+                      fromParent:(NSXMLElement*)element
+{
+    // root layer
+    if(layer.class == IJSVGRootLayer.class) {
+        return [self elementForRoot:(IJSVGRootLayer*)layer
+                         fromParent:element];
+    }
+    
+    // shape layer
+    if (layer.class == IJSVGShapeLayer.class) {
+        return [self elementForShape:(IJSVGShapeLayer*)layer
+                          fromParent:element];
+    }
+    
+    // image layer
+    if ([layer isKindOfClass:IJSVGImageLayer.class]) {
+        return [self elementForImage:(IJSVGImageLayer*)layer
+                          fromParent:element];
+    }
+    
+    // filter layer
+    if (layer.class == IJSVGFilterLayer.class) {
+        return [self elementForFilter:(IJSVGFilterLayer*)layer
+                           fromParent:element];
+    }
+    
+    // group layer, or layer that acts as a group
+    if (layer.class == IJSVGGroupLayer.class ||
+        layer.class == IJSVGTransformLayer.class ||
+        layer.class == IJSVGBasicLayer.class) {
+        return [self elementForGroup:layer
+                          fromParent:element];
+    }
+    return nil;
+}
+
 - (void)_recursiveParseFromLayer:(IJSVGLayer*)layer
                      intoElement:(NSXMLElement*)element
 {
-    // is a shape
-    if(layer.class == IJSVGRootLayer.class) {
-        NSXMLElement* child = [self elementForRoot:(IJSVGRootLayer*)layer
-                                        fromParent:element];
-        if(child != nil) {
-            [element addChild:child];
-        }
-    } else if (layer.class == IJSVGShapeLayer.class) {
-        NSXMLElement* child = [self elementForShape:(IJSVGShapeLayer*)layer
-                                         fromParent:element];
-        if (child != nil) {
-            [element addChild:child];
-        }
-    } else if ([layer isKindOfClass:IJSVGImageLayer.class]) {
-        NSXMLElement* child = [self elementForImage:(IJSVGImageLayer*)layer
-                                         fromParent:element];
-        if (child != nil) {
-            [element addChild:child];
-        }
-    } else if ([layer isKindOfClass:IJSVGGroupLayer.class] ||
-               [layer isKindOfClass:IJSVGTransformLayer.class]) {
-        // assume its probably a group?
-        NSXMLElement* child = [self elementForGroup:layer
-                                         fromParent:element];
-        if (child != nil) {
-            [element addChild:child];
-        }
+    NSXMLElement* el = [self elementForLayer:layer
+                                  fromParent:element];
+    if(el != nil) {
+        [element addChild:el];
     }
 }
 
@@ -1146,7 +1162,7 @@ NSString* IJSVGHash(NSString* key)
     NSString* transformStr = [self transformAttributeStringForTransform:transform];
 
     // apply it to the node
-    IJSVGApplyAttributesToElement(@{ IJSVGAttributeTransform : transformStr }, element);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeTransform: transformStr }, element);
 }
 
 - (NSXMLElement*)elementForGroup:(IJSVGLayer*)layer
@@ -1260,13 +1276,20 @@ NSString* IJSVGHash(NSString* key)
     NSXMLElement* patternElement = [self elementForGroup:patternLayer
                                               fromParent:nil];
     patternElement.name = @"pattern";
-
+    
+    // patterns dont allow a transform attribute, however, it is assigned to
+    // patternTransform, so if there is a transform attribute, just rename it.
+    NSXMLNode* transform = nil;
+    if((transform = [patternElement attributeForName:IJSVGAttributeTransform]) != nil) {
+        transform.name = IJSVGAttributePatternTransform;
+    }
+    
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:patternElement];
     dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
     dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
-    dict[IJSVGAttributePatternUnits] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox" : @"userSpaceOnUse";
-    dict[IJSVGAttributePatternContentUnits] = layer.patternNode.contentUnits == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox" : @"userSpaceOnUse";
+    dict[IJSVGAttributePatternUnits] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox": @"userSpaceOnUse";
+    dict[IJSVGAttributePatternContentUnits] = layer.patternNode.contentUnits == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox": @"userSpaceOnUse";
     
     if(layer.patternNode.viewBox != nil) {
         dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:[layer.patternNode.viewBox computeValue:CGSizeZero]];
@@ -1293,20 +1316,21 @@ NSString* IJSVGHash(NSString* key)
     useElement.name = @"use";
 
     // now add the fill
-    NSDictionary* aDict = nil;
     if (stroke == NO) {
-        aDict = @{ IJSVGAttributeFill : IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue) };
-        IJSVGApplyAttributesToElement(aDict, element);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeFill: IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue)
+        }, element);
 
         // fill opacity
         if (patternLayer.opacity != 1.f) {
             IJSVGApplyAttributesToElement(@{
-                IJSVGAttributeFillOpacity : IJSVGShortFloatStringWithOptions(patternLayer.opacity, _floatingPointOptions)
+                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(patternLayer.opacity, _floatingPointOptions)
             }, element);
         }
     } else {
-        aDict = @{ IJSVGAttributeStroke : IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue) };
-        IJSVGApplyAttributesToElement(aDict, element);
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeStroke: IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue)
+        }, element);
     }
 }
 
@@ -1319,30 +1343,30 @@ NSString* IJSVGHash(NSString* key)
     NSXMLElement* gradientElement = [[NSXMLElement alloc] init];
 
     // work out linear gradient
-    if ([gradient isKindOfClass:[IJSVGLinearGradient class]]) {
-
+    if (gradient.class == IJSVGLinearGradient.class) {
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
         NSDictionary* dict = @{
-            IJSVGAttributeX1 : [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeY1 : [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeX2 : [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeY2 : [lGradient.y2 stringValueWithFloatingPointOptions:_floatingPointOptions] };
+            IJSVGAttributeX1: [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeY1: [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeX2: [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeY2: [lGradient.y2 stringValueWithFloatingPointOptions:_floatingPointOptions]
+        };
 
         // give it the attibutes
         IJSVGApplyAttributesToElement(dict, gradientElement);
     } else {
-
         // assume radial
         IJSVGRadialGradient* rGradient = (IJSVGRadialGradient*)gradient;
         gradientElement.name = @"radialGradient";
         NSDictionary* dict = @{
-            IJSVGAttributeCX : [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeCY : [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFX : [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFY : [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeR : [rGradient.r stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFR : [rGradient.fr stringValueWithFloatingPointOptions:_floatingPointOptions] };
+            IJSVGAttributeCX: [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeCY: [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeFX: [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeFY: [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeR: [rGradient.r stringValueWithFloatingPointOptions:_floatingPointOptions],
+            IJSVGAttributeFR: [rGradient.fr stringValueWithFloatingPointOptions:_floatingPointOptions]
+        };
 
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);
@@ -1354,7 +1378,7 @@ NSString* IJSVGHash(NSString* key)
 
     // apply the units
     if (layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientUnits : @"userSpaceOnUse" },
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientUnits: @"userSpaceOnUse" },
             gradientElement);
     }
 
@@ -1364,7 +1388,7 @@ NSString* IJSVGHash(NSString* key)
     for (NSColor* color in gradient.colors) {
         // grab each color from the gradient
         NSColor* aColor = color;
-        CGFloat location = gradient.locations[index];
+        CGFloat location = gradient.locations[index++];
 
 //        if (sheet != nil) {
 //            aColor = [sheet proposedColorForColor:aColor];
@@ -1401,7 +1425,6 @@ NSString* IJSVGHash(NSString* key)
 
         // append the stop the gradient
         [gradientElement addChild:stop];
-        index++;
     }
 
     // append it to the defs
@@ -1412,20 +1435,28 @@ NSString* IJSVGHash(NSString* key)
     if (transforms.count != 0.f) {
         CGAffineTransform transform = IJSVGConcatTransforms(transforms);
         NSString* transformString = [self transformAttributeStringForTransform:transform];
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientTransform : transformString }, gradientElement);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientTransform: transformString }, gradientElement);
     }
 
     // add it to the element passed in
     if (stroke == NO) {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill : IJSVGHashURL(gradKey) }, element);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill: IJSVGHashURL(gradKey) }, element);
 
         // fill opacity
         if (layer.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity : IJSVGShortFloatStringWithOptions(layer.opacity, _floatingPointOptions) }, element);
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(layer.opacity, _floatingPointOptions) }, element);
         }
     } else {
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStroke : IJSVGHashURL(gradKey) }, element);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStroke: IJSVGHashURL(gradKey) }, element);
     }
+}
+
+- (NSXMLElement*)elementForFilter:(IJSVGFilterLayer*)layer
+                       fromParent:(NSXMLElement*)parent
+{
+    [self _recursiveParseFromLayer:(IJSVGLayer*)layer.sublayer
+                       intoElement:parent];
+    return nil;
 }
 
 - (NSXMLElement*)elementForImage:(IJSVGImageLayer*)layer
@@ -1847,6 +1878,11 @@ NSString* IJSVGHash(NSString* key)
                                             options:[self colorOptions]];
         }
         dict[IJSVGAttributeFill] = colorString;
+        
+        // any fill opacity?
+        if (fillLayer.opacity != 1.f) {
+            dict[IJSVGAttributeFillOpacity] = IJSVGShortFloatStringWithOptions(fillLayer.opacity, _floatingPointOptions);
+        }
     }
 
     // is there a gradient fill?
@@ -2005,10 +2041,22 @@ NSString* IJSVGHash(NSString* key)
                         fromLayer:layer];
 
     // add any masks...
-    if (layer.mask != nil) {
+    if (layer.maskLayer != nil) {
         [self applyMaskToElement:element
                        fromLayer:layer];
     }
+    
+    // add any clips
+    if(layer.clipPath != nil) {
+        [self applyClipToElement:element
+                       fromLayer:layer];
+    }
+}
+
+- (void)applyClipToElement:(NSXMLElement*)element
+                 fromLayer:(IJSVGLayer*)layer
+{
+    
 }
 
 - (void)applyMaskToElement:(NSXMLElement*)element
@@ -2023,23 +2071,27 @@ NSString* IJSVGHash(NSString* key)
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = maskKey;
 
-    if (layer.mask.frame.origin.x != 0.f) {
-        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(layer.mask.frame.origin.x,
+    IJSVGLayer* maskLayer = (IJSVGLayer*)layer.maskLayer;
+    CGRect maskFrame = maskLayer.frame;
+    if (maskFrame.origin.x != 0.f) {
+        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(maskFrame.origin.x,
             _floatingPointOptions);
     }
-    if (layer.mask.frame.origin.y != 0.f) {
-        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(layer.mask.frame.origin.y,
+    if (maskFrame.origin.y != 0.f) {
+        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(maskFrame.origin.y,
             _floatingPointOptions);
     }
 
     IJSVGApplyAttributesToElement(dict, mask);
 
     // add the cool stuff
-    [self _recursiveParseFromLayer:(IJSVGLayer*)layer.mask
+    [self _recursiveParseFromLayer:(IJSVGLayer*)maskLayer
                        intoElement:mask];
 
     // add mask id to element
-    IJSVGApplyAttributesToElement(@{ IJSVGAttributeMask : IJSVGHashURL(maskKey) }, element);
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeMask: IJSVGHashURL(maskKey)
+    }, element);
 
     // add it defs
     [[self defElement] addChild:mask];
