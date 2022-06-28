@@ -710,4 +710,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     return YES;
 }
 
+- (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
+{
+    return [self.class firstSublayerOfClass:aClass
+                                  fromLayer:self];
+}
+
 @end

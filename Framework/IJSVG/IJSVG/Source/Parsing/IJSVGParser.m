@@ -1176,6 +1176,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     CGFloat cY = [cYu computeValue:computedBounds.size.height];
     CGFloat rX = [ru computeValue:computedBounds.size.width];
     CGFloat rY = [ru computeValue:computedBounds.size.height];
+    
+    // if rX and rY dont match, we are not a circle but an ellipsis, this is
+    // insanely important when it comes to exporting
+    if(rX != rY) {
+        node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
+        node.type = IJSVGNodeTypeEllipse;
+    }
+    
     CGRect rect = CGRectMake(cX - rX, cY - rY, rX * 2, rY * 2);
     CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
     node.path = (CGMutablePathRef)nPath;

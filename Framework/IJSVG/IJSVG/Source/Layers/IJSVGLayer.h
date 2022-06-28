@@ -110,6 +110,8 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
 - (void)removeTraits:(IJSVGLayerTraits)traits;
 - (BOOL)matchesTraits:(IJSVGLayerTraits)traits;
 
+- (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass;
+
 @end
 
 CGRect IJSVGLayerGetBoundingBoxBounds(CALayer<IJSVGDrawableLayer>* drawableLayer);

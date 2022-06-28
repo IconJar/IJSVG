@@ -117,4 +117,10 @@
     return YES;
 }
 
+- (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
+{
+    return [IJSVGLayer firstSublayerOfClass:aClass
+                                  fromLayer:self];
+}
+
 @end

@@ -1244,8 +1244,7 @@ NSString* IJSVGHash(NSString* key)
     CGAffineTransform transform = CGAffineTransformIdentity;
     if(patternLayer.class == IJSVGTransformLayer.class) {
         transform = patternLayer.affineTransform;
-        patternLayer = (IJSVGGroupLayer*)[IJSVGLayer firstSublayerOfClass:IJSVGGroupLayer.class
-                                                                fromLayer:patternLayer];
+        patternLayer = (IJSVGGroupLayer*)[patternLayer firstSublayerOfClass:IJSVGGroupLayer.class];
     }
     
     // if we cant find a pattern layer, something went really wrong,
@@ -1258,17 +1257,9 @@ NSString* IJSVGHash(NSString* key)
                                                        layer:patternLayer
                                                   fromParent:element];
     
-    // patterns dont allow a transform attribute, however, it is assigned to
-    // patternTransform, so if there is a transform attribute, just rename it.
-//    NSXMLNode* transform = nil;
-//    if((transform = [patternElement attributeForName:IJSVGAttributeTransform]) != nil) {
-//        transform.name = IJSVGAttributePatternTransform;
-//    }
-    
     CGSize cellSize = CGSizeZero;
     CGRect viewBox = CGRectZero;
     CGPoint origin = CGPointZero;
-    
     
     [layer computeCellSize:&cellSize
                    viewBox:&viewBox
@@ -1282,30 +1273,36 @@ NSString* IJSVGHash(NSString* key)
     origin = CGPointApplyAffineTransform(origin, CGAffineTransformInvert(transform));
     
     // compute the attributes
+    NSString* identifier = [self identifierForElement:patternElement];
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-    dict[IJSVGAttributeID] = [self identifierForElement:patternElement];
+    dict[IJSVGAttributePatternUnits] = IJSVGStringUserSpaceOnUse;
+    dict[IJSVGAttributeID] = identifier;
+    
     if(origin.x != 0.f) {
-        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(origin.x, _floatingPointOptions);
+        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(origin.x,
+                                                                 _floatingPointOptions);
     }
     if(origin.y != 0.f) {
-        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(origin.y, _floatingPointOptions);
+        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(origin.y,
+                                                                 _floatingPointOptions);
     }
     if(cellSize.width != 0.f) {
-        dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(cellSize.width, _floatingPointOptions);
+        dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(cellSize.width,
+                                                                     _floatingPointOptions);
     }
     if(cellSize.height != 0.f) {
-        dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(cellSize.height, _floatingPointOptions);
+        dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(cellSize.height,
+                                                                      _floatingPointOptions);
     }
     
-    // we are in user space now, this is important
-    dict[IJSVGAttributePatternUnits] = IJSVGStringUserSpaceOnUse;
-    
+    // add a viewbox on, only if it needs it
     if(CGPointEqualToPoint(viewBox.origin, CGPointZero) == NO ||
        CGSizeEqualToSize(viewBox.size, cellSize) == NO) {
         dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     }
     
-    // apply any actual pattern transform from the node
+    // apply any actual pattern transform from the node, only if the
+    // actual transform has something
     transform = IJSVGConcatTransforms(layer.patternNode.transforms);
     if(CGAffineTransformIsIdentity(transform) == NO) {
         dict[IJSVGAttributePatternTransform] = [self transformAttributeStringForTransform:transform];
@@ -1322,18 +1319,19 @@ NSString* IJSVGHash(NSString* key)
     // now add the fill
     if (stroke == NO) {
         IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeFill: IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue)
+            IJSVGAttributeFill: IJSVGHashURL(identifier)
         }, element);
 
         // fill opacity
         if (patternLayer.opacity != 1.f) {
             IJSVGApplyAttributesToElement(@{
-                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(patternLayer.opacity, _floatingPointOptions)
+                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(patternLayer.opacity,
+                _floatingPointOptions)
             }, element);
         }
     } else {
         IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeStroke: IJSVGHashURL([patternElement attributeForName:IJSVGAttributeID].stringValue)
+            IJSVGAttributeStroke: IJSVGHashURL(identifier)
         }, element);
     }
 }
