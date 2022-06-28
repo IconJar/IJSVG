@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGViewBox
 
@@ -21,7 +22,7 @@
             return nil;
         }
         case IJSVGViewBoxAlignmentNone: {
-            return @"none";
+            return IJSVGStringNone;
         }
         case IJSVGViewBoxAlignmentXMinYMin: {
             str = @"xMinYMin";

@@ -274,7 +274,11 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         NSString* comp = [self pathStringFromInstructions:@[ ainstruction ]
                                      floatingPointOptions:floatingPointOptions];
 
-        if (comp.length < orig.length && !(instructionChar == prevInstruction.instruction && prevInstruction.instruction > 96 && comp.length == orig.length - 1 && data[0] < 0.f && fmod(prevInstruction.data[prevInstruction.dataLength - 1], 1) != 0.f)) {
+        if (comp.length < orig.length && !(instructionChar == prevInstruction.instruction &&
+                                           prevInstruction.instruction > 96 &&
+                                           comp.length == orig.length - 1 &&
+                                           data[0] < 0.f &&
+                                           fmod(prevInstruction.data[prevInstruction.dataLength - 1], 1) != 0.f)) {
             instruction.instruction = toupper(instructionChar);
             memcpy(data, adata, sizeof(CGFloat) * length);
         }
@@ -306,7 +310,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
             continue;
         }
         if (instruction.instruction == 'c') {
-            if (lastInstruction.instruction == 'c' && instruction.data[0] == -(lastInstruction.data[2] - lastInstruction.data[4]) && instruction.data[1] == -(lastInstruction.data[3] - lastInstruction.data[5])) {
+            if (lastInstruction.instruction == 'c' &&
+                instruction.data[0] == -(lastInstruction.data[2] - lastInstruction.data[4]) &&
+                instruction.data[1] == -(lastInstruction.data[3] - lastInstruction.data[5])) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
                                                                                 dataCount:4];
@@ -316,7 +322,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
                 nInstruction.data[3] = instruction.data[5];
                 [nInstructions addObject:nInstruction];
                 continue;
-            } else if (lastInstruction.instruction == 's' && instruction.data[0] == -(lastInstruction.data[0] - lastInstruction.data[2]) && instruction.data[1] == -(lastInstruction.data[1] - lastInstruction.data[3])) {
+            } else if (lastInstruction.instruction == 's' &&
+                       instruction.data[0] == -(lastInstruction.data[0] - lastInstruction.data[2]) &&
+                       instruction.data[1] == -(lastInstruction.data[1] - lastInstruction.data[3])) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
                                                                                 dataCount:4];
@@ -326,7 +334,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
                 nInstruction.data[3] = instruction.data[5];
                 [nInstructions addObject:nInstruction];
                 continue;
-            } else if (lastInstruction.instruction != 'c' && lastInstruction.instruction != 's' && instruction.data[0] == 0.f && instruction.data[1] == 0.f) {
+            } else if (lastInstruction.instruction != 'c' &&
+                       lastInstruction.instruction != 's' &&
+                       instruction.data[0] == 0.f && instruction.data[1] == 0.f) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
                                                                                 dataCount:4];
@@ -338,7 +348,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
                 continue;
             }
         } else if (instruction.instruction == 'q') {
-            if (lastInstruction.instruction == 'q' && instruction.data[0] == (lastInstruction.data[2] - lastInstruction.data[0]) && instruction.data[1] == (lastInstruction.data[3] - lastInstruction.data[1])) {
+            if (lastInstruction.instruction == 'q' &&
+                instruction.data[0] == (lastInstruction.data[2] - lastInstruction.data[0]) &&
+                instruction.data[1] == (lastInstruction.data[3] - lastInstruction.data[1])) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
                                                                                 dataCount:2];
@@ -346,7 +358,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
                 nInstruction.data[1] = instruction.data[3];
                 [nInstructions addObject:nInstruction];
                 continue;
-            } else if (lastInstruction.instruction == 't' && instruction.data[2] == lastInstruction.data[0] && instruction.data[3] == lastInstruction.data[1]) {
+            } else if (lastInstruction.instruction == 't' &&
+                       instruction.data[2] == lastInstruction.data[0] &&
+                       instruction.data[3] == lastInstruction.data[1]) {
                 IJSVGExporterPathInstruction* nInstruction = nil;
                 nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
                                                                                 dataCount:2];
@@ -378,7 +392,9 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         if (data != NULL) {
 
             // already relative
-            if (instruction == 'm' || instruction == 'c' || instruction == 's' || instruction == 'l' || instruction == 'q' || instruction == 't' || instruction == 'a') {
+            if (instruction == 'm' || instruction == 'c' || instruction == 's' ||
+                instruction == 'l' || instruction == 'q' || instruction == 't' ||
+                instruction == 'a') {
 
                 point[0] += data[length - 2];
                 point[1] += data[length - 1];

@@ -11,6 +11,17 @@
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 
+NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
+NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
+NSString* const IJSVGStringNone = @"none";
+NSString* const IJSVGStringRound = @"round";
+NSString* const IJSVGStringSquare = @"square";
+NSString* const IJSVGStringBevel = @"bevel";
+NSString* const IJSVGStringButt = @"butt";
+NSString* const IJSVGStringMiter = @"miter";
+NSString* const IJSVGStringInherit = @"inherit";
+NSString* const IJSVGStringEvenOdd = @"evenodd";
+
 NSString* const IJSVGAttributeViewBox = @"viewBox";
 NSString* const IJSVGAttributePreserveAspectRatio = @"preserveAspectRatio";
 NSString* const IJSVGAttributeID = @"id";
@@ -452,7 +463,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // stroke dash array
     IJSVGAttributeParse(IJSVGAttributeStrokeDashArray, ^(NSString* value) {
         // nothing specified
-        if ([value isEqualToString:@"none"]) {
+        if ([value isEqualToString:IJSVGStringNone]) {
             node.strokeDashArrayCount = 0;
             return;
         }
@@ -503,7 +514,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
     // display
     IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {
-        if ([value.lowercaseString isEqualToString:@"none"]) {
+        if ([value.lowercaseString isEqualToString:IJSVGStringNone]) {
             node.shouldRender = NO;
         }
     });

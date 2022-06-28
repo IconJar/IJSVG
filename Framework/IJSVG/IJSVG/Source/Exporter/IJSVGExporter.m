@@ -56,30 +56,30 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
     dispatch_once(&onceToken, ^{
         _defaults = @{
             @"clip": @"auto",
-            @"clip-path": @"none",
+            @"clip-path": IJSVGStringNone,
             @"clip-rule": @"nonzero",
-            @"mask": @"none",
+            @"mask": IJSVGStringNone,
             @"opacity": @"1",
             @"stop-color": @"#000",
             @"stop-opacity": @"1",
             @"fill-opacity": @"1",
             @"fill-rule": @"nonzero",
             @"fill": @"#000",
-            @"stroke": @"none",
+            @"stroke": IJSVGStringNone,
             @"stroke-width": @"1",
             @"stroke-linecap": @"butt",
-            @"stroke-linejoin": @"miter",
+            @"stroke-linejoin": IJSVGStringMiter,
             @"stroke-miterlimit": @"4",
-            @"stroke-dasharray": @"none",
+            @"stroke-dasharray": IJSVGStringNone,
             @"stroke-dashoffset": @"0",
             @"stroke-opacity": @"1",
             @"paint-order": @"normal",
-            @"vector-effect": @"none",
+            @"vector-effect": IJSVGStringNone,
             @"display": @"inline",
             @"visibility": @"visible",
-            @"marker-start": @"none",
-            @"marker-mid": @"none",
-            @"marker-end": @"none",
+            @"marker-start": IJSVGStringNone,
+            @"marker-mid": IJSVGStringNone,
+            @"marker-end": IJSVGStringNone,
             @"color-interpolation": @"sRGB",
             @"color-interpolation-filters": @"linearRGB",
             @"color-rendering": @"auto",
@@ -91,11 +91,11 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
             @"font-weight": @"normal",
             @"font-stretch": @"normal",
             @"font-size": @"medium",
-            @"font-size-adjust": @"none",
+            @"font-size-adjust": IJSVGStringNone,
             @"kerning": @"auto",
             @"letter-spacing": @"normal",
             @"word-spacing": @"normal",
-            @"text-decoration": @"none",
+            @"text-decoration": IJSVGStringNone,
             @"text-anchor": @"start",
             @"text-overflow": @"clip",
             @"writing-mode": @"lr-tb",
@@ -1246,23 +1246,12 @@ NSString* IJSVGHash(NSString* key)
     dict[IJSVGAttributeID] = [self identifierForElement:patternElement];
     dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
     dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
-    dict[IJSVGAttributePatternUnits] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox": @"userSpaceOnUse";
-    dict[IJSVGAttributePatternContentUnits] = layer.patternNode.contentUnits == IJSVGUnitObjectBoundingBox ? @"objectBoundingBox": @"userSpaceOnUse";
+    dict[IJSVGAttributePatternUnits] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox: IJSVGStringUserSpaceOnUse;
+    
+    // we need to display the layer for it to compute itself
     
     if(layer.patternNode.viewBox != nil) {
         dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:[layer.patternNode.viewBox computeValue:CGSizeZero]];
-    }
-
-    // sort out x and y position
-    IJSVGUnitLength* x = layer.patternNode.x;
-    IJSVGUnitLength* y = layer.patternNode.y;
-
-    if (x.value != 0) {
-        dict[IJSVGAttributeX] = [layer.patternNode.x stringValue];
-    }
-
-    if (y.value != 0) {
-        dict[IJSVGAttributeY] = [layer.patternNode.y stringValue];
     }
 
     IJSVGApplyAttributesToElement(dict, patternElement);
@@ -1339,7 +1328,7 @@ NSString* IJSVGHash(NSString* key)
     // apply the units
     if (layer.gradient.units == IJSVGUnitUserSpaceOnUse) {
         IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeGradientUnits: @"userSpaceOnUse"
+            IJSVGAttributeGradientUnits: IJSVGStringUserSpaceOnUse
         }, gradientElement);
     }
 
@@ -1833,13 +1822,13 @@ NSString* IJSVGHash(NSString* key)
 
     // work out even odd rule
     if ([layer.fillRule isEqualToString:kCAFillRuleNonZero] == NO) {
-        dict[IJSVGAttributeFillRule] = @"evenodd";
+        dict[IJSVGAttributeFillRule] = IJSVGStringEvenOdd;
     }
 
     // fill color
     IJSVGShapeLayer* fillLayer = (IJSVGShapeLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeFillGeneric];
     if (fillLayer != nil) {
-        NSString* colorString = @"none";
+        NSString* colorString = IJSVGStringNone;
         if(fillLayer.fillColor != NULL) {
             NSColor* fillColor = nil;
             fillColor = [NSColor colorWithCGColor:fillLayer.fillColor];
@@ -1899,7 +1888,7 @@ NSString* IJSVGHash(NSString* key)
             // could be none
             if (strokeColorString != nil) {
                 dict[IJSVGAttributeStroke] = strokeColorString;
-                if ([strokeColorString isEqualToString:@"none"] == YES) {
+                if ([strokeColorString isEqualToString:IJSVGStringNone] == YES) {
                     // remove the stroke width as its completely useless
                     [dict removeObjectForKey:IJSVGAttributeStrokeWidth];
                 }
@@ -1926,9 +1915,9 @@ NSString* IJSVGHash(NSString* key)
         if ([strokeLayer.lineCap isEqualToString:kCALineCapButt] == NO) {
             NSString* capStyle = nil;
             if ([strokeLayer.lineCap isEqualToString:kCALineCapRound]) {
-                capStyle = @"round";
+                capStyle = IJSVGStringRound;
             } else if ([strokeLayer.lineCap isEqualToString:kCALineCapSquare]) {
-                capStyle = @"square";
+                capStyle = IJSVGStringSquare;
             }
             if (capStyle != nil) {
                 dict[IJSVGAttributeStrokeLineCap] = capStyle;
@@ -1939,9 +1928,9 @@ NSString* IJSVGHash(NSString* key)
         if ([strokeLayer.lineJoin isEqualToString:kCALineJoinMiter] == NO) {
             NSString* joinStyle = nil;
             if ([strokeLayer.lineJoin isEqualToString:kCALineJoinBevel]) {
-                joinStyle = @"bevel";
+                joinStyle = IJSVGStringBevel;
             } else if ([strokeLayer.lineJoin isEqualToString:kCALineJoinRound]) {
-                joinStyle = @"round";
+                joinStyle = IJSVGStringRound;
             }
             if (joinStyle != nil) {
                 dict[IJSVGAttributeStrokeLineJoin] = joinStyle;
@@ -1991,7 +1980,7 @@ NSString* IJSVGHash(NSString* key)
 
     // hidden?
     if (layer.isHidden) {
-        style[IJSVGAttributeDisplay] = @"none";
+        style[IJSVGAttributeDisplay] = IJSVGStringNone;
     }
 
     if (style.count != 0) {

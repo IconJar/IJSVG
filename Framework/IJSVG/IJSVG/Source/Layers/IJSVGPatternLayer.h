@@ -15,4 +15,8 @@
 @property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* pattern;
 @property (nonatomic, strong) IJSVGPattern* patternNode;
 
+- (void)computeCellSize:(CGSize*)cellSize
+                viewBox:(CGRect*)viewBox
+                 origin:(CGPoint*)origin;
+
 @end

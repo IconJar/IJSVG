@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGUtils
 
@@ -317,35 +318,35 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
-    if ([string isEqualToString:@"evenodd"])
+    if ([string isEqualToString:IJSVGStringEvenOdd])
         return IJSVGWindingRuleEvenOdd;
-    if ([string isEqualToString:@"inherit"])
+    if ([string isEqualToString:IJSVGStringInherit])
         return IJSVGWindingRuleInherit;
     return IJSVGWindingRuleNonZero;
 }
 
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:@"mitre"])
+    if ([string isEqualToString:IJSVGStringMiter])
         return IJSVGLineJoinStyleMiter;
-    if ([string isEqualToString:@"round"])
+    if ([string isEqualToString:IJSVGStringRound])
         return IJSVGLineJoinStyleRound;
-    if ([string isEqualToString:@"bevel"])
+    if ([string isEqualToString:IJSVGStringBevel])
         return IJSVGLineJoinStyleBevel;
-    if ([string isEqualToString:@"inherit"])
+    if ([string isEqualToString:IJSVGStringInherit])
         return IJSVGLineJoinStyleInherit;
     return IJSVGLineJoinStyleMiter;
 }
 
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:@"butt"])
+    if ([string isEqualToString:IJSVGStringButt])
         return IJSVGLineCapStyleButt;
-    if ([string isEqualToString:@"square"])
+    if ([string isEqualToString:IJSVGStringSquare])
         return IJSVGLineCapStyleSquare;
-    if ([string isEqualToString:@"round"])
+    if ([string isEqualToString:IJSVGStringRound])
         return IJSVGLineCapStyleRound;
-    if ([string isEqualToString:@"inherit"])
+    if ([string isEqualToString:IJSVGStringInherit])
         return IJSVGLineCapStyleInherit;
     return IJSVGLineCapStyleButt;
 }
@@ -388,7 +389,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (IJSVGUnitType)unitTypeForString:(NSString*)string
 {
-    if ([string isEqualToString:@"userSpaceOnUse"]) {
+    if ([string isEqualToString:IJSVGStringUserSpaceOnUse]) {
         return IJSVGUnitUserSpaceOnUse;
     }
     return IJSVGUnitObjectBoundingBox;
@@ -556,7 +557,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 
 + (CGFloat)floatValue:(NSString*)string
 {
-    if ([string isEqualToString:@"inherit"]) {
+    if ([string isEqualToString:IJSVGStringInherit]) {
         return IJSVGInheritedFloatValue;
     }
     return [string floatValue];

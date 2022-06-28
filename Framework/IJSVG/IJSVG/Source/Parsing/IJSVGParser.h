@@ -32,6 +32,17 @@
 
 typedef void (^IJSVGNodeParserPostProcessBlock)(void);
 
+extern NSString* const IJSVGStringObjectBoundingBox;
+extern NSString* const IJSVGStringUserSpaceOnUse;
+extern NSString* const IJSVGStringNone;
+extern NSString* const IJSVGStringRound;
+extern NSString* const IJSVGStringSquare;
+extern NSString* const IJSVGStringBevel;
+extern NSString* const IJSVGStringButt;
+extern NSString* const IJSVGStringMiter;
+extern NSString* const IJSVGStringInherit;
+extern NSString* const IJSVGStringEvenOdd;
+
 extern NSString* const IJSVGAttributeViewBox;
 extern NSString* const IJSVGAttributePreserveAspectRatio;
 extern NSString* const IJSVGAttributeID;

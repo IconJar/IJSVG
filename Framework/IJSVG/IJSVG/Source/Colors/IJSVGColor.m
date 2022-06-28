@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGParsing.h>
+#import <IJSVG/IJSVGParser.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
@@ -376,7 +377,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
     // jsut return none
     if (alpha == 0 && forceHex == NO) {
-        return @"none";
+        return IJSVGStringNone;
     }
 
     // always return hex unless criteria is met

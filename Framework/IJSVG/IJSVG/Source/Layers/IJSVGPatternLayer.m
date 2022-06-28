@@ -60,16 +60,10 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     return [super referencingLayer] ?: self.superlayer;
 }
 
-- (void)drawInContext:(CGContextRef)ctx
+- (void)computeCellSize:(CGSize*)cellSize
+                viewBox:(CGRect*)viewBox
+                 origin:(CGPoint*)origin
 {
-    // holder for callback
-    static const CGPatternCallbacks callbacks = { 0, &IJSVGPatternDrawingCallBack, NULL };
-
-    // create base pattern space
-    CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
-    CGContextSetFillColorSpace(ctx, patternSpace);
-    CGColorSpaceRelease(patternSpace);
-    
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     CGRect rect = IJSVGLayerGetBoundingBoxBounds(layer);
     
@@ -88,26 +82,12 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
         yLength = yLength.lengthByMatchingPercentage;
     }
     
+    *origin = CGPointMake([xLength computeValue:rect.size.width],
+                          [yLength computeValue:rect.size.height]);
+    
     CGFloat width = [wLength computeValue:rect.size.width];
     CGFloat height = [hLength computeValue:rect.size.height];
-    _cellSize = CGSizeMake(width, height);
-    
-        
-    // transform us back into the correct space
-    CGAffineTransform transform = CGAffineTransformIdentity;
-    if (_patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
-    }
-    
-    // transform the X and Y shift
-    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
-    transform = CGAffineTransformTranslate(transform,
-                                           [xLength computeValue:rect.size.width],
-                                           [yLength computeValue:rect.size.height]);
-    
-    // its possible that this layer is shifted inwards due to a stroke on the
-    // parent layer
-    transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
+    *cellSize = CGSizeMake(width, height);
     
     // who knew that patterns have viewBoxes? Not me, but here is an implementation
     // of it anyway
@@ -116,16 +96,48 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
         if(_patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
             nViewBox = [nViewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
         }
-        _viewBox = [nViewBox computeValue:rect.size];
+        *viewBox = [nViewBox computeValue:rect.size];
     } else {
         // no viewbox is assigned, so just map it 1:1 with its cellSize
-        _viewBox = CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height);
+        *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
     }
-        
+}
+
+- (void)drawInContext:(CGContextRef)ctx
+{
+    // holder for callback
+    static const CGPatternCallbacks callbacks = { 0, &IJSVGPatternDrawingCallBack, NULL };
+
+    // create base pattern space
+    CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
+    CGContextSetFillColorSpace(ctx, patternSpace);
+    CGColorSpaceRelease(patternSpace);
+    
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
+            
+    // transform us back into the correct space
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    if (_patternNode.units == IJSVGUnitUserSpaceOnUse) {
+        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    }
+    
+    CGPoint origin = CGPointZero;
+    [self computeCellSize:&_cellSize
+                  viewBox:&_viewBox
+                   origin:&origin];
+    
+    // transform the X and Y shift
+    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
+    transform = CGAffineTransformTranslate(transform, origin.x, origin.y);
+    
+    // its possible that this layer is shifted inwards due to a stroke on the
+    // parent layer
+    transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
+            
     // create the pattern
     CGRect selfBounds = IJSVGLayerGetBoundingBoxBounds(self);
     CGPatternRef ref = CGPatternCreate((void*)self, selfBounds,
-        transform, width, height,
+        transform, _cellSize.width, _cellSize.height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);
 
