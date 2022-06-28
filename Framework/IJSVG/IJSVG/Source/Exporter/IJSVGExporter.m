@@ -1120,12 +1120,13 @@ NSString* IJSVGHash(NSString* key)
     }, element);
 }
 
-- (NSXMLElement*)elementForGroup:(CALayer<IJSVGDrawableLayer>*)layer
-                      fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForGroupName:(NSString*)name
+                               layer:(CALayer<IJSVGDrawableLayer>*)layer
+                          fromParent:(NSXMLElement*)parent
 {
     // create the element
     NSXMLElement* e = [[NSXMLElement alloc] init];
-    e.name = @"g";
+    e.name = name;
 
     // stick defaults
     [self applyDefaultsToElement:e
@@ -1138,6 +1139,14 @@ NSString* IJSVGHash(NSString* key)
     }
 
     return e;
+}
+
+- (NSXMLElement*)elementForGroup:(CALayer<IJSVGDrawableLayer>*)layer
+                      fromParent:(NSXMLElement*)parent
+{
+    return [self elementForGroupName:@"g"
+                               layer:layer
+                          fromParent:parent];
 }
 
 - (void)applyDefaultsForRoot:(IJSVGRootLayer*)layer
@@ -1230,28 +1239,76 @@ NSString* IJSVGHash(NSString* key)
 {
     // now we need the pattern
     IJSVGGroupLayer* patternLayer = (IJSVGGroupLayer*)layer.pattern;
+    
+    // x & y could be apart of a transform layer, if so, remove it
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    if(patternLayer.class == IJSVGTransformLayer.class) {
+        transform = patternLayer.affineTransform;
+        patternLayer = (IJSVGGroupLayer*)[IJSVGLayer firstSublayerOfClass:IJSVGGroupLayer.class
+                                                                fromLayer:patternLayer];
+    }
+    
+    // if we cant find a pattern layer, something went really wrong,
+    // but lets break just incase
+    if(patternLayer == nil) {
+        return;
+    }
 
-    NSXMLElement* patternElement = [self elementForGroup:patternLayer
-                                              fromParent:nil];
-    patternElement.name = @"pattern";
+    NSXMLElement* patternElement = [self elementForGroupName:@"pattern"
+                                                       layer:patternLayer
+                                                  fromParent:element];
     
     // patterns dont allow a transform attribute, however, it is assigned to
     // patternTransform, so if there is a transform attribute, just rename it.
-    NSXMLNode* transform = nil;
-    if((transform = [patternElement attributeForName:IJSVGAttributeTransform]) != nil) {
-        transform.name = IJSVGAttributePatternTransform;
-    }
+//    NSXMLNode* transform = nil;
+//    if((transform = [patternElement attributeForName:IJSVGAttributeTransform]) != nil) {
+//        transform.name = IJSVGAttributePatternTransform;
+//    }
     
+    CGSize cellSize = CGSizeZero;
+    CGRect viewBox = CGRectZero;
+    CGPoint origin = CGPointZero;
+    
+    
+    [layer computeCellSize:&cellSize
+                   viewBox:&viewBox
+                    origin:&origin];
+        
+    // apply any transform that was applied to a transform layer if it existed
+    origin = CGPointApplyAffineTransform(origin, transform);
+    
+    // we need to convert back to user space, so we need to invert the transform for it
+    transform = [IJSVGLayer userSpaceTransformForLayer:layer.referencingLayer];
+    origin = CGPointApplyAffineTransform(origin, CGAffineTransformInvert(transform));
+    
+    // compute the attributes
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:patternElement];
-    dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(layer.patternNode.width.value, _floatingPointOptions);
-    dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(layer.patternNode.height.value, _floatingPointOptions);
-    dict[IJSVGAttributePatternUnits] = layer.patternNode.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox: IJSVGStringUserSpaceOnUse;
+    if(origin.x != 0.f) {
+        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(origin.x, _floatingPointOptions);
+    }
+    if(origin.y != 0.f) {
+        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(origin.y, _floatingPointOptions);
+    }
+    if(cellSize.width != 0.f) {
+        dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(cellSize.width, _floatingPointOptions);
+    }
+    if(cellSize.height != 0.f) {
+        dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(cellSize.height, _floatingPointOptions);
+    }
     
-    // we need to display the layer for it to compute itself
+    // we are in user space now, this is important
+    dict[IJSVGAttributePatternUnits] = IJSVGStringUserSpaceOnUse;
     
-    if(layer.patternNode.viewBox != nil) {
-        dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:[layer.patternNode.viewBox computeValue:CGSizeZero]];
+    if(CGPointEqualToPoint(viewBox.origin, CGPointZero) == NO ||
+       CGSizeEqualToSize(viewBox.size, cellSize) == NO) {
+        dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
+    }
+    
+    // apply any actual pattern transform from the node
+    transform = IJSVGConcatTransforms(layer.patternNode.transforms);
+    if(CGAffineTransformIsIdentity(transform) == NO) {
+        dict[IJSVGAttributePatternTransform] = [self transformAttributeStringForTransform:transform];
     }
 
     IJSVGApplyAttributesToElement(dict, patternElement);
@@ -2024,12 +2081,15 @@ NSString* IJSVGHash(NSString* key)
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = clipKey;
     
-    // convert the path back to userSpaceOnUse
+    // convert the path back to userSpaceOnUse — note this is the inverse
+    // of the transform
     CGPathRef clipPath = layer.clipPath;
-    CGRect boundingBox = layer.outerBoundingBox;
+    CGRect layerRect = layer.innerBoundingBox;
     CGAffineTransform transform = CGAffineTransformIdentity;
-    transform = CGAffineTransformMakeTranslation(CGRectGetMinX(boundingBox),
-                                                 CGRectGetMinY(boundingBox));
+    transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    transform =  CGAffineTransformTranslate(transform, CGRectGetMinX(layerRect),
+                                            CGRectGetMinY(layerRect));
+    transform = CGAffineTransformInvert(transform);
     clipPath = CGPathCreateCopyByTransformingPath(clipPath, &transform);
     
     // create the path

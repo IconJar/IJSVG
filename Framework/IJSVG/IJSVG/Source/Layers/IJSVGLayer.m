@@ -79,6 +79,17 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
     return IJSVGLayerFillTypeUnknown;
 }
 
++ (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
+                                           fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
+{
+    for(CALayer<IJSVGDrawableLayer>* sublayer in layer.sublayers) {
+        if(sublayer.class == aClass) {
+            return sublayer;
+        }
+    }
+    return nil;
+}
+
 + (void)applyAbsoluteTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
                              toContext:(CGContextRef)ctx
 {

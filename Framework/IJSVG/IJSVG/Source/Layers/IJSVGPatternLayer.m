@@ -75,7 +75,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGUnitLength* hLength = _patternNode.height;
         
     // actually do the swap if required
-    if(self.patternNode.units == IJSVGUnitObjectBoundingBox) {
+    if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
         wLength = wLength.lengthByMatchingPercentage;
         hLength = hLength.lengthByMatchingPercentage;
         xLength = xLength.lengthByMatchingPercentage;

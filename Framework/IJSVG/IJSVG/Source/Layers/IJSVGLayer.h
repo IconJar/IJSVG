@@ -156,6 +156,9 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 + (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
                    withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block;
 
++ (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
+                                           fromLayer:(CALayer<IJSVGDrawableLayer>*)layer;
+
 + (void)setBackingScaleFactor:(CGFloat)scale
                 renderQuality:(IJSVGRenderQuality)quality
            recursivelyToLayer:(CALayer<IJSVGDrawableLayer>*)layer;
