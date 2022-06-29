@@ -55,57 +55,25 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _defaults = @{
-            @"clip": @"auto",
-            @"clip-path": IJSVGStringNone,
-            @"clip-rule": @"nonzero",
-            @"mask": IJSVGStringNone,
-            @"opacity": @"1",
-            @"stop-color": @"#000",
-            @"stop-opacity": @"1",
-            @"fill-opacity": @"1",
-            @"fill-rule": @"nonzero",
-            @"fill": @"#000",
-            @"stroke": IJSVGStringNone,
-            @"stroke-width": @"1",
-            @"stroke-linecap": @"butt",
-            @"stroke-linejoin": IJSVGStringMiter,
-            @"stroke-miterlimit": @"4",
-            @"stroke-dasharray": IJSVGStringNone,
-            @"stroke-dashoffset": @"0",
-            @"stroke-opacity": @"1",
-            @"paint-order": @"normal",
-            @"vector-effect": IJSVGStringNone,
-            @"display": @"inline",
-            @"visibility": @"visible",
-            @"marker-start": IJSVGStringNone,
-            @"marker-mid": IJSVGStringNone,
-            @"marker-end": IJSVGStringNone,
-            @"color-interpolation": @"sRGB",
-            @"color-interpolation-filters": @"linearRGB",
-            @"color-rendering": @"auto",
-            @"shape-rendering": @"auto",
-            @"text-rendering": @"auto",
-            @"image-rendering": @"auto",
-            @"font-style": @"normal",
-            @"font-variant": @"normal",
-            @"font-weight": @"normal",
-            @"font-stretch": @"normal",
-            @"font-size": @"medium",
-            @"font-size-adjust": IJSVGStringNone,
-            @"kerning": @"auto",
-            @"letter-spacing": @"normal",
-            @"word-spacing": @"normal",
-            @"text-decoration": IJSVGStringNone,
-            @"text-anchor": @"start",
-            @"text-overflow": @"clip",
-            @"writing-mode": @"lr-tb",
-            @"glyph-orientation-vertical": @"auto",
-            @"glyph-orientation-horizontal": @"0deg",
-            @"direction": @"ltr",
-            @"unicode-bidi": @"normal",
-            @"dominant-baseline": @"auto",
-            @"alignment-baseline": @"baseline",
-            @"baseline-shift": @"baseline"
+            IJSVGAttributeClipPath: IJSVGStringNone,
+            IJSVGAttributeClipRule: @"nonzero",
+            IJSVGAttributeMask: IJSVGStringNone,
+            IJSVGAttributeOpacity: @"1",
+            IJSVGAttributeStopColor: @"#000",
+            IJSVGAttributeStopOpacity: @"1",
+            IJSVGAttributeFillOpacity: @"1",
+            IJSVGAttributeFillRule: @"nonzero",
+            IJSVGAttributeFill: @"#000",
+            IJSVGAttributeStroke: IJSVGStringNone,
+            IJSVGAttributeStrokeWidth: @"1",
+            IJSVGAttributeStrokeLineCap: @"butt",
+            IJSVGAttributeStrokeLineJoin: IJSVGStringMiter,
+            IJSVGAttributeStrokeMiterLimit: @"4",
+            IJSVGAttributeStrokeDashArray: IJSVGStringNone,
+            IJSVGAttributeStrokeDashOffset: @"0",
+            IJSVGAttributeStrokeOpacity: @"1",
+            IJSVGAttributeDisplay: @"inline",
+            IJSVGAttributePreserveAspectRatio: @"xMidYMid"
         };
     });
     return _defaults;
@@ -117,50 +85,18 @@ const NSArray* IJSVGInheritableAttributes(void)
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _attributes = @[
-            @"clip-rule",
-            @"color",
-            @"color-interpolation",
-            @"color-interpolation-filters",
-            @"color-profile",
-            @"color-rendering",
-            @"cursor",
-            @"direction",
-            @"fill",
-            @"fill-opacity",
-            @"fill-rule",
-            @"font",
-            @"font-family",
-            @"font-size",
-            @"font-size-adjust",
-            @"font-stretch",
-            @"font-style",
-            @"font-variant",
-            @"font-weight",
-            @"glyph-orientation-horizontal",
-            @"glyph-orientation-vertical",
-            @"image-rendering",
-            @"kerning",
-            @"letter-spacing",
-            @"marker",
-            @"marker-end",
-            @"marker-mid",
-            @"marker-start",
-            @"pointer-events",
-            @"shape-rendering",
-            @"stroke",
-            @"stroke-dasharray",
-            @"stroke-dashoffset",
-            @"stroke-linecap",
-            @"stroke-linejoin",
-            @"stroke-miterlimit",
-            @"stroke-opacity",
-            @"stroke-width",
-            @"text-anchor",
-            @"text-rendering",
-            @"visibility",
-            @"white-space",
-            @"word-spacing",
-            @"writing-mode"
+            IJSVGAttributeClipRule,
+            IJSVGAttributeFill,
+            IJSVGAttributeFillOpacity,
+            IJSVGAttributeFillRule,
+            IJSVGAttributeStroke,
+            IJSVGAttributeStrokeDashArray,
+            IJSVGAttributeStrokeDashOffset,
+            IJSVGAttributeStrokeLineCap,
+            IJSVGAttributeStrokeLineJoin,
+            IJSVGAttributeStrokeMiterLimit,
+            IJSVGAttributeStrokeOpacity,
+            IJSVGAttributeStrokeWidth,
         ];
     });
     return _attributes;
@@ -235,119 +171,63 @@ NSString* IJSVGHash(NSString* key)
 
 - (NSString*)viewBoxWithRect:(NSRect)rect
 {
-    char* buffer;
-    asprintf(&buffer, "%g %g %g %g", rect.origin.x, rect.origin.y,
-        rect.size.width, rect.size.height);
-    NSString* viewBox = [NSString stringWithCString:buffer
-                                           encoding:NSUTF8StringEncoding];
-    free(buffer);
-    return viewBox;
+    return [NSString stringWithFormat:@"%@ %@ %@ %@",
+        IJSVGShortFloatStringWithOptions(CGRectGetMinX(rect), _floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(CGRectGetMinY(rect), _floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(CGRectGetWidth(rect), _floatingPointOptions),
+        IJSVGShortFloatStringWithOptions(CGRectGetHeight(rect), _floatingPointOptions)
+    ];
 }
 
-- (NSXMLElement*)rootNode:(NSXMLElement**)nestedRoot
+- (NSXMLElement*)rootNode
 {
     // generates the root document
     NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
     
     [self applyDefaultsForRoot:_svg.rootLayer
                      toElement:root];
-    
+        
     [root removeAttributeForName:IJSVGAttributeWidth];
     [root removeAttributeForName:IJSVGAttributeHeight];
 
     // sort out viewbox
-    NSRect viewBox = _svg.viewBox;
+    CGRect viewBox = _svg.viewBox;
+    CGRect originalViewBox = viewBox;
     NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
-        IJSVGAttributeViewBox: [self viewBoxWithRect:viewBox],
-        @"xmlns": XML_DOC_NS
+        IJSVGAttributeXMLNS: XML_DOC_NS
     }];
 
     // add on various XML declaritive things
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
-        attributes[@"version"] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
+        attributes[IJSVGAttributeVersion] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
+    }
+    
+    // do we need to resize the viewbox?
+    CGFloat scale = 1.f;
+    if(CGSizeEqualToSize(CGSizeZero, _size) == NO && CGSizeEqualToSize(viewBox.size, _size) == NO) {
+        scale = MIN(_size.width / viewBox.size.width,
+                    _size.height / viewBox.size.height);
+        viewBox = CGRectMake(CGRectGetMinX(viewBox) * scale,
+                             CGRectGetMinY(viewBox) * scale,
+                             _size.width / scale,
+                             _size.height / scale);
+    }
+    
+    // do we need to center it within its viewbox
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCenterWithinViewBox) == YES) {
+        CGPoint origin = CGPointMake((_size.width / scale) / 2.f - originalViewBox.size.width / 2.f,
+                                     (_size.height / scale) / 2.f - originalViewBox.size.height /  2.f);
+        CGAffineTransform transform = CGAffineTransformMakeTranslation(-origin.x, -origin.y);
+        viewBox = CGRectApplyAffineTransform(viewBox, transform);
     }
 
-    // add on width and height unless specified otherwise
-    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
+    // only add dimentions if required
+    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
         attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(_size.width, _floatingPointOptions);
         attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(_size.height, _floatingPointOptions);
     }
-
-    // was there a size set?
-    CGFloat scale = 1.f;
-    NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] initWithCapacity:2];
-    if (CGSizeEqualToSize(CGSizeZero, _size) == NO && (_size.width != viewBox.size.width && _size.height != viewBox.size.height)) {
-
-        // copy the attributes
-        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-            attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(_size.width, _floatingPointOptions);
-            attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(_size.height, _floatingPointOptions);
-        }
-
-        // work out the scale
-        const CGFloat _proposedScale = MIN(_size.width / viewBox.size.width,
-            _size.height / viewBox.size.height);
-
-        // actually do the scale
-        if (_proposedScale != 1.f) {
-            // compute x and y, don't multiply 0
-            const CGFloat x = viewBox.origin.x == 0.f ? 0.f: (viewBox.origin.x * _proposedScale);
-            const CGFloat y = viewBox.origin.y == 0.f ? 0.f: (viewBox.origin.y * _proposedScale);
-
-            // reset the viewbox for the exported SVG
-            NSRect newViewBox = (NSRect) {
-                .origin = NSMakePoint(x, y),
-                .size = NSMakeSize(_size.width,
-                    _size.height)
-            };
-            attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:newViewBox];
-
-            // do we need to scale?
-            if (IJSVGExporterHasOption(_options, IJSVGExporterOptionScaleToSizeIfNecessary) == YES) {
-                IJSVGTransform* transform = nil;
-                transform = [IJSVGTransform transformByScaleX:_proposedScale
-                                                            y:_proposedScale];
-                [transforms addObject:transform];
-
-                // reset the scale
-                scale = _proposedScale;
-            }
-        }
-    }
-
-    // do we need to center the svg within the box?
-    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCenterWithinViewBox) == YES) {
-        CGPoint transformPoint = CGPointMake(_size.width / 2.f - ((viewBox.size.width * scale) / 2.f),
-            _size.height / 2.f - ((viewBox.size.height * scale) / 2.f));
-
-        // work out what transform point we need to do, if any
-        if (CGPointEqualToPoint(transformPoint, CGPointZero) == NO) {
-            IJSVGTransform* transform = nil;
-            transform = [IJSVGTransform transformByTranslatingX:transformPoint.x
-                                                              y:transformPoint.y];
-            [transforms addObject:transform];
-        }
-    }
-
-    // any transform for the root node?
-    if (transforms.count != 0) {
-        // concat the transform
-        CGAffineTransform afTransform = IJSVGConcatTransforms(transforms);
-        NSXMLElement* transformedElement = [[NSXMLElement alloc] initWithName:@"g"];
-        NSString* transString = nil;
-        transString = [self transformAttributeStringForTransform:afTransform];
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeTransform: transString
-        }, transformedElement);
-        *nestedRoot = transformedElement;
-        [root addChild:transformedElement];
-    }
-
-    // apply the attributes
+    attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     IJSVGApplyAttributesToElement(attributes, root);
-    if (*nestedRoot == nil) {
-        *nestedRoot = root;
-    }
     return root;
 }
 
@@ -361,9 +241,8 @@ NSString* IJSVGHash(NSString* key)
     // set and add the attribute onto the rootElement
     _appliedXLink = YES;
     NSXMLElement* root = _dom.rootElement;
-    NSString* const attributeName = @"xmlns:xlink";
     IJSVGApplyAttributesToElement(@{
-        attributeName: XML_DOC_NSXLINK
+        IJSVGAttributeXMLNSXlink: XML_DOC_NSXLINK
     }, root);
 }
 
@@ -388,10 +267,8 @@ NSString* IJSVGHash(NSString* key)
     _dom = nil;
     _defElement = nil;
     
-    
     // create the stand alone DOM
-    NSXMLElement* nestedRoot = nil;
-    NSXMLElement* rootNode = [self rootNode:&nestedRoot];
+    NSXMLElement* rootNode = [self rootNode];
     _dom = [[NSXMLDocument alloc] initWithRootElement:rootNode];
     _dom.version = XML_DOCTYPE_VERSION;
     _dom.characterEncoding = XML_DOC_CHARSET;
@@ -399,7 +276,7 @@ NSString* IJSVGHash(NSString* key)
     // sort out stuff, so here we go...
     for(NSXMLElement* childLayer in _svg.rootLayer.sublayers) {
         [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)childLayer
-                           intoElement:nestedRoot];
+                           intoElement:rootNode];
     }
 
     // this needs to be added incase it needs to be cleaned
@@ -612,7 +489,9 @@ NSString* IJSVGHash(NSString* key)
                             IJSVGAttributeID: idString
                         }, gradientB);
                     }
-                    NSDictionary* atts = @{ @"xlink:href": IJSVGHash(idString) };
+                    NSDictionary* atts = @{
+                        IJSVGAttributeXLink: IJSVGHash(idString)
+                    };
                     IJSVGApplyAttributesToElement(atts, gradientA);
                     [self applyXLinkToRootElement];
                     [gradientA setChildren:nil];
@@ -1476,30 +1355,44 @@ NSString* IJSVGHash(NSString* key)
 - (NSXMLElement*)elementForImage:(IJSVGImageLayer*)layer
                       fromParent:(NSXMLElement*)parent
 {
-    NSString* base64String = [self base64EncodedStringFromCGImage:(CGImageRef)layer.contents];
-    if (base64String == nil || layer.contents == nil) {
+    IJSVGImage* image = layer.image;
+    if (image == nil) {
         return nil;
     }
 
     // image element for the SVG
     NSXMLElement* imageElement = [[NSXMLElement alloc] init];
     imageElement.name = @"image";
-
+    
+    // we need to transform this into its required aspect ratio
+    CGImageRef cgImage = NULL;
+    CGRect bounds = image.bounds;
+    CGFloat ratio = bounds.size.height / bounds.size.width;
+    if(ratio != 1.f) {
+        NSImage* nsImage = image.image;
+        CGFloat width = nsImage.size.width;
+        CGFloat height = nsImage.size.height;
+        CGRect newImageRect = CGRectMake(0.f, 0.f, width, height * ratio);
+        NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
+                                                toSize:newImageRect.size];
+        cgImage = [actualImage CGImageForProposedRect:&newImageRect
+                                              context:NULL
+                                                hints:nil];
+    } else {
+        cgImage = image.CGImage;
+    }
+    
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
-    dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(layer.frame.size.width, _floatingPointOptions);
-    dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(layer.frame.size.height, _floatingPointOptions);
+    dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(CGRectGetWidth(bounds),
+                                                                 _floatingPointOptions);
+    dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds),
+                                                                  _floatingPointOptions);
+    // encode the image and be done
+    NSString* base64String = [self base64EncodedStringFromCGImage:cgImage];
     dict[IJSVGAttributeXLink] = base64String;
     [self applyXLinkToRootElement];
-
-    // work out any position
-    if (layer.frame.origin.x != 0.f) {
-        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(layer.frame.origin.x, _floatingPointOptions);
-    }
-    if (layer.frame.origin.y != 0.f) {
-        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(layer.frame.origin.y, _floatingPointOptions);
-    }
-
+    
     // add the attributes
     IJSVGApplyAttributesToElement(dict, imageElement);
     return imageElement;
@@ -1961,6 +1854,10 @@ NSString* IJSVGHash(NSString* key)
         strokeLayer = (IJSVGShapeLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeStroke];
         
         // stroke
+        if(strokeLayer.miterLimit != 4.f) {
+            dict[IJSVGAttributeStrokeMiterLimit] = IJSVGShortFloatStringWithOptions(strokeLayer.miterLimit,
+                                                                                    _floatingPointOptions);
+        }
         if (strokeLayer.lineWidth != 0.f) {
             dict[IJSVGAttributeStrokeWidth] = IJSVGShortFloatStringWithOptions(strokeLayer.lineWidth,
                 _floatingPointOptions);
@@ -2009,7 +1906,7 @@ NSString* IJSVGHash(NSString* key)
 
     // apple defaults
     [self applyDefaultsToElement:e
-                       fromLayer:(CALayer<IJSVGDrawableLayer>*)layer];
+                       fromLayer:layer];
     return e;
 }
 

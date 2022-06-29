@@ -298,8 +298,9 @@
 {
     self.renderingStyle = [[IJSVGRenderingStyle alloc] init];
     self.clipToViewport = YES;
+    self.ignoreIntrinsicSize = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
-    self.renderingBackingScaleHelper = ^CGFloat{
+    self.renderingBackingScaleHelper = ^CGFloat {
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
         }

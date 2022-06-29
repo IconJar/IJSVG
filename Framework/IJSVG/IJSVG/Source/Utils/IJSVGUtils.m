@@ -646,4 +646,17 @@ CGFloat degrees_to_radians(CGFloat degrees)
     return kCGLineJoinRound;
 }
 
++ (NSImage*)resizeImage:(NSImage*)anImage
+                 toSize:(CGSize)size
+{
+    NSImage* image = [[NSImage alloc] initWithSize:size];
+    [image lockFocus];
+    [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height)
+               fromRect:NSMakeRect(0.f, 0.f, anImage.size.width, anImage.size.height)
+              operation:NSCompositingOperationCopy
+               fraction:1.f];
+    [image unlockFocus];
+    return image;
+}
+
 @end

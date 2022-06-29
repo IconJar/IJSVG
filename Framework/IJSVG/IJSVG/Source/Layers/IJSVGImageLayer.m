@@ -13,8 +13,7 @@
 - (id)initWithImage:(IJSVGImage*)image
 {
     if((self = [super init]) != nil) {
-        _image = image;
-        [self setNeedsDisplay];
+        self.image = image;
     }
     return self;
 }
@@ -24,10 +23,16 @@
     return YES;
 }
 
+- (void)setImage:(IJSVGImage *)image
+{
+    _image = image;
+    [self setNeedsDisplay];
+}
+
 - (void)drawInContext:(CGContextRef)ctx
 {
     CGImageRef image = _image.CGImage;
-    CGRect imageDrawRect = _image.intrinsicBounds;
+    CGRect imageDrawRect = _image.bounds;
     CGRect currentBounds = self.bounds;
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
         // image will be upside down, so just translate it back on itself

@@ -22,6 +22,9 @@ NSString* const IJSVGStringMiter = @"miter";
 NSString* const IJSVGStringInherit = @"inherit";
 NSString* const IJSVGStringEvenOdd = @"evenodd";
 
+NSString* const IJSVGAttributeVersion = @"version";
+NSString* const IJSVGAttributeXMLNS = @"xmlns";
+NSString* const IJSVGAttributeXMLNSXlink = @"xmlns:xlink";
 NSString* const IJSVGAttributeViewBox = @"viewBox";
 NSString* const IJSVGAttributePreserveAspectRatio = @"preserveAspectRatio";
 NSString* const IJSVGAttributeID = @"id";
@@ -338,6 +341,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     for(NSXMLNode* attributeNode in element.attributes) {
         attributes[attributeNode.name] = attributeNode.stringValue;
     }
+    
+    CGRect bounds = CGRectZero;
+    IJSVGUnitType units = [node.parentNode contentUnitsWithReferencingNodeBounds:&bounds];
 
     // helper for setting an attribute
     typedef void (^IJSVGAttributeParseBlock)(NSString*);
@@ -420,7 +426,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // transforms
     IJSVGAttributesParse(_IJSVGAttributeDictionaryTransforms, ^id (NSString* value) {
         NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
+        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
+                                                                      units:units
+                                                                     bounds:bounds]];
         if(node.transforms != nil) {
             [transforms addObjectsFromArray:node.transforms];
         }

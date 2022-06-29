@@ -30,6 +30,8 @@
 		594CF55F238FF462009B251B /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF55E238FF462009B251B /* AppKit.framework */; };
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
+		5955731F286C643900156047 /* IJSVGTileLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5955731D286C643900156047 /* IJSVGTileLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		59557320286C643900156047 /* IJSVGTileLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5955731E286C643900156047 /* IJSVGTileLayer.m */; };
 		595BA91C280EB29B00AD1C89 /* IJSVGFilterLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 595BA91A280EB29B00AD1C89 /* IJSVGFilterLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		595BA91D280EB29B00AD1C89 /* IJSVGFilterLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 595BA91B280EB29B00AD1C89 /* IJSVGFilterLayer.m */; };
 		5978C46A280A241200D25296 /* IJSVGRootLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5978C468280A241200D25296 /* IJSVGRootLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -184,6 +186,8 @@
 		594CF55E238FF462009B251B /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		594CF560238FF46C009B251B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		594CF562238FF473009B251B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		5955731D286C643900156047 /* IJSVGTileLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGTileLayer.h; sourceTree = "<group>"; };
+		5955731E286C643900156047 /* IJSVGTileLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGTileLayer.m; sourceTree = "<group>"; };
 		595BA91A280EB29B00AD1C89 /* IJSVGFilterLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFilterLayer.h; sourceTree = "<group>"; };
 		595BA91B280EB29B00AD1C89 /* IJSVGFilterLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterLayer.m; sourceTree = "<group>"; };
 		5978C468280A241200D25296 /* IJSVGRootLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGRootLayer.h; sourceTree = "<group>"; };
@@ -420,6 +424,8 @@
 				595BA91B280EB29B00AD1C89 /* IJSVGFilterLayer.m */,
 				59F38A61280ED99200804FE4 /* IJSVGBasicLayer.h */,
 				59F38A62280ED99200804FE4 /* IJSVGBasicLayer.m */,
+				5955731D286C643900156047 /* IJSVGTileLayer.h */,
+				5955731E286C643900156047 /* IJSVGTileLayer.m */,
 			);
 			path = Layers;
 			sourceTree = "<group>";
@@ -691,6 +697,7 @@
 				59F9EAF82808BB5F00188ACB /* IJSVGViewBox.h in Headers */,
 				5910A9AA284377D600BD1F03 /* IJSVGClipPath.h in Headers */,
 				5910A9A628427AD600BD1F03 /* IJSVGMask.h in Headers */,
+				5955731F286C643900156047 /* IJSVGTileLayer.h in Headers */,
 				59EB760B23905F7300F5AE63 /* IJSVGStyleSheetSelector.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -794,6 +801,7 @@
 				5919E65C23F480330051873A /* IJSVGUnitPoint.m in Sources */,
 				59EB75E923905F7300F5AE63 /* IJSVGStringAdditions.m in Sources */,
 				59FDBF0127F3454800AF7038 /* IJSVGColorNode.m in Sources */,
+				59557320286C643900156047 /* IJSVGTileLayer.m in Sources */,
 				59EB761723905F7300F5AE63 /* IJSVGRadialGradient.m in Sources */,
 				59EB75E223905F7300F5AE63 /* IJSVGColorList.m in Sources */,
 				59EB75ED23905F7300F5AE63 /* IJSVGFontConverter.m in Sources */,

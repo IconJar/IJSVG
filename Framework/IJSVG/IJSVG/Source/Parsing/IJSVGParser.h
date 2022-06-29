@@ -43,6 +43,9 @@ extern NSString* const IJSVGStringMiter;
 extern NSString* const IJSVGStringInherit;
 extern NSString* const IJSVGStringEvenOdd;
 
+extern NSString* const IJSVGAttributeVersion;
+extern NSString* const IJSVGAttributeXMLNS;
+extern NSString* const IJSVGAttributeXMLNSXlink;
 extern NSString* const IJSVGAttributeViewBox;
 extern NSString* const IJSVGAttributePreserveAspectRatio;
 extern NSString* const IJSVGAttributeID;

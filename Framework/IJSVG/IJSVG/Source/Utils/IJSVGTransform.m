@@ -85,22 +85,6 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     return transform;
 }
 
-- (void)recalculateWithBounds:(CGRect)bounds
-{
-    CGFloat max = bounds.size.width > bounds.size.height ? bounds.size.width : bounds.size.height;
-    switch (_command) {
-    case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
-            return;
-        }
-        _parameters[1] = _parameters[1] * max;
-        _parameters[2] = _parameters[2] * max;
-    }
-    default:
-        return;
-    }
-}
-
 + (IJSVGTransformCommand)commandForCommandCString:(char*)str
 {
     IJSVGCharBufferToLower(str);
@@ -134,22 +118,30 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (IJSVGTransformCommand)commandForCommandString:(NSString*)str
 {
     str = str.lowercaseString;
-    if ([str isEqualToString:@"matrix"])
+    if ([str isEqualToString:@"matrix"]) {
         return IJSVGTransformCommandMatrix;
-    if ([str isEqualToString:@"translate"])
+    }
+    if ([str isEqualToString:@"translate"]) {
         return IJSVGTransformCommandTranslate;
-    if ([str isEqualToString:@"translatex"])
+    }
+    if ([str isEqualToString:@"translatex"]) {
         return IJSVGTransformCommandTranslateX;
-    if ([str isEqualToString:@"translatey"])
+    }
+    if ([str isEqualToString:@"translatey"]) {
         return IJSVGTransformCommandTranslateY;
-    if ([str isEqualToString:@"scale"])
+    }
+    if ([str isEqualToString:@"scale"]) {
         return IJSVGTransformCommandScale;
-    if ([str isEqualToString:@"skewx"])
+    }
+    if ([str isEqualToString:@"skewx"]) {
         return IJSVGTransformCommandSkewX;
-    if ([str isEqualToString:@"skewy"])
+    }
+    if ([str isEqualToString:@"skewy"]) {
         return IJSVGTransformCommandSkewY;
-    if ([str isEqualToString:@"rotate"])
+    }
+    if ([str isEqualToString:@"rotate"]) {
         return IJSVGTransformCommandRotate;
+    }
     return IJSVGTransformCommandNotImplemented;
 }
 
@@ -207,6 +199,27 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     return transforms;
 }
 
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
+                                           units:(IJSVGUnitType)units
+                                          bounds:(CGRect)bounds
+{
+    NSArray<IJSVGTransform*>* transforms = [self transformsForString:string];
+    for(IJSVGTransform* transform in transforms) {
+        [transform applyBounds:bounds
+              withContentUnits:units];
+    }
+    return transforms;
+}
+
+- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
+                                     bounds:(CGRect)bounds
+{
+    IJSVGTransform* transform = self.copy;
+    [transform applyBounds:bounds
+          withContentUnits:units];
+    return transform;
+}
+
 - (void)applyBounds:(CGRect)bounds
    withContentUnits:(IJSVGUnitType)contentUnits
 {
@@ -214,12 +227,20 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         return;
     }
     
+    // tx and ty of a transform are coordinates, so they
+    // have to be scaled into their bounding box if the units
+    // dicate so.
     switch(self.command) {
         case IJSVGTransformCommandTranslate: {
-            self.parameters[0] *= bounds.size.width;
+            self.parameters[0] *= CGRectGetWidth(bounds);
             if(self.parameterCount == 2) {
-                self.parameters[1] *= bounds.size.height;
+                self.parameters[1] *= CGRectGetHeight(bounds);
             }
+            break;
+        }
+        case IJSVGTransformCommandMatrix: {
+            self.parameters[4] *= CGRectGetWidth(bounds);
+            self.parameters[5] *= CGRectGetHeight(bounds);
             break;
         }
         default:
@@ -395,13 +416,20 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     for (NSDictionary* transform in components) {
         NSString* name = transform[@"name"];
         NSArray<NSNumber*>* data = transform[@"data"];
-        if ([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) && data[0].floatValue == 0.f) {
+        if ([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) &&
+            data[0].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"translate"] && data[0].floatValue == 0.f && data[1].floatValue == 0.f) {
+        } else if ([name isEqualToString:@"translate"] && data[0].floatValue == 0.f &&
+                   data[1].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"scale"] && data[0].floatValue == 1.f && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
+        } else if ([name isEqualToString:@"scale"] && data[0].floatValue == 1.f
+                   && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
             continue;
-        } else if ([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f && data[3].floatValue == 1.f && !(data[1].floatValue != 0.f || data[2].floatValue != 0.f || data[4].floatValue != 0.f || data[5].floatValue != 0.f)) {
+        } else if ([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f &&
+                   data[3].floatValue == 1.f && !(data[1].floatValue != 0.f ||
+                                                  data[2].floatValue != 0.f ||
+                                                  data[4].floatValue != 0.f ||
+                                                  data[5].floatValue != 0.f)) {
             continue;
         }
         [comps addObject:transform];

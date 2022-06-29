@@ -86,5 +86,8 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap;
 + (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin;
 
++ (NSImage*)resizeImage:(NSImage*)anImage
+                 toSize:(CGSize)size;
+
 @end
 NS_ASSUME_NONNULL_END

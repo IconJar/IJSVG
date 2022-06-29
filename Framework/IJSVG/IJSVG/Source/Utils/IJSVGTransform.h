@@ -50,12 +50,16 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
                          floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 - (void)applyBounds:(CGRect)bounds
    withContentUnits:(IJSVGUnitType)contentUnits;
+- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
+                                     bounds:(CGRect)bounds;
 - (CGAffineTransform)CGAffineTransform;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
-- (void)recalculateWithBounds:(CGRect)bounds;
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
                                          y:(CGFloat)y;
 + (IJSVGTransform*)transformByScaleX:(CGFloat)x
                                    y:(CGFloat)y;
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
+                                           units:(IJSVGUnitType)units
+                                          bounds:(CGRect)bounds;
 
 @end
