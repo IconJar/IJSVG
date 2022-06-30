@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/IJSVGColorType.h>
+#import <IJSVG/IJSVGTraitedColor.h>
 
 @class IJSVG;
 @class IJSVGExporter;
@@ -72,7 +72,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
                          defaultID:(NSString* (^)(void))defaultID;
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
                     stringForColor:(NSColor*)color
-                             flags:(IJSVGColorTypeFlags)flag
+                             flags:(IJSVGColorUsageTraits)flag
                            options:(IJSVGColorStringOptions)options;
 
 

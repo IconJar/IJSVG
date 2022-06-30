@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGGradientLayer.h>
@@ -69,6 +69,8 @@ withSVGString:(NSString*)subSVGString;
 @property (nonatomic, strong) IJSVGLayerTree* layerTree;
 @property (nonatomic, strong) IJSVGRootLayer* rootLayer;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
+
+@property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;
 
 // The size of the SVG either computed by its intrinsicSize of its viewBox
 // If the size if % values, it will use the defaultSize
@@ -172,7 +174,6 @@ withSVGString:(NSString*)subSVGString;
 - (void)setNeedsDisplay;
 
 // colors
-- (IJSVGColorList*)colorList;
 - (void)performBlock:(dispatch_block_t)block;
 
 // matching

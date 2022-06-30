@@ -639,7 +639,7 @@
 {
     BOOL transaction = IJSVGBeginTransaction();
     CGContextSaveGState(ctx);
-    CGFloat backingScale = [self backingScaleFactor];
+    CGFloat backingScale = MAX([self backingScaleFactor], 1.f);
     CGInterpolationQuality quality;
     switch (_renderQuality) {
         case kIJSVGRenderQualityLow: {
@@ -704,73 +704,73 @@
     (void)(_layerTree), _layerTree = nil;
 }
 
-- (IJSVGColorList*)colorList
+- (IJSVGTraitedColorStorage*)colors
 {
-    IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
-    void (^block)(CALayer* layer, BOOL* stop) =
-    ^void(CALayer* layer, BOOL* stop) {
-        
-//        // dont do anything
-//        if(([layer isKindOfClass:IJSVGShapeLayer.class] &&
-//            layer.isHidden == NO) == NO) {
-//            return;
-//        }
-//        
-//          
-//        // compute
-//        IJSVGShapeLayer* sLayer = (IJSVGShapeLayer*)layer;
-//        NSColor* color = nil;
+//    IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
+//    void (^block)(CALayer* layer, BOOL* stop) =
+//    ^void(CALayer* layer, BOOL* stop) {
 //
-//        // fill color
-//        if (sLayer.fillColor != nil) {
-//            color = [NSColor colorWithCGColor:sLayer.fillColor];
-//            color = [IJSVGColor computeColorSpace:color];
-//            if (color.alphaComponent != 0.f) {
-//                IJSVGColorType* type = nil;
-//                type = [IJSVGColorType typeWithColor:color
-//                                               flags:IJSVGColorTypeFlagFill];
-//                [sheet addColor:type];
-//            }
-//        }
+////        // dont do anything
+////        if(([layer isKindOfClass:IJSVGShapeLayer.class] &&
+////            layer.isHidden == NO) == NO) {
+////            return;
+////        }
+////
+////
+////        // compute
+////        IJSVGShapeLayer* sLayer = (IJSVGShapeLayer*)layer;
+////        NSColor* color = nil;
+////
+////        // fill color
+////        if (sLayer.fillColor != nil) {
+////            color = [NSColor colorWithCGColor:sLayer.fillColor];
+////            color = [IJSVGColor computeColorSpace:color];
+////            if (color.alphaComponent != 0.f) {
+////                IJSVGColorType* type = nil;
+////                type = [IJSVGColorType typeWithColor:color
+////                                               flags:IJSVGColorTypeFlagFill];
+////                [sheet addColor:type];
+////            }
+////        }
+////
+////        // stroke color
+////        if (sLayer.strokeColor != nil) {
+////            color = [NSColor colorWithCGColor:sLayer.strokeColor];
+////            color = [IJSVGColor computeColorSpace:color];
+////            if (color.alphaComponent != 0.f) {
+////                IJSVGColorType* type = nil;
+////                type = [IJSVGColorType typeWithColor:color
+////                                               flags:IJSVGColorTypeFlagStroke];
+////                [sheet addColor:type];
+////            }
+////        }
+////
+////        // check for any patterns or strokes
+////        if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil ||
+////           sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
+////
+////           // add any colors from gradients
+////            IJSVGGradientLayer* gradLayer = nil;
+////            IJSVGGradientLayer* gradStrokeLayer = nil;
+////
+////            // gradient fill
+////            if ((gradLayer = sLayer.gradientFillLayer) != nil) {
+////                IJSVGColorList* gradSheet = gradLayer.gradient.colorList;
+////                [sheet addColorsFromList:gradSheet];
+////            }
+////
+////            // gradient stroke layers
+////            if ((gradStrokeLayer = sLayer.gradientStrokeLayer) != nil) {
+////                IJSVGColorList* gradSheet = gradStrokeLayer.gradient.colorList;
+////                [sheet addColorsFromList:gradSheet];
+////            }
+////        }
+//    };
 //
-//        // stroke color
-//        if (sLayer.strokeColor != nil) {
-//            color = [NSColor colorWithCGColor:sLayer.strokeColor];
-//            color = [IJSVGColor computeColorSpace:color];
-//            if (color.alphaComponent != 0.f) {
-//                IJSVGColorType* type = nil;
-//                type = [IJSVGColorType typeWithColor:color
-//                                               flags:IJSVGColorTypeFlagStroke];
-//                [sheet addColor:type];
-//            }
-//        }
-//
-//        // check for any patterns or strokes
-//        if (sLayer.patternFillLayer != nil || sLayer.gradientFillLayer != nil ||
-//           sLayer.gradientStrokeLayer != nil || sLayer.patternStrokeLayer != nil) {
-//            
-//           // add any colors from gradients
-//            IJSVGGradientLayer* gradLayer = nil;
-//            IJSVGGradientLayer* gradStrokeLayer = nil;
-//            
-//            // gradient fill
-//            if ((gradLayer = sLayer.gradientFillLayer) != nil) {
-//                IJSVGColorList* gradSheet = gradLayer.gradient.colorList;
-//                [sheet addColorsFromList:gradSheet];
-//            }
-//            
-//            // gradient stroke layers
-//            if ((gradStrokeLayer = sLayer.gradientStrokeLayer) != nil) {
-//                IJSVGColorList* gradSheet = gradStrokeLayer.gradient.colorList;
-//                [sheet addColorsFromList:gradSheet];
-//            }
-//        }
-    };
-    
-    // gogogo!
-    [IJSVGLayer recursivelyWalkLayer:self.rootLayer
-                           withBlock:block];
-    return sheet;
+//    // gogogo!
+//    [IJSVGLayer recursivelyWalkLayer:self.rootLayer
+//                           withBlock:block];
+    return self.rootLayer.colors;
 }
 
 #pragma mark NSPasteboard

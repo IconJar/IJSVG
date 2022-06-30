@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
 
@@ -21,7 +21,7 @@
 @property (nonatomic, strong) IJSVGUnitLength* x2;
 @property (nonatomic, strong) IJSVGUnitLength* y1;
 @property (nonatomic, strong) IJSVGUnitLength* y2;
-@property (nonatomic, strong) IJSVGColorList* colorList;
+@property (nonatomic, strong) IJSVGTraitedColorStorage* colorList;
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors;
@@ -31,7 +31,7 @@
                   bounds:(NSRect)objectRect
                transform:(CGAffineTransform)absoluteTransform;
 
-- (IJSVGColorList*)colorList;
-- (IJSVGColorList*)computedColorList;
+- (IJSVGTraitedColorStorage*)colorList;
+- (IJSVGTraitedColorStorage*)computedColorList;
 
 @end

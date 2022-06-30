@@ -155,4 +155,9 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     return @[self.pattern];
 }
 
+- (IJSVGTraitedColorStorage*)colors
+{
+    return _pattern.colors;
+}
+
 @end

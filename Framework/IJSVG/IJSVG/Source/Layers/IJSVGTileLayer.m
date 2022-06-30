@@ -29,6 +29,10 @@
 @synthesize layerTraits = _layerTraits;
 @synthesize clipPath = _clipPath;
 @synthesize clipPathTransform;
+@synthesize referencingLayer = _referencingLayer;
+@synthesize absoluteOrigin;
+@synthesize blendingMode;
+@synthesize colors;
 
 - (void)dealloc
 {

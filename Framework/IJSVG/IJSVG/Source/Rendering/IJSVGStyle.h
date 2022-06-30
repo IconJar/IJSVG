@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGColorList.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGNode.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
@@ -18,7 +18,7 @@
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) CGFloat lineWidth;
 @property (nonatomic, assign) CGFloat miterLimit;
-@property (nonatomic, strong) IJSVGColorList* colors;
+@property (nonatomic, strong) IJSVGTraitedColorStorage* colors;
 @property (nonatomic, strong) NSColor* fillColor;
 @property (nonatomic, strong) NSColor* strokeColor;
 

@@ -92,4 +92,16 @@
                           transform:transform];
 }
 
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* list = [[IJSVGTraitedColorStorage alloc] init];
+    for(NSColor* color in self.gradient.colors) {
+        IJSVGTraitedColor* traited = nil;
+        traited = [IJSVGTraitedColor colorWithColor:color
+                                             traits:IJSVGColorUsageTraitNone];
+        [list addColor:traited];
+    }
+    return list;
+}
+
 @end

@@ -31,6 +31,29 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 
 @implementation IJSVGLayer
 
+@synthesize backingScaleFactor = _backingScaleFactor;
+@synthesize requiresBackingScale;
+@synthesize renderQuality;
+@synthesize blendingMode;
+@synthesize absoluteOrigin;
+@synthesize clipPath = _clipPath;
+@synthesize clipRule = _clipRule;
+@synthesize clipLayers = _clipLayers;
+@synthesize clippingTransform;
+@synthesize clippingBoundingBox;
+@synthesize maskingClippingRect;
+@synthesize clipPathTransform;
+@synthesize colors;
+@synthesize boundingBox = _boundingBox;
+@synthesize layerTraits = _layerTraits;
+@synthesize maskingBoundingBox;
+@synthesize filter;
+@synthesize referencingLayer = _referencingLayer;
+@synthesize outerBoundingBox = _outerBoundingBox;
+@synthesize maskLayer = _maskLayer;
+@synthesize treatImplicitOriginAsTransform;
+@synthesize fillRule;
+
 - (void)dealloc
 {
     if(_clipPath != NULL) {
@@ -478,7 +501,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
            recursivelyToLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
     [self recursivelyWalkLayer:layer
-                     withBlock:^(CALayer<IJSVGBasicLayer>*sublayer, BOOL *stop) {
+                     withBlock:^(CALayer<IJSVGDrawableLayer>*sublayer, BOOL *stop) {
         if(sublayer.requiresBackingScale == YES) {
             sublayer.backingScaleFactor = scale;
         }
@@ -539,7 +562,6 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     
     // make sure its applied to any mask or clipPath
     _maskLayer.backingScaleFactor = newFactor;
-//    _clipLayer.backingScaleFactor = newFactor;
     for(CALayer<IJSVGDrawableLayer>* clipLayer in _clipLayers) {
         clipLayer.backingScaleFactor = newFactor;
     }
@@ -708,6 +730,15 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 - (BOOL)treatImplicitOriginAsTransform
 {
     return YES;
+}
+
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* colorList = [[IJSVGTraitedColorStorage alloc] init];
+    for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
+        [colorList mergeWithColors:layer.colors];
+    }
+    return colorList;
 }
 
 - (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass

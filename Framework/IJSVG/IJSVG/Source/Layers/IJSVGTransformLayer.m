@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGTransformLayer.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
 
 @implementation IJSVGTransformLayer
 
@@ -29,6 +30,10 @@
 @synthesize layerTraits = _layerTraits;
 @synthesize clipPath = _clipPath;
 @synthesize clipPathTransform;
+@synthesize colors;
+@synthesize absoluteOrigin;
+@synthesize blendingMode;
+@synthesize referencingLayer = _referencingLayer;
 
 - (void)dealloc
 {
@@ -121,6 +126,15 @@
 {
     return [IJSVGLayer firstSublayerOfClass:aClass
                                   fromLayer:self];
+}
+
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* colorList = [[IJSVGTraitedColorStorage alloc] init];
+    for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
+        [colorList mergeWithColors:layer.colors];
+    }
+    return colorList;
 }
 
 @end

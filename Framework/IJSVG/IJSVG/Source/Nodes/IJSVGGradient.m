@@ -42,7 +42,7 @@
     _locations = locations;
 }
 
-- (void)setColorList:(IJSVGColorList*)list
+- (void)setColorList:(IJSVGTraitedColorStorage*)list
 {
     _privateColorList = list;
     if (_CGGradient != NULL) {
@@ -77,9 +77,9 @@
     return stopsParams;
 }
 
-- (IJSVGColorList*)colorList
+- (IJSVGTraitedColorStorage*)colorList
 {
-    IJSVGColorList* sheet = [[IJSVGColorList alloc] init];
+    IJSVGTraitedColorStorage* sheet = [[IJSVGTraitedColorStorage alloc] init];
 //    NSInteger num = self.gradient.numberOfColorStops;
 //    for (NSInteger i = 0; i < num; i++) {
 //        NSColor* color;
@@ -93,7 +93,7 @@
     return sheet;
 }
 
-- (IJSVGColorList*)computedColorList
+- (IJSVGTraitedColorStorage*)computedColorList
 {
     return _privateColorList;
 }

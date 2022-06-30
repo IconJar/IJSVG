@@ -17,7 +17,7 @@
         _lineJoinStyle = IJSVGLineJoinStyleNone;
         _lineWidth = IJSVGInheritedFloatValue;
         _miterLimit = IJSVGInheritedFloatValue;
-        _colors = [[IJSVGColorList alloc] init];
+        _colors = [[IJSVGTraitedColorStorage alloc] init];
     }
     return self;
 }

@@ -8,8 +8,34 @@
 
 #import <IJSVG/IJSVGGroupLayer.h>
 #import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGStrokeLayer.h>
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
+#import <IJSVG/IJSVGPatternLayer.h>
 
 @implementation IJSVGShapeLayer
+
+@synthesize backingScaleFactor = _backingScaleFactor;
+@synthesize requiresBackingScale;
+@synthesize renderQuality;
+@synthesize blendingMode;
+@synthesize absoluteOrigin;
+@synthesize clipPath = _clipPath;
+@synthesize clipRule;
+@synthesize clipLayers = _clipLayers;
+@synthesize clippingTransform;
+@synthesize clippingBoundingBox;
+@synthesize maskingClippingRect;
+@synthesize clipPathTransform;
+@synthesize colors;
+@synthesize boundingBox;
+@synthesize layerTraits = _layerTraits;
+@synthesize maskingBoundingBox;
+@synthesize filter;
+@synthesize referencingLayer = _referencingLayer;
+@synthesize outerBoundingBox;
+@synthesize maskLayer = _maskLayer;
+@synthesize treatImplicitOriginAsTransform;
 
 - (void)dealloc
 {
@@ -199,6 +225,64 @@
 {
     return [IJSVGLayer firstSublayerOfClass:aClass
                                   fromLayer:self];
+}
+
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* list = [[IJSVGTraitedColorStorage alloc] init];
+    
+    // we have a fill color
+    if([self matchesTraits:IJSVGLayerTraitFilled] == YES) {
+        IJSVGShapeLayer* fillLayer = nil;
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGeneric]) != nil) {
+            CGColorRef colorRef = NULL;
+            if((colorRef = fillLayer.fillColor) != NULL) {
+                NSColor* nsColor = [NSColor colorWithCGColor:fillLayer.fillColor];
+                IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
+                                                                      traits:IJSVGColorUsageTraitFill];
+                [list addColor:color];
+            }
+        }
+        
+        // patterns
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillPattern]) != nil) {
+            IJSVGTraitedColorStorage* storage = fillLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitFill];
+            [list mergeWithColors:storage];
+        }
+        
+        // gradients
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGradient]) != nil) {
+            IJSVGTraitedColorStorage* storage = fillLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitGradientStop];
+            [list mergeWithColors:storage];
+        }
+    }
+    
+    // we have a stroke color
+    if([self matchesTraits:IJSVGLayerTraitStroked] == YES) {
+        IJSVGStrokeLayer* strokeLayer = nil;
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
+            IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:[NSColor colorWithCGColor:strokeLayer.strokeColor]
+                                                                 traits:IJSVGColorUsageTraitStroke];
+            [list addColor:color];
+        }
+        
+        // patterns
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
+            IJSVGTraitedColorStorage* storage = strokeLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitFill];
+            [list mergeWithColors:storage];
+        }
+        
+        // gradients
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
+            IJSVGTraitedColorStorage* storage = strokeLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitGradientStop];
+            [list mergeWithColors:storage];
+        }
+    }
+    return list;
 }
 
 @end

@@ -372,7 +372,6 @@
     layer.intrinsicSize = node.intrinsicSize;
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
-    layer.backingScaleFactor = _backingScale;
         
     // we are the top most SVG, not a nested one,
     // we can simply use the viewport given to us

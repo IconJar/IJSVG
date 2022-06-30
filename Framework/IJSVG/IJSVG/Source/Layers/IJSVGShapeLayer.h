@@ -17,32 +17,7 @@
     NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* _layerUsageMapTable;
 }
 
-@property (nonatomic, assign) CGFloat backingScaleFactor;
-@property (nonatomic, readonly) BOOL requiresBackingScale;
-@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
-@property (nonatomic, assign) CGBlendMode blendingMode;
-@property (nonatomic, assign) CGPoint absoluteOrigin;
-@property (nonatomic, assign) CGPoint originalPathOrigin;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
-@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* clipLayer;
-@property (nonatomic, strong) NSArray<CALayer<IJSVGDrawableLayer>*>* clipLayers;
-@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* maskLayer;
-@property (nonatomic, readonly) CGRect absoluteFrame;
-@property (nonatomic, assign) CGRect boundingBox;
-@property (nonatomic, assign) CGRect outerBoundingBox;
-@property (nonatomic, readonly) CGRect innerBoundingBox;
-@property (nonatomic, readonly) CGRect boundingBoxBounds;
-@property (nonatomic, strong) IJSVGFilter* filter;
-@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
-@property (nonatomic, copy) CAShapeLayerFillRule clipRule;
-@property (nonatomic, assign) CGRect maskingBoundingBox;
-@property (nonatomic, assign) CGRect maskingClippingRect;
-@property (nonatomic, assign) CGRect clippingBoundingBox;
-@property (nonatomic, assign) CGAffineTransform clippingTransform;
-@property (nonatomic, assign) CGPathRef clipPath;
-@property (nonatomic, assign) CGAffineTransform clipPathTransform;
-@property (nonatomic, assign) IJSVGLayerTraits layerTraits;
-@property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
                        forSublayer:(IJSVGLayer*)sublayer

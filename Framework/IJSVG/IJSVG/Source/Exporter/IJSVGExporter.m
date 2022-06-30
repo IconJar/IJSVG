@@ -394,15 +394,6 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (NSString*)styleSheetRulesFromDictionary:(NSDictionary*)dict
-{
-    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:dict.count];
-    for (NSString* key in dict.allKeys) {
-        [array addObject:[NSString stringWithFormat:@"%@: %@;", key, dict[key]]];
-    }
-    return [NSString stringWithFormat:@"{%@}", [array componentsJoinedByString:@" "]];
-}
-
 - (void)_sortAttributesOnElement:(NSXMLElement*)element
 {
     // only apply to XML elements, not XMLNodes
@@ -1245,7 +1236,7 @@ NSString* IJSVGHash(NSString* key)
         // add the color
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
         NSString* stopColor = [self colorStringForColor:aColor
-                                                   flag:IJSVGColorTypeFlagStop
+                                                   flag:IJSVGColorUsageTraitGradientStop
                                                 options:options];
         // dont bother adding default
         if ([stopColor isEqualToString:@"#000"] == NO) {
@@ -1738,7 +1729,7 @@ NSString* IJSVGHash(NSString* key)
             NSColor* fillColor = nil;
             fillColor = [NSColor colorWithCGColor:fillLayer.fillColor];
             colorString = [self colorStringForColor:fillColor
-                                               flag:IJSVGColorTypeFlagFill
+                                               flag:IJSVGColorUsageTraitFill
                                             options:[self colorOptions]];
         }
         dict[IJSVGAttributeFill] = colorString;
@@ -1787,7 +1778,7 @@ NSString* IJSVGHash(NSString* key)
         } else if ((strokeLayer = (IJSVGStrokeLayer*)[layer layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
             NSColor* strokeColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
             NSString* strokeColorString = [self colorStringForColor:strokeColor
-                                                               flag:IJSVGColorTypeFlagStroke
+                                                               flag:IJSVGColorUsageTraitStroke
                                                             options:[self colorOptions]];
 
             // could be none
@@ -2195,7 +2186,7 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
 }
 
 - (NSString*)colorStringForColor:(NSColor*)color
-                            flag:(IJSVGColorTypeFlags)flag
+                            flag:(IJSVGColorUsageTraits)flag
                          options:(IJSVGColorStringOptions)options
 {
     NSString* colorString = nil;
