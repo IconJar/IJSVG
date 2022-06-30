@@ -6,10 +6,10 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGUtils.h>
 
-@implementation IJSVGStyle
+@implementation IJSVGStyleSheetStyle
 
 - (id)init
 {
@@ -36,9 +36,9 @@
     return [_dict objectForKey:key];
 }
 
-+ (IJSVGStyle*)parseStyleString:(NSString*)string
++ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
 {
-    IJSVGStyle* style = [[self.class alloc] init];
+    IJSVGStyleSheetStyle* style = [[self.class alloc] init];
     NSInteger length = string.length;
     NSInteger index = 0;
     NSString* key = nil;
@@ -102,10 +102,10 @@
     return [_dict description];
 }
 
-- (IJSVGStyle*)mergedStyle:(IJSVGStyle*)style
+- (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style
 {
     // create the new style
-    IJSVGStyle* newStyle = [[IJSVGStyle alloc] init];
+    IJSVGStyleSheetStyle* newStyle = [[IJSVGStyleSheetStyle alloc] init];
 
     // grab the current style
     NSMutableDictionary* dict = [self properties].mutableCopy;

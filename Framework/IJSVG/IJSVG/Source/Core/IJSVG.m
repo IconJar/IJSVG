@@ -116,7 +116,7 @@
 }
 
 - (id)initWithSVGLayer:(IJSVGGroupLayer*)group
-               viewBox:(NSRect)viewBox
+               viewBox:(CGRect)viewBox
 {
     // this completely bypasses passing of files
     if ((self = [super init]) != nil) {
@@ -124,6 +124,16 @@
         _viewBox = viewBox;
 
         // any setups
+        [self _setupBasicsFromAnyInitializer];
+    }
+    return self;
+}
+
+- (id)initWithRootNode:(IJSVGRootNode*)rootNode
+{
+    if((self = [super init]) != nil) {
+        _rootNode = rootNode;
+        [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
     }
     return self;
@@ -294,18 +304,35 @@
     _intrinsicSize = _rootNode.intrinsicSize;
 }
 
+- (CGSize)size
+{
+    return [_intrinsicSize computeValue:self.defaultSize];
+}
+
+- (CGSize)sizeWithDefaultSize:(CGSize)size
+{
+    return [_intrinsicSize computeValue:size];
+}
+
 - (void)_setupBasicsFromAnyInitializer
 {
-    self.renderingStyle = [[IJSVGRenderingStyle alloc] init];
-    self.clipToViewport = YES;
+    self.style = [[IJSVGStyle alloc] init];
     self.ignoreIntrinsicSize = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
+    self.defaultSize = CGSizeMake(200.f, 200.f);
     self.renderingBackingScaleHelper = ^CGFloat {
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
         }
         return 1.f;
     };
+}
+
+- (BOOL)hasDynamicSize
+{
+    IJSVGUnitSize* size = _intrinsicSize;
+    return size.width.type == IJSVGUnitLengthTypePercentage ||
+        size.height.type == IJSVGUnitLengthTypePercentage;
 }
 
 - (void)setTitle:(NSString*)title
@@ -338,7 +365,7 @@
     _respondsTo.shouldHandleSubSVG = [_delegate respondsToSelector:@selector(svg:foundSubSVG:withSVGString:)];
 }
 
-- (NSRect)viewBox
+- (CGRect)viewBox
 {
     return _viewBox;
 }
@@ -360,35 +387,54 @@
 
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
 {
-    return @[];//[_rootNode subSVGs:recursive];
+    NSMutableArray<IJSVG*>* svgs = [[NSMutableArray alloc] init];
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode *node,
+                                     BOOL *allowChildNodes,
+                                     BOOL *stop) {
+        if(node.class == IJSVGRootNode.class) {
+            IJSVGRootNode* root = (IJSVGRootNode*)node.copy;
+            IJSVG* newSVG = [[self.class alloc] initWithRootNode:root];
+            if(newSVG != nil) {
+                [svgs addObject:newSVG];
+            }
+        }
+    };
+    [IJSVGNode walkNodeTree:_rootNode
+                    handler:handler];
+    return svgs;
+}
+
+- (IJSVGExporter*)exporterWithOptions:(IJSVGExporterOptions)options
+                 floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
+ return [[IJSVGExporter alloc] initWithSVG:self
+                                      size:_viewBox.size
+                                   options:options
+                      floatingPointOptions:floatingPointOptions];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
 {
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:self
-                                                             size:self.viewBox.size
-                                                          options:options];
-    return [exporter SVGString];
+    IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
+    return [self exporterWithOptions:options
+                floatingPointOptions:fpo].SVGString;
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:self
-                                                             size:self.viewBox.size
-                                                          options:options
-                                             floatingPointOptions:floatingPointOptions];
-    return [exporter SVGString];
+    return [self exporterWithOptions:options
+                floatingPointOptions:floatingPointOptions].SVGString;
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
 {
     return [self imageWithSize:aSize
                        flipped:NO
                          error:nil];
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
                     error:(NSError**)error;
 {
     return [self imageWithSize:aSize
@@ -396,27 +442,12 @@
                          error:error];
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
 {
     return [self imageWithSize:aSize
                        flipped:flipped
                          error:nil];
-}
-
-- (NSSize)computeSVGSizeWithRenderSize:(NSSize)size
-{
-    IJSVGUnitSize* svgSize = _intrinsicSize;
-    return NSMakeSize([svgSize.width computeValue:size.width],
-        [svgSize.height computeValue:size.height]);
-}
-
-- (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize
-{
-    NSSize propSize = [self computeSVGSizeWithRenderSize:aSize];
-    [self _beginDraw:(NSRect) { .origin = CGPointZero, .size = aSize }];
-    return NSMakeRect(0.f, 0.f, propSize.width * _clipScale,
-        propSize.height * _clipScale);
 }
 
 - (CGImageRef)newCGImageRefWithSize:(CGSize)size
@@ -425,13 +456,10 @@
 {
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
-    NSRect rect = (CGRect) {
+    CGRect rect = (CGRect) {
         .origin = CGPointZero,
         .size = (CGSize)size
     };
-
-    // this is highly important this is setup
-    [self _beginDraw:rect];
 
     // make sure we setup the scale based on the backing scale factor
     CGFloat scale = [self backingScaleFactor];
@@ -464,7 +492,7 @@
     return imageRef;
 }
 
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
                     error:(NSError**)error
 {
@@ -478,12 +506,17 @@
     return image;
 }
 
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
+- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error
 {
-    NSRect rect = [self computeOriginalDrawingFrameWithSize:aSize];
-    return [self imageWithSize:rect.size flipped:flipped error:error];
+    CGSize ogSize = _rootNode.intrinsicSize.value;
+    CGFloat ratio = ogSize.height / ogSize.width;
+    ogSize.width = aSize.width * ratio;
+    ogSize.height = aSize.height * ratio;
+    return [self imageWithSize:ogSize
+                       flipped:flipped
+                         error:error];
 }
 
 - (NSData*)PDFData
@@ -494,16 +527,16 @@
 - (NSData*)PDFData:(NSError**)error
 {
     return [self
-        PDFDataWithRect:(NSRect) { .origin = NSZeroPoint, .size = _viewBox.size }
+        PDFDataWithRect:(CGRect) { .origin = NSZeroPoint, .size = _viewBox.size }
                   error:error];
 }
 
-- (NSData*)PDFDataWithRect:(NSRect)rect
+- (NSData*)PDFDataWithRect:(CGRect)rect
 {
     return [self PDFDataWithRect:rect error:nil];
 }
 
-- (NSData*)PDFDataWithRect:(NSRect)rect
+- (NSData*)PDFDataWithRect:(CGRect)rect
                      error:(NSError**)error
 {
     // create the data for the PDF
@@ -524,12 +557,10 @@
     CGContextTranslateCTM(context, 0, -box.size.height);
 
     // make sure we set the masks to path bits n bobs
-//    [self _beginVectorDraw];
     // draw the icon
-    [self _drawInRect:(NSRect)box
+    [self _drawInRect:(CGRect)box
               context:context
                 error:error];
-//    [self _endVectorDraw];
 
     CGContextEndPage(context);
 
@@ -539,40 +570,6 @@
     CGDataConsumerRelease(dataConsumer);
     return data;
 }
-
-//- (void)endVectorDraw
-//{
-//    [self _endVectorDraw];
-//}
-//
-//- (void)beginVectorDraw
-//{
-//    [self _beginVectorDraw];
-//}
-
-//- (void)_beginVectorDraw
-//{
-//    // turn on converts masks to PDF's
-//    // as PDF context and layer masks dont work
-//    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-//    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
-//        ((IJSVGLayer*)layer).convertMasksToPaths = YES;
-//    };
-//    [IJSVGLayer recursivelyWalkLayer:self.layer
-//                           withBlock:block];
-//}
-//
-//- (void)_endVectorDraw
-//{
-//    // turn of convert masks to paths as not
-//    // needed for generic rendering
-//    void (^block)(CALayer* layer, BOOL isMask, BOOL* stop) =
-//    ^void(CALayer* layer, BOOL isMask, BOOL* stop) {
-//        ((IJSVGLayer*)layer).convertMasksToPaths = NO;
-//    };
-//    [IJSVGLayer recursivelyWalkLayer:self.layer
-//                           withBlock:block];
-//}
 
 - (void)prepForDrawingInView:(NSView*)view
 {
@@ -592,16 +589,16 @@
     };
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point
-               size:(NSSize)aSize
+- (BOOL)drawAtPoint:(CGPoint)point
+               size:(CGSize)aSize
 {
     return [self drawAtPoint:point
                         size:aSize
                        error:nil];
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point
-               size:(NSSize)aSize
+- (BOOL)drawAtPoint:(CGPoint)point
+               size:(CGSize)aSize
               error:(NSError**)error
 {
     return [self drawInRect:NSMakeRect(point.x, point.y,
@@ -609,12 +606,12 @@
                       error:error];
 }
 
-- (BOOL)drawInRect:(NSRect)rect
+- (BOOL)drawInRect:(CGRect)rect
 {
     return [self drawInRect:rect error:nil];
 }
 
-- (BOOL)drawInRect:(NSRect)rect
+- (BOOL)drawInRect:(CGRect)rect
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
@@ -628,37 +625,7 @@
                        error:error];
 }
 
-- (NSRect)computeRectDrawingInRect:(NSRect)rect
-                           isValid:(BOOL*)valid
-{
-    // we also need to calculate the viewport so we can clip
-    // the drawing if needed
-    NSRect viewPort = NSZeroRect;
-    NSSize propSize = [self computeSVGSizeWithRenderSize:rect.size];
-    viewPort.origin.x = round((rect.size.width / 2 - (propSize.width / 2) * _clipScale) + rect.origin.x);
-    viewPort.origin.y = round(
-        (rect.size.height / 2 - (propSize.height / 2) * _clipScale) + rect.origin.y);
-    viewPort.size.width = propSize.width * _clipScale;
-    viewPort.size.height = propSize.height * _clipScale;
-
-    // check the viewport
-    if (NSEqualRects(_viewBox, NSZeroRect) ||
-        _viewBox.size.width <= 0 ||
-        _viewBox.size.height <= 0 ||
-        NSEqualRects(NSZeroRect, viewPort) ||
-        CGRectIsEmpty(viewPort) ||
-        CGRectIsNull(viewPort) ||
-        viewPort.size.width <= 0 ||
-        viewPort.size.height <= 0) {
-        *valid = NO;
-        return NSZeroRect;
-    }
-
-    *valid = YES;
-    return viewPort;
-}
-
-- (void)drawInRect:(NSRect)rect
+- (void)drawInRect:(CGRect)rect
            context:(CGContextRef)context
 {
     [self _drawInRect:rect
@@ -666,86 +633,13 @@
                 error:nil];
 }
 
-//- (BOOL)_drawInRect:(NSRect)rect
-//            context:(CGContextRef)ref
-//              error:(NSError**)error
-//{
-//    // prep for draw...
-//    CGContextSaveGState(ref);
-//    @try {
-//        [self _beginDraw:rect];
-//
-//        // we also need to calculate the viewport so we can clip
-//        // the drawing if needed
-//        BOOL canDraw = NO;
-//        NSRect viewPort = [self computeRectDrawingInRect:rect isValid:&canDraw];
-//        // check the viewport
-//        if (canDraw == NO) {
-//            if (error != NULL) {
-//                *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-//                                                     code:IJSVGErrorDrawing
-//                                                 userInfo:nil] autorelease];
-//            }
-//        } else {
-//            // clip to mask
-//            if (self.clipToViewport == YES) {
-//                CGContextClipToRect(ref, viewPort);
-//            }
-//
-//            // add the origin back onto the viewport
-//            viewPort.origin.x -= (_viewBox.origin.x) * _scale;
-//            viewPort.origin.y -= (_viewBox.origin.y) * _scale;
-//
-//            // transforms
-//            CGContextTranslateCTM(ref, viewPort.origin.x, viewPort.origin.y);
-//            CGContextScaleCTM(ref, _scale, _scale);
-//
-//            // do we need to update the backing scales on the
-//            // layers?
-//            [self backingScaleFactor:nil];
-//
-//            CGInterpolationQuality quality;
-//            switch (self.renderQuality) {
-//            case kIJSVGRenderQualityLow: {
-//                quality = kCGInterpolationLow;
-//                break;
-//            }
-//            case kIJSVGRenderQualityOptimized: {
-//                quality = kCGInterpolationMedium;
-//                break;
-//            }
-//            default: {
-//                quality = kCGInterpolationHigh;
-//            }
-//            }
-//            CGContextSetInterpolationQuality(ref, quality);
-//            BOOL hasTransaction = IJSVGBeginTransaction();
-//            [self.layer renderInContext:ref];
-//            if (hasTransaction == YES) {
-//                IJSVGEndTransaction();
-//            }
-//        }
-//    } @catch (NSException* exception) {
-//        // just catch and give back a drawing error to the caller
-//        if (error != NULL) {
-//            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-//                                                 code:IJSVGErrorDrawing
-//                                             userInfo:nil] autorelease];
-//        }
-//    }
-//    CGContextRestoreGState(ref);
-//    return (error == nil);
-//}
-
-- (BOOL)_drawInRect:(NSRect)rect
+- (BOOL)_drawInRect:(CGRect)rect
             context:(CGContextRef)ctx
               error:(NSError**)error
 {
     BOOL transaction = IJSVGBeginTransaction();
     CGContextSaveGState(ctx);
-    // make sure we setup a transaction
     CGFloat backingScale = [self backingScaleFactor];
-//    [IJSVGLayer logLayer:self.rootLayer];
     CGInterpolationQuality quality;
     switch (_renderQuality) {
         case kIJSVGRenderQualityLow: {
@@ -798,22 +692,6 @@
     }
     scale = MAX(1.f, scale);
     return _backingScale = scale;
-}
-
-- (void)setRenderingStyle:(IJSVGRenderingStyle*)style
-{
-    _renderingStyle = style;
-}
-
-- (void)observeValueForKeyPath:(NSString*)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary<NSKeyValueChangeKey, id>*)change
-                       context:(void*)context
-{
-    // invalidate the tree if a style is set
-    if (object == _renderingStyle) {
-        [self invalidateLayerTree];
-    }
 }
 
 - (void)setNeedsDisplay
@@ -893,23 +771,6 @@
     [IJSVGLayer recursivelyWalkLayer:self.rootLayer
                            withBlock:block];
     return sheet;
-}
-
-- (void)_beginDraw:(NSRect)rect
-{
-    // in order to correctly fit the the SVG into the
-    // rect, we need to work out the ratio scale in order
-    // to transform the paths into our viewbox
-    NSSize dest = rect.size;
-    NSSize source = _viewBox.size;
-    NSSize propSize = [self computeSVGSizeWithRenderSize:rect.size];
-    _clipScale = MIN(dest.width / propSize.width,
-        dest.height / propSize.height);
-
-    // work out the actual scale based on the clip scale
-    CGFloat w = propSize.width * _clipScale;
-    CGFloat h = propSize.height * _clipScale;
-    _scale = MIN(w / source.width, h / source.height);
 }
 
 #pragma mark NSPasteboard

@@ -9,18 +9,18 @@
 #import <IJSVG/IJSVGColor.h>
 #import <Foundation/Foundation.h>
 
-@interface IJSVGStyle : NSObject {
+@interface IJSVGStyleSheetStyle : NSObject {
 
 @private
     NSMutableDictionary* _dict;
 }
 
-+ (IJSVGStyle*)parseStyleString:(NSString*)string;
++ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
 
 - (void)setPropertyValue:(id)value
              forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
 
-- (IJSVGStyle*)mergedStyle:(IJSVGStyle*)style;
+- (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;
 
 @end

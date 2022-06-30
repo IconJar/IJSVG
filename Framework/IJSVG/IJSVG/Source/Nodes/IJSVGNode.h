@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
 #import <AppKit/AppKit.h>
@@ -178,7 +178,7 @@ void IJSVGAssertPaintableObject(id object);
 
 
 + (void)walkNodeTree:(IJSVGNode*)node
-            handler:(IJSVGNodeWalkHandler)handler;
+             handler:(IJSVGNodeWalkHandler)handler;
 
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind;

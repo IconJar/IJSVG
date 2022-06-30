@@ -346,11 +346,6 @@ NSString* IJSVGHash(NSString* key)
         [self _collapseGradients];
     }
 
-    // create classes?
-    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateClasses) == YES) {
-        [self _createClasses];
-    }
-
     // move attributes to group
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionMoveAttributesToGroup) == YES) {
         [self _moveAttributesToGroupWithElement:_dom.rootElement];
@@ -397,44 +392,6 @@ NSString* IJSVGHash(NSString* key)
             [element addAttribute:att];
         }
     }
-}
-
-- (void)_createClasses
-{
-    const NSArray* inhert = IJSVGInheritableAttributes();
-    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//*"
-                                                     error:nil];
-    NSMutableDictionary* rules = [[NSMutableDictionary alloc] init];
-    for (NSXMLElement* element in elements) {
-        NSDictionary* inhertEl = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
-                                         inheritableAttributes:inhert];
-        NSString* styles = [self styleSheetRulesFromDictionary:inhertEl];
-        NSString* className = nil;
-        if ((className = [rules objectForKey:styles]) == nil) {
-            className = [NSString stringWithFormat:@"%@", [self generateID]];
-            rules[styles] = className;
-        }
-
-        for (NSString* attributeName in inhertEl) {
-            [element removeAttributeForName:attributeName];
-        }
-        
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeClass: className
-        }, element);
-    }
-
-    // add styles to dom
-    NSXMLElement* styles = [[NSXMLElement alloc] initWithName:@"style"];
-    NSXMLNode* node = [[NSXMLNode alloc] initWithKind:NSXMLTextKind];
-
-    NSMutableArray* classes = [[NSMutableArray alloc] initWithCapacity:rules.count];
-    for (NSString* r in rules) {
-        [classes addObject:[NSString stringWithFormat:@".%@%@", rules[r], r]];
-    }
-    node.stringValue = [classes componentsJoinedByString:@""];
-    [styles addChild:node];
-    [_dom.rootElement insertChild:styles atIndex:0];
 }
 
 - (NSString*)styleSheetRulesFromDictionary:(NSDictionary*)dict

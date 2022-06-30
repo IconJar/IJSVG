@@ -41,7 +41,8 @@
 
 - (void)addChild:(IJSVGNode*)child
 {
-    if(child == nil || (child.parentNode == self && [_children containsObject:child])) {
+    if(child == nil || child == self ||
+       (child.parentNode == self && [_children containsObject:child])) {
         return;
     }
     child.parentNode = self;

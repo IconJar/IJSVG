@@ -20,6 +20,6 @@
 }
 
 - (void)parseStyleBlock:(NSString*)string;
-- (IJSVGStyle*)styleForNode:(IJSVGNode*)node;
+- (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node;
 
 @end

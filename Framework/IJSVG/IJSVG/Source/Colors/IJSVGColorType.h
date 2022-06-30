@@ -14,7 +14,9 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorTypeFlags) {
     IJSVGColorTypeFlagUnknown = 1 << 0,
     IJSVGColorTypeFlagFill = 1 << 1,
     IJSVGColorTypeFlagStroke = 1 << 2,
-    IJSVGColorTypeFlagStop = 1 << 3
+    IJSVGColorTypeFlagStop = 1 << 3,
+    IJSVGColorTypeFlagAll = IJSVGColorTypeFlagFill | IJSVGColorTypeFlagStop |
+        IJSVGColorTypeFlagStroke
 };
 
 @interface IJSVGColorType : NSObject {
@@ -25,6 +27,6 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorTypeFlags) {
 @property (nonatomic, assign) IJSVGColorTypeFlags flags;
 
 + (IJSVGColorType*)typeWithColor:(NSColor*)color
-                            flags:(IJSVGColorTypeFlags)mask;
+                           flags:(IJSVGColorTypeFlags)mask;
 
 @end

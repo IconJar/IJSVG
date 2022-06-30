@@ -16,7 +16,7 @@
 #import <IJSVG/IJSVGLayerTree.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRendering.h>
-#import <IJSVG/IJSVGRenderingStyle.h>
+#import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <Foundation/Foundation.h>
 
@@ -41,13 +41,12 @@ withSVGString:(NSString*)subSVGString;
 
 @private
     IJSVGRootNode* _rootNode;
-    CGFloat _scale;
-    CGFloat _clipScale;
     id<IJSVGDelegate> _delegate;
     IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScale;
     NSMutableDictionary* _replacementColors;
+    IJSVGUnitSize* _intrinsicSize;
 
     struct {
         unsigned int shouldHandleSubSVG : 1;
@@ -63,19 +62,29 @@ withSVGString:(NSString*)subSVGString;
 // global overwriting rules for when rendering an SVG, this will overide any
 // fillColor, strokeColor, pattern and gradient fill
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
-@property (nonatomic, assign) BOOL clipToViewport;
-@property (nonatomic, strong) IJSVGRenderingStyle* renderingStyle;
-@property (weak, nonatomic, readonly) IJSVGUnitSize * intrinsicSize;
+@property (nonatomic, strong) IJSVGStyle* style;
+
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, strong) IJSVGLayerTree* layerTree;
 @property (nonatomic, strong) IJSVGRootLayer* rootLayer;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
+// The size of the SVG either computed by its intrinsicSize of its viewBox
+// If the size if % values, it will use the defaultSize
+@property (nonatomic, readonly) CGSize size;
+
+// Will return true if the intrinsic size is a % value
+@property (nonatomic, readonly) BOOL hasDynamicSize;
+
+// This is used when the intrinsic size is a % value, e.g. 100% x 100%
+@property (nonatomic, assign) CGSize defaultSize;
+
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;
 - (IJSVGGroup*)rootNode;
-- (NSRect)viewBox;
+- (CGRect)viewBox;
+- (CGSize)sizeWithDefaultSize:(CGSize)size;
 - (NSArray<IJSVGPath*>*)glyphs;
 - (NSString*)identifier;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
@@ -88,9 +97,10 @@ withSVGString:(NSString*)subSVGString;
       delegate:(id<IJSVGDelegate>)delegate;
 
 - (id)initWithImage:(NSImage*)image;
+- (id)initWithRootNode:(IJSVGRootNode*)rootNode;
 
 - (id)initWithSVGLayer:(IJSVGGroupLayer*)group
-               viewBox:(NSRect)viewBox;
+               viewBox:(CGRect)viewBox;
 
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error
@@ -127,39 +137,38 @@ withSVGString:(NSString*)subSVGString;
                       bundle:(NSBundle*)bundle
                        error:(NSError**)error;
 
-- (NSImage*)imageWithSize:(NSSize)aSize;
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize;
+- (NSImage*)imageWithSize:(CGSize)aSize
                     error:(NSError**)error;
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped;
-- (NSImage*)imageWithSize:(NSSize)aSize
+- (NSImage*)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
                     error:(NSError**)error;
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(NSSize)aSize
+- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error;
 - (CGImageRef)newCGImageRefWithSize:(CGSize)size
                             flipped:(BOOL)flipped
                               error:(NSError**)error;
 
-- (BOOL)drawAtPoint:(NSPoint)point
-               size:(NSSize)size;
-- (BOOL)drawAtPoint:(NSPoint)point
-               size:(NSSize)aSize
+- (BOOL)drawAtPoint:(CGPoint)point
+               size:(CGSize)size;
+- (BOOL)drawAtPoint:(CGPoint)point
+               size:(CGSize)aSize
               error:(NSError**)error;
-- (BOOL)drawInRect:(NSRect)rect;
-- (BOOL)drawInRect:(NSRect)rect
+- (BOOL)drawInRect:(CGRect)rect;
+- (BOOL)drawInRect:(CGRect)rect
              error:(NSError**)error;
-- (void)drawInRect:(NSRect)rect
+- (void)drawInRect:(CGRect)rect
            context:(CGContextRef)context;
 
 - (NSData*)PDFData;
 - (NSData*)PDFData:(NSError**)error;
-- (NSData*)PDFDataWithRect:(NSRect)rect;
-- (NSData*)PDFDataWithRect:(NSRect)rect
+- (NSData*)PDFDataWithRect:(CGRect)rect;
+- (NSData*)PDFDataWithRect:(CGRect)rect
                      error:(NSError**)error;
 
-- (NSRect)computeOriginalDrawingFrameWithSize:(NSSize)aSize;
 - (void)setNeedsDisplay;
 
 // colors

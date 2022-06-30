@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 
 @interface IJSVGStyleSheetSelectorListItem : NSObject {
@@ -133,14 +133,14 @@
     // append the rule onto the list within
     // this style sheet
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
-    aRule.style = [IJSVGStyle parseStyleString:rule];
+    aRule.style = [IJSVGStyleSheetStyle parseStyleString:rule];
     aRule.selectors = selectors;
     [_rules addObject:aRule];
 }
 
-- (IJSVGStyle*)styleForNode:(IJSVGNode*)node
+- (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node
 {
-    IJSVGStyle* style = [[IJSVGStyle alloc] init];
+    IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
     for (IJSVGStyleSheetRule* rule in _rules) {
         IJSVGStyleSheetSelector* matchedSelector = nil;

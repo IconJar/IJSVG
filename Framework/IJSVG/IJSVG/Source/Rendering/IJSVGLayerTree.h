@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGRenderingStyle.h>
+#import <IJSVG/IJSVGStyle.h>
 #import <QuartzCore/QuartzCore.h>
 
 @class IJSVGLayer;
@@ -21,7 +21,7 @@
 
 @property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, assign) CGFloat backingScale;
-@property (nonatomic, strong) IJSVGRenderingStyle* style;
+@property (nonatomic, strong) IJSVGStyle* style;
 
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 

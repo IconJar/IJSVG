@@ -103,17 +103,15 @@
 
 + (IJSVG*)convertPathToSVG:(CGPathRef)path
 {
-    IJSVGBeginTransaction();
-    __block IJSVG* svg = nil;
-    IJSVGGroupLayer* layer = [[IJSVGGroupLayer alloc] init];
-    IJSVGShapeLayer* shape = [[IJSVGShapeLayer alloc] init];
-    [layer addSublayer:shape];
-    shape.path = path;
     CGRect box = CGPathGetPathBoundingBox(path);
-    svg = [[IJSVG alloc] initWithSVGLayer:layer
-                                  viewBox:box];
-    IJSVGEndTransaction();
-    return svg;
+    IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
+    rootNode.viewBox = [IJSVGUnitRect rectWithCGRect:box];
+    CGMutablePathRef nPath = CGPathCreateMutableCopy(path);
+    IJSVGPath* childPath = [[IJSVGPath alloc] init];
+    childPath.path = nPath;
+    [rootNode addChild:childPath];
+    CGPathRelease(nPath);
+    return [[IJSVG alloc] initWithRootNode:rootNode];
 }
 
 @end

@@ -332,8 +332,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(NSArray<NSString*>*)ignoredAttributes
 {
-    IJSVGStyle* styleSheet = nil;
-    __block IJSVGStyle* nodeStyle = nil;
+    IJSVGStyleSheetStyle* styleSheet = nil;
+    __block IJSVGStyleSheetStyle* nodeStyle = nil;
     
     // precache the attributes, this is quicker than asking for it each time
     NSMutableDictionary<NSString*, NSString*>* attributes = nil;
@@ -394,7 +394,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     }
     
     IJSVGAttributeParse(IJSVGAttributeStyle, ^(NSString* value) {
-        nodeStyle = [IJSVGStyle parseStyleString:value];
+        nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
     });
     
     if(styleSheet != nil) {

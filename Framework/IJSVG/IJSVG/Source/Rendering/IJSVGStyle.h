@@ -12,15 +12,14 @@
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 
-@interface IJSVGRenderingStyle : NSObject
+@interface IJSVGStyle : NSObject
 
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, assign) CGFloat lineWidth;
-@property (nonatomic, strong) IJSVGColorList* colorList;
+@property (nonatomic, assign) CGFloat miterLimit;
+@property (nonatomic, strong) IJSVGColorList* colors;
 @property (nonatomic, strong) NSColor* fillColor;
 @property (nonatomic, strong) NSColor* strokeColor;
-
-+ (NSArray<NSString*>*)observableProperties;
 
 @end
