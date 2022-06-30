@@ -263,9 +263,13 @@
     if([self matchesTraits:IJSVGLayerTraitStroked] == YES) {
         IJSVGStrokeLayer* strokeLayer = nil;
         if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
-            IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:[NSColor colorWithCGColor:strokeLayer.strokeColor]
-                                                                 traits:IJSVGColorUsageTraitStroke];
-            [list addColor:color];
+            CGColorRef colorRef = NULL;
+            if((colorRef = strokeLayer.strokeColor) != NULL) {
+                NSColor* nsColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
+                IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
+                                                                     traits:IJSVGColorUsageTraitStroke];
+                [list addColor:color];
+            }
         }
         
         // patterns

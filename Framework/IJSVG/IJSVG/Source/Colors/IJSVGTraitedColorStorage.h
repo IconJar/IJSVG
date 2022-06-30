@@ -23,8 +23,9 @@
     NSMutableSet<IJSVGTraitedColor*>* _colors;
 }
 
-@property (nonatomic, assign, readonly) NSUInteger count;
+@property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) NSSet<IJSVGTraitedColor*>* colors;
+@property (nonatomic, readonly) NSUInteger replacedColorCount;
 
 - (void)addTraits:(IJSVGColorUsageTraits)traits;
 - (void)addColor:(IJSVGTraitedColor*)color;
@@ -32,5 +33,7 @@
            withColor:(NSColor*)withColor
               traits:(IJSVGColorUsageTraits)traits;
 - (void)mergeWithColors:(IJSVGTraitedColorStorage*)colorList;
+- (NSColor*)colorForColor:(NSColor*)color
+           matchingTraits:(IJSVGColorUsageTraits)traits;
 
 @end

@@ -152,6 +152,13 @@
     return newPath;
 }
 
+- (NSColor*)colorForColor:(NSColor*)color
+           matchingTraits:(IJSVGColorUsageTraits)traits
+{
+    return [_style.colors colorForColor:color
+                         matchingTraits:traits];
+}
+
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
@@ -192,6 +199,11 @@
             
             if(colorNode.isNoneOrTransparent == YES) {
                 color = nil;
+            } else {
+                // compute any color that may have been changed via the styles
+                NSColor* repColor = [self colorForColor:color
+                                         matchingTraits:IJSVGColorUsageTraitFill];
+                color = repColor ?: color;
             }
             
             // set the color against the layer — we cant just use fill layer due to how
@@ -315,6 +327,11 @@
         strokeColor = colorNode.color;
     }
     
+    // replacement colour
+    NSColor* repColor = [self colorForColor:strokeColor
+                             matchingTraits:IJSVGColorUsageTraitStroke];
+    strokeColor = repColor ?: strokeColor;
+    
     // set the color
     layer.fillColor = nil;
     layer.strokeColor = strokeColor.CGColor;
@@ -424,6 +441,21 @@
     // gradient fill
     IJSVGGradientLayer* gradientLayer = [IJSVGGradientLayer layer];
     gradientLayer.backingScaleFactor = _backingScale;
+    
+    // lets copy the gradient incase there are any style changes
+    if(_style.colors.replacedColorCount != 0) {
+        gradient = gradient.copy;
+        NSMutableArray* colors = nil;
+        colors = [[NSMutableArray alloc] initWithCapacity:gradient.numberOfStops];
+        for(NSColor* color in gradient.colors) {
+            NSColor* repColor = [self colorForColor:color
+                                     matchingTraits:IJSVGColorUsageTraitGradientStop];
+            NSColor* compColor = repColor ?: color;
+            [colors addObject:compColor];
+        }
+        gradient.colors = colors;
+    }
+    
     gradientLayer.gradient = gradient;
     gradientLayer.frame = layer.bounds;
     gradientLayer.viewBox = self.viewPort;
@@ -706,7 +738,7 @@
     frame.size.height = ceilf(image.height.value);
     layer.frame = frame;
     [layer setNeedsLayout];
-    return layer;
+    return (IJSVGLayer*)layer;
 }
 
 @end

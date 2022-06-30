@@ -20,6 +20,14 @@
     return type;
 }
 
+- (instancetype)init
+{
+    if((self = [super init]) != nil) {
+        _traits = IJSVGColorUsageTraitNone;
+    }
+    return self;
+}
+
 - (BOOL)isEqual:(id)object
 {
     if([object isKindOfClass:IJSVGTraitedColor.class] == NO) {

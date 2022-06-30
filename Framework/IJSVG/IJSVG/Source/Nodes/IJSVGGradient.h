@@ -21,7 +21,6 @@
 @property (nonatomic, strong) IJSVGUnitLength* x2;
 @property (nonatomic, strong) IJSVGUnitLength* y1;
 @property (nonatomic, strong) IJSVGUnitLength* y2;
-@property (nonatomic, strong) IJSVGTraitedColorStorage* colorList;
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors;
@@ -30,8 +29,5 @@
 - (void)drawInContextRef:(CGContextRef)ctx
                   bounds:(NSRect)objectRect
                transform:(CGAffineTransform)absoluteTransform;
-
-- (IJSVGTraitedColorStorage*)colorList;
-- (IJSVGTraitedColorStorage*)computedColorList;
 
 @end

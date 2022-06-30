@@ -93,7 +93,7 @@
 }
 
 - (NSColor*)colorForColor:(NSColor*)color
-                   traits:(IJSVGColorUsageTraits)traits
+           matchingTraits:(IJSVGColorUsageTraits)traits
 {
     color = [IJSVGColor computeColorSpace:color];
     IJSVGReplacementColor* repColor = nil;
@@ -109,6 +109,11 @@
     for(IJSVGTraitedColor* traitedColor in colorList.colors) {
         [self addColor:traitedColor];
     }
+}
+
+- (NSUInteger)replacedColorCount
+{
+    return _replacementColors.count;
 }
 
 - (NSUInteger)count
