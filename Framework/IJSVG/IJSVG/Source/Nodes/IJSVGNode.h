@@ -166,6 +166,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong) IJSVGClipPath* clipPath;
 @property (nonatomic, strong) IJSVGMask* mask;
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
+@property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, strong) IJSVGUnitLength* strokeMiterLimit;

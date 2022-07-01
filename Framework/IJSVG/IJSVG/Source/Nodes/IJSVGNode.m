@@ -127,7 +127,8 @@
 {
     return type == IJSVGNodeTypePath || type == IJSVGNodeTypeRect ||
         type == IJSVGNodeTypeCircle || type == IJSVGNodeTypeEllipse ||
-    type == IJSVGNodeTypePolygon || type == IJSVGNodeTypePolyline;
+        type == IJSVGNodeTypePolygon || type == IJSVGNodeTypePolyline ||
+        type == IJSVGNodeTypeLine;
 }
 
 + (void)walkNodeTree:(IJSVGNode*)node
@@ -235,6 +236,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         self.strokeWidth.inherit = YES;
 
         self.windingRule = IJSVGWindingRuleInherit;
+        self.clipRule = IJSVGWindingRuleInherit;
         self.lineCapStyle = IJSVGLineCapStyleInherit;
         self.lineJoinStyle = IJSVGLineJoinStyleInherit;
         self.units = IJSVGUnitInherit;
@@ -287,6 +289,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
     self.transforms = node.transforms;
     self.windingRule = node.windingRule;
+    self.clipRule = node.clipRule;
     self.lineCapStyle = node.lineCapStyle;
     self.lineJoinStyle = node.lineJoinStyle;
     self.parentNode = node.parentNode;

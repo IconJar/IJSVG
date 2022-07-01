@@ -240,7 +240,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (void*)_handleErrorWithCode:(NSUInteger)code
                         error:(NSError**)error
 {
-    if(error) {
+    if(error != nil) {
         *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
                                             code:code
                                         userInfo:nil];
@@ -314,18 +314,20 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                          height:height];
     }
 
+    IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionNone;
     IJSVGUnitLength* wl = node.viewBox.size.width;
     IJSVGUnitLength* hl = node.viewBox.size.height;
     if(node.width != nil) {
-        node.intrinsicDimensions |= IJSVGIntrinsicDimensionWidth;
+        dimensions|= IJSVGIntrinsicDimensionWidth;
         wl = node.width;
     }
     if(node.height != nil) {
-        node.intrinsicDimensions |= IJSVGIntrinsicDimensionHeight;
+        dimensions |= IJSVGIntrinsicDimensionHeight;
         hl = node.height;
     }
 
     // store the width and height
+    node.intrinsicDimensions = dimensions;
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
                                                height:hl];
 }
@@ -518,10 +520,10 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     });
     
     // clip rule
-//    IJSVGAttributeParse(IJSVGAttributeClipRule, ^(NSString* value) {
-////        node.clip
-//    })
-
+    IJSVGAttributeParse(IJSVGAttributeClipPath, ^(NSString* value) {
+        node.clipRule = [IJSVGUtils windingRuleForString:value];
+    });
+    
     // display
     IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {
         if([value.lowercaseString isEqualToString:IJSVGStringNone]) {

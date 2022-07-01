@@ -1974,12 +1974,16 @@ NSString* IJSVGHash(NSString* key)
     CGPathRelease(clipPath);
 
     IJSVGApplyAttributesToElement(dict, clip);
-
-    // add clip id to element
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeClipPath: IJSVGHashURL(clipKey)
-    }, element);
-
+    
+    NSMutableDictionary* elDict = [[NSMutableDictionary alloc] init];
+    elDict[IJSVGAttributeClipPath] = IJSVGHashURL(clipKey);
+    
+    // add clip rule back on
+    if([layer.clipRule isEqualToString:kCAFillRuleNonZero] == NO) {
+        elDict[IJSVGAttributeClipRule] = IJSVGStringEvenOdd;
+    }
+    IJSVGApplyAttributesToElement(elDict, element);
+    
     // add it defs
     [[self defElement] addChild:clip];
 }

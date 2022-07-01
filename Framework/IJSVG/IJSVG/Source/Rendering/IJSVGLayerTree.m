@@ -694,8 +694,8 @@
         CGPathRef path = [self newClipPathFromNode:clipPath
                                          fromLayer:layer];
         layer.clipPath = path;
+        layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:node.clipRule];
         CGPathRelease(path);
-        layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:clipPath.windingRule];
     }
     
     // setup the opacity
