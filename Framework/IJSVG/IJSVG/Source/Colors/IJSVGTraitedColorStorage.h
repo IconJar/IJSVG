@@ -21,6 +21,8 @@
 @private
     NSMutableArray<IJSVGReplacementColor*>* _replacementColors;
     NSMutableSet<IJSVGTraitedColor*>* _colors;
+    IJSVGColorUsageTraits _traits;
+    IJSVGColorUsageTraits _replacementTraits;
 }
 
 @property (nonatomic, readonly) NSUInteger count;
@@ -35,5 +37,7 @@
 - (void)mergeWithColors:(IJSVGTraitedColorStorage*)colorList;
 - (NSColor*)colorForColor:(NSColor*)color
            matchingTraits:(IJSVGColorUsageTraits)traits;
+- (BOOL)matchesReplacementTraits:(IJSVGColorUsageTraits)traits;
+- (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits;
 
 @end

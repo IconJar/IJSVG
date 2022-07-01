@@ -82,14 +82,25 @@ withSVGString:(NSString*)subSVGString;
 // This is used when the intrinsic size is a % value, e.g. 100% x 100%
 @property (nonatomic, assign) CGSize defaultSize;
 
+// bitmask of which dimentions were implicitly set on the SVG
+@property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
+
 - (void)prepForDrawingInView:(NSView*)view;
 - (BOOL)isFont;
-- (IJSVGGroup*)rootNode;
+- (IJSVGRootNode*)rootNode;
 - (CGRect)viewBox;
 - (CGSize)sizeWithDefaultSize:(CGSize)size;
 - (NSArray<IJSVGPath*>*)glyphs;
 - (NSString*)identifier;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
+- (IJSVGExporter*)exporterWithSize:(CGSize)size
+                           options:(IJSVGExporterOptions)options
+              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (NSString*)SVGStringWithSize:(CGSize)size
+                       options:(IJSVGExporterOptions)options;
+- (NSString*)SVGStringWithSize:(CGSize)size
+                       options:(IJSVGExporterOptions)options
+          floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;

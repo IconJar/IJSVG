@@ -317,9 +317,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     IJSVGUnitLength* wl = node.viewBox.size.width;
     IJSVGUnitLength* hl = node.viewBox.size.height;
     if (node.width != nil) {
+        node.intrinsicDimensions |= IJSVGIntrinsicDimensionWidth;
         wl = node.width;
     }
     if (node.height != nil) {
+        node.intrinsicDimensions |= IJSVGIntrinsicDimensionHeight;
         hl = node.height;
     }
 

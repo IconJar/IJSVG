@@ -378,130 +378,159 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    CGFloat point[2] = { 0, 0 };
-    CGFloat subpathPoint[2] = { 0, 0 };
-    IJSVGExporterPathInstruction* baseInstruction = nil;
-    IJSVGExporterPathInstruction* prevInstruction = nil;
+    CGFloat start[2] = {0, 0};
+    CGFloat cursor[2] = {0, 0};
+    CGFloat prevCoords[2] = {0, 0};
 
     NSInteger index = 0;
     for (IJSVGExporterPathInstruction* anInstruction in instructions) {
         char instruction = anInstruction.instruction;
         CGFloat* data = anInstruction.data;
-        NSInteger length = anInstruction.dataLength;
-
-        if (data != NULL) {
-
-            // already relative
-            if (instruction == 'm' || instruction == 'c' || instruction == 's' ||
-                instruction == 'l' || instruction == 'q' || instruction == 't' ||
-                instruction == 'a') {
-
-                point[0] += data[length - 2];
-                point[1] += data[length - 1];
-
-                if (instruction == 'm') {
-                    subpathPoint[0] = point[0];
-                    subpathPoint[1] = point[1];
-
-                    baseInstruction = anInstruction;
-                }
-
-            } else if (instruction == 'h') {
-                point[0] += data[0];
-            } else if (instruction == 'v') {
-                point[1] += data[0];
+        CGFloat* base = anInstruction.base;
+        CGFloat* coords = anInstruction.coords;
+        
+        switch(instruction) {
+            case 'm': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                start[0] = cursor[0];
+                start[1] = cursor[1];
+                break;
             }
-
-            // convert absolute to relative
-            if (instruction == 'M') {
-                if (index > 0) {
+            case 'M': {
+                if(index != 0) {
                     instruction = 'm';
                 }
-
-                data[0] -= point[0];
-                data[1] -= point[1];
-
-                subpathPoint[0] = point[0] += data[0];
-                subpathPoint[1] = point[1] += data[1];
-
-                baseInstruction = anInstruction;
-            } else if (instruction == 'L' || instruction == 'T') {
-                instruction = tolower(instruction);
-
-                data[0] -= point[0];
-                data[1] -= point[1];
-
-                point[0] += data[0];
-                point[1] += data[1];
-            } else if (instruction == 'C') {
-                instruction = 'c';
-
-                data[0] -= point[0];
-                data[1] -= point[1];
-                data[2] -= point[0];
-                data[3] -= point[1];
-                data[4] -= point[0];
-                data[5] -= point[1];
-
-                point[0] += data[4];
-                point[1] += data[5];
-            } else if (instruction == 'S' || instruction == 'Q') {
-                instruction = tolower(instruction);
-
-                data[0] -= point[0];
-                data[1] -= point[1];
-                data[2] -= point[0];
-                data[3] -= point[1];
-
-                point[0] += data[2];
-                point[1] += data[3];
-            } else if (instruction == 'A') {
-                instruction = 'a';
-
-                data[5] -= point[0];
-                data[6] -= point[1];
-
-                point[0] += data[5];
-                point[1] += data[6];
-            } else if (instruction == 'H') {
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                start[0] = cursor[0];
+                start[1] = cursor[1];
+                break;
+            }
+            case 'l': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'L': {
+                instruction = 'l';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'h': {
+                cursor[0] += data[0];
+                break;
+            }
+            case 'H': {
                 instruction = 'h';
-
-                data[0] -= point[0];
-                point[0] += data[0];
-            } else if (instruction == 'V') {
+                data[0] -= cursor[0];
+                cursor[0] += data[0];
+                break;
+            }
+            case 'v': {
+                cursor[1] += data[0];
+                break;
+            }
+            case 'V': {
                 instruction = 'v';
-
-                data[0] -= point[1];
-                point[1] += data[0];
+                data[0] -= cursor[1];
+                cursor[1] += data[0];
+                break;
             }
-
-            // reset the instruction
-            anInstruction.instruction = instruction;
-            CGFloat* coords = anInstruction.coords;
-            coords[0] = point[0];
-            coords[1] = point[1];
-
-        } else if (instruction == 'Z' || instruction == 'z') {
-            if (baseInstruction != nil) {
-                CGFloat* coords = anInstruction.coords;
-                coords[0] = baseInstruction.coords[0];
-                coords[1] = baseInstruction.coords[1];
+            case 'c': {
+                cursor[0] += data[4];
+                cursor[1] += data[5];
+                break;
             }
-            point[0] = subpathPoint[0];
-            point[1] = subpathPoint[1];
+            case 'C': {
+                instruction = 'c';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                data[4] -= cursor[0];
+                data[5] -= cursor[1];
+                cursor[0] += data[4];
+                cursor[1] += data[5];
+                break;
+            }
+            case 's': {
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'S': {
+                instruction = 's';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'q': {
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'Q': {
+                instruction = 'q';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 't': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'T': {
+                instruction = 't';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'a': {
+                cursor[0] += data[5];
+                cursor[1] += data[6];
+                break;
+            }
+            case 'A': {
+                instruction = 'a';
+                data[5] -= cursor[0];
+                data[6] -= cursor[1];
+                cursor[0] += data[5];
+                cursor[1] += data[6];
+                break;
+            }
+            case 'Z':
+            case 'z': {
+                cursor[0] = start[0];
+                cursor[1] = start[1];
+                break;
+            }
         }
 
-        CGFloat* base = anInstruction.base;
-        if (prevInstruction != nil) {
-            base[0] = prevInstruction.coords[0];
-            base[1] = prevInstruction.coords[1];
-        } else {
-            base[0] = 0.f;
-            base[1] = 0.f;
-        }
-
-        // increment index
-        prevInstruction = anInstruction;
+        // set the instruction back
+        anInstruction.instruction = instruction;
+        base[0] = prevCoords[0];
+        base[1] = prevCoords[1];
+        coords[0] = cursor[0];
+        coords[1] = cursor[1];
+        prevCoords[0] = cursor[0];
+        prevCoords[1] = cursor[1];
         index++;
     }
 }

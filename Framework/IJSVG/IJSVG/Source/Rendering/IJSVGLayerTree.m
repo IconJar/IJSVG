@@ -188,6 +188,13 @@
     // generic fill color
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     IJSVGLayerFillType fillType = [IJSVGLayer fillTypeForFill:fill];
+    
+    // if we have a custom color set, make sure we use a generic type
+    // so we dont need to create complex layers
+    if(_style.fillColor != nil) {
+        fillType = IJSVGLayerFillTypeColor;
+    }
+    
     IJSVGLayerUsageType fillUsageType = IJSVGLayerUsageTypeFillGeneric;
     switch(fillType) {
         // just a generic fill color
@@ -196,6 +203,11 @@
             fillUsageType = IJSVGLayerUsageTypeFillGeneric;
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
             NSColor* color = colorNode.color ?: NSColor.blackColor;
+            
+            // could be an overall replaced fillColor from the style
+            if(_style.fillColor != nil) {
+                color = _style.fillColor;
+            }
             
             if(colorNode.isNoneOrTransparent == YES) {
                 color = nil;
@@ -262,7 +274,15 @@
     if(strokeLayer != nil) {
         // we need to work out what type of fill we need for the layer
         [layer addTraits:IJSVGLayerTraitStroked];
-        switch([IJSVGLayer fillTypeForFill:node.stroke]) {
+        IJSVGLayerFillType type = [IJSVGLayer fillTypeForFill:node.stroke];
+        
+        // if we have a custom color set, be sure to swap over to a
+        // generic color instead of working out complex layers
+        if(_style.strokeColor != nil) {
+            type = IJSVGLayerFillTypeColor;
+        }
+        
+        switch(type) {
             // patterns
             case IJSVGLayerFillTypePattern: {
                 IJSVGPatternLayer* patternLayer = nil;
@@ -327,10 +347,16 @@
         strokeColor = colorNode.color;
     }
     
+    
     // replacement colour
     NSColor* repColor = [self colorForColor:strokeColor
                              matchingTraits:IJSVGColorUsageTraitStroke];
     strokeColor = repColor ?: strokeColor;
+    
+    // use the users overriding color instead
+    if(_style.strokeColor != nil) {
+        strokeColor = _style.strokeColor;
+    }
     
     // set the color
     layer.fillColor = nil;
@@ -443,13 +469,15 @@
     gradientLayer.backingScaleFactor = _backingScale;
     
     // lets copy the gradient incase there are any style changes
-    if(_style.colors.replacedColorCount != 0) {
+    IJSVGColorUsageTraits traits = IJSVGColorUsageTraitGradientStop;
+    if(_style.colors.replacedColorCount != 0 &&
+       [_style.colors matchesReplacementTraits:traits] == YES) {
         gradient = gradient.copy;
         NSMutableArray* colors = nil;
         colors = [[NSMutableArray alloc] initWithCapacity:gradient.numberOfStops];
         for(NSColor* color in gradient.colors) {
             NSColor* repColor = [self colorForColor:color
-                                     matchingTraits:IJSVGColorUsageTraitGradientStop];
+                                     matchingTraits:traits];
             NSColor* compColor = repColor ?: color;
             [colors addObject:compColor];
         }

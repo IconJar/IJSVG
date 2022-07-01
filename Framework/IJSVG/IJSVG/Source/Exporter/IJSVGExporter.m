@@ -202,29 +202,58 @@ NSString* IJSVGHash(NSString* key)
         attributes[IJSVGAttributeVersion] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
     }
     
+    // passing in zero size will just use default. If the SVG had a dynamic
+    // size to begin with (width and height were % based) it will use the original
+    // values from those, else it will do rounding on the values.
+    // passing in a CGSize with infinite size will omit the dimension attributes
+    CGSize proposedSize = _size;
+    IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionBoth;
+    if(CGSizeEqualToSize(proposedSize, IJSVGSizeIntrinsic) == YES) {
+        dimensions = _svg.intrinsicDimensions;
+        if(_svg.hasDynamicSize == YES) {
+            dimensions = IJSVGIntrinsicDimensionNone;
+        }
+        proposedSize = _svg.size;
+    } else if(CGSizeEqualToSize(proposedSize, IJSVGSizeInfinite) == YES) {
+        dimensions = IJSVGIntrinsicDimensionNone;
+    }
+    
     // do we need to resize the viewbox?
     CGFloat scale = 1.f;
-    if(CGSizeEqualToSize(CGSizeZero, _size) == NO && CGSizeEqualToSize(viewBox.size, _size) == NO) {
-        scale = MIN(_size.width / viewBox.size.width,
-                    _size.height / viewBox.size.height);
+    if(CGSizeEqualToSize(CGSizeZero, _size) == NO &&
+       CGSizeEqualToSize(viewBox.size, _size) == NO) {
+        scale = MIN(proposedSize.width / viewBox.size.width,
+                    proposedSize.height / viewBox.size.height);
         viewBox = CGRectMake(CGRectGetMinX(viewBox) * scale,
                              CGRectGetMinY(viewBox) * scale,
-                             _size.width / scale,
-                             _size.height / scale);
+                             proposedSize.width / scale,
+                             proposedSize.height / scale);
     }
     
     // do we need to center it within its viewbox
     if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCenterWithinViewBox) == YES) {
-        CGPoint origin = CGPointMake((_size.width / scale) / 2.f - originalViewBox.size.width / 2.f,
-                                     (_size.height / scale) / 2.f - originalViewBox.size.height /  2.f);
+        CGPoint origin = CGPointMake((proposedSize.width / scale) / 2.f - originalViewBox.size.width / 2.f,
+                                     (proposedSize.height / scale) / 2.f - originalViewBox.size.height /  2.f);
         CGAffineTransform transform = CGAffineTransformMakeTranslation(-origin.x, -origin.y);
         viewBox = CGRectApplyAffineTransform(viewBox, transform);
     }
 
     // only add dimentions if required
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(_size.width, _floatingPointOptions);
-        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(_size.height, _floatingPointOptions);
+        if(dimensions == IJSVGIntrinsicDimensionNone && _svg.hasDynamicSize == YES) {
+            IJSVGUnitSize* dynamicSize = _svg.rootNode.intrinsicSize;
+            attributes[IJSVGAttributeWidth] = dynamicSize.width.stringValue;
+            attributes[IJSVGAttributeHeight] = dynamicSize.height.stringValue;
+        } else {
+            if((dimensions & IJSVGIntrinsicDimensionWidth) == IJSVGIntrinsicDimensionWidth) {
+                attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(proposedSize.width,
+                                                                                   _floatingPointOptions);
+            }
+            if((dimensions & IJSVGIntrinsicDimensionHeight) == IJSVGIntrinsicDimensionHeight) {
+                attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(proposedSize.height,
+                                                                                    _floatingPointOptions);
+            }
+        }
     }
     attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     IJSVGApplyAttributesToElement(attributes, root);

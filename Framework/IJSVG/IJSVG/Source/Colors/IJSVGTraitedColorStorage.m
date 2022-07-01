@@ -24,6 +24,8 @@
     if ((self = [super init]) != nil) {
         _replacementColors = [[NSMutableArray alloc] init];
         _colors = [[NSMutableSet alloc] init];
+        _replacementTraits = IJSVGColorUsageTraitNone;
+        _traits = IJSVGColorUsageTraitNone;
     }
     return self;
 }
@@ -41,6 +43,7 @@
         [_colors enumerateObjectsUsingBlock:handler];
         return;
     }
+    _traits |= color.traits;
     [_colors addObject:color];
 }
 
@@ -65,6 +68,7 @@
         repColor.replacementColor = withColor;
         [_replacementColors addObject:repColor];
     }
+    _replacementTraits |= traits;
     [repColor addTraits:traits];
 }
 
@@ -95,6 +99,9 @@
 - (NSColor*)colorForColor:(NSColor*)color
            matchingTraits:(IJSVGColorUsageTraits)traits
 {
+    if([self matchesReplacementTraits:traits] == NO) {
+        return nil;
+    }
     color = [IJSVGColor computeColorSpace:color];
     IJSVGReplacementColor* repColor = nil;
     if((repColor = [self replacementColorForColor:color
@@ -109,6 +116,16 @@
     for(IJSVGTraitedColor* traitedColor in colorList.colors) {
         [self addColor:traitedColor];
     }
+}
+
+- (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits
+{
+    return (_traits & traits) == traits;
+}
+
+- (BOOL)matchesReplacementTraits:(IJSVGColorUsageTraits)traits
+{
+    return (_replacementTraits & traits) == traits;
 }
 
 - (NSUInteger)replacedColorCount

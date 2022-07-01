@@ -27,6 +27,13 @@
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
+typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
+    IJSVGIntrinsicDimensionNone = 0,
+    IJSVGIntrinsicDimensionWidth = 1 << 1,
+    IJSVGIntrinsicDimensionHeight = 1 << 2,
+    IJSVGIntrinsicDimensionBoth = IJSVGIntrinsicDimensionWidth | IJSVGIntrinsicDimensionHeight
+};
+
 typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
     IJSVGNodeTraitNone = 0,
     IJSVGNodeTraitStroked = 1 << 0,

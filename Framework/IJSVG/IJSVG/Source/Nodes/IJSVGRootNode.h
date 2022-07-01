@@ -12,6 +12,7 @@
 
 @interface IJSVGRootNode : IJSVGGroup
 
+@property (nonatomic, assign) IJSVGIntrinsicDimensions intrinsicDimensions;
 @property (nonatomic, strong) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;
 

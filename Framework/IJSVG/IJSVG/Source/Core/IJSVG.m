@@ -335,6 +335,11 @@
         size.height.type == IJSVGUnitLengthTypePercentage;
 }
 
+- (IJSVGIntrinsicDimensions)intrinsicDimensions
+{
+    return self.rootNode.intrinsicDimensions;
+}
+
 - (void)setTitle:(NSString*)title
 {
     _rootNode.title = title;
@@ -370,7 +375,7 @@
     return _viewBox;
 }
 
-- (IJSVGGroup*)rootNode
+- (IJSVGRootNode*)rootNode
 {
     return _rootNode;
 }
@@ -404,27 +409,48 @@
     return svgs;
 }
 
-- (IJSVGExporter*)exporterWithOptions:(IJSVGExporterOptions)options
-                 floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (IJSVGExporter*)exporterWithSize:(CGSize)size
+                           options:(IJSVGExporterOptions)options
+              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
- return [[IJSVGExporter alloc] initWithSVG:self
-                                      size:_viewBox.size
-                                   options:options
-                      floatingPointOptions:floatingPointOptions];
+    return [[IJSVGExporter alloc] initWithSVG:self
+                                         size:size
+                                      options:options
+                         floatingPointOptions:floatingPointOptions];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
 {
     IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
-    return [self exporterWithOptions:options
+    return [self exporterWithSize:_viewBox.size
+                          options:options
                 floatingPointOptions:fpo].SVGString;
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [self exporterWithOptions:options
-                floatingPointOptions:floatingPointOptions].SVGString;
+    return [self exporterWithSize:_viewBox.size
+                          options:options
+             floatingPointOptions:floatingPointOptions].SVGString;
+}
+
+- (NSString *)SVGStringWithSize:(CGSize)size
+                        options:(IJSVGExporterOptions)options
+{
+    IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
+    return [self exporterWithSize:size
+                          options:options
+             floatingPointOptions:fpo].SVGString;
+}
+
+- (NSString *)SVGStringWithSize:(CGSize)size
+                        options:(IJSVGExporterOptions)options
+           floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
+    return [self exporterWithSize:size
+                          options:options
+             floatingPointOptions:floatingPointOptions].SVGString;
 }
 
 - (NSImage*)imageWithSize:(CGSize)aSize

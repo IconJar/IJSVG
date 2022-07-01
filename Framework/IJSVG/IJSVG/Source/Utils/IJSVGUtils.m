@@ -15,6 +15,16 @@
 
 @implementation IJSVGUtils
 
+CGSize const IJSVGSizeInfinite = (CGSize) {
+    .width = CGFLOAT_MAX,
+    .height = CGFLOAT_MAX
+};
+
+CGSize const IJSVGSizeIntrinsic = (CGSize) {
+    .width = -1.23f,
+    .height = -1.23f
+};
+
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
     while((c = *buffer++)) {

@@ -32,7 +32,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionCollapseGroups = 1 << 6,
     IJSVGExporterOptionCleanupPaths = 1 << 7,
     IJSVGExporterOptionRemoveHiddenElements = 1 << 8,
-    IJSVGExporterOptionScaleToSizeIfNecessary = 1 << 9,
+    IJSVGExporterOptionScaleToSizeIfNecessary DEPRECATED_ATTRIBUTE = 1 << 9,
     IJSVGExporterOptionCompressOutput = 1 << 10,
     IJSVGExporterOptionCollapseGradients = 1 << 11,
     IJSVGExporterOptionCreateClasses DEPRECATED_ATTRIBUTE = 1 << 12,
@@ -48,8 +48,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups |
         IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup |
         IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |
-        IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements |
-        IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput |
+        IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput |
         IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes |
         IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments |
         IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration |

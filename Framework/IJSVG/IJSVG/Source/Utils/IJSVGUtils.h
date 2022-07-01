@@ -16,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGUtils : NSObject
 
+CG_EXTERN const CGSize IJSVGSizeInfinite;
+CG_EXTERN const CGSize IJSVGSizeIntrinsic;
+
 CGFloat magnitude(CGPoint point);
 CGFloat ratio(CGPoint a, CGPoint b);
 CGFloat angle(CGPoint a, CGPoint b);

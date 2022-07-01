@@ -19,6 +19,7 @@
         self.lineJoinStyle = IJSVGLineJoinStyleMiter;
         self.strokeMiterLimit = [IJSVGUnitLength unitWithFloat:4.f];
         self.strokeDashArrayCount = 0;
+        self.intrinsicDimensions = IJSVGIntrinsicDimensionNone;
     }
     return self;
 }
