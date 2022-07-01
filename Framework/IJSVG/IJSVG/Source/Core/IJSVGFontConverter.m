@@ -13,7 +13,7 @@
 
 - (id)initWithFontAtFileURL:(NSURL*)url
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _url = url.copy;
 
         // load the font
@@ -41,10 +41,10 @@
     NSMutableArray* array = [[NSMutableArray alloc] init];
     NSStringEncoding encoding = NSUTF32LittleEndianStringEncoding;
     for (int plane = 0; plane <= 16; plane++) {
-        if ([charSet hasMemberInPlane:plane]) {
+        if([charSet hasMemberInPlane:plane]) {
             UTF32Char c;
             for (c = plane << 16; c < (plane + 1) << 16; c++) {
-                if ([charSet longCharacterIsMember:c]) {
+                if([charSet longCharacterIsMember:c]) {
                     UTF32Char c1 = NSSwapHostIntToLittle(c);
                     [array addObject:[[NSString alloc] initWithBytes:&c1
                                                               length:4
@@ -70,7 +70,7 @@
         CGGlyph glyphs[count];
         CTFontGetGlyphsForCharacters(font, characters, glyphs, count);
         CGPathRef path = CTFontCreatePathForGlyph(font, glyphs[0], NULL);
-        if (path != NULL) {
+        if(path != NULL) {
             // add SVG to the dictionary
             NSString* key = [NSString stringWithFormat:@"%04x", [charString characterAtIndex:0]];
             CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:path];
@@ -83,7 +83,7 @@
 
 - (void)enumerateUsingBlock:(IJSVGFontConverterEnumerateBlock)block
 {
-    if (_transformedPaths == nil) {
+    if(_transformedPaths == nil) {
         _transformedPaths = [[NSMutableDictionary alloc] init];
         [self generateMap];
     }

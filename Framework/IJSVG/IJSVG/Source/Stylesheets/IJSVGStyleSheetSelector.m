@@ -368,7 +368,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         }
         
         // white space or end of string
-        else if ( c == ' ' || (i == length-1 && IJSVGStyleSheetCharIsCombinator(c) == NO)) {
+        else if( c == ' ' || (i == length-1 && IJSVGStyleSheetCharIsCombinator(c) == NO)) {
             
             // add the current parsed selector into the list
             if(rawSelector != nil) {
@@ -392,7 +392,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode * node, IJSVGStyleSheetSelectorRaw *
         }
         
         // combinator
-        else if (IJSVGStyleSheetCharIsCombinator(c) == YES) {
+        else if(IJSVGStyleSheetCharIsCombinator(c) == YES) {
             
             // set the combinator onto the selector
             rawSelector.combinator = IJSVGStyleSheetCombinatorForUnichar(c);

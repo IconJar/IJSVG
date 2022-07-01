@@ -12,7 +12,7 @@
 IJSVG* IJSVGGetFromNSImage(NSImage* image)
 {
     for (NSImageRep* rep in image.representations) {
-        if ([rep isKindOfClass:IJSVGImageRep.class]) {
+        if([rep isKindOfClass:IJSVGImageRep.class]) {
             return ((IJSVGImageRep*)rep).SVG;
         }
     }
@@ -27,17 +27,17 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image)
     NSBundle* bundle = NSBundle.mainBundle;
     NSString* str = nil;
     NSString* ext = imageName.pathExtension;
-    if (ext == nil || ext.length == 0) {
+    if(ext == nil || ext.length == 0) {
         ext = @"svg";
     }
 
-    if ((str = [bundle pathForResource:imageName.stringByDeletingPathExtension
+    if((str = [bundle pathForResource:imageName.stringByDeletingPathExtension
                                 ofType:ext])
         != nil) {
 
         // work out if we can get the data
         NSData* data = [[NSData alloc] initWithContentsOfFile:str];
-        if (data == nil) {
+        if(data == nil) {
             return nil;
         }
 

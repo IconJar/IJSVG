@@ -117,7 +117,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
             
     // transform us back into the correct space
     CGAffineTransform transform = CGAffineTransformIdentity;
-    if (_patternNode.units == IJSVGUnitUserSpaceOnUse) {
+    if(_patternNode.units == IJSVGUnitUserSpaceOnUse) {
         transform = [IJSVGLayer userSpaceTransformForLayer:layer];
     }
     

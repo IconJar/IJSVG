@@ -16,7 +16,7 @@
     if(_locations != NULL) {
         (void)free(_locations), _locations = NULL;
     }
-    if (_CGGradient != NULL) {
+    if(_CGGradient != NULL) {
         (void)CGGradientRelease(_CGGradient), _CGGradient = NULL;
     }
 }
@@ -79,7 +79,7 @@
 - (CGGradientRef)CGGradient
 {
     // store it in the cache
-    if (_CGGradient != nil) {
+    if(_CGGradient != nil) {
         return _CGGradient;
     }
 

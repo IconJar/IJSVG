@@ -88,28 +88,28 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (IJSVGTransformCommand)commandForCommandCString:(char*)str
 {
     IJSVGCharBufferToLower(str);
-    if (strcmp(str, "matrix") == 0) {
+    if(strcmp(str, "matrix") == 0) {
         return IJSVGTransformCommandMatrix;
     }
-    if (strcmp(str, "translate") == 0) {
+    if(strcmp(str, "translate") == 0) {
         return IJSVGTransformCommandTranslate;
     }
-    if (strcmp(str, "translatex") == 0) {
+    if(strcmp(str, "translatex") == 0) {
         return IJSVGTransformCommandTranslateX;
     }
-    if (strcmp(str, "translatey") == 0) {
+    if(strcmp(str, "translatey") == 0) {
         return IJSVGTransformCommandTranslateY;
     }
-    if (strcmp(str, "scale") == 0) {
+    if(strcmp(str, "scale") == 0) {
         return IJSVGTransformCommandScale;
     }
-    if (strcmp(str, "skewx") == 0) {
+    if(strcmp(str, "skewx") == 0) {
         return IJSVGTransformCommandSkewX;
     }
-    if (strcmp(str, "skewy") == 0) {
+    if(strcmp(str, "skewy") == 0) {
         return IJSVGTransformCommandSkewY;
     }
-    if (strcmp(str, "rotate") == 0) {
+    if(strcmp(str, "rotate") == 0) {
         return IJSVGTransformCommandRotate;
     }
     return IJSVGTransformCommandNotImplemented;
@@ -118,28 +118,28 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 + (IJSVGTransformCommand)commandForCommandString:(NSString*)str
 {
     str = str.lowercaseString;
-    if ([str isEqualToString:@"matrix"]) {
+    if([str isEqualToString:@"matrix"]) {
         return IJSVGTransformCommandMatrix;
     }
-    if ([str isEqualToString:@"translate"]) {
+    if([str isEqualToString:@"translate"]) {
         return IJSVGTransformCommandTranslate;
     }
-    if ([str isEqualToString:@"translatex"]) {
+    if([str isEqualToString:@"translatex"]) {
         return IJSVGTransformCommandTranslateX;
     }
-    if ([str isEqualToString:@"translatey"]) {
+    if([str isEqualToString:@"translatey"]) {
         return IJSVGTransformCommandTranslateY;
     }
-    if ([str isEqualToString:@"scale"]) {
+    if([str isEqualToString:@"scale"]) {
         return IJSVGTransformCommandScale;
     }
-    if ([str isEqualToString:@"skewx"]) {
+    if([str isEqualToString:@"skewx"]) {
         return IJSVGTransformCommandSkewX;
     }
-    if ([str isEqualToString:@"skewy"]) {
+    if([str isEqualToString:@"skewy"]) {
         return IJSVGTransformCommandSkewY;
     }
-    if ([str isEqualToString:@"rotate"]) {
+    if([str isEqualToString:@"rotate"]) {
         return IJSVGTransformCommandRotate;
     }
     return IJSVGTransformCommandNotImplemented;
@@ -259,7 +259,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
     // translate
     case IJSVGTransformCommandTranslate: {
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformTranslate(identity, _parameters[0], 0.f);
         }
         return CGAffineTransformTranslate(identity, _parameters[0], _parameters[1]);
@@ -277,7 +277,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
     // rotate
     case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformRotate(identity, (_parameters[0] / 180) * M_PI);
         }
         CGFloat p0 = _parameters[0];
@@ -293,7 +293,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     // scale
     case IJSVGTransformCommandScale: {
         CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformScale(identity, p0, p0);
         }
         CGFloat p1 = _parameters[1];
@@ -416,16 +416,16 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     for (NSDictionary* transform in components) {
         NSString* name = transform[@"name"];
         NSArray<NSNumber*>* data = transform[@"data"];
-        if ([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) &&
+        if([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) &&
             data[0].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"translate"] && data[0].floatValue == 0.f &&
+        } else if([name isEqualToString:@"translate"] && data[0].floatValue == 0.f &&
                    data[1].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"scale"] && data[0].floatValue == 1.f
+        } else if([name isEqualToString:@"scale"] && data[0].floatValue == 1.f
                    && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
             continue;
-        } else if ([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f &&
+        } else if([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f &&
                    data[3].floatValue == 1.f && !(data[1].floatValue != 0.f ||
                                                   data[2].floatValue != 0.f ||
                                                   data[4].floatValue != 0.f ||
@@ -457,7 +457,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     NSMutableArray* transforms = [[NSMutableArray alloc] init];
 
     // tx, ty -> translate
-    if (data[4] != 0.f || data[5] != 0.f) {
+    if(data[4] != 0.f || data[5] != 0.f) {
         [transforms addObject:@{
             @"name" : @"translate",
             @"data" : @[ @(data[4]), @(data[5]) ]
@@ -465,25 +465,25 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     }
 
     // [sx, 0, tan(a).sy, sy, 0, 0] -> skewX(a).scale(sx,sy)
-    if (data[1] == 0.f && data[2] != 0.f) {
+    if(data[1] == 0.f && data[2] != 0.f) {
         [transforms addObject:@{
             @"name" : @"skewX",
             @"data" : @[ @(IJSVGMathAtan(data[2] / sy))]
         }];
 
         // [sx, sy.tan(a), 0, sy, 0, 0] -> skewX(a).scale(sx, sy)
-    } else if (data[1] != 0.f && data[2] == 0.f) {
+    } else if(data[1] != 0.f && data[2] == 0.f) {
         [transforms addObject:@{
             @"name" : @"skewY",
             @"data" : @[ @(IJSVGMathAtan(data[1] / data[0]))]
         }];
         sx = data[0];
         sy = data[3];
-    } else if (colSum == 0.f || (sx == 1.f && sy == 1.f) || !scaleBefore) {
-        if (!scaleBefore) {
+    } else if(colSum == 0.f || (sx == 1.f && sy == 1.f) || !scaleBefore) {
+        if(!scaleBefore) {
             sx = (data[0] < 0.f ? -1.f : 1.f) * hypotf(data[0], data[2]);
             sy = (data[3] < 0.f ? -1.f : 1.f) * hypotf(data[1], data[3]);
-            if (sx != 1.f || sy != 1.f) {
+            if(sx != 1.f || sy != 1.f) {
                 [transforms addObject:@{
                     @"name" : @"scale",
                     @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]
@@ -495,14 +495,14 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         NSMutableArray<NSNumber*>* rotate = [[NSMutableArray alloc] initWithCapacity:3];
         [rotate addObject:@(IJSVGMathAcos(angle) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f: 1.f))];
 
-        if (rotate[0].floatValue != 0.f) {
+        if(rotate[0].floatValue != 0.f) {
             [transforms addObject:@{
                 @"name" : @"rotate",
                 @"data" : rotate
             }];
         }
 
-        if (rowSum != 0.f && colSum != 0.f) {
+        if(rowSum != 0.f && colSum != 0.f) {
             [transforms addObject:@{
                 @"name" : @"skewX",
                 @"data" : @[ @(IJSVGMathAtan(colSum / (sx * sx)))]
@@ -510,7 +510,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         }
 
         // rotate can consume translate
-        if (rotate[0].floatValue != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
+        if(rotate[0].floatValue != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
             [transforms removeObjectAtIndex:0];
             CGFloat cos = data[0] / sx;
             CGFloat sin = data[1] / (scaleBefore ? sx : sy);
@@ -520,7 +520,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
             [rotate addObject:@(((1.f - cos) * x - sin * y) / denom)];
             [rotate addObject:@(((1.f - cos) * y + sin * x) / denom)];
         }
-    } else if (data[1] != 0.f || data[2] != 0.f) {
+    } else if(data[1] != 0.f || data[2] != 0.f) {
         NSDictionary* trans = @{
             @"name" : @"matrix",
             @"data" : @[ @(data[0]), @(data[1]), @(data[2]), @(data[3]), @(data[4]), @(data[5]) ]
@@ -528,7 +528,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         return @[ trans ];
     }
 
-    if (scaleBefore == YES && ((sx != 1.f || sy != 1.f) || transforms.count == 0)) {
+    if(scaleBefore == YES && ((sx != 1.f || sy != 1.f) || transforms.count == 0)) {
         NSDictionary* trans = @{
             @"name" : @"scale",
             @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]

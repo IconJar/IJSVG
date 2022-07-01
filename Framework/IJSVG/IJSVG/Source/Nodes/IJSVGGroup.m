@@ -12,7 +12,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _children = [[NSMutableArray alloc] init];
     }
     return self;
@@ -79,6 +79,12 @@
         }
     }
     return YES;
+}
+
+- (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)traits
+{
+    return [self.class node:self
+containsNodesMatchingTraits:traits];
 }
 
 - (CGRect)bounds

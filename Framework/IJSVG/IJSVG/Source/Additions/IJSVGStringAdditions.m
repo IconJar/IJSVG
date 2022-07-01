@@ -38,7 +38,7 @@
     const char* buffer = self.UTF8String;
     char currentChar;
     while((currentChar = *buffer++) ) {
-        if (isalpha(currentChar)) {
+        if(isalpha(currentChar)) {
             return YES;
         }
     }
@@ -50,7 +50,7 @@
     const char* buffer = self.UTF8String;
     char currentChar;
     while((currentChar = *buffer++) ) {
-        if (!isnumber(currentChar)) {
+        if(!isnumber(currentChar)) {
             return NO;
         }
     }

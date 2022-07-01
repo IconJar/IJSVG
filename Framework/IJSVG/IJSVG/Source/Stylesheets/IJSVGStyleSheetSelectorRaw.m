@@ -14,7 +14,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         classes = [[NSMutableArray alloc] init];
         _combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
         _combinatorString = @" ";

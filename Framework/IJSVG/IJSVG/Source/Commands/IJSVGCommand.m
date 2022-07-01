@@ -139,7 +139,7 @@
         char nextChar = buffer[i + 1];
         BOOL atEnd = i == lastIndex;
         BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
-        if (isStartCommand == YES || atEnd == YES) {
+        if(isStartCommand == YES || atEnd == YES) {
 
             // copy memory from current buffer
             NSInteger index = ((i + 1) - start);
@@ -197,7 +197,7 @@
 
 - (void)dealloc
 {
-    if (_parameters) {
+    if(_parameters) {
         (void)(free(_parameters)), _parameters = nil;
     }
 }
@@ -205,7 +205,7 @@
 - (id)initWithCommandStringBuffer:(const char*)str
                        dataStream:(IJSVGPathDataStream*)dataStream
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         // work out the basics
         _currentIndex = 0;
         _command = str[0];
@@ -216,7 +216,7 @@
         _parameters = IJSVGParsePathDataStreamSequence(str, strlen(str),
             dataStream, sequence, paramCount, &sets);
 
-        if (sets <= 1) {
+        if(sets <= 1) {
             CGFloat* subParams = [self parametersFromIndexOffset:0];
             IJSVGCommand* command = [self subcommandWithParameters:subParams
                                                         paramCount:paramCount
@@ -285,7 +285,7 @@
 {
     CGFloat* subParams = 0;
     NSInteger req = [self.class requiredParameterCount];
-    if (req != 0) {
+    if(req != 0) {
         subParams = (CGFloat*)malloc(req * sizeof(CGFloat));
         memcpy(subParams, &self.parameters[index * req], sizeof(CGFloat) * req);
     }

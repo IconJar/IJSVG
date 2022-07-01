@@ -233,7 +233,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                 toContext:(CGContextRef)ctx
              drawingBlock:(dispatch_block_t)drawingBlock
 {
-    if (blendMode == kCGBlendModeNormal) {
+    if(blendMode == kCGBlendModeNormal) {
         drawingBlock();
         return;
     }
@@ -469,7 +469,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     NSMutableArray* arr = [[NSMutableArray alloc] init];
     for (CALayer* subLayer in layer.sublayers) {
-        if (subLayer.sublayers.count != 0) {
+        if(subLayer.sublayers.count != 0) {
             NSArray* moreLayers = [self deepestSublayersOfLayer:(IJSVGLayer*)subLayer];
             [arr addObjectsFromArray:moreLayers];
         } else {
@@ -552,7 +552,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if (_backingScaleFactor == newFactor) {
+    if(_backingScaleFactor == newFactor) {
         return;
     }
     
@@ -592,7 +592,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
     // walk up the superlayer chain
     CALayer* superlayer = self.superlayer;
-    if (IJSVGIsSVGLayer(superlayer) == YES) {
+    if(IJSVGIsSVGLayer(superlayer) == YES) {
         [(IJSVGLayer*)superlayer applySublayerMaskToContext:context
                                                 forSublayer:(IJSVGLayer*)self
                                                  withOffset:layerOffset];
@@ -603,14 +603,14 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 
     // if its a group we need to get the lowest level children
     // and walk up the chain again
-    if ([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
+    if([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
         NSArray* subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer];
         for (IJSVGLayer* subLayer in subs) {
             [subLayer applySublayerMaskToContext:context
                                      forSublayer:(IJSVGLayer*)self
                                       withOffset:layerOffset];
         }
-    } else if ([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
+    } else if([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
         // is a shape, go for it!
         CGPathRef maskPath = maskingLayer.path;
         CGContextTranslateCTM(context, -layerOffset.x, -layerOffset.y);

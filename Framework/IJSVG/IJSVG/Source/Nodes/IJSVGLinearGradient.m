@@ -50,7 +50,7 @@
     CGFloat width = CGRectGetWidth(boundingBox);
     CGFloat height = CGRectGetHeight(boundingBox);
     
-    if (inUserSpace == YES) {
+    if(inUserSpace == YES) {
         CGContextConcatCTM(ctx, absoluteTransform);
     } else {
         width = 1.f;

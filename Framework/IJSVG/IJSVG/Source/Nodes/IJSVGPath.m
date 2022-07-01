@@ -41,7 +41,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
         _path = CGPathCreateMutable();
     }

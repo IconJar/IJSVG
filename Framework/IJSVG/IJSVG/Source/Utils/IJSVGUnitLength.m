@@ -29,7 +29,7 @@
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
                       fromUnitType:(IJSVGUnitType)units
 {
-    if (units == IJSVGUnitObjectBoundingBox) {
+    if(units == IJSVGUnitObjectBoundingBox) {
         return [self unitWithPercentageString:string];
     }
     return [self unitWithString:string];
@@ -153,7 +153,7 @@
 
     // is inherit or just nothing
     size_t strl = strlen(chars);
-    if (strcmp(chars, "inherit") == 0 || strl == 0) {
+    if(strcmp(chars, "inherit") == 0 || strl == 0) {
         (void)free(chars), chars = NULL;
         return nil;
     }
@@ -226,7 +226,7 @@
 
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
-    if (self.type == IJSVGUnitLengthTypePercentage) {
+    if(self.type == IJSVGUnitLengthTypePercentage) {
         return ((anotherValue / 100.f) * (_value * 100.f));
     }
     return self.value;
@@ -239,7 +239,7 @@
 
 - (NSString*)stringValue
 {
-    if (self.type == IJSVGUnitLengthTypePercentage) {
+    if(self.type == IJSVGUnitLengthTypePercentage) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatString(self.value * 100.f)];
     }
@@ -248,7 +248,7 @@
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
-    if (_type == IJSVGUnitLengthTypePercentage) {
+    if(_type == IJSVGUnitLengthTypePercentage) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatStringWithOptions(_value * 100.f, options)];
     }

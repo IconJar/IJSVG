@@ -23,7 +23,7 @@
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;
     for (NSColor* color in newGradient.colors) {
-        if (color.alphaComponent != 1.f) {
+        if(color.alphaComponent != 1.f) {
             hasAlphaChannel = YES;
             break;
         }
@@ -33,7 +33,7 @@
 
 - (void)setOpacity:(float)opacity
 {
-    if (opacity != 1.f) {
+    if(opacity != 1.f) {
         self.opaque = NO;
     }
     [super setOpacity:opacity];
@@ -67,7 +67,7 @@
     [super drawInContext:ctx];
 
     // nothing to do :(
-    if (self.gradient == nil) {
+    if(self.gradient == nil) {
         return;
     }
 

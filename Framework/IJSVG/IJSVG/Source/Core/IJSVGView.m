@@ -27,7 +27,7 @@
 
 - (id)initWithSVG:(IJSVG*)anSvg
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         self.SVG = anSvg;
     }
     return self;
@@ -36,9 +36,9 @@
 - (void)awakeFromNib
 {
     // image was set via IB
-    if (imageName != nil) {
+    if(imageName != nil) {
         IJSVG* anSVG = [IJSVG svgNamed:imageName];
-        if (tintColor != nil) {
+        if(tintColor != nil) {
             anSVG.style.fillColor = tintColor;
         }
         self.SVG = anSVG;
@@ -63,7 +63,7 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
     // only draw if there is actually an SVG
-    if (self.SVG == nil) {
+    if(self.SVG == nil) {
         return;
     }
 

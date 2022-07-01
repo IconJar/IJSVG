@@ -22,7 +22,7 @@
     BOOL hasTransaction = IJSVGBeginTransaction();
     // kill any memory that has been around
     (void)(_layerTree), _layerTree = nil;
-    if (hasTransaction == YES) {
+    if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
 }
@@ -56,10 +56,10 @@
     NSBundle* bundle = NSBundle.mainBundle;
     NSString* str = nil;
     NSString* ext = [string pathExtension];
-    if (ext == nil || ext.length == 0) {
+    if(ext == nil || ext.length == 0) {
         ext = @"svg";
     }
-    if ((str = [bundle pathForResource:[string stringByDeletingPathExtension]
+    if((str = [bundle pathForResource:[string stringByDeletingPathExtension]
                                 ofType:ext]) != nil) {
         return [[self alloc] initWithFile:str
                                      error:error
@@ -106,7 +106,7 @@
     imageLayer =
         [[IJSVGImageLayer alloc] initWithImage:imageNode];
     [layer addSublayer:imageLayer];
-    if (hasTransaction == YES) {
+    if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
 
@@ -119,7 +119,7 @@
                viewBox:(CGRect)viewBox
 {
     // this completely bypasses passing of files
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         // keep the layer tree
         _viewBox = viewBox;
 
@@ -199,7 +199,7 @@
                  delegate:(id<IJSVGDelegate>)delegate
 {
     // create the object
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         NSError* anError = nil;
         _delegate = delegate;
 
@@ -216,8 +216,8 @@
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong...
-        if (_rootNode == nil) {
-            if (error != NULL) {
+        if(_rootNode == nil) {
+            if(error != NULL) {
                 *error = anError;
             }
             (void)(self), self = nil;
@@ -261,7 +261,7 @@
                   error:(NSError**)error
                delegate:(id<IJSVGDelegate>)delegate
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         // this is basically the same as init with URL just
         // bypasses the loading of a file
         NSError* anError = nil;
@@ -278,8 +278,8 @@
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong :(
-        if (_rootNode == nil) {
-            if (error != NULL) {
+        if(_rootNode == nil) {
+            if(error != NULL) {
                 *error = anError;
             }
             (void)(self), self = nil;
@@ -293,7 +293,7 @@
 {
     BOOL hasTransaction = IJSVGBeginTransaction();
     block();
-    if (hasTransaction == YES) {
+    if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
 }
@@ -499,7 +499,7 @@
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
 
-    if (flipped == YES) {
+    if(flipped == YES) {
         CGContextTranslateCTM(ref, 0.f, size.height);
         CGContextScaleCTM(ref, 1.f, -1.f);
     }
@@ -600,7 +600,7 @@
 - (void)prepForDrawingInView:(NSView*)view
 {
     // kill the render
-    if (view == nil) {
+    if(view == nil) {
         self.renderingBackingScaleHelper = nil;
         return;
     }
@@ -641,7 +641,7 @@
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
-    if (@available(macOS 10.10, *)) {
+    if(@available(macOS 10.10, *)) {
         currentCGContext = NSGraphicsContext.currentContext.CGContext;
     } else {
         currentCGContext = NSGraphicsContext.currentContext.graphicsPort;
@@ -746,7 +746,7 @@
 
 - (id)pasteboardPropertyListForType:(NSString*)type
 {
-    if ([type isEqualToString:NSPasteboardTypePDF]) {
+    if([type isEqualToString:NSPasteboardTypePDF]) {
         return [self PDFData];
     }
     return nil;
@@ -758,50 +758,18 @@
       foundSubSVG:(IJSVG*)subSVG
     withSVGString:(NSString*)string
 {
-    if (_delegate != nil && _respondsTo.shouldHandleSubSVG == 1) {
+    if(_delegate != nil && _respondsTo.shouldHandleSubSVG == 1) {
         [_delegate svg:self
-              foundSubSVG:subSVG
-            withSVGString:string];
+           foundSubSVG:subSVG
+         withSVGString:string];
     }
 }
 
 #pragma mark matching
 
-- (BOOL)matchesPropertiesWithMask:(IJSVGMatchPropertiesMask)mask
+- (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
-    __block IJSVGMatchPropertiesMask matchedMask = IJSVGMatchPropertyNone;
-    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes,
-                                     BOOL* stop) {
-        // dont compute nodes that are not designed
-        // to be rendered
-        if(node.shouldRender == NO) {
-            *allowChildNodes = NO;
-            return;
-        }
-        
-        // check for stroke
-        IJSVGPath* path = (IJSVGPath*)node;
-        if((mask & IJSVGMatchPropertyContainsStrokedElement) != 0 &&
-           [node isKindOfClass:IJSVGPath.class] == YES &&
-           [path matchesTraits:IJSVGNodeTraitStroked] == YES) {
-            matchedMask |= IJSVGMatchPropertyContainsStrokedElement;
-        }
-        
-        // check for mask
-        if((mask & IJSVGMatchPropertyContainsMaskedElement) != 0 &&
-           node.mask != nil) {
-            matchedMask |= IJSVGMatchPropertyContainsMaskedElement;
-        }
-        
-        // simply check if masks equal, if they are, stop this loop
-        // and return the evaluation
-        if(matchedMask == mask) {
-            *stop = YES;
-        }
-    };
-    [IJSVGNode walkNodeTree:_rootNode
-                    handler:handler];
-    return matchedMask == mask;
+    return [_rootNode containsNodesMatchingTraits:traits];
 }
 
 @end

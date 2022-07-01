@@ -22,7 +22,7 @@
                  type:(IJSVGCommandType)type
                  path:(CGMutablePathRef)path
 {
-    if (type == kIJSVGCommandTypeAbsolute) {
+    if(type == kIJSVGCommandTypeAbsolute) {
         CGPathAddLineToPoint(path, NULL, CGPathGetCurrentPoint(path).x, params[0]);
         return;
     }

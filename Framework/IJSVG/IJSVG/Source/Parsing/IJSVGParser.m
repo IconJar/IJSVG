@@ -157,7 +157,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                   error:(NSError**)error
                delegate:(id<IJSVGParserDelegate>)delegate
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _delegate = delegate;
 
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
@@ -173,7 +173,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         }
 
         // error parsing the XML document
-        if (anError != nil) {
+        if(anError != nil) {
             return [self _handleErrorWithCode:IJSVGErrorParsingFile
                                         error:error];
         }
@@ -191,7 +191,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
         // check the actual parsed SVG
         anError = nil;
-        if (![self _validateParse:&anError]) {
+        if(![self _validateParse:&anError]) {
             *error = anError;
             return nil;
         }
@@ -227,7 +227,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                                  error:&anError];
 
     // error reading file
-    if (str == nil) {
+    if(str == nil) {
         return [self _handleErrorWithCode:IJSVGErrorReadingFile
                                     error:error];
     }
@@ -240,7 +240,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (void*)_handleErrorWithCode:(NSUInteger)code
                         error:(NSError**)error
 {
-    if (error) {
+    if(error) {
         *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
                                             code:code
                                         userInfo:nil];
@@ -251,7 +251,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (BOOL)_validateParse:(NSError**)error
 {
     // check is font
-//    if (self.isFont) {
+//    if(self.isFont) {
 //        return YES;
 //    }
     return YES;
@@ -316,11 +316,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
     IJSVGUnitLength* wl = node.viewBox.size.width;
     IJSVGUnitLength* hl = node.viewBox.size.height;
-    if (node.width != nil) {
+    if(node.width != nil) {
         node.intrinsicDimensions |= IJSVGIntrinsicDimensionWidth;
         wl = node.width;
     }
-    if (node.height != nil) {
+    if(node.height != nil) {
         node.intrinsicDimensions |= IJSVGIntrinsicDimensionHeight;
         hl = node.height;
     }
@@ -473,7 +473,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // stroke dash array
     IJSVGAttributeParse(IJSVGAttributeStrokeDashArray, ^(NSString* value) {
         // nothing specified
-        if ([value isEqualToString:IJSVGStringNone]) {
+        if([value isEqualToString:IJSVGStringNone]) {
             node.strokeDashArrayCount = 0;
             return;
         }
@@ -524,7 +524,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
     // display
     IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {
-        if ([value.lowercaseString isEqualToString:IJSVGStringNone]) {
+        if([value.lowercaseString isEqualToString:IJSVGStringNone]) {
             node.shouldRender = NO;
         }
     });
@@ -1540,7 +1540,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     NSString* const namespaceURI = @"http://www.w3.org/1999/xlink";
     NSXMLNode* attributeNode = [element attributeForLocalName:IJSVGAttributeHref
                                                           URI:namespaceURI];
-    if (attributeNode == nil) {
+    if(attributeNode == nil) {
         attributeNode = [element attributeForName:IJSVGAttributeHref];
         if(attributeNode == nil) {
             attributeNode = [element attributeForName:IJSVGAttributeXLink];
@@ -1569,7 +1569,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                               count:&count];
 
     // error occured, free the params
-    if ((count % 2) != 0) {
+    if((count % 2) != 0) {
         free(params);
         return;
     }

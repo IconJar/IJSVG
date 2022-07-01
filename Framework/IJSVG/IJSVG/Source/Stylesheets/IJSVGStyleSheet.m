@@ -27,7 +27,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _selectors = [[NSMutableDictionary alloc] init];
         _rules = [[NSMutableArray alloc] init];
     }
@@ -48,16 +48,16 @@
         IJSVGStyleSheetSelector* selector = nil;
 
         // create a new selector if not found
-        if ((selector = [_selectors objectForKey:selectorName]) == nil) {
+        if((selector = [_selectors objectForKey:selectorName]) == nil) {
             selector = [[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName];
-            if (selector != nil) {
+            if(selector != nil) {
                 [_selectors setObject:selector
                                forKey:selectorName];
             }
         }
 
         // add it to our list
-        if (selector != nil) {
+        if(selector != nil) {
             [array addObject:selector];
         }
     }
@@ -74,18 +74,18 @@
 
     for (NSUInteger i = 0; i < length; i++) {
         unichar c = [string characterAtIndex:i];
-        if (c == '/') {
+        if(c == '/') {
             i++;
-            if (i < length) {
+            if(i < length) {
                 c = [string characterAtIndex:i];
-                if (c == '*') {
+                if(c == '*') {
                     // skip comment until closing /
                     for (; i < length; i++) {
-                        if ([string characterAtIndex:i] == '/') {
+                        if([string characterAtIndex:i] == '/') {
                             break;
                         }
                     }
-                    if (i < length) {
+                    if(i < length) {
                         marker = i + 1;
                         continue;
                     } else {
@@ -99,9 +99,9 @@
         }
 
         // opening brace, could be nested or start of a new string
-        if (c == '{') {
+        if(c == '{') {
             // start a new rule
-            if (depth == 0) {
+            if(depth == 0) {
                 // grab selector and trim it
                 selector = [string substringWithRange:NSMakeRange(marker, i - marker)];
                 selector = [selector stringByTrimmingCharactersInSet:whitespaceCharSet];
@@ -111,9 +111,9 @@
         }
 
         // ending brace
-        else if (c == '}') {
+        else if(c == '}') {
             // if we finished rule
-            if (depth == 1) {
+            if(depth == 1) {
                 NSString* rule = [string substringWithRange:NSMakeRange(marker, i - marker)];
                 rule = [rule stringByTrimmingCharactersInSet:whitespaceCharSet];
 
@@ -144,7 +144,7 @@
     NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
     for (IJSVGStyleSheetRule* rule in _rules) {
         IJSVGStyleSheetSelector* matchedSelector = nil;
-        if ([rule matchesNode:node selector:&matchedSelector]) {
+        if([rule matchesNode:node selector:&matchedSelector]) {
 
             // make a wrapper for the selector with the rule
             IJSVGStyleSheetSelectorListItem* listItem = nil;

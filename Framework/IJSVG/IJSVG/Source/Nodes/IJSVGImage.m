@@ -26,7 +26,7 @@
 
 - (void)loadFromString:(NSString*)encodedString
 {
-    if ([encodedString hasPrefix:@"data:"]) {
+    if([encodedString hasPrefix:@"data:"]) {
         encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+"
                                                                  withString:@""
                                                                     options:NSRegularExpressionSearch
@@ -43,7 +43,7 @@
     NSData* data = [NSData dataWithContentsOfURL:aURL];
 
     // no data, just ignore...invalid probably
-    if (data == nil) {
+    if(data == nil) {
         return;
     }
 
@@ -57,7 +57,7 @@
     _image = anImage;
     _intrinsicSize = (CGSize)_image.size;
 
-    if (CGImage != nil) {
+    if(CGImage != nil) {
         CGImageRelease(CGImage);
         CGImage = nil;
     }

@@ -92,7 +92,7 @@
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if (_backingScaleFactor == newFactor) {
+    if(_backingScaleFactor == newFactor) {
         return;
     }
         
@@ -135,7 +135,7 @@
 
     // walk up the superlayer chain
     CALayer* superlayer = self.superlayer;
-    if (IJSVGIsSVGLayer(superlayer) == YES) {
+    if(IJSVGIsSVGLayer(superlayer) == YES) {
         [(IJSVGLayer*)superlayer applySublayerMaskToContext:context
                                                 forSublayer:(IJSVGLayer*)self
                                                  withOffset:layerOffset];
@@ -146,14 +146,14 @@
 
     // if its a group we need to get the lowest level children
     // and walk up the chain again
-    if ([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
+    if([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
         NSArray* subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer];
         for (IJSVGLayer* subLayer in subs) {
             [subLayer applySublayerMaskToContext:context
                                      forSublayer:(IJSVGLayer*)self
                                       withOffset:layerOffset];
         }
-    } else if ([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
+    } else if([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
         // is a shape, go for it!
         CGPathRef maskPath = maskingLayer.path;
         CGContextTranslateCTM(context, -layerOffset.x, -layerOffset.y);

@@ -12,7 +12,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _lineCapStyle = IJSVGLineCapStyleNone;
         _lineJoinStyle = IJSVGLineJoinStyleNone;
         _lineWidth = IJSVGInheritedFloatValue;

@@ -23,7 +23,7 @@
 
 + (NSArray<NSString*>*)imageTypes
 {
-    if (@available(macOS 10.10, *)) {
+    if(@available(macOS 10.10, *)) {
         return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
     } else {
         return @[ @"public.svg-image", @"svg" ];
@@ -32,7 +32,7 @@
 
 + (NSArray<NSString*>*)imageUnfilteredTypes
 {
-    if (@available(macOS 10.10, *)) {
+    if(@available(macOS 10.10, *)) {
         return @[ (NSString*)kUTTypeScalableVectorGraphics, @"svg" ];
     } else {
         return @[ @"public.svg-image", @"svg" ];
@@ -42,7 +42,7 @@
 + (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data
 {
     IJSVGImageRep* instance = [self imageRepWithData:data];
-    if (instance == nil) {
+    if(instance == nil) {
         return @[];
     }
     return @[ instance ];
@@ -55,7 +55,7 @@
 
 - (instancetype)initWithData:(NSData*)data
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         // grab the string from the data
         // its more then likely UTF-8...
         NSString* string = [[NSString alloc] initWithData:data
@@ -64,7 +64,7 @@
         _svg = [[IJSVG alloc] initWithSVGString:string];
 
         // no valid SVG, just return nil;
-        if (_svg == nil) {
+        if(_svg == nil) {
             return nil;
         }
 

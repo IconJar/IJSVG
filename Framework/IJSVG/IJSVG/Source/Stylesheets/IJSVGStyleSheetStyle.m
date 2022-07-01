@@ -13,7 +13,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _dict = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -50,15 +50,15 @@
         unichar c = [string characterAtIndex:i];
 
         // find the key
-        if (c == ':') {
+        if(c == ':') {
             key = [string substringWithRange:NSMakeRange(index, (i - index))];
             index = i + 1;
         }
 
         // find the value
-        else if (c == ';' || i == (length - 1)) {
+        else if(c == ';' || i == (length - 1)) {
             NSInteger chomp;
-            if (i == (length - 1) && c != ';') {
+            if(i == (length - 1) && c != ';') {
                 chomp = (i - (index - 1));
             } else {
                 chomp = (i - index);
@@ -68,7 +68,7 @@
         }
 
         // set the propery if it actually exists
-        if (key != nil && value != nil) {
+        if(key != nil && value != nil) {
             [style setPropertyValue:[self.class trimString:value]
                         forProperty:[self.class trimString:key]];
             key = nil;
@@ -91,7 +91,7 @@
 - (void)setProperties:(NSDictionary*)properties
            replaceAll:(BOOL)flag
 {
-    if (flag) {
+    if(flag) {
         [_dict removeAllObjects];
     }
     [_dict addEntriesFromDictionary:properties];

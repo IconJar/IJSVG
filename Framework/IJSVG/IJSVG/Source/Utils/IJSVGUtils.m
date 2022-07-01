@@ -48,7 +48,7 @@ BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
 {
     size_t slen = strlen(s1);
     size_t tlen = strlen(s2);
-    if (tlen > slen) {
+    if(tlen > slen) {
         return NO;
     }
     return strcmp(s1 + slen - tlen, s2) == 0;
@@ -103,9 +103,9 @@ size_t IJSVGCharBufferHash(char* buffer)
 NSString* IJSVGShortenFloatString(NSString* string)
 {
     const char* chars = string.UTF8String;
-    if (chars[0] == '-' && chars[1] == '0' && strstr(chars, ".") != NULL) {
+    if(chars[0] == '-' && chars[1] == '0' && strstr(chars, ".") != NULL) {
         return [NSString stringWithFormat:@"-%@", [string substringFromIndex:2]];
-    } else if (chars[0] == '0' && chars[1] == '.') {
+    } else if(chars[0] == '0' && chars[1] == '.') {
         return [string substringFromIndex:1];
     }
     return string;
@@ -126,7 +126,7 @@ IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precisio
 
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options)
 {
-    if (options.round == YES) {
+    if(options.round == YES) {
         f = IJSVGExporterPathFloatToFixed(f, options.precision);
     }
     return IJSVGShortFloatString(f);
@@ -151,13 +151,13 @@ NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* strings)
 
         // we also need to know if the previous command was a decimal or not
         BOOL lastWasDecimal = NO;
-        if (lastCommandChars != NULL) {
+        if(lastCommandChars != NULL) {
             lastWasDecimal = strchr(lastCommandChars, '.') != NULL;
         }
 
         // we only need a space if the current command is not signed
         // a decimal and the previous command was decimal too
-        if (index++ == 0 || isSigned || (isDecimal == YES && lastWasDecimal == YES)) {
+        if(index++ == 0 || isSigned || (isDecimal == YES && lastWasDecimal == YES)) {
             [string appendString:dataString];
         } else {
             [string appendFormat:@" %@", dataString];
@@ -173,7 +173,7 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 {
     NSString* format = [NSString stringWithFormat:@"%@.%ld%@", @"%", precision, @"f"];
     NSString* ret = [NSString stringWithFormat:format, f];
-    if (ret.floatValue == (float)ret.integerValue) {
+    if(ret.floatValue == (float)ret.integerValue) {
         ret = [NSString stringWithFormat:@"%ld", ret.integerValue];
     }
     return IJSVGShortenFloatString(ret);
@@ -188,7 +188,7 @@ NSString* IJSVGPointToCommandString(CGPoint point)
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
 {
-    if ((aChar | ('M' ^ 'm')) == 'm' ||
+    if((aChar | ('M' ^ 'm')) == 'm' ||
         (aChar | ('Z' ^ 'z')) == 'z' ||
         (aChar | ('C' ^ 'c')) == 'c' ||
         (aChar | ('L' ^ 'l')) == 'l' ||
@@ -268,9 +268,9 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     unsigned long length = strlen(characters);
     for (NSInteger i = 0; i < length; i++) {
         char c = *characters++;
-        if (c == '(') {
+        if(c == '(') {
             range.location = i + 1;
-        } else if (c == ')') {
+        } else if(c == ')') {
             range.length = i - range.location;
         }
     }
@@ -314,49 +314,49 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                                      weight:(CGFloat*)weight
 {
     *weight = string.floatValue;
-    if ([string isEqualToString:@"bold"])
+    if([string isEqualToString:@"bold"])
         return IJSVGFontTraitBold;
     return IJSVGFontTraitNone;
 }
 
 + (IJSVGFontTraits)fontStyleStringForString:(NSString*)string
 {
-    if ([string isEqualToString:@"italic"])
+    if([string isEqualToString:@"italic"])
         return IJSVGFontTraitItalic;
     return IJSVGFontTraitNone;
 }
 
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringEvenOdd])
+    if([string isEqualToString:IJSVGStringEvenOdd])
         return IJSVGWindingRuleEvenOdd;
-    if ([string isEqualToString:IJSVGStringInherit])
+    if([string isEqualToString:IJSVGStringInherit])
         return IJSVGWindingRuleInherit;
     return IJSVGWindingRuleNonZero;
 }
 
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringMiter])
+    if([string isEqualToString:IJSVGStringMiter])
         return IJSVGLineJoinStyleMiter;
-    if ([string isEqualToString:IJSVGStringRound])
+    if([string isEqualToString:IJSVGStringRound])
         return IJSVGLineJoinStyleRound;
-    if ([string isEqualToString:IJSVGStringBevel])
+    if([string isEqualToString:IJSVGStringBevel])
         return IJSVGLineJoinStyleBevel;
-    if ([string isEqualToString:IJSVGStringInherit])
+    if([string isEqualToString:IJSVGStringInherit])
         return IJSVGLineJoinStyleInherit;
     return IJSVGLineJoinStyleMiter;
 }
 
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringButt])
+    if([string isEqualToString:IJSVGStringButt])
         return IJSVGLineCapStyleButt;
-    if ([string isEqualToString:IJSVGStringSquare])
+    if([string isEqualToString:IJSVGStringSquare])
         return IJSVGLineCapStyleSquare;
-    if ([string isEqualToString:IJSVGStringRound])
+    if([string isEqualToString:IJSVGStringRound])
         return IJSVGLineCapStyleRound;
-    if ([string isEqualToString:IJSVGStringInherit])
+    if([string isEqualToString:IJSVGStringInherit])
         return IJSVGLineCapStyleInherit;
     return IJSVGLineCapStyleButt;
 }
@@ -399,7 +399,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 
 + (IJSVGUnitType)unitTypeForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringUserSpaceOnUse]) {
+    if([string isEqualToString:IJSVGStringUserSpaceOnUse]) {
         return IJSVGUnitUserSpaceOnUse;
     }
     return IJSVGUnitObjectBoundingBox;
@@ -408,37 +408,37 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 + (IJSVGBlendMode)blendModeForString:(NSString*)string
 {
     string = string.lowercaseString;
-    if ([string isEqualToString:@"normal"])
+    if([string isEqualToString:@"normal"])
         return IJSVGBlendModeNormal;
-    if ([string isEqualToString:@"multiply"])
+    if([string isEqualToString:@"multiply"])
         return IJSVGBlendModeMultiply;
-    if ([string isEqualToString:@"screen"])
+    if([string isEqualToString:@"screen"])
         return IJSVGBlendModeScreen;
-    if ([string isEqualToString:@"overlay"])
+    if([string isEqualToString:@"overlay"])
         return IJSVGBlendModeOverlay;
-    if ([string isEqualToString:@"darken"])
+    if([string isEqualToString:@"darken"])
         return IJSVGBlendModeDarken;
-    if ([string isEqualToString:@"lighten"])
+    if([string isEqualToString:@"lighten"])
         return IJSVGBlendModeLighten;
-    if ([string isEqualToString:@"color-dodge"])
+    if([string isEqualToString:@"color-dodge"])
         return IJSVGBlendModeColorDodge;
-    if ([string isEqualToString:@"color-burn"])
+    if([string isEqualToString:@"color-burn"])
         return IJSVGBlendModeColorBurn;
-    if ([string isEqualToString:@"hard-light"])
+    if([string isEqualToString:@"hard-light"])
         return IJSVGBlendModeHardLight;
-    if ([string isEqualToString:@"soft-light"])
+    if([string isEqualToString:@"soft-light"])
         return IJSVGBlendModeSoftLight;
-    if ([string isEqualToString:@"difference"])
+    if([string isEqualToString:@"difference"])
         return IJSVGBlendModeDifference;
-    if ([string isEqualToString:@"exclusion"])
+    if([string isEqualToString:@"exclusion"])
         return IJSVGBlendModeExclusion;
-    if ([string isEqualToString:@"hue"])
+    if([string isEqualToString:@"hue"])
         return IJSVGBlendModeHue;
-    if ([string isEqualToString:@"saturation"])
+    if([string isEqualToString:@"saturation"])
         return IJSVGBlendModeSaturation;
-    if ([string isEqualToString:@"color"])
+    if([string isEqualToString:@"color"])
         return IJSVGBlendModeColor;
-    if ([string isEqualToString:@"luminosity"])
+    if([string isEqualToString:@"luminosity"])
         return IJSVGBlendModeLuminosity;
     return IJSVGBlendModeNormal;
 }
@@ -549,7 +549,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     fallBackForPercent:(CGFloat)fallBack
 {
     CGFloat val = [string floatValue];
-    if ([string rangeOfString:@"%"].location != NSNotFound) {
+    if([string rangeOfString:@"%"].location != NSNotFound) {
         val = (fallBack * val) / 100;
     }
     return val;
@@ -567,7 +567,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 
 + (CGFloat)floatValue:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringInherit]) {
+    if([string isEqualToString:IJSVGStringInherit]) {
         return IJSVGInheritedFloatValue;
     }
     return [string floatValue];

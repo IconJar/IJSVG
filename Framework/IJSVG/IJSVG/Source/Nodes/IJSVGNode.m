@@ -33,76 +33,76 @@
     if(name == NULL) {
         return IJSVGNodeTypeNotFound;
     }
-    if (strcmp(name, "style") == 0) {
+    if(strcmp(name, "style") == 0) {
         return IJSVGNodeTypeStyle;
     }
-    if (strcmp(name, "switch") == 0) {
+    if(strcmp(name, "switch") == 0) {
         return IJSVGNodeTypeSwitch;
     }
-    if (strcmp(name, "defs") == 0) {
+    if(strcmp(name, "defs") == 0) {
         return IJSVGNodeTypeDef;
     }
-    if (strcmp(name, "g") == 0) {
+    if(strcmp(name, "g") == 0) {
         return IJSVGNodeTypeGroup;
     }
-    if (strcmp(name, "path") == 0) {
+    if(strcmp(name, "path") == 0) {
         return IJSVGNodeTypePath;
     }
-    if (strcmp(name, "polygon") == 0) {
+    if(strcmp(name, "polygon") == 0) {
         return IJSVGNodeTypePolygon;
     }
-    if (strcmp(name, "polyline") == 0) {
+    if(strcmp(name, "polyline") == 0) {
         return IJSVGNodeTypePolyline;
     }
-    if (strcmp(name, "rect") == 0) {
+    if(strcmp(name, "rect") == 0) {
         return IJSVGNodeTypeRect;
     }
-    if (strcmp(name, "line") == 0) {
+    if(strcmp(name, "line") == 0) {
         return IJSVGNodeTypeLine;
     }
-    if (strcmp(name, "circle") == 0) {
+    if(strcmp(name, "circle") == 0) {
         return IJSVGNodeTypeCircle;
     }
-    if (strcmp(name, "ellipse") == 0) {
+    if(strcmp(name, "ellipse") == 0) {
         return IJSVGNodeTypeEllipse;
     }
-    if (strcmp(name, "use") == 0) {
+    if(strcmp(name, "use") == 0) {
         return IJSVGNodeTypeUse;
     }
-    if (strcmp(name, "lineargradient") == 0) {
+    if(strcmp(name, "lineargradient") == 0) {
         return IJSVGNodeTypeLinearGradient;
     }
-    if (strcmp(name, "radialgradient") == 0) {
+    if(strcmp(name, "radialgradient") == 0) {
         return IJSVGNodeTypeRadialGradient;
     }
     if(strcmp(name, "stop") == 0) {
         return IJSVGNodeTypeStop;
     }
-    if (strcmp(name, "glyph") == 0) {
+    if(strcmp(name, "glyph") == 0) {
         return IJSVGNodeTypeGlyph;
     }
-    if (strcmp(name, "font") == 0) {
+    if(strcmp(name, "font") == 0) {
         return IJSVGNodeTypeFont;
     }
-    if (strcmp(name, "clippath") == 0) {
+    if(strcmp(name, "clippath") == 0) {
         return IJSVGNodeTypeClipPath;
     }
-    if (strcmp(name, "mask") == 0) {
+    if(strcmp(name, "mask") == 0) {
         return IJSVGNodeTypeMask;
     }
-    if (strcmp(name, "image") == 0) {
+    if(strcmp(name, "image") == 0) {
         return IJSVGNodeTypeImage;
     }
-    if (strcmp(name, "pattern") == 0) {
+    if(strcmp(name, "pattern") == 0) {
         return IJSVGNodeTypePattern;
     }
-    if (strcmp(name, "svg") == 0) {
+    if(strcmp(name, "svg") == 0) {
         return IJSVGNodeTypeSVG;
     }
-    if (strcmp(name, "text") == 0) {
+    if(strcmp(name, "text") == 0) {
         return IJSVGNodeTypeText;
     }
-    if (strcmp(name, "tspan") == 0 || kind == NSXMLTextKind) {
+    if(strcmp(name, "tspan") == 0 || kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
     }
     if(strcmp(name, "title") == 0) {
@@ -174,9 +174,52 @@
     }
 }
 
++ (BOOL)node:(IJSVGNode*)node
+containsNodesMatchingTraits:(IJSVGNodeTraits)traits
+{
+    __block IJSVGNodeTraits matchedTraits = IJSVGNodeTraitNone;
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node,
+                                     BOOL* allowChildNodes,
+                                     BOOL* stop) {
+        // dont compute nodes that are not designed
+        // to be rendered
+        if(node.shouldRender == NO) {
+            *allowChildNodes = NO;
+            return;
+        }
+        
+        // check for stroke
+        if((traits & IJSVGNodeTraitStroked) == IJSVGNodeTraitStroked &&
+           [node matchesTraits:IJSVGNodeTraitStroked] == YES) {
+            matchedTraits |= IJSVGNodeTraitStroked;
+        }
+        
+        // check for pathed
+        if((traits & IJSVGNodeTraitPathed) == IJSVGNodeTraitPathed &&
+           [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
+            matchedTraits |= IJSVGNodeTraitPathed;
+        }
+        
+        // check for paintable
+        if((traits & IJSVGNodeTraitPaintable) == IJSVGNodeTraitPaintable &&
+           [node matchesTraits:IJSVGNodeTraitPaintable] == YES) {
+            matchedTraits |= IJSVGNodeTraitPaintable;
+        }
+                
+        // simply check if masks equal, if they are, stop this loop
+        // and return the evaluation
+        if(matchedTraits == traits) {
+            *stop = YES;
+        }
+    };
+    [IJSVGNode walkNodeTree:node
+                    handler:handler];
+    return matchedTraits == traits;
+}
+
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         self.opacity = [IJSVGUnitLength unitWithFloat:1.f];
         self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
         self.fillOpacity.inherit = YES;
@@ -286,7 +329,7 @@
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    if (_windingRule == IJSVGWindingRuleInherit && _parentNode != nil) {
+    if(_windingRule == IJSVGWindingRuleInherit && _parentNode != nil) {
         return _parentNode.windingRule;
     }
     return _windingRule;
@@ -294,8 +337,8 @@
 
 - (IJSVGLineCapStyle)lineCapStyle
 {
-    if (_lineCapStyle == IJSVGLineCapStyleInherit) {
-        if (_parentNode != nil) {
+    if(_lineCapStyle == IJSVGLineCapStyleInherit) {
+        if(_parentNode != nil) {
             return _parentNode.lineCapStyle;
         }
     }
@@ -304,8 +347,8 @@
 
 - (IJSVGLineJoinStyle)lineJoinStyle
 {
-    if (_lineJoinStyle == IJSVGLineJoinStyleInherit) {
-        if (_parentNode != nil) {
+    if(_lineJoinStyle == IJSVGLineJoinStyleInherit) {
+        if(_parentNode != nil) {
             return _parentNode.lineJoinStyle;
         }
     }
@@ -316,7 +359,7 @@
 // if they dont exist on this specific node
 - (IJSVGUnitLength*)opacity
 {
-    if (_opacity.inherit && _parentNode != nil) {
+    if(_opacity.inherit && _parentNode != nil) {
         return _parentNode.opacity;
     }
     return _opacity;
@@ -326,7 +369,7 @@
 // if they dont exist on this specific node
 - (IJSVGUnitLength*)fillOpacity
 {
-    if (_fillOpacity.inherit && _parentNode != nil) {
+    if(_fillOpacity.inherit && _parentNode != nil) {
         return _parentNode.fillOpacity;
     }
     return _fillOpacity;
@@ -336,7 +379,7 @@
 // if they dont exist on this specific node
 - (IJSVGUnitLength*)strokeWidth
 {
-    if (_strokeWidth.inherit && _parentNode != nil) {
+    if(_strokeWidth.inherit && _parentNode != nil) {
         return _parentNode.strokeWidth;
     }
     return _strokeWidth;
@@ -355,7 +398,7 @@
 // if they dont exist on this specific node
 - (IJSVGNode*)stroke
 {
-    if (_stroke == nil && _parentNode != nil) {
+    if(_stroke == nil && _parentNode != nil) {
         return _parentNode.stroke;
     }
     return _stroke;
@@ -387,7 +430,7 @@
 
 - (IJSVGUnitLength*)strokeOpacity
 {
-    if (_strokeOpacity.inherit && _parentNode != nil) {
+    if(_strokeOpacity.inherit && _parentNode != nil) {
         return _parentNode.strokeOpacity;
     }
     return _strokeOpacity;
@@ -397,7 +440,7 @@
 // must be on the path, it can also be on the
 - (IJSVGNode*)fill
 {
-    if (_fill == nil && _parentNode != nil) {
+    if(_fill == nil && _parentNode != nil) {
         return _parentNode.fill;
     }
     return _fill;

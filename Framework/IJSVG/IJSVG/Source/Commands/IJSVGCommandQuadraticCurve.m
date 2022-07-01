@@ -23,7 +23,7 @@
                  type:(IJSVGCommandType)type
                  path:(CGMutablePathRef)path
 {
-    if (type == kIJSVGCommandTypeAbsolute) {
+    if(type == kIJSVGCommandTypeAbsolute) {
         CGPathAddQuadCurveToPoint(path, NULL, params[0], params[1],
                                   params[2], params[3]);
         return;

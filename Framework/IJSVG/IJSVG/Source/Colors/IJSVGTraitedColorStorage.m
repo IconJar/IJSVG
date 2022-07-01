@@ -21,7 +21,7 @@
 
 - (instancetype)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _replacementColors = [[NSMutableArray alloc] init];
         _colors = [[NSMutableSet alloc] init];
         _replacementTraits = IJSVGColorUsageTraitNone;

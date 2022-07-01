@@ -25,7 +25,7 @@
 {
     // move to's allow more then one move to, but if there are more then one,
     // we need to run the line to instead...who knew!
-    if (command.class == self.class && currentCommand.isSubCommand == YES) {
+    if(command.class == self.class && currentCommand.isSubCommand == YES) {
         [IJSVGCommandLineTo runWithParams:params
                                paramCount:count
                                   command:currentCommand
@@ -40,7 +40,7 @@
     // relative but there is no previous command which means
     // there is no current point. Asking for current point on an empty
     // path will result in an exception being thrown
-    if (type == kIJSVGCommandTypeAbsolute || command == nil) {
+    if(type == kIJSVGCommandTypeAbsolute || command == nil) {
         CGPathMoveToPoint(path, NULL,
                           params[0], params[1]);
         return;

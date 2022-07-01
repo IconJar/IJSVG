@@ -33,7 +33,7 @@
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _viewPortStack = [[NSMutableArray alloc] init];
     }
     return self;
@@ -705,12 +705,12 @@
     }
 
     // Blending mode
-    if (node.blendMode != IJSVGBlendModeNormal) {
+    if(node.blendMode != IJSVGBlendModeNormal) {
         layer.blendingMode = (CGBlendMode)node.blendMode;
     }
 
     // Should this even be displayed?
-    if (node.shouldRender == NO) {
+    if(node.shouldRender == NO) {
         layer.hidden = YES;
     }
 }
@@ -751,13 +751,13 @@
     }
 
     // no need to do anything if no transform, or x or y == 0
-    if (transforms.count == 0 && x == 0.f && y == 0.f) {
+    if(transforms.count == 0 && x == 0.f && y == 0.f) {
         return layer;
     }
 
     // simply cascade all the transforms onto the identity
     CGAffineTransform identity = CGAffineTransformIdentity;
-    if (x != 0.f || y != 0.f) {
+    if(x != 0.f || y != 0.f) {
         identity = CGAffineTransformTranslate(identity, x, y);
     }
 

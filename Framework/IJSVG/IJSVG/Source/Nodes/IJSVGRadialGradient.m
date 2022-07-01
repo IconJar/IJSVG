@@ -35,7 +35,7 @@
     for (NSString* key in kv.allKeys) {
         NSString* str = [element attributeForName:key].stringValue;
         IJSVGUnitLength* unit = nil;
-        if (str != nil) {
+        if(str != nil) {
             unit = [IJSVGUnitLength unitWithString:str
                                       fromUnitType:gradient.units];
         } else {
@@ -61,13 +61,13 @@
 
     // needs fixing
     NSString* fx = [element attributeForName:IJSVGAttributeFX].stringValue;
-    if (fx != nil) {
+    if(fx != nil) {
         gradient.fx = [IJSVGUnitLength unitWithString:fx
                                          fromUnitType:gradient.units];
     }
 
     NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
-    if (fy != nil) {
+    if(fy != nil) {
         gradient.fy = [IJSVGUnitLength unitWithString:fy
                                          fromUnitType:gradient.units];
     }

@@ -61,7 +61,7 @@ static IJSVGPathDataSequence* _sequence;
     xAxisRotation *= M_PI / 180.f;
     xAxisRotation = fmod(xAxisRotation, 2.f * M_PI);
 
-    if (type == kIJSVGCommandTypeRelative) {
+    if(type == kIJSVGCommandTypeRelative) {
         arcEndPoint.x += pathCurrentPoint.x;
         arcEndPoint.y += pathCurrentPoint.y;
     }
@@ -72,7 +72,7 @@ static IJSVGPathDataSequence* _sequence;
     CGFloat x2 = arcEndPoint.x;
     CGFloat y2 = arcEndPoint.y;
     
-    if (rx == 0.f || ry == 0.f) {
+    if(rx == 0.f || ry == 0.f) {
         CGPathAddLineToPoint(path, NULL, x2, y2);
         return;
     }
@@ -90,7 +90,7 @@ static IJSVGPathDataSequence* _sequence;
 
     CGFloat delta = xp_2 / rx_2 + yp_2 / ry_2;
     
-    if (delta > 1.f) {
+    if(delta > 1.f) {
         rx *= sqrt(delta);
         ry *= sqrt(delta);
         rx_2 = rx * rx;
@@ -120,11 +120,11 @@ static IJSVGPathDataSequence* _sequence;
     
     CGFloat angleDelta = endAngle - startAngle;;
     
-    if (sweepFlag == YES) {
-        if (angleDelta < 0.f) {
+    if(sweepFlag == YES) {
+        if(angleDelta < 0.f) {
             angleDelta += 2.f * M_PI;
         }
-    } else if (angleDelta > 0.f) {
+    } else if(angleDelta > 0.f) {
         angleDelta = angleDelta - 2.f * M_PI;
     }
     
