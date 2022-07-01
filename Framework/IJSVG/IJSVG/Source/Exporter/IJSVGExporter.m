@@ -1965,24 +1965,25 @@ NSString* IJSVGHash(NSString* key)
     clipPath = CGPathCreateCopyByTransformingPath(clipPath, &transform);
     
     // create the path
+    NSMutableDictionary* pathAtts = [[NSMutableDictionary alloc] init];
     NSXMLElement* path = [[NSXMLElement alloc] init];
     path.name = @"path";
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeD: [self pathFromCGPath:clipPath],
-    }, path);
+    pathAtts[IJSVGAttributeD] = [self pathFromCGPath:clipPath];
+    
+    // add clip rule back on
+    if([layer.clipRule isEqualToString:kCAFillRuleNonZero] == NO) {
+        pathAtts[IJSVGAttributeClipRule] = IJSVGStringEvenOdd;
+    }
+    IJSVGApplyAttributesToElement(pathAtts, path);
+    
     [clip addChild:path];
     CGPathRelease(clipPath);
 
     IJSVGApplyAttributesToElement(dict, clip);
     
-    NSMutableDictionary* elDict = [[NSMutableDictionary alloc] init];
-    elDict[IJSVGAttributeClipPath] = IJSVGHashURL(clipKey);
-    
-    // add clip rule back on
-    if([layer.clipRule isEqualToString:kCAFillRuleNonZero] == NO) {
-        elDict[IJSVGAttributeClipRule] = IJSVGStringEvenOdd;
-    }
-    IJSVGApplyAttributesToElement(elDict, element);
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeClipPath: IJSVGHashURL(clipKey)
+    }, element);
     
     // add it defs
     [[self defElement] addChild:clip];

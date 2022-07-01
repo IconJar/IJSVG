@@ -8,6 +8,9 @@
 
 #import <IJSVG/IJSVGGroup.h>
 
-@interface IJSVGClipPath : IJSVGGroup
+@interface IJSVGClipPath : IJSVGGroup {
+@private
+    BOOL _isCurrentlyWalkingSubtree;
+}
 
 @end

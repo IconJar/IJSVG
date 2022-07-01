@@ -51,4 +51,35 @@
     }
 }
 
+- (IJSVGWindingRule)clipRule
+{
+    // we store a flag about walking the tree is clipRule's
+    // we inherit and walk up their parents tree in order to find a value,
+    // due to that, this method can be called from its child and cause recursion
+    // so if it is walking, just return its parent rule
+    if(_isCurrentlyWalkingSubtree == YES) {
+        return [super clipRule];
+    }
+    
+    // find the first use of a clipRule that is useful
+    __block IJSVGWindingRule rule = IJSVGWindingRuleInherit;
+    __weak IJSVGClipPath* weakSelf = self;
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode *node, BOOL *allowChildNodes,
+                                     BOOL *stop) {
+        if(node == weakSelf) {
+            return;
+        }
+        IJSVGWindingRule clipRule = node.clipRule;
+        if(clipRule != IJSVGWindingRuleInherit) {
+            rule = clipRule;
+            *stop = YES;
+        }
+    };
+    _isCurrentlyWalkingSubtree = YES;
+    [IJSVGNode walkNodeTree:self
+                    handler:handler];
+    _isCurrentlyWalkingSubtree = NO;
+    return rule;
+}
+
 @end

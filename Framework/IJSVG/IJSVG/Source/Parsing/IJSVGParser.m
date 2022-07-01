@@ -520,7 +520,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     });
     
     // clip rule
-    IJSVGAttributeParse(IJSVGAttributeClipPath, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeClipRule, ^(NSString* value) {
         node.clipRule = [IJSVGUtils windingRuleForString:value];
     });
     

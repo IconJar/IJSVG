@@ -693,8 +693,14 @@
         IJSVGClipPath* clipPath = node.clipPath;
         CGPathRef path = [self newClipPathFromNode:clipPath
                                          fromLayer:layer];
+        
+        IJSVGWindingRule clipRule = node.clipRule;
+        if(clipRule == IJSVGWindingRuleInherit) {
+            clipRule = clipPath.clipRule;
+        }
+        
         layer.clipPath = path;
-        layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:node.clipRule];
+        layer.clipRule = [IJSVGUtils CGFillRuleForWindingRule:clipRule];
         CGPathRelease(path);
     }
     

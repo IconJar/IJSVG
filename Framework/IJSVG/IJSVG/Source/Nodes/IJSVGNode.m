@@ -338,6 +338,14 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     return _windingRule;
 }
 
+- (IJSVGWindingRule)clipRule
+{
+    if(_clipRule == IJSVGWindingRuleInherit && _parentNode != nil) {
+        return _parentNode.clipRule;
+    }
+    return _clipRule;
+}
+
 - (IJSVGLineCapStyle)lineCapStyle
 {
     if(_lineCapStyle == IJSVGLineCapStyleInherit) {
