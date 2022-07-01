@@ -230,28 +230,28 @@ BOOL IJSVGIsSVGLayer(CALayer* layer)
         [layer isKindOfClass:IJSVGShapeLayer.class];
 }
 
-CGFloat angle(CGPoint a, CGPoint b)
+CGFloat IJSVGAngle(CGPoint a, CGPoint b)
 {
     return [IJSVGUtils angleBetweenPointA:a
                                    pointb:b];
 }
 
-CGFloat ratio(CGPoint a, CGPoint b)
+CGFloat IJSVGRatio(CGPoint a, CGPoint b)
 {
-    return (a.x * b.x + a.y * b.y) / (magnitude(a) * magnitude(b));
+    return (a.x * b.x + a.y * b.y) / (IJSVGMagnitude(a) * IJSVGMagnitude(b));
 }
 
-CGFloat magnitude(CGPoint point)
+CGFloat IJSVGMagnitude(CGPoint point)
 {
     return sqrtf(powf(point.x, 2) + powf(point.y, 2));
 }
 
-CGFloat radians_to_degrees(CGFloat radians)
+CGFloat IJSVGRadiansToDegrees(CGFloat radians)
 {
     return ((radians) * (180.0 / M_PI));
 }
 
-CGFloat degrees_to_radians(CGFloat degrees)
+CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 {
     return ((degrees) / 180.0 * M_PI);
 }
@@ -576,7 +576,7 @@ CGFloat degrees_to_radians(CGFloat degrees)
 + (CGFloat)angleBetweenPointA:(NSPoint)point1
                        pointb:(NSPoint)point2
 {
-    return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(ratio(point1, point2));
+    return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(IJSVGRatio(point1, point2));
 }
 
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path

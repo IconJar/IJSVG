@@ -19,11 +19,11 @@ NS_ASSUME_NONNULL_BEGIN
 CG_EXTERN const CGSize IJSVGSizeInfinite;
 CG_EXTERN const CGSize IJSVGSizeIntrinsic;
 
-CGFloat magnitude(CGPoint point);
-CGFloat ratio(CGPoint a, CGPoint b);
-CGFloat angle(CGPoint a, CGPoint b);
-CGFloat radians_to_degrees(CGFloat radians);
-CGFloat degrees_to_radians(CGFloat degrees);
+CGFloat IJSVGMagnitude(CGPoint point);
+CGFloat IJSVGRatio(CGPoint a, CGPoint b);
+CGFloat IJSVGAngle(CGPoint a, CGPoint b);
+CGFloat IJSVGRadiansToDegrees(CGFloat radians);
+CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 
 BOOL IJSVGCharBufferIsHEX(char* buffer);
 BOOL IJSVGCharBufferHasPrefix(char* pre, char* str);

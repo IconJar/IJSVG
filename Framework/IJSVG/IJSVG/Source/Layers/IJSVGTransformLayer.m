@@ -132,7 +132,7 @@
 {
     IJSVGTraitedColorStorage* colorList = [[IJSVGTraitedColorStorage alloc] init];
     for(CALayer<IJSVGDrawableLayer>* layer in self.sublayers) {
-        [colorList mergeWithColors:layer.colors];
+        [colorList unionColorStorage:layer.colors];
     }
     return colorList;
 }

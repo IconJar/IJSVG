@@ -34,7 +34,7 @@
 - (void)replaceColor:(NSColor*)replaceColor
            withColor:(NSColor*)withColor
               traits:(IJSVGColorUsageTraits)traits;
-- (void)mergeWithColors:(IJSVGTraitedColorStorage*)colorList;
+- (void)unionColorStorage:(IJSVGTraitedColorStorage*)colorList;
 - (NSColor*)colorForColor:(NSColor*)color
            matchingTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesReplacementTraits:(IJSVGColorUsageTraits)traits;

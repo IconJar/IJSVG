@@ -365,15 +365,36 @@
     // work out line width
     CGFloat lineWidth = [node.strokeWidth computeValue:frame.size.width];
     
+    if(_style.lineWidth != IJSVGInheritedFloatValue) {
+        lineWidth = _style.lineWidth;
+    }
+    
     // work out line styles
     IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
     IJSVGLineJoinStyle lineJoinStyle = node.lineJoinStyle;
+    CGFloat miterLimit = node.strokeMiterLimit.value;
     
+    // use anything declared on the style
+    if(_style.lineCapStyle != IJSVGLineCapStyleNone &&
+       _style.lineCapStyle != IJSVGLineCapStyleInherit) {
+        lineCapStyle = _style.lineCapStyle;
+    }
+    
+    if(_style.lineJoinStyle != IJSVGLineJoinStyleNone &&
+       _style.lineJoinStyle != IJSVGLineJoinStyleInherit) {
+        lineJoinStyle = _style.lineJoinStyle;
+    }
+    
+    // miter limit can be set via the style
+    if(_style.miterLimit != IJSVGInheritedFloatValue) {
+        miterLimit = _style.miterLimit;
+    }
+        
     // apply the properties
     layer.lineWidth = lineWidth;
     layer.lineCap = [IJSVGUtils CGLineCapForCapStyle:lineCapStyle];
     layer.lineJoin = [IJSVGUtils CGLineJoinForJoinStyle:lineJoinStyle];
-    layer.miterLimit = node.strokeMiterLimit.value;
+    layer.miterLimit = miterLimit;
     
     CGFloat strokeOpacity = 1.f;
     if(node.strokeOpacity.value != 0.f) {

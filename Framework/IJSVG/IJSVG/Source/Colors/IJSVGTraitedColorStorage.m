@@ -111,7 +111,7 @@
     return nil;
 }
 
-- (void)mergeWithColors:(IJSVGTraitedColorStorage*)colorList
+- (void)unionColorStorage:(IJSVGTraitedColorStorage*)colorList
 {
     for(IJSVGTraitedColor* traitedColor in colorList.colors) {
         [self addColor:traitedColor];

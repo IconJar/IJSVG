@@ -248,14 +248,14 @@
         if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillPattern]) != nil) {
             IJSVGTraitedColorStorage* storage = fillLayer.colors;
             [storage addTraits:IJSVGColorUsageTraitFill];
-            [list mergeWithColors:storage];
+            [list unionColorStorage:storage];
         }
         
         // gradients
         if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGradient]) != nil) {
             IJSVGTraitedColorStorage* storage = fillLayer.colors;
             [storage addTraits:IJSVGColorUsageTraitGradientStop];
-            [list mergeWithColors:storage];
+            [list unionColorStorage:storage];
         }
     }
     
@@ -276,14 +276,14 @@
         if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
             IJSVGTraitedColorStorage* storage = strokeLayer.colors;
             [storage addTraits:IJSVGColorUsageTraitFill];
-            [list mergeWithColors:storage];
+            [list unionColorStorage:storage];
         }
         
         // gradients
         if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
             IJSVGTraitedColorStorage* storage = strokeLayer.colors;
             [storage addTraits:IJSVGColorUsageTraitGradientStop];
-            [list mergeWithColors:storage];
+            [list unionColorStorage:storage];
         }
     }
     return list;
