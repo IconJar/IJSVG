@@ -1979,8 +1979,7 @@ NSString* IJSVGHash(NSString* key)
     [clip addChild:path];
     CGPathRelease(clipPath);
 
-    IJSVGApplyAttributesToElement(dict, clip);
-    
+    IJSVGApplyAttributesToElement(dict, clip);    
     IJSVGApplyAttributesToElement(@{
         IJSVGAttributeClipPath: IJSVGHashURL(clipKey)
     }, element);

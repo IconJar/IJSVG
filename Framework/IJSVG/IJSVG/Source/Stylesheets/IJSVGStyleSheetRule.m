@@ -16,7 +16,7 @@
     // interate over each select and work out if
     // it allows us to be applied
     for (IJSVGStyleSheetSelector* selector in _selectors) {
-        if([selector matchesNode:node]) {
+        if([selector matchesNode:node] == YES) {
             *matchedSelector = selector;
             return YES;
         }

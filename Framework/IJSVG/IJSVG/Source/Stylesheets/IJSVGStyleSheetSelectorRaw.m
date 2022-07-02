@@ -10,12 +10,10 @@
 
 @implementation IJSVGStyleSheetSelectorRaw
 
-@synthesize classes;
-
 - (id)init
 {
     if((self = [super init]) != nil) {
-        classes = [[NSMutableArray alloc] init];
+        _classes = [[NSMutableSet alloc] init];
         _combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
         _combinatorString = @" ";
     }
@@ -24,13 +22,13 @@
 
 - (void)addClassName:(NSString*)className
 {
-    [classes addObject:className];
+    [_classes addObject:className];
 }
 
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@",
-            _combinatorString, _tag, classes, _identifier];
+            _combinatorString, _tag, _classes, _identifier];
 }
 
 @end

@@ -387,8 +387,9 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     // class list
     IJSVGAttributeParse(IJSVGAttributeClass, ^(NSString* value) {
+        NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
         node.className = value;
-        node.classNameList = [value ijsvg_componentsSeparatedByChars:" "];
+        node.classNameList = [NSSet setWithArray:list];
     });
     
     

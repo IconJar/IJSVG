@@ -19,16 +19,14 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 };
 
 @interface IJSVGStyleSheetSelectorRaw : NSObject {
-    
-@private
-    NSMutableArray* classes;
 }
 
 @property (nonatomic, copy) NSString* tag;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, copy) NSString* combinatorString;
-@property (nonatomic, strong) NSArray* classes;
+@property (nonatomic, strong) NSMutableSet<NSString*>* classes;
 @property (nonatomic, assign) IJSVGStyleSheetSelectorCombinator combinator;
+
 - (void)addClassName:(NSString*)className;
 
 @end

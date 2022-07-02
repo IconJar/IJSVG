@@ -147,7 +147,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGNodeType type;
 @property (nonatomic, copy) NSString* name;
 @property (nonatomic, copy) NSString* className;
-@property (nonatomic, strong) NSArray* classNameList;
+@property (nonatomic, strong) NSSet<NSString*>* classNameList;
 @property (nonatomic, copy) NSString* unicode;
 @property (nonatomic, assign) BOOL shouldRender;
 @property (nonatomic, strong) IJSVGUnitLength* x;
