@@ -561,6 +561,30 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     return (IJSVGRootNode*)parent;
 }
 
+- (NSSet<IJSVGNode*>*)nodesMatchingTypes:(IJSVGNodeType)types, ...
+{
+    va_list args;
+    va_start(args, types);
+    IJSVGNodeType type = IJSVGNodeTypeUnknown;
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    while((type = va_arg(args, IJSVGNodeType)) != IJSVGNodeTypeUnknown) {
+        [set addIndex:type];
+    }
+    va_end(args);
+    
+    NSMutableSet<IJSVGNode*>* nodes = [[NSMutableSet alloc] init];
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node,
+                                     BOOL* allowChildNodes,
+                                     BOOL* stop) {
+        if([set containsIndex:node.type] == YES) {
+            [nodes addObject:node];
+        }
+    };
+    [self.class walkNodeTree:self
+                     handler:handler];
+    return nodes.copy;
+}
+
 - (instancetype)parentNodeMatchingClass:(Class)class
 {
     IJSVGNode* parent = self.parentNode;

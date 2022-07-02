@@ -129,28 +129,28 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                               IJSVGAttributeHref];
 }
 
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
 {
-    return [self.class groupForFileURL:aURL
+    return [self.class parserForFileURL:aURL
                                  error:nil
                               delegate:nil];
 }
 
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                       delegate:(id<IJSVGParserDelegate>)delegate
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                        delegate:(id<IJSVGParserDelegate>)delegate
 {
-    return [self.class groupForFileURL:aURL
+    return [self.class parserForFileURL:aURL
                                  error:nil
                               delegate:delegate];
 }
 
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                          error:(NSError**)error
-                       delegate:(id<IJSVGParserDelegate>)delegate
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                           error:(NSError**)error
+                        delegate:(id<IJSVGParserDelegate>)delegate
 {
     return [[self.class alloc] initWithFileURL:aURL
-                                          error:error
-                                       delegate:delegate];
+                                         error:error
+                                      delegate:delegate];
 }
 
 - (id)initWithSVGString:(NSString*)string
@@ -159,7 +159,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 {
     if((self = [super init]) != nil) {
         _delegate = delegate;
-
         _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
         // use NSXMLDocument as its the easiest thing to do on OSX

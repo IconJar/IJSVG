@@ -80,11 +80,9 @@ withSVGString:(NSString*)subSVGString;
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
 - (void)prepForDrawingInView:(NSView*)view;
-- (BOOL)isFont;
 - (IJSVGRootNode*)rootNode;
 - (CGRect)viewBox;
 - (CGSize)sizeWithDefaultSize:(CGSize)size;
-- (NSArray<IJSVGPath*>*)glyphs;
 - (NSString*)identifier;
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
@@ -99,9 +97,14 @@ withSVGString:(NSString*)subSVGString;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
-+ (id)svgNamed:(NSString*)string;
-+ (id)svgNamed:(NSString*)string
++ (id)SVGNamed:(NSString*)string;
++ (id)SVGNamed:(NSString*)string
       delegate:(id<IJSVGDelegate>)delegate;
+
++ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path;
++ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
+                   flipped:(BOOL)flipped;
+
 
 - (id)initWithImage:(NSImage*)image;
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode;
@@ -176,6 +179,7 @@ withSVGString:(NSString*)subSVGString;
 - (NSData*)PDFDataWithRect:(CGRect)rect
                      error:(NSError**)error;
 
+// call this to invalidate the render tree when you change the style
 - (void)setNeedsDisplay;
 
 // colors

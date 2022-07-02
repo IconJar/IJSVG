@@ -42,6 +42,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
 };
 
 typedef NS_ENUM(NSInteger, IJSVGNodeType) {
+    IJSVGNodeTypeUnknown = 0,
     IJSVGNodeTypeGroup,
     IJSVGNodeTypePath,
     IJSVGNodeTypeDef,
@@ -71,8 +72,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeNotFound,
     IJSVGNodeTypeFilter,
     IJSVGNodeTypeFilterEffect,
-    IJSVGNodeTypeForeignObject,
-    IJSVGNodeTypeUnknown,
+    IJSVGNodeTypeForeignObject
 };
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
@@ -208,6 +208,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)removeTraits:(IJSVGNodeTraits)traits;
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
+
+- (NSSet<IJSVGNode*>*)nodesMatchingTypes:(IJSVGNodeType)types, ...;
 
 - (instancetype)parentNodeMatchingClass:(Class)class;
 - (instancetype)rootNodeMatchingClass:(Class)class;

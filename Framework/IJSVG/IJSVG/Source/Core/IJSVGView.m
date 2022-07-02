@@ -21,7 +21,7 @@
 
 + (IJSVGView*)viewWithSVGNamed:(NSString*)name
 {
-    IJSVG* anSVG = [IJSVG svgNamed:name];
+    IJSVG* anSVG = [IJSVG SVGNamed:name];
     return [[self alloc] initWithSVG:anSVG];
 }
 
@@ -37,7 +37,7 @@
 {
     // image was set via IB
     if(imageName != nil) {
-        IJSVG* anSVG = [IJSVG svgNamed:imageName];
+        IJSVG* anSVG = [IJSVG SVGNamed:imageName];
         if(tintColor != nil) {
             anSVG.style.fillColor = tintColor;
         }

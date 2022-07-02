@@ -35,13 +35,13 @@
                        delegate:nil];
 }
 
-+ (id)svgNamed:(NSString*)string
++ (id)SVGNamed:(NSString*)string
 {
     return [self.class svgNamed:string
                           error:nil];
 }
 
-+ (id)svgNamed:(NSString*)string
++ (id)SVGNamed:(NSString*)string
       delegate:(id<IJSVGDelegate>)delegate
 {
     return [self.class svgNamed:string
@@ -69,6 +69,33 @@
     // check the asset catalogues
     return [[self alloc] initWithDataAssetNamed:string
                                            error:error];
+}
+
++ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
+{
+    return [self SVGFromCGPathRef:path
+                          flipped:NO];
+}
+
++ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
+                   flipped:(BOOL)flipped
+{
+    CGRect box = CGPathGetPathBoundingBox(path);
+    IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
+    rootNode.viewBox = [IJSVGUnitRect rectWithCGRect:box];
+    CGMutablePathRef nPath = NULL;
+    if(flipped) {
+        CGPathRef transformedPath = [IJSVGUtils newFlippedCGPath:path];
+        nPath = CGPathCreateMutableCopy(transformedPath);
+        CGPathRelease(transformedPath);
+    } else {
+        nPath = CGPathCreateMutableCopy(path);
+    }
+    IJSVGPath* childPath = [[IJSVGPath alloc] init];
+    childPath.path = nPath;
+    [rootNode addChild:childPath];
+    CGPathRelease(nPath);
+    return [[self.class alloc] initWithRootNode:rootNode];
 }
 
 - (id)initWithDataAssetNamed:(NSDataAssetName)name
@@ -208,10 +235,11 @@
         [self _checkDelegate];
 
         // create the group
-        IJSVGParser* parser = [IJSVGParser groupForFileURL:aURL
+        IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL
                                                       error:&anError
                                                    delegate:self];
         _rootNode = parser.rootNode;
+        
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -378,16 +406,6 @@
 - (IJSVGRootNode*)rootNode
 {
     return _rootNode;
-}
-
-- (BOOL)isFont
-{
-    return NO;//[_rootNode isFont];
-}
-
-- (NSArray<IJSVGPath*>*)glyphs
-{
-    return @[];//[_rootNode glyphs];
 }
 
 - (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive

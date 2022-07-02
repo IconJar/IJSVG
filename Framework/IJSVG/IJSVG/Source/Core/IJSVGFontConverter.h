@@ -23,7 +23,4 @@ typedef void (^IJSVGFontConverterEnumerateBlock)(NSString* unicode, IJSVG* svg);
 - (NSFont*)font;
 - (void)enumerateUsingBlock:(IJSVGFontConverterEnumerateBlock)block;
 
-+ (IJSVG*)convertIJSVGPathToSVG:(IJSVGPath*)path;
-+ (IJSVG*)convertPathToSVG:(CGPathRef)path;
-
 @end

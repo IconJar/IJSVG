@@ -146,11 +146,11 @@ extern NSString* const IJSVGAttributeMarker;
 - (id)initWithFileURL:(NSURL*)aURL
                 error:(NSError**)error
              delegate:(id<IJSVGParserDelegate>)delegate;
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL;
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                       delegate:(id<IJSVGParserDelegate>)delegate;
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                          error:(NSError**)error
-                       delegate:(id<IJSVGParserDelegate>)delegate;
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL;
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                        delegate:(id<IJSVGParserDelegate>)delegate;
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                           error:(NSError**)error
+                        delegate:(id<IJSVGParserDelegate>)delegate;
 
 @end

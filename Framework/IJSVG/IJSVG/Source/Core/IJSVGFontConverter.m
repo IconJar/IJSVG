@@ -89,29 +89,9 @@
     }
 
     for (NSString* key in _transformedPaths.allKeys) {
-        block(key, [self.class convertPathToSVG:(CGPathRef)_transformedPaths[key]]);
+        IJSVG* svg = [IJSVG SVGFromCGPathRef:(CGPathRef)_transformedPaths[key]];
+        block(key, svg);
     }
-}
-
-+ (IJSVG*)convertIJSVGPathToSVG:(IJSVGPath*)path
-{
-    CGPathRef flippedPath = [IJSVGUtils newFlippedCGPath:path.path];
-    IJSVG* svg = [self convertPathToSVG:flippedPath];
-    CGPathRelease(flippedPath);
-    return svg;
-}
-
-+ (IJSVG*)convertPathToSVG:(CGPathRef)path
-{
-    CGRect box = CGPathGetPathBoundingBox(path);
-    IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
-    rootNode.viewBox = [IJSVGUnitRect rectWithCGRect:box];
-    CGMutablePathRef nPath = CGPathCreateMutableCopy(path);
-    IJSVGPath* childPath = [[IJSVGPath alloc] init];
-    childPath.path = nPath;
-    [rootNode addChild:childPath];
-    CGPathRelease(nPath);
-    return [[IJSVG alloc] initWithRootNode:rootNode];
 }
 
 @end
