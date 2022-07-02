@@ -9,8 +9,8 @@
 #import <IJSVG/IJSVGGroup.h>
 
 @interface IJSVGClipPath : IJSVGGroup {
-@private
-    BOOL _isCurrentlyWalkingSubtree;
 }
+
+@property (nonatomic, readonly) IJSVGWindingRule computedClipRule;
 
 @end

@@ -696,7 +696,7 @@
         
         IJSVGWindingRule clipRule = node.clipRule;
         if(clipRule == IJSVGWindingRuleInherit) {
-            clipRule = clipPath.clipRule;
+            clipRule = clipPath.computedClipRule;
         }
         
         layer.clipPath = path;
