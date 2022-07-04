@@ -209,7 +209,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
 
-- (NSSet<IJSVGNode*>*)nodesMatchingTypes:(IJSVGNodeType)types, ...;
+- (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 
 - (instancetype)parentNodeMatchingClass:(Class)class;
 - (instancetype)rootNodeMatchingClass:(Class)class;

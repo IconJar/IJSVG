@@ -159,7 +159,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 {
     if((self = [super init]) != nil) {
         _delegate = delegate;
-        _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -249,10 +248,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (BOOL)_validateParse:(NSError**)error
 {
-    // check is font
-//    if(self.isFont) {
-//        return YES;
-//    }
     return YES;
 }
 

@@ -23,12 +23,6 @@
 @class IJSVG;
 
 @protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>
-
-@optional
-- (void)svg:(IJSVG*)svg
-foundSubSVG:(IJSVG*)subSVG
-withSVGString:(NSString*)subSVGString;
-
 @end
 
 @interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
@@ -84,7 +78,7 @@ withSVGString:(NSString*)subSVGString;
 - (CGRect)viewBox;
 - (CGSize)sizeWithDefaultSize:(CGSize)size;
 - (NSString*)identifier;
-- (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive;
+- (NSSet<IJSVG*>*)directDescendSVGs;
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
                            options:(IJSVGExporterOptions)options
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;

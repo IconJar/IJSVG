@@ -81,6 +81,17 @@
     return YES;
 }
 
+- (NSSet<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type
+{
+    NSMutableSet<IJSVGNode*>* nodes = [[NSMutableSet alloc] init];
+    for(IJSVGNode* node in self.children) {
+        if(node.type == type) {
+            [nodes addObject:node];
+        }
+    }
+    return nodes;
+}
+
 - (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
     return [self.class node:self

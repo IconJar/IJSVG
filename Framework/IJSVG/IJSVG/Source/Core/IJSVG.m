@@ -230,10 +230,6 @@
         NSError* anError = nil;
         _delegate = delegate;
 
-        // this is a really quick check against the delegate
-        // for methods that exist
-        [self _checkDelegate];
-
         // create the group
         IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL
                                                       error:&anError
@@ -294,7 +290,6 @@
         // bypasses the loading of a file
         NSError* anError = nil;
         _delegate = delegate;
-        [self _checkDelegate];
 
         // setup the parser
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
@@ -393,10 +388,6 @@
     return _rootNode.identifier;
 }
 
-- (void)_checkDelegate
-{
-    _respondsTo.shouldHandleSubSVG = [_delegate respondsToSelector:@selector(svg:foundSubSVG:withSVGString:)];
-}
 
 - (CGRect)viewBox
 {
@@ -408,22 +399,15 @@
     return _rootNode;
 }
 
-- (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
+- (NSSet<IJSVG*>*)directDescendSVGs
 {
-    NSMutableArray<IJSVG*>* svgs = [[NSMutableArray alloc] init];
-    IJSVGNodeWalkHandler handler = ^(IJSVGNode *node,
-                                     BOOL *allowChildNodes,
-                                     BOOL *stop) {
-        if(node.class == IJSVGRootNode.class) {
-            IJSVGRootNode* root = (IJSVGRootNode*)node.copy;
-            IJSVG* newSVG = [[self.class alloc] initWithRootNode:root];
-            if(newSVG != nil) {
-                [svgs addObject:newSVG];
-            }
-        }
-    };
-    [IJSVGNode walkNodeTree:_rootNode
-                    handler:handler];
+    NSMutableSet<IJSVG*>* svgs = [[NSMutableSet alloc] init];
+    NSSet<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
+    for(IJSVGNode* node in nodes) {
+        IJSVG* newSVG = nil;
+        newSVG = [[self.class alloc] initWithRootNode:(IJSVGRootNode*)node];
+        [svgs addObject:newSVG];
+    }
     return svgs;
 }
 
@@ -768,19 +752,6 @@
         return [self PDFData];
     }
     return nil;
-}
-
-#pragma mark IJSVGParserDelegate
-
-- (void)svgParser:(IJSVGParser*)svg
-      foundSubSVG:(IJSVG*)subSVG
-    withSVGString:(NSString*)string
-{
-    if(_delegate != nil && _respondsTo.shouldHandleSubSVG == 1) {
-        [_delegate svg:self
-           foundSubSVG:subSVG
-         withSVGString:string];
-    }
 }
 
 #pragma mark matching
