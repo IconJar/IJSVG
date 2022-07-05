@@ -123,7 +123,7 @@
     return IJSVGNodeTypeUnknown;
 }
 
-+ (BOOL)typeIsAShape:(IJSVGNodeType)type
++ (BOOL)typeIsPathable:(IJSVGNodeType)type
 {
     return type == IJSVGNodeTypePath || type == IJSVGNodeTypeRect ||
         type == IJSVGNodeTypeCircle || type == IJSVGNodeTypeEllipse ||

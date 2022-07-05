@@ -189,12 +189,6 @@
     CALayer<IJSVGDrawableLayer>* fillLayer = nil;
     IJSVGLayerFillType fillType = [IJSVGLayer fillTypeForFill:fill];
     
-    // if we have a custom color set, make sure we use a generic type
-    // so we dont need to create complex layers
-    if(_style.fillColor != nil) {
-        fillType = IJSVGLayerFillTypeColor;
-    }
-    
     IJSVGLayerUsageType fillUsageType = IJSVGLayerUsageTypeFillGeneric;
     switch(fillType) {
         // just a generic fill color
@@ -275,12 +269,6 @@
         // we need to work out what type of fill we need for the layer
         [layer addTraits:IJSVGLayerTraitStroked];
         IJSVGLayerFillType type = [IJSVGLayer fillTypeForFill:node.stroke];
-        
-        // if we have a custom color set, be sure to swap over to a
-        // generic color instead of working out complex layers
-        if(_style.strokeColor != nil) {
-            type = IJSVGLayerFillTypeColor;
-        }
         
         switch(type) {
             // patterns

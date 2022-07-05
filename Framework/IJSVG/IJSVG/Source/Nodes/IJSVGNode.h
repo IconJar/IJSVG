@@ -193,7 +193,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind;
-+ (BOOL)typeIsAShape:(IJSVGNodeType)type;
++ (BOOL)typeIsPathable:(IJSVGNodeType)type;
 
 - (void)setDefaults;
 - (void)postProcess;
