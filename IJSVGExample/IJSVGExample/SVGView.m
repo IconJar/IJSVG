@@ -15,10 +15,9 @@
     if( ( self = [super initWithFrame:frameRect] ) != nil ) {
         svg = [self svg];
         svg.renderQuality = kIJSVGRenderQualityFullResolution;
-        
-        __weak SVGView* weakSelf = self;
-        svg.renderingBackingScaleHelper = ^{
-            return weakSelf.window.backingScaleFactor;
+        svg.ignoreIntrinsicSize = YES;
+        svg.renderingBackingScaleHelper = ^CGFloat {
+            return NSScreen.mainScreen.backingScaleFactor;
         };
     }
     return self;
@@ -26,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"errorbar_basic"];
+    return [IJSVG svgNamed:@"circles1"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
