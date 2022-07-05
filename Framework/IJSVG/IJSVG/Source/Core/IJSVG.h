@@ -33,12 +33,7 @@
     IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScale;
-    NSMutableDictionary* _replacementColors;
     IJSVGUnitSize* _intrinsicSize;
-
-    struct {
-        unsigned int shouldHandleSubSVG : 1;
-    } _respondsTo;
 }
 
 // set this to be called when the layer is about to draw, it will call this

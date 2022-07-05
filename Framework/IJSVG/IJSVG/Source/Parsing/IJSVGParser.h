@@ -125,11 +125,6 @@ extern NSString* const IJSVGAttributeMarker;
 @private
     id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
-
-    struct {
-        unsigned int handleSubSVG : 1;
-    } _respondsTo;
-
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
     NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;

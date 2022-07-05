@@ -237,7 +237,7 @@
         if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGeneric]) != nil) {
             CGColorRef colorRef = NULL;
             if((colorRef = fillLayer.fillColor) != NULL) {
-                NSColor* nsColor = [NSColor colorWithCGColor:fillLayer.fillColor];
+                NSColor* nsColor = [NSColor colorWithCGColor:colorRef];
                 IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
                                                                       traits:IJSVGColorUsageTraitFill];
                 [list addColor:color];
@@ -265,7 +265,7 @@
         if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
             CGColorRef colorRef = NULL;
             if((colorRef = strokeLayer.strokeColor) != NULL) {
-                NSColor* nsColor = [NSColor colorWithCGColor:strokeLayer.strokeColor];
+                NSColor* nsColor = [NSColor colorWithCGColor:colorRef];
                 IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
                                                                      traits:IJSVGColorUsageTraitStroke];
                 [list addColor:color];
