@@ -111,19 +111,9 @@ extern NSString* const IJSVGAttributeMarker;
 
 @class IJSVGParser;
 
-@protocol IJSVGParserDelegate <NSObject>
-
-@optional
-- (void)svgParser:(IJSVGParser*)svg
-      foundSubSVG:(IJSVG*)subSVG
-    withSVGString:(NSString*)string;
-
-@end
-
 @interface IJSVGParser : NSObject {
 
 @private
-    id<IJSVGParserDelegate> _delegate;
     NSXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
@@ -135,17 +125,12 @@ extern NSString* const IJSVGAttributeMarker;
 + (BOOL)isDataSVG:(NSData*)data;
 
 - (id)initWithSVGString:(NSString*)string
-                  error:(NSError**)error
-               delegate:(id<IJSVGParserDelegate>)delegate;
+                  error:(NSError**)error;
 
 - (id)initWithFileURL:(NSURL*)aURL
-                error:(NSError**)error
-             delegate:(id<IJSVGParserDelegate>)delegate;
+                error:(NSError**)error;
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL;
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
-                        delegate:(id<IJSVGParserDelegate>)delegate;
-+ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
-                           error:(NSError**)error
-                        delegate:(id<IJSVGParserDelegate>)delegate;
+                           error:(NSError**)error;
 
 @end

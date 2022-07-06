@@ -27,31 +27,14 @@
     }
 }
 
-+ (id)svgNamed:(NSString*)string
-         error:(NSError**)error
-{
-    return [self.class svgNamed:string
-                          error:error
-                       delegate:nil];
-}
-
 + (id)SVGNamed:(NSString*)string
 {
     return [self.class svgNamed:string
                           error:nil];
 }
 
-+ (id)SVGNamed:(NSString*)string
-      delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self.class svgNamed:string
-                          error:nil
-                       delegate:delegate];
-}
-
 + (id)svgNamed:(NSString*)string
          error:(NSError**)error
-      delegate:(id<IJSVGDelegate>)delegate
 {
     NSBundle* bundle = NSBundle.mainBundle;
     NSString* str = nil;
@@ -62,8 +45,7 @@
     if((str = [bundle pathForResource:[string stringByDeletingPathExtension]
                                 ofType:ext]) != nil) {
         return [[self alloc] initWithFile:str
-                                     error:error
-                                  delegate:delegate];
+                                    error:error];
     }
     
     // check the asset catalogues
@@ -169,71 +151,32 @@
 - (id)initWithFile:(NSString*)file
 {
     return [self initWithFile:file
-                        error:nil
-                     delegate:nil];
+                        error:nil];
 }
 
 - (id)initWithFile:(NSString*)file
              error:(NSError**)error
-          delegate:(id<IJSVGDelegate>)delegate
 {
     return [self initWithFilePathURL:[NSURL fileURLWithPath:file isDirectory:NO]
-                               error:error
-                            delegate:delegate];
-}
-
-- (id)initWithFile:(NSString*)file
-             error:(NSError**)error
-{
-    return [self initWithFile:file
-                        error:error
-                     delegate:nil];
-}
-
-- (id)initWithFile:(NSString*)file
-          delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self initWithFile:file
-                        error:nil
-                     delegate:delegate];
+                               error:error];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL
 {
     return [self initWithFilePathURL:aURL
-                               error:nil
-                            delegate:nil];
+                               error:nil];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL
                     error:(NSError**)error
-{
-    return [self initWithFilePathURL:aURL
-                               error:error
-                            delegate:nil];
-}
-
-- (id)initWithFilePathURL:(NSURL*)aURL
-                 delegate:(id<IJSVGDelegate>)delegate
-{
-    return [self initWithFilePathURL:aURL
-                               error:nil
-                            delegate:delegate];
-}
-
-- (id)initWithFilePathURL:(NSURL*)aURL
-                    error:(NSError**)error
-                 delegate:(id<IJSVGDelegate>)delegate
 {
     // create the object
     if((self = [super init]) != nil) {
         NSError* anError = nil;
-        _delegate = delegate;
 
         // create the group
         IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL
-                                                      error:&anError
-                                                   delegate:self];
+                                                      error:&anError];
         _rootNode = parser.rootNode;
         
         [self _setupBasicInfoFromGroup];
@@ -269,32 +212,20 @@
 - (id)initWithSVGString:(NSString*)string
 {
     return [self initWithSVGString:string
-                             error:nil
-                          delegate:nil];
+                             error:nil];
 }
 
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error
-{
-    return [self initWithSVGString:string
-                             error:error
-                          delegate:nil];
-}
-
-- (id)initWithSVGString:(NSString*)string
-                  error:(NSError**)error
-               delegate:(id<IJSVGDelegate>)delegate
 {
     if((self = [super init]) != nil) {
         // this is basically the same as init with URL just
         // bypasses the loading of a file
         NSError* anError = nil;
-        _delegate = delegate;
 
         // setup the parser
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
-                                                                error:&anError
-                                                             delegate:self];
+                                                                error:&anError];
         _rootNode = parser.rootNode;
 
         [self _setupBasicInfoFromGroup];

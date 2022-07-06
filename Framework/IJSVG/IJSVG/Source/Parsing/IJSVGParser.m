@@ -132,33 +132,20 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
 {
     return [self.class parserForFileURL:aURL
-                                 error:nil
-                              delegate:nil];
-}
-
-+ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
-                        delegate:(id<IJSVGParserDelegate>)delegate
-{
-    return [self.class parserForFileURL:aURL
-                                 error:nil
-                              delegate:delegate];
+                                  error:nil];
 }
 
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
                            error:(NSError**)error
-                        delegate:(id<IJSVGParserDelegate>)delegate
 {
     return [[self.class alloc] initWithFileURL:aURL
-                                         error:error
-                                      delegate:delegate];
+                                         error:error];
 }
 
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error
-               delegate:(id<IJSVGParserDelegate>)delegate
 {
     if((self = [super init]) != nil) {
-        _delegate = delegate;
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -216,7 +203,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (id)initWithFileURL:(NSURL*)aURL
                 error:(NSError**)error
-             delegate:(id<IJSVGParserDelegate>)delegate
 {
     NSError* anError = nil;
     NSStringEncoding encoding;
@@ -231,8 +217,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     }
 
     return [self initWithSVGString:str
-                             error:error
-                          delegate:delegate];
+                             error:error];
 }
 
 - (void*)_handleErrorWithCode:(NSUInteger)code

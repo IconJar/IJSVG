@@ -22,14 +22,10 @@
 
 @class IJSVG;
 
-@protocol IJSVGDelegate <NSObject, IJSVGParserDelegate>
-@end
-
-@interface IJSVG : NSObject <NSPasteboardWriting, IJSVGParserDelegate> {
+@interface IJSVG : NSObject <NSPasteboardWriting> {
 
 @private
     IJSVGRootNode* _rootNode;
-    id<IJSVGDelegate> _delegate;
     IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScale;
@@ -87,8 +83,6 @@
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 + (id)SVGNamed:(NSString*)string;
-+ (id)SVGNamed:(NSString*)string
-      delegate:(id<IJSVGDelegate>)delegate;
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path;
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
@@ -101,10 +95,6 @@
 - (id)initWithSVGLayer:(IJSVGGroupLayer*)group
                viewBox:(CGRect)viewBox;
 
-- (id)initWithSVGString:(NSString*)string
-                  error:(NSError**)error
-               delegate:(id<IJSVGDelegate>)delegate;
-
 - (id)initWithSVGString:(NSString*)string;
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error;
@@ -116,19 +106,9 @@
 - (id)initWithFile:(NSString*)file;
 - (id)initWithFile:(NSString*)file
              error:(NSError**)error;
-- (id)initWithFile:(NSString*)file
-          delegate:(id<IJSVGDelegate>)delegate;
-- (id)initWithFile:(NSString*)file
-             error:(NSError**)error
-          delegate:(id<IJSVGDelegate>)delegate;
 - (id)initWithFilePathURL:(NSURL*)aURL;
 - (id)initWithFilePathURL:(NSURL*)aURL
                     error:(NSError**)error;
-- (id)initWithFilePathURL:(NSURL*)aURL
-                 delegate:(id<IJSVGDelegate>)delegate;
-- (id)initWithFilePathURL:(NSURL*)aURL
-                    error:(NSError**)error
-                 delegate:(id<IJSVGDelegate>)delegate;
 
 - (id)initWithDataAssetNamed:(NSDataAssetName)name
                        error:(NSError**)error;
