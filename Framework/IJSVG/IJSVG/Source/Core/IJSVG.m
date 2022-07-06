@@ -539,9 +539,18 @@
                                             error:(NSError**)error
 {
     CGSize ogSize = _rootNode.intrinsicSize.value;
-    CGFloat ratio = ogSize.height / ogSize.width;
-    ogSize.width = aSize.width * ratio;
-    ogSize.height = aSize.height * ratio;
+    CGFloat ratio = 0.f;
+    CGFloat imageWidth = ogSize.width;
+    CGFloat imageHeight = ogSize.height;
+    CGFloat maxWidth = aSize.width;
+    CGFloat maxHeight = aSize.height;
+    if(imageWidth > imageHeight) {
+        ratio = maxWidth / imageWidth;
+    } else {
+        ratio = maxHeight / imageHeight;
+    }
+    ogSize.width = imageWidth * ratio;
+    ogSize.height = imageHeight * ratio;
     return [self imageWithSize:ogSize
                        flipped:flipped
                          error:error];
