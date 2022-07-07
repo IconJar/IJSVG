@@ -109,6 +109,8 @@
     IJSVGUnitSize* size = [IJSVGUnitSize sizeWithCGSize:imageNode.intrinsicSize];
     IJSVGUnitRect* viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
                                                       size:size];
+    imageNode.width = size.width.copy;
+    imageNode.height = size.height.copy;
     rootNode.viewBox = viewBox;
     [rootNode addChild:imageNode];
     return [self initWithRootNode:rootNode];

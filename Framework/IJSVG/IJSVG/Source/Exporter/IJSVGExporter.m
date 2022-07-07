@@ -1349,7 +1349,7 @@ NSString* IJSVGHash(NSString* key)
         NSImage* nsImage = image.image;
         CGFloat width = nsImage.size.width;
         CGFloat height = nsImage.size.height;
-        CGRect newImageRect = CGRectMake(0.f, 0.f, width, height * ratio);
+        CGRect newImageRect = CGRectMake(0.f, 0.f, width * ratio, height * ratio);
         NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
                                                 toSize:newImageRect.size];
         cgImage = [actualImage CGImageForProposedRect:&newImageRect
