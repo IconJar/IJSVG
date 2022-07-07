@@ -19,6 +19,17 @@
     return size;
 }
 
++ (IJSVGUnitSize*)sizeWithCGSize:(CGSize)size
+{
+    return [self sizeWithWidth:[IJSVGUnitLength unitWithFloat:size.width]
+                        height:[IJSVGUnitLength unitWithFloat:size.height]];
+}
+
++ (IJSVGUnitSize*)zeroSize
+{
+    return [self sizeWithCGSize:CGSizeZero];
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitSize* size = [[self.class alloc] init];

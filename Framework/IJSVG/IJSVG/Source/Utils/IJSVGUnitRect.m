@@ -27,6 +27,11 @@
                     height:rect.size.height];
 }
 
++ (IJSVGUnitRect*)zeroRect
+{
+    return [self rectWithCGRect:CGRectZero];
+}
+
 + (IJSVGUnitRect*)rectWithX:(CGFloat)x
                           y:(CGFloat)y
                       width:(CGFloat)width

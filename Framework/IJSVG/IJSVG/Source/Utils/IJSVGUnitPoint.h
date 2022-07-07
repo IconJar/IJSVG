@@ -15,6 +15,8 @@
 @property (nonatomic, strong) IJSVGUnitLength* y;
 @property (nonatomic, readonly) CGPoint value;
 
++ (IJSVGUnitPoint*)zeroPoint;
++ (IJSVGUnitPoint*)pointWithCGPoint:(CGPoint)point;
 + (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x
                             y:(IJSVGUnitLength*)y;
 

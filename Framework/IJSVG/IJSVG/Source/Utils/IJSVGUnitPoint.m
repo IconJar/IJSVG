@@ -19,6 +19,17 @@
     return point;
 }
 
++ (IJSVGUnitPoint *)pointWithCGPoint:(CGPoint)point
+{
+    return [self pointWithX:[IJSVGUnitLength unitWithFloat:point.x]
+                          y:[IJSVGUnitLength unitWithFloat:point.y]];
+}
+
++ (IJSVGUnitPoint*)zeroPoint
+{
+    return [self pointWithCGPoint:CGPointZero];
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitPoint* point = [[self.class alloc] init];

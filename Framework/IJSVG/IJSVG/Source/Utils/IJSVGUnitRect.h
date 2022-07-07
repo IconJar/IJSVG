@@ -17,6 +17,7 @@
 @property (nonatomic, readonly) BOOL isZeroRect;
 @property (nonatomic, readonly) CGRect value;
 
++ (IJSVGUnitRect*)zeroRect;
 + (IJSVGUnitRect*)rectWithCGRect:(CGRect)rect;
 + (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin
                             size:(IJSVGUnitSize*)size;

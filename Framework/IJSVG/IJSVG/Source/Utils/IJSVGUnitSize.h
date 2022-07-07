@@ -15,6 +15,9 @@
 @property (nonatomic, strong) IJSVGUnitLength* height;
 @property (nonatomic, readonly) CGSize value;
 
+
++ (IJSVGUnitSize*)zeroSize;
++ (IJSVGUnitSize*)sizeWithCGSize:(CGSize)size;
 + (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
                          height:(IJSVGUnitLength*)height;
 

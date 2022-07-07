@@ -103,25 +103,15 @@
 
 - (id)initWithImage:(NSImage*)image
 {
-    __block IJSVGGroupLayer* layer = nil;
-    __block IJSVGImageLayer* imageLayer = nil;
-
-    // create the layers we require
+    IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
     IJSVGImage* imageNode = [[IJSVGImage alloc] init];
     imageNode.image = image;
-    
-    BOOL hasTransaction = IJSVGBeginTransaction();
-    layer = [[IJSVGGroupLayer alloc] init];
-    imageLayer =
-        [[IJSVGImageLayer alloc] initWithImage:imageNode];
-    [layer addSublayer:imageLayer];
-    if(hasTransaction == YES) {
-        IJSVGEndTransaction();
-    }
-
-    // return the initialized SVG
-    return [self initWithSVGLayer:layer
-                          viewBox:imageLayer.frame];
+    IJSVGUnitSize* size = [IJSVGUnitSize sizeWithCGSize:imageNode.intrinsicSize];
+    IJSVGUnitRect* viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
+                                                      size:size];
+    rootNode.viewBox = viewBox;
+    [rootNode addChild:imageNode];
+    return [self initWithRootNode:rootNode];
 }
 
 - (id)initWithSVGLayer:(IJSVGGroupLayer*)group
