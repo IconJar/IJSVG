@@ -1342,19 +1342,31 @@ NSString* IJSVGHash(NSString* key)
     imageElement.name = @"image";
     
     // we need to transform this into its required aspect ratio
+    NSImage* nsImage = image.image;
+    CGFloat ratio = 0.f;
     CGImageRef cgImage = NULL;
-    CGRect bounds = image.bounds;
-    CGFloat ratio = bounds.size.height / bounds.size.width;
+    
+    const CGRect bounds = image.bounds;
+    const CGFloat imageWidth = bounds.size.width;
+    const CGFloat imageHeight = bounds.size.height;
+    const CGFloat maxWidth = nsImage.size.width;
+    const CGFloat maxHeight = nsImage.size.height;
+    
+    // work out the ratio
+    if(imageWidth > imageHeight) {
+        ratio = maxWidth / imageWidth;
+    } else {
+        ratio = maxHeight / imageHeight;
+    }
+    
     if(ratio != 1.f) {
-        NSImage* nsImage = image.image;
-        CGFloat width = nsImage.size.width;
-        CGFloat height = nsImage.size.height;
-        CGRect newImageRect = CGRectMake(0.f, 0.f, width * ratio, height * ratio);
+        CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
+                                         imageHeight*ratio);
         NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
-                                                toSize:newImageRect.size];
+                                               toSize:newImageRect.size];
         cgImage = [actualImage CGImageForProposedRect:&newImageRect
                                               context:NULL
-                                                hints:nil];
+                                                hints:NULL];
     } else {
         cgImage = image.CGImage;
     }
