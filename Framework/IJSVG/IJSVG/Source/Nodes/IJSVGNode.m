@@ -603,4 +603,17 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     return foundNode;
 }
 
+- (void)normalizeWithOffset:(CGPoint)offset
+{
+    // if an SVG has been asked to normalize, its root will give us an offset
+    // to transform by to shift everything based on the viewBox's origin, we can
+    // simply just create a translate transform and stick at first position.
+    NSMutableArray* transforms = self.transforms ?
+        self.transforms.mutableCopy : [[NSMutableArray alloc] init];
+    IJSVGTransform* transform = [IJSVGTransform transformByTranslatingX:-offset.x
+                                                                      y:-offset.y];
+    [transforms insertObject:transform atIndex:0];
+    self.transforms = transforms;
+}
+
 @end

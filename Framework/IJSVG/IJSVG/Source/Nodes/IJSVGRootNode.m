@@ -42,4 +42,24 @@
     return rootNode;
 }
 
+- (void)normalizeWithOffset:(CGPoint)offset
+{
+    for(IJSVGNode* node in self.children) {
+        [node normalizeWithOffset:offset];
+    }
+}
+
+- (void)postProcess
+{
+    // Some SVG's will have a viewBox such as 5, 5, 10, 10, given that
+    // we can zero out the origin and shift all its direct children by
+    // the viewBox's origin
+    CGRect vBox = [self.viewBox computeValue:CGSizeZero];
+    if(CGPointEqualToPoint(vBox.origin, CGPointZero) == YES) {
+        return;
+    }
+    [self normalizeWithOffset:vBox.origin];
+    self.viewBox.origin = IJSVGUnitPoint.zeroPoint;
+}
+
 @end

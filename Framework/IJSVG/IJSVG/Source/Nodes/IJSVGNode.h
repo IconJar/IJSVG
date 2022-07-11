@@ -208,6 +208,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)removeTraits:(IJSVGNodeTraits)traits;
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
+- (void)normalizeWithOffset:(CGPoint)offset;
 
 - (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 
