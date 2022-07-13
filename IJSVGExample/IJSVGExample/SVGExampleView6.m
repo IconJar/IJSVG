@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"css"];
+    return [IJSVG SVGNamed:@"css"];
 }
 
 @end

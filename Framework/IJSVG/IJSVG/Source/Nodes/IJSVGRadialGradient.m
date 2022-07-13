@@ -85,6 +85,7 @@
                transform:(CGAffineTransform)absoluteTransform
 {
     CGContextSaveGState(ctx);
+    CGContextSetInterpolationQuality(ctx, kCGInterpolationLow);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = 0.f;
     CGPoint startPoint = CGPointZero;

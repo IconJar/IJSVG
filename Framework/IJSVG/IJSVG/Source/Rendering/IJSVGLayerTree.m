@@ -715,8 +715,8 @@
                                     toLayer:(CALayer<IJSVGDrawableLayer>*)layer
                                    fromNode:(IJSVGNode*)node
 {
-    return layer;
-    if(filter == nil || filter.valid == NO) {
+    if(IJSVGThreadManager.currentManager.featureFlags.filters.enabled == NO ||
+       (filter == nil || filter.valid == NO)) {
         return layer;
     }
     IJSVGFilterLayer* filterLayer = [IJSVGFilterLayer layer];

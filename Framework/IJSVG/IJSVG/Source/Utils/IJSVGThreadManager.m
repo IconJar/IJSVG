@@ -57,6 +57,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
         // store the thread
         _thread = thread;
         
+        // setup the feature flags
+        _featureFlags = [[IJSVGFeatureFlags alloc] init];
+        
         // listen for teardown of the thread
         NSNotificationCenter* center = NSNotificationCenter.defaultCenter;
         [center addObserver:self

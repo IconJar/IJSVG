@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"linecap"];
+    return [IJSVG SVGNamed:@"linecap"];
 }
 
 @end

@@ -29,6 +29,7 @@
 		590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F3201FC9E3004A1554 /* radialgradient2.svg */; };
 		590C87F6201FD0D4004A1554 /* car.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F5201FD0D4004A1554 /* car.svg */; };
 		5911682C2854CB7000678392 /* couchdb.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5911682B2854CB7000678392 /* couchdb.svg */; };
+		5926079C287D6B8B00E93B09 /* Toucan in the Shade.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */; };
 		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
 		59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */ = {isa = PBXBuildFile; fileRef = 59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */; };
 		59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59316D30282901F5003C01AA /* errorbar_basic.svg */; };
@@ -129,6 +130,7 @@
 		590C87F3201FC9E3004A1554 /* radialgradient2.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = radialgradient2.svg; sourceTree = "<group>"; };
 		590C87F5201FD0D4004A1554 /* car.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = car.svg; sourceTree = "<group>"; };
 		5911682B2854CB7000678392 /* couchdb.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = couchdb.svg; sourceTree = "<group>"; };
+		5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Toucan in the Shade.svg"; sourceTree = "<group>"; };
 		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
 		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
 		59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView6.m; sourceTree = "<group>"; };
@@ -251,6 +253,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */,
 				598F31BA285658C7006D9A66 /* bloglines.svg */,
 				598F31B8285658C4006D9A66 /* circles1.svg */,
 				595A69DD2856457E00525065 /* aspect-ratio.svg */,
@@ -451,6 +454,7 @@
 				59B5E3F9284E5EA60050CC73 /* image.svg in Resources */,
 				59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */,
 				59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */,
+				5926079C287D6B8B00E93B09 /* Toucan in the Shade.svg in Resources */,
 				590C87EF201FA093004A1554 /* NewTux.svg in Resources */,
 				59265CE81C4F840400F333F0 /* css.svg in Resources */,
 				595665DE19B6309C00D805FF /* test.svg in Resources */,

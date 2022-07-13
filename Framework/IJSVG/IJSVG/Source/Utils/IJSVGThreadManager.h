@@ -11,6 +11,7 @@
 #import <CoreImage/CoreImage.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGCommandParser.h>
+#import <IJSVG/IJSVGFeatureFlags.h>
 
 @interface IJSVGThreadManager : NSObject {
     
@@ -18,6 +19,7 @@
     NSMutableDictionary* _userInfo;
 }
 
+@property (nonatomic, readonly) IJSVGFeatureFlags* featureFlags;
 @property (nonatomic, readonly) NSThread* thread;
 @property (nonatomic, readonly) CIContext* CIContext;
 @property (nonatomic, readonly) IJSVGPathDataStream* pathDataStream;

@@ -29,11 +29,11 @@
 
 + (id)SVGNamed:(NSString*)string
 {
-    return [self.class svgNamed:string
+    return [self.class SVGNamed:string
                           error:nil];
 }
 
-+ (id)svgNamed:(NSString*)string
++ (id)SVGNamed:(NSString*)string
          error:(NSError**)error
 {
     NSBundle* bundle = NSBundle.mainBundle;

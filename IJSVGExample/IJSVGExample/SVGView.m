@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"circles1"];
+    return [IJSVG SVGNamed:@"Toucan in the Shade"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

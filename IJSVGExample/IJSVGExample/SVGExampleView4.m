@@ -12,7 +12,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"clipped"];
+    return [IJSVG SVGNamed:@"clipped"];
 }
 
 @end
