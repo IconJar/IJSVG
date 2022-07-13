@@ -23,6 +23,8 @@
 @property (nonatomic, assign) CGFloat backingScale;
 @property (nonatomic, strong) IJSVGStyle* style;
 
++ (CGPathRef)newPathFromStrokedShapeLayer:(IJSVGShapeLayer*)shapeLayer;
+
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 
 @end

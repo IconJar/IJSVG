@@ -125,7 +125,7 @@
     layer.boundingBox = pathBounds;
 }
 
-- (CGPathRef)newPathFromStrokeLayer:(IJSVGShapeLayer*)shapeLayer
++ (CGPathRef)newPathFromStrokedShapeLayer:(IJSVGShapeLayer*)shapeLayer
 {
     CGLineCap lineCap = [IJSVGUtils CGLineCapForCALineCap:shapeLayer.lineCap];
     CGLineJoin lineJoin = [IJSVGUtils CGLineJoinForCALineJoin:shapeLayer.lineJoin];
@@ -279,7 +279,7 @@
                 patternLayer.referencingLayer = layer;
                 
                 // clip the drawing to a stroked path
-                CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
+                CGPathRef path = [self.class newPathFromStrokedShapeLayer:strokeLayer];
                 patternLayer.clipPath = path;
                 CGPathRelease(path);
                 [layer setLayer:patternLayer
@@ -296,7 +296,7 @@
                 gradientLayer.referencingLayer = layer;
                 
                 // clip the drawing to a stroked path
-                CGPathRef path = [self newPathFromStrokeLayer:strokeLayer];
+                CGPathRef path = [self.class newPathFromStrokedShapeLayer:strokeLayer];
                 gradientLayer.clipPath = path;
                 CGPathRelease(path);
                 [layer setLayer:gradientLayer
