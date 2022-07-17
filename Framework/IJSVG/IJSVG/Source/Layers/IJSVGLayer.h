@@ -107,6 +107,7 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
 - (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
     forUsageType:(IJSVGLayerUsageType)type;
 - (CALayer<IJSVGDrawableLayer>*)layerForUsageType:(IJSVGLayerUsageType)type;
+- (CALayer<IJSVGDrawableLayer>*)strokeLayer:(IJSVGLayerUsageType*)usageType;
 
 - (void)addTraits:(IJSVGLayerTraits)traits;
 - (void)removeTraits:(IJSVGLayerTraits)traits;

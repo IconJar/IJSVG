@@ -385,7 +385,7 @@
     layer.miterLimit = miterLimit;
     
     CGFloat strokeOpacity = 1.f;
-    if(node.strokeOpacity.value != 0.f) {
+    if(node.strokeOpacity.value != 1.f) {
         strokeOpacity = node.strokeOpacity.value;
     }
     layer.opacity = strokeOpacity;
@@ -496,6 +496,7 @@
     gradientLayer.gradient = gradient;
     gradientLayer.frame = layer.bounds;
     gradientLayer.viewBox = self.viewPort;
+    gradientLayer.opacity = layer.opacity;
     [gradientLayer setNeedsDisplay];
     return gradientLayer;
 }
@@ -530,6 +531,7 @@
     CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:pattern];
     patternFill.referencingLayer = patternLayer;
     patternLayer.pattern = patternFill;
+    patternLayer.opacity = layer.opacity;
     [patternLayer setNeedsDisplay];
     return patternLayer;
 }

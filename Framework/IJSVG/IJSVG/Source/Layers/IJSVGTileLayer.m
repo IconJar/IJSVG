@@ -94,6 +94,26 @@
     return [self.layerUsageMapTable objectForKey:@(type)];
 }
 
+- (CALayer<IJSVGDrawableLayer>*)strokeLayer:(IJSVGLayerUsageType*)usageType
+{
+    CALayer<IJSVGDrawableLayer>* layer = nil;
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokeGeneric;
+        return layer;
+    }
+    
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokeGradient;
+        return layer;
+    }
+    
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokePattern;
+        return layer;
+    }
+    return nil;
+}
+
 - (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
     forUsageType:(IJSVGLayerUsageType)type
 {
