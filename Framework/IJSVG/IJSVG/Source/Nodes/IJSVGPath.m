@@ -107,7 +107,8 @@
         // component to then remove the trait if its 0.f
         if([self.stroke isKindOfClass:IJSVGColorNode.class] == YES) {
             IJSVGColorNode* strokeColor = (IJSVGColorNode*)self.stroke;
-            if(strokeColor.color.alphaComponent == 0.f) {
+            if(strokeColor.color.alphaComponent == 0.f ||
+               strokeColor.isNoneOrTransparent == YES) {
                 [self removeTraits:IJSVGNodeTraitStroked];
             }
         }

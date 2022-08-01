@@ -175,6 +175,29 @@
     }
 }
 
++ (NSArray<IJSVGNode*>*)node:(IJSVGNode*)node
+         nodesMatchingTraits:(IJSVGNodeTraits)traits
+{
+    NSMutableArray<IJSVGNode*>* nodes = [[NSMutableArray alloc] init];
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node,
+                                     BOOL* allowChildNodes,
+                                     BOOL* stop) {
+        // dont compute nodes that are not designed
+        // to be rendered
+        if(node.shouldRender == NO) {
+            *allowChildNodes = NO;
+            return;
+        }
+        
+        if([node matchesTraits:traits] == YES) {
+            [nodes addObject:node];
+        }
+    };
+    [IJSVGNode walkNodeTree:node
+                    handler:handler];
+    return nodes;
+}
+
 + (BOOL)node:(IJSVGNode*)node
 containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {

@@ -24,6 +24,7 @@
 - (void)removeChildren:(NSArray<IJSVGNode*>*)children;
 - (BOOL)childrenMatchTraits:(IJSVGNodeTraits)traits;
 - (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
+- (NSArray<IJSVGNode*>*)nodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (NSSet<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type;
 
 @end

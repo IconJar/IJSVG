@@ -98,6 +98,12 @@
 containsNodesMatchingTraits:traits];
 }
 
+- (NSArray<IJSVGNode*>*)nodesMatchingTraits:(IJSVGNodeTraits)traits
+{
+    return [self.class node:self
+        nodesMatchingTraits:traits];
+}
+
 - (CGRect)bounds
 {
     CGRect rect = CGRectNull;

@@ -188,6 +188,9 @@ void IJSVGAssertPaintableObject(id object);
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler;
 
++ (NSArray<IJSVGNode*>*)node:(IJSVGNode*)node
+         nodesMatchingTraits:(IJSVGNodeTraits)traits;
+
 + (BOOL)node:(IJSVGNode*)node
 containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
