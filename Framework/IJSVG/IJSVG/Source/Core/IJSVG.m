@@ -22,6 +22,7 @@
     BOOL hasTransaction = IJSVGBeginTransaction();
     // kill any memory that has been around
     (void)(_layerTree), _layerTree = nil;
+    (void)(_rootLayer), _rootLayer = nil;
     if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
@@ -640,7 +641,11 @@
 - (IJSVGRootLayer*)rootLayer
 {
     if(_rootLayer == nil) {
-        _rootLayer = [self.layerTree rootLayerForRootNode:_rootNode];
+        __weak IJSVG* weakSelf = self;
+        [self performBlock:^{
+            IJSVG* strongSelf = weakSelf;
+            strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
+        }];
     }
     return _rootLayer;
 }
@@ -662,8 +667,12 @@
 
 - (void)invalidateLayerTree
 {
-    (void)(_rootLayer), _rootLayer = nil;
-    (void)(_layerTree), _layerTree = nil;
+    __weak IJSVG* weakSelf = self;
+    [self performBlock:^{
+        IJSVG* strongSelf = weakSelf;
+        (void)(strongSelf->_rootLayer), strongSelf->_rootLayer = nil;
+        (void)(strongSelf->_layerTree), strongSelf->_layerTree = nil;
+    }];
 }
 
 - (IJSVGTraitedColorStorage*)colors

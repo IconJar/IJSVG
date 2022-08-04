@@ -96,7 +96,7 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
-@property (nonatomic, assign) CALayer<IJSVGDrawableLayer>* referencingLayer;
+@property (nonatomic, weak) CALayer<IJSVGDrawableLayer>* referencingLayer;
 @property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, readonly) IJSVGLayerTraits layerTraits;
 @property (nonatomic, readonly) NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* layerUsageMapTable;
