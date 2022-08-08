@@ -6,15 +6,21 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGNode.h"
-#import "IJSVGUnitLength.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGUnitLength.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGUnitLength
 
++ (IJSVGUnitLength*)zeroUnitLength
+{
+    return [self unitWithFloat:0.f
+                          type:IJSVGUnitLengthTypeNumber];
+}
+
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = number;
     unit.type = IJSVGUnitLengthTypeNumber;
     return unit;
@@ -23,7 +29,7 @@
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
                       fromUnitType:(IJSVGUnitType)units
 {
-    if (units == IJSVGUnitObjectBoundingBox) {
+    if(units == IJSVGUnitObjectBoundingBox) {
         return [self unitWithPercentageString:string];
     }
     return [self unitWithString:string];
@@ -32,7 +38,7 @@
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
                              type:(IJSVGUnitLengthType)type
 {
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = number;
     unit.type = type;
     return unit;
@@ -147,7 +153,7 @@
 
     // is inherit or just nothing
     size_t strl = strlen(chars);
-    if (strcmp(chars, "inherit") == 0 || strl == 0) {
+    if(strcmp(chars, "inherit") == 0 || strl == 0) {
         (void)free(chars), chars = NULL;
         return nil;
     }
@@ -165,7 +171,7 @@
         return nil;
     }
     
-    IJSVGUnitLength* unit = [[[self alloc] init] autorelease];
+    IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = floats[0];
     unit.type = IJSVGUnitLengthTypeNumber;
     
@@ -192,9 +198,35 @@
     return unit;
 }
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGUnitLength* length = [[IJSVGUnitLength alloc] init];
+    length.value = self.value;
+    length.type = self.type;
+    length.originalType = self.originalType;
+    length.inherit = self.inherit;
+    return length;
+}
+
+- (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type
+{
+    return [self.class unitWithFloat:self.value
+                                type:type];
+}
+
+- (IJSVGUnitLength*)lengthByMatchingPercentage
+{
+    if(self.type != IJSVGUnitLengthTypePercentage && self.value <= 1.f) {
+        return [self.class unitWithFloat:self.value
+                                    type:IJSVGUnitLengthTypePercentage];
+    }
+    return [self.class unitWithFloat:self.value
+                                type:self.type];
+}
+
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
-    if (self.type == IJSVGUnitLengthTypePercentage) {
+    if(self.type == IJSVGUnitLengthTypePercentage) {
         return ((anotherValue / 100.f) * (_value * 100.f));
     }
     return self.value;
@@ -207,7 +239,7 @@
 
 - (NSString*)stringValue
 {
-    if (self.type == IJSVGUnitLengthTypePercentage) {
+    if(self.type == IJSVGUnitLengthTypePercentage) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatString(self.value * 100.f)];
     }
@@ -216,7 +248,7 @@
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
-    if (_type == IJSVGUnitLengthTypePercentage) {
+    if(_type == IJSVGUnitLengthTypePercentage) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatStringWithOptions(_value * 100.f, options)];
     }

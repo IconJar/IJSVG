@@ -6,7 +6,7 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGStyleSheetSelector.h>
 #import <Foundation/Foundation.h>
 
@@ -15,8 +15,8 @@
 @interface IJSVGStyleSheetRule : NSObject {
 }
 
-@property (nonatomic, retain) NSArray* selectors;
-@property (nonatomic, retain) IJSVGStyle* style;
+@property (nonatomic, strong) NSArray* selectors;
+@property (nonatomic, strong) IJSVGStyleSheetStyle* style;
 
 - (BOOL)matchesNode:(IJSVGNode*)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector;

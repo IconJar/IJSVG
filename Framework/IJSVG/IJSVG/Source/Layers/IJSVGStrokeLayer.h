@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGShapeLayer.h"
+#import <IJSVG/IJSVGShapeLayer.h>
 
 @interface IJSVGStrokeLayer : IJSVGShapeLayer
 

@@ -6,15 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGText.h"
+#import <IJSVG/IJSVGText.h>
 
 @implementation IJSVGText
-
-- (void)dealloc
-{
-    (void)([_text release]), _text = nil;
-    [super dealloc];
-}
 
 - (IJSVGText*)copyWithZone:(NSZone*)zone
 {

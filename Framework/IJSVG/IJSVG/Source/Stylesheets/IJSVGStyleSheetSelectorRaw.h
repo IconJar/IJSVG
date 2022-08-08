@@ -11,6 +11,7 @@
 @class IJSVGNode;
 
 typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
+    IJSVGStyleSheetSelectorCombinatorWildcard, // *
     IJSVGStyleSheetSelectorCombinatorDescendant, // space
     IJSVGStyleSheetSelectorCombinatorDirectDescendant, // >
     IJSVGStyleSheetSelectorCombinatorPrecededSibling, // ~
@@ -18,16 +19,14 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 };
 
 @interface IJSVGStyleSheetSelectorRaw : NSObject {
-    
-@private
-    NSMutableArray* classes;
 }
 
 @property (nonatomic, copy) NSString* tag;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, copy) NSString* combinatorString;
-@property (nonatomic, retain) NSArray* classes;
+@property (nonatomic, strong) NSMutableSet<NSString*>* classes;
 @property (nonatomic, assign) IJSVGStyleSheetSelectorCombinator combinator;
+
 - (void)addClassName:(NSString*)className;
 
 @end

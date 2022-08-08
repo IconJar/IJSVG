@@ -6,8 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStringAdditions.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation NSString (IJSVGAdditions)
 
@@ -18,7 +18,7 @@
         return @[];
     }
     NSMutableArray<NSString*>* strings = nil;
-    strings = [[[NSMutableArray alloc] init] autorelease];
+    strings = [[NSMutableArray alloc] init];
     char* copy = strdup(chars);
     char* spt = NULL;
     char* ptr = strtok_r(copy, aChar, &spt);
@@ -38,7 +38,7 @@
     const char* buffer = self.UTF8String;
     char currentChar;
     while((currentChar = *buffer++) ) {
-        if (isalpha(currentChar)) {
+        if(isalpha(currentChar)) {
             return YES;
         }
     }
@@ -50,7 +50,7 @@
     const char* buffer = self.UTF8String;
     char currentChar;
     while((currentChar = *buffer++) ) {
-        if (!isnumber(currentChar)) {
+        if(!isnumber(currentChar)) {
             return NO;
         }
     }

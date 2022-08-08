@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" width="480" height="480">
+<defs>
+  <pattern id="strip" width=".025" height=".025" patternUnits="objectBoundingBox" patternTransform="rotate(45)">
+		<rect width=".0025" height=".025" transform="translate(0,0)" fill="#9A9A9A"></rect>
+</pattern>
+<pattern id="pattern" width=".25" height=".25" patternContentUnits="objectBoundingBox">
+<rect width=".25" height=".25" fill="url(#strip)"/>
+<rect width=".125" height=".125" fill="#ffffff"/>
+<rect x=".125" y=".125" width=".125" height=".125" fill="#ffffff"/>
+</pattern>
+</defs>
+<rect width="8" height="8" fill="url(#pattern)"/>
+</svg>

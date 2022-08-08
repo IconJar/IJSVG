@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandClose.h"
+#import <IJSVG/IJSVGCommandClose.h>
 
 @implementation IJSVGCommandClose
 
@@ -20,9 +20,9 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    [path close];
+    CGPathCloseSubpath(path);
 }
 
 @end

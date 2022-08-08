@@ -6,8 +6,16 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroupLayer.h"
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGViewBox.h>
+#import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGLayer.h>
 
 @implementation IJSVGGroupLayer
+
+- (CGRect)innerBoundingBox
+{
+    return self.outerBoundingBox;
+}
 
 @end

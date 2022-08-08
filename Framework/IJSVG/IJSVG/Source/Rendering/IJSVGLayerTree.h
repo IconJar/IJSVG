@@ -7,17 +7,24 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGRenderingStyle.h>
+#import <IJSVG/IJSVGStyle.h>
 #import <QuartzCore/QuartzCore.h>
 
 @class IJSVGLayer;
+@class IJSVGRootLayer;
+@class IJSVGRootNode;
 
 @interface IJSVGLayerTree : NSObject {
+@private
+    NSMutableArray<NSValue*>* _viewPortStack;
 }
 
 @property (nonatomic, assign) CGRect viewBox;
-@property (nonatomic, retain) IJSVGRenderingStyle* style;
+@property (nonatomic, assign) CGFloat backingScale;
+@property (nonatomic, strong) IJSVGStyle* style;
 
-- (IJSVGLayer*)layerForNode:(IJSVGNode*)node;
++ (CGPathRef)newPathFromStrokedShapeLayer:(IJSVGShapeLayer*)shapeLayer;
+
+- (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 
 @end

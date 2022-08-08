@@ -6,10 +6,11 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGColor.h"
-#import "IJSVGUtils.h"
-#import "IJSVGStringAdditions.h"
-#import "IJSVGParsing.h"
+#import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGParsing.h>
+#import <IJSVG/IJSVGParser.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
@@ -28,7 +29,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
     CGFloat s = saturation * ((lightness < 1.f) ? lightness : (2.f - lightness));
     CGFloat brightness = (lightness + s) * .5f;
-    if (s != 0.f) {
+    if(s != 0.f) {
         s = (2.f * s) / (lightness + s);
     }
     CGFloat* floats = (CGFloat*)malloc(3 * sizeof(CGFloat));
@@ -51,7 +52,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 + (NSColor*)computeColorSpace:(NSColor*)color
 {
     NSColorSpace* space = [self defaultColorSpace];
-    if (color.colorSpace != space) {
+    if(color.colorSpace != space) {
         color = [color colorUsingColorSpace:space];
     }
     return color;
@@ -61,7 +62,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _colorTree = [@{
+        _colorTree = @{
             @"aliceblue" : @(0xf0f8ff),
             @"antiquewhite" : @(0xfaebd7),
             @"aqua" : @(0x00ffff),
@@ -207,13 +208,13 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
             @"whitesmoke" : @(0xf5f5f5),
             @"yellow" : @(0xffff00),
             @"yellowgreen" : @(0x9acd32)
-        } retain];
+        };
     });
 }
 
 + (NSColor*)computeColor:(id)colour
 {
-    if ([colour isKindOfClass:[NSColor class]])
+    if([colour isKindOfClass:[NSColor class]])
         return colour;
     return nil;
 }
@@ -244,6 +245,12 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                                                          alpha:a]];
 }
 
++ (BOOL)isNoneOrTransparent:(NSString*)string
+{
+    const char* str = string.lowercaseString.UTF8String;
+    return strcmp(str, "none") == 0 || strcmp(str, "transparent") == 0;
+}
+
 + (NSColor*)colorFromString:(NSString*)string
 {
     // swap over to C for performance
@@ -257,13 +264,14 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
     
     char* str = IJSVGTimmedCharBufferCreate(oString);
-    if (IJSVGCharBufferIsHEX(str) == YES) {
+    if(IJSVGCharBufferIsHEX(str) == YES) {
+        string = [NSString stringWithUTF8String:str];
         (void)free(str), str = NULL;
         return [self.class colorFromHEXString:string];
     }
 
     // is it RGB?
-    if (IJSVGCharBufferHasPrefix(str, "rgb") == YES) {
+    if(IJSVGCharBufferHasPrefix(str, "rgb") == YES) {
         NSUInteger count = 0;
         IJSVGParsingStringMethod** methods = NULL;
         methods = IJSVGParsingMethodParseString(str, &count);
@@ -285,7 +293,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
         NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];
         NSString* alpha = @"100%";
-        if (parts.count == 4) {
+        if(parts.count == 4) {
             alpha = parts[3];
         }
         
@@ -298,12 +306,12 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
 
     // is it HSL?
-    if (IJSVGCharBufferHasPrefix(str, "hsl")) {
+    if(IJSVGCharBufferHasPrefix(str, "hsl")) {
         NSInteger count = 0;
         CGFloat* params = [IJSVGUtils scanFloatsFromCString:str
                                                        size:&count];
         CGFloat alpha = 1;
-        if (count == 4) {
+        if(count == 4) {
             alpha = params[3];
         }
 
@@ -324,10 +332,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
     
     // is simply a clear color, dont fill
-    if (strcmp(str, "none") == 0 ||
+    if(strcmp(str, "none") == 0 ||
         strcmp(str, "transparent") == 0) {
         (void)free(str), str = NULL;
-        return [self computeColorSpace:NSColor.clearColor];
+        return nil;
     }
     
     // could return nil
@@ -339,7 +347,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 {
     NSNumber* hex = nil;
     name = [name.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    if ((hex = _colorTree[name]) == nil) {
+    if((hex = _colorTree[name]) == nil) {
         return nil;
     }
     return [self.class colorFromHEXInteger:hex.integerValue];
@@ -368,33 +376,33 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     BOOL allowRRGGBBAA = (options & IJSVGColorStringOptionAllowRRGGBBAA) != 0;
 
     // jsut return none
-    if (alpha == 0 && forceHex == NO) {
-        return @"none";
+    if(alpha == 0 && forceHex == NO) {
+        return IJSVGStringNone;
     }
 
     // always return hex unless criteria is met
-    if (forceHex == YES || allowRRGGBBAA == YES || alpha == 100 || (red == 0 && green == 0 && blue == 0 && alpha == 0) || (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
+    if(forceHex == YES || allowRRGGBBAA == YES || alpha == 100 || (red == 0 && green == 0 && blue == 0 && alpha == 0) || (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
 
         // we need to make sure the last 2 chars
         // are the same or we cant enable shorthand
-        if (allowRRGGBBAA == YES) {
+        if(allowRRGGBBAA == YES) {
             NSString* alphaHexString = [NSString stringWithFormat:@"%02X",
                                                  (int)(color.alphaComponent * 0xFF)];
-            if ([alphaHexString characterAtIndex:0] !=
+            if([alphaHexString characterAtIndex:0] !=
                 [alphaHexString characterAtIndex:1]) {
                 allowShortHand = NO;
             }
         }
 
-        if (allowShortHand == YES) {
+        if(allowShortHand == YES) {
             NSString* r = [NSString stringWithFormat:@"%02X", red];
             NSString* g = [NSString stringWithFormat:@"%02X", green];
             NSString* b = [NSString stringWithFormat:@"%02X", blue];
-            if ([r characterAtIndex:0] == [r characterAtIndex:1] &&
+            if([r characterAtIndex:0] == [r characterAtIndex:1] &&
                 [g characterAtIndex:0] == [g characterAtIndex:1] &&
                 [b characterAtIndex:0] == [b characterAtIndex:1]) {
                 // allow shorthand alpha
-                if (allowRRGGBBAA == YES && alpha != 100) {
+                if(allowRRGGBBAA == YES && alpha != 100) {
                     NSString* a = [NSString stringWithFormat:@"%02X",
                                             (int)(color.alphaComponent * 0xFF)];
                     return [NSString stringWithFormat:@"#%c%c%c%c",
@@ -405,7 +413,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                                  [g characterAtIndex:0], [b characterAtIndex:0]];
             }
         }
-        if (allowRRGGBBAA == YES && alpha != 100) {
+        if(allowRRGGBBAA == YES && alpha != 100) {
             return [NSString stringWithFormat:@"#%02X%02X%02X%02X", red, green,
                              blue, (int)(color.alphaComponent * 0xFF)];
         }
@@ -755,7 +763,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex
 {
     CGFloat alpha = 1.f;
-    if ([self HEXContainsAlphaComponent:hex] == YES) {
+    if([self HEXContainsAlphaComponent:hex] == YES) {
         alpha = (hex & 0xFF) / 255.f;
         hex = hex >> 8;
     }
@@ -787,7 +795,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     
     char* str = (char*)string.UTF8String;
     size_t length = strlen(str);
-    if (length == 0 || IJSVGCharBufferIsHEX(str) == NO) {
+    if(length == 0 || IJSVGCharBufferIsHEX(str) == NO) {
         return nil;
     }
 
@@ -800,7 +808,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     unsigned long hex;
     // we need to work out if its shorthand
     // if it is, the length needs to be length*2
-    if (length == 3 || length == 4) {
+    if(length == 3 || length == 4) {
         char* chars = NULL;
         chars = (char*)calloc(sizeof(char),length*2+1);
         for(int i = 0; i < length; i++) {
@@ -813,7 +821,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     }
     
     // now convert rest to hex
-    if (containsAlphaComponent != nil) {
+    if(containsAlphaComponent != nil) {
         *containsAlphaComponent = [self HEXContainsAlphaComponent:hex];
     }
     return [self colorFromHEXInteger:hex];

@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandVerticalLine.h"
+#import <IJSVG/IJSVGCommandVerticalLine.h>
 
 @implementation IJSVGCommandVerticalLine
 
@@ -20,14 +20,14 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddLineToPoint(path.path, NULL, path.currentPoint.x, params[0]);
+    if(type == kIJSVGCommandTypeAbsolute) {
+        CGPathAddLineToPoint(path, NULL, CGPathGetCurrentPoint(path).x, params[0]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathAddLineToPoint(path.path, NULL, currentPoint.x, currentPoint.y + params[0]);
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathAddLineToPoint(path, NULL, currentPoint.x, currentPoint.y + params[0]);
 }
 
 @end

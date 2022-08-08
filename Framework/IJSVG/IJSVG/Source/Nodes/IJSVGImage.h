@@ -12,15 +12,14 @@
 @class IJSVGPath;
 
 @interface IJSVGImage : IJSVGNode {
-
-    NSImage* image;
     CGImageRef CGImage;
-    IJSVGPath* imagePath;
 }
 
+@property (nonatomic, readonly) CGSize intrinsicSize;
+@property (nonatomic, readonly) CGRect intrinsicBounds;
+@property (nonatomic, strong) NSImage* image;
+
 - (CGImageRef)CGImage;
-- (void)drawInContextRef:(CGContextRef)context
-                    path:(IJSVGPath*)path;
 - (void)loadFromString:(NSString*)encodedString;
 - (void)loadFromURL:(NSURL*)aURL;
 

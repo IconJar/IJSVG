@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandCurve.h"
+#import <IJSVG/IJSVGCommandCurve.h>
 
 @implementation IJSVGCommandCurve
 
@@ -20,16 +20,16 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddCurveToPoint(path.path, NULL, params[0], params[1],
+    if(type == kIJSVGCommandTypeAbsolute) {
+        CGPathAddCurveToPoint(path, NULL, params[0], params[1],
                               params[2], params[3],
                               params[4], params[5]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathAddCurveToPoint(path.path, NULL,
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathAddCurveToPoint(path, NULL,
                           currentPoint.x + params[0], currentPoint.y + params[1],
                           currentPoint.x + params[2], currentPoint.y + params[3],
                           currentPoint.x + params[4], currentPoint.y + params[5]);

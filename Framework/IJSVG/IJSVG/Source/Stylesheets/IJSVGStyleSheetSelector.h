@@ -16,7 +16,7 @@
     NSString* selector;
     
 @private
-    NSMutableArray* _rawSelectors;
+    NSMutableArray<IJSVGStyleSheetSelectorRaw*>* _rawSelectors;
 }
 
 @property (nonatomic, assign) NSUInteger specificity;

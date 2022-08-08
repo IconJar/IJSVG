@@ -9,12 +9,19 @@
 #import <IJSVG/IJSVGUnitLength.h>
 #import <Foundation/Foundation.h>
 
-@interface IJSVGUnitSize : NSObject
+@interface IJSVGUnitSize : NSObject <NSCopying>
 
-@property (nonatomic, retain) IJSVGUnitLength* width;
-@property (nonatomic, retain) IJSVGUnitLength* height;
+@property (nonatomic, strong) IJSVGUnitLength* width;
+@property (nonatomic, strong) IJSVGUnitLength* height;
+@property (nonatomic, readonly) CGSize value;
 
+
++ (IJSVGUnitSize*)zeroSize;
++ (IJSVGUnitSize*)sizeWithCGSize:(CGSize)size;
 + (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
                          height:(IJSVGUnitLength*)height;
+
+- (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType;
+- (CGSize)computeValue:(CGSize)size;
 
 @end

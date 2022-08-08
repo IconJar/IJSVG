@@ -6,7 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGView.h"
+#import <IJSVG/IJSVGView.h>
 
 @implementation IJSVGView
 
@@ -17,20 +17,17 @@
     // make sure we call this, or block may get called for a view
     // that doesnt exist
     [SVG prepForDrawingInView:nil];
-    (void)([imageName release]), imageName = nil;
-    (void)([SVG release]), SVG = nil;
-    [super dealloc];
 }
 
 + (IJSVGView*)viewWithSVGNamed:(NSString*)name
 {
-    IJSVG* anSVG = [IJSVG svgNamed:name];
-    return [[[self alloc] initWithSVG:anSVG] autorelease];
+    IJSVG* anSVG = [IJSVG SVGNamed:name];
+    return [[self alloc] initWithSVG:anSVG];
 }
 
 - (id)initWithSVG:(IJSVG*)anSvg
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         self.SVG = anSvg;
     }
     return self;
@@ -39,10 +36,10 @@
 - (void)awakeFromNib
 {
     // image was set via IB
-    if (imageName != nil) {
-        IJSVG* anSVG = [IJSVG svgNamed:imageName];
-        if (tintColor != nil) {
-            anSVG.renderingStyle.fillColor = tintColor;
+    if(imageName != nil) {
+        IJSVG* anSVG = [IJSVG SVGNamed:imageName];
+        if(tintColor != nil) {
+            anSVG.style.fillColor = tintColor;
         }
         self.SVG = anSVG;
     }
@@ -51,10 +48,7 @@
 - (void)setSVG:(IJSVG*)anSVG
 {
     // memory clean
-    if (SVG != nil) {
-        (void)([SVG release]), SVG = nil;
-    }
-    SVG = [anSVG retain];
+    SVG = anSVG;
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
@@ -69,7 +63,7 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
     // only draw if there is actually an SVG
-    if (self.SVG == nil) {
+    if(self.SVG == nil) {
         return;
     }
 

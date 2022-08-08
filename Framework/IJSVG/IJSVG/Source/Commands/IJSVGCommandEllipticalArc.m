@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandEllipticalArc.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGCommandEllipticalArc.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGCommandEllipticalArc
 
@@ -40,20 +40,20 @@ static IJSVGPathDataSequence* _sequence;
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     CGPoint radii = CGPointZero;
     CGPoint arcEndPoint = CGPointZero;
-    CGPoint pathCurrentPoint = path.currentPoint;
+    CGPoint pathCurrentPoint = CGPathGetCurrentPoint(path);
     CGFloat xAxisRotation = 0.f;
     BOOL largeArcFlag = NO;
     BOOL sweepFlag = NO;
     
-    radii = [currentCommand readPoint];
-    xAxisRotation = [currentCommand readFloat];
-    largeArcFlag = [currentCommand readBOOL];
-    sweepFlag = [currentCommand readBOOL];
-    arcEndPoint = [currentCommand readPoint];
+    radii = currentCommand.readPoint;
+    xAxisRotation = currentCommand.readFloat;
+    largeArcFlag = currentCommand.readBOOL;
+    sweepFlag = currentCommand.readBOOL;
+    arcEndPoint = currentCommand.readPoint;
     
     CGFloat rx = fabs(radii.x);
     CGFloat ry = fabs(radii.y);
@@ -61,7 +61,7 @@ static IJSVGPathDataSequence* _sequence;
     xAxisRotation *= M_PI / 180.f;
     xAxisRotation = fmod(xAxisRotation, 2.f * M_PI);
 
-    if (type == kIJSVGCommandTypeRelative) {
+    if(type == kIJSVGCommandTypeRelative) {
         arcEndPoint.x += pathCurrentPoint.x;
         arcEndPoint.y += pathCurrentPoint.y;
     }
@@ -72,8 +72,8 @@ static IJSVGPathDataSequence* _sequence;
     CGFloat x2 = arcEndPoint.x;
     CGFloat y2 = arcEndPoint.y;
     
-    if (rx == 0.f || ry == 0.f) {
-        CGPathAddLineToPoint(path.path, NULL, x2, y2);
+    if(rx == 0.f || ry == 0.f) {
+        CGPathAddLineToPoint(path, NULL, x2, y2);
         return;
     }
     
@@ -90,7 +90,7 @@ static IJSVGPathDataSequence* _sequence;
 
     CGFloat delta = xp_2 / rx_2 + yp_2 / ry_2;
     
-    if (delta > 1.f) {
+    if(delta > 1.f) {
         rx *= sqrt(delta);
         ry *= sqrt(delta);
         rx_2 = rx * rx;
@@ -120,11 +120,11 @@ static IJSVGPathDataSequence* _sequence;
     
     CGFloat angleDelta = endAngle - startAngle;;
     
-    if (sweepFlag == YES) {
-        if (angleDelta < 0.f) {
+    if(sweepFlag == YES) {
+        if(angleDelta < 0.f) {
             angleDelta += 2.f * M_PI;
         }
-    } else if (angleDelta > 0.f) {
+    } else if(angleDelta > 0.f) {
         angleDelta = angleDelta - 2.f * M_PI;
     }
     
@@ -132,7 +132,7 @@ static IJSVGPathDataSequence* _sequence;
     transform = CGAffineTransformRotate(transform, xAxisRotation);
     transform = CGAffineTransformScale(transform, rx, ry);
 
-    CGPathAddRelativeArc(path.path, &transform, 0.f, 0.f, 1.f,
+    CGPathAddRelativeArc(path, &transform, 0.f, 0.f, 1.f,
                          startAngle, angleDelta);
 }
 

@@ -35,6 +35,7 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
 @property (nonatomic, assign) NSInteger sort;
 
 void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApplyBlock block);
+BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform affineTransform);
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms);
 NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 
@@ -47,13 +48,18 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)affineTransform;
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
                          floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (void)applyBounds:(CGRect)bounds
+   withContentUnits:(IJSVGUnitType)contentUnits;
+- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
+                                     bounds:(CGRect)bounds;
 - (CGAffineTransform)CGAffineTransform;
-- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
-- (void)recalculateWithBounds:(CGRect)bounds;
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
                                          y:(CGFloat)y;
 + (IJSVGTransform*)transformByScaleX:(CGFloat)x
                                    y:(CGFloat)y;
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
+                                           units:(IJSVGUnitType)units
+                                          bounds:(CGRect)bounds;
 
 @end

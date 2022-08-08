@@ -6,58 +6,122 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroupLayer.h"
-#import "IJSVGShapeLayer.h"
+#import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGStrokeLayer.h>
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
+#import <IJSVG/IJSVGPatternLayer.h>
 
 @implementation IJSVGShapeLayer
 
+@synthesize backingScaleFactor = _backingScaleFactor;
+@synthesize requiresBackingScale;
+@synthesize renderQuality;
+@synthesize blendingMode;
+@synthesize absoluteOrigin;
+@synthesize clipPath = _clipPath;
+@synthesize clipRule;
+@synthesize clipLayers = _clipLayers;
+@synthesize clippingTransform;
+@synthesize clippingBoundingBox;
+@synthesize maskingClippingRect;
+@synthesize clipPathTransform;
+@synthesize colors;
+@synthesize boundingBox;
+@synthesize layerTraits = _layerTraits;
+@synthesize maskingBoundingBox;
+@synthesize filter;
+@synthesize referencingLayer = _referencingLayer;
+@synthesize outerBoundingBox;
+@synthesize maskLayer = _maskLayer;
+@synthesize treatImplicitOriginAsTransform;
+
 - (void)dealloc
 {
-    (void)([_maskingLayer release]), _maskingLayer = nil;
-    [super dealloc];
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+}
+
+- (id<CAAction>)actionForKey:(NSString*)event
+{
+    return nil;
+}
+
+- (CGRect)absoluteFrame
+{
+    return [IJSVGLayer absoluteFrameForLayer:self];
+}
+
+- (CGAffineTransform)absoluteTransform
+{
+    return [IJSVGLayer absoluteTransformForLayer:self];
+}
+
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
+    return _referencingLayer ?: self.superlayer;
+}
+
+- (CGRect)boundingBoxBounds
+{
+    return (CGRect) {
+        .origin = CGPointZero,
+        .size = self.boundingBox.size
+    };
+}
+
+- (CGRect)innerBoundingBox
+{
+    return self.bounds;
+}
+
+- (BOOL)requiresBackingScale
+{
+    return _maskLayer != nil || (_clipLayers != nil && _clipLayers.count != 0);
+}
+
+- (void)setClipPath:(CGPathRef)clipPath
+{
+    if(_clipPath != NULL) {
+        CGPathRelease(_clipPath);
+    }
+    _clipPath = CGPathRetain(clipPath);
 }
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
 {
-    if (self.backingScaleFactor == newFactor) {
+    if(_backingScaleFactor == newFactor) {
         return;
     }
+        
     _backingScaleFactor = newFactor;
     self.contentsScale = newFactor;
     self.rasterizationScale = newFactor;
+    
+    // make sure its applied to any mask or clipPath
+    _maskLayer.backingScaleFactor = newFactor;
+    
+    for(CALayer<IJSVGDrawableLayer>* clipLayer in _clipLayers) {
+        clipLayer.backingScaleFactor = newFactor;
+    }
+    
     [self setNeedsDisplay];
 }
 
-- (void)_customRenderInContext:(CGContextRef)ctx
+- (void)performRenderInContext:(CGContextRef)ctx
 {
-    if (self.convertMasksToPaths == YES && _maskingLayer != nil) {
-        CGContextSaveGState(ctx);
-        [self applySublayerMaskToContext:ctx
-                             forSublayer:(IJSVGLayer*)self
-                              withOffset:CGPointZero];
-        [super renderInContext:ctx];
-        CGContextRestoreGState(ctx);
+    if(_maskLayer != nil) {
+        [IJSVGLayer clipContextWithMask:_maskLayer
+                                toLayer:self
+                              inContext:ctx
+                           drawingBlock:^{
+            [super renderInContext:ctx];
+        }];
         return;
     }
     [super renderInContext:ctx];
-}
-
-- (void)setConvertMasksToPaths:(BOOL)flag
-{
-    if (_convertMasksToPaths == flag) {
-        return;
-    }
-    _convertMasksToPaths = flag;
-    if (flag == YES) {
-        if (_maskingLayer != nil) {
-            (void)([_maskingLayer release]), _maskingLayer = nil;
-        }
-        _maskingLayer = [(IJSVGLayer*)self.mask retain];
-        self.mask = nil;
-    } else {
-        self.mask = _maskingLayer;
-        (void)([_maskingLayer release]), _maskingLayer = nil;
-    }
 }
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
@@ -71,7 +135,7 @@
 
     // walk up the superlayer chain
     CALayer* superlayer = self.superlayer;
-    if (IJSVGIsSVGLayer(superlayer) == YES) {
+    if(IJSVGIsSVGLayer(superlayer) == YES) {
         [(IJSVGLayer*)superlayer applySublayerMaskToContext:context
                                                 forSublayer:(IJSVGLayer*)self
                                                  withOffset:layerOffset];
@@ -82,14 +146,14 @@
 
     // if its a group we need to get the lowest level children
     // and walk up the chain again
-    if ([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
+    if([maskingLayer isKindOfClass:[IJSVGGroupLayer class]]) {
         NSArray* subs = [IJSVGLayer deepestSublayersOfLayer:maskingLayer];
         for (IJSVGLayer* subLayer in subs) {
             [subLayer applySublayerMaskToContext:context
                                      forSublayer:(IJSVGLayer*)self
                                       withOffset:layerOffset];
         }
-    } else if ([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
+    } else if([maskingLayer isKindOfClass:[IJSVGShapeLayer class]]) {
         // is a shape, go for it!
         CGPathRef maskPath = maskingLayer.path;
         CGContextTranslateCTM(context, -layerOffset.x, -layerOffset.y);
@@ -107,31 +171,142 @@
 
 - (void)renderInContext:(CGContextRef)ctx
 {
-    if (self.blendingMode != kCGBlendModeNormal) {
-        CGContextSaveGState(ctx);
-        CGContextSetBlendMode(ctx, self.blendingMode);
-        [self _customRenderInContext:ctx];
-        CGContextRestoreGState(ctx);
-        return;
-    }
-    [self _customRenderInContext:ctx];
+    [IJSVGLayer renderLayer:(IJSVGLayer*)self
+                  inContext:ctx
+                    options:IJSVGLayerDrawingOptionNone];
 }
 
-- (CGPoint)absoluteOrigin
+- (NSMapTable<NSNumber*,CALayer<IJSVGDrawableLayer>*>*)layerUsageMapTable
 {
-    CGPoint point = CGPointZero;
-    CALayer* pLayer = self;
-    while (pLayer != nil) {
-        point.x += pLayer.frame.origin.x;
-        point.y += pLayer.frame.origin.y;
-        pLayer = pLayer.superlayer;
+    if(_layerUsageMapTable == nil) {
+        _layerUsageMapTable = IJSVGLayerDefaultUsageMapTable();
     }
-    return point;
+    return _layerUsageMapTable;
 }
 
-- (id<CAAction>)actionForKey:(NSString*)event
+- (void)setLayer:(CALayer<IJSVGDrawableLayer>*)layer
+    forUsageType:(IJSVGLayerUsageType)type
 {
+    [self.layerUsageMapTable setObject:layer
+                                forKey:@(type)];
+}
+
+- (CALayer<IJSVGDrawableLayer>*)layerForUsageType:(IJSVGLayerUsageType)type
+{
+    return [self.layerUsageMapTable objectForKey:@(type)];
+}
+
+- (CALayer<IJSVGDrawableLayer>*)strokeLayer:(IJSVGLayerUsageType*)usageType
+{
+    CALayer<IJSVGDrawableLayer>* layer = nil;
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokeGeneric;
+        return layer;
+    }
+    
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokeGradient;
+        return layer;
+    }
+    
+    if((layer = [self layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
+        *usageType = IJSVGLayerUsageTypeStrokePattern;
+        return layer;
+    }
     return nil;
+}
+
+-(NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers
+{
+    return self.sublayers;
+}
+
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return YES;
+}
+
+- (void)addTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits |= traits;
+}
+
+- (void)removeTraits:(IJSVGLayerTraits)traits
+{
+    _layerTraits = _layerTraits & ~traits;
+}
+
+- (BOOL)matchesTraits:(IJSVGLayerTraits)traits
+{
+    return (_layerTraits & traits) == traits;
+}
+
+- (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
+{
+    return [IJSVGLayer firstSublayerOfClass:aClass
+                                  fromLayer:self];
+}
+
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* list = [[IJSVGTraitedColorStorage alloc] init];
+    
+    // we have a fill color
+    if([self matchesTraits:IJSVGLayerTraitFilled] == YES) {
+        IJSVGShapeLayer* fillLayer = nil;
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGeneric]) != nil) {
+            CGColorRef colorRef = NULL;
+            if((colorRef = fillLayer.fillColor) != NULL) {
+                NSColor* nsColor = [NSColor colorWithCGColor:colorRef];
+                IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
+                                                                      traits:IJSVGColorUsageTraitFill];
+                [list addColor:color];
+            }
+        }
+        
+        // patterns
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillPattern]) != nil) {
+            IJSVGTraitedColorStorage* storage = fillLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitFill];
+            [list unionColorStorage:storage];
+        }
+        
+        // gradients
+        if((fillLayer = (IJSVGShapeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeFillGradient]) != nil) {
+            IJSVGTraitedColorStorage* storage = fillLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitGradientStop];
+            [list unionColorStorage:storage];
+        }
+    }
+    
+    // we have a stroke color
+    if([self matchesTraits:IJSVGLayerTraitStroked] == YES) {
+        IJSVGStrokeLayer* strokeLayer = nil;
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGeneric]) != nil) {
+            CGColorRef colorRef = NULL;
+            if((colorRef = strokeLayer.strokeColor) != NULL) {
+                NSColor* nsColor = [NSColor colorWithCGColor:colorRef];
+                IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:nsColor
+                                                                     traits:IJSVGColorUsageTraitStroke];
+                [list addColor:color];
+            }
+        }
+        
+        // patterns
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokePattern]) != nil) {
+            IJSVGTraitedColorStorage* storage = strokeLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitFill];
+            [list unionColorStorage:storage];
+        }
+        
+        // gradients
+        if((strokeLayer = (IJSVGStrokeLayer*)[self layerForUsageType:IJSVGLayerUsageTypeStrokeGradient]) != nil) {
+            IJSVGTraitedColorStorage* storage = strokeLayer.colors;
+            [storage addTraits:IJSVGColorUsageTraitGradientStop];
+            [list unionColorStorage:storage];
+        }
+    }
+    return list;
 }
 
 @end

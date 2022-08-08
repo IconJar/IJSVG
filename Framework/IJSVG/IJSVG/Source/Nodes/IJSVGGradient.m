@@ -6,54 +6,60 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGradient.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGGradient
 
-@synthesize colorList = _privateColorList;
-
 - (void)dealloc
 {
-    (void)([_x1 release]), _x1 = nil;
-    (void)([_x2 release]), _x2 = nil;
-    (void)([_y1 release]), _y1 = nil;
-    (void)([_y2 release]), _y2 = nil;
-    (void)([_gradient release]), _gradient = nil;
-    (void)([_privateColorList release]), _privateColorList = nil;
-    if (_CGGradient != nil) {
-        CGGradientRelease(_CGGradient);
+    if(_locations != NULL) {
+        (void)free(_locations), _locations = NULL;
     }
-    [super dealloc];
+    if(_CGGradient != NULL) {
+        (void)CGGradientRelease(_CGGradient), _CGGradient = NULL;
+    }
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
-    IJSVGGradient* clone = [super copyWithZone:zone];
-    clone.gradient = [[self.gradient copy] autorelease];
+    IJSVGGradient* clone = [[self.class alloc] init];
+    [clone applyPropertiesFromNode:self];
     return clone;
 }
 
-- (void)setColorList:(IJSVGColorList*)list
+- (void)applyPropertiesFromNode:(IJSVGGradient*)node
 {
-    (void)([_privateColorList release]), _privateColorList = nil;
-    _privateColorList = list.retain;
-    if (_CGGradient != nil) {
-        CGGradientRelease(_CGGradient);
-        _CGGradient = nil;
-    }
+    [super applyPropertiesFromNode:node];
+    self.numberOfStops = node.numberOfStops;
+    self.colors = node.colors.copy;
+    size_t length = sizeof(CGFloat)*node.numberOfStops;
+    self.locations = (CGFloat*)malloc(length);
+    memcpy(self.locations, node.locations, length);
+    self.x1 = node.x1.copy;
+    self.x2 = node.x2.copy;
+    self.y1 = node.y1.copy;
+    self.y2 = node.y2.copy;
 }
 
-+ (CGFloat *)computeColorStops:(IJSVGGradient*)gradient
-                        colors:(NSArray**)someColors
+- (void)setLocations:(CGFloat*)locations
 {
-    NSArray<IJSVGNode*>* stops = gradient.childNodes;
-    NSMutableArray* colors = [[[NSMutableArray alloc] initWithCapacity:stops.count] autorelease];
+    if(_locations != NULL) {
+        (void)free(_locations), _locations = NULL;
+    }
+    _locations = locations;
+}
+
++ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
+                       colors:(NSArray**)someColors
+{
+    NSArray<IJSVGNode*>* stops = gradient.children;
+    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
     CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
     
     NSInteger i = 0;
     for(IJSVGNode* stopNode in stops) {
-        NSColor* color = stopNode.fillColor;
+        NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
         CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
@@ -70,73 +76,30 @@
     return stopsParams;
 }
 
-- (IJSVGColorList*)colorList
-{
-    IJSVGColorList* sheet = [[[IJSVGColorList alloc] init] autorelease];
-    NSInteger num = self.gradient.numberOfColorStops;
-    for (NSInteger i = 0; i < num; i++) {
-        NSColor* color;
-        [self.gradient getColor:&color
-                       location:nil
-                        atIndex:i];
-        IJSVGColorType* type = [IJSVGColorType typeWithColor:color
-                                                        flags:IJSVGColorTypeFlagStop];
-        [sheet addColor:type];
-    }
-    return sheet;
-}
-
-- (IJSVGColorList*)computedColorList
-{
-    return _privateColorList;
-}
-
 - (CGGradientRef)CGGradient
 {
     // store it in the cache
-    if (_CGGradient != nil) {
+    if(_CGGradient != nil) {
         return _CGGradient;
     }
 
     // actually create the gradient
-    NSInteger num = self.gradient.numberOfColorStops;
-    CGFloat* locations = malloc(sizeof(CGFloat) * num);
+    NSInteger num = self.numberOfStops;
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
         &kCFTypeArrayCallBacks);
-    for (NSInteger i = 0; i < num; i++) {
-        NSColor* color;
-        [self.gradient getColor:&color
-                       location:&locations[i]
-                        atIndex:i];
-        if (_privateColorList != nil) {
-            color = [_privateColorList proposedColorForColor:color];
-        }
+    for (NSColor* color in _colors) {
         CFArrayAppendValue(colors, color.CGColor);
     }
-    CGGradientRef result = CGGradientCreateWithColors(self.gradient.colorSpace.CGColorSpace,
-        colors, locations);
+    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
+        colors, _locations);
     CFRelease(colors);
-    free(locations);
     return _CGGradient = result;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-              objectRect:(NSRect)objectRect
-       absoluteTransform:(CGAffineTransform)absoluteTransform
-                viewPort:(CGRect)viewBox
+                  bounds:(NSRect)objectRect
+               transform:(CGAffineTransform)absoluteTransform
 {
-}
-
-- (void)_debugStart:(CGPoint)startPoint
-                end:(CGPoint)endPoint
-            context:(CGContextRef)ctx
-{
-    CGContextSaveGState(ctx);
-    CGContextSetStrokeColorWithColor(ctx, NSColor.blackColor.CGColor);
-    CGContextSetLineWidth(ctx, 1.f);
-    CGContextMoveToPoint(ctx, startPoint.x, startPoint.y);
-    CGContextAddLineToPoint(ctx, endPoint.x, endPoint.y);
-    CGContextStrokePath(ctx);
 }
 
 @end

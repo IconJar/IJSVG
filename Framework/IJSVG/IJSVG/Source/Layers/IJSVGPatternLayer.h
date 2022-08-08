@@ -6,16 +6,17 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGLayer.h"
-#import "IJSVGPattern.h"
+#import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGPattern.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGPatternLayer : IJSVGLayer
 
-@property (nonatomic, retain) IJSVGLayer* pattern;
-@property (nonatomic, retain) IJSVGPattern* patternNode;
-@property (nonatomic, assign) CGAffineTransform absoluteTransform;
-@property (nonatomic, assign) CGRect objectRect;
-@property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, strong) CALayer<IJSVGDrawableLayer>* pattern;
+@property (nonatomic, strong) IJSVGPattern* patternNode;
+
+- (void)computeCellSize:(CGSize*)cellSize
+                viewBox:(CGRect*)viewBox
+                 origin:(CGPoint*)origin;
 
 @end

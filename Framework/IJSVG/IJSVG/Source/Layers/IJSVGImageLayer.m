@@ -6,50 +6,43 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImageLayer.h"
+#import <IJSVG/IJSVGImageLayer.h>
 
 @implementation IJSVGImageLayer
 
-- (id)initWithImage:(NSImage*)image
+- (id)initWithImage:(IJSVGImage*)image
 {
-    NSRect rect = (NSRect){
-        .origin = NSZeroPoint,
-        .size = image.size
-    };
-    CGImageRef ref = [image CGImageForProposedRect:&rect
-                                           context:nil
-                                             hints:nil];
-    return [self initWithCGImage:ref];
-}
-
-- (id)initWithCGImage:(CGImageRef)imageRef
-{
-    if ((self = [super init]) != nil) {
-        // set the contents
-        self.contents = (id)imageRef;
-
-        // make sure we say we need help
-        self.requiresBackingScaleHelp = YES;
-        self.shouldRasterize = YES;
-
-        // set the frame, simple stuff
-        self.frame = (CGRect){
-            .origin = CGPointZero,
-            .size = CGSizeMake(CGImageGetWidth(imageRef),
-                CGImageGetHeight(imageRef))
-        };
+    if((self = [super init]) != nil) {
+        self.image = image;
     }
     return self;
 }
 
-- (void)setNeedsDisplay
+- (BOOL)requiresBackingScale
 {
-    // swap the content around on call
-    // because set needs display discards previous
-    // content - yolo!
-    id oldContent = self.contents;
-    [super setNeedsDisplay];
-    self.contents = oldContent;
+    return YES;
+}
+
+- (void)setImage:(IJSVGImage *)image
+{
+    _image = image;
+    [self setNeedsDisplay];
+}
+
+- (void)drawInContext:(CGContextRef)ctx
+{
+    CGImageRef image = _image.CGImage;
+    CGRect imageDrawRect = _image.bounds;
+    CGRect currentBounds = self.bounds;
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
+        // image will be upside down, so just translate it back on itself
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
+        CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
+        CGContextDrawImage(ctx, imageDrawRect, image);
+    };
+    IJSVGContextDrawViewBox(ctx, imageDrawRect, currentBounds,
+                            _image.viewBoxAlignment,
+                            _image.viewBoxMeetOrSlice, drawBlock);
 }
 
 @end

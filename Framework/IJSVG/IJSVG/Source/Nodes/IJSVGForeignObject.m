@@ -6,14 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGForeignObject.h"
+#import <IJSVG/IJSVGForeignObject.h>
 
 @implementation IJSVGForeignObject
-
-- (void)dealloc
-{
-    (void)([_requiredExtension release]), _requiredExtension = nil;
-    [super dealloc];
-}
 
 @end

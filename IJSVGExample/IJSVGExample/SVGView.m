@@ -7,24 +7,17 @@
 //
 
 #import "SVGView.h"
-#import "IJSVGExporter.h"
 
 @implementation SVGView
 
-- (void)dealloc
-{
-    [svg release], svg = nil;
-    [super dealloc];
-}
-
 - (id)initWithFrame:(NSRect)frameRect
 {
-    if( ( self = [super initWithFrame:frameRect] ) != nil )
-    {
+    if( ( self = [super initWithFrame:frameRect] ) != nil ) {
         svg = [self svg];
-        svg.renderQuality = IJSVGRenderQualityFullResolution;
-        svg.renderingBackingScaleHelper = ^{
-            return self.window.backingScaleFactor;
+        svg.renderQuality = kIJSVGRenderQualityFullResolution;
+        svg.ignoreIntrinsicSize = YES;
+        svg.renderingBackingScaleHelper = ^CGFloat {
+            return NSScreen.mainScreen.backingScaleFactor;
         };
     }
     return self;
@@ -32,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG svgNamed:@"test (1)"];
+    return [IJSVG SVGNamed:@"Toucan in the Shade"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

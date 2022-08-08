@@ -6,16 +6,9 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStyleSheetRule.h"
+#import <IJSVG/IJSVGStyleSheetRule.h>
 
 @implementation IJSVGStyleSheetRule
-
-- (void)dealloc
-{
-    (void)([_selectors release]), _selectors = nil;
-    (void)([_style release]), _style = nil;
-    [super dealloc];
-}
 
 - (BOOL)matchesNode:(IJSVGNode*)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector
@@ -23,7 +16,7 @@
     // interate over each select and work out if
     // it allows us to be applied
     for (IJSVGStyleSheetSelector* selector in _selectors) {
-        if ([selector matchesNode:node]) {
+        if([selector matchesNode:node] == YES) {
             *matchedSelector = selector;
             return YES;
         }

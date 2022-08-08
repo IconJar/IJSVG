@@ -6,10 +6,27 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVG.h"
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGUnitPoint.h>
 
+NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
+NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
+NSString* const IJSVGStringNone = @"none";
+NSString* const IJSVGStringRound = @"round";
+NSString* const IJSVGStringSquare = @"square";
+NSString* const IJSVGStringBevel = @"bevel";
+NSString* const IJSVGStringButt = @"butt";
+NSString* const IJSVGStringMiter = @"miter";
+NSString* const IJSVGStringInherit = @"inherit";
+NSString* const IJSVGStringEvenOdd = @"evenodd";
+
+NSString* const IJSVGAttributeVersion = @"version";
+NSString* const IJSVGAttributeXMLNS = @"xmlns";
+NSString* const IJSVGAttributeXMLNSXlink = @"xmlns:xlink";
 NSString* const IJSVGAttributeViewBox = @"viewBox";
+NSString* const IJSVGAttributePreserveAspectRatio = @"preserveAspectRatio";
 NSString* const IJSVGAttributeID = @"id";
 NSString* const IJSVGAttributeClass = @"class";
 NSString* const IJSVGAttributeX = @"x";
@@ -22,18 +39,23 @@ NSString* const IJSVGAttributeStrokeWidth = @"stroke-width";
 NSString* const IJSVGAttributeStrokeDashOffset = @"stroke-dashoffset";
 NSString* const IJSVGAttributeFillOpacity = @"fill-opacity";
 NSString* const IJSVGAttributeClipPath = @"clip-path";
+NSString* const IJSVGAttributeClipPathUnits = @"clipPathUnits";
+NSString* const IJSVGAttributeClipRule = @"clip-rule";
 NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
+NSString* const IJSVGAttributePatternUnits = @"patternUnits";
 NSString* const IJSVGAttributePatternContentUnits = @"patternContentUnits";
+NSString* const IJSVGAttributePatternTransform = @"patternTransform";
 NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
 NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
 NSString* const IJSVGAttributeUnicode = @"unicode";
 NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
-NSString* const IJSVGAttributeLineJoin = @"stroke-linejoin";
+NSString* const IJSVGAttributeStrokeLineJoin = @"stroke-linejoin";
 NSString* const IJSVGAttributeStroke = @"stroke";
 NSString* const IJSVGAttributeStrokeDashArray = @"stroke-dasharray";
+NSString* const IJSVGAttributeStrokeMiterLimit = @"stroke-miterlimit";
 NSString* const IJSVGAttributeFill = @"fill";
 NSString* const IJSVGAttributeFillRule = @"fill-rule";
 NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
@@ -52,12 +74,18 @@ NSString* const IJSVGAttributeCY = @"cy";
 NSString* const IJSVGAttributeR = @"r";
 NSString* const IJSVGAttributeFX = @"fx";
 NSString* const IJSVGAttributeFY = @"fy";
+NSString* const IJSVGAttributeFR = @"fr";
 NSString* const IJSVGAttributePoints = @"points";
 NSString* const IJSVGAttributeOffset = @"offset";
 NSString* const IJSVGAttributeStopColor = @"stop-color";
 NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 NSString* const IJSVGAttributeHref = @"href";
 NSString* const IJSVGAttributeOverflow = @"overflow";
+NSString* const IJSVGAttributeFilter = @"filter";
+NSString* const IJSVGAttributeStdDeviation = @"stdDeviation";
+NSString* const IJSVGAttributeIn = @"in";
+NSString* const IJSVGAttributeEdgeMode = @"edgeMode";
+NSString* const IJSVGAttributeMarker = @"marker";
 
 @implementation IJSVGParser
 
@@ -65,10 +93,11 @@ static NSDictionary* _IJSVGAttributeDictionaryFloats = nil;
 static NSDictionary* _IJSVGAttributeDictionaryNodes = nil;
 static NSDictionary* _IJSVGAttributeDictionaryUnits = nil;
 static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
+static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 + (void)load
 {
-    _IJSVGAttributeDictionaryFloats = [@{
+    _IJSVGAttributeDictionaryFloats = @{
         IJSVGAttributeX : @"x",
         IJSVGAttributeY : @"y",
         IJSVGAttributeWidth : @"width",
@@ -77,74 +106,46 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         IJSVGAttributeStrokeOpacity : @"strokeOpacity",
         IJSVGAttributeStrokeWidth : @"strokeWidth",
         IJSVGAttributeStrokeDashOffset : @"strokeDashOffset",
-        IJSVGAttributeFillOpacity : @"fillOpacity" } retain];
-    _IJSVGAttributeDictionaryNodes = [@{
+        IJSVGAttributeStrokeMiterLimit : @"strokeMiterLimit",
+        IJSVGAttributeFillOpacity : @"fillOpacity" };
+    _IJSVGAttributeDictionaryNodes = @{
         IJSVGAttributeClipPath : @"clipPath",
-        IJSVGAttributeMask : @"mask" } retain];
-    _IJSVGAttributeDictionaryUnits = [@{
+        IJSVGAttributeMask : @"mask" };
+    _IJSVGAttributeDictionaryUnits = @{
         IJSVGAttributeGradientUnits : @"units",
         IJSVGAttributeMaskUnits : @"units",
+        IJSVGAttributePatternUnits : @"units",
+        IJSVGAttributeClipPathUnits: @"contentUnits",
         IJSVGAttributeMaskContentUnits : @"contentUnits",
         IJSVGAttributePatternContentUnits : @"contentUnits"
-    } retain];
-    _IJSVGAttributeDictionaryTransforms = [@{
+    };
+    _IJSVGAttributeDictionaryTransforms = @{
         IJSVGAttributeTransform : @"transforms",
-        IJSVGAttributeGradientTransform : @"transforms" } retain];
+        IJSVGAttributeGradientTransform : @"transforms",
+        IJSVGAttributePatternTransform : @"transforms"
+    };
+    _IJSVGUseElementOverwritingAttributes = @[IJSVGAttributeX, IJSVGAttributeY,
+                                              IJSVGAttributeWidth, IJSVGAttributeHeight,
+                                              IJSVGAttributeHref];
 }
 
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
 {
-    return [self.class groupForFileURL:aURL
-                                 error:nil
-                              delegate:nil];
+    return [self.class parserForFileURL:aURL
+                                  error:nil];
 }
 
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                       delegate:(id<IJSVGParserDelegate>)delegate
++ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                           error:(NSError**)error
 {
-    return [self.class groupForFileURL:aURL
-                                 error:nil
-                              delegate:delegate];
-}
-
-+ (IJSVGParser*)groupForFileURL:(NSURL*)aURL
-                          error:(NSError**)error
-                       delegate:(id<IJSVGParserDelegate>)delegate
-{
-    return [[[self.class alloc] initWithFileURL:aURL
-                                          error:error
-                                       delegate:delegate] autorelease];
-}
-
-- (void)dealloc
-{
-    (void)([_glyphs release]), _glyphs = nil;
-    (void)([_styleSheet release]), _styleSheet = nil;
-    (void)([_defNodes release]), _defNodes = nil;
-    (void)([_baseDefNodes release]), _baseDefNodes = nil;
-    (void)([_svgs release]), _svgs = nil;
-    (void)([_intrinsicSize release]), _intrinsicSize = nil;
-    if (_commandDataStream != NULL) {
-        (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = nil;
-    }
-    [super dealloc];
+    return [[self.class alloc] initWithFileURL:aURL
+                                         error:error];
 }
 
 - (id)initWithSVGString:(NSString*)string
                   error:(NSError**)error
-               delegate:(id<IJSVGParserDelegate>)delegate
 {
-    if ((self = [super init]) != nil) {
-        _delegate = delegate;
-
-        _respondsTo.handleForeignObject = [_delegate respondsToSelector:@selector(svgParser:handleForeignObject:document:)];
-        _respondsTo.shouldHandleForeignObject = [_delegate respondsToSelector:@selector(svgParser:shouldHandleForeignObject:)];
-        _respondsTo.handleSubSVG = [_delegate respondsToSelector:@selector(svgParser:foundSubSVG:withSVGString:)];
-
-        _commandDataStream = IJSVGPathDataStreamCreateDefault();
-        _defNodes = [[NSMutableDictionary alloc] init];
-
-        // load the document / file, assume its UTF8
+    if((self = [super init]) != nil) {
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -157,33 +158,32 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
 
         // error parsing the XML document
-        if (anError != nil) {
+        if(anError != nil) {
             return [self _handleErrorWithCode:IJSVGErrorParsingFile
                                         error:error];
         }
 
         // attempt to parse the file
         anError = nil;
-        @try {
-            [self _parse];
-        }
-        @catch (NSException* exception) {
-            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
-                                        error:error];
-        }
+//        @try {
+            [self begin];
+//        }
+//        @catch (NSException* exception) {
+//            NSLog(@"%@",exception);
+//            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
+//                                        error:error];
+//        }
 
         // check the actual parsed SVG
         anError = nil;
-        if (![self _validateParse:&anError]) {
+        if(![self _validateParse:&anError]) {
             *error = anError;
-            (void)([_document release]), _document = nil;
-            (void)([self release]), self = nil;
             return nil;
         }
 
         // we have actually finished with the document at this point
         // so just get rid of it
-        (void)([_document release]), _document = nil;
+        _document = nil;
     }
     return self;
 }
@@ -192,9 +192,9 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 {
     @try {
         NSError* error;
-        NSXMLDocument* doc = [[[NSXMLDocument alloc] initWithData:data
-                                                          options:0
-                                                            error:&error] autorelease];
+        NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
+                                                        options:0
+                                                           error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
     }
@@ -203,7 +203,6 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 
 - (id)initWithFileURL:(NSURL*)aURL
                 error:(NSError**)error
-             delegate:(id<IJSVGParserDelegate>)delegate
 {
     NSError* anError = nil;
     NSStringEncoding encoding;
@@ -212,262 +211,251 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
                                                  error:&anError];
 
     // error reading file
-    if (str == nil) {
+    if(str == nil) {
         return [self _handleErrorWithCode:IJSVGErrorReadingFile
                                     error:error];
     }
 
     return [self initWithSVGString:str
-                             error:error
-                          delegate:delegate];
+                             error:error];
 }
 
 - (void*)_handleErrorWithCode:(NSUInteger)code
                         error:(NSError**)error
 {
-    if (error) {
-        *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                             code:code
-                                         userInfo:nil] autorelease];
+    if(error != nil) {
+        *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                            code:code
+                                        userInfo:nil];
     }
-    (void)([_document release]), _document = nil;
-    (void)([self release]), self = nil;
     return nil;
 }
 
 - (BOOL)_validateParse:(NSError**)error
 {
-    // check is font
-    if (self.isFont)
-        return YES;
-
-    // check the viewbox
-    if (NSEqualRects(self.viewBox, NSZeroRect) || self.size.width == 0 || self.size.height == 0) {
-        if (error != NULL) {
-            *error = [[[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                                 code:IJSVGErrorInvalidViewBox
-                                             userInfo:nil] autorelease];
-        }
-        return NO;
-    }
     return YES;
 }
 
-- (NSSize)size
+- (void)begin
 {
-    return _viewBox.size;
+    // setup basics to begin with
+    _styleSheet = [[IJSVGStyleSheet alloc] init];
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    _commandDataStream = manager.pathDataStream;
+    _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
+                                                  valueOptions:NSPointerFunctionsStrongMemory
+                                                      capacity:1];
+    _rootNode = [[IJSVGRootNode alloc] init];
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
+    [self parseSVGElement:_document.rootElement
+                 ontoNode:_rootNode
+               parentNode:nil
+         postProcessBlock:&postProcessBlock];
+    if(postProcessBlock != nil) {
+        postProcessBlock();
+    }
+    [_rootNode postProcess];
 }
 
-- (void)_parse
+- (void)computeDefsForElement:(NSXMLElement*)element
+                   parentNode:(IJSVGNode*)parentNode
 {
-    NSXMLElement* svgElement = [_document rootElement];
-
-    // parse common attributes on the SVG element
-    [self _parseElementForCommonAttributes:svgElement
-                                      node:self
-                          ignoreAttributes:nil];
-
-    // find the sizebox!
-    NSXMLNode* attribute = nil;
-    if ((attribute = [svgElement attributeForName:IJSVGAttributeViewBox]) != nil) {
-        // we have a viewbox...
-        CGFloat* box = [IJSVGUtils parseViewBox:attribute.stringValue];
-        _viewBox = NSMakeRect(box[0], box[1], box[2], box[3]);
-        (void)free(box);
-    } else {
-        // there is no view box so find the width and height
-        NSString* wAtt = [svgElement attributeForName:IJSVGAttributeWidth].stringValue;
-        NSString* hAtt = [svgElement attributeForName:IJSVGAttributeHeight].stringValue;
-        IJSVGUnitLength* wLength = [IJSVGUnitLength unitWithString:wAtt];
-        IJSVGUnitLength* hLength = [IJSVGUnitLength unitWithString:hAtt];
-        
-        // its possible wlength or hlength are nil
-        CGFloat w = wLength ? wLength.value : 0.f;
-        CGFloat h = hLength ? hLength.value : 0.f;
-        
-        if (h == 0.f && w != 0.f) {
-            h = w;
-        } else if (w == 0.f && h != 0.f) {
-            w = h;
+    for(NSXMLElement* childElement in element.children) {
+        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
+                                                 kind:childElement.kind];
+        if(type != IJSVGNodeTypeDef) {
+            continue;
         }
-        _viewBox = NSMakeRect(0.f, 0.f, w, h);
+        [self parseDefElement:childElement
+                   parentNode:_rootNode
+                    recursive:YES];
+    }
+}
+
+- (void)computeViewBoxForRootNode:(IJSVGRootNode*)node
+{
+    if(node.viewBox == nil) {
+        CGFloat width = node.width.value;
+        CGFloat height = node.height.value;
+        
+        if(height == 0.f && width != 0.f) {
+            height = width;
+        } else if(width == 0.f && height != 0.f) {
+            width = height;
+        }
+        // nothing we can do, its a nil viewBox and has
+        // no width or height
+        if(width == 0.f && height == 0.f) {
+            return;
+        }
+        node.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
+                                          width:width
+                                         height:height];
     }
 
-    // parse the width and height....
-    NSString* w = [svgElement attributeForName:IJSVGAttributeWidth].stringValue;
-    NSString* h = [svgElement attributeForName:IJSVGAttributeHeight].stringValue;
-
-    // by default just the the width and height from the viewbox unless
-    // specified otherwise
-    IJSVGUnitLength* wl = [IJSVGUnitLength unitWithFloat:_viewBox.size.width];
-    IJSVGUnitLength* hl = [IJSVGUnitLength unitWithFloat:_viewBox.size.height];
-    if (w != nil) {
-        wl = [IJSVGUnitLength unitWithString:w];
+    IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionNone;
+    IJSVGUnitLength* wl = node.viewBox.size.width;
+    IJSVGUnitLength* hl = node.viewBox.size.height;
+    if(node.width != nil) {
+        dimensions|= IJSVGIntrinsicDimensionWidth;
+        wl = node.width;
     }
-    if (h != nil) {
-        hl = [IJSVGUnitLength unitWithString:h];
+    if(node.height != nil) {
+        dimensions |= IJSVGIntrinsicDimensionHeight;
+        hl = node.height;
     }
 
     // store the width and height
-    _intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl height:hl].retain;
-
-    // the root element is SVG, so iterate over its children
-    // recursively
-    self.name = svgElement.name;
-    [self _parseBlock:svgElement
-            intoGroup:self
-                  def:NO];
-
-    // dont need the style sheet or the parsed nodes as this point
-    (void)([_styleSheet release]), _styleSheet = nil;
-    (void)([_defNodes release]), _defNodes = nil;
-    (void)IJSVGPathDataStreamRelease(_commandDataStream), _commandDataStream = NULL;
+    node.intrinsicDimensions = dimensions;
+    node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
+                                               height:hl];
 }
 
-- (void)_postParseElementForCommonAttributes:(NSXMLElement*)element
-                                        node:(IJSVGNode*)node
-                            ignoreAttributes:(NSArray*)ignoredAttributes
+- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
+                                                         onNode:(IJSVGNode*)node
+                                              ignoredAttributes:(NSArray<NSString*>*)ignoredAttributes
 {
-
-    // first of all, compute a style sheet
-    IJSVGStyle* sheetStyle = nil;
-    __block IJSVGStyle* style = nil;
-
-    // attribute helpers
-    typedef void (^cp)(NSString*);
-
-    // precaching the attributes is alot faster then asking for attribute for
-    // name each time we want to grab a value ... weird
-    NSArray<NSXMLNode*>* origAttributes = element.attributes;
+    IJSVGStyleSheetStyle* styleSheet = nil;
+    __block IJSVGStyleSheetStyle* nodeStyle = nil;
+    
+    // precache the attributes, this is quicker than asking for it each time
     NSMutableDictionary<NSString*, NSString*>* attributes = nil;
-    attributes = [[[NSMutableDictionary alloc] initWithCapacity:origAttributes.count] autorelease];
-    for (NSXMLNode* node in origAttributes) {
-        attributes[node.name] = node.stringValue;
+    attributes = [[NSMutableDictionary alloc] initWithCapacity:element.attributes.count];
+    for(NSXMLNode* attributeNode in element.attributes) {
+        attributes[attributeNode.name] = attributeNode.stringValue;
     }
+    
+    CGRect bounds = CGRectZero;
+    IJSVGUnitType units = [node.parentNode contentUnitsWithReferencingNodeBounds:&bounds];
 
-    void (^attr)(const NSString*, cp) = ^(NSString* key, cp block) {
-        if ([ignoredAttributes containsObject:key]) {
-            return;
+    // helper for setting an attribute
+    typedef void (^IJSVGAttributeParseBlock)(NSString*);
+    BOOL (^IJSVGAttributeParse)(const NSString*, IJSVGAttributeParseBlock) =
+    ^(NSString* key, IJSVGAttributeParseBlock parseBlock) {
+        if([ignoredAttributes containsObject:key] == YES) {
+            return NO;
         }
-        NSString* v = [style property:key] ?: attributes[key];
-        if (v != nil && v.length != 0) {
-            block(v);
+        NSString* value = [nodeStyle property:key] ?: attributes[key];
+        if(value != nil && value.length != 0) {
+            parseBlock(value);
+            return YES;
         }
+        return NO;
     };
-
-    typedef id (^cap)(NSString*);
-    void (^atts)(NSDictionary<NSString*, NSString*>*, cap) = ^(NSDictionary<NSString*, NSString*>* kv, cap block) {
-        for (NSString* key in kv.allKeys) {
-            attr(key, ^(NSString* value) {
-                [node setValue:block(value)
-                        forKey:kv[key]];
+    
+    // helper for settings attributes
+    typedef id (^IJSVGAttributeComputableParseBlock)(NSString*);
+    void (^IJSVGAttributesParse)(NSDictionary<NSString*, NSString*>*, IJSVGAttributeComputableParseBlock) =
+    ^(NSDictionary<NSString*, NSString*>* dictionary, IJSVGAttributeComputableParseBlock parseBlock) {
+        [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key,
+                                                        NSString * _Nonnull obj,
+                                                        BOOL * _Nonnull stop) {
+            IJSVGAttributeParse(key, ^(NSString* value) {
+                [node setValue:parseBlock(value)
+                        forKey:obj];
             });
-        }
+        }];
     };
-
-    // id, this must be here for the style sheet to actually
-    // render and parse, basically it relies on ID/CSS selectors so these
-    // must be in place before its computed
-    attr(IJSVGAttributeID, ^(NSString* value) {
+    
+    // identifier
+    IJSVGAttributeParse(IJSVGAttributeID, ^(NSString* value) {
         node.identifier = value;
-        _defNodes[node.identifier] = element;
+        [self detachElement:element
+             withIdentifier:value];
     });
-
-    //
-    attr(IJSVGAttributeClass, ^(NSString* value) {
+    
+    // class list
+    IJSVGAttributeParse(IJSVGAttributeClass, ^(NSString* value) {
+        NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
         node.className = value;
-        node.classNameList = [value componentsSeparatedByString:@" "];
+        node.classNameList = [NSSet setWithArray:list];
     });
-
-    // work out the style sheet
-    if (_styleSheet != nil) {
-        sheetStyle = [_styleSheet styleForNode:node];
+    
+    
+    // style
+    if(_styleSheet != nil) {
+        styleSheet = [_styleSheet styleForNode:node];
     }
-
-    // is there a
-    attr(IJSVGAttributeStyle, ^(NSString* value) {
-        style = [IJSVGStyle parseStyleString:value];
+    
+    IJSVGAttributeParse(IJSVGAttributeStyle, ^(NSString* value) {
+        nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
     });
-
-    // merge to two together
-    if (sheetStyle != nil) {
-        style = [sheetStyle mergedStyle:style];
+    
+    if(styleSheet != nil) {
+        nodeStyle = [styleSheet mergedStyle:nodeStyle];
     }
-
-    // floats
-    atts(_IJSVGAttributeDictionaryFloats,
-        ^id(NSString* value) {
-            return [IJSVGUnitLength unitWithString:value];
-        });
-
+        
+    // floating point numbers
+    IJSVGAttributesParse(_IJSVGAttributeDictionaryFloats, ^id (NSString* value) {
+        return [IJSVGUnitLength unitWithString:value];
+    });
+    
     // nodes
-    atts(_IJSVGAttributeDictionaryNodes,
-        ^id(NSString* value) {
-            NSString* url = [IJSVGUtils defURL:value];
-            if (url != nil) {
-                return [self definedObjectForID:url];
+    IJSVGNodeParserPostProcessBlock postProcessBlock = ^{
+        IJSVGAttributesParse(_IJSVGAttributeDictionaryNodes, ^id (NSString* value) {
+            NSString* identifier = [IJSVGUtils defURL:value];
+            if(identifier != nil) {
+                return [self computeDetachedNodeWithIdentifier:identifier
+                                               referencingNode:node];
             }
             return nil;
         });
-
+    };
+    
     // units
-    atts(_IJSVGAttributeDictionaryUnits,
-        ^id(NSString* value) {
-            return @([IJSVGUtils unitTypeForString:value]);
-        });
-
+    IJSVGAttributesParse(_IJSVGAttributeDictionaryUnits, ^id (NSString* value) {
+        return @([IJSVGUtils unitTypeForString:value]);
+    });
+    
     // transforms
-    atts(_IJSVGAttributeDictionaryTransforms,
-        ^(NSString* value) {
-            NSMutableArray* tempTransforms = [[[NSMutableArray alloc] init] autorelease];
-            [tempTransforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
-            if (node.transforms != nil) {
-                [tempTransforms addObjectsFromArray:node.transforms];
-            }
-            return tempTransforms;
-        });
-
-#pragma mark attributes that require custom rules
+    IJSVGAttributesParse(_IJSVGAttributeDictionaryTransforms, ^id (NSString* value) {
+        NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
+        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
+                                                                      units:units
+                                                                     bounds:bounds]];
+        if(node.transforms != nil) {
+            [transforms addObjectsFromArray:node.transforms];
+        }
+        return transforms;
+    });
 
     // unicode
-    attr(IJSVGAttributeUnicode, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeUnicode, ^(NSString* value) {
         node.unicode = [NSString stringWithFormat:@"%04x", [value characterAtIndex:0]];
     });
 
     // linecap
-    attr(IJSVGAttributeStrokeLineCap, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeStrokeLineCap, ^(NSString* value) {
         node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];
     });
 
     // line join
-    attr(IJSVGAttributeLineJoin, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeStrokeLineJoin, ^(NSString* value) {
         node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value];
     });
-
+    
     // stroke color
-    attr(IJSVGAttributeStroke, ^(NSString* value) {
-        NSString* fillDefID = [IJSVGUtils defURL:value];
-        if (fillDefID != nil) {
-            // find the object
-            id obj = [self definedObjectForID:fillDefID];
-
-            // what type is it?
-            if ([obj isKindOfClass:[IJSVGGradient class]]) {
-                node.strokeGradient = (IJSVGGradient*)obj;
-            } else if ([obj isKindOfClass:[IJSVGPattern class]]) {
-                node.strokePattern = (IJSVGPattern*)obj;
-            }
-        } else {
-            // its a color
-            node.strokeColor = [IJSVGColor colorFromString:value];
+    IJSVGAttributeParse(IJSVGAttributeStroke, ^(NSString* value) {
+        // todo
+        NSString* fillIdentifier = [IJSVGUtils defURL:value];
+        if(fillIdentifier != nil) {
+            IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                        referencingNode:node];
+            node.stroke = object;
+            return;
         }
-
+        NSColor* color = [IJSVGColor colorFromString:value];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        }
+        node.stroke = colorNode;
     });
 
     // stroke dash array
-    attr(IJSVGAttributeStrokeDashArray, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeStrokeDashArray, ^(NSString* value) {
         // nothing specified
-        if ([value isEqualToString:@"none"]) {
+        if([value isEqualToString:IJSVGStringNone]) {
             node.strokeDashArrayCount = 0;
             return;
         }
@@ -479,68 +467,76 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     });
 
     // fill - seems kinda complicated for what it actually is
-    attr(IJSVGAttributeFill, ^(NSString* value) {
-        NSString* fillDefID = [IJSVGUtils defURL:value];
-        if (fillDefID != nil) {
-            // find the object
-            id obj = [self definedObjectForID:fillDefID];
-            // what type is it?
-            if ([obj isKindOfClass:[IJSVGGradient class]]) {
-                node.fillGradient = (IJSVGGradient*)obj;
-            } else if ([obj isKindOfClass:[IJSVGPattern class]]) {
-                node.fillPattern = (IJSVGPattern*)obj;
-            }
-        } else {
-            node.fillColor = [IJSVGColor colorFromString:value];
+    IJSVGAttributeParse(IJSVGAttributeFill, ^(NSString* value) {
+        // todo
+        NSString* fillIdentifier = [IJSVGUtils defURL:value];
+        if(fillIdentifier != nil) {
+            IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                        referencingNode:node];
+            node.fill = object.detach;
+            return;
         }
+        NSColor* color = [IJSVGColor colorFromString:value];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        }
+        node.fill = colorNode;
     });
-
+    
     // fill opacity
-    attr(IJSVGAttributeFillOpacity, ^(NSString* value) {
-        if (node.fillOpacity.value != 1.f) {
-            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                         to:node.fillOpacity.value];
-        }
+    IJSVGAttributeParse(IJSVGAttributeFillOpacity, ^(NSString* value) {
+        node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     });
 
     // blendmode
-    attr(IJSVGAttributeBlendMode, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeBlendMode, ^(NSString* value) {
         node.blendMode = [IJSVGUtils blendModeForString:value];
     });
 
     // fill rule
-    attr(IJSVGAttributeFillRule, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeFillRule, ^(NSString* value) {
         node.windingRule = [IJSVGUtils windingRuleForString:value];
     });
-
+    
+    // clip rule
+    IJSVGAttributeParse(IJSVGAttributeClipRule, ^(NSString* value) {
+        node.clipRule = [IJSVGUtils windingRuleForString:value];
+    });
+    
     // display
-    attr(IJSVGAttributeDisplay, ^(NSString* value) {
-        if ([value.lowercaseString isEqualToString:@"none"]) {
+    IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {
+        if([value.lowercaseString isEqualToString:IJSVGStringNone]) {
             node.shouldRender = NO;
         }
     });
     
     // offset
-    attr(IJSVGAttributeOffset, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeOffset, ^(NSString* value) {
         node.offset = [IJSVGUnitLength unitWithString:value];
     });
     
     // stop-opacity
-    attr(IJSVGAttributeStopOpacity, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeStopOpacity, ^(NSString* value) {
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     });
     
     // stop-color
-    attr(IJSVGAttributeStopColor, ^(NSString* value) {
-        node.fillColor = [IJSVGColor colorFromString:value];
-        if(node.fillOpacity.value != 1.f) {
-            node.fillColor = [IJSVGColor changeAlphaOnColor:node.fillColor
-                                                         to:node.fillOpacity.value];
+    IJSVGAttributeParse(IJSVGAttributeStopColor, ^(NSString* value) {
+        NSColor* color = [IJSVGColor colorFromString:value];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        } else if(node.fillOpacity.value != 1.f) {
+            color = [IJSVGColor changeAlphaOnColor:color
+                                                to:node.fillOpacity.value];
+            colorNode.color = color;
         }
+        node.fill = colorNode;
     });
     
     // overflow
-    attr(IJSVGAttributeOverflow, ^(NSString* value) {
+    IJSVGAttributeParse(IJSVGAttributeOverflow, ^(NSString* value) {
         if([value.lowercaseString isEqualToString:@"hidden"]) {
             node.overflowVisibility = IJSVGOverflowVisibilityHidden;
         } else {
@@ -548,825 +544,473 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         }
     });
     
-    // is there a title or desc?
-    for(NSXMLElement* childElement in element.children) {
-        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
-                                                 kind:childElement.kind];
-        switch(type) {
-            case IJSVGNodeTypeTitle: {
-                node.title = childElement.stringValue;
-                break;
+    // viewBox because this somehow is a thing
+    IJSVGAttributeParse(IJSVGAttributeViewBox, ^(NSString* value) {
+        CGFloat* floats = [IJSVGUtils parseViewBox:value];
+        node.viewBox = [IJSVGUnitRect rectWithX:floats[0]
+                                              y:floats[1]
+                                          width:floats[2]
+                                         height:floats[3]];
+        free(floats);
+    });
+    
+    // preserveAspectRatio
+    IJSVGAttributeParse(IJSVGAttributePreserveAspectRatio, ^(NSString* value) {
+        IJSVGViewBoxMeetOrSlice meetOrSlice;
+        IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value
+                                                               meetOrSlice:&meetOrSlice];
+        node.viewBoxAlignment = alignment;
+        node.viewBoxMeetOrSlice = meetOrSlice;
+    });
+    
+    // filters
+    IJSVGAttributeParse(IJSVGAttributeFilter, ^(NSString* value) {
+        NSString* filterIdentifier = [IJSVGUtils defURL:value];
+        if(filterIdentifier != nil) {
+            IJSVGNode* filter = [self computeDetachedNodeWithIdentifier:filterIdentifier
+                                                        referencingNode:node];
+            node.filter = (IJSVGFilter*)filter;
+        }
+    });
+    
+    if(node.type == IJSVGNodeTypeFilterEffect) {
+        IJSVGFilterEffect* effect = (IJSVGFilterEffect*)node;
+                
+        // in
+        IJSVGAttributeParse(IJSVGAttributeIn, ^(NSString* value) {
+            effect.source = [IJSVGFilterEffect sourceForString:value];
+            if(effect.source == IJSVGFilterEffectSourcePrimitiveReference) {
+                effect.primitiveReference = value;
             }
-            case IJSVGNodeTypeDesc: {
-                node.desc = childElement.stringValue;
-                break;
-            }
-            default: {
-            }
-        }
-    }
-}
-
-- (id)definedObjectForID:(NSString*)anID
-              xmlElement:(NSXMLElement**)element
-{
-    // check base def nodes first, then check rest of document
-    NSXMLElement* parseElement = _baseDefNodes[anID] ?: _defNodes[anID];
-    if (parseElement != nil) {
-        // parse the block
-        if (element != nil && element != NULL) {
-            *element = parseElement;
-        }
-        IJSVGGroup* group = [[[IJSVGGroup alloc] init] autorelease];
-        [self _parseBaseBlock:parseElement
-                    intoGroup:group
-                          def:NO];
-        return [group defForID:anID];
-    }
-    return nil;
-}
-
-- (id)definedObjectForID:(NSString*)anID
-{
-    return [self definedObjectForID:anID
-                         xmlElement:nil];
-}
-
-- (BOOL)isFont
-{
-    return _glyphs != nil && [_glyphs count] != 0;
-}
-
-- (NSArray*)glyphs
-{
-    return _glyphs ?: @[];
-}
-
-- (void)addSubSVG:(IJSVG*)anSVG
-{
-    if (_svgs == nil) {
-        _svgs = [[NSMutableArray alloc] init];
-    }
-    [_svgs addObject:anSVG];
-}
-
-- (NSArray<IJSVG*>*)subSVGs:(BOOL)recursive
-{
-    if (recursive == NO) {
-        return _svgs ?: @[];
-    }
-    NSMutableArray<IJSVG*>* svgs = [[[NSMutableArray alloc] init] autorelease];
-    for (IJSVG* anSVG in svgs) {
-        [svgs addObject:anSVG];
-        [svgs addObjectsFromArray:[anSVG subSVGs:recursive]];
-    }
-    return svgs;
-}
-
-- (void)addGlyph:(IJSVGPath*)glyph
-{
-    if (_glyphs == nil) {
-        _glyphs = [[NSMutableArray alloc] init];
-    }
-    [_glyphs addObject:glyph];
-}
-
-- (void)_parseElementForCommonAttributes:(NSXMLElement*)element
-                                    node:(IJSVGNode*)node
-                        ignoreAttributes:(NSArray*)ignoredAttributes
-{
-    [self _postParseElementForCommonAttributes:element
-                                          node:node
-                              ignoreAttributes:ignoredAttributes];
-}
-
-- (void)_setupDefaultsForNode:(IJSVGNode*)node
-{
-    switch (node.type) {
-    // mask
-    case IJSVGNodeTypeMask: {
-        node.overflowVisibility = IJSVGOverflowVisibilityHidden;
-        node.units = IJSVGUnitObjectBoundingBox;
-        break;
-    }
-            
-    // clippath
-    case IJSVGNodeTypeClipPath: {
-        node.units = IJSVGUnitObjectBoundingBox;
-        node.overflowVisibility = IJSVGOverflowVisibilityHidden;
-        break;
-    }
-
-    // gradient
-    case IJSVGNodeTypeRadialGradient:
-    case IJSVGNodeTypeLinearGradient: {
-        node.units = IJSVGUnitObjectBoundingBox;
-        break;
-    }
-
-    default: {
-    }
-    }
-}
-
-- (void)parseDefsForElement:(NSXMLElement*)anElement
-{
-    // nothing found
-    if (anElement.childCount == 0) {
-        return;
-    }
-
-    for (NSXMLElement* element in anElement.children) {
-        // not a def
-        if ([IJSVGNode typeForString:element.localName
-                                kind:element.kind]
-            != IJSVGNodeTypeDef) {
-            continue;
-        }
-
-        // store each object
-        for (NSXMLElement* childDef in element.children) {
-            // is there any stylesheets within this?
-            IJSVGNodeType childType = [IJSVGNode typeForString:childDef.localName
-                                                          kind:element.kind];
-
-            switch (childType) {
-            case IJSVGNodeTypeStyle:
-            case IJSVGNodeTypeGlyph:
-            case IJSVGNodeTypeFont: {
-                [self _parseBaseBlock:childDef
-                            intoGroup:self
-                                  def:NO];
-                break;
-            }
-            case IJSVGNodeTypeNotFound: {
-                // ignore, this is insanely important - specially if its a comment
-                break;
-            }
-            default: {
-                // just a default def, continue on, as we are a def element,
-                // store these seperately to the default ID string ones
-                if (_baseDefNodes == nil) {
-                    _baseDefNodes = [[NSMutableDictionary alloc] init];
-                }
-                NSString* defID = [childDef attributeForName:IJSVGAttributeID].stringValue;
-                if (defID != nil) {
-                    _baseDefNodes[defID] = childDef;
-                }
-            }
-            }
-        }
-    }
-}
-
-- (void)_parseBaseBlock:(NSXMLElement*)element
-              intoGroup:(IJSVGGroup*)parentGroup
-                    def:(BOOL)flag
-{
-    NSString* subName = element.localName;
-    NSXMLNodeKind nodeKind = element.kind;
-    IJSVGNodeType aType = [IJSVGNode typeForString:subName
-                                              kind:nodeKind];
-    switch (aType) {
-
-    // do nothing
-    default:
-    case IJSVGNodeTypeNotFound: {
-        break;
-    }
-
-    // style
-    case IJSVGNodeTypeStyle: {
-        // create the sheet
-        if (_styleSheet == nil) {
-            _styleSheet = [[IJSVGStyleSheet alloc] init];
-        }
-
-        // append the string
-        [_styleSheet parseStyleBlock:element.stringValue];
-        break;
-    }
-
-        // sub SVG
-    case IJSVGNodeTypeSVG: {
-
-        IJSVGGroup* path = [[[IJSVGGroup alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-
-        // grab common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-
-        // if its a sub svg, we can remove the attributes for x and y
-        // this is required or it could go out of bounds before the exporter
-        // hits the layers from the groups :)
-        [element removeAttributeForName:IJSVGAttributeX];
-        [element removeAttributeForName:IJSVGAttributeY];
-
-        // work out the SVG
-        NSError* error = nil;
-        NSString* SVGString = element.XMLString;
-        IJSVG* anSVG = [[[IJSVG alloc] initWithSVGString:SVGString
-                                                   error:&error
-                                                delegate:nil] autorelease];
-
-        // handle sub SVG
-        if (error == nil && _respondsTo.handleSubSVG == 1) {
-            [_delegate svgParser:self
-                     foundSubSVG:anSVG
-                   withSVGString:SVGString];
-        }
-
-        // any error?
-        if (anSVG != nil && error == nil) {
-            path.svg = anSVG;
-            [parentGroup addChild:path];
-            [parentGroup addDef:path];
-
-            // make sure we add this
-            [self addSubSVG:anSVG];
-        }
-        break;
-    }
-
-        // glyph
-    case IJSVGNodeTypeGlyph: {
-
-        // no path data
-        if ([element attributeForName:IJSVGAttributeD] == nil ||
-            [[element attributeForName:IJSVGAttributeD] stringValue].length == 0) {
-            break;
-        }
-
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-
-        // pass the commands for it
-        [self _parsePathCommandData:[[element attributeForName:IJSVGAttributeD] stringValue]
-                           intoPath:path];
-
-        // check the size...
-        if (CGRectIsEmpty(path.controlPointBoundingBox) == YES) {
-            break;
-        }
+        });
         
-        // add the glyph
-        [self addGlyph:path];
-        break;
+        // edge mode
+        IJSVGAttributeParse(IJSVGAttributeEdgeMode, ^(NSString* value) {
+            effect.edgeMode = [IJSVGFilterEffect edgeModeForString:value];
+        });
+        
+        // deviation
+        IJSVGAttributeParse(IJSVGAttributeStdDeviation, ^(NSString* value) {
+            effect.stdDeviation = [IJSVGUnitLength unitWithString:value];
+        });
     }
+    
+    return postProcessBlock;
+}
 
-        // group
-    case IJSVGNodeTypeSwitch:
-    case IJSVGNodeTypeFont:
-    case IJSVGNodeTypeMask:
-    case IJSVGNodeTypeGroup: {
-
-        // parse the defs
-        [self parseDefsForElement:element];
-
-        // create a new group
-        IJSVGGroup* group = [[[IJSVGGroup alloc] init] autorelease];
-        group.type = aType;
-        group.name = subName;
-        group.parentNode = parentGroup;
-
-        // only groups get added to parent, rest is added as a def -
-        // also addition of switches
-        if (!flag && ((aType == IJSVGNodeTypeGroup) || (aType == IJSVGNodeTypeSwitch))) {
-            [parentGroup addChild:group];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:group];
-        [self _parseElementForCommonAttributes:element
-                                          node:group
-                              ignoreAttributes:nil];
-
-        // recursively parse blocks
-        [self _parseBlock:element
-                intoGroup:group
-                      def:NO];
-
-        [parentGroup addDef:group];
-        break;
-    }
-
-        // path
-    case IJSVGNodeTypePath: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parsePathCommandData:[[element attributeForName:IJSVGAttributeD] stringValue]
-                           intoPath:path];
-
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // polygon
-    case IJSVGNodeTypePolygon: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parsePolygon:element
-                   intoPath:path];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // polyline
-    case IJSVGNodeTypePolyline: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parsePolyline:element
-                    intoPath:path];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // rect
-    case IJSVGNodeTypeRect: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _parseRect:element
-                intoPath:path];
-
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:@[ IJSVGAttributeX, IJSVGAttributeY ]];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // line
-    case IJSVGNodeTypeLine: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        [parentGroup addChild:path];
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parseLine:element
-                intoPath:path];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // circle
-    case IJSVGNodeTypeCircle: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parseCircle:element
-                  intoPath:path];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // ellipse
-    case IJSVGNodeTypeEllipse: {
-        IJSVGPath* path = [[[IJSVGPath alloc] init] autorelease];
-        path.type = aType;
-        path.name = subName;
-        path.parentNode = parentGroup;
-
-        if (!flag) {
-            [parentGroup addChild:path];
-        }
-
-        // find common attributes
-        [self _setupDefaultsForNode:path];
-        [self _parseElementForCommonAttributes:element
-                                          node:path
-                              ignoreAttributes:nil];
-        [self _parseEllipse:element
-                   intoPath:path];
-        [parentGroup addDef:path];
-        break;
-    }
-
-        // use
-    case IJSVGNodeTypeUse: {
-
-        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
-        NSString* xlinkID = [xlink substringFromIndex:1];
-        IJSVGNode* node = [self definedObjectForID:xlinkID];
-
-        // there was no specified link ID, well, not that we could find,
-        // so just break
-        if (node == nil) {
+- (IJSVGNode*)parseElement:(NSXMLElement*)element
+                parentNode:(IJSVGNode*)node
+{
+    NSString* name = element.localName;
+    NSXMLNodeKind nodeKind = element.kind;
+    IJSVGNodeType nodeType = [IJSVGNode typeForString:name
+                                                 kind:nodeKind];
+        
+    [self parseDefElement:element
+               parentNode:node
+                recursive:NO];
+    
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
+    IJSVGNode* computedNode = nil;
+    switch(nodeType) {
+        case IJSVGNodeTypeForeignObject: {
+            // do nothing for foreign objects, we dont support them
             break;
         }
-
-        // due to this being a carbon clone, we need to clear the ID
-        if ([element attributeForName:IJSVGAttributeID] == nil) {
-            node.identifier = nil;
-        }
-
-        // at this point, we need to create another group!
-        IJSVGGroup* subGroup = [[[IJSVGGroup alloc] init] autorelease];
-        subGroup.parentNode = parentGroup;
-        [subGroup addChild:node];
-        node.parentNode = subGroup;
-        node.intermediateParentNode = subGroup;
-
-        // is there a width and height?
-        CGFloat x = [element attributeForName:IJSVGAttributeX].stringValue.floatValue;
-        CGFloat y = [element attributeForName:IJSVGAttributeY].stringValue.floatValue;
-
-        // we need to add a transform to the subgroup
-        subGroup.transforms = @[ [IJSVGTransform transformByTranslatingX:x y:y] ];
-
-        if (!flag) {
-            [parentGroup addChild:subGroup];
-        }
-
-        // parse attributes from element onto group - but spec
-        // says ignore x, y, width, height and xlink:href...
-        [self _parseElementForCommonAttributes:element
-                                          node:node
-                              ignoreAttributes:@[IJSVGAttributeX, IJSVGAttributeY,
-                                                 IJSVGAttributeWidth, IJSVGAttributeHeight,
-                                                 IJSVGAttributeXLink]];
-
-        [parentGroup addDef:node];
-        break;
-    }
-     
-        // stop color
-    case IJSVGNodeTypeStop: {
-        IJSVGNode* node = [[[IJSVGNode alloc] init] autorelease];
-        node.type = IJSVGNodeTypeStop;
-        [self _setupDefaultsForNode:node];
-        [self _parseElementForCommonAttributes:element
-                                          node:node
-                              ignoreAttributes:nil];
-        [parentGroup addChild:node];
-        break;
-    }
-
-        // linear gradient
-    case IJSVGNodeTypeLinearGradient: {
-
-        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
-        NSString* xlinkID = [xlink substringFromIndex:1];
-        NSXMLElement* referenceElement;
-        IJSVGNode* node = [self definedObjectForID:xlinkID
-                                        xmlElement:&referenceElement];
-        if (node != nil) {
-            // we are a clone
-            NSXMLElement* elementCopy = [self mergedElement:element
-                                       withReferenceElement:referenceElement];
-
-            IJSVGLinearGradient* grad = [[[IJSVGLinearGradient alloc] init] autorelease];
-            grad.type = aType;
-            [self _setupDefaultsForNode:grad];
-            [self _parseElementForCommonAttributes:elementCopy
-                                              node:grad
-                                  ignoreAttributes:nil];
-            [self _parseBlock:elementCopy
-                    intoGroup:grad
-                          def:NO];
-            grad.gradient = [IJSVGLinearGradient parseGradient:elementCopy
-                                                      gradient:grad];
-            [parentGroup addDef:grad];
+            
+        case IJSVGNodeTypeStyle: {
+            [self parseStyleElement:element
+                         parentNode:node];
             break;
         }
-
-        IJSVGLinearGradient* gradient = [[[IJSVGLinearGradient alloc] init] autorelease];
-        gradient.type = aType;
-        [self _setupDefaultsForNode:gradient];
-        [self _parseElementForCommonAttributes:element
-                                          node:gradient
-                              ignoreAttributes:nil];
-        [self _parseBlock:element
-                intoGroup:gradient
-                      def:NO];
-        gradient.gradient = [IJSVGLinearGradient parseGradient:element
-                                                      gradient:gradient];
-        [parentGroup addDef:gradient];
-        break;
-    }
-
-        // radial gradient
-    case IJSVGNodeTypeRadialGradient: {
-
-        NSString* xlink = [[self resolveXLinkAttributeForElement:element] stringValue];
-        NSString* xlinkID = [xlink substringFromIndex:1];
-        NSXMLElement* referenceElement;
-        IJSVGNode* node = [self definedObjectForID:xlinkID
-                                        xmlElement:&referenceElement];
-        if (node != nil) {
-            // we are a clone
-            IJSVGRadialGradient* grad = [[[IJSVGRadialGradient alloc] init] autorelease];
-            grad.type = aType;
-
-            NSXMLElement* elementCopy = [self mergedElement:element
-                                       withReferenceElement:referenceElement];
-            [self _setupDefaultsForNode:grad];
-            [self _parseElementForCommonAttributes:elementCopy
-                                              node:grad
-                                  ignoreAttributes:nil];
-            [self _parseBlock:elementCopy
-                    intoGroup:grad
-                          def:NO];
-            grad.gradient = [IJSVGRadialGradient parseGradient:elementCopy
-                                                      gradient:grad];
-            [parentGroup addDef:grad];
+            
+        // we can treat unkown element as groups, as some people
+        // thought it was a good idea to stick HTML within the markup
+        case IJSVGNodeTypeUnknown:
+        case IJSVGNodeTypeSwitch:
+        case IJSVGNodeTypeGroup: {
+            computedNode = [self parseGroupElement:element
+                                        parentNode:node
+                                          nodeType:nodeType
+                                  postProcessBlock:&postProcessBlock];
             break;
         }
-
-        IJSVGRadialGradient* gradient = [[[IJSVGRadialGradient alloc] init] autorelease];
-        gradient.type = aType;
-        [self _setupDefaultsForNode:gradient];
-        [self _parseElementForCommonAttributes:element
-                                          node:gradient
-                              ignoreAttributes:nil];
-        [self _parseBlock:element
-                intoGroup:gradient
-                      def:NO];
-        gradient.gradient = [IJSVGRadialGradient parseGradient:element
-                                                      gradient:gradient];
-        [parentGroup addDef:gradient];
-        break;
+        case IJSVGNodeTypeSVG: {
+            computedNode = [self parseSVGElement:element
+                                      parentNode:node
+                                postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypePath: {
+            computedNode = [self parsePathElement:element
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeCircle: {
+            computedNode = [self parseCircleElement:element
+                                         parentNode:node
+                                   postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeEllipse: {
+            computedNode = [self parseEllipseElement:element
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeRect: {
+            computedNode = [self parseRectElement:element
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypePolygon: {
+            computedNode = [self parsePolygonElement:element
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypePolyline: {
+            computedNode = [self parsePolyLineElement:element
+                                           parentNode:node
+                                     postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeLine: {
+            computedNode = [self parseLineElement:element
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeImage: {
+            computedNode = [self parseImageElement:element
+                                        parentNode:node
+                                  postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypePattern: {
+            computedNode = [self parsePatternElement:element
+                                          parentNode:node
+                                    postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeClipPath: {
+            computedNode = [self parseClipPathElement:element
+                                           parentNode:node
+                                     postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeMask: {
+            computedNode = [self parseMaskElement:element
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeDef: {
+            [self parseDefElement:element
+                       parentNode:_rootNode
+                        recursive:YES];
+            break;
+        }
+        case IJSVGNodeTypeUse: {
+            computedNode = [self parseUseElement:element
+                                      parentNode:node
+                                postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeLinearGradient: {
+            computedNode = [self parseLinearGradientElement:element
+                                                 parentNode:node
+                                           postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeRadialGradient: {
+            computedNode = [self parseRadialGradientElement:element
+                                                 parentNode:node
+                                           postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeStop: {
+            computedNode = [self parseStopElement:element
+                                       parentNode:node
+                                 postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeTitle: {
+            [self parseTitleElement:element
+                         parentNode:node
+                   postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeDesc: {
+            [self parseDescElement:element
+                        parentNode:node
+                  postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeFilter: {
+            computedNode = [self parseFilterElement:element
+                                         parentNode:node
+                                   postProcessBlock:&postProcessBlock];
+            break;
+        }
+        case IJSVGNodeTypeFilterEffect: {
+            computedNode = [self parseFilterEffectElement:element
+                                               parentNode:node
+                                         postProcessBlock:&postProcessBlock];
+            break;
+        }
+        default:
+            break;
     }
-
-        // clippath
-    case IJSVGNodeTypeClipPath: {
-
-        IJSVGGroup* group = [[[IJSVGGroup alloc] init] autorelease];
-        group.type = aType;
-        group.name = subName;
-        group.parentNode = parentGroup;
-
-        [self _setupDefaultsForNode:group];
-
-        // find common attributes
-        [self _parseElementForCommonAttributes:element
-                                          node:group
-                              ignoreAttributes:nil];
-
-        // recursively parse blocks
-        [self _parseBlock:element
-                intoGroup:group
-                      def:NO];
-        [parentGroup addDef:group];
-        break;
+    
+    // some nodes require post processing once their tree has been worked out
+    if(postProcessBlock != nil) {
+        postProcessBlock();
     }
+    
+    // perform any post processing
+    [computedNode postProcess];
+    
+    return computedNode;
+}
 
-    // pattern
-    case IJSVGNodeTypePattern: {
-        IJSVGPattern* pattern = [[[IJSVGPattern alloc] init] autorelease];
-
-        [self _setupDefaultsForNode:pattern];
-
-        // find common attributes
-        [self _parseElementForCommonAttributes:element
-                                          node:pattern
-                              ignoreAttributes:nil];
-
-        // pattern has children
-        [self _parseBlock:element
-                intoGroup:pattern
-                      def:NO];
-
-        [parentGroup addDef:pattern];
-        break;
-    }
-
-    // image
-    case IJSVGNodeTypeImage: {
-        IJSVGImage* image = [[[IJSVGImage alloc] init] autorelease];
-
-        [self _setupDefaultsForNode:image];
-
-        // find common attributes
-        [self _parseElementForCommonAttributes:element
-                                          node:image
-                              ignoreAttributes:nil];
-
-        // from base64
-        NSXMLNode* attributeNode = [self resolveXLinkAttributeForElement:element] ?:
-            [element attributeForName:IJSVGAttributeHref];
-        [image loadFromString:attributeNode.stringValue];
-
-        // add to parent
-        [parentGroup addChild:image];
-        [parentGroup addDef:image];
-        break;
-    }
+- (void)computeElement:(NSXMLElement*)element
+            parentNode:(IJSVGNode*)node
+{
+    [self computeDefsForElement:element
+                     parentNode:node];
+    for(NSXMLElement* childElement in element.children) {
+        [self parseElement:childElement
+                parentNode:node];
     }
 }
 
-- (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
+#pragma mark Detaching nodes
+- (void)detachElement:(NSXMLElement*)element
+       withIdentifier:(NSString*)identifier
 {
-    NSString* const namespaceURI = @"http://www.w3.org/1999/xlink";
-    NSXMLNode* attributeNode = [element attributeForLocalName:IJSVGAttributeHref
-                                                          URI:namespaceURI];
-    if (attributeNode == nil) {
-        attributeNode = [element attributeForName:IJSVGAttributeXLink];
+    element = element.copy;
+    [element detach];
+    
+    // its important that we remove the ID attribute
+    [element removeAttributeForName:IJSVGAttributeID];
+    
+    NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
+    IJSVGNode* parentNode = _rootNode;
+    if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
+        scopedDetachedElements = [[NSMutableDictionary alloc] init];
+        [_detachedElements setObject:scopedDetachedElements
+                              forKey:parentNode];
     }
-    return attributeNode;
+    scopedDetachedElements[identifier] = element;
+}
+
+- (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
+{
+    NSXMLElement* element = [_detachedElements objectForKey:_rootNode][identifier];
+    return element.copy;
+}
+
+- (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
+                                referencingNode:(IJSVGNode*)node
+{
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
+    if(detachedElement == nil) {
+        return nil;
+    }
+    // we need to make sure once we are done, we detach this from its parent
+    // or it can cause recursion down the line
+    return [self parseElement:detachedElement
+                   parentNode:node].detach;
 }
 
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
           withReferenceElement:(NSXMLElement*)reference
 {
-    NSXMLElement* copy = [[reference copy] autorelease];
-    for (NSXMLNode* attribute in element.attributes) {
+    NSXMLElement* copy = reference.copy;
+    for (__strong NSXMLNode* attribute in element.attributes) {
         [copy removeAttributeForName:attribute.name];
-        attribute = [[attribute copy] autorelease];
+        attribute = attribute.copy;
         [copy addAttribute:attribute];
     }
     return copy;
 }
 
-- (void)_parseBlock:(NSXMLElement*)anElement
-          intoGroup:(IJSVGGroup*)parentGroup
-                def:(BOOL)flag
-{
-    // parse the defs
-    [self parseDefsForElement:anElement];
+#pragma mark Node Types
 
-    // parse the children
-    for (NSXMLElement* element in [anElement children]) {
-        [self _parseBaseBlock:element
-                    intoGroup:parentGroup
-                          def:flag];
-    }
+- (void)parseStyleElement:(NSXMLElement*)element
+               parentNode:(IJSVGNode*)parentNode
+{
+    [_styleSheet parseStyleBlock:element.stringValue];
 }
 
-#pragma mark Parser stuff!
-
-- (void)_parsePathCommandDataBuffer:(const char*)buffer
-                           intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
+                      parentNode:(IJSVGNode*)parentNode
+                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    NSUInteger len = strlen(buffer);
-    NSUInteger lastIndex = len - 1;
-
-    // make sure we plus 1 for the null byte
-    char* charBuffer = (char*)malloc(sizeof(char)*(len + 1));
-    NSInteger start = 0;
-    IJSVGCommand* _currentCommand = nil;
-    for (NSInteger i = 0; i < len; i++) {
-        char nextChar = buffer[i + 1];
-        BOOL atEnd = i == lastIndex;
-        BOOL isStartCommand = IJSVGIsLegalCommandCharacter(nextChar);
-        if (isStartCommand == YES || atEnd == YES) {
-
-            // copy memory from current buffer
-            NSInteger index = ((i + 1) - start);
-            memcpy(&charBuffer[0], &buffer[start], sizeof(char)*index);
-            charBuffer[index] = '\0';
-
-            // create the command from the substring
-            unsigned long length = index + 1;
-            size_t mlength = sizeof(char)*length;
-            char* commandString = (char*)malloc(mlength);
-            memcpy(commandString, &charBuffer[0], mlength);
-
-            // reset start position
-            start = (i + 1);
-
-            // previous command is actual subcommand
-            IJSVGCommand* previousCommand = _currentCommand.subCommands.lastObject;
-            IJSVGCommand* cCommand = [self _parseCommandStringBuffer:commandString
-                                                     previousCommand:previousCommand
-                                                            intoPath:path];
-            
-            // free the memory as at this point, we are done with it
-            (void)free(commandString), commandString = NULL;
-
-            // retain the current one
-            if (cCommand != nil) {
-                _currentCommand = cCommand;
-            }
-        }
-    }
-    (void)free(charBuffer), charBuffer = NULL;
+    IJSVGFilter* node = [[IJSVGFilter alloc] init];
+    node.type = IJSVGNodeTypeFilter;
+    node.name = element.localName;
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    return node;
 }
 
-- (void)_parsePathCommandData:(NSString*)command
-                     intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseFilterEffectElement:(NSXMLElement*)element
+                            parentNode:(IJSVGNode*)parentNode
+                      postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    // invalid command
-    if (command == nil || command.length == 0) {
-        return;
-    }
+    Class effectClass = [IJSVGFilterEffect effectClassForElementName:element.localName];
+    IJSVGFilterEffect* node = [[effectClass alloc] init];
+    node.type = IJSVGNodeTypeFilterEffect;
+    node.name = element.localName;
 
-    // allocate memory for the string buffer for reading
-    const char* buffer = command.UTF8String;
-    [self _parsePathCommandDataBuffer:buffer
-                             intoPath:path];
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    return node;
 }
 
-- (IJSVGCommand*)_parseCommandStringBuffer:(const char*)buffer
-                           previousCommand:(IJSVGCommand*)previousCommand
-                                  intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element
+                              parentNode:(IJSVGNode*)parentNode
+                        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    // work out the last command - the reason this is so long is because the command
-    // could be a series of the same commands, so work it out by the number of parameters
-    // there is per command string
-    IJSVGCommand* preCommand = nil;
-    if (previousCommand) {
-        preCommand = previousCommand;
+    IJSVGLinearGradient* node = [[IJSVGLinearGradient alloc] init];
+    node.units = IJSVGUnitObjectBoundingBox;
+    node.type = IJSVGNodeTypeLinearGradient;
+    node.name = element.localName;
+    [node addTraits:IJSVGNodeTraitPaintable];
+    
+    NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
+    if(xLinkID != nil) {
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        element = [self mergedElement:element
+                 withReferenceElement:detachedElement];
     }
-
-    // main commands
-    //    Class commandClass = [IJSVGCommand classFor]
-    Class commandClass = [IJSVGCommand commandClassForCommandChar:buffer[0]];
-    IJSVGCommand* command = nil;
-    command = (IJSVGCommand*)[[[commandClass alloc] initWithCommandStringBuffer:buffer
-                                                                     dataStream:_commandDataStream] autorelease];
-    for (IJSVGCommand* subCommand in command.subCommands) {
-        [command.class runWithParams:subCommand.parameters
-                          paramCount:subCommand.parameterCount
-                             command:subCommand
-                     previousCommand:preCommand
-                                type:subCommand.type
-                                path:path];
-        preCommand = subCommand;
-    }
-    return command;
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    [self computeElement:element
+              parentNode:node];
+    [IJSVGLinearGradient parseGradient:element
+                              gradient:node];
+    return node;
 }
 
-- (void)_parseLine:(NSXMLElement*)element
-          intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseRadialGradientElement:(NSXMLElement*)element
+                              parentNode:(IJSVGNode*)parentNode
+                        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
+    IJSVGRadialGradient* node = [[IJSVGRadialGradient alloc] init];
+    node.units = IJSVGUnitObjectBoundingBox;
+    node.type = IJSVGNodeTypeRadialGradient;
+    node.name = element.localName;
+    [node addTraits:IJSVGNodeTraitPaintable];
+    
+    NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
+    if(xLinkID != nil) {
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        element = [self mergedElement:element
+                 withReferenceElement:detachedElement];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    [self computeElement:element
+              parentNode:node];
+    [IJSVGRadialGradient parseGradient:element
+                              gradient:node];
+    return node;
+}
+
+- (IJSVGNode*)parseStopElement:(NSXMLElement*)element
+                    parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGNode* node = [[IJSVGNode alloc] init];
+    node.type = IJSVGNodeTypeStop;
+    node.name = element.localName;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    return node;
+}
+
+- (IJSVGNode*)parsePathElement:(NSXMLElement*)element
+                    parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.type = IJSVGNodeTypePath;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    CGMutablePathRef path = NULL;
+    NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
+    if(pathData != nil) {
+        NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:pathData.UTF8String
+                                                                        dataStream:_commandDataStream];
+        path = [IJSVGCommand newPathForCommandsArray:commands];
+    } else {
+        path = CGPathCreateMutable();
+    }
+    node.path = path;
+    CGPathRelease(path);
+
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    return node;
+}
+
+- (IJSVGNode*)parseLineElement:(NSXMLElement*)element
+                    parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.type = IJSVGNodeTypeLine;
+    node.primitiveType = kIJSVGPrimitivePathTypeLine;
+    node.parentNode = parentNode;
+    node.name = element.localName;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
     // convert a line into a command,
     // basically MX1 Y1LX2 Y2
-    path.primitiveType = kIJSVGPrimitivePathTypeLine;
     CGFloat x1 = [element attributeForName:IJSVGAttributeX1].stringValue.floatValue;
     CGFloat y1 = [element attributeForName:IJSVGAttributeY1].stringValue.floatValue;
     CGFloat x2 = [element attributeForName:IJSVGAttributeX2].stringValue.floatValue;
@@ -1375,67 +1019,539 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
     // use sprintf as its quicker then stringWithFormat...
     char* buffer;
     asprintf(&buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
-    [self _parsePathCommandDataBuffer:buffer
-                             intoPath:path];
+    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
+                                                                    dataStream:_commandDataStream];
+    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
+    node.path = nPath;
+    CGPathRelease(nPath);
+    
     (void)free(buffer);
+    return node;
 }
 
-- (void)_parseCircle:(NSXMLElement*)element
-            intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parsePolyLineElement:(NSXMLElement*)element
+                        parentNode:(IJSVGNode*)parentNode
+                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    path.primitiveType = kIJSVGPrimitivePathTypeCircle;
-    CGFloat cX = [element attributeForName:IJSVGAttributeCX].stringValue.floatValue;
-    CGFloat cY = [element attributeForName:IJSVGAttributeCY].stringValue.floatValue;
-    CGFloat r = [element attributeForName:IJSVGAttributeR].stringValue.floatValue;
-    CGRect rect = CGRectMake(cX - r, cY - r, r * 2, r * 2);
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.type = IJSVGNodeTypePolyline;
+    node.primitiveType = kIJSVGPrimitivePathTypePolyLine;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                        ignoredAttributes:nil];
+    
+    NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
+    [self parsePolyPoints:pointsString
+                 intoPath:node
+                closePath:NO];
+    
+    return node;
+}
+
+- (IJSVGNode*)parsePolygonElement:(NSXMLElement*)element
+                       parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.type = IJSVGNodeTypePolygon;
+    node.primitiveType = kIJSVGPrimitivePathTypePolygon;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
+    [self parsePolyPoints:pointsString
+                 intoPath:node
+                closePath:YES];
+    
+    return node;
+}
+
+- (IJSVGNode*)parseEllipseElement:(NSXMLElement*)element
+                       parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.name = element.localName;
+    node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
+    node.type = IJSVGNodeTypeEllipse;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    CGRect computedBounds = CGRectZero;
+    IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
+    NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
+    NSString* rxString = [element attributeForName:IJSVGAttributeRX].stringValue;
+    NSString* ryString = [element attributeForName:IJSVGAttributeRY].stringValue;
+    
+    IJSVGUnitLength* cXu;
+    IJSVGUnitLength* cYu;
+    IJSVGUnitLength* rXu;
+    IJSVGUnitLength* rYu;
+    if(contentUnits == IJSVGUnitObjectBoundingBox) {
+        cXu = [IJSVGUnitLength unitWithString:cxString].lengthByMatchingPercentage;
+        cYu = [IJSVGUnitLength unitWithString:cyString].lengthByMatchingPercentage;
+        rXu = [IJSVGUnitLength unitWithString:rxString].lengthByMatchingPercentage;
+        rYu = [IJSVGUnitLength unitWithString:ryString].lengthByMatchingPercentage;
+    } else {
+        cXu = [IJSVGUnitLength unitWithString:cxString];
+        cYu = [IJSVGUnitLength unitWithString:cyString];
+        rXu = [IJSVGUnitLength unitWithString:rxString];
+        rYu = [IJSVGUnitLength unitWithString:ryString];
+    }
+    
+    CGFloat cX = [cXu computeValue:computedBounds.size.width];
+    CGFloat cY = [cYu computeValue:computedBounds.size.height];
+    CGFloat rX = [rXu computeValue:computedBounds.size.width];
+    CGFloat rY = [rYu computeValue:computedBounds.size.height];
+    CGRect rect = CGRectMake(cX - rX, cY - rY, rX * 2, rY * 2);
     CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
-    path.path = (CGMutablePathRef)nPath;
+    node.path = (CGMutablePathRef)nPath;
     CGPathRelease(nPath);
+    return node;
 }
 
-- (void)_parseEllipse:(NSXMLElement*)element
-             intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseCircleElement:(NSXMLElement*)element
+                      parentNode:(IJSVGNode*)parentNode
+                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    path.primitiveType = kIJSVGPrimitivePathTypeEllipse;
-    CGFloat cX = [element attributeForName:IJSVGAttributeCX].stringValue.floatValue;
-    CGFloat cY = [element attributeForName:IJSVGAttributeCY].stringValue.floatValue;
-    CGFloat rX = [element attributeForName:IJSVGAttributeRX].stringValue.floatValue;
-    CGFloat rY = [element attributeForName:IJSVGAttributeRY].stringValue.floatValue;
-    NSRect rect = NSMakeRect(cX - rX, cY - rY, rX * 2, rY * 2);
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.name = element.localName;
+    node.primitiveType = kIJSVGPrimitivePathTypeCircle;
+    node.type = IJSVGNodeTypeCircle;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    CGRect computedBounds = CGRectZero;
+    IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
+    
+    NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
+    NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
+    NSString* rString = [element attributeForName:IJSVGAttributeR].stringValue;
+    
+    IJSVGUnitLength* cXu = [IJSVGUnitLength unitWithString:cxString];
+    IJSVGUnitLength* cYu = [IJSVGUnitLength unitWithString:cyString];
+    IJSVGUnitLength* ru = [IJSVGUnitLength unitWithString:rString];
+    
+    if(contentUnits == IJSVGUnitObjectBoundingBox) {
+        cXu = [cXu lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        cYu = [cYu lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        ru = [ru lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+    }
+    
+    CGFloat cX = [cXu computeValue:computedBounds.size.width];
+    CGFloat cY = [cYu computeValue:computedBounds.size.height];
+    CGFloat rX = [ru computeValue:computedBounds.size.width];
+    CGFloat rY = [ru computeValue:computedBounds.size.height];
+    
+    // if rX and rY dont match, we are not a circle but an ellipsis, this is
+    // insanely important when it comes to exporting
+    if(rX != rY) {
+        node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
+        node.type = IJSVGNodeTypeEllipse;
+    }
+    
+    CGRect rect = CGRectMake(cX - rX, cY - rY, rX * 2, rY * 2);
     CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
-    path.path = (CGMutablePathRef)nPath;
+    node.path = (CGMutablePathRef)nPath;
     CGPathRelease(nPath);
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    return node;
 }
 
-- (void)_parsePolyline:(NSXMLElement*)element
-              intoPath:(IJSVGPath*)path
+- (IJSVGNode*)parseGroupElement:(NSXMLElement*)element
+                     parentNode:(IJSVGNode*)parentNode
+                       nodeType:(IJSVGNodeType)nodeType
+               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    path.primitiveType = kIJSVGPrimitivePathTypePolyLine;
-    [self _parsePoly:element
-            intoPath:path
-           closePath:NO];
+    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    node.type = nodeType;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    // recursively compute children
+    [self computeElement:element
+              parentNode:node];
+    return node;
 }
 
-- (void)_parsePolygon:(NSXMLElement*)element
-             intoPath:(IJSVGPath*)path
+- (void)parseSVGElement:(NSXMLElement*)element
+               ontoNode:(IJSVGRootNode*)node
+             parentNode:(IJSVGNode*)parentNode
+       postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    path.primitiveType = kIJSVGPrimitivePathTypePolygon;
-    [self _parsePoly:element
-            intoPath:path
-           closePath:YES];
+    node.type = IJSVGNodeTypeSVG;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    [self parseDefElement:element
+               parentNode:node
+                recursive:NO];
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+
+    // make sure we compute the viewbox
+    [self computeViewBoxForRootNode:node];
+    
+    // recursively compute children
+    [self computeElement:element
+              parentNode:node];
 }
 
-- (void)_parsePoly:(NSXMLElement*)element
-          intoPath:(IJSVGPath*)path
-         closePath:(BOOL)closePath
+- (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
+                   parentNode:(IJSVGNode*)parentNode
+             postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    NSString* points = [element attributeForName:IJSVGAttributePoints].stringValue;
+    IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
+    [self parseSVGElement:element
+                 ontoNode:node
+               parentNode:parentNode
+         postProcessBlock:postProcessBlock];
+    return node;
+}
+
+- (IJSVGNode*)parseRectElement:(NSXMLElement*)element
+                    parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    node.type = IJSVGNodeTypeRect;
+    node.primitiveType = kIJSVGPrimitivePathTypeRect;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    CGRect bounds = parentNode.bounds;
+    CGRect proposedBounds = CGRectZero;
+    IJSVGUnitType contentUnitType = [parentNode contentUnitsWithReferencingNodeBounds:&proposedBounds];
+    
+    // could not compute a value, so just use the bounds
+    if(contentUnitType == IJSVGUnitInherit) {
+        proposedBounds = bounds;
+    }
+    
+    NSString* widthString = [element attributeForName:IJSVGAttributeWidth].stringValue;
+    NSString* heightString = [element attributeForName:IJSVGAttributeHeight].stringValue;
+    NSString* xString = [element attributeForName:IJSVGAttributeX].stringValue;
+    NSString* yString = [element attributeForName:IJSVGAttributeY].stringValue;
+    NSString* rXString = [element attributeForName:IJSVGAttributeRX].stringValue;
+    NSString* rYString = [element attributeForName:IJSVGAttributeRY].stringValue;
+    
+    // width and height
+    IJSVGUnitLength* width = [IJSVGUnitLength unitWithString:widthString];
+    IJSVGUnitLength* height = [IJSVGUnitLength unitWithString:heightString];
+
+    // rect uses x and y as start of path, not move path object -_-
+    IJSVGUnitLength* x = [IJSVGUnitLength unitWithString:xString];
+    IJSVGUnitLength* y = [IJSVGUnitLength unitWithString:yString];
+
+    // radius
+    IJSVGUnitLength* rX = [IJSVGUnitLength unitWithString:rXString];
+    IJSVGUnitLength* rY = [IJSVGUnitLength unitWithString:rYString];
+    
+    bounds = proposedBounds;
+    if(contentUnitType == IJSVGUnitObjectBoundingBox) {
+        width = [width lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        height = [height lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        x = [x lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        y = [y lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        rX = [rX lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        rY = [rY lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+    }
+    
+    if(rY == nil) {
+        rY = rX;
+    }
+    CGRect rect = CGRectMake([x computeValue:bounds.size.width],
+                             [y computeValue:bounds.size.height],
+                             [width computeValue:bounds.size.width],
+                             [height computeValue:bounds.size.height]);
+        
+    CGPathRef nPath = CGPathCreateWithRoundedRect(rect, [rX computeValue:bounds.size.width],
+                                                  [rY computeValue:bounds.size.height], NULL);
+    node.path = (CGMutablePathRef)nPath;
+    CGPathRelease(nPath);
+    
+    NSArray<NSString*>* ignoredAttributes = @[IJSVGAttributeX, IJSVGAttributeY];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:ignoredAttributes];
+    return node;
+}
+
+- (IJSVGNode*)parseImageElement:(NSXMLElement*)element
+                     parentNode:(IJSVGNode*)parentNode
+               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    CGRect bounds = CGRectZero;
+    IJSVGUnitType units = [parentNode contentUnitsWithReferencingNodeBounds:&bounds];
+    IJSVGImage* node = [[IJSVGImage alloc] init];
+    node.type = IJSVGNodeTypeImage;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+        IJSVGGroup* group = (IJSVGGroup*)parentNode;
+        [group addChild:node];
+    }
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    // load image from base64
+    NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
+    
+    if(units == IJSVGUnitObjectBoundingBox) {
+        node.width = [IJSVGUnitLength unitWithFloat:node.width.value*bounds.size.width];
+        node.height = [IJSVGUnitLength unitWithFloat:node.height.value*bounds.size.height];
+    }
+    
+    [node loadFromString:dataNode.stringValue];
+    return node;
+}
+
+- (IJSVGNode*)parseUseElement:(NSXMLElement*)element
+                   parentNode:(IJSVGNode*)parentNode
+             postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    NSString* xlink = [self resolveXLinkAttributeForElement:element].stringValue;
+    NSString* xlinkID = [xlink substringFromIndex:1];
+    if(xlinkID == nil) {
+        return nil;
+    }
+    
+    // its important that we remove the xlink attribute or hell breaks loose
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
+
+    IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:element
+                                                 parentNode:parentNode
+                                                   nodeType:IJSVGNodeTypeUse
+                                           postProcessBlock:postProcessBlock];
+        
+    IJSVGNode* shadowNode = [self parseElement:detachedElement
+                                    parentNode:node];
+    if(shadowNode != nil) {
+        [node addChild:shadowNode];
+    }
+    return node;
+}
+
+- (void)replaceAttributes:(NSArray<NSString*>*)attributes
+                onElement:(NSXMLElement*)onElement
+              fromElement:(NSXMLElement*)fromElement
+{
+    for(NSString* collpaseAttribute in attributes) {
+        NSXMLNode* attribute = nil;
+        if((attribute = [fromElement attributeForName:collpaseAttribute]) != nil &&
+           [onElement attributeForName:collpaseAttribute] != nil) {
+            [attribute detach];
+            [onElement removeAttributeForName:collpaseAttribute];
+            [onElement addAttribute:attribute];
+        }
+    }
+}
+
+- (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
+                       parentNode:(IJSVGNode*)parentNode
+                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGPattern* node = [[IJSVGPattern alloc] init];
+    node.type = IJSVGNodeTypePattern;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    node.units = IJSVGUnitObjectBoundingBox;
+    node.contentUnits = IJSVGUnitUserSpaceOnUse;
+    [node addTraits:IJSVGNodeTraitPaintable];
+    NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
+    if(xLinkID != nil) {
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        element = [self mergedElement:element
+                 withReferenceElement:detachedElement];
+    }
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    [self computeElement:element
+              parentNode:node];
+    return node;
+}
+
+- (IJSVGNode*)parseClipPathElement:(NSXMLElement*)element
+                        parentNode:(IJSVGNode*)parentNode
+                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGClipPath* node = [[IJSVGClipPath alloc] init];
+    node.type = IJSVGNodeTypeClipPath;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    
+    return node;
+}
+
+- (IJSVGNode*)parseMaskElement:(NSXMLElement*)element
+                    parentNode:(IJSVGNode*)parentNode
+              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    IJSVGMask* node = [[IJSVGMask alloc] init];
+    node.type = IJSVGNodeTypeMask;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:node
+                                         ignoredAttributes:nil];
+    
+    [self computeElement:element
+              parentNode:node];
+    return node;
+}
+
+- (void)parseDefElement:(NSXMLElement*)element
+             parentNode:(IJSVGNode*)parentNode
+              recursive:(BOOL)recursive
+{
+    for(NSXMLElement* childElement in element.children) {
+        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
+                                                 kind:childElement.kind];
+        // we always want style elements to be passed
+        if(type != IJSVGNodeTypeNotFound) {
+            NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
+            if(identifier != nil) {
+                [self detachElement:childElement
+                     withIdentifier:identifier];
+            }
+        }
+        
+        // defiend elements are not presentable, we only want to grab the ID's
+        // and detach those elements ready for parsing by other elements, or
+        // find styles that can be added to the style sheet
+        switch(type) {
+            case IJSVGNodeTypeStyle: {
+                [self parseElement:childElement
+                        parentNode:parentNode];
+                break;
+            }
+            default:
+                break;
+        }
+        
+        // only run this if recursive or it can be slow or incorrect
+        // when parsing the tree with ids that are the same
+        if(childElement.childCount != 0 && recursive == YES) {
+            [self parseDefElement:childElement
+                       parentNode:parentNode
+                        recursive:recursive];
+        }
+    }
+}
+
+- (void)parseTitleElement:(NSXMLElement*)element
+               parentNode:(IJSVGNode*)parentNode
+         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    parentNode.title = element.stringValue;
+}
+
+- (void)parseDescElement:(NSXMLElement*)element
+              parentNode:(IJSVGNode*)parentNode
+        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    parentNode.desc = element.stringValue;
+}
+
+#pragma mark XLink
+
+- (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
+{
+    NSString* const namespaceURI = @"http://www.w3.org/1999/xlink";
+    NSXMLNode* attributeNode = [element attributeForLocalName:IJSVGAttributeHref
+                                                          URI:namespaceURI];
+    if(attributeNode == nil) {
+        attributeNode = [element attributeForName:IJSVGAttributeHref];
+        if(attributeNode == nil) {
+            attributeNode = [element attributeForName:IJSVGAttributeXLink];
+        }
+    }
+    return attributeNode;
+}
+
+- (NSString*)resolveXLinkAttributeStringForElement:(NSXMLElement*)element
+{
+    NSXMLNode* node = [self resolveXLinkAttributeForElement:element];
+    if(node != nil) {
+        return [node.stringValue substringFromIndex:1];
+    }
+    return nil;
+}
+
+#pragma mark Command Parsing
+
+- (void)parsePolyPoints:(NSString*)points
+               intoPath:(IJSVGPath*)path
+              closePath:(BOOL)closePath
+{
     NSInteger count = 0;
     CGFloat* params = [IJSVGUtils commandParameters:points
                                               count:&count];
 
     // error occured, free the params
-    if ((count % 2) != 0) {
+    if((count % 2) != 0) {
         free(params);
         return;
     }
@@ -1475,42 +1591,23 @@ static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
         strcat(buffer, "z");
     }
     
-    // actually perform the parse
-    [self _parsePathCommandDataBuffer:buffer
-                             intoPath:path];
+    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
+                                                                    dataStream:_commandDataStream];
+    
+    CGRect bounds;
+    if([path contentUnitsWithReferencingNodeBounds:&bounds] == IJSVGUnitObjectBoundingBox) {
+        commands = [IJSVGCommand convertCommands:commands
+                                         toUnits:IJSVGUnitObjectBoundingBox
+                                          bounds:bounds];
+    }
+    
+    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
+    path.path = nPath;
+    CGPathRelease(nPath);
     
     // free the params
     (void)free(buffer), buffer = NULL;
     (void)free(params), params = NULL;
-}
-
-- (void)_parseRect:(NSXMLElement*)element
-          intoPath:(IJSVGPath*)path
-{
-    path.primitiveType = kIJSVGPrimitivePathTypeRect;
-    // width and height
-    CGFloat width = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeWidth].stringValue
-                        fallBackForPercent:self.viewBox.size.width];
-
-    CGFloat height = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeHeight].stringValue
-                         fallBackForPercent:self.viewBox.size.height];
-
-    // rect uses x and y as start of path, not move path object -_-
-    CGFloat x = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeX].stringValue
-                    fallBackForPercent:self.viewBox.size.width];
-    CGFloat y = [IJSVGUtils floatValue:[element attributeForName:IJSVGAttributeY].stringValue
-                    fallBackForPercent:self.viewBox.size.height];
-
-    // radius
-    CGFloat rX = [element attributeForName:IJSVGAttributeRX].stringValue.floatValue;
-    CGFloat rY = [element attributeForName:IJSVGAttributeRY].stringValue.floatValue;
-    if ([element attributeForName:IJSVGAttributeRY] == nil) {
-        rY = rX;
-    }
-    CGRect rect = CGRectMake(x, y, width, height);
-    CGPathRef nPath = CGPathCreateWithRoundedRect(rect, rX, rY, NULL);
-    path.path = (CGMutablePathRef)nPath;
-    CGPathRelease(nPath);
 }
 
 @end

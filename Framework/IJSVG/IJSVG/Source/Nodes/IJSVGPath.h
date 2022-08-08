@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGColorNode.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVGGroup;
@@ -29,7 +30,10 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
-@property (nonatomic, assign, readonly) BOOL isStroked;
+
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
+                             transform:(CGAffineTransform)transform
+                                toPath:(CGMutablePathRef)mutPath;
 
 - (void)close;
 - (NSPoint)currentPoint;

@@ -10,16 +10,20 @@
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <Foundation/Foundation.h>
+#import <QuartzCore/QuartzCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGUtils : NSObject
 
-CGFloat magnitude(CGPoint point);
-CGFloat ratio(CGPoint a, CGPoint b);
-CGFloat angle(CGPoint a, CGPoint b);
-CGFloat radians_to_degrees(CGFloat radians);
-CGFloat degrees_to_radians(CGFloat degrees);
+CG_EXTERN const CGSize IJSVGSizeInfinite;
+CG_EXTERN const CGSize IJSVGSizeIntrinsic;
+
+CGFloat IJSVGMagnitude(CGPoint point);
+CGFloat IJSVGRatio(CGPoint a, CGPoint b);
+CGFloat IJSVGAngle(CGPoint a, CGPoint b);
+CGFloat IJSVGRadiansToDegrees(CGFloat radians);
+CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 
 BOOL IJSVGCharBufferIsHEX(char* buffer);
 BOOL IJSVGCharBufferHasPrefix(char* pre, char* str);
@@ -28,6 +32,7 @@ char* IJSVGTimmedCharBufferCreate(const char* buffer);
 void IJSVGTrimCharBuffer(char* buffer);
 void IJSVGCharBufferToLower(char* buffer);
 size_t IJSVGCharBufferHash(char* buffer);
+CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
@@ -76,5 +81,16 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
                                      weight:(CGFloat*)weight;
 
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
+
++ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
++ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
++ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule;
+
++ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap;
++ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin;
+
++ (NSImage*)resizeImage:(NSImage*)anImage
+                 toSize:(CGSize)size;
+
 @end
 NS_ASSUME_NONNULL_END

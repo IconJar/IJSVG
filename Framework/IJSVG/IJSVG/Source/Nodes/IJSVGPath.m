@@ -6,26 +6,56 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGroup.h"
-#import "IJSVGPath.h"
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGGroup.h>
 
 @implementation IJSVGPath
+
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
+                             transform:(CGAffineTransform)transform
+                                toPath:(CGMutablePathRef)mutPath
+{
+    for(IJSVGPath* pathNode in nodes) {
+        // just a pathed node
+        if([pathNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
+            CGPathAddPath(mutPath, &transform, pathNode.path);
+            continue;
+        }
+        
+        // could be a use group
+        if([pathNode isKindOfClass:IJSVGGroup.class] == YES) {
+            IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
+            [self recursivelyAddPathedNodesPaths:useGroup.children
+                                       transform:transform
+                                          toPath:mutPath];
+        }
+    }
+}
 
 - (void)dealloc
 {
     if(_path != NULL) {
         (void)CGPathRelease(_path), _path = NULL;
     }
-    [super dealloc];
 }
 
 - (id)init
 {
-    if ((self = [super init]) != nil) {
+    if((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
         _path = CGPathCreateMutable();
     }
     return self;
+}
+
+- (void)setDefaults
+{
+    [self addTraits:IJSVGNodeTraitPathed];
+}
+
+- (CGRect)bounds
+{
+    return self.pathBoundingBox;
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -47,12 +77,12 @@
 
 - (CGRect)pathBoundingBox
 {
-    return CGPathGetPathBoundingBox(_path);
+    return CGPathGetBoundingBox(_path);
 }
 
 - (CGRect)controlPointBoundingBox
 {
-    return CGPathGetBoundingBox(_path);
+    return CGPathGetPathBoundingBox(_path);
 }
 
 - (NSPoint)currentPoint
@@ -65,11 +95,24 @@
     CGPathCloseSubpath(_path);
 }
 
-- (BOOL)isStroked
+#pragma mark Traits
+
+- (void)computeTraits
 {
-    return (self.strokeColor != nil && self.strokeColor.alphaComponent != 0.f) ||
-        self.strokePattern != nil ||
-        self.strokeGradient != nil;
+    if(self.stroke != nil) {
+        // by default we can just add this on
+        [self addTraits:IJSVGNodeTraitStroked];
+        
+        // if we detect the stroke was a color, we need to check its alpha
+        // component to then remove the trait if its 0.f
+        if([self.stroke isKindOfClass:IJSVGColorNode.class] == YES) {
+            IJSVGColorNode* strokeColor = (IJSVGColorNode*)self.stroke;
+            if(strokeColor.color.alphaComponent == 0.f ||
+               strokeColor.isNoneOrTransparent == YES) {
+                [self removeTraits:IJSVGNodeTraitStroked];
+            }
+        }
+    }
 }
 
 @end

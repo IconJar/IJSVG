@@ -17,17 +17,16 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
     kIJSVGCommandTypeRelative
 };
 
-@interface IJSVGCommand : NSObject {
+@interface IJSVGCommand : NSObject <NSCopying> {
 @private
     NSInteger _currentIndex;
 }
 
-@property (nonatomic, copy) NSString* commandString;
 @property (nonatomic, assign) char command;
 @property (nonatomic, assign) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;
 @property (nonatomic, assign) IJSVGCommandType type;
-@property (nonatomic, retain) NSArray<IJSVGCommand*>* subCommands;
+@property (nonatomic, strong) NSArray<IJSVGCommand*>* subCommands;
 @property (nonatomic, assign) IJSVGCommand* previousCommand;
 @property (nonatomic, assign) BOOL isSubCommand;
 
@@ -41,17 +40,30 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path;
+                 path:(CGMutablePathRef)path;
 + (void)parseParams:(CGFloat*)params
          paramCount:(NSInteger)paramCount
           intoArray:(NSMutableArray<IJSVGCommand*>*)commands
       parentCommand:(IJSVGCommand*)parentCommand;
+
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer;
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
+                                          dataStream:(IJSVGPathDataStream*)dataStream;
++ (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands;
+
++ (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands
+                                   toUnits:(IJSVGUnitType)unitType
+                                    bounds:(CGRect)bounds;
 
 - (id)initWithCommandStringBuffer:(const char*)str
                        dataStream:(IJSVGPathDataStream*)dataStream;
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
                                paramCount:(NSInteger)paramCount
                           previousCommand:(IJSVGCommand*)command;
+- (void)convertToUnits:(IJSVGUnitType)units
+           boundingBox:(CGRect)boundingBox;
+- (IJSVGCommand*)commandByConvertingToUnits:(IJSVGUnitType)unitType
+                                boundingBox:(CGRect)boundingBox;
 
 - (CGFloat)readFloat;
 - (NSPoint)readPoint;

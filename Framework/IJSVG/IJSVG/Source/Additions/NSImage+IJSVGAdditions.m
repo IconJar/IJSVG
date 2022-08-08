@@ -6,13 +6,13 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGImageRep.h"
-#import "NSImage+IJSVGAdditions.h"
+#import <IJSVG/IJSVGImageRep.h>
+#import <IJSVG/NSImage+IJSVGAdditions.h>
 
 IJSVG* IJSVGGetFromNSImage(NSImage* image)
 {
     for (NSImageRep* rep in image.representations) {
-        if ([rep isKindOfClass:IJSVGImageRep.class]) {
+        if([rep isKindOfClass:IJSVGImageRep.class]) {
             return ((IJSVGImageRep*)rep).SVG;
         }
     }
@@ -27,23 +27,23 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image)
     NSBundle* bundle = NSBundle.mainBundle;
     NSString* str = nil;
     NSString* ext = imageName.pathExtension;
-    if (ext == nil || ext.length == 0) {
+    if(ext == nil || ext.length == 0) {
         ext = @"svg";
     }
 
-    if ((str = [bundle pathForResource:imageName.stringByDeletingPathExtension
+    if((str = [bundle pathForResource:imageName.stringByDeletingPathExtension
                                 ofType:ext])
         != nil) {
 
         // work out if we can get the data
-        NSData* data = [[[NSData alloc] initWithContentsOfFile:str] autorelease];
-        if (data == nil) {
+        NSData* data = [[NSData alloc] initWithContentsOfFile:str];
+        if(data == nil) {
             return nil;
         }
 
         // grab the image rep
-        IJSVGImageRep* rep = [[[IJSVGImageRep alloc] initWithData:data] autorelease];
-        NSImage* image = [[[NSImage alloc] init] autorelease];
+        IJSVGImageRep* rep = [[IJSVGImageRep alloc] initWithData:data];
+        NSImage* image = [[NSImage alloc] init];
         [image addRepresentation:rep];
         return image;
     }

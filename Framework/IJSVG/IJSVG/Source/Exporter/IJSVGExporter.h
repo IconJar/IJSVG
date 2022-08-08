@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/IJSVGColorType.h>
+#import <IJSVG/IJSVGTraitedColor.h>
 
 @class IJSVG;
 @class IJSVGExporter;
@@ -32,10 +32,10 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionCollapseGroups = 1 << 6,
     IJSVGExporterOptionCleanupPaths = 1 << 7,
     IJSVGExporterOptionRemoveHiddenElements = 1 << 8,
-    IJSVGExporterOptionScaleToSizeIfNecessary = 1 << 9,
+    IJSVGExporterOptionScaleToSizeIfNecessary DEPRECATED_ATTRIBUTE = 1 << 9,
     IJSVGExporterOptionCompressOutput = 1 << 10,
     IJSVGExporterOptionCollapseGradients = 1 << 11,
-    IJSVGExporterOptionCreateClasses = 1 << 12,
+    IJSVGExporterOptionCreateClasses DEPRECATED_ATTRIBUTE = 1 << 12,
     IJSVGExporterOptionRemoveWidthHeightAttributes = 1 << 13,
     IJSVGExporterOptionColorAllowRRGGBBAA = 1 << 14,
     IJSVGExporterOptionRemoveComments = 1 << 15,
@@ -45,16 +45,17 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
     IJSVGExporterOptionRoundTransforms = 1 << 20,
     IJSVGExporterOptionRemoveDefaultValues = 1 << 21,
+    IJSVGExporterOptionConvertStrokesToPaths = 1 << 22,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups |
         IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup |
         IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |
-        IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements |
-        IJSVGExporterOptionScaleToSizeIfNecessary | IJSVGExporterOptionCompressOutput |
+        IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput |
         IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes |
         IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments |
         IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration |
         IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths |
-        IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues
+        IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues |
+        IJSVGExporterOptionConvertStrokesToPaths
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
@@ -72,7 +73,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
                          defaultID:(NSString* (^)(void))defaultID;
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
                     stringForColor:(NSColor*)color
-                             flags:(IJSVGColorTypeFlags)flag
+                             flags:(IJSVGColorUsageTraits)flag
                            options:(IJSVGColorStringOptions)options;
 
 

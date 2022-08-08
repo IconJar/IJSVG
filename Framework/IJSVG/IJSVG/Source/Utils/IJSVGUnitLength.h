@@ -30,12 +30,14 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitInherit
 };
 
-@interface IJSVGUnitLength : NSObject
+@interface IJSVGUnitLength : NSObject <NSCopying>
 
 @property (nonatomic, assign) IJSVGUnitLengthType type;
 @property (nonatomic, assign) IJSVGUnitLengthType originalType;
 @property (nonatomic, assign) CGFloat value;
 @property (nonatomic, assign) BOOL inherit;
+
++ (IJSVGUnitLength*)zeroUnitLength;
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number;
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
@@ -47,6 +49,8 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
                       fromUnitType:(IJSVGUnitType)units;
 
+- (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type;
+- (IJSVGUnitLength*)lengthByMatchingPercentage;
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
 - (NSString*)stringValue;

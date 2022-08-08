@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandLineTo.h"
-#import "IJSVGCommandMove.h"
+#import <IJSVG/IJSVGCommandLineTo.h>
+#import <IJSVG/IJSVGCommandMove.h>
 
 @implementation IJSVGCommandMove
 
@@ -21,11 +21,11 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
     // move to's allow more then one move to, but if there are more then one,
     // we need to run the line to instead...who knew!
-    if (command.class == self.class && currentCommand.isSubCommand == YES) {
+    if(command.class == self.class && currentCommand.isSubCommand == YES) {
         [IJSVGCommandLineTo runWithParams:params
                                paramCount:count
                                   command:currentCommand
@@ -40,15 +40,26 @@
     // relative but there is no previous command which means
     // there is no current point. Asking for current point on an empty
     // path will result in an exception being thrown
-    if (type == kIJSVGCommandTypeAbsolute || command == nil) {
-        CGPathMoveToPoint(path.path, NULL,
+    if(type == kIJSVGCommandTypeAbsolute || command == nil) {
+        CGPathMoveToPoint(path, NULL,
                           params[0], params[1]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathMoveToPoint(path.path, NULL,
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathMoveToPoint(path, NULL,
                       currentPoint.x + params[0],
                       currentPoint.y + params[1]);
+}
+
+- (void)convertToUnits:(IJSVGUnitType)units
+           boundingBox:(CGRect)boundingBox
+{
+    if(units == IJSVGUnitObjectBoundingBox) {
+        self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]] computeValue:boundingBox.size.width];
+        self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]] computeValue:boundingBox.size.height];
+    }
+    [super convertToUnits:units
+              boundingBox:boundingBox];
 }
 
 @end

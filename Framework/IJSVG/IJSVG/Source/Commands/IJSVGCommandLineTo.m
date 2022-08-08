@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandLineTo.h"
+#import <IJSVG/IJSVGCommandLineTo.h>
 
 @implementation IJSVGCommandLineTo
 
@@ -20,15 +20,26 @@
               command:(IJSVGCommand*)currentCommand
       previousCommand:(IJSVGCommand*)command
                  type:(IJSVGCommandType)type
-                 path:(IJSVGPath*)path
+                 path:(CGMutablePathRef)path
 {
-    if (type == kIJSVGCommandTypeAbsolute) {
-        CGPathAddLineToPoint(path.path, NULL, params[0], params[1]);
+    if(type == kIJSVGCommandTypeAbsolute) {
+        CGPathAddLineToPoint(path, NULL, params[0], params[1]);
         return;
     }
-    CGPoint currentPoint = path.currentPoint;
-    CGPathAddLineToPoint(path.path, NULL, currentPoint.x + params[0],
+    CGPoint currentPoint = CGPathGetCurrentPoint(path);
+    CGPathAddLineToPoint(path, NULL, currentPoint.x + params[0],
                          currentPoint.y + params[1]);
+}
+
+- (void)convertToUnits:(IJSVGUnitType)units
+           boundingBox:(CGRect)boundingBox
+{
+    if(units == IJSVGUnitObjectBoundingBox) {
+        self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]] computeValue:boundingBox.size.width];
+        self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]] computeValue:boundingBox.size.height];
+    }
+    [super convertToUnits:units
+              boundingBox:boundingBox];
 }
 
 @end

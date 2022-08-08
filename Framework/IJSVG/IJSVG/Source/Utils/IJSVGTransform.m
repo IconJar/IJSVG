@@ -6,16 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGMath.h"
-#import "IJSVGTransform.h"
-#import "IJSVGParsing.h"
+#import <IJSVG/IJSVGMath.h>
+#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGParsing.h>
 
 @implementation IJSVGTransform
 
 - (void)dealloc
 {
-    (void)free(_parameters);
-    [super dealloc];
+    (void)free(_parameters), _parameters = NULL;
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -50,10 +49,20 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     }
 };
 
+BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
+{
+    if(transform.tx != 0.f || transform.ty != 0.f) {
+        CGFloat scaleX = sqrt(pow(transform.a, 2.f) + pow(transform.c, 2.f));
+        CGFloat scaleY = sqrt(pow(transform.b, 2.f) + pow(transform.d, 2.f));
+        return scaleX != 1.f || scaleY != 1.f;
+    }
+    return NO;
+}
+
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
                                          y:(CGFloat)y
 {
-    IJSVGTransform* transform = [[[self alloc] init] autorelease];
+    IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandTranslate;
     transform.parameterCount = 2;
     CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
@@ -66,7 +75,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 + (IJSVGTransform*)transformByScaleX:(CGFloat)x
                                    y:(CGFloat)y
 {
-    IJSVGTransform* transform = [[[self alloc] init] autorelease];
+    IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandScale;
     transform.parameterCount = 2;
     CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
@@ -76,47 +85,31 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return transform;
 }
 
-- (void)recalculateWithBounds:(CGRect)bounds
-{
-    CGFloat max = bounds.size.width > bounds.size.height ? bounds.size.width : bounds.size.height;
-    switch (_command) {
-    case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
-            return;
-        }
-        _parameters[1] = _parameters[1] * max;
-        _parameters[2] = _parameters[2] * max;
-    }
-    default:
-        return;
-    }
-}
-
 + (IJSVGTransformCommand)commandForCommandCString:(char*)str
 {
     IJSVGCharBufferToLower(str);
-    if (strcmp(str, "matrix") == 0) {
+    if(strcmp(str, "matrix") == 0) {
         return IJSVGTransformCommandMatrix;
     }
-    if (strcmp(str, "translate") == 0) {
+    if(strcmp(str, "translate") == 0) {
         return IJSVGTransformCommandTranslate;
     }
-    if (strcmp(str, "translatex") == 0) {
+    if(strcmp(str, "translatex") == 0) {
         return IJSVGTransformCommandTranslateX;
     }
-    if (strcmp(str, "translatey") == 0) {
+    if(strcmp(str, "translatey") == 0) {
         return IJSVGTransformCommandTranslateY;
     }
-    if (strcmp(str, "scale") == 0) {
+    if(strcmp(str, "scale") == 0) {
         return IJSVGTransformCommandScale;
     }
-    if (strcmp(str, "skewx") == 0) {
+    if(strcmp(str, "skewx") == 0) {
         return IJSVGTransformCommandSkewX;
     }
-    if (strcmp(str, "skewy") == 0) {
+    if(strcmp(str, "skewy") == 0) {
         return IJSVGTransformCommandSkewY;
     }
-    if (strcmp(str, "rotate") == 0) {
+    if(strcmp(str, "rotate") == 0) {
         return IJSVGTransformCommandRotate;
     }
     return IJSVGTransformCommandNotImplemented;
@@ -125,22 +118,30 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 + (IJSVGTransformCommand)commandForCommandString:(NSString*)str
 {
     str = str.lowercaseString;
-    if ([str isEqualToString:@"matrix"])
+    if([str isEqualToString:@"matrix"]) {
         return IJSVGTransformCommandMatrix;
-    if ([str isEqualToString:@"translate"])
+    }
+    if([str isEqualToString:@"translate"]) {
         return IJSVGTransformCommandTranslate;
-    if ([str isEqualToString:@"translatex"])
+    }
+    if([str isEqualToString:@"translatex"]) {
         return IJSVGTransformCommandTranslateX;
-    if ([str isEqualToString:@"translatey"])
+    }
+    if([str isEqualToString:@"translatey"]) {
         return IJSVGTransformCommandTranslateY;
-    if ([str isEqualToString:@"scale"])
+    }
+    if([str isEqualToString:@"scale"]) {
         return IJSVGTransformCommandScale;
-    if ([str isEqualToString:@"skewx"])
+    }
+    if([str isEqualToString:@"skewx"]) {
         return IJSVGTransformCommandSkewX;
-    if ([str isEqualToString:@"skewy"])
+    }
+    if([str isEqualToString:@"skewy"]) {
         return IJSVGTransformCommandSkewY;
-    if ([str isEqualToString:@"rotate"])
+    }
+    if([str isEqualToString:@"rotate"]) {
         return IJSVGTransformCommandRotate;
+    }
     return IJSVGTransformCommandNotImplemented;
 }
 
@@ -166,7 +167,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
 {
     NSMutableArray<IJSVGTransform*>* transforms = nil;
-    transforms = [[[NSMutableArray alloc] init] autorelease];
+    transforms = [[NSMutableArray alloc] init];
     
     const char* charString = string.UTF8String;
     IJSVGParsingStringMethod** methods = NULL;
@@ -183,7 +184,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         
         // create a new transform object and parse the parameters
         NSInteger count = 0;
-        IJSVGTransform* transform = [[[self.class alloc] init] autorelease];
+        IJSVGTransform* transform = [[self.class alloc] init];
         transform.command = commandType;
         transform.sort = [self.class sortForTransformCommand:commandType];
         transform.parameters = [IJSVGUtils scanFloatsFromCString:method->parameters
@@ -198,6 +199,55 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return transforms;
 }
 
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
+                                           units:(IJSVGUnitType)units
+                                          bounds:(CGRect)bounds
+{
+    NSArray<IJSVGTransform*>* transforms = [self transformsForString:string];
+    for(IJSVGTransform* transform in transforms) {
+        [transform applyBounds:bounds
+              withContentUnits:units];
+    }
+    return transforms;
+}
+
+- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
+                                     bounds:(CGRect)bounds
+{
+    IJSVGTransform* transform = self.copy;
+    [transform applyBounds:bounds
+          withContentUnits:units];
+    return transform;
+}
+
+- (void)applyBounds:(CGRect)bounds
+   withContentUnits:(IJSVGUnitType)contentUnits
+{
+    if(contentUnits != IJSVGUnitObjectBoundingBox) {
+        return;
+    }
+    
+    // tx and ty of a transform are coordinates, so they
+    // have to be scaled into their bounding box if the units
+    // dicate so.
+    switch(self.command) {
+        case IJSVGTransformCommandTranslate: {
+            self.parameters[0] *= CGRectGetWidth(bounds);
+            if(self.parameterCount == 2) {
+                self.parameters[1] *= CGRectGetHeight(bounds);
+            }
+            break;
+        }
+        case IJSVGTransformCommandMatrix: {
+            self.parameters[4] *= CGRectGetWidth(bounds);
+            self.parameters[5] *= CGRectGetHeight(bounds);
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 - (CGAffineTransform)CGAffineTransform
 {
     return [self stackIdentity:CGAffineTransformIdentity];
@@ -209,7 +259,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
     // translate
     case IJSVGTransformCommandTranslate: {
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformTranslate(identity, _parameters[0], 0.f);
         }
         return CGAffineTransformTranslate(identity, _parameters[0], _parameters[1]);
@@ -227,7 +277,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
     // rotate
     case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformRotate(identity, (_parameters[0] / 180) * M_PI);
         }
         CGFloat p0 = _parameters[0];
@@ -237,13 +287,13 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
         identity = CGAffineTransformTranslate(identity, p1, p2);
         identity = CGAffineTransformRotate(identity, angle);
-        return CGAffineTransformTranslate(identity, -1.f * p1, -1.f * p2);
+        return CGAffineTransformTranslate(identity, -p1, -p2);
     }
 
     // scale
     case IJSVGTransformCommandScale: {
         CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
+        if(_parameterCount == 1) {
             return CGAffineTransformScale(identity, p0, p0);
         }
         CGFloat p1 = _parameters[1];
@@ -282,125 +332,6 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     return CGAffineTransformIdentity;
 }
 
-- (CGAffineTransform)CGAffineTransformWithModifier:(IJSVGTransformParameterModifier)modifier
-{
-    switch (_command) {
-    // matrix
-    case IJSVGTransformCommandMatrix: {
-        CGFloat p0 = _parameters[0];
-        CGFloat p1 = _parameters[1];
-        CGFloat p2 = _parameters[2];
-        CGFloat p3 = _parameters[3];
-        CGFloat p4 = _parameters[4];
-        CGFloat p5 = _parameters[5];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-            p2 = modifier(2, p2);
-            p3 = modifier(3, p3);
-            p4 = modifier(4, p4);
-            p5 = modifier(5, p5);
-        }
-        return CGAffineTransformMake(p0, p1, p2, p3, p4, p5);
-    }
-
-    // translate
-    case IJSVGTransformCommandTranslate: {
-        CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeTranslation(p0, 0);
-        }
-        CGFloat p1 = _parameters[1];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-        }
-        return CGAffineTransformMakeTranslation(p0, p1);
-    }
-
-    // translateX
-    case IJSVGTransformCommandTranslateX: {
-        CGFloat p0 = _parameters[0];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-        }
-        return CGAffineTransformMakeTranslation(p0, 0.f);
-    }
-
-    // translateY
-    case IJSVGTransformCommandTranslateY: {
-        CGFloat p0 = _parameters[0];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-        }
-        return CGAffineTransformMakeTranslation(0.f, p0);
-    }
-
-    // scale
-    case IJSVGTransformCommandScale: {
-        CGFloat p0 = _parameters[0];
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeScale(p0, p0);
-        }
-        CGFloat p1 = _parameters[1];
-        if (modifier != nil) {
-            p0 = modifier(0, p0);
-            p1 = modifier(1, p1);
-        }
-        return CGAffineTransformMakeScale(p0, p1);
-    }
-
-    // skewX
-    case IJSVGTransformCommandSkewX: {
-        CGFloat degrees = _parameters[0];
-        if (modifier != nil) {
-            degrees = modifier(0, degrees);
-        }
-        CGFloat radians = degrees * M_PI / 180.f;
-        return CGAffineTransformMake(1.f, 0.f, tan(radians), 1.f, 0.f, 0.f);
-    }
-
-    // skewY
-    case IJSVGTransformCommandSkewY: {
-        CGFloat degrees = _parameters[0];
-        if (modifier != nil) {
-            degrees = modifier(0, degrees);
-        }
-        CGFloat radians = degrees * M_PI / 180.f;
-        return CGAffineTransformMake(1.f, tan(radians), 0.f, 1.f, 0.f, 0.f);
-    }
-
-    // rotate
-    case IJSVGTransformCommandRotate: {
-        if (_parameterCount == 1) {
-            return CGAffineTransformMakeRotation((_parameters[0] / 180) * M_PI);
-        } else {
-            CGFloat p0 = _parameters[0];
-            CGFloat p1 = _parameters[1];
-            CGFloat p2 = _parameters[2];
-            if (modifier != nil) {
-                p0 = modifier(0, p0);
-                p1 = modifier(1, p1);
-                p2 = modifier(2, p2);
-            }
-            CGFloat angle = p0 * (M_PI / 180.f);
-            CGAffineTransform def = CGAffineTransformIdentity;
-            def = CGAffineTransformTranslate(def, p1, p2);
-            def = CGAffineTransformRotate(def, angle);
-            def = CGAffineTransformTranslate(def, -1.f * p1, -1.f * p2);
-            return def;
-        }
-        break;
-    }
-
-    // do nothing
-    case IJSVGTransformCommandNotImplemented: {
-        return CGAffineTransformIdentity;
-    }
-    }
-    return CGAffineTransformIdentity;
-}
-
 + (NSArray<IJSVGTransform*>*)transformsFromAffineTransform:(CGAffineTransform)affineTransform
 {
     NSString* matrix = [self affineTransformToSVGMatrixString:affineTransform];
@@ -412,11 +343,11 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 {
     NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
     trans = [self filterUselessAffineTransformComponents:trans];
-    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:trans.count];
     for (NSDictionary* dict in trans) {
         NSArray<NSNumber*>* data = dict[@"data"];
         NSString* method = dict[@"name"];
-        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
             [dataStrings addObject:IJSVGShortFloatStringWithOptions(number.floatValue,
                                                                     floatingPointOptions)];
@@ -434,11 +365,11 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 {
     NSArray<NSDictionary*>* trans = [self affineTransformToSVGTransformComponents:transform];
     trans = [self filterUselessAffineTransformComponents:trans];
-    NSMutableArray<NSString*>* strings = [[[NSMutableArray alloc] initWithCapacity:trans.count] autorelease];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:trans.count];
     for (NSDictionary* dict in trans) {
         NSArray<NSNumber*>* data = dict[@"data"];
         NSString* method = dict[@"name"];
-        NSMutableArray* dataStrings = [[[NSMutableArray alloc] initWithCapacity:data.count] autorelease];
+        NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
             [dataStrings addObject:IJSVGShortFloatString(number.floatValue)];
         }
@@ -480,18 +411,25 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 + (NSArray<NSDictionary*>*)filterUselessAffineTransformComponents:(NSArray<NSDictionary*>*)components
 {
-    NSMutableArray* comps = [[[NSMutableArray alloc] initWithCapacity:components.count] autorelease];
+    NSMutableArray* comps = [[NSMutableArray alloc] initWithCapacity:components.count];
     NSArray<NSString*>* names = @[ @"translate", @"rotate", @"skewX", @"skewY" ];
     for (NSDictionary* transform in components) {
         NSString* name = transform[@"name"];
         NSArray<NSNumber*>* data = transform[@"data"];
-        if ([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) && data[0].floatValue == 0.f) {
+        if([names containsObject:name] && (data.count == 1 || [name isEqualToString:@"rotate"]) &&
+            data[0].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"translate"] && data[0].floatValue == 0.f && data[1].floatValue == 0.f) {
+        } else if([name isEqualToString:@"translate"] && data[0].floatValue == 0.f &&
+                   data[1].floatValue == 0.f) {
             continue;
-        } else if ([name isEqualToString:@"scale"] && data[0].floatValue == 1.f && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
+        } else if([name isEqualToString:@"scale"] && data[0].floatValue == 1.f
+                   && (data.count < 2 || (data.count == 2 && data[1].floatValue == 1.f))) {
             continue;
-        } else if ([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f && data[3].floatValue == 1.f && !(data[1].floatValue != 0.f || data[2].floatValue != 0.f || data[4].floatValue != 0.f || data[5].floatValue != 0.f)) {
+        } else if([name isEqualToString:@"matrix"] && data[0].floatValue == 1.f &&
+                   data[3].floatValue == 1.f && !(data[1].floatValue != 0.f ||
+                                                  data[2].floatValue != 0.f ||
+                                                  data[4].floatValue != 0.f ||
+                                                  data[5].floatValue != 0.f)) {
             continue;
         }
         [comps addObject:transform];
@@ -501,26 +439,25 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 
 + (NSArray<NSDictionary*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform
 {
-    const NSUInteger precision = 5;
     CGFloat data[6] = {
-        IJSVGMathToFixed(transform.a, precision),
-        IJSVGMathToFixed(transform.b, precision),
-        IJSVGMathToFixed(transform.c, precision),
-        IJSVGMathToFixed(transform.d, precision),
-        IJSVGMathToFixed(transform.tx, precision),
-        IJSVGMathToFixed(transform.ty, precision)
+        transform.a,
+        transform.b,
+        transform.c,
+        transform.d,
+        transform.tx,
+        transform.ty
     };
 
-    CGFloat sx = IJSVGMathToFixed(hypotf(data[0], data[1]), precision);
-    CGFloat sy = IJSVGMathToFixed(((data[0] * data[3] - data[1] * data[2]) / sx), precision);
+    CGFloat sx = hypotf(data[0], data[1]);
+    CGFloat sy = ((data[0] * data[3] - data[1] * data[2]) / sx);
     CGFloat colSum = data[0] * data[2] + data[1] * data[3];
     CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
     BOOL scaleBefore = rowSum != 0.f || sx == sy;
 
-    NSMutableArray* transforms = [[[NSMutableArray alloc] init] autorelease];
+    NSMutableArray* transforms = [[NSMutableArray alloc] init];
 
     // tx, ty -> translate
-    if (data[4] != 0.f || data[5] != 0.f) {
+    if(data[4] != 0.f || data[5] != 0.f) {
         [transforms addObject:@{
             @"name" : @"translate",
             @"data" : @[ @(data[4]), @(data[5]) ]
@@ -528,25 +465,25 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
     }
 
     // [sx, 0, tan(a).sy, sy, 0, 0] -> skewX(a).scale(sx,sy)
-    if (data[1] == 0.f && data[2] != 0.f) {
+    if(data[1] == 0.f && data[2] != 0.f) {
         [transforms addObject:@{
             @"name" : @"skewX",
-            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[2] / sy), precision)) ]
+            @"data" : @[ @(IJSVGMathAtan(data[2] / sy))]
         }];
 
         // [sx, sy.tan(a), 0, sy, 0, 0] -> skewX(a).scale(sx, sy)
-    } else if (data[1] != 0.f && data[2] == 0.f) {
+    } else if(data[1] != 0.f && data[2] == 0.f) {
         [transforms addObject:@{
             @"name" : @"skewY",
-            @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(data[1] / data[0]), precision)) ]
+            @"data" : @[ @(IJSVGMathAtan(data[1] / data[0]))]
         }];
         sx = data[0];
         sy = data[3];
-    } else if (colSum == 0.f || (sx == 1.f && sy == 1.f) || !scaleBefore) {
-        if (!scaleBefore) {
+    } else if(colSum == 0.f || (sx == 1.f && sy == 1.f) || !scaleBefore) {
+        if(!scaleBefore) {
             sx = (data[0] < 0.f ? -1.f : 1.f) * hypotf(data[0], data[2]);
             sy = (data[3] < 0.f ? -1.f : 1.f) * hypotf(data[1], data[3]);
-            if (sx != 1.f || sy != 1.f) {
+            if(sx != 1.f || sy != 1.f) {
                 [transforms addObject:@{
                     @"name" : @"scale",
                     @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]
@@ -555,25 +492,25 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         }
 
         CGFloat angle = MIN(MAX(-1.f, data[0] / sx), 1.f);
-        NSMutableArray<NSNumber*>* rotate = [[[NSMutableArray alloc] initWithCapacity:3] autorelease];
-        [rotate addObject:@(IJSVGMathToFixed(IJSVGMathAcos(angle), precision) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f : 1.f))];
+        NSMutableArray<NSNumber*>* rotate = [[NSMutableArray alloc] initWithCapacity:3];
+        [rotate addObject:@(IJSVGMathAcos(angle) * ((scaleBefore ? 1.f : sy) * data[1] < 0.f ? -1.f: 1.f))];
 
-        if (rotate[0].floatValue != 0.f) {
+        if(rotate[0].floatValue != 0.f) {
             [transforms addObject:@{
                 @"name" : @"rotate",
                 @"data" : rotate
             }];
         }
 
-        if (rowSum != 0.f && colSum != 0.f) {
+        if(rowSum != 0.f && colSum != 0.f) {
             [transforms addObject:@{
                 @"name" : @"skewX",
-                @"data" : @[ @(IJSVGMathToFixed(IJSVGMathAtan(colSum / (sx * sx)), precision)) ]
+                @"data" : @[ @(IJSVGMathAtan(colSum / (sx * sx)))]
             }];
         }
 
         // rotate can consume translate
-        if (rotate[0].floatValue != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
+        if(rotate[0].floatValue != 0.f && (data[4] != 0.f || data[5] != 0.f)) {
             [transforms removeObjectAtIndex:0];
             CGFloat cos = data[0] / sx;
             CGFloat sin = data[1] / (scaleBefore ? sx : sy);
@@ -583,7 +520,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
             [rotate addObject:@(((1.f - cos) * x - sin * y) / denom)];
             [rotate addObject:@(((1.f - cos) * y + sin * x) / denom)];
         }
-    } else if (data[1] != 0.f || data[2] != 0.f) {
+    } else if(data[1] != 0.f || data[2] != 0.f) {
         NSDictionary* trans = @{
             @"name" : @"matrix",
             @"data" : @[ @(data[0]), @(data[1]), @(data[2]), @(data[3]), @(data[4]), @(data[5]) ]
@@ -591,7 +528,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
         return @[ trans ];
     }
 
-    if (scaleBefore == YES && ((sx != 1.f || sy != 1.f) || transforms.count == 0)) {
+    if(scaleBefore == YES && ((sx != 1.f || sy != 1.f) || transforms.count == 0)) {
         NSDictionary* trans = @{
             @"name" : @"scale",
             @"data" : (sx == sy) ? @[ @(sx) ] : @[ @(sx), @(sy) ]
@@ -605,7 +542,7 @@ void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApp
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%@ %@", [super description],
-                     [self.class affineTransformToSVGMatrixString:self.CGAffineTransform]];
+                     [self.class affineTransformToSVGTransformComponentString:self.CGAffineTransform]];
 }
 
 @end

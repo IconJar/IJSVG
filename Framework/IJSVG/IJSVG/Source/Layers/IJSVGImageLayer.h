@@ -7,13 +7,18 @@
 //
 
 #import <IJSVG/IJSVGLayer.h>
+#import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGTransformLayer.h>
+#import <IJSVG/IJSVGTileLayer.h>
+#import <IJSVG/IJSVGBasicLayer.h>
 #import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
 
-@interface IJSVGImageLayer : IJSVGLayer {
+@interface IJSVGImageLayer : IJSVGTileLayer {
 }
 
-- (id)initWithImage:(NSImage*)image;
-- (id)initWithCGImage:(CGImageRef)imageRef;
+@property (nonatomic, strong) IJSVGImage* image;
+
+- (id)initWithImage:(IJSVGImage*)image;
 
 @end

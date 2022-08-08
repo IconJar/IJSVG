@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGParser.h"
+#import <IJSVG/IJSVGParser.h>
 #import <Cocoa/Cocoa.h>
 
 @class IJSVG;

@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCommandParser.h"
+#import <IJSVG/IJSVGCommandParser.h>
 
 @implementation IJSVGCommandParser
 
@@ -58,7 +58,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     // if no command length, its completely pointless function,
     // so just return null and set commandsFound to 0, if we dont
     // we get a arithmetic error later on due to zero
-    if (commandLength == 0) {
+    if(commandLength == 0) {
         *commandsFound = 0;
         return NULL;
     }
@@ -83,7 +83,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
         // work out next char
         char nextChar = (char)0;
-        if (i < sLengthMinusOne) {
+        if(i < sLengthMinusOne) {
             nextChar = *cString++;
             cString--;
         }
@@ -99,29 +99,29 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
         // work our what the sequence is...
         IJSVGPathDataSequence seq = kIJSVGPathDataSequenceTypeFloat;
-        if (sequence != NULL) {
+        if(sequence != NULL) {
             seq = sequence[counter % commandLength];
         }
 
         // is a flag, consists of one value
         // if its invalid, make sure we free the memory
         // and return null - or hell breaks lose
-        if (isValid == YES && seq == kIJSVGPathDataSequenceTypeFlag) {
-            if (bufferCount != 0 || (currentChar != '0' && currentChar != '1')) {
+        if(isValid == YES && seq == kIJSVGPathDataSequenceTypeFlag) {
+            if(bufferCount != 0 || (currentChar != '0' && currentChar != '1')) {
                 return NULL;
             }
             wantsEnd = YES;
         }
 
         // could be a float like 5.334e-5 so dont break on the hypen
-        if (wantsEnd && isE && nIsSign) {
+        if(wantsEnd && isE && nIsSign) {
             wantsEnd = false;
         }
 
         // make sure its a valid string
-        if (isValid == YES) {
+        if(isValid == YES) {
             // alloc the buffer if needed
-            if ((bufferCount + 1) == dataStream->charCount) {
+            if((bufferCount + 1) == dataStream->charCount) {
                 // realloc the buffer, incase the string is overflowing the
                 // allocated memory
                 dataStream->charCount += IJSVG_STREAM_CHAR_BLOCK_SIZE;
@@ -129,7 +129,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
                     sizeof(char) * dataStream->charCount);
             }
             // set the actual char against it
-            if (currentChar == '.') {
+            if(currentChar == '.') {
                 isDecimal = true;
             }
             dataStream->charBuffer[bufferCount++] = currentChar;
@@ -141,9 +141,9 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         // is at end of string, or wants to be stopped
         // buffer has to actually exist or its completly
         // useless and will cause a crash
-        if (bufferCount != 0 && (wantsEnd || i == sLengthMinusOne)) {
+        if(bufferCount != 0 && (wantsEnd || i == sLengthMinusOne)) {
             // make sure there is enough room in the float pool
-            if ((counter + 1) == dataStream->floatCount) {
+            if((counter + 1) == dataStream->floatCount) {
                 dataStream->floatCount += IJSVG_STREAM_FLOAT_BLOCK_SIZE;
                 dataStream->floatBuffer = (CGFloat*)realloc(dataStream->floatBuffer,
                     sizeof(CGFloat) * dataStream->floatCount);
@@ -163,7 +163,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     }
 
     // set commands found - only if there is one
-    if (commandsFound != NULL) {
+    if(commandsFound != NULL) {
         *commandsFound = (NSInteger)round(counter / commandLength);
     }
 
@@ -187,10 +187,10 @@ CGFloat IJSVGParseFloat(char* buffer)
 
     // work out a sign, if any, might not be, who knows
     sign = 1.f;
-    if (*buffer == '-') {
+    if(*buffer == '-') {
         sign = -1.f;
         buffer += 1;
-    } else if (*buffer == '+') {
+    } else if(*buffer == '+') {
         buffer += 1;
     }
 
@@ -200,7 +200,7 @@ CGFloat IJSVGParseFloat(char* buffer)
     }
 
     // get digits after decimal point
-    if (*buffer == '.') {
+    if(*buffer == '.') {
         double pow10 = 10.f;
         buffer += 1;
         while (VALID_DIGIT(*buffer)) {
@@ -213,19 +213,19 @@ CGFloat IJSVGParseFloat(char* buffer)
     // handle exponent
     fraction = 0;
     scale = 1.f;
-    if ((*buffer | ('E' ^ 'e')) == 'e') {
+    if((*buffer | ('E' ^ 'e')) == 'e') {
         unsigned int exponent;
         buffer += 1;
-        if (*buffer == '-') {
+        if(*buffer == '-') {
             fraction = 1;
             buffer += 1;
-        } else if (*buffer == '+') {
+        } else if(*buffer == '+') {
             buffer += 1;
         }
         for (exponent = 0; VALID_DIGIT(*buffer); buffer += 1) {
             exponent = exponent * 10 + (*buffer - '0');
         }
-        if (exponent > 308) {
+        if(exponent > 308) {
             exponent = 308;
         }
         while (exponent >= 50) {

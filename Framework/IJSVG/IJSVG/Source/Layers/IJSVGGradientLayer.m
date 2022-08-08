@@ -6,41 +6,24 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGGradientLayer.h"
+#import <IJSVG/IJSVGGradientLayer.h>
+#import <IJSVG/IJSVGRootLayer.h>
 
 @implementation IJSVGGradientLayer
 
-- (void)dealloc
+- (BOOL)requiresBackingScale
 {
-    (void)([_gradient release]), _gradient = nil;
-    [super dealloc];
-}
-
-- (id)init
-{
-    if ((self = [super init]) != nil) {
-        self.requiresBackingScaleHelp = YES;
-        self.shouldRasterize = YES;
-    }
-    return self;
+    return YES;
 }
 
 - (void)setGradient:(IJSVGGradient*)newGradient
 {
-    if (_gradient != nil) {
-        (void)([_gradient release]), _gradient = nil;
-    }
-    _gradient = [newGradient retain];
+    _gradient = newGradient;
 
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;
-    NSInteger stops = _gradient.gradient.numberOfColorStops;
-    for (NSInteger i = 0; i < stops; i++) {
-        NSColor* color = nil;
-        [_gradient.gradient getColor:&color
-                           location:NULL
-                            atIndex:i];
-        if (color.alphaComponent != 1.f) {
+    for (NSColor* color in newGradient.colors) {
+        if(color.alphaComponent != 1.f) {
             hasAlphaChannel = YES;
             break;
         }
@@ -50,7 +33,7 @@
 
 - (void)setOpacity:(float)opacity
 {
-    if (opacity != 1.f) {
+    if(opacity != 1.f) {
         self.opaque = NO;
     }
     [super setOpacity:opacity];
@@ -59,19 +42,24 @@
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
     switch (self.renderQuality) {
-    case kIJSVGRenderQualityOptimized: {
-        backingScaleFactor = (backingScaleFactor * .35f);
-        break;
-    }
-    case kIJSVGRenderQualityLow: {
-        backingScaleFactor = (backingScaleFactor * .05f);
-        break;
-    }
-    default: {
-        break;
-    }
+        case kIJSVGRenderQualityOptimized: {
+            backingScaleFactor = (backingScaleFactor * .35f);
+            break;
+        }
+        case kIJSVGRenderQualityLow: {
+            backingScaleFactor = (backingScaleFactor * .05f);
+            break;
+        }
+        default: {
+            break;
+        }
     }
     [super setBackingScaleFactor:backingScaleFactor];
+}
+
+- (CALayer<IJSVGDrawableLayer> *)referencingLayer
+{
+    return [super referencingLayer] ?: self.superlayer;
 }
 
 - (void)drawInContext:(CGContextRef)ctx
@@ -79,20 +67,41 @@
     [super drawInContext:ctx];
 
     // nothing to do :(
-    if (self.gradient == nil) {
+    if(self.gradient == nil) {
         return;
     }
 
-    // draw the gradient
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(-CGRectGetMinX(_objectRect),
-                                                               -CGRectGetMinY(_objectRect));
-    CGAffineTransform transform = CGAffineTransformConcat(_absoluteTransform, trans);
-    CGContextSaveGState(ctx);
+    // perform the draw
+    CGRect bounds = CGRectZero;
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
+    if(self.gradient.units == IJSVGUnitUserSpaceOnUse) {
+        IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
+        bounds = [rootNode.viewBox computeValue:CGSizeZero];
+        transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+    } else {
+        bounds = IJSVGLayerGetBoundingBoxBounds(layer);
+    }
+    
+    // its possible that this layer is shifted inwards due to a stroke on the
+    // parent layer
+    transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
+    
     [self.gradient drawInContextRef:ctx
-                         objectRect:_objectRect
-                  absoluteTransform:transform
-                           viewPort:self.viewBox];
-    CGContextRestoreGState(ctx);
+                             bounds:bounds
+                          transform:transform];
+}
+
+- (IJSVGTraitedColorStorage*)colors
+{
+    IJSVGTraitedColorStorage* list = [[IJSVGTraitedColorStorage alloc] init];
+    for(NSColor* color in self.gradient.colors) {
+        IJSVGTraitedColor* traited = nil;
+        traited = [IJSVGTraitedColor colorWithColor:color
+                                             traits:IJSVGColorUsageTraitNone];
+        [list addColor:traited];
+    }
+    return list;
 }
 
 @end

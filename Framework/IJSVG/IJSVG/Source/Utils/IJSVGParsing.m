@@ -6,8 +6,8 @@
 //  Copyright © 2021 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGParsing.h"
-#import "IJSVGUtils.h"
+#import <IJSVG/IJSVGParsing.h>
+#import <IJSVG/IJSVGUtils.h>
 
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void)
 {

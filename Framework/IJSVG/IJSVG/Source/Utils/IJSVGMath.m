@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGMath.h"
-#import "IJSVGCommandParser.h"
+#import <IJSVG/IJSVGMath.h>
+#import <IJSVG/IJSVGCommandParser.h>
 
 @implementation IJSVGMath
 

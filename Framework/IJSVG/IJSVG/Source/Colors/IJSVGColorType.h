@@ -9,22 +9,24 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 
-typedef NS_OPTIONS(NSInteger, IJSVGColorTypeFlags) {
-    IJSVGColorTypeNone = 0,
-    IJSVGColorTypeFlagUnknown = 1 << 0,
-    IJSVGColorTypeFlagFill = 1 << 1,
-    IJSVGColorTypeFlagStroke = 1 << 2,
-    IJSVGColorTypeFlagStop = 1 << 3
+typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
+    IJSVGColorUsageTraitNone = 0,
+    IJSVGColorUsageTraitUnknown = 1 << 0,
+    IJSVGColorUsageTraitFill = 1 << 1,
+    IJSVGColorUsageTraitStroke = 1 << 2,
+    IJSVGColorUsageTraitGradientStop = 1 << 3,
+    IJSVGColorUsageTraitAll = IJSVGColorUsageTraitFill | IJSVGColorUsageTraitGradientStop |
+        IJSVGColorUsageTraitStroke
 };
 
-@interface IJSVGColorType : NSObject {
+@interface IJSVGTraitedColor : NSObject {
     
 }
 
-@property (nonatomic, retain) NSColor* color;
-@property (nonatomic, assign) IJSVGColorTypeFlags flags;
+@property (nonatomic, strong) NSColor* color;
+@property (nonatomic, assign) IJSVGColorUsageTraits traits;
 
-+ (IJSVGColorType*)typeWithColor:(NSColor*)color
-                            flags:(IJSVGColorTypeFlags)mask;
++ (IJSVGTraitedColor*)typeWithColor:(NSColor*)color
+                          traits:(IJSVGColorUsageTraits)mask;
 
 @end
