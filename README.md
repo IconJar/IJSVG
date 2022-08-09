@@ -49,7 +49,7 @@ IJSVG provides a very simple way of helping out the backing scale factor of the 
 
     __block IJSVG * svg ....
     svg.renderingBackingScaleHelper = ^{
-        return [svg computeBackingScale:someView.window.backingScaleFactor];
+        return NSScreen.mainScreen.backingScaleFactor; // can be changed to whatever
     };
     
 # Exporting
