@@ -12,7 +12,8 @@ It also supports the `NSPasteboards` writing protocol, an IJSVG object can be pu
 - Fixes a lot of pattern and gradient rendering.
 - Fixes various clipPath issues.
 - Masking now correctly uses alpha masking instead of what `CALayer` uses.
-- Various improvements with exporting.
+- Various improvements with exporting such as modifying the viewBox instead of using a new group for scaling.
+- Exporting now supports converting strokes to paths.
 - Much simpler to use API's for creating SVG's from scratch.
 - Much better threading support.
 - Much improved color replacement support (can now specify only replacing a color that is a fill and not touch ths stroke).
@@ -70,7 +71,6 @@ Which will give you back the SVG code to put into a file, there are various opti
 * Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style.
 * Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns.
 * Color: supports all predefined colors from the SVG spec, HEX values along with RGB(A) and HSL.
-* Caching: has basic caching implemenation.
 * CSS: Basic embedded style sheets are support with very basic selectors.
 
 ## Credit
