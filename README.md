@@ -6,6 +6,7 @@ IJSVG is a Mac OSX 10.13+ COCOA library for rendering SVG's within your COCOA ap
 It also supports the `NSPasteboards` writing protocol, an IJSVG object can be put onto the pasteboard and application like Sketch and Photoshop can paste them into the document as vector objects (generated PDF's on the fly).
 
 ### What is new in IJSVG 3.0?
+— Its almost a complete full rewrite.
 - Is now fully ARC 🎉.
 - Parsing and rendering is much faster.
 - Support for aspect ratios and nested SVG's.
