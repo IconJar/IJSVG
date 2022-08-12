@@ -462,7 +462,7 @@
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error
 {
-    CGSize ogSize = _rootNode.intrinsicSize.value;
+    CGSize ogSize = [_rootNode.intrinsicSize computeValue:aSize];
     CGFloat ratio = 0.f;
     CGFloat imageWidth = ogSize.width;
     CGFloat imageHeight = ogSize.height;
