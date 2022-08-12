@@ -458,9 +458,7 @@
     return image;
 }
 
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
-                                          flipped:(BOOL)flipped
-                                            error:(NSError**)error
+- (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize
 {
     CGSize ogSize = [_rootNode.intrinsicSize computeValue:aSize];
     CGFloat ratio = 0.f;
@@ -475,6 +473,14 @@
     }
     ogSize.width = imageWidth * ratio;
     ogSize.height = imageHeight * ratio;
+    return ogSize;
+}
+
+- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
+                                          flipped:(BOOL)flipped
+                                            error:(NSError**)error
+{
+    CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
     return [self imageWithSize:ogSize
                        flipped:flipped
                          error:error];

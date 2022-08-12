@@ -68,6 +68,7 @@
 - (IJSVGRootNode*)rootNode;
 - (CGRect)viewBox;
 - (CGSize)sizeWithDefaultSize:(CGSize)size;
+- (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
 - (NSString*)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
