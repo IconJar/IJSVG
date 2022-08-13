@@ -26,6 +26,9 @@
     if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
+    
+    // tell the thread manager we are done with
+    [IJSVGThreadManager.currentManager remove:self];
 }
 
 + (id)SVGNamed:(NSString*)string
@@ -273,6 +276,9 @@
         }
         return 1.f;
     };
+    
+    // tell the thread manager we exist
+    [IJSVGThreadManager.currentManager adopt:self];
 }
 
 - (BOOL)hasDynamicSize

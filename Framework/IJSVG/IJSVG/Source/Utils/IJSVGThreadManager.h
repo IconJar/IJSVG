@@ -12,11 +12,13 @@
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGFeatureFlags.h>
+#import <IJSVG/IJSVG.h>
 
 @interface IJSVGThreadManager : NSObject {
     
 @private
     NSMutableDictionary* _userInfo;
+    NSHashTable* _allocedSVGs;
 }
 
 @property (nonatomic, readonly) IJSVGFeatureFlags* featureFlags;
@@ -25,7 +27,12 @@
 @property (nonatomic, readonly) IJSVGPathDataStream* pathDataStream;
  
 + (IJSVGThreadManager*)managerForThread:(NSThread*)thread;
++ (IJSVGThreadManager*)managerForSVG:(IJSVG*)svg;
 + (IJSVGThreadManager*)currentManager;
+
+- (void)adopt:(IJSVG*)svg;
+- (void)remove:(IJSVG*)svg;
+- (BOOL)manages:(IJSVG*)svg;
 
 - (void)setUserInfoObject:(id)object
                    forKey:(id<NSCopying>)key;

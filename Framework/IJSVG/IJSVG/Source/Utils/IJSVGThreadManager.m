@@ -39,6 +39,21 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     return manager;
 }
 
++ (IJSVGThreadManager*)managerForSVG:(IJSVG*)svg
+{
+    NSMapTable* map = [self mapTable];
+    IJSVGThreadManager* found = nil;
+    @synchronized (map) {
+        for(IJSVGThreadManager* manager in map) {
+            if([manager manages:svg] == YES) {
+                found = manager;
+                break;
+            }
+        }
+    }
+    return found;
+}
+
 + (IJSVGThreadManager *)currentManager
 {
     return [self managerForThread:NSThread.currentThread];
@@ -59,6 +74,10 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
         
         // setup the feature flags
         _featureFlags = [[IJSVGFeatureFlags alloc] init];
+        
+        // hash table for the SVGs for this given thread
+        _allocedSVGs = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory
+                                                   capacity:1];
         
         // listen for teardown of the thread
         NSNotificationCenter* center = NSNotificationCenter.defaultCenter;
@@ -87,8 +106,31 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     return _userInfo[key];
 }
 
+- (BOOL)manages:(IJSVG*)svg
+{
+    return [_allocedSVGs containsObject:svg];
+}
+
+- (void)adopt:(IJSVG*)svg
+{
+    if([self manages:svg] == YES) {
+        return;
+    }
+    [_allocedSVGs addObject:svg];
+}
+
+- (void)remove:(IJSVG*)svg
+{
+    [_allocedSVGs removeObject:svg];
+}
+
 - (void)tearDownFromThreadExit
 {
+    BOOL flag = IJSVGBeginTransaction();
+    [_allocedSVGs removeAllObjects];
+    if(flag == YES) {
+        IJSVGEndTransaction();
+    }
     NSMapTable* map = [self.class mapTable];
     @synchronized (map) {
         [map removeObjectForKey:_thread];
