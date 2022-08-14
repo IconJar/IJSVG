@@ -12,3 +12,4 @@
 BOOL IJSVGIsMainThread(void);
 BOOL IJSVGBeginTransaction(void);
 void IJSVGEndTransaction(void);
+void IJSVGPerformTransactionBlock(dispatch_block_t _Nonnull block);

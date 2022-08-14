@@ -241,11 +241,9 @@
 
 - (void)performBlock:(dispatch_block_t)block
 {
-    BOOL hasTransaction = IJSVGBeginTransaction();
-    block();
-    if(hasTransaction == YES) {
-        IJSVGEndTransaction();
-    }
+    IJSVGPerformTransactionBlock(^{
+        block();
+    });
 }
 
 - (void)_setupBasicInfoFromGroup

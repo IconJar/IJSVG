@@ -29,3 +29,12 @@ void IJSVGEndTransaction(void)
     [CATransaction unlock];
     [CATransaction commit];
 };
+
+void IJSVGPerformTransactionBlock(dispatch_block_t _Nonnull block)
+{
+    BOOL begin = IJSVGBeginTransaction();
+    block();
+    if(begin == YES) {
+        IJSVGEndTransaction();
+    }
+}

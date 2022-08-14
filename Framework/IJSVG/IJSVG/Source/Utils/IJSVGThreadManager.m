@@ -126,11 +126,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (void)tearDownFromThreadExit
 {
-    BOOL flag = IJSVGBeginTransaction();
-    [_allocedSVGs removeAllObjects];
-    if(flag == YES) {
-        IJSVGEndTransaction();
-    }
+    IJSVGPerformTransactionBlock(^{
+        [self->_allocedSVGs removeAllObjects];
+    });
     NSMapTable* map = [self.class mapTable];
     @synchronized (map) {
         [map removeObjectForKey:_thread];
