@@ -21,8 +21,8 @@
     // this can all be called on the background thread to be released
     BOOL hasTransaction = IJSVGBeginTransaction();
     // kill any memory that has been around
-    (void)(_layerTree), _layerTree = nil;
-    (void)(_rootLayer), _rootLayer = nil;
+    _layerTree = nil;
+    _rootLayer = nil;
     if(hasTransaction == YES) {
         IJSVGEndTransaction();
     }
@@ -183,7 +183,7 @@
             if(error != NULL) {
                 *error = anError;
             }
-            (void)(self), self = nil;
+            self = nil;
             return nil;
         }
     }
@@ -232,7 +232,7 @@
             if(error != NULL) {
                 *error = anError;
             }
-            (void)(self), self = nil;
+            self = nil;
             return nil;
         }
     }
@@ -680,8 +680,8 @@
     __weak IJSVG* weakSelf = self;
     [self performBlock:^{
         IJSVG* strongSelf = weakSelf;
-        (void)(strongSelf->_rootLayer), strongSelf->_rootLayer = nil;
-        (void)(strongSelf->_layerTree), strongSelf->_layerTree = nil;
+        strongSelf->_rootLayer = nil;
+        strongSelf->_layerTree = nil;
     }];
 }
 
