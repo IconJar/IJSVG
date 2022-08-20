@@ -37,6 +37,7 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
 void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApplyBlock block);
 BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform affineTransform);
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms);
+void IJSVGConcatTransformsCTM(CGContextRef context, NSArray<IJSVGTransform*>* transforms);
 NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 
 + (NSArray<NSDictionary*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform;

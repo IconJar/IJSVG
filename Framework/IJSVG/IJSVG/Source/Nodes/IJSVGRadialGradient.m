@@ -85,16 +85,12 @@
                transform:(CGAffineTransform)absoluteTransform
 {
     CGContextSaveGState(ctx);
-    CGContextSetInterpolationQuality(ctx, kCGInterpolationLow);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
     CGFloat radius = 0.f;
     CGPoint startPoint = CGPointZero;
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
     CGRect boundingBox = objectRect;
-
-    // transforms
-    CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     
     // compute size based on percentages
     CGFloat width = 0.f;
@@ -117,22 +113,20 @@
     CGFloat fx = [_fx computeValue:width];
     CGFloat fy = [_fy computeValue:height];
 
-    gradientEndPoint = CGPointMake(fx, fy);
     gradientStartPoint = startPoint;
+    gradientEndPoint = CGPointMake(fx, fy);
 
     // transform if width or height is not equal - this can only
     // be done if we are using objectBoundingBox
     if(inUserSpace == YES) {
-        CGFloat rad = 2.f * radius;
-        CGRect rect = CGRectMake(startPoint.x, startPoint.y, rad, rad);
-        radius = CGRectGetHeight(rect) / 2.f;
         CGContextConcatCTM(ctx, absoluteTransform);
     } else {
         CGContextConcatCTM(ctx, CGAffineTransformMakeScale(CGRectGetWidth(boundingBox),
                                                            CGRectGetHeight(boundingBox)));
     }
     
-    CGContextConcatCTM(ctx, selfTransform);
+    // concat the gradient transform into the context
+    IJSVGConcatTransformsCTM(ctx, self.transforms);
 
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;

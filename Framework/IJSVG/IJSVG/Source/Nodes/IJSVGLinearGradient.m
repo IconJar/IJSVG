@@ -42,7 +42,6 @@
 
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
-    CGAffineTransform selfTransform = IJSVGConcatTransforms(self.transforms);
     CGRect boundingBox = objectRect;
     
     // make sure we apply the absolute position to
@@ -64,8 +63,8 @@
     gradientEndPoint = CGPointMake([self.x2 computeValue:width],
                                      [self.y2 computeValue:height]);
     
-    // apply the gradient transform if there is one
-    CGContextConcatCTM(ctx, selfTransform);
+    // concat the gradient transform into the context
+    IJSVGConcatTransformsCTM(ctx, self.transforms);
     
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;

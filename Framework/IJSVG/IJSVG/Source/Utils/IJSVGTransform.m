@@ -28,6 +28,13 @@
     return trans;
 }
 
+void IJSVGConcatTransformsCTM(CGContextRef context, NSArray<IJSVGTransform*>* transforms)
+{
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) {
+        CGContextConcatCTM(context, transform.CGAffineTransform);
+    });
+}
+
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms)
 {
     __block CGAffineTransform trans = CGAffineTransformIdentity;
