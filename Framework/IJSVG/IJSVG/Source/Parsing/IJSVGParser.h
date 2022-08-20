@@ -26,7 +26,6 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterEffect.h>
-#import <IJSVG/IJSVGThreadManager.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
@@ -110,6 +109,7 @@ extern NSString* const IJSVGAttributeMarker;
 
 
 @class IJSVGParser;
+@class IJSVGThreadManager;
 
 @interface IJSVGParser : NSObject {
 
@@ -118,6 +118,7 @@ extern NSString* const IJSVGAttributeMarker;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
     NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;
+    IJSVGThreadManager* _threadManager;
 }
 
 @property (nonatomic, strong, readonly) IJSVGRootNode* rootNode;

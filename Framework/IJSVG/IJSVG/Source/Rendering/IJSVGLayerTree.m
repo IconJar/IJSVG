@@ -26,6 +26,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGFilterLayer.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGLayerTree
 

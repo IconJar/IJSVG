@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGRootNode.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGRootNode
 
@@ -54,7 +55,8 @@
     // Some SVG's will have a viewBox such as 5, 5, 10, 10, given that
     // we can zero out the origin and shift all its direct children by
     // the viewBox's origin
-    if(IJSVGThreadManager.currentManager.featureFlags.viewBoxNormalization.enabled == YES) {
+    IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
+    if(threadManager.featureFlags.viewBoxNormalization.enabled == YES) {
         CGRect vBox = [self.viewBox computeValue:CGSizeZero];
         if(CGPointEqualToPoint(vBox.origin, CGPointZero) == YES) {
             return;

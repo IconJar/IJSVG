@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUnitPoint.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
 NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
@@ -241,6 +242,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // setup basics to begin with
     _styleSheet = [[IJSVGStyleSheet alloc] init];
     IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    _threadManager = manager;
     _commandDataStream = manager.pathDataStream;
     _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
                                                   valueOptions:NSPointerFunctionsStrongMemory
@@ -562,7 +564,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         node.viewBoxAlignment = alignment;
         node.viewBoxMeetOrSlice = meetOrSlice;
     });
-    
+        
     // filters
     IJSVGAttributeParse(IJSVGAttributeFilter, ^(NSString* value) {
         NSString* filterIdentifier = [IJSVGUtils defURL:value];
@@ -573,7 +575,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         }
     });
     
-    if(node.type == IJSVGNodeTypeFilterEffect) {
+    if(_threadManager.featureFlags.filters.enabled == YES &&
+       node.type == IJSVGNodeTypeFilterEffect) {
         IJSVGFilterEffect* effect = (IJSVGFilterEffect*)node;
                 
         // in
@@ -750,15 +753,19 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             break;
         }
         case IJSVGNodeTypeFilter: {
-            computedNode = [self parseFilterElement:element
-                                         parentNode:node
-                                   postProcessBlock:&postProcessBlock];
+            if(_threadManager.featureFlags.filters.enabled == YES) {
+                computedNode = [self parseFilterElement:element
+                                             parentNode:node
+                                       postProcessBlock:&postProcessBlock];
+            }
             break;
         }
         case IJSVGNodeTypeFilterEffect: {
-            computedNode = [self parseFilterEffectElement:element
-                                               parentNode:node
-                                         postProcessBlock:&postProcessBlock];
+            if(_threadManager.featureFlags.filters.enabled == YES) {
+                computedNode = [self parseFilterEffectElement:element
+                                                   parentNode:node
+                                             postProcessBlock:&postProcessBlock];
+            }
             break;
         }
         default:

@@ -51,17 +51,13 @@
         (void)CGImageRelease(_image), _image = nil;
     }
     _image = [self.filter newImageByApplyFilterToLayer:_sublayer
-                                                 scale:1.f];
+                                                 scale:self.backingScaleFactor];
 }
 
 - (void)layoutSublayers
 {
-    CGFloat width = CGImageGetWidth(_image);
-    CGFloat height = CGImageGetHeight(_image);
     CGRect frame = _sublayer.innerBoundingBox;
-    _hostingLayer.frame = CGRectMake(frame.origin.x + (frame.size.width / 2.f - width / 2.f),
-                                     frame.origin.y + (frame.size.height / 2.f - height / 2.f),
-                                     width, height);
+    _hostingLayer.frame = frame;
     _hostingLayer.contents = (__bridge id)_image;
 }
 

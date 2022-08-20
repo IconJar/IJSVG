@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGTransaction.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVG
 
