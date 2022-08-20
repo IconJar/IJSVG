@@ -767,6 +767,7 @@
     }
     parentLayer.affineTransform = identity;
     [parentLayer addSublayer:layer];
+    parentLayer.outerBoundingBox = [IJSVGLayer calculateFrameForSublayers:parentLayer.sublayers];
     return parentLayer;
 }
 
