@@ -971,6 +971,15 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+- (NSString*)transformAttributeStringForTransforms:(NSArray<IJSVGTransform*>*)transforms
+{
+    NSMutableArray* strings = [[NSMutableArray alloc] initWithCapacity:transforms.count];
+    for(IJSVGTransform* transform in transforms) {
+        [strings addObject:[self transformAttributeStringForTransform:transform.CGAffineTransform]];
+    }
+    return [strings componentsJoinedByString:@" "];
+}
+
 - (NSString*)transformAttributeStringForTransform:(CGAffineTransform)transform
 {
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRoundTransforms) == YES) {
@@ -1180,9 +1189,9 @@ NSString* IJSVGHash(NSString* key)
     
     // apply any actual pattern transform from the node, only if the
     // actual transform has something
-    transform = IJSVGConcatTransforms(layer.patternNode.transforms);
-    if(CGAffineTransformIsIdentity(transform) == NO) {
-        dict[IJSVGAttributePatternTransform] = [self transformAttributeStringForTransform:transform];
+    NSArray<IJSVGTransform*>* transforms = layer.patternNode.transforms;
+    if(transforms.count != 0) {
+        dict[IJSVGAttributePatternTransform] = [self transformAttributeStringForTransforms:transforms];
     }
 
     IJSVGApplyAttributesToElement(dict, patternElement);
@@ -1315,8 +1324,7 @@ NSString* IJSVGHash(NSString* key)
     // work out the transform
     NSArray* transforms = layer.gradient.transforms;
     if(transforms.count != 0.f) {
-        CGAffineTransform transform = IJSVGConcatTransforms(transforms);
-        NSString* transformString = [self transformAttributeStringForTransform:transform];
+        NSString* transformString = [self transformAttributeStringForTransforms:transforms];
         IJSVGApplyAttributesToElement(@{
             IJSVGAttributeGradientTransform: transformString
         }, gradientElement);
