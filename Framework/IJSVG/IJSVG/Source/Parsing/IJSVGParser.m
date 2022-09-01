@@ -165,19 +165,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         }
 
         // attempt to parse the file
-        anError = nil;
-//        @try {
-            [self begin];
-//        }
-//        @catch (NSException* exception) {
-//            NSLog(@"%@",exception);
-//            return [self _handleErrorWithCode:IJSVGErrorParsingSVG
-//                                        error:error];
-//        }
+        [self begin];
 
         // check the actual parsed SVG
         anError = nil;
-        if(![self _validateParse:&anError]) {
+        if([self _validateParse:&anError] == NO) {
             *error = anError;
             return nil;
         }
@@ -234,6 +226,12 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (BOOL)_validateParse:(NSError**)error
 {
+    if(_rootNode.viewBox.size.isZeroSize == YES) {
+        *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                            code:IJSVGErrorParsingSVG
+                                        userInfo:nil];
+        return NO;
+    }
     return YES;
 }
 
@@ -244,9 +242,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
     _threadManager = manager;
     _commandDataStream = manager.pathDataStream;
-    _detachedElements = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
-                                                  valueOptions:NSPointerFunctionsStrongMemory
-                                                      capacity:1];
+    _detachedReferences = [[NSMutableDictionary alloc] init];
     _rootNode = [[IJSVGRootNode alloc] init];
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     [self parseSVGElement:_document.rootElement
@@ -257,6 +253,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         postProcessBlock();
     }
     [_rootNode postProcess];
+    _detachedReferences = nil;
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -798,26 +795,22 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (void)detachElement:(NSXMLElement*)element
        withIdentifier:(NSString*)identifier
 {
-    element = element.copy;
-    [element detach];
-    
-    // its important that we remove the ID attribute
-    [element removeAttributeForName:IJSVGAttributeID];
-    
-    NSMutableDictionary<NSString*, NSXMLElement*>* scopedDetachedElements = nil;
-    IJSVGNode* parentNode = _rootNode;
-    if((scopedDetachedElements = [_detachedElements objectForKey:parentNode]) == nil) {
-        scopedDetachedElements = [[NSMutableDictionary alloc] init];
-        [_detachedElements setObject:scopedDetachedElements
-                              forKey:parentNode];
-    }
-    scopedDetachedElements[identifier] = element;
+    // we can just store the reference for later, we used to copy at this point
+    // but realised there can be a lot of elements with IDs that dont actually ever
+    // get used, so just store reference and let the usage deal with copy and detach
+    _detachedReferences[identifier] = element;
 }
 
 - (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
 {
-    NSXMLElement* element = [_detachedElements objectForKey:_rootNode][identifier];
-    return element.copy;
+    NSXMLElement* element = _detachedReferences[identifier];
+    if(element != nil) {
+        // we need to copy and detach as we are using it elsewhere, we cant simply
+        // use the reference or it will break, so make sure we clone it first!
+        element = element.copy;
+        [element detach];
+    }
+    return element;
 }
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier

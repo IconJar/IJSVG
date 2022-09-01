@@ -117,7 +117,7 @@ extern NSString* const IJSVGAttributeMarker;
     NSXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
-    NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;
+    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
     IJSVGThreadManager* _threadManager;
 }
 
