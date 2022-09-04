@@ -455,7 +455,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                     createNewReference:NO
                                                         referencingNode:node];
             node.stroke = object;
             return;
@@ -488,9 +487,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                     createNewReference:NO
                                                         referencingNode:node];
-            node.fill = object.detach;
+            node.fill = object;
             return;
         }
         NSColor* color = [IJSVGColor colorFromString:value];
@@ -820,29 +818,13 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 
 - (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
 {
-    return [self detachedElementWithIdentifier:identifier
-                            createNewReference:YES];
-}
-
-- (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
-                            createNewReference:(BOOL)createNewReference
-{
-    NSXMLElement* element = _detachedReferences[identifier];
-    if(element != nil && createNewReference == YES) {
-        // we need to copy and detach as we are using it elsewhere, we cant simply
-        // use the reference or it will break, so make sure we clone it first!
-        element = element.copy;
-        [element detach];
-    }
-    return element;
+    return _detachedReferences[identifier];
 }
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
-                             createNewReference:(BOOL)createNewReference
                                 referencingNode:(IJSVGNode*)node
 {
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier
-                                                     createNewReference:createNewReference];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
     if(detachedElement == nil) {
         return nil;
     }
@@ -850,14 +832,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     // or it can cause recursion down the line
     return [self parseElement:detachedElement
                    parentNode:node].detach;
-}
-
-- (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
-                                referencingNode:(IJSVGNode*)node
-{
-    return [self computeDetachedNodeWithIdentifier:identifier
-                                createNewReference:YES
-                                   referencingNode:node];
 }
 
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
@@ -932,8 +906,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                         createNewReference:NO];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -960,8 +933,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                         createNewReference:NO];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1449,8 +1421,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
-                                                         createNewReference:NO];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
