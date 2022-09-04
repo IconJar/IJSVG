@@ -25,8 +25,8 @@
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind
 {
-    // possible fix for older os's that complain
-    if(string == nil || kind != NSXMLElementKind) {
+    // if string is nil, or its not a generic element or some text span
+    if(string == nil || (kind != NSXMLElementKind && kind != NSXMLTextKind)) {
         return IJSVGNodeTypeNotFound;
     }
     

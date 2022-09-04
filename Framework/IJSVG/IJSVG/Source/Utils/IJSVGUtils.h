@@ -25,6 +25,7 @@ CGFloat IJSVGAngle(CGPoint a, CGPoint b);
 CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 
+char IJSVGCharToLower(char c);
 BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2);
 BOOL IJSVGCharBufferCompare(const char* str1, const char* str2);
 BOOL IJSVGCharBufferIsHEX(char* buffer);

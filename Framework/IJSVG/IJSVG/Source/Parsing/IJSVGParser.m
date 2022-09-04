@@ -1478,26 +1478,29 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         
+        // we can exit early, not a node we know of
+        if(type == IJSVGNodeTypeNotFound) {
+            continue;
+        }
+        
         // we always want style elements to be passed
-        if(type != IJSVGNodeTypeNotFound) {
-            NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
-            if(identifier != nil) {
-                [self detachElement:childElement
-                     withIdentifier:identifier];
-            }
+        NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
+        if(identifier != nil) {
+            [self detachElement:childElement
+                 withIdentifier:identifier];
         }
         
         if(type == IJSVGNodeTypeStyle) {
             [self parseStyleElement:childElement
                          parentNode:parentNode];
-        }
-        
-        // only run this if recursive or it can be slow or incorrect
-        // when parsing the tree with ids that are the same
-        if(recursive == YES && childElement.childCount != 0) {
-            [self parseDefElement:childElement
-                       parentNode:parentNode
-                        recursive:recursive];
+        } else {
+            // only run this if recursive or it can be slow or incorrect
+            // when parsing the tree with ids that are the same
+            if(recursive == YES && childElement.childCount != 0) {
+                [self parseDefElement:childElement
+                           parentNode:parentNode
+                            recursive:recursive];
+            }
         }
     }
 }
