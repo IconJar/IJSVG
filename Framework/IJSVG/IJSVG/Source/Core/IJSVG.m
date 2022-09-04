@@ -20,12 +20,13 @@
 - (void)dealloc
 {
     // thread manager will deal with this for us, but if we are main thread,
-    // we want to kick this off as soon as possible
+    // we want to kick this off as soon as possible, or if the memory is set
+    // to quick.
     IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
-    if(threadManager.thread.isMainThread == YES) {
-        IJSVGBeginTransaction();
-        _layerTree = nil;
-        _rootLayer = nil;
+    BOOL flag = IJSVGBeginTransaction();
+    _layerTree = nil;
+    _rootLayer = nil;
+    if(flag == YES) {
         IJSVGEndTransaction();
     }
     

@@ -29,97 +29,132 @@
         return IJSVGNodeTypeNotFound;
     }
     
-    const char* name = string.lowercaseString.UTF8String;
+    const char* name = string.UTF8String;
     if(name == NULL) {
         return IJSVGNodeTypeNotFound;
     }
-    if(strcmp(name, "style") == 0) {
+    
+    char* dest = (char*)malloc(sizeof(char)*strlen(name)+1);
+    strcpy(dest, name);
+    IJSVGCharBufferToLower(dest);
+    
+    if(strcmp(dest, "style") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeStyle;
     }
-    if(strcmp(name, "switch") == 0) {
+    if(strcmp(dest, "switch") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeSwitch;
     }
-    if(strcmp(name, "defs") == 0) {
+    if(strcmp(dest, "defs") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeDef;
     }
-    if(strcmp(name, "g") == 0) {
+    if(strcmp(dest, "g") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeGroup;
     }
-    if(strcmp(name, "path") == 0) {
+    if(strcmp(dest, "path") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypePath;
     }
-    if(strcmp(name, "polygon") == 0) {
+    if(strcmp(dest, "polygon") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypePolygon;
     }
-    if(strcmp(name, "polyline") == 0) {
+    if(strcmp(dest, "polyline") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypePolyline;
     }
-    if(strcmp(name, "rect") == 0) {
+    if(strcmp(dest, "rect") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeRect;
     }
-    if(strcmp(name, "line") == 0) {
+    if(strcmp(dest, "line") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeLine;
     }
-    if(strcmp(name, "circle") == 0) {
+    if(strcmp(dest, "circle") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeCircle;
     }
-    if(strcmp(name, "ellipse") == 0) {
+    if(strcmp(dest, "ellipse") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeEllipse;
     }
-    if(strcmp(name, "use") == 0) {
+    if(strcmp(dest, "use") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeUse;
     }
-    if(strcmp(name, "lineargradient") == 0) {
+    if(strcmp(dest, "lineargradient") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeLinearGradient;
     }
-    if(strcmp(name, "radialgradient") == 0) {
+    if(strcmp(dest, "radialgradient") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeRadialGradient;
     }
-    if(strcmp(name, "stop") == 0) {
+    if(strcmp(dest, "stop") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeStop;
     }
-    if(strcmp(name, "glyph") == 0) {
+    if(strcmp(dest, "glyph") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeGlyph;
     }
-    if(strcmp(name, "font") == 0) {
+    if(strcmp(dest, "font") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeFont;
     }
-    if(strcmp(name, "clippath") == 0) {
+    if(strcmp(dest, "clippath") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeClipPath;
     }
-    if(strcmp(name, "mask") == 0) {
+    if(strcmp(dest, "mask") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeMask;
     }
-    if(strcmp(name, "image") == 0) {
+    if(strcmp(dest, "image") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeImage;
     }
-    if(strcmp(name, "pattern") == 0) {
+    if(strcmp(dest, "pattern") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypePattern;
     }
-    if(strcmp(name, "svg") == 0) {
+    if(strcmp(dest, "svg") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeSVG;
     }
-    if(strcmp(name, "text") == 0) {
+    if(strcmp(dest, "text") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeText;
     }
-    if(strcmp(name, "tspan") == 0 || kind == NSXMLTextKind) {
+    if(strcmp(dest, "tspan") == 0 || kind == NSXMLTextKind) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeTextSpan;
     }
-    if(strcmp(name, "title") == 0) {
+    if(strcmp(dest, "title") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeTitle;
     }
-    if(strcmp(name, "desc") == 0) {
+    if(strcmp(dest, "desc") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeDesc;
     }
-    if(strcmp(name, "foreignobject") == 0) {
+    if(strcmp(dest, "foreignobject") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeForeignObject;
     }
-    if(strcmp(name, "filter") == 0) {
+    if(strcmp(dest, "filter") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeFilter;
     }
-    if(strcmp(name, "fegaussianblur") == 0) {
+    if(strcmp(dest, "fegaussianblur") == 0) {
+        (void)free(dest), dest = NULL;
         return IJSVGNodeTypeFilterEffect;
     }
+    (void)free(dest), dest = NULL;
     return IJSVGNodeTypeUnknown;
 }
 

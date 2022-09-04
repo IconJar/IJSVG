@@ -227,9 +227,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 - (BOOL)_validateParse:(NSError**)error
 {
     if(_rootNode.viewBox.size.isZeroSize == YES) {
-        *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
-                                            code:IJSVGErrorParsingSVG
-                                        userInfo:nil];
+        if(error != NULL) {
+            *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain
+                                                code:IJSVGErrorParsingSVG
+                                            userInfo:nil];
+        }
         return NO;
     }
     return YES;

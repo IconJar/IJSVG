@@ -25,7 +25,7 @@
 @property (nonatomic, readonly) NSThread* thread;
 @property (nonatomic, readonly) CIContext* CIContext;
 @property (nonatomic, readonly) IJSVGPathDataStream* pathDataStream;
- 
+
 + (IJSVGThreadManager*)managerForThread:(NSThread*)thread;
 + (IJSVGThreadManager*)managerForSVG:(IJSVG*)svg;
 + (IJSVGThreadManager*)currentManager;

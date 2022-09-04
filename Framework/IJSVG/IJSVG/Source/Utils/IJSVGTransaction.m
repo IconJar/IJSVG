@@ -6,10 +6,13 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <AppKit/AppKit.h>
 
-BOOL IJSVGIsMainThread(void) { return NSThread.isMainThread; };
+BOOL IJSVGIsMainThread(void) {
+    return IJSVGThreadManager.currentManager.thread.isMainThread;
+};
 
 BOOL IJSVGBeginTransaction(void)
 {
