@@ -24,6 +24,7 @@
 @class IJSVGFilter;
 @class IJSVGMask;
 @class IJSVGClipPath;
+@class IJSVGThreadManager;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 

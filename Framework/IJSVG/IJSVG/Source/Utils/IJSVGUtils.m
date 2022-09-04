@@ -83,6 +83,22 @@ void IJSVGTrimCharBuffer(char* buffer) {
     memmove(buffer, ptr, length+1);
 }
 
+BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2)
+{
+    if(tolower(str1[0]) != tolower(str2[0])) {
+        return NO;
+    }
+    return strcasecmp(str1, str2) == 0;
+}
+
+BOOL IJSVGCharBufferCompare(const char* str1, const char* str2)
+{
+    if(str1[0] != str2[0]) {
+        return NO;
+    }
+    return strcmp(str1, str2) == 0;
+}
+
 void IJSVGCharBufferToLower(char* buffer)
 {
     for(char *p = buffer; *p; p++) {
@@ -290,8 +306,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     
     // what type of method is it?
     IJSVGParsingStringMethod* method = methods[0];
-    IJSVGCharBufferToLower(method->name);
-    if(strcmp(method->name, "url") != 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
         (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
         return nil;
     }

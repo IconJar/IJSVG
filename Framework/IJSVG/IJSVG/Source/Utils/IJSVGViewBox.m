@@ -85,14 +85,14 @@
         return IJSVGViewBoxMeetOrSliceUnknown;
     }
     
-    const char* name = string.lowercaseString.UTF8String;
+    const char* name = string.UTF8String;
     if(name == NULL) {
         return IJSVGViewBoxMeetOrSliceUnknown;
     }
-    if(strcmp(name, "meet") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "meet") == YES) {
         return IJSVGViewBoxMeetOrSliceMeet;
     }
-    if(strcmp(name, "slice") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "slice") == YES) {
         return IJSVGViewBoxMeetOrSliceSlice;
     }
     return IJSVGViewBoxMeetOrSliceUnknown;
@@ -104,38 +104,38 @@
         return IJSVGViewBoxAlignmentUnknown;
     }
     
-    const char* name = string.lowercaseString.UTF8String;
+    const char* name = string.UTF8String;
     if(name == NULL) {
         return IJSVGViewBoxAlignmentUnknown;
     }
-    if(strcmp(name, "none") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "none") == YES) {
         return IJSVGViewBoxAlignmentNone;
     }
-    if(strcmp(name, "xminymin") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymin") == YES) {
         return IJSVGViewBoxAlignmentXMinYMin;
     }
-    if(strcmp(name, "xmidymin") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymin") == YES) {
         return IJSVGViewBoxAlignmentXMidYMin;
     }
-    if(strcmp(name, "xmaxymin") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymin") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMin;
     }
-    if(strcmp(name, "xminymid") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymid") == YES) {
         return IJSVGViewBoxAlignmentXMinYMid;
     }
-    if(strcmp(name, "xmidymid") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymid") == YES) {
         return IJSVGViewBoxAlignmentXMidYMid;
     }
-    if(strcmp(name, "xmaxymid") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymid") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMid;
     }
-    if(strcmp(name, "xminymax") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymax") == YES) {
         return IJSVGViewBoxAlignmentXMinYMax;
     }
-    if(strcmp(name, "xmidymax") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymax") == YES) {
         return IJSVGViewBoxAlignmentXMidYMax;
     }
-    if(strcmp(name, "xmaxymax") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymax") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMax;
     }
     return IJSVGViewBoxAlignmentUnknown;

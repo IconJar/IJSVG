@@ -90,6 +90,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
     NSInteger _idCount;
     NSInteger _shortIdCount;
     BOOL _appliedXLink;
+    IJSVGThreadManager* _threadManager;
     
     struct {
         unsigned int identifierForElement: 1;

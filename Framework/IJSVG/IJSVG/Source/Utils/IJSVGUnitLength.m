@@ -153,7 +153,7 @@
 
     // is inherit or just nothing
     size_t strl = strlen(chars);
-    if(strcmp(chars, "inherit") == 0 || strl == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(chars, "inherit") == YES || strl == 0) {
         (void)free(chars), chars = NULL;
         return nil;
     }
@@ -239,7 +239,7 @@
 
 - (NSString*)stringValue
 {
-    if(self.type == IJSVGUnitLengthTypePercentage) {
+    if(self.type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatString(self.value * 100.f)];
     }
@@ -248,7 +248,7 @@
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
-    if(_type == IJSVGUnitLengthTypePercentage) {
+    if(_type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatStringWithOptions(_value * 100.f, options)];
     }

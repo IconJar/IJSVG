@@ -96,6 +96,20 @@ static NSDictionary* _IJSVGAttributeDictionaryUnits = nil;
 static NSDictionary* _IJSVGAttributeDictionaryTransforms = nil;
 static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
+IJSVGParserMallocBuffers* IJSVGParserMallocBuffersCreate(void)
+{
+    IJSVGParserMallocBuffers* buffers = NULL;
+    buffers = (IJSVGParserMallocBuffers*)malloc(sizeof(IJSVGParserMallocBuffers));
+    buffers->nodeType = (char*)malloc(sizeof(char)*15); // 14 + 1
+    return buffers;
+}
+
+void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
+{
+    (void)free(buffers->nodeType), buffers->nodeType = NULL;
+    (void)free(buffers);
+}
+
 + (void)load
 {
     _IJSVGAttributeDictionaryFloats = @{
@@ -441,6 +455,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                     createNewReference:NO
                                                         referencingNode:node];
             node.stroke = object;
             return;
@@ -473,6 +488,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                     createNewReference:NO
                                                         referencingNode:node];
             node.fill = object.detach;
             return;
@@ -709,12 +725,6 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
                                  postProcessBlock:&postProcessBlock];
             break;
         }
-        case IJSVGNodeTypeDef: {
-            [self parseDefElement:element
-                       parentNode:_rootNode
-                        recursive:YES];
-            break;
-        }
         case IJSVGNodeTypeUse: {
             computedNode = [self parseUseElement:element
                                       parentNode:node
@@ -767,6 +777,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             }
             break;
         }
+        case IJSVGNodeTypeDef: {
+            // defs have already been handled by the parseDefElement
+            // call further up
+            break;
+        }
         default:
             break;
     }
@@ -805,8 +820,15 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 
 - (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
 {
+    return [self detachedElementWithIdentifier:identifier
+                            createNewReference:YES];
+}
+
+- (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
+                            createNewReference:(BOOL)createNewReference
+{
     NSXMLElement* element = _detachedReferences[identifier];
-    if(element != nil) {
+    if(element != nil && createNewReference == YES) {
         // we need to copy and detach as we are using it elsewhere, we cant simply
         // use the reference or it will break, so make sure we clone it first!
         element = element.copy;
@@ -816,9 +838,11 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
 }
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
+                             createNewReference:(BOOL)createNewReference
                                 referencingNode:(IJSVGNode*)node
 {
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
+    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier
+                                                     createNewReference:createNewReference];
     if(detachedElement == nil) {
         return nil;
     }
@@ -826,6 +850,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     // or it can cause recursion down the line
     return [self parseElement:detachedElement
                    parentNode:node].detach;
+}
+
+- (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
+                                referencingNode:(IJSVGNode*)node
+{
+    return [self computeDetachedNodeWithIdentifier:identifier
+                                createNewReference:YES
+                                   referencingNode:node];
 }
 
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
@@ -900,7 +932,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                         createNewReference:NO];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -927,7 +960,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                         createNewReference:NO];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1415,7 +1449,8 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID
+                                                         createNewReference:NO];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1471,6 +1506,7 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
     for(NSXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
+        
         // we always want style elements to be passed
         if(type != IJSVGNodeTypeNotFound) {
             NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
@@ -1480,22 +1516,14 @@ static NSArray* _IJSVGUseElementOverwritingAttributes = nil;
             }
         }
         
-        // defiend elements are not presentable, we only want to grab the ID's
-        // and detach those elements ready for parsing by other elements, or
-        // find styles that can be added to the style sheet
-        switch(type) {
-            case IJSVGNodeTypeStyle: {
-                [self parseElement:childElement
-                        parentNode:parentNode];
-                break;
-            }
-            default:
-                break;
+        if(type == IJSVGNodeTypeStyle) {
+            [self parseStyleElement:childElement
+                         parentNode:parentNode];
         }
         
         // only run this if recursive or it can be slow or incorrect
         // when parsing the tree with ids that are the same
-        if(childElement.childCount != 0 && recursive == YES) {
+        if(recursive == YES && childElement.childCount != 0) {
             [self parseDefElement:childElement
                        parentNode:parentNode
                         recursive:recursive];

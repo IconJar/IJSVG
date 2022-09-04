@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGRootNode.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGNode
 
@@ -29,132 +30,98 @@
         return IJSVGNodeTypeNotFound;
     }
     
-    const char* name = string.UTF8String;
-    if(name == NULL) {
+    const char* nodeType = string.UTF8String;
+    if(nodeType == NULL) {
         return IJSVGNodeTypeNotFound;
     }
     
-    char* dest = (char*)malloc(sizeof(char)*strlen(name)+1);
-    strcpy(dest, name);
-    IJSVGCharBufferToLower(dest);
-    
-    if(strcmp(dest, "style") == 0) {
-        (void)free(dest), dest = NULL;
-        return IJSVGNodeTypeStyle;
-    }
-    if(strcmp(dest, "switch") == 0) {
-        (void)free(dest), dest = NULL;
-        return IJSVGNodeTypeSwitch;
-    }
-    if(strcmp(dest, "defs") == 0) {
-        (void)free(dest), dest = NULL;
-        return IJSVGNodeTypeDef;
-    }
-    if(strcmp(dest, "g") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
         return IJSVGNodeTypeGroup;
     }
-    if(strcmp(dest, "path") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "path") == YES) {
         return IJSVGNodeTypePath;
     }
-    if(strcmp(dest, "polygon") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "style") == YES) {
+        return IJSVGNodeTypeStyle;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "switch") == YES) {
+        return IJSVGNodeTypeSwitch;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "defs") == YES) {
+        return IJSVGNodeTypeDef;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polygon") == YES) {
         return IJSVGNodeTypePolygon;
     }
-    if(strcmp(dest, "polyline") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polyline") == YES) {
         return IJSVGNodeTypePolyline;
     }
-    if(strcmp(dest, "rect") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "rect") == YES) {
         return IJSVGNodeTypeRect;
     }
-    if(strcmp(dest, "line") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "line") == YES) {
         return IJSVGNodeTypeLine;
     }
-    if(strcmp(dest, "circle") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "circle") == YES) {
         return IJSVGNodeTypeCircle;
     }
-    if(strcmp(dest, "ellipse") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "ellipse") == YES) {
         return IJSVGNodeTypeEllipse;
     }
-    if(strcmp(dest, "use") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "use") == YES) {
         return IJSVGNodeTypeUse;
     }
-    if(strcmp(dest, "lineargradient") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "lineargradient") == YES) {
         return IJSVGNodeTypeLinearGradient;
     }
-    if(strcmp(dest, "radialgradient") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "radialgradient") == YES) {
         return IJSVGNodeTypeRadialGradient;
     }
-    if(strcmp(dest, "stop") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "stop") == YES) {
         return IJSVGNodeTypeStop;
     }
-    if(strcmp(dest, "glyph") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "glyph") == YES) {
         return IJSVGNodeTypeGlyph;
     }
-    if(strcmp(dest, "font") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
         return IJSVGNodeTypeFont;
     }
-    if(strcmp(dest, "clippath") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "clippath") == YES) {
         return IJSVGNodeTypeClipPath;
     }
-    if(strcmp(dest, "mask") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "mask") == YES) {
         return IJSVGNodeTypeMask;
     }
-    if(strcmp(dest, "image") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "image") == YES) {
         return IJSVGNodeTypeImage;
     }
-    if(strcmp(dest, "pattern") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "pattern") == YES) {
         return IJSVGNodeTypePattern;
     }
-    if(strcmp(dest, "svg") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "svg") == YES) {
         return IJSVGNodeTypeSVG;
     }
-    if(strcmp(dest, "text") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
         return IJSVGNodeTypeText;
     }
-    if(strcmp(dest, "tspan") == 0 || kind == NSXMLTextKind) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES || kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
     }
-    if(strcmp(dest, "title") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
         return IJSVGNodeTypeTitle;
     }
-    if(strcmp(dest, "desc") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "desc") == YES) {
         return IJSVGNodeTypeDesc;
     }
-    if(strcmp(dest, "foreignobject") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
         return IJSVGNodeTypeForeignObject;
     }
-    if(strcmp(dest, "filter") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
         return IJSVGNodeTypeFilter;
     }
-    if(strcmp(dest, "fegaussianblur") == 0) {
-        (void)free(dest), dest = NULL;
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
         return IJSVGNodeTypeFilterEffect;
     }
-    (void)free(dest), dest = NULL;
     return IJSVGNodeTypeUnknown;
 }
 

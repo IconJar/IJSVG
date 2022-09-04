@@ -13,9 +13,9 @@
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGFeatureFlags.h>
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGParser.h>
 
 @interface IJSVGThreadManager : NSObject {
-    
 @private
     NSMutableDictionary* _userInfo;
     NSHashTable* _allocedSVGs;

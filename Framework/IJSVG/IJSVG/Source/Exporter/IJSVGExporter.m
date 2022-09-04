@@ -21,6 +21,7 @@
 #import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGExporter
 
@@ -151,6 +152,8 @@ NSString* IJSVGHash(NSString* key)
         _options = options;
         _size = size;
         _svg = svg;
+        _threadManager = IJSVGThreadManager.currentManager;
+        _threadManager = IJSVGThreadManager.currentManager;
 
         // defaults for floating point rounding, if any
         _floatingPointOptions = floatingPointOptions;
