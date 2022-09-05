@@ -12,6 +12,17 @@
 
 @implementation IJSVGPattern
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributePatternTransform];
+    [set addIndex:IJSVGNodeAttributePatternUnits];
+    [set addIndex:IJSVGNodeAttributePatternContentUnits];
+    [set addIndex:IJSVGNodeAttributeViewBox];
+    return set;
+}
+
 - (instancetype)init
 {
     if((self = [super init]) != nil) {

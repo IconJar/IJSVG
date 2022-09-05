@@ -11,6 +11,19 @@
 
 @implementation IJSVGRootNode
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeX];
+    [set addIndex:IJSVGNodeAttributeY];
+    [set addIndex:IJSVGNodeAttributeWidth];
+    [set addIndex:IJSVGNodeAttributeHeight];
+    [set addIndex:IJSVGNodeAttributePreserveAspectRatio];
+    [set addIndex:IJSVGNodeAttributeViewBox];
+    return set;
+}
+
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
@@ -41,29 +54,6 @@
         return parent.rootNode;
     }
     return rootNode;
-}
-
-- (void)normalizeWithOffset:(CGPoint)offset
-{
-    for(IJSVGNode* node in self.children) {
-        [node normalizeWithOffset:offset];
-    }
-}
-
-- (void)postProcess
-{
-    // Some SVG's will have a viewBox such as 5, 5, 10, 10, given that
-    // we can zero out the origin and shift all its direct children by
-    // the viewBox's origin
-    IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
-    if(threadManager.featureFlags.viewBoxNormalization.enabled == YES) {
-        CGRect vBox = [self.viewBox computeValue:CGSizeZero];
-        if(CGPointEqualToPoint(vBox.origin, CGPointZero) == YES) {
-            return;
-        }
-        [self normalizeWithOffset:vBox.origin];
-        self.viewBox.origin = IJSVGUnitPoint.zeroPoint;
-    }
 }
 
 @end

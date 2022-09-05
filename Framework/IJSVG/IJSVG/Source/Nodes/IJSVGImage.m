@@ -17,6 +17,18 @@
     (void)(CGImageRelease(CGImage)), CGImage = nil;
 }
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeX];
+    [set addIndex:IJSVGNodeAttributeY];
+    [set addIndex:IJSVGNodeAttributeWidth];
+    [set addIndex:IJSVGNodeAttributeHeight];
+    [set addIndex:IJSVGNodeAttributePreserveAspectRatio];
+    return set;
+}
+
 - (void)setDefaults
 {
     [super setDefaults];

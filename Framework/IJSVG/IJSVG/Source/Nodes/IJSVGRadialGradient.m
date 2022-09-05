@@ -11,6 +11,19 @@
 
 @implementation IJSVGRadialGradient
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeFX];
+    [set addIndex:IJSVGNodeAttributeFY];
+    [set addIndex:IJSVGNodeAttributeFR];
+    [set addIndex:IJSVGNodeAttributeCX];
+    [set addIndex:IJSVGNodeAttributeCY];
+    [set addIndex:IJSVGNodeAttributeR];
+    return set;
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGRadialGradient* grad = [super copyWithZone:zone];

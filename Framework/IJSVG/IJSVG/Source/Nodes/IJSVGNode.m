@@ -125,6 +125,31 @@
     return IJSVGNodeTypeUnknown;
 }
 
++ (NSIndexSet*)computedAllowedAttributes
+{
+    static NSMutableDictionary<Class, NSIndexSet*>* computed = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
+    NSIndexSet* set = computed[self];
+    if(set == nil) {
+        set = [self allowedAttributes];
+        computed[(id<NSCopying>)self] = set;
+    }
+    return set;
+}
+
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndex:IJSVGNodeAttributeStyle];
+    [set addIndex:IJSVGNodeAttributeClass];
+    [set addIndex:IJSVGNodeAttributeTransform];
+    [set addIndex:IJSVGNodeAttributeID];
+    return set;
+}
+
 + (BOOL)typeIsPathable:(IJSVGNodeType)type
 {
     return type == IJSVGNodeTypePath || type == IJSVGNodeTypeRect ||
@@ -626,19 +651,6 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         parentNode = parentNode.parentNode;
     }
     return foundNode;
-}
-
-- (void)normalizeWithOffset:(CGPoint)offset
-{
-    // if an SVG has been asked to normalize, its root will give us an offset
-    // to transform by to shift everything based on the viewBox's origin, we can
-    // simply just create a translate transform and stick at first position.
-    NSMutableArray* transforms = self.transforms ?
-        self.transforms.mutableCopy : [[NSMutableArray alloc] init];
-    IJSVGTransform* transform = [IJSVGTransform transformByTranslatingX:-offset.x
-                                                                      y:-offset.y];
-    [transforms insertObject:transform atIndex:0];
-    self.transforms = transforms;
 }
 
 @end

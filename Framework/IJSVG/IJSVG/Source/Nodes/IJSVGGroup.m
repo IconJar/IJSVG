@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGImage.h>
 
 @implementation IJSVGGroup
 
@@ -18,11 +19,17 @@
     return self;
 }
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndexes:[IJSVGPath allowedAttributes]];
+    [set addIndexes:[IJSVGImage allowedAttributes]];
+    return set;
+}
+
 - (void)prepareFromCopy
 {
-    if(_children != nil) {
-        (void)_children, _children = nil;
-    }
     _children = [[NSMutableArray alloc] init];
 }
 

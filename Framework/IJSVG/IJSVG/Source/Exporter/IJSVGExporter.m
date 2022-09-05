@@ -153,7 +153,6 @@ NSString* IJSVGHash(NSString* key)
         _size = size;
         _svg = svg;
         _threadManager = IJSVGThreadManager.currentManager;
-        _threadManager = IJSVGThreadManager.currentManager;
 
         // defaults for floating point rounding, if any
         _floatingPointOptions = floatingPointOptions;

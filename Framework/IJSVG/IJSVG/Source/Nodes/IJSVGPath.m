@@ -11,6 +11,27 @@
 
 @implementation IJSVGPath
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeFill];
+    [set addIndex:IJSVGNodeAttributeFillOpacity];
+    [set addIndex:IJSVGNodeAttributeFillRule];
+    [set addIndex:IJSVGNodeAttributeX];
+    [set addIndex:IJSVGNodeAttributeY];
+    [set addIndex:IJSVGNodeAttributeStroke];
+    [set addIndex:IJSVGNodeAttributeStrokeWidth];
+    [set addIndex:IJSVGNodeAttributeStrokeOpacity];
+    [set addIndex:IJSVGNodeAttributeStrokeLineCap];
+    [set addIndex:IJSVGNodeAttributeStrokeLineJoin];
+    [set addIndex:IJSVGNodeAttributeStrokeDashArray];
+    [set addIndex:IJSVGNodeAttributeStrokeDashOffset];
+    [set addIndex:IJSVGNodeAttributeClipPath];
+    [set addIndex:IJSVGNodeAttributeMask];
+    return set;
+}
+
 + (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath

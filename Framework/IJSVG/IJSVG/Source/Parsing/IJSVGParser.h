@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGPath.h>

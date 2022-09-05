@@ -11,6 +11,15 @@
 
 @implementation IJSVGGradient
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeGradientUnits];
+    [set addIndex:IJSVGNodeAttributeGradientTransform];
+    return set;
+}
+
 - (void)dealloc
 {
     if(_locations != NULL) {

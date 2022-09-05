@@ -11,6 +11,19 @@
 
 @implementation IJSVGMask
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeX];
+    [set addIndex:IJSVGNodeAttributeY];
+    [set addIndex:IJSVGNodeAttributeWidth];
+    [set addIndex:IJSVGNodeAttributeHeight];
+    [set addIndex:IJSVGNodeAttributeMaskUnits];
+    [set addIndex:IJSVGNodeAttributeMaskContentUnits];
+    return set;
+}
+
 - (void)setDefaults
 {
     [super setDefaults];

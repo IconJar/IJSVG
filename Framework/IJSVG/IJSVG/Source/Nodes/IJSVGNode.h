@@ -28,6 +28,73 @@
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
+typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
+    IJSVGNodeAttributeVersion,
+    IJSVGNodeAttributeXMLNS,
+    IJSVGNodeAttributeXMLNSXlink,
+    IJSVGNodeAttributeViewBox,
+    IJSVGNodeAttributePreserveAspectRatio,
+    IJSVGNodeAttributeID,
+    IJSVGNodeAttributeClass,
+    IJSVGNodeAttributeX,
+    IJSVGNodeAttributeY,
+    IJSVGNodeAttributeWidth,
+    IJSVGNodeAttributeHeight,
+    IJSVGNodeAttributeOpacity,
+    IJSVGNodeAttributeStrokeOpacity,
+    IJSVGNodeAttributeStrokeWidth,
+    IJSVGNodeAttributeStrokeDashOffset,
+    IJSVGNodeAttributeFillOpacity,
+    IJSVGNodeAttributeClipPath,
+    IJSVGNodeAttributeClipPathUnits,
+    IJSVGNodeAttributeClipRule,
+    IJSVGNodeAttributeMask,
+    IJSVGNodeAttributeGradientUnits,
+    IJSVGNodeAttributePatternUnits,
+    IJSVGNodeAttributePatternContentUnits,
+    IJSVGNodeAttributePatternTransform,
+    IJSVGNodeAttributeMaskUnits,
+    IJSVGNodeAttributeMaskContentUnits,
+    IJSVGNodeAttributeTransform,
+    IJSVGNodeAttributeGradientTransform,
+    IJSVGNodeAttributeUnicode,
+    IJSVGNodeAttributeStrokeLineCap,
+    IJSVGNodeAttributeStrokeLineJoin,
+    IJSVGNodeAttributeStroke,
+    IJSVGNodeAttributeStrokeDashArray,
+    IJSVGNodeAttributeStrokeMiterLimit,
+    IJSVGNodeAttributeFill,
+    IJSVGNodeAttributeFillRule,
+    IJSVGNodeAttributeBlendMode,
+    IJSVGNodeAttributeDisplay,
+    IJSVGNodeAttributeStyle,
+    IJSVGNodeAttributeD,
+    IJSVGNodeAttributeXLink,
+    IJSVGNodeAttributeX1,
+    IJSVGNodeAttributeX2,
+    IJSVGNodeAttributeY1,
+    IJSVGNodeAttributeY2,
+    IJSVGNodeAttributeRX,
+    IJSVGNodeAttributeRY,
+    IJSVGNodeAttributeCX,
+    IJSVGNodeAttributeCY,
+    IJSVGNodeAttributeR,
+    IJSVGNodeAttributeFX,
+    IJSVGNodeAttributeFY,
+    IJSVGNodeAttributeFR,
+    IJSVGNodeAttributePoints,
+    IJSVGNodeAttributeOffset,
+    IJSVGNodeAttributeStopColor,
+    IJSVGNodeAttributeStopOpacity,
+    IJSVGNodeAttributeHref,
+    IJSVGNodeAttributeOverflow,
+    IJSVGNodeAttributeFilter,
+    IJSVGNodeAttributeStdDeviation,
+    IJSVGNodeAttributeIn,
+    IJSVGNodeAttributeEdgeMode,
+    IJSVGNodeAttributeMarker
+};
+
 typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
     IJSVGIntrinsicDimensionNone = 0,
     IJSVGIntrinsicDimensionWidth = 1 << 1,
@@ -185,6 +252,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
 @property (nonatomic, readonly) IJSVGRootNode* rootNode;
 
++ (NSIndexSet*)computedAllowedAttributes;
++ (NSIndexSet*)allowedAttributes;
 
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler;
@@ -212,7 +281,6 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)removeTraits:(IJSVGNodeTraits)traits;
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
-- (void)normalizeWithOffset:(CGPoint)offset;
 
 - (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 

@@ -12,6 +12,17 @@
 
 @implementation IJSVGLinearGradient
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeX1];
+    [set addIndex:IJSVGNodeAttributeX2];
+    [set addIndex:IJSVGNodeAttributeY1];
+    [set addIndex:IJSVGNodeAttributeY2];
+    return set;
+}
+
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient
 {

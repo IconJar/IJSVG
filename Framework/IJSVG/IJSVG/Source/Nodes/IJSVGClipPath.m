@@ -11,6 +11,19 @@
 
 @implementation IJSVGClipPath
 
++ (NSIndexSet*)allowedAttributes
+{
+    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
+    [set addIndexes:[super allowedAttributes]];
+    [set addIndex:IJSVGNodeAttributeX];
+    [set addIndex:IJSVGNodeAttributeY];
+    [set addIndex:IJSVGNodeAttributeWidth];
+    [set addIndex:IJSVGNodeAttributeHeight];
+    [set addIndex:IJSVGNodeAttributeClipPathUnits];
+    [set addIndex:IJSVGNodeAttributeClipRule];
+    return set;
+}
+
 - (void)setDefaults
 {
     self.units = IJSVGUnitObjectBoundingBox;
