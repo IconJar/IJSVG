@@ -12,15 +12,15 @@
 
 @implementation IJSVGLinearGradient
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeX1];
-    [set addIndex:IJSVGNodeAttributeX2];
-    [set addIndex:IJSVGNodeAttributeY1];
-    [set addIndex:IJSVGNodeAttributeY2];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX1];
+    [storage setBit:IJSVGNodeAttributeX2];
+    [storage setBit:IJSVGNodeAttributeY1];
+    [storage setBit:IJSVGNodeAttributeY2];
+    return storage;
 }
 
 + (void)parseGradient:(NSXMLElement*)element

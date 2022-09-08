@@ -11,13 +11,13 @@
 
 @implementation IJSVGGradient
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeGradientUnits];
-    [set addIndex:IJSVGNodeAttributeGradientTransform];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeGradientUnits];
+    [storage setBit:IJSVGNodeAttributeGradientTransform];
+    return storage;
 }
 
 - (void)dealloc

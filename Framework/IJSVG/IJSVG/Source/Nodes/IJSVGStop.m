@@ -10,14 +10,14 @@
 
 @implementation IJSVGStop
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeStopColor];
-    [set addIndex:IJSVGNodeAttributeStopOpacity];
-    [set addIndex:IJSVGNodeAttributeOffset];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeStopColor];
+    [storage setBit:IJSVGNodeAttributeStopOpacity];
+    [storage setBit:IJSVGNodeAttributeOffset];
+    return storage;
 }
 
 @end

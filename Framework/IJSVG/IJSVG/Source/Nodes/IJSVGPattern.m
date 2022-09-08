@@ -12,15 +12,15 @@
 
 @implementation IJSVGPattern
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributePatternTransform];
-    [set addIndex:IJSVGNodeAttributePatternUnits];
-    [set addIndex:IJSVGNodeAttributePatternContentUnits];
-    [set addIndex:IJSVGNodeAttributeViewBox];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributePatternTransform];
+    [storage setBit:IJSVGNodeAttributePatternUnits];
+    [storage setBit:IJSVGNodeAttributePatternContentUnits];
+    [storage setBit:IJSVGNodeAttributeViewBox];
+    return storage;
 }
 
 - (instancetype)init

@@ -11,17 +11,17 @@
 
 @implementation IJSVGRadialGradient
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeFX];
-    [set addIndex:IJSVGNodeAttributeFY];
-    [set addIndex:IJSVGNodeAttributeFR];
-    [set addIndex:IJSVGNodeAttributeCX];
-    [set addIndex:IJSVGNodeAttributeCY];
-    [set addIndex:IJSVGNodeAttributeR];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeFX];
+    [storage setBit:IJSVGNodeAttributeFY];
+    [storage setBit:IJSVGNodeAttributeFR];
+    [storage setBit:IJSVGNodeAttributeCX];
+    [storage setBit:IJSVGNodeAttributeCY];
+    [storage setBit:IJSVGNodeAttributeR];
+    return storage;
 }
 
 - (id)copyWithZone:(NSZone*)zone

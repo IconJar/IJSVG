@@ -19,7 +19,9 @@
 
 - (void)dealloc
 {
-    (void)free(_strokeDashArray), _strokeDashArray = NULL;
+    if(_strokeDashArray != NULL) {
+        (void)free(_strokeDashArray), _strokeDashArray = NULL;
+    }
 }
 
 + (IJSVGNodeType)typeForString:(NSString*)string
@@ -125,14 +127,14 @@
     return IJSVGNodeTypeUnknown;
 }
 
-+ (NSIndexSet*)computedAllowedAttributes
++ (IJSVGBitFlags*)computedAllowedAttributes
 {
-    static NSMutableDictionary<Class, NSIndexSet*>* computed = nil;
+    static NSMutableDictionary<Class, IJSVGBitFlags*>* computed = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         computed = [[NSMutableDictionary alloc] init];
     });
-    NSIndexSet* set = computed[self];
+    IJSVGBitFlags* set = computed[self];
     if(set == nil) {
         set = [self allowedAttributes];
         computed[(id<NSCopying>)self] = set;
@@ -140,14 +142,14 @@
     return set;
 }
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndex:IJSVGNodeAttributeStyle];
-    [set addIndex:IJSVGNodeAttributeClass];
-    [set addIndex:IJSVGNodeAttributeTransform];
-    [set addIndex:IJSVGNodeAttributeID];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeClass];
+    [storage setBit:IJSVGNodeAttributeTransform];
+    [storage setBit:IJSVGNodeAttributeID];
+    return storage;
 }
 
 + (BOOL)typeIsPathable:(IJSVGNodeType)type

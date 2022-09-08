@@ -11,17 +11,17 @@
 
 @implementation IJSVGClipPath
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeX];
-    [set addIndex:IJSVGNodeAttributeY];
-    [set addIndex:IJSVGNodeAttributeWidth];
-    [set addIndex:IJSVGNodeAttributeHeight];
-    [set addIndex:IJSVGNodeAttributeClipPathUnits];
-    [set addIndex:IJSVGNodeAttributeClipRule];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeWidth];
+    [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributeClipPathUnits];
+    [storage setBit:IJSVGNodeAttributeClipRule];
+    return storage;
 }
 
 - (void)setDefaults

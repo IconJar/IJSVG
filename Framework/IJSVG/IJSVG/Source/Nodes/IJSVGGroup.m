@@ -19,13 +19,13 @@
     return self;
 }
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndexes:[IJSVGPath allowedAttributes]];
-    [set addIndexes:[IJSVGImage allowedAttributes]];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage addBits:[IJSVGPath allowedAttributes]];
+    [storage addBits:[IJSVGImage allowedAttributes]];
+    return storage;
 }
 
 - (void)prepareFromCopy

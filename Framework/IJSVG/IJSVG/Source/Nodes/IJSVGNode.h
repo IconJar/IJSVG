@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVG/IJSVGBitFlags64.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
@@ -94,6 +95,8 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeEdgeMode,
     IJSVGNodeAttributeMarker
 };
+
+static const int kIJSVGNodeAttributeStorageLength = 64;
 
 typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
     IJSVGIntrinsicDimensionNone = 0,
@@ -252,8 +255,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
 @property (nonatomic, readonly) IJSVGRootNode* rootNode;
 
-+ (NSIndexSet*)computedAllowedAttributes;
-+ (NSIndexSet*)allowedAttributes;
++ (IJSVGBitFlags*)computedAllowedAttributes;
++ (IJSVGBitFlags*)allowedAttributes;
 
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler;

@@ -11,25 +11,26 @@
 
 @implementation IJSVGPath
 
-+ (NSIndexSet*)allowedAttributes
++ (IJSVGBitFlags*)allowedAttributes
 {
-    NSMutableIndexSet* set = [[NSMutableIndexSet alloc] init];
-    [set addIndexes:[super allowedAttributes]];
-    [set addIndex:IJSVGNodeAttributeFill];
-    [set addIndex:IJSVGNodeAttributeFillOpacity];
-    [set addIndex:IJSVGNodeAttributeFillRule];
-    [set addIndex:IJSVGNodeAttributeX];
-    [set addIndex:IJSVGNodeAttributeY];
-    [set addIndex:IJSVGNodeAttributeStroke];
-    [set addIndex:IJSVGNodeAttributeStrokeWidth];
-    [set addIndex:IJSVGNodeAttributeStrokeOpacity];
-    [set addIndex:IJSVGNodeAttributeStrokeLineCap];
-    [set addIndex:IJSVGNodeAttributeStrokeLineJoin];
-    [set addIndex:IJSVGNodeAttributeStrokeDashArray];
-    [set addIndex:IJSVGNodeAttributeStrokeDashOffset];
-    [set addIndex:IJSVGNodeAttributeClipPath];
-    [set addIndex:IJSVGNodeAttributeMask];
-    return set;
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeFill];
+    [storage setBit:IJSVGNodeAttributeFillOpacity];
+    [storage setBit:IJSVGNodeAttributeFillRule];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeStroke];
+    [storage setBit:IJSVGNodeAttributeStrokeWidth];
+    [storage setBit:IJSVGNodeAttributeStrokeOpacity];
+    [storage setBit:IJSVGNodeAttributeStrokeLineCap];
+    [storage setBit:IJSVGNodeAttributeStrokeLineJoin];
+    [storage setBit:IJSVGNodeAttributeStrokeDashArray];
+    [storage setBit:IJSVGNodeAttributeStrokeDashOffset];
+    [storage setBit:IJSVGNodeAttributeClipPath];
+    [storage setBit:IJSVGNodeAttributeMask];
+    [storage setBit:IJSVGNodeAttributeOpacity];
+    return storage;
 }
 
 + (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
