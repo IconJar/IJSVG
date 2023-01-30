@@ -1,0 +1,5 @@
+framework module IJSVG {
+    umbrella header "IJSVG.h"
+    export *
+    module * { export * } 
+}
