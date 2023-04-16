@@ -38,6 +38,7 @@
 		59557320286C643900156047 /* IJSVGTileLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5955731E286C643900156047 /* IJSVGTileLayer.m */; };
 		595BA91C280EB29B00AD1C89 /* IJSVGFilterLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 595BA91A280EB29B00AD1C89 /* IJSVGFilterLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		595BA91D280EB29B00AD1C89 /* IJSVGFilterLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 595BA91B280EB29B00AD1C89 /* IJSVGFilterLayer.m */; };
+		595FD12F29EC56BA00666897 /* IJSVGUmbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5978C46A280A241200D25296 /* IJSVGRootLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5978C468280A241200D25296 /* IJSVGRootLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5978C46B280A241200D25296 /* IJSVGRootLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5978C469280A241200D25296 /* IJSVGRootLayer.m */; };
 		599EB4D3238FF570004CB6BC /* libobjc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 599EB4D2238FF535004CB6BC /* libobjc.tbd */; };
@@ -202,6 +203,7 @@
 		5955731E286C643900156047 /* IJSVGTileLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGTileLayer.m; sourceTree = "<group>"; };
 		595BA91A280EB29B00AD1C89 /* IJSVGFilterLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFilterLayer.h; sourceTree = "<group>"; };
 		595BA91B280EB29B00AD1C89 /* IJSVGFilterLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterLayer.m; sourceTree = "<group>"; };
+		595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUmbrella.h; sourceTree = "<group>"; };
 		596AB830298854270013110A /* IJSVG.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = IJSVG.modulemap; sourceTree = SOURCE_ROOT; };
 		5978C468280A241200D25296 /* IJSVGRootLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGRootLayer.h; sourceTree = "<group>"; };
 		5978C469280A241200D25296 /* IJSVGRootLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRootLayer.m; sourceTree = "<group>"; };
@@ -622,6 +624,7 @@
 				59EB757D23905F6C00F5AE63 /* IJSVGImageRep.m */,
 				59EB75CD23905F7200F5AE63 /* IJSVGView.h */,
 				59EB75C123905F7100F5AE63 /* IJSVGView.m */,
+				595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -703,6 +706,7 @@
 				591A3E4D25CC91F800AD45B7 /* IJSVGParsing.h in Headers */,
 				59A24EBC23F480EA0090C374 /* IJSVGUnitSize.h in Headers */,
 				59EB764523905F7300F5AE63 /* IJSVGExporter.h in Headers */,
+				595FD12F29EC56BA00666897 /* IJSVGUmbrella.h in Headers */,
 				59F36508262F1ABB00BCE3FD /* IJSVGTraitedColor.h in Headers */,
 				59E7CFAF23B148600077D599 /* IJSVGCommandParser.h in Headers */,
 				59EB762823905F7300F5AE63 /* IJSVGCommandClose.h in Headers */,
@@ -759,7 +763,7 @@
 		594CF466238FF38E009B251B /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1220;
+				LastUpgradeCheck = 1420;
 				ORGANIZATIONNAME = "Curtis Hard";
 				TargetAttributes = {
 					594CF46E238FF38E009B251B = {
@@ -918,6 +922,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEFINES_MODULE = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -937,7 +942,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULEMAP_FILE = IJSVG.modulemap;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -984,6 +989,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -997,7 +1003,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				MODULEMAP_FILE = IJSVG.modulemap;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -1017,6 +1023,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9KTR4W9XX6;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1044,6 +1051,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9KTR4W9XX6;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
