@@ -478,8 +478,8 @@
     } else {
         ratio = maxHeight / imageHeight;
     }
-    ogSize.width = imageWidth * ratio;
-    ogSize.height = imageHeight * ratio;
+    ogSize.width = ceilf(imageWidth * ratio);
+    ogSize.height = ceilf(imageHeight * ratio);
     return ogSize;
 }
 
