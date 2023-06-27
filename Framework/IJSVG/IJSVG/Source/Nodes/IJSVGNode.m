@@ -130,11 +130,12 @@
 + (IJSVGBitFlags*)computedAllowedAttributes
 {
     static NSMutableDictionary<Class, IJSVGBitFlags*>* computed = nil;
-    @synchronized (self) {
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            computed = [[NSMutableDictionary alloc] init];
-        });
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
+    
+    @synchronized (computed) {
         IJSVGBitFlags* set = computed[self];
         if(set == nil) {
             set = [self allowedAttributes];
