@@ -287,7 +287,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 - (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 
-- (instancetype)parentNodeMatchingClass:(Class)class;
-- (instancetype)rootNodeMatchingClass:(Class)class;
+- (instancetype)parentNodeMatchingClass:(Class)someClass;
+- (instancetype)rootNodeMatchingClass:(Class)someClass;
 
 @end
