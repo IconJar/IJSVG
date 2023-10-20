@@ -602,6 +602,14 @@
         maskingBounds.origin.x += maskBounds.origin.x;
         maskingBounds.origin.y += maskBounds.origin.y;
         maskingBounds = CGRectApplyAffineTransform(maskingBounds, userSpaceTransform);
+        
+        // we need to move all the layers back if they are into the userSpace
+        // coordinate system
+        for(CALayer<IJSVGDrawableLayer> *childLayer in maskLayer.sublayers) {
+            childLayer.frame = CGRectApplyAffineTransform(childLayer.frame,
+                                                          userSpaceTransform);
+        }
+        
     }
     
     if(maskNode.units == IJSVGUnitUserSpaceOnUse) {

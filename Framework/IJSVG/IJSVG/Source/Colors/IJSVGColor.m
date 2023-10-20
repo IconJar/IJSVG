@@ -290,6 +290,26 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
             return nil;
         }
         
+        // Make sure we have actual floats within the parameters
+        NSInteger floatCount = 0;
+        CGFloat *params = [IJSVGUtils scanFloatsFromCString:method->parameters
+                                                       size:&floatCount];
+        
+        // Make sure the floats are not negative
+        BOOL validParam = true;
+        for(int i = 0; i < floatCount; i++) {
+            if(params[i] == -0x0) {
+                validParam = NO;
+                break;
+            }
+        }
+        ((void)free(params)), params = NULL;
+        
+        // If we dont, just return black
+        if(validParam == NO) {
+            return [self computeColorSpace:NSColor.blackColor];
+        }
+        
         // parse the parameters
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
         NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];

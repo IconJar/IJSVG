@@ -723,7 +723,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                                   y:floats[1]
                                               width:floats[2]
                                              height:floats[3]];
-            free(floats);
+            ((void)free(floats)), floats = NULL;
         });
     }
     
@@ -1399,9 +1399,16 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                parentNode:node
                 recursive:NO];
     
+    // if we are the root node and not a nested SVG, disable transforms
+    IJSVGBitFlags* ignored = nil;
+    if(parentNode == nil) {
+        ignored = [[IJSVGBitFlags64 alloc] init];
+        [ignored setBit:IJSVGNodeAttributeTransform];
+    }
+    
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
-                                         ignoredAttributes:nil];
+                                         ignoredAttributes:ignored];
 
     // make sure we compute the viewbox
     [self computeViewBoxForRootNode:node];
