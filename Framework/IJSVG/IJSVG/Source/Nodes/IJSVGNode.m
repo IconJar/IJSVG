@@ -152,6 +152,7 @@
     [storage setBit:IJSVGNodeAttributeClass];
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
+    [storage setBit:IJSVGNodeAttributeDisplay];
     return storage;
 }
 
