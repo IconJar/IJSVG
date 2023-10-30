@@ -294,22 +294,12 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         NSInteger floatCount = 0;
         CGFloat *params = [IJSVGUtils scanFloatsFromCString:method->parameters
                                                        size:&floatCount];
-        
-        // Make sure the floats are not negative
-        BOOL validParam = true;
-        for(int i = 0; i < floatCount; i++) {
-            if(params[i] == -0x0) {
-                validParam = NO;
-                break;
-            }
-        }
-        ((void)free(params)), params = NULL;
-        
-        // If we dont, just return black
-        if(validParam == NO) {
+        (void)free(params), params = NULL;
+        if(floatCount < 3) {
             return [self computeColorSpace:NSColor.blackColor];
         }
         
+        // Make sure the floats are not negative
         // parse the parameters
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
         NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];

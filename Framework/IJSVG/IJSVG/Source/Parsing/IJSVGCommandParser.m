@@ -153,6 +153,16 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
             // null value of the end of the string instead of nulling out
             // with memset \0 - huzzah!
             dataStream->charBuffer[bufferCount] = '\0';
+            
+            // lets check to make the buffer actually has a valid float, and
+            // not either just a sign or white space or some random char.
+            if(strlen(dataStream->charBuffer) == 1 && !VALID_DIGIT(dataStream->charBuffer[0])) {
+                isDecimal = false;
+                bufferCount = 0;
+                continue;
+            }
+            
+            // actually add the float into the buffer
             dataStream->floatBuffer[counter++] = IJSVGParseFloat(dataStream->charBuffer);
 
             // reset
@@ -166,7 +176,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     if(commandsFound != NULL) {
         *commandsFound = (NSInteger)round(counter / commandLength);
     }
-
+    
     // allocate the new buffer from memory
     CGFloat* floats = (CGFloat*)malloc(sizeof(CGFloat) * counter);
     memcpy(floats, dataStream->floatBuffer, counter * sizeof(CGFloat));
