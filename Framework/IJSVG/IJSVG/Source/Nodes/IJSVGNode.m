@@ -153,7 +153,6 @@
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
     [storage setBit:IJSVGNodeAttributeDisplay];
-    [storage setBit:IJSVGNodeAttributeBlendMode];
     return storage;
 }
 

@@ -30,6 +30,7 @@
     [storage setBit:IJSVGNodeAttributeClipPath];
     [storage setBit:IJSVGNodeAttributeMask];
     [storage setBit:IJSVGNodeAttributeOpacity];
+    [storage setBit:IJSVGNodeAttributeBlendMode];
     return storage;
 }
 
