@@ -401,7 +401,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                        colorSpace:colorSpace
                                        bitmapInfo:kCGImageAlphaNone
                                             scale:scale];
-    // low - hi pairs
+    // low - high pairs
     const CGFloat colors[6] = {
         0.f, 11.f,
         0.f, 11.f,
