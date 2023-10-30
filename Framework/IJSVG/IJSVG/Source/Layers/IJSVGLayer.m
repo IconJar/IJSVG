@@ -430,6 +430,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     CGRect frame = layer.outerBoundingBox;
     CGRect bounds = layer.innerBoundingBox;
+    bounds = CGRectApplyAffineTransform(bounds, [self userSpaceTransformForLayer:layer.referencingLayer ?: layer]);
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width*scale),
                                                           ceilf(frame.size.height*scale),
