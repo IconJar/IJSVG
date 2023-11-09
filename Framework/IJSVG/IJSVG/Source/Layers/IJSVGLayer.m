@@ -409,6 +409,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     };
     CGImageRef masked = CGImageCreateWithMaskingColors(alphaMask, colors);
     CGImageRelease(alphaMask);
+    CGColorSpaceRelease(colorSpace);
     return masked;
 }
 
