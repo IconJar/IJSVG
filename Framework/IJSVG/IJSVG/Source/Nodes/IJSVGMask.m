@@ -11,6 +11,19 @@
 
 @implementation IJSVGMask
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeWidth];
+    [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributeMaskUnits];
+    [storage setBit:IJSVGNodeAttributeMaskContentUnits];
+    return storage;
+}
+
 - (void)setDefaults
 {
     [super setDefaults];

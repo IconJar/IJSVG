@@ -11,6 +11,19 @@
 
 @implementation IJSVGRadialGradient
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeFX];
+    [storage setBit:IJSVGNodeAttributeFY];
+    [storage setBit:IJSVGNodeAttributeFR];
+    [storage setBit:IJSVGNodeAttributeCX];
+    [storage setBit:IJSVGNodeAttributeCY];
+    [storage setBit:IJSVGNodeAttributeR];
+    return storage;
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGRadialGradient* grad = [super copyWithZone:zone];

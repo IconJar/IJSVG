@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGImage.h>
 
 @implementation IJSVGGroup
 
@@ -18,11 +19,17 @@
     return self;
 }
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage addBits:[IJSVGPath allowedAttributes]];
+    [storage addBits:[IJSVGImage allowedAttributes]];
+    return storage;
+}
+
 - (void)prepareFromCopy
 {
-    if(_children != nil) {
-        (void)_children, _children = nil;
-    }
     _children = [[NSMutableArray alloc] init];
 }
 

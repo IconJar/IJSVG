@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGPath.h>
@@ -111,13 +112,20 @@ extern NSString* const IJSVGAttributeMarker;
 @class IJSVGParser;
 @class IJSVGThreadManager;
 
+typedef struct {
+    char* nodeType;
+} IJSVGParserMallocBuffers;
+
+IJSVGParserMallocBuffers* IJSVGParserMallocBuffersCreate(void);
+void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
+
 @interface IJSVGParser : NSObject {
 
 @private
     NSXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
-    NSMapTable<IJSVGNode*, NSMutableDictionary<NSString*, NSXMLElement*>*>* _detachedElements;
+    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
     IJSVGThreadManager* _threadManager;
 }
 

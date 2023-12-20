@@ -11,6 +11,19 @@
 
 @implementation IJSVGClipPath
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeWidth];
+    [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributeClipPathUnits];
+    [storage setBit:IJSVGNodeAttributeClipRule];
+    return storage;
+}
+
 - (void)setDefaults
 {
     self.units = IJSVGUnitObjectBoundingBox;

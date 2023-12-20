@@ -38,6 +38,11 @@
     return size;
 }
 
+- (BOOL)isZeroSize
+{
+    return self.width.value == 0.f && self.height.value == 0.f;
+}
+
 - (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType
 {
     _width.type = _height.type = lengthType;

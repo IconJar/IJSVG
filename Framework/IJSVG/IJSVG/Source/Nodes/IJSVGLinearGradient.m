@@ -12,6 +12,17 @@
 
 @implementation IJSVGLinearGradient
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX1];
+    [storage setBit:IJSVGNodeAttributeX2];
+    [storage setBit:IJSVGNodeAttributeY1];
+    [storage setBit:IJSVGNodeAttributeY2];
+    return storage;
+}
+
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient
 {

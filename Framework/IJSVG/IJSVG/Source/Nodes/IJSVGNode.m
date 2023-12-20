@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGRootNode.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGNode
 
@@ -18,109 +19,141 @@
 
 - (void)dealloc
 {
-    (void)free(_strokeDashArray), _strokeDashArray = NULL;
+    if(_strokeDashArray != NULL) {
+        (void)free(_strokeDashArray), _strokeDashArray = NULL;
+    }
 }
 
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind
 {
-    // possible fix for older os's that complain
-    if(string == nil || kind != NSXMLElementKind) {
+    // if string is nil, or its not a generic element or some text span
+    if(string == nil || (kind != NSXMLElementKind && kind != NSXMLTextKind)) {
         return IJSVGNodeTypeNotFound;
     }
     
-    const char* name = string.lowercaseString.UTF8String;
-    if(name == NULL) {
+    const char* nodeType = string.UTF8String;
+    if(nodeType == NULL) {
         return IJSVGNodeTypeNotFound;
     }
-    if(strcmp(name, "style") == 0) {
-        return IJSVGNodeTypeStyle;
-    }
-    if(strcmp(name, "switch") == 0) {
-        return IJSVGNodeTypeSwitch;
-    }
-    if(strcmp(name, "defs") == 0) {
-        return IJSVGNodeTypeDef;
-    }
-    if(strcmp(name, "g") == 0) {
+    
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
         return IJSVGNodeTypeGroup;
     }
-    if(strcmp(name, "path") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "path") == YES) {
         return IJSVGNodeTypePath;
     }
-    if(strcmp(name, "polygon") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "style") == YES) {
+        return IJSVGNodeTypeStyle;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "switch") == YES) {
+        return IJSVGNodeTypeSwitch;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "defs") == YES) {
+        return IJSVGNodeTypeDef;
+    }
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polygon") == YES) {
         return IJSVGNodeTypePolygon;
     }
-    if(strcmp(name, "polyline") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polyline") == YES) {
         return IJSVGNodeTypePolyline;
     }
-    if(strcmp(name, "rect") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "rect") == YES) {
         return IJSVGNodeTypeRect;
     }
-    if(strcmp(name, "line") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "line") == YES) {
         return IJSVGNodeTypeLine;
     }
-    if(strcmp(name, "circle") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "circle") == YES) {
         return IJSVGNodeTypeCircle;
     }
-    if(strcmp(name, "ellipse") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "ellipse") == YES) {
         return IJSVGNodeTypeEllipse;
     }
-    if(strcmp(name, "use") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "use") == YES) {
         return IJSVGNodeTypeUse;
     }
-    if(strcmp(name, "lineargradient") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "lineargradient") == YES) {
         return IJSVGNodeTypeLinearGradient;
     }
-    if(strcmp(name, "radialgradient") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "radialgradient") == YES) {
         return IJSVGNodeTypeRadialGradient;
     }
-    if(strcmp(name, "stop") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "stop") == YES) {
         return IJSVGNodeTypeStop;
     }
-    if(strcmp(name, "glyph") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "glyph") == YES) {
         return IJSVGNodeTypeGlyph;
     }
-    if(strcmp(name, "font") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
         return IJSVGNodeTypeFont;
     }
-    if(strcmp(name, "clippath") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "clippath") == YES) {
         return IJSVGNodeTypeClipPath;
     }
-    if(strcmp(name, "mask") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "mask") == YES) {
         return IJSVGNodeTypeMask;
     }
-    if(strcmp(name, "image") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "image") == YES) {
         return IJSVGNodeTypeImage;
     }
-    if(strcmp(name, "pattern") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "pattern") == YES) {
         return IJSVGNodeTypePattern;
     }
-    if(strcmp(name, "svg") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "svg") == YES) {
         return IJSVGNodeTypeSVG;
     }
-    if(strcmp(name, "text") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
         return IJSVGNodeTypeText;
     }
-    if(strcmp(name, "tspan") == 0 || kind == NSXMLTextKind) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES || kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
     }
-    if(strcmp(name, "title") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
         return IJSVGNodeTypeTitle;
     }
-    if(strcmp(name, "desc") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "desc") == YES) {
         return IJSVGNodeTypeDesc;
     }
-    if(strcmp(name, "foreignobject") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
         return IJSVGNodeTypeForeignObject;
     }
-    if(strcmp(name, "filter") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
         return IJSVGNodeTypeFilter;
     }
-    if(strcmp(name, "fegaussianblur") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
         return IJSVGNodeTypeFilterEffect;
     }
     return IJSVGNodeTypeUnknown;
+}
+
++ (IJSVGBitFlags*)computedAllowedAttributes
+{
+    static NSMutableDictionary<Class, IJSVGBitFlags*>* computed = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
+    
+    @synchronized (computed) {
+        IJSVGBitFlags* set = computed[self];
+        if(set == nil) {
+            set = [self allowedAttributes];
+            computed[(id<NSCopying>)self] = set;
+        }
+        return set;
+    }
+}
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeClass];
+    [storage setBit:IJSVGNodeAttributeTransform];
+    [storage setBit:IJSVGNodeAttributeID];
+    [storage setBit:IJSVGNodeAttributeDisplay];
+    return storage;
 }
 
 + (BOOL)typeIsPathable:(IJSVGNodeType)type
@@ -624,19 +657,6 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         parentNode = parentNode.parentNode;
     }
     return foundNode;
-}
-
-- (void)normalizeWithOffset:(CGPoint)offset
-{
-    // if an SVG has been asked to normalize, its root will give us an offset
-    // to transform by to shift everything based on the viewBox's origin, we can
-    // simply just create a translate transform and stick at first position.
-    NSMutableArray* transforms = self.transforms ?
-        self.transforms.mutableCopy : [[NSMutableArray alloc] init];
-    IJSVGTransform* transform = [IJSVGTransform transformByTranslatingX:-offset.x
-                                                                      y:-offset.y];
-    [transforms insertObject:transform atIndex:0];
-    self.transforms = transforms;
 }
 
 @end

@@ -11,6 +11,15 @@
 
 @implementation IJSVGGradient
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeGradientUnits];
+    [storage setBit:IJSVGNodeAttributeGradientTransform];
+    return storage;
+}
+
 - (void)dealloc
 {
     if(_locations != NULL) {

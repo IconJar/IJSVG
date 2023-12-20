@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVG/IJSVGBitFlags64.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
@@ -24,8 +25,78 @@
 @class IJSVGFilter;
 @class IJSVGMask;
 @class IJSVGClipPath;
+@class IJSVGThreadManager;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
+
+typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
+    IJSVGNodeAttributeVersion,
+    IJSVGNodeAttributeXMLNS,
+    IJSVGNodeAttributeXMLNSXlink,
+    IJSVGNodeAttributeViewBox,
+    IJSVGNodeAttributePreserveAspectRatio,
+    IJSVGNodeAttributeID,
+    IJSVGNodeAttributeClass,
+    IJSVGNodeAttributeX,
+    IJSVGNodeAttributeY,
+    IJSVGNodeAttributeWidth,
+    IJSVGNodeAttributeHeight,
+    IJSVGNodeAttributeOpacity,
+    IJSVGNodeAttributeStrokeOpacity,
+    IJSVGNodeAttributeStrokeWidth,
+    IJSVGNodeAttributeStrokeDashOffset,
+    IJSVGNodeAttributeFillOpacity,
+    IJSVGNodeAttributeClipPath,
+    IJSVGNodeAttributeClipPathUnits,
+    IJSVGNodeAttributeClipRule,
+    IJSVGNodeAttributeMask,
+    IJSVGNodeAttributeGradientUnits,
+    IJSVGNodeAttributePatternUnits,
+    IJSVGNodeAttributePatternContentUnits,
+    IJSVGNodeAttributePatternTransform,
+    IJSVGNodeAttributeMaskUnits,
+    IJSVGNodeAttributeMaskContentUnits,
+    IJSVGNodeAttributeTransform,
+    IJSVGNodeAttributeGradientTransform,
+    IJSVGNodeAttributeUnicode,
+    IJSVGNodeAttributeStrokeLineCap,
+    IJSVGNodeAttributeStrokeLineJoin,
+    IJSVGNodeAttributeStroke,
+    IJSVGNodeAttributeStrokeDashArray,
+    IJSVGNodeAttributeStrokeMiterLimit,
+    IJSVGNodeAttributeFill,
+    IJSVGNodeAttributeFillRule,
+    IJSVGNodeAttributeBlendMode,
+    IJSVGNodeAttributeDisplay,
+    IJSVGNodeAttributeStyle,
+    IJSVGNodeAttributeD,
+    IJSVGNodeAttributeXLink,
+    IJSVGNodeAttributeX1,
+    IJSVGNodeAttributeX2,
+    IJSVGNodeAttributeY1,
+    IJSVGNodeAttributeY2,
+    IJSVGNodeAttributeRX,
+    IJSVGNodeAttributeRY,
+    IJSVGNodeAttributeCX,
+    IJSVGNodeAttributeCY,
+    IJSVGNodeAttributeR,
+    IJSVGNodeAttributeFX,
+    IJSVGNodeAttributeFY,
+    IJSVGNodeAttributeFR,
+    IJSVGNodeAttributePoints,
+    IJSVGNodeAttributeOffset,
+    IJSVGNodeAttributeStopColor,
+    IJSVGNodeAttributeStopOpacity,
+    IJSVGNodeAttributeHref,
+    IJSVGNodeAttributeOverflow,
+    IJSVGNodeAttributeFilter,
+    IJSVGNodeAttributeStdDeviation,
+    IJSVGNodeAttributeIn,
+    IJSVGNodeAttributeEdgeMode,
+    IJSVGNodeAttributeMarker
+};
+
+static const int kIJSVGNodeAttributeStorageLength = 64;
 
 typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
     IJSVGIntrinsicDimensionNone = 0,
@@ -184,6 +255,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
 @property (nonatomic, readonly) IJSVGRootNode* rootNode;
 
++ (IJSVGBitFlags*)computedAllowedAttributes;
++ (IJSVGBitFlags*)allowedAttributes;
 
 + (void)walkNodeTree:(IJSVGNode*)node
              handler:(IJSVGNodeWalkHandler)handler;
@@ -211,11 +284,10 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)removeTraits:(IJSVGNodeTraits)traits;
 - (BOOL)matchesTraits:(IJSVGNodeTraits)traits;
 - (void)computeTraits;
-- (void)normalizeWithOffset:(CGPoint)offset;
 
 - (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 
-- (instancetype)parentNodeMatchingClass:(Class)class;
-- (instancetype)rootNodeMatchingClass:(Class)class;
+- (instancetype)parentNodeMatchingClass:(Class)someClass;
+- (instancetype)rootNodeMatchingClass:(Class)someClass;
 
 @end

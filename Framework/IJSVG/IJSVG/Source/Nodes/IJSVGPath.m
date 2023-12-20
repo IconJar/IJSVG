@@ -11,6 +11,29 @@
 
 @implementation IJSVGPath
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeFill];
+    [storage setBit:IJSVGNodeAttributeFillOpacity];
+    [storage setBit:IJSVGNodeAttributeFillRule];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeStroke];
+    [storage setBit:IJSVGNodeAttributeStrokeWidth];
+    [storage setBit:IJSVGNodeAttributeStrokeOpacity];
+    [storage setBit:IJSVGNodeAttributeStrokeLineCap];
+    [storage setBit:IJSVGNodeAttributeStrokeLineJoin];
+    [storage setBit:IJSVGNodeAttributeStrokeDashArray];
+    [storage setBit:IJSVGNodeAttributeStrokeDashOffset];
+    [storage setBit:IJSVGNodeAttributeClipPath];
+    [storage setBit:IJSVGNodeAttributeMask];
+    [storage setBit:IJSVGNodeAttributeOpacity];
+    [storage setBit:IJSVGNodeAttributeBlendMode];
+    return storage;
+}
+
 + (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath

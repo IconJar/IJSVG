@@ -17,6 +17,18 @@
     (void)(CGImageRelease(CGImage)), CGImage = nil;
 }
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributeX];
+    [storage setBit:IJSVGNodeAttributeY];
+    [storage setBit:IJSVGNodeAttributeWidth];
+    [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
+    return storage;
+}
+
 - (void)setDefaults
 {
     [super setDefaults];

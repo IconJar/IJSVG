@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGFilterEffectGaussianBlur.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGFilterEffect
 
@@ -28,26 +29,26 @@ static NSDictionary<NSString*, Class>* _elementClassMap = nil;
 
 + (IJSVGFilterEffectSource)sourceForString:(NSString*)string
 {
-    const char* name = string.lowercaseString.UTF8String;
+    const char* name = string.UTF8String;
     if(name == NULL) {
         return IJSVGFilterEffectSourceGraphic;
     }
-    if(strcmp(name, "sourcegraphic") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "sourcegraphic") == YES) {
         return IJSVGFilterEffectSourceGraphic;
     }
-    if(strcmp(name, "sourcealpha") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "sourcealpha") == YES) {
         return IJSVGFilterEffectSourceAlpha;
     }
-    if(strcmp(name, "backgroundimage") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "backgroundimage") == YES) {
         return IJSVGFilterEffectSourceBackgroundImage;
     }
-    if(strcmp(name, "backgroundalpha") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "backgroundalpha") == YES) {
         return IJSVGFilterEffectSourceBackgroundAlpha;
     }
-    if(strcmp(name, "fillpaint") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "fillpaint") == YES) {
         return IJSVGFilterEffectSourceFillPaint;
     }
-    if(strcmp(name, "strokepain") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(name, "strokepain") == YES) {
         return IJSVGFilterEffectSourceStrokePaint;
     }
     return IJSVGFilterEffectSourcePrimitiveReference;
@@ -59,13 +60,13 @@ static NSDictionary<NSString*, Class>* _elementClassMap = nil;
     if(name == NULL) {
         return IJSVGFilterEffectEdgeModeNone;
     }
-    if(strcmp(name, "none") == 0) {
+    if(IJSVGCharBufferCompare(name, "none") == YES) {
         return IJSVGFilterEffectEdgeModeNone;
     }
-    if(strcmp(name, "wrap") == 0) {
+    if(IJSVGCharBufferCompare(name, "wrap") == YES) {
         return IJSVGFilterEffectEdgeModeWrap;
     }
-    if(strcmp(name, "duplicate") == 0) {
+    if(IJSVGCharBufferCompare(name, "duplicate") == YES) {
         return IJSVGFilterEffectEdgeModeDuplicate;
     }
     return IJSVGFilterEffectEdgeModeNone;

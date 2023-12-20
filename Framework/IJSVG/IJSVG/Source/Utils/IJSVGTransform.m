@@ -94,29 +94,28 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
 + (IJSVGTransformCommand)commandForCommandCString:(char*)str
 {
-    IJSVGCharBufferToLower(str);
-    if(strcmp(str, "matrix") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "matrix") == YES) {
         return IJSVGTransformCommandMatrix;
     }
-    if(strcmp(str, "translate") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translate") == YES) {
         return IJSVGTransformCommandTranslate;
     }
-    if(strcmp(str, "translatex") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translatex") == YES) {
         return IJSVGTransformCommandTranslateX;
     }
-    if(strcmp(str, "translatey") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translatey") == YES) {
         return IJSVGTransformCommandTranslateY;
     }
-    if(strcmp(str, "scale") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "scale") == YES) {
         return IJSVGTransformCommandScale;
     }
-    if(strcmp(str, "skewx") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "skewx") == YES) {
         return IJSVGTransformCommandSkewX;
     }
-    if(strcmp(str, "skewy") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "skewy") == YES) {
         return IJSVGTransformCommandSkewY;
     }
-    if(strcmp(str, "rotate") == 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(str, "rotate") == YES) {
         return IJSVGTransformCommandRotate;
     }
     return IJSVGTransformCommandNotImplemented;

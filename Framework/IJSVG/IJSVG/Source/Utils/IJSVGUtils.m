@@ -39,12 +39,12 @@ BOOL IJSVGCharBufferIsHEX(char* buffer) {
     return YES;
 }
 
-BOOL IJSVGCharBufferHasPrefix(char *str, char *pre)
+inline BOOL IJSVGCharBufferHasPrefix(char *str, char *pre)
 {
     return strncmp(pre, str, strlen(pre)) == 0;
 }
 
-BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
+inline BOOL IJSVGCharBufferHasSuffix(char* s1, char* s2)
 {
     size_t slen = strlen(s1);
     size_t tlen = strlen(s2);
@@ -83,10 +83,44 @@ void IJSVGTrimCharBuffer(char* buffer) {
     memmove(buffer, ptr, length+1);
 }
 
-void IJSVGCharBufferToLower(char* buffer)
+inline char IJSVGCharToLower(char c)
+{
+    if(c >= 'A' && c <= 'Z') {
+        return c - ('A' - 'a');
+    }
+    return c;
+}
+
+BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2)
+{
+    if(str1 == str2) {
+        return YES;
+    }
+    
+    const char *p1 = str1;
+    const char *p2 = str2;
+    int result = 0;
+    
+    while((result = IJSVGCharToLower(*p1) - IJSVGCharToLower(*p2++)) == 0) {
+        if(*p1++ == '\0') {
+            break;
+        }
+    }
+    return result == 0;
+}
+
+inline BOOL IJSVGCharBufferCompare(const char* str1, const char* str2)
+{
+    if(str1[0] != str2[0]) {
+        return NO;
+    }
+    return strcmp(str1, str2) == 0;
+}
+
+inline void IJSVGCharBufferToLower(char* buffer)
 {
     for(char *p = buffer; *p; p++) {
-        *p = tolower(*p);
+        *p = IJSVGCharToLower(*p);
     }
 }
 
@@ -290,8 +324,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     
     // what type of method is it?
     IJSVGParsingStringMethod* method = methods[0];
-    IJSVGCharBufferToLower(method->name);
-    if(strcmp(method->name, "url") != 0) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
         (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
         return nil;
     }

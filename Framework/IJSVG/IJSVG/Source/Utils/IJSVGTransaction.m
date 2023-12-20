@@ -6,10 +6,13 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <AppKit/AppKit.h>
 
-BOOL IJSVGIsMainThread(void) { return NSThread.isMainThread; };
+BOOL IJSVGIsMainThread(void) {
+    return IJSVGThreadManager.currentManager.thread.isMainThread;
+};
 
 BOOL IJSVGBeginTransaction(void)
 {
@@ -20,13 +23,13 @@ BOOL IJSVGBeginTransaction(void)
     // of the catransaction for background composites
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    [CATransaction lock];
+//    [CATransaction lock];
     return YES;
 };
 
 void IJSVGEndTransaction(void)
 {
-    [CATransaction unlock];
+//    [CATransaction unlock];
     [CATransaction commit];
 };
 

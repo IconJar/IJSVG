@@ -396,13 +396,21 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                              scale:(CGFloat)scale
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGImageRef ref = [self newImageForLayer:layer
-                                    options:options
-                                 colorSpace:colorSpace
-                                 bitmapInfo:kCGImageAlphaNone
-                                      scale:scale];
+    CGImageRef alphaMask = [self newImageForLayer:layer
+                                          options:options
+                                       colorSpace:colorSpace
+                                       bitmapInfo:kCGImageAlphaNone
+                                            scale:scale];
+    // low - high pairs
+    const CGFloat colors[6] = {
+        0.f, 11.f,
+        0.f, 11.f,
+        0.f, 11.f
+    };
+    CGImageRef masked = CGImageCreateWithMaskingColors(alphaMask, colors);
+    CGImageRelease(alphaMask);
     CGColorSpaceRelease(colorSpace);
-    return ref;
+    return masked;
 }
 
 + (CGImageRef)newImageWithSize:(CGSize)size
@@ -428,8 +436,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale
 {
+    CALayer<IJSVGDrawableLayer>* referenceLayer = layer.referencingLayer ?: layer;
     CGRect frame = layer.outerBoundingBox;
-    CGRect bounds = layer.innerBoundingBox;
+    CGRect bounds = CGRectApplyAffineTransform(layer.innerBoundingBox,
+                                               [self userSpaceTransformForLayer:referenceLayer]);
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width*scale),
                                                           ceilf(frame.size.height*scale),

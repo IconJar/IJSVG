@@ -14,6 +14,7 @@
 @property (nonatomic, strong) IJSVGUnitLength* width;
 @property (nonatomic, strong) IJSVGUnitLength* height;
 @property (nonatomic, readonly) CGSize value;
+@property (nonatomic, readonly) BOOL isZeroSize;
 
 
 + (IJSVGUnitSize*)zeroSize;

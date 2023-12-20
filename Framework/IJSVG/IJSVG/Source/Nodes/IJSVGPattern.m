@@ -12,6 +12,17 @@
 
 @implementation IJSVGPattern
 
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    [storage addBits:[super allowedAttributes]];
+    [storage setBit:IJSVGNodeAttributePatternTransform];
+    [storage setBit:IJSVGNodeAttributePatternUnits];
+    [storage setBit:IJSVGNodeAttributePatternContentUnits];
+    [storage setBit:IJSVGNodeAttributeViewBox];
+    return storage;
+}
+
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
