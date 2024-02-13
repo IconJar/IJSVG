@@ -55,7 +55,7 @@
     if(bitmap == nil) return;
     for(NSUInteger y = 0; y < 2; y++) {
         for(NSUInteger x = 0; x < 2; x++) {
-            [bitmap setColor:x == y ? NSColor.redColor : NSColor.blueColor atX:x y:y];
+            [bitmap setColor:x == y ? XColor.redColor : XColor.blueColor atX:x y:y];
         }
     }
     NSData* png = [bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];

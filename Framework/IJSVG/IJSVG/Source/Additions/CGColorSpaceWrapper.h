@@ -14,7 +14,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface CGColorSpaceWrapper : NSObject
 
 + (instancetype)deviceRGBColorSpace;
++ (instancetype)sRGBColorSpace;
 - (CGColorSpaceRef)CGColorSpace;
+
+- (instancetype)initWithCGColorSpace:(CGColorSpaceRef)colorSpace;
 
 @end
 

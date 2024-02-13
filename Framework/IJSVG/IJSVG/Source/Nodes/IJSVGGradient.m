@@ -73,8 +73,8 @@
                               matchingTraits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    for(NSColor* color in self.colors) {
-        NSColor* replacement = [style.colors colorForColor:color
+    for(XColor* color in self.colors) {
+        XColor* replacement = [style.colors colorForColor:color
                                             matchingTraits:IJSVGColorUsageTraitGradientStop];
         IJSVGTraitedColor* traited = nil;
         traited = [IJSVGTraitedColor colorWithColor:replacement ?: color
@@ -84,7 +84,7 @@
     return storage;
 }
 
-- (void)setColors:(NSArray<NSColor*>*)colors
+- (void)setColors:(NSArray<XColor*>*)colors
 {
     _colors = colors;
     [self _invalidateCGGradient];

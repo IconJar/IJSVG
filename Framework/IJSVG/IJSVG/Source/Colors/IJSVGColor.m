@@ -280,7 +280,7 @@ static NSDictionary* _colorTree = nil;
 
         // not enough components, fallback to black
         if(parts.count < 3) {
-            return [self computeColorSpace:NSColor.blackColor];
+            return [self computeColorSpace:XColor.blackColor];
         }
 
         NSString* alpha = parts.count == 4 ? parts[3] : @"100%";
@@ -309,7 +309,7 @@ static NSDictionary* _colorTree = nil;
         
         IJSVGParsingStringMethod* method = methods[0];
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
-        NSColor* color = [self.class colorFromOKLCHParameters:parameters];
+        XColor* color = [self.class colorFromOKLCHParameters:parameters];
         IJSVGParsingStringMethodsRelease(methods, count);
         methods = NULL;
         if(color == nil) {

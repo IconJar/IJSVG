@@ -6,12 +6,12 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#if __has_include(<AppKit/AppKit.h>)
-
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGUnitLength.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
+#if __has_include(<AppKit/AppKit.h>)
 @interface IJSVGExporterPathInstructionCommand : NSObject {
 }
 
@@ -32,9 +32,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) char instruction;
 
+#endif
+
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSVGFloatingPointOptions options);
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
 
+#if __has_include(<AppKit/AppKit.h>)
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
                                            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
@@ -60,11 +63,11 @@ CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
                      floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 @end
+#endif
+
 NS_ASSUME_NONNULL_END
 
 static NSInteger const kIJSVGExporterPathInstructionFloatPrecision = 3;
 static CGFloat const kIJSVGExporterPathInstructionErrorThreshold = 1e-2;
 
 #define IJ_SVG_EXPORT_ROUND(value) IJSVGExporterPathFloatToFixed(value, kIJSVGExporterPathInstructionFloatPrecision)
-
-#endif

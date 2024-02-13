@@ -6,8 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-@import CoreGraphics;
-
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSInteger, IJSVGViewBoxAlignment) {

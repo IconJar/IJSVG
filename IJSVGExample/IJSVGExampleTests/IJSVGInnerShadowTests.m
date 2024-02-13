@@ -137,8 +137,8 @@
     NSUInteger partialPixels = 0, shadedPixels = 0;
     for(NSInteger y = 0; y < pixels; y++) {
         for(NSInteger x = 0; x < pixels; x++) {
-            NSColor* a = [[actual colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            NSColor* b = [[source colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+            XColor* a = [[actual colorAtX:x y:y] colorUsingColorSpace:XColorSpace.sRGBColorSpace];
+            XColor* b = [[source colorAtX:x y:y] colorUsingColorSpace:XColorSpace.sRGBColorSpace];
             XCTAssertNotNil(a);
             XCTAssertNotNil(b);
             if(a == nil || b == nil) {

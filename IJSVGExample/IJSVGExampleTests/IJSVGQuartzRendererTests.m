@@ -425,8 +425,8 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect x='5' y='5' width='22' height='22' fill='red' stroke='blue' stroke-width='2'/></svg>"];
     XCTAssertNotNil(svg);
     if(svg == nil) return;
-    svg.style.fillColor = NSColor.greenColor;
-    svg.style.strokeColor = NSColor.magentaColor;
+    svg.style.fillColor = XColor.greenColor;
+    svg.style.strokeColor = XColor.magentaColor;
     svg.style.lineWidth = 4.f;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:IJSVGExporterOptionNone];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:[exporter SVGString]];
@@ -469,7 +469,7 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect width='32' height='32' fill='url(#g)'/></svg>"];
     XCTAssertNotNil(svg);
     if(svg == nil) return;
-    [svg.style.colors replaceColor:NSColor.redColor withColor:NSColor.greenColor traits:IJSVGColorUsageTraitGradientStop];
+    [svg.style.colors replaceColor:XColor.redColor withColor:XColor.greenColor traits:IJSVGColorUsageTraitGradientStop];
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:IJSVGExporterOptionAll];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:[exporter SVGString]];
     XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:roundTrip size:64]);

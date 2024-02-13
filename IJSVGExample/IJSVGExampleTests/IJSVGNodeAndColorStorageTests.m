@@ -15,9 +15,9 @@
 
 @implementation IJSVGNodeAndColorStorageTests
 
-- (NSColor*)rgb:(NSColor*)color
+- (XColor*)rgb:(XColor*)color
 {
-    return [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+    return [color colorUsingColorSpace:XColorSpace.deviceRGBColorSpace];
 }
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
@@ -167,9 +167,9 @@
 
 - (void)testColorNodeReturnsColorsForRequestedTraitsAndStyleOverrides
 {
-    IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:NSColor.redColor];
+    IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:XColor.redColor];
     IJSVGStyle* style = [[IJSVGStyle alloc] init];
-    style.fillColor = NSColor.greenColor;
+    style.fillColor = XColor.greenColor;
 
     IJSVGTraitedColorStorage* fillStorage = [colorNode colorsWithStyle:style
                                                         matchingTraits:IJSVGColorUsageTraitFill];
@@ -186,11 +186,11 @@
 
 - (void)testTraitedColorMergesAndMatchesTraitsByColor
 {
-    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:NSColor.redColor
+    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:XColor.redColor
                                                           traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:NSColor.redColor
+    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:XColor.redColor
                                                               traits:IJSVGColorUsageTraitStroke];
-    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:NSColor.blueColor
+    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:XColor.blueColor
                                                                    traits:IJSVGColorUsageTraitFill];
 
     XCTAssertEqualObjects(color, sameColor);
@@ -205,9 +205,9 @@
 - (void)testTraitedColorStorageMergesColorsAndReplacesByTrait
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor
+    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:XColor.redColor
                                                             traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor
+    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:XColor.redColor
                                                               traits:IJSVGColorUsageTraitStroke];
     [storage addColor:fillRed];
     [storage addColor:strokeRed];
@@ -216,15 +216,15 @@
     XCTAssertTrue([storage matchesTraits:IJSVGColorUsageTraitFill]);
     XCTAssertTrue([storage.colors.anyObject matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
 
-    [storage replaceColor:NSColor.redColor
-                withColor:NSColor.greenColor
+    [storage replaceColor:XColor.redColor
+                withColor:XColor.greenColor
                    traits:IJSVGColorUsageTraitFill];
     XCTAssertEqual(storage.replacedColorCount, 1u);
     XCTAssertTrue([storage matchesReplacementTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertNil([storage colorForColor:NSColor.redColor
+    XCTAssertNil([storage colorForColor:XColor.redColor
                          matchingTraits:IJSVGColorUsageTraitStroke]);
 
-    NSColor* replacement = [storage colorForColor:NSColor.redColor
+    XColor* replacement = [storage colorForColor:XColor.redColor
                                    matchingTraits:IJSVGColorUsageTraitFill];
     XCTAssertNotNil(replacement);
     XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f, 0.002f);

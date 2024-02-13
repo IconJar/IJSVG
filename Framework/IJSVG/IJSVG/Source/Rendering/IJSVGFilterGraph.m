@@ -217,8 +217,8 @@ static CGColorRef IJSVGFilterNewShadowTintForPrimitive(IJSVGFilterPrimitive* pri
     NSString* number = [value hasSuffix:@"%"] ? [value substringToIndex:value.length - 1] : value;
     CGFloat opacity = [IJSVGUtils numbersFromString:number].count == 1
         ? [IJSVGUtils floatValue:value fallBackForPercent:1] : 1;
-    NSColor* color = [[IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack]
-        colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    XColor* color = [[IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack]
+        colorUsingColorSpace:XColorSpace.sRGBColorSpace];
     if(color == nil) {
         return NULL;
     }

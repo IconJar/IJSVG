@@ -14,6 +14,9 @@
 + (instancetype)valueWithRect:(CGRect)rect;
 - (CGRect)rectValue;
 
++ (instancetype)valueWithSize:(CGSize)size;
+- (CGSize)sizeValue;
+
 @end
 
 #endif

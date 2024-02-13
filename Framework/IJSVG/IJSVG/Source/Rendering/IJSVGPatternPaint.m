@@ -172,8 +172,12 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // Keep window drawing independent of deferred nested pattern callbacks.
     // Other contexts keep drawing the pattern directly.
+#if __has_include(<AppKit/AppKit.h>)
     NSGraphicsContext* graphicsContext = NSGraphicsContext.currentContext;
     BOOL drawingToScreen = graphicsContext.CGContext == ctx && graphicsContext.isDrawingToScreen;
+#else
+    BOOL drawingToScreen = false;
+#endif
     if(!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;

@@ -33,11 +33,11 @@ NSString* IJSVGTestSVG(NSString* body);
 IJSVG* IJSVGTestSVGObject(NSString* svgString);
 NSXMLDocument* IJSVGTestXMLDocument(NSString* xmlString);
 NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size);
-NSColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point);
-NSColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point);
-void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha);
+XColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point);
+XColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point);
+void IJSVGAssertColorComponents(XColor* color, CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha);
 void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
                                       NSArray<NSString*>* rows,
-                                      NSDictionary<NSString*, NSColor*>* palette);
+                                      NSDictionary<NSString*, XColor*>* palette);
 
 NS_ASSUME_NONNULL_END

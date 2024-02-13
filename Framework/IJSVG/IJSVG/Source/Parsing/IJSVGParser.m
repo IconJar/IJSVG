@@ -215,7 +215,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                                          error:error];
 }
 
-- (BOOL)_prepareWithXMLDocument:(NSXMLDocument*)document
+- (BOOL)_prepareWithXMLDocument:(CXMLDocument*)document
                         parseError:(NSError*)parseError
                             fileURL:(NSURL*)aURL
                               error:(NSError**)error
@@ -512,7 +512,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     
     NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength] = { nil };
   
-    for(NSXMLNode* attributeNode in elementAttributes) {
+    for(CXMLNode* attributeNode in elementAttributes) {
         NSUInteger attribute = IJSVGNodeAttributeForName(attributeNode.name);
         if(attribute == NSNotFound || [activeAttributes bitIsSet:(int)attribute] == NO) {
             continue;
@@ -756,7 +756,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
-        NSColor* color = [IJSVGColor colorFromString:value];
+        XColor* color = [IJSVGColor colorFromString:value];
         IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
         if(color == nil) {
             colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -1005,7 +1005,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                                 referencingNode:(IJSVGNode*)node
-                                        element:(NSXMLElement*)element
+                                        element:(CXMLElement*)element
 {
     CXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
     if(detachedElement == nil) {
@@ -1034,7 +1034,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
   // SVGs that are problematic.
 #if DEBUG
   NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"",
-        self.className, _fileURL ?: @"Unknown", identifier);
+        NSStringFromClass(self.class), _fileURL ?: @"Unknown", identifier);
 #endif
 }
 
@@ -1072,7 +1072,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
       }
 
       // add the new ones from the copy
-      for(__strong NSXMLElement* child in element.children) {
+      for(__strong CXMLElement* child in element.children) {
         [copy addChild:child.copy];
       }
     }

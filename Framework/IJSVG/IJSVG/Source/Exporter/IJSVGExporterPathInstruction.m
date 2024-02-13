@@ -11,6 +11,8 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <math.h>
 
+#if __has_include(<AppKit/AppKit.h>)
+
 @implementation IJSVGExporterPathInstructionCommand
 @end
 
@@ -298,27 +300,29 @@ static NSUInteger IJSVGExporterPathInstructionStringLength(char instruction,
     return string;
 }
 
+#endif
+
 static CGFloat IJSVGExporterPathPrecisionMultiplier(int precision)
 {
-    switch (precision) {
-        case 0: return 1.f;
-        case 1: return 10.f;
-        case 2: return 100.f;
-        case 3: return 1000.f;
-        case 4: return 10000.f;
-        case 5: return 100000.f;
-        case 6: return 1000000.f;
-        case 7: return 10000000.f;
-        case 8: return 100000000.f;
-        case 9: return 1000000000.f;
-        case 10: return 10000000000.f;
-        default: return pow(10, precision);
-    }
+	switch (precision) {
+		case 0: return 1.f;
+		case 1: return 10.f;
+		case 2: return 100.f;
+		case 3: return 1000.f;
+		case 4: return 10000.f;
+		case 5: return 100000.f;
+		case 6: return 1000000.f;
+		case 7: return 10000000.f;
+		case 8: return 100000000.f;
+		case 9: return 1000000000.f;
+		case 10: return 10000000000.f;
+		default: return pow(10, precision);
+	}
 }
 
 static CGFloat IJSVGExporterPathFloatToFixedWithMultiplier(CGFloat number, CGFloat multiplier)
 {
-    return floorf(multiplier * number) / multiplier;
+	return floorf(multiplier * number) / multiplier;
 }
 
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision)
@@ -349,6 +353,8 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         }
     }
 }
+
+#if __has_include(<AppKit/AppKit.h>)
 
 + (void)convertInstructionsToRoundRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                                  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
@@ -931,3 +937,5 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 }
 
 @end
+
+#endif

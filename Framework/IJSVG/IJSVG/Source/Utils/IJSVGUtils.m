@@ -213,7 +213,6 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
-#if __has_include(<AppKit/AppKit.h>)
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
     return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
@@ -234,7 +233,6 @@ NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions 
     }
     return IJSVGShortFloatString(f);
 };
-#endif
 
 NSString* IJSVGShortFloatString(CGFloat f)
 {

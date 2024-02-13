@@ -213,9 +213,11 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
                 source = [source imageByClampingToExtent];
             }
             if(edgeMode == 2) {
+                CGAffineTransform xform = CGAffineTransformIdentity;
+                NSValue *xformObj = [NSValue valueWithBytes:&xform objCType:@encode(CGAffineTransform)];
                 source = [source imageByApplyingFilter:@"CIAffineTile"
                                    withInputParameters:@{
-                    kCIInputTransformKey: [NSAffineTransform transform]
+                    kCIInputTransformKey: xformObj
                 }];
             }
             CIImage* output = [source imageByApplyingFilter:filterName
