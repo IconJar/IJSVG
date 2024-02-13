@@ -23,10 +23,10 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     
 }
 
-@property (nonatomic, strong) NSColor* color;
+@property (nonatomic, strong) XColor* color;
 @property (nonatomic, assign) IJSVGColorUsageTraits traits;
 
-+ (IJSVGTraitedColor*)typeWithColor:(NSColor*)color
++ (IJSVGTraitedColor*)typeWithColor:(XColor*)color
                           traits:(IJSVGColorUsageTraits)mask;
 
 @end

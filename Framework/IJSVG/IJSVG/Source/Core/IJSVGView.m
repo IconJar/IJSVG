@@ -52,7 +52,12 @@
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
+#if __has_include(<AppKit/AppKit.h>)
     [self setNeedsDisplay:YES];
+#endif
+#if __has_include(<UIKit/UIKit.h>)
+    [self setNeedsDisplay];
+#endif
 }
 
 - (BOOL)isFlipped
@@ -60,7 +65,7 @@
     return YES;
 }
 
-- (void)drawRect:(NSRect)dirtyRect
+- (void)drawRect:(XRect)dirtyRect
 {
     // only draw if there is actually an SVG
     if(self.SVG == nil) {

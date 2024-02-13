@@ -11,8 +11,8 @@
 
 IJSVG* IJSVGGetFromNSImage(NSImage* image);
 
-@interface NSImage (IJSVGAdditions)
+@interface XImage (IJSVGAdditions)
 
-+ (NSImage*)SVGImageNamed:(NSString*)imageName;
++ (XImage*)SVGImageNamed:(NSString*)imageName;
 
 @end

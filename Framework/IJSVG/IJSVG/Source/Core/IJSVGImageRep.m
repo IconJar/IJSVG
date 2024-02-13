@@ -39,7 +39,7 @@
     }
 }
 
-+ (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data
++ (NSArray<XImageRep*>*)imageRepsWithData:(NSData*)data
 {
     IJSVGImageRep* instance = [self imageRepWithData:data];
     if(instance == nil) {
@@ -77,14 +77,14 @@
     return YES;
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point
+- (BOOL)drawAtPoint:(XPoint)point
 {
     [_svg drawAtPoint:point
                  size:_svg.viewBox.size];
     return YES;
 }
 
-- (BOOL)drawInRect:(NSRect)rect
+- (BOOL)drawInRect:(XRect)rect
 {
     [_svg drawInRect:rect];
     return YES;

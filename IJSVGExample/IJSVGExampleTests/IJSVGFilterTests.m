@@ -252,7 +252,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 {
     NSString* exported = [self export:original
                                 scale:scale];
-    NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+    CXMLDocument* xml = IJSVGTestXMLDocument(exported);
     XCTAssertGreaterThan([xml nodesForXPath:@"//filter"
                                       error:nil].count, 0);
     XCTAssertEqual([xml nodesForXPath:@"//image"
@@ -481,7 +481,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
-    NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+    CXMLDocument* xml = IJSVGTestXMLDocument(exported);
     XCTAssertTrue([xml nodesForXPath:@"//filter/feDropShadow"
                                error:nil].count == 1);
     XCTAssertTrue([xml nodesForXPath:@"//*[@filter]"
@@ -505,21 +505,21 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                    encoding:NSUTF8StringEncoding
                                                       error:&error];
     XCTAssertNil(error);
-    NSXMLDocument* withoutFilters = IJSVGTestXMLDocument(original);
-    for(NSXMLElement* node in [withoutFilters nodesForXPath:@"//*[@filter]"
-                                                      error:nil]) {
+    CXMLDocument* withoutFilters = IJSVGTestXMLDocument(original);
+    for(CXMLElement* node in [withoutFilters nodesForXPath:@"//*[@filter]"
+                                                     error:nil]) {
         [node removeAttributeForName:@"filter"];
     }
     for(NSInteger scale = 10; scale <= 20; scale += 10) {
         NSString* exported = [self export:original
                                     scale:scale];
-        NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+        CXMLDocument* xml = IJSVGTestXMLDocument(exported);
         XCTAssertGreaterThan([xml nodesForXPath:@"//filter/feDropShadow"
                                           error:nil].count,
                              0);
         XCTAssertEqual([xml nodesForXPath:@"//image"
                                     error:nil].count, 0);
-        for(NSXMLElement* node in [xml nodesForXPath:@"//*[@filter]"
+        for(CXMLElement* node in [xml nodesForXPath:@"//*[@filter]"
                                                error:nil]) {
             NSString* reference = [node attributeForName:@"filter"].stringValue;
             XCTAssertNotNil(reference);
@@ -813,21 +813,21 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                      options:options];
     NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
                                           options:options | IJSVGExporterOptionCompressFilters];
-    NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
-    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                             error:nil].firstObject;
+    CXMLDocument* document = IJSVGTestXMLDocument(compressed);
+    CXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
+                                            error:nil].firstObject;
     XCTAssertNotNil(filter);
     for(NSString* name in @[@"x", @"y", @"width", @"height", @"filterUnits", @"primitiveUnits"]) {
         XCTAssertNil([filter attributeForName:name]);
     }
-    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
-                                             error:nil].firstObject;
+    CXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
+                                            error:nil].firstObject;
     XCTAssertNil([offset attributeForName:@"dx"]);
     XCTAssertNil([offset attributeForName:@"dy"]);
     XCTAssertEqualObjects([offset attributeForName:@"result"].stringValue,
                           @"offsetResult");
-    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                           error:nil].firstObject;
+    CXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
+                                          error:nil].firstObject;
     XCTAssertEqualObjects([blur attributeForName:@"in"].stringValue,
                           @"offsetResult");
     XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue,
@@ -853,15 +853,15 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                         options:IJSVGExporterOptionCompressFilters
                            floatingPointOptions:IJSVGFloatingPointOptionsMake(YES,
                                                                               2)];
-    NSXMLDocument* document = IJSVGTestXMLDocument(exported);
-    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
-                                             error:nil].firstObject;
+    CXMLDocument* document = IJSVGTestXMLDocument(exported);
+    CXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
+                                            error:nil].firstObject;
     XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDX].stringValue,
                           @".12");
     XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDY].stringValue,
                           @"-.57");
-    NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
-                                               error:nil].firstObject;
+    CXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
+                                              error:nil].firstObject;
     NSString* values = [function attributeForName:IJSVGAttributeTableValues].stringValue;
     XCTAssertEqualObjects(values, @".25 -.5 0");
     XCTAssertEqual([IJSVGUtils numbersFromString:values].count, 3);
@@ -883,9 +883,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                             options:option.integerValue
                                floatingPointOptions:IJSVGFloatingPointOptionsMake(YES,
                                                                                   2)];
-        NSXMLDocument* document = IJSVGTestXMLDocument(exported);
-        NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                                 error:nil].firstObject;
+        CXMLDocument* document = IJSVGTestXMLDocument(exported);
+        CXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
+                                                error:nil].firstObject;
         XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeX].stringValue,
                               @"-12.35%");
         XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeY].stringValue,
@@ -894,8 +894,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                               @"123.45%");
         XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeHeight].stringValue,
                               @"12.34");
-        NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                               error:nil].firstObject;
+        CXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
+                                              error:nil].firstObject;
         XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeX].stringValue,
                               @"1.23");
         XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeY].stringValue,
@@ -906,12 +906,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                               @"98.76%");
         XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeStdDeviation].stringValue,
                               @".12 .56");
-        NSXMLElement* flood = [document nodesForXPath:@"//*[local-name()='feFlood']"
-                                                error:nil].firstObject;
+        CXMLElement* flood = [document nodesForXPath:@"//*[local-name()='feFlood']"
+                                               error:nil].firstObject;
         XCTAssertEqualObjects([flood attributeForName:IJSVGAttributeFloodOpacity].stringValue,
                               @".45");
-        NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
-                                                   error:nil].firstObject;
+        CXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
+                                                  error:nil].firstObject;
         XCTAssertEqualObjects([function attributeForName:IJSVGAttributeSlope].stringValue,
                               @".45");
     }
@@ -927,28 +927,28 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     IJSVG* svg = IJSVGTestSVGObject(source);
     NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
                                           options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
-    NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
-    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                             error:nil].firstObject;
+    CXMLDocument* document = IJSVGTestXMLDocument(compressed);
+    CXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
+                                            error:nil].firstObject;
     XCTAssertEqualObjects([filter attributeForName:@"filterUnits"].stringValue,
                           @"userSpaceOnUse");
     XCTAssertEqualObjects([filter attributeForName:@"color-interpolation-filters"].stringValue,
                           @"sRGB");
-    NSXMLElement* shadow = [document nodesForXPath:@"//*[local-name()='feDropShadow']"
-                                             error:nil].firstObject;
+    CXMLElement* shadow = [document nodesForXPath:@"//*[local-name()='feDropShadow']"
+                                            error:nil].firstObject;
     for(NSString* name in @[@"dx", @"dy", @"stdDeviation"]) {
         XCTAssertEqualObjects([shadow attributeForName:name].stringValue, @"0");
     }
-    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                           error:nil].firstObject;
+    CXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
+                                          error:nil].firstObject;
     XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue,
                           @".5 1.5");
     XCTAssertNotNil([blur attributeForName:@"x"]);
     XCTAssertNotNil([blur attributeForName:@"width"]);
     XCTAssertEqualObjects([blur attributeForName:@"color-interpolation-filters"].stringValue,
                           @"linearRGB");
-    NSXMLElement* convolution = [document nodesForXPath:@"//*[local-name()='feConvolveMatrix']"
-                                                  error:nil].firstObject;
+    CXMLElement* convolution = [document nodesForXPath:@"//*[local-name()='feConvolveMatrix']"
+                                                 error:nil].firstObject;
     XCTAssertEqualObjects([convolution attributeForName:@"divisor"].stringValue,
                           @"1");
     XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed
@@ -1175,7 +1175,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
-    NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+    CXMLDocument* xml = IJSVGTestXMLDocument(exported);
     XCTAssertTrue([xml nodesForXPath:@"//filter/feMerge/feMergeNode"
                                error:nil].count == 2);
     XCTAssertTrue([xml nodesForXPath:@"//filter/feComponentTransfer/feFuncA"

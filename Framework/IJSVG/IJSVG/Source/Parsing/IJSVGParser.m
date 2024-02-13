@@ -261,19 +261,19 @@ typedef struct {
     NSArray<NSString*>* values;
     NSSet<NSString*>* classNameList;
 }
-- (instancetype)initWithElement:(NSXMLElement*)element;
+- (instancetype)initWithElement:(CXMLElement*)element;
 @end
 
 @implementation IJSVGParserRawAttributes
 
-- (instancetype)initWithElement:(NSXMLElement*)element
+- (instancetype)initWithElement:(CXMLElement*)element
 {
     if((self = [super init]) != nil) {
         NSMutableData* data = [[NSMutableData alloc] init];
         NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] init];
-        NSArray<NSXMLNode*>* attributes = element.attributes;
+        NSArray<CXMLNode*>* attributes = element.attributes;
         hasAttributes = attributes.count != 0;
-        for(NSXMLNode* attributeNode in attributes) {
+        for(CXMLNode* attributeNode in attributes) {
             NSUInteger attribute = NSNotFound;
             NSString* value = nil;
             if(!IJSVGReadXMLAttribute(attributeNode, nil, &attribute, &value)) {
@@ -295,18 +295,18 @@ typedef struct {
 @end
 
 @interface IJSVGParser ()
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGParserRawAttributes*>* rawAttributes;
-@property (nonatomic, strong) NSHashTable<NSXMLElement*>* uncachedReferenceElements;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, IJSVGParserRawAttributes*>* rawAttributes;
+@property (nonatomic, strong) NSHashTable<CXMLElement*>* uncachedReferenceElements;
 @property (nonatomic, strong) NSCache<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
 @property (nonatomic, strong) NSCache<NSString*, id>* parsedPaths;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, NSMapTable*>* selectorScopes;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeReferences;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray*>* pendingStylePaints;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorNodes;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorNodes;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, IJSVGNode*>* styleAncestors;
+@property (nonatomic, strong) NSMapTable<CXMLElement*, IJSVGNode*>* definitionStyleParents;
 @end
 
 @implementation IJSVGParser
@@ -324,7 +324,7 @@ typedef struct {
                                          error:error];
 }
 
-- (BOOL)_prepareWithXMLDocument:(NSXMLDocument*)document
+- (BOOL)_prepareWithXMLDocument:(CXMLDocument*)document
                         parseError:(NSError*)parseError
                             fileURL:(NSURL*)aURL
                               error:(NSError**)error
@@ -357,11 +357,11 @@ typedef struct {
 {
     if((self = [super init]) != nil) {
         NSError* anError = nil;
-        NSXMLDocument* document = nil;
+        CXMLDocument* document = nil;
         @try {
-            document = [[NSXMLDocument alloc] initWithXMLString:string
-                                                        options:NSXMLNodePreserveWhitespace
-                                                          error:&anError];
+            document = [[CXMLDocument alloc] initWithXMLString:string
+                                                       options:CXMLNodePreserveWhitespace
+                                                         error:&anError];
         }
         @catch (NSException* exception) {
         }
@@ -382,11 +382,11 @@ typedef struct {
 {
     if((self = [super init]) != nil) {
         NSError* anError = nil;
-        NSXMLDocument* document = nil;
+        CXMLDocument* document = nil;
         @try {
-            document = [[NSXMLDocument alloc] initWithData:data
-                                                   options:NSXMLNodePreserveWhitespace
-                                                     error:&anError];
+            document = [[CXMLDocument alloc] initWithData:data
+                                                  options:CXMLNodePreserveWhitespace
+                                                    error:&anError];
         }
         @catch (NSException* exception) {
         }
@@ -405,9 +405,9 @@ typedef struct {
 {
     @try {
         NSError* error;
-        NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
-                                                         options:NSXMLNodePreserveWhitespace
-                                                           error:&error];
+        CXMLDocument* doc = [[CXMLDocument alloc] initWithData:data
+                                                       options:CXMLNodePreserveWhitespace
+                                                         error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
     }
@@ -529,13 +529,13 @@ typedef struct {
     return node;
 }
 
-- (void)computeDefsForElement:(NSXMLElement*)element
+- (void)computeDefsForElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
 {
     if(element.childCount == 0) {
         return;
     }
-    for(NSXMLElement* childElement in element.children) {
+    for(CXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         if(type != IJSVGNodeTypeDef) {
@@ -614,7 +614,7 @@ typedef struct {
 }
 
 // The following method is highly tuned for performance rather than readability.
-- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
+- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(CXMLElement*)element
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes
 {
@@ -644,7 +644,7 @@ typedef struct {
             }
         }
     }
-    NSArray<NSXMLNode*>* elementAttributes = raw == nil ? element.attributes : nil;
+    NSArray<CXMLNode*>* elementAttributes = raw == nil ? element.attributes : nil;
     NSUInteger attributeCount = raw != nil ? raw->entries.length / sizeof(IJSVGParserRawAttribute) :
         elementAttributes.count;
     BOOL hasStyleSheetRules = _styleSheet.ruleCount != 0;
@@ -676,7 +676,7 @@ typedef struct {
             }
         }
     } else {
-        for(NSXMLNode* attributeNode in elementAttributes) {
+        for(CXMLNode* attributeNode in elementAttributes) {
             NSUInteger attribute = NSNotFound;
             NSString* value = nil;
             if(IJSVGReadXMLAttribute(attributeNode, activeAttributes, &attribute, &value)) {
@@ -863,7 +863,7 @@ typedef struct {
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:YES];
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
+            XColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -890,7 +890,7 @@ typedef struct {
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:NO];
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
+            XColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -926,7 +926,7 @@ typedef struct {
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
-        NSColor* color = [IJSVGColor colorFromString:value];
+        XColor* color = [IJSVGColor colorFromString:value];
         IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
         if(color == nil) {
             colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -973,11 +973,11 @@ typedef struct {
 }
 
 - (void)resolveTextPathForNode:(IJSVGText*)node
-                       element:(NSXMLElement*)element
+                       element:(CXMLElement*)element
 {
     NSString* identifier = [self resolveXLinkAttributeStringForElement:element];
     if(identifier != nil) {
-        NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
+        CXMLElement* definition = [self detachedElementWithIdentifier:identifier];
         // Only geometry is valid here; do not recurse through arbitrary references.
         IJSVGNodeType type = [IJSVGNode typeForString:definition.localName
                                                  kind:definition.kind];
@@ -1004,7 +1004,7 @@ typedef struct {
     }
 }
 
-- (IJSVGText*)parseTextElement:(NSXMLElement*)element
+- (IJSVGText*)parseTextElement:(CXMLElement*)element
                          type:(IJSVGNodeType)type
                    parentNode:(IJSVGNode*)parentNode
 {
@@ -1022,17 +1022,17 @@ typedef struct {
     // These are text positions, not a group translation.
     node.x = nil;
     node.y = nil;
-    NSArray<NSXMLNode*>* children = element.children;
+    NSArray<CXMLNode*>* children = element.children;
     NSMutableArray* content = [[NSMutableArray alloc] initWithCapacity:children.count];
-    for(NSXMLNode* child in children) {
-        if(child.kind == NSXMLTextKind) {
+    for(CXMLNode* child in children) {
+        if(child.kind == CXMLTextKind) {
             [content addObject:child.stringValue ?: @""];
         } else {
             IJSVGNodeType childType = [IJSVGNode typeForString:child.localName
                                                         kind:child.kind];
             if(childType == IJSVGNodeTypeTextSpan || childType == IJSVGNodeTypeTextPath ||
                childType == IJSVGNodeTypeAnchor) {
-                IJSVGText* span = [self parseTextElement:(NSXMLElement*)child
+                IJSVGText* span = [self parseTextElement:(CXMLElement*)child
                                                     type:childType
                                               parentNode:node];
                 [content addObject:span];
@@ -1051,11 +1051,11 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseElement:(CXMLElement*)element
                 parentNode:(IJSVGNode*)node
 {
     NSString* name = element.localName;
-    NSXMLNodeKind nodeKind = element.kind;
+    CXMLNodeKind nodeKind = element.kind;
     IJSVGNodeType nodeType = [IJSVGNode typeForString:name
                                                  kind:nodeKind];
         
@@ -1228,7 +1228,7 @@ typedef struct {
     return computedNode;
 }
 
-- (void)computeElement:(NSXMLElement*)element
+- (void)computeElement:(CXMLElement*)element
             parentNode:(IJSVGNode*)node
 {
     if(element.childCount == 0) {
@@ -1236,17 +1236,17 @@ typedef struct {
     }
     [self computeDefsForElement:element
                      parentNode:node];
-    for(NSXMLNode* childNode in element.children) {
-        if(childNode.kind != NSXMLElementKind) {
+    for(CXMLNode* childNode in element.children) {
+        if(childNode.kind != CXMLElementKind) {
             continue;
         }
-        [self parseElement:(NSXMLElement*)childNode
+        [self parseElement:(CXMLElement*)childNode
                 parentNode:node];
     }
 }
 
 #pragma mark Detaching nodes
-- (void)detachElement:(NSXMLElement*)element
+- (void)detachElement:(CXMLElement*)element
        withIdentifier:(NSString*)identifier
 {
     // we can just store the reference for later, we used to copy at this point
@@ -1255,13 +1255,13 @@ typedef struct {
     _detachedReferences[identifier] = element;
 }
 
-- (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
+- (CXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
 {
     return _detachedReferences[identifier];
 }
 
-- (IJSVGStyleSheetSelectorRecord*)buildSelectorTreeForElement:(NSXMLElement*)element
-                                     nodes:(NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>*)nodes
+- (IJSVGStyleSheetSelectorRecord*)buildSelectorTreeForElement:(CXMLElement*)element
+                                     nodes:(NSMapTable<CXMLElement*, IJSVGStyleSheetSelectorRecord*>*)nodes
 {
     IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
     node.name = element.localName;
@@ -1270,10 +1270,10 @@ typedef struct {
     node.classNameList = IJSVGClassNameList(className);
     [nodes setObject:node forKey:element];
     IJSVGStyleSheetSelectorRecord* previous = nil;
-    for(NSXMLNode* child in element.children) {
-        if(child.kind == NSXMLElementKind) {
+    for(CXMLNode* child in element.children) {
+        if(child.kind == CXMLElementKind) {
             IJSVGStyleSheetSelectorRecord* record =
-                [self buildSelectorTreeForElement:(NSXMLElement*)child nodes:nodes];
+                [self buildSelectorTreeForElement:(CXMLElement*)child nodes:nodes];
             record.selectorParent = node;
             record.selectorPreviousSibling = previous;
             previous = record;
@@ -1282,7 +1282,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGStyleSheetSelectorRecord*)selectorNodeForElement:(NSXMLElement*)element
+- (IJSVGStyleSheetSelectorRecord*)selectorNodeForElement:(CXMLElement*)element
 {
     if(!_styleSheet.requiresSelectorTree) {
         return nil;
@@ -1301,12 +1301,12 @@ typedef struct {
     return [self.selectorNodes objectForKey:element];
 }
 
-- (IJSVGNode*)styleAncestorForElement:(NSXMLNode*)element
+- (IJSVGNode*)styleAncestorForElement:(CXMLNode*)element
 {
-    if(element.kind != NSXMLElementKind) {
+    if(element.kind != CXMLElementKind) {
         return nil;
     }
-    NSXMLElement* source = (NSXMLElement*)element;
+    CXMLElement* source = (CXMLElement*)element;
     IJSVGNode* ancestor = [self.styleAncestors objectForKey:source];
     if(ancestor != nil) {
         return ancestor;
@@ -1324,7 +1324,7 @@ typedef struct {
 
 - (void)applyPaintReference:(NSString*)identifier
                        node:(IJSVGNode*)node
-                    element:(NSXMLElement*)element
+                    element:(CXMLElement*)element
                      stroke:(BOOL)stroke
 {
     void (^apply)(IJSVGNode*) = ^(IJSVGNode* paint) {
@@ -1351,9 +1351,9 @@ typedef struct {
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                                 referencingNode:(IJSVGNode*)node
-                                        element:(NSXMLElement*)element
+                                        element:(CXMLElement*)element
 {
-    NSXMLElement* source = [self detachedElementWithIdentifier:identifier];
+    CXMLElement* source = [self detachedElementWithIdentifier:identifier];
     if(source == nil || [self.activeReferences containsObject:identifier]) {
         return nil;
     }
@@ -1388,8 +1388,8 @@ typedef struct {
     }
 }
 
-- (void)recursionDetectedOn:(NSXMLElement*)element
-                decendentOf:(NSXMLElement*)parent
+- (void)recursionDetectedOn:(CXMLElement*)element
+                decendentOf:(CXMLElement*)parent
                  identifier:(NSString*)identifier
 {
   // For now, we only want to log these for debug builds whilst we fix any
@@ -1400,23 +1400,23 @@ typedef struct {
 #endif
 }
 
-- (BOOL)isElement:(NSXMLElement*)element
-       decedentOf:(NSXMLElement*)parentElement {
-    NSXMLElement* parent = (NSXMLElement*)element.parent;
+- (BOOL)isElement:(CXMLElement*)element
+       decedentOf:(CXMLElement*)parentElement {
+    CXMLElement* parent = (CXMLElement*)element.parent;
     while(parent != nil) {
       if(parentElement == parent) {
         return YES;
       }
-      parent = (NSXMLElement*)parent.parent;
+      parent = (CXMLElement*)parent.parent;
     }
     return NO;
 }
 
-- (NSXMLElement*)mergedElement:(NSXMLElement*)element
-          withReferenceElement:(NSXMLElement*)reference
+- (CXMLElement*)mergedElement:(CXMLElement*)element
+         withReferenceElement:(CXMLElement*)reference
 {
-    NSXMLElement* copy = reference.copy;
-    for (__strong NSXMLNode* attribute in element.attributes) {
+    CXMLElement* copy = reference.copy;
+    for (__strong CXMLNode* attribute in element.attributes) {
         [copy removeAttributeForName:attribute.name];
         attribute = attribute.copy;
         [copy addAttribute:attribute];
@@ -1434,7 +1434,7 @@ typedef struct {
       }
 
       // add the new ones from the copy
-      for(__strong NSXMLElement* child in element.children) {
+      for(__strong CXMLElement* child in element.children) {
         [copy addChild:child.copy];
       }
     }
@@ -1443,13 +1443,13 @@ typedef struct {
 
 #pragma mark Node Types
 
-- (void)parseStyleElement:(NSXMLElement*)element
+- (void)parseStyleElement:(CXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
 {
     [_styleSheet parseStyleBlock:element.stringValue];
 }
 
-- (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element
+- (IJSVGNode*)parseLinearGradientElement:(CXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
                         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1461,7 +1461,7 @@ typedef struct {
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1476,7 +1476,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseRadialGradientElement:(NSXMLElement*)element
+- (IJSVGNode*)parseRadialGradientElement:(CXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
                         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1488,7 +1488,7 @@ typedef struct {
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1503,7 +1503,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseStopElement:(NSXMLElement*)element
+- (IJSVGNode*)parseStopElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1546,7 +1546,7 @@ typedef struct {
     CGPathRelease(cached);
 }
 
-- (IJSVGNode*)parsePathElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePathElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1567,7 +1567,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseLineElement:(NSXMLElement*)element
+- (IJSVGNode*)parseLineElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1592,7 +1592,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parsePolyLineElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePolyLineElement:(CXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1617,7 +1617,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parsePolygonElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePolygonElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1642,7 +1642,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseEllipseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseEllipseElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1667,7 +1667,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseCircleElement:(NSXMLElement*)element
+- (IJSVGNode*)parseCircleElement:(CXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1692,7 +1692,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseGroupElement:(NSXMLElement*)element
+- (IJSVGNode*)parseGroupElement:(CXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
                        nodeType:(IJSVGNodeType)nodeType
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
@@ -1714,7 +1714,7 @@ typedef struct {
     return node;
 }
 
-- (void)parseSVGElement:(NSXMLElement*)element
+- (void)parseSVGElement:(CXMLElement*)element
                ontoNode:(IJSVGRootNode*)node
              parentNode:(IJSVGNode*)parentNode
        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
@@ -1754,7 +1754,7 @@ typedef struct {
   
 }
 
-- (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
+- (IJSVGNode*)parseSVGElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1767,7 +1767,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseRectElement:(NSXMLElement*)element
+- (IJSVGNode*)parseRectElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1801,7 +1801,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseImageElement:(NSXMLElement*)element
+- (IJSVGNode*)parseImageElement:(CXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1818,13 +1818,13 @@ typedef struct {
                                          ignoredAttributes:nil];
     
     // load image from base64
-    NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
+    CXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
     
     [node loadFromString:dataNode.stringValue];
     return node;
 }
 
-- (IJSVGNode*)parseUseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseUseElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1835,7 +1835,7 @@ typedef struct {
     }
   
     // its important that we remove the xlink attribute or hell breaks loose
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
+    CXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
   
     // We are trying to use an element that is a decedent of itself.
     if([self isElement:element decedentOf:detachedElement]) {
@@ -1881,13 +1881,13 @@ typedef struct {
 }
 
 - (void)replaceAttributes:(NSArray<NSString*>*)attributes
-                onElement:(NSXMLElement*)onElement
-              fromElement:(NSXMLElement*)fromElement
+                onElement:(CXMLElement*)onElement
+              fromElement:(CXMLElement*)fromElement
 {
     [self.rawAttributes removeObjectForKey:onElement];
     [self.rawAttributes removeObjectForKey:fromElement];
     for(NSString* collpaseAttribute in attributes) {
-        NSXMLNode* attribute = nil;
+        CXMLNode* attribute = nil;
         if((attribute = [fromElement attributeForName:collpaseAttribute]) != nil &&
            [onElement attributeForName:collpaseAttribute] != nil) {
             [attribute detach];
@@ -1897,7 +1897,7 @@ typedef struct {
     }
 }
 
-- (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePatternElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1910,7 +1910,7 @@ typedef struct {
     [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1922,7 +1922,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseClipPathElement:(NSXMLElement*)element
+- (IJSVGNode*)parseClipPathElement:(CXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1941,19 +1941,19 @@ typedef struct {
     return node;
 }
 
-- (void)parseFilterChildren:(NSXMLElement*)element parentNode:(IJSVGGroup*)node
+- (void)parseFilterChildren:(CXMLElement*)element parentNode:(IJSVGGroup*)node
 {
-    for(NSXMLNode* child in element.children) {
+    for(CXMLNode* child in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:child.localName kind:child.kind];
         if([IJSVGFilterPrimitive type:node.type acceptsChildType:type]) {
-            [self parseFilterPrimitiveElement:(NSXMLElement*)child parentNode:node];
+            [self parseFilterPrimitiveElement:(CXMLElement*)child parentNode:node];
         }
     }
 }
 
 - (IJSVGNode*)filterReferenceWithIdentifier:(NSString*)identifier
                             referencingNode:(IJSVGNode*)node
-                                    element:(NSXMLElement*)element
+                                    element:(CXMLElement*)element
 {
     if(self.activeFilterReferences == nil) {
         self.activeFilterReferences = [[NSMutableSet alloc] init];
@@ -1973,12 +1973,12 @@ typedef struct {
 
 - (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value
                           referencingNode:(IJSVGNode*)node
-                                  element:(NSXMLElement*)element
+                                  element:(CXMLElement*)element
 {
     NSArray<NSString*>* identifiers = [IJSVGUtils defURLs:value];
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
     for(NSString* identifier in identifiers) {
-        NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
+        CXMLElement* definition = [self detachedElementWithIdentifier:identifier];
         if([IJSVGNode typeForString:definition.localName
                                kind:definition.kind] != IJSVGNodeTypeFilter) {
             return @[];
@@ -1994,7 +1994,7 @@ typedef struct {
     return filters;
 }
 
-- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(NSXMLElement*)element
+- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(CXMLElement*)element
                                           parentNode:(IJSVGGroup*)parentNode
 {
     IJSVGNodeType type = [IJSVGNode typeForString:element.localName kind:element.kind];
@@ -2039,7 +2039,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
+- (IJSVGNode*)parseFilterElement:(CXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -2096,7 +2096,7 @@ typedef struct {
     return node;
 }
 
-- (IJSVGNode*)parseMaskElement:(NSXMLElement*)element
+- (IJSVGNode*)parseMaskElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -2114,14 +2114,14 @@ typedef struct {
     return node;
 }
 
-- (void)parseDefElement:(NSXMLElement*)element
+- (void)parseDefElement:(CXMLElement*)element
              parentNode:(IJSVGNode*)parentNode
               recursive:(BOOL)recursive
 {
     if(element.childCount == 0) {
         return;
     }
-    for(NSXMLElement* childElement in element.children) {
+    for(CXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         
@@ -2152,14 +2152,14 @@ typedef struct {
     }
 }
 
-- (void)parseTitleElement:(NSXMLElement*)element
+- (void)parseTitleElement:(CXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
          postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     parentNode.title = element.stringValue;
 }
 
-- (void)parseDescElement:(NSXMLElement*)element
+- (void)parseDescElement:(CXMLElement*)element
               parentNode:(IJSVGNode*)parentNode
         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -2168,10 +2168,10 @@ typedef struct {
 
 #pragma mark XLink
 
-- (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
+- (CXMLNode*)resolveXLinkAttributeForElement:(CXMLElement*)element
 {
     // SVG 2 href takes precedence; resolve legacy links by namespace so aliases work.
-    NSXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
+    CXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
     if(attributeNode == nil) {
         attributeNode = [element attributeForLocalName:IJSVGAttributeHref
                                                    URI:@"http://www.w3.org/1999/xlink"];
@@ -2182,9 +2182,9 @@ typedef struct {
     return attributeNode;
 }
 
-- (NSString*)resolveXLinkAttributeStringForElement:(NSXMLElement*)element
+- (NSString*)resolveXLinkAttributeStringForElement:(CXMLElement*)element
 {
-    NSXMLNode* node = [self resolveXLinkAttributeForElement:element];
+    CXMLNode* node = [self resolveXLinkAttributeForElement:element];
     if([node.stringValue hasPrefix:@"#"] && node.stringValue.length > 1) {
         return [node.stringValue substringFromIndex:1];
     }

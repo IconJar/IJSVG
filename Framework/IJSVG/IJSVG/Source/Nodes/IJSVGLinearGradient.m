@@ -23,7 +23,7 @@
     return storage;
 }
 
-+ (void)parseGradient:(NSXMLElement*)element
++ (void)parseGradient:(CXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient
 {
     // Work out x1, x2, y1, y2
@@ -54,7 +54,7 @@
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                  bounds:(NSRect)objectRect
+                  bounds:(XRect)objectRect
                transform:(CGAffineTransform)absoluteTransform
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;

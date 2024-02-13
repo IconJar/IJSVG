@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGUnitRect.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @implementation IJSVGUnitRect
 

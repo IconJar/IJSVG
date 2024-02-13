@@ -16,7 +16,7 @@
 - (void)testRenderingUsesPresentationAttributes
 {
     NSString* svg = IJSVGTestSVG(@"<rect width=\"8\" height=\"8\" fill=\"#ff0000\"/>");
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(svg, CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(svg, CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 1.f, 0.f, 0.f, 1.f);
 }
@@ -25,8 +25,8 @@
 {
     NSString* body = @"<style>.target { fill: #00ff00; }</style><rect class=\"target\" width=\"8\" "
                       "height=\"8\" fill=\"#ff0000\"/>";
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                  CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                 CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 0.f, 1.f, 0.f, 1.f);
 }
@@ -35,8 +35,8 @@
 {
     NSString* body = @"<style>rect { fill: #00ff00; }</style><rect width=\"8\" height=\"8\" "
                       "style=\"fill: #ff0000;\"/>";
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                  CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                 CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 1.f, 0.f, 0.f, 1.f);
 }
@@ -46,8 +46,8 @@
     NSString* body = @"<style>.hidden { display: none; }</style><rect width=\"8\" height=\"8\" "
                       "fill=\"#ffffff\"/><rect class=\"hidden\" width=\"8\" height=\"8\" "
                       "fill=\"#ff0000\"/>";
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                  CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                 CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 1.f, 1.f, 1.f, 1.f);
 }
@@ -56,10 +56,10 @@
 {
     NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/><path d=\"M0 0 H4 V8 H0 Z\" "
                       "fill=\"#0000ff\"/>";
-    NSColor* leftColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                      CGPointMake(1.f, 4.f));
-    NSColor* rightColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                       CGPointMake(6.f, 4.f));
+    XColor* leftColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                     CGPointMake(1.f, 4.f));
+    XColor* rightColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                      CGPointMake(6.f, 4.f));
 
     IJSVGAssertColorComponents(leftColor, 0.f, 0.f, 1.f, 1.f);
     IJSVGAssertColorComponents(rightColor, 1.f, 1.f, 1.f, 1.f);
@@ -71,22 +71,22 @@
                       "fill=\"#ff0000\"/><path d=\"M4 0 H8 V4 H4 Z\" fill=\"#00ff00\"/><path d=\"M0 4 H4 "
                       "V8 H0 Z\" fill=\"#0000ff\"/><path d=\"M4 4 H8 V8 H4 Z\" fill=\"#000000\"/>";
     NSDictionary* palette = @{
-        @"R": [NSColor colorWithCalibratedRed:1.f
-                                        green:0.f
-                                         blue:0.f
-                                        alpha:1.f],
-        @"G": [NSColor colorWithCalibratedRed:0.f
-                                        green:1.f
-                                         blue:0.f
-                                        alpha:1.f],
-        @"B": [NSColor colorWithCalibratedRed:0.f
-                                        green:0.f
-                                         blue:1.f
-                                        alpha:1.f],
-        @"K": [NSColor colorWithCalibratedRed:0.f
-                                        green:0.f
-                                         blue:0.f
-                                        alpha:1.f]
+        @"R": [XColor colorWithCalibratedRed:1.f
+                                       green:0.f
+                                        blue:0.f
+                                       alpha:1.f],
+        @"G": [XColor colorWithCalibratedRed:0.f
+                                       green:1.f
+                                        blue:0.f
+                                       alpha:1.f],
+        @"B": [XColor colorWithCalibratedRed:0.f
+                                       green:0.f
+                                        blue:1.f
+                                       alpha:1.f],
+        @"K": [XColor colorWithCalibratedRed:0.f
+                                       green:0.f
+                                        blue:0.f
+                                       alpha:1.f]
     };
 
     IJSVGAssertRenderedSVGMatchesMap(IJSVGTestSVG(body),
@@ -108,18 +108,18 @@
                       "class=\"cool\" x=\"2\" y=\"0\" width=\"2\" height=\"8\"/><rect class=\"hidden\" "
                       "x=\"4\" y=\"0\" width=\"2\" height=\"8\" fill=\"#00ff00\"/></g>";
     NSDictionary* palette = @{
-        @"R": [NSColor colorWithCalibratedRed:1.f
-                                        green:0.f
-                                         blue:0.f
-                                        alpha:1.f],
-        @"B": [NSColor colorWithCalibratedRed:0.f
-                                        green:0.f
-                                         blue:1.f
-                                        alpha:1.f],
-        @"W": [NSColor colorWithCalibratedRed:1.f
-                                        green:1.f
-                                         blue:1.f
-                                        alpha:1.f]
+        @"R": [XColor colorWithCalibratedRed:1.f
+                                       green:0.f
+                                        blue:0.f
+                                       alpha:1.f],
+        @"B": [XColor colorWithCalibratedRed:0.f
+                                       green:0.f
+                                        blue:1.f
+                                       alpha:1.f],
+        @"W": [XColor colorWithCalibratedRed:1.f
+                                       green:1.f
+                                        blue:1.f
+                                       alpha:1.f]
     };
 
     IJSVGAssertRenderedSVGMatchesMap(IJSVGTestSVG(body),
@@ -137,7 +137,7 @@
 {
     NSString* svg = IJSVGTestSVG(@"<rect width=\"8\" height=\"8\" fill=\"#ff0000\" fill-opacity=\"0.5\"/>"
                                   "");
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(svg, CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(svg, CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 0.5f, 0.f, 0.f, 0.5f);
 }
@@ -147,14 +147,14 @@
     NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/><g transform=\"translate(4,0)\">"
                       "<path d=\"M0 0 H4 V8 H0 Z\" fill=\"#0000ff\"/></g>";
     NSDictionary* palette = @{
-        @"B": [NSColor colorWithCalibratedRed:0.f
-                                        green:0.f
-                                         blue:1.f
-                                        alpha:1.f],
-        @"W": [NSColor colorWithCalibratedRed:1.f
-                                        green:1.f
-                                         blue:1.f
-                                        alpha:1.f]
+        @"B": [XColor colorWithCalibratedRed:0.f
+                                       green:0.f
+                                        blue:1.f
+                                       alpha:1.f],
+        @"W": [XColor colorWithCalibratedRed:1.f
+                                       green:1.f
+                                        blue:1.f
+                                       alpha:1.f]
     };
 
     IJSVGAssertRenderedSVGMatchesMap(IJSVGTestSVG(body),
@@ -172,8 +172,8 @@
 {
     NSString* body = @"<defs><path id=\"space\"/></defs><rect width=\"8\" height=\"8\" fill=\"#ffffff\"/>"
                       "<use x=\"4\" y=\"4\" xlink:href=\"#space\"/>";
-    NSColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                  CGPointMake(4.f, 4.f));
+    XColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                 CGPointMake(4.f, 4.f));
 
     IJSVGAssertColorComponents(color, 1.f, 1.f, 1.f, 1.f);
 }
@@ -184,15 +184,15 @@
                       "gradientUnits=\"userSpaceOnUse\"><stop offset=\"0\" stop-color=\"#ff0000\"/><stop "
                       "offset=\"1\" stop-color=\"#0000ff\"/></linearGradient></defs><rect width=\"8\" "
                       "height=\"8\" fill=\"url(#fade)\"/>";
-    NSColor* leftColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                      CGPointMake(0.f, 4.f));
-    NSColor* rightColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                       CGPointMake(7.f, 4.f));
-    NSColor* middleColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
-                                                        CGPointMake(4.f, 4.f));
-    NSColor* leftRGBColor = [leftColor colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
-    NSColor* rightRGBColor = [rightColor colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
-    NSColor* middleRGBColor = [middleColor colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    XColor* leftColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                     CGPointMake(0.f, 4.f));
+    XColor* rightColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                      CGPointMake(7.f, 4.f));
+    XColor* middleColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body),
+                                                       CGPointMake(4.f, 4.f));
+    XColor* leftRGBColor = [leftColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* rightRGBColor = [rightColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* middleRGBColor = [middleColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
 
     XCTAssertGreaterThan(leftRGBColor.redComponent, leftRGBColor.blueComponent);
     XCTAssertGreaterThan(rightRGBColor.blueComponent,

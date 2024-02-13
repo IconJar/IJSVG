@@ -16,11 +16,14 @@
                              region:(CGRect)region
                             context:(IJSVGFilterContext*)context
 {
+    CGAffineTransform xform = CGAffineTransformIdentity;
+    NSValue *xformObj = [NSValue valueWithBytes:&xform objCType:@encode(CGAffineTransform)];
+
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     // Repeat the input image only when it has valid bounds.
     return IJSVGFilterValidRect(input.extent) ? [input imageByApplyingFilter:@"CIAffineTile"
                                                          withInputParameters:@{
-        kCIInputTransformKey: NSAffineTransform.transform
+        kCIInputTransformKey: xformObj
     }] : CIImage.emptyImage;
 }
 

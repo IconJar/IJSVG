@@ -83,7 +83,7 @@ static void IJSVGSaveReferenceImage(CGImageRef image, NSString* name)
     WKSnapshotConfiguration* options = [[WKSnapshotConfiguration alloc] init];
     options.rect = CGRectMake(0, 0, 400, 200);
     options.snapshotWidth = @400;
-    [view takeSnapshotWithConfiguration:options completionHandler:^(NSImage* image, NSError* error) {
+    [view takeSnapshotWithConfiguration:options completionHandler:^(XImage* image, NSError* error) {
         if(self.completion == nil) {
             return;
         }
@@ -133,7 +133,7 @@ static void IJSVGSaveReferenceImage(CGImageRef image, NSString* name)
     });
 }
 
-- (NSArray<NSString*>*)compareImage:(NSImage*)snapshot
+- (NSArray<NSString*>*)compareImage:(XImage*)snapshot
 {
     CGRect rect = CGRectMake(0, 0, 400, 200);
     CGImageRef reference = [snapshot CGImageForProposedRect:&rect context:nil hints:nil];

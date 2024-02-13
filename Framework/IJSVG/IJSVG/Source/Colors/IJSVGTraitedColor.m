@@ -11,7 +11,7 @@
 
 @implementation IJSVGTraitedColor
 
-+ (IJSVGTraitedColor*)colorWithColor:(NSColor*)color
++ (IJSVGTraitedColor*)colorWithColor:(XColor*)color
                               traits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColor* type = [[self alloc] init];
@@ -36,7 +36,7 @@
     return [self.color isEqual:((IJSVGTraitedColor*)object).color];
 }
 
-- (void)setColor:(NSColor *)color
+- (void)setColor:(XColor *)color
 {
     _color = [IJSVGColor computeColorSpace:color];
 }

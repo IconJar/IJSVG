@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -732,8 +733,8 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return [string floatValue];
 }
 
-+ (CGFloat)angleBetweenPointA:(NSPoint)point1
-                       pointb:(NSPoint)point2
++ (CGFloat)angleBetweenPointA:(XPoint)point1
+                       pointb:(XPoint)point2
 {
     return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(IJSVGRatio(point1, point2));
 }
@@ -785,13 +786,10 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     }
 }
 
-
-
-
-+ (NSImage*)resizeImage:(NSImage*)anImage
++ (XImage*)resizeImage:(XImage*)anImage
                  toSize:(CGSize)size
 {
-    NSImage* image = [[NSImage alloc] initWithSize:size];
+    XImage* image = [[XImage alloc] initWithSize:size];
     [image lockFocus];
     [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height)
                fromRect:NSMakeRect(0.f, 0.f, anImage.size.width, anImage.size.height)

@@ -18,8 +18,8 @@
     IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(@"<rect width=\"8\" height=\"8\" fill=\"#ff0000\"/>"));
     NSString* exportedString = [svg SVGStringWithSize:CGSizeMake(16.f, 12.f)
                                               options:IJSVGExporterOptionRemoveComments];
-    NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
-    NSXMLElement* rootElement = document.rootElement;
+    CXMLDocument* document = IJSVGTestXMLDocument(exportedString);
+    CXMLElement* rootElement = document.rootElement;
 
     XCTAssertEqualObjects([[rootElement attributeForName:@"width"] stringValue],
                           @"16");
@@ -37,7 +37,7 @@
         IJSVGExporterOptionRemoveWidthHeightAttributes;
     NSString* exportedString = [svg SVGStringWithSize:CGSizeMake(8.f, 8.f)
                                               options:options];
-    NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
+    CXMLDocument* document = IJSVGTestXMLDocument(exportedString);
 
     XCTAssertFalse([exportedString hasPrefix:@"<?xml"]);
     XCTAssertFalse([exportedString containsString:@"Generator:"]);
@@ -71,8 +71,8 @@
         IJSVGExporterOptionRemoveHiddenElements;
     NSString* exportedString = [svg SVGStringWithSize:CGSizeMake(8.f, 8.f)
                                               options:options];
-    NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
-    NSArray<NSXMLNode*>* rects = [document nodesForXPath:@"//*[local-name()='rect']"
+    CXMLDocument* document = IJSVGTestXMLDocument(exportedString);
+    NSArray<CXMLNode*>* rects = [document nodesForXPath:@"//*[local-name()='rect']"
                                                    error:nil];
 
     XCTAssertEqual(rects.count, 1);

@@ -10,12 +10,13 @@
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGGradient : IJSVGGroup
 
-@property (nonatomic, strong, nullable) NSArray<NSColor*>* colors;
+@property (nonatomic, strong, nullable) NSArray<XColor*>* colors;
 @property (nonatomic, assign, nullable) CGFloat* locations;
 @property (nonatomic, assign) NSUInteger numberOfStops;
 @property (nonatomic, assign, nullable) CGGradientRef CGGradient;
@@ -31,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;
 - (void)drawInContextRef:(CGContextRef)ctx
-                  bounds:(NSRect)objectRect
+                  bounds:(XRect)objectRect
                transform:(CGAffineTransform)absoluteTransform;
 
 @end

@@ -14,7 +14,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name);
 
 // Read a known attribute with a nonempty value.
 // Pass nil for activeAttributes to read all known attributes when building the cache.
-BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
+BOOL IJSVGReadXMLAttribute(CXMLNode* node, IJSVGBitFlags* activeAttributes,
     NSUInteger* attribute, NSString* __autoreleasing* value);
 NSSet<NSString*>* IJSVGClassNameList(NSString* value);
 

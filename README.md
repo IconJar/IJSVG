@@ -147,8 +147,8 @@ clipping. Filter effects are excluded.
     // or with and without extension to find it within the bundle
     IJSVG* svg = [IJSVG SVGNamed:@"my_svg"]; 
 
-#### Step 2 - grab the NSImage from it
-    NSImage* svgImage = [svg imageWithSize:CGSizeMake(100.f,100.f)];
+#### Step 2 - grab the XImage from it
+    XImage* svgImage = [svg imageWithSize:CGSizeMake(100.f,100.f)];
   
 # Other ways of drawing
 

@@ -189,7 +189,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                             scale:1
                           flipped:NO
                    blueBackground:NO];
-    reused.style.fillColor = NSColor.blueColor;
+    reused.style.fillColor = XColor.blueColor;
     [reused setNeedsDisplay];
     NSData *after = [self render:reused
                             size:64
@@ -197,7 +197,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                          flipped:NO
                   blueBackground:NO];
     IJSVG *fresh = [self svgForDocument:0];
-    fresh.style.fillColor = NSColor.blueColor;
+    fresh.style.fillColor = XColor.blueColor;
     NSData *expected = [self render:fresh
                                size:64
                               scale:1

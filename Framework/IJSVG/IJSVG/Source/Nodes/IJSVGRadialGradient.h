@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+@import TouchXML;
+
 #import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
 
@@ -20,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitLength* fr;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 
-+ (void)parseGradient:(NSXMLElement*)element
++ (void)parseGradient:(CXMLElement*)element
              gradient:(IJSVGRadialGradient*)gradient;
 
 @end

@@ -25,7 +25,7 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <AppKit/AppKit.h>
+//#import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -261,10 +261,10 @@ extern NSString* const IJSVGAttributePathLength;
 @interface IJSVGParser : NSObject {
 
 @private
-    NSXMLDocument* _document;
+    CXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
-    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
+    NSMutableDictionary<NSString*, CXMLElement*>* _detachedReferences;
     IJSVGThreadManager* _threadManager;
     CGSize _rootSize;
     IJSVGRootNode* _rootNode;

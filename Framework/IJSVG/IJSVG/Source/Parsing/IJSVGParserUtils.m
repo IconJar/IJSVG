@@ -74,7 +74,7 @@ BOOL IJSVGAttributeHasValue(
     return YES;
 }
 
-BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
+BOOL IJSVGReadXMLAttribute(CXMLNode* node, IJSVGBitFlags* activeAttributes,
     NSUInteger* attribute, NSString* __autoreleasing* value)
 {
     NSUInteger index = IJSVGNodeAttributeForName(node.name);
