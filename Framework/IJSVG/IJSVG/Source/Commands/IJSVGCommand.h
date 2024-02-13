@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 
 + (Class)commandClassForCommandChar:(char)aChar;
 + (NSInteger)requiredParameterCount;
-+ (NSPoint)readCoordinatePair:(CGFloat*)pairs
++ (XPoint)readCoordinatePair:(CGFloat*)pairs
                         index:(NSInteger)index;
 + (IJSVGPathDataSequence*)pathDataSequence;
 + (void)runWithParams:(CGFloat*)params
@@ -66,7 +66,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
                                 boundingBox:(CGRect)boundingBox;
 
 - (CGFloat)readFloat;
-- (NSPoint)readPoint;
+- (XPoint)readPoint;
 - (BOOL)readBOOL;
 - (void)resetRead;
 

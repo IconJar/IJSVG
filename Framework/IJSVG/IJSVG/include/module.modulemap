@@ -2,4 +2,5 @@ module IJSVG {
     header "IJSVG/IJSVGUmbrella.h"
     export *
     link framework "AppKit"
+    link framework "TouchXML"
 }

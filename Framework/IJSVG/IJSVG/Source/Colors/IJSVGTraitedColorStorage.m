@@ -10,7 +10,7 @@
 
 @implementation IJSVGReplacementColor
 
-- (void)setReplacementColor:(NSColor*)replacementColor
+- (void)setReplacementColor:(XColor*)replacementColor
 {
     _replacementColor = [IJSVGColor computeColorSpace:replacementColor];
 }
@@ -54,8 +54,8 @@
     }
 }
 
-- (void)replaceColor:(NSColor*)replaceColor
-           withColor:(NSColor*)withColor
+- (void)replaceColor:(XColor*)replaceColor
+           withColor:(XColor*)withColor
               traits:(IJSVGColorUsageTraits)traits
 {
     replaceColor = [IJSVGColor computeColorSpace:replaceColor];
@@ -72,8 +72,8 @@
     [repColor addTraits:traits];
 }
 
-- (IJSVGReplacementColor*)replacementColorForColor:(NSColor*)replacementColor
-                                         withColor:(NSColor*)withColor
+- (IJSVGReplacementColor*)replacementColorForColor:(XColor*)replacementColor
+                                         withColor:(XColor*)withColor
 {
     for(IJSVGReplacementColor* color in _replacementColors) {
         if([color.color isEqual:color] == YES &&
@@ -84,7 +84,7 @@
     return nil;
 }
 
-- (IJSVGReplacementColor*)replacementColorForColor:(NSColor*)color
+- (IJSVGReplacementColor*)replacementColorForColor:(XColor*)color
                                     matchingTraits:(IJSVGColorUsageTraits)traits
 {
     for(IJSVGReplacementColor* replacementColor in _replacementColors) {
@@ -96,7 +96,7 @@
     return nil;
 }
 
-- (NSColor*)colorForColor:(NSColor*)color
+- (XColor*)colorForColor:(XColor*)color
            matchingTraits:(IJSVGColorUsageTraits)traits
 {
     if([self matchesReplacementTraits:traits] == NO) {

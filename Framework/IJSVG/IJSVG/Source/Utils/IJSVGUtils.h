@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 
@@ -75,8 +76,8 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
                                   sourceURL:(NSURL*)sourceURL;
 
 + (CGFloat)floatValue:(NSString*)string;
-+ (CGFloat)angleBetweenPointA:(NSPoint)point
-                       pointb:(NSPoint)point;
++ (CGFloat)angleBetweenPointA:(XPoint)point
+                       pointb:(XPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
 + (NSArray<NSString*>*)defURLs:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string
@@ -101,8 +102,8 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
 
-+ (NSImage*)resizeImage:(NSImage*)anImage
-                 toSize:(CGSize)size;
++ (XImage*)resizeImage:(XImage*)anImage
+                toSize:(CGSize)size;
 
 @end
 NS_ASSUME_NONNULL_END

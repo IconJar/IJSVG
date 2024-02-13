@@ -13,6 +13,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVG;
@@ -20,7 +21,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface IJSVG : NSObject <NSPasteboardWriting> {
+@interface IJSVG : NSObject
+#if __has_include(<AppKit/AppKit.h>)
+<NSPasteboardWriting>
+#endif
+{
 
 @private
     IJSVGRootNode* _rootNode;
@@ -59,7 +64,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Bitmask of which dimensions were implicitly set on the SVG
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
-- (void)prepForDrawingInView:(NSView* _Nullable)view;
+- (void)prepForDrawingInView:(XView* _Nullable)view;
 - (IJSVGRootNode* _Nullable)rootNode;
 - (CGRect)viewBox;
 // Painted geometry in viewBox coordinates, excluding filter effects.
@@ -89,7 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
                    flipped:(BOOL)flipped;
 
 
-- (instancetype)initWithImage:(NSImage*)image;
+- (instancetype)initWithImage:(XImage*)image;
 - (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode;
 
 // Returns nil when parsing fails. Use init(parsing:) in Swift to receive errors.
@@ -114,15 +119,15 @@ NS_ASSUME_NONNULL_BEGIN
                       bundle:(NSBundle*)bundle
                        error:(NSError* _Nullable * _Nullable)error;
 
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize;
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
+- (XImage* _Nullable)imageWithSize:(CGSize)aSize;
+- (XImage* _Nullable)imageWithSize:(CGSize)aSize
                     error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(size:));
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
+- (XImage* _Nullable)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped;
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
+- (XImage* _Nullable)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
                     error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(size:flipped:));
-- (NSImage* _Nullable)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
+- (XImage* _Nullable)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(fitting:flipped:));
 - (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size

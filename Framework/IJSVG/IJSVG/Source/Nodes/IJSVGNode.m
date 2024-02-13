@@ -49,9 +49,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
 
 // Returns not found for absent names and non element nodes.
 + (IJSVGNodeType)typeForString:(NSString* _Nullable)string
-                          kind:(NSXMLNodeKind)kind
+                          kind:(CXMLNodeKind)kind
 {
-    if(string == nil || kind != NSXMLElementKind) {
+    if(string == nil || kind != CXMLElementKind) {
         return IJSVGNodeTypeNotFound;
     }
     

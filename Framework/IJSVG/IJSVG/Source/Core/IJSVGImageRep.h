@@ -6,12 +6,13 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
+#if __has_include(<Cocoa/Cocoa.h>)
 #import <IJSVG/IJSVGParser.h>
 #import <Cocoa/Cocoa.h>
 
 @class IJSVG;
 
-@interface IJSVGImageRep : NSImageRep {
+@interface IJSVGImageRep : XImageRep {
 
 @private
     IJSVG* _svg;
@@ -23,3 +24,4 @@
 @property (nonatomic, readonly) IJSVG* SVG;
 
 @end
+#endif

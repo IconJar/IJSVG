@@ -51,7 +51,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 - (CGMutablePathRef _Nullable)path CF_RETURNS_NOT_RETAINED;
 
 - (void)close;
-- (NSPoint)currentPoint;
+- (XPoint)currentPoint;
 
 @end
 

@@ -46,7 +46,7 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     return [parameters ijsvg_componentsSeparatedByChars:", /\t\n\r"];
 }
 
-+ (NSColor*)colorFromOKLCHParameters:(NSString*)parameters
++ (XColor*)colorFromOKLCHParameters:(NSString*)parameters
 {
     NSArray<NSString*>* components = [self OKLCHComponentsFromParameters:parameters];
     if(components.count < 3) {
@@ -102,10 +102,10 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     green = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(green), 0.f, 1.f);
     blue = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(blue), 0.f, 1.f);
 
-    return [NSColor colorWithDeviceRed:red
-                                 green:green
-                                  blue:blue
-                                 alpha:alpha];
+    return [XColor colorWithDeviceRed:red
+                                green:green
+                                 blue:blue
+                                alpha:alpha];
 }
 
 + (CGFloat*)HSBFromCSSHSLHue:(CGFloat)hue

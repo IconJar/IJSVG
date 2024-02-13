@@ -11,7 +11,7 @@
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVG/IJSVGBitFlags64.h>
-#import <AppKit/AppKit.h>
+//#import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -356,8 +356,8 @@ void IJSVGAssertPaintableObject(id object);
 containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 // Returns not found for absent names and non element nodes.
-+ (IJSVGNodeType)typeForString:(NSString* _Nullable)string
-                          kind:(NSXMLNodeKind)kind;
+//+ (IJSVGNodeType)typeForString:(NSString* _Nullable)string
+//                          kind:(CXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
 
 - (BOOL)containsRelativeUnits;

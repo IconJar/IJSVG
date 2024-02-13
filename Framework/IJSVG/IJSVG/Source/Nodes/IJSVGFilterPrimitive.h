@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -18,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Primitive specific SVG attributes, retained for lossless vector export.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, NSString*>* parameters;
 @property (nonatomic, strong, nullable) IJSVGNode* imageNode;
-@property (nonatomic, strong, nullable) NSImage* image;
+@property (nonatomic, strong, nullable) XImage* image;
 
 + (NSSet<NSString*>*)parameterNames;
 + (BOOL)isPrimitiveType:(IJSVGNodeType)type;

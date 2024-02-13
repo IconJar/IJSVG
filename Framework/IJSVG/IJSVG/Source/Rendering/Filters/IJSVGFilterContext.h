@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGFilter.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <CoreImage/CoreImage.h>
 
 @interface IJSVGFilterContext : NSObject
@@ -46,7 +47,7 @@
 - (CIImage*)offsetImage:(CIImage*)input
                      dx:(CGFloat)dx
                      dy:(CGFloat)dy;
-- (CIImage*)floodWithColor:(NSColor*)color
+- (CIImage*)floodWithColor:(XColor*)color
                    opacity:(CGFloat)opacity;
 
 @end

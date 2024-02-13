@@ -248,11 +248,11 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 {
     if((self = [super init]) != nil) {
         NSError* anError = nil;
-        NSXMLDocument* document = nil;
+        CXMLDocument* document = nil;
         @try {
-            document = [[NSXMLDocument alloc] initWithXMLString:string
-                                                        options:0
-                                                          error:&anError];
+            document = [[CXMLDocument alloc] initWithXMLString:string
+                                                       options:0
+                                                         error:&anError];
         }
         @catch (NSException* exception) {
         }
@@ -273,11 +273,11 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 {
     if((self = [super init]) != nil) {
         NSError* anError = nil;
-        NSXMLDocument* document = nil;
+        CXMLDocument* document = nil;
         @try {
-            document = [[NSXMLDocument alloc] initWithData:data
-                                                   options:0
-                                                     error:&anError];
+            document = [[CXMLDocument alloc] initWithData:data
+                                                  options:0
+                                                    error:&anError];
         }
         @catch (NSException* exception) {
         }
@@ -296,9 +296,9 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 {
     @try {
         NSError* error;
-        NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
-                                                         options:0
-                                                           error:&error];
+        CXMLDocument* doc = [[CXMLDocument alloc] initWithData:data
+                                                       options:0
+                                                         error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
     }
@@ -402,13 +402,13 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (void)computeDefsForElement:(NSXMLElement*)element
+- (void)computeDefsForElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
 {
     if(element.childCount == 0) {
         return;
     }
-    for(NSXMLElement* childElement in element.children) {
+    for(CXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         if(type != IJSVGNodeTypeDef) {
@@ -487,11 +487,11 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 }
 
 // The following method is highly tuned for performance rather than readability.
-- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
+- (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(CXMLElement*)element
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes
 {
-    NSArray<NSXMLNode*>* elementAttributes = element.attributes;
+    NSArray<CXMLNode*>* elementAttributes = element.attributes;
     NSUInteger attributeCount = elementAttributes.count;
     BOOL hasStyleSheetRules = _styleSheet.ruleCount != 0;
     if(attributeCount == 0 && hasStyleSheetRules == NO) {
@@ -690,7 +690,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                                                                 element:element];
             node.stroke = object;
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
+            XColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -720,7 +720,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                                                                 element:element];
             node.fill = object;
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
+            XColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -802,11 +802,11 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return postProcessBlock;
 }
 
-- (IJSVGNode*)parseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseElement:(CXMLElement*)element
                 parentNode:(IJSVGNode*)node
 {
     NSString* name = element.localName;
-    NSXMLNodeKind nodeKind = element.kind;
+    CXMLNodeKind nodeKind = element.kind;
     IJSVGNodeType nodeType = [IJSVGNode typeForString:name
                                                  kind:nodeKind];
         
@@ -971,7 +971,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return computedNode;
 }
 
-- (void)computeElement:(NSXMLElement*)element
+- (void)computeElement:(CXMLElement*)element
             parentNode:(IJSVGNode*)node
 {
     if(element.childCount == 0) {
@@ -979,17 +979,17 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     }
     [self computeDefsForElement:element
                      parentNode:node];
-    for(NSXMLNode* childNode in element.children) {
-        if(childNode.kind != NSXMLElementKind) {
+    for(CXMLNode* childNode in element.children) {
+        if(childNode.kind != CXMLElementKind) {
             continue;
         }
-        [self parseElement:(NSXMLElement*)childNode
+        [self parseElement:(CXMLElement*)childNode
                 parentNode:node];
     }
 }
 
 #pragma mark Detaching nodes
-- (void)detachElement:(NSXMLElement*)element
+- (void)detachElement:(CXMLElement*)element
        withIdentifier:(NSString*)identifier
 {
     // we can just store the reference for later, we used to copy at this point
@@ -998,7 +998,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     _detachedReferences[identifier] = element;
 }
 
-- (NSXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
+- (CXMLElement*)detachedElementWithIdentifier:(NSString*)identifier
 {
     return _detachedReferences[identifier];
 }
@@ -1007,7 +1007,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                                 referencingNode:(IJSVGNode*)node
                                         element:(NSXMLElement*)element
 {
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
+    CXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
     if(detachedElement == nil) {
         return nil;
     }
@@ -1026,8 +1026,8 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                    parentNode:node].detach;
 }
 
-- (void)recursionDetectedOn:(NSXMLElement*)element
-                decendentOf:(NSXMLElement*)parent
+- (void)recursionDetectedOn:(CXMLElement*)element
+                decendentOf:(CXMLElement*)parent
                  identifier:(NSString*)identifier
 {
   // For now, we only want to log these for debug builds whilst we fix any
@@ -1038,23 +1038,23 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 #endif
 }
 
-- (BOOL)isElement:(NSXMLElement*)element
-       decedentOf:(NSXMLElement*)parentElement {
-    NSXMLElement* parent = (NSXMLElement*)element.parent;
+- (BOOL)isElement:(CXMLElement*)element
+       decedentOf:(CXMLElement*)parentElement {
+    CXMLElement* parent = (CXMLElement*)element.parent;
     while(parent != nil) {
       if(parentElement == parent) {
         return YES;
       }
-      parent = (NSXMLElement*)parent.parent;
+      parent = (CXMLElement*)parent.parent;
     }
     return NO;
 }
 
-- (NSXMLElement*)mergedElement:(NSXMLElement*)element
-          withReferenceElement:(NSXMLElement*)reference
+- (CXMLElement*)mergedElement:(CXMLElement*)element
+         withReferenceElement:(CXMLElement*)reference
 {
-    NSXMLElement* copy = reference.copy;
-    for (__strong NSXMLNode* attribute in element.attributes) {
+    CXMLElement* copy = reference.copy;
+    for (__strong CXMLNode* attribute in element.attributes) {
         [copy removeAttributeForName:attribute.name];
         attribute = attribute.copy;
         [copy addAttribute:attribute];
@@ -1081,13 +1081,13 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
 #pragma mark Node Types
 
-- (void)parseStyleElement:(NSXMLElement*)element
+- (void)parseStyleElement:(CXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
 {
     [_styleSheet parseStyleBlock:element.stringValue];
 }
 
-- (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element
+- (IJSVGNode*)parseLinearGradientElement:(CXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
                         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1099,7 +1099,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1114,7 +1114,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseRadialGradientElement:(NSXMLElement*)element
+- (IJSVGNode*)parseRadialGradientElement:(CXMLElement*)element
                               parentNode:(IJSVGNode*)parentNode
                         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1126,7 +1126,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1141,7 +1141,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseStopElement:(NSXMLElement*)element
+- (IJSVGNode*)parseStopElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1159,7 +1159,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parsePathElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePathElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1189,7 +1189,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseLineElement:(NSXMLElement*)element
+- (IJSVGNode*)parseLineElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1214,7 +1214,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parsePolyLineElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePolyLineElement:(CXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1239,7 +1239,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parsePolygonElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePolygonElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1264,7 +1264,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseEllipseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseEllipseElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1289,7 +1289,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseCircleElement:(NSXMLElement*)element
+- (IJSVGNode*)parseCircleElement:(CXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1314,7 +1314,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseGroupElement:(NSXMLElement*)element
+- (IJSVGNode*)parseGroupElement:(CXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
                        nodeType:(IJSVGNodeType)nodeType
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
@@ -1336,7 +1336,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (void)parseSVGElement:(NSXMLElement*)element
+- (void)parseSVGElement:(CXMLElement*)element
                ontoNode:(IJSVGRootNode*)node
              parentNode:(IJSVGNode*)parentNode
        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
@@ -1376,7 +1376,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
   
 }
 
-- (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
+- (IJSVGNode*)parseSVGElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1389,7 +1389,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseRectElement:(NSXMLElement*)element
+- (IJSVGNode*)parseRectElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1423,7 +1423,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseImageElement:(NSXMLElement*)element
+- (IJSVGNode*)parseImageElement:(CXMLElement*)element
                      parentNode:(IJSVGNode*)parentNode
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1440,13 +1440,13 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
                                          ignoredAttributes:nil];
     
     // load image from base64
-    NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
+    CXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
     
     [node loadFromString:dataNode.stringValue];
     return node;
 }
 
-- (IJSVGNode*)parseUseElement:(NSXMLElement*)element
+- (IJSVGNode*)parseUseElement:(CXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1457,7 +1457,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     }
   
     // its important that we remove the xlink attribute or hell breaks loose
-    NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
+    CXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
   
     // We are trying to use an element that is a decedent of itself.
     if([self isElement:element decedentOf:detachedElement]) {
@@ -1481,11 +1481,11 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 }
 
 - (void)replaceAttributes:(NSArray<NSString*>*)attributes
-                onElement:(NSXMLElement*)onElement
-              fromElement:(NSXMLElement*)fromElement
+                onElement:(CXMLElement*)onElement
+              fromElement:(CXMLElement*)fromElement
 {
     for(NSString* collpaseAttribute in attributes) {
-        NSXMLNode* attribute = nil;
+        CXMLNode* attribute = nil;
         if((attribute = [fromElement attributeForName:collpaseAttribute]) != nil &&
            [onElement attributeForName:collpaseAttribute] != nil) {
             [attribute detach];
@@ -1495,7 +1495,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     }
 }
 
-- (IJSVGNode*)parsePatternElement:(NSXMLElement*)element
+- (IJSVGNode*)parsePatternElement:(CXMLElement*)element
                        parentNode:(IJSVGNode*)parentNode
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1508,7 +1508,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     [node addTraits:IJSVGNodeTraitPaintable];
     NSString* xLinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xLinkID != nil) {
-        NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
+        CXMLElement* detachedElement = [self detachedElementWithIdentifier:xLinkID];
         element = [self mergedElement:element
                  withReferenceElement:detachedElement];
     }
@@ -1520,7 +1520,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseClipPathElement:(NSXMLElement*)element
+- (IJSVGNode*)parseClipPathElement:(CXMLElement*)element
                         parentNode:(IJSVGNode*)parentNode
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1539,19 +1539,19 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (void)parseFilterChildren:(NSXMLElement*)element parentNode:(IJSVGGroup*)node
+- (void)parseFilterChildren:(CXMLElement*)element parentNode:(IJSVGGroup*)node
 {
-    for(NSXMLNode* child in element.children) {
+    for(CXMLNode* child in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:child.localName kind:child.kind];
         if([IJSVGFilterPrimitive type:node.type acceptsChildType:type]) {
-            [self parseFilterPrimitiveElement:(NSXMLElement*)child parentNode:node];
+            [self parseFilterPrimitiveElement:(CXMLElement*)child parentNode:node];
         }
     }
 }
 
 - (IJSVGNode*)filterReferenceWithIdentifier:(NSString*)identifier
                             referencingNode:(IJSVGNode*)node
-                                    element:(NSXMLElement*)element
+                                    element:(CXMLElement*)element
 {
     if(self.activeFilterReferences == nil) {
         self.activeFilterReferences = [[NSMutableSet alloc] init];
@@ -1571,12 +1571,12 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
 - (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value
                           referencingNode:(IJSVGNode*)node
-                                  element:(NSXMLElement*)element
+                                  element:(CXMLElement*)element
 {
     NSArray<NSString*>* identifiers = [IJSVGUtils defURLs:value];
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
     for(NSString* identifier in identifiers) {
-        NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
+        CXMLElement* definition = [self detachedElementWithIdentifier:identifier];
         if([IJSVGNode typeForString:definition.localName
                                kind:definition.kind] != IJSVGNodeTypeFilter) {
             return @[];
@@ -1592,7 +1592,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return filters;
 }
 
-- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(NSXMLElement*)element
+- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(CXMLElement*)element
                                           parentNode:(IJSVGGroup*)parentNode
 {
     IJSVGNodeType type = [IJSVGNode typeForString:element.localName kind:element.kind];
@@ -1637,7 +1637,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
+- (IJSVGNode*)parseFilterElement:(CXMLElement*)element
                       parentNode:(IJSVGNode*)parentNode
                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1694,7 +1694,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (IJSVGNode*)parseMaskElement:(NSXMLElement*)element
+- (IJSVGNode*)parseMaskElement:(CXMLElement*)element
                     parentNode:(IJSVGNode*)parentNode
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1712,14 +1712,14 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return node;
 }
 
-- (void)parseDefElement:(NSXMLElement*)element
+- (void)parseDefElement:(CXMLElement*)element
              parentNode:(IJSVGNode*)parentNode
               recursive:(BOOL)recursive
 {
     if(element.childCount == 0) {
         return;
     }
-    for(NSXMLElement* childElement in element.children) {
+    for(CXMLElement* childElement in element.children) {
         IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
                                                  kind:childElement.kind];
         
@@ -1750,14 +1750,14 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     }
 }
 
-- (void)parseTitleElement:(NSXMLElement*)element
+- (void)parseTitleElement:(CXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
          postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     parentNode.title = element.stringValue;
 }
 
-- (void)parseDescElement:(NSXMLElement*)element
+- (void)parseDescElement:(CXMLElement*)element
               parentNode:(IJSVGNode*)parentNode
         postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
@@ -1766,10 +1766,10 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
 #pragma mark XLink
 
-- (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
+- (CXMLNode*)resolveXLinkAttributeForElement:(CXMLElement*)element
 {
     // SVG 2 href takes precedence; resolve legacy links by namespace so aliases work.
-    NSXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
+    CXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
     if(attributeNode == nil) {
         attributeNode = [element attributeForLocalName:IJSVGAttributeHref
                                                    URI:@"http://www.w3.org/1999/xlink"];
@@ -1780,9 +1780,9 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return attributeNode;
 }
 
-- (NSString*)resolveXLinkAttributeStringForElement:(NSXMLElement*)element
+- (NSString*)resolveXLinkAttributeStringForElement:(CXMLElement*)element
 {
-    NSXMLNode* node = [self resolveXLinkAttributeForElement:element];
+    CXMLNode* node = [self resolveXLinkAttributeForElement:element];
     if([node.stringValue hasPrefix:@"#"] && node.stringValue.length > 1) {
         return [node.stringValue substringFromIndex:1];
     }

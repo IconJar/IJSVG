@@ -7,14 +7,14 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <Cocoa/Cocoa.h>
+//#import <Cocoa/Cocoa.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 IB_DESIGNABLE
-@interface IJSVGView : NSView {
+@interface IJSVGView : XView {
     IBInspectable NSString* imageName;
-    IBInspectable NSColor* tintColor;
+    IBInspectable XColor* tintColor;
 
     IJSVG* SVG;
 }
