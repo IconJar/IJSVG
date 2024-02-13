@@ -24,15 +24,18 @@
 # define XRectToCGRect NSRectToCGRect
 # define XScreen NSScreen
 # define XView NSView
+# define CXMLAttributeKind NSXMLAttributeKind
+# define CXMLCommentKind NSXMLCommentKind
 # define CXMLDocument NSXMLDocument
 # define CXMLElement NSXMLElement
+# define CXMLElementKind NSXMLElementKind
 # define CXMLNode NSXMLNode
 # define CXMLNodeCompactEmptyElement NSXMLNodeCompactEmptyElement
 # define CXMLNodeKind NSXMLNodeKind
 # define CXMLNodeOptions NSXMLNodeOptions
 # define CXMLNodeOptionsNone NSXMLNodeOptionsNone
 # define CXMLNodePrettyPrint NSXMLNodePrettyPrint
-# define CXMLElementKind NSXMLElementKind
+# define CXMLTextKind NSXMLTextKind
 
 #endif
 
