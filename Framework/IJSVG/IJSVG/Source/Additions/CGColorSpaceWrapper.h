@@ -7,10 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+@import CoreGraphics;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface CGColorSpaceWrapper : NSObject
+
++ (instancetype)deviceRGBColorSpace;
+- (CGColorSpaceRef)CGColorSpace;
 
 @end
 

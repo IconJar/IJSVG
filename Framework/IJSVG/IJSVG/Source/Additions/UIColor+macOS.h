@@ -20,6 +20,9 @@
 - (CGFloat)blueComponent;
 - (CGFloat)alphaComponent;
 
+- (CGColorSpaceWrapper *)colorSpace;
+- (instancetype)colorUsingColorSpace:(CGColorSpaceWrapper *)colorSpace;
+
 @end
 
 #endif

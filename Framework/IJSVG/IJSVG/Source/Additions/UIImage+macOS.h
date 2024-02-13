@@ -11,6 +11,7 @@
 
 @interface UIImage (macOS)
 
+- (instancetype)initWithCGImage:(CGImageRef)image size:(CGSize)size;
 - (instancetype)initWithSize:(CGSize)size;
 - (void)lockFocus;
 - (void)unlockFocus;

@@ -10,7 +10,7 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/UIImage+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @implementation IJSVGImage
 

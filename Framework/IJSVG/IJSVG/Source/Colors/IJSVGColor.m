@@ -12,7 +12,7 @@
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/UIColor+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 

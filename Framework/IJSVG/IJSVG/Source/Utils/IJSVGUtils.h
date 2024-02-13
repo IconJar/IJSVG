@@ -46,11 +46,15 @@ void IJSVGCharBufferToLower(char* buffer);
 size_t IJSVGCharBufferHash(char* buffer);
 CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 
+#if __has_include(<AppKit/AppKit.h>)
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
+#endif
 
 NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* stringToCompress);
+#if __has_include(<AppKit/AppKit.h>)
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options);
+#endif
 NSString* IJSVGShortenFloatString(NSString* string);
 NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);

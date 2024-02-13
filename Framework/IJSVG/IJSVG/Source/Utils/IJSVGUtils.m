@@ -12,7 +12,7 @@
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGXEntities.h>
-#import <IJSVG/UIImage+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -213,6 +213,7 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
+#if __has_include(<AppKit/AppKit.h>)
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
     return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
@@ -233,6 +234,7 @@ NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions 
     }
     return IJSVGShortFloatString(f);
 };
+#endif
 
 NSString* IJSVGShortFloatString(CGFloat f)
 {
