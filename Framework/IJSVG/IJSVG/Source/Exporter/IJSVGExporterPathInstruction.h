@@ -6,7 +6,6 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUnitLength.h>
 

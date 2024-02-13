@@ -8,7 +8,7 @@
 
 #if __has_include(<AppKit/AppKit.h>)
 
-@import AppKit;
+# import <AppKit/AppKit.h>
 
 # define XColor NSColor
 # define XColorSpace NSColorSpace
@@ -44,9 +44,9 @@
 
 # if __has_include(<UIKit/UIKit.h>)
 
-@import CoreGraphics;
-@import UIKit;
-@import TouchXML;
+# import <CoreGraphics/CoreGraphics.h>
+# import <UIKit/UIKit.h>
+# import <TouchXML/TouchXML.h>
 
 # define NSCompositingOperationCopy 1
 
@@ -67,11 +67,12 @@
 /* CXMLNodePreserveWhitespace does not exist in TouchXML AFAICT. */
 # define CXMLNodePreserveWhitespace (0)
 
-# import "CGColorSpaceWrapper.h"
-# import "NSString+macOS.h"
-# import "NSValue+macOS.h"
-# import "UIColor+macOS.h"
-# import "UIImage+macOS.h"
-# import "UIScreen+macOS.h"
+/* TODO: These should probably be private (at least some of these). */
+# import <IJSVG/CGColorSpaceWrapper.h>
+# import <IJSVG/NSString+macOS.h>
+# import <IJSVG/NSValue+macOS.h>
+# import <IJSVG/UIColor+macOS.h>
+# import <IJSVG/UIImage+macOS.h>
+# import <IJSVG/UIScreen+macOS.h>
 
 #endif

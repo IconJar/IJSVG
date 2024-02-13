@@ -282,6 +282,7 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
     return IJSVGShortFloatString(self.value);
 }
 
+#if __has_include(<AppKit/AppKit.h>)
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
     if(self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
@@ -295,6 +296,7 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
     }
     return IJSVGShortFloatStringWithOptions(_value, options);
 }
+#endif
 
 - (NSString*)description
 {

@@ -1,0 +1,15 @@
+{
+  "originHash" : "ac095e65041803500641d8e1c3ade98811711a718f1a549e04e3a851626c9c4c",
+  "pins" : [
+    {
+      "identity" : "touchxml",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Archery-Inc/TouchXML.git",
+      "state" : {
+        "branch" : "mutability",
+        "revision" : "841ce7d4c062f1e7d29cb5f9f03fc3338f07bf4b"
+      }
+    }
+  ],
+  "version" : 3
+}

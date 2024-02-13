@@ -6,6 +6,8 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
+#if __has_include(<AppKit/AppKit.h>)
+
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 
@@ -16,3 +18,5 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image);
 + (XImage*)SVGImageNamed:(NSString*)imageName;
 
 @end
+
+#endif

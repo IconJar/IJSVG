@@ -10,8 +10,8 @@
 #import <Metal/Metal.h>
 #if SWIFT_PACKAGE
 #import <IJSVG/IJSVGFilterContext.h>
-#import <IJSVG/IJSVGXEntities.h>
 #endif
+#import <IJSVG/IJSVGXEntities.h>
 #import <simd/simd.h>
 
 typedef struct {

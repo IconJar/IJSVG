@@ -6,8 +6,6 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-@import TouchXML;
-
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
