@@ -15,6 +15,7 @@
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
 NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
@@ -1396,7 +1397,7 @@ typedef struct {
   // SVGs that are problematic.
 #if DEBUG
   NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"",
-        self.className, _fileURL ?: @"Unknown", identifier);
+		  NSStringFromClass(self.class), _fileURL ?: @"Unknown", identifier);
 #endif
 }
 

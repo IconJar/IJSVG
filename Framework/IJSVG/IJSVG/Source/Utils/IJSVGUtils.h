@@ -47,8 +47,10 @@ size_t IJSVGCharBufferHash(char* buffer);
 CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path);
 
+#if __has_include(<AppKit/AppKit.h>)
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
+#endif
 
 NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* stringToCompress);
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options);
@@ -103,8 +105,10 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
 
+#if __has_include(<AppKit/AppKit.h>)
 + (XImage*)resizeImage:(XImage*)anImage
                 toSize:(CGSize)size;
+#endif
 
 @end
 NS_ASSUME_NONNULL_END

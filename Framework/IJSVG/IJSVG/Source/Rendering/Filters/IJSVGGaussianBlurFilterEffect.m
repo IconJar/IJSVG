@@ -269,9 +269,11 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     if(edgeMode == IJSVGFilterEdgeModeDuplicate) {
         image = [image imageByClampingToExtent];
     } else if(edgeMode == IJSVGFilterEdgeModeWrap) {
+        CGAffineTransform xform = CGAffineTransformIdentity;
+        NSValue *xformObj = [NSValue valueWithBytes:&xform objCType:@encode(CGAffineTransform)];
         image = [image imageByApplyingFilter:@"CIAffineTile"
                          withInputParameters:@{
-            kCIInputTransformKey: [NSAffineTransform transform]
+            kCIInputTransformKey: xformObj
         }];
     }
     if(sigmaX == 0 && sigmaY == 0) {

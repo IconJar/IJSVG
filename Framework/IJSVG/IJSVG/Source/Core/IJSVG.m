@@ -11,7 +11,7 @@
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/UIScreen+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
@@ -693,7 +693,12 @@
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
+#if __has_include(<AppKit/AppKit.h>)
     currentCGContext = NSGraphicsContext.currentContext.CGContext;
+#endif
+#if __has_include(<UIKit/UIKit.h>)
+    currentCGContext = UIGraphicsGetCurrentContext();
+#endif
     return [self _drawInRect:rect
                      context:currentCGContext
                        error:error];

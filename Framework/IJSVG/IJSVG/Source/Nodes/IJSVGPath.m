@@ -8,7 +8,7 @@
 
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGGroup.h>
-#import <IJSVG/UIColor+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @implementation IJSVGPath
 

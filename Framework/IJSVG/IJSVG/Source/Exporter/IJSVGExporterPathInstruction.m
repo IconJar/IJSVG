@@ -11,6 +11,8 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <math.h>
 
+#if __has_include(<AppKit/AppKit.h>)
+
 @implementation IJSVGExporterPathInstructionCommand
 @end
 
@@ -298,6 +300,8 @@ static NSUInteger IJSVGExporterPathInstructionStringLength(char instruction,
     return string;
 }
 
+#endif
+
 static CGFloat IJSVGExporterPathPrecisionMultiplier(int precision)
 {
     switch (precision) {
@@ -349,6 +353,8 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         }
     }
 }
+
+#if __has_include(<AppKit/AppKit.h>)
 
 + (void)convertInstructionsToRoundRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                                  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
@@ -931,3 +937,5 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 }
 
 @end
+
+#endif

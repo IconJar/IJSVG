@@ -12,7 +12,7 @@
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGXEntities.h>
-#import <IJSVG/UIImage+macOS.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -213,6 +213,7 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
+#if __has_include(<AppKit/AppKit.h>)
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
     return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
@@ -225,6 +226,7 @@ IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precisio
         .precision = precision
     };
 }
+#endif
 
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options)
 {
@@ -787,6 +789,7 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     }
 }
 
+#if __has_include(<AppKit/AppKit.h>)
 + (XImage*)resizeImage:(XImage*)anImage
                  toSize:(CGSize)size
 {
@@ -799,5 +802,6 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     [image unlockFocus];
     return image;
 }
+#endif
 
 @end
