@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGCommandQuadraticCurve.h>
 #import <IJSVG/IJSVGCommandSmoothQuadraticCurve.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @implementation IJSVGCommandSmoothQuadraticCurve
 
@@ -31,7 +32,7 @@
         if(command.class == IJSVGCommandQuadraticCurve.class) {
             // quadratic curve
             if(command.type == kIJSVGCommandTypeAbsolute) {
-                commandPoint = CGPointMake(-1 * command.parameters[0] + 2 * currentPoint.x,
+                commandPoint = XPointMake(-1 * command.parameters[0] + 2 * currentPoint.x,
                     -1 * command.parameters[1] + 2 * currentPoint.y);
             } else {
                 CGPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[2],

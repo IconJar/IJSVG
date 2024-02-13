@@ -173,7 +173,7 @@ extern NSString* const IJSVGColorCurrentColorName;
 @interface IJSVGColor : NSObject
 
 + (XColor* _Nullable)computeColorSpace:(XColor* _Nullable)color;
-+ (XColorSpaceRef)defaultColorSpace;
++ (XColorSpace*)defaultColorSpace;
 + (BOOL)isColor:(NSString*)string;
 + (NSString*)colorStringFromColor:(XColor*)color
                           options:(IJSVGColorStringOptions)options;

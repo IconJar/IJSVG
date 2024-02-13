@@ -1,0 +1,1 @@
+../../Source/Additions/UIImage+macOS.h
