@@ -1,5 +1,5 @@
 //
-//  UIScreen+macOS.swift
+//  NSString+macOS.h
 //  IconJar
 //
 //  Created by François Lamboley on 2024/02/13.
