@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGColorUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGUnitLength.h>
+#import <IJSVG/UIColor+macOS.h>
 
 static CGFloat IJSVGColorClamp(CGFloat value, CGFloat minimumValue,
                                CGFloat maximumValue)

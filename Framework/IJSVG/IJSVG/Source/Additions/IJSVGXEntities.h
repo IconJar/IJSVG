@@ -43,8 +43,10 @@
 @import UIKit;
 @import TouchXML;
 
+# import "CGColorSpaceWrapper.h"
+
 # define XColor UIColor
-# define XColorSpace IJSVGColorSpace
+# define XColorSpace CGColorSpaceWrapper
 # define XCompositingOperation CGBlendMode
 # define XCompositingOperationCopy kCGBlendModeCopy
 # define XImage UIImage
@@ -52,7 +54,9 @@
 # define XPointMake CGPointMake
 # define XPointZero CGPointZero
 # define XRect CGRect
+# define XRectFromCGRect (CGRect)
 # define XRectMake CGRectMake
+# define XRectToCGRect (CGRect)
 # define XScreen UIScreen
 # define XView UIView
 
