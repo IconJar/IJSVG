@@ -6,8 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-@import TouchXML;
-
+#if __has_include(<AppKit/AppKit.h>)
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTraitedColor.h>
@@ -131,3 +130,4 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 @end
 
 NS_ASSUME_NONNULL_END
+#endif

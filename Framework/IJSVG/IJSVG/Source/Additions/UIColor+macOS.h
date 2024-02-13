@@ -13,6 +13,11 @@
 @interface UIColor (macOS)
 
 + (UIColor *)colorWithCGColor:(CGColorRef)color;
++ (UIColor *)colorWithDeviceRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
++ (UIColor *)colorWithDeviceHue:(CGFloat)red saturation:(CGFloat)green brightness:(CGFloat)blue alpha:(CGFloat)alpha;
+- (CGFloat)redComponent;
+- (CGFloat)greenComponent;
+- (CGFloat)blueComponent;
 - (CGFloat)alphaComponent;
 
 @end

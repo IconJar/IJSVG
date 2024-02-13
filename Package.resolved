@@ -1,15 +1,16 @@
 {
-  "originHash" : "b71dda85cf97abc546bd2d8f9f5ab50c9980bdbef376674c9d211bdf5dacc3e7",
-  "pins" : [
-    {
-      "identity" : "touchxml",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Archery-Inc/TouchXML.git",
-      "state" : {
-        "revision" : "1943954a71f7a8061543d693279bc4e4427fc8f5",
-        "version" : "0.3.0-alpha.2"
-      }
-    }
-  ],
-  "version" : 3
+	"object": {
+		"pins": [
+			{
+				"package": "TouchXML",
+				"repositoryURL": "https://github.com/Archery-Inc/TouchXML.git",
+				"state": {
+					"branch": "mutability",
+					"revision": "33b128726324773ed3cce06f5e27302c2e8664db",
+					"version": null
+				}
+			}
+		]
+	},
+	"version": 1
 }

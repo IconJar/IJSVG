@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGXEntities.h>
+#import <IJSVG/UIImage+macOS.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -791,8 +792,8 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
 {
     XImage* image = [[XImage alloc] initWithSize:size];
     [image lockFocus];
-    [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height)
-               fromRect:NSMakeRect(0.f, 0.f, anImage.size.width, anImage.size.height)
+    [anImage drawInRect:XRectMake(0.f, 0.f, size.width, size.height)
+               fromRect:XRectMake(0.f, 0.f, anImage.size.width, anImage.size.height)
               operation:NSCompositingOperationCopy
                fraction:1.f];
     [image unlockFocus];

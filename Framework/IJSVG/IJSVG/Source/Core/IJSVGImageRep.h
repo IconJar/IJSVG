@@ -12,7 +12,7 @@
 
 @class IJSVG;
 
-@interface IJSVGImageRep : XImageRep {
+@interface IJSVGImageRep : NSImageRep {
 
 @private
     IJSVG* _svg;

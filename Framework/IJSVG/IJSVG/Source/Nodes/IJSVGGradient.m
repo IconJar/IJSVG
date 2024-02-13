@@ -148,8 +148,14 @@
     for (XColor* color in _colors) {
         CFArrayAppendValue(colors, color.CGColor);
     }
+#if __has_include(<AppKit/AppKit.h>)
     CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
-        colors, _locations);
+                                                      colors, _locations);
+#endif
+#if __has_include(<UIKit/UIKit.h>)
+    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace,
+                                                      colors, _locations);
+#endif
     CFRelease(colors);
     return _CGGradient = result;
 }

@@ -6,6 +6,7 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#if __has_include(<AppKit/AppKit.h>)
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
@@ -1649,7 +1650,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     imageElement.name = @"image";
     
     // we need to transform this into its required aspect ratio
-    XImage* XImage = image.image;
+    XImage* xImage = image.image;
     CGFloat ratio = 0.f;
     
     // Image nodes retain their source units so they can be resolved for each
@@ -1662,8 +1663,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     const CGFloat imageWidth = bounds.size.width;
     const CGFloat imageHeight = bounds.size.height;
-    const CGFloat maxWidth = XImage.size.width;
-    const CGFloat maxHeight = XImage.size.height;
+    const CGFloat maxWidth = xImage.size.width;
+    const CGFloat maxHeight = xImage.size.height;
     
     // work out the ratio
     if(imageWidth > imageHeight) {
@@ -1708,8 +1709,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         if(ratio != 1.f) {
             CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
                                              imageHeight*ratio);
-            XColor* actualImage = [IJSVGUtils resizeImage:nsImage
-                                                   toSize:newImageRect.size];
+            NSImage* actualImage = [IJSVGUtils resizeImage:xImage
+                                                    toSize:newImageRect.size];
             cgImage = [actualImage CGImageForProposedRect:&newImageRect
                                                   context:NULL
                                                     hints:NULL];
@@ -3081,3 +3082,4 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
 }
 
 @end
+#endif

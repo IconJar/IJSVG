@@ -6,6 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
+@import UniformTypeIdentifiers;
+
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGImageRep.h>
 
@@ -39,7 +41,7 @@
     }
 }
 
-+ (NSArray<XImageRep*>*)imageRepsWithData:(NSData*)data
++ (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data
 {
     IJSVGImageRep* instance = [self imageRepWithData:data];
     if(instance == nil) {
