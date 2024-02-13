@@ -75,6 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
 - (NSString* _Nullable)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;
+#if __has_include(<AppKit/AppKit.h>)
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
                            options:(IJSVGExporterOptions)options
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
@@ -86,6 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options;
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+#endif
 
 + (nullable instancetype)SVGNamed:(NSString*)string;
 

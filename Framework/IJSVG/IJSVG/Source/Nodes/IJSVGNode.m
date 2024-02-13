@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
                                         XColor* color,
