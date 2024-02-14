@@ -15,11 +15,11 @@
 - (instancetype)initWithSize:(CGSize)size;
 - (void)lockFocus;
 - (void)unlockFocus;
-- (CGImageRef)CGImageForProposedRect:(XRect *)proposedDestRect
+- (CGImageRef)CGImageForProposedRect:(CGRect *)proposedDestRect
                              context:(void *)referenceContext
                                hints:(NSDictionary<id, id> *)hints;
-- (void)drawInRect:(XRect)rect
-          fromRect:(XRect)fromRect
+- (void)drawInRect:(CGRect)rect
+          fromRect:(CGRect)fromRect
          operation:(CGBlendMode)op
           fraction:(CGFloat)delta;
 

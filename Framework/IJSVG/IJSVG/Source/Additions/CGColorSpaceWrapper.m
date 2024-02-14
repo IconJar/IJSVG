@@ -10,4 +10,16 @@
 
 @implementation CGColorSpaceWrapper
 
++ (instancetype)deviceRGBColorSpace
+{
+    CGColorSpaceWrapper *ret = [self new];
+    ret->colorSpace = CGColorSpaceCreateDeviceRGB();
+    return ret;
+}
+
+- (CGColorSpaceRef)CGColorSpace
+{
+    return colorSpace;
+}
+
 @end
