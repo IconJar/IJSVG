@@ -33,14 +33,8 @@ final class SVGView : UIView {
         }
     }
     
-//    - (void)drawRect:(XRect)dirtyRect
-//    {
-//        CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
-//        CGContextSaveGState(ref);
-//        CGContextTranslateCTM( ref, 0, self.bounds.size.height);
-//        CGContextScaleCTM( ref, 1, -1 );
-//        [svg drawInRect:self.bounds];
-//        CGContextRestoreGState(ref);
-//    }
+    override func draw(_ rect: CGRect) {
+        svg.draw(in: bounds)
+    }
     
 }
