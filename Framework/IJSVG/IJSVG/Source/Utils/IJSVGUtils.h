@@ -104,8 +104,10 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
 
+#if __has_include(<AppKit/AppKit.h>)
 + (XImage*)resizeImage:(XImage*)anImage
                 toSize:(CGSize)size;
+#endif
 
 @end
 NS_ASSUME_NONNULL_END
