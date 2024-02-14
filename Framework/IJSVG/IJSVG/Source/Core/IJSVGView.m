@@ -35,6 +35,8 @@
 
 - (void)awakeFromNib
 {
+    [super awakeFromNib];
+    
     // image was set via IB
     if(imageName != nil) {
         IJSVG* anSVG = [IJSVG SVGNamed:imageName];
