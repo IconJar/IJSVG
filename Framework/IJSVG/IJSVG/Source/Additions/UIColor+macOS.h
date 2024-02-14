@@ -9,10 +9,10 @@
 #if __has_include(<UIKit/UIKit.h>)
 @import UIKit;
 @import CoreGraphics;
+#include "CGColorSpaceWrapper.h"
 
 @interface UIColor (macOS)
 
-+ (UIColor *)colorWithCGColor:(CGColorRef)color;
 + (UIColor *)colorWithDeviceRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
 + (UIColor *)colorWithDeviceHue:(CGFloat)red saturation:(CGFloat)green brightness:(CGFloat)blue alpha:(CGFloat)alpha;
 - (CGFloat)redComponent;
