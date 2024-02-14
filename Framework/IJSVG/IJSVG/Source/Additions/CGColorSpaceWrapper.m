@@ -13,7 +13,7 @@
 + (instancetype)deviceRGBColorSpace
 {
     CGColorSpaceWrapper *ret = [self new];
-    ret->colorSpace = CGColorSpaceCreateDeviceRGB();
+    ret.colorSpace = CGColorSpaceCreateDeviceRGB();
     return ret;
 }
 

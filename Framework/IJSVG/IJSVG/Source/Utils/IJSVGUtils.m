@@ -791,7 +791,7 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
 
 #if __has_include(<AppKit/AppKit.h>)
 + (XImage*)resizeImage:(XImage*)anImage
-                 toSize:(CGSize)size
+                toSize:(CGSize)size
 {
     XImage* image = [[XImage alloc] initWithSize:size];
     [image lockFocus];
