@@ -14,31 +14,16 @@
 
 - (instancetype)initWithCGImage:(CGImageRef)image size:(CGSize)size
 {
-}
-
-- (instancetype)initWithSize:(CGSize)size
-{
-}
-
-- (void)lockFocus
-{
-}
-
-- (void)unlockFocus
-{
+    return [self initWithCGImage:image];
+#warning TODO: size
 }
 
 - (CGImageRef)CGImageForProposedRect:(XRect *)proposedDestRect
                              context:(void *)referenceContext
                                hints:(NSDictionary<id, id> *)hints
 {
-}
-
-- (void)drawInRect:(XRect)rect
-          fromRect:(XRect)fromRect
-         operation:(CGBlendMode)op
-          fraction:(CGFloat)delta
-{
+    return self.CGImage;
+#warning TODO: size and co
 }
 
 @end

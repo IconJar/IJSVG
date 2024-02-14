@@ -563,15 +563,15 @@
 }
 
 - (XImage*)imageWithSize:(CGSize)aSize
-                  flipped:(BOOL)flipped
-                    error:(NSError**)error
+                 flipped:(BOOL)flipped
+                   error:(NSError**)error
 {
     CGImageRef ref = [self newCGImageRefWithSize:aSize
                                          flipped:flipped
                                            error:error];
 
     XImage* image = [[XImage alloc] initWithCGImage:ref
-                                                 size:aSize];
+                                               size:aSize];
     CGImageRelease(ref);
     return image;
 }

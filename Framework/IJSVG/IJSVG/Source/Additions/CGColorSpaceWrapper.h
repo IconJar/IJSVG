@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
     CGColorSpaceRef colorSpace;
 }
 
+@property(nonatomic) CGColorSpaceRef colorSpace;
+
 + (instancetype)deviceRGBColorSpace;
 + (instancetype)sRGBColorSpace;
 - (CGColorSpaceRef)CGColorSpace;
