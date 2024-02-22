@@ -30,8 +30,8 @@ final class SVGView : UIView {
     private func commonInit() {
         svg.renderingOptions?.renderQuality = .fullResolution
         svg.renderingOptions?.ignoreIntrinsicSize = true
-        svg.renderingBackingScaleHelper = {
-            return UIScreen.main.scale
+        svg.renderingBackingScaleHelper = { [weak self] in
+            return self?.window?.screen.scale ?? UIScreen.main.scale
         }
     }
     
