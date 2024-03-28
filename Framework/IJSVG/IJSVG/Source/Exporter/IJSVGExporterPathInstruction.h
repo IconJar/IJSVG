@@ -7,11 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
 #import <IJSVG/IJSVGUnitLength.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 @interface IJSVGExporterPathInstructionCommand : NSObject {
 }
 
@@ -37,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSVGFloatingPointOptions options);
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 + (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
                                            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 

@@ -6,6 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGView.h>
 
 @implementation IJSVGView
@@ -54,10 +56,9 @@
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
     [self setNeedsDisplay:YES];
-#endif
-#if __has_include(<UIKit/UIKit.h>)
+#else
     [self setNeedsDisplay];
 #endif
 }

@@ -9,9 +9,10 @@
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <TargetConditionals.h>
 #import <math.h>
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 
 @implementation IJSVGExporterPathInstructionCommand
 @end

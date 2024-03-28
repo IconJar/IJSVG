@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
@@ -213,7 +215,7 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
     return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
@@ -789,7 +791,7 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     }
 }
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 + (XImage*)resizeImage:(XImage*)anImage
                 toSize:(CGSize)size
 {

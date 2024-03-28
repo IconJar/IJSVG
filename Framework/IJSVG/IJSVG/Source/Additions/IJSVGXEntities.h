@@ -6,7 +6,8 @@
 //
 //
 
-#if __has_include(<AppKit/AppKit.h>)
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
 
 # import <AppKit/AppKit.h>
 
@@ -39,10 +40,9 @@
 # define CXMLElementKind NSXMLElementKind
 # define CXMLNodePreserveWhitespace NSXMLNodePreserveWhitespace
 
-#endif
 
+#else
 
-# if __has_include(<UIKit/UIKit.h>)
 
 # import <CoreGraphics/CoreGraphics.h>
 # import <UIKit/UIKit.h>
