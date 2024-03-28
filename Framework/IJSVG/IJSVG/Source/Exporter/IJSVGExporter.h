@@ -6,7 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#if __has_include(<AppKit/AppKit.h>)
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
+
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTraitedColor.h>

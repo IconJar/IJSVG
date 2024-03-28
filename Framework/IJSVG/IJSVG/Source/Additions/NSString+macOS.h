@@ -6,7 +6,8 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
+#include <TargetConditionals.h>
+#if !TARGET_OS_MACCATALYST
 
 @import Foundation;
 

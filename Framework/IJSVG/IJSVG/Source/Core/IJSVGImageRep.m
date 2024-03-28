@@ -6,7 +6,8 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#if __has_include(<Cocoa/Cocoa.h>)
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
 
 @import UniformTypeIdentifiers;
 

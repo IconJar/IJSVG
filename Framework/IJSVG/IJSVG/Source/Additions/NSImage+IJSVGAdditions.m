@@ -6,7 +6,9 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#if __has_include(<Cocoa/Cocoa.h>)
+#include <TargetConditionals.h>
+
+#if TARGET_OS_OSX
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
 
