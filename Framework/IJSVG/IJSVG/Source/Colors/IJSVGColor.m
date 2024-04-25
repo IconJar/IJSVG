@@ -34,7 +34,13 @@ static NSDictionary* _colorTree = nil;
 {
     XColorSpace* space = [self defaultColorSpace];
     if(color.colorSpace != space) {
+#if TARGET_OS_OSX
         color = [color colorUsingColorSpace:space];
+#else
+        CGColorRef cgColor = CGColorCreateCopyByMatchingToColorSpace(space.CGColorSpace, kCGRenderingIntentDefault, color.CGColor, NULL);
+        color = [UIColor colorWithCGColor:cgColor];
+        CGColorRelease(cgColor);
+#endif
     }
     return color;
 }
