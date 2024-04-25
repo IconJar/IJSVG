@@ -37,4 +37,9 @@
     self->colorSpace = CGColorSpaceRetain(colorSpace);
 }
 
+- (NSString *)colorSpaceName
+{
+    return (__bridge NSString *)CGColorSpaceGetName(colorSpace);
+}
+
 @end

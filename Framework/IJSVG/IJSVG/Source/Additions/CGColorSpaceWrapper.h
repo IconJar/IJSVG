@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)deviceRGBColorSpace;
 + (instancetype)sRGBColorSpace;
 - (CGColorSpaceRef)CGColorSpace;
+- (NSString *)colorSpaceName;
 
 - (instancetype)initWithCGColorSpace:(CGColorSpaceRef)colorSpace;
 
