@@ -1004,6 +1004,21 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         attribute = attribute.copy;
         [copy addAttribute:attribute];
     }
+  
+    // if we merge an element, we need to also maintain its children, if the
+    // reference element has children and the referencing element does not,
+    // use those else use the referencing element children.
+    if (element.childCount != 0) {
+      // remove any old children
+      for(__strong NSXMLElement* child in copy.children) {
+        [copy removeChildAtIndex:child.index];
+      }
+    
+      // add the new ones from the copy
+      for(__strong NSXMLElement* child in element.children) {
+        [copy addChild:child.copy];
+      }
+    }
     return copy;
 }
 
