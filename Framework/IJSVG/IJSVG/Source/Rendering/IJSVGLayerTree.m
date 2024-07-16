@@ -606,10 +606,12 @@
         // we need to move all the layers back if they are into the userSpace
         // coordinate system
         for(CALayer<IJSVGDrawableLayer> *childLayer in maskLayer.sublayers) {
-            childLayer.frame = CGRectApplyAffineTransform(childLayer.frame,
-                                                          userSpaceTransform);
+          CGRect innerBoundingBox = childLayer.innerBoundingBox;
+          CGAffineTransform innerTransform = CGAffineTransformMakeTranslation(-innerBoundingBox.origin.x,
+                                                                              -innerBoundingBox.origin.y);
+          childLayer.frame = CGRectApplyAffineTransform(childLayer.frame, userSpaceTransform);
+          childLayer.frame = CGRectApplyAffineTransform(childLayer.frame, innerTransform);
         }
-        
     }
     
     if(maskNode.units == IJSVGUnitUserSpaceOnUse) {
