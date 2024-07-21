@@ -61,7 +61,7 @@ char* IJSVGTimmedCharBufferCreate(const char* buffer)
     while(length-1 > 0 && isspace(buffer[length-1])) {
         length--;
     }
-    while(isspace(buffer[start])) {
+    while(isspace(buffer[start]) && start < length) {
         start++;
     }
     char* chars = (char*)malloc(sizeof(char)*((length-start)+1) ?: sizeof(char));
