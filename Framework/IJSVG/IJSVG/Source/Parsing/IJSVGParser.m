@@ -121,6 +121,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                   error:(NSError**)error
 {
     if((self = [super init]) != nil) {
+        // just some generic value to get it up n running.
+        _defaultSize = CGSizeMake(200.f, 200.f);
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -138,19 +140,12 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                         error:error];
         }
 
-        // attempt to parse the file
-        [self begin];
-
         // check the actual parsed SVG
         anError = nil;
         if([self _validateParse:&anError] == NO) {
             *error = anError;
             return nil;
         }
-
-        // we have actually finished with the document at this point
-        // so just get rid of it
-        _document = nil;
     }
     return self;
 }
@@ -211,7 +206,36 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     return YES;
 }
 
-- (void)begin
+- (IJSVGRootNode*)rootNodeWithSize:(CGSize)size
+{
+  __weak IJSVGParser* weakSelf = self;
+  [self beginWithSetup:^{
+    // if we have passed in a value that is not zero, we can just set it to that
+    // else we need to compute it, as we can treat zero as auto.
+    IJSVGParser* strongSelf = weakSelf;
+    CGSize computeSize = size;
+    if(!CGSizeEqualToSize(CGSizeZero, computeSize)) {
+      strongSelf->_rootSize = size;
+      return;
+    }
+      
+    // compute the value, if the value is still a nil size, we just need to
+    // fallback to some generic value, which is against this object.
+    IJSVGRootNode* node = [self rootNode:NO];
+    if(node.viewBox == nil) {
+      strongSelf->_rootSize = strongSelf->_defaultSize;
+      return;
+    }
+    
+    // at this point we can just compute it again from the viewBox size.
+    computeSize = [node.viewBox.size computeValue:CGSizeZero];
+    strongSelf->_rootSize = CGSizeEqualToSize(CGSizeZero, computeSize) ?
+      strongSelf->_defaultSize : computeSize;
+  }];
+  return _rootNode;
+}
+
+- (void)beginWithSetup:(dispatch_block_t __nullable)setup
 {
     // setup basics to begin with
     _styleSheet = [[IJSVGStyleSheet alloc] init];
@@ -219,17 +243,39 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     _threadManager = manager;
     _commandDataStream = manager.pathDataStream;
     _detachedReferences = [[NSMutableDictionary alloc] init];
+    if(setup != nil) {
+      setup();
+    }
     _rootNode = [[IJSVGRootNode alloc] init];
+    _rootNode.clientSize = _rootSize;
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     [self parseSVGElement:_document.rootElement
                  ontoNode:_rootNode
                parentNode:nil
-         postProcessBlock:&postProcessBlock];
+         postProcessBlock:&postProcessBlock
+                recursive:YES];
     if(postProcessBlock != nil) {
         postProcessBlock();
     }
     [_rootNode postProcess];
     _detachedReferences = nil;
+}
+
+- (IJSVGRootNode*)rootNode:(BOOL)recursive
+{
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
+    IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
+    node.clientSize = _rootSize;
+    [self parseSVGElement:_document.rootElement
+                 ontoNode:node
+               parentNode:nil
+         postProcessBlock:&postProcessBlock
+                recursive:NO];
+    if(postProcessBlock != nil) {
+        postProcessBlock();
+    }
+    [node postProcess];
+    return node;
 }
 
 - (void)computeDefsForElement:(NSXMLElement*)element
@@ -250,22 +296,26 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 - (void)computeViewBoxForRootNode:(IJSVGRootNode*)node
 {
     if(node.viewBox == nil) {
-        CGFloat width = node.width.value;
-        CGFloat height = node.height.value;
+        IJSVGUnitLength* width = node.width;
+        IJSVGUnitLength* height = node.height;
+      
+        CGFloat cw = [width computeValue:_rootSize.width];
+        CGFloat ch = [height computeValue:_rootSize.height];
         
-        if(height == 0.f && width != 0.f) {
-            height = width;
-        } else if(width == 0.f && height != 0.f) {
-            width = height;
+        if(ch == 0.f && cw != 0.f) {
+            ch = cw;
+        } else if(cw == 0.f && ch != 0.f) {
+            cw = ch;
         }
         // nothing we can do, its a nil viewBox and has
         // no width or height
-        if(width == 0.f && height == 0.f) {
+        if(cw == 0.f && ch == 0.f) {
             return;
         }
-        node.viewBox = [IJSVGUnitRect rectWithX:0.f y:0.f
-                                          width:width
-                                         height:height];
+        IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
+                                                    height:height];
+        node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
+                                                size:size];
     }
 
     IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionNone;
@@ -279,11 +329,25 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         dimensions |= IJSVGIntrinsicDimensionHeight;
         hl = node.height;
     }
+    
+    // make note if we are using relative units for the width or height.
+    if(wl.type == IJSVGUnitLengthTypePercentage ||
+       hl.type == IJSVGUnitLengthTypePercentage) {
+      node.viewBoxContainsRelativeUnits = YES;
+    }
 
     // store the width and height
     node.intrinsicDimensions = dimensions;
-    node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
-                                               height:hl];
+    
+    // compute the new width and height based on the passed in size as the fall
+    // back for all the percentage values.
+    CGSize computedSize = CGSizeMake([wl computeValue:_rootSize.width],
+                                     [hl computeValue:_rootSize.height]);
+    node.intrinsicSize = [IJSVGUnitSize sizeWithCGSize:computedSize];
+  
+    // compute the viewbox
+    CGRect computedViewBox = [node.viewBox computeValue:_rootSize];
+    node.viewBox.size = [IJSVGUnitSize sizeWithCGSize:computedViewBox.size];
 }
 
 - (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
@@ -1400,6 +1464,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                ontoNode:(IJSVGRootNode*)node
              parentNode:(IJSVGNode*)parentNode
        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+              recursive:(BOOL)recursive
 {
     node.type = IJSVGNodeTypeSVG;
     node.name = element.localName;
@@ -1429,8 +1494,10 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     [self computeViewBoxForRootNode:node];
     
     // recursively compute children
-    [self computeElement:element
-              parentNode:node];
+    if(recursive == YES) {
+      [self computeElement:element
+                parentNode:node];
+    }
 }
 
 - (IJSVGNode*)parseSVGElement:(NSXMLElement*)element
@@ -1441,7 +1508,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     [self parseSVGElement:element
                  ontoNode:node
                parentNode:parentNode
-         postProcessBlock:postProcessBlock];
+         postProcessBlock:postProcessBlock
+                recursive:YES];
     return node;
 }
 

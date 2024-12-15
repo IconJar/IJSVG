@@ -127,9 +127,11 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
     IJSVGStyleSheet* _styleSheet;
     NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
     IJSVGThreadManager* _threadManager;
+    CGSize _rootSize;
+    IJSVGRootNode* _rootNode;
 }
 
-@property (nonatomic, strong, readonly) IJSVGRootNode* rootNode;
+@property (nonatomic, assign) CGSize defaultSize;
 
 + (BOOL)isDataSVG:(NSData*)data;
 
@@ -141,5 +143,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL;
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
                            error:(NSError**)error;
+
+- (IJSVGRootNode*)rootNodeWithSize:(CGSize)size;
 
 @end

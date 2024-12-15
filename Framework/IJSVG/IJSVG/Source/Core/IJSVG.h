@@ -21,6 +21,7 @@
 #import <Foundation/Foundation.h>
 
 @class IJSVG;
+@class IJSVGParser;
 
 @interface IJSVG : NSObject <NSPasteboardWriting> {
 
@@ -30,6 +31,7 @@
     CGRect _viewBox;
     CGFloat _backingScale;
     IJSVGUnitSize* _intrinsicSize;
+    IJSVGParser* _parser;
 }
 
 // set this to be called when the layer is about to draw, it will call this

@@ -11,6 +11,10 @@
 #import <IJSVG/IJSVGTransaction.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
+@interface IJSVG (private)
+@property (nonatomic, strong) IJSVGParser* parser;
+@end
+
 @implementation IJSVG
 
 // these are explicitly implemented
@@ -174,10 +178,10 @@
         NSError* anError = nil;
 
         // create the group
-        IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL
+        IJSVGParser *parser = [IJSVGParser parserForFileURL:aURL
                                                       error:&anError];
-        _rootNode = parser.rootNode;
-        
+        self.parser = parser;
+      
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -197,6 +201,16 @@
 {
     return [self initWithSVGData:data
                            error:nil];
+}
+
+- (void)setParser:(IJSVGParser*)parser {
+    _rootNode = [parser rootNodeWithSize:CGSizeZero];
+  
+    // if the rootNode has any form of relative units, we need to keep hold of
+    // the parser so when we render, we can ask for new values.
+    if(_rootNode.viewBoxContainsRelativeUnits) {
+      _parser = parser;
+    }
 }
 
 - (id)initWithSVGData:(NSData*)data
@@ -224,9 +238,9 @@
 
         // setup the parser
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
-                                                                error:&anError];
-        _rootNode = parser.rootNode;
-
+                                                               error:&anError];
+        self.parser = parser;
+      
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -625,7 +639,7 @@
         }
     }
     CGContextSetInterpolationQuality(ctx, quality);
-    IJSVGRootLayer* rootLayer = self.rootLayer;
+    IJSVGRootLayer* rootLayer = [self rootLayerWithRect:rect];
     [rootLayer renderInContext:ctx
                       viewPort:rect
                   backingScale:backingScale
@@ -647,16 +661,35 @@
     return _layerTree;
 }
 
+- (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect {
+  // no parser, which means there is no need to recompute the value
+  if(_parser == nil || !_rootNode.viewBoxContainsRelativeUnits ||
+     CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
+    return self.rootLayer;
+  }
+  
+  // if we do have a parser, that means the node has relative values, lets recompute
+  __weak IJSVG* weakSelf = self;
+  [self performBlock:^{
+    IJSVG* strongSelf = weakSelf;
+    strongSelf->_rootNode = [strongSelf->_parser rootNodeWithSize:rect.size];
+    strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
+  }];
+  return _rootLayer;
+}
+
 - (IJSVGRootLayer*)rootLayer
 {
-    if(_rootLayer == nil) {
-        __weak IJSVG* weakSelf = self;
-        [self performBlock:^{
-            IJSVG* strongSelf = weakSelf;
-            strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
-        }];
-    }
+  if(_rootLayer != nil) {
     return _rootLayer;
+  }
+  
+  __weak IJSVG* weakSelf = self;
+  [self performBlock:^{
+      IJSVG* strongSelf = weakSelf;
+      strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
+  }];
+  return _rootLayer;
 }
 
 - (CGFloat)backingScaleFactor
