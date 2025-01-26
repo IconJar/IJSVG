@@ -94,7 +94,7 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                 // now we can add
                 if(methodCount + 1 > currentBufferSize) {
                     currentBufferSize += defBufferSize;
-                    *methods = *(IJSVGParsingStringMethod**)realloc(methods, sizeof(IJSVGParsingStringMethod*)*currentBufferSize);
+                    methods = (IJSVGParsingStringMethod**)realloc(methods, sizeof(IJSVGParsingStringMethod*)*currentBufferSize);
                 }
                 methods[methodCount++] = method;
                 method = NULL;
