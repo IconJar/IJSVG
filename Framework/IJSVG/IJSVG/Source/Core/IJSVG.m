@@ -438,10 +438,21 @@
     CGFloat scale = [self backingScaleFactor];
 
     // create the context and colorspace
+    int width = (int)size.width * scale;
+    int height = (int)size.height * scale;
+  
+    // use correct memory alignment for performance.
+    size_t bytesPerRow = ((width * 4) + 15) & ~15;
+    size_t bufferSize = height * bytesPerRow;
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ref = CGBitmapContextCreate(NULL, (int)size.width * scale,
-        (int)size.height * scale, 8, 0, colorSpace,
-        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    void* data = valloc(bufferSize);
+    memset(data, 0, bufferSize);
+    
+    CGBitmapInfo info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host;
+    CGContextRef ref = CGBitmapContextCreate(data, width, height, 8,
+                                             bytesPerRow, colorSpace,
+                                             info);
 
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
@@ -462,6 +473,7 @@
     // release all things!
     CGColorSpaceRelease(colorSpace);
     CGContextRelease(ref);
+    free(data);
     return imageRef;
 }
 
