@@ -122,6 +122,8 @@
                                                       size:size];
     imageNode.width = size.width.copy;
     imageNode.height = size.height.copy;
+    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:imageNode.width.copy
+                                                   height:imageNode.height.copy];
     rootNode.viewBox = viewBox;
     [rootNode addChild:imageNode];
     return [self initWithRootNode:rootNode];
