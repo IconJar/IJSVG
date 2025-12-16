@@ -118,10 +118,12 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 }
 
 - (id)initWithSVGString:(NSString*)string
+                fileURL:(NSURL*)aURL
                   error:(NSError**)error
 {
     if((self = [super init]) != nil) {
         // just some generic value to get it up n running.
+        _fileURL = aURL;
         _defaultSize = CGSizeMake(200.f, 200.f);
 
         // use NSXMLDocument as its the easiest thing to do on OSX
@@ -179,6 +181,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     }
 
     return [self initWithSVGString:str
+                           fileURL:aURL
                              error:error];
 }
 
@@ -497,7 +500,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                 NSString* identifier = [IJSVGUtils defURL:value];
                 if(identifier != nil) {
                     node.mask = (id)[self computeDetachedNodeWithIdentifier:identifier
-                                                            referencingNode:node];
+                                                            referencingNode:node
+                                                                    element:element];
                 }
             });
         }
@@ -509,7 +513,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                 NSString* identifier = [IJSVGUtils defURL:value];
                 if(identifier != nil) {
                     node.clipPath = (id)[self computeDetachedNodeWithIdentifier:identifier
-                                                                referencingNode:node];
+                                                                referencingNode:node
+                                                                        element:element];
                 }
             });
         }
@@ -640,7 +645,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
             NSString* fillIdentifier = [IJSVGUtils defURL:value];
             if(fillIdentifier != nil) {
                 IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                            referencingNode:node];
+                                                            referencingNode:node
+                                                                    element:element];
                 node.stroke = object;
                 return;
             }
@@ -678,7 +684,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
             NSString* fillIdentifier = [IJSVGUtils defURL:value];
             if(fillIdentifier != nil) {
                 IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                            referencingNode:node];
+                                                            referencingNode:node
+                                                                    element:element];
                 node.fill = object;
                 return;
             }
@@ -808,7 +815,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         NSString* filterIdentifier = [IJSVGUtils defURL:value];
         if(filterIdentifier != nil) {
             IJSVGNode* filter = [self computeDetachedNodeWithIdentifier:filterIdentifier
-                                                        referencingNode:node];
+                                                        referencingNode:node
+                                                                element:element];
             node.filter = (IJSVGFilter*)filter;
         }
     });
@@ -1048,15 +1056,49 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                                 referencingNode:(IJSVGNode*)node
+                                        element:(NSXMLElement*)element
 {
     NSXMLElement* detachedElement = [self detachedElementWithIdentifier:identifier];
     if(detachedElement == nil) {
         return nil;
     }
+  
+    // if we are recursive, we must return nil to prevent crashing.
+    if([self isElement:element decedentOf:detachedElement]) {
+      [self recursionDetectedOn:element
+                    decendentOf:detachedElement
+                     identifier:identifier];
+      return nil;
+    }
+  
     // we need to make sure once we are done, we detach this from its parent
     // or it can cause recursion down the line
     return [self parseElement:detachedElement
                    parentNode:node].detach;
+}
+
+- (void)recursionDetectedOn:(NSXMLElement*)element
+                decendentOf:(NSXMLElement*)parent
+                 identifier:(NSString*)identifier
+{
+  // For now, we only want to log these for debug builds whilst we fix any
+  // SVG's that are problematic.
+#if DEBUG
+  NSLog(@"Recursion detected in file: \"%@\", with identifer: \"%@\"",
+        _fileURL ?: @"Unknown", identifier);
+#endif
+}
+
+- (BOOL)isElement:(NSXMLElement*)element
+       decedentOf:(NSXMLElement*)parentElement {
+    NSXMLElement* parent = (NSXMLElement*)element.parent;
+    while(parent != nil) {
+      if(parentElement == parent) {
+        return YES;
+      }
+      parent = (NSXMLElement*)parent.parent;
+    }
+    return NO;
 }
 
 - (NSXMLElement*)mergedElement:(NSXMLElement*)element
@@ -1636,6 +1678,14 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
+  
+    // We are trying to use an element that is a decedent of itself.
+    if([self isElement:element decedentOf:detachedElement]) {
+      [self recursionDetectedOn:element
+                    decendentOf:detachedElement
+                     identifier:xlinkID];
+      return nil;
+    }
 
     IJSVGGroup* node = (IJSVGGroup*)[self parseGroupElement:element
                                                  parentNode:parentNode
