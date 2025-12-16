@@ -48,6 +48,14 @@
     *(_storage + bit) = 1;
 }
 
+- (void)unsetBit:(int)bit
+{
+    *(_storage + bit) = 0;
+}
 
+- (void)setAllBits
+{
+    memset(_storage, 1, _length);
+}
 
 @end
