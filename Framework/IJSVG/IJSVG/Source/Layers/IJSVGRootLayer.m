@@ -63,6 +63,10 @@
     ignoreIntrinsicSize:(BOOL)ignoreIntrinsicSize
 {
     CGRect frame = viewPort;
+    if(CGRectIsInfinite(viewPort)) {
+      return;
+    }
+  
     IJSVGUnitSize* size = nil;
     
     // The SVG might have an intrinsic size against it, if so, we need to use

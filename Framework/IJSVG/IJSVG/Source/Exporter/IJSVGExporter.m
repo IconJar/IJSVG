@@ -1364,7 +1364,7 @@ NSString* IJSVGHash(NSString* key)
                       fromParent:(NSXMLElement*)parent
 {
     IJSVGImage* image = layer.image;
-    if(image == nil) {
+    if(image == nil || image.image == nil) {
         return nil;
     }
 

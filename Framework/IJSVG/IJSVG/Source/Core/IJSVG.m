@@ -240,6 +240,7 @@
 
         // setup the parser
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
+                                                             fileURL:nil
                                                                error:&anError];
         self.parser = parser;
       
@@ -516,6 +517,10 @@
                                             error:(NSError**)error
 {
     CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
+    // Make suer we actually have a size, if not, just return nil.
+    if(isnan(ogSize.width) || isnan(ogSize.height)) {
+      return nil;
+    }
     return [self imageWithSize:ogSize
                        flipped:flipped
                          error:error];
