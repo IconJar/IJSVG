@@ -419,6 +419,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale
 {
+    if (!IJSVGIsValidContextSize(size)) {
+      return nil;
+    }
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(size.width*scale),
                                                           ceilf(size.height*scale),
@@ -438,6 +441,13 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     CALayer<IJSVGDrawableLayer>* referenceLayer = layer.referencingLayer ?: layer;
     CGRect frame = layer.outerBoundingBox;
+  
+    // Make sure we actually have a width and a height or there is no point of
+    // attemping to create an image as it will fail with the context creation.
+    if (!IJSVGIsValidContextSize(frame.size)) {
+      return nil;
+    }
+  
     CGRect bounds = CGRectApplyAffineTransform(layer.innerBoundingBox,
                                                [self userSpaceTransformForLayer:referenceLayer]);
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,

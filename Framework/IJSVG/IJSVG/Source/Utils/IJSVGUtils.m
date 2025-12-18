@@ -25,6 +25,10 @@ CGSize const IJSVGSizeIntrinsic = (CGSize) {
     .height = -1.23f
 };
 
+BOOL IJSVGIsValidContextSize(CGSize size) {
+  return size.width >= 1.f && size.height >= 1.f;
+}
+
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
     while((c = *buffer++)) {

@@ -24,6 +24,7 @@ CGFloat IJSVGRatio(CGPoint a, CGPoint b);
 CGFloat IJSVGAngle(CGPoint a, CGPoint b);
 CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
+BOOL IJSVGIsValidContextSize(CGSize size);
 
 char IJSVGCharToLower(char c);
 BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2);
