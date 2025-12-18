@@ -22,6 +22,8 @@
 @property (nonatomic, strong) IJSVGUnitLength* y1;
 @property (nonatomic, strong) IJSVGUnitLength* y2;
 
+@property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
+
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors;
 

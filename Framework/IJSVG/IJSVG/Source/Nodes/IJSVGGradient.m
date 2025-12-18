@@ -62,15 +62,7 @@
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors
 {
-    NSMutableArray<IJSVGNode*>* stops = [[NSMutableArray alloc] init];
-  
-    // Filter out any chldren that are not stops.
-    for (IJSVGNode* child in gradient.children) {
-      if (child.type == IJSVGNodeTypeStop) {
-        [stops addObject:child];
-      }
-    }
-  
+    NSArray<IJSVGNode*>* stops = gradient.stops;
     NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
     CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
     
@@ -117,6 +109,17 @@
                   bounds:(NSRect)objectRect
                transform:(CGAffineTransform)absoluteTransform
 {
+}
+
+- (NSArray<IJSVGNode *>*)stops
+{
+    NSMutableArray* array = [[NSMutableArray alloc] initWithCapacity:self.children.count];
+    for (IJSVGNode* node in self.children) {
+      if (node.type == IJSVGNodeTypeStop) {
+        [array addObject:node];
+      }
+    }
+    return array;
 }
 
 @end
