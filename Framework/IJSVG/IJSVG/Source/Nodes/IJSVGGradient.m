@@ -62,7 +62,15 @@
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors
 {
-    NSArray<IJSVGNode*>* stops = gradient.children;
+    NSMutableArray<IJSVGNode*>* stops = [[NSMutableArray alloc] init];
+  
+    // Filter out any chldren that are not stops.
+    for (IJSVGNode* child in gradient.children) {
+      if (child.type == IJSVGNodeTypeStop) {
+        [stops addObject:child];
+      }
+    }
+  
     NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
     CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
     
