@@ -1084,8 +1084,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
   // For now, we only want to log these for debug builds whilst we fix any
   // SVG's that are problematic.
 #if DEBUG
-  NSLog(@"Recursion detected in file: \"%@\", with identifer: \"%@\"",
-        _fileURL ?: @"Unknown", identifier);
+  NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"",
+        self.className, _fileURL ?: @"Unknown", identifier);
 #endif
 }
 

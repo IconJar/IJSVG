@@ -350,7 +350,7 @@
 - (NSSet<IJSVG*>*)directDescendSVGs
 {
     NSMutableSet<IJSVG*>* svgs = [[NSMutableSet alloc] init];
-    NSSet<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
+    NSArray<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
     for(IJSVGNode* node in nodes) {
         IJSVG* newSVG = nil;
         newSVG = [[self.class alloc] initWithRootNode:(IJSVGRootNode*)node];

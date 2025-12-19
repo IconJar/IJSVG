@@ -52,15 +52,28 @@
 
 - (void)loadFromURL:(NSURL*)aURL
 {
-    NSData* data = [NSData dataWithContentsOfURL:aURL];
+    // If we are not a data URL, lets check what its trying to reach is actually
+    // reachable, if not, just return as cant load it.
+    if (![aURL.scheme isEqualToString:@"data"] &&
+        ![aURL checkResourceIsReachableAndReturnError:nil]) {
+#if DEBUG
+      NSLog(@"<%@> references: \"%@\", which cannot be reached.",
+            NSStringFromClass(self.class), aURL);
+#endif
+      return;
+    }
 
-    // no data, just ignore...invalid probably
+    // Convert to data, if its nil, just return, nothing more can do.
+    NSData* data = [NSData dataWithContentsOfURL:aURL];
     if(data == nil) {
         return;
     }
 
-    // set the image against the container
+    // set the image against the container — only if it was created from the data.
     NSImage* anImage = [[NSImage alloc] initWithData:data];
+    if (anImage == nil) {
+      return;
+    }
     [self setImage:anImage];
 }
 

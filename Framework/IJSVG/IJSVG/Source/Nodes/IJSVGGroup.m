@@ -88,7 +88,17 @@
     return YES;
 }
 
-- (NSSet<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type
+- (NSArray<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type {
+    NSMutableArray<IJSVGNode*>* nodes = [[NSMutableArray alloc] init];
+    for(IJSVGNode* node in self.children) {
+        if(node.type == type) {
+            [nodes addObject:node];
+        }
+    }
+    return nodes;
+}
+
+- (NSSet<IJSVGNode*>*)childSetOfType:(IJSVGNodeType)type
 {
     NSMutableSet<IJSVGNode*>* nodes = [[NSMutableSet alloc] init];
     for(IJSVGNode* node in self.children) {
