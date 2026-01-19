@@ -51,10 +51,9 @@
         if(str != nil) {
             unit = [IJSVGUnitLength unitWithString:str
                                       fromUnitType:gradient.units];
-        } else {
-            // spec says to say 50% for missing property default
-            unit = [IJSVGUnitLength unitWithPercentageFloat:.5f];
         }
+        // spec says to say 50% for missing property default
+        unit = unit ?: [IJSVGUnitLength unitWithPercentageFloat:.5f];
         [gradient setValue:unit
                     forKey:kv[key]];
     }
@@ -64,9 +63,9 @@
     if(fr != nil) {
         gradient.fr = [IJSVGUnitLength unitWithString:fr
                                          fromUnitType:gradient.units];
-    } else {
-        gradient.fr = [IJSVGUnitLength unitWithPercentageFloat:0.f];
     }
+  
+    gradient.fr = gradient.fr ?: [IJSVGUnitLength unitWithPercentageFloat:0.f];
 
     // fx and fy are the same unless specified otherwise
     gradient.fx = gradient.cx;
@@ -76,13 +75,13 @@
     NSString* fx = [element attributeForName:IJSVGAttributeFX].stringValue;
     if(fx != nil) {
         gradient.fx = [IJSVGUnitLength unitWithString:fx
-                                         fromUnitType:gradient.units];
+                                         fromUnitType:gradient.units] ?: gradient.fx;
     }
 
     NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
     if(fy != nil) {
         gradient.fy = [IJSVGUnitLength unitWithString:fy
-                                         fromUnitType:gradient.units];
+                                         fromUnitType:gradient.units] ?: gradient.fy;
     }
 
     NSArray* colors = nil;

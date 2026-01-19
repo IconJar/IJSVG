@@ -26,16 +26,24 @@
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient
 {
-    // just ask unit for the value
-    NSString* x1 = ([element attributeForName:IJSVGAttributeX1].stringValue ?: @"0");
-    NSString* x2 = ([element attributeForName:IJSVGAttributeX2].stringValue ?: @"100%");
-    NSString* y1 = ([element attributeForName:IJSVGAttributeY1].stringValue ?: @"0");
-    NSString* y2 = ([element attributeForName:IJSVGAttributeY2].stringValue ?: @"0");
-    aGradient.x1 = [IJSVGGradientUnitLength unitWithString:x1 fromUnitType:aGradient.units];
-    aGradient.x2 = [IJSVGGradientUnitLength unitWithString:x2 fromUnitType:aGradient.units];
-    aGradient.y1 = [IJSVGGradientUnitLength unitWithString:y1 fromUnitType:aGradient.units];
-    aGradient.y2 = [IJSVGGradientUnitLength unitWithString:y2 fromUnitType:aGradient.units];
+    // Work out x1, x2, y1, y2
+    NSDictionary *dict = @{
+      IJSVGAttributeX1: @"0",
+      IJSVGAttributeX2: @"100%",
+      IJSVGAttributeY1: @"0",
+      IJSVGAttributeY2: @"0",
+    };
     
+    for (NSString* key in dict) {
+      NSString *value = [element attributeForName:key].stringValue ?: dict[key];
+      IJSVGUnitLength *length = [IJSVGUnitLength unitWithString:value
+                                                   fromUnitType:aGradient.units];
+      length = length ?: [IJSVGUnitLength unitWithString:dict[key]
+                                            fromUnitType:aGradient.units];
+      [aGradient setValue:length
+                   forKey:key];
+    }
+  
     // compute the color stops and colours
     NSArray* colors = nil;
     CGFloat* stopsParams = [self.class computeColorStops:aGradient
