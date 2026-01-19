@@ -168,6 +168,7 @@
     // even though there should had been
     if(length == 0) {
         (void)free(floats), floats = NULL;
+        (void)free(chars), chars = NULL;
         return nil;
     }
     
