@@ -18,6 +18,9 @@
         
         // viewBox normalization
         _viewBoxNormalization = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
+      
+        // Inferring of viewBoxes
+        _inferViewBoxes = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
     }
     return self;
 }

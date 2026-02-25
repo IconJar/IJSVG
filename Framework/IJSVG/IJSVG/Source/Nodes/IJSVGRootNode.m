@@ -38,6 +38,26 @@
     return self;
 }
 
+- (void)inferViewBoxIfRequired
+{
+  // Already have a viewBox, no need to do anything
+  if(self.viewBox != nil) {
+    return;
+  }
+  
+  // We only need to do the following if the FF is enabled.
+  if(IJSVGThreadManager.currentManager.featureFlags.inferViewBoxes.enabled == NO) {
+    return;
+  }
+  
+  // We can just union our child bounds together and use that.
+  CGRect rect = [super bounds];
+  if(CGRectIsInfinite(rect) || CGRectIsEmpty(rect)) {
+    return;
+  }
+  self.viewBox = [IJSVGUnitRect rectWithCGRect:rect];
+}
+
 - (CGRect)bounds
 {
     return [self.viewBox computeValue:CGSizeZero];

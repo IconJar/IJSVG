@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly, strong) IJSVGFeatureFlag* filters;
 @property (nonatomic, readonly, strong) IJSVGFeatureFlag* viewBoxNormalization;
+@property (nonatomic, readonly, strong) IJSVGFeatureFlag* inferViewBoxes;
 
 @end
 

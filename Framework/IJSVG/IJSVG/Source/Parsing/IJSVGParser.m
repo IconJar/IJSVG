@@ -273,7 +273,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                  ontoNode:node
                parentNode:nil
          postProcessBlock:&postProcessBlock
-                recursive:NO];
+                recursive:recursive];
     if(postProcessBlock != nil) {
         postProcessBlock();
     }
@@ -310,15 +310,20 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         } else if(cw == 0.f && ch != 0.f) {
             cw = ch;
         }
-        // nothing we can do, its a nil viewBox and has
-        // no width or height
+        
+        // Lets infer the size if the width and height are zero.
         if(cw == 0.f && ch == 0.f) {
-            return;
+          [node inferViewBoxIfRequired];
+        } else {
+          IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
+                                                      height:height];
+          node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
+                                                  size:size];
         }
-        IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
-                                                    height:height];
-        node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
-                                                size:size];
+    }
+  
+    if(node.viewBox == nil) {
+      return;
     }
 
     IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionNone;
@@ -1532,14 +1537,15 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                                     onNode:node
                                          ignoredAttributes:ignored];
 
-    // make sure we compute the viewbox
-    [self computeViewBoxForRootNode:node];
     
     // recursively compute children
     if(recursive == YES) {
       [self computeElement:element
                 parentNode:node];
     }
+  
+    // make sure we compute the viewbox
+    [self computeViewBoxForRootNode:node];
 }
 
 - (IJSVGNode*)parseSVGElement:(NSXMLElement*)element

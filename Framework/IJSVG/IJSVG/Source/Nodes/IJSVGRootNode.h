@@ -18,4 +18,6 @@
 @property (nonatomic, strong) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;
 
+- (void)inferViewBoxIfRequired;
+
 @end
