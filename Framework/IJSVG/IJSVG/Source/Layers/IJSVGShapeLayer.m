@@ -36,6 +36,7 @@
 @synthesize outerBoundingBox;
 @synthesize maskLayer = _maskLayer;
 @synthesize treatImplicitOriginAsTransform;
+@synthesize maskUsesAlpha = _maskUsesAlpha;
 
 - (void)dealloc
 {
@@ -117,11 +118,11 @@
                                 toLayer:self
                               inContext:ctx
                            drawingBlock:^{
-            [super renderInContext:ctx];
+            [IJSVGLayer renderLayerTree:self inContext:ctx];
         }];
         return;
     }
-    [super renderInContext:ctx];
+    [IJSVGLayer renderLayerTree:self inContext:ctx];
 }
 
 - (void)applySublayerMaskToContext:(CGContextRef)context

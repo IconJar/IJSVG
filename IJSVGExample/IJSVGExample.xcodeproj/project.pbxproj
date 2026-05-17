@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		072DC6760DCF445DBD512112 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C310F21548684F6181BD5579 /* WebKit.framework */; };
 		5901B73D282818CA00290525 /* contour_hatching.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B730282818CA00290525 /* contour_hatching.svg */; };
 		5901B73E282818CA00290525 /* canonical.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B731282818CA00290525 /* canonical.svg */; };
 		5901B73F282818CA00290525 /* clipping.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B732282818CA00290525 /* clipping.svg */; };
@@ -68,6 +69,13 @@
 		59F799E219B880CE00096CB7 /* htc_one.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59F799E119B880CE00096CB7 /* htc_one.svg */; };
 		59FB54BE280B03E600D148FA /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AE0DB59A2FB9B10F00DA70FD /* Group.svg in Resources */ = {isa = PBXBuildFile; fileRef = AE0DB5972FB9B10F00DA70FD /* Group.svg */; };
+		AE0DB59B2FB9B10F00DA70FD /* Rectangle.svg in Resources */ = {isa = PBXBuildFile; fileRef = AE0DB5992FB9B10F00DA70FD /* Rectangle.svg */; };
+		AE0DB59C2FB9B10F00DA70FD /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = AE0DB5982FB9B10F00DA70FD /* NewTux.svg */; };
+		AE0DB59D2FB9B10F00DA70FD /* AJ_Digital_Camera.svg in Resources */ = {isa = PBXBuildFile; fileRef = AE0DB5962FB9B10F00DA70FD /* AJ_Digital_Camera.svg */; };
+		E6C4BA913FFD4E098562C475 /* IJSVGWebKitPSNRTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FCC83ED38A1C4FC3BA5D4E13 /* IJSVGWebKitPSNRTests.m */; };
+		07198EA402F3443187A14F1C /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
+		EC2F13BF2DF44CD088469013 /* IJSVG.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +111,17 @@
 			files = (
 				59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */,
 			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E93DB705D0414EA6A57AC38E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				EC2F13BF2DF44CD088469013 /* IJSVG.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -182,6 +201,12 @@
 		59D6B1A6284F698F0058DE6B /* sh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sh.svg; sourceTree = "<group>"; };
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
+		AE0DB5962FB9B10F00DA70FD /* AJ_Digital_Camera.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = AJ_Digital_Camera.svg; sourceTree = "<group>"; };
+		AE0DB5972FB9B10F00DA70FD /* Group.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Group.svg; sourceTree = "<group>"; };
+		AE0DB5982FB9B10F00DA70FD /* NewTux.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = NewTux.svg; sourceTree = "<group>"; };
+		AE0DB5992FB9B10F00DA70FD /* Rectangle.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Rectangle.svg; sourceTree = "<group>"; };
+		C310F21548684F6181BD5579 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		FCC83ED38A1C4FC3BA5D4E13 /* IJSVGWebKitPSNRTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGWebKitPSNRTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -197,6 +222,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				072DC6760DCF445DBD512112 /* WebKit.framework in Frameworks */,
+				07198EA402F3443187A14F1C /* IJSVG.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -311,6 +338,11 @@
 			isa = PBXGroup;
 			children = (
 				5956659019B62F4700D805FF /* IJSVGExampleTests.m */,
+				FCC83ED38A1C4FC3BA5D4E13 /* IJSVGWebKitPSNRTests.m */,
+				AE0DB5962FB9B10F00DA70FD /* AJ_Digital_Camera.svg */,
+				AE0DB5972FB9B10F00DA70FD /* Group.svg */,
+				AE0DB5982FB9B10F00DA70FD /* NewTux.svg */,
+				AE0DB5992FB9B10F00DA70FD /* Rectangle.svg */,
 				5956658E19B62F4700D805FF /* Supporting Files */,
 			);
 			path = IJSVGExampleTests;
@@ -335,6 +367,7 @@
 		59FB54BD280B03E600D148FA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C310F21548684F6181BD5579 /* WebKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -368,6 +401,7 @@
 				5956658619B62F4700D805FF /* Sources */,
 				5956658719B62F4700D805FF /* Frameworks */,
 				5956658819B62F4700D805FF /* Resources */,
+				E93DB705D0414EA6A57AC38E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -494,6 +528,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE0DB59A2FB9B10F00DA70FD /* Group.svg in Resources */,
+				AE0DB59B2FB9B10F00DA70FD /* Rectangle.svg in Resources */,
+				AE0DB59C2FB9B10F00DA70FD /* NewTux.svg in Resources */,
+				AE0DB59D2FB9B10F00DA70FD /* AJ_Digital_Camera.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -521,6 +559,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */,
+				E6C4BA913FFD4E098562C475 /* IJSVGWebKitPSNRTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,7 +697,6 @@
 		5956659819B62F4700D805FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -672,14 +710,12 @@
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
 			name = Debug;
 		};
 		5956659919B62F4700D805FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -689,7 +725,6 @@
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
 			name = Release;
 		};

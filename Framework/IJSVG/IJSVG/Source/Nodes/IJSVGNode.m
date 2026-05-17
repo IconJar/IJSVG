@@ -121,7 +121,20 @@
     if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
         return IJSVGNodeTypeFilter;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
+    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fecolormatrix") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feflood") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feoffset") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fecomposite") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "femerge") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "femergenode") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feblend") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "femorphology") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fecomponenttransfer") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feturbulence") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fedisplacementmap") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fespecularlighting") == YES ||
+       IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fediffuselighting") == YES) {
         return IJSVGNodeTypeFilterEffect;
     }
     return IJSVGNodeTypeUnknown;

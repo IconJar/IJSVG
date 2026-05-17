@@ -29,6 +29,7 @@
 + (IJSVGThreadManager*)managerForThread:(NSThread*)thread;
 + (IJSVGThreadManager*)managerForSVG:(IJSVG*)svg;
 + (IJSVGThreadManager*)currentManager;
++ (void)clearAllCIContextCaches;
 
 - (void)adopt:(IJSVG*)svg;
 - (void)remove:(IJSVG*)svg;

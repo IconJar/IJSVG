@@ -8,7 +8,8 @@
 
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGTransaction.h>
-#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
+#import <TargetConditionals.h>
 
 BOOL IJSVGIsMainThread(void) {
     return IJSVGThreadManager.currentManager.thread.isMainThread;
@@ -16,6 +17,11 @@ BOOL IJSVGIsMainThread(void) {
 
 BOOL IJSVGBeginTransaction(void)
 {
+#if TARGET_OS_IOS
+    if([NSThread isMainThread] == NO) {
+        return NO;
+    }
+#endif
     if(IJSVGIsMainThread() == YES) {
         return NO;
     }

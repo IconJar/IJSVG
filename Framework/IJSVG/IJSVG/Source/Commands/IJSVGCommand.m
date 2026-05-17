@@ -95,13 +95,6 @@
 + (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands
 {
     CGMutablePathRef path = CGPathCreateMutable();
-    // If there are some commands in the array and the first one is NOT a move
-    // command then we need to implicitly moe the path to zero point or CG will
-    // throw warnings at us.
-    if(commands.count > 0 && ![commands.firstObject isKindOfClass:IJSVGCommandMove.class]) {
-      CGPathMoveToPoint(path, NULL, 0, 0);
-    }
-  
     IJSVGCommand* preCommand = nil;
     for(IJSVGCommand* command in commands) {
         for (IJSVGCommand* subCommand in command.subCommands) {
@@ -171,14 +164,6 @@
                 
                 [commands addObject:command];
             }
-#if DEBUG
-            else {
-                // if we get here then the command buffer is invalid, nothing we can
-                // do about it, just invalid data.
-                NSLog(@"\"%s\" is not a valid command instruction set", commandString);
-            }
-#endif
-            
             // free the memory as at this point, we are done with it
             (void)free(commandString), commandString = NULL;
         }

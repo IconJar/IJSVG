@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 IB_DESIGNABLE
 @interface IJSVGView : NSView {

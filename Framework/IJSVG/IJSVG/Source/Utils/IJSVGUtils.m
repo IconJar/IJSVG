@@ -25,10 +25,6 @@ CGSize const IJSVGSizeIntrinsic = (CGSize) {
     .height = -1.23f
 };
 
-BOOL IJSVGIsValidContextSize(CGSize size) {
-  return size.width >= 1.f && size.height >= 1.f;
-}
-
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
     while((c = *buffer++)) {
@@ -592,16 +588,6 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return val;
 }
 
-+ (void)logParameters:(CGFloat*)param
-                count:(NSInteger)count
-{
-    NSMutableString* str = [[NSMutableString alloc] init];
-    for (NSInteger i = 0; i < count; i++) {
-        [str appendFormat:@"%f ", param[i]];
-    }
-    NSLog(@"%@", str);
-}
-
 + (CGFloat)floatValue:(NSString*)string
 {
     if([string isEqualToString:IJSVGStringInherit]) {
@@ -696,6 +682,13 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 + (NSImage*)resizeImage:(NSImage*)anImage
                  toSize:(CGSize)size
 {
+#if TARGET_OS_IOS
+    UIGraphicsBeginImageContextWithOptions(size, NO, 0.f);
+    [anImage drawInRect:CGRectMake(0.f, 0.f, size.width, size.height)];
+    NSImage* image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+#else
     NSImage* image = [[NSImage alloc] initWithSize:size];
     [image lockFocus];
     [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height)
@@ -704,6 +697,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                fraction:1.f];
     [image unlockFocus];
     return image;
+#endif
 }
 
 @end

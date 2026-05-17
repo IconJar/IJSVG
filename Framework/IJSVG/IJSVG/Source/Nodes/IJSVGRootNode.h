@@ -12,12 +12,9 @@
 
 @interface IJSVGRootNode : IJSVGGroup
 
-@property (nonatomic, assign) CGSize clientSize;
-@property (nonatomic, assign) BOOL viewBoxContainsRelativeUnits;
 @property (nonatomic, assign) IJSVGIntrinsicDimensions intrinsicDimensions;
 @property (nonatomic, strong) IJSVGUnitSize* intrinsicSize;
+@property (nonatomic, assign) BOOL hasExplicitViewBox;
 @property (nonatomic, readonly) CGRect bounds;
-
-- (void)inferViewBoxIfRequired;
 
 @end

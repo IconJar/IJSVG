@@ -6,8 +6,9 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
     IJSVGColorStringOptionNone = 1 << 0,
@@ -167,34 +168,46 @@ typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
     IJSVGColorYellowgreen
 };
 
-extern NSString* const IJSVGColorCurrentColorName;
+extern NSString * const IJSVGColorCurrentColorName;
 
 @interface IJSVGColor : NSObject
 
-CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness);
+CGFloat* _Nullable IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness);
+BOOL IJSVGColorGetRGBAComponents(NSColor* _Nullable color,
+                                 CGFloat* _Nullable red,
+                                 CGFloat* _Nullable green,
+                                 CGFloat* _Nullable blue,
+                                 CGFloat* _Nullable alpha);
+CGFloat IJSVGColorAlphaComponent(NSColor* _Nullable color);
 
-+ (NSColor*)computeColorSpace:(NSColor*)color;
-+ (NSColorSpace*)defaultColorSpace;
-+ (BOOL)isColor:(NSString*)string;
-+ (NSString*)colorStringFromColor:(NSColor*)color
++ (NSColor* _Nullable)computeColorSpace:(NSColor* _Nullable)color;
+#if TARGET_OS_IOS
++ (CGColorSpaceRef _Nonnull)defaultColorSpace;
+#else
++ (NSColorSpace* _Nonnull)defaultColorSpace;
+#endif
++ (BOOL)isColor:(NSString* _Nullable)string;
++ (NSString*)colorStringFromColor:(NSColor* _Nullable)color
                           options:(IJSVGColorStringOptions)options;
-+ (NSString*)colorStringFromColor:(NSColor*)color;
++ (NSString*)colorStringFromColor:(NSColor* _Nullable)color;
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex;
-+ (NSColor*)computeColor:(id)colour;
-+ (BOOL)isNoneOrTransparent:(NSString*)string;
-+ (NSColor*)colorFromString:(NSString*)string;
-+ (NSColor*)colorFromHEXString:(NSString*)string;
-+ (NSColor*)colorFromHEXString:(NSString*)string
-        containsAlphaComponent:(BOOL*)containsAlphaComponent;
++ (NSColor* _Nullable)computeColor:(id _Nullable)colour;
++ (BOOL)isNoneOrTransparent:(NSString* _Nullable)string;
++ (NSColor* _Nullable)colorFromString:(NSString* _Nullable)string;
++ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string;
++ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string
+        containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
 + (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex;
 + (unsigned long)lengthOfHEXInteger:(NSUInteger)hex;
-+ (NSColor*)colorFromRString:(NSString*)rString
-                     gString:(NSString*)gString
-                     bString:(NSString*)bString
-                     aString:(NSString*)aString;
-+ (NSColor*)colorFromPredefinedColorName:(NSString*)name;
-+ (NSString*)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
-+ (NSColor*)changeAlphaOnColor:(NSColor*)color
++ (NSColor*)colorFromRString:(NSString* _Nullable)rString
+                     gString:(NSString* _Nullable)gString
+                     bString:(NSString* _Nullable)bString
+                     aString:(NSString* _Nullable)aString;
++ (NSColor* _Nullable)colorFromPredefinedColorName:(NSString* _Nullable)name;
++ (NSString* _Nullable)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
++ (NSColor* _Nullable)changeAlphaOnColor:(NSColor* _Nullable)color
                             to:(CGFloat)alphaValue;
 
 @end
+
+NS_ASSUME_NONNULL_END

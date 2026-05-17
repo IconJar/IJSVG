@@ -32,10 +32,11 @@
 - (void)drawInContext:(CGContextRef)ctx
 {
     CGImageRef image = _image.CGImage;
-    CGRect imageDrawRect = _image.bounds;
+    CGRect imageDrawRect = _image.intrinsicBounds;
     CGRect currentBounds = self.bounds;
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
         // image will be upside down, so just translate it back on itself
+        CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
         CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
         CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
         CGContextDrawImage(ctx, imageDrawRect, image);

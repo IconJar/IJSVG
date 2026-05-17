@@ -10,4 +10,6 @@
 
 @interface IJSVGMask : IJSVGGroup
 
+@property (nonatomic, assign) BOOL usesAlphaMask;
+
 @end

@@ -7,11 +7,15 @@
 //
 
 #import <IJSVG/IJSVGParser.h>
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 @class IJSVG;
 
+#if TARGET_OS_IOS
+@interface IJSVGImageRep : NSObject {
+#else
 @interface IJSVGImageRep : NSImageRep {
+#endif
 
 @private
     IJSVG* _svg;

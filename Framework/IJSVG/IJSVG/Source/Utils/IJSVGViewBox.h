@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <Quartz/Quartz.h>
+#import <QuartzCore/QuartzCore.h>
 
 typedef NS_ENUM(NSInteger, IJSVGViewBoxAlignment) {
     IJSVGViewBoxAlignmentUnknown,

@@ -10,4 +10,6 @@
 
 @interface IJSVGFilterEffectGaussianBlur : IJSVGFilterEffect
 
+@property (nonatomic, assign) BOOL usesSRGBColorInterpolation;
+
 @end

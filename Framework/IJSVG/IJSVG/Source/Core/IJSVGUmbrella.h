@@ -23,15 +23,28 @@
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGFeatureFlag.h>
 #import <IJSVG/IJSVGFeatureFlags.h>
+#import <IJSVG/IJSVGFilterEffectBlend.h>
+#import <IJSVG/IJSVGFilterEffectColorMatrix.h>
+#import <IJSVG/IJSVGFilterEffectComposite.h>
+#import <IJSVG/IJSVGFilterEffectDisplacementMap.h>
+#import <IJSVG/IJSVGFilterEffectFlood.h>
 #import <IJSVG/IJSVGFilterEffectGaussianBlur.h>
+#import <IJSVG/IJSVGFilterEffectLighting.h>
+#import <IJSVG/IJSVGFilterEffectMerge.h>
+#import <IJSVG/IJSVGFilterEffectOffset.h>
+#import <IJSVG/IJSVGFilterEffectTurbulence.h>
+#import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGPatternLayer.h>
+#import <IJSVG/IJSVGPlatform.h>
 #import <IJSVG/IJSVGStrokeLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGView.h>
+#import <IJSVG/IJSVGXML.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
+#import <IJSVG/IJSVGiOSXML.h>
 
 #endif /* IJSVGUmbrella_h */

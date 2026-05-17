@@ -40,6 +40,7 @@
 - (void)applyPropertiesFromNode:(IJSVGGradient*)node
 {
     [super applyPropertiesFromNode:node];
+    self.spreadMethod = node.spreadMethod;
     self.numberOfStops = node.numberOfStops;
     self.colors = node.colors.copy;
     size_t length = sizeof(CGFloat)*node.numberOfStops;
@@ -62,7 +63,7 @@
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors
 {
-    NSArray<IJSVGNode*>* stops = [gradient childrenOfType:IJSVGNodeTypeStop];
+    NSArray<IJSVGNode*>* stops = gradient.children;
     NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
     CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
     
@@ -99,8 +100,16 @@
     for (NSColor* color in _colors) {
         CFArrayAppendValue(colors, color.CGColor);
     }
-    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
-        colors, _locations);
+    CGGradientRef result = NULL;
+#if TARGET_OS_IOS
+    result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace,
+                                        colors,
+                                        _locations);
+#else
+    result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
+                                        colors,
+                                        _locations);
+#endif
     CFRelease(colors);
     return _CGGradient = result;
 }

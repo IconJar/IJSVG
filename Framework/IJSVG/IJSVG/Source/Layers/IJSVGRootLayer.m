@@ -12,26 +12,36 @@
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    if(self.viewBox != nil) {
+    if(self.rendersWithViewBoxTransform == YES && self.viewBox != nil) {
         CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
-        __weak IJSVGRootLayer* weakSelf = self;
-        IJSVGViewBoxDrawingBlock drawingBlock = ^(CGFloat scale[]) {
-            CGContextSaveGState(ctx);
-            // we have to make sure we set the backing scale factor once
-            // we know how scale this will be drawn at
-            CGFloat nScale = MIN(scale[0], scale[1]);
-            nScale += weakSelf.backingScaleFactor;
-            weakSelf.backingScaleFactor = nScale;
-            
-            // perform the actual render now we have computed backing scale
-            [super performRenderInContext:ctx];
-            CGContextRestoreGState(ctx);
-        };
-        
-        IJSVGContextDrawViewBox(ctx, viewBox, IJSVGLayerGetBoundingBoxBounds(self),
-                                self.viewBoxAlignment,
-                                self.viewBoxMeetOrSlice, drawingBlock);
-        return;
+        BOOL hasViewBox = (isfinite(CGRectGetWidth(viewBox)) &&
+                           isfinite(CGRectGetHeight(viewBox)) &&
+                           CGRectGetWidth(viewBox) > 0.f &&
+                           CGRectGetHeight(viewBox) > 0.f);
+        // For SVGs without an explicit viewBox, the parser synthesises one
+        // from the intrinsic width/height. When such an SVG is rendered into
+        // a viewport of different aspect, browsers embedding it via <img>
+        // stretch the canvas to fill the box (object-fit: fill default), so
+        // use IJSVGViewBoxAlignmentNone here. Otherwise — explicit viewBox
+        // — honour the SVG's own preserveAspectRatio settings.
+        IJSVGViewBoxAlignment alignment = self.hasExplicitViewBox
+            ? self.viewBoxAlignment
+            : IJSVGViewBoxAlignmentNone;
+        IJSVGViewBoxMeetOrSlice meetOrSlice = self.viewBoxMeetOrSlice;
+        if(hasViewBox == YES) {
+            __weak IJSVGRootLayer* weakSelf = self;
+            IJSVGViewBoxDrawingBlock drawingBlock = ^(CGFloat scale[]) {
+                CGContextSaveGState(ctx);
+                CGFloat nScale = MIN(scale[0], scale[1]);
+                nScale += weakSelf.backingScaleFactor;
+                weakSelf.backingScaleFactor = nScale;
+                [super performRenderInContext:ctx];
+                CGContextRestoreGState(ctx);
+            };
+            IJSVGContextDrawViewBox(ctx, viewBox, IJSVGLayerGetBoundingBoxBounds(self),
+                                    alignment, meetOrSlice, drawingBlock);
+            return;
+        }
     }
     [super performRenderInContext:ctx];
 }
@@ -63,15 +73,18 @@
     ignoreIntrinsicSize:(BOOL)ignoreIntrinsicSize
 {
     CGRect frame = viewPort;
-    if(CGRectIsInfinite(viewPort)) {
-      return;
-    }
-  
     IJSVGUnitSize* size = nil;
-    
-    // The SVG might have an intrinsic size against it, if so, we need to use
-    // that instead of the viewPort size to make sure we obey the render correctly.
-    if(ignoreIntrinsicSize == NO && (size = self.intrinsicSize) != nil) {
+
+    // For SVGs *without* an explicit viewBox we keep the frame at the
+    // viewport rect, so the implicit viewBox synthesised in
+    // performRenderInContext: actually scales content into the requested
+    // rect (matching <img>-style fill). For SVGs *with* an explicit viewBox
+    // we preserve the original behaviour and use the intrinsic size as the
+    // frame — that's the existing render path the broader sweep corpus
+    // relies on and it would regress here otherwise.
+    if(ignoreIntrinsicSize == NO &&
+       self.hasExplicitViewBox == YES &&
+       (size = self.intrinsicSize) != nil) {
         CGFloat width = 0.f;
         CGFloat height = 0.f;
         if((width = [size.width computeValue:frame.size.width]) != 0.f) {

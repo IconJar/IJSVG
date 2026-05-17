@@ -52,28 +52,15 @@
 
 - (void)loadFromURL:(NSURL*)aURL
 {
-    // If we are not a data URL, lets check what its trying to reach is actually
-    // reachable, if not, just return as cant load it.
-    if (![aURL.scheme isEqualToString:@"data"] &&
-        ![aURL checkResourceIsReachableAndReturnError:nil]) {
-#if DEBUG
-      NSLog(@"<%@> references: \"%@\", which cannot be reached.",
-            NSStringFromClass(self.class), aURL);
-#endif
-      return;
-    }
-
-    // Convert to data, if its nil, just return, nothing more can do.
     NSData* data = [NSData dataWithContentsOfURL:aURL];
+
+    // no data, just ignore...invalid probably
     if(data == nil) {
         return;
     }
 
-    // set the image against the container — only if it was created from the data.
+    // set the image against the container
     NSImage* anImage = [[NSImage alloc] initWithData:data];
-    if (anImage == nil) {
-      return;
-    }
     [self setImage:anImage];
 }
 
@@ -87,12 +74,16 @@
         CGImage = nil;
     }
 
+#if TARGET_OS_IOS
+    CGImage = [_image CGImage];
+#else
     CGRect rect = CGRectMake(0.f, 0.f,
                              _intrinsicSize.width,
                              _intrinsicSize.height);
     CGImage = [_image CGImageForProposedRect:&rect
                                      context:nil
                                        hints:nil];
+#endif
 
     CGImageRetain(CGImage);
 }

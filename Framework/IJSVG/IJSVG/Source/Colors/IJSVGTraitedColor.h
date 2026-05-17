@@ -6,8 +6,7 @@
 //  Copyright © 2021 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     IJSVGColorUsageTraitNone = 0,

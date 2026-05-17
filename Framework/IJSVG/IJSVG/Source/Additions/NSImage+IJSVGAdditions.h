@@ -6,8 +6,9 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
+
+@class IJSVG;
 
 IJSVG* IJSVGGetFromNSImage(NSImage* image);
 

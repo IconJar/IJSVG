@@ -21,7 +21,5 @@
 - (void)addBits:(IJSVGBitFlags*)storage;
 - (BOOL)bitIsSet:(int)bit;
 - (void)setBit:(int)bit;
-- (void)unsetBit:(int)bit;
-- (void)setAllBits;
 
 @end

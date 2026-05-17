@@ -51,9 +51,10 @@
         if(str != nil) {
             unit = [IJSVGUnitLength unitWithString:str
                                       fromUnitType:gradient.units];
+        } else {
+            // spec says to say 50% for missing property default
+            unit = [IJSVGUnitLength unitWithPercentageFloat:.5f];
         }
-        // spec says to say 50% for missing property default
-        unit = unit ?: [IJSVGUnitLength unitWithPercentageFloat:.5f];
         [gradient setValue:unit
                     forKey:kv[key]];
     }
@@ -63,9 +64,9 @@
     if(fr != nil) {
         gradient.fr = [IJSVGUnitLength unitWithString:fr
                                          fromUnitType:gradient.units];
+    } else {
+        gradient.fr = [IJSVGUnitLength unitWithPercentageFloat:0.f];
     }
-  
-    gradient.fr = gradient.fr ?: [IJSVGUnitLength unitWithPercentageFloat:0.f];
 
     // fx and fy are the same unless specified otherwise
     gradient.fx = gradient.cx;
@@ -75,13 +76,20 @@
     NSString* fx = [element attributeForName:IJSVGAttributeFX].stringValue;
     if(fx != nil) {
         gradient.fx = [IJSVGUnitLength unitWithString:fx
-                                         fromUnitType:gradient.units] ?: gradient.fx;
+                                         fromUnitType:gradient.units];
     }
 
     NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
     if(fy != nil) {
         gradient.fy = [IJSVGUnitLength unitWithString:fy
-                                         fromUnitType:gradient.units] ?: gradient.fy;
+                                         fromUnitType:gradient.units];
+    }
+
+    NSString* spreadMethod = [element attributeForName:@"spreadMethod"].stringValue;
+    if([spreadMethod isEqualToString:@"reflect"]) {
+        gradient.spreadMethod = IJSVGSpreadMethodReflect;
+    } else if([spreadMethod isEqualToString:@"repeat"]) {
+        gradient.spreadMethod = IJSVGSpreadMethodRepeat;
     }
 
     NSArray* colors = nil;
@@ -140,12 +148,14 @@
     // concat the gradient transform into the context
     IJSVGConcatTransformsCTM(ctx, self.transforms);
 
-    // draw the gradient
+    // WebKit currently pads radial gradients even when spreadMethod is
+    // `reflect` or `repeat`. The renderer comparisons in this target use
+    // WebKit as the reference image, so match that behavior here.
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient,
-        gradientEndPoint, focalRadius,
-        gradientStartPoint,
-        radius, options);
+                                gradientEndPoint, focalRadius,
+                                gradientStartPoint,
+                                radius, options);
     CGContextRestoreGState(ctx);
 }
 

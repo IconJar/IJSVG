@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
+#import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGGradientLayer
 
@@ -23,7 +24,7 @@
     // lets check its alpha properties on the colors
     BOOL hasAlphaChannel = NO;
     for (NSColor* color in newGradient.colors) {
-        if(color.alphaComponent != 1.f) {
+        if(IJSVGColorAlphaComponent(color) != 1.f) {
             hasAlphaChannel = YES;
             break;
         }
@@ -76,9 +77,28 @@
     CGAffineTransform transform = CGAffineTransformIdentity;
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     if(self.gradient.units == IJSVGUnitUserSpaceOnUse) {
-        IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
-        bounds = [rootNode.viewBox computeValue:CGSizeZero];
+        CALayer<IJSVGDrawableLayer>* rootCandidate = [IJSVGLayer rootLayerForLayer:self];
+        if([rootCandidate isKindOfClass:IJSVGRootLayer.class]) {
+            IJSVGRootLayer* rootNode = (IJSVGRootLayer*)rootCandidate;
+            bounds = [rootNode.viewBox computeValue:CGSizeZero];
+        } else {
+            bounds = layer.frame;
+        }
         transform = [IJSVGLayer userSpaceTransformForLayer:layer];
+
+        // When rendering inside a filter context, the element was moved to (0,0)
+        // but the gradient needs the original position to compute coordinates.
+        NSValue* filterOffset = [IJSVGThreadManager.currentManager userInfoObjectForKey:@"IJSVGFilterElementOffset"];
+        // In filter rendering we only need to restore the saved offset for the
+        // top-level filtered layer that was normalized to the origin. Descendant
+        // layers still carry their absolute outerBoundingBox, so applying the
+        // saved element offset again shifts user-space gradients twice.
+        if(filterOffset != nil &&
+           CGRectGetMinX(layer.outerBoundingBox) == 0.f &&
+           CGRectGetMinY(layer.outerBoundingBox) == 0.f) {
+            NSPoint offset = filterOffset.pointValue;
+            transform = CGAffineTransformTranslate(transform, -offset.x, -offset.y);
+        }
     } else {
         bounds = IJSVGLayerGetBoundingBoxBounds(layer);
     }

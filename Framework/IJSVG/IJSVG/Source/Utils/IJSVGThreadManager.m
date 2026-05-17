@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGThreadManager.h>
+#import <TargetConditionals.h>
 
 @implementation IJSVGThreadManager
 
@@ -57,6 +58,18 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 + (IJSVGThreadManager *)currentManager
 {
     return [self managerForThread:NSThread.currentThread];
+}
+
++ (void)clearAllCIContextCaches
+{
+    NSMapTable* map = [self mapTable];
+    @synchronized (map) {
+        NSEnumerator* enumerator = map.objectEnumerator;
+        IJSVGThreadManager* manager = nil;
+        while((manager = [enumerator nextObject]) != nil) {
+            [manager->_CIContext clearCaches];
+        }
+    }
 }
 
 - (void)dealloc
@@ -142,9 +155,25 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     if(_CIContext == nil) {
         // for high performance we can disable the color
         // management
+#if TARGET_OS_IOS
+        NSMutableDictionary *options = [NSMutableDictionary dictionaryWithDictionary:@{
+            kCIImageColorSpace: NSNull.null,
+            kCIContextWorkingFormat: @(kCIFormatRGBA8)
+        }];
+        CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+        if(colorSpace != NULL) {
+            options[kCIContextWorkingColorSpace] = (__bridge id)colorSpace;
+            options[kCIContextOutputColorSpace] = (__bridge id)colorSpace;
+        }
+        _CIContext = [CIContext contextWithOptions:options];
+        if(colorSpace != NULL) {
+            CGColorSpaceRelease(colorSpace);
+        }
+#else
         _CIContext = [CIContext contextWithOptions:@{
             kCIImageColorSpace: NSNull.null
         }];
+#endif
     }
     return _CIContext;
 }

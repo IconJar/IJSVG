@@ -7,13 +7,17 @@
 //
 
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGLayer.h>
 
 @interface IJSVGFilter : IJSVGGroup
 
 - (CGImageRef)newImageByApplyFilterToLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                                     scale:(CGFloat)scale;
+                                     scale:(CGFloat)scale
+                               outputFrame:(CGRect*)outFrame;
 
 @property (nonatomic, readonly) BOOL valid;
+@property (nonatomic, assign) BOOL usesSRGBColorInterpolation;
+@property (nonatomic, strong) NSXMLElement* defElement;
 
 @end

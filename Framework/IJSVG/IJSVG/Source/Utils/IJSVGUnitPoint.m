@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGUnitPoint.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @implementation IJSVGUnitPoint
 

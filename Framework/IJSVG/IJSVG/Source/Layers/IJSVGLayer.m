@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
+#import <math.h>
 
 CGRect IJSVGLayerGetBoundingBoxBounds(CALayer<IJSVGDrawableLayer>* drawableLayer)
 {
@@ -28,6 +29,19 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
                                          capacity:3];
 }
 
+static inline BOOL IJSVGRectIsFinite(CGRect rect)
+{
+    return isfinite(rect.origin.x) &&
+           isfinite(rect.origin.y) &&
+           isfinite(rect.size.width) &&
+           isfinite(rect.size.height);
+}
+
+static void IJSVGMaskImageReleaseData(void *info, const void *data, size_t size)
+{
+    free((void *)data);
+}
+
 
 @implementation IJSVGLayer
 
@@ -42,6 +56,7 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 @synthesize clippingTransform;
 @synthesize clippingBoundingBox;
 @synthesize maskingClippingRect;
+@synthesize maskUsesAlpha;
 @synthesize clipPathTransform;
 @synthesize colors;
 @synthesize boundingBox = _boundingBox;
@@ -220,6 +235,128 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     }];
 }
 
++ (void)renderLayerTree:(CALayer<IJSVGDrawableLayer>*)layer
+              inContext:(CGContextRef)ctx
+{
+    if(layer == nil) {
+        return;
+    }
+
+    // 1. Let the layer draw its own content (gradients, patterns, images)
+    // Skip CAShapeLayer subclasses — we draw those manually below
+    if(![layer isKindOfClass:CAShapeLayer.class]) {
+        [layer drawInContext:ctx];
+    }
+
+    // 2. If this is a CAShapeLayer, manually draw the path fill and stroke
+    if([layer isKindOfClass:CAShapeLayer.class]) {
+        CAShapeLayer* shapeLayer = (CAShapeLayer*)layer;
+        CGPathRef path = shapeLayer.path;
+        if(path != NULL) {
+            if(shapeLayer.fillColor != NULL) {
+                CGContextAddPath(ctx, path);
+                CGContextSetFillColorWithColor(ctx, shapeLayer.fillColor);
+                if([shapeLayer.fillRule isEqualToString:kCAFillRuleEvenOdd]) {
+                    CGContextEOFillPath(ctx);
+                } else {
+                    CGContextFillPath(ctx);
+                }
+            }
+            if(shapeLayer.strokeColor != NULL && shapeLayer.lineWidth > 0) {
+                CGContextSetStrokeColorWithColor(ctx, shapeLayer.strokeColor);
+                CGContextSetLineWidth(ctx, shapeLayer.lineWidth);
+                if([shapeLayer.lineCap isEqualToString:kCALineCapRound]) {
+                    CGContextSetLineCap(ctx, kCGLineCapRound);
+                } else if([shapeLayer.lineCap isEqualToString:kCALineCapSquare]) {
+                    CGContextSetLineCap(ctx, kCGLineCapSquare);
+                } else {
+                    CGContextSetLineCap(ctx, kCGLineCapButt);
+                }
+                if([shapeLayer.lineJoin isEqualToString:kCALineJoinRound]) {
+                    CGContextSetLineJoin(ctx, kCGLineJoinRound);
+                } else if([shapeLayer.lineJoin isEqualToString:kCALineJoinBevel]) {
+                    CGContextSetLineJoin(ctx, kCGLineJoinBevel);
+                } else {
+                    CGContextSetLineJoin(ctx, kCGLineJoinMiter);
+                }
+                CGContextSetMiterLimit(ctx, shapeLayer.miterLimit);
+                NSArray* dashPattern = shapeLayer.lineDashPattern;
+                if(dashPattern.count > 0) {
+                    CGFloat* dashes = (CGFloat*)malloc(dashPattern.count * sizeof(CGFloat));
+                    for(NSUInteger i = 0; i < dashPattern.count; i++) {
+                        dashes[i] = [dashPattern[i] doubleValue];
+                    }
+                    CGContextSetLineDash(ctx, shapeLayer.lineDashPhase, dashes, dashPattern.count);
+                    free(dashes);
+                }
+                CGContextAddPath(ctx, path);
+                CGContextStrokePath(ctx);
+            }
+        }
+    }
+
+    // 3. Render sublayers
+    for(CALayer* sublayer in layer.sublayers) {
+        if(sublayer.isHidden) {
+            continue;
+        }
+        if([sublayer conformsToProtocol:@protocol(IJSVGDrawableLayer)]) {
+            CALayer<IJSVGDrawableLayer>* drawableSublayer = (CALayer<IJSVGDrawableLayer>*)sublayer;
+
+            CGContextSaveGState(ctx);
+
+            // Apply sublayer position and transform (anchor-point aware)
+            CGRect sublayerBounds = drawableSublayer.bounds;
+            CGPoint sublayerPosition = drawableSublayer.position;
+            CGPoint anchorPoint = drawableSublayer.anchorPoint;
+            CGFloat anchorX = anchorPoint.x * sublayerBounds.size.width;
+            CGFloat anchorY = anchorPoint.y * sublayerBounds.size.height;
+
+            CGContextTranslateCTM(ctx, sublayerPosition.x, sublayerPosition.y);
+
+            CGAffineTransform transform = drawableSublayer.affineTransform;
+            if(!CGAffineTransformIsIdentity(transform)) {
+                CGContextConcatCTM(ctx, transform);
+            }
+
+            CGContextTranslateCTM(ctx, -anchorX, -anchorY);
+
+            float sublayerOpacity = drawableSublayer.opacity;
+
+            if(sublayerOpacity < 1.0f && sublayerOpacity > 0.0f) {
+                // Use transparency layer for correct opacity compositing
+                CGContextSetAlpha(ctx, sublayerOpacity);
+                CGContextBeginTransparencyLayer(ctx, NULL);
+                CGContextSetAlpha(ctx, 1.0f);
+                float savedOpacity = drawableSublayer.opacity;
+                drawableSublayer.opacity = 1.0f;
+                [self performBasicRenderOfLayer:drawableSublayer
+                                     inContext:ctx
+                                       options:IJSVGLayerDrawingOptionNone];
+                drawableSublayer.opacity = savedOpacity;
+                CGContextEndTransparencyLayer(ctx);
+            } else if(sublayerOpacity > 0.0f) {
+                [self performBasicRenderOfLayer:drawableSublayer
+                                     inContext:ctx
+                                       options:IJSVGLayerDrawingOptionNone];
+            }
+
+            CGContextRestoreGState(ctx);
+        } else {
+            // Non-IJSVG layers (e.g., IJSVGBasicLayer hosting filtered content)
+            CGContextSaveGState(ctx);
+            CGRect frame = sublayer.frame;
+            CGContextTranslateCTM(ctx, frame.origin.x, frame.origin.y);
+            id contents = sublayer.contents;
+            if(contents != nil) {
+                CGImageRef image = (__bridge CGImageRef)contents;
+                CGContextDrawImage(ctx, sublayer.bounds, image);
+            }
+            CGContextRestoreGState(ctx);
+        }
+    }
+}
+
 + (void)renderLayer:(CALayer<IJSVGDrawableLayer>*)layer
           inContext:(CGContextRef)ctx
             options:(IJSVGLayerDrawingOptions)options
@@ -343,7 +480,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                 CGRect maskRect = CGRectInset(rect, -maskTolerance, -maskTolerance);
                 CGContextClipToMask(maskCtx, maskRect, maskImage);
             }
-            CGContextDrawImage(maskCtx, layerRect, layerMask);
+            CGContextClipToMask(maskCtx, layerRect, layerMask);
+            CGContextSetGrayFillColor(maskCtx, 1.f, 1.f);
+            CGContextFillRect(maskCtx, layerRect);
             CGImageRelease(layerMask);
             if(maskImage != NULL) {
                 CGImageRelease(maskImage);
@@ -360,10 +499,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                    bitmapInfo:kCGImageAlphaNone
                                         scale:scale];
     
-    // we need to transform the mask rect back based on the inner bounding
-    // box of the layer, as this could be a group layer that inner box is
-    // not at 0,0.
-    CGRect layerRect = layer.innerBoundingBox;
+    // Clip masks are applied in the target layer's local coordinate space.
+    // `innerBoundingBox` reintroduces absolute origin after the relative-
+    // coordinate transition and shifts chained clip-path results.
+    CGRect layerRect = layer.bounds;
     CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMinX(layerRect),
                                                                    CGRectGetMinY(layerRect));
     rect = CGRectApplyAffineTransform(rect, transform);
@@ -395,23 +534,76 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                            options:(IJSVGLayerDrawingOptions)options
                              scale:(CGFloat)scale
 {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGImageRef alphaMask = [self newImageForLayer:layer
-                                          options:options
-                                       colorSpace:colorSpace
-                                       bitmapInfo:kCGImageAlphaNone
-                                            scale:scale];
-    // low - high pairs
-    const CGFloat colors[6] = {
-        0.f, 11.f,
-        0.f, 11.f,
-        0.f, 11.f
-    };
-    CGImageRef masked = CGImageCreateWithMaskingColors(alphaMask, colors);
-    CGImageRelease(alphaMask);
-    CGColorSpaceRelease(colorSpace);
-    return masked;
+    // Render the mask content in RGBA (not grayscale) so gradient fills
+    // and other complex content renders correctly.
+    CGColorSpaceRef rgbCS = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGImageRef rgbImage = [self newImageForLayer:layer
+                                         options:options
+                                      colorSpace:rgbCS
+                                      bitmapInfo:kCGImageAlphaPremultipliedLast
+                                           scale:scale];
+    CGColorSpaceRelease(rgbCS);
+    if(rgbImage == NULL) return NULL;
+
+    // Convert to grayscale luminance mask.
+    // SVG spec: mask uses luminance of mask content to determine opacity.
+    size_t w = CGImageGetWidth(rgbImage);
+    size_t h = CGImageGetHeight(rgbImage);
+    size_t rgbRowBytes = w * 4;
+    uint8_t* rgbBuf = (uint8_t*)calloc(h, rgbRowBytes);
+
+    CGColorSpaceRef srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef readCtx = CGBitmapContextCreate(rgbBuf, w, h, 8, rgbRowBytes, srgb,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(readCtx, CGRectMake(0, 0, w, h), rgbImage);
+    CGContextRelease(readCtx);
+    CGImageRelease(rgbImage);
+
+    BOOL usesAlphaMask = layer.maskUsesAlpha;
+    // Create grayscale mask from either the alpha channel or SVG luminance.
+    size_t grayRowBytes = w;
+    uint8_t* grayBuf = (uint8_t*)calloc(h, grayRowBytes);
+    for(size_t y = 0; y < h; y++) {
+        for(size_t x = 0; x < w; x++) {
+            size_t idx = y * rgbRowBytes + x * 4;
+            uint8_t r = rgbBuf[idx];
+            uint8_t g = rgbBuf[idx + 1];
+            uint8_t b = rgbBuf[idx + 2];
+            uint8_t a = rgbBuf[idx + 3];
+            // Unpremultiply
+            if(a > 0 && a < 255) {
+                r = (uint8_t)MIN(255, r * 255 / a);
+                g = (uint8_t)MIN(255, g * 255 / a);
+                b = (uint8_t)MIN(255, b * 255 / a);
+            }
+            if(usesAlphaMask == YES) {
+                grayBuf[y * grayRowBytes + x] = 255 - a;
+            } else {
+                uint8_t lum = (uint8_t)(0.2126f * r + 0.7152f * g + 0.0722f * b);
+                grayBuf[y * grayRowBytes + x] = 255 - (uint8_t)(lum * a / 255);
+            }
+        }
+    }
+    free(rgbBuf);
+
+    CGColorSpaceRelease(srgb);
+
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL,
+                                                              grayBuf,
+                                                              h * grayRowBytes,
+                                                              IJSVGMaskImageReleaseData);
+    CGImageRef maskImage = CGImageMaskCreate(w,
+                                             h,
+                                             8,
+                                             8,
+                                             grayRowBytes,
+                                             provider,
+                                             NULL,
+                                             false);
+    CGDataProviderRelease(provider);
+    return maskImage;
 }
+
 
 + (CGImageRef)newImageWithSize:(CGSize)size
                      drawBlock:(void (^)(CGContextRef context))drawBlock
@@ -419,9 +611,6 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                     bitmapInfo:(uint32_t)bitmapInfo
                          scale:(CGFloat)scale
 {
-    if (!IJSVGIsValidContextSize(size)) {
-      return nil;
-    }
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(size.width*scale),
                                                           ceilf(size.height*scale),
@@ -441,14 +630,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     CALayer<IJSVGDrawableLayer>* referenceLayer = layer.referencingLayer ?: layer;
     CGRect frame = layer.outerBoundingBox;
-  
-    // Make sure we actually have a width and a height or there is no point of
-    // attemping to create an image as it will fail with the context creation.
-    if (!IJSVGIsValidContextSize(frame.size)) {
-      return nil;
-    }
-  
-    CGRect bounds = CGRectApplyAffineTransform(layer.innerBoundingBox,
+    CGRect bounds = CGRectApplyAffineTransform(layer.bounds,
                                                [self userSpaceTransformForLayer:referenceLayer]);
     CGContextRef offscreenContext = CGBitmapContextCreate(NULL,
                                                           ceilf(frame.size.width*scale),
@@ -529,26 +711,6 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     }];
 }
 
-+ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
-{
-    [self logLayer:layer
-             depth:0];
-}
-
-+ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer
-           depth:(NSUInteger)depth
-{
-    NSLog(@"%@ %@ frame: %@ transform: %@",[@"" stringByPaddingToLength:depth
-                                    withString:@"- - "
-                               startingAtIndex:0],  layer,
-          NSStringFromRect(layer.frame),
-          [IJSVGTransform affineTransformToSVGTransformComponentString:layer.affineTransform]);
-    for(CALayer<IJSVGDrawableLayer>* sublayer in layer.debugLayers) {
-        [self logLayer:sublayer
-                 depth:depth+1];
-    }
-}
-
 + (CGRect)calculateFrameForSublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)layers
 {
     CGRect rect = CGRectNull;
@@ -558,8 +720,15 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
         // to its sublayers and keep going down the tree
         if([layer isKindOfClass:IJSVGTransformLayer.class] == YES) {
             CGRect frame = [self calculateFrameForSublayers:layer.sublayers];
-            frame = CGRectApplyAffineTransform(frame, layer.affineTransform);
-            layerFrame = frame;
+            if(CGRectIsNull(frame) == NO &&
+               IJSVGRectIsFinite(frame) == YES) {
+                frame = CGRectApplyAffineTransform(frame, layer.affineTransform);
+                layerFrame = frame;
+            }
+        }
+        if(CGRectIsNull(layerFrame) == YES ||
+           IJSVGRectIsFinite(layerFrame) == NO) {
+            continue;
         }
         if(CGRectIsNull(rect)) {
             rect = layerFrame;
@@ -567,7 +736,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
         }
         rect = CGRectUnion(rect, layerFrame);
     }
-    return rect;
+    return CGRectIsNull(rect) == NO ? rect : CGRectZero;
 }
 
 - (void)setBackingScaleFactor:(CGFloat)newFactor
@@ -594,11 +763,11 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                 toLayer:self
                               inContext:ctx
                            drawingBlock:^{
-            [super renderInContext:ctx];
+            [IJSVGLayer renderLayerTree:self inContext:ctx];
         }];
         return;
     }
-    [super renderInContext:ctx];
+    [IJSVGLayer renderLayerTree:self inContext:ctx];
 }
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
