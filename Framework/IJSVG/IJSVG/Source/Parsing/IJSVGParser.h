@@ -27,8 +27,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterEffect.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 typedef void (^IJSVGNodeParserPostProcessBlock)(void);
 

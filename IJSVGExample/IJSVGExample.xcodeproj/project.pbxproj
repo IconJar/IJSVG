@@ -68,6 +68,14 @@
 		59F799E219B880CE00096CB7 /* htc_one.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59F799E119B880CE00096CB7 /* htc_one.svg */; };
 		59FB54BE280B03E600D148FA /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		8074AA7851284F3292425912 /* IJSVGWebKitPSNRTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9249EFD07D92429AB85854A8 /* IJSVGWebKitPSNRTests.m */; };
+		4D23BA8FFA884C3E98BA38BE /* Rectangle.svg in Resources */ = {isa = PBXBuildFile; fileRef = D1FAD87BA04E4647812E90BA /* Rectangle.svg */; };
+		39C73A356E8F499FB14467B7 /* Group.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D1E39F202279CA00C54672 /* Group.svg */; };
+		F0707854DD2540119836A3C1 /* AJ_Digital_Camera.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F0201FBF27004A1554 /* AJ_Digital_Camera.svg */; };
+		38BC361E85534237916E9D03 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
+		0270C9779423418EAFF4FE87 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 437A1B19AF33427286F28800 /* WebKit.framework */; };
+		D1EF486D0EE64BC0B53BC3E4 /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
+		E27F4B1D096D483CA4CF0B45 /* IJSVG.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +111,17 @@
 			files = (
 				59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */,
 			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2FE908ABD4F740E595BF019B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				E27F4B1D096D483CA4CF0B45 /* IJSVG.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -182,6 +201,9 @@
 		59D6B1A6284F698F0058DE6B /* sh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sh.svg; sourceTree = "<group>"; };
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
+		9249EFD07D92429AB85854A8 /* IJSVGWebKitPSNRTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGWebKitPSNRTests.m; sourceTree = "<group>"; };
+		D1FAD87BA04E4647812E90BA /* Rectangle.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Rectangle.svg; sourceTree = "<group>"; };
+		437A1B19AF33427286F28800 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -197,6 +219,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0270C9779423418EAFF4FE87 /* WebKit.framework in Frameworks */,
+				D1EF486D0EE64BC0B53BC3E4 /* IJSVG.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,6 +270,7 @@
 				5986308919BA106D00CF15EA /* SVGExampleView5.m */,
 				59265CE91C4F843E00F333F0 /* SVGExampleView6.h */,
 				59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */,
+				D1FAD87BA04E4647812E90BA /* Rectangle.svg */,
 			);
 			path = IJSVGExample;
 			sourceTree = "<group>";
@@ -312,6 +337,7 @@
 			children = (
 				5956659019B62F4700D805FF /* IJSVGExampleTests.m */,
 				5956658E19B62F4700D805FF /* Supporting Files */,
+				9249EFD07D92429AB85854A8 /* IJSVGWebKitPSNRTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -335,6 +361,7 @@
 		59FB54BD280B03E600D148FA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				437A1B19AF33427286F28800 /* WebKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -368,6 +395,7 @@
 				5956658619B62F4700D805FF /* Sources */,
 				5956658719B62F4700D805FF /* Frameworks */,
 				5956658819B62F4700D805FF /* Resources */,
+				2FE908ABD4F740E595BF019B /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -494,6 +522,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D23BA8FFA884C3E98BA38BE /* Rectangle.svg in Resources */,
+				39C73A356E8F499FB14467B7 /* Group.svg in Resources */,
+				F0707854DD2540119836A3C1 /* AJ_Digital_Camera.svg in Resources */,
+				38BC361E85534237916E9D03 /* NewTux.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -521,6 +553,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5956659119B62F4700D805FF /* IJSVGExampleTests.m in Sources */,
+				8074AA7851284F3292425912 /* IJSVGWebKitPSNRTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,7 +691,6 @@
 		5956659819B62F4700D805FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -672,14 +704,12 @@
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
 			name = Debug;
 		};
 		5956659919B62F4700D805FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -689,7 +719,6 @@
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
 			name = Release;
 		};

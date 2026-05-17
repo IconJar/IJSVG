@@ -29,9 +29,11 @@
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGPatternLayer.h>
+#import <IJSVG/IJSVGPlatform.h>
 #import <IJSVG/IJSVGStrokeLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGView.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
+#import <IJSVG/IJSVGiOSXML.h>
 
 #endif /* IJSVGUmbrella_h */

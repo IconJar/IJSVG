@@ -167,6 +167,10 @@
 		59FDBF0127F3454800AF7038 /* IJSVGColorNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FDBEFF27F3454800AF7038 /* IJSVGColorNode.m */; };
 		59FE8E4328C7E70800AB38B3 /* IJSVGStop.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FE8E4128C7E70800AB38B3 /* IJSVGStop.m */; };
 		59FE8E4428C7E70800AB38B3 /* IJSVGStop.h in Headers */ = {isa = PBXBuildFile; fileRef = 59FE8E4228C7E70800AB38B3 /* IJSVGStop.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		BF16B67F2DF54870ACC269EB /* IJSVGPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = E3C744AB801E4A33A65F5FF9 /* IJSVGPlatform.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		F22B4C3C3CBA42FB8C5C1B44 /* IJSVGPlatform.m in Sources */ = {isa = PBXBuildFile; fileRef = EC97155115A24F3693672BA8 /* IJSVGPlatform.m */; };
+		3C92E7F8C2404360B1CA60CC /* IJSVGiOSXML.h in Headers */ = {isa = PBXBuildFile; fileRef = F9BE68F2FE1042A6A774588A /* IJSVGiOSXML.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3EA0DEAFD1674E288FF54A0A /* IJSVGiOSXML.m in Sources */ = {isa = PBXBuildFile; fileRef = 2125406112FA4571A50989E8 /* IJSVGiOSXML.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -333,6 +337,10 @@
 		59FDBEFF27F3454800AF7038 /* IJSVGColorNode.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGColorNode.m; sourceTree = "<group>"; };
 		59FE8E4128C7E70800AB38B3 /* IJSVGStop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IJSVGStop.m; sourceTree = "<group>"; };
 		59FE8E4228C7E70800AB38B3 /* IJSVGStop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IJSVGStop.h; sourceTree = "<group>"; };
+		E3C744AB801E4A33A65F5FF9 /* IJSVGPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGPlatform.h; sourceTree = "<group>"; };
+		EC97155115A24F3693672BA8 /* IJSVGPlatform.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPlatform.m; sourceTree = "<group>"; };
+		F9BE68F2FE1042A6A774588A /* IJSVGiOSXML.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGiOSXML.h; sourceTree = "<group>"; };
+		2125406112FA4571A50989E8 /* IJSVGiOSXML.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGiOSXML.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -625,6 +633,10 @@
 				59EB75CD23905F7200F5AE63 /* IJSVGView.h */,
 				59EB75C123905F7100F5AE63 /* IJSVGView.m */,
 				595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */,
+				E3C744AB801E4A33A65F5FF9 /* IJSVGPlatform.h */,
+				EC97155115A24F3693672BA8 /* IJSVGPlatform.m */,
+				F9BE68F2FE1042A6A774588A /* IJSVGiOSXML.h */,
+				2125406112FA4571A50989E8 /* IJSVGiOSXML.m */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -733,6 +745,8 @@
 				5955731F286C643900156047 /* IJSVGTileLayer.h in Headers */,
 				59DB84E028C9F70000A9696A /* IJSVGBitFlags64.h in Headers */,
 				59EB760B23905F7300F5AE63 /* IJSVGStyleSheetSelector.h in Headers */,
+				BF16B67F2DF54870ACC269EB /* IJSVGPlatform.h in Headers */,
+				3C92E7F8C2404360B1CA60CC /* IJSVGiOSXML.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -882,6 +896,8 @@
 				59EB75F123905F7300F5AE63 /* IJSVGUtils.m in Sources */,
 				59EB760A23905F7300F5AE63 /* IJSVGCommandMove.m in Sources */,
 				59EB761B23905F7300F5AE63 /* IJSVGPattern.m in Sources */,
+				F22B4C3C3CBA42FB8C5C1B44 /* IJSVGPlatform.m in Sources */,
+				3EA0DEAFD1674E288FF54A0A /* IJSVGiOSXML.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

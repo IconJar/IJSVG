@@ -8,8 +8,7 @@
 
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGNode.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 #import <objc/runtime.h>
 
 @interface IJSVGStyle : NSObject

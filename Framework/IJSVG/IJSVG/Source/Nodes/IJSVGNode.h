@@ -10,8 +10,7 @@
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVG/IJSVGBitFlags64.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 @class IJSVGNode;
 @class IJSVG;

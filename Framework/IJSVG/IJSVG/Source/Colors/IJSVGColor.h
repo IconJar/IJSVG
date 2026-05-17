@@ -6,8 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
     IJSVGColorStringOptionNone = 1 << 0,

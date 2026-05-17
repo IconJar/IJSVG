@@ -9,7 +9,7 @@
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 #import <QuartzCore/QuartzCore.h>
 
 NS_ASSUME_NONNULL_BEGIN

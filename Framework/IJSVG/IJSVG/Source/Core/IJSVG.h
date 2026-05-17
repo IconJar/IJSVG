@@ -18,7 +18,7 @@
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGTransaction.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 @class IJSVG;
 @class IJSVGParser;
