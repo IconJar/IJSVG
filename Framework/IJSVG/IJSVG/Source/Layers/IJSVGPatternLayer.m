@@ -52,7 +52,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     };
     IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice,
                             drawBlock);
-    CGContextSaveGState(ctx);
+    CGContextRestoreGState(ctx);
 };
 
 - (CALayer<IJSVGDrawableLayer>*)referencingLayer
