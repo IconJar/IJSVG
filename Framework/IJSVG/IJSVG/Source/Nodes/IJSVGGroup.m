@@ -52,6 +52,9 @@
        (child.parentNode == self && [_children containsObject:child])) {
         return;
     }
+    if([child.parentNode isKindOfClass:IJSVGGroup.class]) {
+      [(IJSVGGroup*)child.parentNode removeChild:child];
+    }
     child.parentNode = self;
     [_children addObject:child];
 }
