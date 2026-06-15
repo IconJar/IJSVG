@@ -10,7 +10,7 @@
 
 @implementation IJSVGCommandParser
 
-#define VALID_DIGIT(c) ((c ^ '0') <= 9)
+#define VALID_DIGIT(c) (((unsigned char)(c) ^ '0') <= 9)
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length)
 {
@@ -59,7 +59,9 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     // so just return null and set commandsFound to 0, if we dont
     // we get a arithmetic error later on due to zero
     if(commandLength == 0) {
-        *commandsFound = 0;
+        if(commandsFound != NULL) {
+            *commandsFound = 0;
+        }
         return NULL;
     }
 
@@ -81,11 +83,11 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     while (i < sLength) {
         char currentChar = *cString++;
 
-        // work out next char
+        // work out next char - cString already points at it after the
+        // post-increment above, so no need to step forwards and back
         char nextChar = (char)0;
         if(i < sLengthMinusOne) {
-            nextChar = *cString++;
-            cString--;
+            nextChar = *cString;
         }
 
         // check for validator
@@ -174,7 +176,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
     // set commands found - only if there is one
     if(commandsFound != NULL) {
-        *commandsFound = (NSInteger)round(counter / commandLength);
+        *commandsFound = (NSInteger)round((double)counter / commandLength);
     }
     
     // allocate the new buffer from memory
@@ -190,7 +192,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 // it does not look or skip white space as the previous method
 // handles this for us
 // inspired and modified from http://www.leapsecond.com/tools/fast_atof.c
-CGFloat IJSVGParseFloat(char* buffer)
+CGFloat IJSVGParseFloat(const char* buffer)
 {
     int fraction;
     double sign, value, scale;
