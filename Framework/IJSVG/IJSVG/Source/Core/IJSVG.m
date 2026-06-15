@@ -8,12 +8,161 @@
 
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporter.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
-@interface IJSVG (private)
-@property (nonatomic, strong) IJSVGParser* parser;
-@end
+static NSString* IJSVGNormalizedSVGStringForEmbedding(NSString* string)
+{
+    if(string.length == 0) {
+        return string;
+    }
+
+    NSError* error = nil;
+    NSRegularExpression* entityPattern = [NSRegularExpression regularExpressionWithPattern:@"(?is)<!ENTITY\\s+([A-Za-z_][A-Za-z0-9_.:-]*)\\s+([\"'])([\\s\\S]*?)\\2\\s*>"
+                                                                                   options:0
+                                                                                     error:&error];
+    if(entityPattern != nil) {
+        NSArray<NSTextCheckingResult*>* matches = [entityPattern matchesInString:string
+                                                                          options:0
+                                                                            range:NSMakeRange(0, string.length)];
+        NSMutableDictionary<NSString*, NSString*>* entities = [[NSMutableDictionary alloc] initWithCapacity:matches.count];
+        for(NSTextCheckingResult* match in matches) {
+            if(match.numberOfRanges < 4) {
+                continue;
+            }
+            NSString* name = [string substringWithRange:[match rangeAtIndex:1]];
+            NSString* value = [string substringWithRange:[match rangeAtIndex:3]];
+            if(name.length != 0) {
+                entities[name] = value ?: @"";
+            }
+        }
+        for(NSString* name in entities) {
+            NSString* entityRef = [NSString stringWithFormat:@"&%@;", name];
+            string = [string stringByReplacingOccurrencesOfString:entityRef
+                                                       withString:entities[name]];
+        }
+    }
+
+    error = nil;
+    NSRegularExpression* xmlDecl = [NSRegularExpression regularExpressionWithPattern:@"(?is)<\\?xml[^>]*\\?>"
+                                                                             options:0
+                                                                               error:&error];
+    if(xmlDecl != nil) {
+        string = [xmlDecl stringByReplacingMatchesInString:string
+                                                   options:0
+                                                     range:NSMakeRange(0, string.length)
+                                              withTemplate:@""];
+    }
+
+    NSRange doctypeStart = [string rangeOfString:@"<!DOCTYPE"
+                                         options:NSCaseInsensitiveSearch];
+    if(doctypeStart.location != NSNotFound) {
+        NSUInteger removalEnd = NSNotFound;
+        NSUInteger bracketDepth = 0;
+        unichar quoteCharacter = 0;
+        for(NSUInteger index = doctypeStart.location + doctypeStart.length;
+            index < string.length; index++) {
+            unichar character = [string characterAtIndex:index];
+            if(quoteCharacter != 0) {
+                if(character == quoteCharacter) {
+                    quoteCharacter = 0;
+                }
+                continue;
+            }
+            if(character == '"' || character == '\'') {
+                quoteCharacter = character;
+                continue;
+            }
+            if(character == '[') {
+                bracketDepth += 1;
+                continue;
+            }
+            if(character == ']') {
+                if(bracketDepth > 0) {
+                    bracketDepth -= 1;
+                }
+                continue;
+            }
+            if(character == '>' && bracketDepth == 0) {
+                removalEnd = index + 1;
+                break;
+            }
+        }
+        if(removalEnd != NSNotFound && removalEnd > doctypeStart.location) {
+            string = [string stringByReplacingCharactersInRange:NSMakeRange(doctypeStart.location,
+                                                                            removalEnd - doctypeStart.location)
+                                                     withString:@""];
+        }
+    }
+
+    NSRange svgStart = [string rangeOfString:@"<svg"
+                                     options:NSCaseInsensitiveSearch];
+    if(svgStart.location != NSNotFound) {
+        NSRange tagEnd = [string rangeOfString:@">"
+                                       options:0
+                                         range:NSMakeRange(svgStart.location,
+                                                           string.length - svgStart.location)];
+        if(tagEnd.location != NSNotFound) {
+            NSRange tagRange = NSMakeRange(svgStart.location,
+                                           NSMaxRange(tagEnd) - svgStart.location);
+            NSString* tag = [string substringWithRange:tagRange];
+            NSMutableString* replacement = [tag mutableCopy];
+            NSUInteger insertIndex = 4;
+            while(insertIndex < replacement.length) {
+                unichar ch = [replacement characterAtIndex:insertIndex];
+                if([[NSCharacterSet whitespaceAndNewlineCharacterSet] characterIsMember:ch] ||
+                   ch == '>' ||
+                   ch == '/') {
+                    break;
+                }
+                insertIndex += 1;
+            }
+            if([tag rangeOfString:@"xmlns="
+                          options:NSCaseInsensitiveSearch].location == NSNotFound) {
+                [replacement insertString:@" xmlns=\"http://www.w3.org/2000/svg\""
+                                   atIndex:insertIndex];
+                insertIndex += @" xmlns=\"http://www.w3.org/2000/svg\"".length;
+            }
+            if([string rangeOfString:@"xlink:"
+                             options:NSCaseInsensitiveSearch].location != NSNotFound &&
+               [tag rangeOfString:@"xmlns:xlink="
+                          options:NSCaseInsensitiveSearch].location == NSNotFound) {
+                [replacement insertString:@" xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                   atIndex:insertIndex];
+            }
+            string = [string stringByReplacingCharactersInRange:tagRange
+                                                     withString:replacement];
+        }
+    }
+    return string;
+}
+
+static void IJSVGDetachLayerTree(CALayer<IJSVGDrawableLayer>* layer)
+{
+    if(layer == nil) {
+        return;
+    }
+
+    NSArray<CALayer*>* sublayers = [layer.sublayers copy];
+    for(CALayer* sublayer in sublayers) {
+        if([sublayer conformsToProtocol:@protocol(IJSVGDrawableLayer)]) {
+            IJSVGDetachLayerTree((CALayer<IJSVGDrawableLayer>*)sublayer);
+        }
+    }
+
+    if([layer isKindOfClass:IJSVGFilterLayer.class]) {
+        ((IJSVGFilterLayer*)layer).sublayer = nil;
+    }
+    layer.clipLayers = nil;
+    layer.maskLayer = nil;
+    layer.referencingLayer = nil;
+    layer.filter = nil;
+    layer.mask = nil;
+    layer.delegate = nil;
+    layer.contents = nil;
+    layer.sublayers = nil;
+}
 
 @implementation IJSVG
 
@@ -28,6 +177,7 @@
     // to quick.
     IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
     BOOL flag = IJSVGBeginTransaction();
+    IJSVGDetachLayerTree(_rootLayer);
     _layerTree = nil;
     _rootLayer = nil;
     if(flag == YES) {
@@ -62,6 +212,11 @@
     // check the asset catalogues
     return [[self alloc] initWithDataAssetNamed:string
                                            error:error];
+}
+
++ (NSString*)normalizedSVGStringForEmbedding:(NSString*)string
+{
+    return IJSVGNormalizedSVGStringForEmbedding(string);
 }
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
@@ -122,8 +277,6 @@
                                                       size:size];
     imageNode.width = size.width.copy;
     imageNode.height = size.height.copy;
-    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:imageNode.width.copy
-                                                   height:imageNode.height.copy];
     rootNode.viewBox = viewBox;
     [rootNode addChild:imageNode];
     return [self initWithRootNode:rootNode];
@@ -180,10 +333,10 @@
         NSError* anError = nil;
 
         // create the group
-        IJSVGParser *parser = [IJSVGParser parserForFileURL:aURL
+        IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL
                                                       error:&anError];
-        self.parser = parser;
-      
+        _rootNode = parser.rootNode;
+        
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -203,16 +356,6 @@
 {
     return [self initWithSVGData:data
                            error:nil];
-}
-
-- (void)setParser:(IJSVGParser*)parser {
-    _rootNode = [parser rootNodeWithSize:CGSizeZero];
-  
-    // if the rootNode has any form of relative units, we need to keep hold of
-    // the parser so when we render, we can ask for new values.
-    if(_rootNode.viewBoxContainsRelativeUnits) {
-      _parser = parser;
-    }
 }
 
 - (id)initWithSVGData:(NSData*)data
@@ -240,10 +383,9 @@
 
         // setup the parser
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
-                                                             fileURL:nil
-                                                               error:&anError];
-        self.parser = parser;
-      
+                                                                error:&anError];
+        _rootNode = parser.rootNode;
+
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
@@ -289,9 +431,15 @@
     self.renderQuality = kIJSVGRenderQualityFullResolution;
     self.defaultSize = CGSizeMake(200.f, 200.f);
     self.renderingBackingScaleHelper = ^CGFloat {
+#if TARGET_OS_IOS
+        if(UIScreen.mainScreen != nil) {
+            return UIScreen.mainScreen.scale;
+        }
+#else
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
         }
+#endif
         return 1.f;
     };
     
@@ -350,7 +498,7 @@
 - (NSSet<IJSVG*>*)directDescendSVGs
 {
     NSMutableSet<IJSVG*>* svgs = [[NSMutableSet alloc] init];
-    NSArray<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
+    NSSet<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
     for(IJSVGNode* node in nodes) {
         IJSVG* newSVG = nil;
         newSVG = [[self.class alloc] initWithRootNode:(IJSVGRootNode*)node];
@@ -441,21 +589,10 @@
     CGFloat scale = [self backingScaleFactor];
 
     // create the context and colorspace
-    int width = (int)size.width * scale;
-    int height = (int)size.height * scale;
-  
-    // use correct memory alignment for performance.
-    size_t bytesPerRow = ((width * 4) + 15) & ~15;
-    size_t bufferSize = height * bytesPerRow;
-
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    void* data = valloc(bufferSize);
-    memset(data, 0, bufferSize);
-    
-    CGBitmapInfo info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host;
-    CGContextRef ref = CGBitmapContextCreate(data, width, height, 8,
-                                             bytesPerRow, colorSpace,
-                                             info);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef ref = CGBitmapContextCreate(NULL, (int)size.width * scale,
+        (int)size.height * scale, 8, 0, colorSpace,
+        kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
 
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
@@ -476,7 +613,6 @@
     // release all things!
     CGColorSpaceRelease(colorSpace);
     CGContextRelease(ref);
-    free(data);
     return imageRef;
 }
 
@@ -488,8 +624,14 @@
                                          flipped:flipped
                                            error:error];
 
+#if TARGET_OS_IOS
+    NSImage* image = [NSImage imageWithCGImage:ref
+                                         scale:1.f
+                                   orientation:UIImageOrientationUp];
+#else
     NSImage* image = [[NSImage alloc] initWithCGImage:ref
                                                  size:aSize];
+#endif
     CGImageRelease(ref);
     return image;
 }
@@ -517,10 +659,6 @@
                                             error:(NSError**)error
 {
     CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
-    // Make suer we actually have a size, if not, just return nil.
-    if(isnan(ogSize.width) || isnan(ogSize.height)) {
-      return nil;
-    }
     return [self imageWithSize:ogSize
                        flipped:flipped
                          error:error];
@@ -592,7 +730,15 @@
     // set the scale
     __weak NSView* weakView = view;
     self.renderingBackingScaleHelper = ^CGFloat {
+#if TARGET_OS_IOS
+        CGFloat scale = weakView.window.screen.scale;
+        if(scale == 0.f) {
+            scale = UIScreen.mainScreen.scale;
+        }
+        return scale;
+#else
         return weakView.window.screen.backingScaleFactor;
+#endif
     };
 }
 
@@ -622,7 +768,7 @@
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
-    currentCGContext = NSGraphicsContext.currentContext.CGContext;
+    currentCGContext = NSGraphicsGetCurrentContext();
     return [self _drawInRect:rect
                      context:currentCGContext
                        error:error];
@@ -658,7 +804,7 @@
         }
     }
     CGContextSetInterpolationQuality(ctx, quality);
-    IJSVGRootLayer* rootLayer = [self rootLayerWithRect:rect];
+    IJSVGRootLayer* rootLayer = self.rootLayer;
     [rootLayer renderInContext:ctx
                       viewPort:rect
                   backingScale:backingScale
@@ -680,35 +826,16 @@
     return _layerTree;
 }
 
-- (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect {
-  // no parser, which means there is no need to recompute the value
-  if(_parser == nil || !_rootNode.viewBoxContainsRelativeUnits ||
-     CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
-    return self.rootLayer;
-  }
-  
-  // if we do have a parser, that means the node has relative values, lets recompute
-  __weak IJSVG* weakSelf = self;
-  [self performBlock:^{
-    IJSVG* strongSelf = weakSelf;
-    strongSelf->_rootNode = [strongSelf->_parser rootNodeWithSize:rect.size];
-    strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
-  }];
-  return _rootLayer;
-}
-
 - (IJSVGRootLayer*)rootLayer
 {
-  if(_rootLayer != nil) {
+    if(_rootLayer == nil) {
+        __weak IJSVG* weakSelf = self;
+        [self performBlock:^{
+            IJSVG* strongSelf = weakSelf;
+            strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
+        }];
+    }
     return _rootLayer;
-  }
-  
-  __weak IJSVG* weakSelf = self;
-  [self performBlock:^{
-      IJSVG* strongSelf = weakSelf;
-      strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
-  }];
-  return _rootLayer;
 }
 
 - (CGFloat)backingScaleFactor
@@ -731,6 +858,7 @@
     __weak IJSVG* weakSelf = self;
     [self performBlock:^{
         IJSVG* strongSelf = weakSelf;
+        IJSVGDetachLayerTree(strongSelf->_rootLayer);
         strongSelf->_rootLayer = nil;
         strongSelf->_layerTree = nil;
     }];
@@ -741,6 +869,7 @@
     return self.rootLayer.colors;
 }
 
+#if !TARGET_OS_IOS
 #pragma mark NSPasteboard
 
 - (NSArray*)writableTypesForPasteboard:(NSPasteboard*)pasteboard
@@ -755,6 +884,7 @@
     }
     return nil;
 }
+#endif
 
 #pragma mark matching
 

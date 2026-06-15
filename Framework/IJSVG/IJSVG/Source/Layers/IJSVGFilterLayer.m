@@ -9,11 +9,35 @@
 #import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransform.h>
 
-@implementation IJSVGFilterLayer
+@implementation IJSVGFilterLayer {
+    CGRect _filterFrame;
+}
+
+- (void)setOwnedImage:(CGImageRef)image
+{
+    if(_image == image) {
+        return;
+    }
+
+    _hostingLayer.contents = nil;
+
+    if(_image != NULL) {
+        CGImageRelease(_image);
+        _image = NULL;
+    }
+
+    if(image != NULL) {
+        _image = CGImageRetain(image);
+    }
+}
 
 - (void)dealloc
 {
-    (void)CGImageRelease(_image), _image = nil;
+    _hostingLayer.contents = nil;
+    if(_image != NULL) {
+        CGImageRelease(_image);
+        _image = NULL;
+    }
 }
 
 - (instancetype)init
@@ -32,12 +56,10 @@
 
 - (void)setBackingScaleFactor:(CGFloat)backingScaleFactor
 {
-    // we are responsible for recursively calling the sublayer
-    // with the new backing scale factor
     [IJSVGLayer setBackingScaleFactor:backingScaleFactor
                         renderQuality:self.renderQuality
                    recursivelyToLayer:_sublayer];
-    
+
     BOOL needsChange = self.backingScaleFactor != backingScaleFactor;
     [super setBackingScaleFactor:backingScaleFactor];
     if(needsChange == YES) {
@@ -47,17 +69,39 @@
 
 - (void)updateImage
 {
-    if(_image != nil) {
-        (void)CGImageRelease(_image), _image = nil;
+    CGFloat scale = self.backingScaleFactor;
+    if(scale <= 0) scale = 1.0;
+    [IJSVGLayer setBackingScaleFactor:scale
+                        renderQuality:self.renderQuality
+                   recursivelyToLayer:_sublayer];
+    _filterFrame = _sublayer.innerBoundingBox;
+    CGImageRef image = [self.filter newImageByApplyFilterToLayer:_sublayer
+                                                           scale:scale
+                                                     outputFrame:&_filterFrame];
+    [self setOwnedImage:image];
+    if(image != NULL) {
+        CGImageRelease(image);
     }
-    _image = [self.filter newImageByApplyFilterToLayer:_sublayer
-                                                 scale:self.backingScaleFactor];
+}
+
+- (void)performRenderInContext:(CGContextRef)ctx
+{
+    if(_image == NULL) {
+        [self updateImage];
+    }
+    CGImageRef image = _image;
+    if(image != NULL) {
+        CGImageRetain(image);
+    }
+    if(image != NULL) {
+        CGContextDrawImage(ctx, _filterFrame, image);
+        CGImageRelease(image);
+    }
 }
 
 - (void)layoutSublayers
 {
-    CGRect frame = _sublayer.innerBoundingBox;
-    _hostingLayer.frame = frame;
+    _hostingLayer.frame = _filterFrame;
     _hostingLayer.contents = (__bridge id)_image;
 }
 

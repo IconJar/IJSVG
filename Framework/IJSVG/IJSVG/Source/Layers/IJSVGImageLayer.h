@@ -11,8 +11,8 @@
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGTileLayer.h>
 #import <IJSVG/IJSVGBasicLayer.h>
-#import <AppKit/AppKit.h>
 #import <QuartzCore/QuartzCore.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 @interface IJSVGImageLayer : IJSVGTileLayer {
 }

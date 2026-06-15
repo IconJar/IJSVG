@@ -34,6 +34,7 @@
 @synthesize absoluteOrigin;
 @synthesize blendingMode;
 @synthesize referencingLayer = _referencingLayer;
+@synthesize maskUsesAlpha = _maskUsesAlpha;
 
 - (void)dealloc
 {
@@ -66,7 +67,7 @@
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    [super renderInContext:ctx];
+    [IJSVGLayer renderLayerTree:self inContext:ctx];
 }
 
 - (NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers

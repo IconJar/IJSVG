@@ -24,6 +24,8 @@
     trans.parameters = (CGFloat*)malloc(sizeof(CGFloat) * _parameterCount);
     trans.sort = _sort;
     trans.parameterCount = _parameterCount;
+    trans.appliedBounds = _appliedBounds;
+    trans.appliedContentUnits = _appliedContentUnits;
     memcpy(trans.parameters, _parameters, sizeof(CGFloat) * _parameterCount);
     return trans;
 }
@@ -229,6 +231,8 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 - (void)applyBounds:(CGRect)bounds
    withContentUnits:(IJSVGUnitType)contentUnits
 {
+    _appliedBounds = bounds;
+    _appliedContentUnits = contentUnits;
     if(contentUnits != IJSVGUnitObjectBoundingBox) {
         return;
     }

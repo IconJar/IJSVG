@@ -37,14 +37,4 @@
     _storage64 |= (1ULL << bit);
 }
 
-- (void)unsetBit:(int)bit
-{
-  _storage64 &= ~(1ULL << bit);
-}
-
-- (void)setAllBits
-{
-  _storage64 = 1ULL;
-}
-
 @end

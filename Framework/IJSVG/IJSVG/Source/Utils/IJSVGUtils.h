@@ -9,7 +9,7 @@
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 #import <QuartzCore/QuartzCore.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -24,7 +24,6 @@ CGFloat IJSVGRatio(CGPoint a, CGPoint b);
 CGFloat IJSVGAngle(CGPoint a, CGPoint b);
 CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
-BOOL IJSVGIsValidContextSize(CGSize size);
 
 char IJSVGCharToLower(char c);
 BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2);
@@ -64,8 +63,6 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
 + (NSRange)rangeOfParentheses:(NSString*)string;
 
-+ (void)logParameters:(CGFloat*)param
-                count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString*)string;
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;

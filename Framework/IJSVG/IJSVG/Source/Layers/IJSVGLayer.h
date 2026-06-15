@@ -69,6 +69,7 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
 @required
 @property (nonatomic, assign) CGRect maskingBoundingBox;
 @property (nonatomic, assign) CGRect maskingClippingRect;
+@property (nonatomic, assign) BOOL maskUsesAlpha;
 
 @end
 
@@ -164,6 +165,9 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
           inContext:(CGContextRef)ctx
             options:(IJSVGLayerDrawingOptions)options;
 
++ (void)renderLayerTree:(CALayer<IJSVGDrawableLayer>*)layer
+              inContext:(CGContextRef)ctx;
+
 + (void)applyBlendingMode:(CGBlendMode)blendMode
                 toContext:(CGContextRef)ctx
              drawingBlock:(dispatch_block_t)drawingBlock;
@@ -186,6 +190,5 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 + (void)transformLayer:(CALayer<IJSVGDrawableLayer>*)layer
 intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer;
 
-+ (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer;
 
 @end

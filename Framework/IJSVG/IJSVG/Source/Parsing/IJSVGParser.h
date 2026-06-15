@@ -25,10 +25,10 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGXML.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterEffect.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 typedef void (^IJSVGNodeParserPostProcessBlock)(void);
 
@@ -127,17 +127,13 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
     IJSVGStyleSheet* _styleSheet;
     NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
     IJSVGThreadManager* _threadManager;
-    CGSize _rootSize;
-    IJSVGRootNode* _rootNode;
-    NSURL* _fileURL;
 }
 
-@property (nonatomic, assign) CGSize defaultSize;
+@property (nonatomic, strong, readonly) IJSVGRootNode* rootNode;
 
 + (BOOL)isDataSVG:(NSData*)data;
 
 - (id)initWithSVGString:(NSString*)string
-                fileURL:(NSURL*)fileURL
                   error:(NSError**)error;
 
 - (id)initWithFileURL:(NSURL*)aURL
@@ -145,7 +141,5 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL;
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
                            error:(NSError**)error;
-
-- (IJSVGRootNode*)rootNodeWithSize:(CGSize)size;
 
 @end

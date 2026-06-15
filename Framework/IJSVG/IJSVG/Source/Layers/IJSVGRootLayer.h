@@ -15,6 +15,9 @@
     
 }
 
+@property (nonatomic, assign) BOOL rendersWithViewBoxTransform;
+@property (nonatomic, assign) BOOL hasExplicitViewBox;
+
 - (void)renderInContext:(CGContextRef)ctx
                viewPort:(CGRect)viewPort
            backingScale:(CGFloat)backingScale

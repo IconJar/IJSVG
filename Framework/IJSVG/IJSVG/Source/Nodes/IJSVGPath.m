@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGTransform.h>
 
 @implementation IJSVGPath
 
@@ -38,18 +39,27 @@
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath
 {
-    for(IJSVGPath* pathNode in nodes) {
+    for(IJSVGNode* pathNode in nodes) {
+        // Compute effective transform including the node's own transforms
+        // (important for <use transform="..."> inside <clipPath>)
+        CGAffineTransform nodeTransform = transform;
+        if(pathNode.transforms.count > 0) {
+            for(IJSVGTransform* t in pathNode.transforms) {
+                nodeTransform = CGAffineTransformConcat(t.CGAffineTransform, nodeTransform);
+            }
+        }
+
         // just a pathed node
         if([pathNode matchesTraits:IJSVGNodeTraitPathed] == YES) {
-            CGPathAddPath(mutPath, &transform, pathNode.path);
+            CGPathAddPath(mutPath, &nodeTransform, ((IJSVGPath*)pathNode).path);
             continue;
         }
-        
+
         // could be a use group
         if([pathNode isKindOfClass:IJSVGGroup.class] == YES) {
             IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
             [self recursivelyAddPathedNodesPaths:useGroup.children
-                                       transform:transform
+                                       transform:nodeTransform
                                           toPath:mutPath];
         }
     }
@@ -130,7 +140,7 @@
         // component to then remove the trait if its 0.f
         if([self.stroke isKindOfClass:IJSVGColorNode.class] == YES) {
             IJSVGColorNode* strokeColor = (IJSVGColorNode*)self.stroke;
-            if(strokeColor.color.alphaComponent == 0.f ||
+            if(IJSVGColorAlphaComponent(strokeColor.color) == 0.f ||
                strokeColor.isNoneOrTransparent == YES) {
                 [self removeTraits:IJSVGNodeTraitStroked];
             }

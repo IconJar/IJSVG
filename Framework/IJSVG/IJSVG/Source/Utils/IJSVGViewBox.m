@@ -340,12 +340,11 @@ CGAffineTransform IJSVGViewBoxComputeRectNone(CGRect viewBox, CGRect drawingRect
     CGAffineTransform transform = CGAffineTransformIdentity;
     transform = CGAffineTransformConcat(transform, CGAffineTransformMakeScale(width, height));
     
-    // translate it
-    CGAffineTransform translate = CGAffineTransformMakeTranslation(drawingRect.size.width / 2.f - ((viewBox.size.width * width)) / 2.f,
-                                                                   drawingRect.size.height - (viewBox.size.height * height));
-    transform = CGAffineTransformConcat(transform, translate);
-    translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * width),
-                                                 -(viewBox.origin.y * height));
+    // preserveAspectRatio="none" maps the viewBox directly to the drawing
+    // rect with independent X/Y scaling. There is no additional centering or
+    // bottom-alignment step.
+    CGAffineTransform translate = CGAffineTransformMakeTranslation(-(viewBox.origin.x * width),
+                                                                   -(viewBox.origin.y * height));
     transform = CGAffineTransformConcat(transform, translate);
     return transform;
 }

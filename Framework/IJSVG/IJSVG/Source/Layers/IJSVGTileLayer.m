@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGTileLayer.h"
+#import "IJSVGLayer.h"
 
 @implementation IJSVGTileLayer
 
@@ -33,6 +34,7 @@
 @synthesize absoluteOrigin;
 @synthesize blendingMode;
 @synthesize colors;
+@synthesize maskUsesAlpha = _maskUsesAlpha;
 
 - (void)dealloc
 {
@@ -65,7 +67,7 @@
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    [super renderInContext:ctx];
+    [IJSVGLayer renderLayerTree:self inContext:ctx];
 }
 
 - (NSArray<CALayer<IJSVGDrawableLayer>*>*)debugLayers

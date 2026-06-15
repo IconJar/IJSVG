@@ -1109,12 +1109,15 @@ NSString* IJSVGHash(NSString* key)
         return nil;
     }
 
-    // convert the CGImage into an NSImage
+    // convert the CGImage into PNG data
+#if TARGET_OS_IOS
+    NSImage* repImage = [NSImage imageWithCGImage:image];
+    NSData* data = UIImagePNGRepresentation(repImage);
+#else
     NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
-
-    // work out the data
     NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG
                                      properties:@{}];
+#endif
 
     NSString* base64String = [data base64EncodedStringWithOptions:0];
     return [@"data:image/png;base64," stringByAppendingString:base64String];
@@ -1305,7 +1308,7 @@ NSString* IJSVGHash(NSString* key)
         }
 
         // we need to work out the color at this point, annoyingly...
-        CGFloat opacity = aColor.alphaComponent;
+        CGFloat opacity = IJSVGColorAlphaComponent(aColor);
 
         // is opacity is equal to 1, no need to add it as spec
         // defaults opacity to 1 anyway :)
@@ -1355,6 +1358,27 @@ NSString* IJSVGHash(NSString* key)
 - (NSXMLElement*)elementForFilter:(IJSVGFilterLayer*)layer
                        fromParent:(NSXMLElement*)parent
 {
+    IJSVGFilter* filter = layer.filter;
+    if(filter.defElement != nil) {
+        NSXMLElement* filterDef = (NSXMLElement*)[filter.defElement copy];
+        NSString* filterKey = [self identifierForElement:filterDef];
+        [filterDef removeAttributeForName:IJSVGAttributeID];
+        NSXMLNode* idAttribute = [[NSXMLNode alloc] initWithKind:NSXMLAttributeKind];
+        idAttribute.name = IJSVGAttributeID;
+        idAttribute.stringValue = filterKey;
+        [filterDef addAttribute:idAttribute];
+        [[self defElement] addChild:filterDef];
+
+        NSXMLElement* wrapper = [[NSXMLElement alloc] init];
+        wrapper.name = @"g";
+        IJSVGApplyAttributesToElement(@{
+            IJSVGAttributeFilter: IJSVGHashURL(filterKey)
+        }, wrapper);
+        [self applyDefaultsToElement:wrapper fromLayer:layer];
+        [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)layer.sublayer
+                           intoElement:wrapper];
+        return wrapper;
+    }
     [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)layer.sublayer
                        intoElement:parent];
     return nil;
@@ -1395,9 +1419,13 @@ NSString* IJSVGHash(NSString* key)
                                          imageHeight*ratio);
         NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
                                                toSize:newImageRect.size];
+#if TARGET_OS_IOS
+        cgImage = actualImage.CGImage;
+#else
         cgImage = [actualImage CGImageForProposedRect:&newImageRect
                                               context:NULL
                                                 hints:NULL];
+#endif
     } else {
         cgImage = image.CGImage;
     }

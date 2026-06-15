@@ -33,6 +33,8 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
 @property (nonatomic, assign) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;
 @property (nonatomic, assign) NSInteger sort;
+@property (nonatomic, assign) CGRect appliedBounds;
+@property (nonatomic, assign) IJSVGUnitType appliedContentUnits;
 
 void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApplyBlock block);
 BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform affineTransform);

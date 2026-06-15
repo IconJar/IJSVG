@@ -14,13 +14,10 @@
 {
     if((self = [super init]) != nil) {
         // filters
-        _filters = [IJSVGFeatureFlag featureFlagWithEnabled:NO];
+        _filters = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
         
         // viewBox normalization
         _viewBoxNormalization = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
-      
-        // Inferring of viewBoxes
-        _inferViewBoxes = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
     }
     return self;
 }

@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTraitedColor.h>
+#import <IJSVG/IJSVGXML.h>
 
 @class IJSVG;
 @class IJSVGExporter;

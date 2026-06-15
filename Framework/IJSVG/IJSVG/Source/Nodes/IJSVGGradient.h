@@ -11,8 +11,15 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
 
+typedef NS_ENUM(NSInteger, IJSVGSpreadMethod) {
+    IJSVGSpreadMethodPad,      // default: extend last color
+    IJSVGSpreadMethodReflect,  // mirror the gradient
+    IJSVGSpreadMethodRepeat,   // tile the gradient
+};
+
 @interface IJSVGGradient : IJSVGGroup
 
+@property (nonatomic, assign) IJSVGSpreadMethod spreadMethod;
 @property (nonatomic, strong) NSArray<NSColor*>* colors;
 @property (nonatomic, assign) CGFloat* locations;
 @property (nonatomic, assign) NSUInteger numberOfStops;
@@ -21,8 +28,6 @@
 @property (nonatomic, strong) IJSVGUnitLength* x2;
 @property (nonatomic, strong) IJSVGUnitLength* y1;
 @property (nonatomic, strong) IJSVGUnitLength* y2;
-
-@property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors;

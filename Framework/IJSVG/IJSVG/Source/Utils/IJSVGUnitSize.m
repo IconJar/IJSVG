@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGUnitSize.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 @implementation IJSVGUnitSize
 

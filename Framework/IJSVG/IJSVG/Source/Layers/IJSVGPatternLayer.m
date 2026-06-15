@@ -15,10 +15,24 @@
 
 @property (nonatomic, assign, readonly) CGSize cellSize;
 @property (nonatomic, assign) CGRect viewBox;
+@property (nonatomic, assign) BOOL usesImplicitObjectBoundingBoxViewBox;
 
 @end
 
 @implementation IJSVGPatternLayer
+
+static BOOL IJSVGPatternLayerContainsImageLayer(CALayer<IJSVGDrawableLayer>* layer)
+{
+    if([layer isKindOfClass:NSClassFromString(@"IJSVGImageLayer")]) {
+        return YES;
+    }
+    for(CALayer<IJSVGDrawableLayer>* sublayer in layer.sublayers) {
+        if(IJSVGPatternLayerContainsImageLayer(sublayer) == YES) {
+            return YES;
+        }
+    }
+    return NO;
+}
 
 - (BOOL)requiresBackingScale
 {
@@ -44,8 +58,31 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     
     IJSVGViewBoxAlignment alignment = layer.patternNode.viewBoxAlignment;
     IJSVGViewBoxMeetOrSlice meetOrSlice = layer.patternNode.viewBoxMeetOrSlice;
+    if(layer.usesImplicitObjectBoundingBoxViewBox == YES) {
+        alignment = IJSVGViewBoxAlignmentNone;
+    }
     CGRect viewBox = layer.viewBox;
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
+        // Pattern content is rendered as a standalone layer subtree, so the
+        // root pattern layer's frame origin is otherwise ignored. Preserve
+        // that local origin here so stroked or offset pattern content aligns
+        // to the tile the same way WebKit does.
+        CGRect patternFrame = layer.pattern.frame;
+        BOOL hasMeaningfulExtent = isfinite(patternFrame.size.width) &&
+                                   isfinite(patternFrame.size.height) &&
+                                   patternFrame.size.width > 0.f &&
+                                   patternFrame.size.height > 0.f;
+        if(layer.usesImplicitObjectBoundingBoxViewBox == NO &&
+           hasMeaningfulExtent == YES &&
+           (patternFrame.origin.x != 0.f || patternFrame.origin.y != 0.f)) {
+            CGContextSaveGState(ctx);
+            CGContextTranslateCTM(ctx, patternFrame.origin.x, patternFrame.origin.y);
+            [IJSVGLayer renderLayer:layer.pattern
+                          inContext:ctx
+                            options:IJSVGLayerDrawingOptionNone];
+            CGContextRestoreGState(ctx);
+            return;
+        }
         [IJSVGLayer renderLayer:layer.pattern
                       inContext:ctx
                         options:IJSVGLayerDrawingOptionNone];
@@ -66,6 +103,7 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     CGRect rect = IJSVGLayerGetBoundingBoxBounds(layer);
+    self.usesImplicitObjectBoundingBoxViewBox = NO;
     
     // get the bounds, we need these as when we render we might need to swap
     // the coordinates over to objectBoundingBox
@@ -98,8 +136,24 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
         }
         *viewBox = [nViewBox computeValue:rect.size];
     } else {
-        // no viewbox is assigned, so just map it 1:1 with its cellSize
-        *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
+        // Without an explicit viewBox, pattern content defaults to the pattern
+        // content coordinate system. For objectBoundingBox content with raster
+        // content the implicit viewBox is the OBB tile (0,0,1,1); anything an
+        // authored <use> transform or oversized <image> places outside that
+        // tile is clipped by the pattern boundary, matching WebKit. Using the
+        // children's outer bounding box here instead would re-fit the
+        // transformed content back into the tile and cancel out the very
+        // transforms that should determine what's visible.
+        if(_patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
+            if(IJSVGPatternLayerContainsImageLayer(_pattern) == YES) {
+                *viewBox = CGRectMake(0.f, 0.f, 1.f, 1.f);
+                self.usesImplicitObjectBoundingBoxViewBox = YES;
+            } else {
+                *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
+            }
+        } else {
+            *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
+        }
     }
 }
 
@@ -133,10 +187,20 @@ void IJSVGPatternDrawingCallBack(void* info, CGContextRef ctx)
     // its possible that this layer is shifted inwards due to a stroke on the
     // parent layer
     transform = CGAffineTransformConcat(transform, [IJSVGLayer userSpaceTransformForLayer:self]);
-            
+
+    // Quartz invokes the CGPattern callback in pattern space rather than the
+    // caller's transformed user space. Preserve the active context transform
+    // in the pattern matrix so userSpaceOnUse tiles track root scaling and
+    // element transforms such as rotation.
+    CGAffineTransform contextTransform = CGContextGetCTM(ctx);
+    if(CGAffineTransformIsIdentity(contextTransform) == NO) {
+        transform = CGAffineTransformConcat(transform, contextTransform);
+    }
+
     // create the pattern
     CGRect selfBounds = IJSVGLayerGetBoundingBoxBounds(self);
-    CGPatternRef ref = CGPatternCreate((void*)self, selfBounds,
+    CGRect patternBounds = CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height);
+    CGPatternRef ref = CGPatternCreate((void*)self, patternBounds,
         transform, _cellSize.width, _cellSize.height,
         kCGPatternTilingConstantSpacing,
         true, &callbacks);

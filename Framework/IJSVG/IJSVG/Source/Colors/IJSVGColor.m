@@ -18,8 +18,97 @@ NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
 static NSDictionary* _colorTree = nil;
 
+BOOL IJSVGColorGetRGBAComponents(NSColor* _Nullable color,
+                                 CGFloat* _Nullable red,
+                                 CGFloat* _Nullable green,
+                                 CGFloat* _Nullable blue,
+                                 CGFloat* _Nullable alpha)
+{
+    if(color == nil) {
+        if(red != NULL) {
+            *red = 0.f;
+        }
+        if(green != NULL) {
+            *green = 0.f;
+        }
+        if(blue != NULL) {
+            *blue = 0.f;
+        }
+        if(alpha != NULL) {
+            *alpha = 0.f;
+        }
+        return NO;
+    }
+#if TARGET_OS_IOS
+    CGFloat r = 0.f;
+    CGFloat g = 0.f;
+    CGFloat b = 0.f;
+    CGFloat a = 0.f;
+    if([color getRed:&r
+               green:&g
+                blue:&b
+               alpha:&a] == NO) {
+        CGFloat w = 0.f;
+        if([color getWhite:&w
+                     alpha:&a] == YES) {
+            r = w;
+            g = w;
+            b = w;
+        } else {
+            const CGFloat* components = CGColorGetComponents(color.CGColor);
+            size_t count = CGColorGetNumberOfComponents(color.CGColor);
+            if(components != NULL && count >= 2) {
+                if(count == 2) {
+                    r = g = b = components[0];
+                    a = components[1];
+                } else {
+                    r = components[0];
+                    g = components[1];
+                    b = components[2];
+                    a = components[count - 1];
+                }
+            }
+        }
+    }
+    if(red != NULL) {
+        *red = r;
+    }
+    if(green != NULL) {
+        *green = g;
+    }
+    if(blue != NULL) {
+        *blue = b;
+    }
+    if(alpha != NULL) {
+        *alpha = a;
+    }
+    return YES;
+#else
+    if(red != NULL) {
+        *red = color.redComponent;
+    }
+    if(green != NULL) {
+        *green = color.greenComponent;
+    }
+    if(blue != NULL) {
+        *blue = color.blueComponent;
+    }
+    if(alpha != NULL) {
+        *alpha = color.alphaComponent;
+    }
+    return YES;
+#endif
+}
 
-CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness)
+CGFloat IJSVGColorAlphaComponent(NSColor* _Nullable color)
+{
+    CGFloat alpha = 0.f;
+    IJSVGColorGetRGBAComponents(color, NULL, NULL, NULL, &alpha);
+    return alpha;
+}
+
+
+CGFloat* _Nullable IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness)
 {
     hue *= (1.f / 360.f);
     hue = (hue - floorf(hue));
@@ -44,18 +133,34 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     [self.class _generateTree];
 }
 
+#if TARGET_OS_IOS
++ (CGColorSpaceRef)defaultColorSpace
+{
+    static CGColorSpaceRef colorSpace = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    });
+    return colorSpace;
+}
+#else
 + (NSColorSpace*)defaultColorSpace
 {
-    return NSColorSpace.deviceRGBColorSpace;
+    return NSColorSpace.sRGBColorSpace;
 }
+#endif
 
 + (NSColor*)computeColorSpace:(NSColor*)color
 {
+#if TARGET_OS_IOS
+    return color;
+#else
     NSColorSpace* space = [self defaultColorSpace];
     if(color.colorSpace != space) {
         color = [color colorUsingColorSpace:space];
     }
     return color;
+#endif
 }
 
 + (void)_generateTree
@@ -239,10 +344,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     CGFloat g = gUnit.type == IJSVGUnitLengthTypePercentage ? [gUnit computeValue:255.f] : [gUnit computeValue:1.f];
     CGFloat b = bUnit.type == IJSVGUnitLengthTypePercentage ? [bUnit computeValue:255.f] : [bUnit computeValue:1.f];
     CGFloat a = [aUnit computeValue:100.f];
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:(r / 255.f)
-                                                         green:(g / 255.f)
-                                                          blue:(b / 255.f)
-                                                         alpha:a]];
+    return [self computeColorSpace:[NSColor colorWithRed:(r / 255.f)
+                                                   green:(g / 255.f)
+                                                    blue:(b / 255.f)
+                                                   alpha:MIN(a, 1.f)]];
 }
 
 + (BOOL)isNoneOrTransparent:(NSString*)string
@@ -310,6 +415,13 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         
         IJSVGParsingStringMethodsRelease(methods, count);
         methods = NULL;
+        if(parts.count == 1) {
+            // failed parse
+            return [self colorFromRString:@"0"
+                                  gString:@"0"
+                                  bString:@"0"
+                                  aString:@"1"];
+        }
         return [self colorFromRString:parts[0]
                               gString:parts[1]
                               bString:parts[2]
@@ -328,10 +440,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
 
         // convert HSL to HSB
         CGFloat* hsb = IJSVGColorCSSHSLToHSB(params[0], params[1], params[2]);
-        NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
-                                          saturation:hsb[1]
-                                          brightness:hsb[2]
-                                               alpha:alpha];
+        NSColor* color = [NSColor colorWithHue:hsb[0]
+                                    saturation:hsb[1]
+                                    brightness:hsb[2]
+                                         alpha:alpha];
 
         color = [self computeColorSpace:color];
 
@@ -377,10 +489,19 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
     // convert to RGB
     color = [self computeColorSpace:color];
 
-    int red = color.redComponent * 0xFF;
-    int green = color.greenComponent * 0xFF;
-    int blue = color.blueComponent * 0xFF;
-    int alpha = (int)(color.alphaComponent * 100);
+    CGFloat redComponent = 0.f;
+    CGFloat greenComponent = 0.f;
+    CGFloat blueComponent = 0.f;
+    CGFloat alphaComponent = 0.f;
+    IJSVGColorGetRGBAComponents(color,
+                                &redComponent,
+                                &greenComponent,
+                                &blueComponent,
+                                &alphaComponent);
+    int red = redComponent * 0xFF;
+    int green = greenComponent * 0xFF;
+    int blue = blueComponent * 0xFF;
+    int alpha = (int)(alphaComponent * 100);
 
     BOOL forceHex = (options & IJSVGColorStringOptionForceHEX) != 0;
     BOOL allowShortHand = (options & IJSVGColorStringOptionAllowShortHand) != 0;
@@ -398,7 +519,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         // are the same or we cant enable shorthand
         if(allowRRGGBBAA == YES) {
             NSString* alphaHexString = [NSString stringWithFormat:@"%02X",
-                                                 (int)(color.alphaComponent * 0xFF)];
+                                                 (int)(alphaComponent * 0xFF)];
             if([alphaHexString characterAtIndex:0] !=
                 [alphaHexString characterAtIndex:1]) {
                 allowShortHand = NO;
@@ -415,7 +536,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                 // allow shorthand alpha
                 if(allowRRGGBBAA == YES && alpha != 100) {
                     NSString* a = [NSString stringWithFormat:@"%02X",
-                                            (int)(color.alphaComponent * 0xFF)];
+                                            (int)(alphaComponent * 0xFF)];
                     return [NSString stringWithFormat:@"#%c%c%c%c",
                                      [r characterAtIndex:0], [g characterAtIndex:0],
                                      [b characterAtIndex:0], [a characterAtIndex:0]];
@@ -426,7 +547,7 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         }
         if(allowRRGGBBAA == YES && alpha != 100) {
             return [NSString stringWithFormat:@"#%02X%02X%02X%02X", red, green,
-                             blue, (int)(color.alphaComponent * 0xFF)];
+                             blue, (int)(alphaComponent * 0xFF)];
         }
         return [NSString stringWithFormat:@"#%02X%02X%02X", red, green, blue];
     }
@@ -741,10 +862,14 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                             to:(CGFloat)alphaValue
 {
     color = [self computeColorSpace:color];
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:color.redComponent
+#if TARGET_OS_IOS
+    return [color colorWithAlphaComponent:alphaValue];
+#else
+    return [self computeColorSpace:[NSColor colorWithSRGBRed:color.redComponent
                                                          green:color.greenComponent
                                                           blue:color.blueComponent
                                                          alpha:alphaValue]];
+#endif
 }
 
 + (BOOL)isColor:(NSString*)string
@@ -778,10 +903,10 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
         alpha = (hex & 0xFF) / 255.f;
         hex = hex >> 8;
     }
-    return [self computeColorSpace:[NSColor colorWithDeviceRed:((hex >> 16) & 0xFF) / 255.f
-                                                         green:((hex >> 8) & 0xFF) / 255.f
-                                                          blue:(hex & 0xFF) / 255.f
-                                                         alpha:alpha]];
+    return [self computeColorSpace:[NSColor colorWithRed:((hex >> 16) & 0xFF) / 255.f
+                                                   green:((hex >> 8) & 0xFF) / 255.f
+                                                    blue:(hex & 0xFF) / 255.f
+                                                   alpha:alpha]];
 }
 
 + (unsigned long)HEXFromArbitraryHexString:(NSString*)aString

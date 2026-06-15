@@ -18,12 +18,15 @@
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGTransaction.h>
-#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPlatform.h>
 
 @class IJSVG;
-@class IJSVGParser;
 
+#if TARGET_OS_IOS
+@interface IJSVG : NSObject {
+#else
 @interface IJSVG : NSObject <NSPasteboardWriting> {
+#endif
 
 @private
     IJSVGRootNode* _rootNode;
@@ -31,7 +34,6 @@
     CGRect _viewBox;
     CGFloat _backingScale;
     IJSVGUnitSize* _intrinsicSize;
-    IJSVGParser* _parser;
 }
 
 // set this to be called when the layer is about to draw, it will call this
@@ -86,6 +88,7 @@
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 + (id)SVGNamed:(NSString*)string;
++ (NSString*)normalizedSVGStringForEmbedding:(NSString*)string;
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path;
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path

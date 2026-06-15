@@ -52,7 +52,11 @@
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
+#if TARGET_OS_OSX
     [self setNeedsDisplay:YES];
+#else
+    [self setNeedsDisplay];
+#endif
 }
 
 - (BOOL)isFlipped
