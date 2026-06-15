@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#include <xlocale.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -36,6 +35,8 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
     IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* _Nullable commandsFound);
+
+CGFloat IJSVGParseFloat(const char* buffer);
 
 @end
 
