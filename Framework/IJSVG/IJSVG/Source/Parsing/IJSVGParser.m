@@ -145,7 +145,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         // check the actual parsed SVG
         anError = nil;
         if([self _validateParse:&anError] == NO) {
-            *error = anError;
+            if(error != NULL) {
+                *error = anError;
+            }
             return nil;
         }
     }
@@ -1120,11 +1122,13 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     // reference element has children and the referencing element does not,
     // use those else use the referencing element children.
     if (element.childCount != 0) {
-      // remove any old children
-      for(__strong NSXMLElement* child in copy.children) {
-        [copy removeChildAtIndex:child.index];
+      // remove any old children - iterate back to front so we don't mutate
+      // the collection we are enumerating (removing by index whilst fast
+      // enumerating shifts indexes and is undefined behaviour)
+      for(NSUInteger i = copy.childCount; i > 0; i--) {
+        [copy removeChildAtIndex:i - 1];
       }
-    
+
       // add the new ones from the copy
       for(__strong NSXMLElement* child in element.children) {
         [copy addChild:child.copy];
@@ -1897,15 +1901,23 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         }
         
         // append the string onto the buffer, increment the
-        // string length and free the subbuffer memory
-        strcat(buffer, subbuf);
+        // string length and free the subbuffer memory.
+        memcpy(buffer + strLength, subbuf, sSize + 1);
         strLength += sSize;
         (void)free(subbuf), subbuf = NULL;
     }
-    
+
     // append the close path if required
     if(closePath == YES) {
-        strcat(buffer, "z");
+        // make sure there is room for 'z' plus the null terminator, the loop
+        // reserves this, but a degenerate single-point poly skips the loop.
+        if((strLength + 2) > bSize) {
+            buffer = realloc(buffer, sizeof(char) * (strLength + 2));
+            bSize = strLength + 2;
+        }
+        buffer[strLength] = 'z';
+        buffer[strLength + 1] = '\0';
+        strLength += 1;
     }
     
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
