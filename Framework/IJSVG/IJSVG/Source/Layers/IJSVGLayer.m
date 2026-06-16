@@ -329,7 +329,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     
     CGSize size = CGSizeMake(CGRectGetWidth(rect),
                              CGRectGetHeight(rect));
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGColorSpaceRef colorSpace = IJSVGDeviceGrayColorSpace();
     void (^drawBlock)(CGContextRef maskCtx) = ^(CGContextRef maskCtx) {
         CGImageRef maskImage = NULL;
         for(CALayer<IJSVGDrawableLayer>* clipLayer in clipLayers) {
@@ -370,7 +370,6 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     CGContextClipToMask(ctx, rect, image);
     drawingBlock();
     CGImageRelease(image);
-    CGColorSpaceRelease(colorSpace);
     CGContextRestoreGState(ctx);
 }
 
@@ -395,13 +394,11 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                            options:(IJSVGLayerDrawingOptions)options
                              scale:(CGFloat)scale
 {
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
     CGImageRef alphaMask = [self newImageForLayer:layer
                                           options:options
-                                       colorSpace:colorSpace
+                                       colorSpace:IJSVGDeviceGrayColorSpace()
                                        bitmapInfo:kCGImageAlphaNone
                                             scale:scale];
-    CGColorSpaceRelease(colorSpace);
     return alphaMask;
 }
 

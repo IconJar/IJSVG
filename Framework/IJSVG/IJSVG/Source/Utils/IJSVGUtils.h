@@ -26,6 +26,12 @@ CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 BOOL IJSVGIsValidContextSize(CGSize size);
 
+// These are expensive to create and are hit on every offscreen pass,
+// so they are created lazily once and reused. The returned reference is owned
+// by IJSVG, callers must _NOT_ release it.
+CGColorSpaceRef IJSVGDeviceGrayColorSpace(void);
+CGColorSpaceRef IJSVGDeviceRGBColorSpace(void);
+
 char IJSVGCharToLower(char c);
 BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2);
 BOOL IJSVGCharBufferCompare(const char* str1, const char* str2);

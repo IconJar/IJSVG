@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGFilter
 
@@ -23,15 +24,13 @@
 {
     IJSVGFilter* filter = layer.filter;
     layer.filter = nil;
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     uint32_t info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
     CGImageRef originalImage = [IJSVGLayer newImageForLayer:layer
                                                     options:IJSVGLayerDrawingOptionNone
-                                                 colorSpace:colorSpace
+                                                 colorSpace:IJSVGDeviceRGBColorSpace()
                                                  bitmapInfo:info
                                                       scale:scale];
     CIImage* image = [CIImage imageWithCGImage:originalImage];
-    CGColorSpaceRelease(colorSpace);
     CGImageRelease(originalImage);
     
     for(IJSVGFilterEffect* effect in self.children) {

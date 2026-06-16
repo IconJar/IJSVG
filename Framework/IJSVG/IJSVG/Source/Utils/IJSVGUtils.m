@@ -29,6 +29,24 @@ BOOL IJSVGIsValidContextSize(CGSize size) {
   return size.width >= 1.f && size.height >= 1.f;
 }
 
+CGColorSpaceRef IJSVGDeviceGrayColorSpace(void) {
+    static CGColorSpaceRef colorSpace = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceGray();
+    });
+    return colorSpace;
+}
+
+CGColorSpaceRef IJSVGDeviceRGBColorSpace(void) {
+    static CGColorSpaceRef colorSpace = NULL;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceRGB();
+    });
+    return colorSpace;
+}
+
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
     while((c = *buffer++)) {

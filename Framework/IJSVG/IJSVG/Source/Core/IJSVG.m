@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
@@ -448,7 +449,7 @@
     size_t bytesPerRow = ((width * 4) + 15) & ~15;
     size_t bufferSize = height * bytesPerRow;
 
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGColorSpaceRef colorSpace = IJSVGDeviceRGBColorSpace();
     void* data = valloc(bufferSize);
     memset(data, 0, bufferSize);
     
@@ -473,8 +474,7 @@
     // create the image from the context
     CGImageRef imageRef = CGBitmapContextCreateImage(ref);
 
-    // release all things!
-    CGColorSpaceRelease(colorSpace);
+    // release all things! (colorSpace is shared and owned by IJSVG)
     CGContextRelease(ref);
     free(data);
     return imageRef;
