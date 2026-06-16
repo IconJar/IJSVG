@@ -19,6 +19,8 @@
     NSMutableArray* _rules;
 }
 
+@property (nonatomic, readonly) NSUInteger ruleCount;
+
 - (void)parseStyleBlock:(NSString*)string;
 - (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node;
 

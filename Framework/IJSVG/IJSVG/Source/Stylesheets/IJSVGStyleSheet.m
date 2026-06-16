@@ -25,6 +25,11 @@
 
 @implementation IJSVGStyleSheet
 
+- (NSUInteger)ruleCount
+{
+    return _rules.count;
+}
+
 - (id)init
 {
     if((self = [super init]) != nil) {
