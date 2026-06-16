@@ -70,7 +70,6 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     NSInteger counter = 0;
 
     const char* cString = commandChars;
-    const char* validChars = "+-.";
 
     // this is much faster then doing strlen as it doesnt need
     // to compute the length
@@ -92,7 +91,8 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
         // check for validator
         bool isE = (currentChar | ('E' ^ 'e')) == 'e';
-        bool isValid = VALID_DIGIT(currentChar) || isE || strchr(validChars, currentChar) != NULL;
+        bool isValid = VALID_DIGIT(currentChar) || isE || currentChar == '+' ||
+          currentChar == '-' || currentChar == '.';
 
         // in order to work out the split, its either because the next char is
         // a  hyphen or a plus, or next char is a decimal and the current number is a decimal
@@ -158,7 +158,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
             
             // lets check to make the buffer actually has a valid float, and
             // not either just a sign or white space or some random char.
-            if(strlen(dataStream->charBuffer) == 1 && !VALID_DIGIT(dataStream->charBuffer[0])) {
+            if(bufferCount == 1 && !VALID_DIGIT(dataStream->charBuffer[0])) {
                 isDecimal = false;
                 bufferCount = 0;
                 continue;
