@@ -38,6 +38,17 @@
     }
 }
 
+- (uint64_t)bitMask
+{
+    uint64_t mask = 0ULL;
+    for(int i = 0; i < _length; i++) {
+        if(*(_storage + i) == 1) {
+            mask |= (1ULL << i);
+        }
+    }
+    return mask;
+}
+
 - (BOOL)bitIsSet:(int)bit
 {
     return *(_storage + bit) == 1;

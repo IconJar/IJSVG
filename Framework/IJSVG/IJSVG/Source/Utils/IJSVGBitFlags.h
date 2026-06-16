@@ -19,6 +19,7 @@
 
 - (id)initWithLength:(int)length;
 - (void)addBits:(IJSVGBitFlags*)storage;
+- (uint64_t)bitMask;
 - (BOOL)bitIsSet:(int)bit;
 - (void)setBit:(int)bit;
 - (void)unsetBit:(int)bit;

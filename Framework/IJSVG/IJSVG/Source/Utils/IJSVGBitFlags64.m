@@ -27,6 +27,11 @@
     }
 }
 
+- (uint64_t)bitMask
+{
+    return _storage64;
+}
+
 - (BOOL)bitIsSet:(int)bit
 {
     return ((_storage64 >> bit) & 1ULL) == 1;

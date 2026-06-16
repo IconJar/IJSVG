@@ -10,7 +10,7 @@
 
 @interface IJSVGBitFlags64 : IJSVGBitFlags {
 @private
-    int64_t _storage64;
+    uint64_t _storage64;
 }
 
 @end
