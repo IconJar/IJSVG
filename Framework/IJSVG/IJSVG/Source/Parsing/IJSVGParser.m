@@ -375,8 +375,25 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         attributes[attributeNode.name] = attributeNode.stringValue;
     }
     
-    CGRect bounds = CGRectZero;
-    IJSVGUnitType units = [node.parentNode contentUnitsWithReferencingNodeBounds:&bounds];
+    // content units and the referencing bounds are only ever needed when an
+    // actual transform attribute is present.
+    __block BOOL didResolveUnits = NO;
+    __block CGRect bounds = CGRectZero;
+    __block IJSVGUnitType units = IJSVGUnitInherit;
+    void (^applyTransform)(NSString*) = ^(NSString* value) {
+        if(didResolveUnits == NO) {
+            didResolveUnits = YES;
+            units = [node.parentNode contentUnitsWithReferencingNodeBounds:&bounds];
+        }
+        NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
+        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
+                                                                      units:units
+                                                                     bounds:bounds]];
+        if(node.transforms != nil) {
+            [transforms addObjectsFromArray:node.transforms];
+        }
+        node.transforms = transforms;
+    };
 
     // helper for setting an attribute
     typedef void (^IJSVGAttributeParseBlock)(NSString*);
@@ -578,46 +595,19 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     // transform
     if([allowedAttributes bitIsSet:IJSVGNodeAttributeTransform] == YES &&
        [ignoringAttributes bitIsSet:IJSVGNodeAttributeTransform] == NO) {
-        IJSVGAttributeParse(IJSVGAttributeTransform, ^(NSString* value) {
-            NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-            [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
-                                                                          units:units
-                                                                         bounds:bounds]];
-            if(node.transforms != nil) {
-                [transforms addObjectsFromArray:node.transforms];
-            }
-            node.transforms = transforms;
-        });
+        IJSVGAttributeParse(IJSVGAttributeTransform, applyTransform);
     }
-    
+
     // gradient transform
     if([allowedAttributes bitIsSet:IJSVGNodeAttributeGradientTransform] == YES &&
        [ignoringAttributes bitIsSet:IJSVGNodeAttributeGradientTransform] == NO) {
-        IJSVGAttributeParse(IJSVGAttributeGradientTransform, ^(NSString* value) {
-            NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-            [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
-                                                                          units:units
-                                                                         bounds:bounds]];
-            if(node.transforms != nil) {
-                [transforms addObjectsFromArray:node.transforms];
-            }
-            node.transforms = transforms;
-        });
+        IJSVGAttributeParse(IJSVGAttributeGradientTransform, applyTransform);
     }
-    
+
     // pattern transform
     if([allowedAttributes bitIsSet:IJSVGNodeAttributePatternTransform] == YES &&
        [ignoringAttributes bitIsSet:IJSVGNodeAttributePatternTransform] == NO) {
-        IJSVGAttributeParse(IJSVGAttributePatternTransform, ^(NSString* value) {
-            NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-            [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
-                                                                          units:units
-                                                                         bounds:bounds]];
-            if(node.transforms != nil) {
-                [transforms addObjectsFromArray:node.transforms];
-            }
-            node.transforms = transforms;
-        });
+        IJSVGAttributeParse(IJSVGAttributePatternTransform, applyTransform);
     }
 
     // unicode

@@ -37,92 +37,142 @@
         return IJSVGNodeTypeNotFound;
     }
     
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
-        return IJSVGNodeTypeGroup;
+    // quick path here, this checks the first char first and then does the
+    // full string check, much faster than checking every length of string.
+    switch(IJSVGCharToLower(nodeType[0])) {
+        case 'g': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
+                return IJSVGNodeTypeGroup;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "glyph") == YES) {
+                return IJSVGNodeTypeGlyph;
+            }
+            break;
+        }
+        case 'p': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "path") == YES) {
+                return IJSVGNodeTypePath;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polygon") == YES) {
+                return IJSVGNodeTypePolygon;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polyline") == YES) {
+                return IJSVGNodeTypePolyline;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "pattern") == YES) {
+                return IJSVGNodeTypePattern;
+            }
+            break;
+        }
+        case 's': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "style") == YES) {
+                return IJSVGNodeTypeStyle;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "switch") == YES) {
+                return IJSVGNodeTypeSwitch;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "stop") == YES) {
+                return IJSVGNodeTypeStop;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "svg") == YES) {
+                return IJSVGNodeTypeSVG;
+            }
+            break;
+        }
+        case 'd': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "defs") == YES) {
+                return IJSVGNodeTypeDef;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "desc") == YES) {
+                return IJSVGNodeTypeDesc;
+            }
+            break;
+        }
+        case 'r': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "rect") == YES) {
+                return IJSVGNodeTypeRect;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "radialgradient") == YES) {
+                return IJSVGNodeTypeRadialGradient;
+            }
+            break;
+        }
+        case 'l': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "line") == YES) {
+                return IJSVGNodeTypeLine;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "lineargradient") == YES) {
+                return IJSVGNodeTypeLinearGradient;
+            }
+            break;
+        }
+        case 'c': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "circle") == YES) {
+                return IJSVGNodeTypeCircle;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "clippath") == YES) {
+                return IJSVGNodeTypeClipPath;
+            }
+            break;
+        }
+        case 'e': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "ellipse") == YES) {
+                return IJSVGNodeTypeEllipse;
+            }
+            break;
+        }
+        case 'u': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "use") == YES) {
+                return IJSVGNodeTypeUse;
+            }
+            break;
+        }
+        case 'm': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "mask") == YES) {
+                return IJSVGNodeTypeMask;
+            }
+            break;
+        }
+        case 'i': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "image") == YES) {
+                return IJSVGNodeTypeImage;
+            }
+            break;
+        }
+        case 't': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
+                return IJSVGNodeTypeText;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES) {
+                return IJSVGNodeTypeTextSpan;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
+                return IJSVGNodeTypeTitle;
+            }
+            break;
+        }
+        case 'f': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
+                return IJSVGNodeTypeForeignObject;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
+                return IJSVGNodeTypeFont;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
+                return IJSVGNodeTypeFilter;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
+                return IJSVGNodeTypeFilterEffect;
+            }
+            break;
+        }
+        default:
+            break;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "path") == YES) {
-        return IJSVGNodeTypePath;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "style") == YES) {
-        return IJSVGNodeTypeStyle;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "switch") == YES) {
-        return IJSVGNodeTypeSwitch;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "defs") == YES) {
-        return IJSVGNodeTypeDef;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polygon") == YES) {
-        return IJSVGNodeTypePolygon;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "polyline") == YES) {
-        return IJSVGNodeTypePolyline;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "rect") == YES) {
-        return IJSVGNodeTypeRect;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "line") == YES) {
-        return IJSVGNodeTypeLine;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "circle") == YES) {
-        return IJSVGNodeTypeCircle;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "ellipse") == YES) {
-        return IJSVGNodeTypeEllipse;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "use") == YES) {
-        return IJSVGNodeTypeUse;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "lineargradient") == YES) {
-        return IJSVGNodeTypeLinearGradient;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "radialgradient") == YES) {
-        return IJSVGNodeTypeRadialGradient;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "stop") == YES) {
-        return IJSVGNodeTypeStop;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "glyph") == YES) {
-        return IJSVGNodeTypeGlyph;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
-        return IJSVGNodeTypeFont;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "clippath") == YES) {
-        return IJSVGNodeTypeClipPath;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "mask") == YES) {
-        return IJSVGNodeTypeMask;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "image") == YES) {
-        return IJSVGNodeTypeImage;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "pattern") == YES) {
-        return IJSVGNodeTypePattern;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "svg") == YES) {
-        return IJSVGNodeTypeSVG;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
-        return IJSVGNodeTypeText;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES || kind == NSXMLTextKind) {
+
+    // text content nodes are always treated as a text span regardless of name
+    if(kind == NSXMLTextKind) {
         return IJSVGNodeTypeTextSpan;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
-        return IJSVGNodeTypeTitle;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "desc") == YES) {
-        return IJSVGNodeTypeDesc;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
-        return IJSVGNodeTypeForeignObject;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
-        return IJSVGNodeTypeFilter;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
-        return IJSVGNodeTypeFilterEffect;
     }
     return IJSVGNodeTypeUnknown;
 }
