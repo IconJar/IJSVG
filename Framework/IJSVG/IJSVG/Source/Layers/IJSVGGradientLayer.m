@@ -64,8 +64,6 @@
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    [super drawInContext:ctx];
-
     // nothing to do :(
     if(self.gradient == nil) {
         return;

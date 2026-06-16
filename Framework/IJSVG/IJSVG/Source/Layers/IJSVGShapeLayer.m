@@ -110,6 +110,56 @@
     [self setNeedsDisplay];
 }
 
+static void IJSVGShapeLayerApplyDashPattern(IJSVGShapeLayer* layer, CGContextRef ctx)
+{
+    NSArray<NSNumber*>* dashPattern = layer.lineDashPattern;
+    if(dashPattern == nil || dashPattern.count == 0) {
+        CGContextSetLineDash(ctx, 0.f, NULL, 0);
+        return;
+    }
+    NSUInteger count = dashPattern.count;
+    CGFloat* lengths = (CGFloat*)malloc(sizeof(CGFloat)*count);
+    NSUInteger i = 0;
+    for(NSNumber* number in dashPattern) {
+        lengths[i++] = (CGFloat)number.floatValue;
+    }
+    CGContextSetLineDash(ctx, layer.lineDashPhase, lengths, count);
+    (void)free(lengths), lengths = NULL;
+}
+
+static void IJSVGShapeLayerDrawPath(IJSVGShapeLayer* layer, CGContextRef ctx)
+{
+    if(layer.path == NULL || layer.opacity == 0.f || layer.hidden == YES) {
+        return;
+    }
+    CGContextSaveGState(ctx);
+    if(layer.opacity != 1.f) {
+        CGContextSetAlpha(ctx, layer.opacity);
+    }
+    CGColorRef fillColor = layer.fillColor;
+    if(fillColor != NULL) {
+        CGContextAddPath(ctx, layer.path);
+        CGContextSetFillColorWithColor(ctx, fillColor);
+        if([layer.fillRule isEqualToString:kCAFillRuleEvenOdd]) {
+            CGContextEOFillPath(ctx);
+        } else {
+            CGContextFillPath(ctx);
+        }
+    }
+    CGColorRef strokeColor = layer.strokeColor;
+    if(strokeColor != NULL && layer.lineWidth > 0.f) {
+        CGContextAddPath(ctx, layer.path);
+        CGContextSetStrokeColorWithColor(ctx, strokeColor);
+        CGContextSetLineWidth(ctx, layer.lineWidth);
+        CGContextSetLineCap(ctx, [IJSVGUtils CGLineCapForCALineCap:layer.lineCap]);
+        CGContextSetLineJoin(ctx, [IJSVGUtils CGLineJoinForCALineJoin:layer.lineJoin]);
+        CGContextSetMiterLimit(ctx, layer.miterLimit);
+        IJSVGShapeLayerApplyDashPattern(layer, ctx);
+        CGContextStrokePath(ctx);
+    }
+    CGContextRestoreGState(ctx);
+}
+
 - (void)performRenderInContext:(CGContextRef)ctx
 {
     if(_maskLayer != nil) {
@@ -119,6 +169,10 @@
                            drawingBlock:^{
             [super renderInContext:ctx];
         }];
+        return;
+    }
+    if(self.sublayers.count == 0) {
+        IJSVGShapeLayerDrawPath(self, ctx);
         return;
     }
     [super renderInContext:ctx];

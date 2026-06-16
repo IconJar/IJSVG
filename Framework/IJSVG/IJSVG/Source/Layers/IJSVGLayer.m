@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
+#import <IJSVG/IJSVGPatternLayer.h>
 
 CGRect IJSVGLayerGetBoundingBoxBounds(CALayer<IJSVGDrawableLayer>* drawableLayer)
 {
@@ -28,6 +29,10 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
                                          capacity:3];
 }
 
+static BOOL IJSVGLayerCanRenderDirectly(IJSVGLayer* layer)
+{
+    return [layer isKindOfClass:IJSVGPatternLayer.class] == NO;
+}
 
 @implementation IJSVGLayer
 
@@ -585,6 +590,18 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                            drawingBlock:^{
             [super renderInContext:ctx];
         }];
+        return;
+    }
+    if(self.sublayers.count == 0 && IJSVGLayerCanRenderDirectly(self) == YES) {
+        if(self.hidden == YES || self.opacity == 0.f) {
+            return;
+        }
+        CGContextSaveGState(ctx);
+        if(self.opacity != 1.f) {
+            CGContextSetAlpha(ctx, self.opacity);
+        }
+        [self drawInContext:ctx];
+        CGContextRestoreGState(ctx);
         return;
     }
     [super renderInContext:ctx];

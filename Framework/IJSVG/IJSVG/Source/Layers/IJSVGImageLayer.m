@@ -45,4 +45,30 @@
                             _image.viewBoxMeetOrSlice, drawBlock);
 }
 
+- (void)performRenderInContext:(CGContextRef)ctx
+{
+    if(self.maskLayer != nil) {
+        [IJSVGLayer clipContextWithMask:self.maskLayer
+                                toLayer:self
+                              inContext:ctx
+                           drawingBlock:^{
+            [super performRenderInContext:ctx];
+        }];
+        return;
+    }
+    if(self.sublayers.count == 0) {
+        if(self.hidden == YES || self.opacity == 0.f) {
+            return;
+        }
+        CGContextSaveGState(ctx);
+        if(self.opacity != 1.f) {
+            CGContextSetAlpha(ctx, self.opacity);
+        }
+        [self drawInContext:ctx];
+        CGContextRestoreGState(ctx);
+        return;
+    }
+    [super performRenderInContext:ctx];
+}
+
 @end
