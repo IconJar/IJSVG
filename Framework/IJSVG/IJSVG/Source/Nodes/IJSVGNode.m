@@ -195,6 +195,24 @@
     }
 }
 
++ (uint64_t)computedAllowedAttributeMask
+{
+    static NSMutableDictionary<Class, NSNumber*>* computed = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
+    
+    @synchronized (computed) {
+        NSNumber* mask = computed[self];
+        if(mask == nil) {
+            mask = @([self computedAllowedAttributes].bitMask);
+            computed[(id<NSCopying>)self] = mask;
+        }
+        return mask.unsignedLongLongValue;
+    }
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];

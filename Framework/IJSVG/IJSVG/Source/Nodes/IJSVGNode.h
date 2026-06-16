@@ -256,6 +256,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) IJSVGRootNode* rootNode;
 
 + (IJSVGBitFlags*)computedAllowedAttributes;
++ (uint64_t)computedAllowedAttributeMask;
 + (IJSVGBitFlags*)allowedAttributes;
 
 + (void)walkNodeTree:(IJSVGNode*)node
