@@ -110,9 +110,9 @@
     [self setNeedsDisplay];
 }
 
-static void IJSVGShapeLayerApplyDashPattern(IJSVGShapeLayer* layer, CGContextRef ctx)
+- (void)applyDashPatternInContext:(CGContextRef)ctx
 {
-    NSArray<NSNumber*>* dashPattern = layer.lineDashPattern;
+    NSArray<NSNumber*>* dashPattern = self.lineDashPattern;
     if(dashPattern == nil || dashPattern.count == 0) {
         CGContextSetLineDash(ctx, 0.f, NULL, 0);
         return;
@@ -123,38 +123,38 @@ static void IJSVGShapeLayerApplyDashPattern(IJSVGShapeLayer* layer, CGContextRef
     for(NSNumber* number in dashPattern) {
         lengths[i++] = (CGFloat)number.floatValue;
     }
-    CGContextSetLineDash(ctx, layer.lineDashPhase, lengths, count);
+    CGContextSetLineDash(ctx, self.lineDashPhase, lengths, count);
     (void)free(lengths), lengths = NULL;
 }
 
-static void IJSVGShapeLayerDrawPath(IJSVGShapeLayer* layer, CGContextRef ctx)
+- (void)drawPathInContext:(CGContextRef)ctx
 {
-    if(layer.path == NULL || layer.opacity == 0.f || layer.hidden == YES) {
+    if(self.path == NULL || self.opacity == 0.f || self.hidden == YES) {
         return;
     }
     CGContextSaveGState(ctx);
-    if(layer.opacity != 1.f) {
-        CGContextSetAlpha(ctx, layer.opacity);
+    if(self.opacity != 1.f) {
+        CGContextSetAlpha(ctx, self.opacity);
     }
-    CGColorRef fillColor = layer.fillColor;
+    CGColorRef fillColor = self.fillColor;
     if(fillColor != NULL) {
-        CGContextAddPath(ctx, layer.path);
+        CGContextAddPath(ctx, self.path);
         CGContextSetFillColorWithColor(ctx, fillColor);
-        if([layer.fillRule isEqualToString:kCAFillRuleEvenOdd]) {
+        if([self.fillRule isEqualToString:kCAFillRuleEvenOdd]) {
             CGContextEOFillPath(ctx);
         } else {
             CGContextFillPath(ctx);
         }
     }
-    CGColorRef strokeColor = layer.strokeColor;
-    if(strokeColor != NULL && layer.lineWidth > 0.f) {
-        CGContextAddPath(ctx, layer.path);
+    CGColorRef strokeColor = self.strokeColor;
+    if(strokeColor != NULL && self.lineWidth > 0.f) {
+        CGContextAddPath(ctx, self.path);
         CGContextSetStrokeColorWithColor(ctx, strokeColor);
-        CGContextSetLineWidth(ctx, layer.lineWidth);
-        CGContextSetLineCap(ctx, [IJSVGUtils CGLineCapForCALineCap:layer.lineCap]);
-        CGContextSetLineJoin(ctx, [IJSVGUtils CGLineJoinForCALineJoin:layer.lineJoin]);
-        CGContextSetMiterLimit(ctx, layer.miterLimit);
-        IJSVGShapeLayerApplyDashPattern(layer, ctx);
+        CGContextSetLineWidth(ctx, self.lineWidth);
+        CGContextSetLineCap(ctx, [IJSVGUtils CGLineCapForCALineCap:self.lineCap]);
+        CGContextSetLineJoin(ctx, [IJSVGUtils CGLineJoinForCALineJoin:self.lineJoin]);
+        CGContextSetMiterLimit(ctx, self.miterLimit);
+        [self applyDashPatternInContext:ctx];
         CGContextStrokePath(ctx);
     }
     CGContextRestoreGState(ctx);
@@ -162,20 +162,21 @@ static void IJSVGShapeLayerDrawPath(IJSVGShapeLayer* layer, CGContextRef ctx)
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
+    dispatch_block_t drawingBlock = ^{
+        if(self.sublayers.count == 0) {
+            [self drawPathInContext:ctx];
+            return;
+        }
+        [super renderInContext:ctx];
+    };
     if(_maskLayer != nil) {
         [IJSVGLayer clipContextWithMask:_maskLayer
                                 toLayer:self
                               inContext:ctx
-                           drawingBlock:^{
-            [super renderInContext:ctx];
-        }];
+                           drawingBlock:drawingBlock];
         return;
     }
-    if(self.sublayers.count == 0) {
-        IJSVGShapeLayerDrawPath(self, ctx);
-        return;
-    }
-    [super renderInContext:ctx];
+    drawingBlock();
 }
 
 - (void)applySublayerMaskToContext:(CGContextRef)context
