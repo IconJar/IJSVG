@@ -254,13 +254,11 @@ static NSDictionary* _colorTree = nil;
     // is it RGB?
     if(IJSVGCharBufferHasPrefix(str, "rgb") == YES) {
         NSUInteger count = 0;
-        IJSVGParsingStringMethod** methods = NULL;
-        methods = IJSVGParsingMethodParseString(str, &count);
-        IJSVGParsingStringMethod* method = methods[0];
-        
+        IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString(str, &count);
+
         // memory clean for the string
         (void)free(str), str = NULL;
-        
+
         // nothing to return, just mem clean and get out of here
         if(count == 0 || methods == NULL) {
             if(methods != NULL) {
@@ -269,27 +267,22 @@ static NSDictionary* _colorTree = nil;
             }
             return nil;
         }
-        
-        // Make sure we have actual floats within the parameters
-        NSInteger floatCount = 0;
-        CGFloat *params = [IJSVGUtils scanFloatsFromCString:method->parameters
-                                                       size:&floatCount];
-        (void)free(params), params = NULL;
-        if(floatCount < 3) {
-            return [self computeColorSpace:NSColor.blackColor];
-        }
-        
-        // Make sure the floats are not negative
-        // parse the parameters
+
+        // split the parameters once - the component count tells us whether
+        // we have enough channels, so there's no need to pre-scan the floats
+        // purely to count them.
+        IJSVGParsingStringMethod* method = methods[0];
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
         NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];
-        NSString* alpha = @"100%";
-        if(parts.count == 4) {
-            alpha = parts[3];
-        }
-        
         IJSVGParsingStringMethodsRelease(methods, count);
         methods = NULL;
+
+        // not enough components, fallback to black
+        if(parts.count < 3) {
+            return [self computeColorSpace:NSColor.blackColor];
+        }
+
+        NSString* alpha = parts.count == 4 ? parts[3] : @"100%";
         return [self colorFromRString:parts[0]
                               gString:parts[1]
                               bString:parts[2]
