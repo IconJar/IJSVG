@@ -530,11 +530,13 @@ NSString* IJSVGHash(NSString* key)
     const NSSet<NSString*>* inheritableAttributes = IJSVGInheritableAttributeSet();
     __block NSDictionary<NSString*, NSString*>* intersection = nil;
     NSMutableArray<NSXMLElement*>* currentGroup = [[NSMutableArray alloc] init];
+    NSMutableArray<NSDictionary<NSString*, NSString*>*>* currentGroupAttributes = [[NSMutableArray alloc] init];
 
     BOOL (^createGroupIfRequired)(void) = ^BOOL {
         // memory clean
         if(currentGroup.count < 2) {
             [currentGroup removeAllObjects];
+            [currentGroupAttributes removeAllObjects];
             intersection = nil;
             return NO;
         }
@@ -547,12 +549,11 @@ NSString* IJSVGHash(NSString* key)
         // add back into the dom
         [(NSXMLElement*)currentGroup.lastObject.parent replaceChildAtIndex:insertIndex
                                                                   withNode:group];
-        for (NSXMLElement* child in currentGroup) {
+        for (NSInteger i = 0; i < currentGroup.count; i++) {
             @autoreleasepool {
+                NSXMLElement* child = currentGroup[i];
+                NSDictionary<NSString*, NSString*>* childAttributes = currentGroupAttributes[i];
                 NSDictionary<NSString*, NSString*>* childIntersection = nil;
-                NSDictionary<NSString*, NSString*>* childAttributes = nil;
-                childAttributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(child)
-                                          inheritableAttributes:inheritableAttributes];
                 childIntersection = [self intersectionInheritableAttributes:childAttributes
                                                           currentAttributes:intersection
                                                       inheritableAttributes:inheritableAttributes];
@@ -567,24 +568,25 @@ NSString* IJSVGHash(NSString* key)
 
         // memory clean
         [currentGroup removeAllObjects];
+        [currentGroupAttributes removeAllObjects];
         intersection = nil;
 
         return YES;
     };
 
-    for (NSInteger i = 0; i < parentElement.children.count; i++) {
+    NSXMLElement* element = (NSXMLElement*)parentElement.children.firstObject;
+    while (element != nil) {
         @autoreleasepool {
             // the current elements attributes that are inheritable
-            NSXMLElement* element = (NSXMLElement*)parentElement.children[i];
             NSDictionary<NSString*, NSString*>* attributes = nil;
             attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
                                  inheritableAttributes:inheritableAttributes];
 
-            if(intersection == nil) {
-                intersection = attributes;
-                [currentGroup addObject:element];
-            }
+            intersection = attributes;
+            [currentGroup addObject:element];
+            [currentGroupAttributes addObject:attributes];
 
+            NSXMLElement* resumeElement = nil;
             NSXMLElement* nextSibling = element;
             while ((nextSibling = (NSXMLElement*)nextSibling.nextSibling) != nil) {
                 @autoreleasepool {
@@ -596,21 +598,19 @@ NSString* IJSVGHash(NSString* key)
                                                                 currentAttributes:siblingAttributes
                                                             inheritableAttributes:inheritableAttributes];
                     if(siblingIntersection == nil) {
-                        createGroupIfRequired();
-                        // make sure we set the index after
-                        // as it could had changed whilst being added
-                        // to a group
-                        i = nextSibling.index - 1;
+                        resumeElement = nextSibling;
                         break;
                     }
 
                     // append to current list
                     [currentGroup addObject:nextSibling];
+                    [currentGroupAttributes addObject:siblingAttributes];
                 }
             }
 
             // anything left over
             createGroupIfRequired();
+            element = resumeElement;
         }
     }
 
@@ -791,47 +791,50 @@ NSString* IJSVGHash(NSString* key)
     return YES;
 }
 
+- (NSXMLElement*)defPathElementForPathData:(NSString*)data
+{
+    NSXMLElement* element = [[NSXMLElement alloc] initWithName:@"path"];
+    NSDictionary* atts = @{
+        IJSVGAttributeD: data,
+        IJSVGAttributeID: [self identifierForElement:element]
+    };
+    IJSVGApplyAttributesToElement(atts, element);
+    return element;
+}
+
 - (void)_convertUseElements
 {
     @autoreleasepool {
         NSArray* paths = [_dom nodesForXPath:@"//path"
                                        error:nil];
 
-        NSCountedSet* set = [[NSCountedSet alloc] init];
+        NSMutableDictionary<NSString*, NSXMLElement*>* firstPaths = [[NSMutableDictionary alloc] init];
+        NSMutableDictionary<NSString*, NSXMLElement*>* defs = [[NSMutableDictionary alloc] init];
         for (NSXMLElement* element in paths) {
-            [set addObject:[element attributeForName:IJSVGAttributeD].stringValue];
+            NSString* data = [element attributeForName:IJSVGAttributeD].stringValue;
+            if(data == nil) {
+                continue;
+            }
+            if(defs[data] != nil) {
+                continue;
+            }
+            if(firstPaths[data] != nil) {
+                defs[data] = [self defPathElementForPathData:data];
+            } else {
+                firstPaths[data] = element;
+            }
         }
-
-        NSMutableDictionary* defs = [[NSMutableDictionary alloc] init];
 
         // now actually compute them
         for (NSXMLElement* element in paths) {
             NSString* data = [element attributeForName:IJSVGAttributeD].stringValue;
-            if([set countForObject:data] == 1) {
+            NSXMLElement* defParentElement = defs[data];
+            if(defParentElement == nil) {
                 continue;
             }
 
-            // at this point, we know the path is being used more then once
-            NSXMLElement* defParentElement = nil;
-            if((defParentElement = [defs objectForKey:data]) == nil) {
-                // create the def
-                NSXMLElement* element = [[NSXMLElement alloc] init];
-                element.name = @"path";
-
-                NSDictionary* atts = @{
-                    IJSVGAttributeD: data,
-                    IJSVGAttributeID: [self identifierForElement:element]
-                };
-                IJSVGApplyAttributesToElement(atts, element);
-
-                // store it against the def
-                defs[data] = element;
-                defParentElement = element;
-            }
-
             // we know at this point, we need to swap out the path to a use
-            NSXMLElement* use = [[NSXMLElement alloc] init];
-            use.name = @"use";
+            NSXMLElement* use = [[NSXMLElement alloc] initWithName:@"use"];
 
             // grab the id
             NSString* pathId = [defParentElement attributeForName:IJSVGAttributeID].stringValue;
@@ -1125,15 +1128,17 @@ NSString* IJSVGHash(NSString* key)
         return nil;
     }
 
-    // convert the CGImage into an NSImage
-    NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
+    @autoreleasepool {
+        // convert the CGImage into an NSImage
+        NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
 
-    // work out the data
-    NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG
-                                     properties:@{}];
+        // work out the data
+        NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG
+                                         properties:@{}];
 
-    NSString* base64String = [data base64EncodedStringWithOptions:0];
-    return [@"data:image/png;base64," stringByAppendingString:base64String];
+        NSString* base64String = [data base64EncodedStringWithOptions:0];
+        return [@"data:image/png;base64," stringByAppendingString:base64String];
+    }
 }
 
 - (void)applyPatternFromLayer:(IJSVGPatternLayer*)layer
@@ -1391,7 +1396,6 @@ NSString* IJSVGHash(NSString* key)
     // we need to transform this into its required aspect ratio
     NSImage* nsImage = image.image;
     CGFloat ratio = 0.f;
-    CGImageRef cgImage = NULL;
     
     const CGRect bounds = image.bounds;
     const CGFloat imageWidth = bounds.size.width;
@@ -1406,18 +1410,6 @@ NSString* IJSVGHash(NSString* key)
         ratio = maxHeight / imageHeight;
     }
     
-    if(ratio != 1.f) {
-        CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
-                                         imageHeight*ratio);
-        NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
-                                               toSize:newImageRect.size];
-        cgImage = [actualImage CGImageForProposedRect:&newImageRect
-                                              context:NULL
-                                                hints:NULL];
-    } else {
-        cgImage = image.CGImage;
-    }
-    
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
     dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(CGRectGetWidth(bounds),
@@ -1425,7 +1417,22 @@ NSString* IJSVGHash(NSString* key)
     dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds),
                                                                   _floatingPointOptions);
     // encode the image and be done
-    NSString* base64String = [self base64EncodedStringFromCGImage:cgImage];
+    NSString* base64String = nil;
+    @autoreleasepool {
+        CGImageRef cgImage = NULL;
+        if(ratio != 1.f) {
+            CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
+                                             imageHeight*ratio);
+            NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
+                                                   toSize:newImageRect.size];
+            cgImage = [actualImage CGImageForProposedRect:&newImageRect
+                                                  context:NULL
+                                                    hints:NULL];
+        } else {
+            cgImage = image.CGImage;
+        }
+        base64String = [self base64EncodedStringFromCGImage:cgImage];
+    }
     dict[IJSVGAttributeXLink] = base64String;
     [self applyXLinkToRootElement];
     
