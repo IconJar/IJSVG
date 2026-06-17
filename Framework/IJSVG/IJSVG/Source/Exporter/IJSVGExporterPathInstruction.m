@@ -137,57 +137,125 @@ static void IJSVGExporterAppendPathInstructionData(NSMutableString* string,
     case 't':
     case 'm':
     case 'l': {
-        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions, &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
         break;
     }
 
     case 'v':
     case 'h': {
-        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions, &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
         break;
     }
 
     case 'c': {
-        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[4], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[5], floatingPointOptions, &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[4], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[5], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
         break;
     }
 
     case 's':
     case 'q': {
-        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions, &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
         break;
     }
 
     case 'a': {
-        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[4], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[5], floatingPointOptions, &isFirst, &lastWasDecimal);
-        IJSVGExporterAppendPathFloat(string, data[6], floatingPointOptions, &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[0], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[1], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[2], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[3], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[4], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[5], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
+        IJSVGExporterAppendPathFloat(string, data[6], floatingPointOptions,
+                                     &isFirst, &lastWasDecimal);
         break;
     }
     }
 }
 
-static NSString* IJSVGExporterPathStringForInstruction(char instruction,
-                                                       CGFloat* data,
-                                                       IJSVGFloatingPointOptions floatingPointOptions)
+static NSUInteger IJSVGExporterCompressedFloatCStringLength(const char* dataString,
+                                                            BOOL* isFirst,
+                                                            BOOL* lastWasDecimal)
 {
-    NSMutableString* string = [[NSMutableString alloc] init];
-    [string appendFormat:@"%c", instruction];
-    IJSVGExporterAppendPathInstructionData(string, instruction, data, floatingPointOptions);
-    return string;
+    BOOL isSigned = dataString[0] == '-';
+    BOOL isDecimal = (isSigned == NO && dataString[0] == '.') ||
+        (isSigned == YES && dataString[1] == '.');
+    NSUInteger length = strlen(dataString);
+    if(*isFirst == NO && isSigned == NO && (isDecimal == NO || *lastWasDecimal == NO)) {
+        length++;
+    }
+
+    *isFirst = NO;
+    *lastWasDecimal = strchr(dataString, '.') != NULL;
+    return length;
+}
+
+static NSUInteger IJSVGExporterPathFloatLength(CGFloat value,
+                                               IJSVGFloatingPointOptions floatingPointOptions,
+                                               BOOL* isFirst, BOOL* lastWasDecimal)
+{
+    if(floatingPointOptions.round == YES) {
+        value = IJSVGExporterPathFloatToFixed(value, floatingPointOptions.precision);
+    }
+
+    char buffer[64];
+    int length = snprintf(buffer, sizeof(buffer), "%g", value);
+    if(length < 0 || length >= sizeof(buffer)) {
+        NSString* floatString = IJSVGShortFloatStringWithOptions(value, floatingPointOptions);
+        return IJSVGExporterCompressedFloatCStringLength(floatString.UTF8String,
+                                                         isFirst, lastWasDecimal);
+    }
+
+    const char* output = buffer;
+    if(buffer[0] == '-' && buffer[1] == '0' && strchr(buffer, '.') != NULL) {
+        buffer[1] = '-';
+        output = buffer + 1;
+    } else if(buffer[0] == '0' && buffer[1] == '.') {
+        output = buffer + 1;
+    }
+
+    return IJSVGExporterCompressedFloatCStringLength(output, isFirst, lastWasDecimal);
+}
+
+static NSUInteger IJSVGExporterPathInstructionStringLength(char instruction,
+                                                           CGFloat* data,
+                                                           NSInteger length,
+                                                           IJSVGFloatingPointOptions floatingPointOptions)
+{
+    NSUInteger stringLength = 1;
+    BOOL isFirst = YES;
+    BOOL lastWasDecimal = NO;
+    for (NSInteger i = 0; i < length; i++) {
+        stringLength += IJSVGExporterPathFloatLength(data[i], floatingPointOptions, &isFirst, &lastWasDecimal);
+    }
+    return stringLength;
 }
 
 + (NSString*)pathStringWithInstructionSet:(NSArray<IJSVGExporterPathInstructionCommand*>*)instructionSets
@@ -342,14 +410,14 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 
         IJSVGExporterPathInstructionRoundData(adata, length, floatingPointOptions);
 
-        // run these through our default string runner
-        // to compare the outputs
-        NSString* orig = IJSVGExporterPathStringForInstruction(instructionChar, data, floatingPointOptions);
-        NSString* comp = IJSVGExporterPathStringForInstruction(instructionChar, adata, floatingPointOptions);
+        NSUInteger origLength = IJSVGExporterPathInstructionStringLength(instructionChar, data,
+            length, floatingPointOptions);
+        NSUInteger compLength = IJSVGExporterPathInstructionStringLength(instructionChar, adata,
+            length, floatingPointOptions);
 
-        if(comp.length < orig.length && !(instructionChar == prevInstruction.instruction &&
+        if(compLength < origLength && !(instructionChar == prevInstruction.instruction &&
                                            prevInstruction.instruction > 96 &&
-                                           comp.length == orig.length - 1 &&
+                                           compLength == origLength - 1 &&
                                            data[0] < 0.f &&
                                            fmod(prevInstruction.data[prevInstruction.dataLength - 1], 1) != 0.f)) {
             instruction.instruction = toupper(instructionChar);
