@@ -107,6 +107,16 @@ const NSArray* IJSVGInheritableAttributes(void)
     return _attributes;
 }
 
+const NSSet* IJSVGInheritableAttributeSet(void)
+{
+    static NSSet* _attributes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _attributes = [[NSSet alloc] initWithArray:IJSVGInheritableAttributes()];
+    });
+    return _attributes;
+}
+
 void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLElement* element)
 {
     [element setAttributesAsDictionary:attributes];
@@ -454,34 +464,41 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
+- (NSString*)gradientChildSignatureForElement:(NSXMLElement*)element
+{
+    NSMutableString* signature = [[NSMutableString alloc] init];
+    for (NSXMLNode* child in element.children) {
+        [signature appendString:[child XMLStringWithOptions:NSXMLNodeCompactEmptyElement]];
+    }
+    return signature;
+}
+
 - (void)_collapseGradients
 {
     NSString* xPath = @"//defs/*[self::linearGradient or self::radialGradient]";
     NSArray<NSXMLElement*>* gradients = [_dom nodesForXPath:xPath error:nil];
-    for (NSInteger i = 0; i < gradients.count; i++) {
-        if(i != 0) {
-            NSXMLElement* gradientA = gradients[i];
-            NSXMLElement* gradientB = nil;
-            for (NSInteger s = (i - 1); s >= 0; s--) {
-                gradientB = gradients[s];
-                if([self compareElementChildren:gradientA toElement:gradientB] == YES) {
-                    NSString* idString = [gradientB attributeForName:IJSVGAttributeID].stringValue;
-                    if(idString == nil || idString.length == 0) {
-                        idString = [self identifierForElement:gradientA];
-                        IJSVGApplyAttributesToElement(@{
-                            IJSVGAttributeID: idString
-                        }, gradientB);
-                    }
-                    NSDictionary* atts = @{
-                        IJSVGAttributeXLink: IJSVGHash(idString)
-                    };
-                    IJSVGApplyAttributesToElement(atts, gradientA);
-                    [self applyXLinkToRootElement];
-                    [gradientA setChildren:nil];
-                    break;
-                }
-            }
+    NSMutableDictionary<NSString*, NSXMLElement*>* gradientsByChildSignature = [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
+    for (NSXMLElement* gradient in gradients) {
+        NSString* signature = [self gradientChildSignatureForElement:gradient];
+        NSXMLElement* matchingGradient = gradientsByChildSignature[signature];
+        if(matchingGradient == nil) {
+            gradientsByChildSignature[signature] = gradient;
+            continue;
         }
+
+        NSString* idString = [matchingGradient attributeForName:IJSVGAttributeID].stringValue;
+        if(idString == nil || idString.length == 0) {
+            idString = [self identifierForElement:gradient];
+            IJSVGApplyAttributesToElement(@{
+                IJSVGAttributeID: idString
+            }, matchingGradient);
+        }
+        NSDictionary* atts = @{
+            IJSVGAttributeXLink: IJSVGHash(idString)
+        };
+        IJSVGApplyAttributesToElement(atts, gradient);
+        [self applyXLinkToRootElement];
+        [gradient setChildren:nil];
     }
 }
 
@@ -510,7 +527,7 @@ NSString* IJSVGHash(NSString* key)
         return;
     }
 
-    const NSArray<NSString*>* inheritableAttributes = IJSVGInheritableAttributes();
+    const NSSet<NSString*>* inheritableAttributes = IJSVGInheritableAttributeSet();
     __block NSDictionary<NSString*, NSString*>* intersection = nil;
     NSMutableArray<NSXMLElement*>* currentGroup = [[NSMutableArray alloc] init];
 
@@ -607,7 +624,7 @@ NSString* IJSVGHash(NSString* key)
 }
 
 - (NSDictionary*)intersectableAttributes:(NSDictionary*)atts
-                   inheritableAttributes:(const NSArray*)inheritable
+                   inheritableAttributes:(const NSSet*)inheritable
 {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in atts.allKeys) {
@@ -620,7 +637,7 @@ NSString* IJSVGHash(NSString* key)
 
 - (NSDictionary*)intersectionInheritableAttributes:(NSDictionary*)newAttributes
                                  currentAttributes:(NSDictionary*)currentAttributes
-                             inheritableAttributes:(const NSArray*)inheritableAtts
+                             inheritableAttributes:(const NSSet*)inheritableAtts
 {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in newAttributes.allKeys) {
@@ -630,8 +647,7 @@ NSString* IJSVGHash(NSString* key)
             return nil;
         }
 
-        if([currentAttributes objectForKey:key] != nil &&
-            [inheritableAtts containsObject:key] &&
+        if([inheritableAtts containsObject:key] &&
             [newAttributes[key] isEqualToString:currentAttributes[key]]) {
             dict[key] = currentAttributes[key];
         }
@@ -647,7 +663,7 @@ NSString* IJSVGHash(NSString* key)
 - (void)_cleanDef
 {
     NSXMLElement* defNode = [self defElement];
-    if(defNode.children == 0) {
+    if(defNode.childCount == 0) {
         NSXMLElement* parent = (NSXMLElement*)defNode.parent;
         [parent removeChildAtIndex:defNode.index];
     }
@@ -707,12 +723,12 @@ NSString* IJSVGHash(NSString* key)
 - (void)_collapseGroups
 {
     NSArray* groups = [_dom nodesForXPath:@"//g" error:nil];
-    const NSArray* inheritable = IJSVGInheritableAttributes();
+    const NSSet* inheritable = IJSVGInheritableAttributeSet();
     for (NSXMLElement* group in groups) {
 
         // dont do anything due to it being referenced
         if([group attributeForName:IJSVGAttributeID] != nil) {
-            return;
+            continue;
         }
 
         if(group.attributes.count != 0 && group.children.count == 1) {
