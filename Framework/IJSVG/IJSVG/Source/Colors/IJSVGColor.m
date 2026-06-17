@@ -315,7 +315,7 @@ static NSDictionary* _colorTree = nil;
         
         IJSVGParsingStringMethod* method = methods[0];
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
-        NSColor* color = IJSVGColorCreateFromOKLCHParameters(parameters);
+        NSColor* color = [self.class colorFromOKLCHParameters:parameters];
         IJSVGParsingStringMethodsRelease(methods, count);
         methods = NULL;
         if(color == nil) {
@@ -335,7 +335,9 @@ static NSDictionary* _colorTree = nil;
         }
 
         // convert HSL to HSB
-        CGFloat* hsb = IJSVGColorCSSHSLToHSB(params[0], params[1], params[2]);
+        CGFloat* hsb = [self.class HSBFromCSSHSLHue:params[0]
+                                        saturation:params[1]
+                                         lightness:params[2]];
         NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
                                           saturation:hsb[1]
                                           brightness:hsb[2]
