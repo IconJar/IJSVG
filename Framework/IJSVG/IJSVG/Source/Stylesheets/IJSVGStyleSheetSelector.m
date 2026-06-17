@@ -162,7 +162,7 @@ BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelectorRaw* r
                 }
                 
                 // grab the children
-                NSArray * nodes = parentNode.children;
+                NSOrderedSet* nodes = parentNode.children;
                 NSInteger index = [nodes indexOfObject:aNode];
                 
                 // doesnt contain the child

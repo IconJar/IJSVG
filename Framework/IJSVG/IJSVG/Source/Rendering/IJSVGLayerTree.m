@@ -456,7 +456,7 @@
     return layer;
 }
 
-- (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSArray<IJSVGNode*>*)nodes
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSOrderedSet<IJSVGNode*>*)nodes
 {
     NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
     layers = [[NSMutableArray alloc] initWithCapacity:nodes.count];

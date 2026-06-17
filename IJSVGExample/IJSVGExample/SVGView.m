@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"Toucan in the Shade"];
+    return [IJSVG SVGNamed:@"pcolormesh"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

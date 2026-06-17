@@ -14,7 +14,7 @@
 - (id)init
 {
     if((self = [super init]) != nil) {
-        _children = [[NSMutableArray alloc] init];
+        _children = [[NSMutableOrderedSet alloc] init];
     }
     return self;
 }
@@ -30,7 +30,7 @@
 
 - (void)prepareFromCopy
 {
-    _children = [[NSMutableArray alloc] init];
+    _children = [[NSMutableOrderedSet alloc] init];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -53,7 +53,7 @@
         return;
     }
     if([child.parentNode isKindOfClass:IJSVGGroup.class]) {
-      [(IJSVGGroup*)child.parentNode removeChild:child];
+        [(IJSVGGroup*)child.parentNode removeChild:child];
     }
     child.parentNode = self;
     [_children addObject:child];
@@ -137,7 +137,7 @@ containsNodesMatchingTraits:traits];
     return rect;
 }
 
-- (NSArray<IJSVGNode*>*)children
+- (NSMutableOrderedSet<IJSVGNode*>*)children
 {
     return _children;
 }
