@@ -83,8 +83,8 @@
     }
     self.frame = frame;
     _disableBackingScalePropagation = YES;
-    self.backingScaleFactor = backingScale;
     self.renderQuality = quality;
+    self.backingScaleFactor = backingScale;
     _disableBackingScalePropagation = NO;
     [self renderInContext:ctx];
 }

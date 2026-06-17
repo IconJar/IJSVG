@@ -516,10 +516,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
 {
     [self recursivelyWalkLayer:layer
                      withBlock:^(CALayer<IJSVGDrawableLayer>*sublayer, BOOL *stop) {
+        sublayer.renderQuality = quality;
         if(sublayer.requiresBackingScale == YES) {
             sublayer.backingScaleFactor = scale;
         }
-        sublayer.renderQuality = quality;
     }];
 }
 
