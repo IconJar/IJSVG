@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGColorUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGParsing.h>
@@ -17,27 +18,6 @@ NSString* const IJSVGColorCurrentColorName = @"currentColor";
 @implementation IJSVGColor
 
 static NSDictionary* _colorTree = nil;
-
-
-CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightness)
-{
-    hue *= (1.f / 360.f);
-    hue = (hue - floorf(hue));
-    saturation *= 0.01;
-    lightness *= 0.01;
-    lightness *= 2.f;
-
-    CGFloat s = saturation * ((lightness < 1.f) ? lightness : (2.f - lightness));
-    CGFloat brightness = (lightness + s) * .5f;
-    if(s != 0.f) {
-        s = (2.f * s) / (lightness + s);
-    }
-    CGFloat* floats = (CGFloat*)malloc(3 * sizeof(CGFloat));
-    floats[0] = hue;
-    floats[1] = s;
-    floats[2] = brightness;
-    return floats;
-};
 
 + (void)load
 {
@@ -314,6 +294,34 @@ CGFloat* IJSVGColorCSSHSLToHSB(CGFloat hue, CGFloat saturation, CGFloat lightnes
                               gString:parts[1]
                               bString:parts[2]
                               aString:alpha];
+    }
+
+    // is it OKLCH?
+    if(IJSVGCharBufferHasPrefix(str, "oklch") == YES) {
+        NSUInteger count = 0;
+        IJSVGParsingStringMethod** methods = NULL;
+        methods = IJSVGParsingMethodParseString(str, &count);
+        
+        // memory clean for the string
+        (void)free(str), str = NULL;
+        
+        if(count == 0 || methods == NULL) {
+            if(methods != NULL) {
+                IJSVGParsingStringMethodsRelease(methods, count);
+                methods = NULL;
+            }
+            return nil;
+        }
+        
+        IJSVGParsingStringMethod* method = methods[0];
+        NSString* parameters = [NSString stringWithUTF8String:method->parameters];
+        NSColor* color = IJSVGColorCreateFromOKLCHParameters(parameters);
+        IJSVGParsingStringMethodsRelease(methods, count);
+        methods = NULL;
+        if(color == nil) {
+            return nil;
+        }
+        return [self computeColorSpace:color];
     }
 
     // is it HSL?

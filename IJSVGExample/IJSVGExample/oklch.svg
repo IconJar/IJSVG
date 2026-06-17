@@ -1,0 +1,35 @@
+<svg width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="oklch(72% 0.22 260)" />
+      <stop offset="100%" stop-color="oklch(82% 0.18 150)" />
+    </linearGradient>
+
+    <filter id="softShadow">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="oklch(20% 0.04 260 / 0.35)" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="500" fill="oklch(96% 0.03 250)" />
+
+  <circle cx="120" cy="90" r="160" fill="oklch(82% 0.16 40 / 0.45)" />
+  <circle cx="710" cy="430" r="190" fill="oklch(78% 0.18 310 / 0.38)" />
+
+  <rect x="120" y="90" width="560" height="320" rx="36" fill="url(#bg)" filter="url(#softShadow)" />
+
+  <circle cx="260" cy="250" r="92" fill="oklch(95% 0.04 95 / 0.9)" />
+  <circle cx="400" cy="250" r="92" fill="oklch(68% 0.24 25 / 0.9)" />
+  <circle cx="540" cy="250" r="92" fill="oklch(62% 0.25 285 / 0.9)" />
+
+  <text
+    x="400"
+    y="438"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="28"
+    font-weight="700"
+    fill="oklch(32% 0.08 260)"
+  >
+    OKLCH Color SVG
+  </text>
+</svg>
