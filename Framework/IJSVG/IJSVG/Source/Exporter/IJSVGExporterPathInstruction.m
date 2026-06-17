@@ -20,14 +20,8 @@
 
 - (void)dealloc
 {
-    if(_data != NULL) {
+    if(_data != NULL && _data != _inlineData) {
         (void)free(_data), _data = NULL;
-    }
-    if(_base != NULL) {
-        (void)free(_base), _base = NULL;
-    }
-    if(_coords != NULL) {
-        (void)free(_coords), _coords = NULL;
     }
 }
 
@@ -37,15 +31,13 @@
     if((self = [super init]) != nil) {
         _instruction = instruction;
 
-        // only allocate if not zero
-        if(floatCount != 0) {
-            _dataCount = floatCount;
+        _dataCount = floatCount;
+        if(floatCount <= 7) {
+            _data = _inlineData;
+        } else {
             _data = (CGFloat*)calloc(sizeof(CGFloat), floatCount);
         }
 
-        // setup base and coords
-        _base = (CGFloat*)malloc(sizeof(CGFloat) * 2);
-        _coords = (CGFloat*)malloc(sizeof(CGFloat) * 2);
     }
     return self;
 }
@@ -89,14 +81,49 @@ static void IJSVGExporterAppendCompressedFloatString(NSMutableString* string,
     *lastWasDecimal = strchr(chars, '.') != NULL;
 }
 
+static void IJSVGExporterAppendCompressedFloatCString(NSMutableString* string,
+                                                      const char* dataString,
+                                                      BOOL* isFirst,
+                                                      BOOL* lastWasDecimal)
+{
+    BOOL isSigned = dataString[0] == '-';
+    BOOL isDecimal = (isSigned == NO && dataString[0] == '.') || (isSigned == YES && dataString[1] == '.');
+    if(*isFirst == NO && isSigned == NO && (isDecimal == NO || *lastWasDecimal == NO)) {
+        CFStringAppendCString((CFMutableStringRef)string, " ", kCFStringEncodingUTF8);
+    }
+    CFStringAppendCString((CFMutableStringRef)string, dataString, kCFStringEncodingUTF8);
+
+    *isFirst = NO;
+    *lastWasDecimal = strchr(dataString, '.') != NULL;
+}
+
 static void IJSVGExporterAppendPathFloat(NSMutableString* string,
                                          CGFloat value,
                                          IJSVGFloatingPointOptions floatingPointOptions,
                                          BOOL* isFirst,
                                          BOOL* lastWasDecimal)
 {
-    NSString* floatString = IJSVGShortFloatStringWithOptions(value, floatingPointOptions);
-    IJSVGExporterAppendCompressedFloatString(string, floatString, isFirst, lastWasDecimal);
+    if(floatingPointOptions.round == YES) {
+        value = IJSVGExporterPathFloatToFixed(value, floatingPointOptions.precision);
+    }
+
+    char buffer[64];
+    int length = snprintf(buffer, sizeof(buffer), "%g", value);
+    if(length < 0 || length >= sizeof(buffer)) {
+        NSString* floatString = IJSVGShortFloatStringWithOptions(value, floatingPointOptions);
+        IJSVGExporterAppendCompressedFloatString(string, floatString, isFirst, lastWasDecimal);
+        return;
+    }
+
+    const char* output = buffer;
+    if(buffer[0] == '-' && buffer[1] == '0' && strchr(buffer, '.') != NULL) {
+        buffer[1] = '-';
+        output = buffer + 1;
+    } else if(buffer[0] == '0' && buffer[1] == '.') {
+        output = buffer + 1;
+    }
+
+    IJSVGExporterAppendCompressedFloatCString(string, output, isFirst, lastWasDecimal);
 }
 
 static void IJSVGExporterAppendPathInstructionData(NSMutableString* string,
@@ -203,23 +230,50 @@ static NSString* IJSVGExporterPathStringForInstruction(char instruction,
     return string;
 }
 
+static CGFloat IJSVGExporterPathPrecisionMultiplier(int precision)
+{
+    switch (precision) {
+        case 0: return 1.f;
+        case 1: return 10.f;
+        case 2: return 100.f;
+        case 3: return 1000.f;
+        case 4: return 10000.f;
+        case 5: return 100000.f;
+        case 6: return 1000000.f;
+        case 7: return 10000000.f;
+        case 8: return 100000000.f;
+        case 9: return 1000000000.f;
+        case 10: return 10000000000.f;
+        default: return pow(10, precision);
+    }
+}
+
+static CGFloat IJSVGExporterPathFloatToFixedWithMultiplier(CGFloat number, CGFloat multiplier)
+{
+    return floorf(multiplier * number) / multiplier;
+}
+
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision)
 {
-    return floorf(pow(10, precision) * number) / pow(10, precision);
+    return IJSVGExporterPathFloatToFixedWithMultiplier(number,
+        IJSVGExporterPathPrecisionMultiplier(precision));
 }
 
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     IJSVGFloatingPointOptions options)
 {
+    int precision = options.precision;
+    CGFloat multiplier = IJSVGExporterPathPrecisionMultiplier(precision);
+    CGFloat lowerMultiplier = IJSVGExporterPathPrecisionMultiplier(precision - 1);
+    CGFloat errorMultiplier = IJSVGExporterPathPrecisionMultiplier(precision + 1);
+
     for (NSInteger i = length; i-- > 0;) {
         CGFloat d = data[i];
-        CGFloat proposed = IJSVGExporterPathFloatToFixed(d, options.precision);
+        CGFloat proposed = IJSVGExporterPathFloatToFixedWithMultiplier(d, multiplier);
         if(proposed != d) {
-            CGFloat rounded = +IJSVGExporterPathFloatToFixed(d, options.precision - 1);
-            data[i] = IJSVGExporterPathFloatToFixed(+fabs(rounded - d), options.precision + 1)
-                    >= kIJSVGExporterPathInstructionErrorThreshold
-                ? +IJSVGExporterPathFloatToFixed(d, options.precision)
-                : rounded;
+            CGFloat rounded = IJSVGExporterPathFloatToFixedWithMultiplier(d, lowerMultiplier);
+            data[i] = IJSVGExporterPathFloatToFixedWithMultiplier(fabs(rounded - d), errorMultiplier)
+                    >= kIJSVGExporterPathInstructionErrorThreshold ? proposed : rounded;
         }
     }
 }
@@ -312,6 +366,168 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         CGFloat* data = instruction.data;
         IJSVGExporterPathInstructionRoundData(data, instruction.dataLength,
             floatingPointOptions);
+    }
+}
+
++ (void)convertInstructionsDataToRoundedAndRecalculateCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+                                             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+{
+    CGFloat start[2] = {0, 0};
+    CGFloat cursor[2] = {0, 0};
+    CGFloat prevCoords[2] = {0, 0};
+
+    NSInteger index = 0;
+    for (IJSVGExporterPathInstruction* anInstruction in instructions) {
+        char instruction = anInstruction.instruction;
+        CGFloat* data = anInstruction.data;
+        CGFloat* base = anInstruction.base;
+        CGFloat* coords = anInstruction.coords;
+        IJSVGExporterPathInstructionRoundData(data, anInstruction.dataLength,
+            floatingPointOptions);
+
+        switch(instruction) {
+            case 'm': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                start[0] = cursor[0];
+                start[1] = cursor[1];
+                break;
+            }
+            case 'M': {
+                if(index != 0) {
+                    instruction = 'm';
+                }
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                start[0] = cursor[0];
+                start[1] = cursor[1];
+                break;
+            }
+            case 'l': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'L': {
+                instruction = 'l';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'h': {
+                cursor[0] += data[0];
+                break;
+            }
+            case 'H': {
+                instruction = 'h';
+                data[0] -= cursor[0];
+                cursor[0] += data[0];
+                break;
+            }
+            case 'v': {
+                cursor[1] += data[0];
+                break;
+            }
+            case 'V': {
+                instruction = 'v';
+                data[0] -= cursor[1];
+                cursor[1] += data[0];
+                break;
+            }
+            case 'c': {
+                cursor[0] += data[4];
+                cursor[1] += data[5];
+                break;
+            }
+            case 'C': {
+                instruction = 'c';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                data[4] -= cursor[0];
+                data[5] -= cursor[1];
+                cursor[0] += data[4];
+                cursor[1] += data[5];
+                break;
+            }
+            case 's': {
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'S': {
+                instruction = 's';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'q': {
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 'Q': {
+                instruction = 'q';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                data[2] -= cursor[0];
+                data[3] -= cursor[1];
+                cursor[0] += data[2];
+                cursor[1] += data[3];
+                break;
+            }
+            case 't': {
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'T': {
+                instruction = 't';
+                data[0] -= cursor[0];
+                data[1] -= cursor[1];
+                cursor[0] += data[0];
+                cursor[1] += data[1];
+                break;
+            }
+            case 'a': {
+                cursor[0] += data[5];
+                cursor[1] += data[6];
+                break;
+            }
+            case 'A': {
+                instruction = 'a';
+                data[5] -= cursor[0];
+                data[6] -= cursor[1];
+                cursor[0] += data[5];
+                cursor[1] += data[6];
+                break;
+            }
+            case 'Z':
+            case 'z': {
+                cursor[0] = start[0];
+                cursor[1] = start[1];
+                break;
+            }
+        }
+
+        // set the instruction back
+        anInstruction.instruction = instruction;
+        base[0] = prevCoords[0];
+        base[1] = prevCoords[1];
+        coords[0] = cursor[0];
+        coords[1] = cursor[1];
+        prevCoords[0] = cursor[0];
+        prevCoords[1] = cursor[1];
+        index++;
     }
 }
 

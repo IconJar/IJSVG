@@ -2226,10 +2226,8 @@ NSString* IJSVGHash(NSString* key)
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
         [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions
                                                           floatingPointOptions:_floatingPointOptions];
-        [IJSVGExporterPathInstruction convertInstructionsDataToRounded:instructions
-                                                  floatingPointOptions:_floatingPointOptions];
-        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions
-                                                          floatingPointOptions:_floatingPointOptions];
+        [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:instructions
+                                                                          floatingPointOptions:_floatingPointOptions];
         [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions
                                                             floatingPointOptions:_floatingPointOptions];
         instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions

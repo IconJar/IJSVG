@@ -23,8 +23,9 @@ NS_ASSUME_NONNULL_BEGIN
 @private
     NSInteger _dataCount;
     CGFloat* _data;
-    CGFloat* _base;
-    CGFloat* _coords;
+    CGFloat _inlineData[7];
+    CGFloat _base[2];
+    CGFloat _coords[2];
 }
 
 @property (nonatomic, assign) char instruction;
@@ -47,6 +48,8 @@ CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
                               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (void)convertInstructionsDataToRounded:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                     floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (void)convertInstructionsDataToRoundedAndRecalculateCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
+                                             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
