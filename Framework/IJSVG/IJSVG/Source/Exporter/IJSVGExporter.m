@@ -84,9 +84,9 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
     return _defaults;
 }
 
-const NSArray* IJSVGInheritableAttributes(void)
+NSArray<NSString*>* IJSVGInheritableAttributes(void)
 {
-    static NSArray* _attributes;
+    static NSArray<NSString*>* _attributes;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _attributes = @[
