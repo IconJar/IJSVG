@@ -1509,7 +1509,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
                                          ignoredAttributes:ignored];
-
+  
+    // make sure we compute the viewbox
+    [self computeViewBoxForRootNode:node];
     
     // recursively compute children
     if(recursive == YES) {
@@ -1517,8 +1519,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                 parentNode:node];
     }
   
-    // make sure we compute the viewbox
-    [self computeViewBoxForRootNode:node];
 }
 
 - (IJSVGNode*)parseSVGElement:(NSXMLElement*)element

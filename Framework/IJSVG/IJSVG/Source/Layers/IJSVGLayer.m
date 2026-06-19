@@ -31,6 +31,8 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 
 static BOOL IJSVGLayerCanRenderDirectly(IJSVGLayer* layer)
 {
+    /// Patterns do their own coordinate and drawing which replied on CG patterns
+    /// so do not allow the layer to be drawn directly into its parent context.
     return [layer isKindOfClass:IJSVGPatternLayer.class] == NO;
 }
 
