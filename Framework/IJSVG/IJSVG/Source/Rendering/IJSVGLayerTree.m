@@ -179,6 +179,10 @@
 - (IJSVGUnitLength*)unit:(IJSVGUnitLength*)unit
             matchingNode:(IJSVGNode*)node
 {
+    if(unit == nil || node.parentNode == nil) {
+        return unit;
+    }
+
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
     if(contentUnits == IJSVGUnitObjectBoundingBox) {
@@ -586,16 +590,16 @@
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
     CGSize intrinsicSize = [node.intrinsicSize computeValue:bounds.size];
-    CGFloat width = [node.width computeValue:boundsWidth];
-    CGFloat height = [node.height computeValue:boundsHeight];
+    CGFloat width = [[self unit:node.width matchingNode:node] computeValue:boundsWidth];
+    CGFloat height = [[self unit:node.height matchingNode:node] computeValue:boundsHeight];
     if(width == 0.f) {
         width = intrinsicSize.width;
     }
     if(height == 0.f) {
         height = intrinsicSize.height;
     }
-    CGRect frame = CGRectMake([node.x computeValue:boundsWidth],
-                              [node.y computeValue:boundsHeight],
+    CGRect frame = CGRectMake([[self unit:node.x matchingNode:node] computeValue:boundsWidth],
+                              [[self unit:node.y matchingNode:node] computeValue:boundsHeight],
                               width,
                               height);
     layer.frame = frame;
@@ -604,7 +608,10 @@
     // layer applies the viewBox to frame transform itself at draw time, so any
     // relative units must be resolved against the viewBox and not the client,
     // otherwise they end up scaled twice and misplaced.
-    CGRect childBounds = layer.frame;
+    CGRect childBounds = (CGRect) {
+        .origin = CGPointZero,
+        .size = layer.frame.size
+    };
     if(node.viewBox != nil) {
         childBounds = [node.viewBox computeValue:layer.frame.size];
     }
@@ -967,7 +974,9 @@
 
 {
     // any x and y?
-    CGRect frame = layer.bounds;
+    CGRect unitBounds = [self unitResolutionBoundsForNode:node];
+    CGFloat unitWidth = CGRectGetWidth(unitBounds);
+    CGFloat unitHeight = CGRectGetHeight(unitBounds);
     CGFloat x = 0.f;
     CGFloat y = 0.f;
     
@@ -980,8 +989,8 @@
         shouldApplyImplicitOrigin = NO;
     }
     if(shouldApplyImplicitOrigin == YES) {
-        x = [node.x computeValue:frame.size.width];
-        y = [node.y computeValue:frame.size.height];
+        x = [[self unit:node.x matchingNode:node] computeValue:unitWidth];
+        y = [[self unit:node.y matchingNode:node] computeValue:unitHeight];
     }
 
     // no need to do anything if no transform, or x or y == 0
@@ -997,7 +1006,6 @@
 
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
-    CGRect unitBounds = [self unitResolutionBoundsForNode:node];
 
     // this used to be done with each transform being added to its own
     // group layer, but we can simply use one and then apply

@@ -36,6 +36,14 @@
     return grad;
 }
 
+- (BOOL)containsRelativeUnits
+{
+    return _fx.isRelativeUnit == YES || _fy.isRelativeUnit == YES ||
+        _fr.isRelativeUnit == YES || _cx.isRelativeUnit == YES ||
+        _cy.isRelativeUnit == YES || _r.isRelativeUnit == YES ||
+        [super containsRelativeUnits] == YES;
+}
+
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGRadialGradient*)gradient
 {
