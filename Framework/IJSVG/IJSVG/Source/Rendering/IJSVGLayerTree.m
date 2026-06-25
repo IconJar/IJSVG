@@ -97,16 +97,28 @@
     }
 }
 
+- (void)withViewPort:(CGRect)viewPort
+          unitBounds:(CGRect)bounds
+             handler:(dispatch_block_t)handler
+{
+    [self withViewPort:viewPort
+               handler:^{
+        [self withUnitBounds:bounds
+                     handler:handler];
+    }];
+}
+
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode
 {
-    CGRect clientBounds = (CGRect) { .origin = CGPointZero, .size = rootNode.clientSize };
+    CGRect clientBounds = (CGRect) {
+      .origin = CGPointZero,
+      .size = rootNode.clientSize
+    };
     __block IJSVGRootLayer* layer = nil;
     [self withViewPort:clientBounds
+            unitBounds:clientBounds
                handler:^{
-        [self withUnitBounds:clientBounds
-                     handler:^{
-            layer = (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
-        }];
+        layer = (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
     }];
     return layer;
 }
@@ -165,7 +177,7 @@
 }
 
 - (IJSVGUnitLength*)unit:(IJSVGUnitLength*)unit
-           matchingNode:(IJSVGNode*)node
+            matchingNode:(IJSVGNode*)node
 {
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
@@ -587,7 +599,18 @@
                               width,
                               height);
     layer.frame = frame;
-    [self withViewPort:layer.frame
+
+    // children are positioned in the viewBox user coordinate system, the root
+    // layer applies the viewBox to frame transform itself at draw time, so any
+    // relative units must be resolved against the viewBox and not the client,
+    // otherwise they end up scaled twice and misplaced.
+    CGRect childBounds = layer.frame;
+    if(node.viewBox != nil) {
+        childBounds = [node.viewBox computeValue:layer.frame.size];
+    }
+  
+    [self withViewPort:childBounds
+            unitBounds:childBounds
                handler:^{
         layer.sublayers = [self drawableLayersForNodes:node.children];
     }];

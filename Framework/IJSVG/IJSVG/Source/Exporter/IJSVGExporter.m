@@ -23,6 +23,10 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
+@interface IJSVG ()
+- (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect;
+@end
+
 @implementation IJSVGExporter
 
 #define XML_DOC_VERSION 1.1f
@@ -304,6 +308,26 @@ NSString* IJSVGHash(NSString* key)
     return [NSString stringWithFormat:@"%@%ld", chars[(_idCount++ % chars.count)], _shortIdCount];
 }
 
+- (void)resolveRootLayerForExportSize
+{
+    CGSize renderSize = _size;
+    if(CGSizeEqualToSize(renderSize, IJSVGSizeInfinite) == YES) {
+        return;
+    }
+    if(CGSizeEqualToSize(renderSize, IJSVGSizeIntrinsic) == YES ||
+       CGSizeEqualToSize(renderSize, CGSizeZero) == YES) {
+        renderSize = _svg.size;
+    }
+    if(CGSizeEqualToSize(renderSize, CGSizeZero) == YES ||
+       CGSizeEqualToSize(renderSize, IJSVGSizeInfinite) == YES) {
+        return;
+    }
+    [_svg rootLayerWithRect:(CGRect) {
+        .origin = CGPointZero,
+        .size = renderSize
+    }];
+}
+
 - (void)_generateDOMDocument
 {
     _idCount = 0;
@@ -311,6 +335,10 @@ NSString* IJSVGHash(NSString* key)
     _appliedXLink = NO;
     _dom = nil;
     _defElement = nil;
+    
+    // ask the root layer to resolve itself for the new size we want, this
+    // will generate a new tree if required with the correct sizing and bounds.
+    [self resolveRootLayerForExportSize];
     
     // create the stand alone DOM
     NSXMLElement* rootNode = [self rootNode];
