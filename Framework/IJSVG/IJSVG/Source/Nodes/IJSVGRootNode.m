@@ -60,7 +60,11 @@
 
 - (CGRect)bounds
 {
-    return [self.viewBox computeValue:CGSizeZero];
+    CGSize resolvingSize = self.clientSize;
+    if(CGSizeEqualToSize(resolvingSize, CGSizeZero) == YES) {
+        resolvingSize = CGSizeMake(200.f, 200.f);
+    }
+    return [self.viewBox computeValue:resolvingSize];
 }
 
 - (IJSVGRootNode *)rootNode

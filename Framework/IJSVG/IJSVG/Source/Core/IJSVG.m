@@ -270,7 +270,11 @@
 
 - (void)_setupBasicInfoFromGroup
 {
-    _viewBox = [_rootNode.viewBox computeValue:CGSizeZero];
+    CGSize resolvingSize = _rootNode.clientSize;
+    if(CGSizeEqualToSize(resolvingSize, CGSizeZero) == YES) {
+        resolvingSize = CGSizeMake(200.f, 200.f);
+    }
+    _viewBox = [_rootNode.viewBox computeValue:resolvingSize];
     _intrinsicSize = _rootNode.intrinsicSize;
 }
 
@@ -699,6 +703,7 @@
   [self performBlock:^{
     IJSVG* strongSelf = weakSelf;
     strongSelf->_rootNode = [strongSelf->_parser rootNodeWithSize:rect.size];
+    [strongSelf _setupBasicInfoFromGroup];
     strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
   }];
   return _rootLayer;

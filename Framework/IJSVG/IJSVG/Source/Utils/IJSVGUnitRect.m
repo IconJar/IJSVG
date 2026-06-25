@@ -63,8 +63,8 @@
 
 - (BOOL)isZeroRect
 {
-    CGRect computed = [self computeValue:CGSizeZero];
-    return CGRectIsNull(computed) == YES || CGRectEqualToRect(computed, CGRectZero);
+    return _origin.x.value == 0.f && _origin.y.value == 0.f &&
+        _size.width.value == 0.f && _size.height.value == 0.f;
 }
 
 - (IJSVGUnitRect*)copyByConvertingToUnitsLengthType:(IJSVGUnitLengthType)type

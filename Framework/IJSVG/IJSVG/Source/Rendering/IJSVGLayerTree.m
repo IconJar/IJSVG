@@ -573,7 +573,7 @@
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
-    CGSize intrinsicSize = node.intrinsicSize.value;
+    CGSize intrinsicSize = [node.intrinsicSize computeValue:bounds.size];
     CGFloat width = [node.width computeValue:boundsWidth];
     CGFloat height = [node.height computeValue:boundsHeight];
     if(width == 0.f) {

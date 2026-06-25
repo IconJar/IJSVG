@@ -75,7 +75,7 @@
     CALayer<IJSVGDrawableLayer>* layer = (CALayer<IJSVGDrawableLayer>*)self.referencingLayer;
     if(self.gradient.units == IJSVGUnitUserSpaceOnUse) {
         IJSVGRootLayer* rootNode = (IJSVGRootLayer*)[IJSVGLayer rootLayerForLayer:self];
-        bounds = [rootNode.viewBox computeValue:CGSizeZero];
+        bounds = [rootNode.viewBox computeValue:rootNode.frame.size];
         transform = [IJSVGLayer userSpaceTransformForLayer:layer];
     } else {
         bounds = IJSVGLayerGetBoundingBoxBounds(layer);
