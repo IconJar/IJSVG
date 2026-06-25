@@ -80,15 +80,16 @@ char* IJSVGTimmedCharBufferCreate(const char* buffer)
 {
     unsigned long start = 0;
     unsigned long length = strlen(buffer);
-    while(length-1 > 0 && isspace(buffer[length-1])) {
+    while(length > 0 && isspace(buffer[length-1])) {
         length--;
     }
-    while(isspace(buffer[start]) && start < length) {
+    while(start < length && isspace(buffer[start])) {
         start++;
     }
-    char* chars = (char*)malloc(sizeof(char)*((length-start)+1) ?: sizeof(char));
-    memcpy(chars, &buffer[start], length-start);
-    chars[length] = '\0';
+    unsigned long size = length - start;
+    char* chars = (char*)malloc(sizeof(char)*(size+1));
+    memcpy(chars, &buffer[start], size);
+    chars[size] = '\0';
     return chars;
 }
 
