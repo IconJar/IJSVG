@@ -13,7 +13,7 @@
 - (void)performRenderInContext:(CGContextRef)ctx
 {
     if(self.viewBox != nil) {
-        CGRect viewBox = [self.viewBox computeValue:CGSizeZero];
+        CGRect viewBox = [self.viewBox computeValue:self.frame.size];
         __weak IJSVGRootLayer* weakSelf = self;
         IJSVGViewBoxDrawingBlock drawingBlock = ^(CGFloat scale[]) {
             CGContextSaveGState(ctx);

@@ -209,9 +209,10 @@
 - (void)setParser:(IJSVGParser*)parser {
     _rootNode = [parser rootNodeWithSize:CGSizeZero];
   
-    // if the rootNode has any form of relative units, we need to keep hold of
-    // the parser so when we render, we can ask for new values.
-    if(_rootNode.viewBoxContainsRelativeUnits) {
+    // If the root node has any relative units, keep hold of the parser so
+    // render-size-dependent paths, frames, masks, and bounds can be rebuilt
+    // against the actual drawing size.
+    if(_rootNode.viewBoxContainsRelativeUnits || _rootNode.containsRelativeUnits) {
       _parser = parser;
     }
 }
@@ -681,9 +682,15 @@
 }
 
 - (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect {
+  BOOL needsRenderSizeLayout = _rootNode.viewBoxContainsRelativeUnits ||
+    _rootNode.containsRelativeUnits;
+
+  BOOL hasRootLayerForSize = _rootLayer != nil &&
+    CGSizeEqualToSize(_rootNode.clientSize, rect.size) &&
+    CGSizeEqualToSize(_rootLayer.frame.size, rect.size);
+
   // no parser, which means there is no need to recompute the value
-  if(_parser == nil || !_rootNode.viewBoxContainsRelativeUnits ||
-     CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
+  if(_parser == nil || !needsRenderSizeLayout || hasRootLayerForSize) {
     return self.rootLayer;
   }
   

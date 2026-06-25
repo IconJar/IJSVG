@@ -66,6 +66,7 @@
 {
     if((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
+        _pathUnits = IJSVGUnitInherit;
         _path = CGPathCreateMutable();
     }
     return self;
@@ -85,6 +86,16 @@
 {
     IJSVGPath* node = [super copyWithZone:zone];
     node.path = _path;
+    node.pathUnits = _pathUnits;
+    node.x1 = _x1.copy;
+    node.y1 = _y1.copy;
+    node.x2 = _x2.copy;
+    node.y2 = _y2.copy;
+    node.cx = _cx.copy;
+    node.cy = _cy.copy;
+    node.rx = _rx.copy;
+    node.ry = _ry.copy;
+    node.r = _r.copy;
     return node;
 }
 

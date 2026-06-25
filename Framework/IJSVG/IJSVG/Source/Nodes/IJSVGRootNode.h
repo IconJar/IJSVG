@@ -14,6 +14,7 @@
 
 @property (nonatomic, assign) CGSize clientSize;
 @property (nonatomic, assign) BOOL viewBoxContainsRelativeUnits;
+@property (nonatomic, assign) BOOL containsRelativeUnits;
 @property (nonatomic, assign) IJSVGIntrinsicDimensions intrinsicDimensions;
 @property (nonatomic, strong) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;

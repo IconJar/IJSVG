@@ -220,29 +220,32 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 {
   __weak IJSVGParser* weakSelf = self;
   [self beginWithSetup:^{
-    // if we have passed in a value that is not zero, we can just set it to that
-    // else we need to compute it, as we can treat zero as auto.
     IJSVGParser* strongSelf = weakSelf;
-    CGSize computeSize = size;
-    if(!CGSizeEqualToSize(CGSizeZero, computeSize)) {
-      strongSelf->_rootSize = size;
-      return;
-    }
-      
-    // compute the value, if the value is still a nil size, we just need to
-    // fallback to some generic value, which is against this object.
-    IJSVGRootNode* node = [self rootNode:NO];
-    if(node.viewBox == nil) {
-      strongSelf->_rootSize = strongSelf->_defaultSize;
-      return;
-    }
-    
-    // at this point we can just compute it again from the viewBox size.
-    computeSize = [node.viewBox.size computeValue:CGSizeZero];
-    strongSelf->_rootSize = CGSizeEqualToSize(CGSizeZero, computeSize) ?
-      strongSelf->_defaultSize : computeSize;
+    strongSelf->_rootSize = CGSizeEqualToSize(CGSizeZero, size) == YES ?
+      strongSelf->_defaultSize : size;
   }];
   return _rootNode;
+}
+
+- (BOOL)documentContainsRelativeUnits
+{
+    return [self elementContainsRelativeUnits:_document.rootElement];
+}
+
+- (BOOL)elementContainsRelativeUnits:(NSXMLElement*)element
+{
+    for(NSXMLNode* attribute in element.attributes) {
+        if([attribute.stringValue containsString:@"%"] == YES) {
+            return YES;
+        }
+    }
+    for(NSXMLNode* child in element.children) {
+        if(child.kind == NSXMLElementKind &&
+           [self elementContainsRelativeUnits:(NSXMLElement*)child] == YES) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)beginWithSetup:(dispatch_block_t __nullable)setup
@@ -258,6 +261,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     }
     _rootNode = [[IJSVGRootNode alloc] init];
     _rootNode.clientSize = _rootSize;
+    _rootNode.containsRelativeUnits = [self documentContainsRelativeUnits];
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     [self parseSVGElement:_document.rootElement
                  ontoNode:_rootNode
@@ -276,6 +280,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
     node.clientSize = _rootSize;
+    node.containsRelativeUnits = [self documentContainsRelativeUnits];
     [self parseSVGElement:_document.rootElement
                  ontoNode:node
                parentNode:nil
@@ -308,28 +313,13 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 
 - (void)computeViewBoxForRootNode:(IJSVGRootNode*)node
 {
-    if(node.viewBox == nil) {
-        IJSVGUnitLength* width = node.width;
-        IJSVGUnitLength* height = node.height;
-      
-        CGFloat cw = [width computeValue:_rootSize.width];
-        CGFloat ch = [height computeValue:_rootSize.height];
-        
-        if(ch == 0.f && cw != 0.f) {
-            ch = cw;
-        } else if(cw == 0.f && ch != 0.f) {
-            cw = ch;
-        }
-        
-        // Lets infer the size if the width and height are zero.
-        if(cw == 0.f && ch == 0.f) {
-          [node inferViewBoxIfRequired];
-        } else {
-          IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
-                                                      height:height];
-          node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
-                                                  size:size];
-        }
+    if(node.viewBox == nil && (node.width != nil || node.height != nil)) {
+        IJSVGUnitLength* width = node.width ?: node.height;
+        IJSVGUnitLength* height = node.height ?: node.width;
+        IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:width
+                                                    height:height];
+        node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
+                                                size:size];
     }
   
     if(node.viewBox == nil) {
@@ -348,24 +338,14 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         hl = node.height;
     }
     
-    // make note if we are using relative units for the width or height.
     if(wl.type == IJSVGUnitLengthTypePercentage ||
        hl.type == IJSVGUnitLengthTypePercentage) {
       node.viewBoxContainsRelativeUnits = YES;
     }
 
-    // store the width and height
     node.intrinsicDimensions = dimensions;
-    
-    // compute the new width and height based on the passed in size as the fall
-    // back for all the percentage values.
-    CGSize computedSize = CGSizeMake([wl computeValue:_rootSize.width],
-                                     [hl computeValue:_rootSize.height]);
-    node.intrinsicSize = [IJSVGUnitSize sizeWithCGSize:computedSize];
-  
-    // compute the viewbox
-    CGRect computedViewBox = [node.viewBox computeValue:_rootSize];
-    node.viewBox.size = [IJSVGUnitSize sizeWithCGSize:computedViewBox.size];
+    node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
+                                              height:hl];
 }
 
 - (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
@@ -391,20 +371,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         attributes[attributeNode.name] = attributeNode.stringValue;
     }
     
-    // content units and the referencing bounds are only ever needed when an
-    // actual transform attribute is present.
-    __block BOOL didResolveUnits = NO;
-    __block CGRect bounds = CGRectZero;
-    __block IJSVGUnitType units = IJSVGUnitInherit;
     void (^applyTransform)(NSString*) = ^(NSString* value) {
-        if(didResolveUnits == NO) {
-            didResolveUnits = YES;
-            units = [node.parentNode contentUnitsWithReferencingNodeBounds:&bounds];
-        }
         NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value
-                                                                      units:units
-                                                                     bounds:bounds]];
+        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
         if(node.transforms != nil) {
             [transforms addObjectsFromArray:node.transforms];
         }
@@ -1277,23 +1246,10 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                                     onNode:node
                                          ignoredAttributes:nil];
     
-    // convert a line into a command,
-    // basically MX1 Y1LX2 Y2
-    CGFloat x1 = [element attributeForName:IJSVGAttributeX1].stringValue.floatValue;
-    CGFloat y1 = [element attributeForName:IJSVGAttributeY1].stringValue.floatValue;
-    CGFloat x2 = [element attributeForName:IJSVGAttributeX2].stringValue.floatValue;
-    CGFloat y2 = [element attributeForName:IJSVGAttributeY2].stringValue.floatValue;
-
-    // use sprintf as its quicker then stringWithFormat...
-    char* buffer;
-    asprintf(&buffer, "M%.2f %.2fL%.2f %.2f", x1, y1, x2, y2);
-    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
-                                                                    dataStream:_commandDataStream];
-    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
-    node.path = nPath;
-    CGPathRelease(nPath);
-    
-    (void)free(buffer);
+    node.x1 = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeX1].stringValue];
+    node.y1 = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeY1].stringValue];
+    node.x2 = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeX2].stringValue];
+    node.y2 = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeY2].stringValue];
     return node;
 }
 
@@ -1363,41 +1319,14 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         [group addChild:node];
     }
     
-    CGRect computedBounds = CGRectZero;
-    IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
                                          ignoredAttributes:nil];
     
-    NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
-    NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
-    NSString* rxString = [element attributeForName:IJSVGAttributeRX].stringValue;
-    NSString* ryString = [element attributeForName:IJSVGAttributeRY].stringValue;
-    
-    IJSVGUnitLength* cXu;
-    IJSVGUnitLength* cYu;
-    IJSVGUnitLength* rXu;
-    IJSVGUnitLength* rYu;
-    if(contentUnits == IJSVGUnitObjectBoundingBox) {
-        cXu = [IJSVGUnitLength unitWithString:cxString].lengthByMatchingPercentage;
-        cYu = [IJSVGUnitLength unitWithString:cyString].lengthByMatchingPercentage;
-        rXu = [IJSVGUnitLength unitWithString:rxString].lengthByMatchingPercentage;
-        rYu = [IJSVGUnitLength unitWithString:ryString].lengthByMatchingPercentage;
-    } else {
-        cXu = [IJSVGUnitLength unitWithString:cxString];
-        cYu = [IJSVGUnitLength unitWithString:cyString];
-        rXu = [IJSVGUnitLength unitWithString:rxString];
-        rYu = [IJSVGUnitLength unitWithString:ryString];
-    }
-    
-    CGFloat cX = [cXu computeValue:computedBounds.size.width];
-    CGFloat cY = [cYu computeValue:computedBounds.size.height];
-    CGFloat rX = [rXu computeValue:computedBounds.size.width];
-    CGFloat rY = [rYu computeValue:computedBounds.size.height];
-    CGRect rect = CGRectMake(cX - rX, cY - rY, rX * 2, rY * 2);
-    CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
-    node.path = (CGMutablePathRef)nPath;
-    CGPathRelease(nPath);
+    node.cx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCX].stringValue];
+    node.cy = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCY].stringValue];
+    node.rx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRX].stringValue];
+    node.ry = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRY].stringValue];
     return node;
 }
 
@@ -1415,39 +1344,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         [group addChild:node];
     }
     
-    CGRect computedBounds = CGRectZero;
-    IJSVGUnitType contentUnits = [parentNode contentUnitsWithReferencingNodeBounds:&computedBounds];
-    
-    NSString* cxString = [element attributeForName:IJSVGAttributeCX].stringValue;
-    NSString* cyString = [element attributeForName:IJSVGAttributeCY].stringValue;
-    NSString* rString = [element attributeForName:IJSVGAttributeR].stringValue;
-    
-    IJSVGUnitLength* cXu = [IJSVGUnitLength unitWithString:cxString];
-    IJSVGUnitLength* cYu = [IJSVGUnitLength unitWithString:cyString];
-    IJSVGUnitLength* ru = [IJSVGUnitLength unitWithString:rString];
-    
-    if(contentUnits == IJSVGUnitObjectBoundingBox) {
-        cXu = [cXu lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        cYu = [cYu lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        ru = [ru lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-    }
-    
-    CGFloat cX = [cXu computeValue:computedBounds.size.width];
-    CGFloat cY = [cYu computeValue:computedBounds.size.height];
-    CGFloat rX = [ru computeValue:computedBounds.size.width];
-    CGFloat rY = [ru computeValue:computedBounds.size.height];
-    
-    // if rX and rY dont match, we are not a circle but an ellipsis, this is
-    // insanely important when it comes to exporting
-    if(rX != rY) {
-        node.primitiveType = kIJSVGPrimitivePathTypeEllipse;
-        node.type = IJSVGNodeTypeEllipse;
-    }
-    
-    CGRect rect = CGRectMake(cX - rX, cY - rY, rX * 2, rY * 2);
-    CGPathRef nPath = CGPathCreateWithEllipseInRect(rect, NULL);
-    node.path = (CGMutablePathRef)nPath;
-    CGPathRelease(nPath);
+    node.cx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCX].stringValue];
+    node.cy = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCY].stringValue];
+    node.r = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeR].stringValue];
     
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
@@ -1549,56 +1448,12 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         [group addChild:node];
     }
     
-    CGRect bounds = parentNode.bounds;
-    CGRect proposedBounds = CGRectZero;
-    IJSVGUnitType contentUnitType = [parentNode contentUnitsWithReferencingNodeBounds:&proposedBounds];
-    
-    // could not compute a value, so just use the bounds
-    if(contentUnitType == IJSVGUnitInherit) {
-        proposedBounds = bounds;
-    }
-    
-    NSString* widthString = [element attributeForName:IJSVGAttributeWidth].stringValue;
-    NSString* heightString = [element attributeForName:IJSVGAttributeHeight].stringValue;
-    NSString* xString = [element attributeForName:IJSVGAttributeX].stringValue;
-    NSString* yString = [element attributeForName:IJSVGAttributeY].stringValue;
-    NSString* rXString = [element attributeForName:IJSVGAttributeRX].stringValue;
-    NSString* rYString = [element attributeForName:IJSVGAttributeRY].stringValue;
-    
-    // width and height
-    IJSVGUnitLength* width = [IJSVGUnitLength unitWithString:widthString];
-    IJSVGUnitLength* height = [IJSVGUnitLength unitWithString:heightString];
-
-    // rect uses x and y as start of path, not move path object -_-
-    IJSVGUnitLength* x = [IJSVGUnitLength unitWithString:xString];
-    IJSVGUnitLength* y = [IJSVGUnitLength unitWithString:yString];
-
-    // radius
-    IJSVGUnitLength* rX = [IJSVGUnitLength unitWithString:rXString];
-    IJSVGUnitLength* rY = [IJSVGUnitLength unitWithString:rYString];
-    
-    bounds = proposedBounds;
-    if(contentUnitType == IJSVGUnitObjectBoundingBox) {
-        width = [width lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        height = [height lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        x = [x lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        y = [y lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        rX = [rX lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        rY = [rY lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-    }
-    
-    if(rY == nil) {
-        rY = rX;
-    }
-    CGRect rect = CGRectMake([x computeValue:bounds.size.width],
-                             [y computeValue:bounds.size.height],
-                             [width computeValue:bounds.size.width],
-                             [height computeValue:bounds.size.height]);
-        
-    CGPathRef nPath = CGPathCreateWithRoundedRect(rect, [rX computeValue:bounds.size.width],
-                                                  [rY computeValue:bounds.size.height], NULL);
-    node.path = (CGMutablePathRef)nPath;
-    CGPathRelease(nPath);
+    node.x = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeX].stringValue];
+    node.y = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeY].stringValue];
+    node.width = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeWidth].stringValue];
+    node.height = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeHeight].stringValue];
+    node.rx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRX].stringValue];
+    node.ry = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRY].stringValue];
     
     IJSVGBitFlags64* flags = [[IJSVGBitFlags64 alloc] init];
     [flags setBit:IJSVGNodeAttributeX];
@@ -1617,8 +1472,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                      parentNode:(IJSVGNode*)parentNode
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    CGRect bounds = CGRectZero;
-    IJSVGUnitType units = [parentNode contentUnitsWithReferencingNodeBounds:&bounds];
     IJSVGImage* node = [[IJSVGImage alloc] init];
     node.type = IJSVGNodeTypeImage;
     node.name = element.localName;
@@ -1635,11 +1488,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     
     // load image from base64
     NSXMLNode* dataNode = [self resolveXLinkAttributeForElement:element];
-    
-    if(units == IJSVGUnitObjectBoundingBox) {
-        node.width = [IJSVGUnitLength unitWithFloat:node.width.value*bounds.size.width];
-        node.height = [IJSVGUnitLength unitWithFloat:node.height.value*bounds.size.height];
-    }
     
     [node loadFromString:dataNode.stringValue];
     return node;
@@ -1894,13 +1742,8 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
                                                                     dataStream:_commandDataStream];
-    
-    CGRect bounds;
-    if([path contentUnitsWithReferencingNodeBounds:&bounds] == IJSVGUnitObjectBoundingBox) {
-        commands = [IJSVGCommand convertCommands:commands
-                                         toUnits:IJSVGUnitObjectBoundingBox
-                                          bounds:bounds];
-    }
+    IJSVGNode* referencingNode = nil;
+    path.pathUnits = [path contentUnitsWithReferencingNode:&referencingNode];
     
     CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
     path.path = nPath;

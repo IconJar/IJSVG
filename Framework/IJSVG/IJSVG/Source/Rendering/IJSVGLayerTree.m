@@ -36,6 +36,7 @@
 {
     if((self = [super init]) != nil) {
         _viewPortStack = [[NSMutableArray alloc] init];
+        _unitBoundsStack = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -57,9 +58,57 @@
     [_viewPortStack removeLastObject];
 }
 
+- (void)withViewPort:(CGRect)viewPort
+             handler:(dispatch_block_t)handler
+{
+    [self pushViewPort:viewPort];
+    @try {
+        handler();
+    } @finally {
+        [self popViewPort];
+    }
+}
+
+- (void)pushUnitBounds:(CGRect)bounds
+{
+    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(bounds)];
+    [_unitBoundsStack addObject:value];
+}
+
+- (CGRect)unitBounds
+{
+    NSValue* value = _unitBoundsStack.lastObject;
+    return value == nil ? CGRectNull : (CGRect)NSRectToCGRect(value.rectValue);
+}
+
+- (void)popUnitBounds
+{
+    [_unitBoundsStack removeLastObject];
+}
+
+- (void)withUnitBounds:(CGRect)bounds
+               handler:(dispatch_block_t)handler
+{
+    [self pushUnitBounds:bounds];
+    @try {
+        handler();
+    } @finally {
+        [self popUnitBounds];
+    }
+}
+
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode
 {
-    return (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
+    CGRect clientBounds = (CGRect) { .origin = CGPointZero, .size = rootNode.clientSize };
+    __block IJSVGRootLayer* layer = nil;
+    [self withViewPort:clientBounds
+               handler:^{
+        [self withUnitBounds:clientBounds
+                     handler:^{
+            layer = (IJSVGRootLayer*)[self drawableLayerForNode:rootNode];
+        }];
+    }];
+    return layer;
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
@@ -89,21 +138,114 @@
 
 - (CALayer<IJSVGDrawableLayer>*)drawableBasicLayerForPathNode:(IJSVGPath*)node
 {
+    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
+
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
-    if(CGPathIsEmpty(node.path) == NO) {
-        [self applyTransformedPathToShapeLayer:layer
-                                      fromNode:node];
+    if(CGPathIsEmpty(resolvedPath) == NO) {
+        [self applyTransformedPath:resolvedPath
+                      toShapeLayer:layer];
     }
+    CGPathRelease(resolvedPath);
     layer.fillColor = nil;
     layer.fillRule = [IJSVGUtils CGFillRuleForWindingRule:node.windingRule];
     return layer;
 }
 
-- (void)applyTransformedPathToShapeLayer:(CALayer<IJSVGPathableLayer, IJSVGDrawableLayer>*)layer
-                                fromNode:(IJSVGPath*)node
+- (CGRect)unitResolutionBoundsForNode:(IJSVGNode*)node
 {
-    CGRect pathBounds = CGPathGetPathBoundingBox(node.path);
+    CGRect bounds = self.unitBounds;
+    if(CGRectIsNull(bounds) == YES || CGRectIsEmpty(bounds) == YES) {
+        bounds = self.viewPort;
+    }
+    if((CGRectIsNull(bounds) == YES || CGRectIsEmpty(bounds) == YES) && node.parentNode != nil) {
+        bounds = node.parentNode.bounds;
+    }
+    return bounds;
+}
+
+- (IJSVGUnitLength*)unit:(IJSVGUnitLength*)unit
+           matchingNode:(IJSVGNode*)node
+{
+    IJSVGNode* referencingNode = nil;
+    IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    if(contentUnits == IJSVGUnitObjectBoundingBox) {
+        return [unit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+    }
+    return unit;
+}
+
+- (CGPathRef)newResolvedPathForPathNode:(IJSVGPath*)node
+{
+    CGRect bounds = [self unitResolutionBoundsForNode:node];
+    CGFloat width = CGRectGetWidth(bounds);
+    CGFloat height = CGRectGetHeight(bounds);
+
+    if(node.primitiveType == kIJSVGPrimitivePathTypePath ||
+       node.primitiveType == kIJSVGPrimitivePathTypePolygon ||
+       node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
+        if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
+            CGAffineTransform transform = CGAffineTransformMakeScale(width, height);
+            return CGPathCreateCopyByTransformingPath(node.path, &transform);
+        }
+        return CGPathCreateMutableCopy(node.path);
+    }
+
+    CGMutablePathRef path = CGPathCreateMutable();
+
+    switch(node.primitiveType) {
+        case kIJSVGPrimitivePathTypeLine: {
+            CGFloat x1 = [[self unit:node.x1 matchingNode:node] computeValue:width];
+            CGFloat y1 = [[self unit:node.y1 matchingNode:node] computeValue:height];
+            CGFloat x2 = [[self unit:node.x2 matchingNode:node] computeValue:width];
+            CGFloat y2 = [[self unit:node.y2 matchingNode:node] computeValue:height];
+            CGPathMoveToPoint(path, NULL, x1, y1);
+            CGPathAddLineToPoint(path, NULL, x2, y2);
+            break;
+        }
+        case kIJSVGPrimitivePathTypeRect: {
+            IJSVGUnitLength* rx = [self unit:node.rx matchingNode:node];
+            IJSVGUnitLength* ry = [self unit:(node.ry ?: node.rx) matchingNode:node];
+            CGRect rect = CGRectMake([[self unit:node.x matchingNode:node] computeValue:width],
+                                     [[self unit:node.y matchingNode:node] computeValue:height],
+                                     [[self unit:node.width matchingNode:node] computeValue:width],
+                                     [[self unit:node.height matchingNode:node] computeValue:height]);
+            CGPathAddRoundedRect(path, NULL, rect,
+                                 [rx computeValue:width],
+                                 [ry computeValue:height]);
+            break;
+        }
+        case kIJSVGPrimitivePathTypeCircle: {
+            CGFloat cx = [[self unit:node.cx matchingNode:node] computeValue:width];
+            CGFloat cy = [[self unit:node.cy matchingNode:node] computeValue:height];
+            IJSVGUnitLength* radius = [self unit:node.r matchingNode:node];
+            CGFloat rx = [radius computeValue:width];
+            CGFloat ry = [radius computeValue:height];
+            CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
+            CGPathAddEllipseInRect(path, NULL, rect);
+            break;
+        }
+        case kIJSVGPrimitivePathTypeEllipse: {
+            CGFloat cx = [[self unit:node.cx matchingNode:node] computeValue:width];
+            CGFloat cy = [[self unit:node.cy matchingNode:node] computeValue:height];
+            CGFloat rx = [[self unit:node.rx matchingNode:node] computeValue:width];
+            CGFloat ry = [[self unit:node.ry matchingNode:node] computeValue:height];
+            CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
+            CGPathAddEllipseInRect(path, NULL, rect);
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    return path;
+}
+
+- (void)applyTransformedPath:(CGPathRef)path
+                toShapeLayer:(CALayer<IJSVGPathableLayer, IJSVGDrawableLayer>*)layer
+{
+    CGRect pathBounds = CGPathGetPathBoundingBox(path);
     pathBounds = pathBounds;
 
     // this will move the path back to a 0 origin as we actually set the origin
@@ -111,11 +253,11 @@
     if(pathBounds.origin.x != 0.f || pathBounds.origin.y != 0.f) {
         CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
                                                                        -pathBounds.origin.y);
-        CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(node.path, &transform);
+        CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(path, &transform);
         layer.path = transformedPath;
         CGPathRelease(transformedPath);
     } else {
-        layer.path = node.path;
+        layer.path = path;
     }
     
     // note that we store the bounding box at this point, as it can be modified later
@@ -323,8 +465,10 @@
 - (CALayer<IJSVGDrawableLayer>*)drawableStrokedLayerForPathNode:(IJSVGPath*)node
 {
     IJSVGStrokeLayer* layer = [IJSVGStrokeLayer layer];
-    [self applyTransformedPathToShapeLayer:layer
-                                  fromNode:node];
+    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
+    [self applyTransformedPath:resolvedPath
+                  toShapeLayer:layer];
+    CGPathRelease(resolvedPath);
     
     // reset the frame back to zero
     CGRect frame = layer.frame;
@@ -426,16 +570,27 @@
     layer.viewBoxAlignment = node.viewBoxAlignment;
     layer.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
         
-    // we are the top most SVG, not a nested one,
-    // we can simply use the viewport given to us
-    CGRect frame = CGRectZero;
-    frame = CGRectMake(node.x.value, node.y.value,
-                       node.intrinsicSize.width.value,
-                       node.intrinsicSize.height.value);
+    CGRect bounds = [self unitResolutionBoundsForNode:node];
+    CGFloat boundsWidth = CGRectGetWidth(bounds);
+    CGFloat boundsHeight = CGRectGetHeight(bounds);
+    CGSize intrinsicSize = node.intrinsicSize.value;
+    CGFloat width = [node.width computeValue:boundsWidth];
+    CGFloat height = [node.height computeValue:boundsHeight];
+    if(width == 0.f) {
+        width = intrinsicSize.width;
+    }
+    if(height == 0.f) {
+        height = intrinsicSize.height;
+    }
+    CGRect frame = CGRectMake([node.x computeValue:boundsWidth],
+                              [node.y computeValue:boundsHeight],
+                              width,
+                              height);
     layer.frame = frame;
-    [self pushViewPort:layer.frame];
-    layer.sublayers = [self drawableLayersForNodes:node.children];
-    [self popViewPort];
+    [self withViewPort:layer.frame
+               handler:^{
+        layer.sublayers = [self drawableLayersForNodes:node.children];
+    }];
     return layer;
 }
 
@@ -529,7 +684,12 @@
         .size = layer.outerBoundingBox.size
     };
     
-    CALayer<IJSVGDrawableLayer>* patternFill = [self drawableLayerForNode:pattern];
+    CGRect unitBounds = pattern.units == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
+    __block CALayer<IJSVGDrawableLayer>* patternFill = nil;
+    [self withUnitBounds:unitBounds
+                 handler:^{
+        patternFill = [self drawableLayerForNode:pattern];
+    }];
     patternFill.referencingLayer = patternLayer;
     patternLayer.pattern = patternFill;
     patternLayer.opacity = layer.opacity;
@@ -560,9 +720,17 @@
 
 {
     IJSVGMask* maskNode = mask;
-    CALayer<IJSVGDrawableLayer>* maskLayer = nil;
-    maskLayer = fromLayer ?: (CALayer<IJSVGDrawableLayer>*)[self drawableLayerForNode:maskNode];
+    __block CALayer<IJSVGDrawableLayer>* maskLayer = nil;
     CGRect viewPort = maskNode.units == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
+    CGRect contentBounds = maskNode.contentUnits == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
+    if(fromLayer == nil) {
+        [self withUnitBounds:contentBounds
+                     handler:^{
+            maskLayer = (CALayer<IJSVGDrawableLayer>*)[self drawableLayerForNode:maskNode];
+        }];
+    } else {
+        maskLayer = fromLayer;
+    }
     CGFloat width = CGRectGetWidth(viewPort);
     CGFloat height = CGRectGetHeight(viewPort);
     CGRect rect = CGRectZero;
@@ -631,9 +799,13 @@
     NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
     layers = [[NSMutableArray alloc] init];
     IJSVGClipPath* refClipPath = node;
-    IJSVGGroupLayer* groupLayer = nil;
+    __block IJSVGGroupLayer* groupLayer = nil;
+    CGRect contentBounds = node.contentUnits == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
     while(refClipPath != nil) {
-        groupLayer = (IJSVGGroupLayer*)[self drawableLayerForNode:refClipPath];
+        [self withUnitBounds:contentBounds
+                     handler:^{
+            groupLayer = (IJSVGGroupLayer*)[self drawableLayerForNode:refClipPath];
+        }];
         if(groupLayer != nil) {
             groupLayer.referencingLayer = layer;
             [layers addObject:groupLayer];
@@ -655,6 +827,26 @@
     return layers;
 }
 
+- (void)recursivelyAddResolvedPathsForNodes:(NSOrderedSet<IJSVGNode*>*)nodes
+                                    transform:(CGAffineTransform)transform
+                                       toPath:(CGMutablePathRef)mutPath
+{
+    for(IJSVGNode* node in nodes) {
+        if([node isKindOfClass:IJSVGPath.class] == YES &&
+           [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
+            CGPathRef resolvedPath = [self newResolvedPathForPathNode:(IJSVGPath*)node];
+            CGPathAddPath(mutPath, &transform, resolvedPath);
+            CGPathRelease(resolvedPath);
+            continue;
+        }
+        if([node isKindOfClass:IJSVGGroup.class] == YES) {
+            [self recursivelyAddResolvedPathsForNodes:((IJSVGGroup*)node).children
+                                           transform:transform
+                                              toPath:mutPath];
+        }
+    }
+}
+
 - (CGPathRef)newClipPathFromNode:(IJSVGClipPath*)node
                        fromLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
@@ -667,11 +859,15 @@
     CGAffineTransform layerTransform = CGAffineTransformMakeTranslation(CGRectGetMinX(layerRect),
                                                                         CGRectGetMinY(layerRect));
     transform = CGAffineTransformConcat(transform, layerTransform);
+    CGRect contentBounds = node.contentUnits == IJSVGUnitUserSpaceOnUse ? self.viewPort : layer.boundingBox;
     IJSVGClipPath* clipPath = node;
     while(clipPath != nil) {
-        [IJSVGPath recursivelyAddPathedNodesPaths:clipPath.children
-                                        transform:transform
-                                           toPath:mPath];
+        [self withUnitBounds:contentBounds
+                     handler:^{
+            [self recursivelyAddResolvedPathsForNodes:clipPath.children
+                                            transform:transform
+                                               toPath:mPath];
+        }];
         clipPath = clipPath.clipPath;
     }
     return mPath;
@@ -752,7 +948,15 @@
     CGFloat x = 0.f;
     CGFloat y = 0.f;
     
-    if(layer.treatImplicitOriginAsTransform == YES) {
+    BOOL shouldApplyImplicitOrigin = layer.treatImplicitOriginAsTransform == YES;
+    if([node isKindOfClass:IJSVGPath.class] == YES &&
+       ((IJSVGPath*)node).primitiveType == kIJSVGPrimitivePathTypeRect) {
+        shouldApplyImplicitOrigin = NO;
+    }
+    if([node isKindOfClass:IJSVGImage.class] == YES) {
+        shouldApplyImplicitOrigin = NO;
+    }
+    if(shouldApplyImplicitOrigin == YES) {
         x = [node.x computeValue:frame.size.width];
         y = [node.y computeValue:frame.size.height];
     }
@@ -768,13 +972,19 @@
         identity = CGAffineTransformTranslate(identity, x, y);
     }
 
+    IJSVGNode* referencingNode = nil;
+    IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    CGRect unitBounds = [self unitResolutionBoundsForNode:node];
+
     // this used to be done with each transform being added to its own
     // group layer, but we can simply use one and then apply
     // the transforms in reverse order, has same outcome with less memory
     IJSVGTransformLayer* parentLayer = [IJSVGTransformLayer layer];
     for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
+        IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits
+                                                                         bounds:unitBounds];
         identity = CGAffineTransformConcat(identity,
-                                           transform.CGAffineTransform);
+                                           resolvedTransform.CGAffineTransform);
     }
     parentLayer.affineTransform = identity;
     [parentLayer addSublayer:layer];
@@ -787,12 +997,19 @@
 - (IJSVGLayer*)drawableLayerForImageNode:(IJSVGImage*)image
 {
     IJSVGImageLayer* layer = [[IJSVGImageLayer alloc] initWithImage:image];
-    // make sure we set the width and height correctly,
-    // as this may not be exactly the same as the size of the
-    // given image
-    CGRect frame = layer.frame;
-    frame.size.width = ceilf(image.width.value);
-    frame.size.height = ceilf(image.height.value);
+    CGRect bounds = [self unitResolutionBoundsForNode:image];
+    CGFloat width = CGRectGetWidth(bounds);
+    CGFloat height = CGRectGetHeight(bounds);
+    CGRect frame = CGRectMake([[self unit:image.x matchingNode:image] computeValue:width],
+                              [[self unit:image.y matchingNode:image] computeValue:height],
+                              [[self unit:image.width matchingNode:image] computeValue:width],
+                              [[self unit:image.height matchingNode:image] computeValue:height]);
+    if(frame.size.width == 0.f) {
+        frame.size.width = image.intrinsicSize.width;
+    }
+    if(frame.size.height == 0.f) {
+        frame.size.height = image.intrinsicSize.height;
+    }
     layer.frame = frame;
     [layer setNeedsLayout];
     return (IJSVGLayer*)layer;

@@ -17,6 +17,7 @@
 @interface IJSVGLayerTree : NSObject {
 @private
     NSMutableArray<NSValue*>* _viewPortStack;
+    NSMutableArray<NSValue*>* _unitBoundsStack;
 }
 
 @property (nonatomic, assign) CGRect viewBox;
