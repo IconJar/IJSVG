@@ -208,13 +208,7 @@
 
 - (void)setParser:(IJSVGParser*)parser {
     _rootNode = [parser rootNodeWithSize:CGSizeZero];
-  
-    // If the root node has any relative units, keep hold of the parser so
-    // render-size-dependent paths, frames, masks, and bounds can be rebuilt
-    // against the actual drawing size.
-    if(_rootNode.viewBoxContainsRelativeUnits || _rootNode.containsRelativeUnits) {
-      _parser = parser;
-    }
+    _parser = nil;
 }
 
 - (id)initWithSVGData:(NSData*)data
@@ -693,16 +687,16 @@
     CGSizeEqualToSize(_rootNode.clientSize, rect.size) &&
     CGSizeEqualToSize(_rootLayer.frame.size, rect.size);
 
-  // no parser, which means there is no need to recompute the value
-  if(_parser == nil || !needsRenderSizeLayout || hasRootLayerForSize) {
+  if(!needsRenderSizeLayout || hasRootLayerForSize) {
     return self.rootLayer;
   }
   
-  // if we do have a parser, that means the node has relative values, lets recompute
+  // Relative units are stored on the parse tree, so a size change only needs
+  // to update the render client size and resolve the layers again.
   __weak IJSVG* weakSelf = self;
   [self performBlock:^{
     IJSVG* strongSelf = weakSelf;
-    strongSelf->_rootNode = [strongSelf->_parser rootNodeWithSize:rect.size];
+    strongSelf->_rootNode.clientSize = rect.size;
     [strongSelf _setupBasicInfoFromGroup];
     strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
   }];
