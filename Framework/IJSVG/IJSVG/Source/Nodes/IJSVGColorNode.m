@@ -40,9 +40,11 @@
     }
 
     NSColor* color = self.color ?: NSColor.blackColor;
-    if((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill && style.fillColor != nil) {
+    if((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill &&
+       style.fillColor != nil) {
         color = style.fillColor;
-    } else if((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke && style.strokeColor != nil) {
+    } else if((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke &&
+              style.strokeColor != nil) {
         color = style.strokeColor;
     } else {
         NSColor* replacement = [style.colors colorForColor:color
