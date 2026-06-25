@@ -16,6 +16,7 @@
 @property (nonatomic, strong) IJSVGUnitPoint* origin;
 @property (nonatomic, readonly) BOOL isZeroRect;
 @property (nonatomic, readonly) CGRect value;
+@property (nonatomic, readonly) BOOL containsRelativeUnits;
 
 + (IJSVGUnitRect*)zeroRect;
 + (IJSVGUnitRect*)rectWithCGRect:(CGRect)rect;

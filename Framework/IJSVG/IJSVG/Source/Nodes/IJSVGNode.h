@@ -213,6 +213,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong) IJSVGUnitRect* viewBox;
 @property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
 @property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
+@property (nonatomic, readonly) BOOL containsRelativeUnits;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, assign) IJSVGNodeType type;
@@ -271,6 +272,10 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
+
+// whether this node's own values use relative (percentage) units — subclasses
+// override to also consider their type-specific units (then call super).
+- (BOOL)containsRelativeUnits;
 
 - (void)setDefaults;
 - (void)postProcess;

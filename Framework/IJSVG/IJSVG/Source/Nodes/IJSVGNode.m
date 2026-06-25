@@ -441,6 +441,12 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
 }
 
+- (BOOL)containsRelativeUnits
+{
+    return _x.isRelativeUnit == YES || _y.isRelativeUnit == YES ||
+        _width.isRelativeUnit == YES || _height.isRelativeUnit == YES;
+}
+
 - (void)setFill:(IJSVGNode*)fill
 {
     NSAssert([fill matchesTraits:IJSVGNodeTraitPaintable] || fill == nil, @"Fill must a paintable node.");

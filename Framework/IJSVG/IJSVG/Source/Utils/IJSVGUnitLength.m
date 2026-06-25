@@ -225,6 +225,11 @@
                                 type:self.type];
 }
 
+- (BOOL)isRelativeUnit
+{
+    return self.type == IJSVGUnitLengthTypePercentage;
+}
+
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
     if(self.type == IJSVGUnitLengthTypePercentage) {

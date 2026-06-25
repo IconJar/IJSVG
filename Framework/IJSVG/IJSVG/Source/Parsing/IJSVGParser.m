@@ -227,27 +227,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
   return _rootNode;
 }
 
-- (BOOL)documentContainsRelativeUnits
-{
-    return [self elementContainsRelativeUnits:_document.rootElement];
-}
-
-- (BOOL)elementContainsRelativeUnits:(NSXMLElement*)element
-{
-    for(NSXMLNode* attribute in element.attributes) {
-        if([attribute.stringValue containsString:@"%"] == YES) {
-            return YES;
-        }
-    }
-    for(NSXMLNode* child in element.children) {
-        if(child.kind == NSXMLElementKind &&
-           [self elementContainsRelativeUnits:(NSXMLElement*)child] == YES) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 - (void)beginWithSetup:(dispatch_block_t __nullable)setup
 {
     // setup basics to begin with
@@ -261,7 +240,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     }
     _rootNode = [[IJSVGRootNode alloc] init];
     _rootNode.clientSize = _rootSize;
-    _rootNode.containsRelativeUnits = [self documentContainsRelativeUnits];
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     [self parseSVGElement:_document.rootElement
                  ontoNode:_rootNode
@@ -280,7 +258,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
     node.clientSize = _rootSize;
-    node.containsRelativeUnits = [self documentContainsRelativeUnits];
     [self parseSVGElement:_document.rootElement
                  ontoNode:node
                parentNode:nil
@@ -338,11 +315,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         hl = node.height;
     }
     
-    if(wl.type == IJSVGUnitLengthTypePercentage ||
-       hl.type == IJSVGUnitLengthTypePercentage) {
-      node.viewBoxContainsRelativeUnits = YES;
-    }
-
     node.intrinsicDimensions = dimensions;
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
                                               height:hl];

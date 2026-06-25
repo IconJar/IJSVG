@@ -19,6 +19,18 @@
     return self;
 }
 
+- (BOOL)containsRelativeUnits {
+  if([super containsRelativeUnits] == YES) {
+      return YES;
+  }
+  for(IJSVGNode* node in self.children) {
+      if(node.containsRelativeUnits == YES) {
+          return YES;
+      }
+  }
+  return NO;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];

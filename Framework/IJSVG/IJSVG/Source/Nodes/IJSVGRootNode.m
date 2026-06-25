@@ -58,6 +58,18 @@
   self.viewBox = [IJSVGUnitRect rectWithCGRect:rect];
 }
 
+- (BOOL)containsRelativeUnits
+{
+    if(_hasCalculatedContainsRelativeUnits) {
+      return _containsRelativeUnits;
+    }
+    BOOL flag = self.viewBox.containsRelativeUnits ||
+        [super containsRelativeUnits];
+    _containsRelativeUnits = flag;
+    _hasCalculatedContainsRelativeUnits = YES;
+    return _containsRelativeUnits;
+}
+
 - (CGRect)bounds
 {
     CGSize resolvingSize = self.clientSize;

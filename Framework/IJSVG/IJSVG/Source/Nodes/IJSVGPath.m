@@ -77,6 +77,15 @@
     [self addTraits:IJSVGNodeTraitPathed];
 }
 
+- (BOOL)containsRelativeUnits
+{
+    return _cx.isRelativeUnit == YES || _cy.isRelativeUnit == YES ||
+        _r.isRelativeUnit == YES || _rx.isRelativeUnit == YES ||
+        _ry.isRelativeUnit == YES || _x1.isRelativeUnit == YES ||
+        _y1.isRelativeUnit == YES || _x2.isRelativeUnit == YES ||
+        _y2.isRelativeUnit == YES || [super containsRelativeUnits] == YES;
+}
+
 - (CGRect)bounds
 {
     return self.pathBoundingBox;

@@ -67,6 +67,11 @@
         _size.width.value == 0.f && _size.height.value == 0.f;
 }
 
+- (BOOL)containsRelativeUnits
+{
+    return self.size.containsRelativeUnits || self.origin.containsRelativeUnits;
+}
+
 - (IJSVGUnitRect*)copyByConvertingToUnitsLengthType:(IJSVGUnitLengthType)type
 {
     IJSVGUnitRect* rect = self.copy;

@@ -10,6 +10,11 @@
 
 @implementation IJSVGUnitSize
 
+- (BOOL)containsRelativeUnits
+{
+    return self.width.isRelativeUnit || self.height.isRelativeUnit;
+}
+
 + (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
                          height:(IJSVGUnitLength*)height
 {

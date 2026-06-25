@@ -51,6 +51,13 @@
     self.y2 = node.y2.copy;
 }
 
+- (BOOL)containsRelativeUnits
+{
+    return self.x1.isRelativeUnit == YES || self.x2.isRelativeUnit == YES ||
+        self.y1.isRelativeUnit == YES || self.y2.isRelativeUnit == YES ||
+        [super containsRelativeUnits] == YES;
+}
+
 - (void)setLocations:(CGFloat*)locations
 {
     if(_locations != NULL) {

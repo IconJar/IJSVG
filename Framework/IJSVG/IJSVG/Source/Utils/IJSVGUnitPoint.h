@@ -14,6 +14,7 @@
 @property (nonatomic, strong) IJSVGUnitLength* x;
 @property (nonatomic, strong) IJSVGUnitLength* y;
 @property (nonatomic, readonly) CGPoint value;
+@property (nonatomic, readonly) BOOL containsRelativeUnits;
 
 + (IJSVGUnitPoint*)zeroPoint;
 + (IJSVGUnitPoint*)pointWithCGPoint:(CGPoint)point;

@@ -10,6 +10,11 @@
 
 @implementation IJSVGUnitPoint
 
+- (BOOL)containsRelativeUnits
+{
+    return self.x.isRelativeUnit || self.y.isRelativeUnit;
+}
+
 + (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x
                             y:(IJSVGUnitLength*)y
 {

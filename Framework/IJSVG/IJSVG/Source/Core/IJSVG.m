@@ -680,14 +680,12 @@
 }
 
 - (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect {
-  BOOL needsRenderSizeLayout = _rootNode.viewBoxContainsRelativeUnits ||
-    _rootNode.containsRelativeUnits;
 
   BOOL hasRootLayerForSize = _rootLayer != nil &&
     CGSizeEqualToSize(_rootNode.clientSize, rect.size) &&
     CGSizeEqualToSize(_rootLayer.frame.size, rect.size);
 
-  if(!needsRenderSizeLayout || hasRootLayerForSize) {
+  if(!_rootNode.containsRelativeUnits || hasRootLayerForSize) {
     return self.rootLayer;
   }
   

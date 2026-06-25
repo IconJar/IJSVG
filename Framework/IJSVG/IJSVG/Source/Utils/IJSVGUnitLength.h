@@ -36,6 +36,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 @property (nonatomic, assign) IJSVGUnitLengthType originalType;
 @property (nonatomic, assign) CGFloat value;
 @property (nonatomic, assign) BOOL inherit;
+@property (nonatomic, assign) BOOL isRelativeUnit;
 
 + (IJSVGUnitLength*)zeroUnitLength;
 
