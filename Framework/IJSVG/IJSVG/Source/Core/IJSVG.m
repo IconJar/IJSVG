@@ -274,12 +274,20 @@
 
 - (CGSize)size
 {
-    return [_intrinsicSize computeValue:self.defaultSize];
+    return [self sizeWithDefaultSize:self.defaultSize];
+}
+
+- (IJSVGUnitSize*)intrinsicUnitSize
+{
+    return _intrinsicSize.copy;
 }
 
 - (CGSize)sizeWithDefaultSize:(CGSize)size
 {
-    return [_intrinsicSize computeValue:size];
+    if(_intrinsicSize != nil) {
+        return [_intrinsicSize computeValue:size];
+    }
+    return _viewBox.size;
 }
 
 - (void)_setupBasicsFromAnyInitializer

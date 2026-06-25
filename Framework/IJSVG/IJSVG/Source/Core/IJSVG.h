@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGRootNode.h>
+#import <IJSVG/IJSVGUnitSize.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGGradientLayer.h>
 #import <IJSVG/IJSVGGroupLayer.h>
@@ -57,13 +58,16 @@
 // If the size if % values, it will use the defaultSize
 @property (nonatomic, readonly) CGSize size;
 
+// The unresolved unit-backed intrinsic size of the SVG.
+@property (nonatomic, readonly) IJSVGUnitSize* intrinsicUnitSize;
+
 // Will return true if the intrinsic size is a % value
 @property (nonatomic, readonly) BOOL hasDynamicSize;
 
 // This is used when the intrinsic size is a % value, e.g. 100% x 100%
 @property (nonatomic, assign) CGSize defaultSize;
 
-// bitmask of which dimentions were implicitly set on the SVG
+// Bitmask of which dimensions were implicitly set on the SVG
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
 - (void)prepForDrawingInView:(NSView*)view;
