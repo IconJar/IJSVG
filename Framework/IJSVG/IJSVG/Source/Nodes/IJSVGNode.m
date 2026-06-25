@@ -12,6 +12,19 @@
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
+static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
+                                        NSColor* color,
+                                        IJSVGColorUsageTraits traits)
+{
+    if(color == nil) {
+        return;
+    }
+    IJSVGTraitedColor* traited = nil;
+    traited = [IJSVGTraitedColor colorWithColor:color
+                                         traits:traits];
+    [storage addColor:traited];
+}
+
 @implementation IJSVGNode
 
 @synthesize fill = _fill;
@@ -445,6 +458,40 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
     return _x.isRelativeUnit == YES || _y.isRelativeUnit == YES ||
         _width.isRelativeUnit == YES || _height.isRelativeUnit == YES;
+}
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+{
+    IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
+    if(self.shouldRender == NO || [self matchesTraits:IJSVGNodeTraitPathed] == NO) {
+        return storage;
+    }
+
+    IJSVGNode* fill = self.fill;
+    if(fill == nil) {
+        IJSVGNodeAddColorToStorage(storage,
+                                   style.fillColor ?: NSColor.blackColor,
+                                   IJSVGColorUsageTraitFill);
+    } else {
+        IJSVGTraitedColorStorage* fillStorage = nil;
+        fillStorage = [fill colorsWithStyle:style
+                             matchingTraits:IJSVGColorUsageTraitFill];
+        [storage unionColorStorage:fillStorage];
+    }
+
+    if([self matchesTraits:IJSVGNodeTraitStroked] == YES) {
+        IJSVGTraitedColorStorage* strokeStorage = nil;
+        strokeStorage = [self.stroke colorsWithStyle:style
+                                      matchingTraits:IJSVGColorUsageTraitStroke];
+        [storage unionColorStorage:strokeStorage];
+    }
+    return storage;
+}
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+                              matchingTraits:(IJSVGColorUsageTraits)traits
+{
+    return [[IJSVGTraitedColorStorage alloc] init];
 }
 
 - (void)setFill:(IJSVGNode*)fill

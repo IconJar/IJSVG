@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGStyle.h>
 
 @implementation IJSVGColorNode
 
@@ -28,6 +29,32 @@
     if([node isKindOfClass:self.class]) {
         self.color = ((IJSVGColorNode*)node).color;
     }
+}
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+                              matchingTraits:(IJSVGColorUsageTraits)traits
+{
+    IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
+    if(self.isNoneOrTransparent == YES) {
+        return storage;
+    }
+
+    NSColor* color = self.color ?: NSColor.blackColor;
+    if((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill && style.fillColor != nil) {
+        color = style.fillColor;
+    } else if((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke && style.strokeColor != nil) {
+        color = style.strokeColor;
+    } else {
+        NSColor* replacement = [style.colors colorForColor:color
+                                            matchingTraits:traits];
+        color = replacement ?: color;
+    }
+
+    IJSVGTraitedColor* traited = nil;
+    traited = [IJSVGTraitedColor colorWithColor:color
+                                         traits:traits];
+    [storage addColor:traited];
+    return storage;
 }
 
 @end

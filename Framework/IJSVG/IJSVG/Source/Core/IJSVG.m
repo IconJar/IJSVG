@@ -742,7 +742,7 @@
 
 - (IJSVGTraitedColorStorage*)colors
 {
-    return self.rootLayer.colors;
+    return [_rootNode colorsWithStyle:_style];
 }
 
 #pragma mark NSPasteboard

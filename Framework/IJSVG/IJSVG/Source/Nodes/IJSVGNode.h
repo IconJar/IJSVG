@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetStyle.h>
+#import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVG/IJSVGBitFlags64.h>
@@ -26,6 +27,7 @@
 @class IJSVGMask;
 @class IJSVGClipPath;
 @class IJSVGThreadManager;
+@class IJSVGStyle;
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
@@ -273,9 +275,11 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
                           kind:(NSXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
 
-// whether this node's own values use relative (percentage) units — subclasses
-// override to also consider their type-specific units (then call super).
 - (BOOL)containsRelativeUnits;
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style;
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+                              matchingTraits:(IJSVGColorUsageTraits)traits;
 
 - (void)setDefaults;
 - (void)postProcess;

@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGStyle.h>
 
 @implementation IJSVGGradient
 
@@ -56,6 +57,21 @@
     return self.x1.isRelativeUnit == YES || self.x2.isRelativeUnit == YES ||
         self.y1.isRelativeUnit == YES || self.y2.isRelativeUnit == YES ||
         [super containsRelativeUnits] == YES;
+}
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+                              matchingTraits:(IJSVGColorUsageTraits)traits
+{
+    IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
+    for(NSColor* color in self.colors) {
+        NSColor* replacement = [style.colors colorForColor:color
+                                            matchingTraits:IJSVGColorUsageTraitGradientStop];
+        IJSVGTraitedColor* traited = nil;
+        traited = [IJSVGTraitedColor colorWithColor:replacement ?: color
+                                             traits:IJSVGColorUsageTraitGradientStop];
+        [storage addColor:traited];
+    }
+    return storage;
 }
 
 - (void)setLocations:(CGFloat*)locations

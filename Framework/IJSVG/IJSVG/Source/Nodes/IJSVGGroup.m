@@ -31,6 +31,26 @@
   return NO;
 }
 
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+{
+    IJSVGTraitedColorStorage* storage = [super colorsWithStyle:style];
+    if(self.shouldRender == NO) {
+        return storage;
+    }
+    for(IJSVGNode* node in self.children) {
+        [storage unionColorStorage:[node colorsWithStyle:style]];
+    }
+    return storage;
+}
+
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+                              matchingTraits:(IJSVGColorUsageTraits)traits
+{
+    IJSVGTraitedColorStorage* storage = [self colorsWithStyle:style];
+    [storage addTraits:traits];
+    return storage;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
