@@ -29,9 +29,6 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
     IJSVGViewBoxMeetOrSliceSlice,
 };
 
-typedef CGAffineTransform (*IJSVGViewBoxComputeTransformFunction)(CGRect viewBox, CGRect drawingRect,
-                                                                  IJSVGViewBoxMeetOrSlice meetOrSlice);
-
 @interface IJSVGViewBox : NSObject
 
 typedef void (^IJSVGViewBoxDrawingBlock)(CGFloat scale[]);
