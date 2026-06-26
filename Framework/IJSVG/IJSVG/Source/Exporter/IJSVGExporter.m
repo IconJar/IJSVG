@@ -437,10 +437,79 @@ NSString* IJSVGHash(NSString* key)
         [self _removeDefaultAttributes];
     }
 
+    // remove definitions that became unused after the full cleanup pipeline
+    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
+        [self _removeUnreferencedDefinitions];
+        [self _removeUnusedXLinkNamespace];
+        [self _cleanDef];
+    }
+
     // sort attributes last so later cleanup passes cannot undo it
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionSortAttributes) == YES) {
         [self _sortAttributesOnElement:_dom.rootElement];
     }
+}
+
+- (void)addReferencedIdentifiersFromAttribute:(NSXMLNode*)attribute
+                                        toSet:(NSMutableSet<NSString*>*)referencedIdentifiers
+{
+    if(attribute.stringValue.length == 0) {
+        return;
+    }
+
+    if([attribute.name isEqualToString:IJSVGAttributeHref] ||
+       [attribute.name isEqualToString:IJSVGAttributeXLink]) {
+        if([attribute.stringValue hasPrefix:@"#"] && attribute.stringValue.length > 1) {
+            [referencedIdentifiers addObject:[attribute.stringValue substringFromIndex:1]];
+        }
+        return;
+    }
+
+    NSString* identifier = [IJSVGUtils defURL:attribute.stringValue];
+    if(identifier.length != 0) {
+        [referencedIdentifiers addObject:identifier];
+    }
+}
+
+- (NSSet<NSString*>*)referencedIdentifiers
+{
+    NSMutableSet<NSString*>* referencedIdentifiers = [[NSMutableSet alloc] init];
+    NSString* xpath = @"//@*[name()='href' or name()='xlink:href' or name()='fill' or name()='stroke' or name()='clip-path' or name()='mask' or name()='filter' or name()='marker' or name()='style']";
+    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:xpath
+                                                    error:nil];
+    for (NSXMLNode* attribute in attributes) {
+        [self addReferencedIdentifiersFromAttribute:attribute
+                                              toSet:referencedIdentifiers];
+    }
+    return referencedIdentifiers;
+}
+
+- (void)_removeUnreferencedDefinitions
+{
+    NSSet<NSString*>* referencedIdentifiers = [self referencedIdentifiers];
+    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//defs/*[@id]"
+                                                     error:nil];
+    for (NSXMLElement* element in elements) {
+        NSString* identifier = [element attributeForName:IJSVGAttributeID].stringValue;
+        if(identifier.length == 0 || [referencedIdentifiers containsObject:identifier] == YES) {
+            continue;
+        }
+
+        NSXMLElement* parent = (NSXMLElement*)element.parent;
+        [parent removeChildAtIndex:element.index];
+    }
+}
+
+- (void)_removeUnusedXLinkNamespace
+{
+    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:@"//@*[name()='xlink:href']"
+                                                    error:nil];
+    if(attributes.count != 0) {
+        return;
+    }
+
+    [_dom.rootElement removeAttributeForName:IJSVGAttributeXMLNSXlink];
+    _appliedXLink = NO;
 }
 
 - (void)_cleanupUseTransforms
@@ -941,23 +1010,26 @@ NSString* IJSVGHash(NSString* key)
 - (void)_removeDefaultAttributesOnElement:(NSXMLElement*)element
 {
     const NSDictionary<NSString*, NSString*>* defaults = IJSVGDefaultAttributes();
-    const NSArray<NSString*>* inheritables = IJSVGInheritableAttributes();
+    const NSSet<NSString*>* inheritables = IJSVGInheritableAttributeSet();
     if(element.kind == NSXMLElementKind) {
         NSArray<NSXMLNode*>* attributes = element.attributes;
         if([element attributeForName:IJSVGAttributeID] == nil) {
             for (NSXMLNode* node in attributes) {
                 // no value found in defaults
                 NSString* val = nil;
-                if((val = defaults[node.name]) == nil) {
+                if((val = defaults[node.name]) == nil || [val isEqualToString:node.stringValue] == NO) {
                     continue;
                 }
-                BOOL isInheritable = [inheritables containsObject:node.name];
-                NSString* parentComputed = [self _computedAttribute:node.name
-                                                         forElement:(NSXMLElement*)element.parent];
-                BOOL isDefault = [val isEqualToString:node.stringValue] && (isInheritable == NO || parentComputed == nil);
-                if(isDefault) {
-                    [element removeAttributeForName:node.name];
+
+                if([inheritables containsObject:node.name] == YES) {
+                    NSString* parentComputed = [self _computedAttribute:node.name
+                                                             forElement:(NSXMLElement*)element.parent];
+                    if(parentComputed != nil) {
+                        continue;
+                    }
                 }
+
+                [element removeAttributeForName:node.name];
             }
         }
     }
@@ -2417,6 +2489,9 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     // grab the attributes
     NSArray<NSXMLNode*>* attributes = element.attributes;
     NSInteger count = attributes.count;
+    if(count < 2) {
+        return;
+    }
 
     // sort the attributes using a custom sort
     NSArray* sorted = [attributes sortedArrayUsingComparator:^NSComparisonResult(id _Nonnull obj1, id _Nonnull obj2) {
