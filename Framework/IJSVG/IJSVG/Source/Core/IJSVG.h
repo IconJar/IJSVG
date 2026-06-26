@@ -64,16 +64,12 @@
 // Will return true if the intrinsic size is a % value
 @property (nonatomic, readonly) BOOL hasDynamicSize;
 
-// This is used when the intrinsic size is a % value, e.g. 100% x 100%
-@property (nonatomic, assign) CGSize defaultSize;
-
 // Bitmask of which dimensions were implicitly set on the SVG
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
 - (void)prepForDrawingInView:(NSView*)view;
 - (IJSVGRootNode*)rootNode;
 - (CGRect)viewBox;
-- (CGSize)sizeWithDefaultSize:(CGSize)size;
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
 - (NSString*)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;

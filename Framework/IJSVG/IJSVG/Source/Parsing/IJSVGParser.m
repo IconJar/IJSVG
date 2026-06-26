@@ -129,9 +129,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     if((self = [super init]) != nil) {
         // just some generic value to get it up n running.
         _fileURL = aURL;
-      
-        // this is based on what browsers do where there is a 2:1 ratio.
-        _defaultSize = CGSizeMake(300.f, 150.f);
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -222,9 +219,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 {
   __weak IJSVGParser* weakSelf = self;
   [self beginWithSetup:^{
-    IJSVGParser* strongSelf = weakSelf;
-    strongSelf->_rootSize = CGSizeEqualToSize(CGSizeZero, size) == YES ?
-      strongSelf->_defaultSize : size;
+      IJSVGParser* strongSelf = weakSelf;
+      strongSelf->_rootSize = CGSizeEqualToSize(CGSizeZero, size) == YES ?
+          IJSVG_SIZE_DEFAULT_CLIENT : size;
   }];
   return _rootNode;
 }
@@ -305,14 +302,16 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         return;
     }
   
-    CGFloat ratio = self.defaultSize.width / self.defaultSize.height;
+    CGSize defaultSize = IJSVG_SIZE_DEFAULT_CLIENT;
+    CGFloat ratio = defaultSize.width / defaultSize.height;
+  
     if(width != nil && height == nil) {
       height = [IJSVGUnitLength unitWithFloat:width.value*ratio];
     } else if(width == nil && height != nil) {
       width = [IJSVGUnitLength unitWithFloat:height.value*ratio];
     } else {
-      width = [IJSVGUnitLength unitWithFloat:self.defaultSize.width];
-      height = [IJSVGUnitLength unitWithFloat:self.defaultSize.height];
+      width = [IJSVGUnitLength unitWithFloat:defaultSize.width];
+      height = [IJSVGUnitLength unitWithFloat:defaultSize.height];
     }
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:width
                                                height:height];

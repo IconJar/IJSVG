@@ -132,8 +132,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
     NSURL* _fileURL;
 }
 
-@property (nonatomic, assign) CGSize defaultSize;
-
 + (BOOL)isDataSVG:(NSData*)data;
 
 - (id)initWithSVGString:(NSString*)string

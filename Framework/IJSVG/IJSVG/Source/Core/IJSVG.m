@@ -265,16 +265,13 @@
 - (void)_setupBasicInfoFromGroup
 {
     CGSize resolvingSize = _rootNode.clientSize;
-    if(CGSizeEqualToSize(resolvingSize, CGSizeZero) == YES) {
-        resolvingSize = self.defaultSize;
-    }
     _viewBox = [_rootNode.viewBox computeValue:resolvingSize];
     _intrinsicSize = _rootNode.intrinsicSize;
 }
 
 - (CGSize)size
 {
-    return [self sizeWithDefaultSize:self.defaultSize];
+    return [_intrinsicSize computeValue:IJSVG_SIZE_DEFAULT_CLIENT];
 }
 
 - (IJSVGUnitSize*)intrinsicUnitSize
@@ -282,20 +279,11 @@
     return _intrinsicSize.copy;
 }
 
-- (CGSize)sizeWithDefaultSize:(CGSize)size
-{
-    if(_intrinsicSize != nil) {
-        return [_intrinsicSize computeValue:size];
-    }
-    return _viewBox.size;
-}
-
 - (void)_setupBasicsFromAnyInitializer
 {
     self.style = [[IJSVGStyle alloc] init];
     self.ignoreIntrinsicSize = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
-    self.defaultSize = CGSizeMake(350.f, 150.f);
     self.renderingBackingScaleHelper = ^CGFloat {
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;

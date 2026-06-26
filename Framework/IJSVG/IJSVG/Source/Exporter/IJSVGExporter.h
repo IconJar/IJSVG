@@ -39,7 +39,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveWidthHeightAttributes = 1 << 13,
     IJSVGExporterOptionColorAllowRRGGBBAA = 1 << 14,
     IJSVGExporterOptionRemoveComments = 1 << 15,
-    IJSVGExporterOptionCenterWithinViewBox = 1 << 16,
+    IJSVGExporterOptionCenterWithinViewBox DEPRECATED_ATTRIBUTE = 1 << 16,
     IJSVGExporterOptionRemoveXMLDeclaration = 1 << 17,
     IJSVGExporterOptionConvertArcs = 1 << 18,
     IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
@@ -51,8 +51,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |
         IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput |
         IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes |
-        IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments |
-        IJSVGExporterOptionCenterWithinViewBox | IJSVGExporterOptionRemoveXMLDeclaration |
+        IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionRemoveXMLDeclaration |
         IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths |
         IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues |
         IJSVGExporterOptionConvertStrokesToPaths

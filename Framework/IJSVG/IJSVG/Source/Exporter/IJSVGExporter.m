@@ -212,7 +212,6 @@ NSString* IJSVGHash(NSString* key)
 
     // sort out viewbox
     CGRect viewBox = _svg.viewBox;
-    CGRect originalViewBox = viewBox;
     NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
         IJSVGAttributeXMLNS: XML_DOC_NS
     }];
@@ -228,45 +227,18 @@ NSString* IJSVGHash(NSString* key)
     // passing in a CGSize with infinite size will omit the dimension attributes
     CGSize proposedSize = _size;
     IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionBoth;
-    if(CGSizeEqualToSize(proposedSize, IJSVGSizeIntrinsic) == YES ||
+    if(CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INTRINSIC) == YES ||
        CGSizeEqualToSize(proposedSize, CGSizeZero) == YES) {
         dimensions = _svg.intrinsicDimensions;
         if(_svg.hasDynamicSize == YES) {
             dimensions = IJSVGIntrinsicDimensionNone;
         }
         proposedSize = _svg.size;
-    } else if(CGSizeEqualToSize(proposedSize, IJSVGSizeInfinite) == YES) {
+    } else if(CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INFINITE) == YES) {
         dimensions = IJSVGIntrinsicDimensionNone;
     }
-    
-    // do we need to resize the viewbox?
-    CGFloat scale = 1.f;
-    BOOL hasFiniteProposedSize = isfinite(proposedSize.width) && isfinite(proposedSize.height);
-    BOOL hasPositiveProposedSize = proposedSize.width > 0.f && proposedSize.height > 0.f;
-    BOOL hasPositiveViewBoxSize = viewBox.size.width > 0.f && viewBox.size.height > 0.f;
-    BOOL canResizeViewBox = hasFiniteProposedSize && hasPositiveProposedSize && hasPositiveViewBoxSize;
-    if(canResizeViewBox == YES &&
-       CGSizeEqualToSize(IJSVGSizeInfinite, _size) == NO &&
-       CGSizeEqualToSize(viewBox.size, proposedSize) == NO) {
-        scale = MIN(proposedSize.width / viewBox.size.width,
-                    proposedSize.height / viewBox.size.height);
-        viewBox = CGRectMake(CGRectGetMinX(viewBox) * scale,
-                             CGRectGetMinY(viewBox) * scale,
-                             proposedSize.width / scale,
-                             proposedSize.height / scale);
-    }
-    
-    // do we need to center it within its viewbox
-    if(canResizeViewBox == YES &&
-       IJSVGExporterHasOption(_options, IJSVGExporterOptionCenterWithinViewBox) == YES &&
-       CGSizeEqualToSize(IJSVGSizeInfinite, _size) == NO) {
-        CGPoint origin = CGPointMake((proposedSize.width / scale) / 2.f - originalViewBox.size.width / 2.f,
-                                     (proposedSize.height / scale) / 2.f - originalViewBox.size.height /  2.f);
-        CGAffineTransform transform = CGAffineTransformMakeTranslation(-origin.x, -origin.y);
-        viewBox = CGRectApplyAffineTransform(viewBox, transform);
-    }
 
-    // only add dimentions if required
+    // only add dimensions if required
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
         if(dimensions == IJSVGIntrinsicDimensionNone && _svg.hasDynamicSize == YES) {
             IJSVGUnitSize* dynamicSize = _svg.rootNode.intrinsicSize;
@@ -319,15 +291,15 @@ NSString* IJSVGHash(NSString* key)
 - (void)resolveRootLayerForExportSize
 {
     CGSize renderSize = _size;
-    if(CGSizeEqualToSize(renderSize, IJSVGSizeInfinite) == YES) {
+    if(CGSizeEqualToSize(renderSize, IJSVG_SIZE_INFINITE) == YES) {
         return;
     }
-    if(CGSizeEqualToSize(renderSize, IJSVGSizeIntrinsic) == YES ||
+    if(CGSizeEqualToSize(renderSize, IJSVG_SIZE_INTRINSIC) == YES ||
        CGSizeEqualToSize(renderSize, CGSizeZero) == YES) {
         renderSize = _svg.size;
     }
     if(CGSizeEqualToSize(renderSize, CGSizeZero) == YES ||
-       CGSizeEqualToSize(renderSize, IJSVGSizeInfinite) == YES) {
+       CGSizeEqualToSize(renderSize, IJSVG_SIZE_INFINITE) == YES) {
         return;
     }
     [_svg rootLayerWithRect:(CGRect) {

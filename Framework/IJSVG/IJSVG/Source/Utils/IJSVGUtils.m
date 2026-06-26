@@ -15,14 +15,22 @@
 
 @implementation IJSVGUtils
 
-CGSize const IJSVGSizeInfinite = (CGSize) {
+CGSize const IJSVG_SIZE_INFINITE = (CGSize) {
     .width = CGFLOAT_MAX,
     .height = CGFLOAT_MAX
 };
 
-CGSize const IJSVGSizeIntrinsic = (CGSize) {
+CGSize const IJSVG_SIZE_INTRINSIC = (CGSize) {
     .width = -1.23f,
     .height = -1.23f
+};
+
+// This is based on what the browsers do, 300 x 150, this produces a 2:1 scale
+// if the viewBox or intrinisic sized needs to be inferred where there are no
+// measurements given from the SVG.
+CGSize const IJSVG_SIZE_DEFAULT_CLIENT = (CGSize) {
+  .width = 300,
+  .height = 150
 };
 
 BOOL IJSVGIsValidContextSize(CGSize size) {
