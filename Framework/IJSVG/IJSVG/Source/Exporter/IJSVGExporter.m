@@ -213,7 +213,8 @@ NSString* IJSVGHash(NSString* key)
     // sort out viewbox
     CGRect viewBox = _svg.viewBox;
     NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
-        IJSVGAttributeXMLNS: XML_DOC_NS
+        IJSVGAttributeXMLNS: XML_DOC_NS,
+        IJSVGAttributeViewBox: [self viewBoxWithRect:viewBox]
     }];
 
     // add on various XML declaritive things
@@ -255,7 +256,6 @@ NSString* IJSVGHash(NSString* key)
             }
         }
     }
-    attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     IJSVGApplyAttributesToElement(attributes, root);
     return root;
 }
