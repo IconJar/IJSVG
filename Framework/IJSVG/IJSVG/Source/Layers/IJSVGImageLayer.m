@@ -34,15 +34,34 @@
     CGImageRef image = _image.CGImage;
     CGRect imageDrawRect = _image.intrinsicBounds;
     CGRect currentBounds = self.bounds;
+
+    // preserveAspectRatio must be resolved in the images own coordinate space,
+    // not against the layer frame. When an image is used as objectBoundingBox
+    // pattern content the frame has the non-uniform bounding-box scale baked into it,
+    // so fitting the raster directly against the frame would letterbox it and then the
+    // outer transform squashes the result.
+    CGRect imageBounds = _image.bounds;
+    if(CGRectGetWidth(imageBounds) <= 0.f || CGRectGetHeight(imageBounds) <= 0.f) {
+        imageBounds = currentBounds;
+    }
+  
+    CGAffineTransform scale =
+        CGAffineTransformMakeScale(CGRectGetWidth(currentBounds) / CGRectGetWidth(imageBounds),
+                                   CGRectGetHeight(currentBounds) / CGRectGetHeight(imageBounds));
+
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
         // image will be upside down, so just translate it back on itself
         CGContextConcatCTM(ctx, CGAffineTransformMakeScale(1.f, -1.f));
         CGContextTranslateCTM(ctx, 0.f, -CGRectGetHeight(imageDrawRect));
         CGContextDrawImage(ctx, imageDrawRect, image);
     };
-    IJSVGContextDrawViewBox(ctx, imageDrawRect, currentBounds,
+
+    CGContextSaveGState(ctx);
+    CGContextConcatCTM(ctx, scale);
+    IJSVGContextDrawViewBox(ctx, imageDrawRect, imageBounds,
                             _image.viewBoxAlignment,
                             _image.viewBoxMeetOrSlice, drawBlock);
+    CGContextRestoreGState(ctx);
 }
 
 - (void)performRenderInContext:(CGContextRef)ctx

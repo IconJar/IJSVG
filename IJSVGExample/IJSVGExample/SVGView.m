@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"pcolormesh"];
+    return [IJSVG SVGNamed:@"AJ_Digital_Camera"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
