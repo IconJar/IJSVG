@@ -129,7 +129,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     if((self = [super init]) != nil) {
         // just some generic value to get it up n running.
         _fileURL = aURL;
-        _defaultSize = CGSizeMake(200.f, 200.f);
+      
+        // this is based on what browsers do where there is a 2:1 ratio.
+        _defaultSize = CGSizeMake(300.f, 150.f);
 
         // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
@@ -285,6 +287,38 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
         [self parseDefElement:childElement
                    parentNode:_rootNode
                     recursive:YES];
+    }
+}
+
+- (void)inferDefaultIntrinsicSizeAndViewBoxForRootNode:(IJSVGRootNode*)node {
+    if(node.intrinsicSize != nil) {
+      return;
+    }
+  
+    IJSVGUnitLength* width = node.width;
+    IJSVGUnitLength* height = node.height;
+  
+    // We already have a width and a height, use those.
+    if(width != nil && height != nil) {
+        node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:width
+                                                   height:height];
+        return;
+    }
+  
+    CGFloat ratio = self.defaultSize.width / self.defaultSize.height;
+    if(width != nil && height == nil) {
+      height = [IJSVGUnitLength unitWithFloat:width.value*ratio];
+    } else if(width == nil && height != nil) {
+      width = [IJSVGUnitLength unitWithFloat:height.value*ratio];
+    } else {
+      width = [IJSVGUnitLength unitWithFloat:self.defaultSize.width];
+      height = [IJSVGUnitLength unitWithFloat:self.defaultSize.height];
+    }
+    node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:width
+                                               height:height];
+    if(node.viewBox == nil) {
+        node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
+                                                size:node.intrinsicSize.copy];
     }
 }
 
@@ -1383,6 +1417,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
   
     // make sure we compute the viewbox
     [self computeViewBoxForRootNode:node];
+    [self inferDefaultIntrinsicSizeAndViewBoxForRootNode:node];
     
     // recursively compute children
     if(recursive == YES) {

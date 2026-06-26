@@ -266,7 +266,7 @@
 {
     CGSize resolvingSize = _rootNode.clientSize;
     if(CGSizeEqualToSize(resolvingSize, CGSizeZero) == YES) {
-        resolvingSize = CGSizeMake(200.f, 200.f);
+        resolvingSize = self.defaultSize;
     }
     _viewBox = [_rootNode.viewBox computeValue:resolvingSize];
     _intrinsicSize = _rootNode.intrinsicSize;
@@ -295,7 +295,7 @@
     self.style = [[IJSVGStyle alloc] init];
     self.ignoreIntrinsicSize = YES;
     self.renderQuality = kIJSVGRenderQualityFullResolution;
-    self.defaultSize = CGSizeMake(200.f, 200.f);
+    self.defaultSize = CGSizeMake(350.f, 150.f);
     self.renderingBackingScaleHelper = ^CGFloat {
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
