@@ -134,13 +134,16 @@
     return [_dict description];
 }
 
+- (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style
+{
+    [_dict addEntriesFromDictionary:[style properties]];
+}
+
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style
 {
     IJSVGStyleSheetStyle* newStyle = [[IJSVGStyleSheetStyle alloc] init];
-    NSMutableDictionary* dict = [self properties].mutableCopy;
-    [dict addEntriesFromDictionary:[style properties]];
-    [newStyle setProperties:dict
-                 replaceAll:YES];
+    [newStyle addPropertiesFromStyle:self];
+    [newStyle addPropertiesFromStyle:style];
     return newStyle;
 }
 

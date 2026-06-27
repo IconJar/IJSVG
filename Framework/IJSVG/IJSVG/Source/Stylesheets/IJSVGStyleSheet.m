@@ -151,7 +151,6 @@
 
 - (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node
 {
-    IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
     NSUInteger sourceIndex = 0;
     for (IJSVGStyleSheetRule* rule in _rules) {
@@ -166,14 +165,24 @@
         sourceIndex += 1;
     }
 
+    if(matchedRules.count == 0) {
+        return nil;
+    }
+  
+    if(matchedRules.count == 1) {
+        IJSVGStyleSheetSelectorListItem* listItem = matchedRules.firstObject;
+        return listItem.rule.style;
+    }
+
     NSSortDescriptor* specificitySort = [NSSortDescriptor sortDescriptorWithKey:@"selector.specificity"
                                                                     ascending:YES];
     NSSortDescriptor* sourceSort = [NSSortDescriptor sortDescriptorWithKey:@"sourceIndex"
                                                                ascending:YES];
     [matchedRules sortUsingDescriptors:@[ specificitySort, sourceSort ]];
 
+    IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     for (IJSVGStyleSheetSelectorListItem* listItem in matchedRules) {
-        style = [style mergedStyle:listItem.rule.style];
+        [style addPropertiesFromStyle:listItem.rule.style];
     }
 
     return style;

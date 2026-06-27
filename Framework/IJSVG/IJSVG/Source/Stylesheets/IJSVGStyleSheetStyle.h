@@ -21,6 +21,7 @@
              forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
 
+- (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;
 
 @end
