@@ -317,8 +317,8 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
 
         if(end < length && chars[end] == '|' &&
            IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(chars, end, length) == NO) {
-            i = end;
-            continue;
+            failed = YES;
+            break;
         }
 
         rawSelector.tag = tag;
