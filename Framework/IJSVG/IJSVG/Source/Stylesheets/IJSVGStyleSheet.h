@@ -16,7 +16,7 @@
 
 @private
     NSMutableDictionary* _selectors;
-    NSMutableArray* _rules;
+    NSMutableArray<IJSVGStyleSheetRule*>* _rules;
 }
 
 @property (nonatomic, readonly) NSUInteger ruleCount;

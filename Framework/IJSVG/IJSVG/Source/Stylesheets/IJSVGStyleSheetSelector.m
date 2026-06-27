@@ -75,6 +75,11 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
 
 @implementation IJSVGStyleSheetSelector
 
+- (IJSVGStyleSheetSelectorRaw*)matchingSelector
+{
+    return _rawSelectors.firstObject;
+}
+
 - (BOOL)_matches:(IJSVGNode*)aNode
         selector:(IJSVGStyleSheetSelectorRaw*)rawSelector
 {
@@ -104,7 +109,7 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
                     return NO;
                 }
 
-                NSOrderedSet* nodes = parentNode.children;
+                NSArray<IJSVGNode*>* nodes = parentNode.children;
                 NSInteger index = [nodes indexOfObject:aNode];
                 if(index == NSNotFound || index == 0) {
                     return NO;

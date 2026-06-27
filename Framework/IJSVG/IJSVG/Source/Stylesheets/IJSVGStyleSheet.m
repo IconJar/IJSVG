@@ -16,7 +16,6 @@
 
 @property (nonatomic, strong) IJSVGStyleSheetRule* rule;
 @property (nonatomic, strong) IJSVGStyleSheetSelector* selector;
-@property (nonatomic, assign) NSUInteger sourceIndex;
 
 @end
 
@@ -146,23 +145,29 @@
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = [IJSVGStyleSheetStyle parseStyleString:rule];
     aRule.selectors = selectors;
+    aRule.sourceIndex = _rules.count;
+  
+    for(IJSVGStyleSheetSelector* selector in selectors) {
+        [aRule addMatchingSelector:selector];
+    }
     [_rules addObject:aRule];
 }
 
 - (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node
 {
-    NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
-    NSUInteger sourceIndex = 0;
-    for (IJSVGStyleSheetRule* rule in _rules) {
+    NSMutableArray<IJSVGStyleSheetSelectorListItem*>* matchedRules = [[NSMutableArray alloc] init];
+    for(IJSVGStyleSheetRule* rule in _rules) {
+        if([rule canMatchNode:node] == NO) {
+            continue;
+        }
+
         IJSVGStyleSheetSelector* matchedSelector = nil;
         if([rule matchesNode:node selector:&matchedSelector]) {
             IJSVGStyleSheetSelectorListItem* listItem = [[IJSVGStyleSheetSelectorListItem alloc] init];
             listItem.rule = rule;
             listItem.selector = matchedSelector;
-            listItem.sourceIndex = sourceIndex;
             [matchedRules addObject:listItem];
         }
-        sourceIndex += 1;
     }
 
     if(matchedRules.count == 0) {
@@ -174,14 +179,25 @@
         return listItem.rule.style;
     }
 
-    NSSortDescriptor* specificitySort = [NSSortDescriptor sortDescriptorWithKey:@"selector.specificity"
-                                                                    ascending:YES];
-    NSSortDescriptor* sourceSort = [NSSortDescriptor sortDescriptorWithKey:@"sourceIndex"
-                                                               ascending:YES];
-    [matchedRules sortUsingDescriptors:@[ specificitySort, sourceSort ]];
+    [matchedRules sortUsingComparator:^NSComparisonResult(IJSVGStyleSheetSelectorListItem* a,
+                                                          IJSVGStyleSheetSelectorListItem* b) {
+        if(a.selector.specificity < b.selector.specificity) {
+            return NSOrderedAscending;
+        }
+        if(a.selector.specificity > b.selector.specificity) {
+            return NSOrderedDescending;
+        }
+        if(a.rule.sourceIndex < b.rule.sourceIndex) {
+            return NSOrderedAscending;
+        }
+        if(a.rule.sourceIndex > b.rule.sourceIndex) {
+            return NSOrderedDescending;
+        }
+        return NSOrderedSame;
+    }];
 
     IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
-    for (IJSVGStyleSheetSelectorListItem* listItem in matchedRules) {
+    for(IJSVGStyleSheetSelectorListItem* listItem in matchedRules) {
         [style addPropertiesFromStyle:listItem.rule.style];
     }
 
