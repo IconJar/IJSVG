@@ -436,10 +436,14 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.overflowVisibility = node.overflowVisibility;
 
     // dash array needs physical memory copied
-    CGFloat* nStrokeDashArray = (CGFloat*)malloc(node.strokeDashArrayCount * sizeof(CGFloat));
-    memcpy(self.strokeDashArray, nStrokeDashArray, node.strokeDashArrayCount * sizeof(CGFloat));
-    self.strokeDashArray = nStrokeDashArray;
-    self.strokeDashArrayCount = node.strokeDashArrayCount;
+    NSInteger strokeDashArrayCount = node.strokeDashArrayCount;
+    CGFloat* strokeDashArray = node.strokeDashArray;
+    if(strokeDashArrayCount > 0 && strokeDashArray != NULL) {
+        CGFloat* nStrokeDashArray = (CGFloat*)malloc(strokeDashArrayCount * sizeof(CGFloat));
+        memcpy(nStrokeDashArray, strokeDashArray, strokeDashArrayCount * sizeof(CGFloat));
+        self.strokeDashArray = nStrokeDashArray;
+    }
+    self.strokeDashArrayCount = strokeDashArrayCount;
     self.strokeDashOffset = node.strokeDashOffset;
 }
 
