@@ -82,13 +82,14 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
     size_t bytesPerRow = width * 4;
     NSMutableData* data = [NSMutableData dataWithLength:height * bytesPerRow];
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo bitmapInfo = kCGBitmapByteOrder32Big | (CGBitmapInfo)kCGImageAlphaPremultipliedLast;
     CGContextRef context = CGBitmapContextCreate(data.mutableBytes,
                                                  width,
                                                  height,
                                                  8,
                                                  bytesPerRow,
                                                  colorSpace,
-                                                 kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+                                                 bitmapInfo);
     CGContextDrawImage(context, CGRectMake(0.f, 0.f, width, height), image);
 
     CGContextRelease(context);

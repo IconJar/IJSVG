@@ -417,7 +417,7 @@
 		5956656F19B62F4600D805FF /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0920;
+				LastUpgradeCheck = 2700;
 				ORGANIZATIONNAME = "Curtis Hard";
 				TargetAttributes = {
 					5956657619B62F4600D805FF = {
@@ -631,6 +631,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -667,6 +668,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -713,6 +715,7 @@
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
@@ -730,6 +733,7 @@
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
 			};
