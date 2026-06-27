@@ -122,36 +122,77 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                          error:error];
 }
 
+- (BOOL)_prepareWithXMLDocument:(NSXMLDocument*)document
+                        parseError:(NSError*)parseError
+                            fileURL:(NSURL*)aURL
+                              error:(NSError**)error
+{
+    // just some generic value to get it up n running.
+    _fileURL = aURL;
+    _document = document;
+
+    // error parsing the XML document
+    if(parseError != nil || _document == nil) {
+        [self _handleErrorWithCode:IJSVGErrorParsingFile
+                              error:error];
+        return NO;
+    }
+
+    // check the actual parsed SVG
+    NSError* anError = nil;
+    if([self _validateParse:&anError] == NO) {
+        if(error != NULL) {
+            *error = anError;
+        }
+        return NO;
+    }
+    return YES;
+}
+
 - (id)initWithSVGString:(NSString*)string
                 fileURL:(NSURL*)aURL
                   error:(NSError**)error
 {
     if((self = [super init]) != nil) {
-        // just some generic value to get it up n running.
-        _fileURL = aURL;
-
-        // use NSXMLDocument as its the easiest thing to do on OSX
         NSError* anError = nil;
+        NSXMLDocument* document = nil;
         @try {
-            _document = [[NSXMLDocument alloc] initWithXMLString:string
-                                                         options:0
-                                                           error:&anError];
+            document = [[NSXMLDocument alloc] initWithXMLString:string
+                                                        options:0
+                                                          error:&anError];
         }
         @catch (NSException* exception) {
         }
 
-        // error parsing the XML document
-        if(anError != nil) {
-            return [self _handleErrorWithCode:IJSVGErrorParsingFile
-                                        error:error];
+        if([self _prepareWithXMLDocument:document
+                              parseError:anError
+                                  fileURL:aURL
+                                    error:error] == NO) {
+            return nil;
+        }
+    }
+    return self;
+}
+
+- (id)initWithSVGData:(NSData*)data
+              fileURL:(NSURL*)aURL
+                error:(NSError**)error
+{
+    if((self = [super init]) != nil) {
+        NSError* anError = nil;
+        NSXMLDocument* document = nil;
+        @try {
+            document = [[NSXMLDocument alloc] initWithData:data
+                                                   options:0
+                                                     error:&anError];
+        }
+        @catch (NSException* exception) {
         }
 
-        // check the actual parsed SVG
-        anError = nil;
-        if([self _validateParse:&anError] == NO) {
-            if(error != NULL) {
-                *error = anError;
-            }
+        if([self _prepareWithXMLDocument:document
+                              parseError:anError
+                                  fileURL:aURL
+                                    error:error] == NO) {
             return nil;
         }
     }
@@ -175,20 +216,19 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                 error:(NSError**)error
 {
     NSError* anError = nil;
-    NSStringEncoding encoding;
-    NSString* str = [NSString stringWithContentsOfFile:aURL.path
-                                          usedEncoding:&encoding
-                                                 error:&anError];
+    NSData* data = [NSData dataWithContentsOfURL:aURL
+                                         options:NSDataReadingMappedIfSafe
+                                           error:&anError];
 
     // error reading file
-    if(str == nil) {
+    if(data == nil) {
         return [self _handleErrorWithCode:IJSVGErrorReadingFile
                                     error:error];
     }
 
-    return [self initWithSVGString:str
-                           fileURL:aURL
-                             error:error];
+    return [self initWithSVGData:data
+                         fileURL:aURL
+                           error:error];
 }
 
 - (void*)_handleErrorWithCode:(NSUInteger)code

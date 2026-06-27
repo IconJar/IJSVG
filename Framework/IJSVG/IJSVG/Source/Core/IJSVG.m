@@ -214,10 +214,28 @@
 - (id)initWithSVGData:(NSData*)data
                 error:(NSError**)error
 {
-    NSString* svgString = [[NSString alloc] initWithData:data
-                                                encoding:NSUTF8StringEncoding];
-    return [self initWithSVGString:svgString
-                             error:error];
+    if((self = [super init]) != nil) {
+        NSError* anError = nil;
+
+        // setup the parser directly from data to avoid creating an intermediate SVG string
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGData:data
+                                                           fileURL:nil
+                                                             error:&anError];
+        self.parser = parser;
+      
+        [self _setupBasicInfoFromGroup];
+        [self _setupBasicsFromAnyInitializer];
+
+        // something went wrong :(
+        if(_rootNode == nil) {
+            if(error != NULL) {
+                *error = anError;
+            }
+            self = nil;
+            return nil;
+        }
+    }
+    return self;
 }
 
 - (id)initWithSVGString:(NSString*)string

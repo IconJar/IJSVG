@@ -56,12 +56,7 @@
 - (instancetype)initWithData:(NSData*)data
 {
     if((self = [super init]) != nil) {
-        // grab the string from the data
-        // its more then likely UTF-8...
-        NSString* string = [[NSString alloc] initWithData:data
-                                                 encoding:NSUTF8StringEncoding];
-
-        _svg = [[IJSVG alloc] initWithSVGString:string];
+        _svg = [[IJSVG alloc] initWithSVGData:data];
 
         // no valid SVG, just return nil;
         if(_svg == nil) {

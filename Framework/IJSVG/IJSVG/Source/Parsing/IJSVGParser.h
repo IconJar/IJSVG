@@ -137,6 +137,9 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
 - (id)initWithSVGString:(NSString*)string
                 fileURL:(NSURL*)fileURL
                   error:(NSError**)error;
+- (id)initWithSVGData:(NSData*)data
+              fileURL:(NSURL*)fileURL
+                error:(NSError**)error;
 
 - (id)initWithFileURL:(NSURL*)aURL
                 error:(NSError**)error;

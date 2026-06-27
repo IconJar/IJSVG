@@ -22,6 +22,22 @@
     XCTAssertFalse([IJSVGParser isDataSVG:malformedData]);
 }
 
+- (void)testParserBuildsRootFromSVGData
+{
+    NSData* data = [IJSVGTestSVG(@"<rect id=\"box\" width=\"8\" height=\"8\"/>") dataUsingEncoding:NSUTF8StringEncoding];
+    NSError* error = nil;
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGData:data
+                                                       fileURL:nil
+                                                         error:&error];
+    IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
+    IJSVGPath* rect = (IJSVGPath*)rootNode.children.firstObject;
+
+    XCTAssertNotNil(parser);
+    XCTAssertNil(error);
+    XCTAssertEqualObjects(rect.identifier, @"box");
+    XCTAssertEqual(rect.primitiveType, kIJSVGPrimitivePathTypeRect);
+}
+
 - (void)testParserBuildsRootAndPathNodeAttributes
 {
     NSString* string = IJSVGTestSVG(@"<rect id=\"box\" class=\"primary selected\" x=\"1\" y=\"2\" width=\"3\" height=\"4\" fill=\"#336699\"/>");
