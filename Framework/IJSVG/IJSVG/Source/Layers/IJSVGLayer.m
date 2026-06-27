@@ -54,7 +54,6 @@ static BOOL IJSVGLayerCanRenderDirectly(IJSVGLayer* layer)
 @synthesize boundingBox = _boundingBox;
 @synthesize layerTraits = _layerTraits;
 @synthesize maskingBoundingBox;
-@synthesize filter;
 @synthesize referencingLayer = _referencingLayer;
 @synthesize outerBoundingBox = _outerBoundingBox;
 @synthesize maskLayer = _maskLayer;

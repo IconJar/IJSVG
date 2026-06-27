@@ -475,7 +475,6 @@
     IJSVGFeatureFlags* flags = [[IJSVGFeatureFlags alloc] init];
 
     XCTAssertFalse(disabled.enabled);
-    XCTAssertFalse(flags.filters.enabled);
     XCTAssertTrue(flags.viewBoxNormalization.enabled);
     XCTAssertTrue(flags.inferViewBoxes.enabled);
 }

@@ -25,8 +25,6 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/IJSVGFilter.h>
-#import <IJSVG/IJSVGFilterEffect.h>
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
@@ -102,10 +100,6 @@ extern NSString* const IJSVGAttributeStopColor;
 extern NSString* const IJSVGAttributeStopOpacity;
 extern NSString* const IJSVGAttributeHref;
 extern NSString* const IJSVGAttributeOverflow;
-extern NSString* const IJSVGAttributeFilter;
-extern NSString* const IJSVGAttributeStdDeviation;
-extern NSString* const IJSVGAttributeIn;
-extern NSString* const IJSVGAttributeEdgeMode;
 extern NSString* const IJSVGAttributeMarker;
 
 

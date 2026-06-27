@@ -23,8 +23,6 @@
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGFeatureFlag.h>
 #import <IJSVG/IJSVGFeatureFlags.h>
-#import <IJSVG/IJSVGFilterEffectGaussianBlur.h>
-#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>

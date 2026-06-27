@@ -25,7 +25,6 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTransformLayer.h>
-#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
 @implementation IJSVGLayerTree
@@ -138,9 +137,6 @@
     if(layer != nil) {
         [self applyDefaultsToLayer:layer
                           fromNode:node];
-        layer = [self applyFilter:node.filter
-                          toLayer:layer
-                         fromNode:node];
         return [self applyTransforms:node.transforms
                              toLayer:layer
                             fromNode:node];
@@ -317,6 +313,7 @@
     return [_style.colors colorForColor:color
                          matchingTraits:traits];
 }
+
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
@@ -946,24 +943,6 @@
     if(node.shouldRender == NO) {
         layer.hidden = YES;
     }
-}
-
-#pragma mark Filters
-
-- (CALayer<IJSVGDrawableLayer>*)applyFilter:(IJSVGFilter*)filter
-                                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
-                                   fromNode:(IJSVGNode*)node
-{
-    if(IJSVGThreadManager.currentManager.featureFlags.filters.enabled == NO ||
-       (filter == nil || filter.valid == NO)) {
-        return layer;
-    }
-    IJSVGFilterLayer* filterLayer = [IJSVGFilterLayer layer];
-    filterLayer.filter = filter;
-    filterLayer.frame = layer.frame;
-    filterLayer.sublayer = layer;
-    layer.referencingLayer = filterLayer;
-    return filterLayer;
 }
 
 #pragma mark Transforms

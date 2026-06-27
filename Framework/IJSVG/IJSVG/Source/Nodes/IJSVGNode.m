@@ -171,12 +171,6 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
                 return IJSVGNodeTypeFont;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
-                return IJSVGNodeTypeFilter;
-            }
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fegaussianblur") == YES) {
-                return IJSVGNodeTypeFilterEffect;
-            }
             break;
         }
         default:

@@ -13,9 +13,6 @@
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
-        // filters
-        _filters = [IJSVGFeatureFlag featureFlagWithEnabled:NO];
-        
         // viewBox normalization
         _viewBoxNormalization = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
       

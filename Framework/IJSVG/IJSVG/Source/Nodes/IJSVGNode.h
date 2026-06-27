@@ -23,7 +23,6 @@
 @class IJSVGTransform;
 @class IJSVGRootNode;
 @class IJSVGUnitRect;
-@class IJSVGFilter;
 @class IJSVGMask;
 @class IJSVGClipPath;
 @class IJSVGThreadManager;
@@ -91,10 +90,6 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeStopOpacity,
     IJSVGNodeAttributeHref,
     IJSVGNodeAttributeOverflow,
-    IJSVGNodeAttributeFilter,
-    IJSVGNodeAttributeStdDeviation,
-    IJSVGNodeAttributeIn,
-    IJSVGNodeAttributeEdgeMode,
     IJSVGNodeAttributeMarker
 };
 
@@ -143,8 +138,6 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeDesc,
     IJSVGNodeTypeStop,
     IJSVGNodeTypeNotFound,
-    IJSVGNodeTypeFilter,
-    IJSVGNodeTypeFilterEffect,
     IJSVGNodeTypeForeignObject
 };
 
@@ -245,7 +238,6 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, strong) IJSVGUnitLength* strokeMiterLimit;
 @property (nonatomic, strong) NSArray<IJSVGTransform*>* transforms;
-@property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, assign) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;

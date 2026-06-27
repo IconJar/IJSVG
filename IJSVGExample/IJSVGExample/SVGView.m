@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"advanced-css"];
+    return [IJSVG SVGNamed:@"pcolormesh"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

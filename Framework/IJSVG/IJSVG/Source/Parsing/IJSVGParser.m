@@ -82,10 +82,6 @@ NSString* const IJSVGAttributeStopColor = @"stop-color";
 NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 NSString* const IJSVGAttributeHref = @"href";
 NSString* const IJSVGAttributeOverflow = @"overflow";
-NSString* const IJSVGAttributeFilter = @"filter";
-NSString* const IJSVGAttributeStdDeviation = @"stdDeviation";
-NSString* const IJSVGAttributeIn = @"in";
-NSString* const IJSVGAttributeEdgeMode = @"edgeMode";
 NSString* const IJSVGAttributeMarker = @"marker";
 
 static inline BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
@@ -796,40 +792,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
             node.viewBoxMeetOrSlice = meetOrSlice;
         });
     }
-        
-    // filters
-    IJSVGAttributeParse(IJSVGAttributeFilter, ^(NSString* value) {
-        NSString* filterIdentifier = [IJSVGUtils defURL:value];
-        if(filterIdentifier != nil) {
-            IJSVGNode* filter = [self computeDetachedNodeWithIdentifier:filterIdentifier
-                                                        referencingNode:node
-                                                                element:element];
-            node.filter = (IJSVGFilter*)filter;
-        }
-    });
-    
-    if(_threadManager.featureFlags.filters.enabled == YES &&
-       node.type == IJSVGNodeTypeFilterEffect) {
-        IJSVGFilterEffect* effect = (IJSVGFilterEffect*)node;
-                
-        // in
-        IJSVGAttributeParse(IJSVGAttributeIn, ^(NSString* value) {
-            effect.source = [IJSVGFilterEffect sourceForString:value];
-            if(effect.source == IJSVGFilterEffectSourcePrimitiveReference) {
-                effect.primitiveReference = value;
-            }
-        });
-        
-        // edge mode
-        IJSVGAttributeParse(IJSVGAttributeEdgeMode, ^(NSString* value) {
-            effect.edgeMode = [IJSVGFilterEffect edgeModeForString:value];
-        });
-        
-        // deviation
-        IJSVGAttributeParse(IJSVGAttributeStdDeviation, ^(NSString* value) {
-            effect.stdDeviation = [IJSVGUnitLength unitWithString:value];
-        });
-    }
     
     return postProcessBlock;
 }
@@ -979,22 +941,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                   postProcessBlock:&postProcessBlock];
             break;
         }
-        case IJSVGNodeTypeFilter: {
-            if(_threadManager.featureFlags.filters.enabled == YES) {
-                computedNode = [self parseFilterElement:element
-                                             parentNode:node
-                                       postProcessBlock:&postProcessBlock];
-            }
-            break;
-        }
-        case IJSVGNodeTypeFilterEffect: {
-            if(_threadManager.featureFlags.filters.enabled == YES) {
-                computedNode = [self parseFilterEffectElement:element
-                                                   parentNode:node
-                                             postProcessBlock:&postProcessBlock];
-            }
-            break;
-        }
         case IJSVGNodeTypeDef: {
             // defs have already been handled by the parseDefElement
             // call further up
@@ -1126,46 +1072,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                parentNode:(IJSVGNode*)parentNode
 {
     [_styleSheet parseStyleBlock:element.stringValue];
-}
-
-- (IJSVGNode*)parseFilterElement:(NSXMLElement*)element
-                      parentNode:(IJSVGNode*)parentNode
-                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
-{
-    IJSVGFilter* node = [[IJSVGFilter alloc] init];
-    node.type = IJSVGNodeTypeFilter;
-    node.name = element.localName;
-    
-    *postProcessBlock = [self computeAttributesFromElement:element
-                                                    onNode:node
-                                         ignoredAttributes:nil];
-    
-    [self computeElement:element
-              parentNode:node];
-    return node;
-}
-
-- (IJSVGNode*)parseFilterEffectElement:(NSXMLElement*)element
-                            parentNode:(IJSVGNode*)parentNode
-                      postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
-{
-    Class effectClass = [IJSVGFilterEffect effectClassForElementName:element.localName];
-    IJSVGFilterEffect* node = [[effectClass alloc] init];
-    node.type = IJSVGNodeTypeFilterEffect;
-    node.name = element.localName;
-
-    if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
-        IJSVGGroup* group = (IJSVGGroup*)parentNode;
-        [group addChild:node];
-    }
-    
-    *postProcessBlock = [self computeAttributesFromElement:element
-                                                    onNode:node
-                                         ignoredAttributes:nil];
-    
-    [self computeElement:element
-              parentNode:node];
-    return node;
 }
 
 - (IJSVGNode*)parseLinearGradientElement:(NSXMLElement*)element

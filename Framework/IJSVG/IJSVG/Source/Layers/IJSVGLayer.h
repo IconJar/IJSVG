@@ -16,7 +16,6 @@
 @class IJSVGStrokeLayer;
 @class IJSVGGroupLayer;
 @class IJSVGLayer;
-@class IJSVGFilter;
 @class IJSVGTraitedColorStorage;
 
 typedef NS_OPTIONS(NSUInteger, IJSVGLayerTraits) {
@@ -97,7 +96,6 @@ typedef NS_ENUM(NSUInteger, IJSVGLayerUsageType) {
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, weak) CALayer<IJSVGDrawableLayer>* referencingLayer;
-@property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, readonly) IJSVGLayerTraits layerTraits;
 @property (nonatomic, readonly) NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* layerUsageMapTable;
 @property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;

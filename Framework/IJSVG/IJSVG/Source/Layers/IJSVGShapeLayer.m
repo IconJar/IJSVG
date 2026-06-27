@@ -31,7 +31,6 @@
 @synthesize boundingBox;
 @synthesize layerTraits = _layerTraits;
 @synthesize maskingBoundingBox;
-@synthesize filter;
 @synthesize referencingLayer = _referencingLayer;
 @synthesize outerBoundingBox;
 @synthesize maskLayer = _maskLayer;

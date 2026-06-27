@@ -21,7 +21,6 @@
 @synthesize absoluteFrame;
 @synthesize boundingBox;
 @synthesize outerBoundingBox;
-@synthesize filter = _filter;
 @synthesize innerBoundingBox;
 @synthesize maskingBoundingBox;
 @synthesize maskingClippingRect;

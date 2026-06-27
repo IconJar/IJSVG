@@ -18,7 +18,6 @@
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGStrokeLayer.h>
-#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
@@ -446,7 +445,7 @@ NSString* IJSVGHash(NSString* key)
 - (NSSet<NSString*>*)referencedIdentifiers
 {
     NSMutableSet<NSString*>* referencedIdentifiers = [[NSMutableSet alloc] init];
-    NSString* xpath = @"//@*[name()='href' or name()='xlink:href' or name()='fill' or name()='stroke' or name()='clip-path' or name()='mask' or name()='filter' or name()='marker' or name()='style']";
+    NSString* xpath = @"//@*[name()='href' or name()='xlink:href' or name()='fill' or name()='stroke' or name()='clip-path' or name()='mask' or name()='marker' or name()='style']";
     NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:xpath
                                                     error:nil];
     for (NSXMLNode* attribute in attributes) {
@@ -1035,12 +1034,7 @@ NSString* IJSVGHash(NSString* key)
         return [self elementForImage:(IJSVGImageLayer*)layer
                           fromParent:element];
     }
-    
-    // filter layer
-    if(layer.class == IJSVGFilterLayer.class) {
-        return [self elementForFilter:(IJSVGFilterLayer*)layer
-                           fromParent:element];
-    }
+
     
     // group layer, or layer that acts as a group
     if(layer.class == IJSVGGroupLayer.class ||
@@ -1458,14 +1452,6 @@ NSString* IJSVGHash(NSString* key)
             IJSVGAttributeStroke: IJSVGHashURL(gradKey)
         }, element);
     }
-}
-
-- (NSXMLElement*)elementForFilter:(IJSVGFilterLayer*)layer
-                       fromParent:(NSXMLElement*)parent
-{
-    [self _recursiveParseFromLayer:(CALayer<IJSVGDrawableLayer>*)layer.sublayer
-                       intoElement:parent];
-    return nil;
 }
 
 - (NSXMLElement*)elementForImage:(IJSVGImageLayer*)layer
