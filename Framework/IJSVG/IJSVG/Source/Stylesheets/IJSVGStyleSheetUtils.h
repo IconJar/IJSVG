@@ -16,7 +16,7 @@ BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);
 BOOL IJSVGStyleSheetCharIsInvalidSelectorChar(char aChar);
 
-BOOL IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(const char* chars,
+BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* chars,
                                                     NSUInteger index,
                                                     NSUInteger length);
 

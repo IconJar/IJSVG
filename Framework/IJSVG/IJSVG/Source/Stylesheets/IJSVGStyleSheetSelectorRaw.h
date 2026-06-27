@@ -16,7 +16,7 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
     IJSVGStyleSheetSelectorCombinatorDirectDescendant, // >
     IJSVGStyleSheetSelectorCombinatorPrecededSibling, // ~
     IJSVGStyleSheetSelectorCombinatorNextSibling, // +
-    IJSVGStyleSheetSelectorCombinatorPipe // ||
+    IJSVGStyleSheetSelectorCombinatorColumn // ||
 };
 
 @interface IJSVGStyleSheetSelectorRaw : NSObject {

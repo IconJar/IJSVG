@@ -128,8 +128,7 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
             }
         }
 
-        if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDescendant ||
-           aSelector.combinator == IJSVGStyleSheetSelectorCombinatorPipe) {
+        if(aSelector.combinator == IJSVGStyleSheetSelectorCombinatorDescendant) {
             IJSVGNode* parentNode = aNode.parentNode;
             while(parentNode != nil) {
                 if(IJSVGStyleSheetMatchSelector(parentNode, nextSelector) == YES) {
@@ -237,7 +236,7 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
             NSUInteger next = IJSVGStyleSheetIndexBySkippingWhitespace(chars, i + 1, length);
             if(next < length &&
                (IJSVGStyleSheetCharIsCombinator(chars[next]) == YES ||
-                IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(chars, next, length) == YES)) {
+                IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, next, length) == YES)) {
                 i = next - 1;
                 continue;
             }
@@ -251,27 +250,28 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
             continue;
         }
 
-        if(IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(chars, i, length) == YES ||
+        if(IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES ||
            IJSVGStyleSheetCharIsCombinator(c) == YES) {
             if(IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector) == NO) {
                 failed = YES;
                 break;
             }
 
-            pendingCombinator = IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(chars, i, length) == YES ?
-                IJSVGStyleSheetSelectorCombinatorPipe : IJSVGStyleSheetCombinatorForChar(c);
+            pendingCombinator = IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES ?
+                IJSVGStyleSheetSelectorCombinatorColumn : IJSVGStyleSheetCombinatorForChar(c);
             rawSelector = IJSVGStyleSheetCreateRawSelector(pendingCombinator);
             hasUniversalSelector = NO;
             expectingSelectorAfterCombinator = YES;
 
-            NSUInteger next = i + (pendingCombinator == IJSVGStyleSheetSelectorCombinatorPipe ? 2 : 1);
+            NSUInteger next = i + (pendingCombinator == IJSVGStyleSheetSelectorCombinatorColumn ? 2 : 1);
             next = IJSVGStyleSheetIndexBySkippingWhitespace(chars, next, length);
             i = next - 1;
             continue;
         }
 
         if(c == '|') {
-            continue;
+            failed = YES;
+            break;
         }
 
         if(c == '*') {
@@ -316,7 +316,7 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
         }
 
         if(end < length && chars[end] == '|' &&
-           IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(chars, end, length) == NO) {
+           IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, end, length) == NO) {
             failed = YES;
             break;
         }

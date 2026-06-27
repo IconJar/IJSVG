@@ -32,7 +32,7 @@ BOOL IJSVGStyleSheetCharIsInvalidSelectorChar(char aChar)
         aChar == '(' || aChar == ')' || aChar == '[' || aChar == ']';
 }
 
-BOOL IJSVGStyleSheetSelectorIsPipeCombinatorAtIndex(const char* chars,
+BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* chars,
                                                     NSUInteger index,
                                                     NSUInteger length)
 {
@@ -60,7 +60,7 @@ IJSVGStyleSheetSelectorCombinator IJSVGStyleSheetCombinatorForChar(char aChar)
             return IJSVGStyleSheetSelectorCombinatorPrecededSibling;
         }
         case '|': {
-            return IJSVGStyleSheetSelectorCombinatorPipe;
+            return IJSVGStyleSheetSelectorCombinatorColumn;
         }
         case '>':
         default: {
@@ -81,7 +81,7 @@ NSString* IJSVGStyleSheetCombinatorStringForCombinator(IJSVGStyleSheetSelectorCo
         case IJSVGStyleSheetSelectorCombinatorPrecededSibling: {
             return @"~";
         }
-        case IJSVGStyleSheetSelectorCombinatorPipe: {
+        case IJSVGStyleSheetSelectorCombinatorColumn: {
             return @"||";
         }
         case IJSVGStyleSheetSelectorCombinatorWildcard:
