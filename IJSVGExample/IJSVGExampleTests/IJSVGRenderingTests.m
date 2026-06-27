@@ -137,6 +137,16 @@
                                      palette);
 }
 
+- (void)testRenderingIgnoresEmptyReferencedPaths
+{
+    NSString* body = @"<defs><path id=\"space\"/></defs>"
+        @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/>"
+        @"<use x=\"4\" y=\"4\" xlink:href=\"#space\"/>";
+    NSColor* color = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body), CGPointMake(4.f, 4.f));
+
+    IJSVGAssertColorComponents(color, 1.f, 1.f, 1.f, 1.f);
+}
+
 - (void)testRenderingLinearGradientProducesExpectedEndColors
 {
     NSString* body = @"<defs><linearGradient id=\"fade\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"0\" gradientUnits=\"userSpaceOnUse\">"

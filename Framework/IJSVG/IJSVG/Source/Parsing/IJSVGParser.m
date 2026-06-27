@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParserAttributeMacros.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGThreadManager.h>
@@ -84,26 +85,7 @@ NSString* const IJSVGAttributeHref = @"href";
 NSString* const IJSVGAttributeOverflow = @"overflow";
 NSString* const IJSVGAttributeMarker = @"marker";
 
-static inline BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
-{
-    return (mask & (1ULL << attribute)) != 0;
-}
-
 @implementation IJSVGParser
-
-IJSVGParserMallocBuffers* IJSVGParserMallocBuffersCreate(void)
-{
-    IJSVGParserMallocBuffers* buffers = NULL;
-    buffers = (IJSVGParserMallocBuffers*)malloc(sizeof(IJSVGParserMallocBuffers));
-    buffers->nodeType = (char*)malloc(sizeof(char)*15); // 14 + 1
-    return buffers;
-}
-
-void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
-{
-    (void)free(buffers->nodeType), buffers->nodeType = NULL;
-    (void)free(buffers);
-}
 
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
 {
@@ -393,405 +375,210 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes
 {
-    IJSVGStyleSheetStyle* styleSheet = nil;
-    __block IJSVGStyleSheetStyle* nodeStyle = nil;
     NSArray<NSXMLNode*>* elementAttributes = element.attributes;
     NSUInteger attributeCount = elementAttributes.count;
     BOOL hasStyleSheetRules = _styleSheet.ruleCount != 0;
     if(attributeCount == 0 && hasStyleSheetRules == NO) {
         return nil;
     }
+  
     uint64_t activeAttributes = [node.class computedAllowedAttributeMask];
     if(ignoringAttributes != nil) {
         activeAttributes &= ~ignoringAttributes.bitMask;
     }
-    // precache the attributes, this is quicker than asking for it each time
-    NSMutableDictionary<NSString*, NSString*>* attributes = nil;
-    attributes = [[NSMutableDictionary alloc] initWithCapacity:attributeCount];
+    
+    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength] = { nil };
+    uint64_t presentAttributes = 0;
+  
     for(NSXMLNode* attributeNode in elementAttributes) {
-        attributes[attributeNode.name] = attributeNode.stringValue;
-    }
-    
-    void (^applyTransform)(NSString*) = ^(NSString* value) {
-        NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-        [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
-        if(node.transforms != nil) {
-            [transforms addObjectsFromArray:node.transforms];
+        NSUInteger attribute = IJSVGNodeAttributeForName(attributeNode.name);
+        if(attribute == NSNotFound || IJSVGAttributeMaskContains(activeAttributes, attribute) == NO) {
+            continue;
         }
-        node.transforms = transforms;
-    };
-
-    // helper for setting an attribute
-    typedef void (^IJSVGAttributeParseBlock)(NSString*);
-    BOOL (^IJSVGAttributeParse)(const NSString*, IJSVGAttributeParseBlock) =
-    ^(NSString* key, IJSVGAttributeParseBlock parseBlock) {
-        NSString* value = [nodeStyle property:key] ?: attributes[key];
-        if(value != nil && value.length != 0) {
-            parseBlock(value);
-            return YES;
+        NSString* value = attributeNode.stringValue;
+        if(value.length == 0) {
+            continue;
         }
-        return NO;
-    };
-    
-    // identifier
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeID)) {
-        IJSVGAttributeParse(IJSVGAttributeID, ^(NSString* value) {
-            node.identifier = value;
-            [self detachElement:element
-                 withIdentifier:value];
-        });
+        attributeValues[attribute] = value;
+        presentAttributes |= (1ULL << attribute);
     }
     
-    // class list
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeClass)) {
-        IJSVGAttributeParse(IJSVGAttributeClass, ^(NSString* value) {
-            NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
-            node.className = value;
-            node.classNameList = [NSSet setWithArray:list];
-        });
+    NSString* value = IJSVGAttributeValue(IJSVGNodeAttributeID);
+    if(value.length != 0) {
+        node.identifier = value;
+        [self detachElement:element
+             withIdentifier:value];
     }
     
-    
-    // style
-    if(hasStyleSheetRules == YES) {
-        styleSheet = [_styleSheet styleForNode:node];
+    value = IJSVGAttributeValue(IJSVGNodeAttributeClass);
+    if(value.length != 0) {
+        NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
+        node.className = value;
+        node.classNameList = [NSSet setWithArray:list];
     }
     
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStyle)) {
-        IJSVGAttributeParse(IJSVGAttributeStyle, ^(NSString* value) {
-            nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
-        });
-    }
-    
+    IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
+        [_styleSheet styleForNode:node] : nil;
+  
     if(styleSheet != nil) {
-        nodeStyle = nodeStyle == nil ? styleSheet : [styleSheet mergedStyle:nodeStyle];
+        IJSVGStoreStyleAttributes(styleSheet);
+    }
+    
+    value = IJSVGAttributeValue(IJSVGNodeAttributeStyle);
+    if(value.length != 0) {
+        IJSVGStyleSheetStyle* nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
+        IJSVGStoreStyleAttributes(nodeStyle);
     }
             
-    // x
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeX)) {
-        IJSVGAttributeParse(IJSVGAttributeX, ^(NSString* value) {
-            node.x = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // y
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeY)) {
-        IJSVGAttributeParse(IJSVGAttributeY, ^(NSString* value) {
-            node.y = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // width
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeWidth)) {
-        IJSVGAttributeParse(IJSVGAttributeWidth, ^(NSString* value) {
-            node.width = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // height
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeHeight)) {
-        IJSVGAttributeParse(IJSVGAttributeHeight, ^(NSString* value) {
-            node.height = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // opacity
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeOpacity)) {
-        IJSVGAttributeParse(IJSVGAttributeOpacity, ^(NSString* value) {
-            node.opacity = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stroke opacity
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeOpacity)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeOpacity, ^(NSString* value) {
-            node.strokeOpacity = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stroke width
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeWidth)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeWidth, ^(NSString* value) {
-            node.strokeWidth = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stroke dash offset
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeDashOffset)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeDashOffset, ^(NSString* value) {
-            node.strokeDashOffset = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stroke miter limit
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeMiterLimit)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeMiterLimit, ^(NSString* value) {
-            node.strokeMiterLimit = [IJSVGUnitLength unitWithString:value];
-        });
-    }
+    IJSVGParseAttribute(IJSVGNodeAttributeX, node.x = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeY, node.y = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeWidth, node.width = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeHeight, node.height = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeOpacity, node.opacity = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeOpacity, node.strokeOpacity = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeWidth, node.strokeWidth = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeDashOffset, node.strokeDashOffset = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeMiterLimit, node.strokeMiterLimit = [IJSVGUnitLength unitWithString:value]);
 
-    IJSVGNodeParserPostProcessBlock postProcessBlock = ^{
-        // mask
-        if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeMask)) {
-            IJSVGAttributeParse(IJSVGAttributeMask, ^(NSString* value) {
-                NSString* identifier = [IJSVGUtils defURL:value];
-                if(identifier != nil) {
-                    node.mask = (id)[self computeDetachedNodeWithIdentifier:identifier
-                                                            referencingNode:node
-                                                                    element:element];
-                }
-            });
-        }
-        
-        // clip path
-        if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeClipPath)) {
-            IJSVGAttributeParse(IJSVGAttributeClipPath, ^(NSString* value) {
-                NSString* identifier = [IJSVGUtils defURL:value];
-                if(identifier != nil) {
-                    node.clipPath = (id)[self computeDetachedNodeWithIdentifier:identifier
-                                                                referencingNode:node
-                                                                        element:element];
-                }
-            });
-        }
-    };
-    
-    // gradient units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeGradientUnits)) {
-        IJSVGAttributeParse(IJSVGAttributeGradientUnits, ^(NSString* value) {
-            node.units = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // mask units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeMaskUnits)) {
-        IJSVGAttributeParse(IJSVGAttributeMaskUnits, ^(NSString* value) {
-            node.units = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // pattern units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributePatternUnits)) {
-        IJSVGAttributeParse(IJSVGAttributePatternUnits, ^(NSString* value) {
-            node.units = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // mask content units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeMaskContentUnits)) {
-        IJSVGAttributeParse(IJSVGAttributeMaskContentUnits, ^(NSString* value) {
-            node.contentUnits = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // pattern content units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributePatternContentUnits)) {
-        IJSVGAttributeParse(IJSVGAttributePatternContentUnits, ^(NSString* value) {
-            node.contentUnits = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // clip path units
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeClipPathUnits)) {
-        IJSVGAttributeParse(IJSVGAttributeClipPathUnits, ^(NSString* value) {
-            node.contentUnits = [IJSVGUtils unitTypeForString:value];
-        });
-    }
-    
-    // transform
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeTransform)) {
-        IJSVGAttributeParse(IJSVGAttributeTransform, applyTransform);
-    }
-
-    // gradient transform
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeGradientTransform)) {
-        IJSVGAttributeParse(IJSVGAttributeGradientTransform, applyTransform);
-    }
-
-    // pattern transform
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributePatternTransform)) {
-        IJSVGAttributeParse(IJSVGAttributePatternTransform, applyTransform);
-    }
-
-    // unicode
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeUnicode)) {
-        IJSVGAttributeParse(IJSVGAttributeUnicode, ^(NSString* value) {
-            node.unicode = [NSString stringWithFormat:@"%04x", [value characterAtIndex:0]];
-        });
-    }
-
-    // linecap
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeLineCap)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeLineCap, ^(NSString* value) {
-            node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];
-        });
-    }
-
-    // line join
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeLineJoin)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeLineJoin, ^(NSString* value) {
-            node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value];
-        });
-    }
-    
-    // stroke color
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStroke)) {
-        IJSVGAttributeParse(IJSVGAttributeStroke, ^(NSString* value) {
-            // todo
-            NSString* fillIdentifier = [IJSVGUtils defURL:value];
-            if(fillIdentifier != nil) {
-                IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                            referencingNode:node
-                                                                    element:element];
-                node.stroke = object;
-                return;
+    IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
+    IJSVGParseAttribute(IJSVGNodeAttributeMask, {
+        NSString* maskValue = value;
+        postProcessBlock = ^{
+            NSString* identifier = [IJSVGUtils defURL:maskValue];
+            if(identifier != nil) {
+                node.mask = (id)[self computeDetachedNodeWithIdentifier:identifier
+                                                        referencingNode:node
+                                                                element:element];
             }
+        };
+    });
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeClipPath, {
+        NSString* clipPathValue = value;
+        IJSVGNodeParserPostProcessBlock previousPostProcessBlock = postProcessBlock;
+        postProcessBlock = ^{
+            if(previousPostProcessBlock != nil) {
+                previousPostProcessBlock();
+            }
+            NSString* identifier = [IJSVGUtils defURL:clipPathValue];
+            if(identifier != nil) {
+                node.clipPath = (id)[self computeDetachedNodeWithIdentifier:identifier
+                                                            referencingNode:node
+                                                                    element:element];
+            }
+        };
+    });
+    
+    IJSVGParseAttribute(IJSVGNodeAttributeGradientUnits, node.units = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeMaskUnits, node.units = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributePatternUnits, node.units = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeMaskContentUnits, node.contentUnits = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributePatternContentUnits, node.contentUnits = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeClipPathUnits, node.contentUnits = [IJSVGUtils unitTypeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeTransform, IJSVGApplyTransform(value));
+    IJSVGParseAttribute(IJSVGNodeAttributeGradientTransform, IJSVGApplyTransform(value));
+    IJSVGParseAttribute(IJSVGNodeAttributePatternTransform, IJSVGApplyTransform(value));
+    IJSVGParseAttribute(IJSVGNodeAttributeUnicode, node.unicode = [NSString stringWithFormat:@"%04x", [value characterAtIndex:0]]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeLineCap, node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeLineJoin, node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value]);
+    
+    IJSVGParseAttribute(IJSVGNodeAttributeStroke, {
+        NSString* fillIdentifier = [IJSVGUtils defURL:value];
+        if(fillIdentifier != nil) {
+            IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                        referencingNode:node
+                                                                element:element];
+            node.stroke = object;
+        } else {
             NSColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
             }
             node.stroke = colorNode;
-        });
-    }
+        }
+    });
 
-    // stroke dash array
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStrokeDashArray)) {
-        IJSVGAttributeParse(IJSVGAttributeStrokeDashArray, ^(NSString* value) {
-            // nothing specified
-            if([value isEqualToString:IJSVGStringNone]) {
-                node.strokeDashArrayCount = 0;
-                return;
-            }
+    IJSVGParseAttribute(IJSVGNodeAttributeStrokeDashArray, {
+        if([value isEqualToString:IJSVGStringNone]) {
+            node.strokeDashArrayCount = 0;
+        } else {
             NSInteger paramCount = 0;
             CGFloat* params = [IJSVGUtils commandParameters:value
                                                       count:&paramCount];
             node.strokeDashArray = params;
             node.strokeDashArrayCount = paramCount;
-        });
-    }
+        }
+    });
 
-    // fill - seems kinda complicated for what it actually is
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeFill)) {
-        IJSVGAttributeParse(IJSVGAttributeFill, ^(NSString* value) {
-            // todo
-            NSString* fillIdentifier = [IJSVGUtils defURL:value];
-            if(fillIdentifier != nil) {
-                IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
-                                                            referencingNode:node
-                                                                    element:element];
-                node.fill = object;
-                return;
-            }
+    IJSVGParseAttribute(IJSVGNodeAttributeFill, {
+        NSString* fillIdentifier = [IJSVGUtils defURL:value];
+        if(fillIdentifier != nil) {
+            IJSVGNode* object = [self computeDetachedNodeWithIdentifier:fillIdentifier
+                                                        referencingNode:node
+                                                                element:element];
+            node.fill = object;
+        } else {
             NSColor* color = [IJSVGColor colorFromString:value];
             IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
             if(color == nil) {
                 colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
             }
             node.fill = colorNode;
-        });
-    }
+        }
+    });
     
-    // fill opacity
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeFillOpacity)) {
-        IJSVGAttributeParse(IJSVGAttributeFillOpacity, ^(NSString* value) {
-            node.fillOpacity = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-
-    // blendmode
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeBlendMode)) {
-        IJSVGAttributeParse(IJSVGAttributeBlendMode, ^(NSString* value) {
-            node.blendMode = [IJSVGUtils blendModeForString:value];
-        });
-    }
-
-    // fill rule
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeFillRule)) {
-        IJSVGAttributeParse(IJSVGAttributeFillRule, ^(NSString* value) {
-            node.windingRule = [IJSVGUtils windingRuleForString:value];
-        });
-    }
-    
-    // clip rule
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeClipRule)) {
-        IJSVGAttributeParse(IJSVGAttributeClipRule, ^(NSString* value) {
-            node.clipRule = [IJSVGUtils windingRuleForString:value];
-        });
-    }
-    
-    // display
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeDisplay)) {
-        IJSVGAttributeParse(IJSVGAttributeDisplay, ^(NSString* value) {
-            if([value.lowercaseString isEqualToString:IJSVGStringNone]) {
-                node.shouldRender = NO;
-            }
-        });
-    }
-    
-    // offset
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeOffset)) {
-        IJSVGAttributeParse(IJSVGAttributeOffset, ^(NSString* value) {
-            node.offset = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stop-opacity
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStopOpacity)) {
-        IJSVGAttributeParse(IJSVGAttributeStopOpacity, ^(NSString* value) {
-            node.fillOpacity = [IJSVGUnitLength unitWithString:value];
-        });
-    }
-    
-    // stop-color
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeStopColor)) {
-        IJSVGAttributeParse(IJSVGAttributeStopColor, ^(NSString* value) {
-            NSColor* color = [IJSVGColor colorFromString:value];
-            IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
-            if(color == nil) {
-                colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
-            } else if(node.fillOpacity.value != 1.f) {
-                color = [IJSVGColor changeAlphaOnColor:color
-                                                    to:node.fillOpacity.value];
-                colorNode.color = color;
-            }
-            node.fill = colorNode;
-        });
-    }
-    
-    // overflow
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeOverflow)) {
-        IJSVGAttributeParse(IJSVGAttributeOverflow, ^(NSString* value) {
-            if([value.lowercaseString isEqualToString:@"hidden"]) {
-                node.overflowVisibility = IJSVGOverflowVisibilityHidden;
-            } else {
-                node.overflowVisibility = IJSVGOverflowVisibilityVisible;
-            }
-        });
-    }
-    
-    // viewBox because this somehow is a thing
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributeViewBox)) {
-        IJSVGAttributeParse(IJSVGAttributeViewBox, ^(NSString* value) {
-            CGFloat* floats = [IJSVGUtils parseViewBox:value];
-            node.viewBox = [IJSVGUnitRect rectWithX:floats[0]
-                                                  y:floats[1]
-                                              width:floats[2]
-                                             height:floats[3]];
-            ((void)free(floats)), floats = NULL;
-        });
-    }
-    
-    // preserveAspectRatio
-    if(IJSVGAttributeMaskContains(activeAttributes, IJSVGNodeAttributePreserveAspectRatio)) {
-        IJSVGAttributeParse(IJSVGAttributePreserveAspectRatio, ^(NSString* value) {
-            IJSVGViewBoxMeetOrSlice meetOrSlice;
-            IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value
-                                                                   meetOrSlice:&meetOrSlice];
-            node.viewBoxAlignment = alignment;
-            node.viewBoxMeetOrSlice = meetOrSlice;
-        });
-    }
+    IJSVGParseAttribute(IJSVGNodeAttributeFillOpacity, node.fillOpacity = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeBlendMode, node.blendMode = [IJSVGUtils blendModeForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeFillRule, node.windingRule = [IJSVGUtils windingRuleForString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeClipRule, node.clipRule = [IJSVGUtils windingRuleForString:value]);
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeDisplay, {
+        if([value.lowercaseString isEqualToString:IJSVGStringNone]) {
+            node.shouldRender = NO;
+        }
+    });
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeOffset, node.offset = [IJSVGUnitLength unitWithString:value]);
+    IJSVGParseAttribute(IJSVGNodeAttributeStopOpacity, node.fillOpacity = [IJSVGUnitLength unitWithString:value]);
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeStopColor, {
+        NSColor* color = [IJSVGColor colorFromString:value];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        } else if(node.fillOpacity.value != 1.f) {
+            color = [IJSVGColor changeAlphaOnColor:color
+                                                to:node.fillOpacity.value];
+            colorNode.color = color;
+        }
+        node.fill = colorNode;
+    });
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeOverflow, {
+        if([value.lowercaseString isEqualToString:@"hidden"]) {
+            node.overflowVisibility = IJSVGOverflowVisibilityHidden;
+        } else {
+            node.overflowVisibility = IJSVGOverflowVisibilityVisible;
+        }
+    });
+  
+    IJSVGParseAttribute(IJSVGNodeAttributeViewBox, {
+        CGFloat* floats = [IJSVGUtils parseViewBox:value];
+        node.viewBox = [IJSVGUnitRect rectWithX:floats[0]
+                                              y:floats[1]
+                                          width:floats[2]
+                                         height:floats[3]];
+        ((void)free(floats)), floats = NULL;
+    });
+  
+    IJSVGParseAttribute(IJSVGNodeAttributePreserveAspectRatio, {
+        IJSVGViewBoxMeetOrSlice meetOrSlice;
+        IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value
+                                                               meetOrSlice:&meetOrSlice];
+        node.viewBoxAlignment = alignment;
+        node.viewBoxMeetOrSlice = meetOrSlice;
+    });
     
     return postProcessBlock;
 }

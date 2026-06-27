@@ -106,13 +106,6 @@ extern NSString* const IJSVGAttributeMarker;
 @class IJSVGParser;
 @class IJSVGThreadManager;
 
-typedef struct {
-    char* nodeType;
-} IJSVGParserMallocBuffers;
-
-IJSVGParserMallocBuffers* IJSVGParserMallocBuffersCreate(void);
-void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers);
-
 @interface IJSVGParser : NSObject {
 
 @private

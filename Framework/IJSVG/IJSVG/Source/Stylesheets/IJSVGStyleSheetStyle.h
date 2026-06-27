@@ -20,6 +20,7 @@
 - (void)setPropertyValue:(id)value
              forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
+- (NSDictionary*)properties;
 
 - (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;

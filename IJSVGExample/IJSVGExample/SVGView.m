@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"pcolormesh"];
+    return [IJSVG SVGNamed:@"errorbar_basic"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

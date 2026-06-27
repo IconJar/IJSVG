@@ -29,6 +29,12 @@
 
 @implementation IJSVGLayerTree
 
+static BOOL IJSVGRectIsFinite(CGRect rect)
+{
+    return isfinite(rect.origin.x) && isfinite(rect.origin.y) &&
+        isfinite(rect.size.width) && isfinite(rect.size.height);
+}
+
 @synthesize style = _style;
 
 - (id)init
@@ -257,6 +263,9 @@
 - (CGPathRef)newLayerPathForResolvedPath:(CGPathRef)path
                                   bounds:(CGRect)pathBounds
 {
+    if(IJSVGRectIsFinite(pathBounds) == NO) {
+        return CGPathCreateMutable();
+    }
     if(pathBounds.origin.x == 0.f && pathBounds.origin.y == 0.f) {
         return CGPathRetain(path);
     }
@@ -317,9 +326,15 @@
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
     CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
-    CGRect resolvedPathBounds = CGPathGetPathBoundingBox(resolvedPath);
-    CGPathRef layerPath = [self newLayerPathForResolvedPath:resolvedPath
-                                                     bounds:resolvedPathBounds];
+    BOOL resolvedPathIsEmpty = CGPathIsEmpty(resolvedPath);
+    CGRect resolvedPathBounds = resolvedPathIsEmpty == YES ? CGRectZero : CGPathGetPathBoundingBox(resolvedPath);
+    BOOL resolvedPathBoundsAreFinite = resolvedPathIsEmpty == NO && IJSVGRectIsFinite(resolvedPathBounds);
+    if(resolvedPathBoundsAreFinite == NO) {
+        resolvedPathBounds = CGRectZero;
+    }
+    CGPathRef layerPath = resolvedPathBoundsAreFinite == YES ?
+        [self newLayerPathForResolvedPath:resolvedPath
+                                   bounds:resolvedPathBounds] : CGPathCreateMutable();
     IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node
                                                                       resolvedPath:layerPath
                                                                 resolvedPathBounds:resolvedPathBounds];

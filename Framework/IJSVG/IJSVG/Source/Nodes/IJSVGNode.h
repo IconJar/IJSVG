@@ -93,7 +93,9 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeMarker
 };
 
-static const int kIJSVGNodeAttributeStorageLength = 64;
+enum {
+    kIJSVGNodeAttributeStorageLength = 64
+};
 
 typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
     IJSVGIntrinsicDimensionNone = 0,
