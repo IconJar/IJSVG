@@ -13,10 +13,10 @@
 @interface IJSVGGroup : IJSVGNode {
 
 @private
-    NSMutableOrderedSet<IJSVGNode*>* _children;
+    NSMutableArray<IJSVGNode*>* _children;
 }
 
-@property (weak, nonatomic, readonly) NSMutableOrderedSet<IJSVGNode*>* children;
+@property (nonatomic, readonly) NSArray<IJSVGNode*>* children;
 
 - (void)addChild:(IJSVGNode*)child;
 - (void)addChildren:(NSArray<IJSVGNode*>*)children;

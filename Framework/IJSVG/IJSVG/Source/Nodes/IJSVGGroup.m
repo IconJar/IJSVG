@@ -14,7 +14,7 @@
 - (id)init
 {
     if((self = [super init]) != nil) {
-        _children = [[NSMutableOrderedSet alloc] init];
+        _children = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -62,7 +62,7 @@
 
 - (void)prepareFromCopy
 {
-    _children = [[NSMutableOrderedSet alloc] init];
+    _children = [[NSMutableArray alloc] init];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -72,7 +72,6 @@
 
     for (__strong IJSVGNode* childNode in _children) {
         childNode = childNode.copy;
-        childNode.parentNode = node;
         [node addChild:childNode];
     }
     return node;
@@ -80,13 +79,18 @@
 
 - (void)addChild:(IJSVGNode*)child
 {
-    if(child == nil || child == self ||
-       (child.parentNode == self && [_children containsObject:child])) {
+    if(child == nil || child == self) {
         return;
     }
-    if([child.parentNode isKindOfClass:IJSVGGroup.class]) {
+  
+    if(child.parentNode == self && [_children containsObject:child]) {
+        return;
+    }
+  
+    if([child.parentNode isKindOfClass:IJSVGGroup.class] && child.parentNode != self) {
         [(IJSVGGroup*)child.parentNode removeChild:child];
     }
+  
     child.parentNode = self;
     [_children addObject:child];
 }
@@ -169,7 +173,7 @@ containsNodesMatchingTraits:traits];
     return rect;
 }
 
-- (NSMutableOrderedSet<IJSVGNode*>*)children
+- (NSArray<IJSVGNode*>*)children
 {
     return _children;
 }

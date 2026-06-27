@@ -41,7 +41,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
 
-+ (void)recursivelyAddPathedNodesPaths:(NSOrderedSet<IJSVGNode*>*)nodes
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath;
 

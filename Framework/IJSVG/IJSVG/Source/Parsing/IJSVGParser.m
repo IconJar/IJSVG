@@ -1153,8 +1153,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePath;
     node.name = element.localName;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1185,7 +1183,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypeLine;
     node.primitiveType = kIJSVGPrimitivePathTypeLine;
-    node.parentNode = parentNode;
     node.name = element.localName;
     
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
@@ -1212,8 +1209,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     node.type = IJSVGNodeTypePolyline;
     node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypePolyLine;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1239,8 +1234,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     node.type = IJSVGNodeTypePolygon;
     node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypePolygon;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1316,8 +1309,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGGroup* node = [[IJSVGGroup alloc] init];
     node.type = nodeType;
     node.name = element.localName;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1340,8 +1331,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 {
     node.type = IJSVGNodeTypeSVG;
     node.name = element.localName;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1395,8 +1384,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     node.type = IJSVGNodeTypeRect;
     node.primitiveType = kIJSVGPrimitivePathTypeRect;
     node.name = element.localName;
-    node.parentNode = parentNode;
-    
+  
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1429,8 +1417,6 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     IJSVGImage* node = [[IJSVGImage alloc] init];
     node.type = IJSVGNodeTypeImage;
     node.name = element.localName;
-    node.parentNode = parentNode;
-    
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1456,7 +1442,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
     if(xlinkID == nil) {
         return nil;
     }
-    
+  
     // its important that we remove the xlink attribute or hell breaks loose
     NSXMLElement* detachedElement = [self detachedElementWithIdentifier:xlinkID];
   

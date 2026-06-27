@@ -34,7 +34,7 @@
     return storage;
 }
 
-+ (void)recursivelyAddPathedNodesPaths:(NSOrderedSet<IJSVGNode*>*)nodes
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath
 {
