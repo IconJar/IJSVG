@@ -169,6 +169,13 @@ IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSele
     XCTAssertEqualObjects([style property:@"content"], @"'/* not a comment */'");
 }
 
+- (void)testStyleDeclarationParserKeepsTrailingURLValueWithoutSemicolon
+{
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:@"fill:url(#squares)"];
+
+    XCTAssertEqualObjects([style property:@"fill"], @"url(#squares)");
+}
+
 - (void)testStyleSheetUtilsClassifySelectorCharacters
 {
     XCTAssertTrue(IJSVGStyleSheetCharIsWhitespace(' '));

@@ -79,7 +79,9 @@
 
         if(c == ')' && parenDepth != 0) {
             parenDepth -= 1;
-            continue;
+            if(i != length - 1) {
+                continue;
+            }
         }
 
         if(key == nil && c == ':') {
