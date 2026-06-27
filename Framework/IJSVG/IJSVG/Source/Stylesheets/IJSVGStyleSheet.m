@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
+#import <IJSVG/IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 
 @interface IJSVGStyleSheetSelectorListItem : NSObject {
@@ -15,12 +16,11 @@
 
 @property (nonatomic, strong) IJSVGStyleSheetRule* rule;
 @property (nonatomic, strong) IJSVGStyleSheetSelector* selector;
+@property (nonatomic, assign) NSUInteger sourceIndex;
 
 @end
 
 @implementation IJSVGStyleSheetSelectorListItem
-
-
 @end
 
 @implementation IJSVGStyleSheet
@@ -43,16 +43,16 @@
 {
     NSMutableArray* array = [[NSMutableArray alloc] init];
 
-    // split the string by the comma, as it could be multiple
     NSArray* comp = [string componentsSeparatedByString:@","];
     NSCharacterSet* whiteSpaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
 
-    // create a selector or reuse one already being used
     for (__strong NSString* selectorName in comp) {
         selectorName = [selectorName stringByTrimmingCharactersInSet:whiteSpaceCharSet];
-        IJSVGStyleSheetSelector* selector = nil;
+        if(selectorName.length == 0) {
+            continue;
+        }
 
-        // create a new selector if not found
+        IJSVGStyleSheetSelector* selector = nil;
         if((selector = [_selectors objectForKey:selectorName]) == nil) {
             selector = [[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName];
             if(selector != nil) {
@@ -61,7 +61,6 @@
             }
         }
 
-        // add it to our list
         if(selector != nil) {
             [array addObject:selector];
         }
@@ -71,60 +70,69 @@
 
 - (void)parseStyleBlock:(NSString*)string
 {
-    NSUInteger depth = 0, marker = 0;
-    NSUInteger length = [string length];
-    NSCharacterSet* whitespaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    NSString* cleanString = IJSVGStyleSheetStringByRemovingCSSComments(string);
+    const char* chars = cleanString.UTF8String;
+    if(chars == NULL) {
+        return;
+    }
 
+    NSUInteger length = strlen(chars);
+    if(length == 0) {
+        return;
+    }
+
+    NSUInteger depth = 0;
+    NSUInteger marker = 0;
+    NSUInteger parenDepth = 0;
+    char quote = 0;
+    NSCharacterSet* whitespaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     NSString* selector = nil;
 
-    for (NSUInteger i = 0; i < length; i++) {
-        unichar c = [string characterAtIndex:i];
-        if(c == '/') {
-            i++;
-            if(i < length) {
-                c = [string characterAtIndex:i];
-                if(c == '*') {
-                    // skip comment until closing /
-                    for (; i < length; i++) {
-                        if([string characterAtIndex:i] == '/') {
-                            break;
-                        }
-                    }
-                    if(i < length) {
-                        marker = i + 1;
-                        continue;
-                    } else {
-                        // end of string
-                        return;
-                    }
-                } else {
-                    i--;
-                }
+    for(NSUInteger i = 0; i < length; i++) {
+        char c = chars[i];
+
+        if(quote != 0) {
+            if(c == quote && (i == 0 || chars[i - 1] != '\\')) {
+                quote = 0;
             }
+            continue;
         }
 
-        // opening brace, could be nested or start of a new string
-        if(c == '{') {
-            // start a new rule
+        if(c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+
+        if(c == '(') {
+            parenDepth += 1;
+            continue;
+        }
+
+        if(c == ')' && parenDepth != 0) {
+            parenDepth -= 1;
+            continue;
+        }
+
+        if(c == '{' && parenDepth == 0) {
             if(depth == 0) {
-                // grab selector and trim it
-                selector = [string substringWithRange:NSMakeRange(marker, i - marker)];
+                selector = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
                 selector = [selector stringByTrimmingCharactersInSet:whitespaceCharSet];
                 marker = i + 1;
             }
             depth += 1;
+            continue;
         }
 
-        // ending brace
-        else if(c == '}') {
-            // if we finished rule
+        if(c == '}' && parenDepth == 0) {
             if(depth == 1) {
-                NSString* rule = [string substringWithRange:NSMakeRange(marker, i - marker)];
+                NSString* rule = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
                 rule = [rule stringByTrimmingCharactersInSet:whitespaceCharSet];
 
-                // append the rule to the style sheet
-                [self addStyleRule:rule
-                     withSelectors:[self selectorsWithSelectorString:selector]];
+                NSArray* selectors = [self selectorsWithSelectorString:selector];
+                if(rule.length != 0 && selectors.count != 0) {
+                    [self addStyleRule:rule
+                         withSelectors:selectors];
+                }
                 marker = i + 1;
             }
             depth = MAX(depth - 1, 0);
@@ -135,8 +143,6 @@
 - (void)addStyleRule:(NSString*)rule
        withSelectors:(NSArray*)selectors
 {
-    // append the rule onto the list within
-    // this style sheet
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = [IJSVGStyleSheetStyle parseStyleString:rule];
     aRule.selectors = selectors;
@@ -147,28 +153,25 @@
 {
     IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     NSMutableArray* matchedRules = [[NSMutableArray alloc] init];
+    NSUInteger sourceIndex = 0;
     for (IJSVGStyleSheetRule* rule in _rules) {
         IJSVGStyleSheetSelector* matchedSelector = nil;
         if([rule matchesNode:node selector:&matchedSelector]) {
-
-            // make a wrapper for the selector with the rule
-            IJSVGStyleSheetSelectorListItem* listItem = nil;
-            listItem = [[IJSVGStyleSheetSelectorListItem alloc] init];
+            IJSVGStyleSheetSelectorListItem* listItem = [[IJSVGStyleSheetSelectorListItem alloc] init];
             listItem.rule = rule;
             listItem.selector = matchedSelector;
-
-            // add it to the array of matches
+            listItem.sourceIndex = sourceIndex;
             [matchedRules addObject:listItem];
         }
+        sourceIndex += 1;
     }
 
-    // now we have all the wrappers, we need to sort them
-    // by specificity
-    NSSortDescriptor* sort = [NSSortDescriptor sortDescriptorWithKey:@"selector.specificity"
-                                                           ascending:YES];
-    [matchedRules sortUsingDescriptors:@[ sort ]];
+    NSSortDescriptor* specificitySort = [NSSortDescriptor sortDescriptorWithKey:@"selector.specificity"
+                                                                    ascending:YES];
+    NSSortDescriptor* sourceSort = [NSSortDescriptor sortDescriptorWithKey:@"sourceIndex"
+                                                               ascending:YES];
+    [matchedRules sortUsingDescriptors:@[ specificitySort, sourceSort ]];
 
-    // combine the rule
     for (IJSVGStyleSheetSelectorListItem* listItem in matchedRules) {
         style = [style mergedStyle:listItem.rule.style];
     }

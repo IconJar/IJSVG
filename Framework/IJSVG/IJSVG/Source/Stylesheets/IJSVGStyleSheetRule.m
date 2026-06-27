@@ -13,13 +13,17 @@
 - (BOOL)matchesNode:(IJSVGNode*)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector
 {
-    // interate over each select and work out if
-    // it allows us to be applied
+    IJSVGStyleSheetSelector* bestSelector = nil;
     for (IJSVGStyleSheetSelector* selector in _selectors) {
-        if([selector matchesNode:node] == YES) {
-            *matchedSelector = selector;
-            return YES;
+        if([selector matchesNode:node] == YES &&
+           (bestSelector == nil || selector.specificity > bestSelector.specificity)) {
+            bestSelector = selector;
         }
+    }
+
+    if(bestSelector != nil) {
+        *matchedSelector = bestSelector;
+        return YES;
     }
     return NO;
 }

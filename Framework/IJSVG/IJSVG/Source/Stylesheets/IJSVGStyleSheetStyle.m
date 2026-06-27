@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetStyle.h>
+#import <IJSVG/IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGStyleSheetStyle
@@ -39,42 +40,71 @@
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
 {
     IJSVGStyleSheetStyle* style = [[self.class alloc] init];
-    NSInteger length = string.length;
-    NSInteger index = 0;
+    NSString* cleanString = IJSVGStyleSheetStringByRemovingCSSComments(string);
+    const char* chars = cleanString.UTF8String;
+    if(chars == NULL) {
+        return style;
+    }
+
+    NSUInteger length = strlen(chars);
+    if(length == 0) {
+        return style;
+    }
+
+    NSUInteger keyStart = 0;
+    NSUInteger valueStart = 0;
     NSString* key = nil;
-    NSString* value = nil;
+    char quote = 0;
+    NSUInteger parenDepth = 0;
 
-    // iterate over the string - its actually really simple what we need
-    // to do
-    for (NSInteger i = 0; i < length; i++) {
-        unichar c = [string characterAtIndex:i];
+    for(NSUInteger i = 0; i < length; i++) {
+        char c = chars[i];
 
-        // find the key
-        if(c == ':') {
-            key = [string substringWithRange:NSMakeRange(index, (i - index))];
-            index = i + 1;
-        }
-
-        // find the value
-        else if(c == ';' || i == (length - 1)) {
-            NSInteger chomp;
-            if(i == (length - 1) && c != ';') {
-                chomp = (i - (index - 1));
-            } else {
-                chomp = (i - index);
+        if(quote != 0) {
+            if(c == quote && (i == 0 || chars[i - 1] != '\\')) {
+                quote = 0;
             }
-            value = [string substringWithRange:NSMakeRange(index, chomp)];
-            index = i + 1;
+            continue;
         }
 
-        // set the propery if it actually exists
-        if(key != nil && value != nil) {
-            [style setPropertyValue:[self.class trimString:value]
-                        forProperty:[self.class trimString:key]];
+        if(c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+
+        if(c == '(') {
+            parenDepth += 1;
+            continue;
+        }
+
+        if(c == ')' && parenDepth != 0) {
+            parenDepth -= 1;
+            continue;
+        }
+
+        if(key == nil && c == ':') {
+            key = IJSVGStyleSheetStringFromUTF8Bytes(chars, keyStart, i);
+            valueStart = i + 1;
+            continue;
+        }
+
+        if(key != nil && parenDepth == 0 && (c == ';' || i == length - 1)) {
+            NSUInteger valueEnd = (c == ';') ? i : i + 1;
+            NSString* value = IJSVGStyleSheetStringFromUTF8Bytes(chars, valueStart, valueEnd);
+            NSString* trimmedKey = [self.class trimString:key];
+            NSString* trimmedValue = [self.class trimString:value];
+
+            if(trimmedKey.length != 0 && trimmedValue.length != 0) {
+                [style setPropertyValue:trimmedValue
+                            forProperty:trimmedKey];
+            }
+
             key = nil;
-            value = nil;
+            keyStart = i + 1;
+            valueStart = keyStart;
         }
     }
+
     return style;
 }
 
@@ -104,16 +134,9 @@
 
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style
 {
-    // create the new style
     IJSVGStyleSheetStyle* newStyle = [[IJSVGStyleSheetStyle alloc] init];
-
-    // grab the current style
     NSMutableDictionary* dict = [self properties].mutableCopy;
-
-    // overwride the style with the new styles
     [dict addEntriesFromDictionary:[style properties]];
-
-    // add the styles to the style
     [newStyle setProperties:dict
                  replaceAll:YES];
     return newStyle;
