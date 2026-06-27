@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    width="640"
+    height="420"
+    viewBox="0 0 640 420">
+    <title>IJSVG CSS parser test</title>
+    <desc>Basic SVG shapes with deliberately varied stylesheet selectors and declarations.</desc>
+
+    <style>
+        /* Base element and universal selectors. */
+        * {
+            stroke-linejoin: round;
+            stroke-linecap: round;
+        }
+
+        svg|rect,
+        svg|circle,
+        svg|path,
+        svg|polygon,
+        svg|line {
+            stroke: #1f2937;
+            stroke-width: 4;
+        }
+
+        /* Later equal-specificity rule should win over the previous grouped selector. */
+        rect {
+            fill: #e0f2fe;
+        }
+
+        rect {
+            fill: #bfdbfe;
+        }
+
+        #canvas .primary > rect.feature {
+            fill: #60a5fa;
+            stroke: #1d4ed8;
+        }
+
+        #canvas .primary > circle.feature {
+            fill: #fde68a;
+            stroke: #d97706;
+        }
+
+        .adjacent-target {
+            fill: #fca5a5;
+            stroke: #b91c1c;
+        }
+
+        /* General sibling: should style all later sibling paths in this group. */
+        .primary rect ~ path {
+            fill: none;
+            stroke: #0f766e;
+            stroke-width: 8;
+        }
+
+        /* Adjacent sibling: should only style the polygon immediately after the circle. */
+        .primary circle + polygon {
+            stroke: #7f1d1d;
+            stroke-width: 7;
+        }
+
+        /* Descendant and direct descendant should both be exercised here. */
+        #canvas g.secondary line,
+        #canvas > g.secondary > path {
+            stroke: #7c3aed;
+            stroke-width: 6;
+            fill: none;
+        }
+
+        /* Namespace pipe syntax should resolve to the local element name. */
+        svg|g svg|circle.accent {
+            fill: #34d399;
+            stroke: #047857;
+        }
+
+        /* Pipe combinator support in IJSVG maps to an ancestor-axis relationship. */
+        #canvas || circle.pipe-target {
+            fill: #c084fc;
+            stroke: #6d28d9;
+        }
+
+        /* Comments inside declarations should be ignored. */
+        .commented {
+            fill: #fef3c7;
+            /* The next value should still parse. */
+            stroke: #92400e;
+        }
+
+        /* Quoted/function values include punctuation that should not break declaration scanning. */
+        .with-title {
+            fill: #f9a8d4;
+            stroke: #be185d;
+            font-family: "Parser { Test }; Sans";
+            marker: url("#marker-{curly}");
+        }
+
+        .low-specificity {
+            fill: #d1d5db;
+        }
+
+        #specificity-target {
+            fill: #22d3ee;
+            stroke: #0891b2;
+        }
+    </style>
+
+    <defs>
+        <marker id="marker-{curly}" markerWidth="8" markerHeight="8" refX="4" refY="4">
+            <circle cx="4" cy="4" r="3" fill="#be185d"/>
+        </marker>
+    </defs>
+
+    <rect x="1" y="1" width="638" height="418" rx="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+
+    <g id="canvas">
+        <g class="primary" transform="translate(48 52)">
+            <rect class="feature low-specificity" x="0" y="0" width="150" height="90" rx="14"/>
+            <circle class="feature" cx="230" cy="45" r="44"/>
+            <polygon class="adjacent-target" fill="#fca5a5" stroke="#b91c1c" points="325,5 405,45 325,85"/>
+            <path d="M 0 135 C 80 90, 150 180, 230 135 S 375 180, 455 135"/>
+        </g>
+
+        <g class="secondary" transform="translate(68 235)">
+            <line x1="0" y1="0" x2="175" y2="80"/>
+            <path d="M 230 80 L 285 0 L 340 80 Z"/>
+            <circle class="accent pipe-target" cx="430" cy="40" r="42"/>
+        </g>
+
+        <g transform="translate(485 58)">
+            <rect class="commented" x="0" y="0" width="92" height="72" rx="10"/>
+            <circle id="specificity-target" class="low-specificity" cx="46" cy="134" r="38"/>
+            <path class="with-title" d="M 0 226 C 30 185, 62 267, 92 226"/>
+        </g>
+    </g>
+</svg>

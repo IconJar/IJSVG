@@ -25,12 +25,12 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"AJ_Digital_Camera"];
+    return [IJSVG SVGNamed:@"advanced-css"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-    CGContextRef ref = [[NSGraphicsContext currentContext] graphicsPort];
+    CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ref);
     CGContextTranslateCTM( ref, 0, self.bounds.size.height);
     CGContextScaleCTM( ref, 1, -1 );

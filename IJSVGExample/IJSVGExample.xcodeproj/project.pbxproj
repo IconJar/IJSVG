@@ -30,6 +30,7 @@
 		590C87F6201FD0D4004A1554 /* car.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F5201FD0D4004A1554 /* car.svg */; };
 		5911682C2854CB7000678392 /* couchdb.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5911682B2854CB7000678392 /* couchdb.svg */; };
 		5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5919FE042FE30D0F003CAC34 /* oklch.svg */; };
+		591F8EC12FF016980012F5EB /* advanced-css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 591F8EC02FF016980012F5EB /* advanced-css.svg */; };
 		5926079C287D6B8B00E93B09 /* Toucan in the Shade.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */; };
 		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
 		59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */ = {isa = PBXBuildFile; fileRef = 59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */; };
@@ -132,6 +133,7 @@
 		590C87F5201FD0D4004A1554 /* car.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = car.svg; sourceTree = "<group>"; };
 		5911682B2854CB7000678392 /* couchdb.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = couchdb.svg; sourceTree = "<group>"; };
 		5919FE042FE30D0F003CAC34 /* oklch.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = oklch.svg; sourceTree = "<group>"; };
+		591F8EC02FF016980012F5EB /* advanced-css.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "advanced-css.svg"; sourceTree = "<group>"; };
 		5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "Toucan in the Shade.svg"; sourceTree = "<group>"; };
 		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
 		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 			isa = PBXGroup;
 			children = (
 				5919FE042FE30D0F003CAC34 /* oklch.svg */,
+				591F8EC02FF016980012F5EB /* advanced-css.svg */,
 				5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */,
 				598F31BA285658C7006D9A66 /* bloglines.svg */,
 				598F31B8285658C4006D9A66 /* circles1.svg */,
@@ -466,6 +469,7 @@
 				590C87EB201F9888004A1554 /* json.svg in Resources */,
 				59D1E3A0202279CA00C54672 /* Group.svg in Resources */,
 				5901B745282818CA00290525 /* contour_colorbar.svg in Resources */,
+				591F8EC12FF016980012F5EB /* advanced-css.svg in Resources */,
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
 				5991A2A9201E30E600913E3B /* gradients.svg in Resources */,
