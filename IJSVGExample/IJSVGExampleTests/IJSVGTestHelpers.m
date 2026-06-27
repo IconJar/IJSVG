@@ -8,7 +8,8 @@
 
 #import "IJSVGTestHelpers.h"
 
-IJSVGNode* IJSVGTestNode(NSString* name, NSString* identifier, NSArray<NSString*>* classes)
+IJSVGNode* IJSVGTestNode(NSString* name, NSString* identifier,
+                         NSArray<NSString*>* classes)
 {
     IJSVGNode* node = [[IJSVGNode alloc] init];
     node.name = name;
@@ -83,13 +84,9 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
     NSMutableData* data = [NSMutableData dataWithLength:height * bytesPerRow];
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGBitmapInfo bitmapInfo = kCGBitmapByteOrder32Big | (CGBitmapInfo)kCGImageAlphaPremultipliedLast;
-    CGContextRef context = CGBitmapContextCreate(data.mutableBytes,
-                                                 width,
-                                                 height,
-                                                 8,
-                                                 bytesPerRow,
-                                                 colorSpace,
-                                                 bitmapInfo);
+    CGContextRef context = CGBitmapContextCreate(data.mutableBytes, width,
+                                                 height, 8, bytesPerRow,
+                                                 colorSpace, bitmapInfo);
     CGContextDrawImage(context, CGRectMake(0.f, 0.f, width, height), image);
 
     CGContextRelease(context);
@@ -120,7 +117,8 @@ NSColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point)
     return IJSVGTestColorFromRGBAData(data, size, point);
 }
 
-void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha)
+void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green,
+                                CGFloat blue, CGFloat alpha)
 {
     NSColor* rgbColor = [color colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
     XCTAssertEqualWithAccuracy(rgbColor.redComponent, red, 0.02);
