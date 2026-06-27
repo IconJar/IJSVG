@@ -145,16 +145,16 @@
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableBasicLayerForPathNode:(IJSVGPath*)node
+                                              resolvedPath:(CGPathRef)resolvedPath
+                                          resolvedPathBounds:(CGRect)resolvedPathBounds
 {
-    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
-
     IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
     if(CGPathIsEmpty(resolvedPath) == NO) {
-        [self applyTransformedPath:resolvedPath
-                      toShapeLayer:layer];
+        [self applyPath:resolvedPath
+                 bounds:resolvedPathBounds
+           toShapeLayer:layer];
     }
-    CGPathRelease(resolvedPath);
     layer.fillColor = nil;
     layer.fillRule = [IJSVGUtils CGFillRuleForWindingRule:node.windingRule];
     return layer;
@@ -254,23 +254,22 @@
     return path;
 }
 
-- (void)applyTransformedPath:(CGPathRef)path
-                toShapeLayer:(CALayer<IJSVGPathableLayer, IJSVGDrawableLayer>*)layer
+- (CGPathRef)newLayerPathForResolvedPath:(CGPathRef)path
+                                  bounds:(CGRect)pathBounds
 {
-    CGRect pathBounds = CGPathGetPathBoundingBox(path);
-    pathBounds = pathBounds;
-
-    // this will move the path back to a 0 origin as we actually set the origin
-    // with the layer instead (which we can then move around)
-    if(pathBounds.origin.x != 0.f || pathBounds.origin.y != 0.f) {
-        CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
-                                                                       -pathBounds.origin.y);
-        CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(path, &transform);
-        layer.path = transformedPath;
-        CGPathRelease(transformedPath);
-    } else {
-        layer.path = path;
+    if(pathBounds.origin.x == 0.f && pathBounds.origin.y == 0.f) {
+        return CGPathRetain(path);
     }
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(-pathBounds.origin.x,
+                                                                   -pathBounds.origin.y);
+    return CGPathCreateCopyByTransformingPath(path, &transform);
+}
+
+- (void)applyPath:(CGPathRef)path
+           bounds:(CGRect)pathBounds
+     toShapeLayer:(CALayer<IJSVGPathableLayer, IJSVGDrawableLayer>*)layer
+{
+    layer.path = path;
     
     // note that we store the bounding box at this point, as it can be modified later
     // with strokes, however, SVG spec defined bounding box is the path without strokes
@@ -317,7 +316,13 @@
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForPathNode:(IJSVGPath*)node
 {
-    IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
+    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
+    CGRect resolvedPathBounds = CGPathGetPathBoundingBox(resolvedPath);
+    CGPathRef layerPath = [self newLayerPathForResolvedPath:resolvedPath
+                                                     bounds:resolvedPathBounds];
+    IJSVGShapeLayer* layer = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node
+                                                                      resolvedPath:layerPath
+                                                                resolvedPathBounds:resolvedPathBounds];
     
     // color the shape
     id fill = node.fill;
@@ -329,7 +334,9 @@
         // its highly likely that the stroke layer is larger than the layer its being
         // drawing into, so we need to increase the layer size to match or any groups
         // that this is inside wont be the correct frame
-        strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node];
+        strokeLayer = (IJSVGStrokeLayer*)[self drawableStrokedLayerForPathNode:node
+                                                                  resolvedPath:layerPath
+                                                            resolvedPathBounds:resolvedPathBounds];
         strokeWidthDifference = strokeLayer.lineWidth * .5f;
         [layer setLayer:strokeLayer
            forUsageType:IJSVGLayerUsageTypeStroke];
@@ -371,7 +378,9 @@
             // set the color against the layer — we cant just use fill layer due to how
             // the stroke is position within the frame, we have to create another
             // layer to draw the colour into!
-            IJSVGShapeLayer* shape = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node];
+            IJSVGShapeLayer* shape = (IJSVGShapeLayer*)[self drawableBasicLayerForPathNode:node
+                                                                              resolvedPath:layerPath
+                                                                        resolvedPathBounds:resolvedPathBounds];
             shape.fillColor = color.CGColor;
             CGRect shapeRect = shape.frame;
             
@@ -472,16 +481,19 @@
         
     }
     
+    CGPathRelease(layerPath);
+    CGPathRelease(resolvedPath);
     return layer;
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableStrokedLayerForPathNode:(IJSVGPath*)node
+                                                   resolvedPath:(CGPathRef)resolvedPath
+                                             resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     IJSVGStrokeLayer* layer = [IJSVGStrokeLayer layer];
-    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
-    [self applyTransformedPath:resolvedPath
-                  toShapeLayer:layer];
-    CGPathRelease(resolvedPath);
+    [self applyPath:resolvedPath
+             bounds:resolvedPathBounds
+       toShapeLayer:layer];
     
     // reset the frame back to zero
     CGRect frame = layer.frame;
@@ -638,7 +650,7 @@
     return layer;
 }
 
-- (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSOrderedSet<IJSVGNode*>*)nodes
+- (NSArray<CALayer<IJSVGDrawableLayer>*>*)drawableLayersForNodes:(NSArray<IJSVGNode*>*)nodes
 {
     NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = nil;
     layers = [[NSMutableArray alloc] initWithCapacity:nodes.count];
@@ -854,7 +866,7 @@
     return layers;
 }
 
-- (void)recursivelyAddResolvedPathsForNodes:(NSOrderedSet<IJSVGNode*>*)nodes
+- (void)recursivelyAddResolvedPathsForNodes:(NSArray<IJSVGNode*>*)nodes
                                     transform:(CGAffineTransform)transform
                                        toPath:(CGMutablePathRef)mutPath
 {

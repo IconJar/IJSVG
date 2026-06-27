@@ -149,6 +149,32 @@
     XCTAssertEqual(last.primitiveType, kIJSVGPrimitivePathTypeLine);
 }
 
+- (void)testParserCopiesRepeatedUseReferencesIntoDistinctChildren
+{
+    NSString* body = @"<defs><path id=\"shape\" d=\"M0 0 H8\"/></defs>"
+        @"<use id=\"first-use\" href=\"#shape\"/>"
+        @"<use id=\"second-use\" href=\"#shape\"/>";
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
+                                                         fileURL:nil
+                                                           error:nil];
+    IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
+    IJSVGGroup* firstUse = (IJSVGGroup*)rootNode.children[0];
+    IJSVGGroup* secondUse = (IJSVGGroup*)rootNode.children[1];
+    IJSVGPath* firstShadowPath = (IJSVGPath*)firstUse.children.firstObject;
+    IJSVGPath* secondShadowPath = (IJSVGPath*)secondUse.children.firstObject;
+
+    XCTAssertEqual(rootNode.children.count, 2);
+    XCTAssertEqual(firstUse.type, IJSVGNodeTypeUse);
+    XCTAssertEqual(secondUse.type, IJSVGNodeTypeUse);
+    XCTAssertEqual(firstUse.children.count, 1);
+    XCTAssertEqual(secondUse.children.count, 1);
+    XCTAssertNotEqual(firstShadowPath, secondShadowPath);
+    XCTAssertEqual(firstShadowPath.parentNode, firstUse);
+    XCTAssertEqual(secondShadowPath.parentNode, secondUse);
+    XCTAssertEqualObjects(firstShadowPath.identifier, @"shape");
+    XCTAssertEqualObjects(secondShadowPath.identifier, @"shape");
+}
+
 - (void)testParserMapsPrimitiveShapeTypesInRootOrder
 {
     NSString* body = @"<rect id=\"rect\" width=\"1\" height=\"1\"/>"
