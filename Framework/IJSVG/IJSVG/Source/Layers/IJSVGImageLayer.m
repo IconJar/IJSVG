@@ -35,7 +35,7 @@
     CGRect imageDrawRect = _image.intrinsicBounds;
     CGRect currentBounds = self.bounds;
 
-    // preserveAspectRatio must be resolved in the images own coordinate space,
+    // `preserveAspectRatio` must be resolved in the images own coordinate space,
     // not against the layer frame. When an image is used as objectBoundingBox
     // pattern content the frame has the non-uniform bounding-box scale baked into it,
     // so fitting the raster directly against the frame would letterbox it and then the
@@ -43,6 +43,11 @@
     CGRect imageBounds = _image.bounds;
     if(CGRectGetWidth(imageBounds) <= 0.f || CGRectGetHeight(imageBounds) <= 0.f) {
         imageBounds = currentBounds;
+    }
+  
+    if(CGRectGetWidth(imageBounds) <= 0.f || CGRectGetHeight(imageBounds) <= 0.f ||
+       CGRectGetWidth(currentBounds) <= 0.f || CGRectGetHeight(currentBounds) <= 0.f) {
+        return;
     }
   
     CGAffineTransform scale =
