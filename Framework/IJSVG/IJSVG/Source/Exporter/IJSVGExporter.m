@@ -1987,6 +1987,15 @@ NSString* IJSVGHash(NSString* key)
                             IJSVGAttributeFill: strokeColorString
                         }, strokedPath);
                     }
+
+                    // the stroke is now drawn as a filled path, so any stroke opacity
+                    // needs to be carried over as fill opacity else it would be lost
+                    if(strokeLayer.opacity != 1.f) {
+                        IJSVGApplyAttributesToElement(@{
+                            IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(strokeLayer.opacity,
+                                                                                        _floatingPointOptions)
+                        }, strokedPath);
+                    }
                     break;
                 }
                 default: {
@@ -2010,6 +2019,16 @@ NSString* IJSVGHash(NSString* key)
                     // we also need to apply any transforms to this path that were on its parent
                     [self applyTransformToElement:strokedPath
                                         fromLayer:layer];
+
+                    // the element opacity applies to the whole shape (fill and stroke),
+                    // but the stroke now lives in its own sibling path, so it would no
+                    // longer inherit it - carry it over else the stroke loses its opacity
+                    if(layer.opacity != 1.f) {
+                        IJSVGApplyAttributesToElement(@{
+                            IJSVGAttributeOpacity: IJSVGShortFloatStringWithOptions(layer.opacity,
+                                                                                    _floatingPointOptions)
+                        }, strokedPath);
+                    }
 
                     // give back the preceding elements
                     objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey,
