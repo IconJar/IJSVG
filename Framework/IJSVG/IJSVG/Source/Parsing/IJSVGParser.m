@@ -1264,6 +1264,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolyline;
+    node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypePolyLine;
     node.parentNode = parentNode;
     
@@ -1290,6 +1291,7 @@ void IJSVGParserMallocBuffersFree(IJSVGParserMallocBuffers* buffers)
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     node.type = IJSVGNodeTypePolygon;
+    node.name = element.localName;
     node.primitiveType = kIJSVGPrimitivePathTypePolygon;
     node.parentNode = parentNode;
     
