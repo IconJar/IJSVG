@@ -116,8 +116,23 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
 
     NSMutableString* cleanString = [[NSMutableString alloc] initWithCapacity:length];
     NSUInteger marker = 0;
+    char quote = 0;
     for(NSUInteger i = 0; i < length; i++) {
-        if(chars[i] == '/' && i + 1 < length && chars[i + 1] == '*') {
+        char c = chars[i];
+
+        if(quote != 0) {
+            if(c == quote && (i == 0 || chars[i - 1] != '\\')) {
+                quote = 0;
+            }
+            continue;
+        }
+
+        if(c == '\'' || c == '"') {
+            quote = c;
+            continue;
+        }
+
+        if(c == '/' && i + 1 < length && chars[i + 1] == '*') {
             NSString* chunk = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
             if(chunk != nil) {
                 [cleanString appendString:chunk];
