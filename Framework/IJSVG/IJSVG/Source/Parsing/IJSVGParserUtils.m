@@ -8,10 +8,64 @@
 
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVG/IJSVGTransform.h>
 
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
 {
     return (mask & (1ULL << attribute)) != 0;
+}
+
+NSString* IJSVGAttributeValue(
+    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+    IJSVGNodeAttribute attribute)
+{
+    return attributeValues[attribute];
+}
+
+BOOL IJSVGAttributeHasValue(
+    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+    IJSVGNodeAttribute attribute,
+    NSString* __autoreleasing* value)
+{
+    NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
+    if(attributeValue.length == 0) {
+        return NO;
+    }
+    if(value != NULL) {
+        *value = attributeValue;
+    }
+    return YES;
+}
+
+void IJSVGStoreStyleAttributes(
+    IJSVGStyleSheetStyle* style,
+    uint64_t activeAttributes,
+    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength],
+    uint64_t* presentAttributes)
+{
+    NSDictionary* properties = style.properties;
+    for(NSString* key in properties) {
+        NSUInteger attribute = IJSVGNodeAttributeForName(key);
+        if(attribute == NSNotFound || IJSVGAttributeMaskContains(activeAttributes, attribute) == NO) {
+            continue;
+        }
+        NSString* value = properties[key];
+        if(value.length == 0) {
+            continue;
+        }
+        attributeValues[attribute] = value;
+        *presentAttributes |= (1ULL << attribute);
+    }
+}
+
+void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value)
+{
+    NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
+    [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
+    if(node.transforms != nil) {
+        [transforms addObjectsFromArray:node.transforms];
+    }
+    node.transforms = transforms;
 }
 
 NSUInteger IJSVGNodeAttributeForName(NSString* name)
