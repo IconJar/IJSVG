@@ -149,6 +149,20 @@
     XCTAssertEqual(last.primitiveType, kIJSVGPrimitivePathTypeLine);
 }
 
+- (void)testParserPreservesUnicodeAttributeOnGlyphNodes
+{
+    NSString* body = @"<glyph unicode=\"A\"/>";
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
+                                                         fileURL:nil
+                                                           error:nil];
+    IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
+    IJSVGNode* glyph = rootNode.children.firstObject;
+
+    XCTAssertEqual(rootNode.children.count, 1);
+    XCTAssertEqualObjects(glyph.name, @"glyph");
+    XCTAssertEqualObjects(glyph.unicode, @"A");
+}
+
 - (void)testParserCopiesRepeatedUseReferencesIntoDistinctChildren
 {
     NSString* body = @"<defs><path id=\"shape\" d=\"M0 0 H8\"/></defs>"

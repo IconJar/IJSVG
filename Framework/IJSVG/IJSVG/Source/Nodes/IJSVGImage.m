@@ -14,7 +14,10 @@
 
 - (void)dealloc
 {
-    (void)(CGImageRelease(CGImage)), CGImage = nil;
+    if(CGImage != NULL) {
+        CGImageRelease(CGImage);
+        CGImage = NULL;
+    }
 }
 
 + (IJSVGBitFlags*)allowedAttributes
@@ -82,9 +85,14 @@
     _image = anImage;
     _intrinsicSize = (CGSize)_image.size;
 
-    if(CGImage != nil) {
+    if(CGImage != NULL) {
         CGImageRelease(CGImage);
-        CGImage = nil;
+        CGImage = NULL;
+    }
+
+    if(_image == nil) {
+        _intrinsicSize = CGSizeZero;
+        return;
     }
 
     CGRect rect = CGRectMake(0.f, 0.f,
@@ -94,7 +102,9 @@
                                      context:nil
                                        hints:nil];
 
-    CGImageRetain(CGImage);
+    if(CGImage != NULL) {
+        CGImageRetain(CGImage);
+    }
 }
 
 - (CGImageRef)CGImage

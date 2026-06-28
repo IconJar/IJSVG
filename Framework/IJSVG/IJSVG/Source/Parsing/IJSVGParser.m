@@ -52,6 +52,7 @@ NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
 NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
+NSString* const IJSVGAttributeUnicode = @"unicode";
 NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
 NSString* const IJSVGAttributeStrokeLineJoin = @"stroke-linejoin";
 NSString* const IJSVGAttributeStroke = @"stroke";
@@ -414,6 +415,9 @@ NSString* const IJSVGAttributeMarker = @"marker";
         NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
         node.className = value;
         node.classNameList = [NSSet setWithArray:list];
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
+        node.unicode = value;
     }
     
     IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
@@ -807,8 +811,11 @@ NSString* const IJSVGAttributeMarker = @"marker";
     }
     [self computeDefsForElement:element
                      parentNode:node];
-    for(NSXMLElement* childElement in element.children) {
-        [self parseElement:childElement
+    for(NSXMLNode* childNode in element.children) {
+        if(childNode.kind != NSXMLElementKind) {
+            continue;
+        }
+        [self parseElement:(NSXMLElement*)childNode
                 parentNode:node];
     }
 }

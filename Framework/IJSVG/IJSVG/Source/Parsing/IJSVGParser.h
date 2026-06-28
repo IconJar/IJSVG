@@ -68,6 +68,7 @@ extern NSString* const IJSVGAttributeMaskUnits;
 extern NSString* const IJSVGAttributeMaskContentUnits;
 extern NSString* const IJSVGAttributeTransform;
 extern NSString* const IJSVGAttributeGradientTransform;
+extern NSString* const IJSVGAttributeUnicode;
 extern NSString* const IJSVGAttributeStrokeLineCap;
 extern NSString* const IJSVGAttributeStrokeLineJoin;
 extern NSString* const IJSVGAttributeStroke;

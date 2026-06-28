@@ -40,8 +40,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
 + (IJSVGNodeType)typeForString:(NSString*)string
                           kind:(NSXMLNodeKind)kind
 {
-    // if string is nil, or its not a generic element or some text span
-    if(string == nil || (kind != NSXMLElementKind && kind != NSXMLTextKind)) {
+    if(string == nil || kind != NSXMLElementKind) {
         return IJSVGNodeTypeNotFound;
     }
     
@@ -211,6 +210,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
     [storage setBit:IJSVGNodeAttributeClass];
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
+    [storage setBit:IJSVGNodeAttributeUnicode];
     [storage setBit:IJSVGNodeAttributeDisplay];
     return storage;
 }
@@ -371,6 +371,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
     self.title = node.title;
     self.desc = node.desc;
+    self.unicode = node.unicode;
     
     self.name = node.name;
     self.type = node.type;

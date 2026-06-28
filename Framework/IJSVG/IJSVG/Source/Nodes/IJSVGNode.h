@@ -207,6 +207,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) BOOL containsRelativeUnits;
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
+@property (nonatomic, copy) NSString* unicode;
 @property (nonatomic, assign) IJSVGNodeType type;
 @property (nonatomic, copy) NSString* name;
 @property (nonatomic, copy) NSString* className;

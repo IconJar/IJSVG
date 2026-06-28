@@ -164,10 +164,14 @@ containsNodesMatchingTraits:traits];
 {
     CGRect rect = CGRectNull;
     for(IJSVGNode* node in self.children) {
+        CGRect childBounds = node.bounds;
+        if(CGRectIsNull(childBounds)) {
+            continue;
+        }
         if(CGRectIsNull(rect)) {
-            rect = node.bounds;
+            rect = childBounds;
         } else {
-            rect = CGRectUnion(rect, node.bounds);
+            rect = CGRectUnion(rect, childBounds);
         }
     }
     return rect;

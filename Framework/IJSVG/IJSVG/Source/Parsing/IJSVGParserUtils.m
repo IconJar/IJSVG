@@ -209,6 +209,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             if(c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "opacity")) {
                 return IJSVGNodeAttributeOpacity;
             }
+            if(c == 'u' && IJSVGAttributeNameEquals(attributeName, length, "unicode")) {
+                return IJSVGNodeAttributeUnicode;
+            }
             if(c == 'v') {
                 if(IJSVGAttributeNameEquals(attributeName, length, "version")) {
                     return IJSVGNodeAttributeVersion;
@@ -385,6 +388,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeMaskContentUnits: @(IJSVGNodeAttributeMaskContentUnits),
             IJSVGAttributeTransform: @(IJSVGNodeAttributeTransform),
             IJSVGAttributeGradientTransform: @(IJSVGNodeAttributeGradientTransform),
+            IJSVGAttributeUnicode: @(IJSVGNodeAttributeUnicode),
             IJSVGAttributeStrokeLineCap: @(IJSVGNodeAttributeStrokeLineCap),
             IJSVGAttributeStrokeLineJoin: @(IJSVGNodeAttributeStrokeLineJoin),
             IJSVGAttributeStroke: @(IJSVGNodeAttributeStroke),

@@ -12,6 +12,14 @@
 
 @implementation IJSVGGradient
 
+- (void)_invalidateCGGradient
+{
+    if(_CGGradient != NULL) {
+        CGGradientRelease(_CGGradient);
+        _CGGradient = NULL;
+    }
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
@@ -26,9 +34,7 @@
     if(_locations != NULL) {
         (void)free(_locations), _locations = NULL;
     }
-    if(_CGGradient != NULL) {
-        (void)CGGradientRelease(_CGGradient), _CGGradient = NULL;
-    }
+    [self _invalidateCGGradient];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -43,9 +49,13 @@
     [super applyPropertiesFromNode:node];
     self.numberOfStops = node.numberOfStops;
     self.colors = node.colors.copy;
-    size_t length = sizeof(CGFloat)*node.numberOfStops;
-    self.locations = (CGFloat*)malloc(length);
-    memcpy(self.locations, node.locations, length);
+    if(node.numberOfStops > 0 && node.locations != NULL) {
+        size_t length = sizeof(CGFloat)*node.numberOfStops;
+        self.locations = (CGFloat*)malloc(length);
+        memcpy(self.locations, node.locations, length);
+    } else {
+        self.locations = NULL;
+    }
     self.x1 = node.x1.copy;
     self.x2 = node.x2.copy;
     self.y1 = node.y1.copy;
@@ -74,23 +84,36 @@
     return storage;
 }
 
+- (void)setColors:(NSArray<NSColor*>*)colors
+{
+    _colors = colors;
+    [self _invalidateCGGradient];
+}
+
 - (void)setLocations:(CGFloat*)locations
 {
     if(_locations != NULL) {
         (void)free(_locations), _locations = NULL;
     }
     _locations = locations;
+    [self _invalidateCGGradient];
 }
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray**)someColors
 {
-    NSArray<IJSVGNode*>* stops = [gradient childrenOfType:IJSVGNodeTypeStop];
-    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:stops.count];
-    CGFloat* stopsParams = (CGFloat*)malloc(stops.count * sizeof(CGFloat));
+    NSUInteger childCount = gradient.children.count;
+    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:childCount];
+    CGFloat* stopsParams = NULL;
+    if(childCount != 0) {
+        stopsParams = (CGFloat*)malloc(childCount * sizeof(CGFloat));
+    }
     
-    NSInteger i = 0;
-    for(IJSVGNode* stopNode in stops) {
+    NSUInteger i = 0;
+    for(IJSVGNode* stopNode in gradient.children) {
+        if(stopNode.type != IJSVGNodeTypeStop) {
+            continue;
+        }
         NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
         CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
@@ -103,6 +126,9 @@
             }
         }
         [colors addObject:color];
+    }
+    if(i == 0 && stopsParams != NULL) {
+        (void)free(stopsParams), stopsParams = NULL;
     }
     *someColors = (NSArray*)colors;
     return stopsParams;
