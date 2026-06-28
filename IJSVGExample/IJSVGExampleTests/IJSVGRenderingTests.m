@@ -158,6 +158,31 @@
     XCTAssertEqualWithAccuracy(point.y, 11.f, 0.0001f);
 }
 
+- (void)testRecursivelyWalkLayerStopsBeforeVisitingLaterSiblings
+{
+    IJSVGLayer* rootLayer = [IJSVGLayer layer];
+    IJSVGLayer* firstLayer = [IJSVGLayer layer];
+    IJSVGLayer* nestedLayer = [IJSVGLayer layer];
+    IJSVGLayer* secondLayer = [IJSVGLayer layer];
+    rootLayer.name = @"root";
+    firstLayer.name = @"first";
+    nestedLayer.name = @"nested";
+    secondLayer.name = @"second";
+    [rootLayer addSublayer:firstLayer];
+    [firstLayer addSublayer:nestedLayer];
+    [rootLayer addSublayer:secondLayer];
+
+    NSMutableArray<NSString*>* visitedNames = [[NSMutableArray alloc] init];
+    IJSVGRecursivelyWalkLayer(rootLayer, ^(CALayer<IJSVGBasicLayer>* layer, BOOL* stop) {
+        [visitedNames addObject:layer.name];
+        if(layer == nestedLayer) {
+            *stop = YES;
+        }
+    });
+
+    XCTAssertEqualObjects(visitedNames, (@[ @"root", @"first", @"nested" ]));
+}
+
 - (void)testRenderingIgnoresEmptyReferencedPaths
 {
     NSString* body = @"<defs><path id=\"space\"/></defs>"

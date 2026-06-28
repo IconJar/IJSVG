@@ -518,34 +518,16 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     return arr;
 }
 
-+ (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
-                   withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block
-{
-    // call for layer and mask if there is one
-    BOOL stop = NO;
-    block(layer, &stop);
-    if(stop == YES) {
-        return;
-    }
-
-    // sublayers!!
-    for (CALayer<IJSVGBasicLayer>* aLayer in layer.sublayers) {
-        [self recursivelyWalkLayer:aLayer
-                         withBlock:block];
-    }
-}
-
 + (void)setBackingScaleFactor:(CGFloat)scale
                 renderQuality:(IJSVGRenderQuality)quality
            recursivelyToLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
-    [self recursivelyWalkLayer:layer
-                     withBlock:^(CALayer<IJSVGDrawableLayer>*sublayer, BOOL *stop) {
+    IJSVGRecursivelyWalkLayer(layer, ^(CALayer<IJSVGBasicLayer>*sublayer, BOOL *stop) {
         sublayer.renderQuality = quality;
         if(sublayer.requiresBackingScale == YES) {
             sublayer.backingScaleFactor = scale;
         }
-    }];
+    });
 }
 
 + (void)logLayer:(CALayer<IJSVGDrawableLayer>*)layer

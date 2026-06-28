@@ -128,8 +128,6 @@ NSMapTable<NSNumber*, CALayer<IJSVGDrawableLayer>*>* IJSVGLayerDefaultUsageMapTa
 + (IJSVGLayerFillType)fillTypeForFill:(id)fill;
 
 + (NSArray*)deepestSublayersOfLayer:(CALayer*)layer;
-+ (void)recursivelyWalkLayer:(CALayer<IJSVGBasicLayer>*)layer
-                   withBlock:(void (^)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop))block;
 
 + (CALayer<IJSVGDrawableLayer>*)firstSublayerOfClass:(Class)aClass
                                            fromLayer:(CALayer<IJSVGDrawableLayer>*)layer;

@@ -14,6 +14,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol IJSVGBasicLayer;
+
+typedef void (^IJSVGLayerWalkBlock)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop);
+
 @interface IJSVGUtils : NSObject
 
 CG_EXTERN const CGSize IJSVG_SIZE_INFINITE;
@@ -26,6 +30,8 @@ CGFloat IJSVGAngle(CGPoint a, CGPoint b);
 CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 BOOL IJSVGIsValidContextSize(CGSize size);
+void IJSVGRecursivelyWalkLayer(CALayer<IJSVGBasicLayer>* layer,
+                               IJSVGLayerWalkBlock block);
 
 // These are expensive to create and are hit on every offscreen pass,
 // so they are created lazily once and reused. The returned reference is owned

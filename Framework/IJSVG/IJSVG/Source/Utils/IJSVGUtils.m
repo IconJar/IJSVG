@@ -55,6 +55,29 @@ CGColorSpaceRef IJSVGDeviceRGBColorSpace(void) {
     return colorSpace;
 }
 
+static BOOL IJSVGRecursivelyWalkLayerAndReturnShouldStop(CALayer<IJSVGBasicLayer>* layer,
+                                                         IJSVGLayerWalkBlock block)
+{
+    BOOL stop = NO;
+    block(layer, &stop);
+    if(stop == YES) {
+        return YES;
+    }
+
+    for(CALayer<IJSVGBasicLayer>* sublayer in layer.sublayers) {
+        if(IJSVGRecursivelyWalkLayerAndReturnShouldStop(sublayer, block) == YES) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+void IJSVGRecursivelyWalkLayer(CALayer<IJSVGBasicLayer>* layer,
+                               IJSVGLayerWalkBlock block)
+{
+    IJSVGRecursivelyWalkLayerAndReturnShouldStop(layer, block);
+}
+
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
     while((c = *buffer++)) {
