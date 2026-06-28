@@ -349,22 +349,6 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return isupper(commandChar) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
 }
 
-+ (NSRange)rangeOfParentheses:(NSString*)string
-{
-    NSRange range = NSMakeRange(NSNotFound, 0);
-    const char* characters = string.UTF8String;
-    unsigned long length = strlen(characters);
-    for (NSInteger i = 0; i < length; i++) {
-        char c = *characters++;
-        if(c == '(') {
-            range.location = i + 1;
-        } else if(c == ')') {
-            range.length = i - range.location;
-        }
-    }
-    return range;
-}
-
 + (NSString* _Nullable)defURL:(NSString*)string
 {
     const char* str = string.UTF8String;
@@ -576,6 +560,15 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                                        size:count];
 }
 
++ (CGFloat*)commandParameters:(NSString*)command
+                   dataStream:(IJSVGPathDataStream*)dataStream
+                        count:(NSInteger*)count
+{
+    return [self.class scanFloatsFromCString:command.UTF8String
+                                  dataStream:dataStream
+                                        size:count];
+}
+
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
@@ -587,10 +580,19 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                              size:(NSInteger*)length
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(buffer, strlen(buffer),
-        stream, NULL, 1, length);
+    CGFloat* floats = [self.class scanFloatsFromCString:buffer
+                                             dataStream:stream
+                                                   size:length];
     IJSVGPathDataStreamRelease(stream);
     return floats;
+}
+
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                       dataStream:(IJSVGPathDataStream*)dataStream
+                             size:(NSInteger*)length
+{
+    return IJSVGParsePathDataStreamSequence(buffer, strlen(buffer),
+        dataStream, NULL, 1, length);
 }
 
 + (CGFloat*)scanFloatsFromCString:(const char*)buffer
@@ -599,8 +601,9 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                              size:(NSInteger*)length
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(floatCount, charCount);
-    CGFloat* floats = IJSVGParsePathDataStreamSequence(buffer, strlen(buffer),
-        stream, NULL, 1, length);
+    CGFloat* floats = [self.class scanFloatsFromCString:buffer
+                                             dataStream:stream
+                                                   size:length];
     IJSVGPathDataStreamRelease(stream);
     return floats;
 }
@@ -624,16 +627,6 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
         val = (fallBack * val) / 100;
     }
     return val;
-}
-
-+ (void)logParameters:(CGFloat*)param
-                count:(NSInteger)count
-{
-    NSMutableString* str = [[NSMutableString alloc] init];
-    for (NSInteger i = 0; i < count; i++) {
-        [str appendFormat:@"%f ", param[i]];
-    }
-    NSLog(@"%@", str);
 }
 
 + (CGFloat)floatValue:(NSString*)string

@@ -26,11 +26,16 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
     IJSVGTransformCommandNotImplemented
 };
 
+enum {
+    IJSVGTransformParameterCapacity = 6
+};
+
 @interface IJSVGTransform : NSObject {
+    CGFloat _parameters[IJSVGTransformParameterCapacity];
 }
 
 @property (nonatomic, assign) IJSVGTransformCommand command;
-@property (nonatomic, assign) CGFloat* parameters;
+@property (nonatomic, readonly) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;
 @property (nonatomic, assign) NSInteger sort;
 
@@ -53,6 +58,8 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
    withContentUnits:(IJSVGUnitType)contentUnits;
 - (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
                                      bounds:(CGRect)bounds;
+- (void)setParameters:(const CGFloat*)parameters
+                count:(NSInteger)count;
 - (CGAffineTransform)CGAffineTransform;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
 + (IJSVGTransform*)transformByTranslatingX:(CGFloat)x

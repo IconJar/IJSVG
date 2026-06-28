@@ -12,19 +12,29 @@
 
 @implementation IJSVGTransform
 
-- (void)dealloc
+- (CGFloat*)parameters
 {
-    (void)free(_parameters), _parameters = NULL;
+    return _parameters;
+}
+
+- (void)setParameters:(const CGFloat*)parameters
+                 count:(NSInteger)count
+{
+    memset(_parameters, 0, sizeof(_parameters));
+    NSInteger copiedCount = MIN(count, IJSVGTransformParameterCapacity);
+    if(parameters != NULL && copiedCount > 0) {
+        memcpy(_parameters, parameters, sizeof(CGFloat) * copiedCount);
+    }
+    _parameterCount = copiedCount;
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGTransform* trans = [[self.class alloc] init];
     trans.command = _command;
-    trans.parameters = (CGFloat*)malloc(sizeof(CGFloat) * _parameterCount);
     trans.sort = _sort;
-    trans.parameterCount = _parameterCount;
-    memcpy(trans.parameters, _parameters, sizeof(CGFloat) * _parameterCount);
+    [trans setParameters:_parameters
+                   count:_parameterCount];
     return trans;
 }
 
@@ -71,11 +81,9 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 {
     IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandTranslate;
-    transform.parameterCount = 2;
-    CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
-    params[0] = x;
-    params[1] = y;
-    transform.parameters = params;
+    CGFloat params[2] = { x, y };
+    [transform setParameters:params
+                       count:2];
     return transform;
 }
 
@@ -84,11 +92,9 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 {
     IJSVGTransform* transform = [[self alloc] init];
     transform.command = IJSVGTransformCommandScale;
-    transform.parameterCount = 2;
-    CGFloat* params = (CGFloat*)malloc(sizeof(CGFloat) * 2);
-    params[0] = x;
-    params[1] = y;
-    transform.parameters = params;
+    CGFloat params[2] = { x, y };
+    [transform setParameters:params
+                       count:2];
     return transform;
 }
 
@@ -116,36 +122,6 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         return IJSVGTransformCommandSkewY;
     }
     if(IJSVGCharBufferCaseInsensitiveCompare(str, "rotate") == YES) {
-        return IJSVGTransformCommandRotate;
-    }
-    return IJSVGTransformCommandNotImplemented;
-}
-
-+ (IJSVGTransformCommand)commandForCommandString:(NSString*)str
-{
-    str = str.lowercaseString;
-    if([str isEqualToString:@"matrix"]) {
-        return IJSVGTransformCommandMatrix;
-    }
-    if([str isEqualToString:@"translate"]) {
-        return IJSVGTransformCommandTranslate;
-    }
-    if([str isEqualToString:@"translatex"]) {
-        return IJSVGTransformCommandTranslateX;
-    }
-    if([str isEqualToString:@"translatey"]) {
-        return IJSVGTransformCommandTranslateY;
-    }
-    if([str isEqualToString:@"scale"]) {
-        return IJSVGTransformCommandScale;
-    }
-    if([str isEqualToString:@"skewx"]) {
-        return IJSVGTransformCommandSkewX;
-    }
-    if([str isEqualToString:@"skewy"]) {
-        return IJSVGTransformCommandSkewY;
-    }
-    if([str isEqualToString:@"rotate"]) {
         return IJSVGTransformCommandRotate;
     }
     return IJSVGTransformCommandNotImplemented;
@@ -179,6 +155,8 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     IJSVGParsingStringMethod** methods = NULL;
     NSUInteger count = 0;
     methods = IJSVGParsingMethodParseString(charString, &count);
+    IJSVGPathDataStream* dataStream = IJSVGPathDataStreamCreate(IJSVGTransformParameterCapacity,
+                                                                IJSVG_STREAM_CHAR_BLOCK_SIZE);
     for(int i = 0; i < count; i++) {
         IJSVGParsingStringMethod* method = methods[i];
         IJSVGTransformCommand commandType;
@@ -193,14 +171,20 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         IJSVGTransform* transform = [[self.class alloc] init];
         transform.command = commandType;
         transform.sort = [self.class sortForTransformCommand:commandType];
-        transform.parameters = [IJSVGUtils scanFloatsFromCString:method->parameters
-                                                            size:&count];
-        transform.parameterCount = count;
+        CGFloat* params = [IJSVGUtils scanFloatsFromCString:method->parameters
+                                                 dataStream:dataStream
+                                                       size:&count];
+        [transform setParameters:params
+                           count:count];
+        if(params != NULL) {
+            (void)free(params), params = NULL;
+        }
 
         // add to the list of transforms to return
         [transforms addObject:transform];
         (void)IJSVGParsingStringMethodRelease(method), method = NULL;
     }
+    IJSVGPathDataStreamRelease(dataStream);
     (void)free(methods), methods = NULL;
     return transforms;
 }

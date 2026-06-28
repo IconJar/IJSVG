@@ -33,30 +33,6 @@
     return strings;
 }
 
-- (BOOL)ijsvg_containsAlpha
-{
-    const char* buffer = self.UTF8String;
-    char currentChar;
-    while((currentChar = *buffer++) ) {
-        if(isalpha(currentChar)) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-- (BOOL)ijsvg_isNumeric
-{
-    const char* buffer = self.UTF8String;
-    char currentChar;
-    while((currentChar = *buffer++) ) {
-        if(!isnumber(currentChar)) {
-            return NO;
-        }
-    }
-    return YES;
-}
-
 - (NSArray*)ijsvg_componentsSplitByWhiteSpace
 {
     return [self ijsvg_componentsSeparatedByChars:"\t\n\r "];

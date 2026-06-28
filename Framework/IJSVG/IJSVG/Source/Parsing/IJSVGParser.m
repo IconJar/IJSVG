@@ -548,6 +548,7 @@ NSString* const IJSVGAttributeMarker = @"marker";
         } else {
             NSInteger paramCount = 0;
             CGFloat* params = [IJSVGUtils commandParameters:value
+                                                 dataStream:_commandDataStream
                                                       count:&paramCount];
             node.strokeDashArray = params;
             node.strokeDashArrayCount = paramCount;
@@ -1474,6 +1475,7 @@ NSString* const IJSVGAttributeMarker = @"marker";
 {
     NSInteger count = 0;
     CGFloat* params = [IJSVGUtils commandParameters:points
+                                         dataStream:_commandDataStream
                                               count:&count];
 
     // error occured, free the params

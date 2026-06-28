@@ -32,12 +32,8 @@
     XCTAssertEqualObjects([@"" ijsvg_componentsSeparatedByChars:","], @[]);
 }
 
-- (void)testStringAdditionsNumericAlphaAndHexChecks
+- (void)testStringAdditionsHexChecks
 {
-    XCTAssertTrue([@"123456" ijsvg_isNumeric]);
-    XCTAssertFalse([@"12.3" ijsvg_isNumeric]);
-    XCTAssertTrue([@"abc123" ijsvg_containsAlpha]);
-    XCTAssertFalse([@"123" ijsvg_containsAlpha]);
     XCTAssertTrue([@"#A0f" ijsvg_isHexString]);
     XCTAssertFalse([@"#xyz" ijsvg_isHexString]);
 }

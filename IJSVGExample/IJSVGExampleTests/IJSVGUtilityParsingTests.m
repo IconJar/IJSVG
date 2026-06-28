@@ -417,15 +417,11 @@
     XCTAssertFalse(IJSVGIsValidContextSize(CGSizeMake(0.5f, 1.f)));
 }
 
-- (void)testUtilsDefURLAndParenthesesRange
+- (void)testUtilsDefURL
 {
     XCTAssertEqualObjects([IJSVGUtils defURL:@"url(#gradient)"], @"gradient");
     XCTAssertEqualObjects([IJSVGUtils defURL:@"url(mask)"], @"mask");
     XCTAssertNil([IJSVGUtils defURL:@"none"]);
-
-    NSRange range = [IJSVGUtils rangeOfParentheses:@"translate(10, 20)"];
-    XCTAssertEqual(range.location, 10u);
-    XCTAssertEqual(range.length, 6u);
 }
 
 - (void)testBitFlagsSetUnsetMergeAndExposeMasks

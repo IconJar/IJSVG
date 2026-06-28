@@ -66,6 +66,9 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGCommandType)typeForCommandChar:(char)commandChar;
 + (CGFloat*)commandParameters:(NSString*)command
                         count:(NSInteger*)count;
++ (CGFloat*)commandParameters:(NSString*)command
+                   dataStream:(IJSVGPathDataStream*)dataStream
+                        count:(NSInteger*)count;
 + (CGFloat*)parseViewBox:(NSString*)string;
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string;
@@ -75,10 +78,7 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGUnitType)unitTypeForString:(NSString*)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
-+ (NSRange)rangeOfParentheses:(NSString*)string;
 
-+ (void)logParameters:(CGFloat*)param
-                count:(NSInteger)count;
 + (CGFloat)floatValue:(NSString*)string;
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;
@@ -88,6 +88,9 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length;
 + (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                             size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer
+                       dataStream:(IJSVGPathDataStream*)dataStream
                              size:(NSInteger*)length;
 + (CGFloat*)scanFloatsFromCString:(const char*)buffer
                        floatCount:(NSUInteger)floatCount
