@@ -7,6 +7,8 @@
 //
 
 #import "IJSVGTestHelpers.h"
+#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVG/IJSVGTransformLayer.h>
 
 @interface IJSVGRenderingTests : XCTestCase
 @end
@@ -135,6 +137,25 @@
                                         @"WWWWBBBB",
                                         @"WWWWBBBB" ],
                                      palette);
+}
+
+- (void)testAbsoluteTransformIncludesIntermediateTransformLayers
+{
+    IJSVGTransformLayer* outerLayer = [IJSVGTransformLayer layer];
+    IJSVGTransformLayer* innerLayer = [IJSVGTransformLayer layer];
+    IJSVGShapeLayer* shapeLayer = [IJSVGShapeLayer layer];
+
+    outerLayer.affineTransform = CGAffineTransformMakeTranslation(2.f, 0.f);
+    innerLayer.affineTransform = CGAffineTransformMakeTranslation(0.f, 3.f);
+    shapeLayer.affineTransform = CGAffineTransformMakeTranslation(5.f, 7.f);
+    [outerLayer addSublayer:innerLayer];
+    [innerLayer addSublayer:shapeLayer];
+
+    CGAffineTransform transform = [IJSVGLayer absoluteTransformForLayer:shapeLayer];
+    CGPoint point = CGPointApplyAffineTransform(CGPointMake(1.f, 1.f), transform);
+
+    XCTAssertEqualWithAccuracy(point.x, 8.f, 0.0001f);
+    XCTAssertEqualWithAccuracy(point.y, 11.f, 0.0001f);
 }
 
 - (void)testRenderingIgnoresEmptyReferencedPaths

@@ -137,18 +137,21 @@ static BOOL IJSVGLayerCanRenderDirectly(IJSVGLayer* layer)
 
 + (CGAffineTransform)absoluteTransformForLayer:(CALayer<IJSVGDrawableLayer>*)layer
 {
-    CGAffineTransform identity = CGAffineTransformIdentity;
-    CALayer<IJSVGDrawableLayer>* parentLayer = layer;
-    while((parentLayer = parentLayer.referencingLayer) != nil) {
-        identity = [self absoluteTransformForLayer:parentLayer];
-        
-        // only go up until we find a root layer, at that point, we know
-        // we can stop looking
-        if([parentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
+    NSMutableArray<CALayer<IJSVGDrawableLayer>*>* layers = [[NSMutableArray alloc] init];
+    CALayer<IJSVGDrawableLayer>* currentLayer = layer;
+    while(currentLayer != nil) {
+        [layers addObject:currentLayer];
+        if([currentLayer isKindOfClass:IJSVGRootLayer.class] == YES) {
             break;
         }
+        currentLayer = currentLayer.referencingLayer;
     }
-    return CGAffineTransformConcat(identity, layer.affineTransform);
+
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    for(CALayer<IJSVGDrawableLayer>* currentLayer in layers.reverseObjectEnumerator) {
+        transform = CGAffineTransformConcat(transform, currentLayer.affineTransform);
+    }
+    return transform;
 }
 
 + (void)transformLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -330,6 +333,7 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     // weed out the no empty clipPaths
     if(CGRectEqualToRect(rect, CGRectZero) == YES) {
         drawingBlock();
+        CGContextRestoreGState(ctx);
         return;
     }
     
@@ -345,6 +349,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
             CGImageRef layerMask = [self newMaskImageForLayer:clipLayer
                                                       options:IJSVGLayerDrawingOptionIgnoreClipping
                                                         scale:scale];
+            if(layerMask == NULL) {
+                CGContextRestoreGState(maskCtx);
+                continue;
+            }
             if(maskImage != NULL) {
                 CGRect maskRect = CGRectInset(rect, -maskTolerance, -maskTolerance);
                 CGContextClipToMask(maskCtx, maskRect, maskImage);
@@ -357,7 +365,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
             maskImage = CGBitmapContextCreateImage(maskCtx);
             CGContextRestoreGState(maskCtx);
         }
-        CGImageRelease(maskImage);
+        if(maskImage != NULL) {
+            CGImageRelease(maskImage);
+        }
     };
     
     CGImageRef image = [self newImageWithSize:size
@@ -365,6 +375,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                    colorSpace:colorSpace
                                    bitmapInfo:kCGImageAlphaNone
                                         scale:scale];
+    if(image == NULL) {
+        CGContextRestoreGState(ctx);
+        return;
+    }
     
     // we need to transform the mask rect back based on the inner bounding
     // box of the layer, as this could be a group layer that inner box is
@@ -389,6 +403,10 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
     CGImageRef maskImage = [self newMaskImageForLayer:maskLayer
                                               options:IJSVGLayerDrawingOptionNone
                                                 scale:scale];
+    if(maskImage == NULL) {
+        CGContextRestoreGState(ctx);
+        return;
+    }
     CGContextClipToRect(ctx, maskLayer.maskingClippingRect);
     CGContextClipToMask(ctx, maskLayer.maskingBoundingBox, maskImage);
     drawingBlock();
@@ -421,6 +439,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                                           ceilf(size.width*scale),
                                                           ceilf(size.height*scale),
                                                           8, 0, colorSpace, bitmapInfo);
+    if(offscreenContext == NULL) {
+        return nil;
+    }
     CGContextScaleCTM(offscreenContext, scale, scale);
     drawBlock(offscreenContext);
     CGImageRef image = CGBitmapContextCreateImage(offscreenContext);
@@ -449,6 +470,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
                                                           ceilf(frame.size.width*scale),
                                                           ceilf(frame.size.height*scale),
                                                           8, 0, colorSpace, bitmapInfo);
+    if(offscreenContext == NULL) {
+        return nil;
+    }
     CGContextScaleCTM(offscreenContext, scale, scale);
     CGContextConcatCTM(offscreenContext, CGAffineTransformMakeTranslation(-bounds.origin.x,
                                                                           -bounds.origin.y));
