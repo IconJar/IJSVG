@@ -21,7 +21,6 @@
 #import <IJSVG/IJSVGPatternLayer.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGStrokeLayer.h>
-#import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTransformLayer.h>

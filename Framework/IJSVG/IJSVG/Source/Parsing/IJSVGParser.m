@@ -52,7 +52,6 @@ NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
 NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
-NSString* const IJSVGAttributeUnicode = @"unicode";
 NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
 NSString* const IJSVGAttributeStrokeLineJoin = @"stroke-linejoin";
 NSString* const IJSVGAttributeStroke = @"stroke";
@@ -514,9 +513,6 @@ NSString* const IJSVGAttributeMarker = @"marker";
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePatternTransform, &value)) {
         IJSVGApplyTransformAttribute(node, value);
-    }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
-        node.unicode = [NSString stringWithFormat:@"%04x", [value characterAtIndex:0]];
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineCap, &value)) {
         node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];

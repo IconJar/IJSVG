@@ -87,10 +87,6 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
                        floatCount:(NSUInteger)floatCount
                         charCount:(NSUInteger)charCount
                              size:(NSInteger*)length;
-+ (IJSVGFontTraits)fontStyleStringForString:(NSString*)string;
-+ (IJSVGFontTraits)fontWeightTraitForString:(NSString*)string
-                                     weight:(CGFloat*)weight;
-
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
 
 + (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;

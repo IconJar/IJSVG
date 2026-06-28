@@ -374,22 +374,6 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return foundID;
 }
 
-+ (IJSVGFontTraits)fontWeightTraitForString:(NSString*)string
-                                     weight:(CGFloat*)weight
-{
-    *weight = string.floatValue;
-    if([string isEqualToString:@"bold"])
-        return IJSVGFontTraitBold;
-    return IJSVGFontTraitNone;
-}
-
-+ (IJSVGFontTraits)fontStyleStringForString:(NSString*)string
-{
-    if([string isEqualToString:@"italic"])
-        return IJSVGFontTraitItalic;
-    return IJSVGFontTraitNone;
-}
-
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
     if([string isEqualToString:IJSVGStringEvenOdd])

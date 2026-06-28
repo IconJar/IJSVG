@@ -165,12 +165,6 @@ typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) {
     IJSVGLineJoinStyleInherit
 };
 
-typedef NS_OPTIONS(NSInteger, IJSVGFontTraits) {
-    IJSVGFontTraitNone = 1 << 0,
-    IJSVGFontTraitBold = 1 << 1,
-    IJSVGFontTraitItalic = 1 << 2
-};
-
 typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeNormal = kCGBlendModeNormal,
     IJSVGBlendModeMultiply = kCGBlendModeMultiply,
@@ -217,7 +211,6 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy) NSString* name;
 @property (nonatomic, copy) NSString* className;
 @property (nonatomic, strong) NSSet<NSString*>* classNameList;
-@property (nonatomic, copy) NSString* unicode;
 @property (nonatomic, assign) BOOL shouldRender;
 @property (nonatomic, strong) IJSVGUnitLength* x;
 @property (nonatomic, strong) IJSVGUnitLength* y;

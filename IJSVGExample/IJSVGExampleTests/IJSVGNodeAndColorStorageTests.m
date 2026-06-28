@@ -20,7 +20,7 @@
     return [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
 }
 
-- (void)testNodeTypeMappingCoversKnownElementsAndTextFallback
+- (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
 {
     XCTAssertEqual([IJSVGNode typeForString:@"g" kind:NSXMLElementKind], IJSVGNodeTypeGroup);
     XCTAssertEqual([IJSVGNode typeForString:@"PATH" kind:NSXMLElementKind], IJSVGNodeTypePath);
@@ -29,7 +29,7 @@
     XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:NSXMLElementKind], IJSVGNodeTypeClipPath);
     XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
     XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeTextSpan);
+    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeUnknown);
     XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);
 }
 

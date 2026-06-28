@@ -57,9 +57,6 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
                 return IJSVGNodeTypeGroup;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "glyph") == YES) {
-                return IJSVGNodeTypeGlyph;
-            }
             break;
         }
         case 'p': {
@@ -153,12 +150,6 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             break;
         }
         case 't': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
-                return IJSVGNodeTypeText;
-            }
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES) {
-                return IJSVGNodeTypeTextSpan;
-            }
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
                 return IJSVGNodeTypeTitle;
             }
@@ -168,19 +159,12 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
                 return IJSVGNodeTypeForeignObject;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "font") == YES) {
-                return IJSVGNodeTypeFont;
-            }
             break;
         }
         default:
             break;
     }
 
-    // text content nodes are always treated as a text span regardless of name
-    if(kind == NSXMLTextKind) {
-        return IJSVGNodeTypeTextSpan;
-    }
     return IJSVGNodeTypeUnknown;
 }
 
@@ -390,7 +374,6 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     
     self.name = node.name;
     self.type = node.type;
-    self.unicode = node.unicode;
     self.className = node.className;
     self.classNameList = node.classNameList;
     
