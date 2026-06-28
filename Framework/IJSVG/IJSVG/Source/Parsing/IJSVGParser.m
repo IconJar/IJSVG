@@ -585,7 +585,7 @@ NSString* const IJSVGAttributeMarker = @"marker";
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeDisplay, &value)) {
-        if([value.lowercaseString isEqualToString:IJSVGStringNone]) {
+        if([value caseInsensitiveCompare:IJSVGStringNone] == NSOrderedSame) {
             node.shouldRender = NO;
         }
     }
@@ -611,7 +611,7 @@ NSString* const IJSVGAttributeMarker = @"marker";
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
-        if([value.lowercaseString isEqualToString:@"hidden"]) {
+        if([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame) {
             node.overflowVisibility = IJSVGOverflowVisibilityHidden;
         } else {
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;

@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <string.h>
 
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
 {
@@ -60,19 +61,34 @@ void IJSVGStoreStyleAttributes(
 
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value)
 {
-    NSMutableArray<IJSVGTransform*>* transforms = [[NSMutableArray alloc] init];
-    [transforms addObjectsFromArray:[IJSVGTransform transformsForString:value]];
+    NSMutableArray<IJSVGTransform*>* transforms =
+        [IJSVGTransform transformsForString:value].mutableCopy;
+    if(transforms == nil) {
+        transforms = [[NSMutableArray alloc] init];
+    }
     if(node.transforms != nil) {
         [transforms addObjectsFromArray:node.transforms];
     }
     node.transforms = transforms;
 }
 
+static inline BOOL IJSVGAttributeNameEquals(const char* name, size_t length,
+                                            const char* expected)
+{
+    return expected[length] == '\0' && memcmp(name, expected, length) == 0;
+}
+
 NSUInteger IJSVGNodeAttributeForName(NSString* name)
 {
-    switch(name.length) {
+    const char* attributeName = name.UTF8String;
+    if(attributeName == NULL) {
+        return NSNotFound;
+    }
+
+    size_t length = strlen(attributeName);
+    switch(length) {
         case 1: {
-            unichar c = [name characterAtIndex:0];
+            char c = attributeName[0];
             if(c == 'd') {
                 return IJSVGNodeAttributeD;
             }
@@ -88,143 +104,253 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 2: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'i' && [name isEqualToString:IJSVGAttributeID]) {
+            char c = attributeName[0];
+            if(c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "id")) {
                 return IJSVGNodeAttributeID;
             }
             if(c == 'c') {
-                if([name isEqualToString:IJSVGAttributeCX]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "cx")) {
                     return IJSVGNodeAttributeCX;
                 }
-                if([name isEqualToString:IJSVGAttributeCY]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "cy")) {
                     return IJSVGNodeAttributeCY;
                 }
             }
             if(c == 'f') {
-                if([name isEqualToString:IJSVGAttributeFX]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "fx")) {
                     return IJSVGNodeAttributeFX;
                 }
-                if([name isEqualToString:IJSVGAttributeFY]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "fy")) {
                     return IJSVGNodeAttributeFY;
                 }
-                if([name isEqualToString:IJSVGAttributeFR]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "fr")) {
                     return IJSVGNodeAttributeFR;
                 }
             }
             if(c == 'r') {
-                if([name isEqualToString:IJSVGAttributeRX]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "rx")) {
                     return IJSVGNodeAttributeRX;
                 }
-                if([name isEqualToString:IJSVGAttributeRY]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "ry")) {
                     return IJSVGNodeAttributeRY;
                 }
             }
             if(c == 'x') {
-                if([name isEqualToString:IJSVGAttributeX1]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "x1")) {
                     return IJSVGNodeAttributeX1;
                 }
-                if([name isEqualToString:IJSVGAttributeX2]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "x2")) {
                     return IJSVGNodeAttributeX2;
                 }
             }
             if(c == 'y') {
-                if([name isEqualToString:IJSVGAttributeY1]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "y1")) {
                     return IJSVGNodeAttributeY1;
                 }
-                if([name isEqualToString:IJSVGAttributeY2]) {
+                if(IJSVGAttributeNameEquals(attributeName, length, "y2")) {
                     return IJSVGNodeAttributeY2;
                 }
             }
             break;
         }
         case 4: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'f' && [name isEqualToString:IJSVGAttributeFill]) {
+            char c = attributeName[0];
+            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill")) {
                 return IJSVGNodeAttributeFill;
             }
-            if(c == 'h' && [name isEqualToString:IJSVGAttributeHref]) {
+            if(c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "href")) {
                 return IJSVGNodeAttributeHref;
+            }
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask")) {
+                return IJSVGNodeAttributeMask;
             }
             break;
         }
         case 5: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'c' && [name isEqualToString:IJSVGAttributeClass]) {
+            char c = attributeName[0];
+            if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "class")) {
                 return IJSVGNodeAttributeClass;
             }
-            if(c == 's' && [name isEqualToString:IJSVGAttributeStyle]) {
+            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "style")) {
                 return IJSVGNodeAttributeStyle;
             }
-            if(c == 'w' && [name isEqualToString:IJSVGAttributeWidth]) {
+            if(c == 'w' && IJSVGAttributeNameEquals(attributeName, length, "width")) {
                 return IJSVGNodeAttributeWidth;
+            }
+            if(c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xmlns")) {
+                return IJSVGNodeAttributeXMLNS;
             }
             break;
         }
         case 6: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'h' && [name isEqualToString:IJSVGAttributeHeight]) {
+            char c = attributeName[0];
+            if(c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "height")) {
                 return IJSVGNodeAttributeHeight;
             }
-            if(c == 'm' && [name isEqualToString:IJSVGAttributeMarker]) {
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "marker")) {
                 return IJSVGNodeAttributeMarker;
             }
-            if(c == 's' && [name isEqualToString:IJSVGAttributeStroke]) {
+            if(c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "offset")) {
+                return IJSVGNodeAttributeOffset;
+            }
+            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "points")) {
+                return IJSVGNodeAttributePoints;
+            }
+            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke")) {
                 return IJSVGNodeAttributeStroke;
             }
             break;
         }
         case 7: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'd' && [name isEqualToString:IJSVGAttributeDisplay]) {
+            char c = attributeName[0];
+            if(c == 'd' && IJSVGAttributeNameEquals(attributeName, length, "display")) {
                 return IJSVGNodeAttributeDisplay;
             }
-            if(c == 'o' && [name isEqualToString:IJSVGAttributeOpacity]) {
+            if(c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "opacity")) {
                 return IJSVGNodeAttributeOpacity;
             }
-            if(c == 'v' && [name isEqualToString:IJSVGAttributeViewBox]) {
-                return IJSVGNodeAttributeViewBox;
+            if(c == 'u' && IJSVGAttributeNameEquals(attributeName, length, "unicode")) {
+                return IJSVGNodeAttributeUnicode;
+            }
+            if(c == 'v') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "version")) {
+                    return IJSVGNodeAttributeVersion;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "viewBox")) {
+                    return IJSVGNodeAttributeViewBox;
+                }
+            }
+            break;
+        }
+        case 8: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "overflow")) {
+                return IJSVGNodeAttributeOverflow;
             }
             break;
         }
         case 9: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'c' && [name isEqualToString:IJSVGAttributeClipPath]) {
-                return IJSVGNodeAttributeClipPath;
+            char c = attributeName[0];
+            if(c == 'c') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "clip-path")) {
+                    return IJSVGNodeAttributeClipPath;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "clip-rule")) {
+                    return IJSVGNodeAttributeClipRule;
+                }
             }
-            if(c == 'f' && [name isEqualToString:IJSVGAttributeFillRule]) {
+            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-rule")) {
                 return IJSVGNodeAttributeFillRule;
             }
-            if(c == 't' && [name isEqualToString:IJSVGAttributeTransform]) {
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskUnits")) {
+                return IJSVGNodeAttributeMaskUnits;
+            }
+            if(c == 't' && IJSVGAttributeNameEquals(attributeName, length, "transform")) {
                 return IJSVGNodeAttributeTransform;
             }
             break;
         }
         case 10: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 's' && [name isEqualToString:IJSVGAttributeStopColor]) {
+            char c = attributeName[0];
+            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stop-color")) {
                 return IJSVGNodeAttributeStopColor;
             }
-            if(c == 'x' && [name isEqualToString:IJSVGAttributeXLink]) {
+            if(c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xlink:href")) {
                 return IJSVGNodeAttributeXLink;
             }
             break;
         }
+        case 11: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "xmlns:xlink")) {
+                return IJSVGNodeAttributeXMLNSXlink;
+            }
+            break;
+        }
         case 12: {
-            unichar c = [name characterAtIndex:0];
-            if(c == 'f' && [name isEqualToString:IJSVGAttributeFillOpacity]) {
+            char c = attributeName[0];
+            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-opacity")) {
                 return IJSVGNodeAttributeFillOpacity;
             }
-            if(c == 's' && [name isEqualToString:IJSVGAttributeStrokeWidth]) {
-                return IJSVGNodeAttributeStrokeWidth;
+            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternUnits")) {
+                return IJSVGNodeAttributePatternUnits;
             }
-            if(c == 's' && [name isEqualToString:IJSVGAttributeStopOpacity]) {
-                return IJSVGNodeAttributeStopOpacity;
+            if(c == 's') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-width")) {
+                    return IJSVGNodeAttributeStrokeWidth;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "stop-opacity")) {
+                    return IJSVGNodeAttributeStopOpacity;
+                }
+            }
+            break;
+        }
+        case 13: {
+            char c = attributeName[0];
+            if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "clipPathUnits")) {
+                return IJSVGNodeAttributeClipPathUnits;
+            }
+            if(c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientUnits")) {
+                return IJSVGNodeAttributeGradientUnits;
             }
             break;
         }
         case 14: {
-            if([name isEqualToString:IJSVGAttributeStrokeOpacity]) {
-                return IJSVGNodeAttributeStrokeOpacity;
+            char c = attributeName[0];
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mix-blend-mode")) {
+                return IJSVGNodeAttributeBlendMode;
+            }
+            if(c == 's') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-linecap")) {
+                    return IJSVGNodeAttributeStrokeLineCap;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-opacity")) {
+                    return IJSVGNodeAttributeStrokeOpacity;
+                }
+            }
+            break;
+        }
+        case 15: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "stroke-linejoin")) {
+                return IJSVGNodeAttributeStrokeLineJoin;
+            }
+            break;
+        }
+        case 16: {
+            char c = attributeName[0];
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskContentUnits")) {
+                return IJSVGNodeAttributeMaskContentUnits;
+            }
+            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternTransform")) {
+                return IJSVGNodeAttributePatternTransform;
+            }
+            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke-dasharray")) {
+                return IJSVGNodeAttributeStrokeDashArray;
+            }
+            break;
+        }
+        case 17: {
+            char c = attributeName[0];
+            if(c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientTransform")) {
+                return IJSVGNodeAttributeGradientTransform;
+            }
+            if(c == 's') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-dashoffset")) {
+                    return IJSVGNodeAttributeStrokeDashOffset;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-miterlimit")) {
+                    return IJSVGNodeAttributeStrokeMiterLimit;
+                }
+            }
+            break;
+        }
+        case 19: {
+            char c = attributeName[0];
+            if(c == 'p') {
+                if(IJSVGAttributeNameEquals(attributeName, length, "patternContentUnits")) {
+                    return IJSVGNodeAttributePatternContentUnits;
+                }
+                if(IJSVGAttributeNameEquals(attributeName, length, "preserveAspectRatio")) {
+                    return IJSVGNodeAttributePreserveAspectRatio;
+                }
             }
             break;
         }
