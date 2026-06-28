@@ -346,13 +346,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		590AA093280DE648002BBE12 /* Filter Effects */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "Filter Effects";
-			sourceTree = "<group>";
-		};
 		592ABBE223979F9B00F44380 /* Commands */ = {
 			isa = PBXGroup;
 			children = (
@@ -461,7 +454,6 @@
 		592ABBE72397A02900F44380 /* Nodes */ = {
 			isa = PBXGroup;
 			children = (
-				590AA093280DE648002BBE12 /* Filter Effects */,
 				59FE8E4228C7E70800AB38B3 /* IJSVGStop.h */,
 				59FE8E4128C7E70800AB38B3 /* IJSVGStop.m */,
 				59EB75CE23905F7200F5AE63 /* IJSVGForeignObject.h */,
