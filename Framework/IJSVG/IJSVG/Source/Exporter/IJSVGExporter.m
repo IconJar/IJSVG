@@ -552,13 +552,78 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (NSString*)gradientChildSignatureForElement:(NSXMLElement*)element
+- (NSUInteger)gradientHashForNode:(NSXMLNode*)node
 {
-    NSMutableString* signature = [[NSMutableString alloc] init];
-    for (NSXMLNode* child in element.children) {
-        [signature appendString:[child XMLStringWithOptions:NSXMLNodeCompactEmptyElement]];
+    NSUInteger hash = (NSUInteger)node.kind;
+    hash = (hash * 31U) + node.name.hash;
+    hash = (hash * 31U) + node.URI.hash;
+
+    if([node isKindOfClass:NSXMLElement.class]) {
+        NSXMLElement* element = (NSXMLElement*)node;
+        hash = (hash * 31U) + element.attributes.count;
+        for (NSXMLNode* attribute in element.attributes) {
+            hash = (hash * 31U) + attribute.name.hash;
+            hash = (hash * 31U) + attribute.URI.hash;
+            hash = (hash * 31U) + attribute.stringValue.hash;
+        }
+        hash = (hash * 31U) + element.children.count;
+        for (NSXMLNode* child in element.children) {
+            hash = (hash * 31U) + [self gradientHashForNode:child];
+        }
+    } else {
+        hash = (hash * 31U) + node.stringValue.hash;
     }
-    return signature;
+    return hash;
+}
+
+- (NSUInteger)gradientChildHashForElement:(NSXMLElement*)element
+{
+    NSUInteger hash = element.children.count;
+    for (NSXMLNode* child in element.children) {
+        hash = (hash * 31U) + [self gradientHashForNode:child];
+    }
+    return hash;
+}
+
+- (BOOL)compareGradientNode:(NSXMLNode*)node
+                    toNode:(NSXMLNode*)otherNode
+{
+    if(node.kind != otherNode.kind ||
+       ((node.name != otherNode.name) &&
+        [node.name isEqualToString:otherNode.name] == NO) ||
+       ((node.URI != otherNode.URI) && [node.URI isEqualToString:otherNode.URI] == NO)) {
+        return NO;
+    }
+
+    BOOL isElement = [node isKindOfClass:NSXMLElement.class];
+    if(isElement != [otherNode isKindOfClass:NSXMLElement.class]) {
+        return NO;
+    }
+    if(isElement == NO) {
+        return (node.stringValue == otherNode.stringValue ||
+                [node.stringValue isEqualToString:otherNode.stringValue]);
+    }
+
+    NSXMLElement* element = (NSXMLElement*)node;
+    NSXMLElement* otherElement = (NSXMLElement*)otherNode;
+    NSArray<NSXMLNode*>* attributes = element.attributes;
+    NSArray<NSXMLNode*>* otherAttributes = otherElement.attributes;
+    if(attributes.count != otherAttributes.count) {
+        return NO;
+    }
+    for (NSUInteger index = 0; index < attributes.count; index++) {
+        NSXMLNode* attribute = attributes[index];
+        NSXMLNode* otherAttribute = otherAttributes[index];
+        if([attribute.name isEqualToString:otherAttribute.name] == NO ||
+           ((attribute.URI != otherAttribute.URI) &&
+            [attribute.URI isEqualToString:otherAttribute.URI] == NO) ||
+           [attribute.stringValue isEqualToString:otherAttribute.stringValue] == NO) {
+            return NO;
+        }
+    }
+
+    return [self compareElementChildren:element
+                             toElement:otherElement];
 }
 
 - (void)_collapseGradients
@@ -574,12 +639,24 @@ NSString* IJSVGHash(NSString* key)
             [gradients addObject:element];
         }
     }
-    NSMutableDictionary<NSString*, NSXMLElement*>* gradientsByChildSignature = [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
+    NSMutableDictionary<NSNumber*, NSMutableArray<NSXMLElement*>*>* gradientsByChildHash =
+        [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
     for (NSXMLElement* gradient in gradients) {
-        NSString* signature = [self gradientChildSignatureForElement:gradient];
-        NSXMLElement* matchingGradient = gradientsByChildSignature[signature];
+        NSNumber* childHash = @([self gradientChildHashForElement:gradient]);
+        NSMutableArray<NSXMLElement*>* candidates = gradientsByChildHash[childHash];
+        NSXMLElement* matchingGradient = nil;
+        for (NSXMLElement* candidate in candidates) {
+            if([self compareElementChildren:gradient toElement:candidate]) {
+                matchingGradient = candidate;
+                break;
+            }
+        }
         if(matchingGradient == nil) {
-            gradientsByChildSignature[signature] = gradient;
+            if(candidates == nil) {
+                candidates = [[NSMutableArray alloc] init];
+                gradientsByChildHash[childHash] = candidates;
+            }
+            [candidates addObject:gradient];
             continue;
         }
 
@@ -602,15 +679,14 @@ NSString* IJSVGHash(NSString* key)
 - (BOOL)compareElementChildren:(NSXMLElement*)element
                      toElement:(NSXMLElement*)toElement
 {
-    NSArray* childrenA = element.children;
-    NSArray* childrenB = toElement.children;
+    NSArray<NSXMLNode*>* childrenA = element.children;
+    NSArray<NSXMLNode*>* childrenB = toElement.children;
     if(childrenA.count != childrenB.count) {
         return NO;
     }
-    for (NSInteger i = 0; i < childrenA.count; i++) {
-        NSXMLElement* childA = childrenA[i];
-        NSXMLElement* childB = childrenB[i];
-        if([self compareElement:childA withElement:childB] == NO) {
+    for (NSUInteger index = 0; index < childrenA.count; index++) {
+        if([self compareGradientNode:childrenA[index]
+                              toNode:childrenB[index]] == NO) {
             return NO;
         }
     }
