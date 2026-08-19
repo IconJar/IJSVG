@@ -602,79 +602,50 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 + (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                                                 floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    NSMutableArray<IJSVGExporterPathInstruction*>* nInstructions = nil;
-    nInstructions = [[NSMutableArray alloc] initWithCapacity:instructions.count];
     IJSVGExporterPathInstruction* lastInstruction = nil;
     for (IJSVGExporterPathInstruction* instruction in instructions) {
-        lastInstruction = nInstructions.lastObject;
         if(lastInstruction == nil) {
-            [nInstructions addObject:instruction];
+            lastInstruction = instruction;
             continue;
         }
         if(instruction.instruction == 'c') {
             if(lastInstruction.instruction == 'c' &&
                 instruction.data[0] == -(lastInstruction.data[2] - lastInstruction.data[4]) &&
                 instruction.data[1] == -(lastInstruction.data[3] - lastInstruction.data[5])) {
-                IJSVGExporterPathInstruction* nInstruction = nil;
-                nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
-                                                                                dataCount:4];
-                nInstruction.data[0] = instruction.data[2];
-                nInstruction.data[1] = instruction.data[3];
-                nInstruction.data[2] = instruction.data[4];
-                nInstruction.data[3] = instruction.data[5];
-                [nInstructions addObject:nInstruction];
-                continue;
+                instruction.instruction = 's';
+                memmove(instruction.data, instruction.data + 2, sizeof(CGFloat) * 4);
+                instruction->_dataCount = 4;
             } else if(lastInstruction.instruction == 's' &&
                        instruction.data[0] == -(lastInstruction.data[0] - lastInstruction.data[2]) &&
                        instruction.data[1] == -(lastInstruction.data[1] - lastInstruction.data[3])) {
-                IJSVGExporterPathInstruction* nInstruction = nil;
-                nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
-                                                                                dataCount:4];
-                nInstruction.data[0] = instruction.data[2];
-                nInstruction.data[1] = instruction.data[3];
-                nInstruction.data[2] = instruction.data[4];
-                nInstruction.data[3] = instruction.data[5];
-                [nInstructions addObject:nInstruction];
-                continue;
+                instruction.instruction = 's';
+                memmove(instruction.data, instruction.data + 2, sizeof(CGFloat) * 4);
+                instruction->_dataCount = 4;
             } else if(lastInstruction.instruction != 'c' &&
                        lastInstruction.instruction != 's' &&
                        instruction.data[0] == 0.f && instruction.data[1] == 0.f) {
-                IJSVGExporterPathInstruction* nInstruction = nil;
-                nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'s'
-                                                                                dataCount:4];
-                nInstruction.data[0] = instruction.data[2];
-                nInstruction.data[1] = instruction.data[3];
-                nInstruction.data[2] = instruction.data[4];
-                nInstruction.data[3] = instruction.data[5];
-                [nInstructions addObject:nInstruction];
-                continue;
+                instruction.instruction = 's';
+                memmove(instruction.data, instruction.data + 2, sizeof(CGFloat) * 4);
+                instruction->_dataCount = 4;
             }
         } else if(instruction.instruction == 'q') {
             if(lastInstruction.instruction == 'q' &&
                 instruction.data[0] == (lastInstruction.data[2] - lastInstruction.data[0]) &&
                 instruction.data[1] == (lastInstruction.data[3] - lastInstruction.data[1])) {
-                IJSVGExporterPathInstruction* nInstruction = nil;
-                nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
-                                                                                dataCount:2];
-                nInstruction.data[0] = instruction.data[2];
-                nInstruction.data[1] = instruction.data[3];
-                [nInstructions addObject:nInstruction];
-                continue;
+                instruction.instruction = 't';
+                memmove(instruction.data, instruction.data + 2, sizeof(CGFloat) * 2);
+                instruction->_dataCount = 2;
             } else if(lastInstruction.instruction == 't' &&
                        instruction.data[2] == lastInstruction.data[0] &&
                        instruction.data[3] == lastInstruction.data[1]) {
-                IJSVGExporterPathInstruction* nInstruction = nil;
-                nInstruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'t'
-                                                                                dataCount:2];
-                nInstruction.data[0] = instruction.data[2];
-                nInstruction.data[1] = instruction.data[3];
-                [nInstructions addObject:nInstruction];
-                continue;
+                instruction.instruction = 't';
+                memmove(instruction.data, instruction.data + 2, sizeof(CGFloat) * 2);
+                instruction->_dataCount = 2;
             }
         }
-        [nInstructions addObject:instruction];
+        lastInstruction = instruction;
     }
-    return nInstructions;
+    return instructions;
 }
 
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions

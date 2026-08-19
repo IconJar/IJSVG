@@ -2507,8 +2507,6 @@ NSString* IJSVGHash(NSString* key)
 {
     // work out what to do...
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
-        [IJSVGExporterPathInstruction convertInstructionsToRelativeCoordinates:instructions
-                                                          floatingPointOptions:_floatingPointOptions];
         [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:instructions
                                                                           floatingPointOptions:_floatingPointOptions];
         [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions
