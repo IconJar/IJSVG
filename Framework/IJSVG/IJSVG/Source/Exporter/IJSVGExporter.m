@@ -373,19 +373,26 @@ NSString* IJSVGHash(NSString* key)
         [self _cleanDef];
     }
 
+    BOOL collapseGroups = IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups);
+    BOOL removeUselessGroups = IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessGroups);
+    NSArray<NSXMLElement*>* groups = nil;
+    if(collapseGroups == YES || removeUselessGroups == YES) {
+        groups = [_dom nodesForXPath:@"//g" error:nil];
+    }
+
     // collapse groups
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups) == YES) {
-        [self _collapseGroups];
+    if(collapseGroups == YES) {
+        [self _collapseGroups:groups];
     }
 
     // clean any blank groups
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessGroups) == YES) {
-        [self _cleanEmptyGroups];
+    if(removeUselessGroups == YES) {
+        [self _cleanEmptyGroups:groups];
     }
 
     // compress groups together
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups) == YES) {
-        [self _compressGroups];
+    if(collapseGroups == YES) {
+        [self _compressGroups:groups];
     }
 
     // collapse gradients?
@@ -458,9 +465,12 @@ NSString* IJSVGHash(NSString* key)
 - (void)_removeUnreferencedDefinitions
 {
     NSSet<NSString*>* referencedIdentifiers = [self referencedIdentifiers];
-    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//defs/*[@id]"
-                                                     error:nil];
-    for (NSXMLElement* element in elements) {
+    NSArray<NSXMLNode*>* elements = [self.defElement.children copy];
+    for (NSXMLNode* child in elements) {
+        if([child isKindOfClass:NSXMLElement.class] == NO) {
+            continue;
+        }
+        NSXMLElement* element = (NSXMLElement*)child;
         NSString* identifier = [element attributeForName:IJSVGAttributeID].stringValue;
         if(identifier.length == 0 || [referencedIdentifiers containsObject:identifier] == YES) {
             continue;
@@ -473,6 +483,10 @@ NSString* IJSVGHash(NSString* key)
 
 - (void)_removeUnusedXLinkNamespace
 {
+    if(_appliedXLink == NO) {
+        return;
+    }
+
     NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:@"//@*[name()='xlink:href']"
                                                     error:nil];
     if(attributes.count != 0) {
@@ -549,8 +563,17 @@ NSString* IJSVGHash(NSString* key)
 
 - (void)_collapseGradients
 {
-    NSString* xPath = @"//defs/*[self::linearGradient or self::radialGradient]";
-    NSArray<NSXMLElement*>* gradients = [_dom nodesForXPath:xPath error:nil];
+    NSMutableArray<NSXMLElement*>* gradients = [[NSMutableArray alloc] init];
+    for (NSXMLNode* child in self.defElement.children) {
+        if([child isKindOfClass:NSXMLElement.class] == NO) {
+            continue;
+        }
+        NSXMLElement* element = (NSXMLElement*)child;
+        if([element.name isEqualToString:@"linearGradient"] ||
+           [element.name isEqualToString:@"radialGradient"]) {
+            [gradients addObject:element];
+        }
+    }
     NSMutableDictionary<NSString*, NSXMLElement*>* gradientsByChildSignature = [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
     for (NSXMLElement* gradient in gradients) {
         NSString* signature = [self gradientChildSignatureForElement:gradient];
@@ -609,45 +632,6 @@ NSString* IJSVGHash(NSString* key)
         }
     }
 
-    NSDictionary<NSString*, NSString*>* (^attributesForElement)(NSXMLElement*) =
-        ^NSDictionary<NSString*, NSString*>*(NSXMLElement* element) {
-        return [self intersectableAttributes:IJSVGElementAttributeDictionary(element)
-                       inheritableAttributes:inheritableAttributes];
-    };
-
-    NSDictionary<NSString*, NSString*>* (^intersectionForRun)(NSXMLElement*, NSMutableArray<NSXMLElement*>*) =
-        ^NSDictionary<NSString*, NSString*>*(NSXMLElement* startElement, NSMutableArray<NSXMLElement*>* group) {
-        NSDictionary<NSString*, NSString*>* intersection = attributesForElement(startElement);
-        if(intersection.count == 0) {
-            return nil;
-        }
-
-        [group addObject:startElement];
-        NSXMLElement* nextSibling = startElement;
-        while ((nextSibling = (NSXMLElement*)nextSibling.nextSibling) != nil) {
-            if([nextSibling isKindOfClass:NSXMLElement.class] == NO) {
-                break;
-            }
-
-            NSDictionary<NSString*, NSString*>* siblingAttributes = attributesForElement(nextSibling);
-            NSDictionary<NSString*, NSString*>* siblingIntersection = nil;
-            siblingIntersection = [self intersectionInheritableAttributes:intersection
-                                                        currentAttributes:siblingAttributes
-                                                    inheritableAttributes:inheritableAttributes];
-            if(siblingIntersection == nil) {
-                break;
-            }
-
-            intersection = siblingIntersection;
-            [group addObject:nextSibling];
-        }
-
-        if(group.count < 2) {
-            return nil;
-        }
-        return intersection;
-    };
-
     BOOL (^createGroup)(NSArray<NSXMLElement*>*, NSDictionary<NSString*, NSString*>*) =
         ^BOOL(NSArray<NSXMLElement*>* elements, NSDictionary<NSString*, NSString*>* attributes) {
         if(elements.count < 2 || attributes.count == 0) {
@@ -675,18 +659,77 @@ NSString* IJSVGHash(NSString* key)
     };
 
     while (YES) {
-        NSArray<NSXMLElement*>* bestGroup = nil;
-        NSDictionary<NSString*, NSString*>* bestIntersection = nil;
-        for (NSXMLElement* element in parentElement.children) {
-            if([element isKindOfClass:NSXMLElement.class] == NO) {
+        NSArray<NSXMLNode*>* children = parentElement.children;
+        NSMutableArray<NSDictionary<NSString*, NSString*>*>* childAttributes =
+            [[NSMutableArray alloc] initWithCapacity:children.count];
+        for (NSXMLNode* child in children) {
+            NSDictionary<NSString*, NSString*>* attributes = @{};
+            if([child isKindOfClass:NSXMLElement.class]) {
+                attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary((NSXMLElement*)child)
+                                     inheritableAttributes:inheritableAttributes];
+            }
+            [childAttributes addObject:attributes];
+        }
+
+        // Record the end of each consecutive attribute/value run. A run starting
+        // at a child remains valid until its last shared attribute disappears.
+        NSMutableArray<NSDictionary<NSString*, NSNumber*>*>* runEnds =
+            [[NSMutableArray alloc] initWithCapacity:children.count];
+        for (NSUInteger index = 0; index < children.count; index++) {
+            [runEnds addObject:@{}];
+        }
+        for (NSInteger index = (NSInteger)children.count - 1; index >= 0; index--) {
+            NSXMLNode* child = children[(NSUInteger)index];
+            if([child isKindOfClass:NSXMLElement.class] == NO) {
                 continue;
             }
 
-            NSMutableArray<NSXMLElement*>* group = [[NSMutableArray alloc] init];
-            NSDictionary<NSString*, NSString*>* intersection = intersectionForRun(element, group);
-            if(intersection == nil) {
+            NSDictionary<NSString*, NSString*>* attributes = childAttributes[(NSUInteger)index];
+            NSMutableDictionary<NSString*, NSNumber*>* ends = [[NSMutableDictionary alloc] initWithCapacity:attributes.count];
+            for (NSString* attributeName in attributes) {
+                NSUInteger end = (NSUInteger)index;
+                NSUInteger nextIndex = (NSUInteger)index + 1;
+                if(nextIndex < children.count &&
+                   [children[nextIndex] isKindOfClass:NSXMLElement.class]) {
+                    NSDictionary<NSString*, NSString*>* nextAttributes = childAttributes[nextIndex];
+                    if([nextAttributes[attributeName] isEqualToString:attributes[attributeName]]) {
+                        NSDictionary<NSString*, NSNumber*>* nextEnds = runEnds[nextIndex];
+                        end = nextEnds[attributeName].unsignedIntegerValue;
+                    }
+                }
+                ends[attributeName] = @(end);
+            }
+            runEnds[(NSUInteger)index] = ends;
+        }
+
+        NSArray<NSXMLElement*>* bestGroup = nil;
+        NSDictionary<NSString*, NSString*>* bestIntersection = nil;
+        for (NSUInteger index = 0; index < children.count; index++) {
+            NSXMLNode* child = children[index];
+            if([child isKindOfClass:NSXMLElement.class] == NO) {
                 continue;
             }
+
+            NSDictionary<NSString*, NSNumber*>* ends = runEnds[index];
+            NSUInteger groupEnd = index;
+            for (NSNumber* end in ends.allValues) {
+                groupEnd = MAX(groupEnd, end.unsignedIntegerValue);
+            }
+            if(groupEnd == index) {
+                continue;
+            }
+
+            NSMutableDictionary<NSString*, NSString*>* intersection =
+                [[NSMutableDictionary alloc] initWithCapacity:ends.count];
+            for (NSString* attributeName in ends) {
+                if(ends[attributeName].unsignedIntegerValue == groupEnd) {
+                    intersection[attributeName] = childAttributes[index][attributeName];
+                }
+            }
+
+            NSRange range = NSMakeRange(index, groupEnd - index + 1);
+            NSArray<NSXMLElement*>* group =
+                (NSArray<NSXMLElement*>*)[children subarrayWithRange:range];
             if(bestGroup == nil || group.count > bestGroup.count ||
                (group.count == bestGroup.count && intersection.count > bestIntersection.count)) {
                 bestGroup = group;
@@ -750,11 +793,10 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (void)_cleanEmptyGroups
+- (void)_cleanEmptyGroups:(NSArray<NSXMLElement*>*)groups
 {
     @autoreleasepool {
         // cleanup any groups that are completely useless
-        NSArray* groups = [_dom nodesForXPath:@"//g" error:nil];
         for (NSXMLElement* element in groups) {
             NSXMLElement* parent = (NSXMLElement*)element.parent;
             if(element.childCount == 0) {
@@ -763,8 +805,9 @@ NSString* IJSVGHash(NSString* key)
             } else if(element.attributes.count == 0) {
                 // no useful data on the group
                 NSInteger index = element.index;
-                for (NSXMLElement* child in element.children) {
-                    [(NSXMLElement*)child.parent removeChildAtIndex:child.index];
+                NSArray<NSXMLNode*>* children = [element.children copy];
+                [element setChildren:nil];
+                for (NSXMLNode* child in children) {
                     [parent insertChild:child
                                 atIndex:index++];
                 }
@@ -774,9 +817,8 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (void)_compressGroups
+- (void)_compressGroups:(NSArray<NSXMLElement*>*)groups
 {
-    NSArray* groups = [_dom nodesForXPath:@"//g" error:nil];
     for (NSXMLElement* group in groups) {
 
         // whats the next group?
@@ -788,8 +830,9 @@ NSString* IJSVGHash(NSString* key)
         NSXMLElement* nextGroup = (NSXMLElement*)group.nextSibling;
         while ([self compareElement:group withElement:nextGroup]) {
             // move each child into the older group
-            for (NSXMLElement* child in nextGroup.children) {
-                [nextGroup removeChildAtIndex:child.index];
+            NSArray<NSXMLNode*>* children = [nextGroup.children copy];
+            [nextGroup setChildren:nil];
+            for (NSXMLNode* child in children) {
                 [group addChild:child];
             }
 
@@ -801,9 +844,8 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (void)_collapseGroups
+- (void)_collapseGroups:(NSArray<NSXMLElement*>*)groups
 {
-    NSArray* groups = [_dom nodesForXPath:@"//g" error:nil];
     const NSSet* inheritable = IJSVGInheritableAttributeSet();
     for (NSXMLElement* group in groups) {
 
@@ -950,35 +992,8 @@ NSString* IJSVGHash(NSString* key)
     }
 }
 
-- (NSString*)_computedAttribute:(NSString*)attributeName
-                     forElement:(NSXMLElement*)element
-{
-    NSXMLNode* e = (NSXMLNode*)element;
-    if(e == _dom.rootElement || e == _dom.rootDocument) {
-        return nil;
-    }
-
-    NSXMLElement* el = element;
-    while (el != nil) {
-        NSXMLNode* attribute = [el attributeForName:attributeName];
-        if(attribute != nil) {
-            break;
-        }
-        el = (NSXMLElement*)el.parent;
-        if(el == _dom.rootElement || (NSXMLNode*)el == _dom.rootDocument) {
-            el = nil;
-            break;
-        }
-    }
-
-    NSXMLNode* attribute = [el attributeForName:attributeName];
-    if(attribute) {
-        return attribute.stringValue;
-    }
-    return nil;
-}
-
 - (void)_removeDefaultAttributesOnElement:(NSXMLElement*)element
+                       inheritedAttributes:(NSDictionary<NSString*, NSString*>*)inheritedAttributes
 {
     const NSDictionary<NSString*, NSString*>* defaults = IJSVGDefaultAttributes();
     const NSSet<NSString*>* inheritables = IJSVGInheritableAttributeSet();
@@ -988,30 +1003,41 @@ NSString* IJSVGHash(NSString* key)
             for (NSXMLNode* node in attributes) {
                 // no value found in defaults
                 NSString* val = nil;
-                if((val = defaults[node.name]) == nil || [val isEqualToString:node.stringValue] == NO) {
+                if((val = defaults[node.name]) == nil ||
+                   [val isEqualToString:node.stringValue] == NO) {
                     continue;
                 }
 
-                if([inheritables containsObject:node.name] == YES) {
-                    NSString* parentComputed = [self _computedAttribute:node.name
-                                                             forElement:(NSXMLElement*)element.parent];
-                    if(parentComputed != nil) {
-                        continue;
-                    }
+                if([inheritables containsObject:node.name] == YES &&
+                   inheritedAttributes[node.name] != nil) {
+                    continue;
                 }
 
                 [element removeAttributeForName:node.name];
             }
         }
     }
+
+    NSMutableDictionary<NSString*, NSString*>* childInheritedAttributes = [[NSMutableDictionary alloc] initWithDictionary:inheritedAttributes];
+    // Root attributes were intentionally excluded by _computedAttribute:.
+    if(element != _dom.rootElement) {
+        for (NSXMLNode* attribute in element.attributes) {
+            if([inheritables containsObject:attribute.name]) {
+                childInheritedAttributes[attribute.name] = attribute.stringValue;
+            }
+        }
+    }
+
     for (NSXMLElement* childElement in element.children) {
-        [self _removeDefaultAttributesOnElement:childElement];
+        [self _removeDefaultAttributesOnElement:childElement
+                            inheritedAttributes:childInheritedAttributes];
     }
 }
 
 - (void)_removeDefaultAttributes
 {
-    [self _removeDefaultAttributesOnElement:_dom.rootElement];
+    [self _removeDefaultAttributesOnElement:_dom.rootElement
+                        inheritedAttributes:@{}];
 }
 
 - (NSXMLElement*)elementForLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -2289,6 +2315,48 @@ NSString* IJSVGHash(NSString* key)
     return _dom;
 }
 
+- (NSData*)dataByRemovingXMLDeclarationFromData:(NSData*)data
+{
+    const uint8_t* bytes = data.bytes;
+    NSUInteger length = data.length;
+    if(length < 5 ||
+       bytes[0] != '<' ||
+       bytes[1] != '?' ||
+       bytes[2] != 'x' ||
+       bytes[3] != 'm' ||
+       bytes[4] != 'l') {
+        return data;
+    }
+
+    NSUInteger startIndex = NSNotFound;
+    for (NSUInteger index = 5; index + 1 < length; index++) {
+        if(bytes[index] == '?' && bytes[index + 1] == '>') {
+            startIndex = index + 2;
+            break;
+        }
+    }
+    if(startIndex == NSNotFound) {
+        return data;
+    }
+
+    if(startIndex < length && bytes[startIndex] == '\n') {
+        startIndex++;
+    } else if(startIndex < length && bytes[startIndex] == '\r') {
+        startIndex++;
+        if(startIndex < length && bytes[startIndex] == '\n') {
+            startIndex++;
+        }
+    }
+
+    NSData* retainedData = data;
+    return [[NSData alloc] initWithBytesNoCopy:(void*)(bytes + startIndex)
+                                           length:length - startIndex
+                                      deallocator:^(void* _, NSUInteger __) {
+        // Retain the serialized data for the lifetime of this zero-copy slice.
+        (void)retainedData;
+    }];
+}
+
 - (NSString*)stringByRemovingXMLDeclarationFromString:(NSString*)string
 {
     if([string hasPrefix:@"<?xml"] == NO) {
@@ -2336,10 +2404,11 @@ NSString* IJSVGHash(NSString* key)
 
 - (NSData*)SVGData
 {
+    NSData* data = [[self _dom] XMLDataWithOptions:[self XMLSerializationOptions]];
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
-        return [[self SVGString] dataUsingEncoding:NSUTF8StringEncoding];
+        return [self dataByRemovingXMLDeclarationFromData:data];
     }
-    return [[self _dom] XMLDataWithOptions:[self XMLSerializationOptions]];
+    return data;
 }
 
 - (IJSVG*)SVG:(NSError**)error
