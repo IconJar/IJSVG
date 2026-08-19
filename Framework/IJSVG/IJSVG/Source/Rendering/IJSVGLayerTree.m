@@ -12,10 +12,12 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGGroupLayer.h>
 #import <IJSVG/IJSVGRootLayer.h>
+#import <IJSVG/IJSVGRectLayer.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGImageLayer.h>
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGLayerTree.h>
+#import <IJSVG/IJSVGMaskLayer.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
 #import <IJSVG/IJSVGPatternLayer.h>
@@ -153,7 +155,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                               resolvedPath:(CGPathRef)resolvedPath
                                           resolvedPathBounds:(CGRect)resolvedPathBounds
 {
-    IJSVGShapeLayer* layer = [IJSVGShapeLayer layer];
+    IJSVGShapeLayer* layer = node.primitiveType == kIJSVGPrimitivePathTypeRect
+        ? [IJSVGRectLayer layer]
+        : [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
     if(CGPathIsEmpty(resolvedPath) == NO) {
         [self applyPath:resolvedPath
@@ -657,7 +661,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForGroupNode:(IJSVGNode*)node
                                                 sublayers:(NSArray<CALayer<IJSVGDrawableLayer>*>*)sublayers
 {
-    IJSVGGroupLayer* layer = [IJSVGGroupLayer layer];
+    IJSVGGroupLayer* layer = [node isKindOfClass:IJSVGMask.class]
+        ? [IJSVGMaskLayer layer]
+        : [IJSVGGroupLayer layer];
     layer.boundingBox = [IJSVGLayer calculateFrameForSublayers:sublayers];
     layer.outerBoundingBox = layer.boundingBox;
     layer.sublayers = sublayers;
@@ -986,13 +992,6 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     CGFloat y = 0.f;
     
     BOOL shouldApplyImplicitOrigin = layer.treatImplicitOriginAsTransform == YES;
-    if([node isKindOfClass:IJSVGPath.class] == YES &&
-       ((IJSVGPath*)node).primitiveType == kIJSVGPrimitivePathTypeRect) {
-        shouldApplyImplicitOrigin = NO;
-    }
-    if([node isKindOfClass:IJSVGImage.class] == YES) {
-        shouldApplyImplicitOrigin = NO;
-    }
     if(shouldApplyImplicitOrigin == YES) {
         x = [[self unit:node.x matchingNode:node] computeValue:unitWidth];
         y = [[self unit:node.y matchingNode:node] computeValue:unitHeight];

@@ -23,6 +23,11 @@
     return YES;
 }
 
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return NO;
+}
+
 - (void)setImage:(IJSVGImage *)image
 {
     _image = image;

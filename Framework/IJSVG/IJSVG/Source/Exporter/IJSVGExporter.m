@@ -1126,7 +1126,7 @@ NSString* IJSVGHash(NSString* key)
     }
     
     // shape layer
-    if(layer.class == IJSVGShapeLayer.class) {
+    if([layer isKindOfClass:IJSVGShapeLayer.class]) {
         return [self elementForShape:(IJSVGShapeLayer*)layer
                           fromParent:element];
     }
@@ -1139,8 +1139,8 @@ NSString* IJSVGHash(NSString* key)
 
     
     // group layer, or layer that acts as a group
-    if(layer.class == IJSVGGroupLayer.class ||
-        layer.class == IJSVGTransformLayer.class ||
+    if([layer isKindOfClass:IJSVGGroupLayer.class] ||
+       layer.class == IJSVGTransformLayer.class ||
         layer.class == IJSVGBasicLayer.class) {
         return [self elementForGroup:layer
                           fromParent:element];
