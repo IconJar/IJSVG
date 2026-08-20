@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGImage
 
@@ -78,10 +79,16 @@
       return;
     }
     [self setImage:anImage];
+
+    _sourceData = [data copy];
+    _sourceMIMEType = [[IJSVGUtils MIMETypeForImageData:data
+                                              sourceURL:aURL] copy];
 }
 
 - (void)setImage:(NSImage*)anImage
 {
+    _sourceData = nil;
+    _sourceMIMEType = nil;
     _image = anImage;
     _intrinsicSize = (CGSize)_image.size;
 

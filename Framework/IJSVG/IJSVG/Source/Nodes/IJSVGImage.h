@@ -18,6 +18,8 @@
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;
 @property (nonatomic, strong) NSImage* image;
+@property (nonatomic, copy, readonly) NSData* sourceData;
+@property (nonatomic, copy, readonly) NSString* sourceMIMEType;
 
 - (CGImageRef)CGImage;
 - (void)loadFromString:(NSString*)encodedString;

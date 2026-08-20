@@ -1572,7 +1572,14 @@ NSString* IJSVGHash(NSString* key)
     NSImage* nsImage = image.image;
     CGFloat ratio = 0.f;
     
-    const CGRect bounds = image.bounds;
+    // Image nodes retain their source units so they can be resolved for each
+    // render size. Export the layers resolved bounds rather than serializing
+    // `objectBoundingBox` values such as 1.05 as userspace dimensions.
+    CGRect bounds = layer.bounds;
+    if(CGRectIsEmpty(bounds) == YES) {
+        bounds = image.bounds;
+    }
+
     const CGFloat imageWidth = bounds.size.width;
     const CGFloat imageHeight = bounds.size.height;
     const CGFloat maxWidth = nsImage.size.width;
@@ -1591,9 +1598,24 @@ NSString* IJSVGHash(NSString* key)
                                                                  _floatingPointOptions);
     dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds),
                                                                   _floatingPointOptions);
+
+    IJSVGNode* referencingNode = nil;
+    IJSVGUnitType contentUnits = [image.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    if(contentUnits == IJSVGUnitObjectBoundingBox) {
+        // The bounding box scale is already baked into the resolved layer
+        // dimensions. Disable the image elements second aspectratio fit,
+        // which would otherwise distort the exported raster.
+        dict[IJSVGAttributePreserveAspectRatio] = @"none";
+    }
+
     // encode the image and be done
     NSString* base64String = nil;
-    @autoreleasepool {
+    if(image.sourceData != nil && image.sourceMIMEType != nil) {
+        NSString* encoded = [image.sourceData base64EncodedStringWithOptions:0];
+        base64String = [NSString stringWithFormat:@"data:%@;base64,%@",
+                                                  image.sourceMIMEType,
+                                                  encoded];
+    } else @autoreleasepool {
         CGImageRef cgImage = NULL;
         if(ratio != 1.f) {
             CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,

@@ -78,6 +78,8 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGUnitType)unitTypeForString:(NSString*)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
++ (NSString* _Nullable)MIMETypeForImageData:(NSData*)data
+                                  sourceURL:(NSURL*)sourceURL;
 
 + (CGFloat)floatValue:(NSString*)string;
 + (CGFloat)angleBetweenPointA:(NSPoint)point

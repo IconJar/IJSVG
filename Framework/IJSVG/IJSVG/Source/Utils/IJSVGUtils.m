@@ -12,8 +12,42 @@
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
+#import <ImageIO/ImageIO.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 @implementation IJSVGUtils
+
++ (NSString*)MIMETypeForImageData:(NSData*)data
+                        sourceURL:(NSURL*)sourceURL
+{
+    if([sourceURL.scheme isEqualToString:@"data"]) {
+        NSString* string = sourceURL.absoluteString;
+        NSRange separator = [string rangeOfString:@";"];
+        if(separator.location == NSNotFound) {
+            separator = [string rangeOfString:@","];
+        }
+        if(separator.location != NSNotFound && separator.location > 5) {
+            NSString* mimeType = [string substringWithRange:NSMakeRange(5,
+                separator.location - 5)];
+            if([mimeType hasPrefix:@"image/"]) {
+                return mimeType;
+            }
+        }
+    }
+
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+    if(source == NULL) {
+        return nil;
+    }
+    CFStringRef typeIdentifier = CGImageSourceGetType(source);
+    NSString* mimeType = nil;
+    if(typeIdentifier != NULL) {
+        UTType* type = [UTType typeWithIdentifier:(__bridge NSString*)typeIdentifier];
+        mimeType = type.preferredMIMEType;
+    }
+    CFRelease(source);
+    return mimeType;
+}
 
 CGSize const IJSVG_SIZE_INFINITE = (CGSize) {
     .width = CGFLOAT_MAX,
