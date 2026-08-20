@@ -2140,6 +2140,20 @@ NSString* IJSVGHash(NSString* key)
                         }, strokedPath);
                     }
 
+                    // Any masks or clips applied to the source layer must also be
+                    // applied to the generated stroke path. If the source element has
+                    // no fill, it is ignored below and would otherwise take those
+                    // visual constraints with it.
+                    if(layer.maskLayer != nil) {
+                        [self applyMaskToElement:strokedPath
+                                     fromLayer:layer];
+                    }
+                  
+                    if(layer.clipPath != nil) {
+                        [self applyClipToElement:strokedPath
+                                     fromLayer:layer];
+                    }
+
                     // give back the preceding elements
                     objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey,
                                              @[strokedPath], OBJC_ASSOCIATION_RETAIN);
