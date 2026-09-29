@@ -630,6 +630,136 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(eroded, 35, 35, 10), 255, 0, 0, 255));
 }
 
+- (void)testFilterExportCompressionShortensNumbersAndDefaults
+{
+    NSString* source = [self document:@"<defs><filter id=\"f\">"
+        @"<feOffset dx=\"+00.000\" dy=\"0.0\" result=\"offsetResult\"/>"
+        @"<feGaussianBlur in=\"offsetResult\" stdDeviation=\"00.5000, 00.5000\"/>"
+        @"<feColorMatrix values=\"1.000 0 0 0 0.12345678901234567 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0\"/>"
+        @"</filter></defs><rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\" filter=\"url(#f)\"/>"];
+    IJSVG* svg = IJSVGTestSVGObject(source);
+    IJSVGExporterOptions options = IJSVGExporterOptionCompressOutput | IJSVGExporterOptionRemoveComments;
+    NSString* plain = [svg SVGStringWithSize:CGSizeMake(30, 10) options:options];
+    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
+        options:options | IJSVGExporterOptionCompressFilters];
+    NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
+    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
+    XCTAssertNotNil(filter);
+    for(NSString* name in @[ @"x", @"y", @"width", @"height", @"filterUnits", @"primitiveUnits" ]) {
+        XCTAssertNil([filter attributeForName:name]);
+    }
+    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']" error:nil].firstObject;
+    XCTAssertNil([offset attributeForName:@"dx"]);
+    XCTAssertNil([offset attributeForName:@"dy"]);
+    XCTAssertEqualObjects([offset attributeForName:@"result"].stringValue, @"offsetResult");
+    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+    XCTAssertEqualObjects([blur attributeForName:@"in"].stringValue, @"offsetResult");
+    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue, @".5");
+    XCTAssertTrue([plain containsString:@"00.5000, 00.5000"]);
+    XCTAssertTrue([compressed containsString:@"0.12345678901234567"] ||
+                  [compressed containsString:@".12345678901234567"]);
+    XCTAssertLessThan(compressed.length, plain.length);
+    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed scale:10],
+                                                    [self render:plain scale:10]), 1.);
+}
+
+- (void)testFilterExportCompressionUsesFloatingPointOptionsAndKeepsListSeparators
+{
+    IJSVG* svg = IJSVGTestSVGObject([self filtered:@"<feOffset dx=\"0.1234\" dy=\"-0.5678\"/>"
+        @"<feComponentTransfer><feFuncR type=\"table\" tableValues=\"0.25, -0.5, 1e-3\"/></feComponentTransfer>"]);
+    NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
+        options:IJSVGExporterOptionCompressFilters
+        floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
+    NSXMLDocument* document = IJSVGTestXMLDocument(exported);
+    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']" error:nil].firstObject;
+    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDX].stringValue, @".12");
+    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDY].stringValue, @"-.57");
+    NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']" error:nil].firstObject;
+    NSString* values = [function attributeForName:IJSVGAttributeTableValues].stringValue;
+    XCTAssertEqualObjects(values, @".25 -.5 0");
+    XCTAssertEqual([IJSVGUtils numbersFromString:values].count, 3);
+}
+
+- (void)testFilterExportFloatingPointOptionsApplyToRegionsAndParameters
+{
+    NSString* source = [self document:@"<defs><filter id=\"f\" x=\"-12.3456%\" y=\"-0.1234\" width=\"123.4567%\" height=\"12.3456\">"
+        @"<feFlood flood-opacity=\".4567\"/>"
+        @"<feGaussianBlur x=\"1.2345\" y=\"2.3456%\" width=\"12.3456\" height=\"98.7654%\" stdDeviation=\".1234 .5678\"/>"
+        @"<feComponentTransfer><feFuncR type=\"linear\" slope=\".4567\"/></feComponentTransfer>"
+        @"</filter></defs><rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" filter=\"url(#f)\"/>"];
+    IJSVG* svg = IJSVGTestSVGObject(source);
+    for(NSNumber* option in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionCompressFilters) ]) {
+        NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
+            options:option.integerValue
+            floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
+        NSXMLDocument* document = IJSVGTestXMLDocument(exported);
+        NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeX].stringValue, @"-12.35%");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeY].stringValue, @"-.13");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeWidth].stringValue, @"123.45%");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeHeight].stringValue, @"12.34");
+        NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeX].stringValue, @"1.23");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeY].stringValue, @"2.34%");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeWidth].stringValue, @"12.34");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeHeight].stringValue, @"98.76%");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeStdDeviation].stringValue, @".12 .56");
+        NSXMLElement* flood = [document nodesForXPath:@"//*[local-name()='feFlood']" error:nil].firstObject;
+        XCTAssertEqualObjects([flood attributeForName:IJSVGAttributeFloodOpacity].stringValue, @".45");
+        NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']" error:nil].firstObject;
+        XCTAssertEqualObjects([function attributeForName:IJSVGAttributeSlope].stringValue, @".45");
+    }
+}
+
+- (void)testFilterExportCompressionPreservesRegionsAndContextDependentValues
+{
+    NSString* source = [self filtered:@"<feDropShadow dx=\"0\" dy=\"0\" stdDeviation=\"0\"/>"
+        @"<feGaussianBlur stdDeviation=\"0.5000 1.5000\" x=\"0%\" width=\"100%\" color-interpolation-filters=\"linearRGB\"/>"
+        @"<feConvolveMatrix order=\"1\" kernelMatrix=\"2.000\" divisor=\"1\"/>"];
+    IJSVG* svg = IJSVGTestSVGObject(source);
+    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
+        options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
+    NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
+    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
+    XCTAssertEqualObjects([filter attributeForName:@"filterUnits"].stringValue, @"userSpaceOnUse");
+    XCTAssertEqualObjects([filter attributeForName:@"color-interpolation-filters"].stringValue, @"sRGB");
+    NSXMLElement* shadow = [document nodesForXPath:@"//*[local-name()='feDropShadow']" error:nil].firstObject;
+    for(NSString* name in @[ @"dx", @"dy", @"stdDeviation" ]) {
+        XCTAssertEqualObjects([shadow attributeForName:name].stringValue, @"0");
+    }
+    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue, @".5 1.5");
+    XCTAssertNotNil([blur attributeForName:@"x"]);
+    XCTAssertNotNil([blur attributeForName:@"width"]);
+    XCTAssertEqualObjects([blur attributeForName:@"color-interpolation-filters"].stringValue, @"linearRGB");
+    NSXMLElement* convolution = [document nodesForXPath:@"//*[local-name()='feConvolveMatrix']" error:nil].firstObject;
+    XCTAssertEqualObjects([convolution attributeForName:@"divisor"].stringValue, @"1");
+    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed scale:10],
+                                                    [self render:source scale:10]), 1.);
+}
+
+- (void)testConvolutionZeroDivisorUsesKernelSum
+{
+    NSString* content = @"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"#804020\"/>";
+    NSData* expected = [self render:[self filtered:@"<feOffset/>" content:content] scale:10];
+    for(NSString* divisor in @[ @"", @"divisor=\"0\"", @"divisor=\"2\"" ]) {
+        NSString* primitive = [NSString stringWithFormat:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"2\" %@/>", divisor];
+        NSData* actual = [self render:[self filtered:primitive content:content] scale:10];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1., @"%@", divisor);
+    }
+}
+
+- (void)testConvolutionZeroDivisorUsesOneForZeroKernelSum
+{
+    NSData* expected = [self render:[self filtered:@"<feFlood flood-color=\"#404040\"/>"
+        @"<feComposite in2=\"SourceGraphic\" operator=\"in\"/>"] scale:10];
+    for(NSString* divisor in @[ @"", @"divisor=\"0\"", @"divisor=\"1\"" ]) {
+        NSString* primitive = [NSString stringWithFormat:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"0\" bias=\".25\" preserveAlpha=\"true\" %@/>", divisor];
+        NSData* actual = [self render:[self filtered:primitive] scale:10];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1., @"%@", divisor);
+    }
+}
+
 - (void)testConvolutionIdentityAndBias
 {
     NSData* identity = [self render:[self filtered:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"2\" divisor=\"2\"/>"] scale:10];

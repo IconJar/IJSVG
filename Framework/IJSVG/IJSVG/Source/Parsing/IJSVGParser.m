@@ -632,7 +632,9 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
             if(previousPostProcessBlock != nil) {
                 previousPostProcessBlock();
             }
-            node.filters = [self filtersForValue:filterValue referencingNode:node element:element];
+            node.filters = [self filtersForValue:filterValue
+                                 referencingNode:node
+                                         element:element];
         };
     }
 
@@ -1555,7 +1557,9 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     }
     [self.activeFilterReferences addObject:identifier];
     @try {
-        return [self computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element];
+        return [self computeDetachedNodeWithIdentifier:identifier
+                                       referencingNode:node
+                                               element:element];
     } @finally {
         [self.activeFilterReferences removeObject:identifier];
     }
@@ -1569,7 +1573,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
     for(NSString* identifier in identifiers) {
         NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
-        if([IJSVGNode typeForString:definition.localName kind:definition.kind] != IJSVGNodeTypeFilter) {
+        if([IJSVGNode typeForString:definition.localName
+                               kind:definition.kind] != IJSVGNodeTypeFilter) {
             return @[];
         }
         IJSVGFilter* filter = (IJSVGFilter*)[self filterReferenceWithIdentifier:identifier
@@ -1583,7 +1588,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     return filters;
 }
 
-- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(NSXMLElement*)element parentNode:(IJSVGGroup*)parentNode
+- (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(NSXMLElement*)element
+                                          parentNode:(IJSVGGroup*)parentNode
 {
     IJSVGNodeType type = [IJSVGNode typeForString:element.localName kind:element.kind];
     IJSVGFilterPrimitive* node = [[IJSVGFilterPrimitive alloc] init];
@@ -1609,14 +1615,17 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
             node.parameters = parameters;
         }
         if(identifier != nil) {
-            node.imageNode = [self filterReferenceWithIdentifier:identifier referencingNode:node element:element];
+            node.imageNode = [self filterReferenceWithIdentifier:identifier
+                                                 referencingNode:node
+                                                         element:element];
             [node removeChild:node.imageNode];
         } else if(href.length != 0) {
             IJSVGImage* image = [[IJSVGImage alloc] init];
             if([href hasPrefix:@"data:"]) {
                 [image loadFromString:href];
             } else {
-                [image loadFromURL:[NSURL URLWithString:href relativeToURL:_fileURL]];
+                [image loadFromURL:[NSURL URLWithString:href
+                                          relativeToURL:_fileURL]];
             }
             node.image = image.image;
         }
@@ -1676,7 +1685,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
             return node;
         }
     }
-    [self parseFilterChildren:element parentNode:node];
+    [self parseFilterChildren:element
+                   parentNode:node];
     return node;
 }
 

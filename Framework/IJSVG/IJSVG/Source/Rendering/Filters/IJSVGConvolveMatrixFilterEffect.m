@@ -151,10 +151,11 @@ typedef struct {
         weights[i] = coefficients[i].doubleValue;
         sum += weights[i];
     }
+    double defaultDivisor = sum == 0 ? 1 : sum;
     double divisor = [primitive numberForParameter:IJSVGAttributeDivisor
-                                      defaultValue:sum == 0 ? 1 : sum];
+                                      defaultValue:defaultDivisor];
     if(divisor == 0) {
-        return CIImage.emptyImage;
+        divisor = defaultDivisor;
     }
     double bias = [primitive numberForParameter:IJSVGAttributeBias
                                    defaultValue:0];

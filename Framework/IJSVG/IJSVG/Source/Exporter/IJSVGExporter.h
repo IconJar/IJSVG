@@ -46,6 +46,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRoundTransforms = 1 << 20,
     IJSVGExporterOptionRemoveDefaultValues = 1 << 21,
     IJSVGExporterOptionConvertStrokesToPaths = 1 << 22,
+    IJSVGExporterOptionCompressFilters = 1 << 23,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups |
         IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup |
         IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |
@@ -54,7 +55,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
         IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionRemoveXMLDeclaration |
         IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths |
         IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues |
-        IJSVGExporterOptionConvertStrokesToPaths
+        IJSVGExporterOptionConvertStrokesToPaths | IJSVGExporterOptionCompressFilters
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);

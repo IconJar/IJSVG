@@ -2412,16 +2412,137 @@ NSString* IJSVGHash(NSString* key)
     [[self defElement] addChild:clip];
 }
 
-- (NSXMLElement*)elementForFilterPrimitive:(IJSVGFilterPrimitive*)primitive viewPort:(CGRect)viewPort
+- (void)compressFilterAttributes:(NSMutableDictionary<NSString*, NSString*>*)attributes
+                            type:(IJSVGNodeType)type
+{
+    BOOL compress = IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressFilters);
+    if(!compress && !_floatingPointOptions.round) {
+        return;
+    }
+    static NSSet<NSString*>* numericAttributes;
+    static NSSet<NSString*>* pairAttributes;
+    static NSDictionary<NSNumber*, NSDictionary<NSString*, NSString*>*>* defaults;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        numericAttributes = [NSSet setWithArray:@[
+            IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeStdDeviation, IJSVGAttributeRadius,
+            IJSVGAttributeBaseFrequency, IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength,
+            IJSVGAttributeKernelMatrix, IJSVGAttributeDivisor, IJSVGAttributeBias,
+            IJSVGAttributeTargetX, IJSVGAttributeTargetY, IJSVGAttributeScale,
+            IJSVGAttributeK1, IJSVGAttributeK2, IJSVGAttributeK3, IJSVGAttributeK4,
+            IJSVGAttributeValues, IJSVGAttributeTableValues, IJSVGAttributeSlope,
+            IJSVGAttributeIntercept, IJSVGAttributeAmplitude, IJSVGAttributeExponent,
+            IJSVGAttributeOffset, IJSVGAttributeSurfaceScale, IJSVGAttributeDiffuseConstant,
+            IJSVGAttributeSpecularConstant, IJSVGAttributeSpecularExponent,
+            IJSVGAttributeAzimuth, IJSVGAttributeElevation, IJSVGAttributeX,
+            IJSVGAttributeY, IJSVGAttributeZ, IJSVGAttributePointsAtX, IJSVGAttributePointsAtY,
+            IJSVGAttributePointsAtZ, IJSVGAttributeLimitingConeAngle, IJSVGAttributeSeed,
+            IJSVGAttributeNumOctaves, IJSVGAttributeFloodOpacity
+        ]];
+        pairAttributes = [NSSet setWithArray:@[
+            IJSVGAttributeStdDeviation, IJSVGAttributeRadius, IJSVGAttributeBaseFrequency,
+            IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength
+        ]];
+        defaults = @{
+            @(IJSVGNodeTypeFilter): @{
+                IJSVGAttributeFilterUnits: IJSVGStringObjectBoundingBox,
+                IJSVGAttributePrimitiveUnits: IJSVGStringUserSpaceOnUse,
+                IJSVGAttributeX: @"-10%",
+                IJSVGAttributeY: @"-10%",
+                IJSVGAttributeWidth: @"120%",
+                IJSVGAttributeHeight: @"120%"
+            },
+            @(IJSVGNodeTypeFilterOffset): @{
+                IJSVGAttributeDX: @"0",
+                IJSVGAttributeDY: @"0"
+            },
+            @(IJSVGNodeTypeFilterGaussianBlur): @{
+                IJSVGAttributeStdDeviation: @"0",
+                IJSVGAttributeEdgeMode: IJSVGStringNone
+            },
+            @(IJSVGNodeTypeFilterDropShadow): @{
+                IJSVGAttributeDX: @"2",
+                IJSVGAttributeDY: @"2",
+                IJSVGAttributeStdDeviation: @"2"
+            },
+            @(IJSVGNodeTypeFilterBlend): @{
+                IJSVGAttributeMode: IJSVGStringNormal
+            },
+            @(IJSVGNodeTypeFilterComposite): @{
+                IJSVGAttributeOperator: IJSVGStringOver,
+                IJSVGAttributeK1: @"0",
+                IJSVGAttributeK2: @"0",
+                IJSVGAttributeK3: @"0",
+                IJSVGAttributeK4: @"0" },
+            @(IJSVGNodeTypeFilterMorphology): @{
+                IJSVGAttributeOperator: @"erode",
+                IJSVGAttributeRadius: @"0"
+            },
+            @(IJSVGNodeTypeFilterDisplacementMap): @{
+                IJSVGAttributeScale: @"0",
+                IJSVGAttributeXChannelSelector: IJSVGStringChannelA,
+                IJSVGAttributeYChannelSelector: IJSVGStringChannelA
+            },
+            @(IJSVGNodeTypeFilterConvolveMatrix): @{
+                IJSVGAttributeOrder: @"3",
+                IJSVGAttributeBias: @"0",
+                IJSVGAttributeEdgeMode: IJSVGStringDuplicate,
+                IJSVGAttributePreserveAlpha: @"false"
+            }
+        };
+    });
+    for(NSString* key in attributes.allKeys) {
+        if(![numericAttributes containsObject:key]) {
+            continue;
+        }
+        NSString* value = attributes[key];
+        NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:value];
+        if(numbers.count == 0) {
+            continue;
+        }
+        NSArray<NSString*>* originals = [value ijsvg_componentsSeparatedByChars:", \t\r\n"];
+        NSMutableArray<NSString*>* tokens = [[NSMutableArray alloc] initWithCapacity:numbers.count];
+        for(NSUInteger index = 0; index < numbers.count; index++) {
+            CGFloat number = numbers[index].doubleValue;
+            NSString* shortened = IJSVGShortFloatStringWithOptions(number, _floatingPointOptions);
+            // Preserve precise coefficients unless the caller explicitly requests rounding.
+            if(!_floatingPointOptions.round && shortened.doubleValue != number) {
+                shortened = IJSVGShortenFloatString(originals[index]);
+            }
+            [tokens addObject:shortened];
+        }
+        if(compress && [pairAttributes containsObject:key] && tokens.count == 2 &&
+           [tokens[0] isEqualToString:tokens[1]]) {
+            [tokens removeLastObject];
+        }
+        // Filter number lists require separators even before signed or decimal values.
+        NSString* shortened = [tokens componentsJoinedByString:@" "];
+        if(_floatingPointOptions.round || shortened.length <= value.length) {
+            attributes[key] = shortened;
+        }
+    }
+    if(!compress) {
+        return;
+    }
+    // Only fixed attribute defaults are removed. Inherited presentation values stay explicit.
+    [defaults[@(type)] enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSString* value, BOOL* stop) {
+        if([attributes[key] isEqualToString:value]) {
+            [attributes removeObjectForKey:key];
+        }
+    }];
+}
+
+- (NSXMLElement*)elementForFilterPrimitive:(IJSVGFilterPrimitive*)primitive
+                                  viewPort:(CGRect)viewPort
 {
     NSXMLElement* child = [[NSXMLElement alloc] initWithName:primitive.name];
     NSMutableDictionary<NSString*, NSString*>* attributes = primitive.parameters.mutableCopy ?: [[NSMutableDictionary alloc] init];
     attributes[IJSVGAttributeIn] = primitive.input;
     attributes[IJSVGAttributeResult] = primitive.result;
-    attributes[IJSVGAttributeX] = primitive.x.stringValue;
-    attributes[IJSVGAttributeY] = primitive.y.stringValue;
-    attributes[IJSVGAttributeWidth] = primitive.width.stringValue;
-    attributes[IJSVGAttributeHeight] = primitive.height.stringValue;
+    attributes[IJSVGAttributeX] = [primitive.x stringValueWithFloatingPointOptions:_floatingPointOptions];
+    attributes[IJSVGAttributeY] = [primitive.y stringValueWithFloatingPointOptions:_floatingPointOptions];
+    attributes[IJSVGAttributeWidth] = [primitive.width stringValueWithFloatingPointOptions:_floatingPointOptions];
+    attributes[IJSVGAttributeHeight] = [primitive.height stringValueWithFloatingPointOptions:_floatingPointOptions];
 
     attributes[IJSVGAttributeIn2] = primitive.input2;
     attributes[IJSVGAttributeColorInterpolationFilters] = primitive.filterColorInterpolation;
@@ -2442,6 +2563,7 @@ NSString* IJSVGHash(NSString* key)
         attributes[IJSVGAttributeHref] = IJSVGHash(imageIdentifier);
         [attributes removeObjectForKey:IJSVGAttributeXLink];
     }
+    [self compressFilterAttributes:attributes type:primitive.type];
     IJSVGApplyAttributesToElement(attributes, child);
     for(IJSVGFilterPrimitive* nested in primitive.children) {
         [child addChild:[self elementForFilterPrimitive:nested viewPort:viewPort]];
@@ -2493,17 +2615,19 @@ NSString* IJSVGHash(NSString* key)
     }
     NSXMLElement* definition = [[NSXMLElement alloc] initWithName:IJSVGAttributeFilter];
     NSString* identifier = [self identifierForElement:definition];
-    IJSVGApplyAttributesToElement(@{
+    NSMutableDictionary<NSString*, NSString*>* attributes = [@{
         IJSVGAttributeID: identifier,
-        IJSVGAttributeX: filter.x.stringValue,
-        IJSVGAttributeY: filter.y.stringValue,
-        IJSVGAttributeWidth: filter.width.stringValue,
-        IJSVGAttributeHeight: filter.height.stringValue,
+        IJSVGAttributeX: [filter.x stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeY: [filter.y stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeWidth: [filter.width stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeHeight: [filter.height stringValueWithFloatingPointOptions:_floatingPointOptions],
         IJSVGAttributeFilterUnits: filter.units == IJSVGUnitObjectBoundingBox ?
           IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
         IJSVGAttributePrimitiveUnits: filter.contentUnits == IJSVGUnitObjectBoundingBox ?
           IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse
-    }, definition);
+    } mutableCopy];
+    [self compressFilterAttributes:attributes type:IJSVGNodeTypeFilter];
+    IJSVGApplyAttributesToElement(attributes, definition);
   
     for(IJSVGNode* node = filter; node != nil; node = node.parentNode) {
         if([@[IJSVGStringSRGB, IJSVGStringLinearRGB] containsObject:node.filterColorInterpolation]) {
