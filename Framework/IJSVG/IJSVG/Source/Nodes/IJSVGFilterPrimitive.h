@@ -13,7 +13,7 @@
 @property (nonatomic, copy) NSString* input;
 @property (nonatomic, copy) NSString* result;
 @property (nonatomic, copy) NSString* input2;
-// Primitive-specific SVG attributes, retained for lossless vector export.
+// Primitive specific SVG attributes, retained for lossless vector export.
 @property (nonatomic, copy) NSDictionary<NSString*, NSString*>* parameters;
 @property (nonatomic, strong) IJSVGNode* imageNode;
 @property (nonatomic, strong) NSImage* image;

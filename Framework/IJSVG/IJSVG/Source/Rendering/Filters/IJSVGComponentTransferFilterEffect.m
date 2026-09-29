@@ -147,11 +147,9 @@ typedef struct {
                                                                         withInputParameters:polynomial];
         output = [output imageByApplyingFilter:@"CIColorClamp"
                            withInputParameters:@{
-                               @"inputMinComponents": [CIVector vectorWithX:0 Y:0
-                                                                          Z:0 W:0],
-                               @"inputMaxComponents": [CIVector vectorWithX:1 Y:1
-                                                                          Z:1 W:1]
-                           }];
+            @"inputMinComponents": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
+            @"inputMaxComponents": [CIVector vectorWithX:1 Y:1 Z:1 W:1]
+        }];
         return [context imageFromPrimitiveColorSpace:output];
     }
     // A shared RGB exponent can use CIGammaAdjust, followed by a per channel
@@ -165,16 +163,16 @@ typedef struct {
         }
         CIImage* output = [[context imageInPrimitiveColorSpace:input]
             imageByApplyingFilter:@"CIGammaAdjust"
-              withInputParameters:@{ @"inputPower": @(functions[0].exponent) }];
+              withInputParameters:@{
+            @"inputPower": @(functions[0].exponent)
+        }];
         output = [output imageByApplyingFilter:@"CIColorPolynomial"
                            withInputParameters:polynomial];
         output = [output imageByApplyingFilter:@"CIColorClamp"
                            withInputParameters:@{
-                               @"inputMinComponents": [CIVector vectorWithX:0 Y:0
-                                                                          Z:0 W:0],
-                               @"inputMaxComponents": [CIVector vectorWithX:1 Y:1
-                                                                          Z:1 W:1]
-                           }];
+            @"inputMinComponents": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
+            @"inputMaxComponents": [CIVector vectorWithX:1 Y:1 Z:1 W:1]
+        }];
         return [context imageFromPrimitiveColorSpace:output];
     }
     NSData* configuration = [NSData dataWithBytes:functions

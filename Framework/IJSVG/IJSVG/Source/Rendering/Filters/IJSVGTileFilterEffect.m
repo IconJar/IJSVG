@@ -19,7 +19,7 @@
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     return IJSVGFilterValidRect(input.extent) ? [input imageByApplyingFilter:@"CIAffineTile"
                                                          withInputParameters:@{
-      kCIInputTransformKey: NSAffineTransform.transform
+        kCIInputTransformKey: NSAffineTransform.transform
     }] : CIImage.emptyImage;
 }
 

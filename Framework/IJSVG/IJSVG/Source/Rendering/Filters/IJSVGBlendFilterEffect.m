@@ -45,7 +45,7 @@
     return [context applyFilter:modes[primitive.parameters[IJSVGAttributeMode]] ?: @"CISourceOverCompositing"
                         toImage:input
                      parameters:@{
-      kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
+        kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
     }];
 }
 

@@ -88,12 +88,17 @@
         CIImage* first = [context imageInPrimitiveColorSpace:input];
         CIImage* second = [context imageInPrimitiveColorSpace:other];
         CIImage* firstOnly = [first imageByApplyingFilter:@"CISourceOutCompositing"
-                                      withInputParameters:@{ kCIInputBackgroundImageKey: second }];
+                                      withInputParameters:@{
+            kCIInputBackgroundImageKey: second
+        }];
         CIImage* secondOnly = [second imageByApplyingFilter:@"CISourceOutCompositing"
-                                        withInputParameters:@{ kCIInputBackgroundImageKey: first }];
-        return [context
-            imageFromPrimitiveColorSpace:[firstOnly imageByApplyingFilter:@"CIAdditionCompositing"
-                                                      withInputParameters:@{ kCIInputBackgroundImageKey: secondOnly }]];
+                                        withInputParameters:@{
+            kCIInputBackgroundImageKey: first
+        }];
+        return [context imageFromPrimitiveColorSpace:[firstOnly imageByApplyingFilter:@"CIAdditionCompositing"
+                                                                  withInputParameters:@{
+          kCIInputBackgroundImageKey: secondOnly
+        }]];
     }
     if(filters[op] != nil) {
         return [context applyFilter:filters[op]
@@ -103,7 +108,9 @@
     if([op isEqualToString:IJSVGStringArithmetic] == NO) {
         return [context applyFilter:@"CISourceOverCompositing"
                             toImage:input
-                         parameters:@{ kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other] }];
+                         parameters:@{
+            kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
+        }];
     }
     double k1 = [primitive numberForParameter:IJSVGAttributeK1
                                  defaultValue:0];
@@ -119,37 +126,34 @@
         CIImage* first = [[context imageInPrimitiveColorSpace:input]
             imageByApplyingFilter:@"CIColorMatrix"
               withInputParameters:@{
-          @"inputAVector": [CIVector vectorWithX:0 Y:0
-                                               Z:0 W:k2]
+            @"inputAVector": [CIVector vectorWithX:0 Y:0 Z:0 W:k2]
         }];
         CIImage* second = [[context imageInPrimitiveColorSpace:other]
             imageByApplyingFilter:@"CIColorMatrix"
               withInputParameters:@{
-          @"inputAVector": [CIVector vectorWithX:0 Y:0
-                                               Z:0 W:k3]
+            @"inputAVector": [CIVector vectorWithX:0 Y:0 Z:0 W:k3]
         }];
-        return [context
-            imageFromPrimitiveColorSpace:[first imageByApplyingFilter:@"CIAdditionCompositing"
-                                                  withInputParameters:@{
-              kCIInputBackgroundImageKey: second
+        return [context imageFromPrimitiveColorSpace:[first imageByApplyingFilter:@"CIAdditionCompositing"
+                                                              withInputParameters:@{
+                kCIInputBackgroundImageKey: second
             }]];
     }
     return [context mapImage:input
                        other:other
                    operation:^(const float* a, const float* b, float* dst, NSInteger w, NSInteger h) {
-                       IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
-                           NSInteger offset = firstRow * w * 4;
-                           [self compositePixels:a + offset
-                                      withPixels:b + offset
-                                          output:dst + offset
-                                           width:w
-                                          height:lastRow - firstRow
-                               productCoefficient:k1
-                                firstCoefficient:k2
-                               secondCoefficient:k3
-                                        constant:k4];
-                       });
-                   }];
+      IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
+          NSInteger offset = firstRow * w * 4;
+          [self compositePixels:a + offset
+                     withPixels:b + offset
+                         output:dst + offset
+                          width:w
+                         height:lastRow - firstRow
+              productCoefficient:k1
+               firstCoefficient:k2
+              secondCoefficient:k3
+                       constant:k4];
+      });
+    }];
 }
 
 @end

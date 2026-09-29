@@ -41,9 +41,8 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
     if(nx == 1 && ny == 1) {
         return NO;
     }
-    // A single-axis blur can write directly to the destination.
-    NSMutableData* temporary = nx > 1 && ny > 1
-        ? [NSMutableData dataWithLength:w * h * 4 * sizeof(float)] : nil;
+    // A single axis blur can write directly to the destination.
+    NSMutableData* temporary = nx > 1 && ny > 1 ? [NSMutableData dataWithLength:w * h * 4 * sizeof(float)] : nil;
     vImage_Buffer input = { (void*)src, h, w, w * 4 * sizeof(float) };
     vImage_Buffer output = { dst, h, w, w * 4 * sizeof(float) };
     vImage_Buffer intermediate = temporary == nil ? output
@@ -102,7 +101,7 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
                               verticalKernel:kernelY]) {
         return;
     }
-    // Alpha-only bitmaps are already planar; convolve directly into their output.
+    // Alpha only bitmaps are already planar, convolve directly into their output.
     NSMutableData* plane = channels == 1 ? nil : [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* result = channels == 1 ? nil : [NSMutableData dataWithLength:plane.length];
     float* inPlane = channels == 1 ? (float*)src : plane.mutableBytes;
@@ -162,7 +161,9 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
         image = [image imageByClampingToExtent];
     } else if([edgeMode isEqualToString:IJSVGStringWrap]) {
         image = [image imageByApplyingFilter:@"CIAffineTile"
-                         withInputParameters:@{ kCIInputTransformKey: [NSAffineTransform transform] }];
+                         withInputParameters:@{
+            kCIInputTransformKey: [NSAffineTransform transform]
+        }];
     }
     if(sigmaX == 0 && sigmaY == 0) {
         return image;
@@ -170,7 +171,9 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
     if(fabs(sigmaX - sigmaY) < 0.00001) {
         return [context applyFilter:@"CIGaussianBlur"
                             toImage:image
-                         parameters:@{ kCIInputRadiusKey: @(sigmaX) }];
+                         parameters:@{
+            kCIInputRadiusKey: @(sigmaX)
+        }];
     }
     NSData* kernelX = IJSVGFilterKernel(sigmaX);
     NSData* kernelY = IJSVGFilterKernel(sigmaY);
@@ -193,15 +196,14 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
             }
             output = [output imageByApplyingFilter:names[axis]
                                withInputParameters:@{
-                                   @"inputWeights": [CIVector vectorWithValues:coefficients
-                                                                         count:9],
-                                   @"inputBias": @0
-                               }];
+                @"inputWeights": [CIVector vectorWithValues:coefficients count:9],
+                @"inputBias": @0
+            }];
         }
         return [context imageFromPrimitiveColorSpace:output];
     }
     if(alphaOnly) {
-        // Shadows need no RGB storage or color conversion. Keep Core Image's row
+        // Shadows need no RGB storage or color conversion. Keep the Core Image row
         // order on both sides; the symmetric Gaussian kernels need no row flip.
         NSInteger w = context.extent.size.width, h = context.extent.size.height;
         NSMutableData* source = [NSMutableData dataWithLength:w * h * sizeof(float)];
@@ -232,14 +234,15 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
     return [context mapImage:image
                        other:nil
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
-                       [self applyGaussianBlurToPixels:src
-                                                output:dst
-                                                 width:w
-                                                height:h
-                                      horizontalKernel:kernelX
-                                        verticalKernel:kernelY
-                                              channels:4];
-                   }];
+      
+        [self applyGaussianBlurToPixels:src
+                                 output:dst
+                                  width:w
+                                 height:h
+                       horizontalKernel:kernelX
+                         verticalKernel:kernelY
+                               channels:4];
+    }];
 }
 
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive

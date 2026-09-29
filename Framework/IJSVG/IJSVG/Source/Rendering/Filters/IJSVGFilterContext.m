@@ -237,13 +237,10 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 {
     return [image imageByApplyingFilter:@"CIColorMatrix"
                     withInputParameters:@{
-                        @"inputRVector": [CIVector vectorWithX:0 Y:0
-                                                             Z:0 W:0],
-                        @"inputGVector": [CIVector vectorWithX:0 Y:0
-                                                             Z:0 W:0],
-                        @"inputBVector": [CIVector vectorWithX:0 Y:0
-                                                             Z:0 W:0]
-                    }];
+        @"inputRVector": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
+        @"inputGVector": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
+        @"inputBVector": [CIVector vectorWithX:0 Y:0 Z:0 W:0]
+    }];
 }
 
 - (CIImage*)offsetImage:(CIImage*)input

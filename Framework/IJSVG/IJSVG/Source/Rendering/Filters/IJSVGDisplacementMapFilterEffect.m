@@ -72,18 +72,18 @@
     return [context mapImage:input
                        other:other
                    operation:^(const float* src, const float* map, float* dst, NSInteger w, NSInteger h) {
-                       [self displacePixels:src
-                                        map:map
-                                     output:dst
-                                      width:w
-                                     height:h
-                                   xChannel:xc
-                                   yChannel:yc
-                                      scale:scale
-                                      units:units
-                                inputRegion:inputRegion
-                               outputRegion:outputRegion];
-                   }];
+        [self displacePixels:src
+                         map:map
+                      output:dst
+                       width:w
+                      height:h
+                    xChannel:xc
+                    yChannel:yc
+                       scale:scale
+                       units:units
+                 inputRegion:inputRegion
+                outputRegion:outputRegion];
+    }];
 }
 
 @end

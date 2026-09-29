@@ -39,10 +39,14 @@
                                                                                                   region:region
                                                                                                  context:context];
     CIImage* colored = [flood imageByApplyingFilter:@"CISourceInCompositing"
-                                withInputParameters:@{ kCIInputBackgroundImageKey: offset }];
+                                withInputParameters:@{
+        kCIInputBackgroundImageKey: offset
+    }];
     return [context applyFilter:@"CISourceOverCompositing"
                         toImage:input
-                     parameters:@{ kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:colored] }];
+                     parameters:@{
+        kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:colored]
+    }];
 }
 
 @end

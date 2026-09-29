@@ -86,7 +86,7 @@
         IJSVGStringBackgroundAlpha: CIImage.emptyImage
     } mutableCopy];
 
-    // Ordinary blurs and drop shadows do not reference the graph's SourceAlpha.
+    // Ordinary blurs and drop shadows do not reference SourceAlpha in the graph.
     if([inputNames containsObject:IJSVGStringSourceAlpha]) {
         sources[IJSVGStringSourceAlpha] = [renderingContext alphaForImage:source];
     }
@@ -112,6 +112,7 @@
 
     NSMutableDictionary<NSString*, CIImage*>* results = [[NSMutableDictionary alloc] init];
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    BOOL preserveInnerShadowCoverage = self.filter.preservesInnerShadowCoverage;
     NSMutableDictionary<NSString*, NSNumber*>* lastReferences = [[NSMutableDictionary alloc] init];
 
     for(NSUInteger index = 0; index < primitives.count; index++) {
@@ -129,7 +130,7 @@
         }
     }
 
-    // Schedule each named result's release once instead of scanning all live results per primitive.
+    // Schedule the release of each named result once instead of scanning all live results per primitive.
     NSMutableDictionary<NSNumber*, NSMutableArray<NSString*>*>* expiredNames = [[NSMutableDictionary alloc] init];
     for(NSString* name in lastReferences) {
         NSNumber* index = lastReferences[name];
@@ -192,13 +193,24 @@
             if(!IJSVGFilterValidRect(pixelRegion)) {
                 output = CIImage.emptyImage;
             } else {
-                IJSVGFilterEffect* effect = [IJSVGFilterEffect effectForType:primitive.type];
-                NSArray<CIImage*>* inputs = mergeInputs ?: @[input, other];
-                output = [effect outputImageForPrimitive:primitive
-                                                  inputs:inputs
-                                                  region:pixelRegion
-                                                 context:renderingContext]
-                    ?: CIImage.emptyImage;
+                if(preserveInnerShadowCoverage && index > 1
+                   && primitive.type == IJSVGNodeTypeFilterBlend) {
+                    // A hard alpha inner shadow must shade the foreground without
+                    // making its partially covered edge pixels opaque. Source atop
+                    // preserves the original outline through successive shadows.
+                    output = [renderingContext applyFilter:@"CISourceAtopCompositing"
+                                                   toImage:input
+                                                parameters:@{
+                      kCIInputBackgroundImageKey: [renderingContext imageInPrimitiveColorSpace:other]
+                    }];
+                } else {
+                    IJSVGFilterEffect* effect = [IJSVGFilterEffect effectForType:primitive.type];
+                    NSArray<CIImage*>* inputs = mergeInputs ?: @[input, other];
+                    output = [effect outputImageForPrimitive:primitive
+                                                      inputs:inputs
+                                                      region:pixelRegion
+                                                     context:renderingContext] ?: CIImage.emptyImage;
+                }
                 CGRect clip = CGRectIntersection(filterRegion, pixelRegion);
                 output = IJSVGFilterValidRect(clip) ? [output imageByCroppingToRect:clip] : CIImage.emptyImage;
             }

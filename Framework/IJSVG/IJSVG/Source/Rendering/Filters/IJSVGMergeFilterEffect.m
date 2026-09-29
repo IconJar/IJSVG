@@ -17,11 +17,13 @@
                             context:(IJSVGFilterContext*)context
 {
     CIImage* output = CIImage.emptyImage;
-    // Keep the accumulation in the primitive's space instead of color matching
+    // Keep the accumulation in the color space of the primitive instead of color matching
     // the accumulated image into and out of that space for every merge node.
     for(CIImage* image in inputs) {
         output = [[context imageInPrimitiveColorSpace:image] imageByApplyingFilter:@"CISourceOverCompositing"
-                                                             withInputParameters:@{ kCIInputBackgroundImageKey: output }];
+                                                             withInputParameters:@{
+            kCIInputBackgroundImageKey: output
+        }];
     }
     return [context imageFromPrimitiveColorSpace:output];
 }

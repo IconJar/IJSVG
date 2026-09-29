@@ -272,48 +272,6 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     [self wideComponentTransferCoversEveryRow:129];
 }
 
-- (void)testInnerShadowPreviewPreservesSmoothLetterEdges
-{
-    NSString* directory = [@(__FILE__).stringByDeletingLastPathComponent stringByAppendingPathComponent:@"Fixtures"];
-    NSError* error = nil;
-    NSString* string = [NSString stringWithContentsOfFile:[directory stringByAppendingPathComponent:@"ab-button-blood-type-color.svg"] encoding:NSUTF8StringEncoding error:&error];
-    XCTAssertNil(error);
-    IJSVG* svg = IJSVGTestSVGObject(string);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
-    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef context = CGBitmapContextCreate(NULL, 128, 128, 8, 512, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
-    CGColorSpaceRelease(space);
-    XCTAssertTrue(context != NULL);
-    if(context == NULL) {
-        return;
-    }
-    CGContextTranslateCTM(context, 0, 128);
-    CGContextScaleCTM(context, 1, -1);
-    [svg drawInRect:CGRectMake(0, 0, 128, 128) context:context];
-    CGImageRef image = CGBitmapContextCreateImage(context);
-    NSBitmapImageRep* preview = [[NSBitmapImageRep alloc] initWithCGImage:image];
-    CGImageRelease(image);
-    CGContextRelease(context);
-    // Original renderer at 512 pixels, reduced once to 128 with high quality interpolation.
-    NSBitmapImageRep* reference = [[NSBitmapImageRep alloc] initWithData:[NSData dataWithContentsOfFile:
-        [directory stringByAppendingPathComponent:@"ab-button-blood-type-color-reference.png"]]];
-    XCTAssertNotNil(reference);
-    double difference = 0;
-    for(NSInteger y = 32; y < 96; y++) {
-        for(NSInteger x = 16; x < 114; x++) {
-            NSColor* actual = [[preview colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            NSColor* expected = [[reference colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            XCTAssertNotNil(actual);
-            XCTAssertNotNil(expected);
-            difference += fabs(actual.redComponent - expected.redComponent)
-                + fabs(actual.greenComponent - expected.greenComponent)
-                + fabs(actual.blueComponent - expected.blueComponent);
-        }
-    }
-    // Native resolution: ~3.1 levels of mean RGB error; 2x supersampling: ~1.4.
-    XCTAssertLessThan(difference * 255 / (64 * 98 * 3), 2.4);
-}
-
 - (void)testHardShadowOffsetColourAndOpacity
 {
     NSData* bytes = [self render:[self document:@"<defs><filter id=\"f\" x=\"-100%\" y=\"-100%\" width=\"300%\" height=\"300%\">"

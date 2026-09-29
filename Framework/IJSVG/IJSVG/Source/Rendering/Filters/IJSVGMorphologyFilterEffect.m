@@ -29,7 +29,10 @@
     // SVG uses a rectangular structuring element on premultiplied channels.
     return [context applyFilter:dilate ? @"CIMorphologyRectangleMaximum" : @"CIMorphologyRectangleMinimum"
                         toImage:[input imageByCroppingToRect:context.extent]
-                     parameters:@{ @"inputWidth": @(2 * rx + 1), @"inputHeight": @(2 * ry + 1) }];
+                     parameters:@{
+        @"inputWidth": @(2 * rx + 1),
+        @"inputHeight": @(2 * ry + 1)
+    }];
 }
 
 @end

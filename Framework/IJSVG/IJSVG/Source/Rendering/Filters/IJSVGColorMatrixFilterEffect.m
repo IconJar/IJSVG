@@ -70,11 +70,9 @@
                                                                    withInputParameters:parameters];
     image = [image imageByApplyingFilter:@"CIColorClamp"
                      withInputParameters:@{
-                         @"inputMinComponents": [CIVector vectorWithX:0 Y:0
-                                                                    Z:0 W:0],
-                         @"inputMaxComponents": [CIVector vectorWithX:1 Y:1
-                                                                    Z:1 W:1]
-                     }];
+        @"inputMinComponents": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
+        @"inputMaxComponents": [CIVector vectorWithX:1 Y:1 Z:1 W:1]
+    }];
     return [context imageFromPrimitiveColorSpace:image];
 }
 

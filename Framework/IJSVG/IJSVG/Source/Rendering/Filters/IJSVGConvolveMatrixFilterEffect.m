@@ -202,14 +202,15 @@ typedef struct {
             }
             if(edgeMode == 2) {
                 source = [source imageByApplyingFilter:@"CIAffineTile"
-                                   withInputParameters:@{ kCIInputTransformKey: [NSAffineTransform transform] }];
+                                   withInputParameters:@{
+                    kCIInputTransformKey: [NSAffineTransform transform]
+                }];
             }
             CIImage* output = [source imageByApplyingFilter:filterName
                                         withInputParameters:@{
-                                            @"inputWeights": [CIVector vectorWithValues:ciWeights
-                                                                                  count:cw * ch],
-                                            @"inputBias": @0
-                                        }];
+                @"inputWeights": [CIVector vectorWithValues:ciWeights count:cw * ch],
+                @"inputBias": @0
+            }];
             output = [output imageByApplyingTransform:CGAffineTransformMakeTranslation(tx - cw / 2, ty - ch / 2)];
             return [context imageFromPrimitiveColorSpace:output];
         }

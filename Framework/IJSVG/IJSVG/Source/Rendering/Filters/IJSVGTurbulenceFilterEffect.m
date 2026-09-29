@@ -24,7 +24,7 @@ static int32_t IJSVGFilterRandom(int32_t* seed)
 
 static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
 {
-    // The clamp keeps normalization and the seed recurrence within signed 32-bit range.
+    // The clamp keeps normalization and the seed recurrence within signed 32 bit range.
     int32_t normalized = (int32_t)fmax(-2147483646., fmin(2147483646., trunc(seedValue)));
     int32_t seed = normalized <= 0 ? -(normalized % 2147483646) + 1 : normalized;
     for(int channel = 0; channel < 4; channel++) {
@@ -74,7 +74,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
             }
         }
         // Lattice coordinates are integral, so correct a negative remainder
-        // directly instead of taking a second floating-point remainder.
+        // directly instead of taking a second floating point remainder.
         px[i] = (int)fmod(bx, 256.);
         py[i] = (int)fmod(by, 256.);
         px[i] += px[i] < 0 ? 256 : 0;
@@ -137,7 +137,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
         return CIImage.emptyImage;
     }
     // Retain the original tile coordinates for stitching, but only generate pixels
-    // that can survive the primitive's final crop.
+    // that can survive the final crop of the primitive.
     NSInteger left = floor(CGRectGetMinX(outputRegion));
     NSInteger top = floor(CGRectGetMinY(outputRegion));
     NSInteger right = ceil(CGRectGetMaxX(outputRegion));
