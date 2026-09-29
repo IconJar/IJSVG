@@ -29,6 +29,59 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
 
 @implementation IJSVGGaussianBlurFilterEffect
 
+- (BOOL)applyInterleavedBlurToPixels:(const float*)src
+                              output:(float*)dst
+                               width:(NSInteger)w
+                              height:(NSInteger)h
+                    horizontalKernel:(NSData*)kernelX
+                      verticalKernel:(NSData*)kernelY
+{
+    uint32_t nx = (uint32_t)(kernelX.length / sizeof(float));
+    uint32_t ny = (uint32_t)(kernelY.length / sizeof(float));
+    if(nx == 1 && ny == 1) {
+        return NO;
+    }
+    // A single-axis blur can write directly to the destination.
+    NSMutableData* temporary = nx > 1 && ny > 1
+        ? [NSMutableData dataWithLength:w * h * 4 * sizeof(float)] : nil;
+    vImage_Buffer input = { (void*)src, h, w, w * 4 * sizeof(float) };
+    vImage_Buffer output = { dst, h, w, w * 4 * sizeof(float) };
+    vImage_Buffer intermediate = temporary == nil ? output
+        : (vImage_Buffer){ temporary.mutableBytes, h, w, w * 4 * sizeof(float) };
+    vImage_Buffer verticalInput = nx > 1 ? intermediate : input;
+    Pixel_FFFF background = { 0, 0, 0, 0 };
+    vImage_Flags query = kvImageBackgroundColorFill | kvImageGetTempBufferSize;
+    vImage_Error horizontalSize = nx > 1 ? vImageConvolve_ARGBFFFF(&input, &intermediate,
+        NULL, 0, 0, kernelX.bytes, 1, nx, background, query) : 0;
+    vImage_Error verticalSize = ny > 1 ? vImageConvolve_ARGBFFFF(&verticalInput, &output,
+        NULL, 0, 0, kernelY.bytes, ny, 1, background, query) : 0;
+    if(horizontalSize < 0 || verticalSize < 0) {
+        return NO;
+    }
+    NSMutableData* workspace = [NSMutableData dataWithLength:MAX(horizontalSize, verticalSize)];
+    vImage_Error error = kvImageNoError;
+    if(nx > 1) {
+        error = vImageConvolve_ARGBFFFF(&input, &intermediate, workspace.mutableBytes,
+            0, 0, kernelX.bytes, 1, nx, background, kvImageBackgroundColorFill);
+    }
+    if(error == kvImageNoError && ny > 1) {
+        error = vImageConvolve_ARGBFFFF(&verticalInput, &output, workspace.mutableBytes,
+            0, 0, kernelY.bytes, ny, 1, background, kvImageBackgroundColorFill);
+    }
+    if(error != kvImageNoError) {
+        vDSP_vclr(dst, 1, (vDSP_Length)w * h * 4);
+        return NO;
+    }
+    for(NSInteger i = 0; i < w * h * 4; i++) {
+        if(!isfinite(dst[i])) {
+            dst[i] = 0.f;
+        }
+    }
+    float minimum = 0.f, maximum = 1.f;
+    vDSP_vclip(dst, 1, &minimum, &maximum, dst, 1, (vDSP_Length)w * h * 4);
+    return YES;
+}
+
 - (void)applyGaussianBlurToPixels:(const float*)src
                            output:(float*)dst
                             width:(NSInteger)w
@@ -37,6 +90,18 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
                    verticalKernel:(NSData*)kernelY
                          channels:(NSUInteger)channels
 {
+    // Direct RGBA convolution avoids eight strided channel copies for larger
+    // images. Long kernels and small icons are faster on the planar path.
+    if(channels == 4 && w * h >= 65536
+        && kernelX.length + kernelY.length <= 64 * sizeof(float)
+        && [self applyInterleavedBlurToPixels:src
+                                      output:dst
+                                       width:w
+                                      height:h
+                            horizontalKernel:kernelX
+                              verticalKernel:kernelY]) {
+        return;
+    }
     // Alpha-only bitmaps are already planar; convolve directly into their output.
     NSMutableData* plane = channels == 1 ? nil : [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* result = channels == 1 ? nil : [NSMutableData dataWithLength:plane.length];

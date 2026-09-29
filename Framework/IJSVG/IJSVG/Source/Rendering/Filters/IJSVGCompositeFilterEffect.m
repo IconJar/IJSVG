@@ -73,13 +73,17 @@
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
     NSString* op = primitive.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
-    NSDictionary* filters = @{
-        IJSVGStringOver: @"CISourceOverCompositing",
-        IJSVGStringIn: @"CISourceInCompositing",
-        IJSVGStringOut: @"CISourceOutCompositing",
-        IJSVGStringAtop: @"CISourceAtopCompositing",
-        IJSVGStringLighter: @"CIAdditionCompositing"
-    };
+    static NSDictionary<NSString*, NSString*>* filters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        filters = @{
+            IJSVGStringOver: @"CISourceOverCompositing",
+            IJSVGStringIn: @"CISourceInCompositing",
+            IJSVGStringOut: @"CISourceOutCompositing",
+            IJSVGStringAtop: @"CISourceAtopCompositing",
+            IJSVGStringLighter: @"CIAdditionCompositing"
+        };
+    });
     if([op isEqualToString:IJSVGStringXor]) {
         CIImage* first = [context imageInPrimitiveColorSpace:input];
         CIImage* second = [context imageInPrimitiveColorSpace:other];

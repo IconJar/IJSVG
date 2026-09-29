@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -48,7 +48,7 @@
 		593950A92852203000DA9156 /* Chessboard480DiagonalStripe.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */; };
 		59432061285333B60086E3CF /* raleigh.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59432060285333B60086E3CF /* raleigh.svg */; };
 		5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5943859E306BF58E006A5F63 /* dropshadow.svg */; };
-		594385AD306C080B006A5F63 /* IJSVGFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */; };
+		594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 594385AC306C080B006A5F63 /* IJSVGFilterTests.m */; };
 		594385B3306C1C7E006A5F63 /* dropshadow-nested-transforms.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */; };
 		594385B5306C1C7E006A5F63 /* dropshadow-chains-units.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */; };
 		594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */; };
@@ -168,7 +168,7 @@
 		593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Chessboard480DiagonalStripe.svg; sourceTree = "<group>"; };
 		59432060285333B60086E3CF /* raleigh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = raleigh.svg; sourceTree = "<group>"; };
 		5943859E306BF58E006A5F63 /* dropshadow.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = dropshadow.svg; sourceTree = "<group>"; };
-		594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGFilterTests.swift; sourceTree = "<group>"; };
+		594385AC306C080B006A5F63 /* IJSVGFilterTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterTests.m; sourceTree = "<group>"; };
 		594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-nested-transforms.svg"; sourceTree = "<group>"; };
 		594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-chains-units.svg"; sourceTree = "<group>"; };
 		594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-clipping-masks.svg"; sourceTree = "<group>"; };
@@ -361,7 +361,7 @@
 				591F8ED52FF02F7D0012F5EB /* IJSVGColorParsingTests.m */,
 				591F8ED72FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m */,
 				591F8ED92FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m */,
-				594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */,
+				594385AC306C080B006A5F63 /* IJSVGFilterTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -435,7 +435,8 @@
 		5956656F19B62F4600D805FF /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 2700;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2720;
 				ORGANIZATIONNAME = "Curtis Hard";
 				TargetAttributes = {
 					5956657619B62F4600D805FF = {
@@ -582,7 +583,7 @@
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
-				594385AD306C080B006A5F63 /* IJSVGFilterTests.swift in Sources */,
+				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
@@ -657,6 +658,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -694,6 +696,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Release;
 		};
@@ -709,7 +712,10 @@
 					"$(SRCROOT)/IJSVGExample",
 				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -726,7 +732,10 @@
 					"$(SRCROOT)/IJSVGExample",
 				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -750,7 +759,11 @@
 					"$(SRCROOT)/IJSVGExampleTests",
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -773,7 +786,11 @@
 					"$(SRCROOT)/IJSVGExampleTests",
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

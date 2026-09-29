@@ -52,19 +52,21 @@ typedef struct {
         if(representable) {
             NSMutableData* padded = [NSMutableData dataWithLength:pw * ph * 4 * sizeof(float)];
             float* pixels = padded.mutableBytes;
-            for(NSInteger y = 0; y < ph; y++) {
-                for(NSInteger x = 0; x < pw; x++) {
-                    CGFloat px = x - parameters.targetX, py = y - parameters.targetY;
-                    float sample[4];
-                    IJSVGFilterSamplerPixel(&sampler, px, py, sample);
-                    float alpha = sample[3];
-                    for(NSUInteger c = 0; c < 4; c++) {
-                        float value = sample[c];
-                        pixels[(y * pw + x) * 4 + c] = parameters.preserveAlpha && c < 3
-                            ? (alpha > 0 ? value / alpha : 0) : value;
+            IJSVGFilterApplyRows(pw, ph, ^(NSInteger firstRow, NSInteger lastRow) {
+                for(NSInteger y = firstRow; y < lastRow; y++) {
+                    for(NSInteger x = 0; x < pw; x++) {
+                        CGFloat px = x - parameters.targetX, py = y - parameters.targetY;
+                        float sample[4];
+                        IJSVGFilterSamplerPixel(&sampler, px, py, sample);
+                        float alpha = sample[3];
+                        for(NSUInteger c = 0; c < 4; c++) {
+                            float value = sample[c];
+                            pixels[(y * pw + x) * 4 + c] = parameters.preserveAlpha && c < 3
+                                ? (alpha > 0 ? value / alpha : 0) : value;
+                        }
                     }
                 }
-            }
+            });
             vImage_Buffer source = { pixels, ph, pw, pw * 4 * sizeof(float) };
             vImage_Buffer destination = { dst, h, w, w * 4 * sizeof(float) };
             float background[4] = { 0 };
@@ -72,16 +74,18 @@ typedef struct {
                 kw / 2, kh / 2, coefficients, (uint32_t)kh, (uint32_t)kw,
                 background, kvImageBackgroundColorFill);
             if(error == kvImageNoError) {
-                for(NSInteger i = 0; i < w * h; i++) {
-                    float alpha = parameters.preserveAlpha ? src[i * 4 + 3]
-                        : IJSVGFilterClamp(dst[i * 4 + 3] + parameters.bias);
-                    dst[i * 4 + 3] = alpha;
-                    for(NSUInteger c = 0; c < 3; c++) {
-                        dst[i * 4 + c] = parameters.preserveAlpha
-                            ? IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias) * alpha
-                            : MIN(alpha, IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias * alpha));
+                IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
+                    for(NSInteger i = firstRow * w; i < lastRow * w; i++) {
+                        float alpha = parameters.preserveAlpha ? src[i * 4 + 3]
+                            : IJSVGFilterClamp(dst[i * 4 + 3] + parameters.bias);
+                        dst[i * 4 + 3] = alpha;
+                        for(NSUInteger c = 0; c < 3; c++) {
+                            dst[i * 4 + c] = parameters.preserveAlpha
+                                ? IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias) * alpha
+                                : MIN(alpha, IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias * alpha));
+                        }
                     }
-                }
+                });
                 return;
             }
         }

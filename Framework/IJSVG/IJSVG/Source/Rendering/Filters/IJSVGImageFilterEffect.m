@@ -22,13 +22,22 @@
         return context.imageProvider(primitive, region);
     }
 
+    if(primitive.imageNode == nil && primitive.image == nil) {
+        return CIImage.emptyImage;
+    }
+    CGRect bounds = CGRectIntersection(context.extent, CGRectIntegral(region));
+    if(!IJSVGFilterValidRect(bounds)) {
+        return CIImage.emptyImage;
+    }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef bitmap = CGBitmapContextCreate(
-        NULL, context.extent.size.width, context.extent.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+        NULL, bounds.size.width, bounds.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     if(bitmap == NULL) {
         return CIImage.emptyImage;
     }
+    // Keep the global pixel grid while allocating only the visible primitive region.
+    CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
     CGContextClipToRect(bitmap, region);
     if(primitive.imageNode != nil) {
         IJSVGLayerTree* tree = [[IJSVGLayerTree alloc] init];
@@ -55,6 +64,7 @@
     if(result != NULL) {
         CGImageRelease(result);
     }
+    image = [image imageByApplyingTransform:CGAffineTransformMakeTranslation(bounds.origin.x, bounds.origin.y)];
     return [image imageByCroppingToRect:region];
 }
 

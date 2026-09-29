@@ -24,7 +24,8 @@ static int32_t IJSVGFilterRandom(int32_t* seed)
 
 static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
 {
-    int64_t normalized = (int64_t)fmax(-2147483646., fmin(2147483646., trunc(seedValue)));
+    // The clamp keeps normalization and the seed recurrence within signed 32-bit range.
+    int32_t normalized = (int32_t)fmax(-2147483646., fmin(2147483646., trunc(seedValue)));
     int32_t seed = normalized <= 0 ? -(normalized % 2147483646) + 1 : normalized;
     for(int channel = 0; channel < 4; channel++) {
         for(int i = 0; i < 256; i++) {
@@ -72,8 +73,12 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
                 by -= tileHeight;
             }
         }
-        px[i] = (int)fmod(fmod(bx, 256.) + 256., 256.);
-        py[i] = (int)fmod(fmod(by, 256.) + 256., 256.);
+        // Lattice coordinates are integral, so correct a negative remainder
+        // directly instead of taking a second floating-point remainder.
+        px[i] = (int)fmod(bx, 256.);
+        py[i] = (int)fmod(by, 256.);
+        px[i] += px[i] < 0 ? 256 : 0;
+        py[i] += py[i] < 0 ? 256 : 0;
     }
     double dots[2][2][4];
     for(int j = 0; j < 2; j++) {

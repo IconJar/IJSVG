@@ -20,24 +20,28 @@
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
     // Core Image blend operators run in its working space; explicitly match
     // sRGB primitives into/out of that space so the SVG property is respected.
-    NSDictionary* modes = @{
-        IJSVGStringNormal: @"CISourceOverCompositing",
-        IJSVGStringMultiply: @"CIMultiplyBlendMode",
-        IJSVGStringScreen: @"CIScreenBlendMode",
-        IJSVGStringDarken: @"CIDarkenBlendMode",
-        IJSVGStringLighten: @"CILightenBlendMode",
-        IJSVGStringOverlay: @"CIOverlayBlendMode",
-        IJSVGStringColorDodge: @"CIColorDodgeBlendMode",
-        IJSVGStringColorBurn: @"CIColorBurnBlendMode",
-        IJSVGStringHardLight: @"CIHardLightBlendMode",
-        IJSVGStringSoftLight: @"CISoftLightBlendMode",
-        IJSVGStringDifference: @"CIDifferenceBlendMode",
-        IJSVGStringExclusion: @"CIExclusionBlendMode",
-        IJSVGStringHue: @"CIHueBlendMode",
-        IJSVGStringSaturation: @"CISaturationBlendMode",
-        IJSVGStringColor: @"CIColorBlendMode",
-        IJSVGStringLuminosity: @"CILuminosityBlendMode"
-    };
+    static NSDictionary<NSString*, NSString*>* modes;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        modes = @{
+            IJSVGStringNormal: @"CISourceOverCompositing",
+            IJSVGStringMultiply: @"CIMultiplyBlendMode",
+            IJSVGStringScreen: @"CIScreenBlendMode",
+            IJSVGStringDarken: @"CIDarkenBlendMode",
+            IJSVGStringLighten: @"CILightenBlendMode",
+            IJSVGStringOverlay: @"CIOverlayBlendMode",
+            IJSVGStringColorDodge: @"CIColorDodgeBlendMode",
+            IJSVGStringColorBurn: @"CIColorBurnBlendMode",
+            IJSVGStringHardLight: @"CIHardLightBlendMode",
+            IJSVGStringSoftLight: @"CISoftLightBlendMode",
+            IJSVGStringDifference: @"CIDifferenceBlendMode",
+            IJSVGStringExclusion: @"CIExclusionBlendMode",
+            IJSVGStringHue: @"CIHueBlendMode",
+            IJSVGStringSaturation: @"CISaturationBlendMode",
+            IJSVGStringColor: @"CIColorBlendMode",
+            IJSVGStringLuminosity: @"CILuminosityBlendMode"
+        };
+    });
     return [context applyFilter:modes[primitive.parameters[IJSVGAttributeMode]] ?: @"CISourceOverCompositing"
                         toImage:input
                      parameters:@{
