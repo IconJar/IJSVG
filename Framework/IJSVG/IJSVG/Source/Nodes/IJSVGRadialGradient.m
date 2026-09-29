@@ -13,7 +13,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeFX];
     [storage setBit:IJSVGNodeAttributeFY];

@@ -85,8 +85,11 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
++ (NSArray<NSString*>*)defURLs:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string
-    fallBackForPercent:(CGFloat)viewBox;
+   fallBackForPercent:(CGFloat)viewBox;
+// Parses a complete SVG number list; malformed or non-finite values return an empty array.
++ (NSArray<NSNumber*>*)numbersFromString:(NSString*)string;
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length;
 + (CGFloat*)scanFloatsFromCString:(const char*)buffer

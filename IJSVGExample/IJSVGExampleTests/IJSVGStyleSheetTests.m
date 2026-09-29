@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);

@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
@@ -415,6 +416,59 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return foundID;
 }
 
++ (NSArray<NSString*>*)defURLs:(NSString*)string
+{
+    const char* characters = string.UTF8String;
+    if(characters == NULL || strlen(characters) != [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return @[];
+    }
+    NSUInteger count = 0;
+    BOOL valid = NO;
+    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseStringWithValidation(characters, &count, &valid);
+    NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] init];
+    for(NSUInteger index = 0; valid && index < count; index++) {
+        IJSVGParsingStringMethod* method = methods[index];
+        if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
+            valid = NO;
+            break;
+        }
+        const char* parameters = method->parameters;
+        NSUInteger length = strlen(parameters);
+        BOOL quoted = length >= 2 && (parameters[0] == '\'' || parameters[0] == '"')
+            && parameters[length - 1] == parameters[0];
+        if(quoted) {
+            parameters++;
+            length -= 2;
+        }
+        if(length < 2 || parameters[0] != '#') {
+            valid = NO;
+            break;
+        }
+        for(NSUInteger offset = 1; offset < length; offset++) {
+            unsigned char character = (unsigned char)parameters[offset];
+            if(character < ' ' || character == '\x7f' || character == '\\'
+                || (quoted && character == parameters[-1])
+                || (!quoted && (isspace(character) || character == '(' || character == ')'
+                    || character == '\'' || character == '"'))) {
+                valid = NO;
+                break;
+            }
+        }
+        if(valid) {
+            NSString* identifier = [[NSString alloc] initWithBytes:parameters + 1
+                                                            length:length - 1
+                                                          encoding:NSUTF8StringEncoding];
+            if(identifier == nil) {
+                valid = NO;
+                break;
+            }
+            [identifiers addObject:identifier];
+        }
+    }
+    IJSVGParsingStringMethodsRelease(methods, count);
+    return valid ? identifiers : @[];
+}
+
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
     if([string isEqualToString:IJSVGStringEvenOdd])
@@ -601,6 +655,41 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return [self.class scanFloatsFromCString:command.UTF8String
                                   dataStream:dataStream
                                         size:count];
+}
+
++ (NSArray<NSNumber*>*)numbersFromString:(NSString*)string
+{
+    if(string.length == 0) {
+        return @[];
+    }
+    // The path scanner deliberately tolerates separators and invalid text. Validate
+    // attribute grammar first so a partial value cannot replace an SVG default.
+    static NSRegularExpression* expression;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSString* number = @"[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?";
+        NSString* pattern = [NSString stringWithFormat:
+            @"\\A[ \\t\\r\\n]*%@(?:[ \\t\\r\\n]*,[ \\t\\r\\n]*%@|[ \\t\\r\\n]+%@)*[ \\t\\r\\n]*\\z",
+            number, number, number];
+        expression = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
+    });
+    if([expression firstMatchInString:string options:0 range:NSMakeRange(0, string.length)] == nil) {
+        return @[];
+    }
+    NSInteger count = 0;
+    CGFloat* values = [self scanFloatsFromCString:string.UTF8String
+                                     dataStream:IJSVGThreadManager.currentManager.pathDataStream
+                                           size:&count];
+    NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] initWithCapacity:count];
+    for(NSInteger index = 0; index < count; index++) {
+        if(isfinite(values[index]) == NO) {
+            free(values);
+            return @[];
+        }
+        [numbers addObject:@(values[index])];
+    }
+    free(values);
+    return numbers;
 }
 
 + (CGFloat*)scanFloatsFromString:(NSString*)string

@@ -1,0 +1,34 @@
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left: named results. Middle: bbox units under unequal scaling.
+       Right: SourceAlpha and an explicit return to SourceGraphic. -->
+  <defs>
+    <filter id="chain" x="-80%" y="-80%" width="280%" height="280%">
+      <feDropShadow in="SourceGraphic" dx="12" dy="0" stdDeviation="0" flood-color="#06b6d4" result="cyan"/>
+      <feDropShadow in="cyan" dx="0" dy="12" stdDeviation="0" flood-color="#e11d48" result="red"/>
+      <feDropShadow in="red" dx="-8" dy="-5" stdDeviation="2 5" flood-color="#7c3aed" flood-opacity=".6"/>
+    </filter>
+    <filter id="relative" x="-80%" y="-80%" width="280%" height="280%" primitiveUnits="objectBoundingBox">
+      <feDropShadow dx=".2" dy=".3" stdDeviation=".07 .025" flood-color="#2563eb" flood-opacity=".7"/>
+      <feDropShadow dx="-.15" dy="0" stdDeviation="0 .06" flood-color="#f97316" flood-opacity=".7"/>
+    </filter>
+    <filter id="alpha" x="-70%" y="-70%" width="240%" height="240%">
+      <feDropShadow in="SourceAlpha" dx="10" dy="8" stdDeviation="3" flood-color="#e11d48"/>
+      <feDropShadow dx="-8" dy="-8" stdDeviation="1 4" flood-color="#06b6d4" flood-opacity=".7"/>
+    </filter>
+    <filter id="reset" x="-70%" y="-70%" width="240%" height="240%">
+      <feDropShadow dx="25" dy="0" stdDeviation="0" flood-color="red" result="discarded"/>
+      <feDropShadow in="SourceGraphic" dx="-8" dy="8" stdDeviation="2" flood-color="#2563eb"/>
+    </filter>
+  </defs>
+  <g transform="translate(90 85) rotate(-12)" filter="url(#chain)">
+    <path d="M0-38L12-12L40-10L20 9L25 36L0 23L-25 36L-20 9L-40-10L-12-12Z" fill="#fbbf24"/>
+    <circle cx="32" cy="28" r="12" fill="#f97316"/>
+  </g>
+  <g transform="translate(290 92) rotate(15) scale(1.3 .65)">
+    <rect x="-42" y="-40" width="84" height="80" rx="12" fill="#86efac" stroke="#166534" stroke-width="6" filter="url(#relative)"/>
+  </g>
+  <g transform="translate(460 85) rotate(-20)">
+    <path d="M-25-30H25V30H-25Z" fill="#fbbf24" opacity=".8" filter="url(#alpha)"/>
+  </g>
+  <circle cx="550" cy="110" r="19" fill="#fbbf24" filter="url(#reset)"/>
+</svg>

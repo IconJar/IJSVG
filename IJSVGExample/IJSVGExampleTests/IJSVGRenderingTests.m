@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 

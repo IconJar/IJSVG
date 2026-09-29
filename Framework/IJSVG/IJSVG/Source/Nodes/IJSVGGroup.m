@@ -53,7 +53,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage addBits:[IJSVGPath allowedAttributes]];
     [storage addBits:[IJSVGImage allowedAttributes]];
@@ -72,6 +72,8 @@
 
     for (__strong IJSVGNode* childNode in _children) {
         childNode = childNode.copy;
+        // A copied child must not remove itself from the source group.
+        childNode.parentNode = nil;
         [node addChild:childNode];
     }
     return node;

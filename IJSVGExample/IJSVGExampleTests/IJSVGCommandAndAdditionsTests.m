@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGCommandClose.h>
 #import <IJSVG/IJSVGCommandCurve.h>

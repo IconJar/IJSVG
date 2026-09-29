@@ -27,6 +27,16 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
 
 @implementation IJSVGNode
 
+- (IJSVGFilter*)filter
+{
+    return self.filters.firstObject;
+}
+
+- (void)setFilter:(IJSVGFilter*)filter
+{
+    self.filters = filter == nil ? @[] : @[filter];
+}
+
 @synthesize fill = _fill;
 @synthesize stroke = _stroke;
 
@@ -155,6 +165,84 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             break;
         }
         case 'f': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feBlend") == YES) {
+                return IJSVGNodeTypeFilterBlend;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feColorMatrix") == YES) {
+                return IJSVGNodeTypeFilterColorMatrix;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feComponentTransfer") == YES) {
+                return IJSVGNodeTypeFilterComponentTransfer;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feComposite") == YES) {
+                return IJSVGNodeTypeFilterComposite;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feConvolveMatrix") == YES) {
+                return IJSVGNodeTypeFilterConvolveMatrix;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feDiffuseLighting") == YES) {
+                return IJSVGNodeTypeFilterDiffuseLighting;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feDisplacementMap") == YES) {
+                return IJSVGNodeTypeFilterDisplacementMap;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feFlood") == YES) {
+                return IJSVGNodeTypeFilterFlood;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feGaussianBlur") == YES) {
+                return IJSVGNodeTypeFilterGaussianBlur;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feImage") == YES) {
+                return IJSVGNodeTypeFilterImage;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feMerge") == YES) {
+                return IJSVGNodeTypeFilterMerge;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feMorphology") == YES) {
+                return IJSVGNodeTypeFilterMorphology;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feOffset") == YES) {
+                return IJSVGNodeTypeFilterOffset;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feSpecularLighting") == YES) {
+                return IJSVGNodeTypeFilterSpecularLighting;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feTile") == YES) {
+                return IJSVGNodeTypeFilterTile;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feTurbulence") == YES) {
+                return IJSVGNodeTypeFilterTurbulence;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feMergeNode") == YES) {
+                return IJSVGNodeTypeFilterMergeNode;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feFuncR") == YES) {
+                return IJSVGNodeTypeFilterFuncR;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feFuncG") == YES) {
+                return IJSVGNodeTypeFilterFuncG;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feFuncB") == YES) {
+                return IJSVGNodeTypeFilterFuncB;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feFuncA") == YES) {
+                return IJSVGNodeTypeFilterFuncA;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feDistantLight") == YES) {
+                return IJSVGNodeTypeFilterDistantLight;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "fePointLight") == YES) {
+                return IJSVGNodeTypeFilterPointLight;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feSpotLight") == YES) {
+                return IJSVGNodeTypeFilterSpotLight;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "feDropShadow") == YES) {
+                return IJSVGNodeTypeFilterDropShadow;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "filter") == YES) {
+                return IJSVGNodeTypeFilter;
+            }
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "foreignobject") == YES) {
                 return IJSVGNodeTypeForeignObject;
             }
@@ -205,8 +293,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeColorInterpolationFilters];
     [storage setBit:IJSVGNodeAttributeClass];
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
@@ -390,6 +479,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.fill = node.fill;
     self.stroke = node.stroke;
     self.clipPath = node.clipPath;
+    self.filters = node.filters;
+    self.filterColorInterpolation = node.filterColorInterpolation;
 
     self.units = node.units;
     self.contentUnits = node.contentUnits;

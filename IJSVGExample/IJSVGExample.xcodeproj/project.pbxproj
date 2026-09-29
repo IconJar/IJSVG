@@ -47,6 +47,12 @@
 		593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A6285215FB00DA9156 /* 5x5checkerboard.svg */; };
 		593950A92852203000DA9156 /* Chessboard480DiagonalStripe.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */; };
 		59432061285333B60086E3CF /* raleigh.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59432060285333B60086E3CF /* raleigh.svg */; };
+		5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5943859E306BF58E006A5F63 /* dropshadow.svg */; };
+		594385AD306C080B006A5F63 /* IJSVGFilterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */; };
+		594385B3306C1C7E006A5F63 /* dropshadow-nested-transforms.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */; };
+		594385B5306C1C7E006A5F63 /* dropshadow-chains-units.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */; };
+		594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */; };
+		594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */; };
 		59459CEC19B906FE00CE493B /* clipped.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59459CEB19B906FE00CE493B /* clipped.svg */; };
 		59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */ = {isa = PBXBuildFile; fileRef = 59459CEE19B9074F00CE493B /* SVGExampleView4.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
@@ -161,6 +167,12 @@
 		593950A6285215FB00DA9156 /* 5x5checkerboard.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = 5x5checkerboard.svg; sourceTree = "<group>"; };
 		593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Chessboard480DiagonalStripe.svg; sourceTree = "<group>"; };
 		59432060285333B60086E3CF /* raleigh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = raleigh.svg; sourceTree = "<group>"; };
+		5943859E306BF58E006A5F63 /* dropshadow.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = dropshadow.svg; sourceTree = "<group>"; };
+		594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGFilterTests.swift; sourceTree = "<group>"; };
+		594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-nested-transforms.svg"; sourceTree = "<group>"; };
+		594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-chains-units.svg"; sourceTree = "<group>"; };
+		594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-clipping-masks.svg"; sourceTree = "<group>"; };
+		594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-deep-nesting.svg"; sourceTree = "<group>"; };
 		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
 		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
 		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
@@ -274,6 +286,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				5943859E306BF58E006A5F63 /* dropshadow.svg */,
 				5919FE042FE30D0F003CAC34 /* oklch.svg */,
 				591F8EC02FF016980012F5EB /* advanced-css.svg */,
 				5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */,
@@ -326,6 +339,10 @@
 				5956657B19B62F4600D805FF /* Info.plist */,
 				5956657C19B62F4600D805FF /* main.m */,
 				5956659A19B62F9500D805FF /* IJSVGExample-Prefix.pch */,
+				594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */,
+				594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */,
+				594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */,
+				594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -344,6 +361,7 @@
 				591F8ED52FF02F7D0012F5EB /* IJSVGColorParsingTests.m */,
 				591F8ED72FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m */,
 				591F8ED92FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m */,
+				594385AC306C080B006A5F63 /* IJSVGFilterTests.swift */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -481,8 +499,11 @@
 				5901B73E282818CA00290525 /* canonical.svg in Resources */,
 				593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */,
 				5911682C2854CB7000678392 /* couchdb.svg in Resources */,
+				5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */,
 				5901B747282818CA00290525 /* pcolormesh.svg in Resources */,
+				594385B5306C1C7E006A5F63 /* dropshadow-chains-units.svg in Resources */,
 				590C87F1201FBF27004A1554 /* AJ_Digital_Camera.svg in Resources */,
+				594385B3306C1C7E006A5F63 /* dropshadow-nested-transforms.svg in Resources */,
 				59B5E3F9284E5EA60050CC73 /* image.svg in Resources */,
 				59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */,
 				59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */,
@@ -508,6 +529,7 @@
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
 				59D6B1A5284F67FC0058DE6B /* gump-bench.svg in Resources */,
 				5901B746282818CA00290525 /* shape.svg in Resources */,
+				594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */,
 				5901B749282818CA00290525 /* poison.svg in Resources */,
 				59432061285333B60086E3CF /* raleigh.svg in Resources */,
 				590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */,
@@ -518,6 +540,7 @@
 				5986308C19BA180E00CF15EA /* dashed.svg in Resources */,
 				5901B743282818CA00290525 /* clipper_edge.svg in Resources */,
 				5901B748282818CA00290525 /* noscale.svg in Resources */,
+				594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */,
 				595A69DE2856457E00525065 /* aspect-ratio.svg in Resources */,
 				5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */,
 				5901B73D282818CA00290525 /* contour_hatching.svg in Resources */,
@@ -559,6 +582,7 @@
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
+				594385AD306C080B006A5F63 /* IJSVGFilterTests.swift in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
@@ -680,6 +704,10 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExample",
+				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -693,6 +721,10 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExample",
+				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -702,7 +734,7 @@
 		5956659819B62F4700D805FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -713,29 +745,39 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExampleTests",
+				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "";
 			};
 			name = Debug;
 		};
 		5956659919B62F4700D805FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExampleTests",
+				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "";
 			};
 			name = Release;
 		};

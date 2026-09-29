@@ -7,7 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "SVGView.h"
+#import <SVGView.h>
 
 @interface SVGExampleView1 : SVGView
 

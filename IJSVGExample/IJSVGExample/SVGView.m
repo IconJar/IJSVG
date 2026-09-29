@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "SVGView.h"
+#import <SVGView.h>
 
 @implementation SVGView
 
@@ -25,7 +25,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"pcolormesh"];
+    return [IJSVG SVGNamed:@"car"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

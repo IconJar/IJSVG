@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGBitFlags64.h"
+#import <IJSVG/IJSVGBitFlags64.h>
 
 @implementation IJSVGBitFlags64
 
@@ -27,6 +27,11 @@
     }
 }
 
+- (int)length
+{
+    return 64;
+}
+
 - (uint64_t)bitMask
 {
     return _storage64;
@@ -34,7 +39,7 @@
 
 - (BOOL)bitIsSet:(int)bit
 {
-    return ((_storage64 >> bit) & 1ULL) == 1;
+    return bit >= 0 && bit < 64 && ((_storage64 >> bit) & 1ULL) == 1;
 }
 
 - (void)setBit:(int)bit

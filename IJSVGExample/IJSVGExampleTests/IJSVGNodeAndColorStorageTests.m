@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 
@@ -27,7 +27,7 @@
     XCTAssertEqual([IJSVGNode typeForString:@"linearGradient" kind:NSXMLElementKind], IJSVGNodeTypeLinearGradient);
     XCTAssertEqual([IJSVGNode typeForString:@"radialGradient" kind:NSXMLElementKind], IJSVGNodeTypeRadialGradient);
     XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:NSXMLElementKind], IJSVGNodeTypeClipPath);
-    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeFilterGaussianBlur);
     XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
     XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeNotFound);
     XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);

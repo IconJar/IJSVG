@@ -6,7 +6,7 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTileLayer.h"
+#import <IJSVG/IJSVGTileLayer.h>
 
 @implementation IJSVGTileLayer
 

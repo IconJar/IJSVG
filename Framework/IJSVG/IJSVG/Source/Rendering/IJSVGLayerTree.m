@@ -27,6 +27,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTransformLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 
 @implementation IJSVGLayerTree
 
@@ -130,6 +131,18 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
+                                          inViewPort:(CGRect)viewPort
+{
+    __block CALayer<IJSVGDrawableLayer>* layer = nil;
+    [self withViewPort:viewPort
+            unitBounds:viewPort
+               handler:^{
+      layer = [self drawableLayerForNode:node];
+    }];
+    return layer;
+}
+
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
 {
     CALayer<IJSVGDrawableLayer>* layer = nil;
     if([node isKindOfClass:IJSVGPath.class]) {
@@ -142,6 +155,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         layer = [self drawableLayerForImageNode:(IJSVGImage*)node];
     }
     if(layer != nil) {
+        for(IJSVGFilter* filter in node.filters) {
+            layer = [self applyFilter:filter
+                              toLayer:layer
+                             fromNode:node];
+        }
         [self applyDefaultsToLayer:layer
                           fromNode:node];
         return [self applyTransforms:node.transforms
@@ -152,12 +170,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 }
 
 - (CALayer<IJSVGDrawableLayer>*)drawableBasicLayerForPathNode:(IJSVGPath*)node
-                                              resolvedPath:(CGPathRef)resolvedPath
-                                          resolvedPathBounds:(CGRect)resolvedPathBounds
+                                                 resolvedPath:(CGPathRef)resolvedPath
+                                           resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     IJSVGShapeLayer* layer = node.primitiveType == kIJSVGPrimitivePathTypeRect
-        ? [IJSVGRectLayer layer]
-        : [IJSVGShapeLayer layer];
+        ? [IJSVGRectLayer layer] : [IJSVGShapeLayer layer];
     layer.primitiveType = node.primitiveType;
     if(CGPathIsEmpty(resolvedPath) == NO) {
         [self applyPath:resolvedPath
@@ -932,6 +949,85 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return mPath;
 }
 
+- (void)drawPaint:(IJSVGNode*)paint
+      boundingBox:(CGRect)boundingBox
+         viewPort:(CGRect)viewPort
+           region:(CGRect)region
+        inContext:(CGContextRef)context
+{
+    CGContextSaveGState(context);
+    if([paint isKindOfClass:IJSVGColorNode.class]) {
+        NSColor* color = ((IJSVGColorNode*)paint).color;
+        if(color != nil) {
+            CGContextSetFillColorWithColor(context, color.CGColor);
+            CGContextFillRect(context, region);
+        }
+    } else if([paint isKindOfClass:IJSVGGradient.class]) {
+        IJSVGGradient* gradient = (IJSVGGradient*)paint;
+        if(gradient.units == IJSVGUnitObjectBoundingBox) {
+            CGContextTranslateCTM(context, boundingBox.origin.x, boundingBox.origin.y);
+        }
+        [gradient drawInContextRef:context
+                            bounds:gradient.units == IJSVGUnitObjectBoundingBox ? boundingBox : viewPort
+                         transform:CGAffineTransformIdentity];
+    } else if([paint isKindOfClass:IJSVGPattern.class]) {
+        IJSVGGroupLayer* reference = [IJSVGGroupLayer layer];
+        reference.boundingBox = boundingBox;
+        reference.outerBoundingBox = boundingBox;
+        reference.frame = boundingBox;
+        [self withViewPort:viewPort
+                unitBounds:boundingBox
+                   handler:^{
+             IJSVGPatternLayer* pattern = [self drawableBasicPatternLayerForLayer:reference
+                                                                          pattern:(IJSVGPattern*)paint];
+             pattern.referencingLayer = reference;
+             pattern.frame = region;
+             pattern.boundingBox = region;
+             pattern.outerBoundingBox = region;
+             CGContextTranslateCTM(context, region.origin.x, region.origin.y);
+             [pattern renderInContext:context];
+        }];
+    }
+    CGContextRestoreGState(context);
+}
+
+#pragma mark Filters
+
+- (CALayer<IJSVGDrawableLayer>*)applyFilter:(IJSVGFilter*)filter
+                                    toLayer:(CALayer<IJSVGDrawableLayer>*)layer
+                                   fromNode:(IJSVGNode*)node
+{
+    if(filter == nil) {
+        return layer;
+    }
+
+    if([layer isKindOfClass:IJSVGRootLayer.class]) {
+        // Preserve the root layers viewport contract. Its contents are
+        // filtered in viewBox coordinates before root opacity and clips.
+        IJSVGRootLayer* rootLayer = (IJSVGRootLayer*)layer;
+        IJSVGGroupLayer* source = [IJSVGGroupLayer layer];
+        for(CALayer* child in rootLayer.sublayers.copy) {
+            [source addSublayer:child];
+        }
+        source.boundingBox = [IJSVGLayer calculateFrameForSublayers:source.sublayers];
+        source.outerBoundingBox = source.boundingBox;
+        CGRect viewPort
+            = rootLayer.viewBox != nil ? [rootLayer.viewBox computeValue:rootLayer.frame.size] : rootLayer.bounds;
+        IJSVGFilterLayer* filtered = [[IJSVGFilterLayer alloc] initWithSourceLayer:source
+                                                                            filter:filter
+                                                                          viewPort:viewPort];
+        filtered.sourceNode = node;
+        [rootLayer addSublayer:filtered];
+        return rootLayer;
+    }
+
+    IJSVGFilterLayer* filtered = [[IJSVGFilterLayer alloc] initWithSourceLayer:layer
+                                                                        filter:filter
+                                                                      viewPort:self.viewPort];
+    filtered.sourceNode = node;
+    return filtered;
+}
+
 #pragma mark Defaults
 
 - (void)applyDefaultsToLayer:(CALayer<IJSVGDrawableLayer>*)layer
@@ -1018,8 +1114,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
         IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits
                                                                          bounds:unitBounds];
-        identity = CGAffineTransformConcat(identity,
-                                           resolvedTransform.CGAffineTransform);
+        identity = CGAffineTransformConcat(identity, resolvedTransform.CGAffineTransform);
     }
     parentLayer.affineTransform = identity;
     [parentLayer addSublayer:layer];
@@ -1039,12 +1134,14 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                               [[self unit:image.y matchingNode:image] computeValue:height],
                               [[self unit:image.width matchingNode:image] computeValue:width],
                               [[self unit:image.height matchingNode:image] computeValue:height]);
+  
     if(frame.size.width == 0.f) {
         frame.size.width = image.intrinsicSize.width;
     }
     if(frame.size.height == 0.f) {
         frame.size.height = image.intrinsicSize.height;
     }
+  
     layer.frame = frame;
     [layer setNeedsLayout];
     return (IJSVGLayer*)layer;

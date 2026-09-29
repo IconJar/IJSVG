@@ -194,6 +194,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 // inspired and modified from http://www.leapsecond.com/tools/fast_atof.c
 CGFloat IJSVGParseFloat(const char* buffer)
 {
+    const char* start = buffer;
     int fraction;
     double sign, value, scale;
 
@@ -235,10 +236,14 @@ CGFloat IJSVGParseFloat(const char* buffer)
             buffer += 1;
         }
         for (exponent = 0; VALID_DIGIT(*buffer); buffer += 1) {
-            exponent = exponent * 10 + (*buffer - '0');
+            if(exponent <= 308) {
+                exponent = exponent * 10 + (*buffer - '0');
+            }
         }
         if(exponent > 308) {
-            exponent = 308;
+            // Preserve overflow and subnormal values instead of silently clamping
+            // the exponent. Keep the fast conversion for ordinary SVG numbers.
+            return (CGFloat)[[NSString stringWithUTF8String:start] doubleValue];
         }
         while (exponent >= 50) {
             scale *= 1E50;

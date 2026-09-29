@@ -26,6 +26,15 @@
 
 + (CGPathRef)newPathFromStrokedShapeLayer:(IJSVGShapeLayer*)shapeLayer;
 
+- (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
+                                          inViewPort:(CGRect)viewPort;
+
+- (void)drawPaint:(IJSVGNode*)paint
+      boundingBox:(CGRect)boundingBox
+         viewPort:(CGRect)viewPort
+           region:(CGRect)region
+        inContext:(CGContextRef)context;
+
 - (IJSVGRootLayer*)rootLayerForRootNode:(IJSVGRootNode*)rootNode;
 
 @end

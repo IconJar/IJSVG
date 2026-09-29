@@ -13,7 +13,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeFill];
     [storage setBit:IJSVGNodeAttributeFillOpacity];
@@ -29,6 +29,7 @@
     [storage setBit:IJSVGNodeAttributeStrokeDashOffset];
     [storage setBit:IJSVGNodeAttributeClipPath];
     [storage setBit:IJSVGNodeAttributeMask];
+    [storage setBit:IJSVGNodeAttributeFilter];
     [storage setBit:IJSVGNodeAttributeOpacity];
     [storage setBit:IJSVGNodeAttributeBlendMode];
     return storage;
@@ -96,6 +97,7 @@
     IJSVGPath* node = [super copyWithZone:zone];
     node.path = _path;
     node.pathUnits = _pathUnits;
+    node.primitiveType = _primitiveType;
     node.x1 = _x1.copy;
     node.y1 = _y1.copy;
     node.x2 = _x2.copy;

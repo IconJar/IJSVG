@@ -20,7 +20,6 @@ BOOL IJSVGAttributeHasValue(
     NSString* __autoreleasing* value);
 void IJSVGStoreStyleAttributes(
     IJSVGStyleSheetStyle* style,
-    uint64_t activeAttributes,
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength],
-    uint64_t* presentAttributes);
+    IJSVGBitFlags* activeAttributes,
+    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength]);
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value);

@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 
 IJSVGNode* IJSVGTestNode(NSString* name, NSString* identifier,
                          NSArray<NSString*>* classes)

@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "SVGExampleView2.h"
+#import <SVGExampleView2.h>
 
 @implementation SVGExampleView2
 

@@ -1,0 +1,39 @@
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Five filter levels; shared definitions, negative scales and nested opacity. -->
+  <defs>
+    <filter id="soft" x="-100%" y="-100%" width="300%" height="300%">
+      <feDropShadow dx="4" dy="5" stdDeviation="2" flood-color="#1e3a8a" flood-opacity=".45"/>
+    </filter>
+    <filter id="edge" x="-100%" y="-100%" width="300%" height="300%">
+      <feDropShadow dx="-3" dy="2" stdDeviation="0" flood-color="#db2777" flood-opacity=".6"/>
+    </filter>
+  </defs>
+  <g transform="translate(95 90)" filter="url(#soft)">
+    <g transform="rotate(-15)" filter="url(#edge)">
+      <g transform="scale(1.1 .8)" filter="url(#soft)" opacity=".85">
+        <g transform="skewX(12)" filter="url(#edge)">
+          <path d="M-40-35H30L45 5L15 35H-40Z" fill="#fbbf24" stroke="#92400e" stroke-width="3" filter="url(#soft)"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(300 90) scale(-1 1)" filter="url(#soft)" opacity=".75">
+    <g transform="rotate(20)" filter="url(#edge)">
+      <g transform="scale(.8 1.15)" filter="url(#soft)">
+        <g transform="translate(6 -5)" filter="url(#edge)">
+          <circle r="34" fill="#67e8f9" filter="url(#soft)"/>
+          <rect x="-35" y="5" width="30" height="30" fill="#a78bfa" filter="url(#edge)"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g transform="translate(500 85) rotate(12)" filter="url(#soft)">
+    <g transform="scale(1.2 .75)" filter="url(#edge)">
+      <g transform="rotate(-35)" filter="url(#soft)" opacity=".7">
+        <g transform="skewY(15)" filter="url(#edge)">
+          <path d="M0-40L38 25H-38Z" fill="#86efac" stroke="#166534" stroke-width="4" filter="url(#soft)"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

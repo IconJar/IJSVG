@@ -23,13 +23,14 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeX];
     [storage setBit:IJSVGNodeAttributeY];
     [storage setBit:IJSVGNodeAttributeWidth];
     [storage setBit:IJSVGNodeAttributeHeight];
     [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
+    [storage setBit:IJSVGNodeAttributeFilter];
     return storage;
 }
 
