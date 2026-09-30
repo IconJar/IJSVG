@@ -78,6 +78,8 @@ static void IJSVGReleaseContextSlot(IJSVGCIContextSlot* slot)
     [IJSVGContextPoolLock unlock];
 }
 
+static _Thread_local NSUInteger IJSVGCIOutputDepth;
+
 @implementation IJSVGThreadManager
 
 @synthesize pathDataStream = _pathDataStream;
@@ -203,6 +205,28 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     NSMapTable* map = [self.class mapTable];
     @synchronized (map) {
         [map removeObjectForKey:_thread];
+    }
+}
+
++ (void)performCIOutputBlock:(dispatch_block_t)block
+{
+    static dispatch_semaphore_t outputSlots;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        outputSlots = dispatch_semaphore_create(2);
+    });
+    BOOL ownsSlot = IJSVGCIOutputDepth == 0;
+    if(ownsSlot) {
+        dispatch_semaphore_wait(outputSlots, DISPATCH_TIME_FOREVER);
+    }
+    IJSVGCIOutputDepth++;
+    @try {
+        block();
+    } @finally {
+        IJSVGCIOutputDepth--;
+        if(ownsSlot) {
+            dispatch_semaphore_signal(outputSlots);
+        }
     }
 }
 

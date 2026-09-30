@@ -206,9 +206,14 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         }
         __block CGImageRef rendered = NULL;
         CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
-            rendered = [ciContext createCGImage:atlas fromRect:CGRectMake(0, 0, atlasWidth, atlasHeight)
-                                         format:kCIFormatRGBA8 colorSpace:colorSpace];
+        // Wait before leasing a context. Source drawing and graph construction
+        // remain concurrent, and the slot is returned before cropping or replay.
+        [IJSVGThreadManager performCIOutputBlock:^{
+            [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
+                rendered = [ciContext createCGImage:atlas
+                                           fromRect:CGRectMake(0, 0, atlasWidth, atlasHeight)
+                                             format:kCIFormatRGBA8 colorSpace:colorSpace];
+            }];
         }];
         CGColorSpaceRelease(colorSpace);
         if(rendered == NULL) {

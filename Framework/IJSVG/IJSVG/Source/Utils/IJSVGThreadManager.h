@@ -36,6 +36,11 @@
 // The flag identifies contexts that support stitchable Metal kernels.
 + (void)performBlockWithCIContext:(void (^)(CIContext* context, BOOL supportsMetalKernels))block;
 
+// Bounds simultaneous synchronous atlas outputs to two callers.
+// Nested calls on the same thread reuse its slot. Do not dispatch work and wait
+// inside the block or carry the scope across an asynchronous suspension.
++ (void)performCIOutputBlock:(dispatch_block_t)block;
+
 - (void)adopt:(IJSVG*)svg;
 - (void)remove:(IJSVG*)svg;
 - (BOOL)manages:(IJSVG*)svg;

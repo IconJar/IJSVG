@@ -159,28 +159,67 @@
     CGContextRestoreGState(ctx);
 }
 
-- (CGRect)gradientTransparencyClipInContext:(CGContextRef)ctx
+- (CGRect)transparencyClipInContext:(CGContextRef)ctx
 {
-    if(self.sublayers.count != 1 || self.fillColor != NULL || self.strokeColor != NULL
+    if(self.sublayers.count == 0 || self.sublayers.count > 2
+        || self.fillColor != NULL || self.strokeColor != NULL
         || self.contents != nil || self.backgroundColor != NULL || self.borderWidth != 0
         || self.shadowOpacity != 0 || self.mask != nil || self.maskLayer != nil
         || self.filters.count != 0 || self.backgroundFilters.count != 0
+        || !CATransform3DIsIdentity(self.sublayerTransform)
         || !CGPointEqualToPoint(self.bounds.origin, CGPointZero)) {
         return CGRectNull;
     }
-    CALayer* child = self.sublayers.firstObject;
-    if(![child isKindOfClass:IJSVGGradientLayer.class]
-        || !CATransform3DIsIdentity(child.transform)
-        || !CGPointEqualToPoint(child.frame.origin, CGPointZero)
-        || !CGPointEqualToPoint(child.bounds.origin, CGPointZero)
-        || child.shadowOpacity != 0) {
-        return CGRectNull;
+  
+    CGRect bounds = CGRectNull;
+    for(CALayer* child in self.sublayers) {
+        if(!CATransform3DIsIdentity(child.transform)
+            || !CGPointEqualToPoint(child.frame.origin, CGPointZero)
+            || !CGPointEqualToPoint(child.bounds.origin, CGPointZero)
+            || child.sublayers.count != 0 || child.contents != nil
+            || child.backgroundColor != NULL || child.borderWidth != 0
+            || child.shadowOpacity != 0 || child.mask != nil
+            || child.filters.count != 0 || child.backgroundFilters.count != 0) {
+            return CGRectNull;
+        }
+        CGRect paintedBounds = CGRectNull;
+        if([child isMemberOfClass:IJSVGGradientLayer.class]) {
+            IJSVGGradientLayer* gradient = (IJSVGGradientLayer*)child;
+            if(gradient.clipPath == NULL || gradient.maskLayer != nil) {
+                return CGRectNull;
+            }
+            // Gradient strokes already carry the expanded stroke outline.
+            paintedBounds = CGPathGetBoundingBox(gradient.clipPath);
+        } else if([child isMemberOfClass:IJSVGShapeLayer.class]
+                  || [child isMemberOfClass:IJSVGStrokeLayer.class]) {
+            IJSVGShapeLayer* shape = (IJSVGShapeLayer*)child;
+            if(shape.path == NULL || shape.maskLayer != nil) {
+                return CGRectNull;
+            }
+            paintedBounds = CGPathGetBoundingBox(shape.path);
+            if(shape.strokeColor != NULL) {
+                if(!isfinite(shape.lineWidth) || shape.lineWidth <= 0
+                    || !isfinite(shape.miterLimit) || shape.miterLimit < 0) {
+                    return CGRectNull;
+                }
+                // A full width covers round and square caps, including dash caps.
+                // Use the miter limit for sharp joins without allocating an outline.
+                CGFloat padding = shape.lineWidth;
+                if([shape.lineJoin isEqualToString:kCALineJoinMiter]) {
+                    padding *= MAX(1.f, shape.miterLimit);
+                }
+                paintedBounds = CGRectInset(paintedBounds, -padding, -padding);
+            }
+        } else {
+            return CGRectNull;
+        }
+        if(CGRectIsNull(paintedBounds) || !isfinite(paintedBounds.origin.x)
+            || !isfinite(paintedBounds.origin.y) || !isfinite(paintedBounds.size.width)
+            || !isfinite(paintedBounds.size.height)) {
+            return CGRectNull;
+        }
+        bounds = CGRectUnion(bounds, paintedBounds);
     }
-    IJSVGGradientLayer* gradient = (IJSVGGradientLayer*)child;
-    if(gradient.clipPath == NULL) {
-        return CGRectNull;
-    }
-    CGRect bounds = CGPathGetBoundingBox(gradient.clipPath);
     CGAffineTransform transform = CGContextGetCTM(ctx);
     CGFloat determinant = transform.a * transform.d - transform.b * transform.c;
     if(!isfinite(determinant) || determinant == 0) {
@@ -191,7 +230,7 @@
         || !isfinite(bounds.size.width) || !isfinite(bounds.size.height)) {
         return CGRectNull;
     }
-    // Limit the temporary opacity surface to the visible gradient.
+    // Limit the shared opacity surface without changing fill and stroke overlap.
     // Keep two device pixels around it for antialiasing and resampling.
     bounds = CGRectInset(CGRectIntegral(bounds), -2, -2);
     return CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(transform));
@@ -204,7 +243,7 @@
             [self drawPathInContext:ctx];
             return;
         }
-        CGRect clip = [self gradientTransparencyClipInContext:ctx];
+        CGRect clip = [self transparencyClipInContext:ctx];
         if(!CGRectIsNull(clip)) {
             CGContextSaveGState(ctx);
             CGContextClipToRect(ctx, clip);
