@@ -16,6 +16,15 @@ typedef NS_ENUM(NSInteger, IJSVGRenderQuality) {
     kIJSVGRenderQualityLow // fast rendering
 };
 
+// Independent rendering settings with the standard SVG defaults.
+@interface IJSVGRenderingOptions : NSObject <NSCopying>
+
+@property (nonatomic, assign) BOOL filtersEnabled;
+@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
+@property (nonatomic, assign) BOOL ignoreIntrinsicSize;
+
+@end
+
 @interface IJSVGRendering : NSObject
 
 @end

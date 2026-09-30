@@ -33,24 +33,26 @@
     CGFloat _backingScale;
     IJSVGUnitSize* _intrinsicSize;
     IJSVGParser* _parser;
+    IJSVGRenderingOptions* _renderingOptions;
 }
 
-// set this to be called when the layer is about to draw, it will call this
+// Set this to be called when the layer is about to draw, it will call this
 // and ask for the scale of the backing store where its going to be drawn
 // and apply the scale to each layer that has custom drawing against it, mainly
 // pattern and gradient layers
 @property (nonatomic, copy) IJSVGRenderingBackingScaleFactorHelper renderingBackingScaleHelper;
 
-// global overwriting rules for when rendering an SVG, this will overide any
-// fillColor, strokeColor, pattern and gradient fill
-@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
+// Global overwriting rules for when rendering an SVG, this will overide any
+// fillColor, strokeColor, pattern and gradient fill.
+// Reads and writes independent snapshots. Reassign edited options to apply them.
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
+
 @property (nonatomic, strong) IJSVGStyle* style;
 
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
 @property (nonatomic, strong) IJSVGLayerTree* layerTree;
 @property (nonatomic, strong) IJSVGRootLayer* rootLayer;
-@property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
 @property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;
 

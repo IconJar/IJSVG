@@ -10,12 +10,11 @@
 
 @implementation SVGView
 
+/// Configures SVG display with the standard rendering options.
 - (id)initWithFrame:(NSRect)frameRect
 {
     if( ( self = [super initWithFrame:frameRect] ) != nil ) {
         svg = [self svg];
-        svg.renderQuality = kIJSVGRenderQualityFullResolution;
-        svg.ignoreIntrinsicSize = YES;
         svg.renderingBackingScaleHelper = ^CGFloat {
             return NSScreen.mainScreen.backingScaleFactor;
         };

@@ -297,11 +297,11 @@
     return _intrinsicSize.copy;
 }
 
+/// Sets the rendering defaults shared by every initializer.
 - (void)_setupBasicsFromAnyInitializer
 {
+    _renderingOptions = [[IJSVGRenderingOptions alloc] init];
     self.style = [[IJSVGStyle alloc] init];
-    self.ignoreIntrinsicSize = YES;
-    self.renderQuality = kIJSVGRenderQualityFullResolution;
     self.renderingBackingScaleHelper = ^CGFloat {
         if(NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
@@ -649,6 +649,7 @@
                 error:nil];
 }
 
+/// Draws using the current rendering quality and sizing options.
 - (BOOL)_drawInRect:(CGRect)rect
             context:(CGContextRef)ctx
               error:(NSError**)error
@@ -657,7 +658,7 @@
     CGContextSaveGState(ctx);
     CGFloat backingScale = MAX([self backingScaleFactor], 1.f);
     CGInterpolationQuality quality;
-    switch (_renderQuality) {
+    switch (_renderingOptions.renderQuality) {
         case kIJSVGRenderQualityLow: {
             quality = kCGInterpolationLow;
             break;
@@ -675,8 +676,8 @@
     [rootLayer renderInContext:ctx
                       viewPort:rect
                   backingScale:backingScale
-                       quality:_renderQuality
-           ignoreIntrinsicSize:_ignoreIntrinsicSize];
+                       quality:_renderingOptions.renderQuality
+           ignoreIntrinsicSize:_renderingOptions.ignoreIntrinsicSize];
     CGContextRestoreGState(ctx);
     if(transaction == YES) {
         IJSVGEndTransaction();
@@ -684,11 +685,30 @@
     return YES;
 }
 
+/// Returns a snapshot that can be edited without changing active rendering.
+- (IJSVGRenderingOptions*)renderingOptions
+{
+    return _renderingOptions.copy;
+}
+
+/// Captures options and rebuilds layers only when their filter structure changes.
+- (void)setRenderingOptions:(IJSVGRenderingOptions*)renderingOptions
+{
+    IJSVGRenderingOptions* options = renderingOptions.copy;
+    BOOL filtersChanged = _renderingOptions.filtersEnabled != options.filtersEnabled;
+    _renderingOptions = options;
+    if(filtersChanged) {
+        [self invalidateLayerTree];
+    }
+}
+
+/// Creates the layer builder with the current rendering configuration.
 - (IJSVGLayerTree*)layerTree
 {
     if(_layerTree == nil) {
         _layerTree = [[IJSVGLayerTree alloc] init];
         _layerTree.style = _style;
+        _layerTree.renderingOptions = _renderingOptions;
     }
     return _layerTree;
 }

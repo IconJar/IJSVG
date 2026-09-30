@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
 #import <QuartzCore/QuartzCore.h>
 
@@ -23,6 +24,9 @@
 @property (nonatomic, assign) CGRect viewBox;
 @property (nonatomic, assign) CGFloat backingScale;
 @property (nonatomic, strong) IJSVGStyle* style;
+
+/// Copies settings for newly built layers. Reassign edited snapshots to apply them.
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
 
 + (CGPathRef)newPathFromStrokedShapeLayer:(IJSVGShapeLayer*)shapeLayer;
 

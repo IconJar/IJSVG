@@ -38,14 +38,23 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 }
 
 @synthesize style = _style;
+@synthesize renderingOptions = _renderingOptions;
 
+/// Creates a layer builder with the standard rendering defaults.
 - (id)init
 {
     if((self = [super init]) != nil) {
+        _renderingOptions = [[IJSVGRenderingOptions alloc] init];
         _viewPortStack = [[NSMutableArray alloc] init];
         _unitBoundsStack = [[NSMutableArray alloc] init];
     }
     return self;
+}
+
+/// Keeps edits to returned options separate from the layer builder settings.
+- (IJSVGRenderingOptions*)renderingOptions
+{
+    return _renderingOptions.copy;
 }
 
 - (void)pushViewPort:(CGRect)viewPort
@@ -142,6 +151,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return layer;
 }
 
+/// Builds node layers while respecting the filter rendering setting.
 - (CALayer<IJSVGDrawableLayer>*)drawableLayerForNode:(IJSVGNode*)node
 {
     CALayer<IJSVGDrawableLayer>* layer = nil;
@@ -155,10 +165,12 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         layer = [self drawableLayerForImageNode:(IJSVGImage*)node];
     }
     if(layer != nil) {
-        for(IJSVGFilter* filter in node.filters) {
-            layer = [self applyFilter:filter
-                              toLayer:layer
-                             fromNode:node];
+        if(_renderingOptions.filtersEnabled) {
+            for(IJSVGFilter* filter in node.filters) {
+                layer = [self applyFilter:filter
+                                  toLayer:layer
+                                 fromNode:node];
+            }
         }
         [self applyDefaultsToLayer:layer
                           fromNode:node];
