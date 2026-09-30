@@ -1,6 +1,6 @@
 //
 //  IJSVGShapeLayer.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 07/01/2017.
 //  Copyright © 2017 Curtis Hard. All rights reserved.
@@ -159,6 +159,44 @@
     CGContextRestoreGState(ctx);
 }
 
+- (CGRect)gradientTransparencyClipInContext:(CGContextRef)ctx
+{
+    if(self.sublayers.count != 1 || self.fillColor != NULL || self.strokeColor != NULL
+        || self.contents != nil || self.backgroundColor != NULL || self.borderWidth != 0
+        || self.shadowOpacity != 0 || self.mask != nil || self.maskLayer != nil
+        || self.filters.count != 0 || self.backgroundFilters.count != 0
+        || !CGPointEqualToPoint(self.bounds.origin, CGPointZero)) {
+        return CGRectNull;
+    }
+    CALayer* child = self.sublayers.firstObject;
+    if(![child isKindOfClass:IJSVGGradientLayer.class]
+        || !CATransform3DIsIdentity(child.transform)
+        || !CGPointEqualToPoint(child.frame.origin, CGPointZero)
+        || !CGPointEqualToPoint(child.bounds.origin, CGPointZero)
+        || child.shadowOpacity != 0) {
+        return CGRectNull;
+    }
+    IJSVGGradientLayer* gradient = (IJSVGGradientLayer*)child;
+    if(gradient.clipPath == NULL) {
+        return CGRectNull;
+    }
+    CGRect bounds = CGPathGetBoundingBox(gradient.clipPath);
+    CGAffineTransform transform = CGContextGetCTM(ctx);
+    CGFloat determinant = transform.a * transform.d - transform.b * transform.c;
+    if(!isfinite(determinant) || determinant == 0) {
+        return CGRectNull;
+    }
+    bounds = CGRectApplyAffineTransform(bounds, transform);
+    if(CGRectIsEmpty(bounds) || !isfinite(bounds.origin.x) || !isfinite(bounds.origin.y)
+        || !isfinite(bounds.size.width) || !isfinite(bounds.size.height)) {
+        return CGRectNull;
+    }
+    // Limit the temporary opacity surface to the visible gradient.
+    // Keep two device pixels around it for antialiasing and resampling.
+    bounds = CGRectInset(CGRectIntegral(bounds), -2, -2);
+    return CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(transform));
+}
+
 - (void)performRenderInContext:(CGContextRef)ctx
 {
     dispatch_block_t drawingBlock = ^{
@@ -166,7 +204,15 @@
             [self drawPathInContext:ctx];
             return;
         }
-        [super renderInContext:ctx];
+        CGRect clip = [self gradientTransparencyClipInContext:ctx];
+        if(!CGRectIsNull(clip)) {
+            CGContextSaveGState(ctx);
+            CGContextClipToRect(ctx, clip);
+            [super renderInContext:ctx];
+            CGContextRestoreGState(ctx);
+        } else {
+            [super renderInContext:ctx];
+        }
     };
     if(_maskLayer != nil) {
         [IJSVGLayer clipContextWithMask:_maskLayer
