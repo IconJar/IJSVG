@@ -452,8 +452,9 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
             return NULL;
         }
     }
+    BOOL linearRGB = [self usesLinearRGB:blur];
     for(IJSVGFilterPrimitive* primitive in primitives) {
-        if([self usesLinearRGB:primitive] || primitive.x != nil || primitive.y != nil
+        if(([self usesLinearRGB:primitive] && primitives.count != 1) || primitive.x != nil || primitive.y != nil
             || primitive.width != nil || primitive.height != nil || primitive.children.count != 0) {
             return NULL;
         }
@@ -493,8 +494,17 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
             if(primitives.count == 3) {
                 coverage *= coverage;
             }
+            float alpha = bytes[y * stride + x * 4 + 3] / 255.f;
             for(NSUInteger c = 0; c < 4; c++) {
-                src[(y * width + x) * 4 + c] = coverage * bytes[y * stride + x * 4 + c] / 255.f;
+                float value = bytes[y * stride + x * 4 + c] / 255.f;
+                if(linearRGB && c < 3) {
+                    // Convert straight colour, then premultiply for convolution.
+                    value = alpha > 0 ? fminf(1, value / alpha) : 0;
+                    value = value <= .04045f ? value / 12.92f :
+                        powf((value + .055f) / 1.055f, 2.4f);
+                    value *= alpha;
+                }
+                src[(y * width + x) * 4 + c] = coverage * value;
             }
         }
     }
@@ -513,7 +523,15 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
         for(NSUInteger x = 0; x < width; x++) {
             float coverage = IJSVGSmallPixelCoverage(x, y, height, region);
             for(NSUInteger c = 0; c < 4; c++) {
-                float value = coverage * dst[(y * width + x) * 4 + c];
+                float value = dst[(y * width + x) * 4 + c];
+                if(linearRGB && c < 3) {
+                    float alpha = dst[(y * width + x) * 4 + 3];
+                    value = alpha > 0 ? fminf(1, fmaxf(0, value / alpha)) : 0;
+                    value = value <= .0031308f ? value * 12.92f :
+                        1.055f * powf(value, 1.f / 2.4f) - .055f;
+                    value *= alpha;
+                }
+                value *= coverage;
                 destination[y * rowBytes + x * 4 + c] = (uint8_t)lrintf(fminf(1, fmaxf(0, value)) * 255);
             }
         }

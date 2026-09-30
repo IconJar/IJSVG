@@ -173,8 +173,10 @@
   
     CGRect bounds = CGRectNull;
     for(CALayer* child in self.sublayers) {
-        if(!CATransform3DIsIdentity(child.transform)
-            || !CGPointEqualToPoint(child.frame.origin, CGPointZero)
+        CATransform3D childTransform = child.transform;
+        CATransform3D translation = CATransform3DMakeTranslation(childTransform.m41, childTransform.m42, 0.f);
+        if(!isfinite(childTransform.m41) || !isfinite(childTransform.m42)
+            || !CATransform3DEqualToTransform(childTransform, translation)
             || !CGPointEqualToPoint(child.bounds.origin, CGPointZero)
             || child.sublayers.count != 0 || child.contents != nil
             || child.backgroundColor != NULL || child.borderWidth != 0
@@ -218,6 +220,13 @@
             || !isfinite(paintedBounds.size.height)) {
             return CGRectNull;
         }
+        // Fill children can be translated inward to leave room for a stroke.
+        // With translation only, frame.origin includes both position and transform.
+        CGPoint origin = child.frame.origin;
+        if(!isfinite(origin.x) || !isfinite(origin.y)) {
+            return CGRectNull;
+        }
+        paintedBounds = CGRectOffset(paintedBounds, origin.x, origin.y);
         bounds = CGRectUnion(bounds, paintedBounds);
     }
     CGAffineTransform transform = CGContextGetCTM(ctx);

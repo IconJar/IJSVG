@@ -91,7 +91,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         }
         [pending addObjectsFromArray:layer.sublayers ?: @[]];
     }
-    return filters >= 4 && filters <= 128;
+    return filters >= 3 && filters <= 128;
 }
 
 @implementation IJSVGFilterLayer
@@ -152,7 +152,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         // Visit only filter branches and their ancestors during collection.
         // Unfiltered artwork is painted once, during the final replay.
         drawingBlock(scratch);
-        if(batch.invalid || batch.orderedEntries.count < 4) {
+        if(batch.invalid || batch.orderedEntries.count < 3) {
             return NO;
         }
         NSMutableArray<IJSVGMetalShadowJob*>* shadows = [[NSMutableArray alloc] init];
