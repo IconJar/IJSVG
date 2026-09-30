@@ -210,6 +210,9 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 - (CIImage*)imageInPrimitiveColorSpace:(CIImage*)image
 {
+    if(self.inputIsAlphaOnly) {
+        return image;
+    }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
     CIImage* result = [image imageByColorMatchingWorkingSpaceToColorSpace:space];
     CGColorSpaceRelease(space);
@@ -218,6 +221,9 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 - (CIImage*)imageFromPrimitiveColorSpace:(CIImage*)image
 {
+    if(self.outputIsAlphaOnly) {
+        return image;
+    }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
     CIImage* result = [image imageByColorMatchingColorSpaceToWorkingSpace:space];
     CGColorSpaceRelease(space);

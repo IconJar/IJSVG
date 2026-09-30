@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGFilter.h>
 #import <CoreImage/CoreImage.h>
+#import "IJSVGMetalShadowRenderer.h"
 
 @interface IJSVGFilterGraph : NSObject
 
@@ -17,6 +18,7 @@
 @property (nonatomic, assign) CGRect extent;
 @property (nonatomic, assign) CGAffineTransform imageTransform;
 @property (nonatomic, strong) CIContext* context;
+@property (nonatomic, assign) BOOL supportsMetalKernels;
 @property (nonatomic, copy) CIImage* (^imageProvider)(IJSVGFilterPrimitive* primitive, CGRect region);
 @property (nonatomic, copy) CIImage* (^paintProvider)(BOOL stroke);
 @property (nonatomic, copy) CIImage* (^backgroundProvider)(void);
@@ -25,5 +27,9 @@
                   units:(IJSVGUnitType)units
           defaultRegion:(CGRect)region;
 - (CIImage*)imageByFilteringSource:(CIImage*)source;
+
+// Returns NULL when the graph needs the general evaluator.
+- (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap;
+- (IJSVGMetalShadowJob*)metalShadowJobForBitmap:(CGContextRef)bitmap;
 
 @end

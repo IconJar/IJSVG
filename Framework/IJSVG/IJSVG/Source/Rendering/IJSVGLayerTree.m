@@ -1,6 +1,6 @@
 //
 //  IJSVGLayerTree.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 29/12/2016.
 //  Copyright © 2016 Curtis Hard. All rights reserved.
@@ -165,7 +165,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         layer = [self drawableLayerForImageNode:(IJSVGImage*)node];
     }
     if(layer != nil) {
-        if(_renderingOptions.filtersEnabled) {
+        if(_renderingOptions.filtersEnabled && node.filters.count != 0
+            && IJSVGThreadManager.currentManager.CIContext != nil) {
             for(IJSVGFilter* filter in node.filters) {
                 layer = [self applyFilter:filter
                                   toLayer:layer

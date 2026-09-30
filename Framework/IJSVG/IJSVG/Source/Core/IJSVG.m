@@ -1,12 +1,13 @@
 //
-//  IJSVGImage.m
-//  IconJar
+//  IJSVG.m
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGTransaction.h>
 #import <IJSVG/IJSVGThreadManager.h>
@@ -673,11 +674,18 @@
     }
     CGContextSetInterpolationQuality(ctx, quality);
     IJSVGRootLayer* rootLayer = [self rootLayerWithRect:rect];
-    [rootLayer renderInContext:ctx
-                      viewPort:rect
-                  backingScale:backingScale
-                       quality:_renderingOptions.renderQuality
-           ignoreIntrinsicSize:_renderingOptions.ignoreIntrinsicSize];
+    void (^drawRoot)(CGContextRef) = ^(CGContextRef destination) {
+        [rootLayer renderInContext:destination
+                          viewPort:rect
+                      backingScale:backingScale
+                           quality:self->_renderingOptions.renderQuality
+               ignoreIntrinsicSize:self->_renderingOptions.ignoreIntrinsicSize];
+    };
+    if(![IJSVGFilterLayer renderBatchedLayer:rootLayer
+                                   inContext:ctx
+                                drawingBlock:drawRoot]) {
+        drawRoot(ctx);
+    }
     CGContextRestoreGState(ctx);
     if(transaction == YES) {
         IJSVGEndTransaction();

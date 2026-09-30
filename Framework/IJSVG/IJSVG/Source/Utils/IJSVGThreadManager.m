@@ -7,10 +7,79 @@
 //
 
 #import <IJSVG/IJSVGThreadManager.h>
+@import Metal;
+
+// Contexts outlive GCD workers. Reserve a slot for the synchronous filter render;
+// After six simultaneous leases, share the least busy context. CIContext supports
+// concurrent use, so nested renders do not need to wait for an available slot.
+@interface IJSVGCIContextSlot : NSObject {
+    dispatch_once_t _contextToken;
+    CIContext* _context;
+    BOOL _supportsMetalKernels;
+}
+
+@property (nonatomic, assign) NSUInteger users;
+@property (nonatomic, readonly) CIContext* context;
+@property (nonatomic, readonly) BOOL supportsMetalKernels;
+@end
+
+@implementation IJSVGCIContextSlot
+
+- (CIContext*)context
+{
+    dispatch_once(&_contextToken, ^{
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        self->_supportsMetalKernels = device != nil && device.supportsDynamicLibraries;
+        if(device != nil) {
+            self->_context = [CIContext contextWithMTLDevice:device options:@{}];
+        }
+    });
+    return _context;
+}
+
+- (BOOL)supportsMetalKernels
+{
+    (void)self.context;
+    return _supportsMetalKernels;
+}
+
+@end
+
+static NSLock* IJSVGContextPoolLock;
+static NSMutableArray<IJSVGCIContextSlot*>* IJSVGContextPool;
+
+static IJSVGCIContextSlot* IJSVGAcquireContextSlot(void)
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        IJSVGContextPoolLock = [[NSLock alloc] init];
+        IJSVGContextPool = [[NSMutableArray alloc] init];
+    });
+    [IJSVGContextPoolLock lock];
+    IJSVGCIContextSlot* selected = nil;
+    for(IJSVGCIContextSlot* slot in IJSVGContextPool) {
+        if(selected == nil || slot.users < selected.users) {
+            selected = slot;
+        }
+    }
+    if(selected == nil || (selected.users != 0 && IJSVGContextPool.count < 6)) {
+        selected = [[IJSVGCIContextSlot alloc] init];
+        [IJSVGContextPool addObject:selected];
+    }
+    selected.users++;
+    [IJSVGContextPoolLock unlock];
+    return selected;
+}
+
+static void IJSVGReleaseContextSlot(IJSVGCIContextSlot* slot)
+{
+    [IJSVGContextPoolLock lock];
+    slot.users--;
+    [IJSVGContextPoolLock unlock];
+}
 
 @implementation IJSVGThreadManager
 
-@synthesize CIContext = _CIContext;
 @synthesize pathDataStream = _pathDataStream;
 
 static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
@@ -139,14 +208,26 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (CIContext*)CIContext
 {
-    if(_CIContext == nil) {
-        // for high performance we can disable the color
-        // management
-        _CIContext = [CIContext contextWithOptions:@{
-            kCIImageColorSpace: NSNull.null
-        }];
+    // Compatibility accessor. Callers can retain and concurrently use this context.
+    IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
+    @try {
+        return slot.context;
+    } @finally {
+        IJSVGReleaseContextSlot(slot);
     }
-    return _CIContext;
+}
+
++ (void)performBlockWithCIContext:(void (^)(CIContext*, BOOL))block
+{
+    IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
+    @try {
+        CIContext* context = slot.context;
+        if(context != nil) {
+            block(context, slot.supportsMetalKernels);
+        }
+    } @finally {
+        IJSVGReleaseContextSlot(slot);
+    }
 }
 
 - (IJSVGPathDataStream*)pathDataStream

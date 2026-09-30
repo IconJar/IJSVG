@@ -23,12 +23,18 @@
 
 @property (nonatomic, readonly) IJSVGFeatureFlags* featureFlags;
 @property (nonatomic, readonly) NSThread* thread;
+// Filter contexts require a Metal device and may be unavailable.
 @property (nonatomic, readonly) CIContext* CIContext;
 @property (nonatomic, readonly) IJSVGPathDataStream* pathDataStream;
 
 + (IJSVGThreadManager*)managerForThread:(NSThread*)thread;
 + (IJSVGThreadManager*)managerForSVG:(IJSVG*)svg;
 + (IJSVGThreadManager*)currentManager;
+
+// Synchronous lease from a process wide pool of at most six contexts.
+// The block is skipped when a Metal context cannot be created.
+// The flag identifies contexts that support stitchable Metal kernels.
++ (void)performBlockWithCIContext:(void (^)(CIContext* context, BOOL supportsMetalKernels))block;
 
 - (void)adopt:(IJSVG*)svg;
 - (void)remove:(IJSVG*)svg;

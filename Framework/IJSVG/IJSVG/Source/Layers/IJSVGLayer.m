@@ -1,6 +1,6 @@
 //
 //  IJSVGLayer.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 07/01/2017.
 //  Copyright © 2017 Curtis Hard. All rights reserved.
@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGGroupLayer.h>
+#import <IJSVG/IJSVGFilterLayer.h>
 #import <IJSVG/IJSVGLayer.h>
 #import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGTransformLayer.h>
@@ -233,6 +234,9 @@ intoUserSpaceUnitsFrom:(CALayer<IJSVGDrawableLayer>*)fromLayer
           inContext:(CGContextRef)ctx
             options:(IJSVGLayerDrawingOptions)options
 {
+    if(![IJSVGFilterLayer shouldRenderLayerDuringCollection:layer]) {
+        return;
+    }
     [self performBasicRenderOfLayer:layer
                           inContext:ctx
                             options:options];

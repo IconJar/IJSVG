@@ -120,6 +120,39 @@
                                  defaultValue:0];
     double k4 = [primitive numberForParameter:IJSVGAttributeK4
                                  defaultValue:0];
+    // Inner shadows subtract blurred coverage from hard alpha. Keep both inputs
+    // in the lazy graph instead of synchronously reading two float bitmaps back.
+    // sample_t contains premultiplied components, matching compositePixels:.
+    if(context.supportsMetalKernels && k1 == 0 && k2 == -1 && k3 == 1 && k4 == 0) {
+        static CIColorKernel* subtractionKernel;
+        static dispatch_once_t kernelToken;
+        dispatch_once(&kernelToken, ^{
+            NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
+            NSURL* sourceURL = [bundle URLForResource:@"IJSVGSubtract"
+                                        withExtension:@"metal"];
+            NSString* source = sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
+                                                                           encoding:NSUTF8StringEncoding error:NULL] : nil;
+            if(source == nil) {
+                return;
+            }
+            CIKernel* kernel = [CIKernel kernelsWithMetalString:source
+                                                          error:NULL].firstObject;
+            if([kernel isKindOfClass:CIColorKernel.class]) {
+                subtractionKernel = (CIColorKernel*)kernel;
+            }
+        });
+        if(subtractionKernel != nil) {
+            CIImage* result = [subtractionKernel applyWithExtent:context.extent
+                                                     arguments:@[
+                [context imageInPrimitiveColorSpace:input],
+                [context imageInPrimitiveColorSpace:other]
+            ]];
+            if(result != nil) {
+                return [context imageFromPrimitiveColorSpace:result];
+            }
+        }
+        // Retain the CPU evaluator if Metal kernel creation is unavailable.
+    }
     // Nonnegative weighted sums are exactly expressible with opacity scaling
     // and addition; keep signed/product arithmetic on the general path.
     if(k1 == 0 && k4 == 0 && k2 >= 0 && k3 >= 0 && k2 + k3 <= 1) {
