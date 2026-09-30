@@ -43,6 +43,12 @@
 		5926079C287D6B8B00E93B09 /* Toucan in the Shade.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */; };
 		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
 		59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */ = {isa = PBXBuildFile; fileRef = 59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */; };
+		5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */; };
+		5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */; };
+		5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */; };
+		5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */; };
+		5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */; };
+		5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */; };
 		59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59316D30282901F5003C01AA /* errorbar_basic.svg */; };
 		593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A6285215FB00DA9156 /* 5x5checkerboard.svg */; };
 		593950A92852203000DA9156 /* Chessboard480DiagonalStripe.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */; };
@@ -54,9 +60,6 @@
 		594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */; };
 		594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */; };
 		59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */; };
-		594393D7306D352B006A5F63 /* IJSVGFilterConcurrencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594393D6306D352B006A5F63 /* IJSVGFilterConcurrencyTests.swift */; };
-		594393D9306D3CAF006A5F63 /* IJSVGFilterBatchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594393D8306D3CAF006A5F63 /* IJSVGFilterBatchTests.swift */; };
-		594393DF306D40FE006A5F63 /* IJSVGMetalShadowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 594393DE306D40FE006A5F63 /* IJSVGMetalShadowTests.swift */; };
 		59459CEC19B906FE00CE493B /* clipped.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59459CEB19B906FE00CE493B /* clipped.svg */; };
 		59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */ = {isa = PBXBuildFile; fileRef = 59459CEE19B9074F00CE493B /* SVGExampleView4.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
@@ -166,6 +169,13 @@
 		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
 		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
 		59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView6.m; sourceTree = "<group>"; };
+		5929C36B306DC05A003D5C0C /* IJSVGFilterTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFilterTestHelpers.h; sourceTree = "<group>"; };
+		5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterTestHelpers.m; sourceTree = "<group>"; };
+		5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterMatrixTests.m; sourceTree = "<group>"; };
+		5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterConcurrencyTests.m; sourceTree = "<group>"; };
+		5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMetalShadowTests.m; sourceTree = "<group>"; };
+		5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterBatchTests.m; sourceTree = "<group>"; };
+		5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterSamplerTests.m; sourceTree = "<group>"; };
 		59316D30282901F5003C01AA /* errorbar_basic.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = errorbar_basic.svg; sourceTree = "<group>"; };
 		5934D504280C933300BEF20F /* IJSVGExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IJSVGExample.entitlements; sourceTree = "<group>"; };
 		593950A6285215FB00DA9156 /* 5x5checkerboard.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = 5x5checkerboard.svg; sourceTree = "<group>"; };
@@ -178,9 +188,6 @@
 		594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-clipping-masks.svg"; sourceTree = "<group>"; };
 		594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-deep-nesting.svg"; sourceTree = "<group>"; };
 		59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGInnerShadowTests.m; sourceTree = "<group>"; };
-		594393D6306D352B006A5F63 /* IJSVGFilterConcurrencyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGFilterConcurrencyTests.swift; sourceTree = "<group>"; };
-		594393D8306D3CAF006A5F63 /* IJSVGFilterBatchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGFilterBatchTests.swift; sourceTree = "<group>"; };
-		594393DE306D40FE006A5F63 /* IJSVGMetalShadowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGMetalShadowTests.swift; sourceTree = "<group>"; };
 		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
 		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
 		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
@@ -371,9 +378,13 @@
 				591F8ED92FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m */,
 				594385AC306C080B006A5F63 /* IJSVGFilterTests.m */,
 				59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */,
-				594393D6306D352B006A5F63 /* IJSVGFilterConcurrencyTests.swift */,
-				594393D8306D3CAF006A5F63 /* IJSVGFilterBatchTests.swift */,
-				594393DE306D40FE006A5F63 /* IJSVGMetalShadowTests.swift */,
+				5929C36B306DC05A003D5C0C /* IJSVGFilterTestHelpers.h */,
+				5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */,
+				5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */,
+				5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */,
+				5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */,
+				5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */,
+				5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -591,17 +602,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				591F8ECE2FF01E140012F5EB /* IJSVGParserTests.m in Sources */,
-				594393D7306D352B006A5F63 /* IJSVGFilterConcurrencyTests.swift in Sources */,
-				594393D9306D3CAF006A5F63 /* IJSVGFilterBatchTests.swift in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
+				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
+				5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */,
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
 				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
+				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
+				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
-				594393DF306D40FE006A5F63 /* IJSVGMetalShadowTests.swift in Sources */,
+				5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */,
+				5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */,
 				59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */,
 				591F8ECA2FF01DA30012F5EB /* IJSVGTestHelpers.m in Sources */,
 			);
@@ -782,7 +796,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
 				TEST_HOST = "";
 			};
 			name = Debug;
@@ -809,7 +822,6 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
 				TEST_HOST = "";
 			};
 			name = Release;
