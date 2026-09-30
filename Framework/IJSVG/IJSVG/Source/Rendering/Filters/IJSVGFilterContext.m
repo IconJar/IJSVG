@@ -55,8 +55,14 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
         x = MIN(right, MAX(left, x));
         y = MIN(bottom, MAX(top, y));
     } else if(sampler->edgeMode == 2) {
-        x = left + fmod(fmod(x - left, width) + width, width);
-        y = top + fmod(fmod(y - top, height) + height, height);
+        // Interior samples already have valid coordinates. Avoid remainder
+        // calculations for the common case while retaining periodic edges.
+        if(x < left || x > right) {
+            x = left + fmod(fmod(x - left, width) + width, width);
+        }
+        if(y < top || y > bottom) {
+            y = top + fmod(fmod(y - top, height) + height, height);
+        }
     } else if(x < left - 1. || x >= right + 1. || y < top - 1. || y >= bottom + 1.) {
         // Reject distant coordinates before converting them to integer indices.
         return NO;

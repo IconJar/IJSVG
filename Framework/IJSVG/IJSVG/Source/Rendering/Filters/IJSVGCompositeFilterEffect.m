@@ -120,11 +120,13 @@
                                  defaultValue:0];
     double k4 = [primitive numberForParameter:IJSVGAttributeK4
                                  defaultValue:0];
-    // Inner shadows subtract blurred coverage from hard alpha. Keep both inputs
-    // in the lazy graph instead of synchronously reading two float bitmaps back.
-    // sample_t contains premultiplied components, matching compositePixels:.
-    if(context.supportsMetalKernels && k1 == 0 && k2 == -1 && k3 == 1 && k4 == 0) {
-        static CIColorKernel* subtractionKernel;
+    // Keep ordinary arithmetic in the lazy graph instead of reading float
+    // bitmaps back. Large/nonfinite coefficients retain double precision CPU
+    // evaluation; sample_t uses the same premultiplied channels as that path.
+    BOOL boundedCoefficients = fabs(k1) <= 16 && fabs(k2) <= 16 && fabs(k3) <= 16
+        && fabs(k4) <= 16;
+    if(context.supportsMetalKernels && boundedCoefficients) {
+        static CIColorKernel* arithmeticKernel;
         static dispatch_once_t kernelToken;
         dispatch_once(&kernelToken, ^{
             NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
@@ -138,14 +140,15 @@
             CIKernel* kernel = [CIKernel kernelsWithMetalString:source
                                                           error:NULL].firstObject;
             if([kernel isKindOfClass:CIColorKernel.class]) {
-                subtractionKernel = (CIColorKernel*)kernel;
+                arithmeticKernel = (CIColorKernel*)kernel;
             }
         });
-        if(subtractionKernel != nil) {
-            CIImage* result = [subtractionKernel applyWithExtent:context.extent
+        if(arithmeticKernel != nil) {
+            CIImage* result = [arithmeticKernel applyWithExtent:context.extent
                                                      arguments:@[
                 [context imageInPrimitiveColorSpace:input],
-                [context imageInPrimitiveColorSpace:other]
+                [context imageInPrimitiveColorSpace:other],
+                [CIVector vectorWithX:k1 Y:k2 Z:k3 W:k4]
             ]];
             if(result != nil) {
                 return [context imageFromPrimitiveColorSpace:result];
