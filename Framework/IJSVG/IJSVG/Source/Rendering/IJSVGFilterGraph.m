@@ -10,7 +10,7 @@
 #import <IJSVG/IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
-#import <Accelerate/Accelerate.h>
+#import "IJSVGFilterSIMD.h"
 #import <IJSVGMetalBlurRenderer.h>
 
 // Gaussian. Calibration is shared across icons. Complex artwork can use more
@@ -84,39 +84,6 @@ static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
                     cost:weights.length];
         return weights;
     }
-}
-
-static BOOL IJSVGSmallBlur(const float* source, float* output, NSUInteger width,
-                          NSUInteger height, NSUInteger channels, NSData* weights)
-{
-    NSUInteger count = width * height;
-    NSUInteger taps = weights.length / sizeof(float);
-    if(taps == 1) {
-        memcpy(output, source, count * channels * sizeof(float));
-        return YES;
-    }
-    NSMutableData* plane = [NSMutableData dataWithLength:count * sizeof(float)];
-    NSMutableData* result = [NSMutableData dataWithLength:plane.length];
-    vImage_Buffer input = { plane.mutableBytes, height, width, width * sizeof(float) };
-    vImage_Buffer destination = { result.mutableBytes, height, width, width * sizeof(float) };
-    vImage_Flags flags = kvImageBackgroundColorFill | kvImageDoNotTile;
-    vImage_Error size = vImageSepConvolve_PlanarF(&input, &destination, NULL, 0, 0,
-        weights.bytes, (uint32_t)taps, weights.bytes, (uint32_t)taps, 0, 0,
-        flags | kvImageGetTempBufferSize);
-    if(size < 0) {
-        return NO;
-    }
-    NSMutableData* scratch = [NSMutableData dataWithLength:(NSUInteger)size];
-    for(NSUInteger channel = 0; channel < channels; channel++) {
-        float zero = 0;
-        vDSP_vsadd(source + channel, channels, &zero, plane.mutableBytes, 1, count);
-        if(vImageSepConvolve_PlanarF(&input, &destination, scratch.mutableBytes, 0, 0,
-            weights.bytes, (uint32_t)taps, weights.bytes, (uint32_t)taps, 0, 0, flags) != kvImageNoError) {
-            return NO;
-        }
-        vDSP_vsadd(result.bytes, 1, &zero, output + channel, channels, count);
-    }
-    return YES;
 }
 
 static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CGRect region)
@@ -840,9 +807,11 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     }
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger count = width * height;
-    // Keep tiny icons on the CPU; GPU submission costs more than their convolution.
-    // Larger standalone blurs avoid the CI graph, colour matching and readback.
-    if(count > 16384) {
+    // CPU colour conversion dominates medium linearRGB surfaces. Measurements
+    // favour Metal earlier there, except for the shortest convolution kernels.
+    NSUInteger taps = weights.length / sizeof(float);
+    NSUInteger cpuLimit = linearRGB && taps > 9 ? 2048 : 4096;
+    if(count > cpuLimit) {
         CGImageRef image = [IJSVGMetalBlurRenderer newImageForBitmap:bitmap
                                                               region:region
                                                              weights:weights
@@ -857,7 +826,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     }
     NSData* source = IJSVGFilterBlurPixelsForBitmap(bitmap, region, linearRGB, sourceCrops);
     NSMutableData* output = [NSMutableData dataWithLength:source.length];
-    if(!IJSVGSmallBlur(source.bytes, output.mutableBytes, width, height, 4, weights)) {
+    if(!IJSVGFilterSIMDBlur(source.bytes, output.mutableBytes, width, height, 4, weights)) {
         return NULL;
     }
     return IJSVGFilterNewImageForBlurPixels(output, bitmap, region, linearRGB);

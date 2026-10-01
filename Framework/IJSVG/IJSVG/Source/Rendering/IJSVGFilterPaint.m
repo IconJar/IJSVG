@@ -13,6 +13,7 @@
 #import <IJSVGPatternPaint.h>
 #import <CoreImage/CoreImage.h>
 #import <Metal/Metal.h>
+#import "IJSVGFilterSIMD.h"
 
 static _Thread_local CGContextRef IJSVGFilterBitmapContext;
 
@@ -117,22 +118,6 @@ static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent,
         provider, NULL, NO, kCGRenderingIntentDefault);
     CGDataProviderRelease(provider);
     return image;
-}
-
-static BOOL IJSVGFilterUsesBackdropAddition(IJSVGFilter* filter)
-{
-    if(filter.primitives.count != 1) {
-        return NO;
-    }
-    IJSVGFilterPrimitive* primitive = filter.primitives.firstObject;
-    return primitive.type == IJSVGNodeTypeFilterComposite
-        && [primitive.input isEqualToString:IJSVGStringSourceGraphic]
-        && [primitive.input2 isEqualToString:IJSVGStringBackgroundImage]
-        && [primitive.parameters[IJSVGAttributeOperator] isEqualToString:IJSVGStringArithmetic]
-        && [primitive numberForParameter:IJSVGAttributeK1 defaultValue:0] == 0
-        && [primitive numberForParameter:IJSVGAttributeK2 defaultValue:0] == 1
-        && [primitive numberForParameter:IJSVGAttributeK3 defaultValue:0] == 1
-        && [primitive numberForParameter:IJSVGAttributeK4 defaultValue:0] == 0;
 }
 
 // Nested filters already inherit the drawing transform of the supersampled bitmap.
@@ -863,7 +848,7 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         }
         CGImageRef image = NULL;
         // Only renderer-owned bitmap storage can supply pixels for the Metal shortcut.
-        if(IJSVGFilterUsesBackdropAddition(self.filter) &&
+        if(IJSVGFilterSIMDUsesBackdropAddition(self.filter) &&
             supportsMetalKernels && IJSVGFilterRenderDepth == 1 &&
             ctx == IJSVGFilterBitmapContext) {
             image = IJSVGFilterNewSharedMetalImage(output, extent, colorSpace);
@@ -993,6 +978,21 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     graph.extent = CGRectMake(0, 0, pixelSize.width, pixelSize.height);
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
         -workRect.origin.x * scale, -workRect.origin.y * scale);
+    CGImageRef composite = NULL;
+    if(IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting &&
+        ctx == IJSVGFilterBitmapContext) {
+        composite = IJSVGFilterSIMDNewComposite(bitmap, ctx, graph, region);
+    }
+    if(composite != NULL) {
+        [self drawFilteredImage:composite
+                        context:ctx
+                         region:region
+                       workRect:workRect];
+        CGImageRelease(composite);
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
     if([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
         CGContextRelease(bitmap);
         CGColorSpaceRelease(colorSpace);

@@ -1,4 +1,5 @@
 #import <IJSVGFilterTestHelpers.h>
+#import <IJSVGFilterSIMD.h>
 
 @interface IJSVGMetalBlurTests : XCTestCase
 @end
@@ -42,6 +43,43 @@
         "<rect x='121.3' y='2.4' width='190' height='58.7' fill='#20f040'/>"
         "</g></svg>", region, colorSpace, prefix, radius, explicitRegion ? region : @""];
 }
+
+- (void)testWideCPUBoxBlurPreservesGaussianProfile
+{
+    for(NSNumber* sizeValue in @[@32, @64]) {
+        NSUInteger size = sizeValue.unsignedIntegerValue;
+        for(NSNumber* radius in @[@9, @12]) {
+            for(NSString* space in @[@"sRGB", @"linearRGB"]) {
+                for(NSNumber* flipped in @[@NO, @YES]) {
+                    NSMutableArray<NSData*>* results = [NSMutableArray array];
+                    for(NSNumber* reference in @[@NO, @YES]) {
+                        NSString* bounds = @"x='0' y='0' width='64' height='64'";
+                        NSString* document = [NSString stringWithFormat:
+                            @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+                            "<defs><filter id='f' filterUnits='userSpaceOnUse' %@ color-interpolation-filters='%@'>"
+                            "<feGaussianBlur stdDeviation='%@' %@/></filter></defs>"
+                            "<g filter='url(#f)'><rect width='36' height='64' fill='#e03080' opacity='.37'/>"
+                            "<circle cx='39' cy='33' r='29' fill='#2090d0' opacity='.63'/></g></svg>",
+                            bounds, space, @(radius.doubleValue * 64 / size), reference.boolValue ? bounds : @""];
+                        [results addObject:[self renderDocument:document size:size flipped:flipped.boolValue]];
+                    }
+                    // Wide box filters approximate the Gaussian profile. Bound both
+                    // worst-pixel error and total error, including edges of the crop.
+                    XCTAssertLessThanOrEqual([self maximumDifference:results[0] other:results[1]], 8);
+                    const uint8_t* a = results[0].bytes;
+                    const uint8_t* b = results[1].bytes;
+                    double total = 0;
+                    for(NSUInteger i = 0; i < results[0].length; i++) {
+                        total += abs(a[i] - b[i]);
+                    }
+                    XCTAssertLessThanOrEqual(total / results[0].length, 1.0);
+                    XCTAssertTrue([self containsPaintedPixels:results[0]]);
+                }
+            }
+        }
+    }
+}
+
 
 - (void)testMatchesCoreImage
 {
@@ -193,6 +231,89 @@
             XCTAssertEqualObjects(actual, expected);
         }];
     }
+}
+
+
+- (void)testFusedBoxBlurMatchesFloatReferenceWithFullHalo
+{
+    for(NSArray<NSNumber*>* dimensions in @[@[@1, @1], @[@7, @5], @[@32, @23]]) {
+        NSUInteger width = dimensions[0].unsignedIntegerValue;
+        NSUInteger height = dimensions[1].unsignedIntegerValue;
+        for(NSArray<NSNumber*>* kernels in @[@[@1, @1, @1], @[@3, @5, @3], @[@19, @21, @19]]) {
+            NSUInteger sides[3] = {kernels[0].unsignedIntegerValue,
+                kernels[1].unsignedIntegerValue, kernels[2].unsignedIntegerValue};
+            NSUInteger padding = sides[0] / 2 + sides[1] / 2 + sides[2] / 2;
+            NSUInteger paddedWidth = width + 2 * padding;
+            NSUInteger paddedHeight = height + 2 * padding;
+            for(NSUInteger pattern = 0; pattern < 2; pattern++) {
+                NSMutableData* source = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
+                NSMutableData* actual = [NSMutableData dataWithLength:source.length];
+                float* samples = source.mutableBytes;
+                for(NSUInteger i = 0; i < width * height * 4; i++) {
+                    samples[i] = pattern == 0 ? (i < 4 ? 1.f : 0.f) : (i * 71 % 256) / 255.f;
+                }
+                NSMutableData* first = [NSMutableData dataWithLength:paddedWidth * paddedHeight * 4 * sizeof(float)];
+                NSMutableData* second = [NSMutableData dataWithLength:first.length];
+                for(NSUInteger y = 0; y < height; y++) {
+                    memcpy((float*)first.mutableBytes + ((y + padding) * paddedWidth + padding) * 4,
+                        samples + y * width * 4, width * 4 * sizeof(float));
+                }
+                // An intentionally simple reference retains the entire halo and
+                // computes each box independently, without running sums.
+                for(NSUInteger stage = 0; stage < 3; stage++) {
+                    NSInteger radius = sides[stage] / 2;
+                    for(NSUInteger axis = 0; axis < 2; axis++) {
+                        const float* input = first.bytes;
+                        float* output = second.mutableBytes;
+                        for(NSUInteger y = 0; y < paddedHeight; y++) {
+                            for(NSUInteger x = 0; x < paddedWidth; x++) {
+                                for(NSUInteger channel = 0; channel < 4; channel++) {
+                                    double sum = 0;
+                                    for(NSInteger offset = -radius; offset <= radius; offset++) {
+                                        NSInteger sx = (NSInteger)x + (axis == 0 ? offset : 0);
+                                        NSInteger sy = (NSInteger)y + (axis == 1 ? offset : 0);
+                                        if(sx >= 0 && sx < (NSInteger)paddedWidth &&
+                                            sy >= 0 && sy < (NSInteger)paddedHeight) {
+                                            sum += input[(sy * paddedWidth + sx) * 4 + channel];
+                                        }
+                                    }
+                                    output[(y * paddedWidth + x) * 4 + channel] = sum / sides[stage];
+                                }
+                            }
+                        }
+                        NSMutableData* swap = first;
+                        first = second;
+                        second = swap;
+                    }
+                }
+                XCTAssertTrue(IJSVGFilterSIMDThreeBoxBlur(source.bytes, actual.mutableBytes,
+                    width, height, sides));
+                const float* expected = first.bytes;
+                const float* result = actual.bytes;
+                float maximumError = 0;
+                for(NSUInteger y = 0; y < height; y++) {
+                    for(NSUInteger x = 0; x < width * 4; x++) {
+                        float reference = expected[((y + padding) * paddedWidth + padding) * 4 + x];
+                        maximumError = fmaxf(maximumError, fabsf(result[y * width * 4 + x] - reference));
+                    }
+                }
+                XCTAssertLessThanOrEqual(maximumError, 0.00002f, @"%@ %@ pattern %lu",
+                    dimensions, kernels, (unsigned long)pattern);
+            }
+        }
+    }
+}
+
+- (void)testFusedBoxBlurRejectsInvalidInputs
+{
+    float source[4] = {0};
+    float output[4] = {0};
+    NSUInteger even[3] = {3, 2, 3};
+    NSUInteger valid[3] = {3, 3, 3};
+    XCTAssertFalse(IJSVGFilterSIMDThreeBoxBlur(source, output, 1, 1, even));
+    XCTAssertFalse(IJSVGFilterSIMDThreeBoxBlur(source, source, 1, 1, valid));
+    XCTAssertFalse(IJSVGFilterSIMDThreeBoxBlur(NULL, output, 1, 1, valid));
+    XCTAssertFalse(IJSVGFilterSIMDThreeBoxBlur(source, output, 0, 1, valid));
 }
 
 @end
