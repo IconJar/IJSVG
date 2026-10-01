@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGPatternPaint.h>
+#import <IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
@@ -169,12 +170,13 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    // Keep vector patterns for PDF destinations. Bitmap destinations reuse a
-    // Quartz backing image, avoiding repeated cell rendering on every repaint.
-    if(CGBitmapContextGetData(ctx) == NULL) {
+    // Only cache known bitmap destinations. PDF, layer and pattern callback
+    // contexts must not be probed with bitmap only Core Graphics functions.
+    if(![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;
     }
+  
     CGRect bounds = IJSVGPaintGetBoundingBoxBounds(self);
     if(!IJSVGIsValidContextSize(bounds.size)) {
         return;

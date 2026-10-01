@@ -483,6 +483,11 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
 
 @implementation IJSVGFilterPaint
 
++ (BOOL)isRegisteredBitmapContext:(CGContextRef)context
+{
+    return context != NULL && context == IJSVGFilterBitmapContext;
+}
+
 + (void)renderPaint:(IJSVGPaint*)paint inBitmapContext:(CGContextRef)context
 {
     CGContextRef previous = IJSVGFilterBitmapContext;
