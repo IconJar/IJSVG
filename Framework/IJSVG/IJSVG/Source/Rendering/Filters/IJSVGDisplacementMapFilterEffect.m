@@ -52,8 +52,10 @@
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
     NSArray* channels = @[IJSVGStringChannelR, IJSVGStringChannelG, IJSVGStringChannelB, IJSVGStringChannelA];
-    NSUInteger xc = [channels indexOfObject:primitive.parameters[IJSVGAttributeXChannelSelector] ?: IJSVGStringChannelA];
-    NSUInteger yc = [channels indexOfObject:primitive.parameters[IJSVGAttributeYChannelSelector] ?: IJSVGStringChannelA];
+    NSUInteger xc =
+        [channels indexOfObject:primitive.parameters[IJSVGAttributeXChannelSelector] ?: IJSVGStringChannelA];
+    NSUInteger yc =
+        [channels indexOfObject:primitive.parameters[IJSVGAttributeYChannelSelector] ?: IJSVGStringChannelA];
     xc = xc == NSNotFound ? 3 : xc;
     yc = yc == NSNotFound ? 3 : yc;
     double scale = [primitive numberForParameter:IJSVGAttributeScale

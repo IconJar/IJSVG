@@ -6,6 +6,87 @@
 
 @implementation IJSVGFilterBatchTests
 
+
+- (void)assertBackdropRendersIntoPDF:(BOOL)alphaOnly
+{
+    NSString* matrix = alphaOnly
+        ? @"0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"
+        : @"0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0";
+    NSString* document = [NSString stringWithFormat:
+        @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
+        "<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='32' height='32'>"
+        "<feColorMatrix in='%@' values='%@'/></filter></defs>"
+        "<rect x='4' y='4' width='8' height='8' fill='blue'/>"
+        "<rect x='20' y='20' width='4' height='4' fill='red' filter='url(#f)'/></svg>",
+        alphaOnly ? @"BackgroundAlpha" : @"BackgroundImage", matrix];
+    IJSVG* svg = IJSVGTestSVGObject(document);
+    XCTAssertNotNil(svg);
+    if(svg == nil) {
+        return;
+    }
+    for(NSNumber* flipped in @[@NO, @YES]) {
+        NSMutableData* data = [NSMutableData data];
+        CGDataConsumerRef consumer = CGDataConsumerCreateWithCFData((__bridge CFMutableDataRef)data);
+        XCTAssertTrue(consumer != NULL);
+        if(consumer == NULL) {
+            return;
+        }
+        CGRect mediaBox = CGRectMake(0, 0, 96, 96);
+        CGContextRef pdfContext = CGPDFContextCreate(consumer, &mediaBox, NULL);
+        CGDataConsumerRelease(consumer);
+        XCTAssertTrue(pdfContext != NULL);
+        if(pdfContext == NULL) {
+            return;
+        }
+        CGPDFContextBeginPage(pdfContext, NULL);
+        if(flipped.boolValue) {
+            CGContextTranslateCTM(pdfContext, 0, 96);
+            CGContextScaleCTM(pdfContext, 1, -1);
+        }
+        [svg drawInRect:CGRectMake(12, 12, 64, 64) context:pdfContext];
+        CGPDFContextEndPage(pdfContext);
+        CGPDFContextClose(pdfContext);
+        CGContextRelease(pdfContext);
+        CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+        CGPDFDocumentRef pdf = provider == NULL ? NULL : CGPDFDocumentCreateWithProvider(provider);
+        if(provider != NULL) {
+            CGDataProviderRelease(provider);
+        }
+        XCTAssertTrue(pdf != NULL);
+        if(pdf == NULL) {
+            return;
+        }
+        CGContextRef bitmap = [self newBitmapWithSize:96 flipped:NO];
+        CGPDFPageRef page = CGPDFDocumentGetPage(pdf, 1);
+        XCTAssertTrue(page != NULL);
+        XCTAssertTrue(bitmap != NULL);
+        if(bitmap != NULL && page != NULL) {
+            CGContextDrawPDFPage(bitmap, page);
+            const uint8_t* pixels = CGBitmapContextGetData(bitmap);
+            // The earlier blue square must become red (alpha) or green (image).
+            NSUInteger row = flipped.boolValue ? 28 : 95 - 28;
+            const uint8_t* pixel = pixels + (row * 96 + 28) * 4;
+            XCTAssertGreaterThan(pixel[alphaOnly ? 0 : 1], 250);
+            XCTAssertLessThan(pixel[2], 5);
+            XCTAssertGreaterThan(pixel[3], 250);
+        }
+        if(bitmap != NULL) {
+            CGContextRelease(bitmap);
+        }
+        CGPDFDocumentRelease(pdf);
+    }
+}
+
+- (void)testBackgroundImageRendersIntoPDFContext
+{
+    [self assertBackdropRendersIntoPDF:NO];
+}
+
+- (void)testBackgroundAlphaRendersIntoPDFContext
+{
+    [self assertBackdropRendersIntoPDF:YES];
+}
+
 - (void)testFiltersRenderIntoPDFContext
 {
     for(NSNumber* origin in @[@0.0, @12.0]) {

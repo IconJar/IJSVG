@@ -40,8 +40,9 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
     NSUInteger counts[] = { kernelX.length / sizeof(float), kernelY.length / sizeof(float) };
     // Later primitives can move convolution onto a fractional sample grid.
     // Keep their CPU rasterization boundary; accelerate standalone colour blurs.
-    if(alphaOnly || context.filter.primitives.count != 1 || !context.supportsMetalKernels || counts[0] > 257 || counts[1] > 257
-        || !IJSVGFilterValidRect(context.extent)) {
+    if(alphaOnly || context.filter.primitives.count != 1 || !context.supportsMetalKernels ||
+        counts[0] > 257 || counts[1] > 257 ||
+        !IJSVGFilterValidRect(context.extent)) {
         return nil;
     }
     static CIKernel* convolution;
@@ -156,9 +157,9 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
 {
     // Direct RGBA convolution avoids eight strided channel copies for larger
     // images. Long kernels and small icons are faster on the planar path.
-    if(channels == 4 && w * h >= 65536
-        && kernelX.length + kernelY.length <= 64 * sizeof(float)
-        && [self applyInterleavedBlurToPixels:src
+    if(channels == 4 && w * h >= 65536 &&
+        kernelX.length + kernelY.length <= 64 * sizeof(float) &&
+        [self applyInterleavedBlurToPixels:src
                                        output:dst
                                         width:w
                                        height:h

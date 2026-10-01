@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"car"];
+    return [IJSVG SVGNamed:@"pcolormesh.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

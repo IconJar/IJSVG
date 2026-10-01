@@ -132,8 +132,9 @@
             NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
             NSURL* sourceURL = [bundle URLForResource:@"IJSVGSubtract"
                                         withExtension:@"metal"];
-            NSString* source = sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
-                                                                           encoding:NSUTF8StringEncoding error:NULL] : nil;
+            NSString* source = sourceURL != nil
+                ? [NSString stringWithContentsOfURL:sourceURL encoding:NSUTF8StringEncoding error:NULL]
+                : nil;
             if(source == nil) {
                 return;
             }

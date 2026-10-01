@@ -55,7 +55,9 @@
             CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);
             CGRect drawingRect = (CGRect) { CGPointZero, region.size };
             IJSVGContextDrawViewBox(bitmap, viewBox, drawingRect, primitive.viewBoxAlignment,
-                primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) { CGContextDrawImage(bitmap, viewBox, image); });
+                primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
+                    CGContextDrawImage(bitmap, viewBox, image);
+                });
         }
     }
     CGImageRef result = CGBitmapContextCreateImage(bitmap);

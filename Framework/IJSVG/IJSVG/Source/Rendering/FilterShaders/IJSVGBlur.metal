@@ -77,15 +77,19 @@ kernel void blurHorizontal(device const uchar4* source [[buffer(0)]],
 float shadowHorizontalAlpha(int x, int y, device const float4* prepared,
                             device const float4* horizontal, constant BlurParameters& job)
 {
-    if(y < 0 || y >= int(job.geometry.y)) return 0;
-    if(x >= 0 && x < int(job.geometry.x))
+    if(y < 0 || y >= int(job.geometry.y)) {
+        return 0;
+    }
+    if(x >= 0 && x < int(job.geometry.x)) {
         return horizontal[job.config.y + y * job.geometry.x + x].a;
+    }
     float value = 0;
     int radius = int(job.geometry.z / 2);
     for(uint k = 0; k < job.geometry.z; k++) {
         int sx = x + int(k) - radius;
-        if(sx >= 0 && sx < int(job.geometry.x))
+        if(sx >= 0 && sx < int(job.geometry.x)) {
             value += prepared[job.config.y + y * job.geometry.x + sx].a * job.weights[k];
+        }
     }
     return value;
 }

@@ -125,7 +125,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     transform = CGAffineTransformConcat(transform, [IJSVGPaint userSpaceTransformForPaint:self]);
 
     if(_cellSize.width <= 0.f || _cellSize.height <= 0.f ||
-       !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
+        !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
         return;
     }
     // Reduce the phase before device space tiling. Large SVG translations

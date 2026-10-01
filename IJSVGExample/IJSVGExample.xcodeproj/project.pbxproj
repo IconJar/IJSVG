@@ -94,7 +94,7 @@
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */; };
 		59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */; };
-		59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.swift */; };
+		59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -237,7 +237,7 @@
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
 		59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGQuartzRendererTests.m; sourceTree = "<group>"; };
 		59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGResourceExportTests.m; sourceTree = "<group>"; };
-		59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGFilterOutputCacheTests.swift; sourceTree = "<group>"; };
+		59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterOutputCacheTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -396,7 +396,7 @@
 				5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */,
 				59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */,
 				59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */,
-				59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.swift */,
+				59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -624,7 +624,7 @@
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
 				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
-				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.swift in Sources */,
+				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,

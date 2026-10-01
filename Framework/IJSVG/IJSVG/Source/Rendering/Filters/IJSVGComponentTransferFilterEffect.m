@@ -154,9 +154,10 @@ typedef struct {
     }
     // A shared RGB exponent can use CIGammaAdjust, followed by a per channel
     // affine adjustment. Alpha still follows its independent polynomial.
-    if(functions[0].type == 4 && functions[1].type == 4 && functions[2].type == 4 && functions[0].exponent > 0
-        && functions[0].exponent == functions[1].exponent && functions[0].exponent == functions[2].exponent
-        && (functions[3].type == 0 || functions[3].type == 3)) {
+    if(functions[0].type == 4 && functions[1].type == 4 && functions[2].type == 4 &&
+        functions[0].exponent > 0 &&
+        functions[0].exponent == functions[1].exponent && functions[0].exponent == functions[2].exponent &&
+        (functions[3].type == 0 || functions[3].type == 3)) {
         for(NSUInteger c = 0; c < 3; c++) {
             polynomial[coefficientKeys[c]] = [CIVector vectorWithX:functions[c].bias Y:functions[c].amplitude
                                                                  Z:0 W:0];

@@ -72,7 +72,8 @@ static BOOL IJSVGPrepareMetalBlur(void)
             if(function == nil) {
                 return;
             }
-            id<MTLComputePipelineState> pipeline = [IJSVGBlurDevice newComputePipelineStateWithFunction:function error:NULL];
+            id<MTLComputePipelineState> pipeline = [IJSVGBlurDevice newComputePipelineStateWithFunction:function
+                                                                                                  error:NULL];
             if(pipeline == nil) {
                 return;
             }
@@ -100,17 +101,17 @@ static BOOL IJSVGPrepareMetalBlur(void)
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger taps = weights.length / sizeof(float);
     // Bound allocations and kernel work. This path only accepts packed RGBA8.
-    if(width == 0 || height == 0 || width > 2048 || height > 2048
-        || width * height > 1048576 || weights.length != taps * sizeof(float)
-        || taps == 0 || taps > 75 || taps % 2 == 0 || sourceCrops < 1 || sourceCrops > 2
-        || CGBitmapContextGetBitsPerComponent(bitmap) != 8
-        || CGBitmapContextGetBitsPerPixel(bitmap) != 32
-        || CGBitmapContextGetAlphaInfo(bitmap) != kCGImageAlphaPremultipliedLast
-        || (CGBitmapContextGetBitmapInfo(bitmap) & kCGBitmapByteOrderMask) != kCGBitmapByteOrderDefault
-        || CGBitmapContextGetData(bitmap) == NULL || CGBitmapContextGetBytesPerRow(bitmap) < width * 4
-        || !isfinite(region.origin.x) || !isfinite(region.origin.y)
-        || !isfinite(CGRectGetMaxX(region)) || !isfinite(CGRectGetMaxY(region))
-        || CGRectIsEmpty(region) || !IJSVGPrepareMetalBlur()) {
+    if(width == 0 || height == 0 || width > 2048 || height > 2048 ||
+        width * height > 1048576 || weights.length != taps * sizeof(float) ||
+        taps == 0 || taps > 75 || taps % 2 == 0 || sourceCrops < 1 || sourceCrops > 2 ||
+        CGBitmapContextGetBitsPerComponent(bitmap) != 8 ||
+        CGBitmapContextGetBitsPerPixel(bitmap) != 32 ||
+        CGBitmapContextGetAlphaInfo(bitmap) != kCGImageAlphaPremultipliedLast ||
+        (CGBitmapContextGetBitmapInfo(bitmap) & kCGBitmapByteOrderMask) != kCGBitmapByteOrderDefault ||
+        CGBitmapContextGetData(bitmap) == NULL || CGBitmapContextGetBytesPerRow(bitmap) < width * 4 ||
+        !isfinite(region.origin.x) || !isfinite(region.origin.y) ||
+        !isfinite(CGRectGetMaxX(region)) || !isfinite(CGRectGetMaxY(region)) ||
+        CGRectIsEmpty(region) || !IJSVGPrepareMetalBlur()) {
         return nil;
     }
     NSMutableData* source = [NSMutableData dataWithLength:width * height * 4];
@@ -141,8 +142,8 @@ static BOOL IJSVGPrepareMetalBlur(void)
                                   offset:(CGSize)offset
                                    color:(CGColorRef)color
 {
-    if(!isfinite(offset.width) || !isfinite(offset.height) || color == NULL
-        || CGColorGetNumberOfComponents(color) != 4) {
+    if(!isfinite(offset.width) || !isfinite(offset.height) || color == NULL ||
+        CGColorGetNumberOfComponents(color) != 4) {
         return nil;
     }
     IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap

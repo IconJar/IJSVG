@@ -60,8 +60,10 @@ typedef struct {
     IJSVGFilterApplyRows(maxX - minX, maxY - minY, ^(NSInteger firstRow, NSInteger lastRow) {
         for(NSInteger y = minY + firstRow; y < minY + lastRow; y++) {
             for(NSInteger x = minX; x < maxX; x++) {
-                BOOL left = x - dx < CGRectGetMinX(parameters.inputRegion), right = x + dx >= CGRectGetMaxX(parameters.inputRegion);
-                BOOL top = y - dy < CGRectGetMinY(parameters.inputRegion), bottom = y + dy >= CGRectGetMaxY(parameters.inputRegion);
+                BOOL left = x - dx < CGRectGetMinX(parameters.inputRegion),
+                     right = x + dx >= CGRectGetMaxX(parameters.inputRegion);
+                BOOL top = y - dy < CGRectGetMinY(parameters.inputRegion),
+                     bottom = y + dy >= CGRectGetMaxY(parameters.inputRegion);
                 double gx = 0, gy = 0, wx = 0, wy = 0;
                 // Interior derivatives share four corner samples between both axes.
                 // Keep one sided sampling for boundaries and narrow input regions.
@@ -100,8 +102,10 @@ typedef struct {
                         wy += weight;
                     }
                 }
-                double nx = -parameters.surfaceScale * gx * (left || right ? 2 : 1) / (MAX(1, wx) * parameters.step.width);
-                double ny = -parameters.surfaceScale * gy * (top || bottom ? 2 : 1) / (MAX(1, wy) * parameters.step.height);
+                double nx =
+                    -parameters.surfaceScale * gx * (left || right ? 2 : 1) / (MAX(1, wx) * parameters.step.width);
+                double ny =
+                    -parameters.surfaceScale * gy * (top || bottom ? 2 : 1) / (MAX(1, wy) * parameters.step.height);
                 double norm = hypot(hypot(nx, ny), 1);
                 nx /= norm;
                 ny /= norm;
@@ -126,8 +130,13 @@ typedef struct {
                 }
                 double intensity = 1;
                 if(parameters.lightType == IJSVGNodeTypeFilterSpotLight) {
-                    double cosine = parameters.spotDirectionLength > 0 ? -(ux * parameters.spotDirectionX + uy * parameters.spotDirectionY + uz * parameters.spotDirectionZ) / parameters.spotDirectionLength : 0;
-                    intensity = cosine <= 0 || cosine < parameters.coneCosine ? 0 : pow(cosine, parameters.spotExponent);
+                    double cosine = parameters.spotDirectionLength > 0
+                        ? -(ux * parameters.spotDirectionX + uy * parameters.spotDirectionY +
+                              uz * parameters.spotDirectionZ) /
+                            parameters.spotDirectionLength
+                        : 0;
+                    intensity =
+                        cosine <= 0 || cosine < parameters.coneCosine ? 0 : pow(cosine, parameters.spotExponent);
                 }
                 double dot;
                 if(parameters.specular) {

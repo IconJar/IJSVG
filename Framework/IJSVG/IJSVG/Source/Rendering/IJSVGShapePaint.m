@@ -89,8 +89,11 @@
     if(self.fillColor != NULL) {
         CGContextAddPath(ctx, self.path);
         CGContextSetFillColorWithColor(ctx, self.fillColor);
-        if(self.fillRule == IJSVGWindingRuleEvenOdd) CGContextEOFillPath(ctx);
-        else CGContextFillPath(ctx);
+        if(self.fillRule == IJSVGWindingRuleEvenOdd) {
+            CGContextEOFillPath(ctx);
+        } else {
+            CGContextFillPath(ctx);
+        }
     }
     if(self.strokeColor != NULL && self.lineWidth > 0.f) {
         CGContextAddPath(ctx, self.path);

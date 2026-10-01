@@ -19,6 +19,8 @@
 - (instancetype)initWithSourcePaint:(IJSVGPaint*)paint
                               filter:(IJSVGFilter*)filter
                             viewPort:(CGRect)viewPort;
+// Registers storage owned by the renderer; never probe an arbitrary display/PDF context.
++ (void)renderPaint:(IJSVGPaint*)paint inBitmapContext:(CGContextRef)context;
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint;
 
 // Eligibility depends on the resolved graph and can be reused until it rebuilds.

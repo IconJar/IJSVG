@@ -46,7 +46,7 @@
         // The resolved paints are reused between draws. Only walk them when
         // viewport scale, backing scale or quality actually changes.
         if(!self->_hasPropagatedScale || self->_propagatedScale != backingScale ||
-           self->_propagatedQuality != self.renderQuality) {
+            self->_propagatedQuality != self.renderQuality) {
             for(IJSVGPaint* child in self.children) {
                 [IJSVGPaint setBackingScaleFactor:backingScale
                                     renderQuality:self.renderQuality

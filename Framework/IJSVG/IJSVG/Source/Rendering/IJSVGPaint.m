@@ -76,7 +76,7 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
     // underlying geometry when that paint already carries a transform.
     CGRect currentFrame = self.frame;
     if(!CGAffineTransformIsIdentity(_affineTransform) &&
-       CGSizeEqualToSize(frame.size, currentFrame.size)) {
+        CGSizeEqualToSize(frame.size, currentFrame.size)) {
         _frame.origin.x += frame.origin.x - currentFrame.origin.x;
         _frame.origin.y += frame.origin.y - currentFrame.origin.y;
     } else {
@@ -112,10 +112,14 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 - (void)setChildren:(NSArray<IJSVGPaint*>*)children
 {
     for(IJSVGPaint* child in _children) {
-        if(child.parentPaint == self) child.parentPaint = nil;
+        if(child.parentPaint == self) {
+            child.parentPaint = nil;
+        }
     }
     _children = children.copy;
-    for(IJSVGPaint* child in _children) child.parentPaint = self;
+    for(IJSVGPaint* child in _children) {
+        child.parentPaint = self;
+    }
 }
 
 - (void)addChild:(IJSVGPaint*)paint
@@ -267,8 +271,11 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
         }
         if(self.clipPath != NULL) {
             CGContextAddPath(ctx, self.clipPath);
-            if(self.clipRule == IJSVGWindingRuleEvenOdd) CGContextEOClip(ctx);
-            else CGContextClip(ctx);
+            if(self.clipRule == IJSVGWindingRuleEvenOdd) {
+                CGContextEOClip(ctx);
+            } else {
+                CGContextClip(ctx);
+            }
         }
         CGContextSetBlendMode(ctx, self.blendingMode);
         if(_maskPaint != nil) {
@@ -289,14 +296,18 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 - (void)performRenderInContext:(CGContextRef)ctx
 {
     BOOL isolated = self.opacity != 1.f && self.children.count != 0;
-    if(self.opacity != 1.f) CGContextSetAlpha(ctx, self.opacity);
+    if(self.opacity != 1.f) {
+        CGContextSetAlpha(ctx, self.opacity);
+    }
     if(isolated) {
         CGRect bounds = self.transparencyBounds;
         if(!CGRectIsNull(bounds) && !CGRectIsInfinite(bounds)) {
             // Keep antialiasing coverage around the surface at any zoom level.
             CGAffineTransform transform = CGContextGetCTM(ctx);
             CGFloat scale = MIN(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
-            if(scale > 0.f) CGContextClipToRect(ctx, CGRectInset(bounds, -2.f / scale, -2.f / scale));
+            if(scale > 0.f) {
+                CGContextClipToRect(ctx, CGRectInset(bounds, -2.f / scale, -2.f / scale));
+            }
         }
         CGContextBeginTransparencyLayer(ctx, NULL);
     }
@@ -306,7 +317,9 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
         [child renderInContext:ctx
              applyingPlacement:YES];
     }
-    if(isolated) CGContextEndTransparencyLayer(ctx);
+    if(isolated) {
+        CGContextEndTransparencyLayer(ctx);
+    }
 }
 
 - (void)drawInContext:(CGContextRef)ctx

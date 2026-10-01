@@ -32,7 +32,8 @@ IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, 
     CGFloat top = MAX(0, floor(CGRectGetMinY(region)));
     CGFloat right = MIN(width, ceil(CGRectGetMaxX(region))) - 1;
     CGFloat bottom = MIN(height, ceil(CGRectGetMaxY(region))) - 1;
-    if(!isfinite(left) || !isfinite(top) || !isfinite(right) || !isfinite(bottom) || right < left || bottom < top) {
+    if(!isfinite(left) || !isfinite(top) || !isfinite(right) || !isfinite(bottom) || right < left ||
+        bottom < top) {
         return sampler;
     }
     sampler.left = left;
@@ -98,7 +99,8 @@ float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFl
     double value = 0.;
     for(NSUInteger j = 0; j < 2; j++) {
         for(NSUInteger i = 0; i < 2; i++) {
-            if(xs[i] < sampler->left || xs[i] > sampler->right || ys[j] < sampler->top || ys[j] > sampler->bottom) {
+            if(xs[i] < sampler->left || xs[i] > sampler->right || ys[j] < sampler->top ||
+                ys[j] > sampler->bottom) {
                 continue;
             }
             value += sampler->pixels[(ys[j] * sampler->width + xs[i]) * 4 + channel] * weightsX[i] * weightsY[j];
@@ -115,7 +117,8 @@ void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFlo
     if(IJSVGFilterSampleCoordinates(sampler, x, y, xs, ys, weightsX, weightsY)) {
         for(NSUInteger j = 0; j < 2; j++) {
             for(NSUInteger i = 0; i < 2; i++) {
-                if(xs[i] < sampler->left || xs[i] > sampler->right || ys[j] < sampler->top || ys[j] > sampler->bottom) {
+                if(xs[i] < sampler->left || xs[i] > sampler->right || ys[j] < sampler->top ||
+                    ys[j] > sampler->bottom) {
                     continue;
                 }
                 const float* source = sampler->pixels + (ys[j] * sampler->width + xs[i]) * 4;

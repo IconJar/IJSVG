@@ -60,6 +60,51 @@
     return [self renderSVG:[self svgWithBody:body] size:size];
 }
 
+- (void)testBackdropSurfacePreservesDevicePixelEdges
+{
+    NSMutableString* body = [NSMutableString stringWithString:
+        @"<defs><filter id='f'><feComposite in='SourceGraphic' in2='BackgroundImage' "
+        "operator='arithmetic' k2='1'/></filter></defs><rect width='32' height='32' fill='white'/>" ];
+    for(NSUInteger x = 0; x < 32; x++) {
+        [body appendFormat:@"<rect x='%lu' width='.5' height='24' fill='black'/>", (unsigned long)x];
+    }
+    // This isolated shape enables backdrop rendering without changing the stripes.
+    [body appendString:@"<rect x='2' y='28' width='4' height='2' fill='red' filter='url(#f)'/>"];
+    for(NSNumber* scaleValue in @[@1, @2, @3]) {
+        CGFloat scale = scaleValue.doubleValue;
+        NSUInteger size = 32 * scale;
+        NSMutableArray<NSData*>* images = [NSMutableArray array];
+        for(NSNumber* enabled in @[@YES, @NO]) {
+            IJSVG* svg = [self svgWithBody:body];
+            IJSVGRenderingOptions* options = svg.renderingOptions;
+            options.filtersEnabled = enabled.boolValue;
+            svg.renderingOptions = options;
+            svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+            CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+            CGContextRef bitmap = CGBitmapContextCreate(NULL, size, size, 8, size * 4,
+                space, kCGImageAlphaPremultipliedLast);
+            CGColorSpaceRelease(space);
+            XCTAssertTrue(bitmap != NULL);
+            if(bitmap == NULL) {
+                return;
+            }
+            CGContextScaleCTM(bitmap, scale, scale);
+            [svg drawInRect:CGRectMake(0, 0, 32, 32) context:bitmap];
+            [images addObject:[NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:size * size * 4]];
+            CGContextRelease(bitmap);
+        }
+        const uint8_t* actual = images[0].bytes;
+        const uint8_t* expected = images[1].bytes;
+        for(NSUInteger x = 0; x < size; x++) {
+            NSUInteger offset = (size / 2 * size + x) * 4;
+            for(NSUInteger channel = 0; channel < 4; channel++) {
+                XCTAssertEqual(actual[offset + channel], expected[offset + channel],
+                    @"scale=%@ x=%lu channel=%lu", scaleValue, (unsigned long)x, (unsigned long)channel);
+            }
+        }
+    }
+}
+
 - (void)testOverlappingChildrenReceiveGroupOpacityOnce
 {
     NSData* data = [self renderBody:@"<g opacity='0.5'>"

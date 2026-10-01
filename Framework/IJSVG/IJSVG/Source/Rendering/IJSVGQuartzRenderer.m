@@ -51,6 +51,7 @@ static CGLineJoin IJSVGQuartzLineJoin(IJSVGLineJoinStyle style)
     IJSVGRootNode* _rootNode;
     CGSize _clientSize;
     NSSet<IJSVGFilterPaint*>* _batchableFilters;
+    BOOL _requiresBackdrop;
 }
 @end
 
@@ -191,8 +192,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         paint = [self drawablePaintForImageNode:(IJSVGImage*)node];
     }
     if(paint != nil) {
-        if(_renderingOptions.filtersEnabled && node.filters.count != 0
-            && IJSVGThreadManager.currentManager.CIContext != nil) {
+        if(_renderingOptions.filtersEnabled && node.filters.count != 0 &&
+            IJSVGThreadManager.currentManager.CIContext != nil) {
             for(IJSVGFilter* filter in node.filters) {
                 paint = [self applyFilter:filter
                                   toPaint:paint
@@ -259,8 +260,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     CGFloat height = CGRectGetHeight(bounds);
 
     if(node.primitiveType == kIJSVGPrimitivePathTypePath ||
-       node.primitiveType == kIJSVGPrimitivePathTypePolygon ||
-       node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
+        node.primitiveType == kIJSVGPrimitivePathTypePolygon ||
+        node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
         if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
             CGAffineTransform transform = CGAffineTransformMakeScale(width, height);
             return CGPathCreateCopyByTransformingPath(node.path, &transform);
@@ -598,12 +599,12 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 
     // use anything declared on the style
     if(_style.lineCapStyle != IJSVGLineCapStyleNone &&
-       _style.lineCapStyle != IJSVGLineCapStyleInherit) {
+        _style.lineCapStyle != IJSVGLineCapStyleInherit) {
         lineCapStyle = _style.lineCapStyle;
     }
 
     if(_style.lineJoinStyle != IJSVGLineJoinStyleNone &&
-       _style.lineJoinStyle != IJSVGLineJoinStyleInherit) {
+        _style.lineJoinStyle != IJSVGLineJoinStyleInherit) {
         lineJoinStyle = _style.lineJoinStyle;
     }
 
@@ -739,7 +740,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     // lets copy the gradient incase there are any style changes
     IJSVGColorUsageTraits traits = IJSVGColorUsageTraitGradientStop;
     if(_style.colors.replacedColorCount != 0 &&
-       [_style.colors matchesReplacementTraits:traits] == YES) {
+        [_style.colors matchesReplacementTraits:traits] == YES) {
         gradient = gradient.copy;
         NSMutableArray* colors = nil;
         colors = [NSMutableArray.alloc initWithCapacity:gradient.numberOfStops];
@@ -935,7 +936,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 {
     for(IJSVGNode* node in nodes) {
         if([node isKindOfClass:IJSVGPath.class] == YES &&
-           [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
+            [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
             CGPathRef resolvedPath = [self newResolvedPathForPathNode:(IJSVGPath*)node];
             CGPathAddPath(mutPath, &transform, resolvedPath);
             CGPathRelease(resolvedPath);
@@ -1178,6 +1179,89 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 }
 
 
+// Backdrop inputs need all preceding SVG artwork on a readable surface. Use
+// renderer-owned storage on every destination, including window and PDF contexts.
+- (BOOL)paintRequiresBackdrop:(IJSVGPaint*)root
+{
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
+    NSMutableSet<IJSVGPaint*>* visited = [[NSMutableSet alloc] init];
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if([visited containsObject:paint]) {
+            continue;
+        }
+        [visited addObject:paint];
+        if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+            NSSet* names = ((IJSVGFilterPaint*)paint).filter.inputNames;
+            if([names containsObject:IJSVGStringBackgroundImage] ||
+                [names containsObject:IJSVGStringBackgroundAlpha]) {
+                return YES;
+            }
+        }
+        [pending addObjectsFromArray:paint.children ?: @[]];
+        [pending addObjectsFromArray:paint.clipPaints ?: @[]];
+        if(paint.maskPaint != nil) {
+            [pending addObject:paint.maskPaint];
+        }
+        if([paint isKindOfClass:IJSVGPatternPaint.class]) {
+            IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
+            if(pattern != nil) {
+                [pending addObject:pattern];
+            }
+        }
+    }
+    return NO;
+}
+
+- (void)renderBackdropPaintInContext:(CGContextRef)ctx frame:(CGRect)frame
+{
+    // Display/layer contexts can have a backing transform that GetCTM omits.
+    // Derive the complete mapping so one intermediate pixel is one device pixel.
+    CGPoint origin = CGContextConvertPointToDeviceSpace(ctx, CGPointZero);
+    CGPoint xAxis = CGContextConvertPointToDeviceSpace(ctx, CGPointMake(1, 0));
+    CGPoint yAxis = CGContextConvertPointToDeviceSpace(ctx, CGPointMake(0, 1));
+    CGAffineTransform transform = CGAffineTransformMake(
+        xAxis.x - origin.x, xAxis.y - origin.y,
+        yAxis.x - origin.x, yAxis.y - origin.y, origin.x, origin.y);
+    CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(
+        CGRectMake(0, 0, frame.size.width, frame.size.height), transform));
+    if(!IJSVGRectIsFinite(bounds) || CGRectIsEmpty(bounds) ||
+        transform.a * transform.d - transform.b * transform.c == 0) {
+        return;
+    }
+    // Bound storage for large print/export transforms while retaining device
+    // resolution for ordinary windows, Retina displays and image exports.
+    CGFloat scale = MIN(1.f, MIN(4096.f / bounds.size.width, 4096.f / bounds.size.height));
+    size_t width = MAX(1, ceil(bounds.size.width * scale));
+    size_t height = MAX(1, ceil(bounds.size.height * scale));
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, 0,
+        space, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    if(bitmap == NULL) {
+        return;
+    }
+    CGContextSetInterpolationQuality(bitmap, CGContextGetInterpolationQuality(ctx));
+    CGContextScaleCTM(bitmap, width / bounds.size.width, height / bounds.size.height);
+    CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
+    CGContextConcatCTM(bitmap, transform);
+    CGImageRef image = NULL;
+    @try {
+        [IJSVGFilterPaint renderPaint:_rootPaint inBitmapContext:bitmap];
+        image = CGBitmapContextCreateImage(bitmap);
+    } @finally {
+        CGContextRelease(bitmap);
+    }
+    if(image != NULL) {
+        CGContextSaveGState(ctx);
+        CGContextConcatCTM(ctx, CGAffineTransformInvert(transform));
+        CGContextDrawImage(ctx, bounds, image);
+        CGContextRestoreGState(ctx);
+        CGImageRelease(image);
+    }
+}
+
 - (void)renderNode:(IJSVGRootNode*)rootNode
          inContext:(CGContextRef)ctx
           viewPort:(CGRect)viewPort
@@ -1190,14 +1274,19 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         _backingScale = backingScale;
         _rootPaint = [self rootPaintForRootNode:rootNode];
         _batchableFilters = [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint];
+        _requiresBackdrop = [self paintRequiresBackdrop:_rootPaint];
         _rootNode = rootNode;
         _clientSize = rootNode.clientSize;
     }
     CGRect frame = viewPort;
     if(!_renderingOptions.ignoreIntrinsicSize && rootNode.intrinsicSize != nil) {
         CGSize size = [rootNode.intrinsicSize computeValue:viewPort.size];
-        if(size.width != 0.f) frame.size.width = size.width;
-        if(size.height != 0.f) frame.size.height = size.height;
+        if(size.width != 0.f) {
+            frame.size.width = size.width;
+        }
+        if(size.height != 0.f) {
+            frame.size.height = size.height;
+        }
     }
     _rootPaint.frame = frame;
     _rootPaint.backingScaleFactor = backingScale;
@@ -1208,7 +1297,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         void (^drawingBlock)(CGContextRef) = ^(CGContextRef destination) {
             [self->_rootPaint renderInContext:destination];
         };
-        if(_batchableFilters == nil || ![IJSVGFilterPaint renderBatchedPaints:_batchableFilters
+        if(_requiresBackdrop) {
+            [self renderBackdropPaintInContext:ctx frame:frame];
+        } else if(_batchableFilters == nil || ![IJSVGFilterPaint renderBatchedPaints:_batchableFilters
                                                                     inContext:ctx
                                                                  drawingBlock:drawingBlock]) {
             drawingBlock(ctx);

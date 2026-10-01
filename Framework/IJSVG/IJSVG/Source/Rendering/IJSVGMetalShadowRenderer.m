@@ -65,8 +65,8 @@ static BOOL IJSVGPrepareMetalShadows(void)
         if(horizontalFunction == nil || verticalFunction == nil) {
             return;
         }
-        id<MTLComputePipelineState> horizontal = [IJSVGShadowDevice newComputePipelineStateWithFunction:horizontalFunction
-                                                                                                  error:NULL];
+        id<MTLComputePipelineState> horizontal =
+            [IJSVGShadowDevice newComputePipelineStateWithFunction:horizontalFunction error:NULL];
         id<MTLComputePipelineState> vertical = [IJSVGShadowDevice newComputePipelineStateWithFunction:verticalFunction
                                                                                                 error:NULL];
         if(horizontal == nil || vertical == nil) {
@@ -105,9 +105,9 @@ static BOOL IJSVGPrepareMetalShadows(void)
     NSUInteger count = 0, stages = 0;
     for(IJSVGMetalShadowJob* job in jobs) {
         NSUInteger width = job.parameters.geometry.x, height = job.parameters.geometry.y;
-        if(width == 0 || height == 0 || width > 512 || height > 512
-            || job.parameters.config.x == 0 || job.parameters.config.x > 4
-            || job.source.length != width * height * 4) {
+        if(width == 0 || height == 0 || width > 512 || height > 512 ||
+            job.parameters.config.x == 0 || job.parameters.config.x > 4 ||
+            job.source.length != width * height * 4) {
             return NO;
         }
         count += width * height;

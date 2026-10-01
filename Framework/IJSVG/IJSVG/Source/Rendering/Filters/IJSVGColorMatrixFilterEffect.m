@@ -75,8 +75,9 @@
     }
     parameters[@"inputBiasVector"] = [CIVector vectorWithX:matrix[4] Y:matrix[9]
                                                          Z:matrix[14] W:matrix[19]];
-    CIImage* image = [(opacityOnly ? input : [context imageInPrimitiveColorSpace:input]) imageByApplyingFilter:@"CIColorMatrix"
-                                                                                           withInputParameters:parameters];
+    CIImage* image =
+        [(opacityOnly ? input : [context imageInPrimitiveColorSpace:input]) imageByApplyingFilter:@"CIColorMatrix"
+                                                                              withInputParameters:parameters];
     image = [image imageByApplyingFilter:@"CIColorClamp"
                      withInputParameters:@{
         @"inputMinComponents": [CIVector vectorWithX:0 Y:0 Z:0 W:0],

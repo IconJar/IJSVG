@@ -44,7 +44,9 @@ typedef struct {
         BOOL representable = YES;
         for(NSInteger j = 0; j < parameters.kernelHeight; j++) {
             for(NSInteger i = 0; i < parameters.kernelWidth; i++) {
-                double value = k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth - i - 1] / parameters.divisor;
+                double value =
+                    k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth - i - 1] /
+                    parameters.divisor;
                 coefficients[j * kw + i] = value;
                 representable &= isfinite(coefficients[j * kw + i]);
             }
@@ -98,7 +100,8 @@ typedef struct {
                 double result[4] = { 0, 0, 0, 0 };
                 for(NSInteger j = 0; j < parameters.kernelHeight; j++) {
                     for(NSInteger i = 0; i < parameters.kernelWidth; i++) {
-                        double px = x + (i - parameters.targetX) * parameters.step.width, py = y + (j - parameters.targetY) * parameters.step.height;
+                        double px = x + (i - parameters.targetX) * parameters.step.width,
+                               py = y + (j - parameters.targetY) * parameters.step.height;
                         float sample[4];
                         IJSVGFilterSamplerPixel(&sampler, px, py, sample);
                         double alpha = sample[3];
@@ -107,11 +110,15 @@ typedef struct {
                             if(parameters.preserveAlpha) {
                                 value = alpha > 0 ? value / alpha : 0;
                             }
-                            result[c] += value * k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth - i - 1];
+                            result[c] += value *
+                                k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth -
+                                    i - 1];
                         }
                     }
                 }
-                double alpha = parameters.preserveAlpha ? src[index + 3] : IJSVGFilterClamp(result[3] / parameters.divisor + parameters.bias);
+                double alpha = parameters.preserveAlpha
+                    ? src[index + 3]
+                    : IJSVGFilterClamp(result[3] / parameters.divisor + parameters.bias);
                 dst[index + 3] = alpha;
                 for(NSUInteger c = 0; c < 3; c++) {
                     dst[index + c] = parameters.preserveAlpha
@@ -132,9 +139,9 @@ typedef struct {
     CGSize order = [primitive pairForParameter:IJSVGAttributeOrder
                                   defaultValue:CGSizeMake(3, 3)];
     NSArray<NSNumber*>* coefficients = [primitive numbersForParameter:IJSVGAttributeKernelMatrix];
-    if(order.width < 1 || order.height < 1 || order.width > 256 || order.height > 256
-        || floor(order.width) != order.width || floor(order.height) != order.height
-        || coefficients.count != (NSUInteger)(order.width * order.height)) {
+    if(order.width < 1 || order.height < 1 || order.width > 256 || order.height > 256 ||
+        floor(order.width) != order.width || floor(order.height) != order.height ||
+        coefficients.count != (NSUInteger)(order.width * order.height)) {
         return CIImage.emptyImage;
     }
     NSInteger ox = order.width, oy = order.height;
@@ -161,7 +168,8 @@ typedef struct {
                                    defaultValue:0];
     BOOL preserveAlpha = [primitive.parameters[IJSVGAttributePreserveAlpha] isEqualToString:IJSVGStringTrue];
     NSString* edge = primitive.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringDuplicate;
-    NSInteger edgeMode = [edge isEqualToString:IJSVGStringDuplicate] ? 1 : ([edge isEqualToString:IJSVGStringWrap] ? 2 : 0);
+    NSInteger edgeMode =
+        [edge isEqualToString:IJSVGStringDuplicate] ? 1 : ([edge isEqualToString:IJSVGStringWrap] ? 2 : 0);
     CGSize step = [primitive pairForParameter:IJSVGAttributeKernelUnitLength
                                  defaultValue:CGSizeZero];
     if(primitive.parameters[IJSVGAttributeKernelUnitLength] != nil && (step.width <= 0 || step.height <= 0)) {

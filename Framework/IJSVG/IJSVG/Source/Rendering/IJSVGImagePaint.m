@@ -38,7 +38,7 @@
     }
 
     if(CGRectGetWidth(imageBounds) <= 0.f || CGRectGetHeight(imageBounds) <= 0.f ||
-       CGRectGetWidth(currentBounds) <= 0.f || CGRectGetHeight(currentBounds) <= 0.f) {
+        CGRectGetWidth(currentBounds) <= 0.f || CGRectGetHeight(currentBounds) <= 0.f) {
         return;
     }
 
