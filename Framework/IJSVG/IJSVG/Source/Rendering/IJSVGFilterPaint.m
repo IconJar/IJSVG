@@ -14,6 +14,7 @@
 #import <CoreImage/CoreImage.h>
 #import <Metal/Metal.h>
 #import "IJSVGFilterSIMD.h"
+#import <limits.h>
 
 static _Thread_local CGContextRef IJSVGFilterBitmapContext;
 
@@ -1056,9 +1057,25 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     if(!isfinite(scale) || scale <= 0.f) {
         return;
     }
-    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(scale, scale));
+    CGAffineTransform grid = CGAffineTransformMakeScale(scale, scale);
+    CGAffineTransform destination = CGContextGetCTM(ctx);
+    if(ctx == IJSVGFilterBitmapContext &&
+        isfinite(destination.tx) && isfinite(destination.ty) &&
+        fabs(destination.tx) <= INT_MAX && fabs(destination.ty) <= INT_MAX &&
+        (fabs(destination.tx - round(destination.tx)) > 1e-9 ||
+            fabs(destination.ty - round(destination.ty)) > 1e-9) &&
+        fabs(destination.b) <= 1e-9 && fabs(destination.c) <= 1e-9 &&
+        fabs(fabs(destination.a) - scale) <= scale * 1e-9 &&
+        fabs(fabs(destination.d) - scale) <= scale * 1e-9 &&
+        [self.filter.inputNames containsObject:IJSVGStringBackgroundImage]) {
+        // Include destination translation when snapping backdrop-dependent
+        // surfaces. Snapping only in local coordinates introduces a fractional
+        // resample and prevents direct CPU access to the background pixel grid.
+        grid = destination;
+    }
+    workRect = CGRectApplyAffineTransform(workRect, grid);
     workRect = CGRectIntegral(workRect);
-    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(1.f / scale, 1.f / scale));
+    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformInvert(grid));
     CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
                                   round(workRect.size.height * scale));
     if(batch.preflighting) {

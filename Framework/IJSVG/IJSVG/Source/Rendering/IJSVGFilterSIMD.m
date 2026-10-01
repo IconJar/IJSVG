@@ -147,6 +147,44 @@ static simd_float4 IJSVGCompositeEncode(simd_float4 value)
     return value;
 }
 
+// Interpolate the transfer curve, but use the original expression near a
+// final byte-rounding boundary. This avoids powf for ordinary pixels without
+// accepting a different 8-bit result at the sensitive boundaries.
+uint8_t IJSVGFilterSIMDEncodeLinearComponent(float component, float alpha, float coverage)
+{
+    if(alpha <= 0.f) {
+        return 0;
+    }
+    static float table[16385];
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        for(NSUInteger index = 0; index <= 16384; index++) {
+            float value = index / 16384.f;
+            table[index] = value <= .0031308f ? value * 12.92f
+                : 1.055f * powf(value, 1.f / 2.4f) - .055f;
+        }
+    });
+    float straight = component / alpha;
+    float encoded;
+    if(straight <= .0031308f) {
+        encoded = straight * 12.92f;
+    } else {
+        float position = fminf(1.f, straight) * 16384.f;
+        NSUInteger index = MIN((NSUInteger)position, 16383u);
+        float fraction = position - index;
+        encoded = table[index] + (table[index + 1] - table[index]) * fraction;
+    }
+    float value = (encoded * alpha) * (coverage * 255.f);
+    // The interpolation error on this grid is below .002 of an output byte,
+    // including float arithmetic. Use a wider .01 guard around half integers.
+    if(fabsf(value - floorf(value) - .5f) < .01f) {
+        encoded = straight <= .0031308f ? straight * 12.92f
+            : 1.055f * powf(straight, 1.f / 2.4f) - .055f;
+        value = (encoded * alpha) * (coverage * 255.f);
+    }
+    return (uint8_t)lrintf(fminf(255.f, fmaxf(0.f, value)));
+}
+
 // RGBA8 has only 65,536 channel/alpha pairs. Retain the exact float
 // conversion for each pair instead of evaluating transfer functions per pixel.
 static const float* IJSVGCompositeDecodeTable(void)
@@ -279,6 +317,14 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source,
             if(operation != IJSVGSIMDCompositeLighter) {
                 value = simd_clamp(value, 0.f, 1.f);
                 value = simd_min(value, (simd_float4)value.a);
+            }
+            if(linear && operation == IJSVGSIMDCompositeAddition) {
+                for(NSUInteger channel = 0; channel < 3; channel++) {
+                    destination[(y * width + x) * 4 + channel] =
+                        IJSVGFilterSIMDEncodeLinearComponent(value[channel], value.a, coverage);
+                }
+                destination[(y * width + x) * 4 + 3] = (uint8_t)lrintf(value.a * (coverage * 255.f));
+                continue;
             }
             if(linear) {
                 value = IJSVGCompositeEncode(value);
