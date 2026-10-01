@@ -11,7 +11,41 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
-@implementation IJSVGFilterPrimitive
+@implementation IJSVGFilterPrimitive {
+    NSDictionary<NSString*, NSString*>* _parameters;
+    NSMutableDictionary<NSString*, id>* _preparedValues;
+    NSMutableDictionary<NSString*, NSArray<NSNumber*>*>* _parsedNumbers;
+}
+
+@synthesize parameters = _parameters;
+
+- (void)setParameters:(NSDictionary<NSString*, NSString*>*)parameters
+{
+    @synchronized(self) {
+        _parameters = parameters.copy;
+        _preparedValues = nil;
+        _parsedNumbers = nil;
+    }
+}
+
+- (id)preparedValueForKey:(NSString*)key builder:(id (^)(void))builder
+{
+    // Builders may read numeric parameters recursively. Synchronizing the
+    // whole preparation also prevents a replacement from publishing stale data.
+    @synchronized(self) {
+        id value = _preparedValues[key];
+        if(value == nil) {
+            value = builder();
+            if(value != nil) {
+                if(_preparedValues == nil) {
+                    _preparedValues = [[NSMutableDictionary alloc] init];
+                }
+                _preparedValues[key] = value;
+            }
+        }
+        return value;
+    }
+}
 
 + (NSSet<NSString*>*)filterParameterNames
 {
@@ -109,7 +143,33 @@
 
 - (NSArray<NSNumber*>*)numbersForParameter:(NSString*)name
 {
-    return [IJSVGUtils numbersFromString:self.parameters[name]];
+    @synchronized(self) {
+        NSString* string = _parameters[name];
+        if(string.length == 0) {
+            return @[];
+        }
+      
+        // Mesh composites overwhelmingly use these constants. Share them even
+        // on the first draw, without allocating a cache for each triangle.
+        if([string isEqualToString:@"0"] || [string isEqualToString:@"1"]) {
+            static NSArray<NSNumber*>* constants[2];
+            static dispatch_once_t once;
+            dispatch_once(&once, ^{
+                constants[0] = @[@0];
+                constants[1] = @[@1];
+            });
+            return constants[[string isEqualToString:@"1"] ? 1 : 0];
+        }
+        NSArray<NSNumber*>* numbers = _parsedNumbers[name];
+        if(numbers == nil) {
+            numbers = [[IJSVGUtils numbersFromString:string] copy];
+            if(_parsedNumbers == nil) {
+                _parsedNumbers = [[NSMutableDictionary alloc] init];
+            }
+            _parsedNumbers[name] = numbers;
+        }
+        return numbers;
+    }
 }
 
 - (CGFloat)numberForParameter:(NSString*)name

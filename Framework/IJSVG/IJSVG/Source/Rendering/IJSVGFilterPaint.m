@@ -922,35 +922,35 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     return NO;
 }
 
-- (BOOL)renderSmallBlur:(CGImageRef)smallBlur
-                context:(CGContextRef)ctx
-                 region:(CGRect)region
-               workRect:(CGRect)workRect
-              pixelSize:(CGSize)pixelSize
+- (BOOL)renderDirectImage:(CGImageRef)image
+                  context:(CGContextRef)ctx
+                   region:(CGRect)region
+                 workRect:(CGRect)workRect
+                pixelSize:(CGSize)pixelSize
 {
-    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
-    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
-    if(smallBlur == NULL) {
+    if(image == NULL) {
         return NO;
     }
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if(batch.collecting) {
         if(cached != nil) {
             batch.invalid = YES;
-            CGImageRelease(smallBlur);
+            CGImageRelease(image);
         } else {
             IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
-            entry.renderedImage = smallBlur;
+            entry.renderedImage = image;
             entry.workRect = workRect;
             entry.pixelSize = pixelSize;
             [batch.entries setObject:entry forKey:self];
             [batch.orderedEntries addObject:entry];
         }
     } else {
-        [self drawFilteredImage:smallBlur
+        [self drawFilteredImage:image
                         context:ctx
                          region:region
                        workRect:workRect];
-        CGImageRelease(smallBlur);
+        CGImageRelease(image);
     }
     return YES;
 }
@@ -994,17 +994,29 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         CGColorSpaceRelease(colorSpace);
         return;
     }
-    if([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
+    CGImageRef localImage = IJSVGFilterSIMDNewLocalFilter(bitmap, graph, region);
+    if([self renderDirectImage:localImage
+                       context:ctx
+                        region:region
+                      workRect:workRect
+                     pixelSize:pixelSize]) {
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+    if([self collectMetalBitmap:bitmap
+                          graph:graph
+                       workRect:workRect]) {
         CGContextRelease(bitmap);
         CGColorSpaceRelease(colorSpace);
         return;
     }
     CGImageRef smallBlur = [graph newCGImageForSmallBlur:bitmap];
-    if([self renderSmallBlur:smallBlur
-                     context:ctx
-                      region:region
-                    workRect:workRect
-                   pixelSize:pixelSize]) {
+    if([self renderDirectImage:smallBlur
+                       context:ctx
+                        region:region
+                      workRect:workRect
+                     pixelSize:pixelSize]) {
         CGContextRelease(bitmap);
         CGColorSpaceRelease(colorSpace);
         return;
@@ -1085,7 +1097,10 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if(!batch.collecting && cached.renderedImage != NULL &&
         CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
-        [self drawFilteredImage:cached.renderedImage context:ctx region:region workRect:workRect];
+        [self drawFilteredImage:cached.renderedImage
+                        context:ctx
+                         region:region
+                       workRect:workRect];
         return;
     }
     if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {

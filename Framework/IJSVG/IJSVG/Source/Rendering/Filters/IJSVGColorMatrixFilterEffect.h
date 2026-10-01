@@ -9,4 +9,7 @@
 #import <IJSVG/IJSVGFilterEffect.h>
 
 @interface IJSVGColorMatrixFilterEffect : IJSVGFilterEffect
+
++ (NSDictionary*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive;
+
 @end

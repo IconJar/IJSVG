@@ -22,6 +22,10 @@
 + (BOOL)isPrimitiveType:(IJSVGNodeType)type;
 + (BOOL)type:(IJSVGNodeType)parentType
     acceptsChildType:(IJSVGNodeType)childType;
+
+// Immutable derived setup, discarded whenever parameters are replaced.
+- (id)preparedValueForKey:(NSString*)key
+                  builder:(id (^)(void))builder;
 - (NSArray<NSNumber*>*)numbersForParameter:(NSString*)name;
 - (CGFloat)numberForParameter:(NSString*)name
                  defaultValue:(CGFloat)value;
