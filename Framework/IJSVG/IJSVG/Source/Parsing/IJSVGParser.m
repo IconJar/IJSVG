@@ -485,7 +485,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
                                               height:hl];
 }
 
-/// The following method is highly tuned for performance rather than readability.
+// The following method is highly tuned for performance rather than readability.
 - (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes
@@ -1027,7 +1027,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
                  identifier:(NSString*)identifier
 {
   // For now, we only want to log these for debug builds whilst we fix any
-  // SVG's that are problematic.
+  // SVGs that are problematic.
 #if DEBUG
   NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"",
         self.className, _fileURL ?: @"Unknown", identifier);
@@ -1060,7 +1060,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     // reference element has children and the referencing element does not,
     // use those else use the referencing element children.
     if (element.childCount != 0) {
-      // remove any old children - iterate back to front so we don't mutate
+      // remove any old children, iterate back to front so we do not mutate
       // the collection we are enumerating (removing by index whilst fast
       // enumerating shifts indexes and is undefined behaviour)
       for(NSUInteger i = copy.childCount; i > 0; i--) {
@@ -1806,7 +1806,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     char* buffer;
     asprintf(&buffer, "M%f %f L", params[0], params[1]);
     
-    // compute a default buffer - bSize is strlen + 1 for null byte
+    // compute a default buffer, bSize is strlen + 1 for null byte
     size_t bSize = strlen(buffer) + 1;
     size_t strLength = bSize - 1;
     
@@ -1817,7 +1817,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
         size_t sSize = strlen(subbuf);
         
         // if the new size of the string is large than the buffer
-        // increase the buffer up another def size - note, we always
+        // increase the buffer up another def size, note, we always
         // plus 2 incase the close path needs to be appended on the end
         if((strLength + sSize + 2) > bSize) {
             size_t nLength = MAX(sSize, defBufferSize) + 2;
@@ -1834,8 +1834,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
 
     // append the close path if required
     if(closePath == YES) {
-        // make sure there is room for 'z' plus the null terminator, the loop
-        // reserves this, but a degenerate single-point poly skips the loop.
+        // make sure there is room for z plus the null terminator, the loop
+        // reserves this, but a degenerate single point poly skips the loop.
         if((strLength + 2) > bSize) {
             buffer = realloc(buffer, sizeof(char) * (strLength + 2));
             bSize = strLength + 2;

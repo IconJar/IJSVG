@@ -1,0 +1,4 @@
+asset,size,layer_ms,quartz_ms,speedup,max_channel_error,mean_channel_error,changed_pixels_percent,ca_calls,ca_allocations,cold_layer_ms,cold_quartz_ms
+/Users/curtishard/Desktop/v3 Libraries/IconJar-old.ijlibrary/Sets/04598CB6-A790-455E-BFEC-4C7FDA40CC95/man-construction-worker-color-medium-light.svg,64,0.5865,0.3800,1.543,0,0.0000,0.000,0,0,11.0235,1.2012
+/Users/curtishard/Desktop/v3 Libraries/IconJar-old.ijlibrary/Sets/04598CB6-A790-455E-BFEC-4C7FDA40CC95/man-construction-worker-color-medium-light.svg,256,1.5640,1.3414,1.166,0,0.0000,0.000,0,0,3.1705,2.1018
+/Users/curtishard/Desktop/v3 Libraries/IconJar-old.ijlibrary/Sets/04598CB6-A790-455E-BFEC-4C7FDA40CC95/man-construction-worker-color-medium-light.svg,900,10.2287,10.1127,1.011,0,0.0000,0.000,0,0,11.4712,10.6520

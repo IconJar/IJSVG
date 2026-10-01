@@ -20,9 +20,10 @@ typedef struct {
     float weights[128];
 } IJSVGMetalShadowParameters;
 
-// Each job owns its pixels; no CALayer, CGContext or thread local state crosses
+// Each job owns its pixels, no graphics context or thread local state crosses
 // the GPU submission. Results are copied before the pooled buffers are released.
 @interface IJSVGMetalShadowJob : NSObject
+
 @property (nonatomic, strong) NSData* source;
 @property (nonatomic, assign) IJSVGMetalShadowParameters parameters;
 @property (nonatomic, readonly) CGImageRef renderedImage;

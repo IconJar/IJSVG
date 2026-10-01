@@ -7,14 +7,18 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <IJSVG/IJSVGFilterLayer.h>
+#import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGExporter.h>
-#import <IJSVG/IJSVGTransaction.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
 
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
+@end
+
+@interface IJSVG () {
+  IJSVGQuartzRenderer* _quartzRenderer;
+}
 @end
 
 @implementation IJSVG
@@ -25,17 +29,7 @@
 
 - (void)dealloc
 {
-    // thread manager will deal with this for us, but if we are main thread,
-    // we want to kick this off as soon as possible, or if the memory is set
-    // to quick.
     IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
-    BOOL flag = IJSVGBeginTransaction();
-    _layerTree = nil;
-    _rootLayer = nil;
-    if(flag == YES) {
-        IJSVGEndTransaction();
-    }
-    
     // tell the thread manager we are done with
     [threadManager remove:self];
 }
@@ -129,20 +123,6 @@
     rootNode.viewBox = viewBox;
     [rootNode addChild:imageNode];
     return [self initWithRootNode:rootNode];
-}
-
-- (id)initWithSVGLayer:(IJSVGGroupLayer*)group
-               viewBox:(CGRect)viewBox
-{
-    // this completely bypasses passing of files
-    if((self = [super init]) != nil) {
-        // keep the layer tree
-        _viewBox = viewBox;
-
-        // any setups
-        [self _setupBasicsFromAnyInitializer];
-    }
-    return self;
 }
 
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode
@@ -276,9 +256,7 @@
 
 - (void)performBlock:(dispatch_block_t)block
 {
-    IJSVGPerformTransactionBlock(^{
-        block();
-    });
+    block();
 }
 
 - (void)_setupBasicInfoFromGroup
@@ -298,7 +276,7 @@
     return _intrinsicSize.copy;
 }
 
-/// Sets the rendering defaults shared by every initializer.
+// Sets the rendering defaults shared by every initializer.
 - (void)_setupBasicsFromAnyInitializer
 {
     _renderingOptions = [[IJSVGRenderingOptions alloc] init];
@@ -378,8 +356,10 @@
                            options:(IJSVGExporterOptions)options
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [[IJSVGExporter alloc] initWithSVG:self
+    return [[IJSVGExporter alloc] initWithRootNode:_rootNode
                                          size:size
+                                        style:_style
+                             renderingOptions:_renderingOptions
                                       options:options
                          floatingPointOptions:floatingPointOptions];
 }
@@ -389,7 +369,7 @@
     IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
     return [self exporterWithSize:_viewBox.size
                           options:options
-                floatingPointOptions:fpo].SVGString;
+             floatingPointOptions:fpo].SVGString;
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
@@ -600,9 +580,6 @@
         return;
     }
 
-    // construct the layer before drawing
-    [self rootLayer];
-
     // set the scale
     __weak NSView* weakView = view;
     self.renderingBackingScaleHelper = ^CGFloat {
@@ -650,111 +627,62 @@
                 error:nil];
 }
 
-/// Draws using the current rendering quality and sizing options.
+// Draws using the current rendering quality and sizing options.
 - (BOOL)_drawInRect:(CGRect)rect
             context:(CGContextRef)ctx
               error:(NSError**)error
 {
-    BOOL transaction = IJSVGBeginTransaction();
+    if(ctx == NULL) {
+        return NO;
+    }
     CGContextSaveGState(ctx);
-    CGFloat backingScale = MAX([self backingScaleFactor], 1.f);
-    CGInterpolationQuality quality;
-    switch (_renderingOptions.renderQuality) {
-        case kIJSVGRenderQualityLow: {
-            quality = kCGInterpolationLow;
-            break;
+    @try {
+        CGFloat backingScale = MAX([self backingScaleFactor], 1.f);
+        CGInterpolationQuality quality;
+        switch (_renderingOptions.renderQuality) {
+            case kIJSVGRenderQualityLow: {
+                quality = kCGInterpolationLow;
+                break;
+            }
+            case kIJSVGRenderQualityOptimized: {
+                quality = kCGInterpolationMedium;
+                break;
+            }
+            default: {
+                quality = kCGInterpolationHigh;
+            }
         }
-        case kIJSVGRenderQualityOptimized: {
-            quality = kCGInterpolationMedium;
-            break;
+        CGContextSetInterpolationQuality(ctx, quality);
+        if(_rootNode.containsRelativeUnits && !CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
+            _rootNode.clientSize = rect.size;
+            [self _setupBasicInfoFromGroup];
         }
-        default: {
-            quality = kCGInterpolationHigh;
+        if(_quartzRenderer == nil) {
+            _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
+            _quartzRenderer.style = _style;
+            _quartzRenderer.renderingOptions = _renderingOptions;
         }
-    }
-    CGContextSetInterpolationQuality(ctx, quality);
-    IJSVGRootLayer* rootLayer = [self rootLayerWithRect:rect];
-    void (^drawRoot)(CGContextRef) = ^(CGContextRef destination) {
-        [rootLayer renderInContext:destination
-                          viewPort:rect
-                      backingScale:backingScale
-                           quality:self->_renderingOptions.renderQuality
-               ignoreIntrinsicSize:self->_renderingOptions.ignoreIntrinsicSize];
-    };
-    if(![IJSVGFilterLayer renderBatchedLayer:rootLayer
-                                   inContext:ctx
-                                drawingBlock:drawRoot]) {
-        drawRoot(ctx);
-    }
-    CGContextRestoreGState(ctx);
-    if(transaction == YES) {
-        IJSVGEndTransaction();
+        [_quartzRenderer renderNode:_rootNode
+                          inContext:ctx
+                           viewPort:rect
+                       backingScale:backingScale];
+    } @finally {
+        CGContextRestoreGState(ctx);
     }
     return YES;
 }
 
-/// Returns a snapshot that can be edited without changing active rendering.
+// Returns a snapshot that can be edited without changing active rendering.
 - (IJSVGRenderingOptions*)renderingOptions
 {
     return _renderingOptions.copy;
 }
 
-/// Captures options and rebuilds layers only when their filter structure changes.
+// Captures options and rebuilds the resolved Quartz paints.
 - (void)setRenderingOptions:(IJSVGRenderingOptions*)renderingOptions
 {
-    IJSVGRenderingOptions* options = renderingOptions.copy;
-    BOOL filtersChanged = _renderingOptions.filtersEnabled != options.filtersEnabled;
-    _renderingOptions = options;
-    if(filtersChanged) {
-        [self invalidateLayerTree];
-    }
-}
-
-/// Creates the layer builder with the current rendering configuration.
-- (IJSVGLayerTree*)layerTree
-{
-    if(_layerTree == nil) {
-        _layerTree = [[IJSVGLayerTree alloc] init];
-        _layerTree.style = _style;
-        _layerTree.renderingOptions = _renderingOptions;
-    }
-    return _layerTree;
-}
-
-- (IJSVGRootLayer*)rootLayerWithRect:(CGRect)rect {
-
-  BOOL hasRootLayerForSize = _rootLayer != nil &&
-    CGSizeEqualToSize(_rootNode.clientSize, rect.size) &&
-    CGSizeEqualToSize(_rootLayer.frame.size, rect.size);
-
-  if(!_rootNode.containsRelativeUnits || hasRootLayerForSize) {
-    return self.rootLayer;
-  }
-  
-  // Relative units are stored on the parse tree, so a size change only needs
-  // to update the render client size and resolve the layers again.
-  __weak IJSVG* weakSelf = self;
-  [self performBlock:^{
-    IJSVG* strongSelf = weakSelf;
-    strongSelf->_rootNode.clientSize = rect.size;
-    [strongSelf _setupBasicInfoFromGroup];
-    strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
-  }];
-  return _rootLayer;
-}
-
-- (IJSVGRootLayer*)rootLayer
-{
-  if(_rootLayer != nil) {
-    return _rootLayer;
-  }
-  
-  __weak IJSVG* weakSelf = self;
-  [self performBlock:^{
-      IJSVG* strongSelf = weakSelf;
-      strongSelf->_rootLayer = [strongSelf.layerTree rootLayerForRootNode:strongSelf->_rootNode];
-  }];
-  return _rootLayer;
+    _renderingOptions = renderingOptions.copy;
+    _quartzRenderer = nil;
 }
 
 - (CGFloat)backingScaleFactor
@@ -769,16 +697,15 @@
 
 - (void)setNeedsDisplay
 {
-    [self invalidateLayerTree];
+    [self invalidatePaints];
 }
 
-- (void)invalidateLayerTree
+- (void)invalidatePaints
 {
     __weak IJSVG* weakSelf = self;
     [self performBlock:^{
         IJSVG* strongSelf = weakSelf;
-        strongSelf->_rootLayer = nil;
-        strongSelf->_layerTree = nil;
+        strongSelf->_quartzRenderer = nil;
     }];
 }
 

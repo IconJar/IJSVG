@@ -1,4 +1,4 @@
-#import "IJSVGFilterTestHelpers.h"
+#import <IJSVGFilterTestHelpers.h>
 #import <CoreImage/CoreImage.h>
 
 @interface IJSVGFilterConcurrencyTests : XCTestCase

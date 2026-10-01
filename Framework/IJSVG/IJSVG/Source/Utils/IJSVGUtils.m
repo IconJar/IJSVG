@@ -6,8 +6,6 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGLayer.h>
-#import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
@@ -90,28 +88,7 @@ CGColorSpaceRef IJSVGDeviceRGBColorSpace(void) {
     return colorSpace;
 }
 
-static BOOL IJSVGRecursivelyWalkLayerAndReturnShouldStop(CALayer<IJSVGBasicLayer>* layer,
-                                                         IJSVGLayerWalkBlock block)
-{
-    BOOL stop = NO;
-    block(layer, &stop);
-    if(stop == YES) {
-        return YES;
-    }
 
-    for(CALayer<IJSVGBasicLayer>* sublayer in layer.sublayers) {
-        if(IJSVGRecursivelyWalkLayerAndReturnShouldStop(sublayer, block) == YES) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-void IJSVGRecursivelyWalkLayer(CALayer<IJSVGBasicLayer>* layer,
-                               IJSVGLayerWalkBlock block)
-{
-    IJSVGRecursivelyWalkLayerAndReturnShouldStop(layer, block);
-}
 
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
@@ -347,11 +324,6 @@ CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path)
     return point;
 }
 
-BOOL IJSVGIsSVGLayer(CALayer* layer)
-{
-    return [layer isKindOfClass:IJSVGLayer.class] ||
-        [layer isKindOfClass:IJSVGShapeLayer.class];
-}
 
 CGFloat IJSVGAngle(CGPoint a, CGPoint b)
 {
@@ -777,71 +749,40 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 
 #pragma mark CG conversions
 
-+ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle
++ (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle
 {
     switch (joinStyle) {
         default:
         case IJSVGLineJoinStyleMiter: {
-            return kCALineJoinMiter;
+            return kCGLineJoinMiter;
         }
         case IJSVGLineJoinStyleBevel: {
-            return kCALineJoinBevel;
+            return kCGLineJoinBevel;
         }
         case IJSVGLineJoinStyleRound: {
-            return kCALineJoinRound;
+            return kCGLineJoinRound;
         }
     }
 }
 
-+ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle
++ (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle
 {
     switch (capStyle) {
         default:
         case IJSVGLineCapStyleButt: {
-            return kCALineCapButt;
+            return kCGLineCapButt;
         }
         case IJSVGLineCapStyleRound: {
-            return kCALineCapRound;
+            return kCGLineCapRound;
         }
         case IJSVGLineCapStyleSquare: {
-            return kCALineCapSquare;
+            return kCGLineCapSquare;
         }
     }
 }
 
-+ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule
-{
-    switch (rule) {
-        case IJSVGWindingRuleEvenOdd: {
-            return kCAFillRuleEvenOdd;
-        }
-        default: {
-            return kCAFillRuleNonZero;
-        }
-    }
-}
 
-+ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap
-{
-    if([lineCap isEqualToString:kCALineCapButt]) {
-        return kCGLineCapButt;
-    }
-    if([lineCap isEqualToString:kCALineCapRound]) {
-        return kCGLineCapRound;
-    }
-    return kCGLineCapSquare;
-}
 
-+ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin
-{
-    if([lineJoin isEqualToString:kCALineJoinBevel]) {
-        return kCGLineJoinBevel;
-    }
-    if([lineJoin isEqualToString:kCALineJoinMiter]) {
-        return kCGLineJoinMiter;
-    }
-    return kCGLineJoinRound;
-}
 
 + (NSImage*)resizeImage:(NSImage*)anImage
                  toSize:(CGSize)size

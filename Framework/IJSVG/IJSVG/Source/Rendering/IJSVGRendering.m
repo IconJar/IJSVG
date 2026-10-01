@@ -10,7 +10,7 @@
 
 @implementation IJSVGRenderingOptions
 
-/// Preserves the rendering defaults used by existing SVG clients.
+// Preserves the rendering defaults used by existing SVG clients.
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
@@ -21,7 +21,7 @@
     return self;
 }
 
-/// Copies settings so SVG instances never share mutable rendering options.
+// Copies settings so SVG instances never share mutable rendering options.
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGRenderingOptions* options = [[self.class allocWithZone:zone] init];

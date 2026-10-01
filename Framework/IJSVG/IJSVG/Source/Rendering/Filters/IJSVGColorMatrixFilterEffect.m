@@ -57,7 +57,7 @@
         matrix[17] = .0721;
     }
     // Opacity scaling commutes with RGB transfer functions. Keep the clamp,
-    // including its RGB bounds, but omit the two color-space conversion nodes.
+    // including its RGB bounds, but omit the two color space conversion nodes.
     // Do not combine general matrices: each primitive must clamp independently.
     BOOL opacityOnly = isfinite(matrix[18]) && matrix[18] >= 0 && matrix[18] <= 1;
     for(NSUInteger i = 0; i < 20 && opacityOnly; i++) {

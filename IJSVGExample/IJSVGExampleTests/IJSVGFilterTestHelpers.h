@@ -1,5 +1,7 @@
 #import <IJSVGTestHelpers.h>
-#import <IJSVG/IJSVGShapeLayer.h>
+#import <IJSVGShapePaint.h>
+#import <IJSVGRootPaint.h>
+#import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
 @interface XCTestCase (IJSVGFilterTestHelpers)

@@ -1,4 +1,4 @@
-#import "IJSVGFilterTestHelpers.h"
+#import <IJSVGFilterTestHelpers.h>
 #import <QuartzCore/QuartzCore.h>
 
 @interface IJSVGFilterBatchTests : XCTestCase
@@ -158,19 +158,18 @@
 {
     CGContextRef context = [self newBitmapWithSize:64 flipped:flipped];
     if(context == NULL) return nil;
-    IJSVGShapeLayer* container = [IJSVGShapeLayer layer];
+    IJSVGShapePaint* container = [IJSVGShapePaint paint];
     container.frame = CGRectMake(0, 0, 64, 64);
     container.fillColor = NULL;
     container.strokeColor = NULL;
     container.opacity = 0.57;
     if(reference) {
-        CGColorRef clear = CGColorCreateGenericGray(0, 0);
-        container.backgroundColor = clear;
-        CGColorRelease(clear);
+        CGContextSetAlpha(context, container.opacity);
+        CGContextBeginTransparencyLayer(context, NULL);
+        container.opacity = 1;
     }
     for(NSUInteger index = 0; index < 2; index++) {
-        IJSVGShapeLayer* child = [IJSVGShapeLayer layer];
-        child.anchorPoint = CGPointMake(0.3, 0.8);
+        IJSVGShapePaint* child = [IJSVGShapePaint paint];
         child.frame = CGRectMake(5.3, 3.7, 48, 48);
         CGPathRef path = CGPathCreateWithEllipseInRect(CGRectMake(10.2, 12.8, 21.6, 15.4), NULL);
         child.path = path;
@@ -182,13 +181,14 @@
         CGColorRelease(fill);
         CGColorRelease(stroke);
         child.lineWidth = 3.3;
-        child.lineCap = kCALineCapSquare;
-        child.lineJoin = kCALineJoinRound;
+        child.lineCap = kCGLineCapSquare;
+        child.lineJoin = kCGLineJoinRound;
         child.lineDashPattern = @[@2, @3];
-        child.transform = CATransform3DMakeTranslation(offset, -offset / 2, 0);
-        [container addSublayer:child];
+        child.affineTransform = CGAffineTransformMakeTranslation(offset, -offset / 2);
+        [container addChild:child];
     }
     [container renderInContext:context];
+    if(reference) CGContextEndTransparencyLayer(context);
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:64 * 64 * 4];
     CGContextRelease(context);
     return pixels;

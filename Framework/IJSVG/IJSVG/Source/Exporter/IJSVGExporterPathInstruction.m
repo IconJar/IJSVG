@@ -907,7 +907,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     // apply the
     CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
 
-    // remove last instruction if it was Z -> M
+    // remove last instruction if it was Z to M
     IJSVGExporterPathInstruction* lastInstruction = instructions.lastObject;
     if(lastInstruction.instruction == 'M' || lastInstruction.instruction == 'm') {
         if(instructions.count >= 2) {

@@ -268,8 +268,8 @@ static NSDictionary* _colorTree = nil;
             return nil;
         }
 
-        // split the parameters once - the component count tells us whether
-        // we have enough channels, so there's no need to pre-scan the floats
+        // split the parameters once, the component count tells us whether
+        // we have enough channels, so there is no need to scan the floats again
         // purely to count them.
         IJSVGParsingStringMethod* method = methods[0];
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
@@ -434,7 +434,7 @@ static NSDictionary* _colorTree = nil;
         return [NSString stringWithFormat:@"#%02X%02X%02X", red, green, blue];
     }
 
-    // note the %g, CSS alpha is 0 to 1, not 0 - 100, my bad!
+    // note the %g, CSS alpha is 0 to 1, not 0 to 100, my bad!
     return [NSString stringWithFormat:@"rgba(%d,%d,%d,%@)", red, green, blue,
                      IJSVGShortFloatString((float)alpha / 100.f)];
 }

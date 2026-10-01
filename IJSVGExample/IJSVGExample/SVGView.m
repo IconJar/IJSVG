@@ -10,7 +10,7 @@
 
 @implementation SVGView
 
-/// Configures SVG display with the standard rendering options.
+// Configures SVG display with the standard rendering options.
 - (id)initWithFrame:(NSRect)frameRect
 {
     if( ( self = [super initWithFrame:frameRect] ) != nil ) {

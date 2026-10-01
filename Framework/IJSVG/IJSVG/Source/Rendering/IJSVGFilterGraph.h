@@ -8,8 +8,8 @@
 
 #import <IJSVG/IJSVGFilter.h>
 #import <CoreImage/CoreImage.h>
-#import "IJSVGMetalShadowRenderer.h"
-#import "IJSVGMetalBlurRenderer.h"
+#import <IJSVGMetalShadowRenderer.h>
+#import <IJSVGMetalBlurRenderer.h>
 
 @interface IJSVGFilterGraph : NSObject
 

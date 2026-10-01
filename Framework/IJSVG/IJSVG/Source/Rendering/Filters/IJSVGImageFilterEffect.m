@@ -8,8 +8,8 @@
 
 #import <IJSVG/IJSVGImageFilterEffect.h>
 #import <IJSVG/IJSVGViewBox.h>
-#import <IJSVG/IJSVGShapeLayer.h>
-#import <IJSVG/IJSVGLayerTree.h>
+#import <IJSVG/IJSVGPaint.h>
+#import <IJSVG/IJSVGQuartzRenderer.h>
 
 @implementation IJSVGImageFilterEffect
 
@@ -40,9 +40,9 @@
     CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
     CGContextClipToRect(bitmap, region);
     if(primitive.imageNode != nil) {
-        IJSVGLayerTree* tree = [[IJSVGLayerTree alloc] init];
-        CALayer<IJSVGDrawableLayer>* layer = [tree drawableLayerForNode:primitive.imageNode
-                                                             inViewPort:context.viewPort];
+        IJSVGQuartzRenderer* tree = [[IJSVGQuartzRenderer alloc] init];
+        IJSVGPaint* layer = [tree drawablePaintForNode:primitive.imageNode
+                                            inViewPort:context.viewPort];
         CGContextConcatCTM(bitmap, context.imageTransform);
         CGContextTranslateCTM(bitmap, layer.frame.origin.x, layer.frame.origin.y);
         [layer renderInContext:bitmap];

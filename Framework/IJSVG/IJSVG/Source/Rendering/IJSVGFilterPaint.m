@@ -1,0 +1,817 @@
+//
+//  IJSVGFilterPaint.m
+//  IJSVG
+//
+//  Created on 01/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
+#import <IJSVGFilterPaint.h>
+#import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGFilterGraph.h>
+#import <IJSVGQuartzRenderer.h>
+#import <CoreImage/CoreImage.h>
+
+static BOOL IJSVGFilterRectIsFinite(CGRect rect)
+{
+    return isfinite(rect.origin.x) && isfinite(rect.origin.y)
+        && isfinite(rect.size.width) && isfinite(rect.size.height);
+}
+
+// Nested filters already inherit the drawing transform of the supersampled bitmap.
+static _Thread_local NSUInteger IJSVGFilterRenderDepth = 0;
+
+@interface IJSVGQuartzFilterBatchEntry : NSObject
+@property (nonatomic, strong) CIImage* output;
+@property (nonatomic, strong) IJSVGMetalShadowJob* metalShadow;
+@property (nonatomic, strong) IJSVGMetalBlurJob* metalBlur;
+@property (nonatomic, assign) CGRect workRect;
+@property (nonatomic, assign) CGSize pixelSize;
+@property (nonatomic, assign) CGRect atlasRect;
+@property (nonatomic, assign) CGImageRef renderedImage;
+@end
+
+@implementation IJSVGQuartzFilterBatchEntry
+
+- (void)dealloc
+{
+    if(_renderedImage != NULL) {
+        CGImageRelease(_renderedImage);
+    }
+}
+@end
+
+@interface IJSVGQuartzFilterBatch : NSObject
+
+@property (nonatomic, strong) NSMapTable<IJSVGFilterPaint*, IJSVGQuartzFilterBatchEntry*>* entries;
+@property (nonatomic, strong) NSMutableArray<IJSVGQuartzFilterBatchEntry*>* orderedEntries;
+@property (nonatomic, assign) BOOL collecting;
+@property (nonatomic, assign) BOOL preflighting;
+@property (nonatomic, strong) NSMutableSet<IJSVGFilterPaint*>* preflightPaints;
+@property (nonatomic, assign) BOOL invalid;
+@property (nonatomic, assign) NSUInteger retainedPixels;
+@property (nonatomic, assign) NSUInteger totalPixels;
+@property (nonatomic, assign) NSUInteger scratchBytes;
+@property (nonatomic, assign) NSUInteger largestSourcePixels;
+@property (nonatomic, strong) NSSet<IJSVGFilterPaint*>* eligiblePaints;
+@property (nonatomic, strong) NSSet<IJSVGPaint*>* collectionPaints;
+@end
+
+@implementation IJSVGQuartzFilterBatch
+@end
+
+// Scoped to a synchronous draw, the owning local retains the batch until the
+// pointer is cleared in @finally. No state survives the synchronous draw.
+static _Thread_local __unsafe_unretained IJSVGQuartzFilterBatch* IJSVGCurrentFilterBatch;
+
+static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGFilterPaint*>* eligiblePaints)
+{
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
+    NSUInteger filters = 0;
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if(paint.maskPaint != nil || paint.clipPaints.count != 0) {
+            return NO;
+        }
+        if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+            IJSVGFilterPaint* filtered = (id)paint;
+            NSSet* names = filtered.filter.inputNames;
+            if([names containsObject:IJSVGStringBackgroundImage]
+                || [names containsObject:IJSVGStringBackgroundAlpha]) {
+                return NO;
+            }
+            for(IJSVGPaint* parent = paint.parentPaint; parent != nil; parent = parent.parentPaint) {
+                if([parent isKindOfClass:IJSVGFilterPaint.class]) {
+                    return NO;
+                }
+            }
+            [eligiblePaints addObject:filtered];
+            filters++;
+        }
+        [pending addObjectsFromArray:paint.children ?: @[]];
+    }
+    return filters >= 3 && filters <= 128;
+}
+
+static BOOL IJSVGFilterRenderShadowEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
+{
+    NSMutableArray<IJSVGMetalShadowJob*>* shadows = [[NSMutableArray alloc] init];
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.metalShadow != nil) {
+            [shadows addObject:entry.metalShadow];
+        }
+    }
+    if(![IJSVGMetalShadowJob renderJobs:shadows]) {
+        return NO;
+    }
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.metalShadow != nil) {
+            entry.renderedImage = CGImageRetain(entry.metalShadow.renderedImage);
+            entry.metalShadow = nil;
+        }
+    }
+    return YES;
+}
+
+
+static BOOL IJSVGFilterRenderBlurEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
+{
+    NSMutableArray<IJSVGMetalBlurJob*>* blurs = [[NSMutableArray alloc] init];
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.metalBlur != nil) {
+            [blurs addObject:entry.metalBlur];
+        }
+    }
+    if(![IJSVGMetalBlurRenderer renderJobs:blurs]) {
+        return NO;
+    }
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.metalBlur != nil) {
+            entry.renderedImage = CGImageRetain(entry.metalBlur.renderedImage);
+            entry.metalBlur = nil;
+        }
+    }
+    return YES;
+}
+
+
+static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
+{
+    __block CGImageRef rendered = NULL;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    // Wait before leasing a context. Source drawing and graph construction
+    // remain concurrent, and the slot is returned before cropping or replay.
+    [IJSVGThreadManager performCIOutputBlock:^{
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
+            rendered = [ciContext createCGImage:atlas
+                                       fromRect:CGRectMake(0, 0, size.width, size.height)
+                                         format:kCIFormatRGBA8 colorSpace:colorSpace];
+        }];
+    }];
+    CGColorSpaceRelease(colorSpace);
+    return rendered;
+}
+
+
+static CIImage* IJSVGFilterAtlasForEntries(
+    NSArray<IJSVGQuartzFilterBatchEntry*>* entries,
+    CGFloat atlasWidth,
+    CGFloat* height)
+{
+    CGFloat x = 0, y = 0, rowHeight = 0;
+    CIImage* atlas = CIImage.emptyImage;
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.output == nil) {
+            continue;
+        }
+        CGSize size = entry.pixelSize;
+        if(x + size.width > atlasWidth) {
+            x = 0;
+            y += rowHeight;
+            rowHeight = 0;
+        }
+        entry.atlasRect = CGRectMake(x, y, size.width, size.height);
+        CIImage* tile = [[entry.output imageByCroppingToRect:CGRectMake(0, 0, size.width, size.height)]
+                         imageByApplyingTransform:CGAffineTransformMakeTranslation(x, y)];
+        atlas = [tile imageByCompositingOverImage:atlas];
+        x += size.width;
+        rowHeight = MAX(rowHeight, size.height);
+    }
+    CGFloat atlasHeight = y + rowHeight;
+    *height = atlasHeight;
+    return atlas;
+}
+
+
+static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
+{
+    if(!IJSVGFilterRenderShadowEntries(entries)) {
+        return NO;
+    }
+    if(!IJSVGFilterRenderBlurEntries(entries)) {
+        return NO;
+    }
+    NSUInteger pixels = 0;
+    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.output != nil) {
+            pixels += entry.pixelSize.width * entry.pixelSize.height;
+            [ciEntries addObject:entry];
+        }
+    }
+    if(pixels == 0) {
+        return YES;
+    }
+    CGFloat atlasWidth = ciEntries.count == 1 ? ciEntries.firstObject.pixelSize.width : ceil(sqrt(pixels));
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.output != nil) {
+            atlasWidth = MAX(atlasWidth, entry.pixelSize.width);
+        }
+    }
+    CGFloat atlasHeight;
+    CIImage* atlas = IJSVGFilterAtlasForEntries(entries, atlasWidth, &atlasHeight);
+    if(atlasWidth * atlasHeight > 1048576 || atlasWidth * atlasHeight > pixels * 2) {
+        // Packing padding can exceed the budget even when source pixels fit.
+        // Split whole filter images so convolution never loses neighbouring pixels.
+        if(ciEntries.count < 2) {
+            return NO;
+        }
+        NSUInteger middle = ciEntries.count / 2;
+        return IJSVGFilterRenderCollectedEntries([ciEntries subarrayWithRange:NSMakeRange(0, middle)])
+            && IJSVGFilterRenderCollectedEntries([ciEntries subarrayWithRange:NSMakeRange(middle, ciEntries.count - middle)]);
+    }
+    CGImageRef rendered = IJSVGFilterNewImageForAtlas(atlas, CGSizeMake(atlasWidth, atlasHeight));
+    if(rendered == NULL) {
+        return NO;
+    }
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.renderedImage != NULL) {
+            continue;
+        }
+        CGRect crop = entry.atlasRect;
+        crop.origin.y = atlasHeight - CGRectGetMaxY(crop);
+        entry.renderedImage = CGImageCreateWithImageInRect(rendered, crop);
+        entry.output = nil;
+        if(entry.renderedImage == NULL) {
+            CGImageRelease(rendered);
+            return NO;
+        }
+    }
+    CGImageRelease(rendered);
+    return YES;
+}
+
+
+static CGContextRef IJSVGFilterNewCollectionContext(CGContextRef context)
+{
+    // Display and PDF contexts cannot be queried with bitmap context APIs.
+    // The collection pass only needs disposable storage with the same scale.
+    CGAffineTransform transform = CGContextGetCTM(context);
+    CGRect deviceBounds = CGRectApplyAffineTransform(CGContextGetClipBoundingBox(context), transform);
+    if(!IJSVGFilterRectIsFinite(deviceBounds) || CGRectIsEmpty(deviceBounds)) {
+        return NULL;
+    }
+    deviceBounds = CGRectIntegral(deviceBounds);
+    if(deviceBounds.size.width > 2048 || deviceBounds.size.height > 2048
+        || deviceBounds.size.width * deviceBounds.size.height > 4194304) {
+        return NULL;
+    }
+    CGColorSpaceRef scratchColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef scratch = CGBitmapContextCreate(NULL, deviceBounds.size.width, deviceBounds.size.height,
+        8, 0, scratchColorSpace, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(scratchColorSpace);
+    if(scratch == NULL) {
+        return NULL;
+    }
+    CGContextTranslateCTM(scratch, -deviceBounds.origin.x, -deviceBounds.origin.y);
+    CGContextConcatCTM(scratch, transform);
+    return scratch;
+}
+
+
+static NSSet<IJSVGPaint*>* IJSVGFilterCollectionPaintsForFilters(NSSet<IJSVGFilterPaint*>* eligiblePaints)
+{
+    NSMutableSet<IJSVGPaint*>* collectionPaints = [[NSMutableSet alloc] init];
+    for(IJSVGPaint* filtered in eligiblePaints) {
+        for(IJSVGPaint* paint = filtered; paint != nil; paint = paint.parentPaint) {
+            if([collectionPaints containsObject:paint]) {
+                break;
+            }
+            [collectionPaints addObject:paint];
+        }
+    }
+    return collectionPaints;
+}
+
+
+static CIImage* IJSVGFilterBackgroundImageFromContext(CGContextRef ctx,
+                                                      CGAffineTransform imageTransform)
+{
+    // Bitmap destinations can supply their already painted backdrop.
+    // Nonbitmap contexts have no readable pixel backing.
+    if(CGBitmapContextGetData(ctx) == NULL) {
+        return CIImage.emptyImage;
+    }
+    CGImageRef background = CGBitmapContextCreateImage(ctx);
+    if(background == NULL) {
+        return CIImage.emptyImage;
+    }
+    CIImage* image = [CIImage imageWithCGImage:background];
+    CGImageRelease(background);
+    CGAffineTransform mapping
+        = CGAffineTransformConcat(CGAffineTransformInvert(CGContextGetCTM(ctx)), imageTransform);
+    return [image imageByApplyingTransform:mapping];
+}
+
+
+static BOOL IJSVGFilterReservePixelSize(CGSize pixelSize,
+                                        IJSVGQuartzFilterBatch* batch,
+                                        IJSVGQuartzFilterBatchEntry* cached)
+{
+    if(batch.collecting) {
+        NSUInteger pixels = pixelSize.width * pixelSize.height;
+        if(cached != nil || pixelSize.width > 2048 || pixelSize.height > 2048
+            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
+            batch.invalid = YES;
+            return NO;
+        }
+        // Flush complete jobs at one megapixel. Finished RGBA8 images remain
+        // available for ordered replay, while source and GPU scratch storage is reused.
+        if(batch.retainedPixels + pixels > 1048576) {
+            if(!IJSVGFilterRenderCollectedEntries(batch.orderedEntries)) {
+                batch.invalid = YES;
+                return NO;
+            }
+            batch.retainedPixels = 0;
+        }
+        batch.retainedPixels += pixels;
+        batch.totalPixels += pixels;
+    }
+    return YES;
+}
+
+
+static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
+                                         CGRect region, CGRect workRect)
+{
+    CGContextSaveGState(ctx);
+    CGContextClipToRect(ctx, region);
+    CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+    CGContextDrawImage(ctx, workRect, image);
+    CGContextRestoreGState(ctx);
+}
+
+
+@implementation IJSVGFilterPaint
+
++ (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint
+{
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    // Filter source bitmaps still need their complete subtree.
+    return !batch.collecting || IJSVGFilterRenderDepth != 0
+        || [batch.collectionPaints containsObject:paint];
+}
+
++ (NSSet<IJSVGFilterPaint*>*)batchableFiltersForPaint:(IJSVGPaint*)root
+{
+    NSMutableSet<IJSVGFilterPaint*>* paints = [[NSMutableSet alloc] init];
+    return IJSVGQuartzFilterBatchEligible(root, paints) ? paints.copy : nil;
+}
+
++ (BOOL)renderBatchedPaints:(NSSet<IJSVGFilterPaint*>*)eligiblePaints
+                 inContext:(CGContextRef)context
+              drawingBlock:(void (^)(CGContextRef))drawingBlock
+{
+    if(context == NULL || IJSVGCurrentFilterBatch != nil || eligiblePaints.count == 0) {
+        return NO;
+    }
+    CGContextRef scratch = IJSVGFilterNewCollectionContext(context);
+    if(scratch == NULL) {
+        return NO;
+    }
+    IJSVGQuartzFilterBatch* batch __attribute__((objc_precise_lifetime)) = [[IJSVGQuartzFilterBatch alloc] init];
+    batch.eligiblePaints = eligiblePaints;
+    batch.scratchBytes = CGBitmapContextGetBytesPerRow(scratch) * CGBitmapContextGetHeight(scratch);
+    batch.collectionPaints = IJSVGFilterCollectionPaintsForFilters(eligiblePaints);
+    batch.entries = NSMapTable.strongToStrongObjectsMapTable;
+    batch.orderedEntries = [[NSMutableArray alloc] init];
+    batch.collecting = YES;
+    IJSVGCurrentFilterBatch = batch;
+    @try {
+        // Walk the actual drawing transforms, but stop each filter before its
+        // source bitmap is allocated or painted. Reject over budget draws before
+        // doing source rasterization, blur calibration or GPU submissions.
+        batch.preflighting = YES;
+        batch.preflightPaints = [[NSMutableSet alloc] init];
+        drawingBlock(scratch);
+        if(batch.invalid || batch.preflightPaints.count < 3) {
+            return NO;
+        }
+        batch.preflighting = NO;
+        batch.preflightPaints = nil;
+        batch.totalPixels = 0;
+        // Visit only filter branches and their ancestors during collection.
+        // Unfiltered artwork is painted once, during the final replay.
+        drawingBlock(scratch);
+        if(batch.invalid || batch.orderedEntries.count < 3) {
+            return NO;
+        }
+        if(!IJSVGFilterRenderCollectedEntries(batch.orderedEntries)) {
+            return NO;
+        }
+        batch.collecting = NO;
+        drawingBlock(context);
+        return YES;
+    } @finally {
+        IJSVGCurrentFilterBatch = nil;
+        CGContextRelease(scratch);
+    }
+}
+
+- (instancetype)initWithSourcePaint:(IJSVGPaint*)paint
+                             filter:(IJSVGFilter*)filter
+                           viewPort:(CGRect)viewPort
+{
+    if((self = [super init]) != nil) {
+        _filter = filter;
+        self.viewPort = viewPort;
+        self.boundingBox = paint.boundingBox;
+        self.outerBoundingBox = paint.outerBoundingBox;
+        [self addChild:paint];
+    }
+    return self;
+}
+
+- (IJSVGPaint*)sourcePaint
+{
+    return (IJSVGPaint*)self.children.firstObject;
+}
+
+- (BOOL)treatImplicitOriginAsTransform
+{
+    return self.sourcePaint.treatImplicitOriginAsTransform;
+}
+
+- (BOOL)requiresBackingScale
+{
+    return YES;
+}
+
+- (CIImage*)paintImageForStroke:(BOOL)stroke
+                          graph:(IJSVGFilterGraph*)graph
+{
+    IJSVGNode* paint = stroke ? self.sourceNode.stroke : self.sourceNode.fill;
+    if(paint == nil) {
+        return CIImage.emptyImage;
+    }
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(
+        NULL, graph.extent.size.width, graph.extent.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    if(bitmap == NULL) {
+        return CIImage.emptyImage;
+    }
+    CGContextConcatCTM(bitmap, graph.imageTransform);
+    CGRect region = CGRectApplyAffineTransform(graph.extent,
+                                               CGAffineTransformInvert(graph.imageTransform));
+    IJSVGQuartzRenderer* tree = [[IJSVGQuartzRenderer alloc] init];
+    [tree drawPaint:paint
+        boundingBox:self.boundingBox
+           viewPort:self.viewPort
+             region:region
+          inContext:bitmap];
+    CGImageRef result = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+    CIImage* image = result != NULL ? [CIImage imageWithCGImage:result] : CIImage.emptyImage;
+    if(result != NULL) {
+        CGImageRelease(result);
+    }
+    return image;
+}
+
+- (void)performRenderInContext:(CGContextRef)ctx
+{
+    if(self.opacity != 1.f) CGContextSetAlpha(ctx, self.opacity);
+    [self drawInContext:ctx];
+}
+
+- (CGRect)transparencyBounds
+{
+    return CGRectInfinite;
+}
+
+- (BOOL)requiresFilterSupersampling
+{
+    if(self.filter.requiresSupersampling) {
+        return YES;
+    }
+
+    // An outer filter must supply enough source resolution for nested hard alpha effects.
+    NSMutableArray<IJSVGPaint*>* pending = self.children.mutableCopy;
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+            if([(IJSVGFilterPaint*)paint requiresFilterSupersampling]) {
+                return YES;
+            }
+        } else if(paint.children.count != 0) {
+            [pending addObjectsFromArray:paint.children];
+        }
+    }
+    return NO;
+}
+
+- (void)drawInContext:(CGContextRef)ctx
+{
+    IJSVGFilterRenderDepth++;
+    @try {
+        [self drawFilterInContext:ctx];
+    } @finally {
+        IJSVGFilterRenderDepth--;
+    }
+}
+
+- (IJSVGFilterGraph*)filterGraph
+{
+    IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+    graph.filter = self.filter;
+    // Repeated shadow readbacks can accumulate rounding differences in nested filters.
+    graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
+    if(!graph.hasNestedFilters && self.filter.primitives.count == 1
+        && self.filter.primitives.firstObject.type == IJSVGNodeTypeFilterDropShadow) {
+        NSMutableArray<IJSVGPaint*>* pending = self.children.mutableCopy;
+        while(pending.count != 0) {
+            IJSVGPaint* paint = pending.lastObject;
+            [pending removeLastObject];
+            if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+                graph.hasNestedFilters = YES;
+                break;
+            }
+            [pending addObjectsFromArray:paint.children ?: @[]];
+        }
+    }
+    graph.boundingBox = self.boundingBox;
+    graph.viewPort = self.viewPort;
+    return graph;
+}
+
+- (void)preflightPixelSize:(CGSize)pixelSize
+                     batch:(IJSVGQuartzFilterBatch*)batch
+{
+    NSUInteger pixels = pixelSize.width * pixelSize.height;
+    if([batch.preflightPaints containsObject:self]
+        || pixelSize.width > 2048 || pixelSize.height > 2048
+        || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
+        batch.invalid = YES;
+        return;
+    }
+    batch.largestSourcePixels = MAX(batch.largestSourcePixels, pixels);
+    // Account for RGBA8 replay images with up to 2x atlas packing padding,
+    // the current source bitmap, pending RGBA8 sources, and a full
+    // one megapixel Metal lease (44 bytes/pixel), plus parameter headroom.
+    // This is a working set estimate, not a process memory limit: CPU filter
+    // intermediates and private caches in Core Image can add further storage.
+    NSUInteger estimatedBytes = batch.scratchBytes
+        + (batch.totalPixels + pixels) * 8
+        + batch.largestSourcePixels * 4 + 1048576 * (44 + 4) + 65536;
+    if(estimatedBytes > 128 * 1024 * 1024) {
+        batch.invalid = YES;
+        return;
+    }
+    [batch.preflightPaints addObject:self];
+    batch.totalPixels += pixels;
+    return;
+}
+
+- (void)renderSource:(CIImage*)source
+               graph:(IJSVGFilterGraph*)graph
+             context:(CGContextRef)ctx
+          colorSpace:(CGColorSpaceRef)colorSpace
+              region:(CGRect)region
+            workRect:(CGRect)workRect
+{
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    CGRect extent = graph.extent;
+    CGSize pixelSize = extent.size;
+    // Keep filter coordinates aligned with the source bitmap. The calling context
+    // drawing transform handles flipped views and image exports.
+    CGAffineTransform imageTransform = graph.imageTransform;
+    [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+        graph.context = context;
+        graph.supportsMetalKernels = supportsMetalKernels;
+        graph.extent = extent;
+        graph.imageTransform = imageTransform;
+        __weak IJSVGFilterGraph* weakGraph = graph;
+        graph.paintProvider = ^CIImage*(BOOL stroke) {
+            return [self paintImageForStroke:stroke
+                                       graph:weakGraph];
+        };
+        graph.backgroundProvider = ^CIImage* {
+            return IJSVGFilterBackgroundImageFromContext(ctx, imageTransform);
+        };
+
+        CIImage* output = [graph imageByFilteringSource:source];
+        if(batch.collecting) {
+            if(cached != nil) {
+                batch.invalid = YES;
+                return;
+            }
+
+            IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
+            entry.output = output;
+            entry.workRect = workRect;
+            entry.pixelSize = pixelSize;
+            [batch.entries setObject:entry forKey:self];
+            [batch.orderedEntries addObject:entry];
+            return;
+        }
+        CGImageRef image = [context createCGImage:output
+                                         fromRect:extent
+                                           format:kCIFormatRGBA8
+                                       colorSpace:colorSpace];
+
+        if(image != NULL) {
+            IJSVGFilterDrawFilteredImage(image, ctx, region, workRect);
+            CGImageRelease(image);
+        }
+    }];
+
+}
+
+- (CGFloat)renderScaleForRect:(CGRect)workRect context:(CGContextRef)ctx
+{
+    // Use the actual drawing transform so zoom, export size and Retina all
+    // produce the same effect in SVG units. Bound temporary raster storage.
+    CGAffineTransform transform = CGContextGetCTM(ctx);
+    CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
+
+    // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
+    // and shadows retain destination resolution instead of processing 4x the pixels.
+    if(IJSVGFilterRenderDepth == 1 && self.requiresFilterSupersampling) {
+        scale *= 2.f;
+
+    }
+    scale = MIN(scale, 4096.f / MAX(workRect.size.width, workRect.size.height));
+
+    // Floating point primitive buffers need four times the source bitmap storage.
+    scale = MIN(scale, sqrt(4194304.f / (workRect.size.width * workRect.size.height)));
+
+    return scale;
+}
+
+- (BOOL)collectMetalBitmap:(CGContextRef)bitmap
+                     graph:(IJSVGFilterGraph*)graph
+                  workRect:(CGRect)workRect
+{
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    CGSize pixelSize = graph.extent.size;
+    IJSVGMetalShadowJob* shadow = batch.collecting ? [graph metalShadowJobForBitmap:bitmap] : nil;
+    if(shadow != nil) {
+        IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
+        entry.metalShadow = shadow;
+        entry.workRect = workRect;
+        entry.pixelSize = pixelSize;
+        [batch.entries setObject:entry forKey:self];
+        [batch.orderedEntries addObject:entry];
+        return YES;
+    }
+    IJSVGMetalBlurJob* blur = batch.collecting ? [graph metalBlurJobForBitmap:bitmap] : nil;
+    if(blur != nil) {
+        IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
+        entry.metalBlur = blur;
+        entry.workRect = workRect;
+        entry.pixelSize = pixelSize;
+        [batch.entries setObject:entry forKey:self];
+        [batch.orderedEntries addObject:entry];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)renderSmallBlur:(CGImageRef)smallBlur
+                context:(CGContextRef)ctx
+                 region:(CGRect)region
+               workRect:(CGRect)workRect
+              pixelSize:(CGSize)pixelSize
+{
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    if(smallBlur == NULL) {
+        return NO;
+    }
+    if(batch.collecting) {
+        if(cached != nil) {
+            batch.invalid = YES;
+            CGImageRelease(smallBlur);
+        } else {
+            IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
+            entry.renderedImage = smallBlur;
+            entry.workRect = workRect;
+            entry.pixelSize = pixelSize;
+            [batch.entries setObject:entry forKey:self];
+            [batch.orderedEntries addObject:entry];
+        }
+    } else {
+        IJSVGFilterDrawFilteredImage(smallBlur, ctx, region, workRect);
+        CGImageRelease(smallBlur);
+    }
+    return YES;
+}
+
+- (void)renderGraph:(IJSVGFilterGraph*)graph
+            context:(CGContextRef)ctx
+             region:(CGRect)region
+           workRect:(CGRect)workRect
+          pixelSize:(CGSize)pixelSize
+              scale:(CGFloat)scale
+{
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, pixelSize.width, pixelSize.height,
+                                                8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
+
+    if(bitmap == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    CGContextScaleCTM(bitmap, scale, scale);
+    CGContextTranslateCTM(bitmap, -workRect.origin.x, -workRect.origin.y);
+    IJSVGPaint* sourcePaint = self.sourcePaint;
+    CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
+    [sourcePaint renderInContext:bitmap];
+    graph.extent = CGRectMake(0, 0, pixelSize.width, pixelSize.height);
+    graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
+        -workRect.origin.x * scale, -workRect.origin.y * scale);
+    if([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+    CGImageRef smallBlur = [graph newCGImageForSmallBlur:bitmap];
+    if([self renderSmallBlur:smallBlur
+                     context:ctx
+                      region:region
+                    workRect:workRect
+                   pixelSize:pixelSize]) {
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+    CGImageRef sourceImage = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+
+    if(sourceImage == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    CIImage* source = [CIImage imageWithCGImage:sourceImage];
+    CGImageRelease(sourceImage);
+    [self renderSource:source
+                 graph:graph
+               context:ctx
+            colorSpace:colorSpace
+                region:region
+              workRect:workRect];
+
+    CGColorSpaceRelease(colorSpace);
+}
+
+- (void)drawFilterInContext:(CGContextRef)ctx
+{
+    IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+    if(batch.collecting && (batch.invalid || IJSVGFilterRenderDepth != 1
+        || ![batch.eligiblePaints containsObject:self])) {
+        // Indirect SVGs/patterns may introduce filters absent from the paint scan.
+        // Discard the collection pass and use the general renderer in that case.
+        batch.invalid = YES;
+        return;
+    }
+    IJSVGFilterGraph* graph = self.filterGraph;
+    CGRect region = [graph regionForNode:_filter
+                                   units:_filter.units
+                           defaultRegion:CGRectZero];
+
+    if(IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
+        return;
+    }
+
+    CGRect workRect = CGRectUnion(self.outerBoundingBox, region);
+    if(IJSVGFilterRectIsFinite(workRect) == NO || CGRectIsEmpty(workRect) == YES) {
+        return;
+    }
+
+    CGFloat scale = [self renderScaleForRect:workRect context:ctx];
+    if(!isfinite(scale) || scale <= 0.f) {
+        return;
+    }
+    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(scale, scale));
+    workRect = CGRectIntegral(workRect);
+    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(1.f / scale, 1.f / scale));
+    CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
+                                  round(workRect.size.height * scale));
+    if(batch.preflighting) {
+        [self preflightPixelSize:pixelSize batch:batch];
+        return;
+    }
+    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    if(!batch.collecting && cached.renderedImage != NULL
+        && CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
+        IJSVGFilterDrawFilteredImage(cached.renderedImage, ctx, region, workRect);
+        return;
+    }
+    if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
+        return;
+    }
+    [self renderGraph:graph
+              context:ctx
+               region:region
+             workRect:workRect
+            pixelSize:pixelSize
+                scale:scale];
+}
+
+@end

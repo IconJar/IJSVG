@@ -74,7 +74,7 @@
         return;
     }
 
-    // set the image against the container — only if it was created from the data.
+    // set the image against the container, only if it was created from the data.
     NSImage* anImage = [[NSImage alloc] initWithData:data];
     if (anImage == nil) {
       return;

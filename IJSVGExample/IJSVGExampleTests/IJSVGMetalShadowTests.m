@@ -1,4 +1,4 @@
-#import "IJSVGFilterTestHelpers.h"
+#import <IJSVGFilterTestHelpers.h>
 
 @interface IJSVGMetalShadowTests : XCTestCase
 @end

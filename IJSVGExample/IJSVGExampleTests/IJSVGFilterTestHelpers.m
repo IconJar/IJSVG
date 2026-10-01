@@ -1,26 +1,23 @@
-#import "IJSVGFilterTestHelpers.h"
+#import <IJSVGFilterTestHelpers.h>
 
-static NSUInteger IJSVGTestFilterLayerCount(CALayer* layer)
+static NSUInteger IJSVGTestFilterPaintCount(IJSVGPaint* layer)
 {
     if(layer == nil) return 0;
-    NSUInteger count = [layer isKindOfClass:NSClassFromString(@"IJSVGFilterLayer")] ? 1 : 0;
-    count += IJSVGTestFilterLayerCount(layer.mask);
-    for(CALayer* child in layer.sublayers) {
-        count += IJSVGTestFilterLayerCount(child);
+    NSUInteger count = [layer isKindOfClass:NSClassFromString(@"IJSVGFilterPaint")] ? 1 : 0;
+    count += IJSVGTestFilterPaintCount(layer.maskPaint);
+    for(IJSVGPaint* child in layer.children) {
+        count += IJSVGTestFilterPaintCount(child);
     }
     return count;
 }
 
-static void IJSVGDisableTransparencyClip(CALayer* layer)
+
+static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
 {
-    if([layer isKindOfClass:IJSVGShapeLayer.class] && layer.sublayers.count != 0) {
-        CGColorRef clear = CGColorCreateGenericGray(0, 0);
-        layer.backgroundColor = clear;
-        CGColorRelease(clear);
-    }
-    for(CALayer* child in layer.sublayers) {
-        IJSVGDisableTransparencyClip(child);
-    }
+    IJSVGQuartzRenderer* resolver = [[IJSVGQuartzRenderer alloc] init];
+    resolver.style = svg.style;
+    resolver.renderingOptions = svg.renderingOptions;
+    return [resolver rootPaintForRootNode:svg.rootNode];
 }
 
 @implementation XCTestCase (IJSVGFilterTestHelpers)
@@ -69,15 +66,9 @@ static void IJSVGDisableTransparencyClip(CALayer* layer)
     if(clipped) {
         CGContextClipToRect(bitmap, CGRectMake(7, 5, 46, 51));
     }
+    if(generalTransparency) CGContextBeginTransparencyLayer(bitmap, NULL);
     [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
-    if(generalTransparency) {
-        // A transparent background selects the general container path without
-        // changing painted pixels. Modify only this reference instance.
-        XCTAssertNotNil(svg.rootLayer);
-        IJSVGDisableTransparencyClip(svg.rootLayer);
-        CGContextClearRect(bitmap, CGRectMake(0, 0, 64, 64));
-        [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
-    }
+    if(generalTransparency) CGContextEndTransparencyLayer(bitmap);
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:64 * 64 * 4];
     CGContextRelease(bitmap);
     return pixels;
@@ -221,11 +212,11 @@ static void IJSVGDisableTransparencyClip(CALayer* layer)
     XCTAssertTrue(svg.renderingOptions.filtersEnabled);
     NSData* enabled = [self filterOptionPixelsForSVG:svg flipped:flipped exportImage:exportImage];
     XCTAssertNotNil(enabled);
-    XCTAssertGreaterThan(IJSVGTestFilterLayerCount(svg.rootLayer), 0u);
+    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
     if(enabled == nil) return;
 
     // Reuse an already rendered instance across two off/on cycles, exercising
-    // cached layer invalidation and any accelerated filter outputs.
+    // cached paint invalidation and any accelerated filter outputs.
     for(NSNumber* state in @[@NO, @YES, @NO, @YES]) {
         IJSVGRenderingOptions* options = svg.renderingOptions;
         options.filtersEnabled = state.boolValue;
@@ -233,9 +224,9 @@ static void IJSVGDisableTransparencyClip(CALayer* layer)
         NSData* actual = [self filterOptionPixelsForSVG:svg flipped:flipped exportImage:exportImage];
         XCTAssertEqualObjects(actual, state.boolValue ? enabled : plain, @"filtersEnabled=%@", state);
         if(state.boolValue) {
-            XCTAssertGreaterThan(IJSVGTestFilterLayerCount(svg.rootLayer), 0u);
+            XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
         } else {
-            XCTAssertEqual(IJSVGTestFilterLayerCount(svg.rootLayer), 0u);
+            XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
         }
     }
 
@@ -245,11 +236,11 @@ static void IJSVGDisableTransparencyClip(CALayer* layer)
     options.filtersEnabled = NO;
     initiallyDisabled.renderingOptions = options;
     XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled flipped:flipped exportImage:exportImage], plain);
-    XCTAssertEqual(IJSVGTestFilterLayerCount(initiallyDisabled.rootLayer), 0u);
+    XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)), 0u);
     options.filtersEnabled = YES;
     initiallyDisabled.renderingOptions = options;
     XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled flipped:flipped exportImage:exportImage], enabled);
-    XCTAssertGreaterThan(IJSVGTestFilterLayerCount(initiallyDisabled.rootLayer), 0u);
+    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)), 0u);
 }
 
 @end

@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGMetalBlurRenderer.h"
+#import <IJSVGMetalBlurRenderer.h>
 #import <Metal/Metal.h>
 #import <simd/simd.h>
 #import <AppKit/NSColorSpace.h>
@@ -89,10 +89,10 @@ static BOOL IJSVGPrepareMetalBlur(void)
 @implementation IJSVGMetalBlurRenderer
 
 + (IJSVGMetalBlurJob*)jobForBitmap:(CGContextRef)bitmap
-                        region:(CGRect)region
-                       weights:(NSData*)weights
-                     linearRGB:(BOOL)linearRGB
-                   sourceCrops:(NSUInteger)sourceCrops
+                            region:(CGRect)region
+                           weights:(NSData*)weights
+                         linearRGB:(BOOL)linearRGB
+                       sourceCrops:(NSUInteger)sourceCrops
 {
     if(bitmap == NULL) {
         return nil;
@@ -135,18 +135,21 @@ static BOOL IJSVGPrepareMetalBlur(void)
 }
 
 + (IJSVGMetalBlurJob*)shadowJobForBitmap:(CGContextRef)bitmap
-                                region:(CGRect)region
-                               weights:(NSData*)weights
-                             linearRGB:(BOOL)linearRGB
-                                offset:(CGSize)offset
-                                 color:(CGColorRef)color
+                                  region:(CGRect)region
+                                 weights:(NSData*)weights
+                               linearRGB:(BOOL)linearRGB
+                                  offset:(CGSize)offset
+                                   color:(CGColorRef)color
 {
     if(!isfinite(offset.width) || !isfinite(offset.height) || color == NULL
         || CGColorGetNumberOfComponents(color) != 4) {
         return nil;
     }
-    IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap region:region weights:weights
-        linearRGB:linearRGB sourceCrops:1];
+    IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap
+                                         region:region
+                                        weights:weights
+                                      linearRGB:linearRGB
+                                    sourceCrops:1];
     if(job == nil) {
         return nil;
     }
@@ -165,8 +168,11 @@ static BOOL IJSVGPrepareMetalBlur(void)
                      linearRGB:(BOOL)linearRGB
                    sourceCrops:(NSUInteger)sourceCrops
 {
-    IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap region:region weights:weights
-                                    linearRGB:linearRGB sourceCrops:sourceCrops];
+    IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap
+                                         region:region
+                                        weights:weights
+                                      linearRGB:linearRGB
+                                    sourceCrops:sourceCrops];
     return job != nil && [self renderJobs:@[job]] ? CGImageRetain(job.renderedImage) : NULL;
 }
 
@@ -217,7 +223,8 @@ static BOOL IJSVGPrepareMetalBlur(void)
                 capacity * sizeof(uint32_t), 128 * sizeof(IJSVGMetalBlurParameters)};
             NSMutableArray* buffers = [[NSMutableArray alloc] init];
             for(NSUInteger i = 0; i < 6; i++) {
-                id<MTLBuffer> buffer = [IJSVGBlurDevice newBufferWithLength:sizes[i] options:MTLResourceStorageModeShared];
+                id<MTLBuffer> buffer = [IJSVGBlurDevice newBufferWithLength:sizes[i]
+                                                                    options:MTLResourceStorageModeShared];
                 if(buffer == nil) {
                     return NO;
                 }
@@ -252,7 +259,8 @@ static BOOL IJSVGPrepareMetalBlur(void)
             }
             [encoder setComputePipelineState:pipeline];
             for(NSUInteger i = 0; i < 4; i++) {
-                [encoder setBuffer:slot.buffers[i] offset:0 atIndex:i];
+                [encoder setBuffer:slot.buffers[i] offset:0
+                           atIndex:i];
             }
             [encoder setBuffer:slot.buffers[5] offset:0 atIndex:4];
             [encoder setBuffer:slot.buffers[4] offset:0 atIndex:5];

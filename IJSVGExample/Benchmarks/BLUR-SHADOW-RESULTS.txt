@@ -1,0 +1,38 @@
+Blur and drop-shadow optimization validation — 2026-10-01
+
+Implementation
+- Standalone unequal-axis colour blurs use a separable Core Image Metal kernel,
+  using the CPU Gaussian coefficients, up to 257 taps per axis.
+- Small standalone feDropShadow uses the existing Metal job renderer, blurring
+  alpha and combining offset, tint, opacity and source-over in the final pass.
+- Direct shadows require <=4096 source pixels and a pixel sigma from 0.5 to 12.
+  Nested filters, hard shadows, explicit primitive regions, unequal deviations
+  and larger surfaces retain the original evaluator.
+- Chained/alpha-only wider blurs retain CPU rasterization. Fractional downstream
+  sampling differed in experiments, so those cases were excluded.
+
+Method
+BlurShadowComparison.m alternates original and optimized paths within one
+process, with 3 warmups and 15 timed draws per variant. Parsing is excluded.
+Private-method hooks disable only the new optimizations for the reference.
+Each fixture compares every RGBA byte; the runner fails above 2/255.
+A Metal-capable run is required. Timing varies with machine load.
+
+Results
+- 171 existing filter, inner-shadow and Metal tests passed; Xcode build passed.
+- 199 fixture/size comparisons passed (11 requested assets, 60 unequal blurs,
+  60 downstream-offset cases, 68 shadow cases). Maximum difference: 1/255.
+- Accelerated 256px unequal blur fixtures: median 1.68x faster.
+- 32px standalone shadow fixtures: 0.89–1.11ms -> 0.51–0.55ms.
+- dropshadow.svg at 96px: 1.915ms -> 1.589ms (about 17% less draw time).
+- car.svg at 512/900/1800 and health-worker at 32/128/256/512/1024 were
+  pixel-identical. Neither uses these new paths, so timing differences are noise.
+- The 384px and 900px drop-shadow samples retain the original renderer.
+
+Reproduce
+Compile BlurShadowComparison.m with clang -O2 -fobjc-arc, linking IJSVG,
+AppKit, Metal, CoreGraphics and QuartzCore, with -F and -Wl,-rpath pointing
+to the current Xcode build products directory. Run the executable once for
+each manifest: blur-shadow-assets.json, unequal-blur-fixtures.json,
+unequal-blur-offset-fixtures.json and drop-shadow-fixtures.json.
+CSV results alongside this file contain per-size timings and path-hit counts.

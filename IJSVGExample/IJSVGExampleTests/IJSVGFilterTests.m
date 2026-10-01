@@ -2050,7 +2050,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     [self longMergeKeepsPrimitiveColorSpace:@"linearRGB"];
 }
 
-/// Renders the same SVG instance so tests exercise cached layer invalidation.
+// Renders the same SVG instance so tests exercise cached layer invalidation.
 - (NSData*)pixelsForFilterToggleSVG:(IJSVG*)svg
 {
     svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
@@ -2068,22 +2068,22 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     return pixels;
 }
 
-/// Disabling and restoring filters rebuilds already rendered layers.
+// Disabling and restoring filters rebuilds already rendered paints.
 - (void)testFiltersCanBeToggledAfterRendering
 {
     NSString* rectangle = @"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>";
     IJSVG* svg = IJSVGTestSVGObject([self filtered:@"<feOffset dx=\"6\"/>" content:rectangle]);
     XCTAssertTrue(svg.renderingOptions.filtersEnabled);
     NSData* filtered = [self pixelsForFilterToggleSVG:svg];
-    IJSVGRootLayer* originalLayer = svg.rootLayer;
+    IJSVGRootNode* originalNode = svg.rootNode;
     IJSVGRenderingOptions* options = svg.renderingOptions;
     options.filtersEnabled = YES;
     svg.renderingOptions = options;
-    XCTAssertEqual(svg.rootLayer, originalLayer);
+    XCTAssertEqualObjects([self pixelsForFilterToggleSVG:svg], filtered);
     options.filtersEnabled = NO;
     svg.renderingOptions = options;
     NSData* plain = [self pixelsForFilterToggleSVG:svg];
-    XCTAssertNotEqual(svg.rootLayer, originalLayer);
+    XCTAssertEqual(svg.rootNode, originalNode);
     XCTAssertEqualObjects(plain, [self render:[self document:rectangle] scale:1]);
     XCTAssertNotEqualObjects(filtered, plain);
     options.filtersEnabled = YES;
@@ -2091,7 +2091,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertEqualObjects([self pixelsForFilterToggleSVG:svg], filtered);
 }
 
-/// Bypasses root and nested filters while preserving opacity and clipping.
+// Bypasses root and nested filters while preserving opacity and clipping.
 - (void)testFiltersCanBeDisabledBeforeRendering
 {
     NSString* body = @"<defs><filter id=\"f\"><feOffset dx=\"6\"/></filter>"
@@ -2111,7 +2111,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertTrue(independent.renderingOptions.filtersEnabled);
 }
 
-/// Preserves defaults and keeps option snapshots independent across SVG instances.
+// Preserves defaults and keeps option snapshots independent across SVG instances.
 - (void)testRenderingOptionsAreIndependentSnapshots
 {
     IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
@@ -2148,16 +2148,16 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertEqual(second.renderingOptions.renderQuality, kIJSVGRenderQualityOptimized);
 }
 
-/// Changing intrinsic sizing preserves the existing layer structure.
-- (void)testIntrinsicSizeOptionsPreserveLayers
+// Changing intrinsic sizing preserves the existing node graph.
+- (void)testIntrinsicSizeOptionsPreserveNodes
 {
     IJSVG* svg = IJSVGTestSVGObject([self document:@"<rect width=\"4\" height=\"4\"/>"]);
-    IJSVGRootLayer* layer = svg.rootLayer;
+    IJSVGRootNode* node = svg.rootNode;
     IJSVGRenderingOptions* options = svg.renderingOptions;
     options.ignoreIntrinsicSize = NO;
     svg.renderingOptions = options;
     XCTAssertFalse(svg.renderingOptions.ignoreIntrinsicSize);
-    XCTAssertEqual(svg.rootLayer, layer);
+    XCTAssertEqual(svg.rootNode, node);
 }
 
 @end

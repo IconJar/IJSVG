@@ -136,7 +136,7 @@
     gradientStartPoint = startPoint;
     gradientEndPoint = CGPointMake(fx, fy);
 
-    // transform if width or height is not equal - this can only
+    // transform if width or height is not equal, this can only
     // be done if we are using objectBoundingBox
     if(inUserSpace == YES) {
         CGContextConcatCTM(ctx, absoluteTransform);

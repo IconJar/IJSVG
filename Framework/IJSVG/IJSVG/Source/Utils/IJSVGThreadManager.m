@@ -197,11 +197,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (void)tearDownFromThreadExit
 {
-    // it is important that we call a transaction commit
-    // at the end of the thread or any changes will cause a memory leak
-    IJSVGPerformTransactionBlock(^{
-        [self->_allocedSVGs removeAllObjects];
-    });
+    [_allocedSVGs removeAllObjects];
     NSMapTable* map = [self.class mapTable];
     @synchronized (map) {
         [map removeObjectForKey:_thread];

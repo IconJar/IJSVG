@@ -1,4 +1,4 @@
-#import "IJSVGFilterTestHelpers.h"
+#import <IJSVGFilterTestHelpers.h>
 
 @interface IJSVGMetalBlurTests : XCTestCase
 @end
@@ -146,7 +146,7 @@
             (unsigned long)(index * 11), (unsigned long)(index * 17), (unsigned long)index,
             (unsigned long)width];
     }
-    // A canvas-sized clip selects the independent renderer without changing pixels.
+    // A canvas sized clip selects the independent renderer without changing pixels.
     return [NSString stringWithFormat:
         @"<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><defs>%@</defs><g %@>%@</g></svg>",
         definitions, serial ? @"clip-path='url(#canvas)'" : @"", artwork];

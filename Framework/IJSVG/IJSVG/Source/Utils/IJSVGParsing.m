@@ -123,7 +123,7 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
             continue;
         }
         
-        // end of params - store the params into the buffer
+        // end of params, store the params into the buffer
         if(currentChar == ')') {
             // rest the pointer to beginning
             buffer = originBuffer;

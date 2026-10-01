@@ -7,17 +7,22 @@
 //
 
 #import <Metal/Metal.h>
-#import "IJSVGMetalShadowRenderer.h"
+#import <IJSVGMetalShadowRenderer.h>
 
 @interface IJSVGMetalShadowJob ()
+
 @property (nonatomic, assign) CGImageRef renderedImage;
+
 @end
 
 @interface IJSVGMetalShadowBuffers : NSObject
+
 @property (nonatomic, assign) BOOL busy;
 @property (nonatomic, assign) NSUInteger capacity;
 @property (nonatomic, strong) NSArray<id<MTLBuffer>>* buffers;
+
 @end
+
 @implementation IJSVGMetalShadowBuffers
 @end
 
@@ -177,7 +182,8 @@ static BOOL IJSVGPrepareMetalShadows(void)
                 }
                 [encoder setComputePipelineState:pipeline];
                 for(NSUInteger index = 0; index < 6; index++) {
-                    [encoder setBuffer:slot.buffers[index] offset:0 atIndex:index];
+                    [encoder setBuffer:slot.buffers[index] offset:0
+                               atIndex:index];
                 }
                 [encoder setBytes:&stage length:sizeof(stage) atIndex:6];
                 NSUInteger threads = MIN(128, pipeline.maxTotalThreadsPerThreadgroup);

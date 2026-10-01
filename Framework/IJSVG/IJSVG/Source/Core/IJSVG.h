@@ -10,15 +10,9 @@
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGUnitSize.h>
 #import <IJSVG/IJSVGExporter.h>
-#import <IJSVG/IJSVGGradientLayer.h>
-#import <IJSVG/IJSVGGroupLayer.h>
-#import <IJSVG/IJSVGRootLayer.h>
-#import <IJSVG/IJSVGImageLayer.h>
-#import <IJSVG/IJSVGLayerTree.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
-#import <IJSVG/IJSVGTransaction.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVG;
@@ -28,7 +22,6 @@
 
 @private
     IJSVGRootNode* _rootNode;
-    IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScale;
     IJSVGUnitSize* _intrinsicSize;
@@ -36,10 +29,7 @@
     IJSVGRenderingOptions* _renderingOptions;
 }
 
-// Set this to be called when the layer is about to draw, it will call this
-// and ask for the scale of the backing store where its going to be drawn
-// and apply the scale to each layer that has custom drawing against it, mainly
-// pattern and gradient layers
+// Supplies the backing scale for Quartz rendering.
 @property (nonatomic, copy) IJSVGRenderingBackingScaleFactorHelper renderingBackingScaleHelper;
 
 // Global overwriting rules for when rendering an SVG, this will overide any
@@ -51,8 +41,6 @@
 
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
-@property (nonatomic, strong) IJSVGLayerTree* layerTree;
-@property (nonatomic, strong) IJSVGRootLayer* rootLayer;
 
 @property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;
 
@@ -60,7 +48,7 @@
 // If the size if % values, it will use the defaultSize
 @property (nonatomic, readonly) CGSize size;
 
-// The unresolved unit-backed intrinsic size of the SVG.
+// The unresolved unit backed intrinsic size of the SVG.
 @property (nonatomic, readonly) IJSVGUnitSize* intrinsicUnitSize;
 
 // Will return true if the intrinsic size is a % value
@@ -96,9 +84,6 @@
 
 - (id)initWithImage:(NSImage*)image;
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode;
-
-- (id)initWithSVGLayer:(IJSVGGroupLayer*)group
-               viewBox:(CGRect)viewBox;
 
 - (id)initWithSVGString:(NSString*)string;
 - (id)initWithSVGString:(NSString*)string

@@ -11,10 +11,8 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <Accelerate/Accelerate.h>
-#import "IJSVGMetalBlurRenderer.h"
+#import <IJSVGMetalBlurRenderer.h>
 
-// Small isotropic blurs use the current Core Image impulse response. This avoids
-// approximating its subpixel radius kernel, which differs from a point sampled
 // Gaussian. Calibration is shared across icons and bounded to 64 small kernels.
 static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
 {
@@ -55,9 +53,12 @@ static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
                                     withInputParameters:@{ kCIInputRadiusKey: key }];
         NSMutableData* weights = [NSMutableData dataWithLength:side * sizeof(float)];
         [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
-            [context render:blurred toBitmap:weights.mutableBytes
-                   rowBytes:side * sizeof(float) bounds:CGRectMake(0, radius, side, 1)
-                     format:kCIFormatAf colorSpace:NULL];
+            [context render:blurred
+                   toBitmap:weights.mutableBytes
+                   rowBytes:side * sizeof(float)
+                     bounds:CGRectMake(0, radius, side, 1)
+                     format:kCIFormatAf
+                 colorSpace:NULL];
         }];
         float* samples = weights.mutableBytes;
         double total = 0;
@@ -148,7 +149,8 @@ static CIImage* IJSVGFilterInputNamed(
 }
 
 
-static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index, NSArray<IJSVGFilterPrimitive*>* primitives)
+static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
+                                                       NSArray<IJSVGFilterPrimitive*>* primitives)
 {
     if(index != 1) {
         return NO;
@@ -163,7 +165,7 @@ static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index, NSArray
         && [flood numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] == 0
         && flood.result.length != 0 && ![sources containsObject:flood.result]
         && blend.type == IJSVGNodeTypeFilterBlend
-        // Linear-light chains retain the original half-float conversion boundary;
+        // Linear light chains retain the original half float conversion boundary;
         // removing it accumulates visible rounding in overlapping compositions.
         && !IJSVGFilterUsesLinearRGB(blend)
         && [blend.input isEqualToString:IJSVGStringSourceGraphic]
@@ -291,7 +293,8 @@ static NSData* IJSVGFilterBlurPixelsForBitmap(
 }
 
 
-static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef bitmap, CGRect region, BOOL linearRGB)
+static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef bitmap,
+                                                   CGRect region, BOOL linearRGB)
 {
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     CGContextRef result = CGBitmapContextCreate(NULL, width, height, 8, 0,
@@ -392,11 +395,12 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
 
     if(self.paintProvider != nil) {
         if([inputNames containsObject:IJSVGStringFillPaint]) {
-            sources[IJSVGStringFillPaint] = [self.paintProvider(NO) imageByCroppingToRect:filterRegion] ?: CIImage.emptyImage;
+            sources[IJSVGStringFillPaint] = [self.paintProvider(NO) imageByCroppingToRect:filterRegion]
+                ?: CIImage.emptyImage;
         }
         if([inputNames containsObject:IJSVGStringStrokePaint]) {
-            sources[IJSVGStringStrokePaint] =
-                [self.paintProvider(YES) imageByCroppingToRect:filterRegion] ?: CIImage.emptyImage;
+            sources[IJSVGStringStrokePaint] = [self.paintProvider(YES) imageByCroppingToRect:filterRegion]
+                ?: CIImage.emptyImage;
         }
     }
 
@@ -421,10 +425,6 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         if(index == 1 && CGRectEqualToRect(filterRegion, CGRectIntegral(filterRegion))
             && CGRectEqualToRect(pixelRegion, CGRectIntegral(pixelRegion))
             && IJSVGFilterCanElideTransparentBlendAtIndex(index, primitives)) {
-            // Removing a composite can coalesce adjacent CI crops.
-            // Integral crops are idempotent; fractional crops accumulate
-            // edge coverage and must retain the original operation.
-            // Region calculation and named-result lifetimes stay intact.
             output = input;
         } else if(preserveInnerShadowCoverage && index > 1
            && primitive.type == IJSVGNodeTypeFilterBlend) {
@@ -434,7 +434,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             output = [renderingContext applyFilter:@"CISourceAtopCompositing"
                                            toImage:input
                                         parameters:@{
-              kCIInputBackgroundImageKey: [renderingContext imageInPrimitiveColorSpace:other]
+                kCIInputBackgroundImageKey: [renderingContext imageInPrimitiveColorSpace:other]
             }];
         } else {
             IJSVGFilterEffect* effect = [IJSVGFilterEffect effectForType:primitive.type];
@@ -477,7 +477,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         defaultRegion = filterRegion;
     }
     CGRect defaultUserRegion = CGRectApplyAffineTransform(defaultRegion, CGAffineTransformInvert(self.imageTransform));
-    CGRect primitiveRegion = [self regionForNode:primitive units:self.filter.contentUnits defaultRegion:defaultUserRegion];
+    CGRect primitiveRegion = [self regionForNode:primitive
+                                           units:self.filter.contentUnits
+                                   defaultRegion:defaultUserRegion];
     return CGRectApplyAffineTransform(primitiveRegion, self.imageTransform);
 }
 
@@ -493,7 +495,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     }
     source = [source imageByCroppingToRect:filterRegion];
 
-    NSDictionary<NSString*, CIImage*>* sources = [self sourcesForImage:source region:filterRegion context:renderingContext];
+    NSDictionary<NSString*, CIImage*>* sources = [self sourcesForImage:source
+                                                                region:filterRegion
+                                                               context:renderingContext];
 
     NSMutableDictionary<NSString*, CIImage*>* results = [[NSMutableDictionary alloc] init];
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
@@ -516,11 +520,18 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             CIImage* input = IJSVGFilterInputNamed(primitive.input, output, sources, results);
             CIImage* other = IJSVGFilterInputNamed(primitive.input2, output, sources, results);
             NSArray<CIImage*>* mergeInputs = IJSVGFilterMergeInputsForPrimitive(primitive, output, sources, results);
-            CGRect pixelRegion = [self pixelRegionForPrimitive:primitive input:input other:other
-                                                  mergeInputs:mergeInputs filterRegion:filterRegion];
-            output = [self evaluatePrimitiveAtIndex:index input:input other:other mergeInputs:mergeInputs
-                                            region:pixelRegion filterRegion:filterRegion context:renderingContext
-                       preserveInnerShadowCoverage:preserveInnerShadowCoverage];
+            CGRect pixelRegion = [self pixelRegionForPrimitive:primitive
+                                                         input:input other:other
+                                                  mergeInputs:mergeInputs
+                                                  filterRegion:filterRegion];
+            output = [self evaluatePrimitiveAtIndex:index
+                                              input:input
+                                              other:other
+                                        mergeInputs:mergeInputs
+                                             region:pixelRegion
+                                       filterRegion:filterRegion
+                                            context:renderingContext
+                        preserveInnerShadowCoverage:preserveInnerShadowCoverage];
             // Keep only named intermediates with future consumers. The previous
             // output remains available independently for implicit chaining.
             for(NSString* name in expiredNames[@(index)]) {
@@ -543,10 +554,13 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     for(NSUInteger stage = 0; stage < shadows; stage++) {
         NSUInteger index = 2 + stage * 6;
         IJSVGFilterPrimitive* blur = primitives[index + 2];
-        CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation defaultValue:CGSizeZero];
+        CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation
+                                     defaultValue:CGSizeZero];
         CGFloat sigma = deviation.width * units.width;
-        CGFloat dy = [primitives[index + 1] numberForParameter:IJSVGAttributeDY defaultValue:0] * units.height;
-        CGFloat dx = [primitives[index + 1] numberForParameter:IJSVGAttributeDX defaultValue:0] * units.width;
+        CGFloat dy = [primitives[index + 1] numberForParameter:IJSVGAttributeDY
+                                                  defaultValue:0] * units.height;
+        CGFloat dx = [primitives[index + 1] numberForParameter:IJSVGAttributeDX
+                                                  defaultValue:0] * units.width;
         if(!isfinite(sigma) || sigma < .2 || sigma > 4 || !isfinite(deviation.height * units.height)
             || fabs(sigma - deviation.height * units.height) > .00001 || !isfinite(dx) || !isfinite(dy)
             || fabs(dx) >= region.size.width || fabs(dy) >= region.size.height
@@ -588,8 +602,10 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             return nil;
         }
     }
-    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter units:self.filter.units
-        defaultRegion:CGRectZero], self.imageTransform);
+    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter
+                                                             units:self.filter.units
+                                                     defaultRegion:CGRectZero],
+                                               self.imageTransform);
     if(!IJSVGFilterValidRect(region)) {
         return nil;
     }
@@ -601,7 +617,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     parameters.region = (simd_float4){CGRectGetMinX(region), CGRectGetMinY(region),
         CGRectGetMaxX(region), CGRectGetMaxY(region)};
     parameters.config.x = (uint32_t)shadows;
-    if(![self populateShadowParameters:&parameters region:region units:units]) {
+    if(![self populateShadowParameters:&parameters
+                                region:region
+                                 units:units]) {
         return nil;
     }
     if(![IJSVGMetalShadowJob isAvailable]) {
@@ -678,7 +696,8 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox
         ? CGSizeMake(self.boundingBox.size.width * self.imageTransform.a, self.boundingBox.size.height * self.imageTransform.a)
         : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
-    CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation defaultValue:CGSizeZero];
+    CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation
+                                 defaultValue:CGSizeZero];
     CGFloat sigma = deviation.width * units.width;
     // Core Image can fuse crops for effectively identity blurs. Preserve its
     // fractional edge coverage by leaving those radii on the general path.
@@ -687,8 +706,10 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         || ![(blur.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone) isEqualToString:IJSVGStringNone]) {
         return NO;
     }
-    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter units:self.filter.units
-                                                     defaultRegion:CGRectZero], self.imageTransform);
+    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter
+                                                             units:self.filter.units
+                                                     defaultRegion:CGRectZero],
+                                               self.imageTransform);
     if(!IJSVGFilterValidRect(region)) {
         return NO;
     }
@@ -717,15 +738,18 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         || (primitive.input.length != 0 && ![primitive.input isEqualToString:IJSVGStringSourceGraphic])) {
         return nil;
     }
-    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter units:self.filter.units
-        defaultRegion:CGRectZero], self.imageTransform);
+    CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter
+                                                             units:self.filter.units
+                                                     defaultRegion:CGRectZero],
+                                               self.imageTransform);
     if(!IJSVGFilterValidRect(region)) {
         return nil;
     }
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox
         ? CGSizeMake(self.boundingBox.size.width * self.imageTransform.a, self.boundingBox.size.height * self.imageTransform.a)
         : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
-    CGSize deviation = [primitive pairForParameter:IJSVGAttributeStdDeviation defaultValue:CGSizeMake(2, 2)];
+    CGSize deviation = [primitive pairForParameter:IJSVGAttributeStdDeviation
+                                      defaultValue:CGSizeMake(2, 2)];
     if(deviation.width < 0 || deviation.height < 0) {
         deviation = CGSizeMake(2, 2);
     }
@@ -745,7 +769,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     if(tint == NULL) {
         return nil;
     }
-    IJSVGMetalBlurJob* job = [IJSVGMetalBlurRenderer shadowJobForBitmap:bitmap region:region weights:weights
+    IJSVGMetalBlurJob* job = [IJSVGMetalBlurRenderer shadowJobForBitmap:bitmap
+                                                                 region:region
+                                                                weights:weights
         linearRGB:IJSVGFilterUsesLinearRGB(primitive) offset:CGSizeMake(dx, dy) color:tint];
     CGColorRelease(tint);
     return job;
@@ -761,12 +787,18 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     NSData* weights;
     BOOL linearRGB;
     NSUInteger sourceCrops;
-    if(![self prepareBlurForBitmap:bitmap region:&region weights:&weights
-                        linearRGB:&linearRGB sourceCrops:&sourceCrops]) {
+    if(![self prepareBlurForBitmap:bitmap
+                            region:&region
+                           weights:&weights
+                        linearRGB:&linearRGB
+                       sourceCrops:&sourceCrops]) {
         return nil;
     }
-    return [IJSVGMetalBlurRenderer jobForBitmap:bitmap region:region weights:weights
-                                     linearRGB:linearRGB sourceCrops:sourceCrops];
+    return [IJSVGMetalBlurRenderer jobForBitmap:bitmap
+                                         region:region
+                                        weights:weights
+                                     linearRGB:linearRGB
+                                    sourceCrops:sourceCrops];
 }
 
 - (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap
@@ -792,10 +824,10 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     // Larger standalone blurs avoid the CI graph, colour matching and readback.
     if(count > 16384) {
         CGImageRef image = [IJSVGMetalBlurRenderer newImageForBitmap:bitmap
-                                                           region:region
-                                                          weights:weights
-                                                        linearRGB:linearRGB
-                                                      sourceCrops:sourceCrops];
+                                                              region:region
+                                                             weights:weights
+                                                           linearRGB:linearRGB
+                                                         sourceCrops:sourceCrops];
         if(image != NULL) {
             return image;
         }

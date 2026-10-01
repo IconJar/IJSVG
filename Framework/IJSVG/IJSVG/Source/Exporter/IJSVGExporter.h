@@ -12,8 +12,10 @@
 
 @class IJSVG;
 @class IJSVGExporter;
-@class IJSVGLayer;
 @class IJSVGNode;
+@class IJSVGRootNode;
+@class IJSVGStyle;
+@class IJSVGRenderingOptions;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -82,7 +84,9 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 @interface IJSVGExporter : NSObject {
 
 @private
-    IJSVG* _svg;
+    IJSVGRootNode* _sourceRoot;
+    IJSVGStyle* _style;
+    IJSVGRenderingOptions* _renderingOptions;
     CGSize _size;
     IJSVGExporterOptions _options;
     NSXMLDocument* _dom;
@@ -110,6 +114,13 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
              size:(CGSize)size
           options:(IJSVGExporterOptions)options
 floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+
+- (id)initWithRootNode:(IJSVGRootNode*)rootNode
+                  size:(CGSize)size
+                 style:(IJSVGStyle*)style
+      renderingOptions:(IJSVGRenderingOptions*)renderingOptions
+               options:(IJSVGExporterOptions)options
+  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 - (NSString*)SVGString;
 - (NSData*)SVGData;
