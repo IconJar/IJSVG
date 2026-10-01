@@ -14,7 +14,7 @@ struct BlurParameters {
     uint4 geometry; // width, height, taps, source crop count
     float4 region;  // min/max in Core Image coordinates
     uint4 config;   // linear RGB, first pixel in shared storage
-    float weights[28];
+    float weights[76];
 };
 
 float blurCoverage(uint2 p, constant BlurParameters& job)

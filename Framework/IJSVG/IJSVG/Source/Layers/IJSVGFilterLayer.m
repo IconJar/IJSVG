@@ -45,9 +45,13 @@ static _Thread_local NSUInteger IJSVGFilterRenderDepth = 0;
 @property (nonatomic, strong) NSMapTable<IJSVGFilterLayer*, IJSVGFilterBatchEntry*>* entries;
 @property (nonatomic, strong) NSMutableArray<IJSVGFilterBatchEntry*>* orderedEntries;
 @property (nonatomic, assign) BOOL collecting;
+@property (nonatomic, assign) BOOL preflighting;
+@property (nonatomic, strong) NSMutableSet<IJSVGFilterLayer*>* preflightLayers;
 @property (nonatomic, assign) BOOL invalid;
 @property (nonatomic, assign) NSUInteger retainedPixels;
 @property (nonatomic, assign) NSUInteger totalPixels;
+@property (nonatomic, assign) NSUInteger scratchBytes;
+@property (nonatomic, assign) NSUInteger largestSourcePixels;
 @property (nonatomic, strong) NSSet<IJSVGFilterLayer*>* eligibleLayers;
 @property (nonatomic, strong) NSSet<CALayer*>* collectionLayers;
 @end
@@ -148,7 +152,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     if(pixels == 0) {
         return YES;
     }
-    CGFloat atlasWidth = ceil(sqrt(pixels));
+    CGFloat atlasWidth = ciEntries.count == 1 ? ciEntries.firstObject.pixelSize.width : ceil(sqrt(pixels));
     for(IJSVGFilterBatchEntry* entry in entries) {
         if(entry.output != nil) {
             atlasWidth = MAX(atlasWidth, entry.pixelSize.width);
@@ -174,7 +178,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         rowHeight = MAX(rowHeight, size.height);
     }
     CGFloat atlasHeight = y + rowHeight;
-    if(atlasWidth * atlasHeight > 1048576) {
+    if(atlasWidth * atlasHeight > 1048576 || atlasWidth * atlasHeight > pixels * 2) {
         // Packing padding can exceed the budget even when source pixels fit.
         // Split whole filter images so convolution never loses neighbouring pixels.
         if(ciEntries.count < 2) {
@@ -232,10 +236,8 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         return NO;
     }
     deviceBounds = CGRectIntegral(deviceBounds);
-    // Larger canvases can exhaust the filter retention budget after expensive
-    // collection work. Keep them on the direct path until they can be preflighted.
     if(deviceBounds.size.width > 2048 || deviceBounds.size.height > 2048
-        || deviceBounds.size.width * deviceBounds.size.height > 1048576) {
+        || deviceBounds.size.width * deviceBounds.size.height > 4194304) {
         return NO;
     }
     CGColorSpaceRef scratchColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
@@ -249,6 +251,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     CGContextConcatCTM(scratch, transform);
     IJSVGFilterBatch* batch __attribute__((objc_precise_lifetime)) = [[IJSVGFilterBatch alloc] init];
     batch.eligibleLayers = eligibleLayers;
+    batch.scratchBytes = CGBitmapContextGetBytesPerRow(scratch) * CGBitmapContextGetHeight(scratch);
     NSMutableSet<CALayer*>* collectionLayers = [[NSMutableSet alloc] init];
     for(CALayer* filtered in eligibleLayers) {
         for(CALayer* layer = filtered; layer != nil; layer = layer.superlayer) {
@@ -264,6 +267,18 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     batch.collecting = YES;
     IJSVGCurrentFilterBatch = batch;
     @try {
+        // Walk the actual drawing transforms, but stop each filter before its
+        // source bitmap is allocated or painted. Reject over-budget draws before
+        // doing source rasterization, blur calibration or GPU submissions.
+        batch.preflighting = YES;
+        batch.preflightLayers = [[NSMutableSet alloc] init];
+        drawingBlock(scratch);
+        if(batch.invalid || batch.preflightLayers.count < 3) {
+            return NO;
+        }
+        batch.preflighting = NO;
+        batch.preflightLayers = nil;
+        batch.totalPixels = 0;
         // Visit only filter branches and their ancestors during collection.
         // Unfiltered artwork is painted once, during the final replay.
         drawingBlock(scratch);
@@ -465,6 +480,31 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(1.f / scale, 1.f / scale));
     CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
                                   round(workRect.size.height * scale));
+    if(batch.preflighting) {
+        NSUInteger pixels = pixelSize.width * pixelSize.height;
+        if([batch.preflightLayers containsObject:self]
+            || pixelSize.width > 2048 || pixelSize.height > 2048
+            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
+            batch.invalid = YES;
+            return;
+        }
+        batch.largestSourcePixels = MAX(batch.largestSourcePixels, pixels);
+        // Account for RGBA8 replay images with up to 2x atlas packing padding,
+        // the current source bitmap, pending RGBA8 sources, and a full
+        // one-megapixel Metal lease (44 bytes/pixel), plus parameter headroom.
+        // This is a working-set estimate, not a process memory limit: CPU filter
+        // intermediates and Core Image's private caches can add further storage.
+        NSUInteger estimatedBytes = batch.scratchBytes
+            + (batch.totalPixels + pixels) * 8
+            + batch.largestSourcePixels * 4 + 1048576 * (44 + 4) + 65536;
+        if(estimatedBytes > 128 * 1024 * 1024) {
+            batch.invalid = YES;
+            return;
+        }
+        [batch.preflightLayers addObject:self];
+        batch.totalPixels += pixels;
+        return;
+    }
     IJSVGFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if(!batch.collecting && cached.renderedImage != NULL
         && CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
@@ -478,7 +518,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     if(batch.collecting) {
         NSUInteger pixels = pixelSize.width * pixelSize.height;
         if(cached != nil || pixelSize.width > 2048 || pixelSize.height > 2048
-            || pixels > 1048576 || batch.totalPixels + pixels > 4194304) {
+            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
             batch.invalid = YES;
             return;
         }
@@ -598,6 +638,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
                 batch.invalid = YES;
                 return;
             }
+
             IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
             entry.output = output;
             entry.workRect = workRect;

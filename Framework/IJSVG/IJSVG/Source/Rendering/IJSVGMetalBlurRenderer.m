@@ -15,7 +15,7 @@ typedef struct {
     simd_uint4 geometry;
     simd_float4 region;
     simd_uint4 config;
-    float weights[28];
+    float weights[76];
 } IJSVGMetalBlurParameters;
 
 @interface IJSVGMetalBlurJob ()
@@ -100,7 +100,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
     // Bound allocations and kernel work. This path only accepts packed RGBA8.
     if(width == 0 || height == 0 || width > 2048 || height > 2048
         || width * height > 1048576 || weights.length != taps * sizeof(float)
-        || taps == 0 || taps > 27 || taps % 2 == 0 || sourceCrops < 1 || sourceCrops > 2
+        || taps == 0 || taps > 75 || taps % 2 == 0 || sourceCrops < 1 || sourceCrops > 2
         || CGBitmapContextGetBitsPerComponent(bitmap) != 8
         || CGBitmapContextGetBitsPerPixel(bitmap) != 32
         || CGBitmapContextGetAlphaInfo(bitmap) != kCGImageAlphaPremultipliedLast

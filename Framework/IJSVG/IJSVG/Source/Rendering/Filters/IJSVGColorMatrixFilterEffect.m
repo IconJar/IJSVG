@@ -56,6 +56,15 @@
         matrix[16] = .7154;
         matrix[17] = .0721;
     }
+    // Opacity scaling commutes with RGB transfer functions. Keep the clamp,
+    // including its RGB bounds, but omit the two color-space conversion nodes.
+    // Do not combine general matrices: each primitive must clamp independently.
+    BOOL opacityOnly = isfinite(matrix[18]) && matrix[18] >= 0 && matrix[18] <= 1;
+    for(NSUInteger i = 0; i < 20 && opacityOnly; i++) {
+        if(i != 18 && matrix[i] != ((i == 0 || i == 6 || i == 12) ? 1. : 0.)) {
+            opacityOnly = NO;
+        }
+    }
     NSMutableDictionary* parameters = [[NSMutableDictionary alloc] init];
     NSArray* keys = @[@"inputRVector", @"inputGVector", @"inputBVector", @"inputAVector"];
     for(NSUInteger c = 0; c < 4; c++) {
@@ -66,14 +75,14 @@
     }
     parameters[@"inputBiasVector"] = [CIVector vectorWithX:matrix[4] Y:matrix[9]
                                                          Z:matrix[14] W:matrix[19]];
-    CIImage* image = [[context imageInPrimitiveColorSpace:input] imageByApplyingFilter:@"CIColorMatrix"
+    CIImage* image = [(opacityOnly ? input : [context imageInPrimitiveColorSpace:input]) imageByApplyingFilter:@"CIColorMatrix"
                                                                    withInputParameters:parameters];
     image = [image imageByApplyingFilter:@"CIColorClamp"
                      withInputParameters:@{
         @"inputMinComponents": [CIVector vectorWithX:0 Y:0 Z:0 W:0],
         @"inputMaxComponents": [CIVector vectorWithX:1 Y:1 Z:1 W:1]
     }];
-    return [context imageFromPrimitiveColorSpace:image];
+    return opacityOnly ? image : [context imageFromPrimitiveColorSpace:image];
 }
 
 @end

@@ -45,7 +45,7 @@
 
 - (void)testMatchesCoreImage
 {
-    for(NSNumber* radius in @[@0.2, @0.5, @1.3, @2.67857143, @4.0]) {
+    for(NSNumber* radius in @[@0.2, @0.5, @1.3, @2.67857143, @4.0, @4.1, @6.0, @8.0, @12.0]) {
         for(NSString* space in @[@"sRGB", @"linearRGB"]) {
             for(NSNumber* flipped in @[@NO, @YES]) {
                 NSString* name = [NSString stringWithFormat:@"radius=%@ space=%@ flipped=%@", radius, space, flipped];
@@ -133,7 +133,7 @@
         @"<clipPath id='canvas'><rect width='900' height='900'/></clipPath>"];
     NSMutableString* artwork = [[NSMutableString alloc] init];
     for(NSUInteger index = 0; index < count; index++) {
-        NSUInteger radius = ciOnly || index % 2 == 0 ? 6 : 2;
+        NSUInteger radius = ciOnly || index % 2 == 0 ? 13 : 2;
         [definitions appendFormat:
             @"<filter id='large%lu' filterUnits='userSpaceOnUse' "
             "x='.175' y='.31' width='%lu.2' height='400.5' color-interpolation-filters='linearRGB'>"
@@ -154,8 +154,9 @@
 
 - (void)testLargeChunksAndBudgetFallbackMatchIndependentRendering
 {
-    // Six jobs exceed one chunk; twenty exceed the total retention budget.
-    for(NSNumber* count in @[@6, @20]) {
+    // Six jobs exceed one chunk; twenty exercise the larger replay budget;
+    // forty exceed it and must fall back before drawing sources.
+    for(NSNumber* count in @[@6, @20, @40]) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             NSString* name = [NSString stringWithFormat:@"count=%@ flipped=%@", count, flipped];
             [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
@@ -181,7 +182,7 @@
 
 - (void)testUnsupportedRadiiKeepCoreImageOutput
 {
-    for(NSNumber* radius in @[@0.0, @0.1, @5.0, @12.0]) {
+    for(NSNumber* radius in @[@0.0, @0.1, @12.1, @24.0]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@", radius] block:^(id<XCTActivity> activity) {
             NSData* actual = [self renderDocument:[self documentWithRadius:radius.doubleValue colorSpace:@"linearRGB"
                 explicitRegion:NO transparentBlend:NO] size:320 flipped:NO];

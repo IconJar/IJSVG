@@ -171,6 +171,30 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
     return sources[name] ?: results[name] ?: previous;
 }
 
+- (BOOL)canElideTransparentBlendAtIndex:(NSUInteger)index
+                            primitives:(NSArray<IJSVGFilterPrimitive*>*)primitives
+{
+    if(index != 1) {
+        return NO;
+    }
+    IJSVGFilterPrimitive* flood = primitives[0];
+    IJSVGFilterPrimitive* blend = primitives[1];
+    // Exporters commonly introduce SourceGraphic by blending over a named
+    // transparent flood. Only that exact dependency is an identity operation.
+    NSSet* sources = [NSSet setWithArray:@[IJSVGStringSourceGraphic, IJSVGStringSourceAlpha,
+        IJSVGStringBackgroundImage, IJSVGStringBackgroundAlpha, IJSVGStringFillPaint, IJSVGStringStrokePaint]];
+    return flood.type == IJSVGNodeTypeFilterFlood
+        && [flood numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] == 0
+        && flood.result.length != 0 && ![sources containsObject:flood.result]
+        && blend.type == IJSVGNodeTypeFilterBlend
+        // Linear-light chains retain the original half-float conversion boundary;
+        // removing it accumulates visible rounding in overlapping compositions.
+        && ![self usesLinearRGB:blend]
+        && [blend.input isEqualToString:IJSVGStringSourceGraphic]
+        && [blend.input2 isEqualToString:flood.result]
+        && [(blend.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal];
+}
+
 - (CIImage*)imageByFilteringSource:(CIImage*)source
 {
     IJSVGFilterContext* renderingContext = [[IJSVGFilterContext alloc] init];
@@ -311,7 +335,15 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
             if(!IJSVGFilterValidRect(pixelRegion)) {
                 output = CIImage.emptyImage;
             } else {
-                if(preserveInnerShadowCoverage && index > 1
+                if(index == 1 && CGRectEqualToRect(filterRegion, CGRectIntegral(filterRegion))
+                    && CGRectEqualToRect(pixelRegion, CGRectIntegral(pixelRegion))
+                    && [self canElideTransparentBlendAtIndex:index primitives:primitives]) {
+                    // Removing a composite can coalesce adjacent CI crops.
+                    // Integral crops are idempotent; fractional crops accumulate
+                    // edge coverage and must retain the original operation.
+                    // Region calculation and named-result lifetimes stay intact.
+                    output = input;
+                } else if(preserveInnerShadowCoverage && index > 1
                    && primitive.type == IJSVGNodeTypeFilterBlend) {
                     // A hard alpha inner shadow must shade the foreground without
                     // making its partially covered edge pixels opaque. Source atop
@@ -471,7 +503,7 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
     CGFloat sigma = deviation.width * units.width;
     // Core Image can fuse crops for effectively identity blurs. Preserve its
     // fractional edge coverage by leaving those radii on the general path.
-    if(!isfinite(sigma) || sigma < .2 || sigma > 4 || !isfinite(deviation.height * units.height)
+    if(!isfinite(sigma) || sigma < .2 || sigma > 12 || !isfinite(deviation.height * units.height)
         || fabs(sigma - deviation.height * units.height) > .00001
         || ![(blur.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone) isEqualToString:IJSVGStringNone]) {
         return NO;
