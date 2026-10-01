@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <Accelerate/Accelerate.h>
+#import "IJSVGMetalBlurRenderer.h"
 
 // Small isotropic blurs use the current Core Image impulse response. This avoids
 // approximating its subpixel radius kernel, which differs from a point sampled
@@ -417,22 +418,26 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
     return job;
 }
 
-- (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap
+- (BOOL)prepareBlurForBitmap:(CGContextRef)bitmap
+                      region:(CGRect*)outRegion
+                     weights:(NSData**)outWeights
+                   linearRGB:(BOOL*)outLinearRGB
+                 sourceCrops:(NSUInteger*)outSourceCrops
 {
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
-    if(width == 0 || height == 0 || width > 256 || height > 256
+    if(width == 0 || height == 0 || width > 2048 || height > 2048 || width * height > 1048576
         || self.imageTransform.b != 0 || self.imageTransform.c != 0
         || self.imageTransform.a <= 0 || self.imageTransform.a != self.imageTransform.d) {
-        return NULL;
+        return NO;
     }
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
     if(primitives.count != 1 && primitives.count != 3) {
-        return NULL;
+        return NO;
     }
     IJSVGFilterPrimitive* blur = primitives.lastObject;
     if(blur.type != IJSVGNodeTypeFilterGaussianBlur
         || (blur.input.length != 0 && !(primitives.count == 1 && [blur.input isEqualToString:IJSVGStringSourceGraphic]))) {
-        return NULL;
+        return NO;
     }
     if(primitives.count == 3) {
         IJSVGFilterPrimitive* flood = primitives[0];
@@ -449,14 +454,14 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
             || ![blend.input isEqualToString:IJSVGStringSourceGraphic]
             || ![blend.input2 isEqualToString:flood.result]
             || ![(blend.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal]) {
-            return NULL;
+            return NO;
         }
     }
     BOOL linearRGB = [self usesLinearRGB:blur];
     for(IJSVGFilterPrimitive* primitive in primitives) {
         if(([self usesLinearRGB:primitive] && primitives.count != 1) || primitive.x != nil || primitive.y != nil
             || primitive.width != nil || primitive.height != nil || primitive.children.count != 0) {
-            return NULL;
+            return NO;
         }
     }
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox
@@ -469,18 +474,68 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
     if(!isfinite(sigma) || sigma < .2 || sigma > 4 || !isfinite(deviation.height * units.height)
         || fabs(sigma - deviation.height * units.height) > .00001
         || ![(blur.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone) isEqualToString:IJSVGStringNone]) {
-        return NULL;
+        return NO;
     }
     CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter units:self.filter.units
                                                      defaultRegion:CGRectZero], self.imageTransform);
     if(!IJSVGFilterValidRect(region)) {
-        return NULL;
+        return NO;
     }
     NSData* weights = IJSVGSmallBlurWeights(sigma);
     if(weights == nil) {
+        return NO;
+    }
+    *outRegion = region;
+    *outWeights = weights;
+    *outLinearRGB = linearRGB;
+    *outSourceCrops = primitives.count == 3 ? 2 : 1;
+    return YES;
+}
+
+- (IJSVGMetalBlurJob*)metalBlurJobForBitmap:(CGContextRef)bitmap
+{
+    CGRect region;
+    NSData* weights;
+    BOOL linearRGB;
+    NSUInteger sourceCrops;
+    if(![self prepareBlurForBitmap:bitmap region:&region weights:&weights
+                        linearRGB:&linearRGB sourceCrops:&sourceCrops]) {
+        return nil;
+    }
+    return [IJSVGMetalBlurRenderer jobForBitmap:bitmap region:region weights:weights
+                                     linearRGB:linearRGB sourceCrops:sourceCrops];
+}
+
+- (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap
+{
+    CGRect region;
+    NSData* weights;
+    BOOL linearRGB;
+    NSUInteger sourceCrops;
+    if(![self prepareBlurForBitmap:bitmap
+                            region:&region
+                           weights:&weights
+                        linearRGB:&linearRGB
+                       sourceCrops:&sourceCrops]) {
         return NULL;
     }
+    NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger count = width * height;
+    // Keep tiny icons on the CPU; GPU submission costs more than their convolution.
+    // Larger standalone blurs avoid the CI graph, colour matching and readback.
+    if(count > 16384) {
+        CGImageRef image = [IJSVGMetalBlurRenderer newImageForBitmap:bitmap
+                                                           region:region
+                                                          weights:weights
+                                                        linearRGB:linearRGB
+                                                      sourceCrops:sourceCrops];
+        if(image != NULL) {
+            return image;
+        }
+    }
+    if(width > 256 || height > 256) {
+        return NULL;
+    }
     NSMutableData* source = [NSMutableData dataWithLength:count * 4 * sizeof(float)];
     NSMutableData* output = [NSMutableData dataWithLength:source.length];
     const uint8_t* bytes = CGBitmapContextGetData(bitmap);
@@ -491,7 +546,7 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
             float coverage = IJSVGSmallPixelCoverage(x, y, height, region);
             // SourceGraphic is cropped once. The optional transparent blend
             // introduces another primitive crop, including fractional coverage.
-            if(primitives.count == 3) {
+            if(sourceCrops == 2) {
                 coverage *= coverage;
             }
             float alpha = bytes[y * stride + x * 4 + 3] / 255.f;

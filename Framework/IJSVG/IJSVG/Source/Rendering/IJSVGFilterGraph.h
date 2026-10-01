@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGFilter.h>
 #import <CoreImage/CoreImage.h>
 #import "IJSVGMetalShadowRenderer.h"
+#import "IJSVGMetalBlurRenderer.h"
 
 @interface IJSVGFilterGraph : NSObject
 
@@ -31,5 +32,6 @@
 // Returns NULL when the graph needs the general evaluator.
 - (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap;
 - (IJSVGMetalShadowJob*)metalShadowJobForBitmap:(CGContextRef)bitmap;
+- (IJSVGMetalBlurJob*)metalBlurJobForBitmap:(CGContextRef)bitmap;
 
 @end
