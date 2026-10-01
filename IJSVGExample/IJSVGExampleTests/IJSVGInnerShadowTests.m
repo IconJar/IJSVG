@@ -17,8 +17,8 @@
     NSString* directory = [@(__FILE__).stringByDeletingLastPathComponent stringByAppendingPathComponent:@"Fixtures"];
     NSError* error = nil;
     NSString* string = [NSString stringWithContentsOfFile:[directory stringByAppendingPathComponent:@"ab-button-blood-type-color.svg"]
-                                                encoding:NSUTF8StringEncoding
-                                                   error:&error];
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(string);
     return string;
@@ -110,7 +110,7 @@
         // This isolates damage to edge coverage from small
         // rasterisation differences between offscreen and direct drawing.
         NSArray<NSXMLNode*>* nodes = [root nodesForXPath:@".//*[local-name()='filter' and @id='filter4_ii_18590_2298']"
-                                                  error:&error];
+                                                   error:&error];
         XCTAssertNil(error);
         NSXMLElement* filter = (NSXMLElement*)nodes.firstObject;
         XCTAssertNotNil(filter);

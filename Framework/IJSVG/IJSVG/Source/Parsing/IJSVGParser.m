@@ -226,7 +226,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     // error parsing the XML document
     if(parseError != nil || _document == nil) {
         [self _handleErrorWithCode:IJSVGErrorParsingFile
-                              error:error];
+                             error:error];
         return NO;
     }
 
@@ -258,8 +258,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
 
         if([self _prepareWithXMLDocument:document
                               parseError:anError
-                                  fileURL:aURL
-                                    error:error] == NO) {
+                                 fileURL:aURL
+                                   error:error] == NO) {
             return nil;
         }
     }
@@ -283,8 +283,8 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
 
         if([self _prepareWithXMLDocument:document
                               parseError:anError
-                                  fileURL:aURL
-                                    error:error] == NO) {
+                                 fileURL:aURL
+                                   error:error] == NO) {
             return nil;
         }
     }
@@ -296,7 +296,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     @try {
         NSError* error;
         NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
-                                                        options:0
+                                                         options:0
                                                            error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
@@ -482,7 +482,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     
     node.intrinsicDimensions = dimensions;
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
-                                              height:hl];
+                                               height:hl];
 }
 
 // The following method is highly tuned for performance rather than readability.
@@ -1225,7 +1225,7 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
     
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
-                                        ignoredAttributes:nil];
+                                         ignoredAttributes:nil];
     
     NSString* pointsString = [element attributeForName:IJSVGAttributePoints].stringValue;
     [self parsePolyPoints:pointsString

@@ -77,7 +77,7 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
             continue;
         }
         CIImage* weights = [CIImage imageWithBitmapData:kernels[axis] bytesPerRow:count * sizeof(float)
-            size:CGSizeMake(count, 1) format:kCIFormatAf colorSpace:NULL];
+                                                   size:CGSizeMake(count, 1) format:kCIFormatAf colorSpace:NULL];
         CGFloat radius = count / 2;
         BOOL horizontal = axis == 0;
         output = [convolution applyWithExtent:extent roiCallback:^CGRect(int index, CGRect rect) {
@@ -85,7 +85,8 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
                 : CGRectIntersection(extent, CGRectInset(rect, horizontal ? -radius : 0, horizontal ? 0 : -radius));
         } arguments:@[output, weights, [CIVector vectorWithX:horizontal ? 1 : 0 Y:horizontal ? 0 : 1],
             @(count), [CIVector vectorWithX:CGRectGetMinX(extent) Y:CGRectGetMinY(extent)
-                Z:CGRectGetMaxX(extent) W:CGRectGetMaxY(extent)], @(axis == 1 || counts[1] == 1)]];
+                                          Z:CGRectGetMaxX(extent) W:CGRectGetMaxY(extent)],
+                      @(axis == 1 || counts[1] == 1)]];
         if(output == nil) {
             return nil;
         }
@@ -158,11 +159,11 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
     if(channels == 4 && w * h >= 65536
         && kernelX.length + kernelY.length <= 64 * sizeof(float)
         && [self applyInterleavedBlurToPixels:src
-                                      output:dst
-                                       width:w
-                                      height:h
-                            horizontalKernel:kernelX
-                              verticalKernel:kernelY]) {
+                                       output:dst
+                                        width:w
+                                       height:h
+                             horizontalKernel:kernelX
+                               verticalKernel:kernelY]) {
         return;
     }
     // Alpha only bitmaps are already planar, convolve directly into their output.
@@ -266,8 +267,11 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
         }
         return [context imageFromPrimitiveColorSpace:output];
     }
-    CIImage* metal = [self metalBlurImage:image horizontalKernel:kernelX verticalKernel:kernelY
-        alphaOnly:alphaOnly context:context];
+    CIImage* metal = [self metalBlurImage:image
+                         horizontalKernel:kernelX
+                           verticalKernel:kernelY
+                                alphaOnly:alphaOnly
+                                  context:context];
     if(metal != nil) {
         return metal;
     }

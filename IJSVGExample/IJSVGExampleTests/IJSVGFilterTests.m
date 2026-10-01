@@ -127,7 +127,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 {
     IJSVG* svg = IJSVGTestSVGObject(original);
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-        size:CGSizeMake(30 * scale, 10 * scale) options:IJSVGExporterOptionAll];
+                                                            size:CGSizeMake(30 * scale, 10 * scale) options:IJSVGExporterOptionAll];
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
     return exported;
@@ -641,7 +641,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     IJSVGExporterOptions options = IJSVGExporterOptionCompressOutput | IJSVGExporterOptionRemoveComments;
     NSString* plain = [svg SVGStringWithSize:CGSizeMake(30, 10) options:options];
     NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
-        options:options | IJSVGExporterOptionCompressFilters];
+                                          options:options | IJSVGExporterOptionCompressFilters];
     NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
     NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
     XCTAssertNotNil(filter);
@@ -668,8 +668,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     IJSVG* svg = IJSVGTestSVGObject([self filtered:@"<feOffset dx=\"0.1234\" dy=\"-0.5678\"/>"
         @"<feComponentTransfer><feFuncR type=\"table\" tableValues=\"0.25, -0.5, 1e-3\"/></feComponentTransfer>"]);
     NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
-        options:IJSVGExporterOptionCompressFilters
-        floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
+                                        options:IJSVGExporterOptionCompressFilters
+                           floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
     NSXMLDocument* document = IJSVGTestXMLDocument(exported);
     NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']" error:nil].firstObject;
     XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDX].stringValue, @".12");
@@ -690,8 +690,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     IJSVG* svg = IJSVGTestSVGObject(source);
     for(NSNumber* option in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionCompressFilters) ]) {
         NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
-            options:option.integerValue
-            floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
+                                            options:option.integerValue
+                               floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
         NSXMLDocument* document = IJSVGTestXMLDocument(exported);
         NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
         XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeX].stringValue, @"-12.35%");
@@ -718,7 +718,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         @"<feConvolveMatrix order=\"1\" kernelMatrix=\"2.000\" divisor=\"1\"/>"];
     IJSVG* svg = IJSVGTestSVGObject(source);
     NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
-        options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
+                                          options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
     NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
     NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
     XCTAssertEqualObjects([filter attributeForName:@"filterUnits"].stringValue, @"userSpaceOnUse");
@@ -956,7 +956,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)testEmbeddedRasterImagePreservesAspectRatio
 {
     NSBitmapImageRep* image = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:2 pixelsHigh:1
-        bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:8 bitsPerPixel:32];
+                                                                   bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:8 bitsPerPixel:32];
     XCTAssertNotNil(image);
     uint8_t* pixels = image.bitmapData;
     XCTAssertTrue(pixels != NULL);
@@ -1322,8 +1322,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSData* bytes = [self render:[self filtered:@"<feDiffuseLighting surfaceScale=\"0\" diffuseConstant=\".5\" lighting-color=\"#804020\">"
         @"    <feDistantLight elevation=\"90\"/>"
         @"</feDiffuseLighting>"
-        attributes:[NSString stringWithFormat:@"color-interpolation-filters=\"%@\"", colorSpace]
-        content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"] scale:scale];
+                                     attributes:[NSString stringWithFormat:@"color-interpolation-filters=\"%@\"", colorSpace]
+                                        content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"] scale:scale];
     const double values[3] = {128, 64, 32};
     const uint8_t* pixels = bytes.bytes;
     for(NSUInteger channel = 0; channel < 3; channel++) {
@@ -2018,8 +2018,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     }
     [primitives appendString:@"</feMerge>"];
     NSData* bytes = [self render:[self filtered:primitives
-        attributes:[NSString stringWithFormat:@"color-interpolation-filters=\"%@\"", colorSpace]
-        content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"] scale:10];
+                                     attributes:[NSString stringWithFormat:@"color-interpolation-filters=\"%@\"", colorSpace]
+                                        content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"] scale:10];
     const double values[3][3] = {{128, 64, 32}, {32, 128, 192}, {64, 192, 128}};
     double result[3] = {0}, alpha = 0;
     BOOL srgb = [colorSpace isEqual:@"sRGB"];
@@ -2099,7 +2099,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         @"<g filter=\"url(#f)\" opacity=\".5\" clip-path=\"url(#clip)\">"
         @"<rect filter=\"url(#f)\" x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/></g>";
     NSString* document = [[self document:body] stringByReplacingOccurrencesOfString:@"viewBox=\"0 0 30 10\""
-        withString:@"viewBox=\"0 0 30 10\" filter=\"url(#f)\""];
+                                                                         withString:@"viewBox=\"0 0 30 10\" filter=\"url(#f)\""];
     IJSVG* svg = IJSVGTestSVGObject(document);
     IJSVGRenderingOptions* options = svg.renderingOptions;
     options.filtersEnabled = NO;

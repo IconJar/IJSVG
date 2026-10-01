@@ -54,7 +54,7 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     }
 
     CGFloat lightness = [self componentFromOKLCHString:components[0]
-                                       percentageBase:1.f];
+                                        percentageBase:1.f];
     if(isnan(lightness) == YES) {
         return nil;
     }

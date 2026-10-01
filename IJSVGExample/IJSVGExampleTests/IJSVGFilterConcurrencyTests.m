@@ -155,7 +155,7 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
 {
     for(NSNumber* nested in @[@NO, @YES]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"nested=%@", nested]
-                              block:^(id<XCTActivity> activity) {
+                               block:^(id<XCTActivity> activity) {
             NSMutableArray<NSData*>* references = [[NSMutableArray alloc] init];
             for(NSUInteger index = 0; index < 12; index++) {
                 NSData* pixels = [self atlasPixelsForIndex:index nested:nested.boolValue];

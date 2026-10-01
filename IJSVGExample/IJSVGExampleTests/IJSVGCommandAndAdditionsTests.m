@@ -57,7 +57,7 @@
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:"M0 0 L10 10 20 20 h5 v-5 z"
-                                                                  dataStream:stream];
+                                                                    dataStream:stream];
 
     XCTAssertEqual(commands.count, 5u);
     XCTAssertTrue([commands[0] isKindOfClass:IJSVGCommandMove.class]);
@@ -100,7 +100,7 @@
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     IJSVGCommand* command = [IJSVGCommand commandsForDataCharacters:"L10 10 20 20"
-                                             dataStream:stream].firstObject;
+                                                         dataStream:stream].firstObject;
     IJSVGCommand* copy = command.copy;
 
     XCTAssertNotEqual(copy, command);
@@ -118,7 +118,7 @@
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:"L10 10 L20 0"
-                                                                  dataStream:stream];
+                                                                    dataStream:stream];
     CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:commands];
     CGRect bounds = CGPathGetPathBoundingBox(path);
 
@@ -135,16 +135,16 @@
 {
     CGFloat values[] = { 1.f, 2.f, 3.f, 4.f };
     NSPoint second = [IJSVGCommand readCoordinatePair:values
-                                               index:1];
+                                                index:1];
     XCTAssertEqualWithAccuracy(second.x, 3.f, 0.0001f);
     XCTAssertEqualWithAccuracy(second.y, 4.f, 0.0001f);
 
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:"L.5 .25"
-                                                                  dataStream:stream];
+                                                                    dataStream:stream];
     NSArray<IJSVGCommand*>* converted = [IJSVGCommand convertCommands:commands
-                                                               toUnits:IJSVGUnitObjectBoundingBox
-                                                                bounds:CGRectMake(0.f, 0.f, 200.f, 100.f)];
+                                                              toUnits:IJSVGUnitObjectBoundingBox
+                                                               bounds:CGRectMake(0.f, 0.f, 200.f, 100.f)];
 
     XCTAssertEqual(converted.count, commands.count);
     XCTAssertNotEqual(converted.firstObject, commands.firstObject);

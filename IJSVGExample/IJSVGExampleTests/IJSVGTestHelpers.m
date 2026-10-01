@@ -43,7 +43,7 @@ IJSVG* IJSVGTestSVGObject(NSString* svgString)
 {
     NSError* error = nil;
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:svgString
-                                           error:&error];
+                                            error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
     return svg;
@@ -64,7 +64,7 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
 {
     NSError* error = nil;
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:svgString
-                                           error:&error];
+                                            error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
 

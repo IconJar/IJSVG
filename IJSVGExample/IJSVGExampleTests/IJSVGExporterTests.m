@@ -70,7 +70,7 @@
                                               options:options];
     NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
     NSArray<NSXMLNode*>* rects = [document nodesForXPath:@"//*[local-name()='rect']"
-                                                  error:nil];
+                                                   error:nil];
 
     XCTAssertEqual(rects.count, 1);
     XCTAssertFalse([exportedString containsString:@"display=\"none\""]);

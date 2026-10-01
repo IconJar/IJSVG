@@ -93,6 +93,7 @@
 		59FB54BE280B03E600D148FA /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */; };
+		59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -234,6 +235,7 @@
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
 		59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGQuartzRendererTests.m; sourceTree = "<group>"; };
+		59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGResourceExportTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -391,6 +393,7 @@
 				5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */,
 				5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */,
 				59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */,
+				59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -608,6 +611,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				591F8ECE2FF01E140012F5EB /* IJSVGParserTests.m in Sources */,
+				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
 				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,

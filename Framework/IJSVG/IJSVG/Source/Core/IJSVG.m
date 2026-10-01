@@ -50,14 +50,14 @@
         ext = @"svg";
     }
     if((str = [bundle pathForResource:[string stringByDeletingPathExtension]
-                                ofType:ext]) != nil) {
+                               ofType:ext]) != nil) {
         return [[self alloc] initWithFile:str
                                     error:error];
     }
     
     // check the asset catalogues
     return [[self alloc] initWithDataAssetNamed:string
-                                           error:error];
+                                          error:error];
 }
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
@@ -100,10 +100,10 @@
                        error:(NSError**)error
 {
     NSDataAsset* dataAsset = [[NSDataAsset alloc] initWithName:name
-                                                         bundle:bundle];
+                                                        bundle:bundle];
     if(dataAsset != nil) {
         return [self initWithSVGData:dataAsset.data
-                                error:error];
+                               error:error];
     }
     return nil;
 }
@@ -357,11 +357,11 @@
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     return [[IJSVGExporter alloc] initWithRootNode:_rootNode
-                                         size:size
-                                        style:_style
-                             renderingOptions:_renderingOptions
-                                      options:options
-                         floatingPointOptions:floatingPointOptions];
+                                              size:size
+                                             style:_style
+                                  renderingOptions:_renderingOptions
+                                           options:options
+                              floatingPointOptions:floatingPointOptions];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options

@@ -46,11 +46,12 @@ static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
             values[y * side + radius] = 1.f;
         }
         CIImage* stripe = [CIImage imageWithBitmapData:pixels
-                                         bytesPerRow:side * sizeof(float)
-                                                size:CGSizeMake(side, side)
-                                              format:kCIFormatAf colorSpace:NULL];
+                                           bytesPerRow:side * sizeof(float)
+                                                  size:CGSizeMake(side, side)
+                                                format:kCIFormatAf
+                                            colorSpace:NULL];
         CIImage* blurred = [stripe imageByApplyingFilter:@"CIGaussianBlur"
-                                    withInputParameters:@{ kCIInputRadiusKey: key }];
+                                     withInputParameters:@{ kCIInputRadiusKey: key }];
         NSMutableData* weights = [NSMutableData dataWithLength:side * sizeof(float)];
         [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
             [context render:blurred
@@ -521,8 +522,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             CIImage* other = IJSVGFilterInputNamed(primitive.input2, output, sources, results);
             NSArray<CIImage*>* mergeInputs = IJSVGFilterMergeInputsForPrimitive(primitive, output, sources, results);
             CGRect pixelRegion = [self pixelRegionForPrimitive:primitive
-                                                         input:input other:other
-                                                  mergeInputs:mergeInputs
+                                                         input:input
+                                                         other:other
+                                                   mergeInputs:mergeInputs
                                                   filterRegion:filterRegion];
             output = [self evaluatePrimitiveAtIndex:index
                                               input:input
@@ -772,7 +774,9 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     IJSVGMetalBlurJob* job = [IJSVGMetalBlurRenderer shadowJobForBitmap:bitmap
                                                                  region:region
                                                                 weights:weights
-        linearRGB:IJSVGFilterUsesLinearRGB(primitive) offset:CGSizeMake(dx, dy) color:tint];
+                                                              linearRGB:IJSVGFilterUsesLinearRGB(primitive)
+                                                                 offset:CGSizeMake(dx, dy)
+                                                                  color:tint];
     CGColorRelease(tint);
     return job;
 }
@@ -790,14 +794,14 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     if(![self prepareBlurForBitmap:bitmap
                             region:&region
                            weights:&weights
-                        linearRGB:&linearRGB
+                         linearRGB:&linearRGB
                        sourceCrops:&sourceCrops]) {
         return nil;
     }
     return [IJSVGMetalBlurRenderer jobForBitmap:bitmap
                                          region:region
                                         weights:weights
-                                     linearRGB:linearRGB
+                                      linearRGB:linearRGB
                                     sourceCrops:sourceCrops];
 }
 
@@ -814,7 +818,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     if(![self prepareBlurForBitmap:bitmap
                             region:&region
                            weights:&weights
-                        linearRGB:&linearRGB
+                         linearRGB:&linearRGB
                        sourceCrops:&sourceCrops]) {
         return NULL;
     }

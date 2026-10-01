@@ -49,7 +49,7 @@
     NSString* actual = [self documentWithRadius:radius shadows:shadows colorSpace:colorSpace forceGeneral:NO offset:offset];
     NSString* expected = [self documentWithRadius:radius shadows:shadows colorSpace:colorSpace forceGeneral:YES offset:offset];
     XCTAssertLessThanOrEqual([self maximumDifference:[self renderDocument:actual flipped:flipped]
-        other:[self renderDocument:expected flipped:flipped]], 2,
+                                               other:[self renderDocument:expected flipped:flipped]], 2,
         @"radius=%g shadows=%lu space=%@ flipped=%d offset=%@", radius, (unsigned long)shadows, colorSpace, flipped, offset);
 }
 
@@ -58,9 +58,9 @@
     for(NSNumber* radius in @[@0.1, @0.2, @0.5, @1.0, @2.0]) {
         for(NSNumber* shadows in @[@1, @2, @4]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@ shadows=%@", radius, shadows]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 [self compareRadius:radius.doubleValue shadows:shadows.unsignedIntegerValue
-                    colorSpace:@"sRGB" flipped:NO offset:nil];
+                         colorSpace:@"sRGB" flipped:NO offset:nil];
             }];
         }
     }
@@ -71,7 +71,7 @@
     for(NSNumber* flipped in @[@NO, @YES]) {
         for(NSString* colorSpace in @[@"sRGB", @"linearRGB"]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"%@ flipped=%@", colorSpace, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 [self compareRadius:0.5 shadows:2 colorSpace:colorSpace flipped:flipped.boolValue offset:nil];
             }];
         }
@@ -82,7 +82,7 @@
 {
     for(NSNumber* offset in @[@0.000001, @-0.000001, @0.999999, @-0.999999]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"offset=%@", offset]
-                              block:^(id<XCTActivity> activity) {
+                               block:^(id<XCTActivity> activity) {
             [self compareRadius:1 shadows:2 colorSpace:@"sRGB" flipped:NO offset:offset];
         }];
     }
@@ -97,9 +97,9 @@
                     shadows, flipped, exportImage];
                 [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
                     NSString* document = [self documentWithRadius:1 shadows:shadows.unsignedIntegerValue
-                        colorSpace:@"sRGB" forceGeneral:NO offset:nil];
+                                                       colorSpace:@"sRGB" forceGeneral:NO offset:nil];
                     [self assertFilterOptionsForDocument:document
-                        flipped:flipped.boolValue exportImage:exportImage.boolValue];
+                                                 flipped:flipped.boolValue exportImage:exportImage.boolValue];
                 }];
             }
         }

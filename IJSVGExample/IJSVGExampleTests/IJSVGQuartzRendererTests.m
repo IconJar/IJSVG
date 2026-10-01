@@ -34,7 +34,7 @@
     if(space == NULL) return nil;
 
     CGContextRef context = CGBitmapContextCreate(NULL, size, size, 8, size * 4,
-                                                space, kCGImageAlphaPremultipliedLast);
+                                                space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
     if(context == NULL) return nil;
@@ -161,217 +161,217 @@
 - (void)testUnoptimizedVectorExportPreservesNestedTransforms
 {
     [self assertVectorExportPreservesQuartzPixels:@"<g transform='translate(2 3)'><g transform='translate(5 7)'><rect width='8' height='8' fill='red'/></g></g>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesNestedTransforms
 {
     [self assertVectorExportPreservesQuartzPixels:@"<g transform='translate(2 3)'><g transform='translate(5 7)'><rect width='8' height='8' fill='red'/></g></g>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesGroupOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<g opacity='.5'><rect x='2' y='2' width='20' height='20' fill='red'/><rect x='10' y='10' width='20' height='20' fill='blue'/></g>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesGroupOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<g opacity='.5'><rect x='2' y='2' width='20' height='20' fill='red'/><rect x='10' y='10' width='20' height='20' fill='blue'/></g>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesDashedStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<path d='M3 5L25 5L25 25' fill='none' stroke='red' stroke-width='3' stroke-linecap='round' stroke-linejoin='bevel' stroke-dasharray='3 2' stroke-dashoffset='1'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesDashedStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<path d='M3 5L25 5L25 25' fill='none' stroke='red' stroke-width='3' stroke-linecap='round' stroke-linejoin='bevel' stroke-dasharray='3 2' stroke-dashoffset='1'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesLinearGradientOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect x='4' y='4' width='24' height='24' fill='url(#g)' fill-opacity='.6'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesLinearGradientOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect x='4' y='4' width='24' height='24' fill='url(#g)' fill-opacity='.6'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesRadialGradient
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><radialGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><circle cx='16' cy='16' r='10' fill='url(#g)'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesRadialGradient
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><radialGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><circle cx='16' cy='16' r='10' fill='url(#g)'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesGradientStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#g)' stroke-opacity='.6' stroke-width='3'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesGradientStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#g)' stroke-opacity='.6' stroke-width='3'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesPatternOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='8' height='8' patternUnits='userSpaceOnUse'><rect width='4' height='8' fill='red'/><rect x='4' width='4' height='8' fill='blue'/></pattern></defs><rect width='32' height='32' fill='url(#p)' fill-opacity='.5'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesPatternOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='8' height='8' patternUnits='userSpaceOnUse'><rect width='4' height='8' fill='red'/><rect x='4' width='4' height='8' fill='blue'/></pattern></defs><rect width='32' height='32' fill='url(#p)' fill-opacity='.5'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesTransformedClip
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><clipPath id='c'><rect width='8' height='8'/></clipPath></defs><g transform='translate(8 8)'><rect width='20' height='20' fill='red' clip-path='url(#c)'/></g>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesTransformedClip
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><clipPath id='c'><rect width='8' height='8'/></clipPath></defs><g transform='translate(8 8)'><rect width='20' height='20' fill='red' clip-path='url(#c)'/></g>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesMask
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><mask id='m'><rect width='16' height='32' fill='white'/></mask></defs><rect width='32' height='32' fill='red' mask='url(#m)'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesMask
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><mask id='m'><rect width='16' height='32' fill='white'/></mask></defs><rect width='32' height='32' fill='red' mask='url(#m)'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesNestedSVG
 {
     [self assertVectorExportPreservesQuartzPixels:@"<svg x='8' y='8' width='16' height='16' viewBox='0 0 8 8'><rect width='8' height='8' fill='blue'/></svg>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesNestedSVG
 {
     [self assertVectorExportPreservesQuartzPixels:@"<svg x='8' y='8' width='16' height='16' viewBox='0 0 8 8'><rect width='8' height='8' fill='blue'/></svg>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesPatternedStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='8' height='8' patternUnits='userSpaceOnUse' patternTransform='translate(2 3)'><rect width='4' height='8' fill='red'/></pattern></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#p)' stroke-opacity='.6' stroke-width='3'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesPatternedStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='8' height='8' patternUnits='userSpaceOnUse' patternTransform='translate(2 3)'><rect width='4' height='8' fill='red'/></pattern></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#p)' stroke-opacity='.6' stroke-width='3'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesPositionedMask
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><mask id='m' maskUnits='userSpaceOnUse' x='8' y='8' width='8' height='8'><rect x='8' y='8' width='8' height='8' fill='white'/></mask></defs><rect x='4' y='4' width='24' height='24' fill='red' mask='url(#m)'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesPositionedMask
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><mask id='m' maskUnits='userSpaceOnUse' x='8' y='8' width='8' height='8'><rect x='8' y='8' width='8' height='8' fill='white'/></mask></defs><rect x='4' y='4' width='24' height='24' fill='red' mask='url(#m)'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesFillAndStrokeOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<rect x='5' y='5' width='22' height='22' fill='red' stroke='blue' stroke-width='4' opacity='.5'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesFillAndStrokeOpacity
 {
     [self assertVectorExportPreservesQuartzPixels:@"<rect x='5' y='5' width='22' height='22' fill='red' stroke='blue' stroke-width='4' opacity='.5'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesTransformedLinearGradient
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g' gradientUnits='userSpaceOnUse' x1='4' x2='28' gradientTransform='rotate(15 16 16)'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect x='4' y='4' width='24' height='24' fill='url(#g)' stroke='black' stroke-width='2'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesTransformedLinearGradient
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><linearGradient id='g' gradientUnits='userSpaceOnUse' x1='4' x2='28' gradientTransform='rotate(15 16 16)'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect x='4' y='4' width='24' height='24' fill='url(#g)' stroke='black' stroke-width='2'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesRadialGradientStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><radialGradient id='g' gradientTransform='scale(.8 1)'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#g)' stroke-width='3'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesRadialGradientStroke
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><radialGradient id='g' gradientTransform='scale(.8 1)'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></radialGradient></defs><path d='M4 8L28 8L28 24' fill='none' stroke='url(#g)' stroke-width='3'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesEvenOddFill
 {
     [self assertVectorExportPreservesQuartzPixels:@"<path d='M2 2H30V30H2ZM8 8H24V24H8Z' fill='red' fill-rule='evenodd'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesEvenOddFill
 {
     [self assertVectorExportPreservesQuartzPixels:@"<path d='M2 2H30V30H2ZM8 8H24V24H8Z' fill='red' fill-rule='evenodd'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesRelativePattern
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='.25' height='.25'><rect width='4' height='8' fill='red'/></pattern></defs><rect x='4' y='4' width='24' height='24' fill='url(#p)'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesRelativePattern
 {
     [self assertVectorExportPreservesQuartzPixels:@"<defs><pattern id='p' width='.25' height='.25'><rect width='4' height='8' fill='red'/></pattern></defs><rect x='4' y='4' width='24' height='24' fill='url(#p)'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testUnoptimizedVectorExportPreservesMultiplyBlend
 {
     [self assertVectorExportPreservesQuartzPixels:@"<rect width='32' height='32' fill='red'/><rect x='8' y='8' width='16' height='16' fill='blue' style='mix-blend-mode:multiply'/>"
-                                      optimized:NO];
+                                        optimized:NO];
 }
 
 - (void)testOptimizedVectorExportPreservesMultiplyBlend
 {
     [self assertVectorExportPreservesQuartzPixels:@"<rect width='32' height='32' fill='red'/><rect x='8' y='8' width='16' height='16' fill='blue' style='mix-blend-mode:multiply'/>"
-                                      optimized:YES];
+                                        optimized:YES];
 }
 
 - (void)testExportPreservesStyleOverrides
@@ -397,11 +397,11 @@
     if(node == nil) return;
     CGSize clientSize = node.clientSize;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithRootNode:node
-                                                               size:CGSizeMake(64.f, 64.f)
-                                                              style:svg.style
-                                                   renderingOptions:svg.renderingOptions
-                                                            options:optimized ? IJSVGExporterOptionAll : IJSVGExporterOptionNone
-                                               floatingPointOptions:IJSVGFloatingPointOptionsDefault()];
+                                                                 size:CGSizeMake(64.f, 64.f)
+                                                                style:svg.style
+                                                     renderingOptions:svg.renderingOptions
+                                                              options:optimized ? IJSVGExporterOptionAll : IJSVGExporterOptionNone
+                                                 floatingPointOptions:IJSVGFloatingPointOptionsDefault()];
     NSString* text = [exporter SVGString];
     XCTAssertTrue(CGSizeEqualToSize(node.clientSize, clientSize));
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:text];

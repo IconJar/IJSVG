@@ -171,7 +171,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
                             style:svg.style
                  renderingOptions:svg.renderingOptions
                           options:options
-            floatingPointOptions:floatingPointOptions];
+             floatingPointOptions:floatingPointOptions];
 }
 
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode
@@ -654,7 +654,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 
     return [self compareElementChildren:element
-                             toElement:otherElement];
+                              toElement:otherElement];
 }
 
 - (void)_collapseGradients
@@ -1674,6 +1674,14 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
+    // Image paints resolve their origin inside drawInContext:, rather than
+    // adding it to the enclosing transform. Preserve that position on export.
+    dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(CGRectGetMinX(paint.frame),
+                                                           _floatingPointOptions);
+    dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(CGRectGetMinY(paint.frame),
+                                                           _floatingPointOptions);
+    dict[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:image.viewBoxAlignment
+                                                                         meetOrSlice:image.viewBoxMeetOrSlice];
     dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(CGRectGetWidth(bounds),
                                                                  _floatingPointOptions);
     dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds),
@@ -1701,7 +1709,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
                                              imageHeight*ratio);
             NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
-                                                   toSize:newImageRect.size];
+                                                    toSize:newImageRect.size];
             cgImage = [actualImage CGImageForProposedRect:&newImageRect
                                                   context:NULL
                                                     hints:NULL];
@@ -2226,12 +2234,12 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
                     // visual constraints with it.
                     if(paint.maskPaint != nil) {
                         [self applyMaskToElement:strokedPath
-                                     fromPaint:paint];
+                                       fromPaint:paint];
                     }
                   
                     if(paint.clipPath != nil) {
                         [self applyClipToElement:strokedPath
-                                     fromPaint:paint];
+                                       fromPaint:paint];
                     }
 
                     // give back the preceding elements
@@ -2622,7 +2630,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     if(primitive.type == IJSVGNodeTypeFilterImage && primitive.imageNode != nil) {
         IJSVGQuartzRenderer* tree = _paintResolver;
         IJSVGPaint* imagePaint = [tree drawablePaintForNode:primitive.imageNode
-                                                                  inViewPort:viewPort];
+                                                 inViewPort:viewPort];
         NSXMLElement* imageElement = [[NSXMLElement alloc] initWithName:@"g"];
         NSString* imageIdentifier = [self identifierForElement:imageElement];
         [self _recursiveParseFromPaint:imagePaint intoElement:imageElement];
@@ -2795,8 +2803,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     NSData* retainedData = data;
     return [[NSData alloc] initWithBytesNoCopy:(void*)(bytes + startIndex)
-                                           length:length - startIndex
-                                      deallocator:^(void* _, NSUInteger __) {
+                                        length:length - startIndex
+                                   deallocator:^(void* _, NSUInteger __) {
         // Retain the serialized data for the lifetime of this zero copy slice.
         (void)retainedData;
     }];
@@ -2877,7 +2885,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     // work out what to do...
     if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
         [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:instructions
-                                                                          floatingPointOptions:_floatingPointOptions];
+                                                                           floatingPointOptions:_floatingPointOptions];
         [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions
                                                             floatingPointOptions:_floatingPointOptions];
         instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions

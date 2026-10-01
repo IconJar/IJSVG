@@ -145,7 +145,7 @@
         });
         if(arithmeticKernel != nil) {
             CIImage* result = [arithmeticKernel applyWithExtent:context.extent
-                                                     arguments:@[
+                                                      arguments:@[
                 [context imageInPrimitiveColorSpace:input],
                 [context imageInPrimitiveColorSpace:other],
                 [CIVector vectorWithX:k1 Y:k2 Z:k3 W:k4]
@@ -184,7 +184,7 @@
                          output:dst + offset
                           width:w
                          height:lastRow - firstRow
-              productCoefficient:k1
+             productCoefficient:k1
                firstCoefficient:k2
               secondCoefficient:k3
                        constant:k4];

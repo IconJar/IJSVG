@@ -53,7 +53,7 @@
                 [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
                     @autoreleasepool {
                         [self assertFilterOptionsForDocument:fixture[@"document"]
-                            flipped:flipped.boolValue exportImage:exportImage.boolValue];
+                                                     flipped:flipped.boolValue exportImage:exportImage.boolValue];
                     }
                 }];
             }

@@ -10,7 +10,7 @@
 {
     for(NSNumber* origin in @[@0.0, @12.0]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"origin=%@", origin]
-                              block:^(id<XCTActivity> activity) {
+                               block:^(id<XCTActivity> activity) {
             NSMutableString* shapes = [[NSMutableString alloc] init];
             for(NSUInteger index = 0; index < 4; index++) {
                 [shapes appendFormat:@"<rect x='%lu' y='8' width='10' height='40' fill='red' filter='url(#f)'/>",
@@ -89,11 +89,11 @@
 {
     for(NSNumber* flipped in @[@NO, @YES]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"flipped=%@", flipped]
-                              block:^(id<XCTActivity> activity) {
+                               block:^(id<XCTActivity> activity) {
             NSData* actual = [self renderDocument:[self mixedArtworkDocument:NO]
-                flipped:flipped.boolValue clipped:YES generalTransparency:NO];
+                                          flipped:flipped.boolValue clipped:YES generalTransparency:NO];
             NSData* expected = [self renderDocument:[self mixedArtworkDocument:YES]
-                flipped:flipped.boolValue clipped:YES generalTransparency:NO];
+                                            flipped:flipped.boolValue clipped:YES generalTransparency:NO];
             XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
         }];
     }
@@ -104,7 +104,7 @@
     for(NSNumber* angle in @[@0, @17]) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"angle=%@ flipped=%@", angle, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 NSString* document = [NSString stringWithFormat:
                     @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
                     "<defs><linearGradient id='paint'><stop stop-color='#d02060' stop-opacity='.4'/>"
@@ -133,7 +133,7 @@
     for(NSString* style in styles) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"%@ flipped=%@", style, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 NSString* stroke = strokes[style] ?: @"stroke='url(#paint)' stroke-width='3.7' stroke-linecap='round' stroke-linejoin='miter'";
                 NSString* fill = [style isEqualToString:@"both-gradients"] ? @"url(#paint)" : @"#30b080";
                 NSString* path = [style isEqualToString:@"curve-dash"]
@@ -199,7 +199,7 @@
     for(NSNumber* offset in @[@-8.7, @0.0, @7.35]) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"offset=%@ flipped=%@", offset, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 NSData* actual = [self translatedPixelsWithOffset:offset.doubleValue flipped:flipped.boolValue reference:NO];
                 NSData* expected = [self translatedPixelsWithOffset:offset.doubleValue flipped:flipped.boolValue reference:YES];
                 XCTAssertTrue([self containsPaintedPixels:actual]);
@@ -230,7 +230,7 @@
     for(NSNumber* alpha in @[@0.02, @0.3, @1.0]) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"alpha=%@ flipped=%@", alpha, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 NSData* actual = [self renderDocument:[self saturatedEdgesDocumentWithAlpha:alpha explicitRegion:NO] flipped:flipped.boolValue];
                 NSData* expected = [self renderDocument:[self saturatedEdgesDocumentWithAlpha:alpha explicitRegion:YES] flipped:flipped.boolValue];
                 XCTAssertTrue([self containsPaintedPixels:actual]);
@@ -256,7 +256,7 @@
     for(NSNumber* radius in @[@0.0, @0.05, @0.1, @0.25, @0.5, @0.9, @1.3, @2.0]) {
         for(NSString* colorSpace in @[@"sRGB", @"linearRGB"]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@ %@", radius, colorSpace]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 // Explicit primitive bounds select the general evaluator with the same crop.
                 NSData* actual = [self renderDocument:[self blurDocumentWithRadius:radius colorSpace:colorSpace explicitRegion:NO] flipped:NO];
                 NSData* expected = [self renderDocument:[self blurDocumentWithRadius:radius colorSpace:colorSpace explicitRegion:YES] flipped:NO];
@@ -290,7 +290,7 @@
     for(NSNumber* flipped in @[@NO, @YES]) {
         for(NSNumber* count in @[@3, @4]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"count=%@ flipped=%@", count, flipped]
-                                  block:^(id<XCTActivity> activity) {
+                                   block:^(id<XCTActivity> activity) {
                 NSMutableArray* indices = [[NSMutableArray alloc] init];
                 NSMutableArray* references = [[NSMutableArray alloc] init];
                 for(NSUInteger index = 0; index < count.unsignedIntegerValue; index++) {
@@ -298,7 +298,7 @@
                     [references addObject:[self batchedDocumentWithIndices:@[@(index)]]];
                 }
                 NSData* actual = [self renderDocument:[self batchedDocumentWithIndices:indices]
-                    flipped:flipped.boolValue clipped:YES generalTransparency:NO];
+                                              flipped:flipped.boolValue clipped:YES generalTransparency:NO];
                 NSData* expected = [self compositeDocuments:references flipped:flipped.boolValue clipped:YES];
                 XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
             }];

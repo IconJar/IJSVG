@@ -21,7 +21,7 @@
     // the accumulated image into and out of that space for every merge node.
     for(CIImage* image in inputs) {
         output = [[context imageInPrimitiveColorSpace:image] imageByApplyingFilter:@"CISourceOverCompositing"
-                                                             withInputParameters:@{
+                                                               withInputParameters:@{
             kCIInputBackgroundImageKey: output
         }];
     }

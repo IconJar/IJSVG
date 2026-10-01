@@ -51,9 +51,9 @@
                 NSString* name = [NSString stringWithFormat:@"radius=%@ space=%@ flipped=%@", radius, space, flipped];
                 [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
                     NSData* actual = [self renderDocument:[self documentWithRadius:radius.doubleValue
-                        colorSpace:space explicitRegion:NO transparentBlend:NO] size:320 flipped:flipped.boolValue];
+                                                                        colorSpace:space explicitRegion:NO transparentBlend:NO] size:320 flipped:flipped.boolValue];
                     NSData* expected = [self renderDocument:[self documentWithRadius:radius.doubleValue
-                        colorSpace:space explicitRegion:YES transparentBlend:NO] size:320 flipped:flipped.boolValue];
+                                                                          colorSpace:space explicitRegion:YES transparentBlend:NO] size:320 flipped:flipped.boolValue];
                     XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
                     XCTAssertTrue([self containsPaintedPixels:actual]);
                 }];
@@ -65,10 +65,10 @@
 - (void)testTransparentBlendAndConcurrentRenders
 {
     NSData* reference = [self renderDocument:[self documentWithRadius:2 colorSpace:@"sRGB"
-        explicitRegion:YES transparentBlend:YES] size:320 flipped:NO];
+                                                       explicitRegion:YES transparentBlend:YES] size:320 flipped:NO];
     [self runWorkers:12 freshThreads:NO block:^(NSUInteger index) {
         NSData* pixels = [self renderDocument:[self documentWithRadius:2 colorSpace:@"sRGB"
-            explicitRegion:NO transparentBlend:YES] size:320 flipped:NO];
+                                                        explicitRegion:NO transparentBlend:YES] size:320 flipped:NO];
         XCTAssertLessThanOrEqual([self maximumDifference:pixels other:reference], 2);
     }];
 }
@@ -105,9 +105,9 @@
             NSString* name = [NSString stringWithFormat:@"space=%@ flipped=%@", space, flipped];
             [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
                 NSData* actual = [self renderDocument:[self batchDocumentWithColorSpace:space explicitRegion:NO]
-                    size:320 flipped:flipped.boolValue];
+                                                 size:320 flipped:flipped.boolValue];
                 NSData* expected = [self renderDocument:[self batchDocumentWithColorSpace:space explicitRegion:YES]
-                    size:320 flipped:flipped.boolValue];
+                                                   size:320 flipped:flipped.boolValue];
                 XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
                 XCTAssertTrue([self containsPaintedPixels:actual]);
             }];
@@ -118,10 +118,10 @@
 - (void)testConcurrentBatchesKeepIndependentPixels
 {
     NSData* expected = [self renderDocument:[self batchDocumentWithColorSpace:@"linearRGB" explicitRegion:YES]
-        size:320 flipped:NO];
+                                       size:320 flipped:NO];
     [self runWorkers:12 freshThreads:NO block:^(NSUInteger index) {
         NSData* actual = [self renderDocument:[self batchDocumentWithColorSpace:@"linearRGB" explicitRegion:NO]
-            size:320 flipped:NO];
+                                         size:320 flipped:NO];
         XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
     }];
 }
@@ -161,9 +161,9 @@
             NSString* name = [NSString stringWithFormat:@"count=%@ flipped=%@", count, flipped];
             [XCTContext runActivityNamed:name block:^(id<XCTActivity> activity) {
                 NSData* actual = [self renderDocument:[self largeBatchDocumentWithCount:count.unsignedIntegerValue
-                    width:600 serial:NO ciOnly:NO] size:900 flipped:flipped.boolValue];
+                                                                                  width:600 serial:NO ciOnly:NO] size:900 flipped:flipped.boolValue];
                 NSData* expected = [self renderDocument:[self largeBatchDocumentWithCount:count.unsignedIntegerValue
-                    width:600 serial:YES ciOnly:NO] size:900 flipped:flipped.boolValue];
+                                                                                    width:600 serial:YES ciOnly:NO] size:900 flipped:flipped.boolValue];
                 XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
             }];
         }
@@ -174,9 +174,9 @@
 {
     // The source pixels fit in one chunk but the packed atlas exceeds one megapixel.
     NSData* actual = [self renderDocument:[self largeBatchDocumentWithCount:3 width:800 serial:NO ciOnly:YES]
-        size:900 flipped:NO];
+                                     size:900 flipped:NO];
     NSData* expected = [self renderDocument:[self largeBatchDocumentWithCount:3 width:800 serial:YES ciOnly:YES]
-        size:900 flipped:NO];
+                                       size:900 flipped:NO];
     XCTAssertLessThanOrEqual([self maximumDifference:actual other:expected], 2);
 }
 
@@ -185,9 +185,9 @@
     for(NSNumber* radius in @[@0.0, @0.1, @12.1, @24.0]) {
         [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@", radius] block:^(id<XCTActivity> activity) {
             NSData* actual = [self renderDocument:[self documentWithRadius:radius.doubleValue colorSpace:@"linearRGB"
-                explicitRegion:NO transparentBlend:NO] size:320 flipped:NO];
+                                                            explicitRegion:NO transparentBlend:NO] size:320 flipped:NO];
             NSData* expected = [self renderDocument:[self documentWithRadius:radius.doubleValue colorSpace:@"linearRGB"
-                explicitRegion:YES transparentBlend:NO] size:320 flipped:NO];
+                                                              explicitRegion:YES transparentBlend:NO] size:320 flipped:NO];
             XCTAssertNotNil(actual);
             XCTAssertNotNil(expected);
             XCTAssertEqualObjects(actual, expected);

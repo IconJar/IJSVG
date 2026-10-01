@@ -650,8 +650,8 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     }
     NSInteger count = 0;
     CGFloat* values = [self scanFloatsFromCString:string.UTF8String
-                                     dataStream:IJSVGThreadManager.currentManager.pathDataStream
-                                           size:&count];
+                                       dataStream:IJSVGThreadManager.currentManager.pathDataStream
+                                             size:&count];
     NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] initWithCapacity:count];
     for(NSInteger index = 0; index < count; index++) {
         if(isfinite(values[index]) == NO) {

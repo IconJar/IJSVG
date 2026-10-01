@@ -329,8 +329,8 @@ static NSDictionary* _colorTree = nil;
 
         // convert HSL to HSB
         CGFloat* hsb = [self.class HSBFromCSSHSLHue:params[0]
-                                        saturation:params[1]
-                                         lightness:params[2]];
+                                         saturation:params[1]
+                                          lightness:params[2]];
         NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
                                           saturation:hsb[1]
                                           brightness:hsb[2]

@@ -700,7 +700,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 {
     NSArray<IJSVGPaint*>* paints = [self drawablePaintsForNodes:node.children];
     return [self drawablePaintForGroupNode:node
-                                 children:paints];
+                                  children:paints];
 }
 
 - (IJSVGPaint*)drawablePaintForGroupNode:(IJSVGNode*)node
@@ -943,8 +943,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         }
         if([node isKindOfClass:IJSVGGroup.class] == YES) {
             [self recursivelyAddResolvedPathsForNodes:((IJSVGGroup*)node).children
-                                           transform:transform
-                                              toPath:mutPath];
+                                            transform:transform
+                                               toPath:mutPath];
         }
     }
 }
@@ -1047,8 +1047,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     }
 
     IJSVGFilterPaint* filtered = [IJSVGFilterPaint.alloc initWithSourcePaint:paint
-                                                                        filter:filter
-                                                                      viewPort:self.viewPort];
+                                                                      filter:filter
+                                                                    viewPort:self.viewPort];
     filtered.sourceNode = node;
     return filtered;
 }
