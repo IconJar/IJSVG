@@ -20,6 +20,12 @@
                          weights:(NSData*)weights
                        linearRGB:(BOOL)linearRGB
                      sourceCrops:(NSUInteger)sourceCrops;
++ (IJSVGMetalBlurJob*)shadowJobForBitmap:(CGContextRef)bitmap
+                                region:(CGRect)region
+                               weights:(NSData*)weights
+                             linearRGB:(BOOL)linearRGB
+                                offset:(CGSize)offset
+                                 color:(CGColorRef)color;
 + (BOOL)renderJobs:(NSArray<IJSVGMetalBlurJob*>*)jobs;
 
 // NULL leaves the caller on its existing evaluator.

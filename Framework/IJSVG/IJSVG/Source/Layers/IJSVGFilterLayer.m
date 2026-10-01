@@ -99,17 +99,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     return filters >= 3 && filters <= 128;
 }
 
-@implementation IJSVGFilterLayer
-
-+ (BOOL)shouldRenderLayerDuringCollection:(CALayer*)layer
-{
-    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
-    // Filter source bitmaps still need their complete subtree.
-    return !batch.collecting || IJSVGFilterRenderDepth != 0
-        || [batch.collectionLayers containsObject:layer];
-}
-
-+ (BOOL)renderCollectedEntries:(NSArray<IJSVGFilterBatchEntry*>*)entries
+static BOOL IJSVGFilterRenderShadowEntries(NSArray<IJSVGFilterBatchEntry*>* entries)
 {
     NSMutableArray<IJSVGMetalShadowJob*>* shadows = [[NSMutableArray alloc] init];
     for(IJSVGFilterBatchEntry* entry in entries) {
@@ -126,6 +116,12 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
             entry.metalShadow = nil;
         }
     }
+    return YES;
+}
+
+
+static BOOL IJSVGFilterRenderBlurEntries(NSArray<IJSVGFilterBatchEntry*>* entries)
+{
     NSMutableArray<IJSVGMetalBlurJob*>* blurs = [[NSMutableArray alloc] init];
     for(IJSVGFilterBatchEntry* entry in entries) {
         if(entry.metalBlur != nil) {
@@ -141,23 +137,33 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
             entry.metalBlur = nil;
         }
     }
-    NSUInteger pixels = 0;
-    NSMutableArray<IJSVGFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
-    for(IJSVGFilterBatchEntry* entry in entries) {
-        if(entry.output != nil) {
-            pixels += entry.pixelSize.width * entry.pixelSize.height;
-            [ciEntries addObject:entry];
-        }
-    }
-    if(pixels == 0) {
-        return YES;
-    }
-    CGFloat atlasWidth = ciEntries.count == 1 ? ciEntries.firstObject.pixelSize.width : ceil(sqrt(pixels));
-    for(IJSVGFilterBatchEntry* entry in entries) {
-        if(entry.output != nil) {
-            atlasWidth = MAX(atlasWidth, entry.pixelSize.width);
-        }
-    }
+    return YES;
+}
+
+
+static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
+{
+    __block CGImageRef rendered = NULL;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    // Wait before leasing a context. Source drawing and graph construction
+    // remain concurrent, and the slot is returned before cropping or replay.
+    [IJSVGThreadManager performCIOutputBlock:^{
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
+            rendered = [ciContext createCGImage:atlas
+                                       fromRect:CGRectMake(0, 0, size.width, size.height)
+                                         format:kCIFormatRGBA8 colorSpace:colorSpace];
+        }];
+    }];
+    CGColorSpaceRelease(colorSpace);
+    return rendered;
+}
+
+
+static CIImage* IJSVGFilterAtlasForEntries(
+    NSArray<IJSVGFilterBatchEntry*>* entries,
+    CGFloat atlasWidth,
+    CGFloat* height)
+{
     CGFloat x = 0, y = 0, rowHeight = 0;
     CIImage* atlas = CIImage.emptyImage;
     for(IJSVGFilterBatchEntry* entry in entries) {
@@ -178,6 +184,38 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         rowHeight = MAX(rowHeight, size.height);
     }
     CGFloat atlasHeight = y + rowHeight;
+    *height = atlasHeight;
+    return atlas;
+}
+
+
+static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGFilterBatchEntry*>* entries)
+{
+    if(!IJSVGFilterRenderShadowEntries(entries)) {
+        return NO;
+    }
+    if(!IJSVGFilterRenderBlurEntries(entries)) {
+        return NO;
+    }
+    NSUInteger pixels = 0;
+    NSMutableArray<IJSVGFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
+    for(IJSVGFilterBatchEntry* entry in entries) {
+        if(entry.output != nil) {
+            pixels += entry.pixelSize.width * entry.pixelSize.height;
+            [ciEntries addObject:entry];
+        }
+    }
+    if(pixels == 0) {
+        return YES;
+    }
+    CGFloat atlasWidth = ciEntries.count == 1 ? ciEntries.firstObject.pixelSize.width : ceil(sqrt(pixels));
+    for(IJSVGFilterBatchEntry* entry in entries) {
+        if(entry.output != nil) {
+            atlasWidth = MAX(atlasWidth, entry.pixelSize.width);
+        }
+    }
+    CGFloat atlasHeight;
+    CIImage* atlas = IJSVGFilterAtlasForEntries(entries, atlasWidth, &atlasHeight);
     if(atlasWidth * atlasHeight > 1048576 || atlasWidth * atlasHeight > pixels * 2) {
         // Packing padding can exceed the budget even when source pixels fit.
         // Split whole filter images so convolution never loses neighbouring pixels.
@@ -185,21 +223,10 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
             return NO;
         }
         NSUInteger middle = ciEntries.count / 2;
-        return [self renderCollectedEntries:[ciEntries subarrayWithRange:NSMakeRange(0, middle)]]
-            && [self renderCollectedEntries:[ciEntries subarrayWithRange:NSMakeRange(middle, ciEntries.count - middle)]];
+        return IJSVGFilterRenderCollectedEntries([ciEntries subarrayWithRange:NSMakeRange(0, middle)])
+            && IJSVGFilterRenderCollectedEntries([ciEntries subarrayWithRange:NSMakeRange(middle, ciEntries.count - middle)]);
     }
-    __block CGImageRef rendered = NULL;
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    // Wait before leasing a context. Source drawing and graph construction
-    // remain concurrent, and the slot is returned before cropping or replay.
-    [IJSVGThreadManager performCIOutputBlock:^{
-        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
-            rendered = [ciContext createCGImage:atlas
-                                       fromRect:CGRectMake(0, 0, atlasWidth, atlasHeight)
-                                         format:kCIFormatRGBA8 colorSpace:colorSpace];
-        }];
-    }];
-    CGColorSpaceRelease(colorSpace);
+    CGImageRef rendered = IJSVGFilterNewImageForAtlas(atlas, CGSizeMake(atlasWidth, atlasHeight));
     if(rendered == NULL) {
         return NO;
     }
@@ -220,38 +247,36 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     return YES;
 }
 
-+ (BOOL)renderBatchedLayer:(CALayer*)root
-                 inContext:(CGContextRef)context
-              drawingBlock:(void (^)(CGContextRef))drawingBlock
+
+static CGContextRef IJSVGFilterNewCollectionContext(CGContextRef context)
 {
-    NSMutableSet<IJSVGFilterLayer*>* eligibleLayers = [[NSMutableSet alloc] init];
-    if(context == NULL || IJSVGCurrentFilterBatch != nil || !IJSVGFilterBatchEligible(root, eligibleLayers)) {
-        return NO;
-    }
     // Display and PDF contexts cannot be queried with bitmap context APIs.
     // The collection pass only needs disposable storage with the same scale.
     CGAffineTransform transform = CGContextGetCTM(context);
     CGRect deviceBounds = CGRectApplyAffineTransform(CGContextGetClipBoundingBox(context), transform);
     if(!IJSVGFilterRectIsFinite(deviceBounds) || CGRectIsEmpty(deviceBounds)) {
-        return NO;
+        return NULL;
     }
     deviceBounds = CGRectIntegral(deviceBounds);
     if(deviceBounds.size.width > 2048 || deviceBounds.size.height > 2048
         || deviceBounds.size.width * deviceBounds.size.height > 4194304) {
-        return NO;
+        return NULL;
     }
     CGColorSpaceRef scratchColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef scratch = CGBitmapContextCreate(NULL, deviceBounds.size.width, deviceBounds.size.height,
         8, 0, scratchColorSpace, kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(scratchColorSpace);
     if(scratch == NULL) {
-        return NO;
+        return NULL;
     }
     CGContextTranslateCTM(scratch, -deviceBounds.origin.x, -deviceBounds.origin.y);
     CGContextConcatCTM(scratch, transform);
-    IJSVGFilterBatch* batch __attribute__((objc_precise_lifetime)) = [[IJSVGFilterBatch alloc] init];
-    batch.eligibleLayers = eligibleLayers;
-    batch.scratchBytes = CGBitmapContextGetBytesPerRow(scratch) * CGBitmapContextGetHeight(scratch);
+    return scratch;
+}
+
+
+static NSSet<CALayer*>* IJSVGFilterCollectionLayersForFilters(NSSet<IJSVGFilterLayer*>* eligibleLayers)
+{
     NSMutableSet<CALayer*>* collectionLayers = [[NSMutableSet alloc] init];
     for(CALayer* filtered in eligibleLayers) {
         for(CALayer* layer = filtered; layer != nil; layer = layer.superlayer) {
@@ -261,7 +286,90 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
             [collectionLayers addObject:layer];
         }
     }
-    batch.collectionLayers = collectionLayers;
+    return collectionLayers;
+}
+
+
+static CIImage* IJSVGFilterBackgroundImageFromContext(CGContextRef ctx, CGAffineTransform imageTransform)
+{
+    // Bitmap destinations can supply their already painted backdrop.
+    // Nonbitmap contexts have no readable pixel backing.
+    if(CGBitmapContextGetData(ctx) == NULL) {
+        return CIImage.emptyImage;
+    }
+    CGImageRef background = CGBitmapContextCreateImage(ctx);
+    if(background == NULL) {
+        return CIImage.emptyImage;
+    }
+    CIImage* image = [CIImage imageWithCGImage:background];
+    CGImageRelease(background);
+    CGAffineTransform mapping
+        = CGAffineTransformConcat(CGAffineTransformInvert(CGContextGetCTM(ctx)), imageTransform);
+    return [image imageByApplyingTransform:mapping];
+}
+
+
+static BOOL IJSVGFilterReservePixelSize(CGSize pixelSize, IJSVGFilterBatch* batch, IJSVGFilterBatchEntry* cached)
+{
+    if(batch.collecting) {
+        NSUInteger pixels = pixelSize.width * pixelSize.height;
+        if(cached != nil || pixelSize.width > 2048 || pixelSize.height > 2048
+            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
+            batch.invalid = YES;
+            return NO;
+        }
+        // Flush complete jobs at one megapixel. Finished RGBA8 images remain
+        // available for ordered replay, while source and GPU scratch storage is reused.
+        if(batch.retainedPixels + pixels > 1048576) {
+            if(!IJSVGFilterRenderCollectedEntries(batch.orderedEntries)) {
+                batch.invalid = YES;
+                return NO;
+            }
+            batch.retainedPixels = 0;
+        }
+        batch.retainedPixels += pixels;
+        batch.totalPixels += pixels;
+    }
+    return YES;
+}
+
+
+static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx, CGRect region, CGRect workRect)
+{
+    CGContextSaveGState(ctx);
+    CGContextClipToRect(ctx, region);
+    CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+    CGContextDrawImage(ctx, workRect, image);
+    CGContextRestoreGState(ctx);
+}
+
+
+@implementation IJSVGFilterLayer
+
++ (BOOL)shouldRenderLayerDuringCollection:(CALayer*)layer
+{
+    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
+    // Filter source bitmaps still need their complete subtree.
+    return !batch.collecting || IJSVGFilterRenderDepth != 0
+        || [batch.collectionLayers containsObject:layer];
+}
+
++ (BOOL)renderBatchedLayer:(CALayer*)root
+                 inContext:(CGContextRef)context
+              drawingBlock:(void (^)(CGContextRef))drawingBlock
+{
+    NSMutableSet<IJSVGFilterLayer*>* eligibleLayers = [[NSMutableSet alloc] init];
+    if(context == NULL || IJSVGCurrentFilterBatch != nil || !IJSVGFilterBatchEligible(root, eligibleLayers)) {
+        return NO;
+    }
+    CGContextRef scratch = IJSVGFilterNewCollectionContext(context);
+    if(scratch == NULL) {
+        return NO;
+    }
+    IJSVGFilterBatch* batch __attribute__((objc_precise_lifetime)) = [[IJSVGFilterBatch alloc] init];
+    batch.eligibleLayers = eligibleLayers;
+    batch.scratchBytes = CGBitmapContextGetBytesPerRow(scratch) * CGBitmapContextGetHeight(scratch);
+    batch.collectionLayers = IJSVGFilterCollectionLayersForFilters(eligibleLayers);
     batch.entries = [NSMapTable strongToStrongObjectsMapTable];
     batch.orderedEntries = [[NSMutableArray alloc] init];
     batch.collecting = YES;
@@ -285,7 +393,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
         if(batch.invalid || batch.orderedEntries.count < 3) {
             return NO;
         }
-        if(![self renderCollectedEntries:batch.orderedEntries]) {
+        if(!IJSVGFilterRenderCollectedEntries(batch.orderedEntries)) {
             return NO;
         }
         batch.collecting = NO;
@@ -383,7 +491,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     if(self.filter.requiresSupersampling) {
         return YES;
     }
-  
+
     // An outer filter must supply enough source resolution for nested hard alpha effects.
     NSMutableArray<CALayer*>* pending = [self.sublayers mutableCopy];
     while(pending.count != 0) {
@@ -410,213 +518,71 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
     }
 }
 
-- (CIImage*)backgroundImageFromContext:(CGContextRef)ctx
-                        imageTransform:(CGAffineTransform)imageTransform
+- (IJSVGFilterGraph*)filterGraph
 {
-    // Bitmap destinations can supply their already painted backdrop.
-    // Nonbitmap contexts have no readable pixel backing.
-    if(CGBitmapContextGetData(ctx) == NULL) {
-        return CIImage.emptyImage;
+    IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+    graph.filter = self.filter;
+    // Repeated shadow readbacks can accumulate rounding differences in nested filters.
+    graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
+    if(!graph.hasNestedFilters && self.filter.primitives.count == 1
+        && self.filter.primitives.firstObject.type == IJSVGNodeTypeFilterDropShadow) {
+        NSMutableArray<CALayer*>* pending = [self.sublayers mutableCopy];
+        while(pending.count != 0) {
+            CALayer* layer = pending.lastObject;
+            [pending removeLastObject];
+            if([layer isKindOfClass:IJSVGFilterLayer.class]) {
+                graph.hasNestedFilters = YES;
+                break;
+            }
+            [pending addObjectsFromArray:layer.sublayers ?: @[]];
+        }
     }
-    CGImageRef background = CGBitmapContextCreateImage(ctx);
-    if(background == NULL) {
-        return CIImage.emptyImage;
-    }
-    CIImage* image = [CIImage imageWithCGImage:background];
-    CGImageRelease(background);
-    CGAffineTransform mapping
-        = CGAffineTransformConcat(CGAffineTransformInvert(CGContextGetCTM(ctx)), imageTransform);
-    return [image imageByApplyingTransform:mapping];
+    graph.boundingBox = self.boundingBox;
+    graph.viewPort = self.viewPort;
+    return graph;
 }
 
-- (void)drawFilterInContext:(CGContextRef)ctx
+- (void)preflightPixelSize:(CGSize)pixelSize batch:(IJSVGFilterBatch*)batch
 {
-    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
-    if(batch.collecting && (batch.invalid || IJSVGFilterRenderDepth != 1
-        || ![batch.eligibleLayers containsObject:self])) {
-        // Indirect SVGs/patterns may introduce filters absent from the layer scan.
-        // Discard the collection pass and use the general renderer in that case.
+    NSUInteger pixels = pixelSize.width * pixelSize.height;
+    if([batch.preflightLayers containsObject:self]
+        || pixelSize.width > 2048 || pixelSize.height > 2048
+        || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
         batch.invalid = YES;
         return;
     }
-    IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
-    graph.filter = self.filter;
-    graph.boundingBox = self.boundingBox;
-    graph.viewPort = self.viewPort;
-    CGRect region = [graph regionForNode:_filter
-                                   units:_filter.units
-                           defaultRegion:CGRectZero];
-  
-    if(IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
+    batch.largestSourcePixels = MAX(batch.largestSourcePixels, pixels);
+    // Account for RGBA8 replay images with up to 2x atlas packing padding,
+    // the current source bitmap, pending RGBA8 sources, and a full
+    // one-megapixel Metal lease (44 bytes/pixel), plus parameter headroom.
+    // This is a working-set estimate, not a process memory limit: CPU filter
+    // intermediates and Core Image's private caches can add further storage.
+    NSUInteger estimatedBytes = batch.scratchBytes
+        + (batch.totalPixels + pixels) * 8
+        + batch.largestSourcePixels * 4 + 1048576 * (44 + 4) + 65536;
+    if(estimatedBytes > 128 * 1024 * 1024) {
+        batch.invalid = YES;
         return;
     }
+    [batch.preflightLayers addObject:self];
+    batch.totalPixels += pixels;
+    return;
+}
 
-    CGRect workRect = CGRectUnion(self.outerBoundingBox, region);
-    if(IJSVGFilterRectIsFinite(workRect) == NO || CGRectIsEmpty(workRect) == YES) {
-        return;
-    }
-
-    // Use the actual drawing transform so zoom, export size and Retina all
-    // produce the same effect in SVG units. Bound temporary raster storage.
-    CGAffineTransform transform = CGContextGetCTM(ctx);
-    CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
-  
-    // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
-    // and shadows retain destination resolution instead of processing 4x the pixels.
-    if(IJSVGFilterRenderDepth == 1 && [self requiresFilterSupersampling]) {
-        scale *= 2.f;
-  
-    }
-    scale = MIN(scale, 4096.f / MAX(workRect.size.width, workRect.size.height));
-  
-    // Floating point primitive buffers need four times the source bitmap storage.
-    scale = MIN(scale, sqrt(4194304.f / (workRect.size.width * workRect.size.height)));
-    if(isfinite(scale) == NO || scale <= 0.f) {
-        return;
-    }
-  
-    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(scale, scale));
-    workRect = CGRectIntegral(workRect);
-    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(1.f / scale, 1.f / scale));
-    CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
-                                  round(workRect.size.height * scale));
-    if(batch.preflighting) {
-        NSUInteger pixels = pixelSize.width * pixelSize.height;
-        if([batch.preflightLayers containsObject:self]
-            || pixelSize.width > 2048 || pixelSize.height > 2048
-            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
-            batch.invalid = YES;
-            return;
-        }
-        batch.largestSourcePixels = MAX(batch.largestSourcePixels, pixels);
-        // Account for RGBA8 replay images with up to 2x atlas packing padding,
-        // the current source bitmap, pending RGBA8 sources, and a full
-        // one-megapixel Metal lease (44 bytes/pixel), plus parameter headroom.
-        // This is a working-set estimate, not a process memory limit: CPU filter
-        // intermediates and Core Image's private caches can add further storage.
-        NSUInteger estimatedBytes = batch.scratchBytes
-            + (batch.totalPixels + pixels) * 8
-            + batch.largestSourcePixels * 4 + 1048576 * (44 + 4) + 65536;
-        if(estimatedBytes > 128 * 1024 * 1024) {
-            batch.invalid = YES;
-            return;
-        }
-        [batch.preflightLayers addObject:self];
-        batch.totalPixels += pixels;
-        return;
-    }
+- (void)renderSource:(CIImage*)source
+               graph:(IJSVGFilterGraph*)graph
+             context:(CGContextRef)ctx
+          colorSpace:(CGColorSpaceRef)colorSpace
+              region:(CGRect)region
+            workRect:(CGRect)workRect
+{
+    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
     IJSVGFilterBatchEntry* cached = [batch.entries objectForKey:self];
-    if(!batch.collecting && cached.renderedImage != NULL
-        && CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
-        CGContextSaveGState(ctx);
-        CGContextClipToRect(ctx, region);
-        CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
-        CGContextDrawImage(ctx, workRect, cached.renderedImage);
-        CGContextRestoreGState(ctx);
-        return;
-    }
-    if(batch.collecting) {
-        NSUInteger pixels = pixelSize.width * pixelSize.height;
-        if(cached != nil || pixelSize.width > 2048 || pixelSize.height > 2048
-            || pixels > 1048576 || batch.totalPixels + pixels > 8388608) {
-            batch.invalid = YES;
-            return;
-        }
-        // Flush complete jobs at one megapixel. Finished RGBA8 images remain
-        // available for ordered replay, while source and GPU scratch storage is reused.
-        if(batch.retainedPixels + pixels > 1048576) {
-            if(![self.class renderCollectedEntries:batch.orderedEntries]) {
-                batch.invalid = YES;
-                return;
-            }
-            batch.retainedPixels = 0;
-        }
-        batch.retainedPixels += pixels;
-        batch.totalPixels += pixels;
-    }
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, pixelSize.width, pixelSize.height,
-                                                8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
-  
-    if(bitmap == NULL) {
-        CGColorSpaceRelease(colorSpace);
-        return;
-    }
-  
-    CGContextScaleCTM(bitmap, scale, scale);
-    CGContextTranslateCTM(bitmap, -workRect.origin.x, -workRect.origin.y);
-    CALayer<IJSVGDrawableLayer>* sourceLayer = self.sourceLayer;
-    CGContextTranslateCTM(bitmap, sourceLayer.frame.origin.x, sourceLayer.frame.origin.y);
-    [sourceLayer renderInContext:bitmap];
-    graph.extent = CGRectMake(0, 0, pixelSize.width, pixelSize.height);
-    graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
-        -workRect.origin.x * scale, -workRect.origin.y * scale);
-    IJSVGMetalShadowJob* shadow = batch.collecting ? [graph metalShadowJobForBitmap:bitmap] : nil;
-    if(shadow != nil) {
-        IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
-        entry.metalShadow = shadow;
-        entry.workRect = workRect;
-        entry.pixelSize = pixelSize;
-        [batch.entries setObject:entry forKey:self];
-        [batch.orderedEntries addObject:entry];
-        CGContextRelease(bitmap);
-        CGColorSpaceRelease(colorSpace);
-        return;
-    }
-    IJSVGMetalBlurJob* blur = batch.collecting ? [graph metalBlurJobForBitmap:bitmap] : nil;
-    if(blur != nil) {
-        IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
-        entry.metalBlur = blur;
-        entry.workRect = workRect;
-        entry.pixelSize = pixelSize;
-        [batch.entries setObject:entry forKey:self];
-        [batch.orderedEntries addObject:entry];
-        CGContextRelease(bitmap);
-        CGColorSpaceRelease(colorSpace);
-        return;
-    }
-    CGImageRef smallBlur = [graph newCGImageForSmallBlur:bitmap];
-    if(smallBlur != NULL) {
-        if(batch.collecting) {
-            if(cached != nil) {
-                batch.invalid = YES;
-                CGImageRelease(smallBlur);
-            } else {
-                IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
-                entry.renderedImage = smallBlur;
-                entry.workRect = workRect;
-                entry.pixelSize = pixelSize;
-                [batch.entries setObject:entry forKey:self];
-                [batch.orderedEntries addObject:entry];
-            }
-        } else {
-            CGContextSaveGState(ctx);
-            CGContextClipToRect(ctx, region);
-            CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
-            CGContextDrawImage(ctx, workRect, smallBlur);
-            CGContextRestoreGState(ctx);
-            CGImageRelease(smallBlur);
-        }
-        CGContextRelease(bitmap);
-        CGColorSpaceRelease(colorSpace);
-        return;
-    }
-    CGImageRef sourceImage = CGBitmapContextCreateImage(bitmap);
-    CGContextRelease(bitmap);
-  
-    if(sourceImage == NULL) {
-        CGColorSpaceRelease(colorSpace);
-        return;
-    }
-
-    CIImage* source = [CIImage imageWithCGImage:sourceImage];
-    CGImageRelease(sourceImage);
-    CGRect extent = CGRectMake(0.f, 0.f, pixelSize.width, pixelSize.height);
+    CGRect extent = graph.extent;
+    CGSize pixelSize = extent.size;
     // Keep filter coordinates aligned with the source bitmap. The calling context
     // drawing transform handles flipped views and image exports.
-    CGAffineTransform imageTransform = CGAffineTransformMake(scale, 0.f, 0.f,
-                                                             scale, -workRect.origin.x * scale,
-                                                             -workRect.origin.y * scale);
+    CGAffineTransform imageTransform = graph.imageTransform;
     [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
         graph.context = context;
         graph.supportsMetalKernels = supportsMetalKernels;
@@ -628,8 +594,7 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
                                        graph:weakGraph];
         };
         graph.backgroundProvider = ^CIImage* {
-            return [self backgroundImageFromContext:ctx
-                                    imageTransform:imageTransform];
+            return IJSVGFilterBackgroundImageFromContext(ctx, imageTransform);
         };
 
         CIImage* output = [graph imageByFilteringSource:source];
@@ -653,16 +618,191 @@ static BOOL IJSVGFilterBatchEligible(CALayer* root, NSMutableSet<IJSVGFilterLaye
                                        colorSpace:colorSpace];
 
         if(image != NULL) {
-            CGContextSaveGState(ctx);
-            CGContextClipToRect(ctx, region);
-            CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
-            CGContextDrawImage(ctx, workRect, image);
-            CGContextRestoreGState(ctx);
+            IJSVGFilterDrawFilteredImage(image, ctx, region, workRect);
             CGImageRelease(image);
         }
     }];
 
+}
+
+- (CGFloat)renderScaleForRect:(CGRect)workRect context:(CGContextRef)ctx
+{
+    // Use the actual drawing transform so zoom, export size and Retina all
+    // produce the same effect in SVG units. Bound temporary raster storage.
+    CGAffineTransform transform = CGContextGetCTM(ctx);
+    CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
+
+    // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
+    // and shadows retain destination resolution instead of processing 4x the pixels.
+    if(IJSVGFilterRenderDepth == 1 && [self requiresFilterSupersampling]) {
+        scale *= 2.f;
+
+    }
+    scale = MIN(scale, 4096.f / MAX(workRect.size.width, workRect.size.height));
+
+    // Floating point primitive buffers need four times the source bitmap storage.
+    scale = MIN(scale, sqrt(4194304.f / (workRect.size.width * workRect.size.height)));
+
+    return scale;
+}
+
+- (BOOL)collectMetalBitmap:(CGContextRef)bitmap
+                     graph:(IJSVGFilterGraph*)graph
+                  workRect:(CGRect)workRect
+{
+    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
+    CGSize pixelSize = graph.extent.size;
+    IJSVGMetalShadowJob* shadow = batch.collecting ? [graph metalShadowJobForBitmap:bitmap] : nil;
+    if(shadow != nil) {
+        IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
+        entry.metalShadow = shadow;
+        entry.workRect = workRect;
+        entry.pixelSize = pixelSize;
+        [batch.entries setObject:entry forKey:self];
+        [batch.orderedEntries addObject:entry];
+        return YES;
+    }
+    IJSVGMetalBlurJob* blur = batch.collecting ? [graph metalBlurJobForBitmap:bitmap] : nil;
+    if(blur != nil) {
+        IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
+        entry.metalBlur = blur;
+        entry.workRect = workRect;
+        entry.pixelSize = pixelSize;
+        [batch.entries setObject:entry forKey:self];
+        [batch.orderedEntries addObject:entry];
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)renderSmallBlur:(CGImageRef)smallBlur
+                context:(CGContextRef)ctx
+                 region:(CGRect)region
+               workRect:(CGRect)workRect
+              pixelSize:(CGSize)pixelSize
+{
+    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
+    IJSVGFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    if(smallBlur == NULL) {
+        return NO;
+    }
+    if(batch.collecting) {
+        if(cached != nil) {
+            batch.invalid = YES;
+            CGImageRelease(smallBlur);
+        } else {
+            IJSVGFilterBatchEntry* entry = [[IJSVGFilterBatchEntry alloc] init];
+            entry.renderedImage = smallBlur;
+            entry.workRect = workRect;
+            entry.pixelSize = pixelSize;
+            [batch.entries setObject:entry forKey:self];
+            [batch.orderedEntries addObject:entry];
+        }
+    } else {
+        IJSVGFilterDrawFilteredImage(smallBlur, ctx, region, workRect);
+        CGImageRelease(smallBlur);
+    }
+    return YES;
+}
+
+- (void)renderGraph:(IJSVGFilterGraph*)graph
+            context:(CGContextRef)ctx
+             region:(CGRect)region
+           workRect:(CGRect)workRect
+          pixelSize:(CGSize)pixelSize
+              scale:(CGFloat)scale
+{
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, pixelSize.width, pixelSize.height,
+                                                8, 0, colorSpace, kCGImageAlphaPremultipliedLast);
+
+    if(bitmap == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    CGContextScaleCTM(bitmap, scale, scale);
+    CGContextTranslateCTM(bitmap, -workRect.origin.x, -workRect.origin.y);
+    CALayer<IJSVGDrawableLayer>* sourceLayer = self.sourceLayer;
+    CGContextTranslateCTM(bitmap, sourceLayer.frame.origin.x, sourceLayer.frame.origin.y);
+    [sourceLayer renderInContext:bitmap];
+    graph.extent = CGRectMake(0, 0, pixelSize.width, pixelSize.height);
+    graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
+        -workRect.origin.x * scale, -workRect.origin.y * scale);
+    if([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+    CGImageRef smallBlur = [graph newCGImageForSmallBlur:bitmap];
+    if([self renderSmallBlur:smallBlur context:ctx region:region workRect:workRect pixelSize:pixelSize]) {
+        CGContextRelease(bitmap);
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+    CGImageRef sourceImage = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+
+    if(sourceImage == NULL) {
+        CGColorSpaceRelease(colorSpace);
+        return;
+    }
+
+    CIImage* source = [CIImage imageWithCGImage:sourceImage];
+    CGImageRelease(sourceImage);
+    [self renderSource:source graph:graph context:ctx colorSpace:colorSpace
+                    region:region workRect:workRect];
+
     CGColorSpaceRelease(colorSpace);
+}
+
+- (void)drawFilterInContext:(CGContextRef)ctx
+{
+    IJSVGFilterBatch* batch = IJSVGCurrentFilterBatch;
+    if(batch.collecting && (batch.invalid || IJSVGFilterRenderDepth != 1
+        || ![batch.eligibleLayers containsObject:self])) {
+        // Indirect SVGs/patterns may introduce filters absent from the layer scan.
+        // Discard the collection pass and use the general renderer in that case.
+        batch.invalid = YES;
+        return;
+    }
+    IJSVGFilterGraph* graph = [self filterGraph];
+    CGRect region = [graph regionForNode:_filter
+                                   units:_filter.units
+                           defaultRegion:CGRectZero];
+
+    if(IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
+        return;
+    }
+
+    CGRect workRect = CGRectUnion(self.outerBoundingBox, region);
+    if(IJSVGFilterRectIsFinite(workRect) == NO || CGRectIsEmpty(workRect) == YES) {
+        return;
+    }
+
+    CGFloat scale = [self renderScaleForRect:workRect context:ctx];
+    if(!isfinite(scale) || scale <= 0.f) {
+        return;
+    }
+    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(scale, scale));
+    workRect = CGRectIntegral(workRect);
+    workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformMakeScale(1.f / scale, 1.f / scale));
+    CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
+                                  round(workRect.size.height * scale));
+    if(batch.preflighting) {
+        [self preflightPixelSize:pixelSize batch:batch];
+        return;
+    }
+    IJSVGFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    if(!batch.collecting && cached.renderedImage != NULL
+        && CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
+        IJSVGFilterDrawFilteredImage(cached.renderedImage, ctx, region, workRect);
+        return;
+    }
+    if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
+        return;
+    }
+    [self renderGraph:graph context:ctx region:region workRect:workRect pixelSize:pixelSize scale:scale];
 }
 
 @end

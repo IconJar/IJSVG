@@ -15,6 +15,8 @@ typedef struct {
     simd_uint4 geometry;
     simd_float4 region;
     simd_uint4 config;
+    simd_float4 shadowOffset;
+    simd_float4 shadowTint;
     float weights[76];
 } IJSVGMetalBlurParameters;
 
@@ -128,6 +130,31 @@ static BOOL IJSVGPrepareMetalBlur(void)
     };
     IJSVGMetalBlurParameters parameters = job.parameters;
     memcpy(parameters.weights, weights.bytes, weights.length);
+    job.parameters = parameters;
+    return job;
+}
+
++ (IJSVGMetalBlurJob*)shadowJobForBitmap:(CGContextRef)bitmap
+                                region:(CGRect)region
+                               weights:(NSData*)weights
+                             linearRGB:(BOOL)linearRGB
+                                offset:(CGSize)offset
+                                 color:(CGColorRef)color
+{
+    if(!isfinite(offset.width) || !isfinite(offset.height) || color == NULL
+        || CGColorGetNumberOfComponents(color) != 4) {
+        return nil;
+    }
+    IJSVGMetalBlurJob* job = [self jobForBitmap:bitmap region:region weights:weights
+        linearRGB:linearRGB sourceCrops:1];
+    if(job == nil) {
+        return nil;
+    }
+    const CGFloat* components = CGColorGetComponents(color);
+    IJSVGMetalBlurParameters parameters = job.parameters;
+    parameters.config.z = 1;
+    parameters.shadowOffset = (simd_float4){offset.width, offset.height, 0, 0};
+    parameters.shadowTint = (simd_float4){components[0], components[1], components[2], components[3]};
     job.parameters = parameters;
     return job;
 }

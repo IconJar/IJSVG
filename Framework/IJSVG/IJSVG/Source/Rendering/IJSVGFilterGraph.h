@@ -20,6 +20,7 @@
 @property (nonatomic, assign) CGAffineTransform imageTransform;
 @property (nonatomic, strong) CIContext* context;
 @property (nonatomic, assign) BOOL supportsMetalKernels;
+@property (nonatomic, assign) BOOL hasNestedFilters;
 @property (nonatomic, copy) CIImage* (^imageProvider)(IJSVGFilterPrimitive* primitive, CGRect region);
 @property (nonatomic, copy) CIImage* (^paintProvider)(BOOL stroke);
 @property (nonatomic, copy) CIImage* (^backgroundProvider)(void);

@@ -29,6 +29,70 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
 
 @implementation IJSVGGaussianBlurFilterEffect
 
+// A lazy separable convolution avoids the CPU readback between filter stages.
+// Limit the kernel length; unusually wide filters retain the vImage fallback.
+- (CIImage*)metalBlurImage:(CIImage*)image
+          horizontalKernel:(NSData*)kernelX
+            verticalKernel:(NSData*)kernelY
+                 alphaOnly:(BOOL)alphaOnly
+                   context:(IJSVGFilterContext*)context
+{
+    NSUInteger counts[] = { kernelX.length / sizeof(float), kernelY.length / sizeof(float) };
+    // Later primitives can move convolution onto a fractional sample grid.
+    // Keep their CPU rasterization boundary; accelerate standalone colour blurs.
+    if(alphaOnly || context.filter.primitives.count != 1 || !context.supportsMetalKernels || counts[0] > 257 || counts[1] > 257
+        || !IJSVGFilterValidRect(context.extent)) {
+        return nil;
+    }
+    static CIKernel* convolution;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString* source = @"#include <CoreImage/CoreImage.h>\n"
+            "extern \"C\" { namespace coreimage {\n"
+            "[[ stitchable ]] float4 ijsvgSeparable(sampler image, sampler weights, "
+            "float2 axis, float count, float4 bounds, float finalPass, destination dest) {\n"
+            " float4 sum = float4(0.0f); float2 p = dest.coord();\n"
+            " int taps = int(count); int radius = taps / 2;\n"
+            " for(int i = 0; i < taps; i++) {\n"
+            "  float2 q = p + axis * float(i - radius);\n"
+            "  if(q.x >= bounds.x && q.y >= bounds.y && q.x < bounds.z && q.y < bounds.w) {\n"
+            "   float w = weights.sample(weights.transform(float2(float(i) + .5f, .5f))).a;\n"
+            "   sum += float4(image.sample(image.transform(q))) * w;\n"
+            "  }\n"
+            " }\n"
+            " return finalPass > 0.0f ? clamp(sum, 0.0f, 1.0f) : sum;\n"
+            "} } }";
+        convolution = [CIKernel kernelsWithMetalString:source error:NULL].firstObject;
+    });
+    if(convolution == nil) {
+        return nil;
+    }
+    CGRect extent = context.extent;
+    CIImage* output = alphaOnly ? image : [context imageInPrimitiveColorSpace:image];
+    output = [output imageByCroppingToRect:extent];
+    NSArray<NSData*>* kernels = @[kernelX, kernelY];
+    for(NSUInteger axis = 0; axis < 2; axis++) {
+        NSUInteger count = counts[axis];
+        if(count == 1) {
+            continue;
+        }
+        CIImage* weights = [CIImage imageWithBitmapData:kernels[axis] bytesPerRow:count * sizeof(float)
+            size:CGSizeMake(count, 1) format:kCIFormatAf colorSpace:NULL];
+        CGFloat radius = count / 2;
+        BOOL horizontal = axis == 0;
+        output = [convolution applyWithExtent:extent roiCallback:^CGRect(int index, CGRect rect) {
+            return index == 1 ? CGRectMake(0, 0, count, 1)
+                : CGRectIntersection(extent, CGRectInset(rect, horizontal ? -radius : 0, horizontal ? 0 : -radius));
+        } arguments:@[output, weights, [CIVector vectorWithX:horizontal ? 1 : 0 Y:horizontal ? 0 : 1],
+            @(count), [CIVector vectorWithX:CGRectGetMinX(extent) Y:CGRectGetMinY(extent)
+                Z:CGRectGetMaxX(extent) W:CGRectGetMaxY(extent)], @(axis == 1 || counts[1] == 1)]];
+        if(output == nil) {
+            return nil;
+        }
+    }
+    return alphaOnly ? output : [context imageFromPrimitiveColorSpace:output];
+}
+
 - (BOOL)applyInterleavedBlurToPixels:(const float*)src
                               output:(float*)dst
                                width:(NSInteger)w
@@ -201,6 +265,11 @@ static NSData* IJSVGFilterKernel(CGFloat sigma)
             }];
         }
         return [context imageFromPrimitiveColorSpace:output];
+    }
+    CIImage* metal = [self metalBlurImage:image horizontalKernel:kernelX verticalKernel:kernelY
+        alphaOnly:alphaOnly context:context];
+    if(metal != nil) {
+        return metal;
     }
     if(alphaOnly) {
         // Shadows need no RGB storage or color conversion. Keep the Core Image row
