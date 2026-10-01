@@ -13,19 +13,23 @@
 #import <Accelerate/Accelerate.h>
 #import <IJSVGMetalBlurRenderer.h>
 
-// Gaussian. Calibration is shared across icons and bounded to 64 small kernels.
+// Gaussian. Calibration is shared across icons. Complex artwork can use more
+// than 64 radii in a single draw; retain that working set without recalibrating
+// each frame, and give NSCache a small byte budget for memory-pressure eviction.
 static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
 {
     if(sigma == 0) {
         float one = 1.f;
-        return [NSData dataWithBytes:&one length:sizeof(one)];
+        return [NSData dataWithBytes:&one
+                              length:sizeof(one)];
     }
     static NSCache<NSNumber*, NSData*>* cache;
     static NSObject* lock;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         cache = [[NSCache alloc] init];
-        cache.countLimit = 64;
+        cache.countLimit = 1024;
+        cache.totalCostLimit = 256 * 1024;
         lock = [[NSObject alloc] init];
     });
     NSNumber* key = @(sigma);
@@ -75,7 +79,9 @@ static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
         for(NSUInteger i = 0; i < side; i++) {
             samples[i] /= total;
         }
-        [cache setObject:weights forKey:key];
+        [cache setObject:weights
+                  forKey:key
+                    cost:weights.length];
         return weights;
     }
 }
@@ -158,6 +164,7 @@ static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
     }
     IJSVGFilterPrimitive* flood = primitives[0];
     IJSVGFilterPrimitive* blend = primitives[1];
+  
     // Exporters commonly introduce SourceGraphic by blending over a named
     // transparent flood. Only that exact dependency is an identity operation.
     NSSet* sources = [NSSet setWithArray:@[IJSVGStringSourceGraphic, IJSVGStringSourceAlpha,
@@ -166,6 +173,7 @@ static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
         && [flood numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] == 0
         && flood.result.length != 0 && ![sources containsObject:flood.result]
         && blend.type == IJSVGNodeTypeFilterBlend
+  
         // Linear light chains retain the original half float conversion boundary;
         // removing it accumulates visible rounding in overlapping compositions.
         && !IJSVGFilterUsesLinearRGB(blend)
@@ -477,7 +485,8 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     if(!IJSVGFilterValidRect(defaultRegion)) {
         defaultRegion = filterRegion;
     }
-    CGRect defaultUserRegion = CGRectApplyAffineTransform(defaultRegion, CGAffineTransformInvert(self.imageTransform));
+    CGRect defaultUserRegion = CGRectApplyAffineTransform(defaultRegion,
+                                                          CGAffineTransformInvert(self.imageTransform));
     CGRect primitiveRegion = [self regionForNode:primitive
                                            units:self.filter.contentUnits
                                    defaultRegion:defaultUserRegion];
@@ -612,7 +621,8 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         return nil;
     }
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox
-        ? CGSizeMake(self.boundingBox.size.width * self.imageTransform.a, self.boundingBox.size.height * self.imageTransform.a)
+        ? CGSizeMake(self.boundingBox.size.width * self.imageTransform.a,
+                     self.boundingBox.size.height * self.imageTransform.a)
         : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
     IJSVGMetalShadowParameters parameters = {0};
     parameters.geometry = (simd_uint4){(uint32_t)width, (uint32_t)height, 0, 0};

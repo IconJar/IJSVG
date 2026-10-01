@@ -1042,6 +1042,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                                                           filter:filter
                                                                         viewPort:viewPort];
         filtered.sourceNode = node;
+        filtered.cachesRenderedOutput = YES;
         [rootPaint addChild:filtered];
         return rootPaint;
     }
@@ -1050,6 +1051,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                                                       filter:filter
                                                                     viewPort:self.viewPort];
     filtered.sourceNode = node;
+    filtered.cachesRenderedOutput = YES;
     return filtered;
 }
 

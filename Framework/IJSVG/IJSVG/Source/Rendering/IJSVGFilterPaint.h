@@ -12,6 +12,9 @@
 @interface IJSVGFilterPaint : IJSVGGroupPaint
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+
+// Only enable for resolved, immutable paint graphs. Rebuild the graph to invalidate.
+@property (nonatomic, assign) BOOL cachesRenderedOutput;
 @property (nonatomic, readonly) IJSVGPaint* sourcePaint;
 - (instancetype)initWithSourcePaint:(IJSVGPaint*)paint
                               filter:(IJSVGFilter*)filter

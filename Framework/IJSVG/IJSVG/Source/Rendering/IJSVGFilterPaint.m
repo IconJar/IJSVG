@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVGPatternPaint.h>
 #import <CoreImage/CoreImage.h>
 
 static BOOL IJSVGFilterRectIsFinite(CGRect rect)
@@ -343,7 +344,113 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
 }
 
 
+// Cached pixels never retain the paint graph. NSCache can discard them under
+// memory pressure, and a paint removes its entry when its resolved graph dies.
+@interface IJSVGFilterCachedImage : NSObject
+@property (nonatomic, assign) CGImageRef image;
+@property (nonatomic, copy) NSArray* signature;
+@end
+
+@implementation IJSVGFilterCachedImage
+- (void)dealloc
+{
+    CGImageRelease(_image);
+}
+@end
+
+static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
+{
+    static NSCache* cache;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [[NSCache alloc] init];
+        cache.countLimit = 256;
+        cache.totalCostLimit = 32 * 1024 * 1024;
+    });
+    return cache;
+}
+
+@interface IJSVGFilterPaint () {
+    NSObject* _outputCacheKey;
+    NSArray* _outputSignature;
+    BOOL _checkedOutputCaching;
+    BOOL _canCacheOutput;
+}
+@end
+
 @implementation IJSVGFilterPaint
+
+- (void)dealloc
+{
+    if(_outputCacheKey != nil) [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
+}
+
+- (BOOL)canCacheOutput
+{
+    if(!self.cachesRenderedOutput) return NO;
+    if(_checkedOutputCaching) return _canCacheOutput;
+    _checkedOutputCaching = YES;
+    // Backdrop inputs depend on the destination, including those inside masks,
+    // patterns and nested filters. feImage can reference another SVG subtree.
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:self];
+    NSMutableSet<IJSVGPaint*>* visited = [[NSMutableSet alloc] init];
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if([visited containsObject:paint]) continue;
+        [visited addObject:paint];
+        if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+            IJSVGFilter* filter = ((IJSVGFilterPaint*)paint).filter;
+            NSSet* names = filter.inputNames;
+            if([names containsObject:IJSVGStringBackgroundImage]
+                || [names containsObject:IJSVGStringBackgroundAlpha]) return NO;
+            for(IJSVGFilterPrimitive* primitive in filter.primitives) {
+                if(primitive.type == IJSVGNodeTypeFilterImage) return NO;
+            }
+        }
+        [pending addObjectsFromArray:paint.children];
+        [pending addObjectsFromArray:paint.clipPaints ?: @[]];
+        if(paint.maskPaint != nil) [pending addObject:paint.maskPaint];
+        if([paint isKindOfClass:IJSVGPatternPaint.class]) {
+            IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
+            if(pattern != nil) [pending addObject:pattern];
+        }
+    }
+    _outputCacheKey = [[NSObject alloc] init];
+    return _canCacheOutput = YES;
+}
+
+- (void)drawFilteredImage:(CGImageRef)image
+                 context:(CGContextRef)ctx
+                  region:(CGRect)region
+                workRect:(CGRect)workRect
+{
+    if(_outputSignature != nil) {
+        IJSVGFilterCachedImage* cached = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
+        if(![cached.signature isEqual:_outputSignature]) {
+            NSUInteger width = CGImageGetWidth(image), height = CGImageGetHeight(image);
+            // An atlas crop can retain a much larger backing image. Materialize
+            // independent RGBA8 pixels so cache cost reflects retained storage.
+            if(width != 0 && height != 0 && width <= 4194304 / height) {
+                CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4,
+                    CGImageGetColorSpace(image), kCGImageAlphaPremultipliedLast);
+                if(bitmap != NULL) {
+                    CGContextSetBlendMode(bitmap, kCGBlendModeCopy);
+                    CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), image);
+                    CGImageRef copy = CGBitmapContextCreateImage(bitmap);
+                    CGContextRelease(bitmap);
+                    if(copy != NULL) {
+                        cached = [[IJSVGFilterCachedImage alloc] init];
+                        cached.image = copy;
+                        cached.signature = _outputSignature;
+                        [IJSVGFilterOutputCache() setObject:cached forKey:_outputCacheKey cost:width * height * 4];
+                    }
+                }
+            }
+        }
+    }
+    IJSVGFilterDrawFilteredImage(image, ctx, region, workRect);
+}
 
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint
 {
@@ -614,7 +721,10 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
                                        colorSpace:colorSpace];
 
         if(image != NULL) {
-            IJSVGFilterDrawFilteredImage(image, ctx, region, workRect);
+            [self drawFilteredImage:image
+                            context:ctx
+                             region:region
+                           workRect:workRect];
             CGImageRelease(image);
         }
     }];
@@ -695,7 +805,10 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
             [batch.orderedEntries addObject:entry];
         }
     } else {
-        IJSVGFilterDrawFilteredImage(smallBlur, ctx, region, workRect);
+        [self drawFilteredImage:smallBlur
+                        context:ctx
+                         region:region
+                       workRect:workRect];
         CGImageRelease(smallBlur);
     }
     return YES;
@@ -800,11 +913,34 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
     IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if(!batch.collecting && cached.renderedImage != NULL
         && CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
-        IJSVGFilterDrawFilteredImage(cached.renderedImage, ctx, region, workRect);
+        [self drawFilteredImage:cached.renderedImage context:ctx region:region workRect:workRect];
         return;
     }
     if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
         return;
+    }
+    _outputSignature = nil;
+    if(self.canCacheOutput) {
+        _outputSignature = @[
+            [NSValue valueWithRect:workRect], [NSValue valueWithSize:pixelSize],
+            [NSValue valueWithRect:region], [NSValue valueWithRect:self.boundingBox],
+            [NSValue valueWithRect:self.viewPort], [NSValue valueWithRect:self.sourcePaint.frame],
+            @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1)
+        ];
+        IJSVGFilterCachedImage* output = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
+        if([output.signature isEqual:_outputSignature]) {
+            if(batch.collecting) {
+                IJSVGQuartzFilterBatchEntry* entry = [[IJSVGQuartzFilterBatchEntry alloc] init];
+                entry.renderedImage = CGImageRetain(output.image);
+                entry.workRect = workRect;
+                entry.pixelSize = pixelSize;
+                [batch.entries setObject:entry forKey:self];
+                [batch.orderedEntries addObject:entry];
+            } else {
+                IJSVGFilterDrawFilteredImage(output.image, ctx, region, workRect);
+            }
+            return;
+        }
     }
     [self renderGraph:graph
               context:ctx
