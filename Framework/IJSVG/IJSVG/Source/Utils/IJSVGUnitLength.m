@@ -1,6 +1,6 @@
 //
 //  IJSVGUnitLength.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 13/01/2017.
 //  Copyright © 2017 Curtis Hard. All rights reserved.

@@ -1,6 +1,6 @@
 //
 //  IJSVGPattern.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 27/05/2016.
 //  Copyright © 2016 Curtis Hard. All rights reserved.
@@ -14,7 +14,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributePatternTransform];
     [storage setBit:IJSVGNodeAttributePatternUnits];

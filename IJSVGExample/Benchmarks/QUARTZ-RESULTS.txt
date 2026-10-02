@@ -1,0 +1,51 @@
+Quartz renderer benchmark — 2026-10-01
+
+Implementation
+IJSVG draws its parsed IJSVGRootNode through IJSVGQuartzRenderer. The renderer
+resolves NSObject paint objects (shape, gradient, image, pattern, group, mask,
+transform, root and filter). It neither creates nor traverses CALayer objects.
+The original IJSVGLayerTree and layer renderer remain available unchanged.
+Both backends share the existing Core Image/Metal filter evaluator and shaders.
+Quartz bitmap destinations cache pattern images; PDF destinations use CGPattern.
+
+Measurement
+Machine architecture: arm64
+Framework: Xcode Debug build; benchmark harness: clang -O2, ARC.
+11 SVG fixtures at 64, 256 and 900 square pixels, sRGB RGBA8, backing scale 1.
+Parsing is excluded. First draw includes tree/paint preparation and drawing;
+these are single observations, not statistically robust cold-start estimates.
+The very first legacy draw also includes process/framework warmup.
+Warm times are medians of 15 draws after first draw plus 3 warmups. Backend order
+alternates. Context allocation and clearing are outside the timed region.
+The Quartz measurement uses IJSVG's default draw API; the legacy measurement
+calls the retained root layer renderer with equivalent quality and batching.
+
+Results
+Warm speedup geometric mean over all 33 cases: 1.33x.
+Range: 0.86x–2.21x. Values below 1 mean Quartz was slower.
+Car at 256: 8.1414 ms -> 6.3690 ms (1.28x).
+Car at 900: 31.8611 ms -> 24.7327 ms (1.29x).
+Image at 256: 0.5102 ms -> 0.3119 ms (1.64x).
+Clipped at 256: 0.1497 ms -> 0.0990 ms (1.51x).
+Pattern-alignment at 256: 0.2085 ms -> 0.2435 ms (0.86x).
+5x5 checkerboard at 900: 0.1200 ms -> 0.1303 ms (0.92x).
+Debug measurements are comparative observations, not release-performance claims.
+
+Correctness
+The harness intercepts CALayer allocation and its base renderInContext: method.
+All Quartz first/warm draws recorded zero allocations and zero rendering calls.
+It fails if either counter is nonzero. Pixel comparisons cover all four channels.
+All non-pattern fixtures matched exactly or within one 8-bit channel value.
+5x5 checkerboard matched exactly. Diagonal stripes differ by at most 2 at 64 px
+and match exactly at 256/900. Translated pattern alignment has edge resampling
+variations: mean absolute channel errors 0.8278 / 0.3416 / 0.1232 out of 255 at
+64 / 256 / 900; maximum errors 35 / 31 / 46. It is not pixel-identical.
+Pattern checks also verify repetition at known SVG coordinates.
+The full 322-test suite passed. After final context/lifetime changes and adding
+a destination-origin test, all 5 focused renderer/filter-paint checks passed.
+
+Reproduce
+From IJSVGExample, build in Xcode, then:
+sh Benchmarks/run-quartz.sh /path/to/Build/Products/Debug /tmp/ijsvg-quartz
+This writes timings, comparison metrics, and PNGs for both backends.
+Raw measurements: Benchmarks/quartz-results.csv.

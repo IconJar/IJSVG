@@ -32,8 +32,7 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image)
     }
 
     if((str = [bundle pathForResource:imageName.stringByDeletingPathExtension
-                                ofType:ext])
-        != nil) {
+                               ofType:ext]) != nil) {
 
         // work out if we can get the data
         NSData* data = [[NSData alloc] initWithContentsOfFile:str];

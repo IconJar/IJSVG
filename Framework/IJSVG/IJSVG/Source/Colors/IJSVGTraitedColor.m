@@ -1,5 +1,5 @@
 //
-//  IJSVGColorType.m
+//  IJSVGTraitedColor.m
 //  IJSVG
 //
 //  Created by Curtis Hard on 20/04/2021.

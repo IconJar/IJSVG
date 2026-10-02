@@ -1,0 +1,32 @@
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Each coloured silhouette has its own shadow; the enclosing group casts another. -->
+  <defs>
+    <filter id="outer" x="-60%" y="-60%" width="240%" height="240%">
+      <feDropShadow dx="8" dy="10" stdDeviation="4" flood-color="#172554" flood-opacity=".55"/>
+    </filter>
+    <filter id="inner" x="-60%" y="-60%" width="240%" height="240%">
+      <feDropShadow dx="-5" dy="5" stdDeviation="2" flood-color="#0891b2" flood-opacity=".8"/>
+    </filter>
+    <filter id="sharp" x="-60%" y="-60%" width="240%" height="240%">
+      <feDropShadow dx="5" dy="-6" stdDeviation="0" flood-color="#e11d48" flood-opacity=".6"/>
+    </filter>
+  </defs>
+  <g transform="translate(80 80) rotate(-18)" filter="url(#outer)">
+    <rect x="-38" y="-35" width="76" height="70" rx="12" fill="#fbbf24" filter="url(#inner)"/>
+    <g transform="translate(27 20) rotate(35)" filter="url(#sharp)">
+      <path d="M-24-18H24V18H-24Z" fill="#fb7185" stroke="#9f1239" stroke-width="4"/>
+    </g>
+  </g>
+  <g transform="translate(295 85) skewX(22) scale(1.25 .7)" filter="url(#outer)" opacity=".75">
+    <circle r="42" fill="#a78bfa" filter="url(#inner)"/>
+    <g transform="rotate(30) translate(30 20)" filter="url(#sharp)">
+      <rect x="-22" y="-18" width="44" height="36" fill="#67e8f9" stroke="#155e75" stroke-width="5"/>
+    </g>
+  </g>
+  <g transform="translate(515 92) scale(-1 .9) rotate(24)" filter="url(#outer)">
+    <path d="M-45-35L42-20L15 38L-35 25Z" fill="#86efac" stroke="#166534" stroke-width="5" filter="url(#inner)"/>
+    <g transform="translate(12 -12) scale(.8 1.2)" filter="url(#sharp)">
+      <circle r="17" fill="#fda4af"/>
+    </g>
+  </g>
+</svg>

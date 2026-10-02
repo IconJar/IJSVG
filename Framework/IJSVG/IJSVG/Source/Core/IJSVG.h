@@ -1,6 +1,6 @@
 //
-//  IJSVGImage.h
-//  IconJar
+//  IJSVG.h
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -10,15 +10,9 @@
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGUnitSize.h>
 #import <IJSVG/IJSVGExporter.h>
-#import <IJSVG/IJSVGGradientLayer.h>
-#import <IJSVG/IJSVGGroupLayer.h>
-#import <IJSVG/IJSVGRootLayer.h>
-#import <IJSVG/IJSVGImageLayer.h>
-#import <IJSVG/IJSVGLayerTree.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGStyle.h>
-#import <IJSVG/IJSVGTransaction.h>
 #import <Foundation/Foundation.h>
 
 @class IJSVG;
@@ -28,29 +22,25 @@
 
 @private
     IJSVGRootNode* _rootNode;
-    IJSVGLayerTree* _layerTree;
     CGRect _viewBox;
     CGFloat _backingScale;
     IJSVGUnitSize* _intrinsicSize;
     IJSVGParser* _parser;
+    IJSVGRenderingOptions* _renderingOptions;
 }
 
-// set this to be called when the layer is about to draw, it will call this
-// and ask for the scale of the backing store where its going to be drawn
-// and apply the scale to each layer that has custom drawing against it, mainly
-// pattern and gradient layers
+// Supplies the backing scale for Quartz rendering.
 @property (nonatomic, copy) IJSVGRenderingBackingScaleFactorHelper renderingBackingScaleHelper;
 
-// global overwriting rules for when rendering an SVG, this will overide any
-// fillColor, strokeColor, pattern and gradient fill
-@property (nonatomic, assign) IJSVGRenderQuality renderQuality;
+// Global overwriting rules for when rendering an SVG, this will overide any
+// fillColor, strokeColor, pattern and gradient fill.
+// Reads and writes independent snapshots. Reassign edited options to apply them.
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
+
 @property (nonatomic, strong) IJSVGStyle* style;
 
 @property (nonatomic, copy) NSString* title;
 @property (nonatomic, copy) NSString* desc;
-@property (nonatomic, strong) IJSVGLayerTree* layerTree;
-@property (nonatomic, strong) IJSVGRootLayer* rootLayer;
-@property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
 @property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;
 
@@ -58,7 +48,7 @@
 // If the size if % values, it will use the defaultSize
 @property (nonatomic, readonly) CGSize size;
 
-// The unresolved unit-backed intrinsic size of the SVG.
+// The unresolved unit backed intrinsic size of the SVG.
 @property (nonatomic, readonly) IJSVGUnitSize* intrinsicUnitSize;
 
 // Will return true if the intrinsic size is a % value
@@ -94,9 +84,6 @@
 
 - (id)initWithImage:(NSImage*)image;
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode;
-
-- (id)initWithSVGLayer:(IJSVGGroupLayer*)group
-               viewBox:(CGRect)viewBox;
 
 - (id)initWithSVGString:(NSString*)string;
 - (id)initWithSVGString:(NSString*)string

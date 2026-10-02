@@ -1,6 +1,6 @@
 //
 //  IJSVGNode.h
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -14,6 +14,13 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
+    IJSVGBackgroundEnabledUnspecified,
+    IJSVGBackgroundEnabledAccumulate,
+    IJSVGBackgroundEnabledNew,
+    IJSVGBackgroundEnabledInherit
+};
+
 @class IJSVGNode;
 @class IJSVG;
 @class IJSVGGroup;
@@ -24,6 +31,7 @@
 @class IJSVGRootNode;
 @class IJSVGUnitRect;
 @class IJSVGMask;
+@class IJSVGFilter;
 @class IJSVGClipPath;
 @class IJSVGThreadManager;
 @class IJSVGStyle;
@@ -90,12 +98,66 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeStopOpacity,
     IJSVGNodeAttributeHref,
     IJSVGNodeAttributeOverflow,
-    IJSVGNodeAttributeMarker
+    IJSVGNodeAttributeMarker,
+    IJSVGNodeAttributeFilter,
+    IJSVGNodeAttributeFilterUnits,
+    IJSVGNodeAttributePrimitiveUnits,
+    IJSVGNodeAttributeDX,
+    IJSVGNodeAttributeDY,
+    IJSVGNodeAttributeStdDeviation,
+    IJSVGNodeAttributeFloodColor,
+    IJSVGNodeAttributeFloodOpacity,
+    IJSVGNodeAttributeIn,
+    IJSVGNodeAttributeResult,
+    IJSVGNodeAttributeIn2,
+    IJSVGNodeAttributeMode,
+    IJSVGNodeAttributeType,
+    IJSVGNodeAttributeValues,
+    IJSVGNodeAttributeOperator,
+    IJSVGNodeAttributeK1,
+    IJSVGNodeAttributeK2,
+    IJSVGNodeAttributeK3,
+    IJSVGNodeAttributeK4,
+    IJSVGNodeAttributeOrder,
+    IJSVGNodeAttributeKernelMatrix,
+    IJSVGNodeAttributeDivisor,
+    IJSVGNodeAttributeBias,
+    IJSVGNodeAttributeTargetX,
+    IJSVGNodeAttributeTargetY,
+    IJSVGNodeAttributeEdgeMode,
+    IJSVGNodeAttributeKernelUnitLength,
+    IJSVGNodeAttributePreserveAlpha,
+    IJSVGNodeAttributeSurfaceScale,
+    IJSVGNodeAttributeDiffuseConstant,
+    IJSVGNodeAttributeSpecularConstant,
+    IJSVGNodeAttributeSpecularExponent,
+    IJSVGNodeAttributeLightingColor,
+    IJSVGNodeAttributeScale,
+    IJSVGNodeAttributeXChannelSelector,
+    IJSVGNodeAttributeYChannelSelector,
+    IJSVGNodeAttributeRadius,
+    IJSVGNodeAttributeBaseFrequency,
+    IJSVGNodeAttributeNumOctaves,
+    IJSVGNodeAttributeSeed,
+    IJSVGNodeAttributeStitchTiles,
+    IJSVGNodeAttributeTableValues,
+    IJSVGNodeAttributeSlope,
+    IJSVGNodeAttributeIntercept,
+    IJSVGNodeAttributeAmplitude,
+    IJSVGNodeAttributeExponent,
+    IJSVGNodeAttributeAzimuth,
+    IJSVGNodeAttributeElevation,
+    IJSVGNodeAttributeZ,
+    IJSVGNodeAttributePointsAtX,
+    IJSVGNodeAttributePointsAtY,
+    IJSVGNodeAttributePointsAtZ,
+    IJSVGNodeAttributeLimitingConeAngle,
+    IJSVGNodeAttributeColorInterpolationFilters,
+    IJSVGNodeAttributeEnableBackground,
+    IJSVGNodeAttributeCount
 };
 
-enum {
-    kIJSVGNodeAttributeStorageLength = 64
-};
+enum { kIJSVGNodeAttributeStorageLength = IJSVGNodeAttributeCount };
 
 typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
     IJSVGIntrinsicDimensionNone = 0,
@@ -140,7 +202,33 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeDesc,
     IJSVGNodeTypeStop,
     IJSVGNodeTypeNotFound,
-    IJSVGNodeTypeForeignObject
+    IJSVGNodeTypeForeignObject,
+    IJSVGNodeTypeFilter,
+    IJSVGNodeTypeFilterDropShadow,
+    IJSVGNodeTypeFilterBlend,
+    IJSVGNodeTypeFilterColorMatrix,
+    IJSVGNodeTypeFilterComponentTransfer,
+    IJSVGNodeTypeFilterComposite,
+    IJSVGNodeTypeFilterConvolveMatrix,
+    IJSVGNodeTypeFilterDiffuseLighting,
+    IJSVGNodeTypeFilterDisplacementMap,
+    IJSVGNodeTypeFilterFlood,
+    IJSVGNodeTypeFilterGaussianBlur,
+    IJSVGNodeTypeFilterImage,
+    IJSVGNodeTypeFilterMerge,
+    IJSVGNodeTypeFilterMorphology,
+    IJSVGNodeTypeFilterOffset,
+    IJSVGNodeTypeFilterSpecularLighting,
+    IJSVGNodeTypeFilterTile,
+    IJSVGNodeTypeFilterTurbulence,
+    IJSVGNodeTypeFilterMergeNode,
+    IJSVGNodeTypeFilterFuncR,
+    IJSVGNodeTypeFilterFuncG,
+    IJSVGNodeTypeFilterFuncB,
+    IJSVGNodeTypeFilterFuncA,
+    IJSVGNodeTypeFilterDistantLight,
+    IJSVGNodeTypeFilterPointLight,
+    IJSVGNodeTypeFilterSpotLight
 };
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
@@ -228,6 +316,12 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGNode* parentNode;
 @property (nonatomic, strong) IJSVGClipPath* clipPath;
 @property (nonatomic, strong) IJSVGMask* mask;
+@property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, copy) NSArray<IJSVGFilter*>* filters;
+@property (nonatomic, copy) NSString* filterColorInterpolation;
+@property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
+@property (nonatomic, assign) CGRect backgroundBounds;
+@property (nonatomic, readonly) CGRect backgroundRect;
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
 @property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;

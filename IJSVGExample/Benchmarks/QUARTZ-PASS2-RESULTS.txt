@@ -1,0 +1,40 @@
+Quartz renderer — second pass, 2026-10-01
+
+Each paint class now has its own .h/.m files, standard dated file headers,
+and dot syntax for value-returning zero-argument accessors. Void operations
+retain bracket syntax to avoid Clang's unused-getter warning.
+
+Optimizations
+- Child placement shares the paint's graphics-state save/restore pair.
+- Mask-free draws call the paint directly, without constructing a drawing block.
+- Unchanged backing scale and quality do not walk the paint graph again.
+- Stroke dash lengths are resolved once when the dash pattern is assigned.
+- Filter batching eligibility is computed once per resolved graph and reset
+  when the graph is rebuilt or invalidated.
+
+Measurement
+Same Debug framework, -O2 harness, 11 SVGs at 64/256/900 pixels, 15 warm draws
+per case with alternating backend order. Parsing and bitmap creation excluded.
+Second pass versus previous Quartz: 1.177x geometric-mean speedup (33 cases).
+Second pass versus original CALayer renderer: 1.581x geometric-mean speedup.
+These short Debug runs are comparative measurements, not a promise of optimal
+or release performance. Raster-heavy 900px cases see much smaller gains.
+
+Construction worker (second pass)
+64px:  0.4237 -> 0.3045 ms; 1.938x versus CALayer in the final run.
+256px: 1.3260 -> 1.1938 ms; 1.255x versus CALayer.
+900px: 9.9668 -> 9.8694 ms; 1.043x versus CALayer.
+The worker is pixel-identical to CALayer at all three sizes.
+
+Output validation
+All 36 Quartz PNGs (33 fixture cases plus 3 worker cases) are byte-identical
+before and after this pass. Zero CALayer allocations and render calls were
+recorded. Earlier pattern edge-resampling differences versus CALayer remain
+unchanged; see QUARTZ-RESULTS.txt for details.
+All 324 tests pass, including viewport-scale cache validation.
+Xcode's warning/error navigator is empty after final validation.
+
+Raw results
+quartz-pass2-before.csv / quartz-pass2-after.csv
+quartz-worker-pass2-before.csv / quartz-worker-pass2-after.csv
+Reproduce using Benchmarks/run-quartz.sh with Xcode's built products directory.

@@ -1,6 +1,6 @@
 //
 //  IJSVGColor.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 31/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -268,8 +268,8 @@ static NSDictionary* _colorTree = nil;
             return nil;
         }
 
-        // split the parameters once - the component count tells us whether
-        // we have enough channels, so there's no need to pre-scan the floats
+        // split the parameters once, the component count tells us whether
+        // we have enough channels, so there is no need to scan the floats again
         // purely to count them.
         IJSVGParsingStringMethod* method = methods[0];
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
@@ -329,8 +329,8 @@ static NSDictionary* _colorTree = nil;
 
         // convert HSL to HSB
         CGFloat* hsb = [self.class HSBFromCSSHSLHue:params[0]
-                                        saturation:params[1]
-                                         lightness:params[2]];
+                                         saturation:params[1]
+                                          lightness:params[2]];
         NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
                                           saturation:hsb[1]
                                           brightness:hsb[2]
@@ -434,7 +434,7 @@ static NSDictionary* _colorTree = nil;
         return [NSString stringWithFormat:@"#%02X%02X%02X", red, green, blue];
     }
 
-    // note the %g, CSS alpha is 0 to 1, not 0 - 100, my bad!
+    // note the %g, CSS alpha is 0 to 1, not 0 to 100, my bad!
     return [NSString stringWithFormat:@"rgba(%d,%d,%d,%@)", red, green, blue,
                      IJSVGShortFloatString((float)alpha / 100.f)];
 }

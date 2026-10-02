@@ -20,6 +20,11 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
 void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
                                       NSUInteger count);
 
+// Reports whether every byte belongs to a complete method or separating whitespace.
+IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string,
+                                                                       NSUInteger* count,
+                                                                       BOOL* valid);
+
 @interface IJSVGParsing : NSObject
 
 @end

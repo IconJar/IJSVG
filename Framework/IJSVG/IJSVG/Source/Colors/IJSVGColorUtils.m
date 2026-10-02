@@ -1,6 +1,6 @@
 //
 //  IJSVGColorUtils.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 31/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -54,7 +54,7 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     }
 
     CGFloat lightness = [self componentFromOKLCHString:components[0]
-                                       percentageBase:1.f];
+                                        percentageBase:1.f];
     if(isnan(lightness) == YES) {
         return nil;
     }

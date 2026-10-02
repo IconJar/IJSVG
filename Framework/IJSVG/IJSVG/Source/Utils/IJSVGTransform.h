@@ -1,6 +1,6 @@
 //
 //  IJSVGTransform.h
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 01/09/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.

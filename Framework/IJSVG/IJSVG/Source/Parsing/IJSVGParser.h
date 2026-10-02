@@ -1,6 +1,6 @@
 //
 //  IJSVGParser.h
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -18,6 +18,7 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
 #import <IJSVG/IJSVGMask.h>
+#import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGStyleSheet.h>
@@ -39,6 +40,60 @@ extern NSString* const IJSVGStringButt;
 extern NSString* const IJSVGStringMiter;
 extern NSString* const IJSVGStringInherit;
 extern NSString* const IJSVGStringEvenOdd;
+
+// SVG filter attribute values and predefined inputs.
+extern NSString* const IJSVGStringNormal;
+extern NSString* const IJSVGStringMultiply;
+extern NSString* const IJSVGStringScreen;
+extern NSString* const IJSVGStringDarken;
+extern NSString* const IJSVGStringLighten;
+extern NSString* const IJSVGStringOverlay;
+extern NSString* const IJSVGStringColorDodge;
+extern NSString* const IJSVGStringColorBurn;
+extern NSString* const IJSVGStringHardLight;
+extern NSString* const IJSVGStringSoftLight;
+extern NSString* const IJSVGStringDifference;
+extern NSString* const IJSVGStringExclusion;
+extern NSString* const IJSVGStringHue;
+extern NSString* const IJSVGStringSaturation;
+extern NSString* const IJSVGStringColor;
+extern NSString* const IJSVGStringLuminosity;
+extern NSString* const IJSVGStringMatrix;
+extern NSString* const IJSVGStringSaturate;
+extern NSString* const IJSVGStringHueRotate;
+extern NSString* const IJSVGStringLuminanceToAlpha;
+extern NSString* const IJSVGStringDilate;
+extern NSString* const IJSVGStringOver;
+extern NSString* const IJSVGStringIn;
+extern NSString* const IJSVGStringOut;
+extern NSString* const IJSVGStringAtop;
+extern NSString* const IJSVGStringLighter;
+extern NSString* const IJSVGStringXor;
+extern NSString* const IJSVGStringArithmetic;
+extern NSString* const IJSVGStringIdentity;
+extern NSString* const IJSVGStringTable;
+extern NSString* const IJSVGStringDiscrete;
+extern NSString* const IJSVGStringLinear;
+extern NSString* const IJSVGStringGamma;
+extern NSString* const IJSVGStringTrue;
+extern NSString* const IJSVGStringDuplicate;
+extern NSString* const IJSVGStringWrap;
+extern NSString* const IJSVGStringFractalNoise;
+extern NSString* const IJSVGStringStitch;
+extern NSString* const IJSVGStringBlack;
+extern NSString* const IJSVGStringWhite;
+extern NSString* const IJSVGStringSRGB;
+extern NSString* const IJSVGStringLinearRGB;
+extern NSString* const IJSVGStringSourceGraphic;
+extern NSString* const IJSVGStringSourceAlpha;
+extern NSString* const IJSVGStringBackgroundImage;
+extern NSString* const IJSVGStringBackgroundAlpha;
+extern NSString* const IJSVGStringFillPaint;
+extern NSString* const IJSVGStringStrokePaint;
+extern NSString* const IJSVGStringChannelR;
+extern NSString* const IJSVGStringChannelG;
+extern NSString* const IJSVGStringChannelB;
+extern NSString* const IJSVGStringChannelA;
 
 extern NSString* const IJSVGAttributeVersion;
 extern NSString* const IJSVGAttributeXMLNS;
@@ -100,7 +155,61 @@ extern NSString* const IJSVGAttributeStopOpacity;
 extern NSString* const IJSVGAttributeHref;
 extern NSString* const IJSVGAttributeOverflow;
 extern NSString* const IJSVGAttributeMarker;
-
+extern NSString* const IJSVGAttributeFilter;
+extern NSString* const IJSVGAttributeFilterUnits;
+extern NSString* const IJSVGAttributePrimitiveUnits;
+extern NSString* const IJSVGAttributeDX;
+extern NSString* const IJSVGAttributeDY;
+extern NSString* const IJSVGAttributeStdDeviation;
+extern NSString* const IJSVGAttributeFloodColor;
+extern NSString* const IJSVGAttributeFloodOpacity;
+extern NSString* const IJSVGAttributeIn;
+extern NSString* const IJSVGAttributeResult;
+extern NSString* const IJSVGAttributeIn2;
+extern NSString* const IJSVGAttributeMode;
+extern NSString* const IJSVGAttributeType;
+extern NSString* const IJSVGAttributeValues;
+extern NSString* const IJSVGAttributeOperator;
+extern NSString* const IJSVGAttributeK1;
+extern NSString* const IJSVGAttributeK2;
+extern NSString* const IJSVGAttributeK3;
+extern NSString* const IJSVGAttributeK4;
+extern NSString* const IJSVGAttributeOrder;
+extern NSString* const IJSVGAttributeKernelMatrix;
+extern NSString* const IJSVGAttributeDivisor;
+extern NSString* const IJSVGAttributeBias;
+extern NSString* const IJSVGAttributeTargetX;
+extern NSString* const IJSVGAttributeTargetY;
+extern NSString* const IJSVGAttributeEdgeMode;
+extern NSString* const IJSVGAttributeKernelUnitLength;
+extern NSString* const IJSVGAttributePreserveAlpha;
+extern NSString* const IJSVGAttributeSurfaceScale;
+extern NSString* const IJSVGAttributeDiffuseConstant;
+extern NSString* const IJSVGAttributeSpecularConstant;
+extern NSString* const IJSVGAttributeSpecularExponent;
+extern NSString* const IJSVGAttributeLightingColor;
+extern NSString* const IJSVGAttributeScale;
+extern NSString* const IJSVGAttributeXChannelSelector;
+extern NSString* const IJSVGAttributeYChannelSelector;
+extern NSString* const IJSVGAttributeRadius;
+extern NSString* const IJSVGAttributeBaseFrequency;
+extern NSString* const IJSVGAttributeNumOctaves;
+extern NSString* const IJSVGAttributeSeed;
+extern NSString* const IJSVGAttributeStitchTiles;
+extern NSString* const IJSVGAttributeTableValues;
+extern NSString* const IJSVGAttributeSlope;
+extern NSString* const IJSVGAttributeIntercept;
+extern NSString* const IJSVGAttributeAmplitude;
+extern NSString* const IJSVGAttributeExponent;
+extern NSString* const IJSVGAttributeAzimuth;
+extern NSString* const IJSVGAttributeElevation;
+extern NSString* const IJSVGAttributeZ;
+extern NSString* const IJSVGAttributePointsAtX;
+extern NSString* const IJSVGAttributePointsAtY;
+extern NSString* const IJSVGAttributePointsAtZ;
+extern NSString* const IJSVGAttributeLimitingConeAngle;
+extern NSString* const IJSVGAttributeColorInterpolationFilters;
+extern NSString* const IJSVGAttributeEnableBackground;
 
 @class IJSVGParser;
 @class IJSVGThreadManager;

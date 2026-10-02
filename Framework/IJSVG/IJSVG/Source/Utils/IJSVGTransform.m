@@ -1,6 +1,6 @@
 //
 //  IJSVGTransform.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 01/09/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -446,7 +446,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
     NSMutableArray* transforms = [[NSMutableArray alloc] init];
 
-    // tx, ty -> translate
+    // tx, ty to translate
     if(data[4] != 0.f || data[5] != 0.f) {
         [transforms addObject:@{
             @"name" : @"translate",
@@ -454,14 +454,14 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         }];
     }
 
-    // [sx, 0, tan(a).sy, sy, 0, 0] -> skewX(a).scale(sx,sy)
+    // [sx, 0, tan(a).sy, sy, 0, 0] to skewX(a).scale(sx,sy)
     if(data[1] == 0.f && data[2] != 0.f) {
         [transforms addObject:@{
             @"name" : @"skewX",
             @"data" : @[ @(IJSVGMathAtan(data[2] / sy))]
         }];
 
-        // [sx, sy.tan(a), 0, sy, 0, 0] -> skewX(a).scale(sx, sy)
+        // [sx, sy.tan(a), 0, sy, 0, 0] to skewX(a).scale(sx, sy)
     } else if(data[1] != 0.f && data[2] == 0.f) {
         [transforms addObject:@{
             @"name" : @"skewY",

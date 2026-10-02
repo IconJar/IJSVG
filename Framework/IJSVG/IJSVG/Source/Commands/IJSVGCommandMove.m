@@ -1,6 +1,6 @@
 //
 //  IJSVGCommandMove.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -23,7 +23,7 @@
                  type:(IJSVGCommandType)type
                  path:(CGMutablePathRef)path
 {
-    // move to's allow more then one move to, but if there are more then one,
+    // move commands allow more then one move to, but if there are more then one,
     // we need to run the line to instead...who knew!
     if(command.class == self.class && currentCommand.isSubCommand == YES) {
         [IJSVGCommandLineTo runWithParams:params
@@ -35,19 +35,17 @@
         return;
     }
 
-    // actual move to command - do a moveToPoint only
+    // actual move to command, do a moveToPoint only
     // if the type is absolute, or its possible the type is
     // relative but there is no previous command which means
     // there is no current point. Asking for current point on an empty
     // path will result in an exception being thrown
     if(type == kIJSVGCommandTypeAbsolute || command == nil) {
-        CGPathMoveToPoint(path, NULL,
-                          params[0], params[1]);
+        CGPathMoveToPoint(path, NULL, params[0], params[1]);
         return;
     }
     CGPoint currentPoint = CGPathGetCurrentPoint(path);
-    CGPathMoveToPoint(path, NULL,
-                      currentPoint.x + params[0],
+    CGPathMoveToPoint(path, NULL, currentPoint.x + params[0],
                       currentPoint.y + params[1]);
 }
 
@@ -55,8 +53,10 @@
            boundingBox:(CGRect)boundingBox
 {
     if(units == IJSVGUnitObjectBoundingBox) {
-        self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]] computeValue:boundingBox.size.width];
-        self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]] computeValue:boundingBox.size.height];
+        self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]]
+                              computeValue:boundingBox.size.width];
+        self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]]
+                              computeValue:boundingBox.size.height];
     }
     [super convertToUnits:units
               boundingBox:boundingBox];

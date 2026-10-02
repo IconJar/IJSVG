@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "AppDelegate.h"
+#import <AppDelegate.h>
 
 @interface AppDelegate ()
 

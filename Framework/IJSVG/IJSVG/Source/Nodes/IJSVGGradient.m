@@ -1,6 +1,6 @@
 //
 //  IJSVGGradient.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 03/09/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -22,7 +22,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeGradientUnits];
     [storage setBit:IJSVGNodeAttributeGradientTransform];

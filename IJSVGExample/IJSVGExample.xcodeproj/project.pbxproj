@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -43,12 +43,26 @@
 		5926079C287D6B8B00E93B09 /* Toucan in the Shade.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */; };
 		59265CE81C4F840400F333F0 /* css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59265CE71C4F840400F333F0 /* css.svg */; };
 		59265CEB1C4F843E00F333F0 /* SVGExampleView6.m in Sources */ = {isa = PBXBuildFile; fileRef = 59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */; };
+		5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */; };
+		5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */; };
+		5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */; };
+		5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */; };
+		5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */; };
+		5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */; };
 		59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59316D30282901F5003C01AA /* errorbar_basic.svg */; };
 		593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A6285215FB00DA9156 /* 5x5checkerboard.svg */; };
 		593950A92852203000DA9156 /* Chessboard480DiagonalStripe.svg in Resources */ = {isa = PBXBuildFile; fileRef = 593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */; };
 		59432061285333B60086E3CF /* raleigh.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59432060285333B60086E3CF /* raleigh.svg */; };
+		5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5943859E306BF58E006A5F63 /* dropshadow.svg */; };
+		594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 594385AC306C080B006A5F63 /* IJSVGFilterTests.m */; };
+		594385B3306C1C7E006A5F63 /* dropshadow-nested-transforms.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */; };
+		594385B5306C1C7E006A5F63 /* dropshadow-chains-units.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */; };
+		594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */; };
+		594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */ = {isa = PBXBuildFile; fileRef = 594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */; };
+		59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */; };
 		59459CEC19B906FE00CE493B /* clipped.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59459CEB19B906FE00CE493B /* clipped.svg */; };
 		59459CEF19B9074F00CE493B /* SVGExampleView4.m in Sources */ = {isa = PBXBuildFile; fileRef = 59459CEE19B9074F00CE493B /* SVGExampleView4.m */; };
+		5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
 		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
 		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
@@ -78,6 +92,10 @@
 		59F799E219B880CE00096CB7 /* htc_one.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59F799E119B880CE00096CB7 /* htc_one.svg */; };
 		59FB54BE280B03E600D148FA /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */; };
+		59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */; };
+		59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */; };
+		59FC3A73306FE5DC0028BEAC /* man-bowing-color-light.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -156,14 +174,29 @@
 		59265CE71C4F840400F333F0 /* css.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = css.svg; sourceTree = "<group>"; };
 		59265CE91C4F843E00F333F0 /* SVGExampleView6.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView6.h; sourceTree = "<group>"; };
 		59265CEA1C4F843E00F333F0 /* SVGExampleView6.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView6.m; sourceTree = "<group>"; };
+		5929C36B306DC05A003D5C0C /* IJSVGFilterTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFilterTestHelpers.h; sourceTree = "<group>"; };
+		5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterTestHelpers.m; sourceTree = "<group>"; };
+		5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterMatrixTests.m; sourceTree = "<group>"; };
+		5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterConcurrencyTests.m; sourceTree = "<group>"; };
+		5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMetalShadowTests.m; sourceTree = "<group>"; };
+		5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterBatchTests.m; sourceTree = "<group>"; };
+		5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterSamplerTests.m; sourceTree = "<group>"; };
 		59316D30282901F5003C01AA /* errorbar_basic.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = errorbar_basic.svg; sourceTree = "<group>"; };
 		5934D504280C933300BEF20F /* IJSVGExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IJSVGExample.entitlements; sourceTree = "<group>"; };
 		593950A6285215FB00DA9156 /* 5x5checkerboard.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = 5x5checkerboard.svg; sourceTree = "<group>"; };
 		593950A82852203000DA9156 /* Chessboard480DiagonalStripe.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Chessboard480DiagonalStripe.svg; sourceTree = "<group>"; };
 		59432060285333B60086E3CF /* raleigh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = raleigh.svg; sourceTree = "<group>"; };
+		5943859E306BF58E006A5F63 /* dropshadow.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = dropshadow.svg; sourceTree = "<group>"; };
+		594385AC306C080B006A5F63 /* IJSVGFilterTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterTests.m; sourceTree = "<group>"; };
+		594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-nested-transforms.svg"; sourceTree = "<group>"; };
+		594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-chains-units.svg"; sourceTree = "<group>"; };
+		594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-clipping-masks.svg"; sourceTree = "<group>"; };
+		594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "dropshadow-deep-nesting.svg"; sourceTree = "<group>"; };
+		59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGInnerShadowTests.m; sourceTree = "<group>"; };
 		59459CEB19B906FE00CE493B /* clipped.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = clipped.svg; sourceTree = "<group>"; };
 		59459CED19B9074F00CE493B /* SVGExampleView4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView4.h; sourceTree = "<group>"; };
 		59459CEE19B9074F00CE493B /* SVGExampleView4.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView4.m; sourceTree = "<group>"; };
+		5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMetalBlurTests.m; sourceTree = "<group>"; };
 		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5956657C19B62F4600D805FF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -203,6 +236,10 @@
 		59D6B1A6284F698F0058DE6B /* sh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sh.svg; sourceTree = "<group>"; };
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
+		59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGQuartzRendererTests.m; sourceTree = "<group>"; };
+		59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGResourceExportTests.m; sourceTree = "<group>"; };
+		59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterOutputCacheTests.m; sourceTree = "<group>"; };
+		59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "man-bowing-color-light.svg"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -274,6 +311,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				5943859E306BF58E006A5F63 /* dropshadow.svg */,
 				5919FE042FE30D0F003CAC34 /* oklch.svg */,
 				591F8EC02FF016980012F5EB /* advanced-css.svg */,
 				5926079B287D6B8B00E93B09 /* Toucan in the Shade.svg */,
@@ -309,6 +347,7 @@
 				59D1E39F202279CA00C54672 /* Group.svg */,
 				590C87F5201FD0D4004A1554 /* car.svg */,
 				590C87F3201FC9E3004A1554 /* radialgradient2.svg */,
+				59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */,
 				590C87F0201FBF27004A1554 /* AJ_Digital_Camera.svg */,
 				590C87EC201FA08C004A1554 /* intertwingly.svg */,
 				590C87EE201FA092004A1554 /* NewTux.svg */,
@@ -326,6 +365,10 @@
 				5956657B19B62F4600D805FF /* Info.plist */,
 				5956657C19B62F4600D805FF /* main.m */,
 				5956659A19B62F9500D805FF /* IJSVGExample-Prefix.pch */,
+				594385B2306C1C7E006A5F63 /* dropshadow-nested-transforms.svg */,
+				594385B4306C1C7E006A5F63 /* dropshadow-chains-units.svg */,
+				594385B6306C1C7E006A5F63 /* dropshadow-clipping-masks.svg */,
+				594385B8306C1C7E006A5F63 /* dropshadow-deep-nesting.svg */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -344,6 +387,19 @@
 				591F8ED52FF02F7D0012F5EB /* IJSVGColorParsingTests.m */,
 				591F8ED72FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m */,
 				591F8ED92FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m */,
+				594385AC306C080B006A5F63 /* IJSVGFilterTests.m */,
+				59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */,
+				5929C36B306DC05A003D5C0C /* IJSVGFilterTestHelpers.h */,
+				5929C36C306DC05A003D5C0C /* IJSVGFilterTestHelpers.m */,
+				5929C36E306DC05A003D5C0C /* IJSVGFilterMatrixTests.m */,
+				5929C370306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m */,
+				5929C372306DC0D7003D5C0C /* IJSVGMetalShadowTests.m */,
+				5929C374306DC16E003D5C0C /* IJSVGFilterBatchTests.m */,
+				5929C377306DC63E003D5C0C /* IJSVGFilterSamplerTests.m */,
+				5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */,
+				59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */,
+				59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */,
+				59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -417,7 +473,8 @@
 		5956656F19B62F4600D805FF /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 2700;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2720;
 				ORGANIZATIONNAME = "Curtis Hard";
 				TargetAttributes = {
 					5956657619B62F4600D805FF = {
@@ -480,9 +537,13 @@
 				59D6B1A3284F669B0058DE6B /* pattern-alignment.svg in Resources */,
 				5901B73E282818CA00290525 /* canonical.svg in Resources */,
 				593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */,
+				59FC3A73306FE5DC0028BEAC /* man-bowing-color-light.svg in Resources */,
 				5911682C2854CB7000678392 /* couchdb.svg in Resources */,
+				5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */,
 				5901B747282818CA00290525 /* pcolormesh.svg in Resources */,
+				594385B5306C1C7E006A5F63 /* dropshadow-chains-units.svg in Resources */,
 				590C87F1201FBF27004A1554 /* AJ_Digital_Camera.svg in Resources */,
+				594385B3306C1C7E006A5F63 /* dropshadow-nested-transforms.svg in Resources */,
 				59B5E3F9284E5EA60050CC73 /* image.svg in Resources */,
 				59316D31282901F5003C01AA /* errorbar_basic.svg in Resources */,
 				59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */,
@@ -508,6 +569,7 @@
 				5956658519B62F4600D805FF /* MainMenu.xib in Resources */,
 				59D6B1A5284F67FC0058DE6B /* gump-bench.svg in Resources */,
 				5901B746282818CA00290525 /* shape.svg in Resources */,
+				594385B7306C1C7E006A5F63 /* dropshadow-clipping-masks.svg in Resources */,
 				5901B749282818CA00290525 /* poison.svg in Resources */,
 				59432061285333B60086E3CF /* raleigh.svg in Resources */,
 				590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */,
@@ -518,6 +580,7 @@
 				5986308C19BA180E00CF15EA /* dashed.svg in Resources */,
 				5901B743282818CA00290525 /* clipper_edge.svg in Resources */,
 				5901B748282818CA00290525 /* noscale.svg in Resources */,
+				594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */,
 				595A69DE2856457E00525065 /* aspect-ratio.svg in Resources */,
 				5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */,
 				5901B73D282818CA00290525 /* contour_hatching.svg in Resources */,
@@ -555,13 +618,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				591F8ECE2FF01E140012F5EB /* IJSVGParserTests.m in Sources */,
+				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
+				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
+				5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */,
+				59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */,
+				5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */,
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
+				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
+				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
+				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
+				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
+				5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */,
+				5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */,
+				59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */,
 				591F8ECA2FF01DA30012F5EB /* IJSVGTestHelpers.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -633,6 +708,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -670,6 +746,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExample;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Release;
 		};
@@ -680,8 +757,15 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExample",
+				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -693,8 +777,15 @@
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CODE_SIGN_ENTITLEMENTS = IJSVGExample/IJSVGExample.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExample",
+				);
 				INFOPLIST_FILE = IJSVGExample/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -702,7 +793,7 @@
 		5956659819B62F4700D805FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -713,29 +804,49 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExampleTests",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
+				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "";
 			};
 			name = Debug;
 		};
 		5956659919B62F4700D805FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_ARC = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
 					"$(inherited)",
 				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/IJSVGExampleTests",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
+				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/IJSVGExample.app/Contents/MacOS/IJSVGExample";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "";
 			};
 			name = Release;
 		};

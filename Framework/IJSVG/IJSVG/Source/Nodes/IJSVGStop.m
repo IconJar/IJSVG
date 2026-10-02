@@ -6,13 +6,13 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGStop.h"
+#import <IJSVG/IJSVGStop.h>
 
 @implementation IJSVGStop
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeStopColor];
     [storage setBit:IJSVGNodeAttributeStopOpacity];

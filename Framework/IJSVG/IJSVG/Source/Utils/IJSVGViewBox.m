@@ -191,8 +191,8 @@ CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRec
     CGFloat scaleX = drawingRect.size.width / viewBox.size.width;
     CGFloat scaleY = drawingRect.size.height / viewBox.size.height;
 
-    // 'none' stretches each axis independently to fill the drawing rect, with no
-    // aspect-ratio preservation and nothing to align — just offset the origin.
+    // none stretches each axis independently to fill the drawing rect, with no
+    // aspect ratio preservation and nothing to align, just offset the origin.
     if(alignment == IJSVGViewBoxAlignmentNone) {
         CGAffineTransform transform = CGAffineTransformMakeScale(scaleX, scaleY);
         return CGAffineTransformConcat(transform,
@@ -245,7 +245,7 @@ CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox,
         CGContextClipToRect(ctx, drawingRect);
     }
 
-    // a missing, empty or identical viewBox maps 1:1 — there is nothing to scale
+    // a missing, empty or identical viewBox maps 1:1, there is nothing to scale
     // so we draw with an identity transform rather than skipping the draw.
     CGAffineTransform transform = CGAffineTransformIdentity;
     if(CGRectIsNull(viewBox) == NO && viewBox.size.width > 0.f &&
@@ -255,7 +255,7 @@ CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox,
         CGContextConcatCTM(ctx, transform);
     }
 
-    // hand the resolved per-axis scale to the drawing block (used to compute the
+    // hand the resolved per axis scale to the drawing block (used to compute the
     // backing scale factor before rendering).
     CGFloat scale[2] = { transform.a, transform.d };
     block(scale);

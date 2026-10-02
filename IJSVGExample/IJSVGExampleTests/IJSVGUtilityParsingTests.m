@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGBitFlags.h>
 #import <IJSVG/IJSVGBitFlags64.h>
 #import <IJSVG/IJSVGCommandParser.h>
@@ -228,7 +228,7 @@
     XCTAssertEqual(alignment, IJSVGViewBoxAlignmentXMaxYMid);
     XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceSlice);
     XCTAssertEqualObjects([IJSVGViewBox aspectRatioWithAlignment:alignment
-                                                    meetOrSlice:meetOrSlice], @"xMaxYMid slice");
+                                                     meetOrSlice:meetOrSlice], @"xMaxYMid slice");
     XCTAssertEqual([IJSVGViewBox alignmentForString:@"none"], IJSVGViewBoxAlignmentNone);
     XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"meet"], IJSVGViewBoxMeetOrSliceMeet);
     XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"unknown"], IJSVGViewBoxMeetOrSliceUnknown);
@@ -315,7 +315,7 @@
 - (void)testUnitPointComputesRelativeCoordinatesAndCopiesDeeply
 {
     IJSVGUnitPoint* point = [IJSVGUnitPoint pointWithX:[IJSVGUnitLength unitWithString:@"25%"]
-                                                    y:[IJSVGUnitLength unitWithString:@"10"]];
+                                                     y:[IJSVGUnitLength unitWithString:@"10"]];
     CGPoint computed = [point computeValue:CGSizeMake(200.f, 300.f)];
     IJSVGUnitPoint* copy = point.copy;
 
@@ -356,7 +356,7 @@
 - (void)testUnitRectComputesRelativeValuesAndConvertsCopies
 {
     IJSVGUnitPoint* origin = [IJSVGUnitPoint pointWithX:[IJSVGUnitLength unitWithString:@"10%"]
-                                                    y:[IJSVGUnitLength unitWithString:@"20%"]];
+                                                      y:[IJSVGUnitLength unitWithString:@"20%"]];
     IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:[IJSVGUnitLength unitWithString:@"50%"]
                                                 height:[IJSVGUnitLength unitWithString:@"25%"]];
     IJSVGUnitRect* rect = [IJSVGUnitRect rectWithOrigin:origin

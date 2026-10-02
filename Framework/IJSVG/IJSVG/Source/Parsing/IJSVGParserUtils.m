@@ -10,6 +10,43 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <string.h>
+#import <IJSVG/IJSVGUtils.h>
+
+void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
+{
+    char* buffer = IJSVGTimmedCharBufferCreate(value.UTF8String);
+    if(buffer == NULL) {
+        return;
+    }
+    size_t length = strcspn(buffer, " \t\r\n");
+    char* parameters = buffer + length;
+    if(*parameters != 0) {
+        *parameters++ = 0;
+        IJSVGTrimCharBuffer(parameters);
+    }
+    IJSVGBackgroundEnabled mode = IJSVGBackgroundEnabledUnspecified;
+    CGRect bounds = CGRectNull;
+    if(IJSVGCharBufferCompare(buffer, "inherit") && *parameters == 0) {
+        mode = IJSVGBackgroundEnabledInherit;
+    } else if(IJSVGCharBufferCompare(buffer, "accumulate") && *parameters == 0) {
+        mode = IJSVGBackgroundEnabledAccumulate;
+    } else if(IJSVGCharBufferCompare(buffer, "new")) {
+        if(*parameters == 0) {
+            mode = IJSVGBackgroundEnabledNew;
+            bounds = CGRectInfinite;
+        } else {
+            NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:@(parameters)];
+            if(numbers.count == 4 && numbers[2].doubleValue > 0 && numbers[3].doubleValue > 0) {
+                mode = IJSVGBackgroundEnabledNew;
+                bounds = CGRectMake(numbers[0].doubleValue, numbers[1].doubleValue,
+                                    numbers[2].doubleValue, numbers[3].doubleValue);
+            }
+        }
+    }
+    free(buffer);
+    node.backgroundEnabled = mode;
+    node.backgroundBounds = bounds;
+}
 
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
 {
@@ -25,8 +62,7 @@ NSString* IJSVGAttributeValue(
 
 BOOL IJSVGAttributeHasValue(
     NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute,
-    NSString* __autoreleasing* value)
+    IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
     NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
     if(attributeValue.length == 0) {
@@ -40,14 +76,13 @@ BOOL IJSVGAttributeHasValue(
 
 void IJSVGStoreStyleAttributes(
     IJSVGStyleSheetStyle* style,
-    uint64_t activeAttributes,
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength],
-    uint64_t* presentAttributes)
+    IJSVGBitFlags* activeAttributes,
+    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
     NSDictionary* properties = style.properties;
     for(NSString* key in properties) {
         NSUInteger attribute = IJSVGNodeAttributeForName(key);
-        if(attribute == NSNotFound || IJSVGAttributeMaskContains(activeAttributes, attribute) == NO) {
+        if(attribute == NSNotFound || [activeAttributes bitIsSet:(int)attribute] == NO) {
             continue;
         }
         NSString* value = properties[key];
@@ -55,7 +90,6 @@ void IJSVGStoreStyleAttributes(
             continue;
         }
         attributeValues[attribute] = value;
-        *presentAttributes |= (1ULL << attribute);
     }
 }
 
@@ -104,6 +138,15 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 2: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "dx")) {
+                return IJSVGNodeAttributeDX;
+            }
+            if(IJSVGAttributeNameEquals(attributeName, length, "dy")) {
+                return IJSVGNodeAttributeDY;
+            }
+            if(IJSVGAttributeNameEquals(attributeName, length, "in")) {
+                return IJSVGNodeAttributeIn;
+            }
             char c = attributeName[0];
             if(c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "id")) {
                 return IJSVGNodeAttributeID;
@@ -183,7 +226,13 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 6: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "result")) {
+                return IJSVGNodeAttributeResult;
+            }
             char c = attributeName[0];
+            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "filter")) {
+                return IJSVGNodeAttributeFilter;
+            }
             if(c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "height")) {
                 return IJSVGNodeAttributeHeight;
             }
@@ -260,12 +309,21 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 11: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "flood-color")) {
+                return IJSVGNodeAttributeFloodColor;
+            }
+            if(IJSVGAttributeNameEquals(attributeName, length, "filterUnits")) {
+                return IJSVGNodeAttributeFilterUnits;
+            }
             if(IJSVGAttributeNameEquals(attributeName, length, "xmlns:xlink")) {
                 return IJSVGNodeAttributeXMLNSXlink;
             }
             break;
         }
         case 12: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "stdDeviation")) {
+                return IJSVGNodeAttributeStdDeviation;
+            }
             char c = attributeName[0];
             if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-opacity")) {
                 return IJSVGNodeAttributeFillOpacity;
@@ -284,6 +342,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 13: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "flood-opacity")) {
+                return IJSVGNodeAttributeFloodOpacity;
+            }
             char c = attributeName[0];
             if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "clipPathUnits")) {
                 return IJSVGNodeAttributeClipPathUnits;
@@ -295,6 +356,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
         }
         case 14: {
             char c = attributeName[0];
+            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "primitiveUnits")) {
+                return IJSVGNodeAttributePrimitiveUnits;
+            }
             if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mix-blend-mode")) {
                 return IJSVGNodeAttributeBlendMode;
             }
@@ -419,7 +483,62 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeStopOpacity: @(IJSVGNodeAttributeStopOpacity),
             IJSVGAttributeHref: @(IJSVGNodeAttributeHref),
             IJSVGAttributeOverflow: @(IJSVGNodeAttributeOverflow),
-            IJSVGAttributeMarker: @(IJSVGNodeAttributeMarker)
+            IJSVGAttributeMarker: @(IJSVGNodeAttributeMarker),
+            IJSVGAttributeFilter: @(IJSVGNodeAttributeFilter),
+            IJSVGAttributeFilterUnits: @(IJSVGNodeAttributeFilterUnits),
+            IJSVGAttributePrimitiveUnits: @(IJSVGNodeAttributePrimitiveUnits),
+            IJSVGAttributeDX: @(IJSVGNodeAttributeDX),
+            IJSVGAttributeDY: @(IJSVGNodeAttributeDY),
+            IJSVGAttributeStdDeviation: @(IJSVGNodeAttributeStdDeviation),
+            IJSVGAttributeFloodColor: @(IJSVGNodeAttributeFloodColor),
+            IJSVGAttributeFloodOpacity: @(IJSVGNodeAttributeFloodOpacity),
+            IJSVGAttributeIn: @(IJSVGNodeAttributeIn),
+            IJSVGAttributeResult: @(IJSVGNodeAttributeResult),
+            IJSVGAttributeIn2: @(IJSVGNodeAttributeIn2),
+            IJSVGAttributeMode: @(IJSVGNodeAttributeMode),
+            IJSVGAttributeType: @(IJSVGNodeAttributeType),
+            IJSVGAttributeValues: @(IJSVGNodeAttributeValues),
+            IJSVGAttributeOperator: @(IJSVGNodeAttributeOperator),
+            IJSVGAttributeK1: @(IJSVGNodeAttributeK1),
+            IJSVGAttributeK2: @(IJSVGNodeAttributeK2),
+            IJSVGAttributeK3: @(IJSVGNodeAttributeK3),
+            IJSVGAttributeK4: @(IJSVGNodeAttributeK4),
+            IJSVGAttributeOrder: @(IJSVGNodeAttributeOrder),
+            IJSVGAttributeKernelMatrix: @(IJSVGNodeAttributeKernelMatrix),
+            IJSVGAttributeDivisor: @(IJSVGNodeAttributeDivisor),
+            IJSVGAttributeBias: @(IJSVGNodeAttributeBias),
+            IJSVGAttributeTargetX: @(IJSVGNodeAttributeTargetX),
+            IJSVGAttributeTargetY: @(IJSVGNodeAttributeTargetY),
+            IJSVGAttributeEdgeMode: @(IJSVGNodeAttributeEdgeMode),
+            IJSVGAttributeKernelUnitLength: @(IJSVGNodeAttributeKernelUnitLength),
+            IJSVGAttributePreserveAlpha: @(IJSVGNodeAttributePreserveAlpha),
+            IJSVGAttributeSurfaceScale: @(IJSVGNodeAttributeSurfaceScale),
+            IJSVGAttributeDiffuseConstant: @(IJSVGNodeAttributeDiffuseConstant),
+            IJSVGAttributeSpecularConstant: @(IJSVGNodeAttributeSpecularConstant),
+            IJSVGAttributeSpecularExponent: @(IJSVGNodeAttributeSpecularExponent),
+            IJSVGAttributeLightingColor: @(IJSVGNodeAttributeLightingColor),
+            IJSVGAttributeScale: @(IJSVGNodeAttributeScale),
+            IJSVGAttributeXChannelSelector: @(IJSVGNodeAttributeXChannelSelector),
+            IJSVGAttributeYChannelSelector: @(IJSVGNodeAttributeYChannelSelector),
+            IJSVGAttributeRadius: @(IJSVGNodeAttributeRadius),
+            IJSVGAttributeBaseFrequency: @(IJSVGNodeAttributeBaseFrequency),
+            IJSVGAttributeNumOctaves: @(IJSVGNodeAttributeNumOctaves),
+            IJSVGAttributeSeed: @(IJSVGNodeAttributeSeed),
+            IJSVGAttributeStitchTiles: @(IJSVGNodeAttributeStitchTiles),
+            IJSVGAttributeTableValues: @(IJSVGNodeAttributeTableValues),
+            IJSVGAttributeSlope: @(IJSVGNodeAttributeSlope),
+            IJSVGAttributeIntercept: @(IJSVGNodeAttributeIntercept),
+            IJSVGAttributeAmplitude: @(IJSVGNodeAttributeAmplitude),
+            IJSVGAttributeExponent: @(IJSVGNodeAttributeExponent),
+            IJSVGAttributeAzimuth: @(IJSVGNodeAttributeAzimuth),
+            IJSVGAttributeElevation: @(IJSVGNodeAttributeElevation),
+            IJSVGAttributeZ: @(IJSVGNodeAttributeZ),
+            IJSVGAttributePointsAtX: @(IJSVGNodeAttributePointsAtX),
+            IJSVGAttributePointsAtY: @(IJSVGNodeAttributePointsAtY),
+            IJSVGAttributePointsAtZ: @(IJSVGNodeAttributePointsAtZ),
+            IJSVGAttributeLimitingConeAngle: @(IJSVGNodeAttributeLimitingConeAngle),
+            IJSVGAttributeColorInterpolationFilters: @(IJSVGNodeAttributeColorInterpolationFilters),
+            IJSVGAttributeEnableBackground: @(IJSVGNodeAttributeEnableBackground)
         };
     });
     NSNumber* attribute = attributes[name];

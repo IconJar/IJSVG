@@ -1,6 +1,6 @@
 //
 //  IJSVGView.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 04/04/2017.
 //  Copyright © 2017 Curtis Hard. All rights reserved.

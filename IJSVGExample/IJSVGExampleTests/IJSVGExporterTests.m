@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 
 @interface IJSVGExporterTests : XCTestCase
 @end
@@ -70,7 +70,7 @@
                                               options:options];
     NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
     NSArray<NSXMLNode*>* rects = [document nodesForXPath:@"//*[local-name()='rect']"
-                                                  error:nil];
+                                                   error:nil];
 
     XCTAssertEqual(rects.count, 1);
     XCTAssertFalse([exportedString containsString:@"display=\"none\""]);

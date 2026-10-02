@@ -1,6 +1,6 @@
 //
-//  IJSVGColorList.m
-//  IconJar
+//  IJSVGTraitedColorStorage.m
+//  IJSVG
 //
 //  Created by Curtis Hard on 07/07/2019.
 //  Copyright © 2019 Curtis Hard. All rights reserved.

@@ -1,0 +1,107 @@
+Filter pipeline experiments — 2026-10-01
+Apple M1 Max; macOS 27.0.1 (26A434); Xcode Debug framework.
+
+Run after building with Xcode:
+  sh Benchmarks/run.sh /path/to/Build/Products/Debug
+Requires access to Metal; a sandbox with no Metal device cannot benchmark this.
+The script compiles standalone harnesses, leaving application targets unchanged.
+
+Batch preflight
+The existing transform-aware preflight now estimates collection bitmap storage,
+RGBA8 replay storage with at most 2x atlas packing overhead, the largest source,
+one megapixel of pending sources, a 44-byte/pixel Metal lease, and parameter
+headroom. Admission budget: 128 MiB; retained output cap: 8 megapixels.
+Pending work still flushes at one megapixel. Atlas packing recursively splits
+whole images to preserve convolution neighbors and bound padding.
+This is an estimate, not a process memory ceiling: CPU filter intermediates,
+Core Image caches, and simultaneous callers can consume additional memory.
+
+Car (fresh SVG each draw; parse excluded; two warmups, twelve timed draws;
+median milliseconds; explicit serial bypass vs batching):
+  pixels       serial    batched    maximum RGBA8 channel difference
+  512x341       43.942     29.926    0
+  900x600       75.935     51.383    0
+  1800x1200    235.841    202.765    2
+The 2x car now submits five multi-job blur batches per draw. The original
+four-megapixel retention cap rejected it. Timings are local observations,
+not cross-device guarantees. CarBatch.m also writes PNG and raw RGBA outputs.
+
+Wide blur
+FilterPipeline.m compares full resolution CI against high-quality half/quarter
+resampling, scaled-radius Gaussian blur, then bilinear upsampling. Fresh input
+identities prevent cached-output timings. Three warmups and fifteen alternating
+samples; sizes 128/512/1024; radii 6/12/24; sRGB and linearRGB; translucent edges,
+fractional crops and thin high-contrast lines. Output is premultiplied sRGB RGBA8.
+See blur-results.csv for timings and max/mean absolute channel differences.
+At 1024, half-resolution is commonly 10–20% faster, but differences reach
+11/255 (quarter: 24/255). Even radius 24 reaches 3/255 at half resolution.
+Decision: do not enable downsampling; it exceeds the existing 2/255 tolerance.
+Preserved the pre-existing direct Metal radius-12 extension. Expanded its
+reference comparisons through radius 12 in both spaces and orientations;
+unsupported-radius checks now cover 12.1 and 24.
+
+Filter chains
+OpacityChain.m compares six opacity-only matrix/clamp stages with fractional
+crops followed by source-over compositing, with/without the redundant RGB
+conversion pairs. Four warmups, thirty alternating samples, fresh input data.
+See opacity-results.csv. sRGB medians improve approximately 10–14%, with zero
+RGBA8 differences. LinearRGB benefit is inconsistent. The production change
+removes those conversion pairs only for identity RGB plus alpha scale in [0,1].
+Clamps, primitive crops, named results and compositing order remain intact.
+General matrix/composite fusion is intentionally not enabled: removing stage
+clamps or crossing color-space/crop boundaries can change SVG semantics.
+
+Validation
+Xcode build passes. All 23 selected batch, concurrency, filter-matrix and Metal
+blur tests pass across targeted runs. Updated large-batch coverage includes
+6, 20 and 40 filters (chunking, admitted larger output, over-budget fallback).
+
+Follow-up: compatible filter chains
+----------------------------------
+Run: sh Benchmarks/run-chains.sh /path/to/Build/Products/Debug
+
+The car contains only single Gaussian-blur filters. The mixed/complex corpus
+profile is saved in filter-chain-profile.csv. The supplied health-worker SVG
+adds 16 flood/blend/blur chains and seven inner-shadow variants. Its two double
+inner-shadow filters were among the largest inclusive filter costs. Inclusive
+profiles include cold calls, nested source drawing and collection overhead;
+they are not isolated GPU timings.
+
+Implemented a narrow simplification in IJSVGFilterGraph: normal blending of
+SourceGraphic over an explicitly named, zero-opacity flood is an identity when
+both filter and primitive crops are pixel-aligned and the blend uses sRGB.
+The compositor and its color conversions are omitted; primitive-region
+calculation, crop, named-result retention and later operations are preserved.
+Reserved source-name collisions, nonnormal blends, nontransparent floods,
+fractional crops and linearRGB retain the previous evaluator.
+
+Why the guards matter: CI can coalesce adjacent crops when the compositor is
+removed. Fractional crops accumulate edge coverage, unlike integral crops.
+Repeated linearRGB compositions also accumulated a 3/255 rounding difference
+when their intermediate conversion was removed, so those are excluded.
+A separate tint/atop fusion experiment was discarded: inconsistent speed gains
+and a concurrent reference comparison outside the existing 2/255 tolerance.
+
+Final repeated color/opacity/compositing benchmark: 24 overlapping filters,
+three warmups, 21 timed samples per variant, alternating order in one process,
+fresh SVG each draw, parsing excluded. Apple M1 Max, Debug framework.
+See color-chain-results.csv for the complete measurements.
+  sRGB size    reference ms    optimized ms    max RGBA8 difference
+  32              7.165           5.111             0
+  64              9.416           6.474             1
+  128            10.915           9.183             1
+  256            22.223          21.459             1
+This synthetic workload improves 16–31% at 32–128 pixels; it is not a claim
+about every SVG. linearRGB selects the original path and matches exactly.
+
+health-worker-color-light.svg is included as a regression/benchmark fixture.
+It matches reference pixels exactly at 32,64,128,256,512,1024. Its relevant
+crops are fractional, so this optimization deliberately does not apply; no
+speedup is claimed for that asset. See health-worker-chain-results.csv.
+
+Validation: Xcode build passes and all 33 selected inner-shadow, Metal-shadow,
+filter-matrix and concurrency tests pass. The standalone comparison additionally
+checked 120 size/recipe combinations (two color spaces, orientations, explicit
+regions, named branches, opaque floods, multiply blends and source collisions).
+The final sRGB-only guard is further verified by the eight alternating color
+chain comparisons, including zero optimized operations in linearRGB cases.

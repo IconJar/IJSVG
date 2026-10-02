@@ -10,6 +10,7 @@
 #define IJSVGUmbrella_h
 
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGCommandClose.h>
 #import <IJSVG/IJSVGCommandCurve.h>
 #import <IJSVG/IJSVGCommandEllipticalArc.h>
@@ -26,10 +27,8 @@
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>
-#import <IJSVG/IJSVGPatternLayer.h>
-#import <IJSVG/IJSVGStrokeLayer.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGView.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
 
-#endif /* IJSVGUmbrella_h */
+#endif // IJSVGUmbrella_h

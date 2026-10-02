@@ -1,6 +1,6 @@
 //
 //  IJSVGUtils.h
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
@@ -10,13 +10,9 @@
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <Foundation/Foundation.h>
-#import <QuartzCore/QuartzCore.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 NS_ASSUME_NONNULL_BEGIN
-
-@protocol IJSVGBasicLayer;
-
-typedef void (^IJSVGLayerWalkBlock)(CALayer<IJSVGBasicLayer>* layer, BOOL* stop);
 
 @interface IJSVGUtils : NSObject
 
@@ -30,8 +26,6 @@ CGFloat IJSVGAngle(CGPoint a, CGPoint b);
 CGFloat IJSVGRadiansToDegrees(CGFloat radians);
 CGFloat IJSVGDegreesToRadians(CGFloat degrees);
 BOOL IJSVGIsValidContextSize(CGSize size);
-void IJSVGRecursivelyWalkLayer(CALayer<IJSVGBasicLayer>* layer,
-                               IJSVGLayerWalkBlock block);
 
 // These are expensive to create and are hit on every offscreen pass,
 // so they are created lazily once and reused. The returned reference is owned
@@ -62,7 +56,6 @@ NSString* IJSVGShortFloatString(CGFloat f);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
-BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (IJSVGCommandType)typeForCommandChar:(char)commandChar;
 + (CGFloat*)commandParameters:(NSString*)command
                         count:(NSInteger*)count;
@@ -85,8 +78,12 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
 + (CGFloat)angleBetweenPointA:(NSPoint)point
                        pointb:(NSPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
++ (NSArray<NSString*>*)defURLs:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string
-    fallBackForPercent:(CGFloat)viewBox;
+   fallBackForPercent:(CGFloat)viewBox;
+
+// Parses a complete SVG number list, malformed values, infinities or NaNs return an empty array.
++ (NSArray<NSNumber*>*)numbersFromString:(NSString*)string;
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length;
 + (CGFloat*)scanFloatsFromCString:(const char*)buffer
@@ -100,12 +97,9 @@ BOOL IJSVGIsSVGLayer(CALayer* layer);
                              size:(NSInteger*)length;
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path;
 
-+ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
-+ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
-+ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule;
++ (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
++ (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
-+ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap;
-+ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin;
 
 + (NSImage*)resizeImage:(NSImage*)anImage
                  toSize:(CGSize)size;

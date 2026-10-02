@@ -42,11 +42,27 @@ void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
 IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                                                          NSUInteger* count)
 {
+    BOOL valid;
+    return IJSVGParsingMethodParseStringWithValidation(string, count, &valid);
+}
+
+IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string,
+                                                                       NSUInteger* count,
+                                                                       BOOL* valid)
+{
+    *valid = YES;
+    *count = 0;
+    if(string == NULL) {
+        *valid = NO;
+        return NULL;
+    }
     const char* charString = string;
     unsigned long length = strlen(string);
-    char* buffer = (char*)calloc(sizeof(char), length);
+    char* buffer = (char*)calloc(sizeof(char), length + 1);
     char* originBuffer = buffer;
     int bufferIndex = 0;
+    char quote = 0;
+    BOOL escaped = NO;
     
     const size_t defBufferSize = 5;
     size_t currentBufferSize = defBufferSize;
@@ -60,9 +76,32 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
     for(int i = 0; i < length; i++) {
         char currentChar = *charString++;
         
-        // start of params - store the command name as its current in the buffer
+        // Quoted parameters can contain parentheses without ending the method.
+        if(quote != 0) {
+            *buffer++ = currentChar;
+            bufferIndex++;
+            if(escaped) {
+                escaped = NO;
+            } else if(currentChar == '\\') {
+                escaped = YES;
+            } else if(currentChar == quote) {
+                quote = 0;
+            }
+            continue;
+        }
+        if(method != NULL && (currentChar == '\'' || currentChar == '"')) {
+            quote = currentChar;
+            *buffer++ = currentChar;
+            bufferIndex++;
+            continue;
+        }
+
+        // Start parameters and retain the method name.
         if(currentChar == '(') {
-            // rest the pointer to beginning
+            if(method != NULL) {
+                *valid = NO;
+            }
+            // Reset the pointer to the beginning.
             buffer = originBuffer;
             
             //write here
@@ -70,7 +109,12 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                 method = IJSVGParsingStringMethodCreate();
                 method->name = (char*)calloc(sizeof(char),bufferIndex+1);
                 memcpy(method->name, buffer, sizeof(char)*bufferIndex);
-                IJSVGTrimCharBuffer(method->name);
+                if(bufferIndex != 0) {
+                    IJSVGTrimCharBuffer(method->name);
+                }
+                if(method->name[0] == '\0') {
+                    *valid = NO;
+                }
             }
             
             // write null up until the limit we reached
@@ -79,7 +123,7 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
             continue;
         }
         
-        // end of params - store the params into the buffer
+        // end of params, store the params into the buffer
         if(currentChar == ')') {
             // rest the pointer to beginning
             buffer = originBuffer;
@@ -89,7 +133,9 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
             if(method != NULL) {
                 method->parameters = (char*)calloc(sizeof(char),bufferIndex+1);
                 memcpy(method->parameters, buffer, sizeof(char)*bufferIndex);
-                IJSVGTrimCharBuffer(method->parameters);
+                if(bufferIndex != 0) {
+                    IJSVGTrimCharBuffer(method->parameters);
+                }
                 
                 // now we can add
                 if(methodCount + 1 > currentBufferSize) {
@@ -98,6 +144,8 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
                 }
                 methods[methodCount++] = method;
                 method = NULL;
+            } else {
+                *valid = NO;
             }
             
             // write null up until the limit we reached
@@ -113,9 +161,16 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
     
     // left over
     if(method != NULL) {
+        *valid = NO;
         (void)IJSVGParsingStringMethodRelease(method), method = NULL;
     }
     
+    for(int i = 0; i < bufferIndex; i++) {
+        if(isspace((unsigned char)originBuffer[i]) == 0) {
+            *valid = NO;
+            break;
+        }
+    }
     buffer = originBuffer;
     *count = methodCount;
     (void)free(buffer), buffer = NULL;

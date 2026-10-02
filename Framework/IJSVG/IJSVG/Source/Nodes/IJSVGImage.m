@@ -1,6 +1,6 @@
 //
 //  IJSVGImage.m
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 28/05/2016.
 //  Copyright © 2016 Curtis Hard. All rights reserved.
@@ -23,13 +23,14 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeX];
     [storage setBit:IJSVGNodeAttributeY];
     [storage setBit:IJSVGNodeAttributeWidth];
     [storage setBit:IJSVGNodeAttributeHeight];
     [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
+    [storage setBit:IJSVGNodeAttributeFilter];
     return storage;
 }
 
@@ -73,7 +74,7 @@
         return;
     }
 
-    // set the image against the container — only if it was created from the data.
+    // set the image against the container, only if it was created from the data.
     NSImage* anImage = [[NSImage alloc] initWithData:data];
     if (anImage == nil) {
       return;

@@ -13,7 +13,7 @@
 
 + (IJSVGBitFlags*)allowedAttributes
 {
-    IJSVGBitFlags64* storage = [[IJSVGBitFlags64 alloc] init];
+    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage addBits:[super allowedAttributes]];
     [storage setBit:IJSVGNodeAttributeX];
     [storage setBit:IJSVGNodeAttributeY];
@@ -24,11 +24,12 @@
     return storage;
 }
 
+// Sets the SVG mask region and coordinate system defaults.
 - (void)setDefaults
 {
     [super setDefaults];
-    self.x = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
-    self.y = [IJSVGUnitLength unitWithPercentageFloat:-.2f];
+    self.x = [IJSVGUnitLength unitWithPercentageFloat:-.1f];
+    self.y = [IJSVGUnitLength unitWithPercentageFloat:-.1f];
     self.width = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
     self.height = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
     self.units = IJSVGUnitObjectBoundingBox;

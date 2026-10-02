@@ -1,0 +1,9 @@
+name,size,reference_ms,optimized_ms,max_difference,elided_blends
+color-opacity-blend-sRGB,32,7.165,5.111,0,576
+color-opacity-blend-sRGB,64,9.416,6.474,1,576
+color-opacity-blend-sRGB,128,10.915,9.183,1,576
+color-opacity-blend-sRGB,256,22.223,21.459,1,576
+color-opacity-blend-linearRGB,32,7.099,7.298,0,0
+color-opacity-blend-linearRGB,64,8.429,8.350,0,0
+color-opacity-blend-linearRGB,128,10.920,10.912,0,0
+color-opacity-blend-linearRGB,256,21.824,21.824,0,0

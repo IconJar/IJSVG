@@ -23,7 +23,7 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 // Datastreams work by setting up one stream of bits/memory per SVG
 // so that each SVG has a reusable memory block to read and parse paths into.
 // As its all linear and one SVG per thread, this saves alot of memory allocation
-// calls as we simple can just reuse the buffer that already exists - this also
+// calls as we simple can just reuse the buffer that already exists, this also
 // allows us to specify the default allocation size, so when parsing viewBox we
 // can simply allocate (4*sizeof(CGFloat)) instead of the default 50 slots
 IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void)
@@ -82,8 +82,8 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
     while (i < sLength) {
         char currentChar = *cString++;
 
-        // work out next char - cString already points at it after the
-        // post-increment above, so no need to step forwards and back
+        // work out next char, cString already points at it after the
+        // post increment above, so no need to step forwards and back
         char nextChar = (char)0;
         if(i < sLengthMinusOne) {
             nextChar = *cString;
@@ -107,7 +107,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
         // is a flag, consists of one value
         // if its invalid, make sure we free the memory
-        // and return null - or hell breaks lose
+        // and return null, or hell breaks lose
         if(isValid == YES && seq == kIJSVGPathDataSequenceTypeFlag) {
             if(bufferCount != 0 || (currentChar != '0' && currentChar != '1')) {
                 return NULL;
@@ -115,7 +115,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
             wantsEnd = YES;
         }
 
-        // could be a float like 5.334e-5 so dont break on the hypen
+        // A float exponent can be negative, so do not break on the minus sign
         if(wantsEnd && isE && nIsSign) {
             wantsEnd = false;
         }
@@ -151,9 +151,9 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
                     sizeof(CGFloat) * dataStream->floatCount);
             }
 
-            // add the float - for performance reasons, we can simply set the
+            // add the float, for performance reasons, we can simply set the
             // null value of the end of the string instead of nulling out
-            // with memset \0 - huzzah!
+            // with memset \0, huzzah!
             dataStream->charBuffer[bufferCount] = '\0';
             
             // lets check to make the buffer actually has a valid float, and
@@ -174,7 +174,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
         i++;
     }
 
-    // set commands found - only if there is one
+    // set commands found, only if there is one
     if(commandsFound != NULL) {
         *commandsFound = (NSInteger)round((double)counter / commandLength);
     }
@@ -194,6 +194,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 // inspired and modified from http://www.leapsecond.com/tools/fast_atof.c
 CGFloat IJSVGParseFloat(const char* buffer)
 {
+    const char* start = buffer;
     int fraction;
     double sign, value, scale;
 
@@ -235,10 +236,14 @@ CGFloat IJSVGParseFloat(const char* buffer)
             buffer += 1;
         }
         for (exponent = 0; VALID_DIGIT(*buffer); buffer += 1) {
-            exponent = exponent * 10 + (*buffer - '0');
+            if(exponent <= 308) {
+                exponent = exponent * 10 + (*buffer - '0');
+            }
         }
         if(exponent > 308) {
-            exponent = 308;
+            // Preserve overflow and subnormal values instead of silently clamping
+            // the exponent. Keep the fast conversion for ordinary SVG numbers.
+            return (CGFloat)[[NSString stringWithUTF8String:start] doubleValue];
         }
         while (exponent >= 50) {
             scale *= 1E50;

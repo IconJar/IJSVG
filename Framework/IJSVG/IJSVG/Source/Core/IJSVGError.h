@@ -1,6 +1,6 @@
 //
 //  IJSVGError.h
-//  IJSVGExample
+//  IJSVG
 //
 //  Created by Curtis Hard on 16/09/2015.
 //  Copyright © 2015 Curtis Hard. All rights reserved.

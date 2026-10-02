@@ -1,6 +1,6 @@
 //
 //  IJSVGExporterPathInstruction.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 08/01/2017.
 //  Copyright © 2017 Curtis Hard. All rights reserved.
@@ -330,6 +330,10 @@ CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision)
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     IJSVGFloatingPointOptions options)
 {
+    // Path cleanup must not quantize coordinates when rounding is disabled.
+    if(options.round == NO) {
+        return;
+    }
     int precision = options.precision;
     CGFloat multiplier = IJSVGExporterPathPrecisionMultiplier(precision);
     CGFloat lowerMultiplier = IJSVGExporterPathPrecisionMultiplier(precision - 1);
@@ -814,6 +818,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 
     // keep track of the current point
     __block CGPoint currentPoint = CGPointZero;
+    __block CGPoint subpathStart = CGPointZero;
     NSMutableArray* instructions = [[NSMutableArray alloc] init];
 
     // create the path callback
@@ -825,11 +830,12 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         case kCGPathElementMoveToPoint: {
             // move to command
             instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                           dataCount:2];
+                                                                          dataCount:2];
             CGPoint point = pathElement->points[0];
             instruction.data[0] = point.x;
             instruction.data[1] = point.y;
             currentPoint = point;
+            subpathStart = point;
 
             [instructions addObject:instruction];
             break;
@@ -840,15 +846,15 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
             CGPoint point = pathElement->points[0];
             if(point.x == currentPoint.x) {
                 instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
-                                                                               dataCount:1];
+                                                                              dataCount:1];
                 instruction.data[0] = point.y;
             } else if(point.y == currentPoint.y) {
                 instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
-                                                                               dataCount:1];
+                                                                              dataCount:1];
                 instruction.data[0] = point.x;
             } else {
                 instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                               dataCount:2];
+                                                                              dataCount:2];
                 instruction.data[0] = point.x;
                 instruction.data[1] = point.y;
             }
@@ -863,7 +869,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
             CGPoint controlPoint = pathElement->points[0];
             CGPoint point = pathElement->points[1];
             instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Q'
-                                                                           dataCount:4];
+                                                                          dataCount:4];
             instruction.data[0] = controlPoint.x;
             instruction.data[1] = controlPoint.y;
             instruction.data[2] = point.x;
@@ -882,7 +888,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 
             currentPoint = point;
             instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'C'
-                                                                           dataCount:6];
+                                                                          dataCount:6];
             instruction.data[0] = controlPoint1.x;
             instruction.data[1] = controlPoint1.y;
             instruction.data[2] = controlPoint2.x;
@@ -895,9 +901,11 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         }
 
         case kCGPathElementCloseSubpath: {
+            // Closing returns to the subpath start before any following H/V decision.
+            currentPoint = subpathStart;
             // close command
             instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                           dataCount:0];
+                                                                          dataCount:0];
             [instructions addObject:instruction];
             break;
         }
@@ -907,7 +915,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     // apply the
     CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
 
-    // remove last instruction if it was Z -> M
+    // remove last instruction if it was Z to M
     IJSVGExporterPathInstruction* lastInstruction = instructions.lastObject;
     if(lastInstruction.instruction == 'M' || lastInstruction.instruction == 'm') {
         if(instructions.count >= 2) {

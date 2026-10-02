@@ -1,0 +1,33 @@
+<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left: a hard filter boundary. Middle: clip after nested filters.
+       Right: a mask and group opacity after nested shadows. -->
+  <defs>
+    <filter id="tight" filterUnits="userSpaceOnUse" x="25" y="30" width="110" height="115">
+      <feDropShadow dx="22" dy="16" stdDeviation="8" flood-color="#7c3aed" flood-opacity=".8"/>
+    </filter>
+    <filter id="wide" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="10" dy="10" stdDeviation="4" flood-color="#0f172a" flood-opacity=".6"/>
+    </filter>
+    <filter id="child" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="-8" dy="5" stdDeviation="3 0" flood-color="#0891b2" flood-opacity=".8"/>
+    </filter>
+    <clipPath id="cut"><rect x="-48" y="-40" width="85" height="95" rx="12"/></clipPath>
+    <mask id="bands" maskUnits="userSpaceOnUse" x="-65" y="-65" width="150" height="150">
+      <rect x="-65" y="-65" width="150" height="150" fill="white"/>
+      <rect x="5" y="-65" width="15" height="150" fill="black"/>
+    </mask>
+  </defs>
+  <g transform="translate(8 8)" filter="url(#tight)">
+    <rect x="35" y="40" width="85" height="80" rx="8" fill="#fb7185" filter="url(#child)"/>
+  </g>
+  <g transform="translate(285 88) rotate(18)" filter="url(#wide)" clip-path="url(#cut)">
+    <rect x="-45" y="-35" width="90" height="75" rx="10" fill="#fbbf24" filter="url(#child)"/>
+    <circle cx="25" cy="30" r="25" fill="#a78bfa"/>
+  </g>
+  <g transform="translate(495 88) rotate(-12)" filter="url(#wide)" mask="url(#bands)" opacity=".65">
+    <rect x="-40" y="-35" width="80" height="70" rx="12" fill="#86efac" filter="url(#child)"/>
+    <g transform="translate(20 25) rotate(35)" filter="url(#child)">
+      <rect x="-25" y="-18" width="50" height="36" fill="#fb7185" stroke="#9f1239" stroke-width="4"/>
+    </g>
+  </g>
+</svg>

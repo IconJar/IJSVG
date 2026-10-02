@@ -1,14 +1,13 @@
 //
 //  IJSVGUtils.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 30/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGLayer.h>
-#import <IJSVG/IJSVGShapeLayer.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
@@ -89,28 +88,7 @@ CGColorSpaceRef IJSVGDeviceRGBColorSpace(void) {
     return colorSpace;
 }
 
-static BOOL IJSVGRecursivelyWalkLayerAndReturnShouldStop(CALayer<IJSVGBasicLayer>* layer,
-                                                         IJSVGLayerWalkBlock block)
-{
-    BOOL stop = NO;
-    block(layer, &stop);
-    if(stop == YES) {
-        return YES;
-    }
 
-    for(CALayer<IJSVGBasicLayer>* sublayer in layer.sublayers) {
-        if(IJSVGRecursivelyWalkLayerAndReturnShouldStop(sublayer, block) == YES) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-void IJSVGRecursivelyWalkLayer(CALayer<IJSVGBasicLayer>* layer,
-                               IJSVGLayerWalkBlock block)
-{
-    IJSVGRecursivelyWalkLayerAndReturnShouldStop(layer, block);
-}
 
 BOOL IJSVGCharBufferIsHEX(char* buffer) {
     char c;
@@ -346,11 +324,6 @@ CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path)
     return point;
 }
 
-BOOL IJSVGIsSVGLayer(CALayer* layer)
-{
-    return [layer isKindOfClass:IJSVGLayer.class] ||
-        [layer isKindOfClass:IJSVGShapeLayer.class];
-}
 
 CGFloat IJSVGAngle(CGPoint a, CGPoint b)
 {
@@ -413,6 +386,59 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     // release the stuff
     (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
     return foundID;
+}
+
++ (NSArray<NSString*>*)defURLs:(NSString*)string
+{
+    const char* characters = string.UTF8String;
+    if(characters == NULL || strlen(characters) != [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return @[];
+    }
+    NSUInteger count = 0;
+    BOOL valid = NO;
+    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseStringWithValidation(characters, &count, &valid);
+    NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] init];
+    for(NSUInteger index = 0; valid && index < count; index++) {
+        IJSVGParsingStringMethod* method = methods[index];
+        if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
+            valid = NO;
+            break;
+        }
+        const char* parameters = method->parameters;
+        NSUInteger length = strlen(parameters);
+        BOOL quoted = length >= 2 && (parameters[0] == '\'' || parameters[0] == '"')
+            && parameters[length - 1] == parameters[0];
+        if(quoted) {
+            parameters++;
+            length -= 2;
+        }
+        if(length < 2 || parameters[0] != '#') {
+            valid = NO;
+            break;
+        }
+        for(NSUInteger offset = 1; offset < length; offset++) {
+            unsigned char character = (unsigned char)parameters[offset];
+            if(character < ' ' || character == '\x7f' || character == '\\'
+                || (quoted && character == parameters[-1])
+                || (!quoted && (isspace(character) || character == '(' || character == ')'
+                    || character == '\'' || character == '"'))) {
+                valid = NO;
+                break;
+            }
+        }
+        if(valid) {
+            NSString* identifier = [[NSString alloc] initWithBytes:parameters + 1
+                                                            length:length - 1
+                                                          encoding:NSUTF8StringEncoding];
+            if(identifier == nil) {
+                valid = NO;
+                break;
+            }
+            [identifiers addObject:identifier];
+        }
+    }
+    IJSVGParsingStringMethodsRelease(methods, count);
+    return valid ? identifiers : @[];
 }
 
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
@@ -603,6 +629,41 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
                                         size:count];
 }
 
++ (NSArray<NSNumber*>*)numbersFromString:(NSString*)string
+{
+    if(string.length == 0) {
+        return @[];
+    }
+    // The path scanner deliberately tolerates separators and invalid text. Validate
+    // attribute grammar first so a partial value cannot replace an SVG default.
+    static NSRegularExpression* expression;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSString* number = @"[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?";
+        NSString* pattern = [NSString stringWithFormat:
+            @"\\A[ \\t\\r\\n]*%@(?:[ \\t\\r\\n]*,[ \\t\\r\\n]*%@|[ \\t\\r\\n]+%@)*[ \\t\\r\\n]*\\z",
+            number, number, number];
+        expression = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
+    });
+    if([expression firstMatchInString:string options:0 range:NSMakeRange(0, string.length)] == nil) {
+        return @[];
+    }
+    NSInteger count = 0;
+    CGFloat* values = [self scanFloatsFromCString:string.UTF8String
+                                       dataStream:IJSVGThreadManager.currentManager.pathDataStream
+                                             size:&count];
+    NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] initWithCapacity:count];
+    for(NSInteger index = 0; index < count; index++) {
+        if(isfinite(values[index]) == NO) {
+            free(values);
+            return @[];
+        }
+        [numbers addObject:@(values[index])];
+    }
+    free(values);
+    return numbers;
+}
+
 + (CGFloat*)scanFloatsFromString:(NSString*)string
                             size:(NSInteger*)length
 {
@@ -688,71 +749,40 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 
 #pragma mark CG conversions
 
-+ (CAShapeLayerLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle
++ (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle
 {
     switch (joinStyle) {
         default:
         case IJSVGLineJoinStyleMiter: {
-            return kCALineJoinMiter;
+            return kCGLineJoinMiter;
         }
         case IJSVGLineJoinStyleBevel: {
-            return kCALineJoinBevel;
+            return kCGLineJoinBevel;
         }
         case IJSVGLineJoinStyleRound: {
-            return kCALineJoinRound;
+            return kCGLineJoinRound;
         }
     }
 }
 
-+ (CAShapeLayerLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle
++ (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle
 {
     switch (capStyle) {
         default:
         case IJSVGLineCapStyleButt: {
-            return kCALineCapButt;
+            return kCGLineCapButt;
         }
         case IJSVGLineCapStyleRound: {
-            return kCALineCapRound;
+            return kCGLineCapRound;
         }
         case IJSVGLineCapStyleSquare: {
-            return kCALineCapSquare;
+            return kCGLineCapSquare;
         }
     }
 }
 
-+ (CAShapeLayerFillRule)CGFillRuleForWindingRule:(IJSVGWindingRule)rule
-{
-    switch (rule) {
-        case IJSVGWindingRuleEvenOdd: {
-            return kCAFillRuleEvenOdd;
-        }
-        default: {
-            return kCAFillRuleNonZero;
-        }
-    }
-}
 
-+ (CGLineCap)CGLineCapForCALineCap:(CAShapeLayerLineCap)lineCap
-{
-    if([lineCap isEqualToString:kCALineCapButt]) {
-        return kCGLineCapButt;
-    }
-    if([lineCap isEqualToString:kCALineCapRound]) {
-        return kCGLineCapRound;
-    }
-    return kCGLineCapSquare;
-}
 
-+ (CGLineJoin)CGLineJoinForCALineJoin:(CAShapeLayerLineCap)lineJoin
-{
-    if([lineJoin isEqualToString:kCALineJoinBevel]) {
-        return kCGLineJoinBevel;
-    }
-    if([lineJoin isEqualToString:kCALineJoinMiter]) {
-        return kCGLineJoinMiter;
-    }
-    return kCGLineJoinRound;
-}
 
 + (NSImage*)resizeImage:(NSImage*)anImage
                  toSize:(CGSize)size

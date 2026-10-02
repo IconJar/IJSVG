@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 
 IJSVGNode* IJSVGTestNode(NSString* name, NSString* identifier,
                          NSArray<NSString*>* classes)
@@ -43,7 +43,7 @@ IJSVG* IJSVGTestSVGObject(NSString* svgString)
 {
     NSError* error = nil;
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:svgString
-                                           error:&error];
+                                            error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
     return svg;
@@ -64,7 +64,7 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
 {
     NSError* error = nil;
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:svgString
-                                           error:&error];
+                                            error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
 

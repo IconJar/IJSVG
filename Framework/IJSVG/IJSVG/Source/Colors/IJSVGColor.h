@@ -1,6 +1,6 @@
 //
 //  IJSVGColor.h
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 31/08/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
