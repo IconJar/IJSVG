@@ -43,7 +43,7 @@ typedef struct {
     double x, y, z;
 } IJSVGLightingVector;
 
-// Keep surface sampling separate from the light and reflection equations.
+// Use nearby opacity values to find the surface direction.
 static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSampler* sampler,
                                                              NSInteger x, NSInteger y, double dx,
                                                              double dy, IJSVGLightingParameters parameters)
@@ -53,8 +53,8 @@ static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSa
     BOOL top = y - dy < CGRectGetMinY(parameters.inputRegion),
          bottom = y + dy >= CGRectGetMaxY(parameters.inputRegion);
     double gx = 0, gy = 0, wx = 0, wy = 0;
-    // Interior derivatives share four corner samples between both axes.
-    // Keep one sided sampling for boundaries and narrow input regions.
+    // Reuse corner samples when the pixel is away from the edges.
+    // At an edge only use samples that are inside the image.
     if(!left && !right && !top && !bottom) {
         double topLeft = IJSVGFilterSamplerValue(sampler, x - dx, y - dy, 3);
         double topRight = IJSVGFilterSamplerValue(sampler, x + dx, y - dy, 3);
@@ -68,7 +68,7 @@ static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSa
         gy = (bottomLeft - topLeft) + 2 * (bottomMiddle - topMiddle) + (bottomRight - topRight);
         wx = wy = 4;
     } else {
-        // Sobel derivatives with one sided differences on each boundary.
+        // Measure the change in opacity along each edge.
         for(int j = -1; j <= 1; j++) {
             if((j < 0 && top) || (j > 0 && bottom)) {
                 continue;
@@ -165,7 +165,7 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
 
 static IJSVGLightingVector IJSVGLightingColor(NSColor* color, IJSVGFilterContext* context)
 {
-    // Lighting uses a constant color; color match one pixel instead of the full extent.
+    // The light has one color so only one pixel needs color conversion.
     CIImage* flood = [context floodWithColor:color
                                      opacity:1];
     float colorValues[4] = { 0 };

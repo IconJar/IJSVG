@@ -15,7 +15,7 @@
              edgeMode:(NSString*)edgeMode
               context:(IJSVGFilterContext*)context;
 
-// Use for alpha images whose RGB channels are already zero.
+// Use this for images that only contain opacity values.
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
              edgeMode:(NSString*)edgeMode

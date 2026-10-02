@@ -69,8 +69,8 @@
     }
     CGSize units = context.pixelUnits;
     CGRect inputRegion = input.extent;
-    // CIDisplacementDistortion uses a grayscale texture. SVG selects separate,
-    // unpremultiplied channels for x and y, so that filter is not equivalent.
+    // SVG uses separate color channels to move pixels in each direction.
+    // The Core Image displacement filter uses one gray value so it cannot do the same job.
     return [context mapImage:input
                        other:other
                    operation:^(const float* src, const float* map, float* dst, NSInteger w, NSInteger h) {

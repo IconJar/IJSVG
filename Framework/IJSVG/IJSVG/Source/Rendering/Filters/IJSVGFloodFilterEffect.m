@@ -17,6 +17,7 @@
                              region:(CGRect)region
                             context:(IJSVGFilterContext*)context
 {
+    // Opacity can be a number or a percentage. Use full opacity if it is invalid.
     NSString* value = [primitive.parameters[IJSVGAttributeFloodOpacity]
         stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
     NSString* number = [value hasSuffix:@"%"] ? [value substringToIndex:value.length - 1] : value;

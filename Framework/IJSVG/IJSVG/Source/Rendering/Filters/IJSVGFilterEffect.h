@@ -8,9 +8,9 @@
 
 #import <IJSVG/IJSVGFilterContext.h>
 
-// Stateless effects accept resolved CIImage inputs and return a lazy CIImage.
-// Single input effects use inputs[0], binary effects use inputs[0...1], and
-// merge consumes the entire ordered array. The graph owns final region clipping.
+// Effects read their input images and return a Core Image result.
+// Most effects use one or two inputs. Merge uses all inputs in order.
+// The filter graph crops the final result.
 @interface IJSVGFilterEffect : NSObject
 + (instancetype)effectForType:(IJSVGNodeType)type;
 - (BOOL)requiresSupersamplingForPrimitive:(IJSVGFilterPrimitive*)primitive;

@@ -24,11 +24,13 @@
         deviation = CGSizeMake(2, 2);
     }
     IJSVGGaussianBlurFilterEffect* blur = [IJSVGGaussianBlurFilterEffect effectForType:IJSVGNodeTypeFilterGaussianBlur];
+    // Blur the opacity to get the shadow shape.
     CIImage* blurred = [blur blurImage:[context alphaForImage:input]
                              deviation:deviation
                               edgeMode:IJSVGStringNone
                              alphaOnly:YES
                                context:context];
+    // Move the shadow away from the original image.
     CIImage* offset = [context offsetImage:blurred
                                         dx:[primitive numberForParameter:IJSVGAttributeDX
                                                             defaultValue:2]
@@ -38,6 +40,7 @@
                                                                                                   inputs:@[]
                                                                                                   region:region
                                                                                                  context:context];
+    // Give the shadow its color and draw the original image over it.
     CIImage* colored = [flood imageByApplyingFilter:@"CISourceInCompositing"
                                 withInputParameters:@{
         kCIInputBackgroundImageKey: offset

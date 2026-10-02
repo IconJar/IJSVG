@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGFilterContext.h>
 
+// Read shader text from the framework bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)
 {
     NSBundle* bundle = [NSBundle bundleForClass:IJSVGFilterContext.class];
@@ -30,7 +31,7 @@ BOOL IJSVGFilterValidRect(CGRect rect)
         !CGRectIsEmpty(rect);
 }
 
-// Prepare pixel bounds once per effect, rather than once per sample and channel.
+// Find the pixel limits once so each sample can reuse them.
 IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height,
     CGRect region, NSInteger edgeMode)
 {
@@ -66,8 +67,7 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
         x = MIN(right, MAX(left, x));
         y = MIN(bottom, MAX(top, y));
     } else if(sampler->edgeMode == 2) {
-        // Interior samples already have valid coordinates. Avoid remainder
-        // calculations for the common case while retaining periodic edges.
+        // Only wrap coordinates that fall outside the image.
         if(x < left || x > right) {
             x = left + fmod(fmod(x - left, width) + width, width);
         }
@@ -75,7 +75,7 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
             y = top + fmod(fmod(y - top, height) + height, height);
         }
     } else if(x < left - 1. || x >= right + 1. || y < top - 1. || y >= bottom + 1.) {
-        // Reject distant coordinates before converting them to integer indices.
+        // Reject distant samples before turning their positions into array indexes.
         return NO;
     }
     xs[0] = floor(x);
@@ -91,7 +91,7 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
             xs[i] = MIN(right, MAX(left, xs[i]));
             ys[i] = MIN(bottom, MAX(top, ys[i]));
         } else if(sampler->edgeMode == 2) {
-            // Coordinates are already wrapped; only the next neighbour can cross the edge.
+            // Only the next pixel can cross the edge after wrapping.
             xs[i] = xs[i] > right ? xs[i] - width : xs[i];
             ys[i] = ys[i] > bottom ? ys[i] - height : ys[i];
         }
@@ -99,6 +99,7 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
     return YES;
 }
 
+// Blend nearby pixels to sample a position between pixel centers.
 float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, NSUInteger channel)
 {
     NSInteger xs[2], ys[2];
@@ -119,6 +120,7 @@ float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFl
     return value;
 }
 
+// Reuse the same sample positions for all four channels.
 void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, float pixel[4])
 {
     double values[4] = { 0 };
@@ -153,13 +155,13 @@ float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height, 
 
 void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(NSInteger, NSInteger))
 {
-    // Small icons are cheaper to evaluate directly. Larger independent CPU loops
-    // use row bands; vImage convolutions keep their own internal scheduling.
+    // Process small images directly.
+    // Split larger images into rows that can run at the same time.
     if(width * height < 65536 || height < 2) {
         operation(0, height);
         return;
     }
-    // Short, wide images still need enough bands to occupy the worker queue.
+    // Use smaller groups of rows for short images so more workers can help.
     const NSInteger rowsPerBand = height < 128 ? MAX(1, height / 8) : 32;
     size_t bands = (height + rowsPerBand - 1) / rowsPerBand;
     dispatch_apply(bands, dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), ^(size_t band) {
@@ -185,7 +187,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     size_t width = self.extent.size.width, height = self.extent.size.height;
     NSMutableData* data = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
-    // Flip in the lazy image graph so rendering writes directly in CPU row order.
+    // Flip the image so the CPU receives rows in the expected order.
     CGFloat flipY = CGRectGetMinY(self.extent) + CGRectGetMaxY(self.extent);
     image = [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, 0.f, flipY)];
     [self.context render:image
@@ -207,11 +209,11 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
                                            format:kCIFormatRGBAf
                                        colorSpace:space];
     CGColorSpaceRelease(space);
-    // Keep the existing pixel storage and restore image coordinates without a row copy.
+    // Restore the image position without copying the pixels.
     return [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, 0.f, self.extent.size.height)];
 }
 
-// Only effects without an equivalent Core Image operation materialize pixels.
+// Read pixels only when Core Image cannot perform the effect.
 - (CIImage*)mapImage:(CIImage*)image
                other:(CIImage*)other
            operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation
@@ -224,8 +226,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [self imageForPixels:output];
 }
 
-// Color matching remains part of the lazy Core Image graph. No bitmap readback
-// is needed to evaluate a primitive in its SVG interpolation space.
+// Convert colors through Core Image without reading pixels back to the CPU.
 
 - (CIImage*)imageInPrimitiveColorSpace:(CIImage*)image
 {

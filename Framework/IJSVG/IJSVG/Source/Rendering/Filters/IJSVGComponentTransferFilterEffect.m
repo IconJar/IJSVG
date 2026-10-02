@@ -20,7 +20,7 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
 {
     const IJSVGComponentTransferFunction* functions = configuration.bytes;
     const double* values = tables.bytes;
-    // Batch enough pixels to amortize vForce dispatch while bounding scratch storage.
+    // Process small groups of pixels to keep memory use low.
     NSInteger capacity = MIN(w * h, 4096);
     NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 3 * sizeof(double)];
     double* channel = scratch.mutableBytes;
@@ -45,7 +45,7 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
             } else if(f.type == 3) {
                 vDSP_vsmsaD(channel, 1, &f.slope, &f.intercept, channel, 1, count);
             } else if((f.type == 1 || f.type == 2) && f.count > 0) {
-                // SVG tables have arbitrary lengths and discrete boundary rules.
+                // Look up each value using the SVG table rules.
                 for(NSInteger x = 0; x < count; x++) {
                     double v = channel[x];
                     if(f.type == 1) {
@@ -68,6 +68,7 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
     }
 }
 
+// Read the settings for each color channel and store their table values.
 static void IJSVGPrepareTransferFunctions(IJSVGFilterPrimitive* primitive,
                                           IJSVGComponentTransferFunction functions[4],
                                           NSMutableData* tables)
@@ -103,6 +104,7 @@ static void IJSVGPrepareTransferFunctions(IJSVGFilterPrimitive* primitive,
 
 }
 
+// Check whether Core Image can represent this channel function.
 static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f,
                                                 const double* tableValues,
                                                 CGFloat coefficients[4])
@@ -138,9 +140,8 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
     NSMutableData* tables = [[NSMutableData alloc] init];
     IJSVGPrepareTransferFunctions(primitive, functions, tables);
 
-    // CIColorPolynomial works on straight RGBA, like SVG component transfer.
-    // It exactly covers identity, linear, two entry tables, and cubic or lower
-    // integer gamma functions; arbitrary tables and exponents need the fallback.
+    // Use Core Image for functions that fit a simple polynomial.
+    // Other functions use the pixel calculation below.
     NSMutableDictionary* polynomial = [[NSMutableDictionary alloc] init];
     NSArray* coefficientKeys = @[@"inputRedCoefficients", @"inputGreenCoefficients",
                                  @"inputBlueCoefficients", @"inputAlphaCoefficients"];
@@ -165,8 +166,8 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
         }];
         return [context imageFromPrimitiveColorSpace:output];
     }
-    // A shared RGB exponent can use CIGammaAdjust, followed by a per channel
-    // affine adjustment. Alpha still follows its independent polynomial.
+    // A shared RGB exponent can use one gamma adjustment.
+    // Apply the remaining color changes and opacity separately.
     if(functions[0].type == 4 && functions[1].type == 4 && functions[2].type == 4 &&
         functions[0].exponent > 0 &&
         functions[0].exponent == functions[1].exponent && functions[0].exponent == functions[2].exponent &&

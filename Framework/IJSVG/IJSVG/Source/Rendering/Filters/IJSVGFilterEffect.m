@@ -52,6 +52,7 @@
 
 + (instancetype)effectForType:(IJSVGNodeType)type
 {
+    // Create one shared instance of each effect. Render data stays in the context.
     static NSDictionary<NSNumber*, IJSVGFilterEffect*>* effects;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

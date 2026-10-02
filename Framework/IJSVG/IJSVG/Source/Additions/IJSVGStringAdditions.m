@@ -1,6 +1,6 @@
 //
 //  IJSVGStringAdditions.m
-//  IconJar
+//  IJSVG
 //
 //  Created by Curtis Hard on 07/06/2019.
 //  Copyright © 2019 Curtis Hard. All rights reserved.

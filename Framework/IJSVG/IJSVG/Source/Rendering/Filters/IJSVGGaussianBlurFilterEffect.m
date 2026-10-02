@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <Accelerate/Accelerate.h>
 
+// Build blur weights and scale them so their total is one.
 static NSData* IJSVGFilterKernel(CGFloat sigma)
 {
     NSUInteger radius = sigma > 0.f ? (NSUInteger)ceil(3.f * MIN(sigma, 4096.f)) : 0;
@@ -36,7 +37,7 @@ static BOOL IJSVGApplyInterleavedBlurToPixels(const float* src, float* dst,
     if(nx == 1 && ny == 1) {
         return NO;
     }
-    // A single axis blur can write directly to the destination.
+    // A blur in one direction can write straight to the output.
     NSMutableData* temporary = nx > 1 && ny > 1 ? [NSMutableData dataWithLength:w * h * 4 * sizeof(float)] : nil;
     vImage_Buffer input = { (void*)src, h, w, w * 4 * sizeof(float) };
     vImage_Buffer output = { dst, h, w, w * 4 * sizeof(float) };
@@ -79,14 +80,14 @@ static BOOL IJSVGApplyInterleavedBlurToPixels(const float* src, float* dst,
 static void IJSVGApplyGaussianBlurToPixels(const float* src, float* dst, NSInteger w, NSInteger h,
                                            NSData* kernelX, NSData* kernelY, NSUInteger channels)
 {
-    // Direct RGBA convolution avoids eight strided channel copies for larger
-    // images. Long kernels and small icons are faster on the planar path.
+    // Process all color channels together for large images with short kernels.
+    // Small images and long kernels use one channel at a time.
     if(channels == 4 && w * h >= 65536 &&
         kernelX.length + kernelY.length <= 64 * sizeof(float) &&
         IJSVGApplyInterleavedBlurToPixels(src, dst, w, h, kernelX, kernelY)) {
         return;
     }
-    // Alpha only bitmaps are already planar, convolve directly into their output.
+    // Opacity images have one channel and can use the output directly.
     NSMutableData* plane = channels == 1 ? nil : [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* result = channels == 1 ? nil : [NSMutableData dataWithLength:plane.length];
     float* inPlane = channels == 1 ? (float*)src : plane.mutableBytes;
@@ -107,7 +108,7 @@ static void IJSVGApplyGaussianBlurToPixels(const float* src, float* dst, NSInteg
         vImage_Error error = vImageSepConvolve_PlanarF(&input, &output, workspace.mutableBytes, 0, 0,
             kernelX.bytes, kernelWidth, kernelY.bytes, kernelHeight, 0.f, 0.f, kvImageBackgroundColorFill);
         if(error == kvImageNoError) {
-            // Preserve the treatment by the scalar evaluator of nonfinite pixels.
+            // Replace invalid pixel values with zero.
             for(NSInteger i = 0; i < w * h; i++) {
                 if(!isfinite(outPlane[i])) {
                     outPlane[i] = 0.f;
@@ -148,8 +149,8 @@ static CIImage* IJSVGSmallKernelBlur(CIImage* image, NSData* kernelX, NSData* ke
 static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     IJSVGFilterContext* context)
 {
-    // Shadows need no RGB storage or color conversion. Keep the Core Image row
-    // order on both sides; the symmetric Gaussian kernels need no row flip.
+    // Shadows only need opacity values.
+    // The blur is symmetric so the rows do not need to be flipped.
     NSInteger w = context.extent.size.width, h = context.extent.size.height;
     NSMutableData* source = [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* output = [NSMutableData dataWithLength:source.length];
@@ -171,8 +172,8 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
 
 @implementation IJSVGGaussianBlurFilterEffect
 
-// A lazy separable convolution avoids the CPU readback between filter stages.
-// Limit the kernel length; unusually wide filters retain the vImage fallback.
+// Blur in two directions on the GPU without copying pixels to the CPU.
+// Very wide blurs use the CPU path.
 - (CIImage*)metalBlurImage:(CIImage*)image
           horizontalKernel:(NSData*)kernelX
             verticalKernel:(NSData*)kernelY
@@ -180,8 +181,8 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
                    context:(IJSVGFilterContext*)context
 {
     NSUInteger counts[] = { kernelX.length / sizeof(float), kernelY.length / sizeof(float) };
-    // Later primitives can move convolution onto a fractional sample grid.
-    // Keep their CPU rasterization boundary; accelerate standalone colour blurs.
+    // Only use this path for a single color blur.
+    // Later effects may need samples between pixels.
     if(alphaOnly || context.filter.primitives.count != 1 || !context.supportsMetalKernels ||
         counts[0] > 257 || counts[1] > 257 ||
         !IJSVGFilterValidRect(context.extent)) {
@@ -270,8 +271,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     }
     NSData* kernelX = IJSVGFilterKernel(sigmaX);
     NSData* kernelY = IJSVGFilterKernel(sigmaY);
-    // A nine tap convolution expresses small single axis or unequal axis blurs
-    // exactly, including the SVG axis with zero deviation, without a bitmap readback.
+    // Use Core Image directly when both blur kernels fit within nine values.
     if(kernelX.length <= 9 * sizeof(float) && kernelY.length <= 9 * sizeof(float)) {
         return IJSVGSmallKernelBlur(image, kernelX, kernelY, context);
     }
@@ -286,8 +286,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     if(alphaOnly) {
         return IJSVGAlphaBlur(image, kernelX, kernelY, context);
     }
-    // SVG supports independent deviations, including an exactly zero axis.
-    // Keep the separable fallback for cases the isotropic CI filter cannot express.
+    // Blur each direction separately when one blur radius cannot describe both.
     return [context mapImage:image
                        other:nil
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {

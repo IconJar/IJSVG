@@ -17,6 +17,7 @@
                             context:(IJSVGFilterContext*)context
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
+    // Repeat the input image only when it has valid bounds.
     return IJSVGFilterValidRect(input.extent) ? [input imageByApplyingFilter:@"CIAffineTile"
                                                          withInputParameters:@{
         kCIInputTransformKey: NSAffineTransform.transform

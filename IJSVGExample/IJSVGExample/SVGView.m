@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"pcolormesh.svg"];
+    return [IJSVG SVGNamed:@"Chessboard480DiagonalStripe"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

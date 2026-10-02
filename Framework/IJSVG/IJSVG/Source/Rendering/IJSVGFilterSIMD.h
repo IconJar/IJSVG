@@ -1,4 +1,12 @@
-// CPU filter kernels for renderer-owned RGBA8 sRGB bitmaps.
+//
+//  IJSVGFilterSIMD.h
+//  IJSVG
+//
+//  Created on 01/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
+// CPU filters for RGBA8 sRGB bitmaps owned by the renderer.
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 
@@ -12,9 +20,9 @@ BOOL IJSVGFilterSIMDUsesBackdropAddition(IJSVGFilter* filter);
 uint8_t IJSVGFilterSIMDEncodeLinearComponent(float component, float alpha,
                                              float coverage);
 
-// Both contexts must be renderer-owned RGBA8 sRGB bitmaps. Returns NULL when
-// the graph or pixel mapping requires the general evaluator. The caller owns
-// the returned image; neither input bitmap is modified.
+// Both contexts must be RGBA8 sRGB bitmaps owned by the renderer.
+// Return NULL if the graph or pixel positions need the general calculation.
+// The caller owns the returned image. Both input bitmaps stay unchanged.
 CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdrop,
                                        IJSVGFilterGraph* graph, CGRect region) CF_RETURNS_RETAINED;
 
@@ -23,9 +31,9 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
 CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source, IJSVGFilterGraph* graph,
                                          CGRect region) CF_RETURNS_RETAINED;
 
-// Fused three-box kernel for RGBA float buffers. Each side is odd and <=501.
-// Transparent borders are retained through all passes. Buffers must be
-// separate and 16-byte aligned, as with renderer-owned NSMutableData storage.
+// Apply three box blurs to RGBA float buffers. Each size must be odd and at most 501.
+// Keep transparent borders through every pass. Use separate buffers whose
+// addresses are multiples of 16, like the NSMutableData buffers used by the renderer.
 BOOL IJSVGFilterSIMDThreeBoxBlur(const float* source, float* output,
                                  NSUInteger width, NSUInteger height,
                                  const NSUInteger sides[3]);

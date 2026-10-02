@@ -1,6 +1,6 @@
 //
-//  IJSVGStyle.m
-//  IJSVGExample
+//  IJSVGStyleSheetStyle.m
+//  IJSVG
 //
 //  Created by Curtis Hard on 03/09/2014.
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.

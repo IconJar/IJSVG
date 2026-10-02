@@ -14,8 +14,8 @@ static void IJSVGCompositePixels(const float* a, const float* b, float* dst,
                                  NSInteger w, NSInteger h, double k1, double k2,
                                  double k3, double k4)
 {
-    // Figma style inner shadows subtract blurred alpha from hard alpha.
-    // Vectorize this common case without changing premultiplied semantics.
+    // Subtract the blurred opacity from the original opacity to make an inner shadow.
+    // Process several values at once and keep colors within the opacity limit.
     if(k1 == 0 && k2 == -1 && k3 == 1 && k4 == 0) {
         vDSP_Length count = (vDSP_Length)w * h;
         float minimum = 0.f, maximum = 1.f;
@@ -26,7 +26,7 @@ static void IJSVGCompositePixels(const float* a, const float* b, float* dst,
         }
         return;
     }
-    // Batch double precision evaluation with bounded scratch storage.
+    // Process small groups of pixels to limit memory use.
     vDSP_Length total = (vDSP_Length)w * h * 4;
     vDSP_Length capacity = MIN(total, 4096);
     NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 3 * sizeof(double)];
@@ -56,6 +56,7 @@ static void IJSVGCompositePixels(const float* a, const float* b, float* dst,
     }
 }
 
+// Keep the parts of each image that do not overlap the other.
 static CIImage* IJSVGCompositeXor(CIImage* input, CIImage* other, IJSVGFilterContext* context)
 {
     CIImage* first = [context imageInPrimitiveColorSpace:input];
@@ -74,6 +75,7 @@ static CIImage* IJSVGCompositeXor(CIImage* input, CIImage* other, IJSVGFilterCon
     }]];
 }
 
+// Load and compile the shader once for all renders.
 static CIColorKernel* IJSVGCompositeArithmeticKernel(void)
 {
     static CIColorKernel* arithmeticKernel;
@@ -103,9 +105,8 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
                                  defaultValue:0];
     double k4 = [primitive numberForParameter:IJSVGAttributeK4
                                  defaultValue:0];
-    // Keep ordinary arithmetic in the lazy graph instead of reading float
-    // bitmaps back. Large/nonfinite coefficients retain double precision CPU
-    // evaluation; sample_t uses the same premultiplied channels as that path.
+    // Use Metal for small coefficients.
+    // Large or invalid coefficients need the more precise CPU calculation.
     BOOL boundedCoefficients = fabs(k1) <= 16 && fabs(k2) <= 16 && fabs(k3) <= 16
         && fabs(k4) <= 16;
     if(context.supportsMetalKernels && boundedCoefficients) {
@@ -121,10 +122,10 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
                 return [context imageFromPrimitiveColorSpace:result];
             }
         }
-        // Retain the CPU evaluator if Metal kernel creation is unavailable.
+        // Use the CPU path if Metal cannot create the kernel.
     }
-    // Nonnegative weighted sums are exactly expressible with opacity scaling
-    // and addition; keep signed/product arithmetic on the general path.
+    // Simple positive sums can use opacity changes and image addition.
+    // Other formulas use the general calculation.
     if(k1 == 0 && k4 == 0 && k2 >= 0 && k3 >= 0 && k2 + k3 <= 1) {
         CIImage* first = [[context imageInPrimitiveColorSpace:input]
             imageByApplyingFilter:@"CIColorMatrix"

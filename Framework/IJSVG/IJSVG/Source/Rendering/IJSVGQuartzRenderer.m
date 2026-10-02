@@ -47,19 +47,19 @@ static CGLineJoin IJSVGQuartzLineJoin(IJSVGLineJoinStyle style)
 static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
                                        IJSVGStyle* style)
 {
-    // work out line width
+    // Calculate the stroke width.
     CGFloat lineWidth = [node.strokeWidth computeValue:paint.frame.size.width];
 
     if(style.lineWidth != IJSVGInheritedFloatValue) {
         lineWidth = style.lineWidth;
     }
 
-    // work out line styles
+    // Read the stroke cap and join settings.
     IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
     IJSVGLineJoinStyle lineJoinStyle = node.lineJoinStyle;
     CGFloat miterLimit = node.strokeMiterLimit.value;
 
-    // use anything declared on the style
+    // Use the settings supplied by the style.
     if(style.lineCapStyle != IJSVGLineCapStyleNone &&
         style.lineCapStyle != IJSVGLineCapStyleInherit) {
         lineCapStyle = style.lineCapStyle;
@@ -70,12 +70,12 @@ static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
         lineJoinStyle = style.lineJoinStyle;
     }
 
-    // miter limit can be set via the style
+    // Use the style limit for sharp corners.
     if(style.miterLimit != IJSVGInheritedFloatValue) {
         miterLimit = style.miterLimit;
     }
 
-    // apply the properties
+    // Store the stroke settings.
     paint.lineWidth = lineWidth;
     paint.lineCap = IJSVGQuartzLineCap(lineCapStyle);
     paint.lineJoin = IJSVGQuartzLineJoin(lineJoinStyle);
@@ -87,7 +87,7 @@ static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
     }
     paint.opacity = strokeOpacity;
 
-    // dashing
+    // Set the dash pattern.
     paint.lineDashPhase = node.strokeDashOffset.value;
     if(node.strokeDashArrayCount != IJSVGInheritedIntegerValue) {
         paint.lineDashPattern = node.lineDashPattern;
@@ -98,15 +98,15 @@ static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
 static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 {
     CGRect frame = paint.frame;
-    // lets resize the paint as we have computed everything at this point
+    // Expand the frame to include the stroke.
     CGFloat increase = paint.lineWidth / 2.f;
     frame = CGRectInset(frame, -increase, -increase);
 
-    // now we know what to do, we need to transform the path
+    // Move the path to allow space for the stroke.
     CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
     CGPathRef path = CGPathCreateCopyByTransformingPath(paint.path, &transform);
 
-    // make sure we reset this back to zero
+    // Keep the path position relative to the new frame.
     paint.frame = (CGRect) {
         .origin = CGPointZero,
         .size = frame.size
@@ -139,7 +139,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 @synthesize style = _style;
 @synthesize renderingOptions = _renderingOptions;
 
-// Creates a paint builder with the standard rendering defaults.
+// Create the renderer with default settings.
 - (id)init
 {
     if((self = [super init]) != nil) {
@@ -151,7 +151,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return self;
 }
 
-// Keeps edits to returned options separate from the paint builder settings.
+// Return a copy so callers cannot change these settings directly.
 - (IJSVGRenderingOptions*)renderingOptions
 {
     return _renderingOptions.copy;
@@ -178,6 +178,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
              handler:(dispatch_block_t)handler
 {
     [self pushViewPort:viewPort];
+    // Restore the previous bounds even if drawing raises an exception.
     @try {
         handler();
     } @finally {
@@ -251,7 +252,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return paint;
 }
 
-// Builds node paints while respecting the filter rendering setting.
+// Build the paint and apply filters when they are enabled.
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
 {
     IJSVGPaint* paint = nil;
@@ -299,6 +300,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return paint;
 }
 
+// Choose the bounds used to turn relative sizes into points.
 - (CGRect)unitResolutionBoundsForNode:(IJSVGNode*)node
 {
     CGRect bounds = self.unitBounds;
@@ -326,6 +328,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return unit;
 }
 
+// Convert the SVG shape and its relative sizes into a Quartz path.
 - (CGPathRef)newResolvedPathForPathNode:(IJSVGPath*)node
 {
     CGRect bounds = [self unitResolutionBoundsForNode:node];
@@ -393,6 +396,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return path;
 }
 
+// Move the path to start at zero inside its paint bounds.
 - (CGPathRef)newPaintPathForResolvedPath:(CGPathRef)path
                                   bounds:(CGRect)pathBounds
 {
@@ -413,9 +417,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 {
     paint.path = path;
 
-    // note that we store the bounding box at this point, as it can be modified later
-    // with strokes, however, SVG spec defined bounding box is the path without strokes
-    // and without control points.
+    // Save the path bounds before adding the stroke.
+    // SVG bounds do not include the stroke or control points.
     paint.frame = pathBounds;
     paint.outerBoundingBox = pathBounds;
     paint.boundingBox = pathBounds;
@@ -460,19 +463,19 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                resolvedPath:(CGPathRef)paintPath
                          resolvedPathBounds:(CGRect)resolvedPathBounds
 {
-    // generic fill color
+    // Choose the fill type.
     IJSVGPaint* fillPaint = nil;
     IJSVGPaintFillType fillType = [IJSVGPaint fillTypeForFill:node.fill];
 
     switch(fillType) {
-        // just a generic fill color
+        // Fill with one color.
         default:
         case IJSVGPaintFillTypeColor: {
 
             IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
             NSColor* color = colorNode.color ?: NSColor.blackColor;
 
-            // could be an overall replaced fillColor from the style
+            // Use the fill color supplied by the style.
             if(_style.fillColor != nil) {
                 color = _style.fillColor;
             }
@@ -480,23 +483,20 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             if(colorNode.isNoneOrTransparent == YES) {
                 color = nil;
             } else {
-                // compute any color that may have been changed via the styles
+                // Apply any color replacement from the style.
                 NSColor* repColor = [self colorForColor:color
                                          matchingTraits:IJSVGColorUsageTraitFill];
                 color = repColor ?: color;
             }
 
-            // set the color against the paint, we cant just use fill paint due to how
-            // the stroke is position within the frame, we have to create another
-            // paint to draw the colour into!
+            // Use a separate shape for the fill so the stroke can sit around it.
             IJSVGShapePaint* shape = (IJSVGShapePaint*)[self drawableBasicPaintForPathNode:node
                                                                               resolvedPath:paintPath
                                                                         resolvedPathBounds:resolvedPathBounds];
             shape.fillColor = color.CGColor;
             CGRect shapeRect = shape.frame;
 
-            // reset back to 0, later on this will move in enough for the stroke
-            // to be half over the edge
+            // Start the fill at zero. The stroke spacing is added later.
             shapeRect.origin.x = 0.f;
             shapeRect.origin.y = 0.f;
             shape.frame = shapeRect;
@@ -504,7 +504,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             break;
         }
 
-        // pattern fill
+        // Fill with a pattern.
         case IJSVGPaintFillTypePattern: {
             fillPaint = [self drawablePatternPaintForPathNode:node
                                                       pattern:(IJSVGPattern*)node.fill
@@ -512,7 +512,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             break;
         }
 
-        // gradient fill
+        // Fill with a gradient.
         case IJSVGPaintFillTypeGradient: {
             fillPaint = [self drawableGradientPaintForPathNode:node
                                                       gradient:(IJSVGGradient*)node.fill
@@ -530,18 +530,18 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                 fromNode:(IJSVGPath*)node
 {
     paint.strokeStyle = strokePaint;
-    // we need to work out what type of fill we need for the paint
+    // Choose how to fill the stroke.
     IJSVGPaintFillType type = [IJSVGPaint fillTypeForFill:node.stroke];
 
     switch(type) {
-        // patterns
+        // Fill the stroke with a pattern.
         case IJSVGPaintFillTypePattern: {
             IJSVGPatternPaint* patternPaint = nil;
             patternPaint = [self drawableBasicPatternPaintForPaint:strokePaint
                                                            pattern:(IJSVGPattern*)node.stroke];
             patternPaint.referencingPaint = paint;
 
-            // clip the drawing to a stroked path
+            // Keep the drawing inside the stroke shape.
             CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
             patternPaint.clipPath = path;
             CGPathRelease(path);
@@ -550,14 +550,14 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             break;
         }
 
-        // gradients
+        // Fill the stroke with a gradient.
         case IJSVGPaintFillTypeGradient: {
             IJSVGGradientPaint* gradientPaint = nil;
             gradientPaint = [self drawableBasicGradientPaintForPaint:strokePaint
                                                             gradient:(IJSVGGradient*)node.stroke];
             gradientPaint.referencingPaint = paint;
 
-            // clip the drawing to a stroked path
+            // Keep the drawing inside the stroke shape.
             CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
             gradientPaint.clipPath = path;
             CGPathRelease(path);
@@ -566,7 +566,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             break;
         }
 
-        // generic
+        // Draw a plain stroke.
         default: {
             paint.strokePaint = strokePaint;
             [paint addChild:strokePaint];
@@ -592,19 +592,17 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                                                       resolvedPath:paintPath
                                                                 resolvedPathBounds:resolvedPathBounds];
 
-    // stroke the path
+    // Create the stroke.
     IJSVGStrokePaint* strokePaint = nil;
     CGFloat strokeWidthDifference = 0.f;
     if([node matchesTraits:IJSVGNodeTraitStroked]) {
-        // its highly likely that the stroke paint is larger than the paint its being
-        // drawing into, so we need to increase the paint size to match or any groups
-        // that this is inside wont be the correct frame
+        // Expand the paint so its frame includes the stroke.
         strokePaint = (IJSVGStrokePaint*)[self drawableStrokedPaintForPathNode:node
                                                                   resolvedPath:paintPath
                                                             resolvedPathBounds:resolvedPathBounds];
         strokeWidthDifference = strokePaint.lineWidth * .5f;
 
-        // make sure we update the bounding box as it has changed
+        // Update the bounds to include the stroke.
         paint.frame = CGRectInset(paint.frame, -strokeWidthDifference,
                                   -strokeWidthDifference);
         paint.outerBoundingBox = paint.frame;
@@ -616,8 +614,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                             resolvedPathBounds:resolvedPathBounds];
 
     if(fillPaint != nil) {
-        // fill opacity is precalculated for its colour when the type is fillColor,
-        // for fills such as gradients and patterns, just reduce the opacity down
+        // Apply the fill opacity.
         if(node.fillOpacity.value != 1.f) {
             fillPaint.opacity = node.fillOpacity.value;
         }
@@ -628,7 +625,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         [paint addChild:fillPaint];
     }
 
-    // stroke the path
+    // Attach the stroke.
     if(strokePaint != nil) {
         [self applyStrokePaint:strokePaint
                        toPaint:paint
@@ -649,24 +646,24 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
              bounds:resolvedPathBounds
        toShapePaint:paint];
 
-    // compute the color
+    // Choose the stroke color.
     NSColor* strokeColor = NSColor.blackColor;
     if([node.stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node.stroke;
         strokeColor = colorNode.color;
     }
 
-    // replacement colour
+    // Apply any color replacement.
     NSColor* repColor = [self colorForColor:strokeColor
                              matchingTraits:IJSVGColorUsageTraitStroke];
     strokeColor = repColor ?: strokeColor;
 
-    // use the users overriding color instead
+    // Use the stroke color supplied by the style.
     if(_style.strokeColor != nil) {
         strokeColor = _style.strokeColor;
     }
 
-    // set the color
+    // Store the color.
     paint.fillColor = nil;
     paint.strokeColor = strokeColor.CGColor;
 
@@ -701,10 +698,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                               width, height);
     paint.frame = frame;
 
-    // children are positioned in the viewBox user coordinate system, the root
-    // paint applies the viewBox to frame transform itself at draw time, so any
-    // relative units must be resolved against the viewBox and not the client,
-    // otherwise they end up scaled twice and misplaced.
+    // Resolve child sizes using the viewBox.
+    // The root applies the final scale when drawing so children must not be scaled twice.
     CGRect childBounds = (CGRect) {
         .origin = CGPointZero,
         .size = paint.frame.size
@@ -757,11 +752,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 - (IJSVGGradientPaint*)drawableBasicGradientPaintForPaint:(IJSVGPaint*)paint
                                                  gradient:(IJSVGGradient*)gradient
 {
-    // gradient fill
+    // Create the gradient fill.
     IJSVGGradientPaint* gradientPaint = IJSVGGradientPaint.paint;
     gradientPaint.backingScaleFactor = _backingScale;
 
-    // lets copy the gradient incase there are any style changes
+    // Copy the gradient so style changes leave the original unchanged.
     IJSVGColorUsageTraits traits = IJSVGColorUsageTraitGradientStop;
     if(_style.colors.replacedColorCount != 0 &&
         [_style.colors matchesReplacementTraits:traits] == YES) {
@@ -789,13 +784,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                        gradient:(IJSVGGradient*)gradient
                                           paint:(IJSVGPaint*)paint
 {
-    // gradient fill
+    // Create the gradient fill.
     IJSVGGradientPaint* gradientPaint = [self drawableBasicGradientPaintForPaint:paint
                                                                         gradient:gradient];
 
-    // we must clip the fill to the path that we are drawing in, its simply just a matter
-    // of asking the tree for a path based on the paint passed in, but then moving
-    // it back to our current coordinate space
+    // Clip the fill to the shape in its local coordinates.
     gradientPaint.clipRule = paint.fillRule;
     gradientPaint.clipPath = ((IJSVGShapePaint*)paint).path;
     return gradientPaint;
@@ -804,7 +797,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 - (IJSVGPatternPaint*)drawableBasicPatternPaintForPaint:(IJSVGPaint*)paint
                                                 pattern:(IJSVGPattern*)pattern
 {
-    // pattern fill
+    // Create the pattern fill.
     IJSVGPatternPaint* patternPaint = IJSVGPatternPaint.paint;
     patternPaint.patternNode = pattern;
     patternPaint.frame = (CGRect) {
@@ -829,12 +822,10 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                        pattern:(IJSVGPattern*)pattern
                                          paint:(IJSVGPaint*)paint
 {
-    // pattern fill
+    // Create the pattern fill.
     IJSVGPatternPaint* patternPaint = [self drawableBasicPatternPaintForPaint:paint
                                                                       pattern:pattern];
-    // we must clip the fill to the path that we are drawing in, its simply just a matter
-    // of asking the tree for a path based on the paint passed in, but then moving
-    // it back to our current coordinate space
+    // Clip the fill to the shape in its local coordinates.
     patternPaint.clipRule = paint.fillRule;
     patternPaint.clipPath = ((IJSVGShapePaint*)paint).path;
 
@@ -866,8 +857,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     IJSVGUnitLength* widthUnit = maskNode.width;
     IJSVGUnitLength* heightUnit = maskNode.height;
 
-    // infer the fact that object bounding box must be % values of
-    // the box its being drawn into
+    // Treat these values as fractions of the object bounds.
     if(maskNode.units == IJSVGUnitObjectBoundingBox) {
         xUnit = [xUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
         yUnit = [yUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
@@ -875,14 +865,13 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         heightUnit = [heightUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
     }
 
-    // calculate the rect, rect is the clipping rect
+    // Calculate the mask clip rectangle.
     rect.origin.x = [xUnit computeValue:width];
     rect.origin.y = [yUnit computeValue:height];
     rect.size.width = [widthUnit computeValue:width];
     rect.size.height = [heightUnit computeValue:height];
 
-    // calculate the actual masking bounds, maskingBounds is
-    // is the rect that the final mask is transformed into
+    // Find the bounds where the mask will be drawn.
     CGRect paintBounds = paint.innerBoundingBox;
     CGRect maskBounds = maskPaint.outerBoundingBox;
     CGRect maskingBounds = paintBounds;
@@ -898,8 +887,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         maskingBounds.origin.y += maskBounds.origin.y;
         maskingBounds = CGRectApplyAffineTransform(maskingBounds, userSpaceTransform);
 
-        // we need to move all the paints back if they are into the userSpace
-        // coordinate system
+        // Move each child into the mask coordinate space.
         for(IJSVGPaint *childPaint in maskPaint.children) {
           CGRect innerBoundingBox = childPaint.innerBoundingBox;
           CGAffineTransform innerTransform = CGAffineTransformMakeTranslation(-innerBoundingBox.origin.x,
@@ -954,6 +942,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return paints;
 }
 
+// Collect paths from this group and any groups inside it.
 - (void)recursivelyAddResolvedPathsForNodes:(NSArray<IJSVGNode*>*)nodes
                                   transform:(CGAffineTransform)transform
                                      toPath:(CGMutablePathRef)mutPath
@@ -974,6 +963,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     }
 }
 
+// Combine the clip shapes in the same coordinate space as the paint.
 - (CGPathRef)newClipPathFromNode:(IJSVGClipPath*)node
                        fromPaint:(IJSVGPaint*)paint
 {
@@ -1000,6 +990,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return mPath;
 }
 
+// Draw a solid color, gradient or pattern while preserving the context settings.
 - (void)drawPaint:(IJSVGNode*)paint
       boundingBox:(CGRect)boundingBox
          viewPort:(CGRect)viewPort
@@ -1053,8 +1044,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     }
 
     if([paint isKindOfClass:IJSVGRootPaint.class]) {
-        // Preserve the root paints viewport contract. Its contents are
-        // filtered in viewBox coordinates before root opacity and clips.
+        // Filter root contents in viewBox coordinates.
+        // Apply root opacity and clipping afterward.
         IJSVGRootPaint* rootPaint = (IJSVGRootPaint*)paint;
         IJSVGGroupPaint* source = IJSVGGroupPaint.paint;
         source.children = rootPaint.children;
@@ -1088,14 +1079,14 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     paint.sourceNode = node;
     paint.viewPort = self.viewPort;
 
-    // mask the paint
+    // Apply the mask.
     if(node.mask != nil) {
         paint.maskPaint = [self maskPaintFromNode:node.mask
                                  referencingPaint:paint
                                         fromPaint:nil];
     }
 
-    // add the clip mask if any
+    // Apply the clip path.
     if(node.clipPath != nil) {
         IJSVGClipPath* clipPath = node.clipPath;
         CGPathRef path = [self newClipPathFromNode:clipPath
@@ -1111,18 +1102,18 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         CGPathRelease(path);
     }
 
-    // setup the opacity
+    // Set the opacity.
     CGFloat opacity = node.opacity.value;
     if(opacity != 1.f) {
         paint.opacity = opacity;
     }
 
-    // Blending mode
+    // Set the blend mode.
     if(node.blendMode != IJSVGBlendModeNormal) {
         paint.blendingMode = (CGBlendMode)node.blendMode;
     }
 
-    // Should this even be displayed?
+    // Hide the paint when needed.
     if(node.shouldRender == NO) {
         paint.hidden = YES;
     }
@@ -1135,7 +1126,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                       fromNode:(IJSVGNode*)node
 
 {
-    // any x and y?
+    // Read the node position.
     CGRect unitBounds = [self unitResolutionBoundsForNode:node];
     CGFloat unitWidth = CGRectGetWidth(unitBounds);
     CGFloat unitHeight = CGRectGetHeight(unitBounds);
@@ -1148,12 +1139,12 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         y = [[self unit:node.y matchingNode:node] computeValue:unitHeight];
     }
 
-    // no need to do anything if no transform, or x or y == 0
+    // Skip the wrapper when the position and transform are unchanged.
     if(transforms.count == 0 && x == 0.f && y == 0.f) {
         return paint;
     }
 
-    // simply cascade all the transforms onto the identity
+    // Combine the transforms.
     CGAffineTransform identity = CGAffineTransformIdentity;
     if(x != 0.f || y != 0.f) {
         identity = CGAffineTransformTranslate(identity, x, y);
@@ -1162,9 +1153,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
 
-    // this used to be done with each transform being added to its own
-    // group paint, but we can simply use one and then apply
-    // the transforms in reverse order, has same outcome with less memory
+    // Use one wrapper for all transforms to save memory.
+    // Keep their original order.
     IJSVGTransformPaint* parentPaint = IJSVGTransformPaint.paint;
     for(IJSVGTransform* transform in transforms.reverseObjectEnumerator) {
         IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits
@@ -1202,8 +1192,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return (IJSVGPaint*)paint;
 }
 
-// Backdrop inputs need all preceding SVG artwork on a readable surface. Use
-// renderer-owned storage on every destination, including window and PDF contexts.
+// Keep earlier artwork in a bitmap so filters can read the background.
+// Use this for screen drawing and PDF output.
 - (BOOL)paintRequiresBackdrop:(IJSVGPaint*)root
 {
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
@@ -1239,8 +1229,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 
 - (void)renderBackdropPaintInContext:(CGContextRef)ctx frame:(CGRect)frame
 {
-    // Display/layer contexts can have a backing transform that GetCTM omits.
-    // Derive the complete mapping so one intermediate pixel is one device pixel.
+    // Include the display scale when mapping to pixels.
+    // One pixel in the temporary image should match one output pixel.
     CGPoint origin = CGContextConvertPointToDeviceSpace(ctx, CGPointZero);
     CGPoint xAxis = CGContextConvertPointToDeviceSpace(ctx, CGPointMake(1, 0));
     CGPoint yAxis = CGContextConvertPointToDeviceSpace(ctx, CGPointMake(0, 1));
@@ -1253,8 +1243,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         transform.a * transform.d - transform.b * transform.c == 0) {
         return;
     }
-    // Bound storage for large print/export transforms while retaining device
-    // resolution for ordinary windows, Retina displays and image exports.
+    // Limit memory use for large print and export sizes.
+    // Keep full pixel detail for normal drawing.
     CGFloat scale = MIN(1.f, MIN(4096.f / bounds.size.width, 4096.f / bounds.size.height));
     size_t width = MAX(1, ceil(bounds.size.width * scale));
     size_t height = MAX(1, ceil(bounds.size.height * scale));

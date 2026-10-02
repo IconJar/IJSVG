@@ -8,8 +8,8 @@
 
 #import <IJSVG/IJSVGTurbulenceFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
-// CIRandomGenerator cannot reproduce the seeded SVG lattice or stitched tiles.
-// Per render noise state: no shared seed or mutable global lattice.
+// Build the noise here so the seed and repeating edges follow SVG rules.
+// Each render keeps its own noise data.
 typedef struct {
     int permutation[514];
     double gradient[514][2][4];
@@ -24,7 +24,7 @@ static int32_t IJSVGFilterRandom(int32_t* seed)
 
 static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
 {
-    // The clamp keeps normalization and the seed recurrence within signed 32 bit range.
+    // Keep the seed within the range of a signed 32 bit number.
     int32_t normalized = (int32_t)fmax(-2147483646., fmin(2147483646., trunc(seedValue)));
     int32_t seed = normalized <= 0 ? -(normalized % 2147483646) + 1 : normalized;
     for(int channel = 0; channel < 4; channel++) {
@@ -52,8 +52,7 @@ static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
     }
 }
 
-// All channels share lattice coordinates and permutation indices. Keep channels
-// contiguous so their gradient arithmetic can be vectorized together.
+// Reuse the same noise positions for all four color channels.
 static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, double y,
                                    double tileWidth, double tileHeight, double wrapX,
                                    double wrapY, BOOL stitch, double values[4])
@@ -74,8 +73,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
                 by -= tileHeight;
             }
         }
-        // Lattice coordinates are integral, so correct a negative remainder
-        // directly instead of taking a second floating point remainder.
+        // Move negative positions into the valid range.
         px[i] = (int)fmod(bx, 256.);
         py[i] = (int)fmod(by, 256.);
         px[i] += px[i] < 0 ? 256 : 0;
@@ -98,6 +96,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
     }
 }
 
+// Add layers of noise with smaller details and less strength each time.
 static inline void IJSVGTurbulenceValues(const IJSVGFilterNoise* noise, double px,
                                          double py, CGSize frequency, double tileWidth,
                                          double tileHeight, double wrapX, double wrapY,
@@ -122,6 +121,7 @@ static inline void IJSVGTurbulenceValues(const IJSVGFilterNoise* noise, double p
     }
 }
 
+// Adjust the frequency so opposite tile edges match.
 static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize)
 {
     double f[] = { frequency.width, frequency.height }, size[] = {
@@ -168,8 +168,8 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     if(CGRectIsEmpty(outputRegion)) {
         return CIImage.emptyImage;
     }
-    // Retain the original tile coordinates for stitching, but only generate pixels
-    // that can survive the final crop of the primitive.
+    // Keep the original tile position so the edges still match.
+    // Only create pixels inside the visible region.
     NSInteger left = floor(CGRectGetMinX(outputRegion));
     NSInteger top = floor(CGRectGetMinY(outputRegion));
     NSInteger right = ceil(CGRectGetMaxX(outputRegion));

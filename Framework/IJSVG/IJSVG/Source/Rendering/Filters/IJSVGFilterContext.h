@@ -43,7 +43,7 @@
 
 @end
 
-// Loads bundled Metal source; returns nil if the resource is missing or unreadable.
+// Load Metal source from the framework. Return nil if it cannot be read.
 NSString* IJSVGFilterShaderSource(NSString* name);
 
 void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(NSInteger, NSInteger));

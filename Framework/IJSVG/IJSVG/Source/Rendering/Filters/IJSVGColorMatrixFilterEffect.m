@@ -13,7 +13,7 @@
 
 - (BOOL)requiresSupersamplingForPrimitive:(IJSVGFilterPrimitive*)primitive
 {
-    // Alpha amplifying matrices need extra coverage samples at shape edges.
+    // Sample more points at shape edges when the matrix increases opacity.
     NSString* type = primitive.parameters[IJSVGAttributeType] ?: IJSVGStringMatrix;
     NSArray<NSNumber*>* values = [primitive numbersForParameter:IJSVGAttributeValues];
     return [type isEqualToString:IJSVGStringMatrix] && values.count == 20
@@ -54,9 +54,8 @@
             matrix[16] = .7154;
             matrix[17] = .0721;
         }
-        // Opacity scaling commutes with RGB transfer functions. Keep the clamp,
-        // including its RGB bounds, but omit the two color space conversion nodes.
-        // Do not combine general matrices: each primitive must clamp independently.
+        // Changing only opacity does not need color conversion.
+        // Still limit each color value after every filter.
         BOOL opacityOnly = isfinite(matrix[18]) && matrix[18] >= 0 && matrix[18] <= 1;
         for(NSUInteger i = 0; i < 20 && opacityOnly; i++) {
             if(i != 18 && matrix[i] != ((i == 0 || i == 6 || i == 12) ? 1. : 0.)) {

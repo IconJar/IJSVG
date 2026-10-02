@@ -1,5 +1,5 @@
 //
-//  IJSVGBitStorage.m
+//  IJSVGBitFlags.m
 //  IJSVG
 //
 //  Created by Curtis Hard on 06/09/2022.

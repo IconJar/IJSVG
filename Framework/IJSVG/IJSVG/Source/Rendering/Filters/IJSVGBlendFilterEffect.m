@@ -18,8 +18,7 @@
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
-    // Core Image blend operators run in its working space; explicitly match
-    // sRGB primitives into/out of that space so the SVG property is respected.
+    // Convert colors before and after blending to follow the SVG color space.
     static NSDictionary<NSString*, NSString*>* modes;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

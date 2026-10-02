@@ -2,6 +2,7 @@
 //  IJSVGSeparableBlur.metal
 //  IJSVG
 //
+//  Created on 02/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 

@@ -36,7 +36,7 @@
     if(bitmap == NULL) {
         return CIImage.emptyImage;
     }
-    // Keep the global pixel grid while allocating only the visible primitive region.
+    // Allocate only the visible region while keeping pixels aligned.
     CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
     CGContextClipToRect(bitmap, region);
     if(primitive.imageNode != nil) {

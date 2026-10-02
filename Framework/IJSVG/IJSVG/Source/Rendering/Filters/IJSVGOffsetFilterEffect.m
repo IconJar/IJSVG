@@ -16,6 +16,7 @@
                              region:(CGRect)region
                             context:(IJSVGFilterContext*)context
 {
+    // Move the image using the filter coordinate units.
     return [context offsetImage:inputs.firstObject ?: CIImage.emptyImage
                              dx:[primitive numberForParameter:IJSVGAttributeDX
                                                  defaultValue:0]

@@ -27,8 +27,8 @@ static BOOL IJSVGConvolveInterleavedPixels(const float* src, float* dst,
                                            NSInteger w, NSInteger h,
     const double* k, IJSVGConvolutionParameters parameters, IJSVGFilterSampler sampler)
 {
-    // Padding explicitly applies SVG edge modes and noncentral targets.
-    // vImage requires odd kernels; an extra zero tap handles even orders.
+    // Add pixels around the image to handle its edges and the kernel position.
+    // vImage needs odd kernel sizes so add a zero value for even sizes.
     NSInteger kw = parameters.kernelWidth | 1, kh = parameters.kernelHeight | 1;
     NSInteger pw = w + kw - 1, ph = h + kh - 1;
     NSMutableData* taps = [NSMutableData dataWithLength:kw * kh * sizeof(float)];
@@ -96,7 +96,7 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
         IJSVGConvolveInterleavedPixels(src, dst, w, h, k, parameters, sampler)) {
         return;
     }
-    // Fractional sampling and unrepresentable float kernels retain the general evaluator.
+    // Use the general calculation for samples between pixels or values too large for floats.
     IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
         for(NSInteger y = firstRow; y < lastRow; y++) {
             for(NSInteger x = 0; x < w; x++) {
@@ -182,9 +182,8 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
     CGSize units = context.pixelUnits;
     step = CGSizeEqualToSize(step, CGSizeZero) ? CGSizeMake(1, 1)
                                                : CGSizeMake(step.width * units.width, step.height * units.height);
-    // Built in convolution filters evaluate premultiplied RGBA. SVG
-    // preserveAlpha and nonzero bias have different equations, so those cases
-    // use the general evaluator below.
+    // Core Image can handle this case without changing the opacity rules.
+    // Preserving opacity or adding a bias needs the general calculation.
     if(!preserveAlpha && bias == 0 && step.width == 1 && step.height == 1) {
         NSInteger cw = 0, ch = 0;
         NSString* filterName = nil;
@@ -202,8 +201,8 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
         }
         if(filterName != nil) {
             CGFloat ciWeights[49] = { 0 };
-            // CI lists rows from high to low y; SVG reverses the kernel in both
-            // axes. The translation below preserves noncentral SVG targets.
+            // Reorder the weights to match Core Image.
+            // Move the result to keep the SVG kernel position.
             for(NSInteger y = 0; y < oy; y++) {
                 for(NSInteger x = 0; x < ox; x++) {
                     ciWeights[(ch - y - 1) * cw + x] = weights[(oy - y - 1) * ox + ox - x - 1] / divisor;
