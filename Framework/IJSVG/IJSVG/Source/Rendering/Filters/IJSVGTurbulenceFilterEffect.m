@@ -54,8 +54,9 @@ static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
 
 // All channels share lattice coordinates and permutation indices. Keep channels
 // contiguous so their gradient arithmetic can be vectorized together.
-static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, double y, double tileWidth,
-    double tileHeight, double wrapX, double wrapY, BOOL stitch, double values[4])
+static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, double y,
+                                   double tileWidth, double tileHeight, double wrapX,
+                                   double wrapY, BOOL stitch, double values[4])
 {
     x += 4096.;
     y += 4096.;
@@ -97,6 +98,45 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
     }
 }
 
+static inline void IJSVGTurbulenceValues(const IJSVGFilterNoise* noise, double px,
+                                         double py, CGSize frequency, double tileWidth,
+                                         double tileHeight, double wrapX, double wrapY,
+                                         NSInteger octaves, BOOL fractal, BOOL stitch,
+                                         double values[4])
+{
+    double nx = px * frequency.width, ny = py * frequency.height, amplitude = 1.;
+    double tw = tileWidth, th = tileHeight, wx = wrapX, wy = wrapY;
+    for(NSInteger octave = 0; octave < octaves; octave++) {
+        double samples[4];
+        IJSVGFilterNoiseValues(noise, nx, ny, tw, th, wx, wy, stitch, samples);
+        for(int c = 0; c < 4; c++) {
+            values[c] += amplitude * (fractal ? samples[c] : fabs(samples[c]));
+        }
+        nx *= 2;
+        ny *= 2;
+        amplitude *= .5;
+        tw *= 2;
+        th *= 2;
+        wx = wx * 2 - 4096.;
+        wy = wy * 2 - 4096.;
+    }
+}
+
+static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize)
+{
+    double f[] = { frequency.width, frequency.height }, size[] = {
+      tileSize.width, tileSize.height
+    };
+    for(int axis = 0; axis < 2; axis++) {
+        if(f[axis] > 0 && size[axis] > 0) {
+            double low = floor(size[axis] * f[axis]) / size[axis];
+            double high = ceil(size[axis] * f[axis]) / size[axis];
+            f[axis] = low > 0 && f[axis] / low < high / f[axis] ? low : high;
+        }
+    }
+    return CGSizeMake(f[0], f[1]);
+}
+
 @implementation IJSVGTurbulenceFilterEffect
 
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
@@ -122,15 +162,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
         tile.origin.y -= context.boundingBox.origin.y / context.boundingBox.size.height;
     }
     if(stitch) {
-        double f[] = { frequency.width, frequency.height }, size[] = { tile.size.width, tile.size.height };
-        for(int axis = 0; axis < 2; axis++) {
-            if(f[axis] > 0 && size[axis] > 0) {
-                double low = floor(size[axis] * f[axis]) / size[axis];
-                double high = ceil(size[axis] * f[axis]) / size[axis];
-                f[axis] = low > 0 && f[axis] / low < high / f[axis] ? low : high;
-            }
-        }
-        frequency = CGSizeMake(f[0], f[1]);
+        frequency = IJSVGTurbulenceStitchedFrequency(frequency, tile.size);
     }
     CGRect outputRegion = CGRectIntersection(region, context.extent);
     if(CGRectIsEmpty(outputRegion)) {
@@ -158,23 +190,9 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
             double py = tile.origin.y + (y + .5 - region.origin.y) / units.height;
             for(NSInteger x = left; x < right; x++) {
                 double px = tile.origin.x + (x + .5 - region.origin.x) / units.width;
-                double nx = px * frequency.width, ny = py * frequency.height, amplitude = 1.;
-                double tw = tileWidth, th = tileHeight, wx = wrapX, wy = wrapY;
                 double values[4] = { 0 };
-                for(NSInteger octave = 0; octave < octaves; octave++) {
-                    double samples[4];
-                    IJSVGFilterNoiseValues(noise, nx, ny, tw, th, wx, wy, stitch, samples);
-                    for(int c = 0; c < 4; c++) {
-                        values[c] += amplitude * (fractal ? samples[c] : fabs(samples[c]));
-                    }
-                    nx *= 2;
-                    ny *= 2;
-                    amplitude *= .5;
-                    tw *= 2;
-                    th *= 2;
-                    wx = wx * 2 - 4096.;
-                    wy = wy * 2 - 4096.;
-                }
+                IJSVGTurbulenceValues(noise, px, py, frequency, tileWidth, tileHeight,
+                    wrapX, wrapY, octaves, fractal, stitch, values);
                 NSInteger index = (y * w + x) * 4;
                 for(int c = 0; c < 4; c++) {
                     output[index + c] = IJSVGFilterClamp(fractal ? (values[c] + 1.) * .5 : values[c]);

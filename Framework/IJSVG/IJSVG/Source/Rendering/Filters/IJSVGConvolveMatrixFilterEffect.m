@@ -23,74 +23,78 @@ typedef struct {
     CGRect inputRegion;
 } IJSVGConvolutionParameters;
 
-@implementation IJSVGConvolveMatrixFilterEffect
-
-- (void)convolvePixels:(const float*)src
-                output:(float*)dst
-                 width:(NSInteger)w
-                height:(NSInteger)h
-                kernel:(NSData*)kernel
-            parameters:(IJSVGConvolutionParameters)parameters
+static BOOL IJSVGConvolveInterleavedPixels(const float* src, float* dst,
+                                           NSInteger w, NSInteger h,
+    const double* k, IJSVGConvolutionParameters parameters, IJSVGFilterSampler sampler)
 {
-    const double* k = kernel.bytes;
-    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion, parameters.edgeMode);
-    if(parameters.step.width == 1 && parameters.step.height == 1) {
-        // Padding explicitly applies SVG edge modes and noncentral targets.
-        // vImage requires odd kernels; an extra zero tap handles even orders.
-        NSInteger kw = parameters.kernelWidth | 1, kh = parameters.kernelHeight | 1;
-        NSInteger pw = w + kw - 1, ph = h + kh - 1;
-        NSMutableData* taps = [NSMutableData dataWithLength:kw * kh * sizeof(float)];
-        float* coefficients = taps.mutableBytes;
-        BOOL representable = YES;
-        for(NSInteger j = 0; j < parameters.kernelHeight; j++) {
-            for(NSInteger i = 0; i < parameters.kernelWidth; i++) {
-                double value =
-                    k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth - i - 1] /
-                    parameters.divisor;
-                coefficients[j * kw + i] = value;
-                representable &= isfinite(coefficients[j * kw + i]);
-            }
+    // Padding explicitly applies SVG edge modes and noncentral targets.
+    // vImage requires odd kernels; an extra zero tap handles even orders.
+    NSInteger kw = parameters.kernelWidth | 1, kh = parameters.kernelHeight | 1;
+    NSInteger pw = w + kw - 1, ph = h + kh - 1;
+    NSMutableData* taps = [NSMutableData dataWithLength:kw * kh * sizeof(float)];
+    float* coefficients = taps.mutableBytes;
+    BOOL representable = YES;
+    for(NSInteger j = 0; j < parameters.kernelHeight; j++) {
+        for(NSInteger i = 0; i < parameters.kernelWidth; i++) {
+            double value = k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth - i - 1] / parameters.divisor;
+            coefficients[j * kw + i] = value;
+            representable &= isfinite(coefficients[j * kw + i]);
         }
-        if(representable) {
-            NSMutableData* padded = [NSMutableData dataWithLength:pw * ph * 4 * sizeof(float)];
-            float* pixels = padded.mutableBytes;
-            IJSVGFilterApplyRows(pw, ph, ^(NSInteger firstRow, NSInteger lastRow) {
-                for(NSInteger y = firstRow; y < lastRow; y++) {
-                    for(NSInteger x = 0; x < pw; x++) {
-                        CGFloat px = x - parameters.targetX, py = y - parameters.targetY;
-                        float sample[4];
-                        IJSVGFilterSamplerPixel(&sampler, px, py, sample);
-                        float alpha = sample[3];
-                        for(NSUInteger c = 0; c < 4; c++) {
-                            float value = sample[c];
-                            pixels[(y * pw + x) * 4 + c] = parameters.preserveAlpha && c < 3
-                                ? (alpha > 0 ? value / alpha : 0) : value;
-                        }
+    }
+    if(representable) {
+        NSMutableData* padded = [NSMutableData dataWithLength:pw * ph * 4 * sizeof(float)];
+        float* pixels = padded.mutableBytes;
+        IJSVGFilterApplyRows(pw, ph, ^(NSInteger firstRow, NSInteger lastRow) {
+            for(NSInteger y = firstRow; y < lastRow; y++) {
+                for(NSInteger x = 0; x < pw; x++) {
+                    CGFloat px = x - parameters.targetX, py = y - parameters.targetY;
+                    float sample[4];
+                    IJSVGFilterSamplerPixel(&sampler, px, py, sample);
+                    float alpha = sample[3];
+                    for(NSUInteger c = 0; c < 4; c++) {
+                        float value = sample[c];
+                        pixels[(y * pw + x) * 4 + c] = parameters.preserveAlpha && c < 3
+                            ? (alpha > 0 ? value / alpha : 0) : value;
+                    }
+                }
+            }
+        });
+        vImage_Buffer source = { pixels, ph, pw, pw * 4 * sizeof(float) };
+        vImage_Buffer destination = { dst, h, w, w * 4 * sizeof(float) };
+        float background[4] = { 0 };
+      
+        vImage_Error error = vImageConvolve_ARGBFFFF(&source, &destination, NULL,
+            kw / 2, kh / 2, coefficients, (uint32_t)kh, (uint32_t)kw,
+            background, kvImageBackgroundColorFill);
+      
+        if(error == kvImageNoError) {
+            IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
+                for(NSInteger i = firstRow * w; i < lastRow * w; i++) {
+                    float alpha = parameters.preserveAlpha ? src[i * 4 + 3]
+                        : IJSVGFilterClamp(dst[i * 4 + 3] + parameters.bias);
+                    dst[i * 4 + 3] = alpha;
+                    for(NSUInteger c = 0; c < 3; c++) {
+                        dst[i * 4 + c] = parameters.preserveAlpha
+                            ? IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias) * alpha
+                            : MIN(alpha, IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias * alpha));
                     }
                 }
             });
-            vImage_Buffer source = { pixels, ph, pw, pw * 4 * sizeof(float) };
-            vImage_Buffer destination = { dst, h, w, w * 4 * sizeof(float) };
-            float background[4] = { 0 };
-            vImage_Error error = vImageConvolve_ARGBFFFF(&source, &destination, NULL,
-                kw / 2, kh / 2, coefficients, (uint32_t)kh, (uint32_t)kw,
-                background, kvImageBackgroundColorFill);
-            if(error == kvImageNoError) {
-                IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
-                    for(NSInteger i = firstRow * w; i < lastRow * w; i++) {
-                        float alpha = parameters.preserveAlpha ? src[i * 4 + 3]
-                            : IJSVGFilterClamp(dst[i * 4 + 3] + parameters.bias);
-                        dst[i * 4 + 3] = alpha;
-                        for(NSUInteger c = 0; c < 3; c++) {
-                            dst[i * 4 + c] = parameters.preserveAlpha
-                                ? IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias) * alpha
-                                : MIN(alpha, IJSVGFilterClamp(dst[i * 4 + c] + parameters.bias * alpha));
-                        }
-                    }
-                });
-                return;
-            }
+            return YES;
         }
+    }
+    return NO;
+}
+
+static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInteger h,
+                                NSData* kernel, IJSVGConvolutionParameters parameters)
+{
+    const double* k = kernel.bytes;
+    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion,
+                                                        parameters.edgeMode);
+    if(parameters.step.width == 1 && parameters.step.height == 1 &&
+        IJSVGConvolveInterleavedPixels(src, dst, w, h, k, parameters, sampler)) {
+        return;
     }
     // Fractional sampling and unrepresentable float kernels retain the general evaluator.
     IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
@@ -110,14 +114,12 @@ typedef struct {
                             if(parameters.preserveAlpha) {
                                 value = alpha > 0 ? value / alpha : 0;
                             }
-                            result[c] += value *
-                                k[(parameters.kernelHeight - j - 1) * parameters.kernelWidth + parameters.kernelWidth -
-                                    i - 1];
+                            result[c] += value * k[(parameters.kernelHeight - j - 1) *
+                                                   parameters.kernelWidth + parameters.kernelWidth - i - 1];
                         }
                     }
                 }
-                double alpha = parameters.preserveAlpha
-                    ? src[index + 3]
+                double alpha = parameters.preserveAlpha ? src[index + 3]
                     : IJSVGFilterClamp(result[3] / parameters.divisor + parameters.bias);
                 dst[index + 3] = alpha;
                 for(NSUInteger c = 0; c < 3; c++) {
@@ -129,6 +131,8 @@ typedef struct {
         }
     });
 }
+
+@implementation IJSVGConvolveMatrixFilterEffect
 
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
                              inputs:(NSArray<CIImage*>*)inputs
@@ -240,12 +244,7 @@ typedef struct {
     return [context mapImage:input
                        other:nil
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
-      [self convolvePixels:src
-                    output:dst
-                     width:w
-                    height:h
-                    kernel:kernel
-                parameters:parameters];
+      IJSVGConvolvePixels(src, dst, w, h, kernel, parameters);
     }];
 }
 

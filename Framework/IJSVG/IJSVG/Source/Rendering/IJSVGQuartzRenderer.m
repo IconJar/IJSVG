@@ -44,6 +44,79 @@ static CGLineJoin IJSVGQuartzLineJoin(IJSVGLineJoinStyle style)
     }
 }
 
+static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
+                                       IJSVGStyle* style)
+{
+    // work out line width
+    CGFloat lineWidth = [node.strokeWidth computeValue:paint.frame.size.width];
+
+    if(style.lineWidth != IJSVGInheritedFloatValue) {
+        lineWidth = style.lineWidth;
+    }
+
+    // work out line styles
+    IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
+    IJSVGLineJoinStyle lineJoinStyle = node.lineJoinStyle;
+    CGFloat miterLimit = node.strokeMiterLimit.value;
+
+    // use anything declared on the style
+    if(style.lineCapStyle != IJSVGLineCapStyleNone &&
+        style.lineCapStyle != IJSVGLineCapStyleInherit) {
+        lineCapStyle = style.lineCapStyle;
+    }
+
+    if(style.lineJoinStyle != IJSVGLineJoinStyleNone &&
+        style.lineJoinStyle != IJSVGLineJoinStyleInherit) {
+        lineJoinStyle = style.lineJoinStyle;
+    }
+
+    // miter limit can be set via the style
+    if(style.miterLimit != IJSVGInheritedFloatValue) {
+        miterLimit = style.miterLimit;
+    }
+
+    // apply the properties
+    paint.lineWidth = lineWidth;
+    paint.lineCap = IJSVGQuartzLineCap(lineCapStyle);
+    paint.lineJoin = IJSVGQuartzLineJoin(lineJoinStyle);
+    paint.miterLimit = miterLimit;
+
+    CGFloat strokeOpacity = 1.f;
+    if(node.strokeOpacity.value != 1.f) {
+        strokeOpacity = node.strokeOpacity.value;
+    }
+    paint.opacity = strokeOpacity;
+
+    // dashing
+    paint.lineDashPhase = node.strokeDashOffset.value;
+    if(node.strokeDashArrayCount != IJSVGInheritedIntegerValue) {
+        paint.lineDashPattern = node.lineDashPattern;
+    }
+
+}
+
+static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
+{
+    CGRect frame = paint.frame;
+    // lets resize the paint as we have computed everything at this point
+    CGFloat increase = paint.lineWidth / 2.f;
+    frame = CGRectInset(frame, -increase, -increase);
+
+    // now we know what to do, we need to transform the path
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
+    CGPathRef path = CGPathCreateCopyByTransformingPath(paint.path, &transform);
+
+    // make sure we reset this back to zero
+    paint.frame = (CGRect) {
+        .origin = CGPointZero,
+        .size = frame.size
+    };
+    paint.outerBoundingBox = paint.frame;
+    paint.path = path;
+    CGPathRelease(path);
+
+}
+
 @interface IJSVGQuartzRenderer () {
     NSMutableArray<NSValue*>* _viewPortStack;
     NSMutableArray<NSValue*>* _unitBoundsStack;
@@ -382,55 +455,21 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                          matchingTraits:traits];
 }
 
-
-- (IJSVGPaint*)drawablePaintForPathNode:(IJSVGPath*)node
+- (IJSVGPaint*)drawableFillPaintForPathNode:(IJSVGPath*)node
+                                      paint:(IJSVGShapePaint*)paint
+                               resolvedPath:(CGPathRef)paintPath
+                         resolvedPathBounds:(CGRect)resolvedPathBounds
 {
-    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
-    BOOL resolvedPathIsEmpty = CGPathIsEmpty(resolvedPath);
-    CGRect resolvedPathBounds = resolvedPathIsEmpty == YES ? CGRectZero : CGPathGetPathBoundingBox(resolvedPath);
-    BOOL resolvedPathBoundsAreFinite = resolvedPathIsEmpty == NO && IJSVGRectIsFinite(resolvedPathBounds);
-    if(resolvedPathBoundsAreFinite == NO) {
-        resolvedPathBounds = CGRectZero;
-    }
-    CGPathRef paintPath = resolvedPathBoundsAreFinite == YES ?
-        [self newPaintPathForResolvedPath:resolvedPath
-                                   bounds:resolvedPathBounds] : CGPathCreateMutable();
-    IJSVGShapePaint* paint = (IJSVGShapePaint*)[self drawableBasicPaintForPathNode:node
-                                                                      resolvedPath:paintPath
-                                                                resolvedPathBounds:resolvedPathBounds];
-
-    // color the shape
-    id fill = node.fill;
-
-    // stroke the path
-    IJSVGStrokePaint* strokePaint = nil;
-    CGFloat strokeWidthDifference = 0.f;
-    if([node matchesTraits:IJSVGNodeTraitStroked]) {
-        // its highly likely that the stroke paint is larger than the paint its being
-        // drawing into, so we need to increase the paint size to match or any groups
-        // that this is inside wont be the correct frame
-        strokePaint = (IJSVGStrokePaint*)[self drawableStrokedPaintForPathNode:node
-                                                                  resolvedPath:paintPath
-                                                            resolvedPathBounds:resolvedPathBounds];
-        strokeWidthDifference = strokePaint.lineWidth * .5f;
-
-        // make sure we update the bounding box as it has changed
-        paint.frame = CGRectInset(paint.frame, -strokeWidthDifference,
-                                  -strokeWidthDifference);
-        paint.outerBoundingBox = paint.frame;
-    }
-
     // generic fill color
     IJSVGPaint* fillPaint = nil;
-    IJSVGPaintFillType fillType = [IJSVGPaint fillTypeForFill:fill];
-
+    IJSVGPaintFillType fillType = [IJSVGPaint fillTypeForFill:node.fill];
 
     switch(fillType) {
         // just a generic fill color
         default:
         case IJSVGPaintFillTypeColor: {
 
-            IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
+            IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
             NSColor* color = colorNode.color ?: NSColor.blackColor;
 
             // could be an overall replaced fillColor from the style
@@ -483,6 +522,99 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         }
     }
 
+    return fillPaint;
+}
+
+- (void)applyStrokePaint:(IJSVGStrokePaint*)strokePaint
+                 toPaint:(IJSVGShapePaint*)paint
+                fromNode:(IJSVGPath*)node
+{
+    paint.strokeStyle = strokePaint;
+    // we need to work out what type of fill we need for the paint
+    IJSVGPaintFillType type = [IJSVGPaint fillTypeForFill:node.stroke];
+
+    switch(type) {
+        // patterns
+        case IJSVGPaintFillTypePattern: {
+            IJSVGPatternPaint* patternPaint = nil;
+            patternPaint = [self drawableBasicPatternPaintForPaint:strokePaint
+                                                           pattern:(IJSVGPattern*)node.stroke];
+            patternPaint.referencingPaint = paint;
+
+            // clip the drawing to a stroked path
+            CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
+            patternPaint.clipPath = path;
+            CGPathRelease(path);
+            paint.strokePaint = patternPaint;
+            [paint addChild:patternPaint];
+            break;
+        }
+
+        // gradients
+        case IJSVGPaintFillTypeGradient: {
+            IJSVGGradientPaint* gradientPaint = nil;
+            gradientPaint = [self drawableBasicGradientPaintForPaint:strokePaint
+                                                            gradient:(IJSVGGradient*)node.stroke];
+            gradientPaint.referencingPaint = paint;
+
+            // clip the drawing to a stroked path
+            CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
+            gradientPaint.clipPath = path;
+            CGPathRelease(path);
+            paint.strokePaint = gradientPaint;
+            [paint addChild:gradientPaint];
+            break;
+        }
+
+        // generic
+        default: {
+            paint.strokePaint = strokePaint;
+            [paint addChild:strokePaint];
+            break;
+        }
+    }
+
+}
+
+- (IJSVGPaint*)drawablePaintForPathNode:(IJSVGPath*)node
+{
+    CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
+    BOOL resolvedPathIsEmpty = CGPathIsEmpty(resolvedPath);
+    CGRect resolvedPathBounds = resolvedPathIsEmpty == YES ? CGRectZero : CGPathGetPathBoundingBox(resolvedPath);
+    BOOL resolvedPathBoundsAreFinite = resolvedPathIsEmpty == NO && IJSVGRectIsFinite(resolvedPathBounds);
+    if(resolvedPathBoundsAreFinite == NO) {
+        resolvedPathBounds = CGRectZero;
+    }
+    CGPathRef paintPath = resolvedPathBoundsAreFinite == YES ?
+        [self newPaintPathForResolvedPath:resolvedPath
+                                   bounds:resolvedPathBounds] : CGPathCreateMutable();
+    IJSVGShapePaint* paint = (IJSVGShapePaint*)[self drawableBasicPaintForPathNode:node
+                                                                      resolvedPath:paintPath
+                                                                resolvedPathBounds:resolvedPathBounds];
+
+    // stroke the path
+    IJSVGStrokePaint* strokePaint = nil;
+    CGFloat strokeWidthDifference = 0.f;
+    if([node matchesTraits:IJSVGNodeTraitStroked]) {
+        // its highly likely that the stroke paint is larger than the paint its being
+        // drawing into, so we need to increase the paint size to match or any groups
+        // that this is inside wont be the correct frame
+        strokePaint = (IJSVGStrokePaint*)[self drawableStrokedPaintForPathNode:node
+                                                                  resolvedPath:paintPath
+                                                            resolvedPathBounds:resolvedPathBounds];
+        strokeWidthDifference = strokePaint.lineWidth * .5f;
+
+        // make sure we update the bounding box as it has changed
+        paint.frame = CGRectInset(paint.frame, -strokeWidthDifference,
+                                  -strokeWidthDifference);
+        paint.outerBoundingBox = paint.frame;
+    }
+
+    IJSVGPaint* fillPaint = [self drawableFillPaintForPathNode:node
+                                                         paint:paint
+                                                  resolvedPath:paintPath
+                                            resolvedPathBounds:resolvedPathBounds];
+
     if(fillPaint != nil) {
         // fill opacity is precalculated for its colour when the type is fillColor,
         // for fills such as gradients and patterns, just reduce the opacity down
@@ -496,54 +628,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         [paint addChild:fillPaint];
     }
 
-
     // stroke the path
     if(strokePaint != nil) {
-        paint.strokeStyle = strokePaint;
-        // we need to work out what type of fill we need for the paint
-        IJSVGPaintFillType type = [IJSVGPaint fillTypeForFill:node.stroke];
-
-        switch(type) {
-            // patterns
-            case IJSVGPaintFillTypePattern: {
-                IJSVGPatternPaint* patternPaint = nil;
-                patternPaint = [self drawableBasicPatternPaintForPaint:strokePaint
-                                                               pattern:(IJSVGPattern*)node.stroke];
-                patternPaint.referencingPaint = paint;
-
-                // clip the drawing to a stroked path
-                CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
-                patternPaint.clipPath = path;
-                CGPathRelease(path);
-                paint.strokePaint = patternPaint;
-                [paint addChild:patternPaint];
-                break;
-            }
-
-            // gradients
-            case IJSVGPaintFillTypeGradient: {
-                IJSVGGradientPaint* gradientPaint = nil;
-                gradientPaint = [self drawableBasicGradientPaintForPaint:strokePaint
-                                                                gradient:(IJSVGGradient*)node.stroke];
-                gradientPaint.referencingPaint = paint;
-
-                // clip the drawing to a stroked path
-                CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
-                gradientPaint.clipPath = path;
-                CGPathRelease(path);
-                paint.strokePaint = gradientPaint;
-                [paint addChild:gradientPaint];
-                break;
-            }
-
-            // generic
-            default: {
-                paint.strokePaint = strokePaint;
-                [paint addChild:strokePaint];
-                break;
-            }
-        }
-
+        [self applyStrokePaint:strokePaint
+                       toPaint:paint
+                      fromNode:node];
     }
 
     CGPathRelease(paintPath);
@@ -560,16 +649,12 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
              bounds:resolvedPathBounds
        toShapePaint:paint];
 
-    // reset the frame back to zero
-    CGRect frame = paint.frame;
-
     // compute the color
     NSColor* strokeColor = NSColor.blackColor;
     if([node.stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node.stroke;
         strokeColor = colorNode.color;
     }
-
 
     // replacement colour
     NSColor* repColor = [self colorForColor:strokeColor
@@ -585,69 +670,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     paint.fillColor = nil;
     paint.strokeColor = strokeColor.CGColor;
 
-    // work out line width
-    CGFloat lineWidth = [node.strokeWidth computeValue:frame.size.width];
-
-    if(_style.lineWidth != IJSVGInheritedFloatValue) {
-        lineWidth = _style.lineWidth;
-    }
-
-    // work out line styles
-    IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
-    IJSVGLineJoinStyle lineJoinStyle = node.lineJoinStyle;
-    CGFloat miterLimit = node.strokeMiterLimit.value;
-
-    // use anything declared on the style
-    if(_style.lineCapStyle != IJSVGLineCapStyleNone &&
-        _style.lineCapStyle != IJSVGLineCapStyleInherit) {
-        lineCapStyle = _style.lineCapStyle;
-    }
-
-    if(_style.lineJoinStyle != IJSVGLineJoinStyleNone &&
-        _style.lineJoinStyle != IJSVGLineJoinStyleInherit) {
-        lineJoinStyle = _style.lineJoinStyle;
-    }
-
-    // miter limit can be set via the style
-    if(_style.miterLimit != IJSVGInheritedFloatValue) {
-        miterLimit = _style.miterLimit;
-    }
-
-    // apply the properties
-    paint.lineWidth = lineWidth;
-    paint.lineCap = IJSVGQuartzLineCap(lineCapStyle);
-    paint.lineJoin = IJSVGQuartzLineJoin(lineJoinStyle);
-    paint.miterLimit = miterLimit;
-
-    CGFloat strokeOpacity = 1.f;
-    if(node.strokeOpacity.value != 1.f) {
-        strokeOpacity = node.strokeOpacity.value;
-    }
-    paint.opacity = strokeOpacity;
-
-    // dashing
-    paint.lineDashPhase = node.strokeDashOffset.value;
-    if(node.strokeDashArrayCount != IJSVGInheritedIntegerValue) {
-        paint.lineDashPattern = node.lineDashPattern;
-    }
-
-    // lets resize the paint as we have computed everything at this point
-    CGFloat increase = paint.lineWidth / 2.f;
-    frame = CGRectInset(frame, -increase, -increase);
-
-
-    // now we know what to do, we need to transform the path
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(increase, increase);
-    CGPathRef path = CGPathCreateCopyByTransformingPath(paint.path, &transform);
-
-    // make sure we reset this back to zero
-    paint.frame = (CGRect) {
-        .origin = CGPointZero,
-        .size = frame.size
-    };
-    paint.outerBoundingBox = paint.frame;
-    paint.path = path;
-    CGPathRelease(path);
+    IJSVGQuartzConfigureStroke(paint, node, _style);
+    IJSVGQuartzExpandStrokeBounds(paint);
 
     return paint;
 }
@@ -1177,7 +1201,6 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 
     return (IJSVGPaint*)paint;
 }
-
 
 // Backdrop inputs need all preceding SVG artwork on a readable surface. Use
 // renderer-owned storage on every destination, including window and PDF contexts.

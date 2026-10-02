@@ -15,14 +15,8 @@ typedef struct {
     double slope, intercept, amplitude, exponent, bias;
 } IJSVGComponentTransferFunction;
 
-@implementation IJSVGComponentTransferFilterEffect
-
-- (void)applyTransferToPixels:(const float*)src
-                       output:(float*)dst
-                        width:(NSInteger)w
-                       height:(NSInteger)h
-                configuration:(NSData*)configuration
-                       tables:(NSData*)tables
+static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w,
+                                       NSInteger h, NSData* configuration, NSData* tables)
 {
     const IJSVGComponentTransferFunction* functions = configuration.bytes;
     const double* values = tables.bytes;
@@ -74,15 +68,10 @@ typedef struct {
     }
 }
 
-
-- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
-                             inputs:(NSArray<CIImage*>*)inputs
-                             region:(CGRect)region
-                            context:(IJSVGFilterContext*)context
+static void IJSVGPrepareTransferFunctions(IJSVGFilterPrimitive* primitive,
+                                          IJSVGComponentTransferFunction functions[4],
+                                          NSMutableData* tables)
 {
-    CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
-    IJSVGComponentTransferFunction functions[4] = { 0 };
-    NSMutableData* tables = [[NSMutableData alloc] init];
     NSArray* types = @[IJSVGStringIdentity, IJSVGStringTable, IJSVGStringDiscrete, IJSVGStringLinear, IJSVGStringGamma];
     for(NSUInteger c = 0; c < 4; c++) {
         IJSVGFilterPrimitive* function = nil;
@@ -112,6 +101,43 @@ typedef struct {
         }
     }
 
+}
+
+static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f,
+                                                const double* tableValues,
+                                                CGFloat coefficients[4])
+{
+    if(f.type == 3) {
+        coefficients[0] = f.intercept;
+        coefficients[1] = f.slope;
+    } else if(f.type == 1 && f.count == 2) {
+        coefficients[0] = tableValues[f.offset];
+        coefficients[1] = tableValues[f.offset + 1] - coefficients[0];
+    } else if((f.type == 1 || f.type == 2) && f.count == 1) {
+        coefficients[0] = tableValues[f.offset];
+        coefficients[1] = 0;
+    } else if(f.type == 4 && f.exponent >= 0 && f.exponent <= 3 && floor(f.exponent) == f.exponent) {
+        memset(coefficients, 0, 4 * sizeof(*coefficients));
+        coefficients[0] = f.bias;
+        coefficients[(NSUInteger)f.exponent] += f.amplitude;
+    } else if(f.type == 4 || ((f.type == 1 || f.type == 2) && f.count > 0)) {
+        return NO;
+    }
+    return YES;
+}
+
+@implementation IJSVGComponentTransferFilterEffect
+
+- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
+                             inputs:(NSArray<CIImage*>*)inputs
+                             region:(CGRect)region
+                            context:(IJSVGFilterContext*)context
+{
+    CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
+    IJSVGComponentTransferFunction functions[4] = { 0 };
+    NSMutableData* tables = [[NSMutableData alloc] init];
+    IJSVGPrepareTransferFunctions(primitive, functions, tables);
+
     // CIColorPolynomial works on straight RGBA, like SVG component transfer.
     // It exactly covers identity, linear, two entry tables, and cubic or lower
     // integer gamma functions; arbitrary tables and exponents need the fallback.
@@ -123,20 +149,7 @@ typedef struct {
     for(NSUInteger c = 0; c < 4; c++) {
         IJSVGComponentTransferFunction f = functions[c];
         CGFloat coefficients[4] = { 0, 1, 0, 0 };
-        if(f.type == 3) {
-            coefficients[0] = f.intercept;
-            coefficients[1] = f.slope;
-        } else if(f.type == 1 && f.count == 2) {
-            coefficients[0] = tableValues[f.offset];
-            coefficients[1] = tableValues[f.offset + 1] - coefficients[0];
-        } else if((f.type == 1 || f.type == 2) && f.count == 1) {
-            coefficients[0] = tableValues[f.offset];
-            coefficients[1] = 0;
-        } else if(f.type == 4 && f.exponent >= 0 && f.exponent <= 3 && floor(f.exponent) == f.exponent) {
-            memset(coefficients, 0, sizeof(coefficients));
-            coefficients[0] = f.bias;
-            coefficients[(NSUInteger)f.exponent] += f.amplitude;
-        } else if(f.type == 4 || ((f.type == 1 || f.type == 2) && f.count > 0)) {
+        if(!IJSVGTransferPolynomialCoefficients(f, tableValues, coefficients)) {
             supportsPolynomial = NO;
         }
         polynomial[coefficientKeys[c]] = [CIVector vectorWithValues:coefficients
@@ -181,16 +194,12 @@ typedef struct {
     return [context mapImage:input
                        other:nil
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
-                       IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
-                           NSInteger offset = firstRow * w * 4;
-                           [self applyTransferToPixels:src + offset
-                                                output:dst + offset
-                                                 width:w
-                                                height:lastRow - firstRow
-                                         configuration:configuration
-                                                tables:tables];
-                       });
-                   }];
+        IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
+           NSInteger offset = firstRow * w * 4;
+           IJSVGApplyTransferToPixels(src + offset, dst + offset, w, lastRow - firstRow,
+                                      configuration, tables);
+        });
+    }];
 }
 
 @end

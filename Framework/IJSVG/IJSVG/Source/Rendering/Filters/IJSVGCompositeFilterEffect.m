@@ -10,17 +10,9 @@
 #import <IJSVG/IJSVGParser.h>
 #import <Accelerate/Accelerate.h>
 
-@implementation IJSVGCompositeFilterEffect
-
-- (void)compositePixels:(const float*)a
-             withPixels:(const float*)b
-                 output:(float*)dst
-                  width:(NSInteger)w
-                 height:(NSInteger)h
-     productCoefficient:(double)k1
-       firstCoefficient:(double)k2
-      secondCoefficient:(double)k3
-               constant:(double)k4
+static void IJSVGCompositePixels(const float* a, const float* b, float* dst,
+                                 NSInteger w, NSInteger h, double k1, double k2,
+                                 double k3, double k4)
 {
     // Figma style inner shadows subtract blurred alpha from hard alpha.
     // Vectorize this common case without changing premultiplied semantics.
@@ -64,54 +56,50 @@
     }
 }
 
-
-- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
-                             inputs:(NSArray<CIImage*>*)inputs
-                             region:(CGRect)region
-                            context:(IJSVGFilterContext*)context
+static CIImage* IJSVGCompositeXor(CIImage* input, CIImage* other, IJSVGFilterContext* context)
 {
-    CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
-    CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
-    NSString* op = primitive.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
-    static NSDictionary<NSString*, NSString*>* filters;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        filters = @{
-            IJSVGStringOver: @"CISourceOverCompositing",
-            IJSVGStringIn: @"CISourceInCompositing",
-            IJSVGStringOut: @"CISourceOutCompositing",
-            IJSVGStringAtop: @"CISourceAtopCompositing",
-            IJSVGStringLighter: @"CIAdditionCompositing"
-        };
+    CIImage* first = [context imageInPrimitiveColorSpace:input];
+    CIImage* second = [context imageInPrimitiveColorSpace:other];
+    CIImage* firstOnly = [first imageByApplyingFilter:@"CISourceOutCompositing"
+                                  withInputParameters:@{
+        kCIInputBackgroundImageKey: second
+    }];
+    CIImage* secondOnly = [second imageByApplyingFilter:@"CISourceOutCompositing"
+                                    withInputParameters:@{
+        kCIInputBackgroundImageKey: first
+    }];
+    return [context imageFromPrimitiveColorSpace:[firstOnly imageByApplyingFilter:@"CIAdditionCompositing"
+                                                              withInputParameters:@{
+        kCIInputBackgroundImageKey: secondOnly
+    }]];
+}
+
+static CIColorKernel* IJSVGCompositeArithmeticKernel(void)
+{
+    static CIColorKernel* arithmeticKernel;
+    static dispatch_once_t kernelToken;
+    dispatch_once(&kernelToken, ^{
+        NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
+        NSURL* sourceURL = [bundle URLForResource:@"IJSVGSubtract"
+                                    withExtension:@"metal"];
+        NSString* source = sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
+                                                                       encoding:NSUTF8StringEncoding
+                                                                          error:NULL] : nil;
+        if(source == nil) {
+            return;
+        }
+        CIKernel* kernel = [CIKernel kernelsWithMetalString:source
+                                                      error:NULL].firstObject;
+        if([kernel isKindOfClass:CIColorKernel.class]) {
+            arithmeticKernel = (CIColorKernel*)kernel;
+        }
     });
-    if([op isEqualToString:IJSVGStringXor]) {
-        CIImage* first = [context imageInPrimitiveColorSpace:input];
-        CIImage* second = [context imageInPrimitiveColorSpace:other];
-        CIImage* firstOnly = [first imageByApplyingFilter:@"CISourceOutCompositing"
-                                      withInputParameters:@{
-            kCIInputBackgroundImageKey: second
-        }];
-        CIImage* secondOnly = [second imageByApplyingFilter:@"CISourceOutCompositing"
-                                        withInputParameters:@{
-            kCIInputBackgroundImageKey: first
-        }];
-        return [context imageFromPrimitiveColorSpace:[firstOnly imageByApplyingFilter:@"CIAdditionCompositing"
-                                                                  withInputParameters:@{
-          kCIInputBackgroundImageKey: secondOnly
-        }]];
-    }
-    if(filters[op] != nil) {
-        return [context applyFilter:filters[op]
-                            toImage:input
-                         parameters:@{ kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other] }];
-    }
-    if([op isEqualToString:IJSVGStringArithmetic] == NO) {
-        return [context applyFilter:@"CISourceOverCompositing"
-                            toImage:input
-                         parameters:@{
-            kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
-        }];
-    }
+    return arithmeticKernel;
+}
+
+static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImage* input,
+    CIImage* other, IJSVGFilterContext* context)
+{
     double k1 = [primitive numberForParameter:IJSVGAttributeK1
                                  defaultValue:0];
     double k2 = [primitive numberForParameter:IJSVGAttributeK2
@@ -126,24 +114,7 @@
     BOOL boundedCoefficients = fabs(k1) <= 16 && fabs(k2) <= 16 && fabs(k3) <= 16
         && fabs(k4) <= 16;
     if(context.supportsMetalKernels && boundedCoefficients) {
-        static CIColorKernel* arithmeticKernel;
-        static dispatch_once_t kernelToken;
-        dispatch_once(&kernelToken, ^{
-            NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
-            NSURL* sourceURL = [bundle URLForResource:@"IJSVGSubtract"
-                                        withExtension:@"metal"];
-            NSString* source = sourceURL != nil
-                ? [NSString stringWithContentsOfURL:sourceURL encoding:NSUTF8StringEncoding error:NULL]
-                : nil;
-            if(source == nil) {
-                return;
-            }
-            CIKernel* kernel = [CIKernel kernelsWithMetalString:source
-                                                          error:NULL].firstObject;
-            if([kernel isKindOfClass:CIColorKernel.class]) {
-                arithmeticKernel = (CIColorKernel*)kernel;
-            }
-        });
+        CIColorKernel* arithmeticKernel = IJSVGCompositeArithmeticKernel();
         if(arithmeticKernel != nil) {
             CIImage* result = [arithmeticKernel applyWithExtent:context.extent
                                                       arguments:@[
@@ -180,17 +151,50 @@
                    operation:^(const float* a, const float* b, float* dst, NSInteger w, NSInteger h) {
       IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
           NSInteger offset = firstRow * w * 4;
-          [self compositePixels:a + offset
-                     withPixels:b + offset
-                         output:dst + offset
-                          width:w
-                         height:lastRow - firstRow
-             productCoefficient:k1
-               firstCoefficient:k2
-              secondCoefficient:k3
-                       constant:k4];
+          IJSVGCompositePixels(a + offset, b + offset, dst + offset, w, lastRow - firstRow, k1, k2, k3, k4);
       });
     }];
+}
+
+@implementation IJSVGCompositeFilterEffect
+
+- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
+                             inputs:(NSArray<CIImage*>*)inputs
+                             region:(CGRect)region
+                            context:(IJSVGFilterContext*)context
+{
+    CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
+    CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
+    NSString* op = primitive.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
+    static NSDictionary<NSString*, NSString*>* filters;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        filters = @{
+            IJSVGStringOver: @"CISourceOverCompositing",
+            IJSVGStringIn: @"CISourceInCompositing",
+            IJSVGStringOut: @"CISourceOutCompositing",
+            IJSVGStringAtop: @"CISourceAtopCompositing",
+            IJSVGStringLighter: @"CIAdditionCompositing"
+        };
+    });
+    if([op isEqualToString:IJSVGStringXor]) {
+        return IJSVGCompositeXor(input, other, context);
+    }
+    if(filters[op] != nil) {
+        return [context applyFilter:filters[op]
+                            toImage:input
+                         parameters:@{
+            kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
+        }];
+    }
+    if([op isEqualToString:IJSVGStringArithmetic] == NO) {
+        return [context applyFilter:@"CISourceOverCompositing"
+                            toImage:input
+                         parameters:@{
+            kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
+        }];
+    }
+    return IJSVGCompositeArithmetic(primitive, input, other, context);
 }
 
 @end
