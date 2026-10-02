@@ -170,9 +170,11 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    // Only cache known bitmap destinations. PDF, layer and pattern callback
-    // contexts must not be probed with bitmap only Core Graphics functions.
-    if(![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
+    // Keep window drawing independent of deferred nested pattern callbacks.
+    // Other contexts keep drawing the pattern directly.
+    NSGraphicsContext* graphicsContext = NSGraphicsContext.currentContext;
+    BOOL drawingToScreen = graphicsContext.CGContext == ctx && graphicsContext.isDrawingToScreen;
+    if(!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;
     }
@@ -182,6 +184,11 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
         return;
     }
     CGFloat scale = MAX(self.backingScaleFactor, 1.f);
+    if(drawingToScreen) {
+        // Match the bitmap to the current size in screen pixels.
+        CGAffineTransform transform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
+        scale = MAX(scale, MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d)));
+    }
     scale = MIN(scale, 4096.f / MAX(bounds.size.width, bounds.size.height));
     scale = MIN(scale, sqrt(4194304.f / (bounds.size.width * bounds.size.height)));
     if(_cachedImage == NULL || _cachedScale != scale || !CGRectEqualToRect(_cachedBounds, bounds)) {
