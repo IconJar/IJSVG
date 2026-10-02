@@ -26,6 +26,14 @@
 - (CGSize)pixelUnits;
 - (NSMutableData*)pixelsForImage:(CIImage*)image;
 - (CIImage*)imageForPixels:(NSData*)pixels;
+- (CIImage*)imageForPixels:(NSData*)pixels
+                    bounds:(CGRect)bounds;
+
+// Restrict effects that do not read neighbouring pixels to their output region.
+- (CIImage*)mapImage:(CIImage*)image
+               other:(CIImage*)other
+              region:(CGRect)region
+           operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;
 - (CIImage*)mapImage:(CIImage*)image
                other:(CIImage*)other
            operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;

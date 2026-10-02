@@ -69,6 +69,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 - (void)addChild:(IJSVGPaint*)paint;
 - (void)renderInContext:(CGContextRef)ctx;
 - (void)drawInContext:(CGContextRef)ctx;
+- (void)drawContentsInContext:(CGContextRef)ctx;
 - (void)performRenderInContext:(CGContextRef)ctx;
 - (CGRect)transparencyBounds;
 

@@ -1085,12 +1085,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testBitmapBackgroundInputUsesPreviouslyPaintedContent
 {
-    NSString* original = [self document:@"<defs><filter id=\"f\" filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"30\" height=\"10\">"
+    NSString* original = [self document:@"<g enable-background=\"new\"><defs><filter id=\"f\" filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"30\" height=\"10\">"
         @"    <feColorMatrix in=\"BackgroundImage\" type=\"matrix\""
         @"        values=\"0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0\"/>"
         @"</filter></defs>"
         @"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"blue\"/>"
-        @"<rect x=\"12\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\" filter=\"url(#f)\"/>"];
+        @"<rect x=\"12\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\" filter=\"url(#f)\"/></g>"];
     NSData* bytes = [self render:original scale:10];
     XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 0, 255, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 135, 35, 10)[3] == 0);

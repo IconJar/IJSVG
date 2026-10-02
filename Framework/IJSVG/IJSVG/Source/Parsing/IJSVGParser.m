@@ -194,6 +194,7 @@ NSString* const IJSVGAttributePointsAtY = @"pointsAtY";
 NSString* const IJSVGAttributePointsAtZ = @"pointsAtZ";
 NSString* const IJSVGAttributeLimitingConeAngle = @"limitingConeAngle";
 NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-filters";
+NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
 @interface IJSVGParser ()
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
@@ -551,6 +552,9 @@ NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-
         IJSVGStoreStyleAttributes(nodeStyle, activeAttributes, attributeValues);
     }
 
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeEnableBackground, &value)) {
+        IJSVGApplyBackgroundAttribute(node, value);
+    }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeColorInterpolationFilters, &value)) {
         node.filterColorInterpolation = value;
     }

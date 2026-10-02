@@ -184,16 +184,21 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 - (NSMutableData*)pixelsForImage:(CIImage*)image
 {
-    size_t width = self.extent.size.width, height = self.extent.size.height;
+    return [self pixelsForImage:image bounds:self.extent];
+}
+
+- (NSMutableData*)pixelsForImage:(CIImage*)image bounds:(CGRect)bounds
+{
+    size_t width = bounds.size.width, height = bounds.size.height;
     NSMutableData* data = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
     // Flip the image so the CPU receives rows in the expected order.
-    CGFloat flipY = CGRectGetMinY(self.extent) + CGRectGetMaxY(self.extent);
+    CGFloat flipY = CGRectGetMinY(bounds) + CGRectGetMaxY(bounds);
     image = [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, 0.f, flipY)];
     [self.context render:image
                 toBitmap:data.mutableBytes
                 rowBytes:width * 4 * sizeof(float)
-                  bounds:self.extent
+                  bounds:bounds
                   format:kCIFormatRGBAf
               colorSpace:space];
     CGColorSpaceRelease(space);
@@ -202,15 +207,24 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 - (CIImage*)imageForPixels:(NSData*)pixels
 {
+    return [self imageForPixels:pixels
+                         bounds:self.extent];
+}
+
+- (CIImage*)imageForPixels:(NSData*)pixels
+                    bounds:(CGRect)bounds
+{
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
     CIImage* image = [CIImage imageWithBitmapData:pixels
-                                      bytesPerRow:self.extent.size.width * 4 * sizeof(float)
-                                             size:self.extent.size
+                                      bytesPerRow:bounds.size.width * 4 * sizeof(float)
+                                             size:bounds.size
                                            format:kCIFormatRGBAf
                                        colorSpace:space];
     CGColorSpaceRelease(space);
     // Restore the image position without copying the pixels.
-    return [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, 0.f, self.extent.size.height)];
+    return [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f,
+                                                                 bounds.origin.x,
+                                                                 CGRectGetMaxY(bounds))];
 }
 
 // Read pixels only when Core Image cannot perform the effect.
@@ -218,12 +232,34 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
                other:(CIImage*)other
            operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation
 {
-    NSData* first = [self pixelsForImage:image];
-    NSData* second = other == image ? first : (other == nil ? nil : [self pixelsForImage:other]);
+    return [self mapImage:image
+                    other:other
+                   region:self.extent
+                operation:operation];
+}
+
+- (CIImage*)mapImage:(CIImage*)image
+               other:(CIImage*)other
+              region:(CGRect)region
+           operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation
+{
+    if(!IJSVGFilterValidRect(region)) {
+        return CIImage.emptyImage;
+    }
+    // Keep whole pixels here. The graph applies the exact fractional crop later.
+    CGRect bounds = CGRectIntersection(CGRectIntegral(region), self.extent);
+    if(!IJSVGFilterValidRect(bounds)) {
+        return CIImage.emptyImage;
+    }
+    NSData* first = [self pixelsForImage:image
+                                  bounds:bounds];
+    NSData* second = other == image ? first : (other == nil ? nil : [self pixelsForImage:other
+                                                                                  bounds:bounds]);
     NSMutableData* output = [NSMutableData dataWithLength:first.length];
-    operation(first.bytes, second.bytes, output.mutableBytes, self.extent.size.width,
-              self.extent.size.height);
-    return [self imageForPixels:output];
+    operation(first.bytes, second.bytes, output.mutableBytes, bounds.size.width,
+              bounds.size.height);
+    return [self imageForPixels:output
+                         bounds:bounds];
 }
 
 // Convert colors through Core Image without reading pixels back to the CPU.

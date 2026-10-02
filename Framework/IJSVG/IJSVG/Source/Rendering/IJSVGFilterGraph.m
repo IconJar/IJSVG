@@ -349,10 +349,12 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
                                               context:(IJSVGFilterContext*)renderingContext
 {
     NSSet<NSString*>* inputNames = self.filter.inputNames;
+    // Transparent inputs still need bounds when a filter creates visible pixels.
+    CIImage* transparent = [[CIImage imageWithColor:CIColor.clearColor] imageByCroppingToRect:filterRegion];
     NSMutableDictionary<NSString*, CIImage*>* sources = [@{
         IJSVGStringSourceGraphic: source,
-        IJSVGStringBackgroundImage: CIImage.emptyImage,
-        IJSVGStringBackgroundAlpha: CIImage.emptyImage
+        IJSVGStringBackgroundImage: transparent,
+        IJSVGStringBackgroundAlpha: transparent
     } mutableCopy];
 
     // Ordinary blurs and drop shadows do not reference SourceAlpha in the graph.
@@ -363,7 +365,10 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     if(self.backgroundProvider != nil &&
         ([inputNames containsObject:IJSVGStringBackgroundImage] ||
         [inputNames containsObject:IJSVGStringBackgroundAlpha])) {
-        CIImage* background = [self.backgroundProvider() imageByCroppingToRect:filterRegion] ?: CIImage.emptyImage;
+        CIImage* background = [self.backgroundProvider() imageByCroppingToRect:filterRegion];
+        if(background == nil || !IJSVGFilterValidRect(background.extent)) {
+            background = transparent;
+        }
         sources[IJSVGStringBackgroundImage] = background;
         if([inputNames containsObject:IJSVGStringBackgroundAlpha]) {
             sources[IJSVGStringBackgroundAlpha] = [renderingContext alphaForImage:background];

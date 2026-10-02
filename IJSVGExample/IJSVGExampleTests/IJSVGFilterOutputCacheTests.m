@@ -180,7 +180,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     NSString *region = variant < 4 ? @"x='-.1' y='-.1' width='1.2' height='1.2'" :
         @"filterUnits='userSpaceOnUse' x='3.25' y='4.75' width='53.5' height='48.25'";
     NSString *xml = [NSString stringWithFormat:
-        @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+        @"<svg enable-background='new' xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
         @"<defs>"
         @"<linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
         @"<stop offset='0' stop-color='#ce3245' stop-opacity='.8'/>"
@@ -271,7 +271,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
             for(NSNumber *reference in @[@NO, @YES]) {
                 NSString *unused = reference.boolValue ? @"<feFlood flood-opacity='0' result='unused'/>" : @"";
                 NSMutableString *xml = [NSMutableString stringWithFormat:
-                    @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+                    @"<svg enable-background='new' xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
                     @"<defs><filter id='f' %@ color-interpolation-filters='%@'>%@"
                     @"%@"
                     @"</filter></defs><rect width='64' height='64' fill='#21486b' fill-opacity='.4'/>",
@@ -321,7 +321,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                 NSMutableArray<NSData*>* renders = [NSMutableArray array];
                 for(NSNumber* filtered in @[@NO, @YES]) {
                     NSMutableString* xml = [NSMutableString stringWithString:
-                        @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
+                        @"<svg enable-background='new' xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
                         @"<defs><filter id='f' color-interpolation-filters='sRGB'>"
                         @"<feComposite in='SourceGraphic' in2='BackgroundImage' operator='arithmetic' k2='1' k3='1'/>"
                         @"</filter></defs><rect width='32' height='32' fill='#123456'/>"];

@@ -13,7 +13,7 @@
         ? @"0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"
         : @"0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0";
     NSString* document = [NSString stringWithFormat:
-        @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
+        @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' enable-background='new'>"
         "<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='32' height='32'>"
         "<feColorMatrix in='%@' values='%@'/></filter></defs>"
         "<rect x='4' y='4' width='8' height='8' fill='blue'/>"

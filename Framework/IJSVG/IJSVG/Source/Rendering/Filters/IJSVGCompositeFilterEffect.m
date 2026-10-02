@@ -95,7 +95,7 @@ static CIColorKernel* IJSVGCompositeArithmeticKernel(void)
 }
 
 static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImage* input,
-    CIImage* other, IJSVGFilterContext* context)
+    CIImage* other, CGRect region, IJSVGFilterContext* context)
 {
     double k1 = [primitive numberForParameter:IJSVGAttributeK1
                                  defaultValue:0];
@@ -144,6 +144,7 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
     }
     return [context mapImage:input
                        other:other
+                      region:region
                    operation:^(const float* a, const float* b, float* dst, NSInteger w, NSInteger h) {
       IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
           NSInteger offset = firstRow * w * 4;
@@ -190,7 +191,7 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
             kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
         }];
     }
-    return IJSVGCompositeArithmetic(primitive, input, other, context);
+    return IJSVGCompositeArithmetic(primitive, input, other, region, context);
 }
 
 @end

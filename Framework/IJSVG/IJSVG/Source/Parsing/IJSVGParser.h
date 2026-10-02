@@ -209,6 +209,7 @@ extern NSString* const IJSVGAttributePointsAtY;
 extern NSString* const IJSVGAttributePointsAtZ;
 extern NSString* const IJSVGAttributeLimitingConeAngle;
 extern NSString* const IJSVGAttributeColorInterpolationFilters;
+extern NSString* const IJSVGAttributeEnableBackground;
 
 @class IJSVGParser;
 @class IJSVGThreadManager;

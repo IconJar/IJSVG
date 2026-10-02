@@ -1206,9 +1206,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         }
         [visited addObject:paint];
         if([paint isKindOfClass:IJSVGFilterPaint.class]) {
-            NSSet* names = ((IJSVGFilterPaint*)paint).filter.inputNames;
-            if([names containsObject:IJSVGStringBackgroundImage] ||
-                [names containsObject:IJSVGStringBackgroundAlpha]) {
+            if(((IJSVGFilterPaint*)paint).usesBackground) {
                 return YES;
             }
         }
@@ -1310,13 +1308,18 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         void (^drawingBlock)(CGContextRef) = ^(CGContextRef destination) {
             [self->_rootPaint renderInContext:destination];
         };
-        if(_requiresBackdrop) {
-            [self renderBackdropPaintInContext:ctx frame:frame];
-        } else if(_batchableFilters == nil || ![IJSVGFilterPaint renderBatchedPaints:_batchableFilters
-                                                                    inContext:ctx
-                                                                 drawingBlock:drawingBlock]) {
-            drawingBlock(ctx);
-        }
+        // Resolve the destination pixels once for filters and batch collection.
+        CGAffineTransform pixelTransform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
+        [IJSVGFilterPaint drawInContext:ctx pixelTransform:pixelTransform drawingBlock:^{
+            if(self->_requiresBackdrop) {
+                [self renderBackdropPaintInContext:ctx
+                                             frame:frame];
+            } else if(self->_batchableFilters == nil || ![IJSVGFilterPaint renderBatchedPaints:self->_batchableFilters
+                                                                                inContext:ctx
+                                                                             drawingBlock:drawingBlock]) {
+                drawingBlock(ctx);
+            }
+        }];
     } @finally {
         CGContextRestoreGState(ctx);
     }

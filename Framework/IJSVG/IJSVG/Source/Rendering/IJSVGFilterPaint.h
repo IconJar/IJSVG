@@ -12,6 +12,7 @@
 @interface IJSVGFilterPaint : IJSVGGroupPaint
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, readonly) BOOL usesBackground;
 
 // Only enable for resolved, immutable paint graphs. Rebuild the graph to invalidate.
 @property (nonatomic, assign) BOOL cachesRenderedOutput;
@@ -23,7 +24,16 @@
 // Registers storage owned by the renderer; never probe an arbitrary display/PDF context.
 + (void)renderPaint:(IJSVGPaint*)paint inBitmapContext:(CGContextRef)context;
 + (BOOL)isRegisteredBitmapContext:(CGContextRef)context;
+// Start a separate background for a container that requests one.
++ (void)drawBackgroundForPaint:(IJSVGPaint*)paint
+                      context:(CGContextRef)context
+                 drawingBlock:(void (^)(CGContextRef))drawingBlock;
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint;
+
+// Pass the destination pixel mapping through the complete drawing operation.
++ (void)drawInContext:(CGContextRef)context
+      pixelTransform:(CGAffineTransform)pixelTransform
+        drawingBlock:(void (^)(void))drawingBlock;
 
 // Eligibility depends on the resolved graph and can be reused until it rebuilds.
 + (NSSet<IJSVGFilterPaint*>*)batchableFiltersForPaint:(IJSVGPaint*)root;

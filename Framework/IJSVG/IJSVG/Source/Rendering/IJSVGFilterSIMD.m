@@ -763,8 +763,15 @@ static BOOL IJSVGThreeBoxBlur(const float* source, float* output,
     for(NSUInteger stage = 0; stage < 3; stage++) {
         sides[stage] = stage < lowerPasses ? lower : lower + 2;
     }
-    if(width * height <= 4096 &&
-        IJSVGFilterSIMDThreeBoxBlur(source, output, width, height, sides)) {
+    // Larger images benefit when the compiler optimizes for speed.
+#if defined(__OPTIMIZE_SIZE__)
+    NSUInteger maximumPixels = 4096;
+#else
+    NSUInteger maximumPixels = 16384;
+#endif
+    BOOL useFusedBlur = width * height <= 4096 ||
+        (width <= 128 && height <= 128 && width * height <= maximumPixels);
+    if(useFusedBlur && IJSVGFilterSIMDThreeBoxBlur(source, output, width, height, sides)) {
         return YES;
     }
 #endif

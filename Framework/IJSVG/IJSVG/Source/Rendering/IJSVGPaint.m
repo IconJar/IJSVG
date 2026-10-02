@@ -311,14 +311,18 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
         }
         CGContextBeginTransparencyLayer(ctx, NULL);
     }
-    [self drawInContext:ctx];
-    for(IJSVGPaint* child in self.children) {
-        // Placement and paint state share one save/restore pair.
-        [child renderInContext:ctx
-             applyingPlacement:YES];
-    }
+    [self drawContentsInContext:ctx];
     if(isolated) {
         CGContextEndTransparencyLayer(ctx);
+    }
+}
+
+- (void)drawContentsInContext:(CGContextRef)ctx
+{
+    [self drawInContext:ctx];
+    for(IJSVGPaint* child in self.children) {
+        [child renderInContext:ctx
+             applyingPlacement:YES];
     }
 }
 

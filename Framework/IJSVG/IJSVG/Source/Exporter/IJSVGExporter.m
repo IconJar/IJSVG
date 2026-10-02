@@ -2388,6 +2388,28 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
 
+    IJSVGNode* node = paint.sourceNode;
+    switch(node.backgroundEnabled) {
+        case IJSVGBackgroundEnabledAccumulate:
+            dict[IJSVGAttributeEnableBackground] = @"accumulate";
+            break;
+        case IJSVGBackgroundEnabledInherit:
+            dict[IJSVGAttributeEnableBackground] = @"inherit";
+            break;
+        case IJSVGBackgroundEnabledNew: {
+            CGRect bounds = node.backgroundBounds;
+            dict[IJSVGAttributeEnableBackground] = CGRectIsInfinite(bounds) ? @"new"
+                : [NSString stringWithFormat:@"new %@ %@ %@ %@",
+                    IJSVGShortFloatStringWithOptions(bounds.origin.x, _floatingPointOptions),
+                    IJSVGShortFloatStringWithOptions(bounds.origin.y, _floatingPointOptions),
+                    IJSVGShortFloatStringWithOptions(bounds.size.width, _floatingPointOptions),
+                    IJSVGShortFloatStringWithOptions(bounds.size.height, _floatingPointOptions)];
+            break;
+        }
+        case IJSVGBackgroundEnabledUnspecified:
+            break;
+    }
+
     // opacity
     if(paint.opacity != 1.f) {
         dict[IJSVGAttributeOpacity] = IJSVGShortFloatStringWithOptions(paint.opacity,

@@ -95,6 +95,7 @@
 		59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */; };
 		59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */; };
 		59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */; };
+		59FC3A73306FE5DC0028BEAC /* man-bowing-color-light.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -238,6 +239,7 @@
 		59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGQuartzRendererTests.m; sourceTree = "<group>"; };
 		59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGResourceExportTests.m; sourceTree = "<group>"; };
 		59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterOutputCacheTests.m; sourceTree = "<group>"; };
+		59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "man-bowing-color-light.svg"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -345,6 +347,7 @@
 				59D1E39F202279CA00C54672 /* Group.svg */,
 				590C87F5201FD0D4004A1554 /* car.svg */,
 				590C87F3201FC9E3004A1554 /* radialgradient2.svg */,
+				59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */,
 				590C87F0201FBF27004A1554 /* AJ_Digital_Camera.svg */,
 				590C87EC201FA08C004A1554 /* intertwingly.svg */,
 				590C87EE201FA092004A1554 /* NewTux.svg */,
@@ -534,6 +537,7 @@
 				59D6B1A3284F669B0058DE6B /* pattern-alignment.svg in Resources */,
 				5901B73E282818CA00290525 /* canonical.svg in Resources */,
 				593950A7285215FB00DA9156 /* 5x5checkerboard.svg in Resources */,
+				59FC3A73306FE5DC0028BEAC /* man-bowing-color-light.svg in Resources */,
 				5911682C2854CB7000678392 /* couchdb.svg in Resources */,
 				5943859F306BF58E006A5F63 /* dropshadow.svg in Resources */,
 				5901B747282818CA00290525 /* pcolormesh.svg in Resources */,

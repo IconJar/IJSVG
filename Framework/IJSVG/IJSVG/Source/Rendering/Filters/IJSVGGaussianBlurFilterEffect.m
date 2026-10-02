@@ -147,27 +147,27 @@ static CIImage* IJSVGSmallKernelBlur(CIImage* image, NSData* kernelX, NSData* ke
 }
 
 static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
-    IJSVGFilterContext* context)
+    IJSVGFilterContext* context, CGRect bounds)
 {
     // Shadows only need opacity values.
     // The blur is symmetric so the rows do not need to be flipped.
-    NSInteger w = context.extent.size.width, h = context.extent.size.height;
+    NSInteger w = bounds.size.width, h = bounds.size.height;
     NSMutableData* source = [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* output = [NSMutableData dataWithLength:source.length];
     [context.context render:image
                    toBitmap:source.mutableBytes
                    rowBytes:w * sizeof(float)
-                     bounds:context.extent
+                     bounds:bounds
                      format:kCIFormatAf
                  colorSpace:NULL];
     IJSVGApplyGaussianBlurToPixels(source.bytes, output.mutableBytes, w, h, kernelX, kernelY, 1);
     CIImage* result = [CIImage imageWithBitmapData:output
                                        bytesPerRow:w * sizeof(float)
-                                              size:context.extent.size
+                                              size:bounds.size
                                             format:kCIFormatAf
                                         colorSpace:NULL];
     return [result imageByApplyingTransform:CGAffineTransformMakeTranslation(
-        context.extent.origin.x, context.extent.origin.y)];
+        bounds.origin.x, bounds.origin.y)];
 }
 
 @implementation IJSVGGaussianBlurFilterEffect
@@ -246,6 +246,21 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
             alphaOnly:(BOOL)alphaOnly
               context:(IJSVGFilterContext*)context
 {
+    return [self blurImage:image
+                 deviation:deviation
+                  edgeMode:edgeMode
+                 alphaOnly:alphaOnly
+                    region:context.extent
+                   context:context];
+}
+
+- (CIImage*)blurImage:(CIImage*)image
+            deviation:(CGSize)deviation
+             edgeMode:(NSString*)edgeMode
+            alphaOnly:(BOOL)alphaOnly
+               region:(CGRect)region
+              context:(IJSVGFilterContext*)context
+{
     if(deviation.width < 0 || deviation.height < 0) {
         return CIImage.emptyImage;
     }
@@ -283,12 +298,23 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     if(metal != nil) {
         return metal;
     }
-    if(alphaOnly) {
-        return IJSVGAlphaBlur(image, kernelX, kernelY, context);
+    // Keep the blur radius and one extra pixel for sampling fractional offsets.
+    CGRect bounds = CGRectIntersection(context.extent, CGRectIntegral(CGRectInset(region,
+        -(CGFloat)(kernelX.length / sizeof(float) / 2 + 1),
+        -(CGFloat)(kernelY.length / sizeof(float) / 2 + 1))));
+  
+    if(!IJSVGFilterValidRect(bounds)) {
+        return CIImage.emptyImage;
     }
+  
+    if(alphaOnly) {
+        return IJSVGAlphaBlur(image, kernelX, kernelY, context, bounds);
+    }
+  
     // Blur each direction separately when one blur radius cannot describe both.
     return [context mapImage:image
                        other:nil
+                      region:bounds
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
       
         IJSVGApplyGaussianBlurToPixels(src, dst, w, h, kernelX, kernelY, 4);
@@ -304,6 +330,10 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
                  deviation:[primitive pairForParameter:IJSVGAttributeStdDeviation
                                           defaultValue:CGSizeZero]
                   edgeMode:primitive.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone
+                 alphaOnly:context.inputIsAlphaOnly ||
+                     [primitive.input isEqualToString:IJSVGStringSourceAlpha] ||
+                     [primitive.input isEqualToString:IJSVGStringBackgroundAlpha]
+                    region:region
                    context:context];
 }
 

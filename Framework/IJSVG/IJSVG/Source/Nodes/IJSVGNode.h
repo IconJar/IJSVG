@@ -14,6 +14,13 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
+    IJSVGBackgroundEnabledUnspecified,
+    IJSVGBackgroundEnabledAccumulate,
+    IJSVGBackgroundEnabledNew,
+    IJSVGBackgroundEnabledInherit
+};
+
 @class IJSVGNode;
 @class IJSVG;
 @class IJSVGGroup;
@@ -146,6 +153,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributePointsAtZ,
     IJSVGNodeAttributeLimitingConeAngle,
     IJSVGNodeAttributeColorInterpolationFilters,
+    IJSVGNodeAttributeEnableBackground,
     IJSVGNodeAttributeCount
 };
 
@@ -311,6 +319,9 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong) IJSVGFilter* filter;
 @property (nonatomic, copy) NSArray<IJSVGFilter*>* filters;
 @property (nonatomic, copy) NSString* filterColorInterpolation;
+@property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
+@property (nonatomic, assign) CGRect backgroundBounds;
+@property (nonatomic, readonly) CGRect backgroundRect;
 @property (nonatomic, assign) IJSVGWindingRule windingRule;
 @property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;

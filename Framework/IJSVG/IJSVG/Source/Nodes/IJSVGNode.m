@@ -296,6 +296,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
     [storage setBit:IJSVGNodeAttributeColorInterpolationFilters];
+    [storage setBit:IJSVGNodeAttributeEnableBackground];
     [storage setBit:IJSVGNodeAttributeClass];
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
@@ -481,6 +482,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.clipPath = node.clipPath;
     self.filters = node.filters;
     self.filterColorInterpolation = node.filterColorInterpolation;
+    self.backgroundEnabled = node.backgroundEnabled;
+    self.backgroundBounds = node.backgroundBounds;
 
     self.units = node.units;
     self.contentUnits = node.contentUnits;
@@ -618,6 +621,17 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 // these are all recursive, so go up the chain
 // if they dont exist on this specific node
+- (CGRect)backgroundRect
+{
+    if(![self isKindOfClass:IJSVGGroup.class]) {
+        return CGRectNull;
+    }
+    if(self.backgroundEnabled == IJSVGBackgroundEnabledInherit) {
+        return self.parentNode != nil ? self.parentNode.backgroundRect : CGRectNull;
+    }
+    return self.backgroundEnabled == IJSVGBackgroundEnabledNew ? self.backgroundBounds : CGRectNull;
+}
+
 - (IJSVGUnitLength*)opacity
 {
     if(_opacity.inherit && _parentNode != nil) {

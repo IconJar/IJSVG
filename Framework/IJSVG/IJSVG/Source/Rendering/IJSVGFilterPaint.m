@@ -17,6 +17,19 @@
 #import <limits.h>
 
 static _Thread_local CGContextRef IJSVGFilterBitmapContext;
+static _Thread_local CGContextRef IJSVGFilterBackgroundContext;
+static _Thread_local CGRect IJSVGFilterBackgroundClip;
+static _Thread_local CGContextRef IJSVGFilterDestinationContext;
+static _Thread_local CGAffineTransform IJSVGFilterDestinationTransform;
+
+static CGAffineTransform IJSVGFilterPixelTransform(CGContextRef context)
+{
+    CGAffineTransform transform = CGContextGetCTM(context);
+    if(context == IJSVGFilterDestinationContext) {
+        transform = CGAffineTransformConcat(transform, IJSVGFilterDestinationTransform);
+    }
+    return transform;
+}
 
 static BOOL IJSVGFilterRectIsFinite(CGRect rect)
 {
@@ -179,12 +192,11 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
         }
         if([paint isKindOfClass:IJSVGFilterPaint.class]) {
             IJSVGFilterPaint* filtered = (id)paint;
-            NSSet* names = filtered.filter.inputNames;
-            if([names containsObject:IJSVGStringBackgroundImage] ||
-                [names containsObject:IJSVGStringBackgroundAlpha]) {
+            if(filtered.usesBackground) {
                 return NO;
             }
-            for(IJSVGPaint* parent = paint.parentPaint; parent != nil; parent = parent.parentPaint) {
+            for(IJSVGPaint* parent = paint.parentPaint; parent != nil;
+                parent = parent.parentPaint) {
                 if([parent isKindOfClass:IJSVGFilterPaint.class]) {
                     return NO;
                 }
@@ -249,7 +261,8 @@ static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
         [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
             rendered = [ciContext createCGImage:atlas
                                        fromRect:CGRectMake(0, 0, size.width, size.height)
-                                         format:kCIFormatRGBA8 colorSpace:colorSpace];
+                                         format:kCIFormatRGBA8
+                                     colorSpace:colorSpace];
         }];
     }];
     CGColorSpaceRelease(colorSpace);
@@ -350,8 +363,8 @@ static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntr
 static CGContextRef IJSVGFilterNewCollectionContext(CGContextRef context)
 {
     // Display and PDF contexts cannot be queried with bitmap context APIs.
-    // The collection pass only needs disposable storage with the same scale.
-    CGAffineTransform transform = CGContextGetCTM(context);
+    // Use the pixel mapping supplied by the renderer for the collection bitmap.
+    CGAffineTransform transform = IJSVGFilterPixelTransform(context);
     CGRect deviceBounds = CGRectApplyAffineTransform(CGContextGetClipBoundingBox(context), transform);
     if(!IJSVGFilterRectIsFinite(deviceBounds) || CGRectIsEmpty(deviceBounds)) {
         return NULL;
@@ -403,6 +416,9 @@ static CIImage* IJSVGFilterBackgroundImageFromContext(CGContextRef ctx,
     }
     CIImage* image = [CIImage imageWithCGImage:background];
     CGImageRelease(background);
+    if(ctx == IJSVGFilterBackgroundContext && !CGRectIsInfinite(IJSVGFilterBackgroundClip)) {
+        image = [image imageByCroppingToRect:IJSVGFilterBackgroundClip];
+    }
     CGAffineTransform mapping
         = CGAffineTransformConcat(CGAffineTransformInvert(CGContextGetCTM(ctx)), imageTransform);
     return [image imageByApplyingTransform:mapping];
@@ -483,12 +499,81 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
 
 @implementation IJSVGFilterPaint
 
++ (void)drawInContext:(CGContextRef)context
+       pixelTransform:(CGAffineTransform)pixelTransform
+         drawingBlock:(void (^)(void))drawingBlock
+{
+    CGContextRef previousContext = IJSVGFilterDestinationContext;
+    CGAffineTransform previousTransform = IJSVGFilterDestinationTransform;
+    // Keep only the mapping that is missing from the drawing context.
+    CGAffineTransform transform = CGContextGetCTM(context);
+    IJSVGFilterDestinationContext = context;
+    IJSVGFilterDestinationTransform = CGAffineTransformConcat(CGAffineTransformInvert(transform), pixelTransform);
+    @try {
+        drawingBlock();
+    } @finally {
+        IJSVGFilterDestinationContext = previousContext;
+        IJSVGFilterDestinationTransform = previousTransform;
+    }
+}
+
++ (void)drawBackgroundForPaint:(IJSVGPaint*)paint
+                       context:(CGContextRef)context
+                  drawingBlock:(void (^)(CGContextRef))drawingBlock
+{
+    CGAffineTransform transform = CGContextGetCTM(context);
+    CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(CGContextGetClipBoundingBox(context), transform));
+    if(!IJSVGFilterRectIsFinite(bounds) || CGRectIsEmpty(bounds)) {
+        return;
+    }
+    CGFloat scale = MIN(1.f, MIN(4096.f / bounds.size.width, 4096.f / bounds.size.height));
+    size_t width = MAX(1, ceil(bounds.size.width * scale));
+    size_t height = MAX(1, ceil(bounds.size.height * scale));
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, 0, space,
+        kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    if(bitmap == NULL) {
+        return;
+    }
+    CGContextScaleCTM(bitmap, scale, scale);
+    CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
+    CGContextConcatCTM(bitmap, transform);
+    CGContextRef previousBitmap = IJSVGFilterBitmapContext;
+    CGContextRef previousBackground = IJSVGFilterBackgroundContext;
+    CGRect previousClip = IJSVGFilterBackgroundClip;
+    IJSVGFilterBitmapContext = bitmap;
+    IJSVGFilterBackgroundContext = bitmap;
+    CGRect clip = paint.sourceNode.backgroundRect;
+    IJSVGFilterBackgroundClip = CGRectIsInfinite(clip) ? clip
+        : CGRectApplyAffineTransform(clip, CGContextGetCTM(bitmap));
+    @try {
+        drawingBlock(bitmap);
+    } @finally {
+        IJSVGFilterBitmapContext = previousBitmap;
+        IJSVGFilterBackgroundContext = previousBackground;
+        IJSVGFilterBackgroundClip = previousClip;
+    }
+    CGImageRef image = CGBitmapContextCreateImage(bitmap);
+    CGContextRelease(bitmap);
+    if(image != NULL) {
+        CGContextSaveGState(context);
+        CGContextConcatCTM(context, CGAffineTransformInvert(transform));
+        // Apply container opacity after its children finish reading the background.
+        CGContextSetAlpha(context, paint.opacity);
+        CGContextDrawImage(context, bounds, image);
+        CGContextRestoreGState(context);
+        CGImageRelease(image);
+    }
+}
+
 + (BOOL)isRegisteredBitmapContext:(CGContextRef)context
 {
     return context != NULL && context == IJSVGFilterBitmapContext;
 }
 
-+ (void)renderPaint:(IJSVGPaint*)paint inBitmapContext:(CGContextRef)context
++ (void)renderPaint:(IJSVGPaint*)paint
+    inBitmapContext:(CGContextRef)context
 {
     CGContextRef previous = IJSVGFilterBitmapContext;
     IJSVGFilterBitmapContext = context;
@@ -504,6 +589,26 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     if(_outputCacheKey != nil) {
         [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
     }
+}
+
+- (BOOL)usesBackground
+{
+    NSSet* names = self.filter.inputNames;
+    if(![names containsObject:IJSVGStringBackgroundImage] &&
+        ![names containsObject:IJSVGStringBackgroundAlpha]) {
+        return NO;
+    }
+    // A new canvas on the filtered container has no earlier contents.
+    if(!CGRectIsNull(self.sourceNode.backgroundRect)) {
+        return NO;
+    }
+    for(IJSVGNode* node = self.sourceNode.parentNode; node != nil;
+        node = node.parentNode) {
+        if(!CGRectIsNull(node.backgroundRect)) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)canCacheOutput
@@ -528,9 +633,7 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         [visited addObject:paint];
         if([paint isKindOfClass:IJSVGFilterPaint.class]) {
             IJSVGFilter* filter = ((IJSVGFilterPaint*)paint).filter;
-            NSSet* names = filter.inputNames;
-            if([names containsObject:IJSVGStringBackgroundImage] ||
-                [names containsObject:IJSVGStringBackgroundAlpha]) {
+            if(((IJSVGFilterPaint*)paint).usesBackground) {
                 return NO;
             }
             for(IJSVGFilterPrimitive* primitive in filter.primitives) {
@@ -578,7 +681,9 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
                         cached = [[IJSVGFilterCachedImage alloc] init];
                         cached.image = copy;
                         cached.signature = _outputSignature;
-                        [IJSVGFilterOutputCache() setObject:cached forKey:_outputCacheKey cost:width * height * 4];
+                        [IJSVGFilterOutputCache() setObject:cached
+                                                     forKey:_outputCacheKey
+                                                       cost:width * height * 4];
                     }
                 }
             }
@@ -688,8 +793,9 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         return CIImage.emptyImage;
     }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef bitmap = CGBitmapContextCreate(
-        NULL, graph.extent.size.width, graph.extent.size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, graph.extent.size.width,
+                                                graph.extent.size.height, 8, 0, space,
+                                                kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     if(bitmap == NULL) {
         return CIImage.emptyImage;
@@ -834,7 +940,7 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
                                        graph:weakGraph];
         };
         graph.backgroundProvider = ^CIImage* {
-            return IJSVGFilterBackgroundImageFromContext(ctx, imageTransform);
+            return self.usesBackground ? IJSVGFilterBackgroundImageFromContext(ctx, imageTransform) : CIImage.emptyImage;
         };
 
         CIImage* output = [graph imageByFilteringSource:source];
@@ -879,9 +985,9 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
 
 - (CGFloat)renderScaleForRect:(CGRect)workRect context:(CGContextRef)ctx
 {
-    // Use the actual drawing transform so zoom, export size and Retina all
-    // produce the same effect in SVG units. Bound temporary raster storage.
-    CGAffineTransform transform = CGContextGetCTM(ctx);
+    // Local transforms extend the pixel mapping supplied by the renderer.
+    // Nested bitmaps already contain their full pixel scale.
+    CGAffineTransform transform = IJSVGFilterPixelTransform(ctx);
     CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
 
     // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
@@ -985,8 +1091,9 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
         -workRect.origin.x * scale, -workRect.origin.y * scale);
     CGImageRef composite = NULL;
-    if(IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting &&
-        ctx == IJSVGFilterBitmapContext) {
+    if(self.usesBackground && IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting &&
+        ctx == IJSVGFilterBitmapContext &&
+        (ctx != IJSVGFilterBackgroundContext || CGRectIsInfinite(IJSVGFilterBackgroundClip))) {
         composite = IJSVGFilterSIMDNewComposite(bitmap, ctx, graph, region);
     }
     if(composite != NULL) {
@@ -1062,6 +1169,18 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
                            defaultRegion:CGRectZero];
 
     if(IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
+        return;
+    }
+
+    IJSVGFilterPrimitive* primitive = self.filter.primitives.firstObject;
+    if(!self.usesBackground && IJSVGFilterSIMDUsesBackdropAddition(self.filter) &&
+        primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
+        // Adding transparent black leaves the source unchanged.
+        CGContextSaveGState(ctx);
+        CGContextClipToRect(ctx, region);
+        CGContextTranslateCTM(ctx, self.sourcePaint.frame.origin.x, self.sourcePaint.frame.origin.y);
+        [self.sourcePaint renderInContext:ctx];
+        CGContextRestoreGState(ctx);
         return;
     }
 

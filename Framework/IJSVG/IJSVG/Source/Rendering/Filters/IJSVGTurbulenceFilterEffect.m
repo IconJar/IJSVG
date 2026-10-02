@@ -177,7 +177,7 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     NSMutableData* state = [NSMutableData dataWithLength:sizeof(IJSVGFilterNoise)];
     IJSVGFilterInitNoise(state.mutableBytes, [primitive numberForParameter:IJSVGAttributeSeed
                                                               defaultValue:0]);
-    NSInteger w = context.extent.size.width, h = context.extent.size.height;
+    NSInteger w = right - left, h = bottom - top;
     NSMutableData* pixels = [NSMutableData dataWithLength:w * h * 4 * sizeof(float)];
     float* output = pixels.mutableBytes;
     const IJSVGFilterNoise* noise = state.bytes;
@@ -188,12 +188,12 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     IJSVGFilterApplyRows(right - left, bottom - top, ^(NSInteger firstRow, NSInteger lastRow) {
         for(NSInteger y = top + firstRow; y < top + lastRow; y++) {
             double py = tile.origin.y + (y + .5 - region.origin.y) / units.height;
-            for(NSInteger x = left; x < right; x++) {
+            NSInteger index = (y - top) * w * 4;
+            for(NSInteger x = left; x < right; x++, index += 4) {
                 double px = tile.origin.x + (x + .5 - region.origin.x) / units.width;
                 double values[4] = { 0 };
                 IJSVGTurbulenceValues(noise, px, py, frequency, tileWidth, tileHeight,
                     wrapX, wrapY, octaves, fractal, stitch, values);
-                NSInteger index = (y * w + x) * 4;
                 for(int c = 0; c < 4; c++) {
                     output[index + c] = IJSVGFilterClamp(fractal ? (values[c] + 1.) * .5 : values[c]);
                 }
@@ -203,7 +203,9 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
             }
         }
     });
-    return [context imageForPixels:pixels];
+    // Keep the same row orientation and position as the full working buffer.
+    CGRect bounds = CGRectMake(left, top, w, h);
+    return [context imageForPixels:pixels bounds:bounds];
 }
 
 @end

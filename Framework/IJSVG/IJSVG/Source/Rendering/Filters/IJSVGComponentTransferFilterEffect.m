@@ -194,6 +194,7 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
                                            length:sizeof(functions)];
     return [context mapImage:input
                        other:nil
+                      region:region
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
         IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
            NSInteger offset = firstRow * w * 4;

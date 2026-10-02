@@ -10,6 +10,43 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <string.h>
+#import <IJSVG/IJSVGUtils.h>
+
+void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
+{
+    char* buffer = IJSVGTimmedCharBufferCreate(value.UTF8String);
+    if(buffer == NULL) {
+        return;
+    }
+    size_t length = strcspn(buffer, " \t\r\n");
+    char* parameters = buffer + length;
+    if(*parameters != 0) {
+        *parameters++ = 0;
+        IJSVGTrimCharBuffer(parameters);
+    }
+    IJSVGBackgroundEnabled mode = IJSVGBackgroundEnabledUnspecified;
+    CGRect bounds = CGRectNull;
+    if(IJSVGCharBufferCompare(buffer, "inherit") && *parameters == 0) {
+        mode = IJSVGBackgroundEnabledInherit;
+    } else if(IJSVGCharBufferCompare(buffer, "accumulate") && *parameters == 0) {
+        mode = IJSVGBackgroundEnabledAccumulate;
+    } else if(IJSVGCharBufferCompare(buffer, "new")) {
+        if(*parameters == 0) {
+            mode = IJSVGBackgroundEnabledNew;
+            bounds = CGRectInfinite;
+        } else {
+            NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:@(parameters)];
+            if(numbers.count == 4 && numbers[2].doubleValue > 0 && numbers[3].doubleValue > 0) {
+                mode = IJSVGBackgroundEnabledNew;
+                bounds = CGRectMake(numbers[0].doubleValue, numbers[1].doubleValue,
+                                    numbers[2].doubleValue, numbers[3].doubleValue);
+            }
+        }
+    }
+    free(buffer);
+    node.backgroundEnabled = mode;
+    node.backgroundBounds = bounds;
+}
 
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
 {
@@ -25,8 +62,7 @@ NSString* IJSVGAttributeValue(
 
 BOOL IJSVGAttributeHasValue(
     NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute,
-    NSString* __autoreleasing* value)
+    IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
     NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
     if(attributeValue.length == 0) {
@@ -501,7 +537,8 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributePointsAtY: @(IJSVGNodeAttributePointsAtY),
             IJSVGAttributePointsAtZ: @(IJSVGNodeAttributePointsAtZ),
             IJSVGAttributeLimitingConeAngle: @(IJSVGNodeAttributeLimitingConeAngle),
-            IJSVGAttributeColorInterpolationFilters: @(IJSVGNodeAttributeColorInterpolationFilters)
+            IJSVGAttributeColorInterpolationFilters: @(IJSVGNodeAttributeColorInterpolationFilters),
+            IJSVGAttributeEnableBackground: @(IJSVGNodeAttributeEnableBackground)
         };
     });
     NSNumber* attribute = attributes[name];
