@@ -43,6 +43,9 @@
 
 @end
 
+// Loads bundled Metal source; returns nil if the resource is missing or unreadable.
+NSString* IJSVGFilterShaderSource(NSString* name);
+
 void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(NSInteger, NSInteger));
 
 float IJSVGFilterClamp(double value);

@@ -1,0 +1,30 @@
+//
+//  IJSVGSeparableBlur.metal
+//  IJSVG
+//
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
+#include <CoreImage/CoreImage.h>
+
+extern "C" {
+    namespace coreimage {
+        [[ stitchable ]] float4 ijsvgSeparable(sampler image, sampler weights,
+                                             float2 axis, float count, float4 bounds,
+                                             float finalPass, destination dest)
+        {
+            float4 sum = float4(0.0f);
+            float2 p = dest.coord();
+            int taps = int(count);
+            int radius = taps / 2;
+            for(int i = 0; i < taps; i++) {
+                float2 q = p + axis * float(i - radius);
+                if(q.x >= bounds.x && q.y >= bounds.y && q.x < bounds.z && q.y < bounds.w) {
+                    float w = weights.sample(weights.transform(float2(float(i) + .5f, .5f))).a;
+                    sum += float4(image.sample(image.transform(q))) * w;
+                }
+            }
+            return finalPass > 0.0f ? clamp(sum, 0.0f, 1.0f) : sum;
+        }
+    }
+}

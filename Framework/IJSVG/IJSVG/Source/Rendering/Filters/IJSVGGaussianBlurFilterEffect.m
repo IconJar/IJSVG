@@ -190,22 +190,12 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     static CIKernel* convolution;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSString* source = @"#include <CoreImage/CoreImage.h>\n"
-            "extern \"C\" { namespace coreimage {\n"
-            "[[ stitchable ]] float4 ijsvgSeparable(sampler image, sampler weights, "
-            "float2 axis, float count, float4 bounds, float finalPass, destination dest) {\n"
-            " float4 sum = float4(0.0f); float2 p = dest.coord();\n"
-            " int taps = int(count); int radius = taps / 2;\n"
-            " for(int i = 0; i < taps; i++) {\n"
-            "  float2 q = p + axis * float(i - radius);\n"
-            "  if(q.x >= bounds.x && q.y >= bounds.y && q.x < bounds.z && q.y < bounds.w) {\n"
-            "   float w = weights.sample(weights.transform(float2(float(i) + .5f, .5f))).a;\n"
-            "   sum += float4(image.sample(image.transform(q))) * w;\n"
-            "  }\n"
-            " }\n"
-            " return finalPass > 0.0f ? clamp(sum, 0.0f, 1.0f) : sum;\n"
-            "} } }";
-        convolution = [CIKernel kernelsWithMetalString:source error:NULL].firstObject;
+        NSString* source = IJSVGFilterShaderSource(@"IJSVGSeparableBlur");
+        if(source == nil) {
+            return;
+        }
+        convolution = [CIKernel kernelsWithMetalString:source
+                                                 error:NULL].firstObject;
     });
     if(convolution == nil) {
         return nil;

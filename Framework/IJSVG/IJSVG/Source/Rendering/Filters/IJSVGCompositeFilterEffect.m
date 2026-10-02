@@ -79,12 +79,7 @@ static CIColorKernel* IJSVGCompositeArithmeticKernel(void)
     static CIColorKernel* arithmeticKernel;
     static dispatch_once_t kernelToken;
     dispatch_once(&kernelToken, ^{
-        NSBundle* bundle = [NSBundle bundleForClass:IJSVGCompositeFilterEffect.class];
-        NSURL* sourceURL = [bundle URLForResource:@"IJSVGSubtract"
-                                    withExtension:@"metal"];
-        NSString* source = sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
-                                                                       encoding:NSUTF8StringEncoding
-                                                                          error:NULL] : nil;
+        NSString* source = IJSVGFilterShaderSource(@"IJSVGSubtract");
         if(source == nil) {
             return;
         }

@@ -8,6 +8,16 @@
 
 #import <IJSVG/IJSVGFilterContext.h>
 
+NSString* IJSVGFilterShaderSource(NSString* name)
+{
+    NSBundle* bundle = [NSBundle bundleForClass:IJSVGFilterContext.class];
+    NSURL* sourceURL = [bundle URLForResource:name
+                                withExtension:@"metal"];
+    return sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
+                                                      encoding:NSUTF8StringEncoding
+                                                         error:NULL] : nil;
+}
+
 float IJSVGFilterClamp(double value)
 {
     return isfinite(value) ? fmin(1., fmax(0., value)) : 0.f;

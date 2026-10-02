@@ -8,6 +8,7 @@
 
 #import <Metal/Metal.h>
 #import <IJSVGMetalShadowRenderer.h>
+#import <IJSVG/IJSVGFilterContext.h>
 
 @interface IJSVGMetalShadowJob ()
 
@@ -44,11 +45,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
         // Core Graphics bitmap rows run from top to bottom. Translated crops fuse
         // before blur, but the next primitive uses the integral Core Image extent.
         // Keep those two regions distinct to preserve fractional edge coverage.
-        NSBundle* bundle = [NSBundle bundleForClass:IJSVGMetalShadowJob.class];
-        NSURL* sourceURL = [bundle URLForResource:@"IJSVGInnerShadow"
-                                    withExtension:@"metal"];
-        NSString* source = sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
-                                                                       encoding:NSUTF8StringEncoding error:NULL] : nil;
+        NSString* source = IJSVGFilterShaderSource(@"IJSVGInnerShadow");
         if(source == nil) {
             return;
         }
