@@ -79,6 +79,8 @@
 		598F31BB285658C7006D9A66 /* bloglines.svg in Resources */ = {isa = PBXBuildFile; fileRef = 598F31BA285658C7006D9A66 /* bloglines.svg */; };
 		5991A2A9201E30E600913E3B /* gradients.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5991A2A8201E30E600913E3B /* gradients.svg */; };
 		5991A2AB201E310200913E3B /* heart.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5991A2AA201E310200913E3B /* heart.svg */; };
+		5999230E3071601B004F4D18 /* IJSVGMaskCacheTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5999230D3071601B004F4D18 /* IJSVGMaskCacheTests.m */; };
+		5999231030716433004F4D18 /* IJSVGGradientGeometryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5999230F30716433004F4D18 /* IJSVGGradientGeometryTests.m */; };
 		59A11E6C19B89CEA00E44498 /* SVGExampleView1.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A11E6B19B89CEA00E44498 /* SVGExampleView1.m */; };
 		59A11E6F19B89D2000E44498 /* SVGExampleView2.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A11E6E19B89D2000E44498 /* SVGExampleView2.m */; };
 		59A11E7219B89D6600E44498 /* SVGExampleView3.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A11E7119B89D6600E44498 /* SVGExampleView3.m */; };
@@ -221,6 +223,8 @@
 		598F31BA285658C7006D9A66 /* bloglines.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bloglines.svg; sourceTree = "<group>"; };
 		5991A2A8201E30E600913E3B /* gradients.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = gradients.svg; sourceTree = "<group>"; };
 		5991A2AA201E310200913E3B /* heart.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = heart.svg; sourceTree = "<group>"; };
+		5999230D3071601B004F4D18 /* IJSVGMaskCacheTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMaskCacheTests.m; sourceTree = "<group>"; };
+		5999230F30716433004F4D18 /* IJSVGGradientGeometryTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientGeometryTests.m; sourceTree = "<group>"; };
 		59A11E6A19B89CEA00E44498 /* SVGExampleView1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView1.h; sourceTree = "<group>"; };
 		59A11E6B19B89CEA00E44498 /* SVGExampleView1.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView1.m; sourceTree = "<group>"; };
 		59A11E6D19B89D2000E44498 /* SVGExampleView2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SVGExampleView2.h; sourceTree = "<group>"; };
@@ -400,6 +404,8 @@
 				59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */,
 				59FC38EB306EC6E50028BEAC /* IJSVGResourceExportTests.m */,
 				59FC38ED306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m */,
+				5999230D3071601B004F4D18 /* IJSVGMaskCacheTests.m */,
+				5999230F30716433004F4D18 /* IJSVGGradientGeometryTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -625,12 +631,14 @@
 				5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */,
 				59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */,
 				5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */,
+				5999230E3071601B004F4D18 /* IJSVGMaskCacheTests.m in Sources */,
 				591F8ED22FF01E6E0012F5EB /* IJSVGRenderingTests.m in Sources */,
 				591F8ED02FF01E3B0012F5EB /* IJSVGExporterTests.m in Sources */,
 				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
 				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
+				5999231030716433004F4D18 /* IJSVGGradientGeometryTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
 				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,

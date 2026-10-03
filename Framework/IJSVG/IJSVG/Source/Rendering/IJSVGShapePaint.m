@@ -83,26 +83,26 @@
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    if(self.path == NULL) {
+    if(_path == NULL) {
         return;
     }
-    if(self.fillColor != NULL) {
-        CGContextAddPath(ctx, self.path);
-        CGContextSetFillColorWithColor(ctx, self.fillColor);
+    if(_fillColor != NULL) {
+        CGContextAddPath(ctx, _path);
+        CGContextSetFillColorWithColor(ctx, _fillColor);
         if(self.fillRule == IJSVGWindingRuleEvenOdd) {
             CGContextEOFillPath(ctx);
         } else {
             CGContextFillPath(ctx);
         }
     }
-    if(self.strokeColor != NULL && self.lineWidth > 0.f) {
-        CGContextAddPath(ctx, self.path);
-        CGContextSetStrokeColorWithColor(ctx, self.strokeColor);
-        CGContextSetLineWidth(ctx, self.lineWidth);
-        CGContextSetLineCap(ctx, self.lineCap);
-        CGContextSetLineJoin(ctx, self.lineJoin);
-        CGContextSetMiterLimit(ctx, self.miterLimit);
-        CGContextSetLineDash(ctx, self.lineDashPhase, _dashLengths.bytes,
+    if(_strokeColor != NULL && _lineWidth > 0.f) {
+        CGContextAddPath(ctx, _path);
+        CGContextSetStrokeColorWithColor(ctx, _strokeColor);
+        CGContextSetLineWidth(ctx, _lineWidth);
+        CGContextSetLineCap(ctx, _lineCap);
+        CGContextSetLineJoin(ctx, _lineJoin);
+        CGContextSetMiterLimit(ctx, _miterLimit);
+        CGContextSetLineDash(ctx, _lineDashPhase, _dashLengths.bytes,
                              _dashLengths.length / sizeof(CGFloat));
         CGContextStrokePath(ctx);
     }

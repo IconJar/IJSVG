@@ -20,6 +20,40 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
     return (CGRect) { .origin = CGPointZero, .size = paint.boundingBox.size };
 }
 
+// Cache entries own only pixels, never the paint graph. A new graph gets a new
+// key; size, scale, placement and quality changes replace that key's snapshot.
+@interface IJSVGMaskCachedImage : NSObject
+@property (nonatomic, assign) CGImageRef image;
+@property (nonatomic, assign) CGSize size;
+@property (nonatomic, assign) CGRect bounds;
+@property (nonatomic, assign) CGFloat scale;
+@property (nonatomic, assign) IJSVGRenderQuality quality;
+@end
+
+@implementation IJSVGMaskCachedImage
+- (void)dealloc
+{
+    CGImageRelease(_image);
+}
+@end
+
+static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
+{
+    static NSCache* cache;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        cache = [[NSCache alloc] init];
+        cache.countLimit = 128;
+        cache.totalCostLimit = 16 * 1024 * 1024;
+    });
+    return cache;
+}
+
+@interface IJSVGPaint () {
+    NSObject* _maskCacheKey;
+}
+@end
+
 @implementation IJSVGPaint
 
 @synthesize frame = _frame;
@@ -45,6 +79,39 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 - (void)dealloc
 {
     CGPathRelease(_clipPath);
+    if(_maskCacheKey != nil) {
+        [IJSVGMaskImageCache() removeObjectForKey:_maskCacheKey];
+    }
+}
+
+- (void)prepareMaskCaching
+{
+    if(_maskCacheKey != nil) {
+        [IJSVGMaskImageCache() removeObjectForKey:_maskCacheKey];
+        _maskCacheKey = nil;
+    }
+    // Filters can read the destination or another SVG; patterns can contain
+    // those dependencies too. Keep their existing per-draw behavior.
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:self];
+    NSMutableSet<IJSVGPaint*>* visited = [[NSMutableSet alloc] init];
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if([visited containsObject:paint]) {
+            continue;
+        }
+        [visited addObject:paint];
+        if([paint isKindOfClass:IJSVGFilterPaint.class] ||
+           [paint isKindOfClass:IJSVGPatternPaint.class] ||
+            (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+            return;
+        }
+        [pending addObjectsFromArray:paint.children];
+        if(paint.maskPaint != nil) {
+            [pending addObject:paint.maskPaint];
+        }
+    }
+    _maskCacheKey = [[NSObject alloc] init];
 }
 
 - (void)setClipPath:(CGPathRef)path
@@ -74,9 +141,14 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 {
     // Mask placement adjusts the origin of a paint in parent space. Preserve the
     // underlying geometry when that paint already carries a transform.
+    // Untransformed paints can accept the frame directly. Their current frame
+    // is otherwise calculated and discarded for every assignment.
+    if(CGAffineTransformIsIdentity(_affineTransform)) {
+        _frame = frame;
+        return;
+    }
     CGRect currentFrame = self.frame;
-    if(!CGAffineTransformIsIdentity(_affineTransform) &&
-        CGSizeEqualToSize(frame.size, currentFrame.size)) {
+    if(CGSizeEqualToSize(frame.size, currentFrame.size)) {
         _frame.origin.x += frame.origin.x - currentFrame.origin.x;
         _frame.origin.y += frame.origin.y - currentFrame.origin.y;
     } else {
@@ -212,19 +284,50 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
     }
     CGRect bounds = CGRectApplyAffineTransform(mask.innerBoundingBox,
                        [self userSpaceTransformForPaint:mask.referencingPaint ?: mask]);
-    CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale),
-                                                ceil(frame.size.height * scale), 8, 0,
-                                                IJSVGDeviceGrayColorSpace(), (CGBitmapInfo)kCGImageAlphaNone);
-    if(bitmap == NULL) {
-        return;
-    }
-    CGContextScaleCTM(bitmap, scale, scale);
-    CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
-    [mask renderInContext:bitmap];
-    CGImageRef image = CGBitmapContextCreateImage(bitmap);
-    CGContextRelease(bitmap);
-    if(image == NULL) {
-        return;
+    IJSVGMaskCachedImage* cached = mask->_maskCacheKey == nil ? nil :
+        [IJSVGMaskImageCache() objectForKey:mask->_maskCacheKey];
+    CGImageRef image = NULL;
+    if(cached != nil && cached.scale == scale &&
+        cached.quality == mask.renderQuality &&
+        CGSizeEqualToSize(cached.size, frame.size) &&
+        CGRectEqualToRect(cached.bounds, bounds)) {
+        image = CGImageRetain(cached.image);
+    } else {
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale),
+                                                    ceil(frame.size.height * scale), 8, 0,
+                                                    IJSVGDeviceGrayColorSpace(), (CGBitmapInfo)kCGImageAlphaNone);
+        if(bitmap == NULL) {
+            return;
+        }
+        size_t stride = CGBitmapContextGetBytesPerRow(bitmap);
+        size_t height = CGBitmapContextGetHeight(bitmap);
+        @try {
+            CGContextScaleCTM(bitmap, scale, scale);
+            CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
+            [mask renderInContext:bitmap];
+            image = CGBitmapContextCreateImage(bitmap);
+        } @finally {
+            CGContextRelease(bitmap);
+        }
+        if(image == NULL) {
+            return;
+        }
+        if(mask->_maskCacheKey != nil) {
+            // Keep at most one size per mask and avoid retaining large export
+            // surfaces. Quartz still renders those at their requested scale.
+            [IJSVGMaskImageCache() removeObjectForKey:mask->_maskCacheKey];
+            if(height != 0 && stride <= (4 * 1024 * 1024) / height) {
+                cached = [[IJSVGMaskCachedImage alloc] init];
+                cached.image = CGImageRetain(image);
+                cached.size = frame.size;
+                cached.bounds = bounds;
+                cached.scale = scale;
+                cached.quality = mask.renderQuality;
+                [IJSVGMaskImageCache() setObject:cached
+                                          forKey:mask->_maskCacheKey
+                                          cost:stride * height];
+            }
+        }
     }
     CGContextSaveGState(ctx);
     CGContextClipToRect(ctx, mask.maskingClippingRect);
@@ -259,7 +362,7 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 - (void)renderInContext:(CGContextRef)ctx
       applyingPlacement:(BOOL)applyingPlacement
 {
-    if(self.hidden || self.opacity == 0.f || ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
+    if(_hidden || _opacity == 0.f || ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
         return;
     }
     CGContextSaveGState(ctx);
@@ -269,15 +372,15 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
             CGContextConcatCTM(ctx, _affineTransform);
             CGContextTranslateCTM(ctx, -_frame.size.width * .5f, -_frame.size.height * .5f);
         }
-        if(self.clipPath != NULL) {
-            CGContextAddPath(ctx, self.clipPath);
-            if(self.clipRule == IJSVGWindingRuleEvenOdd) {
+        if(_clipPath != NULL) {
+            CGContextAddPath(ctx, _clipPath);
+            if(_clipRule == IJSVGWindingRuleEvenOdd) {
                 CGContextEOClip(ctx);
             } else {
                 CGContextClip(ctx);
             }
         }
-        CGContextSetBlendMode(ctx, self.blendingMode);
+        CGContextSetBlendMode(ctx, _blendingMode);
         if(_maskPaint != nil) {
             [IJSVGPaint clipContextWithMask:_maskPaint
                                     toPaint:self
@@ -295,9 +398,9 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    BOOL isolated = self.opacity != 1.f && self.children.count != 0;
-    if(self.opacity != 1.f) {
-        CGContextSetAlpha(ctx, self.opacity);
+    BOOL isolated = _opacity != 1.f && _children.count != 0;
+    if(_opacity != 1.f) {
+        CGContextSetAlpha(ctx, _opacity);
     }
     if(isolated) {
         CGRect bounds = self.transparencyBounds;
@@ -320,7 +423,7 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 - (void)drawContentsInContext:(CGContextRef)ctx
 {
     [self drawInContext:ctx];
-    for(IJSVGPaint* child in self.children) {
+    for(IJSVGPaint* child in _children) {
         [child renderInContext:ctx
              applyingPlacement:YES];
     }

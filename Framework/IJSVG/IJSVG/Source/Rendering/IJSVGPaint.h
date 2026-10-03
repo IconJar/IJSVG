@@ -66,6 +66,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
                     toPaint:(IJSVGPaint*)paint
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock;
+// Enable raster reuse only after a mask's resolved geometry is finalized.
+// Rebuild the resolved graph when its artwork changes.
+- (void)prepareMaskCaching;
 - (void)addChild:(IJSVGPaint*)paint;
 - (void)renderInContext:(CGContextRef)ctx;
 - (void)drawInContext:(CGContextRef)ctx;

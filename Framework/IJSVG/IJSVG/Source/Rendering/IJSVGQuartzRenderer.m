@@ -342,7 +342,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             CGAffineTransform transform = CGAffineTransformMakeScale(width, height);
             return CGPathCreateCopyByTransformingPath(node.path, &transform);
         }
-        return CGPathCreateMutableCopy(node.path);
+        // Resolved paths are only read; an immutable copy can share path storage.
+        return CGPathCreateCopy(node.path);
     }
 
     CGMutablePathRef path = CGPathCreateMutable();
@@ -904,6 +905,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     maskPaint.maskingBoundingBox = maskingBounds;
     maskPaint.maskingClippingRect = rect;
     maskPaint.referencingPaint = paint;
+    [maskPaint prepareMaskCaching];
     return maskPaint;
 }
 
