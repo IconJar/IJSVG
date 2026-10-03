@@ -1,0 +1,1 @@
+../../Source/Rendering/IJSVGPaint.h

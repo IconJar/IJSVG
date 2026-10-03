@@ -35,7 +35,27 @@ Quick Start
 
 The framework and example application target macOS 14.6 or later. Filter rendering requires a Metal-capable device. Individual accelerated paths also check the device capabilities they need.
 
-Add the IJSVG library files and resources to your project, including its Metal shader resources, and import IJSVG.h into the files where you use SVGs.
+### Swift Package Manager
+
+Requires Xcode 16 / Swift 6 or later and macOS 14.6 or later.
+
+In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
+and add the **IJSVG** library product to your app target. For local development,
+choose **Add Local** and select the repository root containing `Package.swift`.
+Use a branch or revision until a release tag containing the manifest is available.
+
+Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
+The package uses the existing Objective-C implementation and bundles its Metal
+shader sources automatically. Package builds compile shaders on first use;
+the existing Xcode framework continues to use its precompiled blur library.
+
+Run `swift build` and `swift test` from the repository root to build and check
+Swift interoperability, rendering, and shader resource loading. Shader compilation
+checks run when a Metal device is available.
+
+The existing framework project and example application remain available.
+For manual integration, include the library sources and Metal shader resources,
+and import IJSVG.h into the files where you use SVGs.
 
 #### Step 1 - initialize the SVG object
     IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:someURLHere];

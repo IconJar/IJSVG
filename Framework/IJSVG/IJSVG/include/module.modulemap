@@ -1,0 +1,5 @@
+module IJSVG {
+    header "IJSVG/IJSVGUmbrella.h"
+    export *
+    link framework "AppKit"
+}

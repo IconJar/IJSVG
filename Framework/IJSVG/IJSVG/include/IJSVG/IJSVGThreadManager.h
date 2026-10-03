@@ -1,0 +1,1 @@
+../../Source/Utils/IJSVGThreadManager.h

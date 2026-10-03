@@ -1,0 +1,1 @@
+../../Source/Commands/IJSVGCommandCurve.h

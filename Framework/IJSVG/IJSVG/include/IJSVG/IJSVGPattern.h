@@ -1,0 +1,1 @@
+../../Source/Nodes/IJSVGPattern.h

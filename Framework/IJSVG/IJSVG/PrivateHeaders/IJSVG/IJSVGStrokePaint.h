@@ -1,0 +1,1 @@
+../../Source/Rendering/IJSVGStrokePaint.h

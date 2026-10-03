@@ -8,6 +8,9 @@
 
 #import <IJSVGMetalBlurRenderer.h>
 #import <Metal/Metal.h>
+#if SWIFT_PACKAGE
+#import <IJSVG/IJSVGFilterContext.h>
+#endif
 #import <simd/simd.h>
 #import <AppKit/NSColorSpace.h>
 
@@ -61,8 +64,17 @@ static BOOL IJSVGPrepareMetalBlur(void)
         if(IJSVGBlurDevice == nil || !IJSVGBlurDevice.hasUnifiedMemory) {
             return;
         }
+#if SWIFT_PACKAGE
+        // Copy shader sources so both Xcode and command-line package builds work.
+        NSString* source = IJSVGFilterShaderSource(@"IJSVGBlur");
+        id<MTLLibrary> library = source != nil
+            ? [IJSVGBlurDevice newLibraryWithSource:source
+                                            options:nil
+                                              error:NULL] : nil;
+#else
         NSBundle* bundle = [NSBundle bundleForClass:IJSVGMetalBlurRenderer.class];
         id<MTLLibrary> library = [IJSVGBlurDevice newDefaultLibraryWithBundle:bundle error:NULL];
+#endif
         if(library == nil) {
             return;
         }

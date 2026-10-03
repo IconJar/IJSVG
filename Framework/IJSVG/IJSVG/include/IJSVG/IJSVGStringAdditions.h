@@ -1,0 +1,1 @@
+../../Source/Additions/IJSVGStringAdditions.h

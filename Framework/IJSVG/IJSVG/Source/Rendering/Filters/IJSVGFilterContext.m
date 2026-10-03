@@ -8,10 +8,14 @@
 
 #import <IJSVG/IJSVGFilterContext.h>
 
-// Read shader text from the framework bundle.
+// Read shader text from the framework or Swift package resource bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)
 {
+#if SWIFT_PACKAGE
+    NSBundle* bundle = SWIFTPM_MODULE_BUNDLE;
+#else
     NSBundle* bundle = [NSBundle bundleForClass:IJSVGFilterContext.class];
+#endif
     NSURL* sourceURL = [bundle URLForResource:name
                                 withExtension:@"metal"];
     return sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
