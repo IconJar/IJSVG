@@ -57,6 +57,55 @@ The existing framework project and example application remain available.
 For manual integration, include the library sources and Metal shader resources,
 and import IJSVG.h into the files where you use SVGs.
 
+### Swift loading and optional values
+
+Use the throwing initializers to receive parsing and file errors:
+
+```swift
+let svg = try IJSVG(contentsOf: fileURL)
+let parsed = try IJSVG(parsing: svgText)
+let decoded = try IJSVG(data: svgData)
+let fromPath = try IJSVG(filePath: filePath)
+```
+
+The convenience initializer `IJSVG(svgString:)` returns an optional when error
+information is not needed. Metadata such as `title` and `desc`, view SVG content,
+and exporter delegates are optional and can be cleared with `nil`.
+
+These annotations keep Objective C selectors unchanged. Swift callers of the
+previous error accepting initializers should use the names above. Optional
+properties now require normal optional handling instead of implicit unwrapping.
+
+### Swift rendering and Core Graphics ownership
+
+```swift
+let image = try svg.renderImage(size: CGSize(width: 64, height: 64))
+let flipped = try svg.renderImage(size: CGSize(width: 64, height: 64), flipped: true)
+let fitted = try svg.renderImage(fitting: CGSize(width: 64, height: 64), flipped: false)
+let cgImage = try svg.renderCGImage(size: CGSize(width: 64, height: 64), flipped: false)
+let pdf = svg.pdfData()
+let checkedPDF = try svg.renderPDF()
+```
+
+Use `pdfData(in:)` or `renderPDF(in:)` to specify the PDF drawing rectangle.
+The `renderPDF` methods throw when the underlying method reports an error,
+even if it also returns data. These annotations do not add rendering validation
+or change when the Objective C implementation reports errors.
+
+The Objective C selectors are unchanged. Swift calls to the image methods with
+an error parameter now use `renderImage`, and `newCGImageRef` uses `renderCGImage`.
+The existing `image(with:)` convenience methods remain available.
+
+Core Graphics results use Swift memory management, including rendered images,
+`IJSVGUtils.flippedPath(_:)`, `IJSVGCommand.makePath(commands:)`, and shared color
+spaces. Do not call `takeRetainedValue()` or `takeUnretainedValue()` on these results.
+Objective C callers still release newly created objects and do not release borrowed
+node image, path, gradient, or shared color space references.
+
+Parser base URLs can be `nil`. Missing node relationships, paint overrides, image
+source data, filter inputs, and unsuccessful color lookups are optional in Swift.
+Collections that are always initialized remain nonoptional.
+
 #### Step 1 - initialize the SVG object
     IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:someURLHere];
     // or with and without extension to find it within the bundle

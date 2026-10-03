@@ -32,3 +32,46 @@ func loadsPackagedShader(name: String) throws {
         #expect(!library.functionNames.isEmpty)
     }
 }
+
+@Test func importsThrowingInitializers() throws {
+    let source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"8\"/>"
+    let parsed: IJSVG = try IJSVG(parsing: source)
+    let data = Data(source.utf8)
+    let fromData: IJSVG = try IJSVG(data: data)
+    #expect(parsed.size == fromData.size)
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".svg")
+    try data.write(to: url)
+    defer { try? FileManager.default.removeItem(at: url) }
+    let fromURL: IJSVG = try IJSVG(contentsOf: url)
+    let fromPath: IJSVG = try IJSVG(filePath: url.path)
+    #expect(fromURL.size == parsed.size)
+    #expect(fromPath.size == parsed.size)
+}
+
+@Test func reportsParsingAndFileErrors() {
+    #expect(throws: (any Error).self) { try IJSVG(parsing: "not SVG") }
+    #expect(throws: (any Error).self) { try IJSVG(data: Data()) }
+    let missing = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".svg")
+    #expect(throws: (any Error).self) { try IJSVG(contentsOf: missing) }
+    #expect(IJSVG(svgString: "not SVG") == nil)
+}
+
+@Test func optionalMetadataCanBeCleared() throws {
+    let svg = try IJSVG(parsing: "<svg xmlns=\"http://www.w3.org/2000/svg\"/>")
+    #expect(svg.title == nil)
+    #expect(svg.desc == nil)
+    svg.title = "Example"
+    svg.title = nil
+    svg.desc = nil
+    svg.renderingBackingScaleHelper = nil
+    #expect(svg.title == nil)
+    let exporter = svg.exporter(with: CGSize(width: 16, height: 16), options: [], floatingPointOptions: IJSVGFloatingPointOptionsDefault())
+    exporter.delegate = nil
+    #expect(exporter.delegate == nil)
+}
+
+@MainActor @Test func viewAcceptsAnEmptySVG() {
+    let view = IJSVGView(svg: nil)
+    view.svg = nil
+    #expect(view.svg == nil)
+}

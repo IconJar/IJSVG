@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVGNode.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class IJSVGPath;
 
 @interface IJSVGImage : IJSVGNode {
@@ -17,12 +19,14 @@
 
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;
-@property (nonatomic, strong) NSImage* image;
-@property (nonatomic, copy, readonly) NSData* sourceData;
-@property (nonatomic, copy, readonly) NSString* sourceMIMEType;
+@property (nonatomic, strong, nullable) NSImage* image;
+@property (nonatomic, copy, readonly, nullable) NSData* sourceData;
+@property (nonatomic, copy, readonly, nullable) NSString* sourceMIMEType;
 
-- (CGImageRef)CGImage;
+- (CGImageRef _Nullable)CGImage CF_RETURNS_NOT_RETAINED;
 - (void)loadFromString:(NSString*)encodedString;
 - (void)loadFromURL:(NSURL*)aURL;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGFilter : IJSVGGroup
 
 @property (nonatomic, readonly) NSArray<IJSVGFilterPrimitive*>* primitives;
@@ -18,3 +20,5 @@
 @property (nonatomic, readonly) BOOL preservesInnerShadowCoverage;
 
 @end
+
+NS_ASSUME_NONNULL_END

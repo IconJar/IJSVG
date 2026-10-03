@@ -9,16 +9,20 @@
 #import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGRadialGradient : IJSVGGradient
 
-@property (nonatomic, strong) IJSVGUnitLength* cx;
-@property (nonatomic, strong) IJSVGUnitLength* cy;
-@property (nonatomic, strong) IJSVGUnitLength* fx;
-@property (nonatomic, strong) IJSVGUnitLength* fy;
-@property (nonatomic, strong) IJSVGUnitLength* fr;
-@property (nonatomic, strong) IJSVGUnitLength* r;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cx;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cy;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* fx;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* fy;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* fr;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGRadialGradient*)gradient;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -102,29 +102,29 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
     } _respondsTo;
 }
 
-@property (nonatomic, assign) id<IJSVGExporterDelegate> delegate;
+@property (nonatomic, assign, nullable) id<IJSVGExporterDelegate> delegate;
 @property (nonatomic, assign) IJSVGFloatingPointOptions floatingPointOptions;
 @property (nonatomic, copy, nullable) NSString* title;
 @property (nonatomic, copy, nullable) NSString* desc;
 
-- (id)initWithSVG:(IJSVG*)svg
-             size:(CGSize)size
-          options:(IJSVGExporterOptions)options;
-- (id)initWithSVG:(IJSVG*)svg
-             size:(CGSize)size
-          options:(IJSVGExporterOptions)options
+- (instancetype)initWithSVG:(IJSVG*)svg
+                       size:(CGSize)size
+                    options:(IJSVGExporterOptions)options;
+- (instancetype)initWithSVG:(IJSVG*)svg
+                       size:(CGSize)size
+                    options:(IJSVGExporterOptions)options
 floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
-- (id)initWithRootNode:(IJSVGRootNode*)rootNode
-                  size:(CGSize)size
-                 style:(IJSVGStyle*)style
-      renderingOptions:(IJSVGRenderingOptions*)renderingOptions
-               options:(IJSVGExporterOptions)options
-  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode
+                            size:(CGSize)size
+                           style:(IJSVGStyle* _Nullable)style
+                renderingOptions:(IJSVGRenderingOptions* _Nullable)renderingOptions
+                         options:(IJSVGExporterOptions)options
+            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 - (NSString*)SVGString;
 - (NSData*)SVGData;
-- (IJSVG*)SVG:(NSError**)error;
+- (nullable IJSVG*)SVG:(NSError* _Nullable * _Nullable)error;
 
 @end
 

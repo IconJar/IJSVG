@@ -8,15 +8,17 @@
 
 #import <IJSVG/IJSVGGroup.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGFilterPrimitive : IJSVGGroup
 
-@property (nonatomic, copy) NSString* input;
-@property (nonatomic, copy) NSString* result;
-@property (nonatomic, copy) NSString* input2;
+@property (nonatomic, copy, nullable) NSString* input;
+@property (nonatomic, copy, nullable) NSString* result;
+@property (nonatomic, copy, nullable) NSString* input2;
 // Primitive specific SVG attributes, retained for lossless vector export.
-@property (nonatomic, copy) NSDictionary<NSString*, NSString*>* parameters;
-@property (nonatomic, strong) IJSVGNode* imageNode;
-@property (nonatomic, strong) NSImage* image;
+@property (nonatomic, copy, nullable) NSDictionary<NSString*, NSString*>* parameters;
+@property (nonatomic, strong, nullable) IJSVGNode* imageNode;
+@property (nonatomic, strong, nullable) NSImage* image;
 
 + (NSSet<NSString*>*)parameterNames;
 + (BOOL)isPrimitiveType:(IJSVGNodeType)type;
@@ -24,8 +26,8 @@
     acceptsChildType:(IJSVGNodeType)childType;
 
 // Immutable derived setup, discarded whenever parameters are replaced.
-- (id)preparedValueForKey:(NSString*)key
-                  builder:(id (^)(void))builder;
+- (id _Nullable)preparedValueForKey:(NSString*)key
+                  builder:(id _Nullable (^)(void))builder;
 - (NSArray<NSNumber*>*)numbersForParameter:(NSString*)name;
 - (CGFloat)numberForParameter:(NSString*)name
                  defaultValue:(CGFloat)value;
@@ -33,3 +35,5 @@
               defaultValue:(CGSize)value;
 
 @end
+
+NS_ASSUME_NONNULL_END

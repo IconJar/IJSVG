@@ -11,25 +11,29 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGGroup.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGGradient : IJSVGGroup
 
-@property (nonatomic, strong) NSArray<NSColor*>* colors;
-@property (nonatomic, assign) CGFloat* locations;
+@property (nonatomic, strong, nullable) NSArray<NSColor*>* colors;
+@property (nonatomic, assign, nullable) CGFloat* locations;
 @property (nonatomic, assign) NSUInteger numberOfStops;
-@property (nonatomic, assign) CGGradientRef CGGradient;
-@property (nonatomic, strong) IJSVGUnitLength* x1;
-@property (nonatomic, strong) IJSVGUnitLength* x2;
-@property (nonatomic, strong) IJSVGUnitLength* y1;
-@property (nonatomic, strong) IJSVGUnitLength* y2;
+@property (nonatomic, assign, nullable) CGGradientRef CGGradient;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* x1;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* x2;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* y1;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* y2;
 
 @property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
 
-+ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
-                       colors:(NSArray**)someColors;
++ (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient
+                       colors:(NSArray* _Nonnull * _Nonnull)someColors;
 
-- (CGGradientRef)CGGradient;
+- (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;
 - (void)drawInContextRef:(CGContextRef)ctx
                   bounds:(NSRect)objectRect
                transform:(CGAffineTransform)absoluteTransform;
 
 @end
+
+NS_ASSUME_NONNULL_END

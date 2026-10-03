@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGColorNode.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class IJSVGGroup;
 
 typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
@@ -26,17 +28,17 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
-@property (nonatomic, assign) CGMutablePathRef path;
+@property (nonatomic, assign, nullable) CGMutablePathRef path;
 @property (nonatomic, assign) IJSVGUnitType pathUnits;
-@property (nonatomic, strong) IJSVGUnitLength* x1;
-@property (nonatomic, strong) IJSVGUnitLength* y1;
-@property (nonatomic, strong) IJSVGUnitLength* x2;
-@property (nonatomic, strong) IJSVGUnitLength* y2;
-@property (nonatomic, strong) IJSVGUnitLength* cx;
-@property (nonatomic, strong) IJSVGUnitLength* cy;
-@property (nonatomic, strong) IJSVGUnitLength* rx;
-@property (nonatomic, strong) IJSVGUnitLength* ry;
-@property (nonatomic, strong) IJSVGUnitLength* r;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* x1;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* y1;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* x2;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* y2;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cx;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cy;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* rx;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* ry;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
@@ -45,7 +47,12 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
                              transform:(CGAffineTransform)transform
                                 toPath:(CGMutablePathRef)mutPath;
 
+// The node owns the path; the getter does not transfer ownership.
+- (CGMutablePathRef _Nullable)path CF_RETURNS_NOT_RETAINED;
+
 - (void)close;
 - (NSPoint)currentPoint;
 
 @end
+
+NS_ASSUME_NONNULL_END

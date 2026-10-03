@@ -28,6 +28,8 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef void (^IJSVGNodeParserPostProcessBlock)(void);
 
 extern NSString* const IJSVGStringObjectBoundingBox;
@@ -229,19 +231,21 @@ extern NSString* const IJSVGAttributeEnableBackground;
 
 + (BOOL)isDataSVG:(NSData*)data;
 
-- (id)initWithSVGString:(NSString*)string
-                fileURL:(NSURL*)fileURL
-                  error:(NSError**)error;
-- (id)initWithSVGData:(NSData*)data
-              fileURL:(NSURL*)fileURL
-                error:(NSError**)error;
+- (nullable instancetype)initWithSVGString:(NSString*)string
+                fileURL:(NSURL* _Nullable)fileURL
+                  error:(NSError* _Nullable * _Nullable)error;
+- (nullable instancetype)initWithSVGData:(NSData*)data
+              fileURL:(NSURL* _Nullable)fileURL
+                error:(NSError* _Nullable * _Nullable)error;
 
-- (id)initWithFileURL:(NSURL*)aURL
-                error:(NSError**)error;
-+ (IJSVGParser*)parserForFileURL:(NSURL*)aURL;
-+ (IJSVGParser*)parserForFileURL:(NSURL*)aURL
-                           error:(NSError**)error;
+- (nullable instancetype)initWithFileURL:(NSURL*)aURL
+                error:(NSError* _Nullable * _Nullable)error;
++ (nullable IJSVGParser*)parserForFileURL:(NSURL*)aURL;
++ (nullable IJSVGParser*)parserForFileURL:(NSURL*)aURL
+                           error:(NSError* _Nullable * _Nullable)error;
 
 - (IJSVGRootNode*)rootNodeWithSize:(CGSize)size;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     IJSVGColorUsageTraitNone = 0,
     IJSVGColorUsageTraitUnknown = 1 << 0,
@@ -23,7 +25,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     
 }
 
-@property (nonatomic, strong) NSColor* color;
+@property (nonatomic, strong, nullable) NSColor* color;
 @property (nonatomic, assign) IJSVGColorUsageTraits traits;
 
 + (IJSVGTraitedColor*)colorWithColor:(NSColor*)color
@@ -34,3 +36,5 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
 - (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -9,6 +9,8 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
     IJSVGColorStringOptionNone = 1 << 0,
     IJSVGColorStringOptionForceHEX = 1 << 1,
@@ -171,28 +173,30 @@ extern NSString* const IJSVGColorCurrentColorName;
 
 @interface IJSVGColor : NSObject
 
-+ (NSColor*)computeColorSpace:(NSColor*)color;
++ (NSColor* _Nullable)computeColorSpace:(NSColor* _Nullable)color;
 + (NSColorSpace*)defaultColorSpace;
 + (BOOL)isColor:(NSString*)string;
 + (NSString*)colorStringFromColor:(NSColor*)color
                           options:(IJSVGColorStringOptions)options;
 + (NSString*)colorStringFromColor:(NSColor*)color;
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex;
-+ (NSColor*)computeColor:(id)colour;
++ (NSColor* _Nullable)computeColor:(id _Nullable)colour;
 + (BOOL)isNoneOrTransparent:(NSString*)string;
-+ (NSColor*)colorFromString:(NSString*)string;
-+ (NSColor*)colorFromHEXString:(NSString*)string;
-+ (NSColor*)colorFromHEXString:(NSString*)string
-        containsAlphaComponent:(BOOL*)containsAlphaComponent;
++ (NSColor* _Nullable)colorFromString:(NSString* _Nullable)string;
++ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string;
++ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string
+        containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
 + (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex;
 + (unsigned long)lengthOfHEXInteger:(NSUInteger)hex;
 + (NSColor*)colorFromRString:(NSString*)rString
                      gString:(NSString*)gString
                      bString:(NSString*)bString
                      aString:(NSString*)aString;
-+ (NSColor*)colorFromPredefinedColorName:(NSString*)name;
-+ (NSString*)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
++ (NSColor* _Nullable)colorFromPredefinedColorName:(NSString*)name;
++ (NSString* _Nullable)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
 + (NSColor*)changeAlphaOnColor:(NSColor*)color
                             to:(CGFloat)alphaValue;
 
 @end
+
+NS_ASSUME_NONNULL_END

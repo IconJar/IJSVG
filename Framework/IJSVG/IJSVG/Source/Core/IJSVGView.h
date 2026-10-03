@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVG.h>
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 IB_DESIGNABLE
 @interface IJSVGView : NSView {
     IBInspectable NSString* imageName;
@@ -17,9 +19,11 @@ IB_DESIGNABLE
     IJSVG* SVG;
 }
 
-@property (nonatomic, strong) IJSVG* SVG;
+@property (nonatomic, strong, nullable) IJSVG* SVG;
 
 + (IJSVGView*)viewWithSVGNamed:(NSString*)name;
-- (id)initWithSVG:(IJSVG*)anSvg;
+- (instancetype)initWithSVG:(IJSVG* _Nullable)anSvg;
 
 @end
+
+NS_ASSUME_NONNULL_END

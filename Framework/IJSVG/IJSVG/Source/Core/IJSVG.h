@@ -18,6 +18,8 @@
 @class IJSVG;
 @class IJSVGParser;
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVG : NSObject <NSPasteboardWriting> {
 
 @private
@@ -30,26 +32,26 @@
 }
 
 // Supplies the backing scale for Quartz rendering.
-@property (nonatomic, copy) IJSVGRenderingBackingScaleFactorHelper renderingBackingScaleHelper;
+@property (nonatomic, copy, nullable) IJSVGRenderingBackingScaleFactorHelper renderingBackingScaleHelper;
 
 // Global overwriting rules for when rendering an SVG, this will overide any
 // fillColor, strokeColor, pattern and gradient fill.
 // Reads and writes independent snapshots. Reassign edited options to apply them.
-@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
+@property (nonatomic, copy, nullable) IJSVGRenderingOptions* renderingOptions;
 
-@property (nonatomic, strong) IJSVGStyle* style;
+@property (nonatomic, strong, nullable) IJSVGStyle* style;
 
-@property (nonatomic, copy) NSString* title;
-@property (nonatomic, copy) NSString* desc;
+@property (nonatomic, copy, nullable) NSString* title;
+@property (nonatomic, copy, nullable) NSString* desc;
 
-@property (nonatomic, readonly) IJSVGTraitedColorStorage* colors;
+@property (nonatomic, readonly, nullable) IJSVGTraitedColorStorage* colors;
 
 // The size of the SVG either computed by its intrinsicSize of its viewBox
 // If the size if % values, it will use the defaultSize
 @property (nonatomic, readonly) CGSize size;
 
 // The unresolved unit backed intrinsic size of the SVG.
-@property (nonatomic, readonly) IJSVGUnitSize* intrinsicUnitSize;
+@property (nonatomic, readonly, nullable) IJSVGUnitSize* intrinsicUnitSize;
 
 // Will return true if the intrinsic size is a % value
 @property (nonatomic, readonly) BOOL hasDynamicSize;
@@ -57,11 +59,11 @@
 // Bitmask of which dimensions were implicitly set on the SVG
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
-- (void)prepForDrawingInView:(NSView*)view;
-- (IJSVGRootNode*)rootNode;
+- (void)prepForDrawingInView:(NSView* _Nullable)view;
+- (IJSVGRootNode* _Nullable)rootNode;
 - (CGRect)viewBox;
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
-- (NSString*)identifier;
+- (NSString* _Nullable)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
                            options:(IJSVGExporterOptions)options
@@ -75,68 +77,70 @@
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
-+ (id)SVGNamed:(NSString*)string;
++ (nullable instancetype)SVGNamed:(NSString*)string;
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path;
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
                    flipped:(BOOL)flipped;
 
 
-- (id)initWithImage:(NSImage*)image;
-- (id)initWithRootNode:(IJSVGRootNode*)rootNode;
+- (instancetype)initWithImage:(NSImage*)image;
+- (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode;
 
-- (id)initWithSVGString:(NSString*)string;
-- (id)initWithSVGString:(NSString*)string
-                  error:(NSError**)error;
+// Returns nil when parsing fails. Use init(parsing:) in Swift to receive errors.
+- (nullable instancetype)initWithSVGString:(NSString*)string;
+- (nullable instancetype)initWithSVGString:(NSString*)string
+                  error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(init(parsing:));
 
-- (id)initWithSVGData:(NSData*)data;
-- (id)initWithSVGData:(NSData*)data
-                error:(NSError**)error;
+- (nullable instancetype)initWithSVGData:(NSData*)data;
+- (nullable instancetype)initWithSVGData:(NSData*)data
+                error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(init(data:));
 
-- (id)initWithFile:(NSString*)file;
-- (id)initWithFile:(NSString*)file
-             error:(NSError**)error;
-- (id)initWithFilePathURL:(NSURL*)aURL;
-- (id)initWithFilePathURL:(NSURL*)aURL
-                    error:(NSError**)error;
+- (nullable instancetype)initWithFile:(NSString*)file;
+- (nullable instancetype)initWithFile:(NSString*)file
+             error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(init(filePath:));
+- (nullable instancetype)initWithFilePathURL:(NSURL*)aURL;
+- (nullable instancetype)initWithFilePathURL:(NSURL*)aURL
+                    error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(init(contentsOf:));
 
-- (id)initWithDataAssetNamed:(NSDataAssetName)name
-                       error:(NSError**)error;
-- (id)initWithDataAssetNamed:(NSDataAssetName)name
+- (nullable instancetype)initWithDataAssetNamed:(NSDataAssetName)name
+                       error:(NSError* _Nullable * _Nullable)error;
+- (nullable instancetype)initWithDataAssetNamed:(NSDataAssetName)name
                       bundle:(NSBundle*)bundle
-                       error:(NSError**)error;
+                       error:(NSError* _Nullable * _Nullable)error;
 
-- (NSImage*)imageWithSize:(CGSize)aSize;
-- (NSImage*)imageWithSize:(CGSize)aSize
-                    error:(NSError**)error;
-- (NSImage*)imageWithSize:(CGSize)aSize
+- (NSImage* _Nullable)imageWithSize:(CGSize)aSize;
+- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
+                    error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(size:));
+- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped;
-- (NSImage*)imageWithSize:(CGSize)aSize
+- (NSImage* _Nullable)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
-                    error:(NSError**)error;
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
+                    error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(size:flipped:));
+- (NSImage* _Nullable)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
                                           flipped:(BOOL)flipped
-                                            error:(NSError**)error;
-- (CGImageRef)newCGImageRefWithSize:(CGSize)size
+                                            error:(NSError* _Nullable * _Nullable)error NS_SWIFT_NAME(renderImage(fitting:flipped:));
+- (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size
                             flipped:(BOOL)flipped
-                              error:(NSError**)error;
+                              error:(NSError* _Nullable * _Nullable)error CF_RETURNS_RETAINED NS_SWIFT_NAME(renderCGImage(size:flipped:));
 
 - (BOOL)drawAtPoint:(CGPoint)point
                size:(CGSize)size;
 - (BOOL)drawAtPoint:(CGPoint)point
                size:(CGSize)aSize
-              error:(NSError**)error;
+              error:(NSError* _Nullable * _Nullable)error;
 - (BOOL)drawInRect:(CGRect)rect;
 - (BOOL)drawInRect:(CGRect)rect
-             error:(NSError**)error;
+             error:(NSError* _Nullable * _Nullable)error;
 - (void)drawInRect:(CGRect)rect
            context:(CGContextRef)context;
 
-- (NSData*)PDFData;
-- (NSData*)PDFData:(NSError**)error;
-- (NSData*)PDFDataWithRect:(CGRect)rect;
+// PDF output is nonnull even when drawing reports an error. Swift checks the error itself.
+- (NSData*)PDFData NS_SWIFT_NAME(pdfData());
+- (NSData*)PDFData:(NSError* _Nullable * _Nullable)error __attribute__((swift_error(nonnull_error))) NS_SWIFT_NAME(renderPDF());
+- (NSData*)PDFDataWithRect:(CGRect)rect NS_SWIFT_NAME(pdfData(in:));
 - (NSData*)PDFDataWithRect:(CGRect)rect
-                     error:(NSError**)error;
+                     error:(NSError* _Nullable * _Nullable)error __attribute__((swift_error(nonnull_error))) NS_SWIFT_NAME(renderPDF(in:));
 
 // call this to invalidate the render tree when you change the style
 - (void)setNeedsDisplay;
@@ -147,3 +151,5 @@
 // matching
 - (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)mask;
 @end
+
+NS_ASSUME_NONNULL_END

@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGPath.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGGroup : IJSVGNode {
 
 @private
@@ -18,7 +20,7 @@
 
 @property (nonatomic, readonly) NSArray<IJSVGNode*>* children;
 
-- (void)addChild:(IJSVGNode*)child;
+- (void)addChild:(IJSVGNode* _Nullable)child;
 - (void)addChildren:(NSArray<IJSVGNode*>*)children;
 - (void)removeChild:(IJSVGNode*)child;
 - (void)removeChildren:(NSArray<IJSVGNode*>*)children;
@@ -29,3 +31,5 @@
 - (NSArray<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type;
 
 @end
+
+NS_ASSUME_NONNULL_END

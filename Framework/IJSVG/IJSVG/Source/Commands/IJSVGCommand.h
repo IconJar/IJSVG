@@ -49,7 +49,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer;
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
                                           dataStream:(IJSVGPathDataStream*)dataStream;
-+ (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands;
++ (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands CF_RETURNS_RETAINED NS_SWIFT_NAME(makePath(commands:));
 
 + (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands
                                    toUnits:(IJSVGUnitType)unitType

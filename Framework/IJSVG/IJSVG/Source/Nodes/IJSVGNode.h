@@ -14,6 +14,8 @@
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
     IJSVGBackgroundEnabledUnspecified,
     IJSVGBackgroundEnabledAccumulate,
@@ -289,36 +291,36 @@ void IJSVGAssertPaintableObject(id object);
 
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
-@property (nonatomic, strong) IJSVGUnitRect* viewBox;
+@property (nonatomic, strong, nullable) IJSVGUnitRect* viewBox;
 @property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
 @property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
 @property (nonatomic, readonly) BOOL containsRelativeUnits;
-@property (nonatomic, copy) NSString* title;
-@property (nonatomic, copy) NSString* desc;
-@property (nonatomic, copy) NSString* unicode;
+@property (nonatomic, copy, nullable) NSString* title;
+@property (nonatomic, copy, nullable) NSString* desc;
+@property (nonatomic, copy, nullable) NSString* unicode;
 @property (nonatomic, assign) IJSVGNodeType type;
-@property (nonatomic, copy) NSString* name;
-@property (nonatomic, copy) NSString* className;
-@property (nonatomic, strong) NSSet<NSString*>* classNameList;
+@property (nonatomic, copy, nullable) NSString* name;
+@property (nonatomic, copy, nullable) NSString* className;
+@property (nonatomic, strong, nullable) NSSet<NSString*>* classNameList;
 @property (nonatomic, assign) BOOL shouldRender;
-@property (nonatomic, strong) IJSVGUnitLength* x;
-@property (nonatomic, strong) IJSVGUnitLength* y;
-@property (nonatomic, strong) IJSVGUnitLength* width;
-@property (nonatomic, strong) IJSVGUnitLength* height;
-@property (nonatomic, strong) IJSVGUnitLength* opacity;
-@property (nonatomic, strong) IJSVGUnitLength* fillOpacity;
-@property (nonatomic, strong) IJSVGUnitLength* strokeOpacity;
-@property (nonatomic, strong) IJSVGUnitLength* strokeWidth;
-@property (nonatomic, strong) IJSVGUnitLength* offset;
-@property (nonatomic, strong) IJSVGNode* fill;
-@property (nonatomic, strong) IJSVGNode* stroke;
-@property (nonatomic, copy) NSString* identifier;
-@property (nonatomic, assign) IJSVGNode* parentNode;
-@property (nonatomic, strong) IJSVGClipPath* clipPath;
-@property (nonatomic, strong) IJSVGMask* mask;
-@property (nonatomic, strong) IJSVGFilter* filter;
-@property (nonatomic, copy) NSArray<IJSVGFilter*>* filters;
-@property (nonatomic, copy) NSString* filterColorInterpolation;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* x;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* y;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* width;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* height;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* opacity;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* fillOpacity;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeOpacity;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeWidth;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* offset;
+@property (nonatomic, strong, nullable) IJSVGNode* fill;
+@property (nonatomic, strong, nullable) IJSVGNode* stroke;
+@property (nonatomic, copy, nullable) NSString* identifier;
+@property (nonatomic, assign, nullable) IJSVGNode* parentNode;
+@property (nonatomic, strong, nullable) IJSVGClipPath* clipPath;
+@property (nonatomic, strong, nullable) IJSVGMask* mask;
+@property (nonatomic, strong, nullable) IJSVGFilter* filter;
+@property (nonatomic, copy, nullable) NSArray<IJSVGFilter*>* filters;
+@property (nonatomic, copy, nullable) NSString* filterColorInterpolation;
 @property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
 @property (nonatomic, assign) CGRect backgroundBounds;
 @property (nonatomic, readonly) CGRect backgroundRect;
@@ -326,19 +328,19 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
-@property (nonatomic, strong) IJSVGUnitLength* strokeMiterLimit;
-@property (nonatomic, strong) NSArray<IJSVGTransform*>* transforms;
-@property (nonatomic, assign) CGFloat* strokeDashArray;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeMiterLimit;
+@property (nonatomic, strong, nullable) NSArray<IJSVGTransform*>* transforms;
+@property (nonatomic, assign, nullable) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;
-@property (nonatomic, strong) IJSVGUnitLength* strokeDashOffset;
-@property (nonatomic, strong) IJSVG* svg;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeDashOffset;
+@property (nonatomic, strong, nullable) IJSVG* svg;
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
-@property (nonatomic, readonly) IJSVGRootNode* rootNode;
+@property (nonatomic, readonly, nullable) IJSVGRootNode* rootNode;
 
 + (IJSVGBitFlags*)computedAllowedAttributes;
 + (uint64_t)computedAllowedAttributeMask;
@@ -359,8 +361,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 - (BOOL)containsRelativeUnits;
 
-- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style;
-- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style;
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style
                               matchingTraits:(IJSVGColorUsageTraits)traits;
 
 - (void)setDefaults;
@@ -368,7 +370,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds;
-- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode**)referencingNode;
+- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode* _Nonnull * _Nonnull)referencingNode;
 
 - (instancetype)detach;
 
@@ -379,7 +381,9 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 - (NSSet<IJSVGNode*>*)nodesMatchingTypes:(NSIndexSet*)types;
 
-- (instancetype)parentNodeMatchingClass:(Class)someClass;
-- (instancetype)rootNodeMatchingClass:(Class)someClass;
+- (nullable instancetype)parentNodeMatchingClass:(Class)someClass;
+- (nullable instancetype)rootNodeMatchingClass:(Class)someClass;
 
 @end
+
+NS_ASSUME_NONNULL_END

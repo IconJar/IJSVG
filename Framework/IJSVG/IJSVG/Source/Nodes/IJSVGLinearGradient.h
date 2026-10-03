@@ -9,9 +9,13 @@
 #import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface IJSVGLinearGradient : IJSVGGradient
 
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -30,8 +30,8 @@ BOOL IJSVGIsValidContextSize(CGSize size);
 // These are expensive to create and are hit on every offscreen pass,
 // so they are created lazily once and reused. The returned reference is owned
 // by IJSVG, callers must _NOT_ release it.
-CGColorSpaceRef IJSVGDeviceGrayColorSpace(void);
-CGColorSpaceRef IJSVGDeviceRGBColorSpace(void);
+CGColorSpaceRef IJSVGDeviceGrayColorSpace(void) CF_RETURNS_NOT_RETAINED;
+CGColorSpaceRef IJSVGDeviceRGBColorSpace(void) CF_RETURNS_NOT_RETAINED;
 
 char IJSVGCharToLower(char c);
 BOOL IJSVGCharBufferCaseInsensitiveCompare(const char* str1, const char* str2);
@@ -95,7 +95,7 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
                        floatCount:(NSUInteger)floatCount
                         charCount:(NSUInteger)charCount
                              size:(NSInteger*)length;
-+ (CGPathRef)newFlippedCGPath:(CGPathRef)path;
++ (CGPathRef)newFlippedCGPath:(CGPathRef)path CF_RETURNS_RETAINED NS_SWIFT_NAME(flippedPath(_:));
 
 + (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
