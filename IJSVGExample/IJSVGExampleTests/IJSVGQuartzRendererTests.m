@@ -60,6 +60,7 @@
     return [self renderSVG:[self svgWithBody:body] size:size];
 }
 
+// Checks backdrop rendering at several backing scales.
 - (void)testBackdropSurfacePreservesDevicePixelEdges
 {
     NSMutableString* body = [NSMutableString stringWithString:
@@ -82,7 +83,7 @@
             svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
             CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
             CGContextRef bitmap = CGBitmapContextCreate(NULL, size, size, 8, size * 4,
-                space, kCGImageAlphaPremultipliedLast);
+                space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
             CGColorSpaceRelease(space);
             XCTAssertTrue(bitmap != NULL);
             if(bitmap == NULL) {

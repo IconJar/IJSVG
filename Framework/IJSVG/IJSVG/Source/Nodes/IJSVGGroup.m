@@ -105,16 +105,18 @@
     [_children removeObject:child];
 }
 
+// Snapshots the input because changing parent links can mutate the supplied array.
 - (void)addChildren:(NSArray<IJSVGNode*>*)children
 {
-    for(IJSVGNode* node in children) {
+    for(IJSVGNode* node in [children copy]) {
         [self addChild:node];
     }
 }
 
+// Snapshots the input because changing parent links can mutate the supplied array.
 - (void)removeChildren:(NSArray<IJSVGNode*>*)children
 {
-    for(IJSVGNode* node in children) {
+    for(IJSVGNode* node in [children copy]) {
         [self removeChild:node];
     }
 }

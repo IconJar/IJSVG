@@ -355,7 +355,8 @@ void IJSVGAssertPaintableObject(id object);
 + (BOOL)node:(IJSVGNode*)node
 containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
-+ (IJSVGNodeType)typeForString:(NSString*)string
+// Returns not found for absent names and non element nodes.
++ (IJSVGNodeType)typeForString:(NSString* _Nullable)string
                           kind:(NSXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
 

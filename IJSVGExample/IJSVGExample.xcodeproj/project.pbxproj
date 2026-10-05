@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A87B53C04E204BEB8D002101 /* IJSVGArtworkFittingTests.m */; };
 		5901B73D282818CA00290525 /* contour_hatching.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B730282818CA00290525 /* contour_hatching.svg */; };
 		5901B73E282818CA00290525 /* canonical.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B731282818CA00290525 /* canonical.svg */; };
 		5901B73F282818CA00290525 /* clipping.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B732282818CA00290525 /* clipping.svg */; };
@@ -138,6 +139,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A87B53C04E204BEB8D002101 /* IJSVGArtworkFittingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGArtworkFittingTests.m; sourceTree = "<group>"; };
 		5901B730282818CA00290525 /* contour_hatching.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = contour_hatching.svg; sourceTree = "<group>"; };
 		5901B731282818CA00290525 /* canonical.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = canonical.svg; sourceTree = "<group>"; };
 		5901B732282818CA00290525 /* clipping.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = clipping.svg; sourceTree = "<group>"; };
@@ -390,6 +392,7 @@
 				591F8ED32FF02B030012F5EB /* IJSVGUtilityParsingTests.m */,
 				591F8ED52FF02F7D0012F5EB /* IJSVGColorParsingTests.m */,
 				591F8ED72FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m */,
+				A87B53C04E204BEB8D002101 /* IJSVGArtworkFittingTests.m */,
 				591F8ED92FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m */,
 				594385AC306C080B006A5F63 /* IJSVGFilterTests.m */,
 				59438AC8306C7ABC006A5F63 /* IJSVGInnerShadowTests.m */,
@@ -638,6 +641,7 @@
 				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
+				A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */,
 				5999231030716433004F4D18 /* IJSVGGradientGeometryTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
 				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,

@@ -32,6 +32,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) CGRect outerBoundingBox;
 @property (nonatomic, readonly) CGRect innerBoundingBox;
 @property (nonatomic, assign) CGAffineTransform affineTransform;
+
+// Maps local geometry into parent coordinates using the original frame.
+@property (nonatomic, readonly) CGAffineTransform placementTransform;
 @property (nonatomic, copy) NSArray<IJSVGPaint*>* children;
 @property (nonatomic, weak) IJSVGPaint* parentPaint;
 @property (nonatomic, weak) IJSVGPaint* referencingPaint;

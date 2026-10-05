@@ -106,6 +106,27 @@ Parser base URLs can be `nil`. Missing node relationships, paint overrides, imag
 source data, filter inputs, and unsuccessful color lookups are optional in Swift.
 Collections that are always initialized remain nonoptional.
 
+### Artwork bounds and fitting (4.0.2)
+
+After changing stroke styles or path geometry, fit overflowing artwork into the
+original viewBox without changing the output dimensions or aspect ratio:
+
+```objc
+CGRect bounds = [svg artworkBounds];
+[svg fitArtworkToViewBox:YES];
+// Remove the fitting scale when restoring the original artwork.
+[svg fitArtworkToViewBox:NO];
+```
+
+Swift callers use `svg.artworkBounds()` and
+`svg.fitArtworkToViewBox(enabled: true)`. Call fitting again after subsequent
+style or geometry changes. Repeated calls replace the fitting transform rather
+than accumulating scale. Fitting preserves the original canvas center.
+
+Bounds include resolved fills, strokes, caps, joins, dashes, and transforms.
+They are conservative geometry bounds, not a pixel tight measurement of masks or
+clipping. Filter effects are excluded.
+
 #### Step 1 - initialize the SVG object
     IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:someURLHere];
     // or with and without extension to find it within the bundle

@@ -225,6 +225,67 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     }];
 }
 
+// Measures children with the same placement used during drawing.
+- (CGRect)artworkBoundsForChildrenOfPaint:(IJSVGPaint*)paint
+{
+    CGRect bounds = CGRectNull;
+    for(IJSVGPaint* child in paint.children) {
+        CGRect local = [self artworkBoundsForPaint:child];
+        if(CGRectIsNull(local) || CGRectIsInfinite(local)) {
+            continue;
+        }
+        bounds = CGRectUnion(bounds, CGRectApplyAffineTransform(local, child.placementTransform));
+    }
+    return bounds;
+}
+
+// Includes stroked outlines with resolved caps, joins, dashes, and units.
+- (CGRect)artworkBoundsForPaint:(IJSVGPaint*)paint
+{
+    if(paint.hidden || paint.opacity <= 0.f) {
+        return CGRectNull;
+    }
+    if([paint isKindOfClass:IJSVGRootPaint.class]) {
+        return paint.bounds;
+    }
+    CGRect bounds = [self artworkBoundsForChildrenOfPaint:paint];
+    if([paint isKindOfClass:IJSVGShapePaint.class]) {
+        IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+        if(shape.path != NULL) {
+            if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f) {
+                bounds = CGRectUnion(bounds, CGPathGetPathBoundingBox(shape.path));
+            }
+            if(shape.strokeColor != NULL && CGColorGetAlpha(shape.strokeColor) > 0.f &&
+               shape.lineWidth > 0.f) {
+                CGPathRef outline = [self.class newPathFromStrokedShapePaint:shape];
+                if(outline != NULL) {
+                    bounds = CGRectUnion(bounds, CGPathGetPathBoundingBox(outline));
+                    CGPathRelease(outline);
+                }
+            }
+        }
+    } else if([paint isKindOfClass:IJSVGImagePaint.class]) {
+        bounds = CGRectUnion(bounds, paint.bounds);
+    }
+    if(paint.clipPath != NULL) {
+        CGRect clipBounds = CGPathGetPathBoundingBox(paint.clipPath);
+        if([paint isKindOfClass:IJSVGGradientPaint.class] ||
+           [paint isKindOfClass:IJSVGPatternPaint.class]) {
+            bounds = CGRectUnion(bounds, clipBounds);
+        }
+        bounds = CGRectIntersection(bounds, clipBounds);
+    }
+    return bounds;
+}
+
+// Resolves bounds in viewBox coordinates without the outer viewport clip.
+- (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode
+{
+    IJSVGRootPaint* paint = [self rootPaintForRootNode:rootNode];
+    return paint.hidden || paint.opacity <= 0.f ? CGRectNull :
+        [self artworkBoundsForChildrenOfPaint:paint];
+}
+
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
 {
     CGRect clientBounds = (CGRect) {

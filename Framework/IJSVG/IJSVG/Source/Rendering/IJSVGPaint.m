@@ -137,6 +137,17 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
                                                 _frame.size.width, _frame.size.height), transform);
 }
 
+// Uses the stored frame because the public frame already includes the transform.
+- (CGAffineTransform)placementTransform
+{
+    CGAffineTransform placement = CGAffineTransformMakeTranslation(CGRectGetMidX(_frame),
+                                                                   CGRectGetMidY(_frame));
+    placement = CGAffineTransformConcat(_affineTransform, placement);
+    return CGAffineTransformConcat(CGAffineTransformMakeTranslation(-_frame.size.width / 2.f,
+                                                                    -_frame.size.height / 2.f),
+                                   placement);
+}
+
 - (void)setFrame:(CGRect)frame
 {
     // Mask placement adjusts the origin of a paint in parent space. Preserve the

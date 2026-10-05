@@ -18,6 +18,8 @@
 
 @interface IJSVG () {
   IJSVGQuartzRenderer* _quartzRenderer;
+  IJSVGRootNode* _artworkFittingRoot;
+  IJSVGGroup* _artworkFittingGroup;
 }
 @end
 
@@ -329,6 +331,89 @@
     return _rootNode.identifier;
 }
 
+
+// Calculates uniform fitting around the original canvas center.
+- (CGAffineTransform)artworkFittingTransform
+{
+    CGRect viewport = self.viewBox;
+    if(CGRectIsEmpty(viewport) ||
+       !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) ||
+       !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport))) {
+        return CGAffineTransformIdentity;
+    }
+    CGRect bounds = self.artworkBounds;
+    if(CGRectIsEmpty(bounds) ||
+       !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) ||
+       !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport)) ||
+       !isfinite(CGRectGetMinX(bounds)) || !isfinite(CGRectGetMinY(bounds)) ||
+       !isfinite(CGRectGetMaxX(bounds)) || !isfinite(CGRectGetMaxY(bounds)) ||
+       CGRectContainsRect(viewport, bounds)) {
+        return CGAffineTransformIdentity;
+    }
+    CGFloat horizontal = MAX(CGRectGetMidX(viewport) - CGRectGetMinX(bounds),
+                             CGRectGetMaxX(bounds) - CGRectGetMidX(viewport));
+    CGFloat vertical = MAX(CGRectGetMidY(viewport) - CGRectGetMinY(bounds),
+                           CGRectGetMaxY(bounds) - CGRectGetMidY(viewport));
+    // Divide before multiplying to avoid overflow for very large coordinates.
+    CGFloat scale = MIN(1.f, MIN((viewport.size.width / 2.f) / horizontal,
+                                (viewport.size.height / 2.f) / vertical));
+    if(!isfinite(scale) || scale <= 0.f || scale >= 1.f - 1e-12) {
+        return CGAffineTransformIdentity;
+    }
+    return CGAffineTransformMake(scale, 0.f, 0.f, scale,
+                                 CGRectGetMidX(viewport) * (1.f - scale),
+                                 CGRectGetMidY(viewport) * (1.f - scale));
+}
+
+// Replaces the fitting transform so repeated adjustments never accumulate scale.
+- (void)fitArtworkToViewBox:(BOOL)enabled
+{
+    IJSVGRootNode* root = self.rootNode;
+    if(root == nil) {
+        return;
+    }
+    if(_artworkFittingRoot != root ||
+       (_artworkFittingGroup != nil && _artworkFittingGroup.rootNode != root)) {
+        _artworkFittingRoot = nil;
+        _artworkFittingGroup = nil;
+    }
+    _artworkFittingGroup.transforms = @[];
+    if(enabled) {
+        CGAffineTransform transform = [self artworkFittingTransform];
+        if(!CGAffineTransformIsIdentity(transform)) {
+            if(_artworkFittingGroup == nil) {
+                _artworkFittingGroup = [[IJSVGGroup alloc] init];
+                [_artworkFittingGroup addChildren:root.children];
+                [root addChild:_artworkFittingGroup];
+                _artworkFittingRoot = root;
+            }
+            // Preserve full precision without formatting and parsing an SVG string.
+            IJSVGTransform* fitting = [[IJSVGTransform alloc] init];
+            fitting.command = IJSVGTransformCommandMatrix;
+            CGFloat parameters[] = { transform.a, transform.b, transform.c,
+                                     transform.d, transform.tx, transform.ty };
+            [fitting setParameters:parameters count:6];
+            _artworkFittingGroup.transforms = @[fitting];
+        }
+    }
+    [self setNeedsDisplay];
+}
+
+// Measures styled geometry without clipping it to the outer viewport.
+- (CGRect)artworkBounds
+{
+    IJSVGRootNode* root = self.rootNode;
+    if(root == nil) {
+        return CGRectNull;
+    }
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    renderer.style = self.style;
+    // This query measures geometry only and must not prepare filter resources.
+    IJSVGRenderingOptions* options = self.renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
+    options.filtersEnabled = NO;
+    renderer.renderingOptions = options;
+    return [renderer artworkBoundsForRootNode:root];
+}
 
 - (CGRect)viewBox
 {

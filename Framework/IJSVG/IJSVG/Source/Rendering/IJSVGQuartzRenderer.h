@@ -30,6 +30,9 @@
            region:(CGRect)region
         inContext:(CGContextRef)context;
 
+// Measures painted geometry before clipping to the outer SVG viewport.
+- (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode;
+
 // Resolve the node graph without allocating a graphics context.
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode;
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort;

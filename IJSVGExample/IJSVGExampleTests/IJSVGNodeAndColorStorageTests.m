@@ -230,4 +230,30 @@
     XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f, 0.002f);
 }
 
+// Bulk moves and removals must tolerate the live children array of a group.
+- (void)testBulkChildOperationsPreserveOrderAndParentLinks
+{
+    IJSVGGroup* source = [[IJSVGGroup alloc] init];
+    IJSVGGroup* destination = [[IJSVGGroup alloc] init];
+    NSArray<IJSVGNode*>* children = @[
+        IJSVGTestNode(@"rect", @"first", nil),
+        IJSVGTestNode(@"circle", @"second", nil),
+        IJSVGTestNode(@"path", @"third", nil)
+    ];
+    [source addChildren:children];
+    XCTAssertNoThrow([destination addChildren:source.children]);
+    XCTAssertEqual(source.children.count, 0u);
+    XCTAssertEqualObjects(destination.children, children);
+    for(IJSVGNode* child in children) {
+        XCTAssertEqual(child.parentNode, destination);
+    }
+    XCTAssertNoThrow([destination addChildren:destination.children]);
+    XCTAssertEqualObjects(destination.children, children);
+    XCTAssertNoThrow([destination removeChildren:destination.children]);
+    XCTAssertEqual(destination.children.count, 0u);
+    for(IJSVGNode* child in children) {
+        XCTAssertNil(child.parentNode);
+    }
+}
+
 @end
