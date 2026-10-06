@@ -9,7 +9,6 @@
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGXEntities.h>
-//#import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
 

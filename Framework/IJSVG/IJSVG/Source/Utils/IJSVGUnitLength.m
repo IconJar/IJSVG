@@ -252,7 +252,6 @@
     return IJSVGShortFloatString(self.value);
 }
 
-#if __has_include(<AppKit/AppKit.h>)
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
     if(_type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
@@ -261,7 +260,6 @@
     }
     return IJSVGShortFloatStringWithOptions(_value, options);
 }
-#endif
 
 - (NSString*)description
 {
