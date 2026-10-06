@@ -22,7 +22,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGViewBox.h>
 
-@interface IJSVGUtilityParsingTests : XCTestCase
+@interface IJSVGUtilityParsingTests: XCTestCase
 @end
 
 @implementation IJSVGUtilityParsingTests
@@ -64,11 +64,8 @@
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSInteger commandsFound = 0;
     const char* command = "30 50 0 0 1 162.55 162.45";
-    CGFloat* values = IJSVGParsePathDataStreamSequence(command,
-                                                       strlen(command),
-                                                       stream,
-                                                       sequence,
-                                                       7,
+    CGFloat* values = IJSVGParsePathDataStreamSequence(command, strlen(command),
+                                                       stream, sequence, 7,
                                                        &commandsFound);
 
     XCTAssertNotEqual(values, NULL);
@@ -99,11 +96,8 @@
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSInteger commandsFound = NSNotFound;
     const char* command = "30 50 0 2 1 162.55 162.45";
-    CGFloat* values = IJSVGParsePathDataStreamSequence(command,
-                                                       strlen(command),
-                                                       stream,
-                                                       sequence,
-                                                       7,
+    CGFloat* values = IJSVGParsePathDataStreamSequence(command, strlen(command),
+                                                       stream, sequence, 7,
                                                        &commandsFound);
 
     XCTAssertEqual(values, NULL);
@@ -116,17 +110,15 @@
 {
     NSMutableString* command = [NSMutableString string];
     for(NSInteger i = 0; i < 75; i++) {
-        [command appendFormat:@"%ld.125 ", (long)i];
+        [command appendFormat:@"%ld.125 ",
+                              (long)i];
     }
 
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(1, 3);
     NSInteger count = 0;
     CGFloat* values = IJSVGParsePathDataStreamSequence(command.UTF8String,
                                                        strlen(command.UTF8String),
-                                                       stream,
-                                                       NULL,
-                                                       1,
-                                                       &count);
+                                                       stream, NULL, 1, &count);
 
     XCTAssertEqual(count, 75);
     XCTAssertEqualWithAccuracy(values[0], 0.125f, 0.0001f);
@@ -140,7 +132,8 @@
 {
     IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
     NSInteger commandsFound = NSNotFound;
-    CGFloat* values = IJSVGParsePathDataStreamSequence("10 20", 5, stream, NULL, 0, &commandsFound);
+    CGFloat* values = IJSVGParsePathDataStreamSequence("10 20", 5, stream, NULL,
+                                                       0, &commandsFound);
 
     XCTAssertEqual(values, NULL);
     XCTAssertEqual(commandsFound, 0);
@@ -151,7 +144,9 @@
 - (void)testMethodParserSplitsNamesAndTrimmedParameters
 {
     NSUInteger count = 0;
-    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString(" translate ( 10, 20 ) rotate(45) scale( 2 ) ", &count);
+    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString(" translate ( 10, 20 ) rotate(45) "
+                                                                       "scale( 2 ) ",
+                                                                       &count);
 
     XCTAssertEqual(count, 3u);
     XCTAssertEqual(strcmp(methods[0]->name, "translate"), 0);
@@ -167,7 +162,8 @@
 - (void)testMethodParserDropsIncompleteMethod
 {
     NSUInteger count = 0;
-    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString("translate(10, 20", &count);
+    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString("translate(10, 20",
+                                                                       &count);
 
     XCTAssertEqual(count, 0u);
 
@@ -176,7 +172,10 @@
 
 - (void)testTransformsForStringCreatesCommandsAndParsedParameters
 {
-    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:@"translate(10 -5) rotate(45) scale(.5,2e1) unknown(1)"];
+    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:@"translate(10 -5) "
+                                                                                "rotate(45) "
+                                                                                "scale(.5,2e1) "
+                                                                                "unknown(1)"];
 
     XCTAssertEqual(transforms.count, 3u);
     XCTAssertEqual(transforms[0].command, IJSVGTransformCommandTranslate);
@@ -209,14 +208,75 @@
     XCTAssertNil(empty);
 }
 
+- (void)testFontRelativeUnitParsingAndResolution
+{
+    NSArray<NSString*>* strings = @[@"2em", @" 2EM ", @"2ex", @" 2Ex "];
+    for(NSUInteger index = 0; index < strings.count; index++) {
+        IJSVGUnitLength* unit = [IJSVGUnitLength unitWithString:strings[index]];
+        IJSVGUnitLengthType type = index < 2 ? IJSVGUnitLengthTypeEM: IJSVGUnitLengthTypeEX;
+        XCTAssertEqual(unit.type, type);
+        XCTAssertEqual(unit.originalType, type);
+        XCTAssertEqualWithAccuracy(unit.value, 2, .000001);
+        XCTAssertTrue(unit.isRelativeUnit);
+        CGFloat resolved = [unit computeValue:200
+                                     fontSize:30
+                                      xHeight:12];
+        XCTAssertEqualWithAccuracy(resolved, index < 2 ? 60 : 24, .000001);
+        XCTAssertEqualWithAccuracy(unit.value, 2, .000001);
+    }
+}
+
+- (void)testFontRelativeUnitsCopyAndSerialize
+{
+    for(NSString* string in @[@"0em", @"0ex", @"-.5em", @"1.25ex"]) {
+        IJSVGUnitLength* unit = [IJSVGUnitLength unitWithString:string];
+        IJSVGUnitLength* copy = unit.copy;
+        XCTAssertEqual(copy.type, unit.type);
+        XCTAssertEqual(copy.originalType, unit.originalType);
+        XCTAssertEqualWithAccuracy(copy.value, unit.value, .000001);
+        IJSVGUnitLength* roundTrip = [IJSVGUnitLength unitWithString:copy.stringValue];
+        XCTAssertEqual(roundTrip.type, unit.type);
+        XCTAssertEqualWithAccuracy(roundTrip.value, unit.value, .000001);
+        XCTAssertEqual([unit lengthByMatchingPercentage].type, unit.type);
+    }
+    IJSVGFloatingPointOptions options = IJSVGFloatingPointOptionsMake(YES, 2);
+    IJSVGUnitLength* unit = [IJSVGUnitLength unitWithString:@"1.234ex"];
+    XCTAssertEqualObjects([unit stringValueWithFloatingPointOptions:options],
+                          @"1.23ex");
+}
+
+- (void)testFontMetricsDoNotChangeAbsoluteOrPercentageUnits
+{
+    NSArray<NSString*>* strings = @[
+        @"12",
+        @"12px",
+        @"2.54cm",
+        @"25.4mm",
+        @"1in",
+        @"72pt",
+        @"6pc",
+        @"25%"
+    ];
+    CGFloat expected[] = { 12, 12, 96, 96, 96, 96, 96, 50 };
+    for(NSUInteger index = 0; index < strings.count; index++) {
+        IJSVGUnitLength* unit = [IJSVGUnitLength unitWithString:strings[index]];
+        CGFloat value = [unit computeValue:200
+                                  fontSize:30
+                                   xHeight:12];
+        XCTAssertEqualWithAccuracy(value, expected[index], .0001);
+    }
+}
+
 - (void)testFloatingPointStringFormattingOptions
 {
     IJSVGFloatingPointOptions rounded = IJSVGFloatingPointOptionsMake(YES, 2);
     IJSVGUnitLength* percent = [IJSVGUnitLength unitWithString:@"12.345%"];
     IJSVGUnitLength* number = [IJSVGUnitLength unitWithString:@"3.14159"];
 
-    XCTAssertEqualObjects([percent stringValueWithFloatingPointOptions:rounded], @"12.34%");
-    XCTAssertEqualObjects([number stringValueWithFloatingPointOptions:rounded], @"3.14");
+    XCTAssertEqualObjects([percent stringValueWithFloatingPointOptions:rounded],
+                          @"12.34%");
+    XCTAssertEqualObjects([number stringValueWithFloatingPointOptions:rounded],
+                          @"3.14");
 }
 
 - (void)testViewBoxAspectRatioParsingAndFormatting
@@ -228,10 +288,14 @@
     XCTAssertEqual(alignment, IJSVGViewBoxAlignmentXMaxYMid);
     XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceSlice);
     XCTAssertEqualObjects([IJSVGViewBox aspectRatioWithAlignment:alignment
-                                                     meetOrSlice:meetOrSlice], @"xMaxYMid slice");
-    XCTAssertEqual([IJSVGViewBox alignmentForString:@"none"], IJSVGViewBoxAlignmentNone);
-    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"meet"], IJSVGViewBoxMeetOrSliceMeet);
-    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"unknown"], IJSVGViewBoxMeetOrSliceUnknown);
+                                                     meetOrSlice:meetOrSlice],
+                          @"xMaxYMid slice");
+    XCTAssertEqual([IJSVGViewBox alignmentForString:@"none"],
+                   IJSVGViewBoxAlignmentNone);
+    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"meet"],
+                   IJSVGViewBoxMeetOrSliceMeet);
+    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"unknown"],
+                   IJSVGViewBoxMeetOrSliceUnknown);
 }
 
 - (void)testViewBoxComputeTransformForMeetSliceAndNone
@@ -239,8 +303,7 @@
     CGRect viewBox = CGRectMake(10.f, 20.f, 50.f, 100.f);
     CGRect drawingRect = CGRectMake(0.f, 0.f, 200.f, 200.f);
 
-    CGAffineTransform meet = IJSVGViewBoxComputeTransform(viewBox,
-                                                          drawingRect,
+    CGAffineTransform meet = IJSVGViewBoxComputeTransform(viewBox, drawingRect,
                                                           IJSVGViewBoxAlignmentXMidYMid,
                                                           IJSVGViewBoxMeetOrSliceMeet);
     XCTAssertEqualWithAccuracy(meet.a, 2.f, 0.0001f);
@@ -248,8 +311,7 @@
     XCTAssertEqualWithAccuracy(meet.tx, 30.f, 0.0001f);
     XCTAssertEqualWithAccuracy(meet.ty, -40.f, 0.0001f);
 
-    CGAffineTransform slice = IJSVGViewBoxComputeTransform(viewBox,
-                                                           drawingRect,
+    CGAffineTransform slice = IJSVGViewBoxComputeTransform(viewBox, drawingRect,
                                                            IJSVGViewBoxAlignmentXMinYMin,
                                                            IJSVGViewBoxMeetOrSliceSlice);
     XCTAssertEqualWithAccuracy(slice.a, 4.f, 0.0001f);
@@ -257,8 +319,7 @@
     XCTAssertEqualWithAccuracy(slice.tx, -40.f, 0.0001f);
     XCTAssertEqualWithAccuracy(slice.ty, -80.f, 0.0001f);
 
-    CGAffineTransform none = IJSVGViewBoxComputeTransform(viewBox,
-                                                          drawingRect,
+    CGAffineTransform none = IJSVGViewBoxComputeTransform(viewBox, drawingRect,
                                                           IJSVGViewBoxAlignmentNone,
                                                           IJSVGViewBoxMeetOrSliceMeet);
     XCTAssertEqualWithAccuracy(none.a, 4.f, 0.0001f);
@@ -294,7 +355,8 @@
     XCTAssertEqualWithAccuracy(pc.value, 32.f, 0.001f);
     XCTAssertEqual(matched.type, IJSVGUnitLengthTypePercentage);
     XCTAssertEqualWithAccuracy(matched.value, 0.5f, 0.0001f);
-    XCTAssertEqualObjects([[IJSVGUnitLength unitWithString:@"25%"] stringValue], @"25%");
+    XCTAssertEqualObjects([[IJSVGUnitLength unitWithString:@"25%"] stringValue],
+                          @"25%");
     XCTAssertNotEqual(copied, cm);
     XCTAssertEqual(copied.originalType, cm.originalType);
     XCTAssertEqualWithAccuracy(copied.value, cm.value, 0.0001f);
@@ -406,10 +468,13 @@
     XCTAssertEqualObjects(IJSVGShortenFloatString(@"0.25"), @".25");
     XCTAssertEqualObjects(IJSVGShortenFloatString(@"-0.25"), @"-.25");
     XCTAssertEqualObjects(IJSVGShortFloatString(0.5f), @".5");
-    XCTAssertEqualObjects(IJSVGShortFloatStringWithPrecision(1.25f, 2), @"1.25");
+    XCTAssertEqualObjects(IJSVGShortFloatStringWithPrecision(1.25f, 2),
+                          @"1.25");
     XCTAssertEqualObjects(IJSVGShortFloatStringWithPrecision(2.f, 2), @"2");
-    XCTAssertEqualObjects(IJSVGPointToCommandString(CGPointMake(0.5f, -0.25f)), @".5 -.25");
-    XCTAssertEqualObjects(IJSVGCompressFloatParameterArray(@[ @".5", @".25", @"-1", @"2" ]), @".5.25-1 2");
+    XCTAssertEqualObjects(IJSVGPointToCommandString(CGPointMake(0.5f, -0.25f)),
+                          @".5 -.25");
+    XCTAssertEqualObjects(IJSVGCompressFloatParameterArray(@[@".5", @".25", @"-1", @"2"]),
+                          @".5.25-1 2");
     XCTAssertTrue(IJSVGIsLegalCommandCharacter('M'));
     XCTAssertTrue(IJSVGIsLegalCommandCharacter('a'));
     XCTAssertFalse(IJSVGIsLegalCommandCharacter('R'));

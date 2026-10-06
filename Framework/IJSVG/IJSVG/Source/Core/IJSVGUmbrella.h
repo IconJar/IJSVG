@@ -10,6 +10,8 @@
 #define IJSVGUmbrella_h
 
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGCommandClose.h>
 #import <IJSVG/IJSVGCommandCurve.h>

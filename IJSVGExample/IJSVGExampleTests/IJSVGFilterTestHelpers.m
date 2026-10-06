@@ -11,7 +11,6 @@ static NSUInteger IJSVGTestFilterPaintCount(IJSVGPaint* layer)
     return count;
 }
 
-
 static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
 {
     IJSVGQuartzRenderer* resolver = [[IJSVGQuartzRenderer alloc] init];
@@ -22,7 +21,8 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
 
 @implementation XCTestCase (IJSVGFilterTestHelpers)
 
-- (CGContextRef)newBitmapWithSize:(NSUInteger)size flipped:(BOOL)flipped
+- (CGContextRef)newBitmapWithSize:(NSUInteger)size
+                          flipped:(BOOL)flipped
 {
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     XCTAssertTrue(space != NULL);
@@ -30,7 +30,8 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         return NULL;
     }
     CGContextRef bitmap = CGBitmapContextCreate(NULL, size, size, 8, size * 4,
-        space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+                                                space,
+                                                (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(bitmap != NULL);
     if(bitmap != NULL && flipped) {
@@ -40,26 +41,34 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     return bitmap;
 }
 
-- (NSData*)renderDocument:(NSString*)document flipped:(BOOL)flipped
+- (NSData*)renderDocument:(NSString*)document
+                  flipped:(BOOL)flipped
 {
-    return [self renderDocument:document flipped:flipped clipped:NO generalTransparency:NO];
+    return [self renderDocument:document
+                        flipped:flipped
+                        clipped:NO
+            generalTransparency:NO];
 }
 
-- (NSData*)renderDocument:(NSString*)document flipped:(BOOL)flipped
-                 clipped:(BOOL)clipped generalTransparency:(BOOL)generalTransparency
+- (NSData*)renderDocument:(NSString*)document
+                  flipped:(BOOL)flipped
+                  clipped:(BOOL)clipped
+      generalTransparency:(BOOL)generalTransparency
 {
     XCTAssertNotNil(document);
     if(document == nil) {
         return nil;
     }
     NSError* error = nil;
-    IJSVG* svg = [[IJSVG alloc] initWithSVGString:document error:&error];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:document
+                                            error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(svg);
     if(svg == nil) {
         return nil;
     }
-    CGContextRef bitmap = [self newBitmapWithSize:64 flipped:flipped];
+    CGContextRef bitmap = [self newBitmapWithSize:64
+                                          flipped:flipped];
     if(bitmap == NULL) {
         return nil;
     }
@@ -67,21 +76,29 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         CGContextClipToRect(bitmap, CGRectMake(7, 5, 46, 51));
     }
     if(generalTransparency) CGContextBeginTransparencyLayer(bitmap, NULL);
-    [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
+    [svg drawInRect:CGRectMake(0, 0, 64, 64)
+            context:bitmap];
     if(generalTransparency) CGContextEndTransparencyLayer(bitmap);
-    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:64 * 64 * 4];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap)
+                                    length:64 * 64 * 4];
     CGContextRelease(bitmap);
     return pixels;
 }
 
-- (NSData*)compositeDocuments:(NSArray<NSString*>*)documents flipped:(BOOL)flipped clipped:(BOOL)clipped
+- (NSData*)compositeDocuments:(NSArray<NSString*>*)documents
+                      flipped:(BOOL)flipped
+                      clipped:(BOOL)clipped
 {
-    CGContextRef bitmap = [self newBitmapWithSize:64 flipped:NO];
+    CGContextRef bitmap = [self newBitmapWithSize:64
+                                          flipped:NO];
     if(bitmap == NULL) {
         return nil;
     }
     for(NSString* document in documents) {
-        NSData* pixels = [self renderDocument:document flipped:flipped clipped:clipped generalTransparency:NO];
+        NSData* pixels = [self renderDocument:document
+                                      flipped:flipped
+                                      clipped:clipped
+                          generalTransparency:NO];
         if(pixels == nil) {
             CGContextRelease(bitmap);
             return nil;
@@ -92,8 +109,11 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
             CGContextRelease(bitmap);
             return nil;
         }
-        CGImageRef image = CGImageCreate(64, 64, 8, 32, 256, CGBitmapContextGetColorSpace(bitmap),
-            (CGBitmapInfo)kCGImageAlphaPremultipliedLast, provider, NULL, false, kCGRenderingIntentDefault);
+        CGImageRef image = CGImageCreate(64, 64, 8, 32, 256,
+                                         CGBitmapContextGetColorSpace(bitmap),
+                                         (CGBitmapInfo)kCGImageAlphaPremultipliedLast,
+                                         provider, NULL, false,
+                                         kCGRenderingIntentDefault);
         CGDataProviderRelease(provider);
         XCTAssertTrue(image != NULL);
         if(image == NULL) {
@@ -103,12 +123,14 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         CGContextDrawImage(bitmap, CGRectMake(0, 0, 64, 64), image);
         CGImageRelease(image);
     }
-    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:64 * 64 * 4];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap)
+                                    length:64 * 64 * 4];
     CGContextRelease(bitmap);
     return pixels;
 }
 
-- (NSInteger)maximumDifference:(NSData*)first other:(NSData*)second
+- (NSInteger)maximumDifference:(NSData*)first
+                         other:(NSData*)second
 {
     XCTAssertNotNil(first);
     XCTAssertNotNil(second);
@@ -136,7 +158,8 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     return NO;
 }
 
-- (void)runWorkers:(NSUInteger)count freshThreads:(BOOL)freshThreads
+- (void)runWorkers:(NSUInteger)count
+      freshThreads:(BOOL)freshThreads
              block:(void (^)(NSUInteger))block
 {
     XCTestExpectation* finished = [self expectationWithDescription:@"All rendering workers finished"];
@@ -154,22 +177,29 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         if(freshThreads) {
             [NSThread detachNewThreadWithBlock:work];
         } else {
-            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), work);
+            dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED,
+                                                     0), work);
         }
     }
-    [self waitForExpectations:@[finished] timeout:30];
+    [self waitForExpectations:@[finished]
+                      timeout:30];
 }
 
-- (NSData*)filterOptionPixelsForSVG:(IJSVG*)svg flipped:(BOOL)flipped exportImage:(BOOL)exportImage
+- (NSData*)filterOptionPixelsForSVG:(IJSVG*)svg
+                            flipped:(BOOL)flipped
+                        exportImage:(BOOL)exportImage
 {
     XCTAssertNotNil(svg);
     if(svg == nil) return nil;
     svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
-    CGContextRef bitmap = [self newBitmapWithSize:64 flipped:exportImage ? NO : flipped];
+    CGContextRef bitmap = [self newBitmapWithSize:64
+                                          flipped:exportImage ? NO : flipped];
     if(bitmap == NULL) return nil;
     if(exportImage) {
         NSError* error = nil;
-        CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(64, 64) flipped:flipped error:&error];
+        CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(64, 64)
+                                              flipped:flipped
+                                                error:&error];
         XCTAssertNil(error);
         XCTAssertTrue(image != NULL);
         if(image == NULL) {
@@ -179,30 +209,39 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         CGContextDrawImage(bitmap, CGRectMake(0, 0, 64, 64), image);
         CGImageRelease(image);
     } else {
-        [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
+        [svg drawInRect:CGRectMake(0, 0, 64, 64)
+                context:bitmap];
     }
-    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:64 * 64 * 4];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap)
+                                    length:64 * 64 * 4];
     CGContextRelease(bitmap);
     return pixels;
 }
 
-- (void)assertFilterOptionsForDocument:(NSString*)document flipped:(BOOL)flipped exportImage:(BOOL)exportImage
+- (void)assertFilterOptionsForDocument:(NSString*)document
+                               flipped:(BOOL)flipped
+                           exportImage:(BOOL)exportImage
 {
     // Strip only filter attributes from these fixtures. Preserve masks, clips,
     // opacity, transforms and definitions to form an independent plain reference.
     NSError* error = nil;
-    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:document options:0 error:&error];
+    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:document
+                                                          options:0
+                                                            error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(xml);
     if(xml == nil) return;
-    NSArray<NSXMLElement*>* elements = [xml nodesForXPath:@"//*[@filter]" error:&error];
+    NSArray<NSXMLElement*>* elements = [xml nodesForXPath:@"//*[@filter]"
+                                                    error:&error];
     XCTAssertNil(error);
     XCTAssertGreaterThan(elements.count, 0u);
     for(NSXMLElement* element in elements) {
         [element removeAttributeForName:@"filter"];
     }
     IJSVG* reference = IJSVGTestSVGObject(xml.XMLString);
-    NSData* plain = [self filterOptionPixelsForSVG:reference flipped:flipped exportImage:exportImage];
+    NSData* plain = [self filterOptionPixelsForSVG:reference
+                                           flipped:flipped
+                                       exportImage:exportImage];
     XCTAssertNotNil(plain);
     XCTAssertTrue([self containsPaintedPixels:plain]);
     if(plain == nil) return;
@@ -210,9 +249,12 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     IJSVG* svg = IJSVGTestSVGObject(document);
     XCTAssertNotNil(svg);
     XCTAssertTrue(svg.renderingOptions.filtersEnabled);
-    NSData* enabled = [self filterOptionPixelsForSVG:svg flipped:flipped exportImage:exportImage];
+    NSData* enabled = [self filterOptionPixelsForSVG:svg
+                                             flipped:flipped
+                                         exportImage:exportImage];
     XCTAssertNotNil(enabled);
-    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
+    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)),
+                         0u);
     if(enabled == nil) return;
 
     // Reuse an already rendered instance across two off/on cycles, exercising
@@ -221,12 +263,17 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
         IJSVGRenderingOptions* options = svg.renderingOptions;
         options.filtersEnabled = state.boolValue;
         svg.renderingOptions = options;
-        NSData* actual = [self filterOptionPixelsForSVG:svg flipped:flipped exportImage:exportImage];
-        XCTAssertEqualObjects(actual, state.boolValue ? enabled : plain, @"filtersEnabled=%@", state);
+        NSData* actual = [self filterOptionPixelsForSVG:svg
+                                                flipped:flipped
+                                            exportImage:exportImage];
+        XCTAssertEqualObjects(actual, state.boolValue ? enabled : plain,
+                              @"filtersEnabled=%@", state);
         if(state.boolValue) {
-            XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
+            XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)),
+                                 0u);
         } else {
-            XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
+            XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)),
+                           0u);
         }
     }
 
@@ -235,12 +282,20 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     IJSVGRenderingOptions* options = initiallyDisabled.renderingOptions;
     options.filtersEnabled = NO;
     initiallyDisabled.renderingOptions = options;
-    XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled flipped:flipped exportImage:exportImage], plain);
-    XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)), 0u);
+    XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled
+                                                 flipped:flipped
+                                             exportImage:exportImage],
+                          plain);
+    XCTAssertEqual(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)),
+                   0u);
     options.filtersEnabled = YES;
     initiallyDisabled.renderingOptions = options;
-    XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled flipped:flipped exportImage:exportImage], enabled);
-    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)), 0u);
+    XCTAssertEqualObjects([self filterOptionPixelsForSVG:initiallyDisabled
+                                                 flipped:flipped
+                                             exportImage:exportImage],
+                          enabled);
+    XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(initiallyDisabled)),
+                         0u);
 }
 
 @end

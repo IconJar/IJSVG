@@ -7,7 +7,7 @@
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 
-@interface IJSVGInnerShadowTests : XCTestCase
+@interface IJSVGInnerShadowTests: XCTestCase
 @end
 
 @implementation IJSVGInnerShadowTests
@@ -16,7 +16,8 @@
 {
     NSString* directory = [@(__FILE__).stringByDeletingLastPathComponent stringByAppendingPathComponent:@"Fixtures"];
     NSError* error = nil;
-    NSString* string = [NSString stringWithContentsOfFile:[directory stringByAppendingPathComponent:@"ab-button-blood-type-color.svg"]
+    NSString* string = [NSString stringWithContentsOfFile:[directory stringByAppendingPathComponent:@"ab-button-blood-type"
+                                                                                                     "-color.svg"]
                                                  encoding:NSUTF8StringEncoding
                                                     error:&error];
     XCTAssertNil(error);
@@ -30,7 +31,9 @@
         return nil;
     }
     NSError* error = nil;
-    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string fileURL:nil error:&error];
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
+                                                         fileURL:nil
+                                                           error:&error];
     XCTAssertNil(error);
     IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(32, 32)];
     XCTAssertNotNil(root);
@@ -43,7 +46,9 @@
     return filters;
 }
 
-- (NSBitmapImageRep*)render:(NSString*)string pixels:(NSInteger)pixels backingScale:(NSInteger)backingScale
+- (NSBitmapImageRep*)render:(NSString*)string
+                     pixels:(NSInteger)pixels
+               backingScale:(NSInteger)backingScale
 {
     if(string == nil) {
         return nil;
@@ -56,8 +61,9 @@
     if(space == NULL) {
         return nil;
     }
-    CGContextRef context = CGBitmapContextCreate(NULL, pixels, pixels, 8, pixels * 4,
-                                                 space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGContextRef context = CGBitmapContextCreate(NULL, pixels, pixels, 8,
+                                                 pixels * 4, space,
+                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
     if(context == NULL) {
@@ -66,7 +72,8 @@
     CGContextTranslateCTM(context, 0, pixels);
     CGContextScaleCTM(context, backingScale, -backingScale);
     CGFloat points = (CGFloat)pixels / backingScale;
-    [svg drawInRect:CGRectMake(0, 0, points, points) context:context];
+    [svg drawInRect:CGRectMake(0, 0, points, points)
+            context:context];
     CGImageRef image = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
     XCTAssertTrue(image != NULL);
@@ -85,7 +92,9 @@
         return nil;
     }
     NSError* error = nil;
-    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:string options:0 error:&error];
+    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:string
+                                                          options:0
+                                                            error:&error];
     XCTAssertNil(error);
     NSXMLElement* root = xml.rootElement;
     XCTAssertNotNil(root);
@@ -109,7 +118,8 @@
         // Keep the same offscreen raster bounds, but remove the shadows.
         // This isolates damage to edge coverage from small
         // rasterisation differences between offscreen and direct drawing.
-        NSArray<NSXMLNode*>* nodes = [root nodesForXPath:@".//*[local-name()='filter' and @id='filter4_ii_18590_2298']"
+        NSArray<NSXMLNode*>* nodes = [root nodesForXPath:@".//*[local-name()='filter' and "
+                                                          "@id='filter4_ii_18590_2298']"
                                                    error:&error];
         XCTAssertNil(error);
         NSXMLElement* filter = (NSXMLElement*)nodes.firstObject;
@@ -124,10 +134,15 @@
 
 // Compare the filtered letters with their unshaded silhouette, on transparent
 // pixels. A mean RGB score over an opaque button can hide damaged edge alpha.
-- (void)assertInnerShadowsPreserveLetterCoverageAtPixels:(NSInteger)pixels backingScale:(NSInteger)backingScale
+- (void)assertInnerShadowsPreserveLetterCoverageAtPixels:(NSInteger)pixels
+                                            backingScale:(NSInteger)backingScale
 {
-    NSBitmapImageRep* actual = [self render:[self lettersFiltered:YES] pixels:pixels backingScale:backingScale];
-    NSBitmapImageRep* source = [self render:[self lettersFiltered:NO] pixels:pixels backingScale:backingScale];
+    NSBitmapImageRep* actual = [self render:[self lettersFiltered:YES]
+                                     pixels:pixels
+                               backingScale:backingScale];
+    NSBitmapImageRep* source = [self render:[self lettersFiltered:NO]
+                                     pixels:pixels
+                               backingScale:backingScale];
     XCTAssertNotNil(actual);
     XCTAssertNotNil(source);
     if(actual == nil || source == nil) {
@@ -137,19 +152,23 @@
     NSUInteger partialPixels = 0, shadedPixels = 0;
     for(NSInteger y = 0; y < pixels; y++) {
         for(NSInteger x = 0; x < pixels; x++) {
-            NSColor* a = [[actual colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            NSColor* b = [[source colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+            NSColor* a = [[actual colorAtX:x
+                                         y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+            NSColor* b = [[source colorAtX:x
+                                         y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
             XCTAssertNotNil(a);
             XCTAssertNotNil(b);
             if(a == nil || b == nil) {
                 return;
             }
-            maximumAlphaError = MAX(maximumAlphaError, fabs(a.alphaComponent - b.alphaComponent));
+            maximumAlphaError = MAX(maximumAlphaError,
+                                    fabs(a.alphaComponent - b.alphaComponent));
             if(b.alphaComponent > 0 && b.alphaComponent < 1) {
                 partialPixels++;
             }
             double colorDifference = MAX(fabs(a.redComponent - b.redComponent),
-                MAX(fabs(a.greenComponent - b.greenComponent), fabs(a.blueComponent - b.blueComponent)));
+                                         MAX(fabs(a.greenComponent - b.greenComponent),
+                                             fabs(a.blueComponent - b.blueComponent)));
             if(b.alphaComponent > .25 && colorDifference > 1. / 255) {
                 shadedPixels++;
             }
@@ -164,42 +183,50 @@
 
 - (void)testInnerShadowsPreserveLetterCoverageAt32Pixels1x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:32 backingScale:1];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:32
+                                              backingScale:1];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt32Pixels2x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:32 backingScale:2];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:32
+                                              backingScale:2];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt64Pixels1x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:64 backingScale:1];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:64
+                                              backingScale:1];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt64Pixels2x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:64 backingScale:2];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:64
+                                              backingScale:2];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt128Pixels1x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:128 backingScale:1];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:128
+                                              backingScale:1];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt128Pixels2x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:128 backingScale:2];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:128
+                                              backingScale:2];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt256Pixels1x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:256 backingScale:1];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:256
+                                              backingScale:1];
 }
 
 - (void)testInnerShadowsPreserveLetterCoverageAt256Pixels2x
 {
-    [self assertInnerShadowsPreserveLetterCoverageAtPixels:256 backingScale:2];
+    [self assertInnerShadowsPreserveLetterCoverageAtPixels:256
+                                              backingScale:2];
 }
 
 - (void)testRecognisedInnerShadowsUseNativeResolution
@@ -217,7 +244,9 @@
     XCTAssertTrue(values.lastObject.preservesInnerShadowCoverage);
 }
 
-- (void)setParameter:(NSString*)key value:(NSString*)value onPrimitive:(IJSVGFilterPrimitive*)primitive
+- (void)setParameter:(NSString*)key
+               value:(NSString*)value
+         onPrimitive:(IJSVGFilterPrimitive*)primitive
 {
     NSMutableDictionary* parameters = [primitive.parameters mutableCopy] ?: [[NSMutableDictionary alloc] init];
     parameters[key] = value;
@@ -235,17 +264,27 @@
     }
     IJSVGFilterPrimitive* hardAlpha = primitives[2];
     if([change isEqualToString:@"matrix"]) {
-        [self setParameter:@"values" value:@"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 -0.5" onPrimitive:hardAlpha];
+        [self setParameter:@"values"
+                     value:@"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 -0.5"
+               onPrimitive:hardAlpha];
     } else if([change isEqualToString:@"input"]) {
         hardAlpha.input = @"SourceGraphic";
     } else if([change isEqualToString:@"operator"]) {
-        [self setParameter:@"operator" value:@"in" onPrimitive:primitives[5]];
+        [self setParameter:@"operator"
+                     value:@"in"
+               onPrimitive:primitives[5]];
     } else if([change isEqualToString:@"coefficient"]) {
-        [self setParameter:@"k2" value:@"-0.5" onPrimitive:primitives[5]];
+        [self setParameter:@"k2"
+                     value:@"-0.5"
+               onPrimitive:primitives[5]];
     } else if([change isEqualToString:@"tint"]) {
-        [self setParameter:@"values" value:@"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 2 0" onPrimitive:primitives[6]];
+        [self setParameter:@"values"
+                     value:@"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 2 0"
+               onPrimitive:primitives[6]];
     } else if([change isEqualToString:@"blend"]) {
-        [self setParameter:@"mode" value:@"multiply" onPrimitive:primitives[7]];
+        [self setParameter:@"mode"
+                     value:@"multiply"
+               onPrimitive:primitives[7]];
     } else if([change isEqualToString:@"region"]) {
         primitives[4].width = [IJSVGUnitLength unitWithFloat:2];
     } else if([change isEqualToString:@"branch"]) {

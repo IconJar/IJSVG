@@ -10,7 +10,7 @@
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 
-@interface IJSVGNodeAndColorStorageTests : XCTestCase
+@interface IJSVGNodeAndColorStorageTests: XCTestCase
 @end
 
 @implementation IJSVGNodeAndColorStorageTests
@@ -22,15 +22,33 @@
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
 {
-    XCTAssertEqual([IJSVGNode typeForString:@"g" kind:NSXMLElementKind], IJSVGNodeTypeGroup);
-    XCTAssertEqual([IJSVGNode typeForString:@"PATH" kind:NSXMLElementKind], IJSVGNodeTypePath);
-    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient" kind:NSXMLElementKind], IJSVGNodeTypeLinearGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient" kind:NSXMLElementKind], IJSVGNodeTypeRadialGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:NSXMLElementKind], IJSVGNodeTypeClipPath);
-    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeFilterGaussianBlur);
-    XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeNotFound);
-    XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:@"g"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeGroup);
+    XCTAssertEqual([IJSVGNode typeForString:@"PATH"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypePath);
+    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeLinearGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeRadialGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"clipPath"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeClipPath);
+    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeFilterGaussianBlur);
+    XCTAssertEqual([IJSVGNode typeForString:@"unknown"
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"text body"
+                                       kind:NSXMLTextKind],
+                   IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:nil
+                                       kind:NSXMLElementKind],
+                   IJSVGNodeTypeNotFound);
 }
 
 - (void)testNodeTypeIsPathableOnlyForPathShapes
@@ -101,7 +119,7 @@
     hidden.type = IJSVGNodeTypePath;
     hidden.shouldRender = NO;
     [hidden addTraits:IJSVGNodeTraitPathed];
-    [group addChildren:@[ rect, circle, hidden ]];
+    [group addChildren:@[rect, circle, hidden]];
 
     XCTAssertEqual([group childrenOfType:IJSVGNodeTypeRect].count, 1u);
     XCTAssertTrue([[group childSetOfType:IJSVGNodeTypeCircle] containsObject:circle]);
@@ -121,25 +139,27 @@
     IJSVGNode* after = IJSVGTestNode(@"circle", nil, nil);
     after.name = @"after";
     [branch addChild:skipped];
-    [root addChildren:@[ branch, after ]];
+    [root addChildren:@[branch, after]];
 
     NSMutableArray<NSString*>* visited = [[NSMutableArray alloc] init];
-    [IJSVGNode walkNodeTree:root handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
+    [IJSVGNode walkNodeTree:root
+                    handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
         [visited addObject:node.name ?: @"unknown"];
         if(node == branch) {
             *allowChildNodes = NO;
         }
     }];
-    XCTAssertEqualObjects(visited, (@[ @"root", @"branch", @"after" ]));
+    XCTAssertEqualObjects(visited, (@[@"root", @"branch", @"after"]));
 
     [visited removeAllObjects];
-    [IJSVGNode walkNodeTree:root handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
+    [IJSVGNode walkNodeTree:root
+                    handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
         [visited addObject:node.name ?: @"unknown"];
         if(node == branch) {
             *stop = YES;
         }
     }];
-    XCTAssertEqualObjects(visited, (@[ @"root", @"branch" ]));
+    XCTAssertEqualObjects(visited, (@[@"root", @"branch"]));
 }
 
 - (void)testInheritedNodePropertiesResolveFromParent
@@ -176,7 +196,8 @@
     IJSVGTraitedColor* fillColor = fillStorage.colors.anyObject;
     XCTAssertEqual(fillStorage.count, 1u);
     XCTAssertTrue([fillColor matchesTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertEqualWithAccuracy([self rgb:fillColor.color].greenComponent, 1.f, 0.002f);
+    XCTAssertEqualWithAccuracy([self rgb:fillColor.color].greenComponent, 1.f,
+                               0.002f);
 
     colorNode.isNoneOrTransparent = YES;
     IJSVGTraitedColorStorage* emptyStorage = [colorNode colorsWithStyle:style
@@ -227,7 +248,8 @@
     NSColor* replacement = [storage colorForColor:NSColor.redColor
                                    matchingTraits:IJSVGColorUsageTraitFill];
     XCTAssertNotNil(replacement);
-    XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f, 0.002f);
+    XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f,
+                               0.002f);
 }
 
 // Bulk moves and removals must tolerate the live children array of a group.

@@ -1,11 +1,12 @@
 #import <IJSVGTestHelpers.h>
 
 // Exercise the internal sampler without exposing its implementation in the public API.
-extern float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height,
-                              CGFloat x, CGFloat y, NSUInteger channel, CGRect region,
-                              NSInteger edgeMode);
+extern float IJSVGFilterSample(const float* pixels, NSInteger width,
+                               NSInteger height, CGFloat x, CGFloat y,
+                               NSUInteger channel, CGRect region,
+                               NSInteger edgeMode);
 
-@interface IJSVGFilterSamplerTests : XCTestCase
+@interface IJSVGFilterSamplerTests: XCTestCase
 @end
 
 @implementation IJSVGFilterSamplerTests
@@ -36,10 +37,13 @@ extern float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger h
     };
     for(NSUInteger index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
         for(NSUInteger channel = 0; channel < 4; channel++) {
-            float actual = IJSVGFilterSample(pixels, 4, 4, cases[index][0], cases[index][1],
-                channel, region, 2);
-            XCTAssertEqualWithAccuracy(actual, cases[index][2] + channel * 100, 0.00001,
-                @"case=%lu channel=%lu", (unsigned long)index, (unsigned long)channel);
+            float actual = IJSVGFilterSample(pixels, 4, 4, cases[index][0],
+                                             cases[index][1], channel, region,
+                                             2);
+            XCTAssertEqualWithAccuracy(actual, cases[index][2] + channel * 100,
+                                       0.00001, @"case=%lu channel=%lu",
+                                       (unsigned long)index,
+                                       (unsigned long)channel);
         }
     }
 }
@@ -49,8 +53,10 @@ extern float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger h
     float pixels[4] = {1, 1, 1, 1};
     CGRect region = CGRectMake(0, 0, 1, 1);
     for(NSNumber* value in @[@(NAN), @(INFINITY), @(-INFINITY)]) {
-        XCTAssertEqual(IJSVGFilterSample(pixels, 1, 1, value.doubleValue, 0, 0, region, 2), 0);
-        XCTAssertEqual(IJSVGFilterSample(pixels, 1, 1, 0, value.doubleValue, 0, region, 2), 0);
+        XCTAssertEqual(IJSVGFilterSample(pixels, 1, 1, value.doubleValue, 0, 0,
+                                         region, 2), 0);
+        XCTAssertEqual(IJSVGFilterSample(pixels, 1, 1, 0, value.doubleValue, 0,
+                                         region, 2), 0);
     }
     XCTAssertEqual(IJSVGFilterSample(pixels, 1, 1, 0, 0, 0, CGRectZero, 2), 0);
 }

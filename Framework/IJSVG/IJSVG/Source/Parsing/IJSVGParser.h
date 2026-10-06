@@ -213,6 +213,48 @@ extern NSString* const IJSVGAttributeLimitingConeAngle;
 extern NSString* const IJSVGAttributeColorInterpolationFilters;
 extern NSString* const IJSVGAttributeEnableBackground;
 
+// SVG text presentation and positioning attributes.
+extern NSString* const IJSVGAttributeFont;
+extern NSString* const IJSVGAttributeFontFamily;
+extern NSString* const IJSVGAttributeFontSize;
+extern NSString* const IJSVGAttributeFontWeight;
+extern NSString* const IJSVGAttributeFontStyle;
+extern NSString* const IJSVGAttributeFontStretch;
+extern NSString* const IJSVGAttributeFontVariant;
+extern NSString* const IJSVGAttributeFontVariantLigatures;
+extern NSString* const IJSVGAttributeFontFeatureSettings;
+extern NSString* const IJSVGAttributeFontKerning;
+extern NSString* const IJSVGAttributeLetterSpacing;
+extern NSString* const IJSVGAttributeWordSpacing;
+extern NSString* const IJSVGAttributeTextAnchor;
+extern NSString* const IJSVGAttributeDirection;
+extern NSString* const IJSVGAttributeUnicodeBidi;
+extern NSString* const IJSVGAttributeWritingMode;
+extern NSString* const IJSVGAttributeTextOrientation;
+extern NSString* const IJSVGAttributeDominantBaseline;
+extern NSString* const IJSVGAttributeAlignmentBaseline;
+extern NSString* const IJSVGAttributeBaselineShift;
+extern NSString* const IJSVGAttributeTextDecoration;
+extern NSString* const IJSVGAttributeTextDecorationLine;
+extern NSString* const IJSVGAttributeWhiteSpace;
+extern NSString* const IJSVGAttributeLineHeight;
+extern NSString* const IJSVGAttributeInlineSize;
+extern NSString* const IJSVGAttributeTextTransform;
+extern NSString* const IJSVGAttributeTextOverflow;
+extern NSString* const IJSVGAttributeXMLSpace;
+extern NSString* const IJSVGAttributeLang;
+extern NSString* const IJSVGAttributeXMLLang;
+extern NSString* const IJSVGAttributeTextRendering;
+extern NSString* const IJSVGAttributeRotate;
+extern NSString* const IJSVGAttributeTextLength;
+extern NSString* const IJSVGAttributeLengthAdjust;
+extern NSString* const IJSVGAttributeStartOffset;
+extern NSString* const IJSVGAttributeMethod;
+extern NSString* const IJSVGAttributeSpacing;
+extern NSString* const IJSVGAttributeSide;
+extern NSString* const IJSVGAttributePath;
+extern NSString* const IJSVGAttributePathLength;
+
 @class IJSVGParser;
 @class IJSVGThreadManager;
 

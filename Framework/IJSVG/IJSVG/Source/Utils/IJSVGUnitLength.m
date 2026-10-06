@@ -41,6 +41,7 @@
     IJSVGUnitLength* unit = [[self alloc] init];
     unit.value = number;
     unit.type = type;
+    unit.originalType = type;
     return unit;
 }
 
@@ -59,54 +60,59 @@
 
 + (IJSVGUnitLengthType)typeForCString:(const char*)chars
 {
-    if(IJSVGCharBufferHasSuffix((char*)chars, "%")) {
+    if(chars == NULL) {
+        return IJSVGUnitLengthTypeNumber;
+    }
+    size_t length = strlen(chars);
+    if(length != 0 && chars[length - 1] == '%') {
         return IJSVGUnitLengthTypePercentage;
     }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "cm")) {
-        return IJSVGUnitLengthTypeCM;
+    if(length < 2) {
+        return IJSVGUnitLengthTypeNumber;
     }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "mm")) {
-        return IJSVGUnitLengthTypeMM;
-    }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "in")) {
-        return IJSVGUnitLengthTypeIN;
-    }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "pt")) {
-        return IJSVGUnitLengthTypePT;
-    }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "pc")) {
-        return IJSVGUnitLengthTypePC;
-    }
-    if(IJSVGCharBufferHasSuffix((char*)chars, "px")) {
-        return IJSVGUnitLengthTypePX;
+    const char* suffix = chars + length - 2;
+    switch(IJSVGCharToLower(suffix[0])) {
+        case 'c':
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "cm")) {
+                return IJSVGUnitLengthTypeCM;
+            }
+            break;
+        case 'm':
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "mm")) {
+                return IJSVGUnitLengthTypeMM;
+            }
+            break;
+        case 'i':
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "in")) {
+                return IJSVGUnitLengthTypeIN;
+            }
+            break;
+        case 'p':
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "pt")) {
+                return IJSVGUnitLengthTypePT;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "pc")) {
+                return IJSVGUnitLengthTypePC;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "px")) {
+                return IJSVGUnitLengthTypePX;
+            }
+            break;
+        case 'e':
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "em")) {
+                return IJSVGUnitLengthTypeEM;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(suffix, "ex")) {
+                return IJSVGUnitLengthTypeEX;
+            }
+            break;
     }
     return IJSVGUnitLengthTypeNumber;
 }
 
 + (IJSVGUnitLengthType)typeForString:(NSString*)string
 {
-    if([string hasSuffix:@"%"] == YES) {
-        return IJSVGUnitLengthTypePercentage;
-    }
-    if([string hasSuffix:@"cm"] == YES) {
-        return IJSVGUnitLengthTypeCM;
-    }
-    if([string hasSuffix:@"mm"] == YES) {
-        return IJSVGUnitLengthTypeMM;
-    }
-    if([string hasSuffix:@"in"] == YES) {
-        return IJSVGUnitLengthTypeIN;
-    }
-    if([string hasSuffix:@"pt"] == YES) {
-        return IJSVGUnitLengthTypePT;
-    }
-    if([string hasSuffix:@"pc"] == YES) {
-        return IJSVGUnitLengthTypePC;
-    }
-    if([string hasSuffix:@"px"] == YES) {
-        return IJSVGUnitLengthTypePX;
-    }
-    return IJSVGUnitLengthTypeNumber;
+    return [self typeForCString:string.UTF8String];
 }
 
 + (CGFloat)convertUnitValue:(CGFloat)unit
@@ -185,6 +191,11 @@
     (void)free(chars), chars = NULL;
     
     switch(type) {
+        case IJSVGUnitLengthTypeEM:
+        case IJSVGUnitLengthTypeEX:
+            // Keep font relative values until the font metrics are known.
+            unit.type = type;
+            break;
         case IJSVGUnitLengthTypePercentage: {
             unit.value = [self convertUnitValue:unit.value
                        toBaseFromUnitLengthType:type];
@@ -217,7 +228,7 @@
 
 - (IJSVGUnitLength*)lengthByMatchingPercentage
 {
-    if(self.type != IJSVGUnitLengthTypePercentage && self.value <= 1.f) {
+    if(!self.isRelativeUnit && self.value <= 1.f) {
         return [self.class unitWithFloat:self.value
                                     type:IJSVGUnitLengthTypePercentage];
     }
@@ -227,7 +238,8 @@
 
 - (BOOL)isRelativeUnit
 {
-    return self.type == IJSVGUnitLengthTypePercentage;
+    return self.type == IJSVGUnitLengthTypePercentage ||
+        self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX;
 }
 
 - (CGFloat)computeValue:(CGFloat)anotherValue
@@ -238,6 +250,20 @@
     return self.value;
 }
 
+- (CGFloat)computeValue:(CGFloat)anotherValue
+               fontSize:(CGFloat)fontSize
+                xHeight:(CGFloat)xHeight
+{
+    switch(self.type) {
+        case IJSVGUnitLengthTypeEM:
+            return self.value * fontSize;
+        case IJSVGUnitLengthTypeEX:
+            return self.value * xHeight;
+        default:
+            return [self computeValue:anotherValue];
+    }
+}
+
 - (CGFloat)valueAsPercentage
 {
     return self.value / 100;
@@ -245,6 +271,10 @@
 
 - (NSString*)stringValue
 {
+    if(self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
+        NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
+        return [NSString stringWithFormat:@"%@%@", IJSVGShortFloatString(self.value), suffix];
+    }
     if(self.type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatString(self.value * 100.f)];
@@ -254,6 +284,11 @@
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
+    if(self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
+        NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
+        NSString* number = IJSVGShortFloatStringWithOptions(self.value, options);
+        return [NSString stringWithFormat:@"%@%@", number, suffix];
+    }
     if(_type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
         return [NSString stringWithFormat:@"%@%%",
                          IJSVGShortFloatStringWithOptions(_value * 100.f, options)];

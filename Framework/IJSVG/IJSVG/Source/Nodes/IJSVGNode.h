@@ -23,6 +23,7 @@ typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
     IJSVGBackgroundEnabledInherit
 };
 
+@class IJSVGTextAttributeValue;
 @class IJSVGNode;
 @class IJSVG;
 @class IJSVGGroup;
@@ -156,6 +157,46 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeLimitingConeAngle,
     IJSVGNodeAttributeColorInterpolationFilters,
     IJSVGNodeAttributeEnableBackground,
+    IJSVGNodeAttributeFont,
+    IJSVGNodeAttributeFontFamily,
+    IJSVGNodeAttributeFontSize,
+    IJSVGNodeAttributeFontWeight,
+    IJSVGNodeAttributeFontStyle,
+    IJSVGNodeAttributeFontStretch,
+    IJSVGNodeAttributeFontVariant,
+    IJSVGNodeAttributeFontVariantLigatures,
+    IJSVGNodeAttributeFontFeatureSettings,
+    IJSVGNodeAttributeFontKerning,
+    IJSVGNodeAttributeLetterSpacing,
+    IJSVGNodeAttributeWordSpacing,
+    IJSVGNodeAttributeTextAnchor,
+    IJSVGNodeAttributeDirection,
+    IJSVGNodeAttributeUnicodeBidi,
+    IJSVGNodeAttributeWritingMode,
+    IJSVGNodeAttributeTextOrientation,
+    IJSVGNodeAttributeDominantBaseline,
+    IJSVGNodeAttributeAlignmentBaseline,
+    IJSVGNodeAttributeBaselineShift,
+    IJSVGNodeAttributeTextDecoration,
+    IJSVGNodeAttributeTextDecorationLine,
+    IJSVGNodeAttributeWhiteSpace,
+    IJSVGNodeAttributeLineHeight,
+    IJSVGNodeAttributeInlineSize,
+    IJSVGNodeAttributeTextTransform,
+    IJSVGNodeAttributeTextOverflow,
+    IJSVGNodeAttributeXMLSpace,
+    IJSVGNodeAttributeLang,
+    IJSVGNodeAttributeXMLLang,
+    IJSVGNodeAttributeRotate,
+    IJSVGNodeAttributeTextLength,
+    IJSVGNodeAttributeLengthAdjust,
+    IJSVGNodeAttributeStartOffset,
+    IJSVGNodeAttributeMethod,
+    IJSVGNodeAttributeSpacing,
+    IJSVGNodeAttributeSide,
+    IJSVGNodeAttributePath,
+    IJSVGNodeAttributePathLength,
+    IJSVGNodeAttributeTextRendering,
     IJSVGNodeAttributeCount
 };
 
@@ -230,7 +271,9 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeFilterFuncA,
     IJSVGNodeTypeFilterDistantLight,
     IJSVGNodeTypeFilterPointLight,
-    IJSVGNodeTypeFilterSpotLight
+    IJSVGNodeTypeFilterSpotLight,
+    IJSVGNodeTypeTextPath,
+    IJSVGNodeTypeAnchor
 };
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
@@ -298,6 +341,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy, nullable) NSString* title;
 @property (nonatomic, copy, nullable) NSString* desc;
 @property (nonatomic, copy, nullable) NSString* unicode;
+// Specified text properties, retained on all elements for inheritance through groups.
+@property (nonatomic, copy, nullable) NSDictionary<NSString*, IJSVGTextAttributeValue*>* textStyle;
 @property (nonatomic, assign) IJSVGNodeType type;
 @property (nonatomic, copy, nullable) NSString* name;
 @property (nonatomic, copy, nullable) NSString* className;

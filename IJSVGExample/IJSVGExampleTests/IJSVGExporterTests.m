@@ -8,7 +8,7 @@
 
 #import <IJSVGTestHelpers.h>
 
-@interface IJSVGExporterTests : XCTestCase
+@interface IJSVGExporterTests: XCTestCase
 @end
 
 @implementation IJSVGExporterTests
@@ -21,9 +21,12 @@
     NSXMLDocument* document = IJSVGTestXMLDocument(exportedString);
     NSXMLElement* rootElement = document.rootElement;
 
-    XCTAssertEqualObjects([[rootElement attributeForName:@"width"] stringValue], @"16");
-    XCTAssertEqualObjects([[rootElement attributeForName:@"height"] stringValue], @"12");
-    XCTAssertEqualObjects([[rootElement attributeForName:@"viewBox"] stringValue], @"0 0 8 8");
+    XCTAssertEqualObjects([[rootElement attributeForName:@"width"] stringValue],
+                          @"16");
+    XCTAssertEqualObjects([[rootElement attributeForName:@"height"] stringValue],
+                          @"12");
+    XCTAssertEqualObjects([[rootElement attributeForName:@"viewBox"] stringValue],
+                          @"0 0 8 8");
 }
 
 - (void)testExporterCanRemoveXMLDeclarationCommentsAndDimensions
@@ -60,8 +63,8 @@
 
 - (void)testExporterRemoveHiddenElementsDropsDisplayNoneNodes
 {
-    NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/>"
-        @"<rect width=\"8\" height=\"8\" fill=\"#ff0000\" display=\"none\"/>";
+    NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/><rect width=\"8\" height=\"8\" "
+                      "fill=\"#ff0000\" display=\"none\"/>";
     IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(body));
     IJSVGExporterOptions options = IJSVGExporterOptionRemoveXMLDeclaration |
         IJSVGExporterOptionRemoveComments |
@@ -83,7 +86,8 @@
         IJSVGExporterOptionRemoveComments |
         IJSVGExporterOptionCompressOutput;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(8.f, 8.f)
+                                                            size:CGSizeMake(8.f,
+                                                                            8.f)
                                                          options:options];
     NSData* data = exporter.SVGData;
     NSError* error = nil;
@@ -105,7 +109,8 @@
         IJSVGExporterOptionCleanupPaths;
     NSString* exportedString = [svg SVGStringWithSize:CGSizeMake(8.f, 8.f)
                                               options:options
-                                 floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 1)];
+                                 floatingPointOptions:IJSVGFloatingPointOptionsMake(YES,
+                                                                                    1)];
 
     XCTAssertTrue([exportedString containsString:@".1"] || [exportedString containsString:@"0.1"]);
     XCTAssertFalse([exportedString containsString:@"0.1234"]);
@@ -114,11 +119,10 @@
 
 - (void)testExporterRoundTripsIntoRenderableSVG
 {
-    NSString* body = @"<defs><linearGradient id=\"fade\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"0\" gradientUnits=\"userSpaceOnUse\">"
-        @"<stop offset=\"0\" stop-color=\"#ff0000\"/>"
-        @"<stop offset=\"1\" stop-color=\"#0000ff\"/>"
-        @"</linearGradient></defs>"
-        @"<rect width=\"8\" height=\"8\" fill=\"url(#fade)\"/>";
+    NSString* body = @"<defs><linearGradient id=\"fade\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"0\" "
+                      "gradientUnits=\"userSpaceOnUse\"><stop offset=\"0\" stop-color=\"#ff0000\"/><stop "
+                      "offset=\"1\" stop-color=\"#0000ff\"/></linearGradient></defs><rect width=\"8\" "
+                      "height=\"8\" fill=\"url(#fade)\"/>";
     IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(body));
     NSString* exportedString = [svg SVGStringWithSize:CGSizeMake(8.f, 8.f)
                                               options:IJSVGExporterOptionAll];

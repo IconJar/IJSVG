@@ -36,7 +36,10 @@ IJSVGStyleSheet* IJSVGTestStyleSheet(NSString* styleBlock)
 
 NSString* IJSVGTestSVG(NSString* body)
 {
-    return [NSString stringWithFormat:@"<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"8\" height=\"8\" viewBox=\"0 0 8 8\">%@</svg>", body];
+    return [NSString stringWithFormat:@"<svg xmlns=\"http://www.w3.org/2000/svg\" "
+                                       "xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"8\" "
+                                       "height=\"8\" viewBox=\"0 0 8 8\">%@</svg>",
+                                      body];
 }
 
 IJSVG* IJSVGTestSVGObject(NSString* svgString)
@@ -143,7 +146,8 @@ void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
             NSColor* expectedColor = palette[key];
             XCTAssertNotNil(expectedColor);
 
-            NSColor* actualColor = IJSVGTestColorFromRGBAData(data, size, CGPointMake(x, y));
+            NSColor* actualColor = IJSVGTestColorFromRGBAData(data, size,
+                                                              CGPointMake(x, y));
             NSColor* expectedRGBColor = [expectedColor colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
             IJSVGAssertColorComponents(actualColor,
                                        expectedRGBColor.redComponent,

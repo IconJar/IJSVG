@@ -21,7 +21,9 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeIN,
     IJSVGUnitLengthTypePT,
     IJSVGUnitLengthTypePC,
-    IJSVGUnitLengthTypePX
+    IJSVGUnitLengthTypePX,
+    IJSVGUnitLengthTypeEM,
+    IJSVGUnitLengthTypeEX
 };
 
 typedef NS_ENUM(NSInteger, IJSVGUnitType) {
@@ -30,7 +32,7 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitInherit
 };
 
-@interface IJSVGUnitLength : NSObject <NSCopying>
+@interface IJSVGUnitLength: NSObject <NSCopying>
 
 @property (nonatomic, assign) IJSVGUnitLengthType type;
 @property (nonatomic, assign) IJSVGUnitLengthType originalType;
@@ -54,6 +56,10 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 - (IJSVGUnitLength*)lengthByMatchingPercentage;
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
+// Supply font metrics when resolving em and ex values.
+- (CGFloat)computeValue:(CGFloat)anotherValue
+               fontSize:(CGFloat)fontSize
+                xHeight:(CGFloat)xHeight;
 - (NSString*)stringValue;
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options;
 

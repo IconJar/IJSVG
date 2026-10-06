@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"pcolormesh.svg"];
+    return [IJSVG SVGNamed:@"text-grumpy.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

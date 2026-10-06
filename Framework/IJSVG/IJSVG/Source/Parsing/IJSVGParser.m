@@ -7,8 +7,10 @@
 //
 
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUnitPoint.h>
@@ -196,6 +198,48 @@ NSString* const IJSVGAttributeLimitingConeAngle = @"limitingConeAngle";
 NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-filters";
 NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 
+// SVG text presentation and positioning attributes.
+NSString* const IJSVGAttributeFont = @"font";
+NSString* const IJSVGAttributeFontFamily = @"font-family";
+NSString* const IJSVGAttributeFontSize = @"font-size";
+NSString* const IJSVGAttributeFontWeight = @"font-weight";
+NSString* const IJSVGAttributeFontStyle = @"font-style";
+NSString* const IJSVGAttributeFontStretch = @"font-stretch";
+NSString* const IJSVGAttributeFontVariant = @"font-variant";
+NSString* const IJSVGAttributeFontVariantLigatures = @"font-variant-ligatures";
+NSString* const IJSVGAttributeFontFeatureSettings = @"font-feature-settings";
+NSString* const IJSVGAttributeFontKerning = @"font-kerning";
+NSString* const IJSVGAttributeLetterSpacing = @"letter-spacing";
+NSString* const IJSVGAttributeWordSpacing = @"word-spacing";
+NSString* const IJSVGAttributeTextAnchor = @"text-anchor";
+NSString* const IJSVGAttributeDirection = @"direction";
+NSString* const IJSVGAttributeUnicodeBidi = @"unicode-bidi";
+NSString* const IJSVGAttributeWritingMode = @"writing-mode";
+NSString* const IJSVGAttributeTextOrientation = @"text-orientation";
+NSString* const IJSVGAttributeDominantBaseline = @"dominant-baseline";
+NSString* const IJSVGAttributeAlignmentBaseline = @"alignment-baseline";
+NSString* const IJSVGAttributeBaselineShift = @"baseline-shift";
+NSString* const IJSVGAttributeTextDecoration = @"text-decoration";
+NSString* const IJSVGAttributeTextDecorationLine = @"text-decoration-line";
+NSString* const IJSVGAttributeWhiteSpace = @"white-space";
+NSString* const IJSVGAttributeLineHeight = @"line-height";
+NSString* const IJSVGAttributeInlineSize = @"inline-size";
+NSString* const IJSVGAttributeTextTransform = @"text-transform";
+NSString* const IJSVGAttributeTextOverflow = @"text-overflow";
+NSString* const IJSVGAttributeXMLSpace = @"xml:space";
+NSString* const IJSVGAttributeLang = @"lang";
+NSString* const IJSVGAttributeXMLLang = @"xml:lang";
+NSString* const IJSVGAttributeTextRendering = @"text-rendering";
+NSString* const IJSVGAttributeRotate = @"rotate";
+NSString* const IJSVGAttributeTextLength = @"textLength";
+NSString* const IJSVGAttributeLengthAdjust = @"lengthAdjust";
+NSString* const IJSVGAttributeStartOffset = @"startOffset";
+NSString* const IJSVGAttributeMethod = @"method";
+NSString* const IJSVGAttributeSpacing = @"spacing";
+NSString* const IJSVGAttributeSide = @"side";
+NSString* const IJSVGAttributePath = @"path";
+NSString* const IJSVGAttributePathLength = @"pathLength";
+
 @interface IJSVGParser ()
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @end
@@ -251,7 +295,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
         NSXMLDocument* document = nil;
         @try {
             document = [[NSXMLDocument alloc] initWithXMLString:string
-                                                        options:0
+                                                        options:NSXMLNodePreserveWhitespace
                                                           error:&anError];
         }
         @catch (NSException* exception) {
@@ -276,7 +320,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
         NSXMLDocument* document = nil;
         @try {
             document = [[NSXMLDocument alloc] initWithData:data
-                                                   options:0
+                                                   options:NSXMLNodePreserveWhitespace
                                                      error:&anError];
         }
         @catch (NSException* exception) {
@@ -297,7 +341,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     @try {
         NSError* error;
         NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data
-                                                         options:0
+                                                         options:NSXMLNodePreserveWhitespace
                                                            error:&error];
         return doc != nil && error == nil;
     } @catch (NSException* exception) {
@@ -546,11 +590,14 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     if(styleSheet != nil) {
         IJSVGStoreStyleAttributes(styleSheet, activeAttributes, attributeValues);
     }
-    
+
+    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* nodeStyle = nil;
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
-        IJSVGStyleSheetStyle* nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
+        nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
         IJSVGStoreStyleAttributes(nodeStyle, activeAttributes, attributeValues);
     }
+
+    IJSVGApplyTextAttributes(node, attributeValues);
 
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeEnableBackground, &value)) {
         IJSVGApplyBackgroundAttribute(node, value);
@@ -802,6 +849,85 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     return postProcessBlock;
 }
 
+- (void)resolveTextPathForNode:(IJSVGText*)node
+                       element:(NSXMLElement*)element
+{
+    NSString* identifier = [self resolveXLinkAttributeStringForElement:element];
+    if(identifier != nil) {
+        NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
+        // Only geometry is valid here; do not recurse through arbitrary references.
+        IJSVGNodeType type = [IJSVGNode typeForString:definition.localName
+                                                 kind:definition.kind];
+        if([IJSVGNode typeIsPathable:type]) {
+            node.textPath = (IJSVGPath*)[self computeDetachedNodeWithIdentifier:identifier
+                                                                referencingNode:nil
+                                                                        element:element];
+            NSString* length = [definition attributeForName:IJSVGAttributePathLength].stringValue;
+            if(length.length != 0) {
+                NSMutableDictionary* positioning = [node.positioning mutableCopy];
+                positioning[IJSVGAttributePathLength] = IJSVGParseTextAttribute(length,
+                                                                                IJSVGNodeAttributePathLength);
+                node.positioning = positioning;
+            }
+        }
+    }
+    IJSVGTextAttributeValue* path = node.positioning[IJSVGAttributePath];
+    if(path != nil) {
+        NSXMLElement* pathElement = [[NSXMLElement alloc] initWithName:@"path"];
+        [pathElement addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeD
+                                                   stringValue:path.string]];
+        node.textPath = (IJSVGPath*)[self parseElement:pathElement
+                                            parentNode:nil];
+    }
+}
+
+- (IJSVGText*)parseTextElement:(NSXMLElement*)element
+                         type:(IJSVGNodeType)type
+                   parentNode:(IJSVGNode*)parentNode
+{
+    IJSVGText* node = [[IJSVGText alloc] init];
+    node.name = element.localName;
+    node.type = type;
+    node.isTextPath = type == IJSVGNodeTypeTextPath;
+    if([parentNode isKindOfClass:IJSVGGroup.class]) {
+        [(IJSVGGroup*)parentNode addChild:node];
+    }
+    IJSVGNodeParserPostProcessBlock postProcess = [self computeAttributesFromElement:element
+                                                                              onNode:node
+                                                                   ignoredAttributes:nil];
+
+    // These are text positions, not a group translation.
+    node.x = nil;
+    node.y = nil;
+    NSArray<NSXMLNode*>* children = element.children;
+    NSMutableArray* content = [[NSMutableArray alloc] initWithCapacity:children.count];
+    for(NSXMLNode* child in children) {
+        if(child.kind == NSXMLTextKind) {
+            [content addObject:child.stringValue ?: @""];
+        } else {
+            IJSVGNodeType childType = [IJSVGNode typeForString:child.localName
+                                                        kind:child.kind];
+            if(childType == IJSVGNodeTypeTextSpan || childType == IJSVGNodeTypeTextPath ||
+               childType == IJSVGNodeTypeAnchor) {
+                IJSVGText* span = [self parseTextElement:(NSXMLElement*)child
+                                                    type:childType
+                                              parentNode:node];
+                [content addObject:span];
+            }
+        }
+    }
+    node.textContent = content;
+    if(node.isTextPath) {
+        [self resolveTextPathForNode:node
+                             element:element];
+    }
+    if(postProcess) {
+        postProcess();
+    }
+    [node postProcess];
+    return node;
+}
+
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
                 parentNode:(IJSVGNode*)node
 {
@@ -817,6 +943,14 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
     IJSVGNode* computedNode = nil;
     switch(nodeType) {
+        case IJSVGNodeTypeText:
+            return [self parseTextElement:element
+                                     type:nodeType
+                               parentNode:node];
+        case IJSVGNodeTypeTextPath:
+        case IJSVGNodeTypeTextSpan:
+            // A standalone tspan is not rendered.
+            break;
         case IJSVGNodeTypeForeignObject: {
             // do nothing for foreign objects, we dont support them
             break;

@@ -63,6 +63,12 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
     // quick path here, this checks the first char first and then does the
     // full string check, much faster than checking every length of string.
     switch(IJSVGCharToLower(nodeType[0])) {
+        case 'a': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "a") == YES) {
+                return IJSVGNodeTypeAnchor;
+            }
+            break;
+        }
         case 'g': {
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "g") == YES) {
                 return IJSVGNodeTypeGroup;
@@ -160,6 +166,15 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
             break;
         }
         case 't': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "text") == YES) {
+                return IJSVGNodeTypeText;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "textpath") == YES) {
+                return IJSVGNodeTypeTextPath;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "tspan") == YES) {
+                return IJSVGNodeTypeTextSpan;
+            }
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "title") == YES) {
                 return IJSVGNodeTypeTitle;
             }
@@ -302,7 +317,13 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
     [storage setBit:IJSVGNodeAttributeTransform];
     [storage setBit:IJSVGNodeAttributeID];
     [storage setBit:IJSVGNodeAttributeUnicode];
+    [storage setBit:IJSVGNodeAttributeTextRendering];
     [storage setBit:IJSVGNodeAttributeDisplay];
+    // Text presentation attributes inherit through every ancestor element.
+    for(IJSVGNodeAttribute attribute = IJSVGNodeAttributeFont;
+        attribute <= IJSVGNodeAttributeXMLLang; attribute++) {
+        [storage setBit:(int)attribute];
+    }
     return storage;
 }
 
@@ -463,6 +484,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.title = node.title;
     self.desc = node.desc;
     self.unicode = node.unicode;
+    self.textStyle = node.textStyle;
     
     self.name = node.name;
     self.type = node.type;

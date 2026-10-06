@@ -8,7 +8,7 @@
 
 #import <IJSVGTestHelpers.h>
 
-@interface IJSVGParserTests : XCTestCase
+@interface IJSVGParserTests: XCTestCase
 @end
 
 @implementation IJSVGParserTests
@@ -40,7 +40,8 @@
 
 - (void)testParserBuildsRootAndPathNodeAttributes
 {
-    NSString* string = IJSVGTestSVG(@"<rect id=\"box\" class=\"primary selected\" x=\"1\" y=\"2\" width=\"3\" height=\"4\" fill=\"#336699\"/>");
+    NSString* string = IJSVGTestSVG(@"<rect id=\"box\" class=\"primary selected\" x=\"1\" y=\"2\" "
+                                     "width=\"3\" height=\"4\" fill=\"#336699\"/>");
     NSError* error = nil;
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
                                                          fileURL:nil
@@ -64,7 +65,8 @@
 
 - (void)testParserInfersViewBoxFromWidthAndHeight
 {
-    NSString* string = @"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"6\"><rect width=\"12\" height=\"6\"/></svg>";
+    NSString* string = @"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"6\"><rect "
+                        "width=\"12\" height=\"6\"/></svg>";
     NSError* error = nil;
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
                                                          fileURL:nil
@@ -81,7 +83,8 @@
 
 - (void)testParserAppliesStyleElementRulesToNodeAttributes
 {
-    NSString* body = @"<style>rect.target { fill: #00ff00; stroke: #0000ff; stroke-width: 2; }</style><rect class=\"target\" width=\"8\" height=\"8\"/>";
+    NSString* body = @"<style>rect.target { fill: #00ff00; stroke: #0000ff; stroke-width: 2; }</style>"
+                      "<rect class=\"target\" width=\"8\" height=\"8\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -95,7 +98,8 @@
 
 - (void)testParserAllowsInlineStyleToOverrideStyleElement
 {
-    NSString* body = @"<style>rect { fill: #00ff00; stroke-width: 1; }</style><rect width=\"8\" height=\"8\" style=\"fill: #ff0000; stroke-width: 3;\"/>";
+    NSString* body = @"<style>rect { fill: #00ff00; stroke-width: 1; }</style><rect width=\"8\" "
+                      "height=\"8\" style=\"fill: #ff0000; stroke-width: 3;\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -112,12 +116,10 @@
 
 - (void)testParserBuildsNestedNodeTreeWithParentLinksAndOrder
 {
-    NSString* body = @"<title>Root title</title><desc>Root description</desc>"
-        @"<g id=\"outer\" class=\"container\" transform=\"translate(2,3)\">"
-        @"<rect id=\"first\" width=\"2\" height=\"2\"/>"
-        @"<g id=\"inner\"><circle id=\"dot\" cx=\"4\" cy=\"4\" r=\"1\"/></g>"
-        @"<line id=\"last\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"8\"/>"
-        @"</g>";
+    NSString* body = @"<title>Root title</title><desc>Root description</desc><g id=\"outer\" "
+                      "class=\"container\" transform=\"translate(2,3)\"><rect id=\"first\" width=\"2\" "
+                      "height=\"2\"/><g id=\"inner\"><circle id=\"dot\" cx=\"4\" cy=\"4\" r=\"1\"/></g>"
+                      "<line id=\"last\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"8\"/></g>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -135,7 +137,8 @@
     XCTAssertEqualObjects(outer.identifier, @"outer");
     XCTAssertTrue([outer.classNameList containsObject:@"container"]);
     XCTAssertEqual(outer.transforms.count, 1);
-    XCTAssertEqual(outer.transforms.firstObject.command, IJSVGTransformCommandTranslate);
+    XCTAssertEqual(outer.transforms.firstObject.command,
+                   IJSVGTransformCommandTranslate);
     XCTAssertEqual(outer.children.count, 3);
     XCTAssertEqual(first.parentNode, outer);
     XCTAssertEqual(inner.parentNode, outer);
@@ -165,9 +168,8 @@
 
 - (void)testParserCopiesRepeatedUseReferencesIntoDistinctChildren
 {
-    NSString* body = @"<defs><path id=\"shape\" d=\"M0 0 H8\"/></defs>"
-        @"<use id=\"first-use\" href=\"#shape\"/>"
-        @"<use id=\"second-use\" href=\"#shape\"/>";
+    NSString* body = @"<defs><path id=\"shape\" d=\"M0 0 H8\"/></defs><use id=\"first-use\" "
+                      "href=\"#shape\"/><use id=\"second-use\" href=\"#shape\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -191,25 +193,31 @@
 
 - (void)testParserMapsPrimitiveShapeTypesInRootOrder
 {
-    NSString* body = @"<rect id=\"rect\" width=\"1\" height=\"1\"/>"
-        @"<circle id=\"circle\" cx=\"2\" cy=\"2\" r=\"1\"/>"
-        @"<ellipse id=\"ellipse\" cx=\"3\" cy=\"3\" rx=\"1\" ry=\"2\"/>"
-        @"<polygon id=\"polygon\" points=\"0,0 2,0 2,2\"/>"
-        @"<polyline id=\"polyline\" points=\"0,0 1,1 2,0\"/>"
-        @"<line id=\"line\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"8\"/>"
-        @"<path id=\"path\" d=\"M0 0 H8\"/>";
+    NSString* body = @"<rect id=\"rect\" width=\"1\" height=\"1\"/><circle id=\"circle\" cx=\"2\" "
+                      "cy=\"2\" r=\"1\"/><ellipse id=\"ellipse\" cx=\"3\" cy=\"3\" rx=\"1\" ry=\"2\"/>"
+                      "<polygon id=\"polygon\" points=\"0,0 2,0 2,2\"/><polyline id=\"polyline\" "
+                      "points=\"0,0 1,1 2,0\"/><line id=\"line\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"8\"/>"
+                      "<path id=\"path\" d=\"M0 0 H8\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
     IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
-    NSArray<NSNumber*>* expectedTypes = @[ @(kIJSVGPrimitivePathTypeRect),
+    NSArray<NSNumber*>* expectedTypes = @[@(kIJSVGPrimitivePathTypeRect),
                                            @(kIJSVGPrimitivePathTypeCircle),
                                            @(kIJSVGPrimitivePathTypeEllipse),
                                            @(kIJSVGPrimitivePathTypePolygon),
                                            @(kIJSVGPrimitivePathTypePolyLine),
                                            @(kIJSVGPrimitivePathTypeLine),
-                                           @(kIJSVGPrimitivePathTypePath) ];
-    NSArray<NSString*>* expectedIdentifiers = @[ @"rect", @"circle", @"ellipse", @"polygon", @"polyline", @"line", @"path" ];
+                                           @(kIJSVGPrimitivePathTypePath)];
+    NSArray<NSString*>* expectedIdentifiers = @[
+        @"rect",
+        @"circle",
+        @"ellipse",
+        @"polygon",
+        @"polyline",
+        @"line",
+        @"path"
+    ];
 
     XCTAssertEqual(rootNode.children.count, expectedTypes.count);
     for(NSUInteger index = 0; index < expectedTypes.count; index++) {
@@ -223,11 +231,10 @@
 
 - (void)testParserResolvesClipPathAndMaskReferencesIntoDetachedNodeTrees
 {
-    NSString* body = @"<defs>"
-        @"<clipPath id=\"clip\"><rect id=\"clip-rect\" width=\"4\" height=\"4\"/></clipPath>"
-        @"<mask id=\"mask\"><rect id=\"mask-rect\" width=\"8\" height=\"8\" fill=\"#ffffff\"/></mask>"
-        @"</defs>"
-        @"<rect id=\"target\" width=\"8\" height=\"8\" clip-path=\"url(#clip)\" mask=\"url(#mask)\"/>";
+    NSString* body = @"<defs><clipPath id=\"clip\"><rect id=\"clip-rect\" width=\"4\" height=\"4\"/>"
+                      "</clipPath><mask id=\"mask\"><rect id=\"mask-rect\" width=\"8\" height=\"8\" "
+                      "fill=\"#ffffff\"/></mask></defs><rect id=\"target\" width=\"8\" height=\"8\" "
+                      "clip-path=\"url(#clip)\" mask=\"url(#mask)\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -240,17 +247,18 @@
     XCTAssertTrue([target.mask isKindOfClass:IJSVGMask.class]);
     XCTAssertEqual(target.clipPath.children.count, 1);
     XCTAssertEqual(target.mask.children.count, 1);
-    XCTAssertEqualObjects(target.clipPath.children.firstObject.identifier, @"clip-rect");
-    XCTAssertEqualObjects(target.mask.children.firstObject.identifier, @"mask-rect");
+    XCTAssertEqualObjects(target.clipPath.children.firstObject.identifier,
+                          @"clip-rect");
+    XCTAssertEqualObjects(target.mask.children.firstObject.identifier,
+                          @"mask-rect");
 }
 
 - (void)testParserBuildsGradientNodeTreeAndStopColors
 {
-    NSString* body = @"<defs><linearGradient id=\"fade\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"0\" gradientUnits=\"userSpaceOnUse\">"
-        @"<stop offset=\"0\" stop-color=\"#ff0000\"/>"
-        @"<stop offset=\"1\" stop-color=\"#0000ff\" stop-opacity=\"0.5\"/>"
-        @"</linearGradient></defs>"
-        @"<rect id=\"target\" width=\"8\" height=\"8\" fill=\"url(#fade)\"/>";
+    NSString* body = @"<defs><linearGradient id=\"fade\" x1=\"0\" y1=\"0\" x2=\"8\" y2=\"0\" "
+                      "gradientUnits=\"userSpaceOnUse\"><stop offset=\"0\" stop-color=\"#ff0000\"/><stop "
+                      "offset=\"1\" stop-color=\"#0000ff\" stop-opacity=\"0.5\"/></linearGradient></defs>"
+                      "<rect id=\"target\" width=\"8\" height=\"8\" fill=\"url(#fade)\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];

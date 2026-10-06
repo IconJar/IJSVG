@@ -9,7 +9,7 @@
 #import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGColor.h>
 
-@interface IJSVGColorParsingTests : XCTestCase
+@interface IJSVGColorParsingTests: XCTestCase
 @end
 
 @implementation IJSVGColorParsingTests
@@ -159,7 +159,8 @@
     NSColor* color = [IJSVGColor colorFromString:@"oklch(62.8% 0.25 29.23 / 50%)"];
 
     XCTAssertNotNil(color);
-    XCTAssertEqualWithAccuracy([self deviceRGBColor:color].alphaComponent, 0.5f, 0.002f);
+    XCTAssertEqualWithAccuracy([self deviceRGBColor:color].alphaComponent, 0.5f,
+                               0.002f);
 }
 
 - (void)testColorFromStringRejectsInvalidOKLCHInput
@@ -197,7 +198,8 @@
                                             blue:153.f / 255.f
                                            alpha:0.5f];
 
-    XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color], @"rgba(51,102,153,.5)");
+    XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color],
+                          @"rgba(51,102,153,.5)");
 }
 
 - (void)testColorStringFromColorCanForceRRGGBBAAOutput
@@ -209,7 +211,8 @@
     IJSVGColorStringOptions options = IJSVGColorStringOptionAllowRRGGBBAA;
 
     XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color
-                                                   options:options], @"#33669980");
+                                                   options:options],
+                          @"#33669980");
 }
 
 - (void)testChangeAlphaKeepsRGBComponents
@@ -227,7 +230,9 @@
 
 - (void)testParserCreatesColorNodesForFillStrokeAndNone
 {
-    NSString* body = @"<rect id=\"a\" width=\"5\" height=\"5\" fill=\"#336699\" stroke=\"rgba(255,0,0,.5)\"/><rect id=\"b\" x=\"5\" width=\"5\" height=\"5\" fill=\"none\"/>";
+    NSString* body = @"<rect id=\"a\" width=\"5\" height=\"5\" fill=\"#336699\" "
+                      "stroke=\"rgba(255,0,0,.5)\"/><rect id=\"b\" x=\"5\" width=\"5\" height=\"5\" "
+                      "fill=\"none\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];
@@ -257,7 +262,9 @@
 
 - (void)testParserAppliesStopColorAndStopOpacityToGradientStops
 {
-    NSString* body = @"<defs><linearGradient id=\"g\"><stop offset=\"0\" stop-color=\"#336699\" stop-opacity=\"25%\"/><stop offset=\"1\" stop-color=\"hsl(120,100%,50%)\"/></linearGradient></defs><rect width=\"10\" height=\"10\" fill=\"url(#g)\"/>";
+    NSString* body = @"<defs><linearGradient id=\"g\"><stop offset=\"0\" stop-color=\"#336699\" "
+                      "stop-opacity=\"25%\"/><stop offset=\"1\" stop-color=\"hsl(120,100%,50%)\"/>"
+                      "</linearGradient></defs><rect width=\"10\" height=\"10\" fill=\"url(#g)\"/>";
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body)
                                                          fileURL:nil
                                                            error:nil];

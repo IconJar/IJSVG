@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVGPaint.h>
 #import <IJSVGGroupPaint.h>
 #import <IJSVGTransformPaint.h>
@@ -125,6 +126,11 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     CGSize _clientSize;
     NSSet<IJSVGFilterPaint*>* _batchableFilters;
     BOOL _requiresBackdrop;
+    BOOL _containsText;
+    CGAffineTransform _textTransform;
+    CGAffineTransform _textRenderTransform;
+    CGSize _textRenderFrameSize;
+    IJSVGRootNode* _textBuildRoot;
 }
 @end
 
@@ -145,6 +151,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     if((self = [super init]) != nil) {
         _renderingOptions = [[IJSVGRenderingOptions alloc] init];
         _style = [[IJSVGStyle alloc] init];
+        _textTransform = CGAffineTransformIdentity;
         _viewPortStack = [[NSMutableArray alloc] init];
         _unitBoundsStack = [[NSMutableArray alloc] init];
     }
@@ -313,11 +320,55 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return paint;
 }
 
-// Build the paint and apply filters when they are enabled.
+- (IJSVGPaint*)drawablePaintForTextNode:(IJSVGText*)node
+{
+    _containsText = YES;
+    CGFloat scale = sqrt((_textTransform.a * _textTransform.a + _textTransform.b * _textTransform.b +
+                          _textTransform.c * _textTransform.c + _textTransform.d * _textTransform.d) / 2);
+    IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:node
+                                                           viewport:[self unitResolutionBoundsForNode:node].size
+                                                        renderScale:scale
+                                                       pathResolver:^CGPathRef(IJSVGPath* pathNode) {
+            CGPathRef path = [self newResolvedPathForPathNode:pathNode];
+            CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
+            CGPathRef transformed = CGPathCreateCopyByTransformingPath(path,
+                                                                       &transform);
+            CGPathRelease(path);
+            return transformed;
+        }];
+    return [self drawablePaintForGroupNode:layout.group];
+}
+
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
 {
+    if(node.transforms.count == 0) {
+        return [self drawablePaintForNodeWithTextTransform:node];
+    }
+    CGAffineTransform previous = _textTransform;
+    CGRect bounds = [self unitResolutionBoundsForNode:node];
+    IJSVGNode* referencingNode = nil;
+    IJSVGUnitType units = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    CGAffineTransform local = CGAffineTransformIdentity;
+    for(IJSVGTransform* transform in node.transforms.reverseObjectEnumerator) {
+        IJSVGTransform* resolved = [transform transformByApplyingUnits:units
+                                                                bounds:bounds];
+        local = CGAffineTransformConcat(local, resolved.CGAffineTransform);
+    }
+    _textTransform = CGAffineTransformConcat(local, previous);
+    @try {
+        return [self drawablePaintForNodeWithTextTransform:node];
+    } @finally {
+        _textTransform = previous;
+    }
+}
+
+// Build the paint and apply filters when they are enabled.
+- (IJSVGPaint*)drawablePaintForNodeWithTextTransform:(IJSVGNode*)node
+{
     IJSVGPaint* paint = nil;
-    if([node isKindOfClass:IJSVGPath.class]) {
+    if([node isKindOfClass:IJSVGText.class]) {
+        paint = [self drawablePaintForTextNode:(IJSVGText*)node];
+    } else if([node isKindOfClass:IJSVGPath.class]) {
         paint = [self drawablePaintForPathNode:(IJSVGPath*)node];
     } else if([node isKindOfClass:IJSVGRootNode.class]) {
         paint = [self drawablePaintForRootNode:(IJSVGRootNode*)node];
@@ -747,16 +798,20 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
     CGSize intrinsicSize = [node.intrinsicSize computeValue:bounds.size];
-    CGFloat width = [[self unit:node.width matchingNode:node] computeValue:boundsWidth];
-    CGFloat height = [[self unit:node.height matchingNode:node] computeValue:boundsHeight];
+    CGFloat width = [[self unit:node.width
+                   matchingNode:node] computeValue:boundsWidth];
+    CGFloat height = [[self unit:node.height
+                    matchingNode:node] computeValue:boundsHeight];
     if(width == 0.f) {
         width = intrinsicSize.width;
     }
     if(height == 0.f) {
         height = intrinsicSize.height;
     }
-    CGRect frame = CGRectMake([[self unit:node.x matchingNode:node] computeValue:boundsWidth],
-                              [[self unit:node.y matchingNode:node] computeValue:boundsHeight],
+    CGRect frame = CGRectMake([[self unit:node.x
+                             matchingNode:node] computeValue:boundsWidth],
+                              [[self unit:node.y
+                             matchingNode:node] computeValue:boundsHeight],
                               width, height);
     paint.frame = frame;
 
@@ -770,11 +825,25 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         childBounds = [node.viewBox computeValue:paint.frame.size];
     }
 
-    [self withViewPort:childBounds
-            unitBounds:childBounds
-               handler:^{
-        paint.children = [self drawablePaintsForNodes:node.children];
-    }];
+    CGAffineTransform previous = _textTransform;
+    if(node.viewBox != nil) {
+        CGSize size = node == _textBuildRoot ? _textRenderFrameSize : frame.size;
+        CGRect viewBox = [node.viewBox computeValue:size];
+        CGAffineTransform transform = IJSVGViewBoxComputeTransform(viewBox,
+                                                                   (CGRect){ CGPointZero, size },
+                                                                   node.viewBoxAlignment,
+                                                                   node.viewBoxMeetOrSlice);
+        _textTransform = CGAffineTransformConcat(transform, previous);
+    }
+    @try {
+        [self withViewPort:childBounds
+                unitBounds:childBounds
+                   handler:^{
+            paint.children = [self drawablePaintsForNodes:node.children];
+        }];
+    } @finally {
+        _textTransform = previous;
+    }
     return paint;
 }
 
@@ -1288,7 +1357,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return NO;
 }
 
-- (void)renderBackdropPaintInContext:(CGContextRef)ctx frame:(CGRect)frame
+- (void)renderBackdropPaintInContext:(CGContextRef)ctx
+                               frame:(CGRect)frame
 {
     // Include the display scale when mapping to pixels.
     // One pixel in the temporary image should match one output pixel.
@@ -1322,7 +1392,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     CGContextConcatCTM(bitmap, transform);
     CGImageRef image = NULL;
     @try {
-        [IJSVGFilterPaint renderPaint:_rootPaint inBitmapContext:bitmap];
+        [IJSVGFilterPaint renderPaint:_rootPaint
+                      inBitmapContext:bitmap];
         image = CGBitmapContextCreateImage(bitmap);
     } @finally {
         CGContextRelease(bitmap);
@@ -1344,14 +1415,6 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     if(ctx == NULL || rootNode == nil || !IJSVGRectIsFinite(viewPort) || CGRectIsEmpty(viewPort)) {
         return;
     }
-    if(_rootPaint == nil || _rootNode != rootNode || !CGSizeEqualToSize(_clientSize, rootNode.clientSize)) {
-        _backingScale = backingScale;
-        _rootPaint = [self rootPaintForRootNode:rootNode];
-        _batchableFilters = [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint];
-        _requiresBackdrop = [self paintRequiresBackdrop:_rootPaint];
-        _rootNode = rootNode;
-        _clientSize = rootNode.clientSize;
-    }
     CGRect frame = viewPort;
     if(!_renderingOptions.ignoreIntrinsicSize && rootNode.intrinsicSize != nil) {
         CGSize size = [rootNode.intrinsicSize computeValue:viewPort.size];
@@ -1361,6 +1424,32 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         if(size.height != 0.f) {
             frame.size.height = size.height;
         }
+    }
+    CGAffineTransform outputTransform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
+    outputTransform.tx = 0;
+    outputTransform.ty = 0;
+    BOOL textScaleChanged = _containsText &&
+        (!CGAffineTransformEqualToTransform(outputTransform,
+                                            _textRenderTransform) ||
+         !CGSizeEqualToSize(frame.size, _textRenderFrameSize));
+    if(_rootPaint == nil || _rootNode != rootNode ||
+       !CGSizeEqualToSize(_clientSize, rootNode.clientSize) || textScaleChanged) {
+        _backingScale = backingScale;
+        _textRenderTransform = outputTransform;
+        _textRenderFrameSize = frame.size;
+        _textTransform = outputTransform;
+        _textBuildRoot = rootNode;
+        _containsText = NO;
+        @try {
+            _rootPaint = [self rootPaintForRootNode:rootNode];
+        } @finally {
+            _textTransform = CGAffineTransformIdentity;
+            _textBuildRoot = nil;
+        }
+        _batchableFilters = [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint];
+        _requiresBackdrop = [self paintRequiresBackdrop:_rootPaint];
+        _rootNode = rootNode;
+        _clientSize = rootNode.clientSize;
     }
     _rootPaint.frame = frame;
     _rootPaint.backingScaleFactor = backingScale;
@@ -1373,13 +1462,15 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         };
         // Resolve the destination pixels once for filters and batch collection.
         CGAffineTransform pixelTransform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
-        [IJSVGFilterPaint drawInContext:ctx pixelTransform:pixelTransform drawingBlock:^{
+        [IJSVGFilterPaint drawInContext:ctx
+                         pixelTransform:pixelTransform
+                           drawingBlock:^{
             if(self->_requiresBackdrop) {
                 [self renderBackdropPaintInContext:ctx
                                              frame:frame];
             } else if(self->_batchableFilters == nil || ![IJSVGFilterPaint renderBatchedPaints:self->_batchableFilters
-                                                                                inContext:ctx
-                                                                             drawingBlock:drawingBlock]) {
+                                                                                     inContext:ctx
+                                                                                  drawingBlock:drawingBlock]) {
                 drawingBlock(ctx);
             }
         }];
