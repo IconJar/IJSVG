@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVG.h>
-//#import <Cocoa/Cocoa.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

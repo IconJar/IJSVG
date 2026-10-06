@@ -63,8 +63,6 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
                fontSize:(CGFloat)fontSize
                 xHeight:(CGFloat)xHeight;
 - (NSString*)stringValue;
-#if __has_include(<AppKit/AppKit.h>)
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options;
-#endif
 
 @end
