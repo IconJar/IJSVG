@@ -31,6 +31,12 @@
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGView.h>
+#import <IJSVG/CGColorSpaceWrapper.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
+#import <IJSVG/NSString+macOS.h>
+#import <IJSVG/NSValue+macOS.h>
+#import <IJSVG/UIColor+macOS.h>
+#import <IJSVG/UIImage+macOS.h>
+#import <IJSVG/UIScreen+macOS.h>
 
 #endif // IJSVGUmbrella_h

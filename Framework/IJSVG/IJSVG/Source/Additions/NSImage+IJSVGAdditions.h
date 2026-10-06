@@ -6,7 +6,7 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>

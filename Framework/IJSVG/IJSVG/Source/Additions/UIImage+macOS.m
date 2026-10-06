@@ -6,7 +6,10 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
+#import <TargetConditionals.h>
+#if !TARGET_OS_OSX
+
+#import <UIKit/UIKit.h>
 #import "UIImage+macOS.h"
 #import "IJSVGXEntities.h"
 

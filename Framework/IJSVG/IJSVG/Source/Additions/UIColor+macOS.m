@@ -6,7 +6,10 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
+#import <TargetConditionals.h>
+#if !TARGET_OS_OSX
+
+#import <UIKit/UIKit.h>
 #import "UIColor+macOS.h"
 
 @implementation UIColor (macOS)
