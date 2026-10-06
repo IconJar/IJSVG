@@ -158,7 +158,7 @@
 - (IJSVG*)exampleSVGNamed:(NSString*)name
 {
     NSString* directory = @(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
-    NSString* path = [[directory stringByAppendingPathComponent:@"IJSVGExample"]
+    NSString* path = [[directory stringByAppendingPathComponent:@"Common Example Resources"]
                      stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"svg"]];
     XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:path], @"Missing example: %@", path);
     NSError* error = nil;
