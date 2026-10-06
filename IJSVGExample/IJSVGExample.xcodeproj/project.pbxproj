@@ -365,7 +365,10 @@
 				5956657819B62F4600D805FF /* Products */,
 				59FB54BD280B03E600D148FA /* Frameworks */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
+			usesTabs = 0;
 		};
 		5956657819B62F4600D805FF /* Products */ = {
 			isa = PBXGroup;
