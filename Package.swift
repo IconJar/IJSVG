@@ -29,8 +29,6 @@ let package = Package(
                 .headerSearchPath("Source/Parsing")
             ],
             linkerSettings: [
-                .linkedFramework("AppKit"),
-                .linkedFramework("Quartz"),
                 .linkedFramework("CoreImage"),
                 .linkedFramework("Metal"),
                 .linkedFramework("Accelerate"),
