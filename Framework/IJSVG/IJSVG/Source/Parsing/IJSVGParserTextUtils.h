@@ -14,6 +14,6 @@ IJSVGTextKeyword IJSVGTextKeywordForString(NSString* value);
 IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value,
                                                  IJSVGNodeAttribute attribute);
 void IJSVGApplyTextAttributes(IJSVGNode* node,
-                              NSString* _Nullable __unsafe_unretained const attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength]);
+                              NSArray<NSString*>* attributeValues);
 
 NS_ASSUME_NONNULL_END

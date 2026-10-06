@@ -54,14 +54,16 @@ BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
 }
 
 NSString* IJSVGAttributeValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+    NSArray *attributeValues,
     IJSVGNodeAttribute attribute)
 {
-    return attributeValues[attribute];
+    id res = [attributeValues objectAtIndex:attribute];
+    if (res == NSNull.null) return nil;
+    return (NSString *)res;
 }
 
 BOOL IJSVGAttributeHasValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+    NSArray *attributeValues,
     IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
     NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
@@ -99,7 +101,7 @@ NSSet<NSString*>* IJSVGClassNameList(NSString* value)
 void IJSVGStoreStyleAttributes(
     IJSVGStyleSheetStyle* style,
     IJSVGBitFlags* activeAttributes,
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+    NSMutableArray *attributeValues)
 {
     NSDictionary* properties = style.properties;
     for(NSString* key in properties) {
@@ -111,7 +113,7 @@ void IJSVGStoreStyleAttributes(
         if(value.length == 0) {
             continue;
         }
-        attributeValues[attribute] = value;
+        [attributeValues replaceObjectAtIndex:attribute withObject:value];
     }
 }
 

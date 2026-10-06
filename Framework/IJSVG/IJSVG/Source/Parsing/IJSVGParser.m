@@ -666,7 +666,8 @@ typedef struct {
         activeAttributes = attributes;
     }
     
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength] = { nil };
+    NSMutableArray *attributeValues = [NSMutableArray arrayWithCapacity:kIJSVGNodeAttributeStorageLength];
+    for (NSUInteger i = 0; i < kIJSVGNodeAttributeStorageLength; ++i) [attributeValues addObject:NSNull.null];
   
     if(raw != nil) {
         const IJSVGParserRawAttribute* entries = raw->entries.bytes;
