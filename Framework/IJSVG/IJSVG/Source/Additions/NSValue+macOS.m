@@ -23,6 +23,16 @@
     return self.CGRectValue;
 }
 
++ (instancetype)valueWithSize:(CGSize)size
+{
+    return [self valueWithCGSize:size];
+}
+
+- (CGSize)sizeValue
+{
+    return self.CGSizeValue;
+}
+
 @end
 
 #endif
