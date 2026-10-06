@@ -136,7 +136,10 @@
 				594CF470238FF38E009B251B /* Products */,
 				594CF55D238FF461009B251B /* Frameworks */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
+			usesTabs = 0;
 		};
 		594CF470238FF38E009B251B /* Products */ = {
 			isa = PBXGroup;
