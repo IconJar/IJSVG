@@ -28,8 +28,6 @@ let package = Package(
                 .headerSearchPath("Source/Rendering")
             ],
             linkerSettings: [
-                .linkedFramework("AppKit"),
-                .linkedFramework("Quartz"),
                 .linkedFramework("CoreImage"),
                 .linkedFramework("Metal"),
                 .linkedFramework("Accelerate"),

@@ -6,6 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGUtils.h>
@@ -355,7 +357,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     }
 }
 
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 
 + (void)convertInstructionsToRoundRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                                  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions

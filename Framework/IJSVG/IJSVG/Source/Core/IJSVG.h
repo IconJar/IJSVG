@@ -6,6 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGUnitSize.h>
@@ -22,7 +24,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVG : NSObject
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 <NSPasteboardWriting>
 #endif
 {
@@ -75,7 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
 - (NSString* _Nullable)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;
-#if __has_include(<AppKit/AppKit.h>)
+#if TARGET_OS_OSX
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
                            options:(IJSVGExporterOptions)options
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;

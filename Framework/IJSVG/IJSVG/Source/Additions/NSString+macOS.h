@@ -7,7 +7,7 @@
 //
 
 #include <TargetConditionals.h>
-#if TARGET_OS_MACCATALYST
+#if !TARGET_OS_MACCATALYST
 
 #import <Foundation/Foundation.h>
 
