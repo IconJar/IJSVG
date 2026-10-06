@@ -508,8 +508,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Archery-Inc/TouchXML.git";
 			requirement = {
-				branch = mutability;
-				kind = branch;
+				kind = upToNextMinorVersion;
+				minimumVersion = "0.3.0-alpha.3";
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
