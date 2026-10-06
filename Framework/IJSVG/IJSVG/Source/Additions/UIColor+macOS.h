@@ -6,9 +6,11 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
-@import UIKit;
-@import CoreGraphics;
+#import <TargetConditionals.h>
+#if !TARGET_OS_OSX
+
+#import <UIKit/UIKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 #include "CGColorSpaceWrapper.h"
 
 @interface UIColor (macOS)

@@ -6,7 +6,9 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
+#import <TargetConditionals.h>
+#if !TARGET_OS_OSX
+
 #import "NSValue+macOS.h"
 
 @implementation NSValue (macOS)

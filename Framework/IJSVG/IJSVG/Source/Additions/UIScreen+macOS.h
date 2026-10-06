@@ -6,8 +6,10 @@
 //
 //
 
-#if __has_include(<UIKit/UIKit.h>)
-@import UIKit;
+#import <TargetConditionals.h>
+#if !TARGET_OS_OSX
+
+#import <UIKit/UIKit.h>
 
 @interface UIScreen (macOS)
 

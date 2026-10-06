@@ -17,6 +17,21 @@
     return ret;
 }
 
++ (instancetype)sRGBColorSpace
+{
+    CGColorSpaceWrapper *ret = [self new];
+    ret.colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    return ret;
+}
+
+- (instancetype)initWithCGColorSpace:(CGColorSpaceRef)colorSpace
+{
+    if ((self = [super init]) != nil) {
+        self.colorSpace = CGColorSpaceRetain(colorSpace);
+    }
+    return self;
+}
+
 - (void)dealloc
 {
     CGColorSpaceRelease(colorSpace);

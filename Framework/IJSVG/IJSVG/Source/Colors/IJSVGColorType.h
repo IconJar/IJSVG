@@ -7,7 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
 
 typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     IJSVGColorUsageTraitNone = 0,
