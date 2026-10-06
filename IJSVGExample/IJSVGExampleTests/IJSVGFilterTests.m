@@ -498,7 +498,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)complexFixturesRenderAndSurviveExport:(NSString*)name
 {
     NSString* directory = @(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
-    NSString* path = [directory stringByAppendingPathComponent:[NSString stringWithFormat:@"IJSVGExample/%@.svg",
+    NSString* path = [directory stringByAppendingPathComponent:[NSString stringWithFormat:@"Common Example Resources/%@.svg",
                                                                                           name]];
     NSError* error = nil;
     NSString* original = [NSString stringWithContentsOfFile:path
