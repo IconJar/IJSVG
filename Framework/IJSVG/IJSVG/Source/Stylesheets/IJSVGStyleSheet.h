@@ -20,6 +20,7 @@
 }
 
 @property (nonatomic, readonly) NSUInteger ruleCount;
+@property (nonatomic, readonly) BOOL requiresSelectorTree;
 
 - (void)parseStyleBlock:(NSString*)string;
 - (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node;

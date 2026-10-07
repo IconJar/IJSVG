@@ -57,6 +57,9 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 
 - (id)initWithCommandStringBuffer:(const char*)str
                        dataStream:(IJSVGPathDataStream*)dataStream;
+- (id)initWithCommandStringBuffer:(const char*)str
+                           length:(NSUInteger)length
+                       dataStream:(IJSVGPathDataStream*)dataStream;
 - (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
                                paramCount:(NSInteger)paramCount
                           previousCommand:(IJSVGCommand*)command;

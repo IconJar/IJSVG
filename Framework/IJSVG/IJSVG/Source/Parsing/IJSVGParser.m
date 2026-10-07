@@ -241,6 +241,9 @@ NSString* const IJSVGAttributePath = @"path";
 NSString* const IJSVGAttributePathLength = @"pathLength";
 
 @interface IJSVGParser ()
+@property (nonatomic, strong) NSCache<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
+@property (nonatomic, strong) NSCache<NSString*, id>* parsedPaths;
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeReferences;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray*>* pendingStylePaints;
@@ -421,6 +424,9 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     self.pendingStylePaints = [[NSMutableDictionary alloc] init];
     self.selectorNodes = nil;
     self.selectorScope = nil;
+    self.selectorScopes = nil;
+    self.inlineStyles = nil;
+    self.parsedPaths = nil;
     self.styleAncestors = [NSMapTable strongToStrongObjectsMapTable];
     self.definitionStyleParents = [NSMapTable strongToStrongObjectsMapTable];
     if(setup != nil) {
@@ -439,6 +445,9 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     }
     [_rootNode postProcess];
     _rootNode.styleAncestors = self.styleAncestors.objectEnumerator.allObjects;
+    self.inlineStyles = nil;
+    self.parsedPaths = nil;
+    self.selectorScopes = nil;
     _detachedReferences = nil;
 }
 
@@ -611,7 +620,17 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
 
     __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* nodeStyle = nil;
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
-        nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
+        nodeStyle = [self.inlineStyles objectForKey:value];
+        if(nodeStyle == nil) {
+            nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
+            if(self.inlineStyles == nil) {
+                self.inlineStyles = [[NSCache alloc] init];
+                self.inlineStyles.countLimit = 256;
+                self.inlineStyles.totalCostLimit = 1024 * 1024;
+            }
+            NSUInteger cost = value.length * sizeof(unichar);
+            [self.inlineStyles setObject:nodeStyle forKey:value cost:cost];
+        }
         if(styleSheet != nil) {
             nodeStyle = [styleSheet mergedStyle:nodeStyle];
         }
@@ -1173,6 +1192,9 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
 
 - (IJSVGNode*)selectorNodeForElement:(NSXMLElement*)element
 {
+    if(!_styleSheet.requiresSelectorTree) {
+        return nil;
+    }
     IJSVGNode* scoped = [self.selectorScope objectForKey:element];
     if(scoped != nil) {
         return scoped;
@@ -1417,17 +1439,30 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
         [group addChild:node];
     }
     
-    CGMutablePathRef path = NULL;
     NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
-    if(pathData != nil) {
-        NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:pathData.UTF8String
-                                                                        dataStream:_commandDataStream];
-        path = [IJSVGCommand newPathForCommandsArray:commands];
+    id cachedPath = pathData != nil ? [self.parsedPaths objectForKey:pathData] : nil;
+    if(cachedPath != nil) {
+        node.path = (__bridge CGMutablePathRef)cachedPath;
     } else {
-        path = CGPathCreateMutable();
+        CGMutablePathRef path = NULL;
+        if(pathData != nil) {
+            const char* characters = pathData.UTF8String;
+            NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:characters
+                                                                            dataStream:_commandDataStream];
+            path = [IJSVGCommand newPathForCommandsArray:commands];
+            if(self.parsedPaths == nil) {
+                self.parsedPaths = [[NSCache alloc] init];
+                self.parsedPaths.countLimit = 128;
+                self.parsedPaths.totalCostLimit = 4 * 1024 * 1024;
+            }
+            NSUInteger cost = pathData.length * sizeof(unichar);
+            [self.parsedPaths setObject:(__bridge id)path forKey:pathData cost:cost];
+        } else {
+            path = CGPathCreateMutable();
+        }
+        node.path = path;
+        CGPathRelease(path);
     }
-    node.path = path;
-    CGPathRelease(path);
 
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
@@ -1722,9 +1757,18 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
         return node;
     }
     NSMapTable* previousScope = self.selectorScope;
-    self.selectorScope = [NSMapTable strongToStrongObjectsMapTable];
-    [self buildSelectorTreeForElement:detachedElement
-                                nodes:self.selectorScope];
+    self.selectorScope = nil;
+    if(_styleSheet.requiresSelectorTree) {
+        self.selectorScope = [self.selectorScopes objectForKey:detachedElement];
+        if(self.selectorScope == nil) {
+            self.selectorScope = [NSMapTable strongToStrongObjectsMapTable];
+            [self buildSelectorTreeForElement:detachedElement nodes:self.selectorScope];
+            if(self.selectorScopes == nil) {
+                self.selectorScopes = [NSMapTable strongToStrongObjectsMapTable];
+            }
+            [self.selectorScopes setObject:self.selectorScope forKey:detachedElement];
+        }
+    }
     [self.activeReferences addObject:xlinkID];
     @try {
         IJSVGNode* shadowNode = [self parseElement:detachedElement
@@ -2054,72 +2098,31 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
                intoPath:(IJSVGPath*)path
               closePath:(BOOL)closePath
 {
+    if(points.length == 0) {
+        return;
+    }
     NSInteger count = 0;
     CGFloat* params = [IJSVGUtils commandParameters:points
                                          dataStream:_commandDataStream
                                               count:&count];
-
-    // error occured, free the params
-    if((count % 2) != 0) {
+    if(count < 2 || (count % 2) != 0 || params == NULL) {
         free(params);
         return;
     }
-    
-    const int defBufferSize = 10;
-    char* buffer;
-    asprintf(&buffer, "M%f %f L", params[0], params[1]);
-    
-    // compute a default buffer, bSize is strlen + 1 for null byte
-    size_t bSize = strlen(buffer) + 1;
-    size_t strLength = bSize - 1;
-    
-    // for every pair of coordinates
-    for(int i = 2; i < count; i+= 2) {
-        char* subbuf;
-        asprintf(&subbuf, "%f %f ", params[i], params[i + 1]);
-        size_t sSize = strlen(subbuf);
-        
-        // if the new size of the string is large than the buffer
-        // increase the buffer up another def size, note, we always
-        // plus 2 incase the close path needs to be appended on the end
-        if((strLength + sSize + 2) > bSize) {
-            size_t nLength = MAX(sSize, defBufferSize) + 2;
-            buffer = realloc(buffer, sizeof(char)*(bSize+nLength));
-            bSize += nLength;
-        }
-        
-        // append the string onto the buffer, increment the
-        // string length and free the subbuffer memory.
-        memcpy(buffer + strLength, subbuf, sSize + 1);
-        strLength += sSize;
-        (void)free(subbuf), subbuf = NULL;
-    }
 
-    // append the close path if required
-    if(closePath == YES) {
-        // make sure there is room for z plus the null terminator, the loop
-        // reserves this, but a degenerate single point poly skips the loop.
-        if((strLength + 2) > bSize) {
-            buffer = realloc(buffer, sizeof(char) * (strLength + 2));
-            bSize = strLength + 2;
-        }
-        buffer[strLength] = 'z';
-        buffer[strLength + 1] = '\0';
-        strLength += 1;
+    CGMutablePathRef result = CGPathCreateMutable();
+    CGPathMoveToPoint(result, NULL, params[0], params[1]);
+    for(NSInteger index = 2; index < count; index += 2) {
+        CGPathAddLineToPoint(result, NULL, params[index], params[index + 1]);
     }
-    
-    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:buffer
-                                                                    dataStream:_commandDataStream];
+    if(closePath) {
+        CGPathCloseSubpath(result);
+    }
     IJSVGNode* referencingNode = nil;
     path.pathUnits = [path contentUnitsWithReferencingNode:&referencingNode];
-    
-    CGMutablePathRef nPath = [IJSVGCommand newPathForCommandsArray:commands];
-    path.path = nPath;
-    CGPathRelease(nPath);
-    
-    // free the params
-    (void)free(buffer), buffer = NULL;
-    (void)free(params), params = NULL;
+    path.path = result;
+    CGPathRelease(result);
+    free(params);
 }
 
 @end

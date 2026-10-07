@@ -11,18 +11,42 @@
 #import <IJSVG/IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 
-@interface IJSVGStyleSheetSelectorListItem : NSObject {
+typedef struct {
+    __unsafe_unretained IJSVGStyleSheetRule* rule;
+    NSUInteger specificity;
+} IJSVGStyleSheetMatch;
+
+static int IJSVGStyleSheetCompareMatches(const void* first, const void* second)
+{
+    const IJSVGStyleSheetMatch* a = first;
+    const IJSVGStyleSheetMatch* b = second;
+    if(a->specificity != b->specificity) {
+        return a->specificity < b->specificity ? -1 : 1;
+    }
+    NSUInteger aIndex = a->rule.sourceIndex;
+    NSUInteger bIndex = b->rule.sourceIndex;
+    return aIndex < bIndex ? -1 : (aIndex > bIndex ? 1 : 0);
 }
 
-@property (nonatomic, strong) IJSVGStyleSheetRule* rule;
-@property (nonatomic, strong) IJSVGStyleSheetSelector* selector;
+static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableIndexSet*>* index,
+    NSSet<NSString*>* names, NSUInteger ruleIndex)
+{
+    for(NSString* name in names) {
+        NSMutableIndexSet* entries = index[name];
+        if(entries == nil) {
+            entries = [[NSMutableIndexSet alloc] init];
+            index[name] = entries;
+        }
+        [entries addIndex:ruleIndex];
+    }
+}
 
-@end
-
-@implementation IJSVGStyleSheetSelectorListItem
-@end
-
-@implementation IJSVGStyleSheet
+@implementation IJSVGStyleSheet {
+    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _identifierRules;
+    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _classRules;
+    NSMutableDictionary<NSString*, NSMutableIndexSet*>* _tagRules;
+    NSMutableIndexSet* _universalRules;
+}
 
 - (NSUInteger)ruleCount
 {
@@ -34,6 +58,10 @@
     if((self = [super init]) != nil) {
         _selectors = [[NSMutableDictionary alloc] init];
         _rules = [[NSMutableArray alloc] init];
+        _identifierRules = [[NSMutableDictionary alloc] init];
+        _classRules = [[NSMutableDictionary alloc] init];
+        _tagRules = [[NSMutableDictionary alloc] init];
+        _universalRules = [[NSMutableIndexSet alloc] init];
     }
     return self;
 }
@@ -146,58 +174,71 @@
   
     for(IJSVGStyleSheetSelector* selector in selectors) {
         [aRule addMatchingSelector:selector];
+        _requiresSelectorTree |= selector.requiresSelectorTree;
     }
     [_rules addObject:aRule];
+    if(aRule.matchesUniversalSelector) {
+        [_universalRules addIndex:aRule.sourceIndex];
+    } else {
+        IJSVGStyleSheetIndexRule(_identifierRules, aRule.matchingIdentifiers, aRule.sourceIndex);
+        IJSVGStyleSheetIndexRule(_classRules, aRule.matchingClassNames, aRule.sourceIndex);
+        IJSVGStyleSheetIndexRule(_tagRules, aRule.matchingTagNames, aRule.sourceIndex);
+    }
 }
 
 - (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node
 {
-    NSMutableArray<IJSVGStyleSheetSelectorListItem*>* matchedRules = [[NSMutableArray alloc] init];
-    for(IJSVGStyleSheetRule* rule in _rules) {
-        if([rule canMatchNode:node] == NO) {
-            continue;
-        }
-
-        IJSVGStyleSheetSelector* matchedSelector = nil;
-        if([rule matchesNode:node selector:&matchedSelector]) {
-            IJSVGStyleSheetSelectorListItem* listItem = [[IJSVGStyleSheetSelectorListItem alloc] init];
-            listItem.rule = rule;
-            listItem.selector = matchedSelector;
-            [matchedRules addObject:listItem];
+    NSMutableIndexSet* candidates = [_universalRules mutableCopy];
+    if(node.identifier != nil) {
+        NSIndexSet* entries = _identifierRules[node.identifier];
+        if(entries != nil) {
+            [candidates addIndexes:entries];
         }
     }
-
-    if(matchedRules.count == 0) {
+    if(node.name != nil) {
+        NSIndexSet* entries = _tagRules[node.name];
+        if(entries != nil) {
+            [candidates addIndexes:entries];
+        }
+    }
+    for(NSString* className in node.classNameList) {
+        NSIndexSet* entries = _classRules[className];
+        if(entries != nil) {
+            [candidates addIndexes:entries];
+        }
+    }
+    NSUInteger capacity = candidates.count;
+    if(capacity == 0) {
         return nil;
     }
-  
-    if(matchedRules.count == 1) {
-        IJSVGStyleSheetSelectorListItem* listItem = matchedRules.firstObject;
-        return listItem.rule.style;
+    IJSVGStyleSheetMatch localMatches[32];
+    IJSVGStyleSheetMatch* matches = capacity <= 32 ? localMatches :
+        malloc(capacity * sizeof(*matches));
+    if(matches == NULL) {
+        return nil;
     }
-
-    [matchedRules sortUsingComparator:^NSComparisonResult(IJSVGStyleSheetSelectorListItem* a,
-                                                          IJSVGStyleSheetSelectorListItem* b) {
-        if(a.selector.specificity < b.selector.specificity) {
-            return NSOrderedAscending;
+    NSUInteger count = 0;
+    for(NSUInteger index = candidates.firstIndex; index != NSNotFound;
+        index = [candidates indexGreaterThanIndex:index]) {
+        IJSVGStyleSheetRule* rule = _rules[index];
+        IJSVGStyleSheetSelector* selector = nil;
+        if([rule matchesNode:node selector:&selector]) {
+            matches[count++] = (IJSVGStyleSheetMatch){rule, selector.specificity};
         }
-        if(a.selector.specificity > b.selector.specificity) {
-            return NSOrderedDescending;
-        }
-        if(a.rule.sourceIndex < b.rule.sourceIndex) {
-            return NSOrderedAscending;
-        }
-        if(a.rule.sourceIndex > b.rule.sourceIndex) {
-            return NSOrderedDescending;
-        }
-        return NSOrderedSame;
-    }];
-
-    IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
-    for(IJSVGStyleSheetSelectorListItem* listItem in matchedRules) {
-        [style addPropertiesFromStyle:listItem.rule.style];
     }
-
+    IJSVGStyleSheetStyle* style = nil;
+    if(count == 1) {
+        style = matches[0].rule.style;
+    } else if(count > 1) {
+        qsort(matches, count, sizeof(*matches), IJSVGStyleSheetCompareMatches);
+        style = [[IJSVGStyleSheetStyle alloc] init];
+        for(NSUInteger index = 0; index < count; index++) {
+            [style addPropertiesFromStyle:matches[index].rule.style];
+        }
+    }
+    if(matches != localMatches) {
+        free(matches);
+    }
     return style;
 }
 

@@ -75,6 +75,11 @@ static BOOL IJSVGStyleSheetMatchSelector(IJSVGNode* node, IJSVGStyleSheetSelecto
 
 @implementation IJSVGStyleSheetSelector
 
+- (BOOL)requiresSelectorTree
+{
+    return _rawSelectors.count > 1;
+}
+
 - (IJSVGStyleSheetSelectorRaw*)matchingSelector
 {
     return _rawSelectors.firstObject;

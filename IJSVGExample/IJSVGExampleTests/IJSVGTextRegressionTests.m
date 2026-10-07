@@ -12,6 +12,9 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
+#import <IJSVG/IJSVGCommand.h>
+#import <sys/mman.h>
+#import <unistd.h>
 
 @interface IJSVGTextRegressionContext : NSObject
 
@@ -761,6 +764,103 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             IJSVGCheck([selector.combinatorString isEqualToString:@">"]);
             selector.combinator = IJSVGStyleSheetSelectorCombinatorNextSibling;
             IJSVGCheck([selector.combinatorString isEqualToString:@"+"]);
+        };
+        entries[@"parserPolygonPrecisionAndEmptyPoints"] = ^(IJSVGTextRegressionContext* context) {
+            NSString* xml = @"<svg xmlns='http://www.w3.org/2000/svg'><polygon points='0.123456789 0.987654321 2.123456789 3.987654321'/><polyline points=''/><polygon/><polyline points='1'/></svg>";
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+            IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(10, 10)];
+            IJSVGPath* polygon = (IJSVGPath*)root.children.firstObject;
+            CGRect bounds = CGPathGetBoundingBox(polygon.path);
+            IJSVGCheck(fabs(bounds.origin.x - .123456789) < 1e-9);
+            IJSVGCheck(fabs(bounds.origin.y - .987654321) < 1e-9);
+            IJSVGCheck(fabs(bounds.size.width - 2) < 1e-9);
+            IJSVGCheck(fabs(bounds.size.height - 3) < 1e-9);
+            for(NSUInteger index = 1; index < root.children.count; index++) {
+                IJSVGPath* empty = (IJSVGPath*)root.children[index];
+                IJSVGCheck(CGPathIsEmpty(empty.path));
+            }
+        };
+        entries[@"parserCommandSpanStopsAtBufferBoundary"] = ^(IJSVGTextRegressionContext* context) {
+            size_t pageSize = (size_t)getpagesize();
+            char* memory = mmap(NULL, pageSize * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+            [context require:memory != MAP_FAILED message:@"Could not allocate command test memory"];
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+            @try {
+                [context require:mprotect(memory + pageSize, pageSize, PROT_NONE) == 0 message:@"Could not protect command boundary"];
+                const char data[] = {'M', '1', '0', ' ', '2', '0'};
+                char* start = memory + pageSize - sizeof(data);
+                memcpy(start, data, sizeof(data));
+                Class commandClass = [IJSVGCommand commandClassForCommandChar:'M'];
+                IJSVGCommand* command = [[commandClass alloc] initWithCommandStringBuffer:start
+                                                                                   length:sizeof(data)
+                                                                               dataStream:stream];
+                [context require:command.subCommands.count == 1 message:@"Missing bounded move command"];
+                IJSVGCheck(command.subCommands.firstObject.parameters[0] == 10);
+                IJSVGCheck(command.subCommands.firstObject.parameters[1] == 20);
+            } @finally {
+                IJSVGPathDataStreamRelease(stream);
+                munmap(memory, pageSize * 2);
+            }
+        };
+        entries[@"parserIncompleteCommandsDoNotReadMissingParameters"] = ^(IJSVGTextRegressionContext* context) {
+            for(NSString* input in @[@"", @" ", @"M", @"M1", @"M0 0L10", @"M0 0C1 2 3", @"M0 0A1 1 0 2 0 3 4", @"M+ . L-"]) {
+                NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:input.UTF8String];
+                CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:commands];
+                IJSVGCheck(path != NULL);
+                CGPathRelease(path);
+            }
+            NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:"  M1e1 2e1L30 40z  "];
+            IJSVGCheck(commands.count == 3);
+            IJSVGCheck(commands.firstObject.subCommands.firstObject.parameters[0] == 10);
+            IJSVGCheck(commands.firstObject.subCommands.firstObject.parameters[1] == 20);
+        };
+        entries[@"parserCachedGeometryRemainsIndependent"] = ^(IJSVGTextRegressionContext* context) {
+            NSString* xml = @"<svg xmlns='http://www.w3.org/2000/svg'><path d='M0 0L10 10'/><path d='M0 0L10 10'/></svg>";
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+            IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+            IJSVGPath* first = (IJSVGPath*)root.children[0];
+            IJSVGPath* second = (IJSVGPath*)root.children[1];
+            IJSVGCheck(first.path != second.path);
+            CGPathAddLineToPoint(first.path, NULL, 80, 80);
+            IJSVGCheck(CGPathGetBoundingBox(second.path).size.width == 10);
+            IJSVGRootNode* reparsed = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+            IJSVGPath* fresh = (IJSVGPath*)reparsed.children.firstObject;
+            IJSVGCheck(CGPathGetBoundingBox(fresh.path).size.width == 10);
+        };
+        entries[@"parserCachedStylesResolvePerInstance"] = ^(IJSVGTextRegressionContext* context) {
+            NSData* actual = [context pixels:@"<style>.first{fill:red!important}.second{fill:blue!important}</style><rect class='first' width='20' height='20' style='fill:green'/><rect class='second' x='30' width='20' height='20' style='fill:green'/><rect x='60' width='20' height='20' style='fill:green'/>"];
+            NSData* expected = [context pixels:@"<rect width='20' height='20' fill='red'/><rect x='30' width='20' height='20' fill='blue'/><rect x='60' width='20' height='20' fill='green'/>"];
+            IJSVGCheck([actual isEqual:expected]);
+            actual = [context pixels:@"<defs><path id='p' d='M0 0L20 0 20 20 0 20Z'/></defs><use href='#p' fill='red'/><use href='#p' x='30' fill='blue'/>"];
+            expected = [context pixels:@"<rect width='20' height='20' fill='red'/><rect x='30' width='20' height='20' fill='blue'/>"];
+            IJSVGCheck([actual isEqual:expected]);
+        };
+        entries[@"parserCSSIndexPreservesCascadeAndNewRules"] = ^(IJSVGTextRegressionContext* context) {
+            IJSVGStyleSheet* sheet = [[IJSVGStyleSheet alloc] init];
+            [sheet parseStyleBlock:@"*{fill:black}.a,#chosen{fill:red}.a.b{fill:green}rect{fill:blue}"];
+            IJSVGNode* node = [[IJSVGNode alloc] init];
+            node.name = @"rect";
+            node.classNameList = [NSSet setWithArray:@[@"a", @"b"]];
+            IJSVGCheck([[[sheet styleForNode:node] property:@"fill"] isEqual:@"green"]);
+            node.identifier = @"chosen";
+            IJSVGCheck([[[sheet styleForNode:node] property:@"fill"] isEqual:@"red"]);
+            [sheet parseStyleBlock:@"rect{fill:orange!important}#chosen{stroke:blue}"];
+            IJSVGCheck([[[sheet styleForNode:node] property:@"fill"] isEqual:@"orange"]);
+            IJSVGCheck([[[sheet styleForNode:node] property:@"stroke"] isEqual:@"blue"]);
+            for(NSUInteger index = 0; index < 40; index++) {
+                NSString* rule = [NSString stringWithFormat:@"rect{stroke-width:%lu}", index];
+                [sheet parseStyleBlock:rule];
+            }
+            IJSVGCheck([[[sheet styleForNode:node] property:@"stroke-width"] isEqual:@"39"]);
+            node.identifier = nil;
+            node.classNameList = nil;
+            node.name = @"circle";
+            IJSVGCheck([[[sheet styleForNode:node] property:@"fill"] isEqual:@"black"]);
+        };
+        entries[@"parserCachedSelectorScopesKeepSiblingRules"] = ^(IJSVGTextRegressionContext* context) {
+            NSData* actual = [context pixels:@"<style>.a + .b{fill:red}</style><defs><g id='g'><rect class='a' width='20' height='20'/><rect class='b' x='30' width='20' height='20'/></g></defs><use href='#g' fill='blue'/><use href='#g' y='30' fill='green'/>"];
+            NSData* expected = [context pixels:@"<rect width='20' height='20' fill='blue'/><rect x='30' width='20' height='20' fill='red'/><rect y='30' width='20' height='20' fill='green'/><rect x='30' y='30' width='20' height='20' fill='red'/>"];
+            IJSVGCheck([actual isEqual:expected]);
         };
         cases = entries.copy;
     });

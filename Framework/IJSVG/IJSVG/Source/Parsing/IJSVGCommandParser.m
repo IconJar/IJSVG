@@ -161,6 +161,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
             if(bufferCount == 1 && !VALID_DIGIT(dataStream->charBuffer[0])) {
                 isDecimal = false;
                 bufferCount = 0;
+                i++;
                 continue;
             }
             
@@ -176,7 +177,7 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 
     // set commands found, only if there is one
     if(commandsFound != NULL) {
-        *commandsFound = (NSInteger)round((double)counter / commandLength);
+        *commandsFound = counter / commandLength;
     }
     
     // allocate the new buffer from memory

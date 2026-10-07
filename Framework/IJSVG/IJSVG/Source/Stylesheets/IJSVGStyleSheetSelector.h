@@ -20,6 +20,7 @@
 }
 
 @property (nonatomic, assign) NSUInteger specificity;
+@property (nonatomic, readonly) BOOL requiresSelectorTree;
 @property (nonatomic, readonly) IJSVGStyleSheetSelectorRaw* matchingSelector;
 
 - (id)initWithSelectorString:(NSString*)string;
