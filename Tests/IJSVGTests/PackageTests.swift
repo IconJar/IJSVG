@@ -22,7 +22,8 @@ import Testing
     #expect(color.alphaComponent > 0.95)
 }
 
-@Test(arguments: ["IJSVGBlur", "IJSVGInnerShadow", "IJSVGSubtract", "IJSVGSeparableBlur"])
+/* NOT the CoreImage shaders here as they are not compilable with makeLibrary (requires -fcikernel for the compiler and -cikernel for the linker). */
+@Test(arguments: ["IJSVGBlur", "IJSVGInnerShadow"])
 func loadsPackagedShader(name: String) throws {
     let source = try #require(IJSVGPackageShaderSource(name))
     #expect(!source.isEmpty)
@@ -30,6 +31,17 @@ func loadsPackagedShader(name: String) throws {
     if let device = MTLCreateSystemDefaultDevice() {
         let library = try device.makeLibrary(source: source, options: nil)
         #expect(!library.functionNames.isEmpty)
+    }
+}
+
+@Test(arguments: ["IJSVGSubtract", "IJSVGSeparableBlur"])
+func loadsPackagedCoreImageShader(name: String) throws {
+    let source = try #require(IJSVGPackageShaderSource(name))
+    #expect(!source.isEmpty)
+    // Resource checks also run on machines without a Metal device.
+    if MTLCreateSystemDefaultDevice() != nil {
+        let kernels = try CIKernel.kernels(withMetalString: source)
+        #expect(!kernels.isEmpty)
     }
 }
 
