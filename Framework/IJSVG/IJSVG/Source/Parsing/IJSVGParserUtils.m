@@ -74,6 +74,28 @@ BOOL IJSVGAttributeHasValue(
     return YES;
 }
 
+BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
+    NSUInteger* attribute, NSString* __autoreleasing* value)
+{
+    NSUInteger index = IJSVGNodeAttributeForName(node.name);
+    if(index == NSNotFound ||
+       (activeAttributes != nil && ![activeAttributes bitIsSet:(int)index])) {
+        return NO;
+    }
+    NSString* string = node.stringValue;
+    if(string.length == 0) {
+        return NO;
+    }
+    *attribute = index;
+    *value = string;
+    return YES;
+}
+
+NSSet<NSString*>* IJSVGClassNameList(NSString* value)
+{
+    return [NSSet setWithArray:[value ijsvg_componentsSplitByWhiteSpace] ?: @[]];
+}
+
 void IJSVGStoreStyleAttributes(
     IJSVGStyleSheetStyle* style,
     IJSVGBitFlags* activeAttributes,

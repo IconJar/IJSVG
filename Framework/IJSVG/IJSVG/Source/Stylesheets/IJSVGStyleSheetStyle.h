@@ -22,6 +22,10 @@
              forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
 - (NSDictionary*)properties;
+- (BOOL)isPropertyImportant:(NSString*)key;
+- (void)setResolvedValue:(id)value
+             forProperty:(NSString*)key
+               important:(BOOL)important;
 
 - (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;

@@ -25,8 +25,8 @@
 @property (nonatomic, strong) NSMutableSet<NSString*>* matchingTagNames;
 
 - (void)addMatchingSelector:(IJSVGStyleSheetSelector*)selector;
-- (BOOL)canMatchNode:(IJSVGNode*)node;
-- (BOOL)matchesNode:(IJSVGNode*)node
+- (BOOL)canMatchNode:(id<IJSVGStyleSheetSelectorNode>)node;
+- (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector;
 
 @end

@@ -41,7 +41,7 @@
     _matchesUniversalSelector = YES;
 }
 
-- (BOOL)canMatchNode:(IJSVGNode*)node
+- (BOOL)canMatchNode:(id<IJSVGStyleSheetSelectorNode>)node
 {
     if(_matchesUniversalSelector == YES) {
         return YES;
@@ -60,7 +60,7 @@
     return NO;
 }
 
-- (BOOL)matchesNode:(IJSVGNode*)node
+- (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node
            selector:(IJSVGStyleSheetSelector**)matchedSelector
 {
     IJSVGStyleSheetSelector* bestSelector = nil;

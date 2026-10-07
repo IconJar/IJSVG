@@ -23,6 +23,6 @@
 @property (nonatomic, readonly) BOOL requiresSelectorTree;
 
 - (void)parseStyleBlock:(NSString*)string;
-- (IJSVGStyleSheetStyle*)styleForNode:(IJSVGNode*)node;
+- (IJSVGStyleSheetStyle*)styleForNode:(id<IJSVGStyleSheetSelectorNode>)node;
 
 @end

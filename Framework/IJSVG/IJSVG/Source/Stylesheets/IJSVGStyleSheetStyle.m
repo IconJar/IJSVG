@@ -97,6 +97,11 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
     }
 }
 
+- (BOOL)isPropertyImportant:(NSString*)key
+{
+    return [_importantProperties containsObject:key];
+}
+
 - (NSDictionary*)properties
 {
     return _dict;

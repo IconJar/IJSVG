@@ -240,15 +240,71 @@ NSString* const IJSVGAttributeSide = @"side";
 NSString* const IJSVGAttributePath = @"path";
 NSString* const IJSVGAttributePathLength = @"pathLength";
 
+static NSMapTable* IJSVGParserElementMapTable(void)
+{
+    return [NSMapTable
+        mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality
+        valueOptions:NSPointerFunctionsStrongMemory];
+}
+
+typedef struct {
+    NSUInteger attribute;
+    __unsafe_unretained NSString* value;
+} IJSVGParserRawAttribute;
+
+// Keep the raw strings alive while cached entries refer to them.
+// Resolve inherited values separately because each use can have a different parent.
+@interface IJSVGParserRawAttributes : NSObject {
+@public
+    NSData* entries;
+    BOOL hasAttributes;
+    NSArray<NSString*>* values;
+    NSSet<NSString*>* classNameList;
+}
+- (instancetype)initWithElement:(NSXMLElement*)element;
+@end
+
+@implementation IJSVGParserRawAttributes
+
+- (instancetype)initWithElement:(NSXMLElement*)element
+{
+    if((self = [super init]) != nil) {
+        NSMutableData* data = [[NSMutableData alloc] init];
+        NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] init];
+        NSArray<NSXMLNode*>* attributes = element.attributes;
+        hasAttributes = attributes.count != 0;
+        for(NSXMLNode* attributeNode in attributes) {
+            NSUInteger attribute = NSNotFound;
+            NSString* value = nil;
+            if(!IJSVGReadXMLAttribute(attributeNode, nil, &attribute, &value)) {
+                continue;
+            }
+            [strings addObject:value];
+            IJSVGParserRawAttribute entry = { attribute, value };
+            [data appendBytes:&entry length:sizeof(entry)];
+            if(attribute == IJSVGNodeAttributeClass) {
+                classNameList = IJSVGClassNameList(value);
+            }
+        }
+        entries = data.copy;
+        values = strings.copy;
+    }
+    return self;
+}
+
+@end
+
 @interface IJSVGParser ()
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGParserRawAttributes*>* rawAttributes;
+@property (nonatomic, strong) NSHashTable<NSXMLElement*>* uncachedReferenceElements;
 @property (nonatomic, strong) NSCache<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
 @property (nonatomic, strong) NSCache<NSString*, id>* parsedPaths;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeReferences;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray*>* pendingStylePaints;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGGroup*>* selectorNodes;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGGroup*>* selectorScope;
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorNodes;
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
 @end
@@ -427,6 +483,8 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     self.selectorScopes = nil;
     self.inlineStyles = nil;
     self.parsedPaths = nil;
+    self.rawAttributes = nil;
+    self.uncachedReferenceElements = nil;
     self.styleAncestors = [NSMapTable strongToStrongObjectsMapTable];
     self.definitionStyleParents = [NSMapTable strongToStrongObjectsMapTable];
     if(setup != nil) {
@@ -447,6 +505,8 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     _rootNode.styleAncestors = self.styleAncestors.objectEnumerator.allObjects;
     self.inlineStyles = nil;
     self.parsedPaths = nil;
+    self.rawAttributes = nil;
+    self.uncachedReferenceElements = nil;
     self.selectorScopes = nil;
     _detachedReferences = nil;
 }
@@ -562,10 +622,34 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     if(definitionParent != nil) {
         node.styleParent = definitionParent;
     }
-    NSArray<NSXMLNode*>* elementAttributes = element.attributes;
-    NSUInteger attributeCount = elementAttributes.count;
+    __attribute__((objc_precise_lifetime)) IJSVGParserRawAttributes* raw = nil;
+    // Cache attributes for referenced elements because they may be parsed again.
+    if(self.activeReferences.count != 0 || self.activeFilterReferences.count != 0) {
+        raw = [self.rawAttributes objectForKey:element];
+        if(raw == nil) {
+            if([self.uncachedReferenceElements containsObject:element]) {
+                raw = [[IJSVGParserRawAttributes alloc] initWithElement:element];
+                if(self.rawAttributes == nil) {
+                    self.rawAttributes = IJSVGParserElementMapTable();
+                }
+                [self.rawAttributes setObject:raw forKey:element];
+                [self.uncachedReferenceElements removeObject:element];
+            } else {
+                // Wait until the element is referenced again before caching its attributes.
+                if(self.uncachedReferenceElements == nil) {
+                    self.uncachedReferenceElements = [NSHashTable hashTableWithOptions:
+                        NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality];
+                }
+                [self.uncachedReferenceElements addObject:element];
+            }
+        }
+    }
+    NSArray<NSXMLNode*>* elementAttributes = raw == nil ? element.attributes : nil;
+    NSUInteger attributeCount = raw != nil ? raw->entries.length / sizeof(IJSVGParserRawAttribute) :
+        elementAttributes.count;
     BOOL hasStyleSheetRules = _styleSheet.ruleCount != 0;
-    if(attributeCount == 0 && hasStyleSheetRules == NO) {
+    BOOL hasAttributes = raw != nil ? raw->hasAttributes : attributeCount != 0;
+    if(!hasAttributes && hasStyleSheetRules == NO) {
         return nil;
     }
 
@@ -583,18 +667,24 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     
     NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength] = { nil };
   
-    for(NSXMLNode* attributeNode in elementAttributes) {
-        NSUInteger attribute = IJSVGNodeAttributeForName(attributeNode.name);
-        if(attribute == NSNotFound || [activeAttributes bitIsSet:(int)attribute] == NO) {
-            continue;
+    if(raw != nil) {
+        const IJSVGParserRawAttribute* entries = raw->entries.bytes;
+        for(NSUInteger index = 0; index < attributeCount; index++) {
+            NSUInteger attribute = entries[index].attribute;
+            if([activeAttributes bitIsSet:(int)attribute]) {
+                attributeValues[attribute] = entries[index].value;
+            }
         }
-        NSString* value = attributeNode.stringValue;
-        if(value.length == 0) {
-            continue;
+    } else {
+        for(NSXMLNode* attributeNode in elementAttributes) {
+            NSUInteger attribute = NSNotFound;
+            NSString* value = nil;
+            if(IJSVGReadXMLAttribute(attributeNode, activeAttributes, &attribute, &value)) {
+                attributeValues[attribute] = value;
+            }
         }
-        attributeValues[attribute] = value;
     }
-    
+
     NSString* value = nil;
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeID, &value)) {
         node.identifier = value;
@@ -603,16 +693,15 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     }
     
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClass, &value)) {
-        NSArray* list = [value ijsvg_componentsSeparatedByChars:" "];
         node.className = value;
-        node.classNameList = [NSSet setWithArray:list];
+        node.classNameList = raw != nil ? raw->classNameList : IJSVGClassNameList(value);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
         node.unicode = value;
     }
     
     IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
-        [_styleSheet styleForNode:[self selectorNodeForElement:element] ?: node] : nil;
+        [_styleSheet styleForNode:(id<IJSVGStyleSheetSelectorNode>)[self selectorNodeForElement:element] ?: node] : nil;
   
     if(styleSheet != nil) {
         IJSVGStoreStyleAttributes(styleSheet, activeAttributes, attributeValues);
@@ -1171,36 +1260,41 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     return _detachedReferences[identifier];
 }
 
-- (IJSVGGroup*)buildSelectorTreeForElement:(NSXMLElement*)element
-                                     nodes:(NSMapTable<NSXMLElement*, IJSVGGroup*>*)nodes
+- (IJSVGStyleSheetSelectorRecord*)buildSelectorTreeForElement:(NSXMLElement*)element
+                                     nodes:(NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>*)nodes
 {
-    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
     node.name = element.localName;
     node.identifier = [element attributeForName:IJSVGAttributeID].stringValue;
-    node.className = [element attributeForName:IJSVGAttributeClass].stringValue;
-    node.classNameList = [NSSet setWithArray:
-        [node.className ijsvg_componentsSeparatedByChars:" "] ?: @[]];
+    NSString* className = [element attributeForName:IJSVGAttributeClass].stringValue;
+    node.classNameList = IJSVGClassNameList(className);
     [nodes setObject:node forKey:element];
+    IJSVGStyleSheetSelectorRecord* previous = nil;
     for(NSXMLNode* child in element.children) {
         if(child.kind == NSXMLElementKind) {
-            [node addChild:[self buildSelectorTreeForElement:(NSXMLElement*)child
-                                                       nodes:nodes]];
+            IJSVGStyleSheetSelectorRecord* record =
+                [self buildSelectorTreeForElement:(NSXMLElement*)child nodes:nodes];
+            record.selectorParent = node;
+            record.selectorPreviousSibling = previous;
+            previous = record;
         }
     }
     return node;
 }
 
-- (IJSVGNode*)selectorNodeForElement:(NSXMLElement*)element
+- (IJSVGStyleSheetSelectorRecord*)selectorNodeForElement:(NSXMLElement*)element
 {
     if(!_styleSheet.requiresSelectorTree) {
         return nil;
     }
-    IJSVGNode* scoped = [self.selectorScope objectForKey:element];
+    IJSVGStyleSheetSelectorRecord* scoped = [self.selectorScope objectForKey:element];
     if(scoped != nil) {
         return scoped;
     }
     if(self.selectorNodes == nil) {
-        self.selectorNodes = [NSMapTable strongToStrongObjectsMapTable];
+        // Look up records by the XML object address.
+        // Hashing XML contents becomes expensive when an element has many siblings.
+        self.selectorNodes = IJSVGParserElementMapTable();
         [self buildSelectorTreeForElement:_document.rootElement
                                     nodes:self.selectorNodes];
     }
@@ -1764,10 +1858,10 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
     if(_styleSheet.requiresSelectorTree) {
         self.selectorScope = [self.selectorScopes objectForKey:detachedElement];
         if(self.selectorScope == nil) {
-            self.selectorScope = [NSMapTable strongToStrongObjectsMapTable];
+            self.selectorScope = IJSVGParserElementMapTable();
             [self buildSelectorTreeForElement:detachedElement nodes:self.selectorScope];
             if(self.selectorScopes == nil) {
-                self.selectorScopes = [NSMapTable strongToStrongObjectsMapTable];
+                self.selectorScopes = IJSVGParserElementMapTable();
             }
             [self.selectorScopes setObject:self.selectorScope forKey:detachedElement];
         }
@@ -1790,6 +1884,8 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
                 onElement:(NSXMLElement*)onElement
               fromElement:(NSXMLElement*)fromElement
 {
+    [self.rawAttributes removeObjectForKey:onElement];
+    [self.rawAttributes removeObjectForKey:fromElement];
     for(NSString* collpaseAttribute in attributes) {
         NSXMLNode* attribute = nil;
         if((attribute = [fromElement attributeForName:collpaseAttribute]) != nil &&
