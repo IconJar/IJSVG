@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVGCommand.h>
 #import <Foundation/Foundation.h>
 
+void IJSVGPathAddEllipticalArc(CGMutablePathRef path, const CGFloat* params, BOOL relative);
+
 @interface IJSVGCommandEllipticalArc : IJSVGCommand
 
 @end

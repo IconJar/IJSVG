@@ -16,6 +16,35 @@
 #import <sys/mman.h>
 #import <unistd.h>
 
+static NSArray<NSArray<NSNumber*>*>* IJSVGRegressionPathElements(CGPathRef path)
+{
+    NSMutableArray<NSArray<NSNumber*>*>* result = [[NSMutableArray alloc] init];
+    CGPathApplyWithBlock(path, ^(const CGPathElement* element) {
+        NSUInteger count = 0;
+        switch(element->type) {
+            case kCGPathElementMoveToPoint:
+            case kCGPathElementAddLineToPoint:
+                count = 1;
+                break;
+            case kCGPathElementAddQuadCurveToPoint:
+                count = 2;
+                break;
+            case kCGPathElementAddCurveToPoint:
+                count = 3;
+                break;
+            case kCGPathElementCloseSubpath:
+                break;
+        }
+        NSMutableArray<NSNumber*>* values = [NSMutableArray arrayWithObject:@(element->type)];
+        for(NSUInteger index = 0; index < count; index++) {
+            [values addObject:@(element->points[index].x)];
+            [values addObject:@(element->points[index].y)];
+        }
+        [result addObject:values];
+    });
+    return result;
+}
+
 @interface IJSVGTextRegressionContext : NSObject
 
 @property (nonatomic, strong) NSMutableArray<NSString*>* failures;
@@ -861,6 +890,175 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             NSData* actual = [context pixels:@"<style>.a + .b{fill:red}</style><defs><g id='g'><rect class='a' width='20' height='20'/><rect class='b' x='30' width='20' height='20'/></g></defs><use href='#g' fill='blue'/><use href='#g' y='30' fill='green'/>"];
             NSData* expected = [context pixels:@"<rect width='20' height='20' fill='blue'/><rect x='30' width='20' height='20' fill='red'/><rect y='30' width='20' height='20' fill='green'/><rect x='30' y='30' width='20' height='20' fill='red'/>"];
             IJSVGCheck([actual isEqual:expected]);
+        };
+        entries[@"parserDirectPathMatchesCommandObjects"] = ^(IJSVGTextRegressionContext* context) {
+            NSMutableArray<NSString*>* paths = [@[
+                @"M10 20 30 40 50 60m5 6 7 8z m2 3h4v5H40V50",
+                @"M0 0C1 2 3 4 5 6S7 8 9 10s1 2 3 4c5 6 7 8 9 10s1 2 3 4",
+                @"M0 0Q5 8 10 0T20 0 30 0q5 8 10 0t10 0 10 0L60 20T70 0",
+                @"M10 10A20 30 40 0 1 80 50a20 30 40 1 0 20 30A0 10 0 0 0 10 10",
+                @"M0 0A10 10 0 0110 10zM.5-.5L1e2-2e1",
+                @"M0 0L10 0 10 10Zl5 5s1 2 3 4t5 6"
+            ] mutableCopy];
+            uint32_t seed = 12345;
+            const char commands[] = "LlHhVvCcSsQqTtAaMmZz";
+            for(NSUInteger sample = 0; sample < 100; sample++) {
+                NSMutableString* path = [NSMutableString stringWithString:@"M10 20"];
+                for(NSUInteger segment = 0; segment < 40; segment++) {
+                    seed = seed * 1664525 + 1013904223;
+                    char command = commands[seed % (sizeof(commands) - 1)];
+                    [path appendFormat:@"%c", command];
+                    Class commandClass = [IJSVGCommand commandClassForCommandChar:command];
+                    NSInteger count = [commandClass requiredParameterCount];
+                    for(NSInteger index = 0; index < count; index++) {
+                        seed = seed * 1664525 + 1013904223;
+                        BOOL flag = (command == 'a' || command == 'A') && (index == 3 || index == 4);
+                        double value = flag ? seed % 2 : (double)(seed % 2000) / 13. - 50.;
+                        [path appendFormat:@" %.8g", value];
+                    }
+                }
+                [paths addObject:path];
+            }
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+            @try {
+                for(NSString* data in paths) {
+                    const char* characters = data.UTF8String;
+                    CGMutablePathRef actual = IJSVGCreatePathFromData(characters, strlen(characters), stream);
+                    NSArray<IJSVGCommand*>* commands = [IJSVGCommand commandsForDataCharacters:characters];
+                    CGMutablePathRef expected = [IJSVGCommand newPathForCommandsArray:commands];
+                    NSArray<NSArray<NSNumber*>*>* actualElements = IJSVGRegressionPathElements(actual);
+                    NSArray<NSArray<NSNumber*>*>* expectedElements = IJSVGRegressionPathElements(expected);
+                    CGPathRelease(actual);
+                    CGPathRelease(expected);
+                    [context require:actualElements.count == expectedElements.count message:data];
+                    for(NSUInteger index = 0; index < actualElements.count; index++) {
+                        NSArray<NSNumber*>* a = actualElements[index];
+                        NSArray<NSNumber*>* b = expectedElements[index];
+                        [context require:a.count == b.count && [a[0] isEqual:b[0]] message:data];
+                        for(NSUInteger value = 1; value < a.count; value++) {
+                            double tolerance = 1e-8 * MAX(1., fabs(b[value].doubleValue));
+                            [context require:fabs(a[value].doubleValue - b[value].doubleValue) <= tolerance message:data];
+                        }
+                    }
+                }
+            } @finally {
+                IJSVGPathDataStreamRelease(stream);
+            }
+        };
+        entries[@"parserDirectPathRespectsMemoryBoundary"] = ^(IJSVGTextRegressionContext* context) {
+            size_t pageSize = (size_t)getpagesize();
+            char* memory = mmap(NULL, pageSize * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+            [context require:memory != MAP_FAILED message:@"Could not allocate path test memory"];
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(1, 1);
+            @try {
+                [context require:mprotect(memory + pageSize, pageSize, PROT_NONE) == 0 message:@"Could not protect path boundary"];
+                for(NSString* data in @[@"", @"M", @"M0 0L10", @"M+ . L-", @"M10 20L30 40", @"M0 0A10 10 0 0110 10"]) {
+                    NSUInteger length = [data lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+                    char* start = memory + pageSize - length;
+                    memcpy(start, data.UTF8String, length);
+                    CGMutablePathRef path = IJSVGCreatePathFromData(start, length, stream);
+                    IJSVGCheck(path != NULL);
+                    CGPathRelease(path);
+                }
+            } @finally {
+                IJSVGPathDataStreamRelease(stream);
+                munmap(memory, pageSize * 2);
+            }
+        };
+        entries[@"parserNumericBuffersGrowAndReuseCapacity"] = ^(IJSVGTextRegressionContext* context) {
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(1, 1);
+            @try {
+                NSMutableString* numbers = [[NSMutableString alloc] init];
+                for(NSUInteger index = 0; index < 20000; index++) {
+                    [numbers appendFormat:@"%lu ", index];
+                }
+                NSInteger count = 0;
+                const char* bytes = numbers.UTF8String;
+                CGFloat* values = IJSVGParsePathDataStreamSequence(bytes, strlen(bytes), stream, NULL, 1, &count);
+                [context require:values != NULL message:@"Missing numeric values"];
+                IJSVGCheck(count == 20000);
+                IJSVGCheck(values[0] == 0 && values[19999] == 19999);
+                free(values);
+                IJSVGCheck(stream->floatCount >= count && stream->floatCount < count * 2);
+                NSInteger capacity = stream->floatCount;
+                values = IJSVGParsePathDataStreamSequence("1 2", 3, stream, NULL, 1, &count);
+                IJSVGCheck(count == 2 && stream->floatCount == capacity);
+                free(values);
+                NSString* zeros = [@"" stringByPaddingToLength:200 withString:@"0" startingAtIndex:0];
+                NSString* fraction = [NSString stringWithFormat:@"0.%@1", zeros];
+                bytes = fraction.UTF8String;
+                values = IJSVGParsePathDataStreamSequence(bytes, strlen(bytes), stream, NULL, 1, &count);
+                IJSVGCheck(count == 1 && values != NULL && values[0] > 0);
+                IJSVGCheck(stream->charCount > fraction.length && stream->charCount <= fraction.length * 2);
+                free(values);
+            } @finally {
+                IJSVGPathDataStreamRelease(stream);
+            }
+        };
+        entries[@"parserAppendsIndependentPathData"] = ^(IJSVGTextRegressionContext* context) {
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+            CGMutablePathRef combined = CGPathCreateMutable();
+            CGPathAddRect(combined, NULL, CGRectMake(80, 90, 10, 10));
+            const char* data = "m2 3 4 5z";
+            IJSVGAppendPathData(combined, data, strlen(data), stream);
+            NSArray<NSArray<NSNumber*>*>* elements = IJSVGRegressionPathElements(combined);
+            NSArray<NSNumber*>* move = elements[5];
+            IJSVGCheck(move[0].integerValue == kCGPathElementMoveToPoint);
+            IJSVGCheck(move[1].doubleValue == 2 && move[2].doubleValue == 3);
+            IJSVGPathDataStreamRelease(stream);
+            CGPathRelease(combined);
+        };
+        entries[@"parserPolygonAppendsWithoutPartialInvalidGeometry"] = ^(IJSVGTextRegressionContext* context) {
+            IJSVGPathDataStream* stream = IJSVGPathDataStreamCreate(1, 1);
+            CGMutablePathRef path = CGPathCreateMutable();
+            CGPathAddRect(path, NULL, CGRectMake(80, 90, 10, 10));
+            for(NSString* invalid in @[@"", @"1", @"1 2 3", @"1 2 3 1e999"]) {
+                const char* bytes = invalid.UTF8String;
+                IJSVGCheck(!IJSVGAppendPolyPoints(path, bytes, strlen(bytes), YES, stream));
+                IJSVGCheck(IJSVGRegressionPathElements(path).count == 5);
+            }
+            const char points[] = {'1', ' ', '2', ' ', '3', ' ', '4'};
+            IJSVGCheck(IJSVGAppendPolyPoints(path, points, sizeof(points), YES, stream));
+            NSArray<NSArray<NSNumber*>*>* elements = IJSVGRegressionPathElements(path);
+            IJSVGCheck(elements.count == 8);
+            IJSVGCheck(elements[5][1].doubleValue == 1 && elements[5][2].doubleValue == 2);
+            IJSVGCheck(elements.lastObject[0].integerValue == kCGPathElementCloseSubpath);
+            IJSVGPathDataStreamRelease(stream);
+            CGPathRelease(path);
+        };
+        entries[@"parserInlineTextPathMatchesReferencedGeometry"] = ^(IJSVGTextRegressionContext* context) {
+            NSData* actual = [context pixels:@"<text font-family='Helvetica' font-size='20'><textPath path='M20 80 Q180 10 360 80'>Along the curve</textPath></text>"];
+            NSData* expected = [context pixels:@"<defs><path id='curve' d='M20 80 Q180 10 360 80'/></defs><text font-family='Helvetica' font-size='20'><textPath href='#curve'>Along the curve</textPath></text>"];
+            IJSVGCheck([actual isEqual:expected]);
+            [context layout:@"<text><textPath path='M20 80 L360 80'>First</textPath><textPath path='M20 80 L360 80'>Second</textPath></text>"];
+            NSMutableArray<IJSVGPath*>* paths = [[NSMutableArray alloc] init];
+            [IJSVGNode walkNodeTree:context.root handler:^(IJSVGNode* node, BOOL* descend, BOOL* stop) {
+                if([node isKindOfClass:IJSVGText.class] && ((IJSVGText*)node).textPath != nil) {
+                    [paths addObject:((IJSVGText*)node).textPath];
+                }
+            }];
+            [context require:paths.count == 2 message:@"Missing inline text paths"];
+            CGPathAddLineToPoint(paths[0].path, NULL, 500, 500);
+            IJSVGCheck(CGPathGetBoundingBox(paths[1].path).size.height == 0);
+        };
+        entries[@"pathImportsAndSelfAssignmentPreserveOwnership"] = ^(IJSVGTextRegressionContext* context) {
+            CGMutablePathRef source = CGPathCreateMutable();
+            CGPathMoveToPoint(source, NULL, 3, 5);
+            CGPathAddLineToPoint(source, NULL, 20, 30);
+            for(NSNumber* flipped in @[@NO, @YES]) {
+                IJSVG* svg = [IJSVG SVGFromCGPathRef:source flipped:flipped.boolValue];
+                IJSVGPath* imported = (IJSVGPath*)svg.rootNode.children.firstObject;
+                CGPathRef expected = flipped.boolValue ? [IJSVGUtils newFlippedCGPath:source] : CGPathCreateCopy(source);
+                IJSVGCheck(CGPathEqualToPath(imported.path, expected));
+                imported.path = imported.path;
+                IJSVGCheck(CGPathEqualToPath(imported.path, expected));
+                CGPathRelease(expected);
+            }
+            IJSVG* svg = [IJSVG SVGFromCGPathRef:source];
+            CGPathAddLineToPoint(source, NULL, 500, 500);
+            IJSVGPath* imported = (IJSVGPath*)svg.rootNode.children.firstObject;
+            IJSVGCheck(CGPathGetBoundingBox(imported.path).size.width == 17);
+            CGPathRelease(source);
         };
         cases = entries.copy;
     });

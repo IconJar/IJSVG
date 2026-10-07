@@ -114,10 +114,11 @@
 {
     // this will automatically copy any path into a mutable path
     // regardless of if it was a mutable path to begin with
+    CGMutablePathRef copy = CGPathCreateMutableCopy(path);
     if(_path != NULL) {
-        (void)CGPathRelease(_path), _path = NULL;
+        CGPathRelease(_path);
     }
-    _path = CGPathCreateMutableCopy(path);
+    _path = copy;
 }
 
 - (CGRect)pathBoundingBox

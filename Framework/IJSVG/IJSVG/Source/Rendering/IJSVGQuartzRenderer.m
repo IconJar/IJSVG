@@ -329,12 +329,10 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                                            viewport:[self unitResolutionBoundsForNode:node].size
                                                         renderScale:scale
                                                        pathResolver:^CGPathRef(IJSVGPath* pathNode) {
-            CGPathRef path = [self newResolvedPathForPathNode:pathNode];
+            CGMutablePathRef path = CGPathCreateMutable();
             CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
-            CGPathRef transformed = CGPathCreateCopyByTransformingPath(path,
-                                                                       &transform);
-            CGPathRelease(path);
-            return transformed;
+            [self appendResolvedPathForPathNode:pathNode transform:transform toPath:path];
+            return path;
         }];
     return layout;
 }
@@ -445,25 +443,23 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return unit;
 }
 
-// Convert the SVG shape and its relative sizes into a Quartz path.
-- (CGPathRef)newResolvedPathForPathNode:(IJSVGPath*)node
+- (void)appendResolvedPathForPathNode:(IJSVGPath*)node
+                             transform:(CGAffineTransform)transform
+                                toPath:(CGMutablePathRef)path
 {
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     CGFloat width = CGRectGetWidth(bounds);
     CGFloat height = CGRectGetHeight(bounds);
-
     if(node.primitiveType == kIJSVGPrimitivePathTypePath ||
         node.primitiveType == kIJSVGPrimitivePathTypePolygon ||
         node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
         if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
-            CGAffineTransform transform = CGAffineTransformMakeScale(width, height);
-            return CGPathCreateCopyByTransformingPath(node.path, &transform);
+            CGAffineTransform scale = CGAffineTransformMakeScale(width, height);
+            transform = CGAffineTransformConcat(scale, transform);
         }
-        // Resolved paths are only read; an immutable copy can share path storage.
-        return CGPathCreateCopy(node.path);
+        CGPathAddPath(path, &transform, node.path);
+        return;
     }
-
-    CGMutablePathRef path = CGPathCreateMutable();
 
     switch(node.primitiveType) {
         case kIJSVGPrimitivePathTypeLine: {
@@ -471,8 +467,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             CGFloat y1 = [[self unit:node.y1 matchingNode:node] computeValue:height];
             CGFloat x2 = [[self unit:node.x2 matchingNode:node] computeValue:width];
             CGFloat y2 = [[self unit:node.y2 matchingNode:node] computeValue:height];
-            CGPathMoveToPoint(path, NULL, x1, y1);
-            CGPathAddLineToPoint(path, NULL, x2, y2);
+            CGPathMoveToPoint(path, &transform, x1, y1);
+            CGPathAddLineToPoint(path, &transform, x2, y2);
             break;
         }
         case kIJSVGPrimitivePathTypeRect: {
@@ -482,9 +478,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                      [[self unit:node.y matchingNode:node] computeValue:height],
                                      [[self unit:node.width matchingNode:node] computeValue:width],
                                      [[self unit:node.height matchingNode:node] computeValue:height]);
-            CGPathAddRoundedRect(path, NULL, rect,
-                                 [rx computeValue:width],
-                                 [ry computeValue:height]);
+            CGFloat radiusX = [rx computeValue:width];
+            CGFloat radiusY = [ry computeValue:height];
+            CGPathAddRoundedRect(path, &transform, rect, radiusX, radiusY);
             break;
         }
         case kIJSVGPrimitivePathTypeCircle: {
@@ -494,7 +490,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             CGFloat rx = [radius computeValue:width];
             CGFloat ry = [radius computeValue:height];
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
-            CGPathAddEllipseInRect(path, NULL, rect);
+            CGPathAddEllipseInRect(path, &transform, rect);
             break;
         }
         case kIJSVGPrimitivePathTypeEllipse: {
@@ -503,7 +499,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             CGFloat rx = [[self unit:node.rx matchingNode:node] computeValue:width];
             CGFloat ry = [[self unit:node.ry matchingNode:node] computeValue:height];
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
-            CGPathAddEllipseInRect(path, NULL, rect);
+            CGPathAddEllipseInRect(path, &transform, rect);
             break;
         }
         default: {
@@ -511,6 +507,24 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         }
     }
 
+}
+
+- (CGPathRef)newResolvedPathForPathNode:(IJSVGPath*)node
+{
+    if(node.primitiveType == kIJSVGPrimitivePathTypePath ||
+        node.primitiveType == kIJSVGPrimitivePathTypePolygon ||
+        node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
+        if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
+            CGRect bounds = [self unitResolutionBoundsForNode:node];
+            CGAffineTransform transform = CGAffineTransformMakeScale(bounds.size.width, bounds.size.height);
+            return CGPathCreateCopyByTransformingPath(node.path, &transform);
+        }
+        return CGPathCreateCopy(node.path);
+    }
+    CGMutablePathRef path = CGPathCreateMutable();
+    [self appendResolvedPathForPathNode:node
+                              transform:CGAffineTransformIdentity
+                                 toPath:path];
     return path;
 }
 
@@ -1085,9 +1099,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         }
         if([node isKindOfClass:IJSVGPath.class] == YES &&
             [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
-            CGPathRef resolvedPath = [self newResolvedPathForPathNode:(IJSVGPath*)node];
-            CGPathAddPath(mutPath, &transform, resolvedPath);
-            CGPathRelease(resolvedPath);
+            [self appendResolvedPathForPathNode:(IJSVGPath*)node
+                                      transform:transform
+                                         toPath:mutPath];
             continue;
         }
         if([node isKindOfClass:IJSVGGroup.class] == YES) {

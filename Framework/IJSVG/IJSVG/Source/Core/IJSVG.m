@@ -74,18 +74,10 @@
     CGRect box = CGPathGetPathBoundingBox(path);
     IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
     rootNode.viewBox = [IJSVGUnitRect rectWithCGRect:box];
-    CGMutablePathRef nPath = NULL;
-    if(flipped) {
-        CGPathRef transformedPath = [IJSVGUtils newFlippedCGPath:path];
-        nPath = CGPathCreateMutableCopy(transformedPath);
-        CGPathRelease(transformedPath);
-    } else {
-        nPath = CGPathCreateMutableCopy(path);
-    }
     IJSVGPath* childPath = [[IJSVGPath alloc] init];
-    childPath.path = nPath;
+    CGAffineTransform transform = flipped ? IJSVGPathFlippingTransform(path) : CGAffineTransformIdentity;
+    CGPathAddPath(childPath.path, &transform, path);
     [rootNode addChild:childPath];
-    CGPathRelease(nPath);
     return [[self.class alloc] initWithRootNode:rootNode];
 }
 

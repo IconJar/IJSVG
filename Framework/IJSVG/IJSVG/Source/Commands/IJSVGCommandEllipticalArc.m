@@ -9,51 +9,14 @@
 #import <IJSVG/IJSVGCommandEllipticalArc.h>
 #import <IJSVG/IJSVGUtils.h>
 
-@implementation IJSVGCommandEllipticalArc
-
-static IJSVGPathDataSequence* _sequence;
-
-+ (NSInteger)requiredParameterCount
+void IJSVGPathAddEllipticalArc(CGMutablePathRef path, const CGFloat* params, BOOL relative)
 {
-    return 7;
-}
-
-+ (IJSVGPathDataSequence*)pathDataSequence
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _sequence = (IJSVGPathDataSequence*)malloc(sizeof(IJSVGPathDataSequence) * 7);
-        _sequence[0] = kIJSVGPathDataSequenceTypeFloat;
-        _sequence[1] = kIJSVGPathDataSequenceTypeFloat;
-        _sequence[2] = kIJSVGPathDataSequenceTypeFloat;
-        _sequence[3] = kIJSVGPathDataSequenceTypeFlag;
-        _sequence[4] = kIJSVGPathDataSequenceTypeFlag;
-        _sequence[5] = kIJSVGPathDataSequenceTypeFloat;
-        _sequence[6] = kIJSVGPathDataSequenceTypeFloat;
-    });
-    return _sequence;
-}
-
-// modified from https://github.com/SVGKit/SVGKit/blob/880c94a5b77b6f22beb491a7a7e02ace220c32af/Source/Parsers/SVGKPointsAndPathsParser.m
-+ (void)runWithParams:(CGFloat*)params
-           paramCount:(NSInteger)count
-              command:(IJSVGCommand*)currentCommand
-      previousCommand:(IJSVGCommand*)command
-                 type:(IJSVGCommandType)type
-                 path:(CGMutablePathRef)path
-{
-    CGPoint radii = CGPointZero;
-    CGPoint arcEndPoint = CGPointZero;
+    CGPoint radii = CGPointMake(params[0], params[1]);
+    CGPoint arcEndPoint = CGPointMake(params[5], params[6]);
     CGPoint pathCurrentPoint = CGPathGetCurrentPoint(path);
-    CGFloat xAxisRotation = 0.f;
-    BOOL largeArcFlag = NO;
-    BOOL sweepFlag = NO;
-    
-    radii = currentCommand.readPoint;
-    xAxisRotation = currentCommand.readFloat;
-    largeArcFlag = currentCommand.readBOOL;
-    sweepFlag = currentCommand.readBOOL;
-    arcEndPoint = currentCommand.readPoint;
+    CGFloat xAxisRotation = params[2];
+    BOOL largeArcFlag = params[3] == 1;
+    BOOL sweepFlag = params[4] == 1;
     
     CGFloat rx = fabs(radii.x);
     CGFloat ry = fabs(radii.y);
@@ -61,7 +24,7 @@ static IJSVGPathDataSequence* _sequence;
     xAxisRotation *= M_PI / 180.f;
     xAxisRotation = fmod(xAxisRotation, 2.f * M_PI);
 
-    if(type == kIJSVGCommandTypeRelative) {
+    if(relative) {
         arcEndPoint.x += pathCurrentPoint.x;
         arcEndPoint.y += pathCurrentPoint.y;
     }
@@ -134,6 +97,42 @@ static IJSVGPathDataSequence* _sequence;
 
     CGPathAddRelativeArc(path, &transform, 0.f, 0.f, 1.f,
                          startAngle, angleDelta);
+}
+
+@implementation IJSVGCommandEllipticalArc
+
+static IJSVGPathDataSequence* _sequence;
+
++ (NSInteger)requiredParameterCount
+{
+    return 7;
+}
+
++ (IJSVGPathDataSequence*)pathDataSequence
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _sequence = (IJSVGPathDataSequence*)malloc(sizeof(IJSVGPathDataSequence) * 7);
+        _sequence[0] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[1] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[2] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[3] = kIJSVGPathDataSequenceTypeFlag;
+        _sequence[4] = kIJSVGPathDataSequenceTypeFlag;
+        _sequence[5] = kIJSVGPathDataSequenceTypeFloat;
+        _sequence[6] = kIJSVGPathDataSequenceTypeFloat;
+    });
+    return _sequence;
+}
+
+// modified from https://github.com/SVGKit/SVGKit/blob/880c94a5b77b6f22beb491a7a7e02ace220c32af/Source/Parsers/SVGKPointsAndPathsParser.m
++ (void)runWithParams:(CGFloat*)params
+           paramCount:(NSInteger)count
+              command:(IJSVGCommand*)currentCommand
+      previousCommand:(IJSVGCommand*)command
+                 type:(IJSVGCommandType)type
+                 path:(CGMutablePathRef)path
+{
+    IJSVGPathAddEllipticalArc(path, params, type == kIJSVGCommandTypeRelative);
 }
 
 @end

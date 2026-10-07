@@ -738,13 +738,17 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(IJSVGRatio(point1, point2));
 }
 
+CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
+{
+    CGRect bounds = CGPathGetPathBoundingBox(path);
+    CGAffineTransform scale = CGAffineTransformMakeScale(1.f, -1.f);
+    return CGAffineTransformTranslate(scale, 0.f, bounds.size.height);
+}
+
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path
 {
-    CGRect boundingBox = CGPathGetPathBoundingBox(path);
-    CGAffineTransform scale = CGAffineTransformMakeScale(1.f, -1.f);
-    CGAffineTransform translate = CGAffineTransformTranslate(scale, 0.f, boundingBox.size.height);
-    CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &translate);
-    return transformPath;
+    CGAffineTransform transform = IJSVGPathFlippingTransform(path);
+    return CGPathCreateCopyByTransformingPath(path, &transform);
 }
 
 #pragma mark CG conversions

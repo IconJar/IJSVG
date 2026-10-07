@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -35,6 +36,16 @@ IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence
 CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
     IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
     NSInteger commandLength, NSInteger* _Nullable commandsFound);
+
+// Each data stream starts at its own origin, even when the destination has geometry.
+void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteger length,
+    IJSVGPathDataStream* dataStream);
+// Invalid point lists leave the destination unchanged.
+BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInteger length,
+    BOOL closePath, IJSVGPathDataStream* dataStream);
+
+CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger length,
+    IJSVGPathDataStream* dataStream) CF_RETURNS_RETAINED;
 
 CGFloat IJSVGParseFloat(const char* buffer);
 
