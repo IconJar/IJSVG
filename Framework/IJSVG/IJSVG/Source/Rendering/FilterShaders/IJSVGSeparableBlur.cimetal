@@ -6,6 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+/* THIS FILE HAS A cimetal EXTENSION DUE TO AN XCODE BUILD SYSTEM BUG. */
+
 #include <CoreImage/CoreImage.h>
 
 extern "C" {
