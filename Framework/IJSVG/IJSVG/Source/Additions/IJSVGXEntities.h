@@ -71,7 +71,6 @@
 
 /* TODO: These should probably be private (at least some of these). */
 # import <IJSVG/CGColorSpaceWrapper.h>
-# import <IJSVG/NSString+macOS.h>
 # import <IJSVG/NSValue+macOS.h>
 # import <IJSVG/UIColor+macOS.h>
 # import <IJSVG/UIImage+macOS.h>

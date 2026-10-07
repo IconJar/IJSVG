@@ -34,7 +34,6 @@
 				Additions/IJSVGStringAdditions.h,
 				Additions/IJSVGXEntities.h,
 				"Additions/NSImage+IJSVGAdditions.h",
-				"Additions/NSString+macOS.h",
 				"Additions/NSValue+macOS.h",
 				"Additions/UIColor+macOS.h",
 				"Additions/UIImage+macOS.h",
