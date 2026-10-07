@@ -15,18 +15,12 @@ let package = Package(
             name: "IJSVG",
             dependencies: [.product(name: "TouchXML", package: "TouchXML")],
             path: "Framework/IJSVG/IJSVG",
-            exclude: [
-                "Info.plist",
-                "Source/Rendering/FilterShaders/IJSVGBlur.metal",
-                "Source/Rendering/FilterShaders/IJSVGInnerShadow.metal",
-                "Source/Rendering/FilterShaders/IJSVGSeparableBlur.metal",
-                "Source/Rendering/FilterShaders/IJSVGSubtract.metal",
-            ],
+            exclude: ["Info.plist"],
             resources: [
                 .copy("Source/Rendering/FilterShaders/IJSVGBlur.metal"),
                 .copy("Source/Rendering/FilterShaders/IJSVGInnerShadow.metal"),
-                .copy("Source/Rendering/FilterShaders/IJSVGSeparableBlur.metal"),
-                .copy("Source/Rendering/FilterShaders/IJSVGSubtract.metal"),
+                .copy("Source/Rendering/FilterShaders/IJSVGSeparableBlur.cimetal"),
+                .copy("Source/Rendering/FilterShaders/IJSVGSubtract.cimetal"),
             ],
             publicHeadersPath: "include",
             cSettings: [
