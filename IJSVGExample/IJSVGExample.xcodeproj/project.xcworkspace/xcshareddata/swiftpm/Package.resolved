@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Archery-Inc/TouchXML.git",
       "state" : {
-        "revision" : "d5ef287c76f8368094b3ad6663ce15463ac846a2",
-        "version" : "0.3.0-alpha.3"
+        "revision" : "841ce7d4c062f1e7d29cb5f9f03fc3338f07bf4b",
+        "version" : "0.3.0-alpha.4"
       }
     }
   ],
