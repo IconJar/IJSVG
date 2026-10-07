@@ -107,7 +107,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		7B61CBB63075260B00E3A804 /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (7B61CC903075260C00E3A804 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {Rendering/FilterShaders/IJSVGSeparableBlur.metal = text; }; explicitFolders = (); path = Source; sourceTree = "<group>"; };
+		7B61CBB63075260B00E3A804 /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (7B61CC903075260C00E3A804 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Source; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
