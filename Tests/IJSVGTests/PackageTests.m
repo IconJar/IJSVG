@@ -13,14 +13,14 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='red'/></svg>"];
     XCTAssertNotNil(svg);
     XCTAssertTrue(CGSizeEqualToSize(svg.size, CGSizeMake(16, 16)));
-    NSImage* image = [svg imageWithSize:CGSizeMake(32, 32)];
+    XColor* image = [svg imageWithSize:CGSizeMake(32, 32)];
     XCTAssertNotNil(image);
     XCTAssertTrue(CGSizeEqualToSize(image.size, CGSizeMake(32, 32)));
     CGImageRef cgImage = [image CGImageForProposedRect:NULL context:nil hints:nil];
     XCTAssertTrue(cgImage != NULL);
     if(cgImage == NULL) return;
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
-    NSColor* color = [[bitmap colorAtX:16 y:16] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+    XColor* color = [[bitmap colorAtX:16 y:16] colorUsingColorSpace:XColorSpace.deviceRGBColorSpace];
     XCTAssertNotNil(color);
     XCTAssertGreaterThan(color.redComponent, 0.95);
     XCTAssertLessThan(color.greenComponent, 0.05);

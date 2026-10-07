@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;
-@property (nonatomic, strong, nullable) NSImage* image;
+@property (nonatomic, strong, nullable) XImage* image;
 @property (nonatomic, copy, readonly, nullable) NSData* sourceData;
 @property (nonatomic, copy, readonly, nullable) NSString* sourceMIMEType;
 

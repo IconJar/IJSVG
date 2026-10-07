@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 // Read shader text from the framework or Swift package resource bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)
@@ -18,6 +19,11 @@ NSString* IJSVGFilterShaderSource(NSString* name)
 #endif
     NSURL* sourceURL = [bundle URLForResource:name
                                 withExtension:@"metal"];
+    /* If the metal file does not exist, we also search a cimetal file.
+     * See commit log for explanation about this. */
+    if (sourceURL == nil)
+        sourceURL = [bundle URLForResource:name
+                             withExtension:@"cimetal"];
     return sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
                                                       encoding:NSUTF8StringEncoding
                                                          error:NULL] : nil;
@@ -323,10 +329,10 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [input imageByApplyingTransform:CGAffineTransformMakeTranslation(dx * units.width, dy * units.height)];
 }
 
-- (CIImage*)floodWithColor:(NSColor*)color
+- (CIImage*)floodWithColor:(XColor*)color
                    opacity:(CGFloat)opacity
 {
-    color = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace] ?: NSColor.blackColor;
+    color = [color colorUsingXColorSpace:XColorSpace.sRGBColorSpace] ?: XColor.blackColor;
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CIColor* ciColor = [CIColor colorWithRed:color.redComponent
                                        green:color.greenComponent

@@ -10,6 +10,10 @@
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
 
+inline NSString *NSStringFromRect(CGRect rect) {
+    return [NSString stringWithFormat:@"{%f, %f, %f, %f}", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height];
+}
+
 @interface IJSVGArtworkFittingTests: XCTestCase
 @end
 
@@ -176,7 +180,7 @@
 - (IJSVG*)exampleSVGNamed:(NSString*)name
 {
     NSString* directory = @(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
-    NSString* path = [[directory stringByAppendingPathComponent:@"IJSVGExample"]
+    NSString* path = [[directory stringByAppendingPathComponent:@"Common Example Resources"]
                      stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"svg"]];
     XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:path],
                   @"Missing example: %@", path);

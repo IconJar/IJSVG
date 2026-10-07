@@ -106,7 +106,7 @@
     IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
     IJSVGPath* rect = (IJSVGPath*)rootNode.children.firstObject;
     IJSVGColorNode* fill = (IJSVGColorNode*)rect.fill;
-    NSColor* rgbColor = [fill.color colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    XColor* rgbColor = [fill.color colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
 
     XCTAssertEqualWithAccuracy(rgbColor.redComponent, 1.f, 0.03);
     XCTAssertEqualWithAccuracy(rgbColor.greenComponent, 0.f, 0.03);
@@ -265,8 +265,8 @@
     IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
     IJSVGPath* target = (IJSVGPath*)rootNode.children.firstObject;
     IJSVGLinearGradient* gradient = (IJSVGLinearGradient*)target.fill;
-    NSColor* firstColor = [gradient.colors.firstObject colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
-    NSColor* lastColor = [gradient.colors.lastObject colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    XColor* firstColor = [gradient.colors.firstObject colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* lastColor = [gradient.colors.lastObject colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
 
     XCTAssertTrue([gradient isKindOfClass:IJSVGLinearGradient.class]);
     XCTAssertEqualObjects(gradient.identifier, @"fade");

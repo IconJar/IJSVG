@@ -6,6 +6,9 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
+#include <TargetConditionals.h>
+
+#if TARGET_OS_OSX
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/NSImage+IJSVGAdditions.h>
 
@@ -50,3 +53,4 @@ IJSVG* IJSVGGetFromNSImage(NSImage* image)
 }
 
 @end
+#endif

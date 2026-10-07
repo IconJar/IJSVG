@@ -6,10 +6,15 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <TargetConditionals.h>
 #import <math.h>
+
+#if TARGET_OS_OSX
 
 @implementation IJSVGExporterPathInstructionCommand
 @end
@@ -298,6 +303,8 @@ static NSUInteger IJSVGExporterPathInstructionStringLength(char instruction,
     return string;
 }
 
+#endif
+
 static CGFloat IJSVGExporterPathPrecisionMultiplier(int precision)
 {
     switch (precision) {
@@ -349,6 +356,8 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
         }
     }
 }
+
+#if TARGET_OS_OSX
 
 + (void)convertInstructionsToRoundRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
                                  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
@@ -931,3 +940,5 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
 }
 
 @end
+
+#endif

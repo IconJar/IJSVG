@@ -6,11 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGXEntities.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
@@ -211,6 +215,7 @@ NSString* IJSVGShortenFloatString(NSString* string)
     return string;
 }
 
+#if TARGET_OS_OSX
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void)
 {
     return IJSVGFloatingPointOptionsMake(NO, kIJSVGExporterPathInstructionFloatPrecision);
@@ -223,6 +228,7 @@ IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precisio
         .precision = precision
     };
 }
+#endif
 
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options)
 {
@@ -732,8 +738,8 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return [string floatValue];
 }
 
-+ (CGFloat)angleBetweenPointA:(NSPoint)point1
-                       pointb:(NSPoint)point2
++ (CGFloat)angleBetweenPointA:(XPoint)point1
+                       pointb:(XPoint)point2
 {
     return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(IJSVGRatio(point1, point2));
 }
@@ -785,20 +791,19 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     }
 }
 
-
-
-
-+ (NSImage*)resizeImage:(NSImage*)anImage
-                 toSize:(CGSize)size
+#if TARGET_OS_OSX
++ (XImage*)resizeImage:(XImage*)anImage
+                toSize:(CGSize)size
 {
-    NSImage* image = [[NSImage alloc] initWithSize:size];
+    XImage* image = [[XImage alloc] initWithSize:size];
     [image lockFocus];
-    [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height)
-               fromRect:NSMakeRect(0.f, 0.f, anImage.size.width, anImage.size.height)
+    [anImage drawInRect:XRectMake(0.f, 0.f, size.width, size.height)
+               fromRect:XRectMake(0.f, 0.f, anImage.size.width, anImage.size.height)
               operation:NSCompositingOperationCopy
                fraction:1.f];
     [image unlockFocus];
     return image;
 }
+#endif
 
 @end

@@ -6,6 +6,11 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
+
+@import UniformTypeIdentifiers;
+
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGImageRep.h>
 
@@ -77,14 +82,14 @@
     return YES;
 }
 
-- (BOOL)drawAtPoint:(NSPoint)point
+- (BOOL)drawAtPoint:(XPoint)point
 {
     [_svg drawAtPoint:point
                  size:_svg.viewBox.size];
     return YES;
 }
 
-- (BOOL)drawInRect:(NSRect)rect
+- (BOOL)drawInRect:(XRect)rect
 {
     [_svg drawInRect:rect];
     return YES;
@@ -101,3 +106,5 @@
 }
 
 @end
+
+#endif

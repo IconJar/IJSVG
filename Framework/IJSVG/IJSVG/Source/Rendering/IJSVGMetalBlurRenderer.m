@@ -11,8 +11,8 @@
 #if SWIFT_PACKAGE
 #import <IJSVG/IJSVGFilterContext.h>
 #endif
+#import <IJSVG/IJSVGXEntities.h>
 #import <simd/simd.h>
-#import <AppKit/NSColorSpace.h>
 
 typedef struct {
     simd_uint4 geometry;
@@ -27,7 +27,7 @@ typedef struct {
 @property (nonatomic, strong) NSData* source;
 @property (nonatomic, strong) NSData* weights;
 @property (nonatomic, assign) IJSVGMetalBlurParameters parameters;
-@property (nonatomic, strong) NSColorSpace* colorSpace;
+@property (nonatomic, strong) XColorSpace* colorSpace;
 @property (nonatomic, assign) CGImageRef renderedImage;
 @end
 
@@ -135,7 +135,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
     IJSVGMetalBlurJob* job = [[IJSVGMetalBlurJob alloc] init];
     job.source = source;
     job.weights = [weights copy];
-    job.colorSpace = [[NSColorSpace alloc] initWithCGColorSpace:CGBitmapContextGetColorSpace(bitmap)];
+    job.colorSpace = [[XColorSpace alloc] initWithCGColorSpace:CGBitmapContextGetColorSpace(bitmap)];
     job.parameters = (IJSVGMetalBlurParameters){
         .geometry = {(uint32_t)width, (uint32_t)height, (uint32_t)taps, (uint32_t)sourceCrops},
         .region = {CGRectGetMinX(region), CGRectGetMinY(region), CGRectGetMaxX(region), CGRectGetMaxY(region)},

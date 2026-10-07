@@ -6,8 +6,8 @@
 //  Copyright © 2021 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
-#import <AppKit/AppKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -25,10 +25,10 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     
 }
 
-@property (nonatomic, strong, nullable) NSColor* color;
+@property (nonatomic, strong, nullable) XColor* color;
 @property (nonatomic, assign) IJSVGColorUsageTraits traits;
 
-+ (IJSVGTraitedColor*)colorWithColor:(NSColor*)color
++ (IJSVGTraitedColor*)colorWithColor:(XColor*)color
                               traits:(IJSVGColorUsageTraits)mask;
 
 - (void)addTraits:(IJSVGColorUsageTraits)traits;

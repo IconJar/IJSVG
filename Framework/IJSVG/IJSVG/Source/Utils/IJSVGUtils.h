@@ -6,9 +6,12 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 
@@ -46,8 +49,10 @@ size_t IJSVGCharBufferHash(char* buffer);
 CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path);
 
+#if TARGET_OS_OSX
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsDefault(void);
 IJSVGFloatingPointOptions IJSVGFloatingPointOptionsMake(BOOL round, int precision);
+#endif
 
 NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* stringToCompress);
 NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions options);
@@ -76,8 +81,8 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
                                   sourceURL:(NSURL*)sourceURL;
 
 + (CGFloat)floatValue:(NSString*)string;
-+ (CGFloat)angleBetweenPointA:(NSPoint)point
-                       pointb:(NSPoint)point;
++ (CGFloat)angleBetweenPointA:(XPoint)point
+                       pointb:(XPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
 + (NSArray<NSString*>*)defURLs:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string
@@ -102,8 +107,10 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
 
-+ (NSImage*)resizeImage:(NSImage*)anImage
-                 toSize:(CGSize)size;
+#if TARGET_OS_OSX
++ (XImage*)resizeImage:(XImage*)anImage
+                toSize:(CGSize)size;
+#endif
 
 @end
 NS_ASSUME_NONNULL_END

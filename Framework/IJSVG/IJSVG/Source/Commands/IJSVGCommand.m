@@ -53,10 +53,10 @@
 {
 }
 
-+ (NSPoint)readCoordinatePair:(CGFloat*)pairs
++ (XPoint)readCoordinatePair:(CGFloat*)pairs
                         index:(NSInteger)index
 {
-    return NSMakePoint(pairs[index * 2], pairs[index * 2 + 1]);
+    return XPointMake(pairs[index * 2], pairs[index * 2 + 1]);
 }
 
 + (void)load
@@ -295,12 +295,12 @@
     return f;
 }
 
-- (NSPoint)readPoint
+- (XPoint)readPoint
 {
     CGFloat x = _parameters[_currentIndex];
     CGFloat y = _parameters[_currentIndex + 1];
     _currentIndex += 2;
-    return NSMakePoint(x, y);
+    return XPointMake(x, y);
 }
 
 - (BOOL)readBOOL

@@ -6,13 +6,17 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
+#if TARGET_OS_OSX
+
 #import <AppKit/AppKit.h>
 #import <Cocoa/Cocoa.h>
 
 IJSVG* IJSVGGetFromNSImage(NSImage* image);
 
-@interface NSImage (IJSVGAdditions)
+@interface XImage (IJSVGAdditions)
 
-+ (NSImage*)SVGImageNamed:(NSString*)imageName;
++ (XImage*)SVGImageNamed:(NSString*)imageName;
 
 @end
+
+#endif

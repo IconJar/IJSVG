@@ -166,14 +166,14 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 
 - (void)pushViewPort:(CGRect)viewPort
 {
-    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(viewPort)];
+    NSValue* value = [NSValue valueWithRect:XRectFromCGRect(viewPort)];
     [_viewPortStack addObject:value];
 }
 
 - (CGRect)viewPort
 {
     NSValue* value = _viewPortStack.lastObject;
-    return (CGRect)NSRectToCGRect(value.rectValue);
+    return (CGRect)XRectToCGRect(value.rectValue);
 }
 
 - (void)popViewPort
@@ -195,14 +195,14 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 
 - (void)pushUnitBounds:(CGRect)bounds
 {
-    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(bounds)];
+    NSValue* value = [NSValue valueWithRect:XRectFromCGRect(bounds)];
     [_unitBoundsStack addObject:value];
 }
 
 - (CGRect)unitBounds
 {
     NSValue* value = _unitBoundsStack.lastObject;
-    return value == nil ? CGRectNull : (CGRect)NSRectToCGRect(value.rectValue);
+    return value == nil ? CGRectNull : (CGRect)XRectToCGRect(value.rectValue);
 }
 
 - (void)popUnitBounds
@@ -583,8 +583,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return newPath;
 }
 
-- (NSColor*)colorForColor:(NSColor*)color
-           matchingTraits:(IJSVGColorUsageTraits)traits
+- (XColor*)colorForColor:(XColor*)color
+          matchingTraits:(IJSVGColorUsageTraits)traits
 {
     return [_style.colors colorForColor:color
                          matchingTraits:traits];
@@ -605,7 +605,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         case IJSVGPaintFillTypeColor: {
 
             IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
-            NSColor* color = colorNode.color ?: NSColor.blackColor;
+            XColor* color = colorNode.color ?: XColor.blackColor;
 
             // Use the fill color supplied by the style.
             if(_style.fillColor != nil) {
@@ -616,8 +616,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                 color = nil;
             } else {
                 // Apply any color replacement from the style.
-                NSColor* repColor = [self colorForColor:color
-                                         matchingTraits:IJSVGColorUsageTraitFill];
+                XColor* repColor = [self colorForColor:color
+                                        matchingTraits:IJSVGColorUsageTraitFill];
                 color = repColor ?: color;
             }
 
@@ -779,15 +779,15 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
        toShapePaint:paint];
 
     // Choose the stroke color.
-    NSColor* strokeColor = NSColor.blackColor;
+    XColor* strokeColor = XColor.blackColor;
     if([node.stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node.stroke;
         strokeColor = colorNode.color;
     }
 
     // Apply any color replacement.
-    NSColor* repColor = [self colorForColor:strokeColor
-                             matchingTraits:IJSVGColorUsageTraitStroke];
+    XColor* repColor = [self colorForColor:strokeColor
+                            matchingTraits:IJSVGColorUsageTraitStroke];
     strokeColor = repColor ?: strokeColor;
 
     // Use the stroke color supplied by the style.
@@ -913,10 +913,10 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         gradient = gradient.copy;
         NSMutableArray* colors = nil;
         colors = [NSMutableArray.alloc initWithCapacity:gradient.numberOfStops];
-        for(NSColor* color in gradient.colors) {
-            NSColor* repColor = [self colorForColor:color
-                                     matchingTraits:traits];
-            NSColor* compColor = repColor ?: color;
+        for(XColor* color in gradient.colors) {
+            XColor* repColor = [self colorForColor:color
+                                    matchingTraits:traits];
+            XColor* compColor = repColor ?: color;
             [colors addObject:compColor];
         }
         gradient.colors = colors;
@@ -1148,7 +1148,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 {
     CGContextSaveGState(context);
     if([paint isKindOfClass:IJSVGColorNode.class]) {
-        NSColor* color = ((IJSVGColorNode*)paint).color;
+        XColor* color = ((IJSVGColorNode*)paint).color;
         if(color != nil) {
             CGContextSetFillColorWithColor(context, color.CGColor);
             CGContextFillRect(context, region);

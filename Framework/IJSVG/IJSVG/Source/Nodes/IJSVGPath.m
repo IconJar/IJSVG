@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @implementation IJSVGPath
 
@@ -131,7 +132,7 @@
     return CGPathGetPathBoundingBox(_path);
 }
 
-- (NSPoint)currentPoint
+- (XPoint)currentPoint
 {
     return CGPathGetCurrentPoint(_path);
 }

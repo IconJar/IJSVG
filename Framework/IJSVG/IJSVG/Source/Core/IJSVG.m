@@ -6,11 +6,14 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVG.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
@@ -102,7 +105,7 @@
     return nil;
 }
 
-- (id)initWithImage:(NSImage*)image
+- (id)initWithImage:(XImage*)image
 {
     IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
     IJSVGImage* imageNode = [[IJSVGImage alloc] init];
@@ -276,8 +279,8 @@
     _renderingOptions = [[IJSVGRenderingOptions alloc] init];
     self.style = [[IJSVGStyle alloc] init];
     self.renderingBackingScaleHelper = ^CGFloat {
-        if(NSScreen.mainScreen != nil) {
-            return NSScreen.mainScreen.backingScaleFactor;
+        if(XScreen.mainScreen != nil) {
+            return XScreen.mainScreen.backingScaleFactor;
         }
         return 1.f;
     };
@@ -429,6 +432,7 @@
     return svgs;
 }
 
+#if TARGET_OS_OSX
 - (IJSVGExporter*)exporterWithSize:(CGSize)size
                            options:(IJSVGExporterOptions)options
               floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
@@ -474,15 +478,16 @@
                           options:options
              floatingPointOptions:floatingPointOptions].SVGString;
 }
+#endif
 
-- (NSImage*)imageWithSize:(CGSize)aSize
+- (XImage*)imageWithSize:(CGSize)aSize
 {
     return [self imageWithSize:aSize
                        flipped:NO
                          error:nil];
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
+- (XImage*)imageWithSize:(CGSize)aSize
                     error:(NSError**)error;
 {
     return [self imageWithSize:aSize
@@ -490,7 +495,7 @@
                          error:error];
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
+- (XImage*)imageWithSize:(CGSize)aSize
                   flipped:(BOOL)flipped
 {
     return [self imageWithSize:aSize
@@ -551,16 +556,16 @@
     return imageRef;
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
-                  flipped:(BOOL)flipped
-                    error:(NSError**)error
+- (XImage*)imageWithSize:(CGSize)aSize
+                 flipped:(BOOL)flipped
+                   error:(NSError**)error
 {
     CGImageRef ref = [self newCGImageRefWithSize:aSize
                                          flipped:flipped
                                            error:error];
 
-    NSImage* image = [[NSImage alloc] initWithCGImage:ref
-                                                 size:aSize];
+    XImage* image = [[XImage alloc] initWithCGImage:ref
+                                               size:aSize];
     CGImageRelease(ref);
     return image;
 }
@@ -583,7 +588,7 @@
     return ogSize;
 }
 
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
+- (XImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
                                           flipped:(BOOL)flipped
                                             error:(NSError**)error
 {
@@ -605,7 +610,7 @@
 - (NSData*)PDFData:(NSError**)error
 {
     return [self
-        PDFDataWithRect:(CGRect) { .origin = NSZeroPoint, .size = _viewBox.size }
+        PDFDataWithRect:(CGRect) { .origin = XPointZero, .size = _viewBox.size }
                   error:error];
 }
 
@@ -649,7 +654,7 @@
     return data;
 }
 
-- (void)prepForDrawingInView:(NSView*)view
+- (void)prepForDrawingInView:(XView*)view
 {
     // kill the render
     if(view == nil) {
@@ -658,7 +663,7 @@
     }
 
     // set the scale
-    __weak NSView* weakView = view;
+    __weak XView* weakView = view;
     self.renderingBackingScaleHelper = ^CGFloat {
         return weakView.window.screen.backingScaleFactor;
     };
@@ -676,7 +681,7 @@
                size:(CGSize)aSize
               error:(NSError**)error
 {
-    return [self drawInRect:NSMakeRect(point.x, point.y,
+    return [self drawInRect:XRectMake(point.x, point.y,
                                        aSize.width, aSize.height)
                       error:error];
 }
@@ -690,7 +695,11 @@
              error:(NSError**)error
 {
     CGContextRef currentCGContext;
+#if TARGET_OS_OSX
     currentCGContext = NSGraphicsContext.currentContext.CGContext;
+#else
+    currentCGContext = UIGraphicsGetCurrentContext();
+#endif
     return [self _drawInRect:rect
                      context:currentCGContext
                        error:error];
@@ -793,6 +802,7 @@
 
 #pragma mark NSPasteboard
 
+#if TARGET_OS_OSX
 - (NSArray*)writableTypesForPasteboard:(NSPasteboard*)pasteboard
 {
     return @[ NSPasteboardTypePDF ];
@@ -805,6 +815,7 @@
     }
     return nil;
 }
+#endif
 
 #pragma mark matching
 

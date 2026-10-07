@@ -11,7 +11,7 @@
 @implementation SVGView
 
 // Configures SVG display with the standard rendering options.
-- (id)initWithFrame:(NSRect)frameRect
+- (id)initWithFrame:(XRect)frameRect
 {
     if( ( self = [super initWithFrame:frameRect] ) != nil ) {
         svg = [self svg];
@@ -27,7 +27,7 @@
     return [IJSVG SVGNamed:@"text-filter.svg"];
 }
 
-- (void)drawRect:(NSRect)dirtyRect
+- (void)drawRect:(XRect)dirtyRect
 {
     CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ref);

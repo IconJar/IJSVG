@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -67,7 +68,7 @@ typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) {
 // Primitive specific SVG attributes, retained for lossless vector export.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, NSString*>* parameters;
 @property (nonatomic, strong, nullable) IJSVGNode* imageNode;
-@property (nonatomic, strong, nullable) NSImage* image;
+@property (nonatomic, strong, nullable) XImage* image;
 
 @property (nonatomic, readonly) IJSVGFilterCompositeOperator compositeOperator;
 @property (nonatomic, readonly) IJSVGFilterEdgeMode edgeMode;

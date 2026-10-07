@@ -6,6 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVGPatternPaint.h>
 #import <IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGUnitRect.h>
@@ -172,8 +174,12 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 {
     // Keep window drawing independent of deferred nested pattern callbacks.
     // Other contexts keep drawing the pattern directly.
+#if TARGET_OS_OSX
     NSGraphicsContext* graphicsContext = NSGraphicsContext.currentContext;
     BOOL drawingToScreen = graphicsContext.CGContext == ctx && graphicsContext.isDrawingToScreen;
+#else
+    BOOL drawingToScreen = false;
+#endif
     if(!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;

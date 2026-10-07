@@ -52,12 +52,12 @@ IJSVG* IJSVGTestSVGObject(NSString* svgString)
     return svg;
 }
 
-NSXMLDocument* IJSVGTestXMLDocument(NSString* xmlString)
+CXMLDocument* IJSVGTestXMLDocument(NSString* xmlString)
 {
     NSError* error = nil;
-    NSXMLDocument* document = [[NSXMLDocument alloc] initWithXMLString:xmlString
-                                                               options:0
-                                                                 error:&error];
+    CXMLDocument* document = [[CXMLDocument alloc] initWithXMLString:xmlString
+                                                             options:0
+                                                               error:&error];
     XCTAssertNotNil(document);
     XCTAssertNil(error);
     return document;
@@ -98,7 +98,7 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
     return data;
 }
 
-NSColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point)
+XColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point)
 {
     NSUInteger width = (NSUInteger)size.width;
     NSUInteger height = (NSUInteger)size.height;
@@ -107,23 +107,23 @@ NSColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point)
     NSUInteger bitmapY = height - 1 - clampedY;
     const unsigned char* pixels = data.bytes;
     const unsigned char* pixel = pixels + ((bitmapY * width) + clampedX) * 4;
-    return [NSColor colorWithCalibratedRed:pixel[0] / 255.f
-                                     green:pixel[1] / 255.f
-                                      blue:pixel[2] / 255.f
-                                     alpha:pixel[3] / 255.f];
+    return [XColor colorWithCalibratedRed:pixel[0] / 255.f
+                                    green:pixel[1] / 255.f
+                                     blue:pixel[2] / 255.f
+                                    alpha:pixel[3] / 255.f];
 }
 
-NSColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point)
+XColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point)
 {
     CGSize size = CGSizeMake(8.f, 8.f);
     NSData* data = IJSVGTestRGBADataForSVG(svgString, size);
     return IJSVGTestColorFromRGBAData(data, size, point);
 }
 
-void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green,
+void IJSVGAssertColorComponents(XColor* color, CGFloat red, CGFloat green,
                                 CGFloat blue, CGFloat alpha)
 {
-    NSColor* rgbColor = [color colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    XColor* rgbColor = [color colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
     XCTAssertEqualWithAccuracy(rgbColor.redComponent, red, 0.02);
     XCTAssertEqualWithAccuracy(rgbColor.greenComponent, green, 0.02);
     XCTAssertEqualWithAccuracy(rgbColor.blueComponent, blue, 0.02);
@@ -132,7 +132,7 @@ void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green,
 
 void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
                                       NSArray<NSString*>* rows,
-                                      NSDictionary<NSString*, NSColor*>* palette)
+                                      NSDictionary<NSString*, XColor*>* palette)
 {
     CGSize size = CGSizeMake(rows.firstObject.length, rows.count);
     NSData* data = IJSVGTestRGBADataForSVG(svgString, size);
@@ -143,12 +143,12 @@ void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
 
         for(NSUInteger x = 0; x < row.length; x++) {
             NSString* key = [row substringWithRange:NSMakeRange(x, 1)];
-            NSColor* expectedColor = palette[key];
+            XColor* expectedColor = palette[key];
             XCTAssertNotNil(expectedColor);
 
-            NSColor* actualColor = IJSVGTestColorFromRGBAData(data, size,
+            XColor* actualColor = IJSVGTestColorFromRGBAData(data, size,
                                                               CGPointMake(x, y));
-            NSColor* expectedRGBColor = [expectedColor colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+            XColor* expectedRGBColor = [expectedColor colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
             IJSVGAssertColorComponents(actualColor,
                                        expectedRGBColor.redComponent,
                                        expectedRGBColor.greenComponent,

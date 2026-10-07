@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @interface IJSVGColor (Utils)
 
@@ -16,8 +17,8 @@
                   saturation:(CGFloat)saturation
                    lightness:(CGFloat)lightness;
 
-// Creates an NSColor from the parameter list of an oklch() color function,
+// Creates an XColor from the parameter list of an oklch() color function,
 // e.g. the "62.8% 0.25 29.23" portion. Returns nil if the parameters are invalid.
-+ (NSColor*)colorFromOKLCHParameters:(NSString*)parameters;
++ (XColor*)colorFromOKLCHParameters:(NSString*)parameters;
 
 @end

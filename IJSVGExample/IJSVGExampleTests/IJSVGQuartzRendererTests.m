@@ -596,8 +596,8 @@
                                                    "fill='red' stroke='blue' stroke-width='2'/></svg>"];
     XCTAssertNotNil(svg);
     if(svg == nil) return;
-    svg.style.fillColor = NSColor.greenColor;
-    svg.style.strokeColor = NSColor.magentaColor;
+    svg.style.fillColor = XColor.greenColor;
+    svg.style.strokeColor = XColor.magentaColor;
     svg.style.lineWidth = 4.f;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
                                                             size:CGSizeMake(32.f,
@@ -657,8 +657,8 @@
                                                    "width='32' height='32' fill='url(#g)'/></svg>"];
     XCTAssertNotNil(svg);
     if(svg == nil) return;
-    [svg.style.colors replaceColor:NSColor.redColor
-                         withColor:NSColor.greenColor
+    [svg.style.colors replaceColor:XColor.redColor
+                         withColor:XColor.greenColor
                             traits:IJSVGColorUsageTraitGradientStop];
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
                                                             size:CGSizeMake(32.f,

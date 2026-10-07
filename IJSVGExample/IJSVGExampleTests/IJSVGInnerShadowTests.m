@@ -92,24 +92,24 @@
         return nil;
     }
     NSError* error = nil;
-    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:string
-                                                          options:0
-                                                            error:&error];
+    CXMLDocument* xml = [[CXMLDocument alloc] initWithXMLString:string
+                                                        options:0
+                                                          error:&error];
     XCTAssertNil(error);
-    NSXMLElement* root = xml.rootElement;
+    CXMLElement* root = xml.rootElement;
     XCTAssertNotNil(root);
-    NSMutableArray<NSXMLElement*>* groups = [[NSMutableArray alloc] init];
-    for(NSXMLNode* child in root.children) {
-        if(child.kind == NSXMLElementKind && [child.name isEqualToString:@"g"]) {
-            [groups addObject:(NSXMLElement*)child];
+    NSMutableArray<CXMLElement*>* groups = [[NSMutableArray alloc] init];
+    for(CXMLNode* child in root.children) {
+        if(child.kind == CXMLElementKind && [child.name isEqualToString:@"g"]) {
+            [groups addObject:(CXMLElement*)child];
         }
     }
-    NSXMLElement* lettering = groups.lastObject;
+    CXMLElement* lettering = groups.lastObject;
     XCTAssertNotNil(lettering);
     if(lettering == nil) {
         return nil;
     }
-    for(NSXMLElement* group in groups) {
+    for(CXMLElement* group in groups) {
         if(group != lettering) {
             [group detach];
         }
@@ -118,16 +118,16 @@
         // Keep the same offscreen raster bounds, but remove the shadows.
         // This isolates damage to edge coverage from small
         // rasterisation differences between offscreen and direct drawing.
-        NSArray<NSXMLNode*>* nodes = [root nodesForXPath:@".//*[local-name()='filter' and "
+        NSArray<CXMLNode*>* nodes = [root nodesForXPath:@".//*[local-name()='filter' and "
                                                           "@id='filter4_ii_18590_2298']"
                                                    error:&error];
         XCTAssertNil(error);
-        NSXMLElement* filter = (NSXMLElement*)nodes.firstObject;
+        CXMLElement* filter = (CXMLElement*)nodes.firstObject;
         XCTAssertNotNil(filter);
         if(filter == nil) {
             return nil;
         }
-        filter.children = @[[NSXMLElement elementWithName:@"feColorMatrix"]];
+        filter.children = @[[CXMLElement elementWithName:@"feColorMatrix"]];
     }
     return xml.XMLString;
 }
@@ -152,10 +152,10 @@
     NSUInteger partialPixels = 0, shadedPixels = 0;
     for(NSInteger y = 0; y < pixels; y++) {
         for(NSInteger x = 0; x < pixels; x++) {
-            NSColor* a = [[actual colorAtX:x
-                                         y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            NSColor* b = [[source colorAtX:x
-                                         y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+            XColor* a = [[actual colorAtX:x
+                                        y:y] colorUsingXColorSpace:XColorSpace.sRGBColorSpace];
+            XColor* b = [[source colorAtX:x
+                                        y:y] colorUsingXColorSpace:XColorSpace.sRGBColorSpace];
             XCTAssertNotNil(a);
             XCTAssertNotNil(b);
             if(a == nil || b == nil) {

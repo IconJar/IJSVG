@@ -225,17 +225,17 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     // Strip only filter attributes from these fixtures. Preserve masks, clips,
     // opacity, transforms and definitions to form an independent plain reference.
     NSError* error = nil;
-    NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:document
-                                                          options:0
-                                                            error:&error];
+    CXMLDocument* xml = [[CXMLDocument alloc] initWithXMLString:document
+                                                        options:0
+                                                          error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(xml);
     if(xml == nil) return;
-    NSArray<NSXMLElement*>* elements = [xml nodesForXPath:@"//*[@filter]"
-                                                    error:&error];
+    NSArray<CXMLElement*>* elements = [xml nodesForXPath:@"//*[@filter]"
+                                                   error:&error];
     XCTAssertNil(error);
     XCTAssertGreaterThan(elements.count, 0u);
-    for(NSXMLElement* element in elements) {
+    for(CXMLElement* element in elements) {
         [element removeAttributeForName:@"filter"];
     }
     IJSVG* reference = IJSVGTestSVGObject(xml.XMLString);

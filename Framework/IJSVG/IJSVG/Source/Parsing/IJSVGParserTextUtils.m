@@ -247,7 +247,7 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value,
 
 
 void IJSVGApplyTextAttributes(IJSVGNode* node,
-                              NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength])
+                              NSArray<NSString*>* attributeValues)
 {
     static NSArray<NSString*>* styleNames;
     static NSArray<NSString*>* positionNames;

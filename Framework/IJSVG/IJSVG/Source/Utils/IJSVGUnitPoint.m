@@ -6,6 +6,7 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
+#import <CoreGraphics/CoreGraphics.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 
 @implementation IJSVGUnitPoint

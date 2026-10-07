@@ -73,9 +73,9 @@
                               matchingTraits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    for(NSColor* color in self.colors) {
-        NSColor* replacement = [style.colors colorForColor:color
-                                            matchingTraits:IJSVGColorUsageTraitGradientStop];
+    for(XColor* color in self.colors) {
+        XColor* replacement = [style.colors colorForColor:color
+                                           matchingTraits:IJSVGColorUsageTraitGradientStop];
         IJSVGTraitedColor* traited = nil;
         traited = [IJSVGTraitedColor colorWithColor:replacement ?: color
                                              traits:IJSVGColorUsageTraitGradientStop];
@@ -84,7 +84,7 @@
     return storage;
 }
 
-- (void)setColors:(NSArray<NSColor*>*)colors
+- (void)setColors:(NSArray<XColor*>*)colors
 {
     _colors = colors;
     [self _invalidateCGGradient];
@@ -114,7 +114,7 @@
         if(stopNode.type != IJSVGNodeTypeStop) {
             continue;
         }
-        NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
+        XColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
         CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
@@ -145,17 +145,17 @@
     NSInteger num = self.numberOfStops;
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num,
         &kCFTypeArrayCallBacks);
-    for (NSColor* color in _colors) {
+    for (XColor* color in _colors) {
         CFArrayAppendValue(colors, color.CGColor);
     }
     CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace,
-        colors, _locations);
+                                                      colors, _locations);
     CFRelease(colors);
     return _CGGradient = result;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx
-                  bounds:(NSRect)objectRect
+                  bounds:(XRect)objectRect
                transform:(CGAffineTransform)absoluteTransform
 {
 }

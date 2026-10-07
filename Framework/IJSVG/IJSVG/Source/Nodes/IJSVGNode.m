@@ -11,9 +11,10 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage,
-                                        NSColor* color,
+                                        XColor* color,
                                         IJSVGColorUsageTraits traits)
 {
     if(color == nil) {
@@ -94,9 +95,9 @@ NSString* IJSVGColorInterpolationString(IJSVGColorInterpolation value)
 
 // Returns not found for absent names and non element nodes.
 + (IJSVGNodeType)typeForString:(NSString* _Nullable)string
-                          kind:(NSXMLNodeKind)kind
+                          kind:(CXMLNodeKind)kind
 {
-    if(string == nil || kind != NSXMLElementKind) {
+    if(string == nil || kind != CXMLElementKind) {
         return IJSVGNodeTypeNotFound;
     }
     
@@ -616,7 +617,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     IJSVGNode* fill = self.fill;
     if(fill == nil) {
         IJSVGNodeAddColorToStorage(storage,
-                                   style.fillColor ?: NSColor.blackColor,
+                                   style.fillColor ?: XColor.blackColor,
                                    IJSVGColorUsageTraitFill);
     } else {
         IJSVGTraitedColorStorage* fillStorage = nil;

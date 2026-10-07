@@ -24,7 +24,7 @@
     NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:number];
     CGFloat opacity = numbers.count == 1 ? [IJSVGUtils floatValue:value
                                                fallBackForPercent:1] : 1;
-    NSColor* color = [IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack];
+    XColor* color = [IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack];
     return [context floodWithColor:color
                            opacity:opacity];
 }

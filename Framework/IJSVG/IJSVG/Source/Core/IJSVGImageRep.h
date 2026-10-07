@@ -6,6 +6,9 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
+
 #import <IJSVG/IJSVGParser.h>
 #import <Cocoa/Cocoa.h>
 
@@ -23,3 +26,4 @@
 @property (nonatomic, readonly) IJSVG* SVG;
 
 @end
+#endif

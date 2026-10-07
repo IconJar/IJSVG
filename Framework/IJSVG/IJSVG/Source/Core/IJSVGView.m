@@ -6,6 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+
 #import <IJSVG/IJSVGView.h>
 
 @implementation IJSVGView
@@ -35,6 +37,8 @@
 
 - (void)awakeFromNib
 {
+    [super awakeFromNib];
+    
     // image was set via IB
     if(imageName != nil) {
         IJSVG* anSVG = [IJSVG SVGNamed:imageName];
@@ -52,7 +56,11 @@
 
     // redisplay ourself!
     [SVG prepForDrawingInView:self];
+#if TARGET_OS_OSX
     [self setNeedsDisplay:YES];
+#else
+    [self setNeedsDisplay];
+#endif
 }
 
 - (BOOL)isFlipped
@@ -60,7 +68,7 @@
     return YES;
 }
 
-- (void)drawRect:(NSRect)dirtyRect
+- (void)drawRect:(XRect)dirtyRect
 {
     // only draw if there is actually an SVG
     if(self.SVG == nil) {

@@ -6,6 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <TargetConditionals.h>
+#if TARGET_OS_OSX
+
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTraitedColor.h>
@@ -70,11 +73,11 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
 @optional
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
-              identifierForElement:(NSXMLElement* _Nullable)element
+              identifierForElement:(CXMLElement* _Nullable)element
                               type:(IJSVGNodeType)type
                          defaultID:(NSString* (^)(void))defaultID;
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
-                    stringForColor:(NSColor*)color
+                    stringForColor:(XColor*)color
                              flags:(IJSVGColorUsageTraits)flag
                            options:(IJSVGColorStringOptions)options;
 
@@ -89,8 +92,8 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
     IJSVGRenderingOptions* _renderingOptions;
     CGSize _size;
     IJSVGExporterOptions _options;
-    NSXMLDocument* _dom;
-    NSXMLElement* _defElement;
+    CXMLDocument* _dom;
+    CXMLElement* _defElement;
     NSInteger _idCount;
     NSInteger _shortIdCount;
     BOOL _appliedXLink;
@@ -129,3 +132,4 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 @end
 
 NS_ASSUME_NONNULL_END
+#endif

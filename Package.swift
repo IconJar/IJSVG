@@ -7,16 +7,20 @@ let package = Package(
     products: [
         .library(name: "IJSVG", targets: ["IJSVG"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/Archery-Inc/TouchXML.git", .upToNextMinor(from: "0.3.0-alpha.4")),
+    ],
     targets: [
         .target(
             name: "IJSVG",
+            dependencies: [.product(name: "TouchXML", package: "TouchXML")],
             path: "Framework/IJSVG/IJSVG",
             exclude: ["Info.plist"],
             resources: [
                 .copy("Source/Rendering/FilterShaders/IJSVGBlur.metal"),
                 .copy("Source/Rendering/FilterShaders/IJSVGInnerShadow.metal"),
-                .copy("Source/Rendering/FilterShaders/IJSVGSeparableBlur.metal"),
-                .copy("Source/Rendering/FilterShaders/IJSVGSubtract.metal"),
+                .copy("Source/Rendering/FilterShaders/IJSVGSeparableBlur.cimetal"),
+                .copy("Source/Rendering/FilterShaders/IJSVGSubtract.cimetal"),
             ],
             publicHeadersPath: "include",
             cSettings: [
@@ -25,8 +29,6 @@ let package = Package(
                 .headerSearchPath("Source/Parsing")
             ],
             linkerSettings: [
-                .linkedFramework("AppKit"),
-                .linkedFramework("Quartz"),
                 .linkedFramework("CoreImage"),
                 .linkedFramework("Metal"),
                 .linkedFramework("Accelerate"),

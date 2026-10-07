@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 @implementation IJSVGImage
 
@@ -75,7 +76,7 @@
     }
 
     // set the image against the container, only if it was created from the data.
-    NSImage* anImage = [[NSImage alloc] initWithData:data];
+    XImage* anImage = [[XImage alloc] initWithData:data];
     if (anImage == nil) {
       return;
     }
@@ -86,7 +87,7 @@
                                               sourceURL:aURL] copy];
 }
 
-- (void)setImage:(NSImage*)anImage
+- (void)setImage:(XImage*)anImage
 {
     _sourceData = nil;
     _sourceMIMEType = nil;

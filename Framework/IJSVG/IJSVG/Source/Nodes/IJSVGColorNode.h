@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -14,12 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
     
 }
 
-@property (nonatomic, strong, nullable) NSColor* color;
+@property (nonatomic, strong, nullable) XColor* color;
 @property (nonatomic, assign) BOOL isNoneOrTransparent;
 
-+ (IJSVGNode*)colorNodeWithColor:(NSColor* _Nullable)color;
++ (IJSVGNode*)colorNodeWithColor:(XColor* _Nullable)color;
 
-- (instancetype)initWithColor:(NSColor* _Nullable)color;
+- (instancetype)initWithColor:(XColor* _Nullable)color;
 
 @end
 

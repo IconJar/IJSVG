@@ -7,13 +7,14 @@
 //
 
 #import <IJSVG/IJSVGGradient.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGLinearGradient : IJSVGGradient
 
-+ (void)parseGradient:(NSXMLElement*)element
++ (void)parseGradient:(CXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient;
 
 @end

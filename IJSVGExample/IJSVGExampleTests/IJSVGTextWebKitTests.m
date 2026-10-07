@@ -131,12 +131,12 @@ didFailNavigation:(WKNavigation*)navigation
     [self waitForExpectations:@[metrics]
                       timeout:20];
     XCTestExpectation* snapshot = [self expectationWithDescription:@"WebKit snapshot"];
-    __block NSImage* referenceImage = nil;
+    __block XImage* referenceImage = nil;
     WKSnapshotConfiguration* snapshotConfiguration = [[WKSnapshotConfiguration alloc] init];
     snapshotConfiguration.rect = CGRectMake(0, 0, 400, 200);
     snapshotConfiguration.snapshotWidth = @400;
     [self.webView takeSnapshotWithConfiguration:snapshotConfiguration
-                              completionHandler:^(NSImage* image, NSError* error) {
+                              completionHandler:^(XImage* image, NSError* error) {
                                   XCTAssertNil(error);
                                   referenceImage = image;
                                   [snapshot fulfill];

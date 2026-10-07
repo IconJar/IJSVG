@@ -8,13 +8,14 @@
 
 #import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGTraitedColor.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGReplacementColor : IJSVGTraitedColor
 
-@property (nonatomic, strong, nullable) NSColor* replacementColor;
+@property (nonatomic, strong, nullable) XColor* replacementColor;
 
 @end
 
@@ -33,11 +34,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addTraits:(IJSVGColorUsageTraits)traits;
 - (void)addColor:(IJSVGTraitedColor*)color;
-- (void)replaceColor:(NSColor*)replaceColor
-           withColor:(NSColor*)withColor
+- (void)replaceColor:(XColor*)replaceColor
+           withColor:(XColor*)withColor
               traits:(IJSVGColorUsageTraits)traits;
 - (void)unionColorStorage:(IJSVGTraitedColorStorage* _Nullable)colorList;
-- (NSColor* _Nullable)colorForColor:(NSColor*)color
+- (XColor* _Nullable)colorForColor:(XColor*)color
            matchingTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesReplacementTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits;

@@ -11,12 +11,12 @@
 
 @implementation IJSVGColorNode
 
-+ (IJSVGNode*)colorNodeWithColor:(NSColor *)color
++ (IJSVGNode*)colorNodeWithColor:(XColor *)color
 {
     return [[self alloc] initWithColor:color];
 }
 
-- (id)initWithColor:(NSColor*)color {
+- (id)initWithColor:(XColor*)color {
     if((self = [super init]) != nil) {
         [self addTraits:IJSVGNodeTraitPaintable];
         self.color = color;
@@ -39,7 +39,7 @@
         return storage;
     }
 
-    NSColor* color = self.color ?: NSColor.blackColor;
+    XColor* color = self.color ?: XColor.blackColor;
     if((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill &&
        style.fillColor != nil) {
         color = style.fillColor;
@@ -47,8 +47,8 @@
               style.strokeColor != nil) {
         color = style.strokeColor;
     } else {
-        NSColor* replacement = [style.colors colorForColor:color
-                                            matchingTraits:traits];
+        XColor* replacement = [style.colors colorForColor:color
+                                           matchingTraits:traits];
         color = replacement ?: color;
     }
 

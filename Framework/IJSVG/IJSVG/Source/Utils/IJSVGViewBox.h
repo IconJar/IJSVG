@@ -6,8 +6,8 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
-#import <Quartz/Quartz.h>
 
 typedef NS_ENUM(NSInteger, IJSVGViewBoxAlignment) {
     IJSVGViewBoxAlignmentUnknown,
