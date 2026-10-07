@@ -15,7 +15,13 @@ let package = Package(
             name: "IJSVG",
             dependencies: [.product(name: "TouchXML", package: "TouchXML")],
             path: "Framework/IJSVG/IJSVG",
-            exclude: ["Info.plist"],
+            exclude: [
+                "Info.plist",
+                "Source/Rendering/FilterShaders/IJSVGBlur.metal",
+                "Source/Rendering/FilterShaders/IJSVGInnerShadow.metal",
+                "Source/Rendering/FilterShaders/IJSVGSeparableBlur.metal",
+                "Source/Rendering/FilterShaders/IJSVGSubtract.metal",
+            ],
             resources: [
                 .copy("Source/Rendering/FilterShaders/IJSVGBlur.metal"),
                 .copy("Source/Rendering/FilterShaders/IJSVGInnerShadow.metal"),
