@@ -1,1 +1,0 @@
-../../Source/Additions/NSString+macOS.h
