@@ -1,11 +1,26 @@
-IJSVG 4.0
+IJSVG 4.1
 ===
 
-IJSVG is a native Cocoa library for rendering SVGs in macOS 14.6+ applications. It uses a Core Graphics (Quartz) paint graph, with SVG filter effects powered by Core Image, Metal acceleration and SIMD CPU processing.
+IJSVG is a Cocoa library for drawing SVGs in macOS 14.6 and later. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
 
-It also supports the `NSPasteboards` writing protocol, an IJSVG object can be put onto the pasteboard and application like Sketch and Photoshop can paste them into the document as vector objects (generated PDF's on the fly).
+You can also copy an IJSVG object to the pasteboard. It provides PDF data so apps such as Sketch and Photoshop can paste the artwork as vectors.
 
-### What is new in IJSVG 4.0?
+### What is new in IJSVG 4.1.0?
+
+- Text support, including `text`, `tspan` and `textPath`.
+- Font selection and fallback, text spacing, alignment, rotation and decorations.
+- Text wrapping, vertical text and text that follows a path.
+- Support for CSS font shorthand, `textLength` and `lengthAdjust`.
+- Faster parsing of paths, CSS rules and repeated elements, with less memory used for CSS matching.
+- More Objective C tests for text, parsing and drawing.
+
+In our Release benchmarks, the latest parser changes cut parsing time by about
+98% for complex CSS selectors, 38% for overlapping CSS rules and 13% for repeated
+attributes. The data used for CSS matching took about 81% less memory.
+Results depend on the SVG. These tests compare with commit `0afcd11`, not 4.0.2,
+and cover CPU parsing with shader compilation excluded from both builds.
+
+### Introduced in IJSVG 4.0
 
 - A Core Graphics paint graph for drawing shapes, groups, gradients, patterns, images, clipping and masks.
 - SVG filter graphs, including blur, drop shadows, blending, compositing, color adjustments, displacement, turbulence and lighting effects.
@@ -42,7 +57,7 @@ Requires Xcode 16 / Swift 6 or later and macOS 14.6 or later.
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Use a branch or revision until a release tag containing the manifest is available.
+Select version **4.1.0** or later to include SVG text support and the parser improvements.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
 The package uses the existing Objective-C implementation and bundles its Metal
@@ -157,23 +172,40 @@ Use `renderingBackingScaleHelper` to supply the backing scale factor for custom 
 
 IJSVG exports its node and paint graphs back to SVG, including gradients, patterns, clipping, masks and filter definitions. Filters are serialized as SVG primitives so their effects remain editable in the exported document.
 
-Its a simple as doing this:
+To export an SVG:
 
     IJSVG* svg ...
     IJSVGExporter * exporter = [[IJSVGExporter alloc] initWithSVG:svg options:IJSVGExporterOptionAll];
     NSString* svgString = exporter.SVGString;
     
-Which will give you back the SVG code to put into a file, there are various options you can give it for more XML manipulation such as collpasing groups and converting transform's from matrix's back to their human readable counter parts.
+This gives you an SVG string to save to a file. Export options include collapsing groups and converting transform matrices into individual transforms.
     
+### SVG text
+
+Text uses the same loading and drawing APIs as other SVG content:
+
+```objc
+NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 80'>"
+    "<text x='20' y='50' font-family='Helvetica' font-size='32' fill='#333'>"
+    "Hello <tspan fill='#087ea4'>SVG</tspan></text></svg>";
+IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+NSImage* image = [svg imageWithSize:CGSizeMake(240, 80)];
+```
+
+IJSVG uses fonts installed on the system and falls back to another font if one
+is missing, so text can look different on another Mac. Use `textPath` with an
+`href` pointing to a path ID to place text along a curve. Use `tspan` to change
+the style or position of part of the text.
+
 # What it supports
 
-* Elements: svg, defs, use, g, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon and line (including group hierarchy, inheritance and nested SVGs).
+* Elements: svg, defs, use, g, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs).
 * Commands: A, M, L, H, V, C, S, T, Q and Z and full support for multiple parameters of each type.
 * Transformations: matrix, rotate, translate, scale and skew transformations.
 * Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style.
 * Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns.
 * Color: supports all predefined colors from the SVG spec, HEX values along with RGB(A) and HSL.
-* CSS: Basic embedded style sheets are support with very basic selectors.
+* CSS: Embedded style sheets and inline styles, with type, class, ID and universal selectors, descendant and child combinators, and adjacent and general sibling combinators. Declaration resolution accounts for specificity, source order and `!important`.
 * Filters: `feBlend`, `feColorMatrix`, `feComponentTransfer`, `feComposite`, `feConvolveMatrix`, `feDisplacementMap`, `feMorphology`, `feTile`, `feFlood`, `feOffset`, `feImage`, `feMerge`, `feGaussianBlur`, `feDropShadow`, `feTurbulence`, `feDiffuseLighting` and `feSpecularLighting`.
 * Filter inputs: `SourceGraphic`, `SourceAlpha`, `BackgroundImage`, `BackgroundAlpha`, `FillPaint`, `StrokePaint` and named intermediate results.
 
