@@ -682,7 +682,7 @@ typedef struct {
             NSUInteger attribute = NSNotFound;
             NSString* value = nil;
             if(IJSVGReadXMLAttribute(attributeNode, activeAttributes, &attribute, &value)) {
-                attributeValues[attribute] = value;
+                attributeValues[attribute] = value ?: NSNull.null;
             }
         }
     }
