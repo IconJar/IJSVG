@@ -17,7 +17,7 @@
 
 - (XColor*)rgb:(XColor*)color
 {
-    return [color colorUsingColorSpace:XColorSpace.deviceRGBColorSpace];
+    return [color colorUsingXColorSpace:XColorSpace.deviceRGBColorSpace];
 }
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText

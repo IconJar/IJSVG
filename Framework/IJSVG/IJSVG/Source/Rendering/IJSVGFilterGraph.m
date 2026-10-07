@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGXEntities.h>
 #import "IJSVGFilterSIMD.h"
 #import <IJSVGMetalBlurRenderer.h>
 
@@ -210,7 +211,7 @@ static CGColorRef IJSVGFilterNewShadowTintForPrimitive(IJSVGFilterPrimitive* pri
     CGFloat opacity = [IJSVGUtils numbersFromString:number].count == 1
         ? [IJSVGUtils floatValue:value fallBackForPercent:1] : 1;
     XColor* color = [[IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack]
-        colorUsingColorSpace:XColorSpace.sRGBColorSpace];
+        colorUsingXColorSpace:XColorSpace.sRGBColorSpace];
     if(color == nil) {
         return NULL;
     }

@@ -40,6 +40,8 @@
 # define CXMLElementKind NSXMLElementKind
 # define CXMLNodePreserveWhitespace NSXMLNodePreserveWhitespace
 
+# import <IJSVG/UIColor+macOS.h>
+
 
 #else
 
