@@ -18,6 +18,11 @@ NSString* IJSVGFilterShaderSource(NSString* name)
 #endif
     NSURL* sourceURL = [bundle URLForResource:name
                                 withExtension:@"metal"];
+    /* If the metal file does not exist, we also search a cimetal file.
+     * See commit log for explanation about this. */
+    if (sourceURL == nil)
+        sourceURL = [bundle URLForResource:name
+                             withExtension:@"cimetal"];
     return sourceURL != nil ? [NSString stringWithContentsOfURL:sourceURL
                                                       encoding:NSUTF8StringEncoding
                                                          error:NULL] : nil;
