@@ -11,7 +11,7 @@
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
 		599EB4D3238FF570004CB6BC /* libobjc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 599EB4D2238FF535004CB6BC /* libobjc.tbd */; platformFilters = (ios, maccatalyst, macos, tvos, watchos, xros, ); };
-		7B61CC933075266000E3A804 /* TouchXML in Frameworks */ = {isa = PBXBuildFile; productRef = 7B61CC923075266000E3A804 /* TouchXML */; };
+		7B61CC933075266000E3A804 /* TouchXML in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, maccatalyst, tvos, watchos, xros, ); productRef = 7B61CC923075266000E3A804 /* TouchXML */; };
 		7B61D1D6307528AB00E3A804 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B61D1D5307528AB00E3A804 /* UIKit.framework */; platformFilters = (ios, maccatalyst, tvos, watchos, xros, ); };
 /* End PBXBuildFile section */
 
@@ -209,7 +209,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				7B61D1D43075286E00E3A804 /* PBXTargetDependency */,
+				7B2CB986307680680081D7B4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7B61CBB63075260B00E3A804 /* Source */,
@@ -279,9 +279,16 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		7B61D1D43075286E00E3A804 /* PBXTargetDependency */ = {
+		7B2CB986307680680081D7B4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 7B61D1D33075286E00E3A804 /* TouchXML */;
+			platformFilters = (
+				ios,
+				maccatalyst,
+				tvos,
+				watchos,
+				xros,
+			);
+			productRef = 7B2CB985307680680081D7B4 /* TouchXML */;
 		};
 /* End PBXTargetDependency section */
 
@@ -531,12 +538,12 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7B61CC923075266000E3A804 /* TouchXML */ = {
+		7B2CB985307680680081D7B4 /* TouchXML */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7B61CC913075266000E3A804 /* XCRemoteSwiftPackageReference "TouchXML" */;
 			productName = TouchXML;
 		};
-		7B61D1D33075286E00E3A804 /* TouchXML */ = {
+		7B61CC923075266000E3A804 /* TouchXML */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7B61CC913075266000E3A804 /* XCRemoteSwiftPackageReference "TouchXML" */;
 			productName = TouchXML;
