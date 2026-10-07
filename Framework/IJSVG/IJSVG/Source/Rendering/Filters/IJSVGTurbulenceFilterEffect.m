@@ -31,11 +31,12 @@ static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
         for(int i = 0; i < 256; i++) {
             noise->permutation[i] = i;
             double x, y, length;
+            // Match SVG/WebKit: rejecting nonzero vectors changes the seeded sequence.
             do {
                 x = (IJSVGFilterRandom(&seed) % 512 - 256) / 256.;
                 y = (IJSVGFilterRandom(&seed) % 512 - 256) / 256.;
                 length = hypot(x, y);
-            } while(length == 0 || length > 1);
+            } while(length == 0);
             noise->gradient[i][0][channel] = x / length;
             noise->gradient[i][1][channel] = y / length;
         }
@@ -187,15 +188,17 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     double wrapY = floor(tile.origin.y * frequency.height + 4096. + tileHeight);
     IJSVGFilterApplyRows(right - left, bottom - top, ^(NSInteger firstRow, NSInteger lastRow) {
         for(NSInteger y = top + firstRow; y < top + lastRow; y++) {
-            double py = tile.origin.y + (y + .5 - region.origin.y) / units.height;
+            double py = tile.origin.y + (y + 1. - region.origin.y) / units.height;
             NSInteger index = (y - top) * w * 4;
             for(NSInteger x = left; x < right; x++, index += 4) {
-                double px = tile.origin.x + (x + .5 - region.origin.x) / units.width;
+                double px = tile.origin.x + (x + 1. - region.origin.x) / units.width;
                 double values[4] = { 0 };
                 IJSVGTurbulenceValues(noise, px, py, frequency, tileWidth, tileHeight,
                     wrapX, wrapY, octaves, fractal, stitch, values);
                 for(int c = 0; c < 4; c++) {
-                    output[index + c] = IJSVGFilterClamp(fractal ? (values[c] + 1.) * .5 : values[c]);
+                    // WebKit truncates straight RGBA to eight bits before premultiplication.
+                    double value = IJSVGFilterClamp(fractal ? (values[c] + 1.) * .5 : values[c]);
+                    output[index + c] = floor(value * 255.) / 255.;
                 }
                 for(int c = 0; c < 3; c++) {
                     output[index + c] *= output[index + 3];

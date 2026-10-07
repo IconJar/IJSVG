@@ -1042,12 +1042,13 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)turbulenceMatchesOriginalSamples:(BOOL)fractal
                                   stitch:(BOOL)stitch
 {
-    // Original scalar evaluator samples, before sharing the RGBA lattice.
+    // Captured from WKWebView by drawing the same SVG into a 30 x 10 canvas.
+    // Canvas straight RGBA is premultiplied here to match the bitmap context.
     const int references[4][4][4] = {
-        {{3, 13, 11, 57}, {20, 13, 30, 72}, {41, 26, 36, 115}, {5, 4, 4, 35}},
-        {{82, 60, 88, 156}, {84, 74, 49, 158}, {80, 87, 94, 144}, {58, 63, 62, 128}},
-        {{3, 13, 11, 56}, {16, 10, 31, 65}, {33, 41, 50, 125}, {8, 13, 12, 59}},
-        {{82, 60, 87, 156}, {86, 78, 45, 159}, {74, 98, 107, 153}, {73, 79, 52, 130}}
+        {{22, 34, 36, 84}, {21, 27, 25, 76}, {6, 9, 21, 42}, {9, 7, 9, 36}},
+        {{43, 30, 54, 85}, {37, 49, 30, 89}, {61, 53, 79, 106}, {84, 64, 71, 145}},
+        {{20, 31, 32, 80}, {19, 27, 23, 81}, {2, 4, 10, 17}, {0, 0, 0, 0}},
+        {{45, 31, 56, 87}, {35, 54, 34, 92}, {60, 58, 91, 118}, {63, 63, 63, 127}}
     };
     const int positions[4][2] = {{0, 0}, {3, 3}, {14, 5}, {29, 9}};
     NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<feTurbulence "
