@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 73;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -29,6 +29,10 @@
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		7B61CC903075260C00E3A804 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Rendering/FilterShaders/IJSVGBlur.metal,
+				Rendering/FilterShaders/IJSVGInnerShadow.metal,
+			);
 			publicHeaders = (
 				Additions/CGColorSpaceWrapper.h,
 				Additions/IJSVGStringAdditions.h,
@@ -106,8 +110,19 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		7B2CB98E307681640081D7B4 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 594CF46D238FF38E009B251B /* Resources */;
+			membershipExceptions = (
+				Rendering/FilterShaders/IJSVGBlur.metal,
+				Rendering/FilterShaders/IJSVGInnerShadow.metal,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		7B61CBB63075260B00E3A804 /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (7B61CC903075260C00E3A804 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Source; sourceTree = "<group>"; };
+		7B61CBB63075260B00E3A804 /* Source */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (7B61CC903075260C00E3A804 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 7B2CB98E307681640081D7B4 /* PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Source; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -223,7 +238,6 @@
 				};
 			};
 			buildConfigurationList = 594CF469238FF38E009B251B /* Build configuration list for PBXProject "IJSVG" */;
-			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -234,6 +248,7 @@
 			packageReferences = (
 				7B61CC913075266000E3A804 /* XCRemoteSwiftPackageReference "TouchXML" */,
 			);
+			preferredProjectObjectVersion = 50;
 			productRefGroup = 594CF470238FF38E009B251B /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
