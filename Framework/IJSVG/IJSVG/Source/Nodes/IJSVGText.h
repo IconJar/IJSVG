@@ -130,6 +130,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
 @interface IJSVGText: IJSVGGroup
 
 @property (nonatomic, copy) NSArray* textContent;
+
+// Whether this node owns text rather than only containing styled child spans.
+@property (nonatomic, readonly) BOOL hasTextContent;
 @property (nonatomic, copy) NSDictionary<NSString*, IJSVGTextAttributeValue*>* positioning;
 @property (nonatomic, strong, nullable) IJSVGPath* textPath;
 @property (nonatomic, assign) BOOL isTextPath;

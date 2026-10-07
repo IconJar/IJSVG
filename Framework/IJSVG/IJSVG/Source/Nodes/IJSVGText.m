@@ -7,6 +7,8 @@
 //
 
 #import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGStyle.h>
 
 @implementation IJSVGTextAttributeValue
 
@@ -57,6 +59,52 @@
     copy.textPath = self.textPath.copy;
     copy.isTextPath = self.isTextPath;
     return copy;
+}
+
+// Identifies direct text runs without counting child span containers.
+- (BOOL)hasTextContent
+{
+    for(id item in self.textContent) {
+        if([item isKindOfClass:NSString.class] && [item length] != 0) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+// Text strokes use the same visibility rules as path strokes.
+- (void)computeTraits
+{
+    [super computeTraits];
+    [self removeTraits:IJSVGNodeTraitStroked];
+    if(!self.hasTextContent || self.stroke == nil) {
+        return;
+    }
+    if([self.stroke isKindOfClass:IJSVGColorNode.class] &&
+       ((IJSVGColorNode*)self.stroke).isNoneOrTransparent) {
+        return;
+    }
+    [self addTraits:IJSVGNodeTraitStroked];
+}
+
+// Includes direct text paints alongside colors collected from child spans.
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
+{
+    IJSVGTraitedColorStorage* storage = [super colorsWithStyle:style];
+    if(!self.shouldRender || !self.hasTextContent) {
+        return storage;
+    }
+    IJSVGNode* fill = self.fill;
+    if(fill == nil) {
+        fill = [[IJSVGColorNode alloc] initWithColor:style.fillColor ?: NSColor.blackColor];
+    }
+    [storage unionColorStorage:[fill colorsWithStyle:style
+                                     matchingTraits:IJSVGColorUsageTraitFill]];
+    if([self matchesTraits:IJSVGNodeTraitStroked]) {
+        [storage unionColorStorage:[self.stroke colorsWithStyle:style
+                                                matchingTraits:IJSVGColorUsageTraitStroke]];
+    }
+    return storage;
 }
 
 - (BOOL)containsRelativeUnits
