@@ -151,8 +151,8 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     }
     NSInteger octaves = MIN(16, MAX(0, [primitive numberForParameter:IJSVGAttributeNumOctaves
                                                         defaultValue:1]));
-    BOOL fractal = [primitive.parameters[IJSVGAttributeType] isEqualToString:IJSVGStringFractalNoise];
-    BOOL stitch = [primitive.parameters[IJSVGAttributeStitchTiles] isEqualToString:IJSVGStringStitch];
+    BOOL fractal = primitive.turbulenceType == IJSVGFilterTurbulenceTypeFractalNoise;
+    BOOL stitch = primitive.stitchTiles;
     CGSize units = context.pixelUnits;
     CGRect tile = CGRectMake((region.origin.x - context.imageTransform.tx) / units.width,
         (region.origin.y - context.imageTransform.ty) / units.height, region.size.width / units.width,

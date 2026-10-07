@@ -102,7 +102,7 @@ static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSa
 static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w,
                                        NSInteger h, IJSVGLightingParameters parameters)
 {
-    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion, 1);
+    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion, IJSVGFilterEdgeModeDuplicate);
     double dx = parameters.step.width * parameters.units.width;
     double dy = parameters.step.height * parameters.units.height;
     double distantX = cos(parameters.azimuth) * cos(parameters.elevation);

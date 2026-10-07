@@ -18,7 +18,7 @@
 
 IJSVGTextKeyword IJSVGTextRenderingForNode(IJSVGNode* node)
 {
-    for(IJSVGNode* current = node; current != nil; current = current.parentNode) {
+    for(IJSVGNode* current = node; current != nil; current = current.styleParent) {
         IJSVGTextKeyword keyword = current.textStyle[IJSVGAttributeTextRendering].keyword;
         if(keyword == IJSVGTextKeywordInitial) {
             return IJSVGTextKeywordAuto;

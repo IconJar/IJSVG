@@ -98,15 +98,7 @@ static float IJSVGSmallPixelCoverage(CGFloat x, CGFloat y, NSUInteger height, CG
 
 static BOOL IJSVGFilterUsesLinearRGB(IJSVGNode* node)
 {
-    for(IJSVGNode* current = node; current != nil; current = current.parentNode) {
-        if([current.filterColorInterpolation isEqualToString:IJSVGStringSRGB]) {
-            return NO;
-        }
-        if([current.filterColorInterpolation isEqualToString:IJSVGStringLinearRGB]) {
-            return YES;
-        }
-    }
-    return YES;
+    return node.resolvedFilterColorInterpolation == IJSVGColorInterpolationLinearRGB;
 }
 
 
@@ -146,7 +138,7 @@ static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
         && !IJSVGFilterUsesLinearRGB(blend)
         && [blend.input isEqualToString:IJSVGStringSourceGraphic]
         && [blend.input2 isEqualToString:flood.result]
-        && [(blend.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal];
+        && blend.filterBlendMode == IJSVGBlendModeNormal;
 }
 
 
@@ -548,7 +540,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
         if(!isfinite(sigma) || sigma < .2 || sigma > 4 || !isfinite(deviation.height * units.height) ||
             fabs(sigma - deviation.height * units.height) > .00001 || !isfinite(dx) || !isfinite(dy) ||
             fabs(dx) >= region.size.width || fabs(dy) >= region.size.height ||
-            ![(blur.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone) isEqualToString:IJSVGStringNone]) {
+            blur.edgeMode != IJSVGFilterEdgeModeNone) {
             return NO;
         }
         NSData* weights = IJSVGSmallBlurWeights(sigma);
@@ -648,7 +640,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             blend.type != IJSVGNodeTypeFilterBlend ||
             ![blend.input isEqualToString:IJSVGStringSourceGraphic] ||
             ![blend.input2 isEqualToString:flood.result] ||
-            ![(blend.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal]) {
+            blend.filterBlendMode != IJSVGBlendModeNormal) {
             return NO;
         }
     }
@@ -691,7 +683,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
     // fractional edge coverage by leaving those radii on the general path.
     if(!isfinite(sigma) || sigma < .2 || sigma > 12 || !isfinite(deviation.height * units.height) ||
         fabs(sigma - deviation.height * units.height) > .00001 ||
-        ![(blur.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone) isEqualToString:IJSVGStringNone]) {
+        blur.edgeMode != IJSVGFilterEdgeModeNone) {
         return NO;
     }
     CGRect region = CGRectApplyAffineTransform([self regionForNode:self.filter

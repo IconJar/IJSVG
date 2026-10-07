@@ -14,9 +14,9 @@
 - (BOOL)requiresSupersamplingForPrimitive:(IJSVGFilterPrimitive*)primitive
 {
     // Sample more points at shape edges when the matrix increases opacity.
-    NSString* type = primitive.parameters[IJSVGAttributeType] ?: IJSVGStringMatrix;
+    IJSVGFilterColorMatrixType type = primitive.colorMatrixType;
     NSArray<NSNumber*>* values = [primitive numbersForParameter:IJSVGAttributeValues];
-    return [type isEqualToString:IJSVGStringMatrix] && values.count == 20
+    return (type == IJSVGFilterColorMatrixTypeMatrix) && values.count == 20
         && values[18].doubleValue > 1.;
 }
 
@@ -25,22 +25,22 @@
     return [primitive preparedValueForKey:@"colorMatrix"
                                   builder:^id {
         double matrix[20] = { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0 };
-        NSString* type = primitive.parameters[IJSVGAttributeType] ?: IJSVGStringMatrix;
+        IJSVGFilterColorMatrixType type = primitive.colorMatrixType;
         NSArray<NSNumber*>* values = [primitive numbersForParameter:IJSVGAttributeValues];
-        if([type isEqualToString:IJSVGStringMatrix]) {
+        if(type == IJSVGFilterColorMatrixTypeMatrix) {
             if(values.count != 0 && values.count != 20) {
                 return @{};
             }
             for(NSUInteger i = 0; i < values.count; i++) {
                 matrix[i] = values[i].doubleValue;
             }
-        } else if([type isEqualToString:IJSVGStringSaturate]) {
+        } else if(type == IJSVGFilterColorMatrixTypeSaturate) {
             double s = [primitive numberForParameter:IJSVGAttributeValues
                                         defaultValue:1];
             double m[] = { .213 + .787 * s, .715 - .715 * s, .072 - .072 * s, 0, 0, .213 - .213 * s, .715 + .285 * s,
                 .072 - .072 * s, 0, 0, .213 - .213 * s, .715 - .715 * s, .072 + .928 * s, 0, 0, 0, 0, 0, 1, 0 };
             memcpy(matrix, m, sizeof(matrix));
-        } else if([type isEqualToString:IJSVGStringHueRotate]) {
+        } else if(type == IJSVGFilterColorMatrixTypeHueRotate) {
             double angle = [primitive numberForParameter:IJSVGAttributeValues
                                             defaultValue:0] * M_PI / 180.;
             double c = cos(angle), s = sin(angle);
@@ -48,7 +48,7 @@
                 .213 - .213 * c + .143 * s, .715 + .285 * c + .140 * s, .072 - .072 * c - .283 * s, 0, 0,
                 .213 - .213 * c - .787 * s, .715 - .715 * c + .715 * s, .072 + .928 * c + .072 * s, 0, 0, 0, 0, 0, 1, 0 };
             memcpy(matrix, m, sizeof(matrix));
-        } else if([type isEqualToString:IJSVGStringLuminanceToAlpha]) {
+        } else if(type == IJSVGFilterColorMatrixTypeLuminanceToAlpha) {
             memset(matrix, 0, sizeof(matrix));
             matrix[15] = .2125;
             matrix[16] = .7154;

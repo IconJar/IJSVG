@@ -19,6 +19,9 @@ typedef CGPathRef _Nullable (^IJSVGTextPathResolver)(IJSVGPath* node);
 @property (nonatomic, readonly) NSString* string;
 @property (nonatomic, readonly) NSUInteger glyphCount;
 @property (nonatomic, readonly) NSArray<NSValue*>* characterPositions;
+
+// Final rotation of each character in degrees, including rotation along a text path.
+@property (nonatomic, readonly) NSArray<NSNumber*>* characterRotations;
 @property (nonatomic, readonly) CGFloat advance;
 
 - (instancetype)initWithText:(IJSVGText*)text

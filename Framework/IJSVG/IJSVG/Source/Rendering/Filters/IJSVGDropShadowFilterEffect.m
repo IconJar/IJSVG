@@ -32,7 +32,7 @@
     // Blur the opacity to get the shadow shape.
     CIImage* blurred = [blur blurImage:[context alphaForImage:input]
                              deviation:deviation
-                              edgeMode:IJSVGStringNone
+                              edgeMode:IJSVGFilterEdgeModeNone
                              alphaOnly:YES
                                 region:blurRegion
                                context:context];

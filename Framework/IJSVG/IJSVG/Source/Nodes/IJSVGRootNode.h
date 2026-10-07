@@ -22,6 +22,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;
 
+// The document owns style ancestors so paint references cannot form retain cycles.
+@property (nonatomic, copy) NSArray<IJSVGNode*>* styleAncestors;
+
 - (void)inferViewBoxIfRequired;
 
 @end

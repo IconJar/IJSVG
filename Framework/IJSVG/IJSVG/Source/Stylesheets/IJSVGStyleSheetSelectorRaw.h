@@ -24,7 +24,7 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 
 @property (nonatomic, copy) NSString* tag;
 @property (nonatomic, copy) NSString* identifier;
-@property (nonatomic, copy) NSString* combinatorString;
+@property (nonatomic, readonly) NSString* combinatorString;
 @property (nonatomic, strong) NSMutableSet<NSString*>* classes;
 @property (nonatomic, assign) IJSVGStyleSheetSelectorCombinator combinator;
 

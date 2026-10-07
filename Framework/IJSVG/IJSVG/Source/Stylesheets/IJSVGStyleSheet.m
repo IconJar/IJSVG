@@ -84,21 +84,14 @@
     NSUInteger marker = 0;
     NSUInteger parenDepth = 0;
     char quote = 0;
+    BOOL escaped = NO;
     NSCharacterSet* whitespaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     NSString* selector = nil;
 
     for(NSUInteger i = 0; i < length; i++) {
         char c = chars[i];
 
-        if(quote != 0) {
-            if(c == quote && (i == 0 || chars[i - 1] != '\\')) {
-                quote = 0;
-            }
-            continue;
-        }
-
-        if(c == '\'' || c == '"') {
-            quote = c;
+        if(IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
             continue;
         }
 
@@ -123,6 +116,10 @@
         }
 
         if(c == '}' && parenDepth == 0) {
+            if(depth == 0) {
+                marker = i + 1;
+                continue;
+            }
             if(depth == 1) {
                 NSString* rule = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
                 rule = [rule stringByTrimmingCharactersInSet:whitespaceCharSet];
@@ -134,7 +131,7 @@
                 }
                 marker = i + 1;
             }
-            depth = MAX(depth - 1, 0);
+            depth--;
         }
     }
 }

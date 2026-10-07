@@ -2130,7 +2130,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                           @"lime");
     XCTAssertEqualObjects(primitive.parameters[IJSVGAttributeSurfaceScale],
                           @"2");
-    XCTAssertEqualObjects(primitive.filterColorInterpolation, @"linearRGB");
+    XCTAssertEqual(primitive.filterColorInterpolation, IJSVGColorInterpolationLinearRGB);
     IJSVGFilterPrimitive* light = (IJSVGFilterPrimitive*)primitive.children.firstObject;
     XCTAssertNotNil(light);
     XCTAssertEqualObjects(light.parameters[IJSVGAttributeZ], @"3");

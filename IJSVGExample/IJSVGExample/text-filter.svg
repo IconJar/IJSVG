@@ -1,0 +1,19 @@
+<svg width="350" height="75" viewBox="0 0 350 75">
+<title>Inner Shadow</title>
+<rect x="0" y="0" width="400" height="100" style="fill: #09f"/>
+<g style="overflow:hidden; text-anchor: middle; font-size:45; font-weight: bold; font-family: Verdana, Helvetica, Arial, sans-serif">
+<defs>
+<mask id="textMask">
+<text style="fill:white;" x="175" y="55">InnerShadow</text>
+</mask>
+<filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
+<feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+<feOffset in="blur" dx="2.5" dy="2.5"/>
+</filter>
+</defs>
+<g mask="url(#textMask)">
+<rect x="0" y="0" width="350" height="75" style="fill:black"/>
+<text style="fill: #09f; filter: url(#innerShadow)" x="175" y="55">InnerShadow</text>
+</g>
+</g>
+</svg>

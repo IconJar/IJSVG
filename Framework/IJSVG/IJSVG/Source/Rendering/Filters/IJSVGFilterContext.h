@@ -60,7 +60,7 @@ float IJSVGFilterClamp(double value);
 BOOL IJSVGFilterValidRect(CGRect rect);
 float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height,
                         CGFloat x, CGFloat y, NSUInteger channel, CGRect region,
-                        NSInteger edgeMode);
+                        IJSVGFilterEdgeMode edgeMode);
 
 typedef struct {
     const float* pixels;
@@ -69,10 +69,10 @@ typedef struct {
     NSInteger top;
     NSInteger right;
     NSInteger bottom;
-    NSInteger edgeMode;
+    IJSVGFilterEdgeMode edgeMode;
 } IJSVGFilterSampler;
 
 IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height,
-    CGRect region, NSInteger edgeMode);
+    CGRect region, IJSVGFilterEdgeMode edgeMode);
 float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, NSUInteger channel);
 void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, float pixel[4]);

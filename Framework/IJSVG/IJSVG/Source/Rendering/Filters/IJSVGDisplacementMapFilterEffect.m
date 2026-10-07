@@ -16,14 +16,15 @@
                 output:(float*)dst
                  width:(NSInteger)w
                 height:(NSInteger)h
-              xChannel:(NSUInteger)xc
-              yChannel:(NSUInteger)yc
+              xChannel:(IJSVGFilterColorChannel)xc
+              yChannel:(IJSVGFilterColorChannel)yc
                  scale:(double)scale
                  units:(CGSize)units
            inputRegion:(CGRect)inputRegion
           outputRegion:(CGRect)outputRegion
 {
-    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, inputRegion, 0);
+    IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, inputRegion,
+                                                        IJSVGFilterEdgeModeNone);
     double scaleX = scale * units.width, scaleY = scale * units.height;
     NSInteger minX = floor(CGRectGetMinX(outputRegion));
     NSInteger minY = floor(CGRectGetMinY(outputRegion));
@@ -34,8 +35,8 @@
             for(NSInteger x = minX; x < maxX; x++) {
                 NSInteger i = (y * w + x) * 4;
                 double alpha = map[i + 3];
-                double dx = xc == 3 ? alpha : (alpha > 0 ? map[i + xc] / alpha : 0);
-                double dy = yc == 3 ? alpha : (alpha > 0 ? map[i + yc] / alpha : 0);
+                double dx = xc == IJSVGFilterColorChannelAlpha ? alpha : (alpha > 0 ? map[i + xc] / alpha : 0);
+                double dy = yc == IJSVGFilterColorChannelAlpha ? alpha : (alpha > 0 ? map[i + yc] / alpha : 0);
                 IJSVGFilterSamplerPixel(&sampler, x + scaleX * (dx - .5), y + scaleY * (dy - .5), dst + i);
             }
         }
@@ -51,13 +52,8 @@
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
-    NSArray* channels = @[IJSVGStringChannelR, IJSVGStringChannelG, IJSVGStringChannelB, IJSVGStringChannelA];
-    NSUInteger xc =
-        [channels indexOfObject:primitive.parameters[IJSVGAttributeXChannelSelector] ?: IJSVGStringChannelA];
-    NSUInteger yc =
-        [channels indexOfObject:primitive.parameters[IJSVGAttributeYChannelSelector] ?: IJSVGStringChannelA];
-    xc = xc == NSNotFound ? 3 : xc;
-    yc = yc == NSNotFound ? 3 : yc;
+    IJSVGFilterColorChannel xc = primitive.xChannel;
+    IJSVGFilterColorChannel yc = primitive.yChannel;
     double scale = [primitive numberForParameter:IJSVGAttributeScale
                                     defaultValue:0];
     if(scale == 0) {

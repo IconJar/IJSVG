@@ -2644,7 +2644,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     attributes[IJSVGAttributeHeight] = [primitive.height stringValueWithFloatingPointOptions:_floatingPointOptions];
 
     attributes[IJSVGAttributeIn2] = primitive.input2;
-    attributes[IJSVGAttributeColorInterpolationFilters] = primitive.filterColorInterpolation;
+    attributes[IJSVGAttributeColorInterpolationFilters] = IJSVGColorInterpolationString(primitive.filterColorInterpolation);
     if(primitive.type == IJSVGNodeTypeFilterImage) {
         attributes[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:primitive.viewBoxAlignment
                                                                                    meetOrSlice:primitive.viewBoxMeetOrSlice];
@@ -2728,14 +2728,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     [self compressFilterAttributes:attributes type:IJSVGNodeTypeFilter];
     IJSVGApplyAttributesToElement(attributes, definition);
   
-    for(IJSVGNode* node = filter; node != nil; node = node.parentNode) {
-        if([@[IJSVGStringSRGB, IJSVGStringLinearRGB] containsObject:node.filterColorInterpolation]) {
-            [definition addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeColorInterpolationFilters
-                                                      stringValue:node.filterColorInterpolation]];
-            break;
-        }
-    }
-  
+    [definition addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeColorInterpolationFilters
+                                              stringValue:IJSVGColorInterpolationString(filter.resolvedFilterColorInterpolation)]];
+
     for(IJSVGFilterPrimitive* primitive in filter.primitives) {
         [definition addChild:[self elementForFilterPrimitive:primitive
                                                     viewPort:paint.viewPort]];

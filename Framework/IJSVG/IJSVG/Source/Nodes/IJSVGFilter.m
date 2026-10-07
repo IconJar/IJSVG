@@ -89,7 +89,7 @@
         shape.type != IJSVGNodeTypeFilterBlend ||
         ![shape.input isEqualToString:IJSVGStringSourceGraphic] ||
         ![shape.input2 isEqualToString:flood.result] ||
-        ![(shape.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal]) {
+        shape.filterBlendMode != IJSVGBlendModeNormal) {
         return NO;
     }
 
@@ -131,20 +131,20 @@
             }
         }
         if(![subtract.input2 isEqualToString:hardAlpha.result] ||
-            ![subtract.parameters[IJSVGAttributeOperator] isEqualToString:IJSVGStringArithmetic] ||
+            subtract.compositeOperator != IJSVGFilterCompositeOperatorArithmetic ||
             [subtract numberForParameter:IJSVGAttributeK1 defaultValue:0] != 0 ||
             [subtract numberForParameter:IJSVGAttributeK2 defaultValue:0] != -1 ||
             [subtract numberForParameter:IJSVGAttributeK3 defaultValue:0] != 1 ||
             [subtract numberForParameter:IJSVGAttributeK4 defaultValue:0] != 0 ||
             blend.input.length != 0 || ![blend.input2 isEqualToString:previousShape] ||
-            ![(blend.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal) isEqualToString:IJSVGStringNormal] ||
+            blend.filterBlendMode != IJSVGBlendModeNormal ||
             (blend.result.length != 0 && [sources containsObject:blend.result])) {
             return NO;
         }
         NSArray<NSNumber*>* alphaValues = [hardAlpha numbersForParameter:IJSVGAttributeValues];
         NSArray<NSNumber*>* colorValues = [color numbersForParameter:IJSVGAttributeValues];
-        if(![(hardAlpha.parameters[IJSVGAttributeType] ?: IJSVGStringMatrix) isEqualToString:IJSVGStringMatrix] ||
-            ![(color.parameters[IJSVGAttributeType] ?: IJSVGStringMatrix) isEqualToString:IJSVGStringMatrix] ||
+        if(hardAlpha.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
+            color.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
             alphaValues.count != 20 || colorValues.count != 20) {
             return NO;
         }

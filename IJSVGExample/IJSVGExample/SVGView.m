@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"text-grumpy.svg"];
+    return [IJSVG SVGNamed:@"text-filter.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

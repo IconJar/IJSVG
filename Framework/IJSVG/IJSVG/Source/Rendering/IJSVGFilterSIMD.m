@@ -26,7 +26,7 @@ BOOL IJSVGFilterSIMDUsesBackdropAddition(IJSVGFilter* filter)
     return primitive.type == IJSVGNodeTypeFilterComposite
         && [primitive.input isEqualToString:IJSVGStringSourceGraphic]
         && [primitive.input2 isEqualToString:IJSVGStringBackgroundImage]
-        && [primitive.parameters[IJSVGAttributeOperator] isEqualToString:IJSVGStringArithmetic]
+        && primitive.compositeOperator == IJSVGFilterCompositeOperatorArithmetic
         && [primitive numberForParameter:IJSVGAttributeK1 defaultValue:0] == 0
         && [primitive numberForParameter:IJSVGAttributeK2 defaultValue:0] == 1
         && [primitive numberForParameter:IJSVGAttributeK3 defaultValue:0] == 1
@@ -59,40 +59,40 @@ static IJSVGSIMDCompositeOperation IJSVGFilterSIMDOperation(IJSVGFilter* filter)
         return IJSVGSIMDCompositeUnsupported;
     }
     if(primitive.type == IJSVGNodeTypeFilterBlend) {
-        NSString* mode = primitive.parameters[IJSVGAttributeMode] ?: IJSVGStringNormal;
-        if([mode isEqualToString:IJSVGStringNormal]) {
+        IJSVGBlendMode mode = primitive.filterBlendMode;
+        if(mode == IJSVGBlendModeNormal) {
             return IJSVGSIMDCompositeOver;
         }
-        if([mode isEqualToString:IJSVGStringMultiply]) {
+        if(mode == IJSVGBlendModeMultiply) {
             return IJSVGSIMDCompositeMultiply;
         }
-        if([mode isEqualToString:IJSVGStringScreen]) {
+        if(mode == IJSVGBlendModeScreen) {
             return IJSVGSIMDCompositeScreen;
         }
-        if([mode isEqualToString:IJSVGStringDarken]) {
+        if(mode == IJSVGBlendModeDarken) {
             return IJSVGSIMDCompositeDarken;
         }
-        if([mode isEqualToString:IJSVGStringLighten]) {
+        if(mode == IJSVGBlendModeLighten) {
             return IJSVGSIMDCompositeLighten;
         }
     } else if(primitive.type == IJSVGNodeTypeFilterComposite) {
-        NSString* op = primitive.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
-        if([op isEqualToString:IJSVGStringOver]) {
+        IJSVGFilterCompositeOperator op = primitive.compositeOperator;
+        if(op == IJSVGFilterCompositeOperatorOver) {
             return IJSVGSIMDCompositeOver;
         }
-        if([op isEqualToString:IJSVGStringIn]) {
+        if(op == IJSVGFilterCompositeOperatorIn) {
             return IJSVGSIMDCompositeIn;
         }
-        if([op isEqualToString:IJSVGStringOut]) {
+        if(op == IJSVGFilterCompositeOperatorOut) {
             return IJSVGSIMDCompositeOut;
         }
-        if([op isEqualToString:IJSVGStringAtop]) {
+        if(op == IJSVGFilterCompositeOperatorAtop) {
             return IJSVGSIMDCompositeAtop;
         }
-        if([op isEqualToString:IJSVGStringXor]) {
+        if(op == IJSVGFilterCompositeOperatorXor) {
             return IJSVGSIMDCompositeXor;
         }
-        if([op isEqualToString:IJSVGStringLighter]) {
+        if(op == IJSVGFilterCompositeOperatorLighter) {
             return IJSVGSIMDCompositeLighter;
         }
         if(IJSVGFilterSIMDUsesBackdropAddition(filter)) {
@@ -239,16 +239,7 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
     if(primitive.x != nil || primitive.y != nil || primitive.width != nil || primitive.height != nil) {
         return NULL;
     }
-    BOOL linear = YES;
-    for(IJSVGNode* node = primitive; node != nil; node = node.parentNode) {
-        if([node.filterColorInterpolation isEqualToString:IJSVGStringSRGB]) {
-            linear = NO;
-            break;
-        }
-        if([node.filterColorInterpolation isEqualToString:IJSVGStringLinearRGB]) {
-            break;
-        }
-    }
+    BOOL linear = primitive.resolvedFilterColorInterpolation == IJSVGColorInterpolationLinearRGB;
     CGAffineTransform mapping = CGAffineTransformConcat(CGAffineTransformInvert(graph.imageTransform),
                                                         CGContextGetCTM(backdrop));
     if(!isfinite(mapping.a) || !isfinite(mapping.b) || !isfinite(mapping.c) ||
@@ -373,15 +364,7 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
 // batch renderer. Keep fractional crops on Core Image's texture sampler.
 static BOOL IJSVGLocalFilterUsesLinearRGB(IJSVGFilterPrimitive* primitive)
 {
-    for(IJSVGNode* node = primitive; node != nil; node = node.parentNode) {
-        if([node.filterColorInterpolation isEqualToString:IJSVGStringSRGB]) {
-            return NO;
-        }
-        if([node.filterColorInterpolation isEqualToString:IJSVGStringLinearRGB]) {
-            break;
-        }
-    }
-    return YES;
+    return primitive.resolvedFilterColorInterpolation == IJSVGColorInterpolationLinearRGB;
 }
 
 static CGImageRef IJSVGLocalFilterImage(CGContextRef source, NSData* pixels)
@@ -541,13 +524,8 @@ CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source,
     if(colorMatrix) {
         return IJSVGLocalColorMatrix(source, last, crop);
     }
-    NSString* operation = last.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
-    NSArray* operations = @[
-      IJSVGStringOver, IJSVGStringIn, IJSVGStringOut, IJSVGStringAtop,
-      IJSVGStringXor
-    ];
-    NSUInteger operationIndex = [operations indexOfObject:operation];
-    if(operationIndex == NSNotFound) {
+    IJSVGFilterCompositeOperator operation = last.compositeOperator;
+    if(operation > IJSVGFilterCompositeOperatorXor) {
         return NULL;
     }
     static const CGBlendMode modes[] = {kCGBlendModeNormal, kCGBlendModeSourceIn,
@@ -626,7 +604,7 @@ CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source,
     }
     memcpy(CGBitmapContextGetData(destination), second.bytes, second.length);
     CGContextSetInterpolationQuality(destination, kCGInterpolationNone);
-    CGContextSetBlendMode(destination, modes[operationIndex]);
+    CGContextSetBlendMode(destination, modes[operation]);
     CGContextDrawImage(destination, CGRectMake(0, 0, width, height), foreground);
     CGImageRef image = CGBitmapContextCreateImage(destination);
     CGImageRelease(foreground);

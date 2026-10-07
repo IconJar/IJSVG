@@ -50,7 +50,7 @@ shader sources automatically. Package builds compile shaders on first use;
 the existing Xcode framework continues to use its precompiled blur library.
 
 Run `swift build` and `swift test` from the repository root to build and check
-Swift interoperability, rendering, and shader resource loading. Shader compilation
+the Objective-C XCTest coverage for API behavior, rendering, and shader resource loading. Shader compilation
 checks run when a Metal device is available.
 
 The existing framework project and example application remain available.

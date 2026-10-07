@@ -95,6 +95,12 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters,
             continue;
         }
         NSUInteger index = mapping[utf16Start + indices[i]];
+        if(index == NSNotFound) {
+            continue;
+        }
+        // Core Text can report separate string indices for combining marks.
+        // Keep combining marks attached to the same cluster origin.
+        index = characters[index].cluster;
         IJSVGTextCharacter* character = &characters[index];
         IJSVGTextGlyph* glyph = &records[written++];
         glyph->font = (__bridge CTFontRef)font;
@@ -112,8 +118,10 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters,
         glyph->offset = CGPointMake(point.x - character->position.x,
                                     point.y - character->position.y);
         CGSize advance = advances[i];
-        CGFloat distance = advance.height == 0 ? fabs(advance.width) : hypot(advance.width,
-                                                                             advance.height);
+        // Moving a mark across the text direction does not change the advance.
+        CGFloat distance = character->style.vertical
+            ? (advance.height == 0 ? advance.width : fabs(advance.height))
+            : advance.width;
         character->advance += distance / fontScale;
     }
     if(written != start + (NSUInteger)count) {
@@ -131,7 +139,7 @@ CGAffineTransform IJSVGTextGlyphTransform(IJSVGTextCharacter* c,
     CGPoint offset = glyph->offset;
     if(angle == 0 && !style.vertical) {
         return CGAffineTransformMake(c->scale * fontScale, 0, 0, -fontScale,
-                                     position.x + offset.x,
+                                     position.x + offset.x * c->scale,
                                      position.y + offset.y);
     }
     BOOL upright = NO;
@@ -139,12 +147,17 @@ CGAffineTransform IJSVGTextGlyphTransform(IJSVGTextCharacter* c,
         IJSVGTextKeyword orientation = style.orientation;
         unichar scalar = c->firstCodeUnit;
         upright = orientation == IJSVGTextKeywordUpright ||
-            (orientation != IJSVGTextKeywordSideways && scalar >= 0x2E80);
+            (orientation != IJSVGTextKeywordSideways && scalar >= u'⺀');
         // Core Text supplies rotated glyphs for sideways vertical runs.
     }
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(c->position.x + glyph->offset.x,
-                                                                   c->position.y + glyph->offset.y);
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(position.x,
+                                                                   position.y);
     transform = CGAffineTransformRotate(transform, angle);
+    // Offsets are already in SVG coordinates. Scale them along the text direction
+    // and rotate them with the cluster before converting the glyph outline.
+    CGFloat offsetX = style.vertical ? offset.x : offset.x * c->scale;
+    CGFloat offsetY = style.vertical ? offset.y * c->scale : offset.y;
+    transform = CGAffineTransformTranslate(transform, offsetX, offsetY);
     if(c->style.vertical) {
         CGSize translation;
         CGGlyph glyphID = glyph->glyph;

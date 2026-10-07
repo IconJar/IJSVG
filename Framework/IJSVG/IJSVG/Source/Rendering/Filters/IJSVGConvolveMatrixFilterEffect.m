@@ -18,7 +18,7 @@ typedef struct {
     double divisor;
     double bias;
     BOOL preserveAlpha;
-    NSInteger edgeMode;
+    IJSVGFilterEdgeMode edgeMode;
     CGSize step;
     CGRect inputRegion;
 } IJSVGConvolutionParameters;
@@ -170,10 +170,8 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
     }
     double bias = [primitive numberForParameter:IJSVGAttributeBias
                                    defaultValue:0];
-    BOOL preserveAlpha = [primitive.parameters[IJSVGAttributePreserveAlpha] isEqualToString:IJSVGStringTrue];
-    NSString* edge = primitive.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringDuplicate;
-    NSInteger edgeMode =
-        [edge isEqualToString:IJSVGStringDuplicate] ? 1 : ([edge isEqualToString:IJSVGStringWrap] ? 2 : 0);
+    BOOL preserveAlpha = primitive.preserveAlpha;
+    IJSVGFilterEdgeMode edgeMode = primitive.edgeMode;
     CGSize step = [primitive pairForParameter:IJSVGAttributeKernelUnitLength
                                  defaultValue:CGSizeZero];
     if(primitive.parameters[IJSVGAttributeKernelUnitLength] != nil && (step.width <= 0 || step.height <= 0)) {
@@ -209,10 +207,10 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
                 }
             }
             CIImage* source = [context imageInPrimitiveColorSpace:input];
-            if(edgeMode == 1) {
+            if(edgeMode == IJSVGFilterEdgeModeDuplicate) {
                 source = [source imageByClampingToExtent];
             }
-            if(edgeMode == 2) {
+            if(edgeMode == IJSVGFilterEdgeModeWrap) {
                 source = [source imageByApplyingFilter:@"CIAffineTile"
                                    withInputParameters:@{
                     kCIInputTransformKey: [NSAffineTransform transform]

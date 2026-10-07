@@ -320,7 +320,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return paint;
 }
 
-- (IJSVGPaint*)drawablePaintForTextNode:(IJSVGText*)node
+- (IJSVGTextLayout*)textLayoutForNode:(IJSVGText*)node
 {
     _containsText = YES;
     CGFloat scale = sqrt((_textTransform.a * _textTransform.a + _textTransform.b * _textTransform.b +
@@ -336,7 +336,12 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
             CGPathRelease(path);
             return transformed;
         }];
-    return [self drawablePaintForGroupNode:layout.group];
+    return layout;
+}
+
+- (IJSVGPaint*)drawablePaintForTextNode:(IJSVGText*)node
+{
+    return [self drawablePaintForGroupNode:[self textLayoutForNode:node].group];
 }
 
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
@@ -1017,15 +1022,6 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         maskingBounds.origin.x += maskBounds.origin.x;
         maskingBounds.origin.y += maskBounds.origin.y;
         maskingBounds = CGRectApplyAffineTransform(maskingBounds, userSpaceTransform);
-
-        // Move each child into the mask coordinate space.
-        for(IJSVGPaint *childPaint in maskPaint.children) {
-          CGRect innerBoundingBox = childPaint.innerBoundingBox;
-          CGAffineTransform innerTransform = CGAffineTransformMakeTranslation(-innerBoundingBox.origin.x,
-                                                                              -innerBoundingBox.origin.y);
-          childPaint.frame = CGRectApplyAffineTransform(childPaint.frame, userSpaceTransform);
-          childPaint.frame = CGRectApplyAffineTransform(childPaint.frame, innerTransform);
-        }
     }
 
     if(maskNode.units == IJSVGUnitUserSpaceOnUse) {
@@ -1080,6 +1076,13 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                      toPath:(CGMutablePathRef)mutPath
 {
     for(IJSVGNode* node in nodes) {
+        if([node isKindOfClass:IJSVGText.class]) {
+            IJSVGTextLayout* layout = [self textLayoutForNode:(IJSVGText*)node];
+            [self recursivelyAddResolvedPathsForNodes:layout.group.children
+                                            transform:transform
+                                               toPath:mutPath];
+            continue;
+        }
         if([node isKindOfClass:IJSVGPath.class] == YES &&
             [node matchesTraits:IJSVGNodeTraitPathed] == YES) {
             CGPathRef resolvedPath = [self newResolvedPathForPathNode:(IJSVGPath*)node];

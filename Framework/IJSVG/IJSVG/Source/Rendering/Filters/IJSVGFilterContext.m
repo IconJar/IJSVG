@@ -37,9 +37,15 @@ BOOL IJSVGFilterValidRect(CGRect rect)
 
 // Find the pixel limits once so each sample can reuse them.
 IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height,
-    CGRect region, NSInteger edgeMode)
+    CGRect region, IJSVGFilterEdgeMode edgeMode)
 {
-    IJSVGFilterSampler sampler = { .pixels = pixels, .width = width, .right = -1, .bottom = -1, .edgeMode = edgeMode };
+    IJSVGFilterSampler sampler = {
+      .pixels = pixels,
+      .width = width,
+      .right = -1,
+      .bottom = -1,
+      .edgeMode = edgeMode
+    };
     if(CGRectIsEmpty(region)) {
         return sampler;
     }
@@ -67,10 +73,10 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
     NSInteger left = sampler->left, top = sampler->top;
     NSInteger right = sampler->right, bottom = sampler->bottom;
     NSInteger width = right - left + 1, height = bottom - top + 1;
-    if(sampler->edgeMode == 1) {
+    if(sampler->edgeMode == IJSVGFilterEdgeModeDuplicate) {
         x = MIN(right, MAX(left, x));
         y = MIN(bottom, MAX(top, y));
-    } else if(sampler->edgeMode == 2) {
+    } else if(sampler->edgeMode == IJSVGFilterEdgeModeWrap) {
         // Only wrap coordinates that fall outside the image.
         if(x < left || x > right) {
             x = left + fmod(fmod(x - left, width) + width, width);
@@ -91,10 +97,10 @@ static BOOL IJSVGFilterSampleCoordinates(const IJSVGFilterSampler* sampler, CGFl
     weightsX[0] = 1. - weightsX[1];
     weightsY[0] = 1. - weightsY[1];
     for(NSUInteger i = 0; i < 2; i++) {
-        if(sampler->edgeMode == 1) {
+        if(sampler->edgeMode == IJSVGFilterEdgeModeDuplicate) {
             xs[i] = MIN(right, MAX(left, xs[i]));
             ys[i] = MIN(bottom, MAX(top, ys[i]));
-        } else if(sampler->edgeMode == 2) {
+        } else if(sampler->edgeMode == IJSVGFilterEdgeModeWrap) {
             // Only the next pixel can cross the edge after wrapping.
             xs[i] = xs[i] > right ? xs[i] - width : xs[i];
             ys[i] = ys[i] > bottom ? ys[i] - height : ys[i];
@@ -150,7 +156,7 @@ void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFlo
 }
 
 float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height, CGFloat x, CGFloat y,
-    NSUInteger channel, CGRect region, NSInteger edgeMode)
+    NSUInteger channel, CGRect region, IJSVGFilterEdgeMode edgeMode)
 {
     IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(pixels, width, height, region, edgeMode);
     return IJSVGFilterSamplerValue(&sampler, x, y, channel);

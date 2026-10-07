@@ -8,6 +8,23 @@
 
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGRootNode.h>
+#import <IJSVG/IJSVGText.h>
+
+static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
+{
+    if([node matchesTraits:IJSVGNodeTraitPathed] || [node isKindOfClass:IJSVGText.class]) {
+        return YES;
+    }
+    if(node.type != IJSVGNodeTypeUse) {
+        return NO;
+    }
+    for(IJSVGNode* child in ((IJSVGGroup*)node).children) {
+        if(!IJSVGClipPathSupportsNode(child)) {
+            return NO;
+        }
+    }
+    return YES;
+}
 
 @implementation IJSVGClipPath
 
@@ -47,19 +64,9 @@
 
 - (void)postProcess
 {
-    // clip paths only allow shapes in them, nothing else, we can simply
-    // check the node types for the trait of pathed
-    IJSVGNodeTraits childTraits = IJSVGNodeTraitPathed;
-    for(IJSVGNode* childNode in self.children.copy) {
-        if([childNode matchesTraits:childTraits] == NO) {
-            BOOL remove = YES;
-            IJSVGNodeType type = childNode.type;
-            if(type == IJSVGNodeTypeUse) {
-                remove = [(IJSVGGroup*)childNode childrenMatchTraits:childTraits] == NO;
-            }
-            if(remove == YES) {
-                [self removeChild:childNode];
-            }
+    for(IJSVGNode* child in self.children.copy) {
+        if(!IJSVGClipPathSupportsNode(child)) {
+            [self removeChild:child];
         }
     }
 }

@@ -58,7 +58,7 @@
     return unit;
 }
 
-+ (IJSVGUnitLengthType)typeForCString:(const char*)chars
+IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 {
     if(chars == NULL) {
         return IJSVGUnitLengthTypeNumber;
@@ -112,7 +112,7 @@
 
 + (IJSVGUnitLengthType)typeForString:(NSString*)string
 {
-    return [self typeForCString:string.UTF8String];
+    return IJSVGUnitLengthTypeForCString(string.UTF8String);
 }
 
 + (CGFloat)convertUnitValue:(CGFloat)unit
@@ -183,7 +183,7 @@
     unit.type = IJSVGUnitLengthTypeNumber;
     
     
-    IJSVGUnitLengthType type = [self typeForCString:chars];
+    IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(chars);
     unit.originalType = type;
     
     // memory free

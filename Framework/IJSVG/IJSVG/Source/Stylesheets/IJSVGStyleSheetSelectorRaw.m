@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
+#import <IJSVG/IJSVGStyleSheetUtils.h>
 
 @implementation IJSVGStyleSheetSelectorRaw
 
@@ -15,9 +16,13 @@
     if((self = [super init]) != nil) {
         _classes = [[NSMutableSet alloc] init];
         _combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
-        _combinatorString = @" ";
     }
     return self;
+}
+
+- (NSString*)combinatorString
+{
+    return IJSVGStyleSheetCombinatorStringForCombinator(self.combinator);
 }
 
 - (void)addClassName:(NSString*)className
@@ -28,7 +33,7 @@
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@",
-            _combinatorString, _tag, _classes, _identifier];
+            self.combinatorString, _tag, _classes, _identifier];
 }
 
 @end

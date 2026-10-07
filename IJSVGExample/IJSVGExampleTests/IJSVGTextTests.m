@@ -213,7 +213,7 @@
                        "'Custom Family'";
     IJSVGTextAttributeValue* parsed = IJSVGParseTextAttribute(value,
                                                               IJSVGNodeAttributeFontFamily);
-    NSArray<NSString*>* expected = @[@"Times", @"Helvetica", @"Menlo", @"Apple Chancery",
+    NSArray<NSString*>* expected = @[@"SERIF", @"Sans-Serif", @"Menlo", @"Apple Chancery",
                                      @"Papyrus", @".AppleSystemUIFont", @"日本語フォント", @"Custom Family"];
     XCTAssertEqualObjects(parsed.families, expected);
 }
@@ -977,7 +977,7 @@
                                             "x='0'>C</tspan></textPath><textPath href='#q'><tspan x='0'>"
                                             "D</tspan></textPath></text>"];
     XCTAssertEqual(layout.characterPositions.count, 4);
-    CGFloat x[] = { 20, 40, 10, 0 };
+    CGFloat x[] = { 20, 20, 10, 0 };
     CGFloat y[] = { 20, 20, 20, 70 };
     for(NSUInteger index = 0; index < 4; index++) {
         CGPoint point = layout.characterPositions[index].pointValue;

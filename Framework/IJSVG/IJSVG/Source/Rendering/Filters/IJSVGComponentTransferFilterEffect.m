@@ -11,7 +11,8 @@
 #import <Accelerate/Accelerate.h>
 
 typedef struct {
-    NSUInteger type, offset, count;
+    IJSVGFilterTransferType type;
+    NSUInteger offset, count;
     double slope, intercept, amplitude, exponent, bias;
 } IJSVGComponentTransferFunction;
 
@@ -28,7 +29,7 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
     double* powers = transformed + capacity;
     for(NSUInteger c = 0; c < 4; c++) {
         IJSVGComponentTransferFunction f = functions[c];
-        if(f.type == 4) {
+        if(f.type == IJSVGFilterTransferTypeGamma) {
             vDSP_vfillD(&f.exponent, powers, 1, capacity);
         }
         for(NSInteger start = 0; start < w * h; start += capacity) {
@@ -39,16 +40,16 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
                 float alpha = src[i + 3];
                 channel[x] = IJSVGFilterClamp(c == 3 ? alpha : (alpha > 0 ? src[i + c] / alpha : 0));
             }
-            if(f.type == 4) {
+            if(f.type == IJSVGFilterTransferTypeGamma) {
                 vvpow(transformed, powers, channel, &count);
                 vDSP_vsmsaD(transformed, 1, &f.amplitude, &f.bias, channel, 1, count);
-            } else if(f.type == 3) {
+            } else if(f.type == IJSVGFilterTransferTypeLinear) {
                 vDSP_vsmsaD(channel, 1, &f.slope, &f.intercept, channel, 1, count);
-            } else if((f.type == 1 || f.type == 2) && f.count > 0) {
+            } else if((f.type == IJSVGFilterTransferTypeTable || f.type == IJSVGFilterTransferTypeDiscrete) && f.count > 0) {
                 // Look up each value using the SVG table rules.
                 for(NSInteger x = 0; x < count; x++) {
                     double v = channel[x];
-                    if(f.type == 1) {
+                    if(f.type == IJSVGFilterTransferTypeTable) {
                         double index = v * (f.count - 1);
                         NSUInteger k = floor(index), next = MIN(k + 1, f.count - 1);
                         channel[x] = values[f.offset + k]
@@ -73,7 +74,6 @@ static void IJSVGPrepareTransferFunctions(IJSVGFilterPrimitive* primitive,
                                           IJSVGComponentTransferFunction functions[4],
                                           NSMutableData* tables)
 {
-    NSArray* types = @[IJSVGStringIdentity, IJSVGStringTable, IJSVGStringDiscrete, IJSVGStringLinear, IJSVGStringGamma];
     for(NSUInteger c = 0; c < 4; c++) {
         IJSVGFilterPrimitive* function = nil;
         for(IJSVGFilterPrimitive* child in primitive.children) {
@@ -81,7 +81,7 @@ static void IJSVGPrepareTransferFunctions(IJSVGFilterPrimitive* primitive,
                 function = child;
             }
         }
-        functions[c].type = [types indexOfObject:function.parameters[IJSVGAttributeType] ?: IJSVGStringIdentity];
+        functions[c].type = function.transferType;
         functions[c].slope = [function numberForParameter:IJSVGAttributeSlope
                                              defaultValue:1];
         functions[c].intercept = [function numberForParameter:IJSVGAttributeIntercept
@@ -109,20 +109,20 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
                                                 const double* tableValues,
                                                 CGFloat coefficients[4])
 {
-    if(f.type == 3) {
+    if(f.type == IJSVGFilterTransferTypeLinear) {
         coefficients[0] = f.intercept;
         coefficients[1] = f.slope;
-    } else if(f.type == 1 && f.count == 2) {
+    } else if(f.type == IJSVGFilterTransferTypeTable && f.count == 2) {
         coefficients[0] = tableValues[f.offset];
         coefficients[1] = tableValues[f.offset + 1] - coefficients[0];
-    } else if((f.type == 1 || f.type == 2) && f.count == 1) {
+    } else if((f.type == IJSVGFilterTransferTypeTable || f.type == IJSVGFilterTransferTypeDiscrete) && f.count == 1) {
         coefficients[0] = tableValues[f.offset];
         coefficients[1] = 0;
-    } else if(f.type == 4 && f.exponent >= 0 && f.exponent <= 3 && floor(f.exponent) == f.exponent) {
+    } else if(f.type == IJSVGFilterTransferTypeGamma && f.exponent >= 0 && f.exponent <= 3 && floor(f.exponent) == f.exponent) {
         memset(coefficients, 0, 4 * sizeof(*coefficients));
         coefficients[0] = f.bias;
         coefficients[(NSUInteger)f.exponent] += f.amplitude;
-    } else if(f.type == 4 || ((f.type == 1 || f.type == 2) && f.count > 0)) {
+    } else if(f.type == IJSVGFilterTransferTypeGamma || ((f.type == IJSVGFilterTransferTypeTable || f.type == IJSVGFilterTransferTypeDiscrete) && f.count > 0)) {
         return NO;
     }
     return YES;
@@ -168,10 +168,10 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
     }
     // A shared RGB exponent can use one gamma adjustment.
     // Apply the remaining color changes and opacity separately.
-    if(functions[0].type == 4 && functions[1].type == 4 && functions[2].type == 4 &&
+    if(functions[0].type == IJSVGFilterTransferTypeGamma && functions[1].type == IJSVGFilterTransferTypeGamma && functions[2].type == IJSVGFilterTransferTypeGamma &&
         functions[0].exponent > 0 &&
         functions[0].exponent == functions[1].exponent && functions[0].exponent == functions[2].exponent &&
-        (functions[3].type == 0 || functions[3].type == 3)) {
+        (functions[3].type == IJSVGFilterTransferTypeIdentity || functions[3].type == IJSVGFilterTransferTypeLinear)) {
         for(NSUInteger c = 0; c < 3; c++) {
             polynomial[coefficientKeys[c]] = [CIVector vectorWithX:functions[c].bias Y:functions[c].amplitude
                                                                  Z:0 W:0];

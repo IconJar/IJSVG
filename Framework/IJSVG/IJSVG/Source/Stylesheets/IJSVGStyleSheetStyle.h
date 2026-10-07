@@ -13,6 +13,7 @@
 
 @private
     NSMutableDictionary* _dict;
+    NSMutableSet<NSString*>* _importantProperties;
 }
 
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;

@@ -25,7 +25,7 @@
     CGSize units = context.pixelUnits;
     NSInteger rx = MIN(context.extent.size.width, floor(radius.width * units.width));
     NSInteger ry = MIN(context.extent.size.height, floor(radius.height * units.height));
-    BOOL dilate = [primitive.parameters[IJSVGAttributeOperator] isEqualToString:IJSVGStringDilate];
+    BOOL dilate = primitive.morphologyOperator == IJSVGFilterMorphologyOperatorDilate;
     // SVG grows or shrinks pixels using a rectangular area.
     return [context applyFilter:dilate ? @"CIMorphologyRectangleMaximum" : @"CIMorphologyRectangleMinimum"
                         toImage:[input imageByCroppingToRect:context.extent]

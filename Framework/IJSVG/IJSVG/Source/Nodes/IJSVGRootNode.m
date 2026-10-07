@@ -11,6 +11,14 @@
 
 @implementation IJSVGRootNode
 
+- (void)applyPropertiesFromNode:(IJSVGNode*)node
+{
+    [super applyPropertiesFromNode:node];
+    if([node isKindOfClass:IJSVGRootNode.class]) {
+        self.styleAncestors = ((IJSVGRootNode*)node).styleAncestors;
+    }
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

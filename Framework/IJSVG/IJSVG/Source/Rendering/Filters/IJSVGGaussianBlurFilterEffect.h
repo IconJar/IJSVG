@@ -12,20 +12,20 @@
 
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
               context:(IJSVGFilterContext*)context;
 
 // Use this for images that only contain opacity values.
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
             alphaOnly:(BOOL)alphaOnly
               context:(IJSVGFilterContext*)context;
 
 // Keep the samples needed around the requested output.
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
             alphaOnly:(BOOL)alphaOnly
                region:(CGRect)region
               context:(IJSVGFilterContext*)context;

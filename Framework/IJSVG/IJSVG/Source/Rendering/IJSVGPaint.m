@@ -288,13 +288,14 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock
 {
-    CGRect frame = mask.outerBoundingBox;
     CGFloat scale = MAX(paint.backingScaleFactor, 1.f);
+    CGAffineTransform grid = CGAffineTransformMakeScale(scale, scale);
+    CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(mask.outerBoundingBox, grid));
+    bounds = CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(grid));
+    CGRect frame = bounds;
     if(!IJSVGIsValidContextSize(frame.size)) {
         return;
     }
-    CGRect bounds = CGRectApplyAffineTransform(mask.innerBoundingBox,
-                       [self userSpaceTransformForPaint:mask.referencingPaint ?: mask]);
     IJSVGMaskCachedImage* cached = mask->_maskCacheKey == nil ? nil :
         [IJSVGMaskImageCache() objectForKey:mask->_maskCacheKey];
     CGImageRef image = NULL;
@@ -342,7 +343,12 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     }
     CGContextSaveGState(ctx);
     CGContextClipToRect(ctx, mask.maskingClippingRect);
-    CGContextClipToMask(ctx, mask.maskingBoundingBox, image);
+    CGRect maskBounds = mask.maskingBoundingBox;
+    maskBounds.origin.x += bounds.origin.x - mask.outerBoundingBox.origin.x;
+    maskBounds.origin.y += bounds.origin.y - mask.outerBoundingBox.origin.y;
+    maskBounds.size.width = CGImageGetWidth(image) / scale;
+    maskBounds.size.height = CGImageGetHeight(image) / scale;
+    CGContextClipToMask(ctx, maskBounds, image);
     drawingBlock();
     CGContextRestoreGState(ctx);
     CGImageRelease(image);

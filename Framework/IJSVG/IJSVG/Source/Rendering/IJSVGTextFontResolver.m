@@ -70,9 +70,75 @@ static NSArray* IJSVGTextFontFeatures(NSDictionary<NSString*, IJSVGTextAttribute
 }
 
 
-static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
-                                            CTFontSymbolicTraits traits)
+static CGFloat IJSVGTextFontWeight(NSDictionary<NSString*, IJSVGTextAttributeValue*>* values)
 {
+    IJSVGTextAttributeValue* value = values[IJSVGAttributeFontWeight];
+    return value.keyword == IJSVGTextKeywordBold ? 700 : (value.number > 0 ? value.number : 400);
+}
+
+static CGFloat IJSVGTextNormalizedWeight(CGFloat weight)
+{
+    // Core Text uses a normalized scale, with regular at zero.
+    static const CGFloat weights[] = { -0.8, -0.6, -0.4, 0, 0.23, 0.3, 0.4, 0.56, 0.62, 1 };
+    CGFloat index = MAX(0, MIN(9, weight / 100 - 1));
+    NSUInteger lower = (NSUInteger)index;
+    return lower == 9
+        ? weights[lower]
+        : weights[lower] + (weights[lower + 1] - weights[lower]) * (index - lower);
+}
+
+static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
+                                            CTFontSymbolicTraits traits,
+                                            CGFloat weight)
+{
+    if(weight >= 600) {
+        traits |= kCTFontBoldTrait;
+    }
+    if(weight != 400 && weight != 700) {
+        NSDictionary* attributes = @{
+            (__bridge NSString*)kCTFontFamilyNameAttribute: CFBridgingRelease(CTFontCopyFamilyName(font)),
+            (__bridge NSString*)kCTFontTraitsAttribute: @{
+                (__bridge NSString*)kCTFontSymbolicTrait: @(traits),
+                (__bridge NSString*)kCTFontWeightTrait: @(IJSVGTextNormalizedWeight(weight))
+            }
+        };
+        CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes((__bridge CFDictionaryRef)attributes);
+        NSSet* mandatory = [NSSet setWithObject:(__bridge NSString*)kCTFontFamilyNameAttribute];
+        NSArray* matches = CFBridgingRelease(CTFontDescriptorCreateMatchingFontDescriptors(descriptor,
+                                                                                         (__bridge CFSetRef)mandatory));
+        CFRelease(descriptor);
+        CTFontSymbolicTraits styleMask = kCTFontItalicTrait | kCTFontCondensedTrait |
+            kCTFontExpandedTrait;
+        CTFontDescriptorRef best = NULL;
+        CGFloat bestDistance = CGFLOAT_MAX;
+        CGFloat requested = IJSVGTextNormalizedWeight(weight);
+        for(id match in matches) {
+            NSDictionary* candidateTraits = CFBridgingRelease(CTFontDescriptorCopyAttribute((__bridge CTFontDescriptorRef)match,
+                                                                                           kCTFontTraitsAttribute));
+            CTFontSymbolicTraits symbols = [candidateTraits[(__bridge NSString*)kCTFontSymbolicTrait] unsignedIntValue];
+            if((symbols & styleMask) != (traits & styleMask)) {
+                continue;
+            }
+            CGFloat candidate = [candidateTraits[(__bridge NSString*)kCTFontWeightTrait] doubleValue];
+            CGFloat distance = fabs(candidate - requested);
+            // CSS searches towards lighter faces below 400, towards heavier faces
+            // above 500, and towards 500 before lighter faces between 400 and 500.
+            if(weight < 400) {
+                distance += candidate > requested ? 4 : 0;
+            } else if(weight > 500) {
+                distance += candidate < requested ? 4 : 0;
+            } else {
+                distance += candidate > IJSVGTextNormalizedWeight(500) ? 8 : (candidate < requested ? 4 : 0);
+            }
+            if(distance < bestDistance) {
+                best = (__bridge CTFontDescriptorRef)match;
+                bestDistance = distance;
+            }
+        }
+        if(best != NULL) {
+            return CTFontCreateWithFontDescriptor(best, size, NULL);
+        }
+    }
     CTFontSymbolicTraits mask = kCTFontBoldTrait | kCTFontItalicTrait |
         kCTFontCondensedTrait | kCTFontExpandedTrait;
     if((CTFontGetSymbolicTraits(font) & mask) == traits) {
@@ -120,8 +186,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     }
     static NSSet* mandatory;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken,
-                  ^{
+    dispatch_once(&onceToken, ^{
         mandatory = [NSSet setWithObject:(__bridge NSString*)kCTFontFamilyNameAttribute];
     });
     CTFontDescriptorRef match = NULL;
@@ -149,8 +214,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         NSDictionary* attributes = @{(__bridge NSString*)kCTFontFamilyNameAttribute: family};
         CFDictionaryRef fontAttributes = (__bridge CFDictionaryRef)attributes;
         CTFontDescriptorRef descriptor = CTFontDescriptorCreateWithAttributes(fontAttributes);
-        match = CTFontDescriptorCreateMatchingFontDescriptor(descriptor,
-                                                             (__bridge CFSetRef)mandatory);
+        match = CTFontDescriptorCreateMatchingFontDescriptor(descriptor, (__bridge CFSetRef)mandatory);
         CFRelease(descriptor);
     }
     id result = CFBridgingRelease(match);
@@ -183,19 +247,18 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
                              font:(CTFontRef)font
                              size:(CGFloat)size
                            traits:(CTFontSymbolicTraits)traits
+                           weight:(CGFloat)weight
 {
     if(descriptors.count < 2) {
         return nil;
     }
-    NSArray* defaults = CFBridgingRelease(CTFontCopyDefaultCascadeListForLanguages(font,
-                                                                                   NULL));
+    NSArray* defaults = CFBridgingRelease(CTFontCopyDefaultCascadeListForLanguages(font, NULL));
     NSUInteger count = descriptors.count - 1 + defaults.count;
     NSMutableArray* cascade = [[NSMutableArray alloc] initWithCapacity:count];
     for(NSUInteger index = 1; index < descriptors.count; index++) {
         CTFontDescriptorRef descriptor = (__bridge CTFontDescriptorRef)descriptors[index];
-        CTFontRef fallback = CTFontCreateWithFontDescriptor(descriptor, size,
-                                                            NULL);
-        CTFontRef variant = IJSVGTextCreateFontVariant(fallback, size, traits);
+        CTFontRef fallback = CTFontCreateWithFontDescriptor(descriptor, size, NULL);
+        CTFontRef variant = IJSVGTextCreateFontVariant(fallback, size, traits, weight);
         [cascade addObject:CFBridgingRelease(CTFontCopyFontDescriptor(variant))];
         CFRelease(variant);
         CFRelease(fallback);
@@ -212,10 +275,11 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
 {
     NSArray* families = values[IJSVGAttributeFontFamily].families ?: @[IJSVGTextDefaultFontFamily];
     CTFontSymbolicTraits traits = IJSVGTextFontTraits(values);
+    CGFloat weight = IJSVGTextFontWeight(values);
     IJSVGTextKeyword rendering = values[IJSVGAttributeTextRendering].keyword;
     CGFloat scale = rendering == IJSVGTextKeywordGeometricPrecision ? 1 : self.renderScale;
     CGFloat opticalSize = MAX(.001, size * scale);
-    NSArray* key = @[families, @(size), @(traits), @(opticalSize),
+    NSArray* key = @[families, @(size), @(traits), @(weight), @(opticalSize),
                      values[IJSVGAttributeFontFeatureSettings].features ?: @{},
                      @(values[IJSVGAttributeFontVariant].keyword)];
     id cached = self.fonts[key];
@@ -235,13 +299,14 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         CFStringRef fontName = (__bridge CFStringRef)IJSVGTextDefaultFontName;
         base = CTFontCreateWithName(fontName, resolvedSize, NULL);
     }
-    CTFontRef font = IJSVGTextCreateFontVariant(base, resolvedSize, traits);
+    CTFontRef font = IJSVGTextCreateFontVariant(base, resolvedSize, traits, weight);
     CFRelease(base);
     NSArray* features = IJSVGTextFontFeatures(values);
     NSArray* cascade = [self cascadeForDescriptors:descriptors
                                               font:font
                                               size:resolvedSize
-                                            traits:traits];
+                                            traits:traits
+                                            weight:weight];
     if(features.count != 0 || cascade.count != 0 || systemFont) {
         NSUInteger count = (systemFont ? 1 : 0) + (features.count != 0 ? 1 : 0) + (cascade.count != 0 ? 1 : 0);
         NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithCapacity:count];

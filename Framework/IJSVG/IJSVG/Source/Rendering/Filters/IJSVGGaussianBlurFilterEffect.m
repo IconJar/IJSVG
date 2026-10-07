@@ -230,7 +230,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
 
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
               context:(IJSVGFilterContext*)context
 {
     return [self blurImage:image
@@ -242,7 +242,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
 
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
             alphaOnly:(BOOL)alphaOnly
               context:(IJSVGFilterContext*)context
 {
@@ -256,7 +256,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
 
 - (CIImage*)blurImage:(CIImage*)image
             deviation:(CGSize)deviation
-             edgeMode:(NSString*)edgeMode
+             edgeMode:(IJSVGFilterEdgeMode)edgeMode
             alphaOnly:(BOOL)alphaOnly
                region:(CGRect)region
               context:(IJSVGFilterContext*)context
@@ -266,9 +266,9 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     }
     CGSize units = context.pixelUnits;
     CGFloat sigmaX = deviation.width * units.width, sigmaY = deviation.height * units.height;
-    if([edgeMode isEqualToString:IJSVGStringDuplicate]) {
+    if(edgeMode == IJSVGFilterEdgeModeDuplicate) {
         image = [image imageByClampingToExtent];
-    } else if([edgeMode isEqualToString:IJSVGStringWrap]) {
+    } else if(edgeMode == IJSVGFilterEdgeModeWrap) {
         image = [image imageByApplyingFilter:@"CIAffineTile"
                          withInputParameters:@{
             kCIInputTransformKey: [NSAffineTransform transform]
@@ -329,7 +329,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     return [self blurImage:inputs.firstObject ?: CIImage.emptyImage
                  deviation:[primitive pairForParameter:IJSVGAttributeStdDeviation
                                           defaultValue:CGSizeZero]
-                  edgeMode:primitive.parameters[IJSVGAttributeEdgeMode] ?: IJSVGStringNone
+                  edgeMode:primitive.edgeMode
                  alphaOnly:context.inputIsAlphaOnly ||
                      [primitive.input isEqualToString:IJSVGStringSourceAlpha] ||
                      [primitive.input isEqualToString:IJSVGStringBackgroundAlpha]

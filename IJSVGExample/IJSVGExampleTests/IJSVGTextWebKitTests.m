@@ -9,6 +9,8 @@
 #import <XCTest/XCTest.h>
 #import <WebKit/WebKit.h>
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGTextLayout.h>
 
 @interface IJSVGTextWebKitTests: XCTestCase <WKNavigationDelegate>
 
@@ -115,11 +117,14 @@ didFailNavigation:(WKNavigation*)navigation
     [self waitForExpectations:@[self.navigation]
                       timeout:20];
     XCTestExpectation* metrics = [self expectationWithDescription:@"WebKit character metrics"];
+    __block NSArray* referenceMetrics = nil;
     [self.webView evaluateJavaScript:@"Array.from(document.querySelectorAll('text')).map(t => "
                                       "Array.from({length:t.getNumberOfChars()}, (_,i) => {let "
                                       "p=t.getStartPositionOfChar(i); return "
                                       "[p.x,p.y,t.getRotationOfChar(i)]}))"
                    completionHandler:^(id result, NSError* error) {
+                       XCTAssertNil(error);
+                       referenceMetrics = result;
                        NSLog(@"WebKit metrics %@: %@", name, result);
                        [metrics fulfill];
                    }];
@@ -157,6 +162,12 @@ didFailNavigation:(WKNavigation*)navigation
 
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:svgString];
     CGFloat renderScale = (CGFloat)CGImageGetWidth(reference) / 400;
+    if([name isEqualToString:@"positioning"] || [name isEqualToString:@"length"] ||
+       [name isEqualToString:@"decoration-spaces"] || [name isEqualToString:@"font-weights"]) {
+        [self compareMetrics:referenceMetrics
+                         svg:svgString
+                       scale:renderScale];
+    }
     CGContextRef context = [self newBitmapWithScale:renderScale];
     CGContextTranslateCTM(context, 0, 200 * renderScale);
     CGContextScaleCTM(context, renderScale, -renderScale);
@@ -191,6 +202,87 @@ didFailNavigation:(WKNavigation*)navigation
     self.webView = nil;
     [self.window close];
     self.window = nil;
+}
+
+- (void)compareMetrics:(NSArray*)expected
+                   svg:(NSString*)xml
+                 scale:(CGFloat)scale
+{
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml
+                                                         fileURL:nil
+                                                           error:nil];
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(400, 200)];
+    NSMutableArray<IJSVGText*>* texts = [[NSMutableArray alloc] init];
+    [IJSVGNode walkNodeTree:root
+                    handler:^(IJSVGNode* node, BOOL* descend, BOOL* stop) {
+                        if([node isKindOfClass:IJSVGText.class]) {
+                            [texts addObject:(IJSVGText*)node];
+                            *descend = NO;
+                        }
+                    }];
+    XCTAssertEqual(texts.count, expected.count);
+    for(NSUInteger index = 0; index < MIN(texts.count, expected.count); index++) {
+        IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:texts[index]
+                                                           viewport:CGSizeMake(400, 200)
+                                                        renderScale:scale
+                                                       pathResolver:nil];
+        NSArray* characters = expected[index];
+        XCTAssertEqual(layout.characterPositions.count, characters.count);
+        for(NSUInteger character = 0; character < MIN(layout.characterPositions.count, characters.count); character++) {
+            CGPoint point = layout.characterPositions[character].pointValue;
+            NSArray<NSNumber*>* metrics = characters[character];
+            // WebKit reports unscaled DOM positions for spacingAndGlyphs.
+            // Its final scaled geometry remains covered by the image comparison.
+            BOOL scalesGlyphs = texts[index].positioning[IJSVGAttributeLengthAdjust].keyword == IJSVGTextKeywordSpacingAndGlyphs;
+            if(!scalesGlyphs) {
+                XCTAssertEqualWithAccuracy(point.x, metrics[0].doubleValue, .25,
+                                           @"text %lu character %lu x", index, character);
+                XCTAssertEqualWithAccuracy(point.y, metrics[1].doubleValue, .25,
+                                           @"text %lu character %lu y", index, character);
+            }
+            CGFloat rotation = layout.characterRotations[character].doubleValue;
+            CGFloat difference = remainder(rotation - metrics[2].doubleValue, 360);
+            XCTAssertEqualWithAccuracy(difference, 0, .01,
+                                       @"text %lu character %lu rotation", index, character);
+        }
+    }
+}
+
+- (void)testDecorationsAcrossSpacesMatchWebKit
+{
+    // Decoration offsets use Core Text font metrics; WebKit places these lines
+    // slightly differently. Exact coverage across spaces is tested geometrically.
+    [self compareBody:@"<g font-family='Helvetica' font-size='30'><text x='20' y='40' "
+                       "text-decoration='underline'>hello world</text><text x='20' y='90' "
+                       "text-decoration='overline'>hello world</text><text x='20' y='140' "
+                       "text-decoration='line-through'>hello world</text></g>"
+                 name:@"decoration-spaces"
+            tolerance:.26];
+}
+
+- (void)testNumericAndRelativeWeightsMatchWebKit
+{
+    [self compareBody:@"<g font-family='Helvetica Neue' font-size='28'>"
+                       "<text x='20' y='40' font-weight='300'>Light <tspan font-weight='500'>Medium</tspan></text>"
+                       "<text x='20' y='90' font-weight='700'>Bold <tspan font-weight='bolder'>Heavy</tspan></text>"
+                       "<text x='20' y='140' font-weight='700'><tspan font-weight='lighter'>Regular</tspan></text></g>"
+                 name:@"font-weights"
+            tolerance:.16];
+}
+
+- (void)testNestedBidiScopesMatchWebKit
+{
+    NSArray* modes = @[@"embed", @"bidi-override", @"isolate", @"isolate-override", @"plaintext"];
+    for(NSString* mode in modes) {
+        NSString* body = [NSString stringWithFormat:@"<text x='20' y='70' font-family='Helvetica' "
+                                                     "font-size='32'>A<tspan direction='rtl' "
+                                                     "unicode-bidi='%@'>אב <tspan>12</tspan> "
+                                                     "C</tspan>Z</text>",
+                                                    mode];
+        [self compareBody:body
+                     name:[@"bidi-" stringByAppendingString:mode]
+                tolerance:.16];
+    }
 }
 
 - (void)testFontRelativeLengthsMatchWebKit

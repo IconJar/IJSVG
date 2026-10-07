@@ -35,6 +35,7 @@ typedef struct {
     __unsafe_unretained IJSVGText* pathNode;
     __unsafe_unretained IJSVGTextComputedStyle* style;
     NSUInteger utf16;
+    NSUInteger cluster;
     CGPoint position;
     CGFloat advance;
     CGFloat x;

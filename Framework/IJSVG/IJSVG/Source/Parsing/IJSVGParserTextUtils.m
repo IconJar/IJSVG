@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <string.h>
+#import <IJSVG/IJSVGStyleSheetUtils.h>
 
 static NSString* const IJSVGTextSerifFontFamily = @"Times";
 static NSString* const IJSVGTextSansSerifFontFamily = @"Helvetica";
@@ -111,20 +112,12 @@ static NSString* IJSVGTextResolveGenericFamily(NSString* family)
 static void IJSVGParseTextFamilies(NSString* value,
                                    IJSVGTextAttributeValue* parsed)
 {
-    static NSCharacterSet* trim;
-    static dispatch_once_t familyOnce;
-    dispatch_once(&familyOnce,
-                  ^{
-        trim = [NSCharacterSet characterSetWithCharactersInString:@" \t\r\n'\""];
+    NSMutableArray<NSString*>* families = [[NSMutableArray alloc] init];
+    BOOL valid = IJSVGStyleSheetEnumerateFontFamilies(value, ^(NSString* family, BOOL quoted) {
+        NSString* resolvedFamily = quoted ? family : IJSVGTextResolveGenericFamily(family);
+        [families addObject:resolvedFamily];
     });
-    NSArray<NSString*>* entries = [value ijsvg_componentsSeparatedByChars:","];
-    NSMutableArray* families = [[NSMutableArray alloc] initWithCapacity:entries.count];
-    for(NSString* entry in entries) {
-        NSString* family = [entry stringByTrimmingCharactersInSet:trim];
-        [families addObject:IJSVGTextResolveGenericFamily(family)];
-    }
-    // Keep the listed order for font fallback.
-    parsed.families = families;
+    parsed.families = valid ? families : @[];
 }
 
 static void IJSVGParseTextFeatures(NSString* value,
@@ -132,8 +125,7 @@ static void IJSVGParseTextFeatures(NSString* value,
 {
     static NSCharacterSet* quotes;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken,
-                  ^{
+    dispatch_once(&onceToken, ^{
         quotes = [NSCharacterSet characterSetWithCharactersInString:@"'\""];
     });
     NSArray<NSString*>* entries = [value ijsvg_componentsSeparatedByChars:","];
@@ -226,8 +218,10 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value,
             break;
         case IJSVGNodeAttributeFontWeight:
             parsed.number = value.doubleValue;
-            if(parsed.keyword == IJSVGTextKeywordUnspecified && parsed.number > 0) {
-                parsed.keyword = parsed.number >= 600 ? IJSVGTextKeywordBold: IJSVGTextKeywordNormal;
+            // Keep numeric weights intact for font matching and relative inheritance.
+            if(parsed.keyword == IJSVGTextKeywordUnspecified &&
+               (!isfinite(parsed.number) || parsed.number < 1 || parsed.number > 1000)) {
+                parsed.keyword = IJSVGTextKeywordInherit;
             }
             break;
         case IJSVGNodeAttributeFontVariantLigatures:
@@ -251,67 +245,6 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value,
     return parsed;
 }
 
-static void IJSVGExpandTextFont(NSString* shorthand,
-                                NSMutableDictionary* values)
-{
-    IJSVGTextKeyword keyword = IJSVGTextKeywordForString(shorthand);
-    if(keyword == IJSVGTextKeywordInherit || keyword == IJSVGTextKeywordUnset ||
-       keyword == IJSVGTextKeywordInitial) {
-        for(NSString* attribute in @[
-                IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontStyle,
-                IJSVGAttributeFontWeight, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant,
-                IJSVGAttributeLineHeight
-            ]) {
-            values[attribute] = shorthand;
-        }
-        return;
-    }
-    values[IJSVGAttributeFontStyle] = IJSVGStringNormal;
-    values[IJSVGAttributeFontWeight] = IJSVGStringNormal;
-    values[IJSVGAttributeFontVariant] = IJSVGStringNormal;
-    NSArray<NSString*>* tokens = [shorthand ijsvg_componentsSeparatedByChars:" ,\t\r\n"];
-    for(NSUInteger index = 0; index < tokens.count; index++) {
-        NSString* token = tokens[index];
-        if([token rangeOfCharacterFromSet:NSCharacterSet.decimalDigitCharacterSet].location !=
-           NSNotFound) {
-            if(token.doubleValue >= 100 && token.doubleValue <= 900 &&
-               [token rangeOfCharacterFromSet:NSCharacterSet.letterCharacterSet].location ==
-                   NSNotFound &&
-               [token rangeOfString:@"/"].location == NSNotFound) {
-                values[IJSVGAttributeFontWeight] = token;
-                continue;
-            }
-            NSArray<NSString*>* parts = [token ijsvg_componentsSeparatedByChars:"/"];
-            values[IJSVGAttributeFontSize] = parts.firstObject;
-            if(parts.count > 1) {
-                values[IJSVGAttributeLineHeight] = parts[1];
-            }
-            if(index + 1 < tokens.count) {
-                NSRange range = [shorthand rangeOfString:token];
-                NSString* family = [shorthand substringFromIndex:NSMaxRange(range)];
-                NSCharacterSet* whitespace = NSCharacterSet.whitespaceAndNewlineCharacterSet;
-                values[IJSVGAttributeFontFamily] = [family stringByTrimmingCharactersInSet:whitespace];
-            }
-            break;
-        }
-        switch(IJSVGTextKeywordForString(token)) {
-            case IJSVGTextKeywordItalic:
-            case IJSVGTextKeywordOblique:
-                values[IJSVGAttributeFontStyle] = token;
-                break;
-            case IJSVGTextKeywordBold:
-            case IJSVGTextKeywordBolder:
-            case IJSVGTextKeywordLighter:
-                values[IJSVGAttributeFontWeight] = token;
-                break;
-            case IJSVGTextKeywordSmallCaps:
-                values[IJSVGAttributeFontVariant] = token;
-                break;
-            default:
-                break;
-        }
-    }
-}
 
 void IJSVGApplyTextAttributes(IJSVGNode* node,
                               NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength])
@@ -319,8 +252,7 @@ void IJSVGApplyTextAttributes(IJSVGNode* node,
     static NSArray<NSString*>* styleNames;
     static NSArray<NSString*>* positionNames;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken,
-                  ^{
+    dispatch_once(&onceToken, ^{
         styleNames = @[
             IJSVGAttributeFont, IJSVGAttributeFontFamily, IJSVGAttributeFontSize,
             IJSVGAttributeFontWeight, IJSVGAttributeFontStyle, IJSVGAttributeFontStretch,
@@ -346,10 +278,9 @@ void IJSVGApplyTextAttributes(IJSVGNode* node,
     // Expand shorthand only when present and parse longhands directly by attribute.
     NSString* shorthand = IJSVGAttributeValue(attributeValues,
                                               IJSVGNodeAttributeFont);
-    NSMutableDictionary<NSString*, NSString*>* expanded = nil;
+    NSDictionary<NSString*, NSString*>* expanded = nil;
     if(shorthand != nil) {
-        expanded = [[NSMutableDictionary alloc] initWithCapacity:7];
-        IJSVGExpandTextFont(shorthand, expanded);
+        expanded = IJSVGStyleSheetExpandDeclaration(IJSVGAttributeFont, shorthand);
     }
     NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* parsed = nil;
     for(NSUInteger index = 1; index < styleNames.count; index++) {
@@ -381,21 +312,22 @@ void IJSVGApplyTextAttributes(IJSVGNode* node,
         return;
     }
 
-    static const IJSVGNodeAttribute positionAttributes[] = { IJSVGNodeAttributeX,
-                                                             IJSVGNodeAttributeY, IJSVGNodeAttributeDX, IJSVGNodeAttributeDY, IJSVGNodeAttributeRotate,
-                                                             IJSVGNodeAttributeTextLength, IJSVGNodeAttributeLengthAdjust, IJSVGNodeAttributeStartOffset,
-                                                             IJSVGNodeAttributeMethod, IJSVGNodeAttributeSpacing, IJSVGNodeAttributeSide,
-                                                             IJSVGNodeAttributePath, IJSVGNodeAttributePathLength };
+    static const IJSVGNodeAttribute positionAttributes[] = {
+      IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeDX,
+      IJSVGNodeAttributeDY, IJSVGNodeAttributeRotate, IJSVGNodeAttributeTextLength,
+      IJSVGNodeAttributeLengthAdjust, IJSVGNodeAttributeStartOffset,
+      IJSVGNodeAttributeMethod, IJSVGNodeAttributeSpacing, IJSVGNodeAttributeSide,
+      IJSVGNodeAttributePath, IJSVGNodeAttributePathLength
+    };
+  
     NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* positioning = nil;
     for(NSUInteger index = 0; index < positionNames.count; index++) {
         NSString* value = nil;
-        if(IJSVGAttributeHasValue(attributeValues, positionAttributes[index],
-                                  &value)) {
+        if(IJSVGAttributeHasValue(attributeValues, positionAttributes[index], &value)) {
             if(positioning == nil) {
                 positioning = [[NSMutableDictionary alloc] init];
             }
-            positioning[positionNames[index]] = IJSVGParseTextAttribute(value,
-                                                                        positionAttributes[index]);
+            positioning[positionNames[index]] = IJSVGParseTextAttribute(value, positionAttributes[index]);
         }
     }
     ((IJSVGText*)node).positioning = positioning ?: @{};

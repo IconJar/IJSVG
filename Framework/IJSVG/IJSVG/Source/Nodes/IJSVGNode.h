@@ -317,6 +317,17 @@ typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeLuminosity = kCGBlendModeLuminosity
 };
 
+typedef NS_ENUM(NSInteger, IJSVGColorInterpolation) {
+    IJSVGColorInterpolationUnspecified,
+    IJSVGColorInterpolationInherit,
+    IJSVGColorInterpolationAuto,
+    IJSVGColorInterpolationSRGB,
+    IJSVGColorInterpolationLinearRGB
+};
+
+IJSVGColorInterpolation IJSVGColorInterpolationForString(NSString* _Nullable value);
+NSString* _Nullable IJSVGColorInterpolationString(IJSVGColorInterpolation value);
+
 typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
     IJSVGOverflowVisibilityHidden,
     IJSVGOverflowVisibilityVisible
@@ -343,6 +354,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy, nullable) NSString* unicode;
 // Specified text properties, retained on all elements for inheritance through groups.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, IJSVGTextAttributeValue*>* textStyle;
+// Style inheritance can follow the source document independently of rendering.
+@property (nonatomic, weak, nullable) IJSVGNode* styleParent;
 @property (nonatomic, assign) IJSVGNodeType type;
 @property (nonatomic, copy, nullable) NSString* name;
 @property (nonatomic, copy, nullable) NSString* className;
@@ -365,7 +378,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong, nullable) IJSVGMask* mask;
 @property (nonatomic, strong, nullable) IJSVGFilter* filter;
 @property (nonatomic, copy, nullable) NSArray<IJSVGFilter*>* filters;
-@property (nonatomic, copy, nullable) NSString* filterColorInterpolation;
+@property (nonatomic, assign) IJSVGColorInterpolation filterColorInterpolation;
+@property (nonatomic, readonly) IJSVGColorInterpolation resolvedFilterColorInterpolation;
 @property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
 @property (nonatomic, assign) CGRect backgroundBounds;
 @property (nonatomic, readonly) CGRect backgroundRect;

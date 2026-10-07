@@ -31,7 +31,13 @@ NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* chars,
                                                        NSUInteger start,
                                                        NSUInteger end);
 
+BOOL IJSVGStyleSheetConsumeQuotedCharacter(char c, char* quote, BOOL* escaped);
+NSString* _Nullable IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important);
+BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,
+                                           void (^handler)(NSString* family, BOOL quoted));
 NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string);
+NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
+                                                                     NSString* value);
 
 BOOL IJSVGStyleSheetSelectorRawHasSimpleSelector(IJSVGStyleSheetSelectorRaw* rawSelector);
 BOOL IJSVGStyleSheetSelectorRawHasAnySelector(IJSVGStyleSheetSelectorRaw* rawSelector,

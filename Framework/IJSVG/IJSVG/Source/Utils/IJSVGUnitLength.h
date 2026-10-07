@@ -26,6 +26,8 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeEX
 };
 
+IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars);
+
 typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitUserSpaceOnUse,
     IJSVGUnitObjectBoundingBox,

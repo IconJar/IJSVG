@@ -21,7 +21,8 @@ let package = Package(
             publicHeadersPath: "include",
             cSettings: [
                 .headerSearchPath("PrivateHeaders"),
-                .headerSearchPath("Source/Rendering")
+                .headerSearchPath("Source/Rendering"),
+                .headerSearchPath("Source/Parsing")
             ],
             linkerSettings: [
                 .linkedFramework("AppKit"),

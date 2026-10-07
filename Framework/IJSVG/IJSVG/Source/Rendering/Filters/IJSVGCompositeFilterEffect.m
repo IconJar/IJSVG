@@ -162,29 +162,29 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
     CIImage* other = inputs.count > 1 ? inputs[1] : CIImage.emptyImage;
-    NSString* op = primitive.parameters[IJSVGAttributeOperator] ?: IJSVGStringOver;
-    static NSDictionary<NSString*, NSString*>* filters;
+    IJSVGFilterCompositeOperator op = primitive.compositeOperator;
+    static NSDictionary<NSNumber*, NSString*>* filters;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         filters = @{
-            IJSVGStringOver: @"CISourceOverCompositing",
-            IJSVGStringIn: @"CISourceInCompositing",
-            IJSVGStringOut: @"CISourceOutCompositing",
-            IJSVGStringAtop: @"CISourceAtopCompositing",
-            IJSVGStringLighter: @"CIAdditionCompositing"
+            @(IJSVGFilterCompositeOperatorOver): @"CISourceOverCompositing",
+            @(IJSVGFilterCompositeOperatorIn): @"CISourceInCompositing",
+            @(IJSVGFilterCompositeOperatorOut): @"CISourceOutCompositing",
+            @(IJSVGFilterCompositeOperatorAtop): @"CISourceAtopCompositing",
+            @(IJSVGFilterCompositeOperatorLighter): @"CIAdditionCompositing"
         };
     });
-    if([op isEqualToString:IJSVGStringXor]) {
+    if(op == IJSVGFilterCompositeOperatorXor) {
         return IJSVGCompositeXor(input, other, context);
     }
-    if(filters[op] != nil) {
-        return [context applyFilter:filters[op]
+    if(filters[@(op)] != nil) {
+        return [context applyFilter:filters[@(op)]
                             toImage:input
                          parameters:@{
             kCIInputBackgroundImageKey: [context imageInPrimitiveColorSpace:other]
         }];
     }
-    if([op isEqualToString:IJSVGStringArithmetic] == NO) {
+    if(op != IJSVGFilterCompositeOperatorArithmetic) {
         return [context applyFilter:@"CISourceOverCompositing"
                             toImage:input
                          parameters:@{

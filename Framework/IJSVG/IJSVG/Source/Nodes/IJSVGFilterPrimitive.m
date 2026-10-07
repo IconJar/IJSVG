@@ -11,6 +11,133 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
+typedef struct {
+    const char* name;
+    NSInteger value;
+} IJSVGFilterKeyword;
+
+static NSInteger IJSVGFilterKeywordValue(NSString* string, const IJSVGFilterKeyword* keywords,
+    size_t count, NSInteger fallback)
+{
+    const char* value = string.UTF8String;
+    if(value == NULL || strlen(value) != [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return fallback;
+    }
+    for(size_t i = 0; i < count; i++) {
+        if(strcmp(value, keywords[i].name) == 0) {
+            return keywords[i].value;
+        }
+    }
+    return fallback;
+}
+
+static IJSVGFilterCompositeOperator IJSVGFilterCompositeOperatorForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"over", IJSVGFilterCompositeOperatorOver},
+        {"in", IJSVGFilterCompositeOperatorIn},
+        {"out", IJSVGFilterCompositeOperatorOut},
+        {"atop", IJSVGFilterCompositeOperatorAtop},
+        {"xor", IJSVGFilterCompositeOperatorXor},
+        {"arithmetic", IJSVGFilterCompositeOperatorArithmetic},
+        {"lighter", IJSVGFilterCompositeOperatorLighter}
+    };
+    return (IJSVGFilterCompositeOperator)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterCompositeOperatorOver);
+}
+
+static IJSVGFilterEdgeMode IJSVGFilterEdgeModeForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"none", IJSVGFilterEdgeModeNone},
+        {"duplicate", IJSVGFilterEdgeModeDuplicate},
+        {"wrap", IJSVGFilterEdgeModeWrap}
+    };
+    return (IJSVGFilterEdgeMode)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterEdgeModeUnspecified);
+}
+
+static IJSVGFilterColorMatrixType IJSVGFilterColorMatrixTypeForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"matrix", IJSVGFilterColorMatrixTypeMatrix},
+        {"saturate", IJSVGFilterColorMatrixTypeSaturate},
+        {"hueRotate", IJSVGFilterColorMatrixTypeHueRotate},
+        {"luminanceToAlpha", IJSVGFilterColorMatrixTypeLuminanceToAlpha}
+    };
+    return (IJSVGFilterColorMatrixType)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterColorMatrixTypeMatrix);
+}
+
+static IJSVGFilterTransferType IJSVGFilterTransferTypeForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"identity", IJSVGFilterTransferTypeIdentity},
+        {"table", IJSVGFilterTransferTypeTable},
+        {"discrete", IJSVGFilterTransferTypeDiscrete},
+        {"linear", IJSVGFilterTransferTypeLinear},
+        {"gamma", IJSVGFilterTransferTypeGamma}
+    };
+    return (IJSVGFilterTransferType)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterTransferTypeIdentity);
+}
+
+static IJSVGFilterMorphologyOperator IJSVGFilterMorphologyOperatorForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"erode", IJSVGFilterMorphologyOperatorErode},
+        {"dilate", IJSVGFilterMorphologyOperatorDilate}
+    };
+    return (IJSVGFilterMorphologyOperator)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterMorphologyOperatorErode);
+}
+
+static IJSVGFilterTurbulenceType IJSVGFilterTurbulenceTypeForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"turbulence", IJSVGFilterTurbulenceTypeTurbulence},
+        {"fractalNoise", IJSVGFilterTurbulenceTypeFractalNoise}
+    };
+    return (IJSVGFilterTurbulenceType)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterTurbulenceTypeTurbulence);
+}
+
+static IJSVGFilterColorChannel IJSVGFilterColorChannelForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"R", IJSVGFilterColorChannelRed},
+        {"G", IJSVGFilterColorChannelGreen},
+        {"B", IJSVGFilterColorChannelBlue},
+        {"A", IJSVGFilterColorChannelAlpha}
+    };
+    return (IJSVGFilterColorChannel)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGFilterColorChannelAlpha);
+}
+
+static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
+{
+    static const IJSVGFilterKeyword keywords[] = {
+        {"normal", IJSVGBlendModeNormal},
+        {"multiply", IJSVGBlendModeMultiply},
+        {"screen", IJSVGBlendModeScreen},
+        {"darken", IJSVGBlendModeDarken},
+        {"lighten", IJSVGBlendModeLighten},
+        {"overlay", IJSVGBlendModeOverlay},
+        {"color-dodge", IJSVGBlendModeColorDodge},
+        {"color-burn", IJSVGBlendModeColorBurn},
+        {"hard-light", IJSVGBlendModeHardLight},
+        {"soft-light", IJSVGBlendModeSoftLight},
+        {"difference", IJSVGBlendModeDifference},
+        {"exclusion", IJSVGBlendModeExclusion},
+        {"hue", IJSVGBlendModeHue},
+        {"saturation", IJSVGBlendModeSaturation},
+        {"color", IJSVGBlendModeColor},
+        {"luminosity", IJSVGBlendModeLuminosity}
+    };
+    return (IJSVGBlendMode)IJSVGFilterKeywordValue(value, keywords,
+        sizeof(keywords) / sizeof(*keywords), IJSVGBlendModeNormal);
+}
+
 @implementation IJSVGFilterPrimitive {
     NSDictionary<NSString*, NSString*>* _parameters;
     NSMutableDictionary<NSString*, id>* _preparedValues;
@@ -18,6 +145,16 @@
 }
 
 @synthesize parameters = _parameters;
+@synthesize edgeMode = _edgeMode;
+
+- (IJSVGFilterEdgeMode)edgeMode
+{
+    if(_edgeMode == IJSVGFilterEdgeModeUnspecified) {
+        return self.type == IJSVGNodeTypeFilterConvolveMatrix ?
+            IJSVGFilterEdgeModeDuplicate : IJSVGFilterEdgeModeNone;
+    }
+    return _edgeMode;
+}
 
 - (void)setParameters:(NSDictionary<NSString*, NSString*>*)parameters
 {
@@ -25,6 +162,17 @@
         _parameters = parameters.copy;
         _preparedValues = nil;
         _parsedNumbers = nil;
+        _compositeOperator = IJSVGFilterCompositeOperatorForString(_parameters[IJSVGAttributeOperator]);
+        _edgeMode = IJSVGFilterEdgeModeForString(_parameters[IJSVGAttributeEdgeMode]);
+        _colorMatrixType = IJSVGFilterColorMatrixTypeForString(_parameters[IJSVGAttributeType]);
+        _transferType = IJSVGFilterTransferTypeForString(_parameters[IJSVGAttributeType]);
+        _morphologyOperator = IJSVGFilterMorphologyOperatorForString(_parameters[IJSVGAttributeOperator]);
+        _turbulenceType = IJSVGFilterTurbulenceTypeForString(_parameters[IJSVGAttributeType]);
+        _xChannel = IJSVGFilterColorChannelForString(_parameters[IJSVGAttributeXChannelSelector]);
+        _yChannel = IJSVGFilterColorChannelForString(_parameters[IJSVGAttributeYChannelSelector]);
+        _filterBlendMode = IJSVGBlendModeForString(_parameters[IJSVGAttributeMode]);
+        _preserveAlpha = [_parameters[IJSVGAttributePreserveAlpha] isEqualToString:IJSVGStringTrue];
+        _stitchTiles = [_parameters[IJSVGAttributeStitchTiles] isEqualToString:IJSVGStringStitch];
     }
 }
 
@@ -91,6 +239,7 @@
 {
     [super setDefaults];
     self.shouldRender = NO;
+    self.parameters = nil;
 }
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
