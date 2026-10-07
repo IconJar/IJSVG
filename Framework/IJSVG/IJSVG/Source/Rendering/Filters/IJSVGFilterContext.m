@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVG/IJSVGXEntities.h>
 
 // Read shader text from the framework or Swift package resource bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)
@@ -325,7 +326,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 - (CIImage*)floodWithColor:(XColor*)color
                    opacity:(CGFloat)opacity
 {
-    color = [color colorUsingColorSpace:XColorSpace.sRGBColorSpace] ?: XColor.blackColor;
+    color = [color colorUsingXColorSpace:XColorSpace.sRGBColorSpace] ?: XColor.blackColor;
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CIColor* ciColor = [CIColor colorWithRed:color.redComponent
                                        green:color.greenComponent

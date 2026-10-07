@@ -6,6 +6,8 @@
 //
 //
 
+#import <IJSVG/IJSVGXEntities.h>
+
 #import <TargetConditionals.h>
 #if !TARGET_OS_OSX
 
@@ -23,7 +25,17 @@
 - (CGFloat)alphaComponent;
 
 - (CGColorSpaceWrapper *)colorSpace;
-- (instancetype)colorUsingColorSpace:(CGColorSpaceWrapper *)colorSpace;
+/* `colorUsingColorSpace:` is a private symbol, which takes precedence over the one we create.
+ * So instead we create our own symbol, both in the iOS and macOS world, and use that symbol. */
+- (UIColor *)colorUsingXColorSpace:(XColorSpace *)colorSpace;
+
+@end
+
+#else
+
+@interface NSColor (iOSParity)
+
+- (NSColor *)colorUsingXColorSpace:(XColorSpace *)colorSpace;
 
 @end
 

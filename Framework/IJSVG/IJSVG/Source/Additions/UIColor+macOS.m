@@ -59,10 +59,24 @@
     return ret;
 }
 
-- (instancetype)colorUsingColorSpace:(CGColorSpaceWrapper *)colorSpace
+- (UIColor *)colorUsingXColorSpace:(XColorSpace *)colorSpace
 {
     CGColorRef cgColor = CGColorCreateCopyByMatchingToColorSpace(colorSpace.colorSpace, kCGRenderingIntentDefault, self.CGColor, NULL);
     return [[UIColor alloc] initWithCGColor:cgColor];
+}
+
+@end
+
+#else
+
+#import <AppKit/AppKit.h>
+#import "UIColor+macOS.h"
+
+@implementation NSColor (iOSParity)
+
+- (NSColor *)colorUsingXColorSpace:(XColorSpace *)colorSpace
+{
+	return [self colorUsingColorSpace:colorSpace];
 }
 
 @end

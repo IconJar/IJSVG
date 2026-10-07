@@ -16,7 +16,7 @@
 
 - (XColor*)deviceRGBColor:(XColor*)color
 {
-    return [color colorUsingColorSpace:XColorSpace.deviceRGBColorSpace];
+    return [color colorUsingXColorSpace:XColorSpace.deviceRGBColorSpace];
 }
 
 - (void)assertColor:(XColor*)color

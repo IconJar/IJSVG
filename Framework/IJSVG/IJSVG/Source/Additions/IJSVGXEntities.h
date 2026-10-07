@@ -38,6 +38,8 @@
 # define CXMLNodePrettyPrint NSXMLNodePrettyPrint
 # define CXMLTextKind NSXMLTextKind
 
+# import <IJSVG/UIColor+macOS.h>
+
 
 #else
 

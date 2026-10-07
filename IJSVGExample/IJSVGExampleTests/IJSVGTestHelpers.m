@@ -120,7 +120,7 @@ XColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point)
 void IJSVGAssertColorComponents(XColor* color, CGFloat red, CGFloat green,
                                 CGFloat blue, CGFloat alpha)
 {
-    XColor* rgbColor = [color colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* rgbColor = [color colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
     XCTAssertEqualWithAccuracy(rgbColor.redComponent, red, 0.02);
     XCTAssertEqualWithAccuracy(rgbColor.greenComponent, green, 0.02);
     XCTAssertEqualWithAccuracy(rgbColor.blueComponent, blue, 0.02);
@@ -144,7 +144,7 @@ void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
             XCTAssertNotNil(expectedColor);
 
             XColor* actualColor = IJSVGTestColorFromRGBAData(data, size, CGPointMake(x, y));
-            XColor* expectedRGBColor = [expectedColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
+            XColor* expectedRGBColor = [expectedColor colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
             IJSVGAssertColorComponents(actualColor,
                                        expectedRGBColor.redComponent,
                                        expectedRGBColor.greenComponent,

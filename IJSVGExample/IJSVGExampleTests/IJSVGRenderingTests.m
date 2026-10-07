@@ -159,9 +159,9 @@
     XColor* leftColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body), CGPointMake(0.f, 4.f));
     XColor* rightColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body), CGPointMake(7.f, 4.f));
     XColor* middleColor = IJSVGTestColorFromSVGAtPoint(IJSVGTestSVG(body), CGPointMake(4.f, 4.f));
-    XColor* leftRGBColor = [leftColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
-    XColor* rightRGBColor = [rightColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
-    XColor* middleRGBColor = [middleColor colorUsingColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* leftRGBColor = [leftColor colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* rightRGBColor = [rightColor colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
+    XColor* middleRGBColor = [middleColor colorUsingXColorSpace:XColorSpace.genericRGBColorSpace];
 
     XCTAssertGreaterThan(leftRGBColor.redComponent, leftRGBColor.blueComponent);
     XCTAssertGreaterThan(rightRGBColor.blueComponent, rightRGBColor.redComponent);
