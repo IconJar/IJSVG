@@ -28,6 +28,7 @@
 @interface IJSVGExporter () {
     IJSVGRootPaint* _rootPaint;
     IJSVGQuartzRenderer* _paintResolver;
+    NSSet<IJSVGPaint*>* _outsideViewportPaints;
 }
 @end
 
@@ -332,6 +333,26 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             node.clientSize = size;
         }
         _rootPaint = [_paintResolver rootPaintForRootNode:node];
+        _outsideViewportPaints = nil;
+        if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveNodesOutsideViewBox)) {
+            CGRect viewBox = [node.viewBox computeValue:node.clientSize];
+            NSSet<IJSVGNode*>* outside = [_paintResolver nodesOutsideViewBox:viewBox
+                                                                 ofRootPaint:_rootPaint];
+            NSMutableSet<IJSVGPaint*>* paints = [NSMutableSet set];
+            NSMutableArray<IJSVGPaint*>* pending = [_rootPaint.children mutableCopy];
+            while(pending.count != 0) {
+                IJSVGPaint* paint = pending.lastObject;
+                [pending removeLastObject];
+                if(paint.sourceNode != nil && [outside containsObject:paint.sourceNode]) {
+                    [paints addObject:paint];
+                } else {
+                    [pending addObjectsFromArray:paint.children];
+                }
+            }
+            // Paint identity restricts omission to scene artwork. The same source
+            // node used as a mask/pattern resource must remain available.
+            _outsideViewportPaints = paints.copy;
+        }
     } @finally {
         node.clientSize = previousSize;
     }
@@ -1198,6 +1219,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_recursiveParseFromPaint:(IJSVGPaint*)paint
                      intoElement:(NSXMLElement*)element
 {
+    if([_outsideViewportPaints containsObject:paint]) {
+        return;
+    }
     NSXMLElement* el = [self elementForPaint:paint
                                   fromParent:element];
     

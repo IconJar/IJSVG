@@ -132,6 +132,17 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     CGAffineTransform _textRenderTransform;
     CGSize _textRenderFrameSize;
     IJSVGRootNode* _textBuildRoot;
+    IJSVGRootNode* _measurementRootNode;
+    CGSize _measurementClientSize;
+    IJSVGRootPaint* _geometryMeasurementPaint;
+    IJSVGRootPaint* _effectsMeasurementPaint;
+    BOOL _resolvingGeometryOnly;
+    BOOL _resolvingMeasurements;
+    BOOL _measurementHasFilters;
+    BOOL _hasGeometryBounds;
+    BOOL _hasEffectsBounds;
+    CGRect _geometryBounds;
+    CGRect _effectsBounds;
 }
 @end
 
@@ -256,8 +267,10 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     if([paint isKindOfClass:IJSVGRootPaint.class]) {
         return paint.bounds;
     }
-    CGRect bounds = [self artworkBoundsForChildrenOfPaint:paint];
-    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    BOOL filteredPaint = [paint isKindOfClass:IJSVGFilterPaint.class];
+    // The filter region replaces source bounds; avoid measuring discarded geometry.
+    CGRect bounds = filteredPaint ? CGRectNull : [self artworkBoundsForChildrenOfPaint:paint];
+    if(filteredPaint) {
         IJSVGFilterPaint* filtered = (IJSVGFilterPaint*)paint;
         IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
         graph.boundingBox = filtered.boundingBox;
@@ -295,16 +308,270 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return bounds;
 }
 
+// Reject disjoint control bounds before allocating or transforming paths.
+// A contained nonempty path is conservatively visible; only boundary cases
+// need the more expensive filled-area intersection (including compound holes).
+static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform transform,
+                                         CGRect viewBox, CGPathRef viewport, BOOL evenOdd)
+{
+    if(path == NULL || CGPathIsEmpty(path)) {
+        return NO;
+    }
+    CGRect bounds = CGRectApplyAffineTransform(CGPathGetBoundingBox(path), transform);
+    if(!IJSVGRectIsFinite(bounds)) {
+        return YES;
+    }
+    if(!CGRectIntersectsRect(bounds, viewBox)) {
+        return NO;
+    }
+    if(CGRectContainsRect(viewBox, bounds)) {
+        return YES;
+    }
+    CGPathRef placed = CGPathCreateCopyByTransformingPath(path, &transform);
+    if(placed == NULL) {
+        return YES;
+    }
+    BOOL intersects = CGPathIntersectsPath(placed, viewport, evenOdd);
+    CGPathRelease(placed);
+    return intersects;
+}
+
+- (BOOL)paintHasGeometryInViewBox:(IJSVGPaint*)paint
+                        transform:(CGAffineTransform)transform
+                          viewBox:(CGRect)viewBox
+                         viewport:(CGPathRef)viewport
+{
+    if([paint isKindOfClass:IJSVGShapePaint.class]) {
+        IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+        if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f &&
+           IJSVGPathMayIntersectViewBox(shape.path, transform, viewBox, viewport,
+                                       shape.fillRule == IJSVGWindingRuleEvenOdd)) {
+            return YES;
+        }
+        if(shape.path != NULL && shape.strokeColor != NULL &&
+           CGColorGetAlpha(shape.strokeColor) > 0.f && shape.lineWidth > 0.f) {
+            if(CGPathIsEmpty(shape.path)) {
+                return NO;
+            }
+            // A generous envelope covers caps and miter joins without allocating
+            // the dashed/stroked outline for clearly contained or disjoint paths.
+            CGFloat padding = shape.lineWidth * MAX(2.f, shape.miterLimit);
+            CGRect envelope = CGRectApplyAffineTransform(
+                CGRectInset(CGPathGetBoundingBox(shape.path), -padding, -padding), transform);
+            if(!IJSVGRectIsFinite(envelope)) {
+                return YES;
+            }
+            if(!CGRectIntersectsRect(envelope, viewBox)) {
+                return NO;
+            }
+            if(CGRectContainsRect(viewBox, envelope)) {
+                return YES;
+            }
+            CGPathRef outline = [self.class newPathFromStrokedShapePaint:shape];
+            BOOL intersects = outline == NULL || IJSVGPathMayIntersectViewBox(outline, transform, viewBox, viewport, NO);
+            CGPathRelease(outline);
+            if(intersects) {
+                return YES;
+            }
+        }
+    } else if([paint isKindOfClass:IJSVGGradientPaint.class] ||
+              [paint isKindOfClass:IJSVGPatternPaint.class]) {
+        return paint.clipPath == NULL ||
+            IJSVGPathMayIntersectViewBox(paint.clipPath, transform, viewBox, viewport,
+                                        paint.clipRule == IJSVGWindingRuleEvenOdd);
+    } else if([paint isKindOfClass:IJSVGImagePaint.class]) {
+        CGRect bounds = CGRectApplyAffineTransform(paint.bounds, transform);
+        return !IJSVGRectIsFinite(bounds) || CGRectIntersectsRect(bounds, viewBox);
+    }
+    return NO;
+}
+
+// Postorder traversal measures each paint once and propagates visibility to
+// groups. Multiple fill/stroke paints can refer to the same source node.
+- (BOOL)collectOutsideNodesForPaint:(IJSVGPaint*)paint
+                          transform:(CGAffineTransform)parentTransform
+                            viewBox:(CGRect)viewBox
+                           viewport:(CGPathRef)viewport
+                            outside:(NSMutableSet<IJSVGNode*>*)outside
+                            visible:(NSMutableSet<IJSVGNode*>*)visible
+{
+    IJSVGNode* node = paint.sourceNode;
+    if([paint isKindOfClass:IJSVGFilterPaint.class] ||
+       [paint isKindOfClass:IJSVGRootPaint.class]) {
+        // Do not classify descendants whose output can be moved or generated.
+        if(node != nil) {
+            [visible addObject:node];
+        }
+        return YES;
+    }
+    if(paint.hidden || paint.opacity <= 0.f) {
+        if(node != nil) {
+            [outside addObject:node];
+        }
+        return NO;
+    }
+    CGAffineTransform transform = CGAffineTransformConcat(paint.placementTransform, parentTransform);
+    BOOL intersects = NO;
+    for(IJSVGPaint* child in paint.children) {
+        // Visit every child even when the group is already known to be visible.
+        BOOL childIntersects = [self collectOutsideNodesForPaint:child
+                                                       transform:transform
+                                                         viewBox:viewBox
+                                                        viewport:viewport
+                                                         outside:outside
+                                                         visible:visible];
+        intersects = intersects || childIntersects;
+    }
+    intersects = intersects || [self paintHasGeometryInViewBox:paint
+                                                     transform:transform
+                                                       viewBox:viewBox
+                                                      viewport:viewport];
+    if(node != nil) {
+        [(intersects ? visible : outside) addObject:node];
+    }
+    return intersects;
+}
+
+- (NSSet<IJSVGNode*>*)nodesOutsideViewBox:(CGRect)viewBox
+                               ofRootNode:(IJSVGRootNode*)rootNode
+{
+    if(!IJSVGRectIsFinite(viewBox) || CGRectIsEmpty(viewBox)) {
+        return [NSSet set];
+    }
+    return [self nodesOutsideViewBox:viewBox
+                         ofRootPaint:[self measurementPaintForRootNode:rootNode
+                                                      includingFilters:YES]];
+}
+
+- (NSSet<IJSVGNode*>*)nodesOutsideViewBox:(CGRect)viewBox
+                              ofRootPaint:(IJSVGRootPaint*)root
+{
+    if(!IJSVGRectIsFinite(viewBox) || CGRectIsEmpty(viewBox)) {
+        return [NSSet set];
+    }
+    NSMutableSet<IJSVGNode*>* outside = [NSMutableSet set];
+    NSMutableSet<IJSVGNode*>* visible = [NSMutableSet set];
+    CGPathRef viewport = CGPathCreateWithRect(viewBox, NULL);
+    for(IJSVGPaint* child in root.children) {
+        [self collectOutsideNodesForPaint:child
+                                transform:CGAffineTransformIdentity
+                                  viewBox:viewBox
+                                 viewport:viewport
+                                  outside:outside
+                                  visible:visible];
+    }
+    CGPathRelease(viewport);
+    [outside minusSet:visible];
+    if(root.sourceNode != nil) {
+        [outside removeObject:root.sourceNode];
+    }
+    return outside.copy;
+}
+
+// Measurement uses viewBox-space text geometry, independently of the drawing
+// context's pixel scale. Cache the two filter modes without changing options.
+- (IJSVGRootPaint*)measurementPaintForRootNode:(IJSVGRootNode*)rootNode
+                            includingFilters:(BOOL)includingFilters
+{
+    if(_measurementRootNode != rootNode ||
+       !CGSizeEqualToSize(_measurementClientSize, rootNode.clientSize)) {
+        _geometryMeasurementPaint = nil;
+        _effectsMeasurementPaint = nil;
+        _hasGeometryBounds = NO;
+        _hasEffectsBounds = NO;
+        _measurementRootNode = rootNode;
+        _measurementClientSize = rootNode.clientSize;
+    }
+    BOOL effects = includingFilters && _renderingOptions.filtersEnabled;
+    IJSVGRootPaint* cached = effects ? _effectsMeasurementPaint : _geometryMeasurementPaint;
+    if(cached != nil) {
+        return cached;
+    }
+    BOOL previousGeometryOnly = _resolvingGeometryOnly;
+    BOOL previousMeasurements = _resolvingMeasurements;
+    _resolvingMeasurements = YES;
+    _resolvingGeometryOnly = !effects;
+    _measurementHasFilters = NO;
+    IJSVGRootPaint* paint = nil;
+    @try {
+        paint = [self rootPaintForRootNode:rootNode];
+    } @finally {
+        _resolvingGeometryOnly = previousGeometryOnly;
+        _resolvingMeasurements = previousMeasurements;
+    }
+    if(effects) {
+        _effectsMeasurementPaint = paint;
+    } else {
+        _geometryMeasurementPaint = paint;
+    }
+    // Unfiltered artwork needs only one resolved tree for all three queries.
+    if(!_measurementHasFilters) {
+        _geometryMeasurementPaint = paint;
+        _effectsMeasurementPaint = paint;
+    }
+    return paint;
+}
+
+- (void)hideNodes:(NSSet<IJSVGNode*>*)nodes
+inMeasurementPaint:(IJSVGPaint*)paint
+{
+    if(paint.sourceNode != nil && [nodes containsObject:paint.sourceNode]) {
+        paint.hidden = YES;
+        return;
+    }
+    for(IJSVGPaint* child in paint.children) {
+        [self hideNodes:nodes
+     inMeasurementPaint:child];
+    }
+}
+
+- (void)hideNodesInMeasurements:(NSSet<IJSVGNode*>*)nodes
+{
+    if(nodes.count == 0) {
+        return;
+    }
+    [self hideNodes:nodes inMeasurementPaint:_geometryMeasurementPaint];
+    if(_effectsMeasurementPaint != _geometryMeasurementPaint) {
+        [self hideNodes:nodes
+     inMeasurementPaint:_effectsMeasurementPaint];
+    }
+    _hasGeometryBounds = NO;
+    _hasEffectsBounds = NO;
+}
+
 // Resolves bounds in viewBox coordinates without the outer viewport clip.
 - (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode
 {
-    IJSVGRootPaint* paint = [self rootPaintForRootNode:rootNode];
-    return paint.hidden || paint.opacity <= 0.f ? CGRectNull :
+    return [self artworkBoundsForRootNode:rootNode
+                         includingFilters:YES];
+}
+
+- (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode
+                 includingFilters:(BOOL)includingFilters
+{
+    IJSVGRootPaint* paint = [self measurementPaintForRootNode:rootNode
+                                             includingFilters:includingFilters];
+    BOOL effects = includingFilters && _renderingOptions.filtersEnabled;
+    if(effects ? _hasEffectsBounds : _hasGeometryBounds) {
+        return effects ? _effectsBounds : _geometryBounds;
+    }
+    CGRect bounds = paint.hidden || paint.opacity <= 0.f ? CGRectNull :
         [self artworkBoundsForChildrenOfPaint:paint];
+    // The two modes share the result when no filter changes the geometry.
+    if(paint == _geometryMeasurementPaint) {
+        _geometryBounds = bounds;
+        _hasGeometryBounds = YES;
+    }
+    if(paint == _effectsMeasurementPaint) {
+        _effectsBounds = bounds;
+        _hasEffectsBounds = YES;
+    }
+    return bounds;
 }
 
 // Measures a resolved node including its transform and enabled effects.
-- (CGRect)extentForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort
+- (CGRect)extentForNode:(IJSVGNode*)node
+             inViewPort:(CGRect)viewPort
 {
     IJSVGPaint* paint = [self drawablePaintForNode:node inViewPort:viewPort];
     if(paint == nil || paint.hidden || paint.opacity <= 0.f) {
@@ -353,7 +620,9 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
                                                        pathResolver:^CGPathRef(IJSVGPath* pathNode) {
             CGMutablePathRef path = CGPathCreateMutable();
             CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
-            [self appendResolvedPathForPathNode:pathNode transform:transform toPath:path];
+            [self appendResolvedPathForPathNode:pathNode
+                                      transform:transform
+                                         toPath:path];
             return path;
         }];
     return layout;
@@ -403,8 +672,11 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         paint = [self drawablePaintForImageNode:(IJSVGImage*)node];
     }
     if(paint != nil) {
-        if(_renderingOptions.filtersEnabled && node.filters.count != 0 &&
-            IJSVGThreadManager.currentManager.CIContext != nil) {
+        if(_renderingOptions.filtersEnabled && node.filters.count != 0) {
+            _measurementHasFilters = YES;
+        }
+        if(!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0 &&
+            (_resolvingMeasurements || IJSVGThreadManager.currentManager.CIContext != nil)) {
             for(IJSVGFilter* filter in node.filters) {
                 paint = [self applyFilter:filter
                                   toPaint:paint
@@ -1521,15 +1793,23 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
 - (void)setStyle:(IJSVGStyle*)style
 {
     _style = style;
+    _hasGeometryBounds = NO;
+    _hasEffectsBounds = NO;
     _rootPaint = nil;
     _batchableFilters = nil;
+    _geometryMeasurementPaint = nil;
+    _effectsMeasurementPaint = nil;
 }
 
 - (void)setRenderingOptions:(IJSVGRenderingOptions*)options
 {
     _renderingOptions = options.copy;
+    _hasGeometryBounds = NO;
+    _hasEffectsBounds = NO;
     _rootPaint = nil;
     _batchableFilters = nil;
+    _geometryMeasurementPaint = nil;
+    _effectsMeasurementPaint = nil;
 }
 
 @end

@@ -1,3 +1,11 @@
+//
+//  IJSVGExtentTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 08/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
@@ -270,7 +278,7 @@
     NSUInteger height = (NSUInteger)ceil(size.height * scale);
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4,
-        space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+        space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
     if(context == NULL) return CGRectNull;

@@ -1,3 +1,11 @@
+//
+//  IJSVGFilterTestHelpers.h
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 30/09/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVGTestHelpers.h>
 #import <IJSVGShapePaint.h>
 #import <IJSVGRootPaint.h>

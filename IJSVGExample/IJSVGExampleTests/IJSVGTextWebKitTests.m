@@ -2,7 +2,7 @@
 //  IJSVGTextWebKitTests.m
 //  IJSVGExampleTests
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 

@@ -30,6 +30,7 @@
 		590C87F6201FD0D4004A1554 /* car.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F5201FD0D4004A1554 /* car.svg */; };
 		5911682C2854CB7000678392 /* couchdb.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5911682B2854CB7000678392 /* couchdb.svg */; };
 		5915E9ED3077D26500FEEC4B /* IJSVGExtentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */; };
+		5915EE843077F98500FEEC4B /* IJSVGVisibilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5915EE833077F98500FEEC4B /* IJSVGVisibilityTests.m */; };
 		5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5919FE042FE30D0F003CAC34 /* oklch.svg */; };
 		591F8EC12FF016980012F5EB /* advanced-css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 591F8EC02FF016980012F5EB /* advanced-css.svg */; };
 		591F8ECA2FF01DA30012F5EB /* IJSVGTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 591F8EC92FF01DA30012F5EB /* IJSVGTestHelpers.m */; };
@@ -172,6 +173,7 @@
 		590C87F5201FD0D4004A1554 /* car.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = car.svg; sourceTree = "<group>"; };
 		5911682B2854CB7000678392 /* couchdb.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = couchdb.svg; sourceTree = "<group>"; };
 		5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGExtentTests.m; sourceTree = "<group>"; };
+		5915EE833077F98500FEEC4B /* IJSVGVisibilityTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGVisibilityTests.m; sourceTree = "<group>"; };
 		5919FE042FE30D0F003CAC34 /* oklch.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = oklch.svg; sourceTree = "<group>"; };
 		591F8EC02FF016980012F5EB /* advanced-css.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "advanced-css.svg"; sourceTree = "<group>"; };
 		591F8EC82FF01D840012F5EB /* IJSVGTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGTestHelpers.h; sourceTree = "<group>"; };
@@ -441,6 +443,7 @@
 				59835AA530769CF0007A1232 /* IJSVGRegressionRegistration.m */,
 				59835AAA3076B77C007A1232 /* IJSVGParserOptimizationTests.m */,
 				5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */,
+				5915EE833077F98500FEEC4B /* IJSVGVisibilityTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -665,6 +668,7 @@
 				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,
 				59835AAB3076B77C007A1232 /* IJSVGParserOptimizationTests.m in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
+				5915EE843077F98500FEEC4B /* IJSVGVisibilityTests.m in Sources */,
 				59B649D23075836A0004EFC2 /* IJSVGTextTests.m in Sources */,
 				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,

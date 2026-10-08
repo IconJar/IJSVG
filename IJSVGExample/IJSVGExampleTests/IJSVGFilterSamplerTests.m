@@ -1,3 +1,11 @@
+//
+//  IJSVGFilterSamplerTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 30/09/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVGTestHelpers.h>
 
 // Exercise the internal sampler without exposing its implementation in the public API.

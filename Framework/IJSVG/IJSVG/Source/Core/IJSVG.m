@@ -18,8 +18,11 @@
 
 @interface IJSVG () {
   IJSVGQuartzRenderer* _quartzRenderer;
+  IJSVGQuartzRenderer* _artworkRenderer;
   IJSVGRootNode* _artworkFittingRoot;
   IJSVGGroup* _artworkFittingGroup;
+  NSSet<IJSVGNode*>* _nodesOutsideViewBox;
+  NSSet<IJSVGNode*>* _artworkFittingHiddenNodes;
 }
 @end
 
@@ -255,6 +258,8 @@
 
 - (void)_setupBasicInfoFromGroup
 {
+    _nodesOutsideViewBox = nil;
+    _artworkRenderer = nil;
     CGSize resolvingSize = _rootNode.clientSize;
     _viewBox = [_rootNode.viewBox computeValue:resolvingSize];
     _intrinsicSize = _rootNode.intrinsicSize;
@@ -360,13 +365,38 @@
 // Replaces the fitting transform so repeated adjustments never accumulate scale.
 - (void)fitArtworkToViewBox:(BOOL)enabled
 {
-    [self fitArtworkToViewBox:enabled includingFilters:NO];
+    [self fitArtworkToViewBox:enabled
+             includingFilters:NO];
 }
 
 // Fits the outer completed artwork so filter regions scale with their contents.
 - (void)fitArtworkToViewBox:(BOOL)enabled
            includingFilters:(BOOL)includingFilters
 {
+    [self fitArtworkToViewBox:enabled
+             includingFilters:includingFilters
+  ignoringNodesOutsideViewBox:NO];
+}
+
+- (void)fitArtworkToViewBox:(BOOL)enabled
+ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
+{
+    [self fitArtworkToViewBox:enabled
+             includingFilters:NO
+  ignoringNodesOutsideViewBox:ignoreOutside];
+}
+
+- (void)fitArtworkToViewBox:(BOOL)enabled
+           includingFilters:(BOOL)includingFilters
+ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
+{
+    BOOL needsReclassification = _artworkFittingHiddenNodes.count != 0 ||
+        _artworkFittingGroup.transforms.count != 0;
+    // Undo our visibility changes before measuring the original artwork again.
+    for(IJSVGNode* node in _artworkFittingHiddenNodes) {
+        node.shouldRender = YES;
+    }
+    _artworkFittingHiddenNodes = nil;
     IJSVGRootNode* root = self.rootNode;
     if(root == nil) {
         return;
@@ -377,7 +407,28 @@
         _artworkFittingGroup = nil;
     }
     _artworkFittingGroup.transforms = @[];
+    if(needsReclassification) {
+        _nodesOutsideViewBox = nil;
+        _artworkRenderer = nil;
+    }
+    if(enabled && ignoreOutside) {
+        // The first query classifies the entire tree; reuse it for this operation.
+        [self isNodeOutsideViewBox:root];
+        NSMutableSet<IJSVGNode*>* hidden = [NSMutableSet set];
+        for(IJSVGNode* node in _nodesOutsideViewBox) {
+            if(node.shouldRender) {
+                [hidden addObject:node];
+                node.shouldRender = NO;
+            }
+        }
+        _artworkFittingHiddenNodes = hidden.copy;
+        [_artworkRenderer hideNodesInMeasurements:_artworkFittingHiddenNodes];
+    }
     if(enabled) {
+        // The outside-node pass already resolved and updated the measurement tree.
+        if(!ignoreOutside) {
+            _artworkRenderer = nil;
+        }
         CGAffineTransform transform = [self artworkFittingTransformIncludingFilters:includingFilters];
         if(!CGAffineTransformIsIdentity(transform)) {
             if(_artworkFittingGroup == nil) {
@@ -393,11 +444,23 @@
               transform.a, transform.b, transform.c,
               transform.d, transform.tx, transform.ty
             };
-            [fitting setParameters:parameters count:6];
+            [fitting setParameters:parameters
+                             count:6];
             _artworkFittingGroup.transforms = @[fitting];
         }
     }
     [self setNeedsDisplay];
+}
+
+// Share measurement state without disturbing the context-dependent render tree.
+- (IJSVGQuartzRenderer*)artworkRenderer
+{
+    if(_artworkRenderer == nil) {
+        _artworkRenderer = [[IJSVGQuartzRenderer alloc] init];
+        _artworkRenderer.style = _style;
+        _artworkRenderer.renderingOptions = _renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
+    }
+    return _artworkRenderer;
 }
 
 // Measures conservative effect coverage without clipping the outer viewport.
@@ -407,10 +470,8 @@
     if(root == nil) {
         return CGRectNull;
     }
-    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
-    renderer.style = self.style;
-    renderer.renderingOptions = self.renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
-    return [renderer artworkBoundsForRootNode:root];
+    return [self.artworkRenderer artworkBoundsForRootNode:root
+                                         includingFilters:YES];
 }
 
 // Measures styled geometry without clipping it to the outer viewport.
@@ -420,13 +481,26 @@
     if(root == nil) {
         return CGRectNull;
     }
-    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
-    renderer.style = self.style;
-    // This query measures geometry only and must not prepare filter resources.
-    IJSVGRenderingOptions* options = self.renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
-    options.filtersEnabled = NO;
-    renderer.renderingOptions = options;
-    return [renderer artworkBoundsForRootNode:root];
+    return [self.artworkRenderer artworkBoundsForRootNode:root
+                                         includingFilters:NO];
+}
+
+- (BOOL)isNodeOutsideViewBox:(IJSVGNode* __unsafe_unretained)node
+{
+    // Borrow the argument for cached lookups; retain it only while resolving.
+    if(_nodesOutsideViewBox != nil) {
+        return [_nodesOutsideViewBox containsObject:node];
+    }
+    IJSVGNode* queryNode = node;
+    IJSVGRootNode* root = self.rootNode;
+    if(root == nil || queryNode == nil) {
+        return NO;
+    }
+    if(_nodesOutsideViewBox == nil) {
+        _nodesOutsideViewBox = [self.artworkRenderer nodesOutsideViewBox:self.viewBox
+                                                              ofRootNode:root];
+    }
+    return [_nodesOutsideViewBox containsObject:queryNode];
 }
 
 - (CGRect)viewBox
@@ -782,6 +856,14 @@
 {
     _renderingOptions = renderingOptions.copy;
     _quartzRenderer = nil;
+    _nodesOutsideViewBox = nil;
+    _artworkRenderer = nil;
+}
+
+- (void)setStyle:(IJSVGStyle*)style
+{
+    _style = style;
+    [self setNeedsDisplay];
 }
 
 - (CGFloat)backingScaleFactor
@@ -805,6 +887,8 @@
     [self performBlock:^{
         IJSVG* strongSelf = weakSelf;
         strongSelf->_quartzRenderer = nil;
+        strongSelf->_nodesOutsideViewBox = nil;
+        strongSelf->_artworkRenderer = nil;
     }];
 }
 

@@ -1,3 +1,11 @@
+//
+//  IJSVGParserOptimizationTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 07/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVGTestHelpers.h>
 
 @interface IJSVGParserOptimizationTests : XCTestCase

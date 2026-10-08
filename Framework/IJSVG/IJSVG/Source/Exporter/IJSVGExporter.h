@@ -49,6 +49,8 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionRemoveDefaultValues = 1 << 21,
     IJSVGExporterOptionConvertStrokesToPaths = 1 << 22,
     IJSVGExporterOptionCompressFilters = 1 << 23,
+    // Omits outside artwork without changing source nodes. Excluded from .all.
+    IJSVGExporterOptionRemoveNodesOutsideViewBox = 1 << 24,
     IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups |
         IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup |
         IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |

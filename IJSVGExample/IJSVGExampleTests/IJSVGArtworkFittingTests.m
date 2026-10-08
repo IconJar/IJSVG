@@ -2,7 +2,7 @@
 //  IJSVGArtworkFittingTests.m
 //  IJSVGExampleTests
 //
-//  Created on 05/10/2026.
+//  Created by Curtis Hard on 05/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 

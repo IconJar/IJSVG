@@ -32,6 +32,18 @@
 
 // Measures painted geometry before clipping to the outer SVG viewport.
 - (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode;
+- (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode
+                 includingFilters:(BOOL)includingFilters;
+
+- (NSSet<IJSVGNode*>*)nodesOutsideViewBox:(CGRect)viewBox
+                               ofRootNode:(IJSVGRootNode*)rootNode;
+
+// Reuses an already resolved tree (for export).
+- (NSSet<IJSVGNode*>*)nodesOutsideViewBox:(CGRect)viewBox
+                              ofRootPaint:(IJSVGRootPaint*)root;
+
+// Updates cached measurements after fitting hides outside nodes.
+- (void)hideNodesInMeasurements:(NSSet<IJSVGNode*>*)nodes;
 // Includes filter regions and placement in the parent coordinate system.
 - (CGRect)extentForNode:(IJSVGNode*)node
              inViewPort:(CGRect)viewPort;

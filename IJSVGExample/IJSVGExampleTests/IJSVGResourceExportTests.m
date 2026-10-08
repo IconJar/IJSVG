@@ -1,3 +1,11 @@
+//
+//  IJSVGResourceExportTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 01/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>

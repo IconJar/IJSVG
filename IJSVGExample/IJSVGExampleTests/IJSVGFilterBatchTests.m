@@ -1,3 +1,11 @@
+//
+//  IJSVGFilterBatchTests.m
+//  IJSVGExampleTests
+//
+//  Created by Curtis Hard on 30/09/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVGFilterTestHelpers.h>
 #import <QuartzCore/QuartzCore.h>
 
