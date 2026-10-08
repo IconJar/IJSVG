@@ -29,6 +29,7 @@
 		590C87F4201FC9E4004A1554 /* radialgradient2.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F3201FC9E3004A1554 /* radialgradient2.svg */; };
 		590C87F6201FD0D4004A1554 /* car.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87F5201FD0D4004A1554 /* car.svg */; };
 		5911682C2854CB7000678392 /* couchdb.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5911682B2854CB7000678392 /* couchdb.svg */; };
+		5915E9ED3077D26500FEEC4B /* IJSVGExtentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */; };
 		5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5919FE042FE30D0F003CAC34 /* oklch.svg */; };
 		591F8EC12FF016980012F5EB /* advanced-css.svg in Resources */ = {isa = PBXBuildFile; fileRef = 591F8EC02FF016980012F5EB /* advanced-css.svg */; };
 		591F8ECA2FF01DA30012F5EB /* IJSVGTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 591F8EC92FF01DA30012F5EB /* IJSVGTestHelpers.m */; };
@@ -170,6 +171,7 @@
 		590C87F3201FC9E3004A1554 /* radialgradient2.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = radialgradient2.svg; sourceTree = "<group>"; };
 		590C87F5201FD0D4004A1554 /* car.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = car.svg; sourceTree = "<group>"; };
 		5911682B2854CB7000678392 /* couchdb.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = couchdb.svg; sourceTree = "<group>"; };
+		5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGExtentTests.m; sourceTree = "<group>"; };
 		5919FE042FE30D0F003CAC34 /* oklch.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = oklch.svg; sourceTree = "<group>"; };
 		591F8EC02FF016980012F5EB /* advanced-css.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "advanced-css.svg"; sourceTree = "<group>"; };
 		591F8EC82FF01D840012F5EB /* IJSVGTestHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGTestHelpers.h; sourceTree = "<group>"; };
@@ -438,6 +440,7 @@
 				59835AA330768FA7007A1232 /* IJSVGReferenceWebKitChecks.m */,
 				59835AA530769CF0007A1232 /* IJSVGRegressionRegistration.m */,
 				59835AAA3076B77C007A1232 /* IJSVGParserOptimizationTests.m */,
+				5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -684,6 +687,7 @@
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
 				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
+				5915E9ED3077D26500FEEC4B /* IJSVGExtentTests.m in Sources */,
 				5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */,
 				5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */,
 				59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */,

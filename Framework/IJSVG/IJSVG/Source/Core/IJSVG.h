@@ -62,11 +62,19 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)prepForDrawingInView:(NSView* _Nullable)view;
 - (IJSVGRootNode* _Nullable)rootNode;
 - (CGRect)viewBox;
+
 // Painted geometry in viewBox coordinates, excluding filter effects.
 - (CGRect)artworkBounds;
+// Conservative painted extent including enabled filter regions,
+// before viewport clipping.
+- (CGRect)artworkExtent;
 // Fits painted geometry into the viewBox while preserving canvas size and aspect ratio.
 // Call after geometry or style changes. Passing NO removes the previous fitting scale.
 - (void)fitArtworkToViewBox:(BOOL)enabled NS_SWIFT_NAME(fitArtworkToViewBox(enabled:));
+// Fits the completed effects as well as geometry when requested.
+- (void)fitArtworkToViewBox:(BOOL)enabled
+           includingFilters:(BOOL)includingFilters NS_SWIFT_NAME(fitArtworkToViewBox(enabled:includingFilters:));
+
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize;
 - (NSString* _Nullable)identifier;
 - (NSSet<IJSVG*>*)directDescendSVGs;

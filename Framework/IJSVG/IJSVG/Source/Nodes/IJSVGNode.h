@@ -425,6 +425,11 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style
                               matchingTraits:(IJSVGColorUsageTraits)traits;
 
+// Conservative painted extent in parent coordinates, including filter regions.
+// The viewport resolves relative units and style supplies rendering overrides.
+- (CGRect)extentWithViewPort:(CGRect)viewPort
+                       style:(IJSVGStyle* _Nullable)style NS_SWIFT_NAME(extent(in:style:));
+
 - (void)setDefaults;
 - (void)postProcess;
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;

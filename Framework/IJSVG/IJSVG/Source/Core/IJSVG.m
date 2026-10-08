@@ -325,7 +325,7 @@
 
 
 // Calculates uniform fitting around the original canvas center.
-- (CGAffineTransform)artworkFittingTransform
+- (CGAffineTransform)artworkFittingTransformIncludingFilters:(BOOL)includingFilters
 {
     CGRect viewport = self.viewBox;
     if(CGRectIsEmpty(viewport) ||
@@ -333,7 +333,7 @@
        !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport))) {
         return CGAffineTransformIdentity;
     }
-    CGRect bounds = self.artworkBounds;
+    CGRect bounds = includingFilters ? self.artworkExtent : self.artworkBounds;
     if(CGRectIsEmpty(bounds) ||
        !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) ||
        !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport)) ||
@@ -360,18 +360,25 @@
 // Replaces the fitting transform so repeated adjustments never accumulate scale.
 - (void)fitArtworkToViewBox:(BOOL)enabled
 {
+    [self fitArtworkToViewBox:enabled includingFilters:NO];
+}
+
+// Fits the outer completed artwork so filter regions scale with their contents.
+- (void)fitArtworkToViewBox:(BOOL)enabled
+           includingFilters:(BOOL)includingFilters
+{
     IJSVGRootNode* root = self.rootNode;
     if(root == nil) {
         return;
     }
     if(_artworkFittingRoot != root ||
-       (_artworkFittingGroup != nil && _artworkFittingGroup.rootNode != root)) {
+       (_artworkFittingGroup != nil && _artworkFittingGroup.parentNode != root)) {
         _artworkFittingRoot = nil;
         _artworkFittingGroup = nil;
     }
     _artworkFittingGroup.transforms = @[];
     if(enabled) {
-        CGAffineTransform transform = [self artworkFittingTransform];
+        CGAffineTransform transform = [self artworkFittingTransformIncludingFilters:includingFilters];
         if(!CGAffineTransformIsIdentity(transform)) {
             if(_artworkFittingGroup == nil) {
                 _artworkFittingGroup = [[IJSVGGroup alloc] init];
@@ -382,13 +389,28 @@
             // Preserve full precision without formatting and parsing an SVG string.
             IJSVGTransform* fitting = [[IJSVGTransform alloc] init];
             fitting.command = IJSVGTransformCommandMatrix;
-            CGFloat parameters[] = { transform.a, transform.b, transform.c,
-                                     transform.d, transform.tx, transform.ty };
+            CGFloat parameters[] = {
+              transform.a, transform.b, transform.c,
+              transform.d, transform.tx, transform.ty
+            };
             [fitting setParameters:parameters count:6];
             _artworkFittingGroup.transforms = @[fitting];
         }
     }
     [self setNeedsDisplay];
+}
+
+// Measures conservative effect coverage without clipping the outer viewport.
+- (CGRect)artworkExtent
+{
+    IJSVGRootNode* root = self.rootNode;
+    if(root == nil) {
+        return CGRectNull;
+    }
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    renderer.style = self.style;
+    renderer.renderingOptions = self.renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
+    return [renderer artworkBoundsForRootNode:root];
 }
 
 // Measures styled geometry without clipping it to the outer viewport.

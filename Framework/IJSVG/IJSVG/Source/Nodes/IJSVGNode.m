@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGRootNode.h>
@@ -69,6 +70,22 @@ NSString* IJSVGColorInterpolationString(IJSVGColorInterpolation value)
 }
 
 @implementation IJSVGNode
+
+// Resolves current node properties without caching stale geometry or effects.
+- (CGRect)extentWithViewPort:(CGRect)viewPort
+                       style:(IJSVGStyle*)style
+{
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    // A nil style means no overrides; keep the renderer's default stroke settings.
+    if(style != nil) {
+        renderer.style = style;
+    }
+    IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
+    options.filtersEnabled = YES;
+    renderer.renderingOptions = options;
+    return [renderer extentForNode:self
+                        inViewPort:viewPort];
+}
 
 @synthesize styleParent = _styleParent;
 

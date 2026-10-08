@@ -1301,7 +1301,7 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9KTR4W9XX6;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -1314,7 +1314,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.0;
+				MARKETING_VERSION = 4.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1330,7 +1330,7 @@
 				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 9KTR4W9XX6;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -1343,7 +1343,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.0;
+				MARKETING_VERSION = 4.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

@@ -20,6 +20,7 @@
 #import <IJSVGPatternPaint.h>
 #import <IJSVGImagePaint.h>
 #import <IJSVGFilterPaint.h>
+#import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
@@ -256,7 +257,16 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         return paint.bounds;
     }
     CGRect bounds = [self artworkBoundsForChildrenOfPaint:paint];
-    if([paint isKindOfClass:IJSVGShapePaint.class]) {
+    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        IJSVGFilterPaint* filtered = (IJSVGFilterPaint*)paint;
+        IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+        graph.boundingBox = filtered.boundingBox;
+        graph.viewPort = filtered.viewPort;
+        // Filters can generate pixels beyond the source, but never beyond this region.
+        bounds = [graph regionForNode:filtered.filter
+                                 units:filtered.filter.units
+                         defaultRegion:CGRectZero];
+    } else if([paint isKindOfClass:IJSVGShapePaint.class]) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         if(shape.path != NULL) {
             if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f) {
@@ -291,6 +301,18 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     IJSVGRootPaint* paint = [self rootPaintForRootNode:rootNode];
     return paint.hidden || paint.opacity <= 0.f ? CGRectNull :
         [self artworkBoundsForChildrenOfPaint:paint];
+}
+
+// Measures a resolved node including its transform and enabled effects.
+- (CGRect)extentForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort
+{
+    IJSVGPaint* paint = [self drawablePaintForNode:node inViewPort:viewPort];
+    if(paint == nil || paint.hidden || paint.opacity <= 0.f) {
+        return CGRectNull;
+    }
+    CGRect bounds = [self artworkBoundsForPaint:paint];
+    return CGRectIsNull(bounds) ? bounds :
+        CGRectApplyAffineTransform(bounds, paint.placementTransform);
 }
 
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
