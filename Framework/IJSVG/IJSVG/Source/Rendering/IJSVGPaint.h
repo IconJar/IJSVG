@@ -43,6 +43,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) CGPathRef clipPath;
 @property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGWindingRule fillRule;
+// Raster coverage includes filters without changing mask coordinate placement.
+@property (nonatomic, assign) CGRect maskingSourceBounds;
 @property (nonatomic, assign) CGRect maskingBoundingBox;
 @property (nonatomic, assign) CGRect maskingClippingRect;
 @property (nonatomic, assign) CGRect clippingBoundingBox;

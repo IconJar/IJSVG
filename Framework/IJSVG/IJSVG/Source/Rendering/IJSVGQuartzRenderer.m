@@ -308,6 +308,31 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return bounds;
 }
 
+// Geometry is already covered by outerBoundingBox. Only measure the extra
+// coverage from filters here; re-stroking every mask path is expensive.
+- (CGRect)filterCoverageBoundsForPaint:(IJSVGPaint*)paint
+{
+    if(paint.hidden || paint.opacity <= 0.f || [paint isKindOfClass:IJSVGRootPaint.class]) {
+        return CGRectNull;
+    }
+    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        // A filters declared region bounds its output, including nested filters.
+        return [self artworkBoundsForPaint:paint];
+    }
+    CGRect bounds = CGRectNull;
+    for(IJSVGPaint* child in paint.children) {
+        CGRect local = [self filterCoverageBoundsForPaint:child];
+        if(!IJSVGRectIsFinite(local)) {
+            continue;
+        }
+        bounds = CGRectUnion(bounds, CGRectApplyAffineTransform(local, child.placementTransform));
+    }
+    if(paint.clipPath != NULL && !CGRectIsNull(bounds)) {
+        bounds = CGRectIntersection(bounds, CGPathGetPathBoundingBox(paint.clipPath));
+    }
+    return bounds;
+}
+
 // Reject disjoint control bounds before allocating or transforming paths.
 // A contained nonempty path is conservatively visible; only boundary cases
 // need the more expensive filled-area intersection (including compound holes).
@@ -1336,6 +1361,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
         rect = CGRectApplyAffineTransform(rect, userSpaceTransform);
     }
 
+    // Filters can paint outside the geometry used for mask units and placement.
+    CGRect sourceBounds = [self filterCoverageBoundsForPaint:maskPaint];
+    maskPaint.maskingSourceBounds = IJSVGRectIsFinite(sourceBounds) ?
+        CGRectUnion(maskPaint.outerBoundingBox, sourceBounds) : maskPaint.outerBoundingBox;
     maskPaint.maskingBoundingBox = maskingBounds;
     maskPaint.maskingClippingRect = rect;
     maskPaint.referencingPaint = paint;

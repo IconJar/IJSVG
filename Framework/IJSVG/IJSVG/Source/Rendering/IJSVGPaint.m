@@ -71,6 +71,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         _affineTransform = CGAffineTransformIdentity;
         _boundingBox = CGRectNull;
         _outerBoundingBox = CGRectNull;
+        _maskingSourceBounds = CGRectNull;
         _children = @[];
     }
     return self;
@@ -290,7 +291,20 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 {
     CGFloat scale = MAX(paint.backingScaleFactor, 1.f);
     CGAffineTransform grid = CGAffineTransformMakeScale(scale, scale);
-    CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(mask.outerBoundingBox, grid));
+    // Keep raster coverage separate from the geometry used to position the mask.
+    CGRect sourceBounds = CGRectIsNull(mask.maskingSourceBounds) ?
+        mask.outerBoundingBox : mask.maskingSourceBounds;
+    // Clip in raster source coordinates before allocation. ClipToMask below maps
+    // source pixels by this translation, the declared mask region remains the
+    // final clip. This avoids giant bitmaps for mostly out of region filters.
+    CGRect sourceClip = CGRectOffset(mask.maskingClippingRect,
+        mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x,
+        mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
+    sourceBounds = CGRectIntersection(sourceBounds, sourceClip);
+    if(CGRectIsNull(sourceBounds) || CGRectIsEmpty(sourceBounds)) {
+        return;
+    }
+    CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(sourceBounds, grid));
     bounds = CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(grid));
     CGRect frame = bounds;
     if(!IJSVGIsValidContextSize(frame.size)) {
