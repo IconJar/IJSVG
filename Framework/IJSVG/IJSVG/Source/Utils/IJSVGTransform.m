@@ -339,7 +339,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         NSString* method = dict[@"name"];
         NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
-            [dataStrings addObject:IJSVGShortFloatStringWithOptions(number.floatValue,
+            [dataStrings addObject:IJSVGShortFloatStringWithOptions(number.doubleValue,
                                                                     floatingPointOptions)];
         }
         [strings addObject:[NSString stringWithFormat:@"%@(%@)", method,
@@ -361,7 +361,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         NSString* method = dict[@"name"];
         NSMutableArray* dataStrings = [[NSMutableArray alloc] initWithCapacity:data.count];
         for (NSNumber* number in data) {
-            [dataStrings addObject:IJSVGShortFloatString(number.floatValue)];
+            [dataStrings addObject:IJSVGShortFloatString(number.doubleValue)];
         }
         [strings addObject:[NSString stringWithFormat:@"%@(%@)", method,
                                      IJSVGCompressFloatParameterArray(dataStrings)]];
@@ -438,11 +438,21 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         transform.ty
     };
 
-    CGFloat sx = hypotf(data[0], data[1]);
+    CGFloat sx = hypot(data[0], data[1]);
+    // A collapsed first axis cannot be decomposed by dividing through its scale.
+    if(sx == 0.f) {
+        return @[@{
+          @"name": @"matrix",
+          @"data": @[@(data[0]), @(data[1]), @(data[2]),
+                     @(data[3]), @(data[4]), @(data[5])]
+        }];
+    }
     CGFloat sy = ((data[0] * data[3] - data[1] * data[2]) / sx);
     CGFloat colSum = data[0] * data[2] + data[1] * data[3];
     CGFloat rowSum = data[0] * data[1] + data[2] * data[3];
-    BOOL scaleBefore = rowSum != 0.f || sx == sy;
+    // Keep the determinant's sign for reflections. Inferring both scale signs
+    // from the diagonal loses the negative axis at a 45-degree page fold.
+    BOOL scaleBefore = rowSum != 0.f || sx == sy || sy < 0.f;
 
     NSMutableArray* transforms = [[NSMutableArray alloc] init];
 

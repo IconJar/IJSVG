@@ -693,12 +693,17 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
     NSMutableDictionary<NSNumber*, NSMutableArray<NSXMLElement*>*>* gradientsByChildHash =
         [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
+    // XML nodes hash their mutable contents. Key by identity because assigning
+    // the template reference changes the candidate's attributes and hash.
+    NSMapTable<NSXMLElement*, NSXMLElement*>* stopTemplates = [NSMapTable
+        mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality
+                  valueOptions:NSPointerFunctionsStrongMemory];
     for (NSXMLElement* gradient in gradients) {
         NSNumber* childHash = @([self gradientChildHashForElement:gradient]);
         NSMutableArray<NSXMLElement*>* candidates = gradientsByChildHash[childHash];
         NSXMLElement* matchingGradient = nil;
         for (NSXMLElement* candidate in candidates) {
-            if([self compareElementChildren:gradient toElement:candidate]) {
+            if([self compareElementChildren:gradient toElement:[stopTemplates objectForKey:candidate] ?: candidate]) {
                 matchingGradient = candidate;
                 break;
             }
@@ -712,13 +717,23 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             continue;
         }
 
-        NSString* idString = [matchingGradient attributeForName:IJSVGAttributeID].stringValue;
-        if(idString == nil || idString.length == 0) {
-            idString = [self identifierForElement:gradient];
-            IJSVGApplyAttributesToElement(@{
-                IJSVGAttributeID: idString
-            }, matchingGradient);
+        // Share stops through a neutral template. Referencing the first gradient
+        // directly also inherits its transform, units and other omitted defaults.
+        NSXMLElement* template = [stopTemplates objectForKey:matchingGradient];
+        if(template == nil) {
+            template = [[NSXMLElement alloc] initWithName:@"linearGradient"];
+            NSString* identifier = [self identifierForElement:template];
+            IJSVGApplyAttributesToElement(@{IJSVGAttributeID: identifier}, template);
+            NSArray<NSXMLNode*>* stops = matchingGradient.children.copy;
+            [matchingGradient setChildren:nil];
+            for(NSXMLNode* stop in stops) {
+                [template addChild:stop];
+            }
+            [self.defElement addChild:template];
+            [stopTemplates setObject:template forKey:matchingGradient];
+            IJSVGApplyAttributesToElement(@{IJSVGAttributeXLink: IJSVGHash(identifier)}, matchingGradient);
         }
+        NSString* idString = [template attributeForName:IJSVGAttributeID].stringValue;
         NSDictionary* atts = @{
             IJSVGAttributeXLink: IJSVGHash(idString)
         };
@@ -945,12 +960,25 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 }
 
+// Only inherited presentation attributes and transforms distribute over children.
+// Effects, IDs and coordinate dependent resources establish a group boundary.
+- (BOOL)canDistributeGroupAttributes:(NSXMLElement*)group
+{
+    const NSSet<NSString*>* inheritable = IJSVGInheritableAttributeSet();
+    for (NSXMLNode* attribute in group.attributes) {
+        if(![inheritable containsObject:attribute.name] &&
+           ![attribute.name isEqualToString:IJSVGAttributeTransform]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)_compressGroups:(NSArray<NSXMLElement*>*)groups
 {
     for (NSXMLElement* group in groups) {
-
-        // whats the next group?
-        if(group.parent == nil) {
+        // Whats the next group?
+        if(group.parent == nil || ![self canDistributeGroupAttributes:group]) {
             continue;
         }
 
@@ -974,68 +1002,28 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (void)_collapseGroups:(NSArray<NSXMLElement*>*)groups
 {
-    const NSSet* inheritable = IJSVGInheritableAttributeSet();
-    for (NSXMLElement* group in groups) {
-
-        // dont do anything due to it being referenced
-        if([group attributeForName:IJSVGAttributeID] != nil) {
+    for(NSXMLElement* group in groups) {
+        // Keep effects on their own element: moving a filter through a clip or
+        // mask changes which pixels become SourceGraphic. Equal opacities and
+        // filters on nested elements also represent separate operations.
+        if(group.parent == nil || ![self canDistributeGroupAttributes:group] ||
+           group.attributes.count == 0 || group.children.count != 1) {
             continue;
         }
-
-        if(group.attributes.count != 0 && group.children.count == 1) {
-
-            // grab the first child as its a loner
-            NSXMLElement* child = (NSXMLElement*)group.children[0];
-            if([child attributeForName:IJSVGAttributeTransform] != nil) {
-                continue;
-            }
-
-            if([group attributeForName:IJSVGAttributeFilter] != nil) {
-                BOOL hasCompositingConflict = NO;
-                for(NSXMLNode* attribute in group.attributes) {
-                    if([inheritable containsObject:attribute.name] == NO &&
-                        [child attributeForName:attribute.name] != nil) {
-                        hasCompositingConflict = YES;
-                        break;
-                    }
-                }
-                if(hasCompositingConflict == YES) {
-                    // Moving only some attributes would move the transform
-                    // below the filter or discard a nested filter operation.
-                    continue;
-                }
-            }
-
-            for (NSXMLNode* gAttribute in group.attributes) {
-
-                // if it just doesnt have the attriute, just add it
-                if([child attributeForName:gAttribute.name] == NO) {
-                    // remove first, or throws a wobbly
-                    [group removeAttributeForName:gAttribute.name];
-                    [child addAttribute:gAttribute];
-                } else if([gAttribute.name isEqualToString:IJSVGAttributeTransform]) {
-                    // transform requires concatination
-                    NSXMLNode* childTransform = [child attributeForName:IJSVGAttributeTransform];
-                    childTransform.stringValue = [NSString stringWithFormat:@"%@ %@",
-                                                           gAttribute.stringValue, childTransform.stringValue];
-
-                } else if([inheritable containsObject:gAttribute.name] == NO) {
-                    // if its not inheritable, only remove it if its not equal
-                    NSXMLNode* aAtt = [child attributeForName:gAttribute.name];
-                    if(aAtt == nil || (aAtt != nil && [aAtt.stringValue isEqualToString:gAttribute.stringValue] == NO)) {
-                        continue;
-                    }
-                }
-                [group removeAttributeForName:gAttribute.name];
-            }
-
-            // remove the group as its useless!
-            if(group.attributes.count == 0) {
-                [child detach];
-                [(NSXMLElement*)group.parent replaceChildAtIndex:group.index
-                                                        withNode:child];
+        NSXMLElement* child = (NSXMLElement*)group.children.firstObject;
+        if(![child isKindOfClass:NSXMLElement.class] ||
+           [child attributeForName:IJSVGAttributeTransform] != nil) {
+            continue;
+        }
+        for(NSXMLNode* attribute in group.attributes.copy) {
+            [group removeAttributeForName:attribute.name];
+            if([child attributeForName:attribute.name] == nil) {
+                [child addAttribute:attribute];
             }
         }
+        [child detach];
+        [(NSXMLElement*)group.parent replaceChildAtIndex:group.index
+                                                withNode:child];
     }
 }
 
