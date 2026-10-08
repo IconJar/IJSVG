@@ -26,8 +26,11 @@
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
-    if([node isKindOfClass:self.class]) {
-        self.color = ((IJSVGColorNode*)node).color;
+    [super applyPropertiesFromNode:node];
+    if([node isKindOfClass:IJSVGColorNode.class]) {
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)node;
+        self.color = colorNode.color;
+        self.isNoneOrTransparent = colorNode.isNoneOrTransparent;
     }
 }
 

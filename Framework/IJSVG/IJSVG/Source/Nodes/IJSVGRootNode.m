@@ -15,7 +15,12 @@
 {
     [super applyPropertiesFromNode:node];
     if([node isKindOfClass:IJSVGRootNode.class]) {
-        self.styleAncestors = ((IJSVGRootNode*)node).styleAncestors;
+        IJSVGRootNode* root = (IJSVGRootNode*)node;
+        self.styleAncestors = root.styleAncestors;
+        self.clientSize = root.clientSize;
+        self.intrinsicSize = root.intrinsicSize.copy;
+        self.intrinsicDimensions = root.intrinsicDimensions;
+        _hasCalculatedContainsRelativeUnits = NO;
     }
 }
 

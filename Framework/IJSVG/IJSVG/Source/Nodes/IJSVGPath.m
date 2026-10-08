@@ -98,6 +98,7 @@
     node.path = _path;
     node.pathUnits = _pathUnits;
     node.primitiveType = _primitiveType;
+    node.lastControlPoint = _lastControlPoint;
     node.x1 = _x1.copy;
     node.y1 = _y1.copy;
     node.x2 = _x2.copy;

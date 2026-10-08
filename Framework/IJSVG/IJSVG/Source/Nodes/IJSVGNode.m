@@ -562,6 +562,11 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.y = node.y;
     self.width = node.width;
     self.height = node.height;
+    self.offset = node.offset.copy;
+
+    // Preserve explicit traits and whether derived traits have already been computed.
+    _traits = node->_traits;
+    _computedTraits = node->_computedTraits;
 
     self.fill = node.fill;
     self.stroke = node.stroke;

@@ -10,4 +10,11 @@
 
 @implementation IJSVGForeignObject
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGForeignObject* node = [super copyWithZone:zone];
+    node.requiredExtension = _requiredExtension;
+    return node;
+}
+
 @end

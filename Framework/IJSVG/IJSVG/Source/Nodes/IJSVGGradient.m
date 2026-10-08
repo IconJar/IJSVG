@@ -37,13 +37,6 @@
     [self _invalidateCGGradient];
 }
 
-- (id)copyWithZone:(NSZone*)zone
-{
-    IJSVGGradient* clone = [[self.class alloc] init];
-    [clone applyPropertiesFromNode:self];
-    return clone;
-}
-
 - (void)applyPropertiesFromNode:(IJSVGGradient*)node
 {
     [super applyPropertiesFromNode:node];

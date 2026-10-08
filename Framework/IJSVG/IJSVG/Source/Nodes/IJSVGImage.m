@@ -13,6 +13,21 @@
 
 @implementation IJSVGImage
 
+- (id)copyWithZone:(NSZone*)zone
+{
+    IJSVGImage* node = [super copyWithZone:zone];
+    // Preserve the cached state without invoking setImage:,
+    // which clears export metadata.
+    node->_image = _image;
+    node->_intrinsicSize = _intrinsicSize;
+    node->_sourceData = [_sourceData copy];
+    node->_sourceMIMEType = [_sourceMIMEType copy];
+
+    // Each node owns a reference to the shared pixels.
+    node->CGImage = CGImage != NULL ? CGImageRetain(CGImage) : NULL;
+    return node;
+}
+
 - (void)dealloc
 {
     if(CGImage != NULL) {
