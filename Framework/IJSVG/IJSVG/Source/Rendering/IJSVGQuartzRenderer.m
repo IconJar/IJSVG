@@ -154,6 +154,9 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     NSSet<IJSVGFilterPaint*>* _batchableFilters;
     BOOL _requiresBackdrop;
     BOOL _containsText;
+    BOOL _containsNonScalingStrokes;
+    NSArray<IJSVGShapePaint*>* _viewportStrokeShapes;
+    NSData* _viewportStrokeTransforms;
     CGAffineTransform _textTransform;
     CGAffineTransform _textRenderTransform;
     CGSize _textRenderFrameSize;
@@ -636,6 +639,31 @@ inMeasurementPaint:(IJSVGPaint*)paint
 }
 
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
+                         viewportSize:(CGSize)size
+{
+    if(!isfinite(size.width) || !isfinite(size.height) || size.width <= 0
+       || size.height <= 0) {
+        return [self rootPaintForRootNode:rootNode];
+    }
+    IJSVGRootNode* previousRoot = _textBuildRoot;
+    CGSize previousSize = _textRenderFrameSize;
+    CGAffineTransform previousTransform = _textTransform;
+    CGAffineTransform previousOutput = _textRenderTransform;
+    _textBuildRoot = rootNode;
+    _textRenderFrameSize = size;
+    _textTransform = CGAffineTransformIdentity;
+    _textRenderTransform = CGAffineTransformIdentity;
+    @try {
+        return [self rootPaintForRootNode:rootNode];
+    } @finally {
+        _textBuildRoot = previousRoot;
+        _textRenderFrameSize = previousSize;
+        _textTransform = previousTransform;
+        _textRenderTransform = previousOutput;
+    }
+}
+
+- (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
 {
     CGRect clientBounds = (CGRect) {
       .origin = CGPointZero,
@@ -905,6 +933,19 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 + (CGPathRef)newPathFromStrokedShapePaint:(IJSVGShapePaint*)shapePaint
 {
+    if(shapePaint.path == NULL || shapePaint.lineWidth <= 0.f) {
+        return CGPathCreateMutable();
+    }
+    CGAffineTransform hostTransform = shapePaint.strokeHostTransform;
+    CGPathRef hostPath = NULL;
+    if(shapePaint.nonScalingStroke) {
+        CGFloat determinant = hostTransform.a * hostTransform.d - hostTransform.b * hostTransform.c;
+        if(!isfinite(determinant) || determinant == 0.f) {
+            return CGPathCreateMutable();
+        }
+        hostPath = CGPathCreateCopyByTransformingPath(shapePaint.path, &hostTransform);
+    }
+    CGPathRef centerline = hostPath ?: shapePaint.path;
     CGLineCap lineCap = shapePaint.lineCap;
     CGLineJoin lineJoin = shapePaint.lineJoin;
     CGPathRef dashedPath = NULL;
@@ -915,17 +956,27 @@ inMeasurementPaint:(IJSVGPaint*)paint
         for(NSNumber* number in shapePaint.lineDashPattern) {
             lengths[i++] = (CGFloat)number.floatValue;
         }
-        dashedPath = CGPathCreateCopyByDashingPath(shapePaint.path, NULL,
+        dashedPath = CGPathCreateCopyByDashingPath(centerline, NULL,
                                                    shapePaint.lineDashPhase,
                                                    lengths, count);
         (void)free(lengths), lengths = NULL;
     }
-    CGPathRef path = dashedPath ?: shapePaint.path;
+    CGPathRef path = dashedPath ?: centerline;
     CGPathRef newPath = CGPathCreateCopyByStrokingPath(path, NULL, shapePaint.lineWidth,
                                                        lineCap, lineJoin,
                                                        shapePaint.miterLimit);
     if(dashedPath != NULL) {
         CGPathRelease(dashedPath);
+    }
+
+    if(hostPath != NULL) {
+        // SVG 2 paints the host space outline back in the original user space,
+        // preserving gradient and pattern coordinates even under shear.
+        CGAffineTransform inverse = CGAffineTransformInvert(hostTransform);
+        CGPathRef localOutline = CGPathCreateCopyByTransformingPath(newPath, &inverse);
+        CGPathRelease(newPath);
+        CGPathRelease(hostPath);
+        newPath = localOutline;
     }
     return newPath;
 }
@@ -1510,6 +1561,20 @@ inMeasurementPaint:(IJSVGPaint*)paint
     paint.strokeColor = strokeColor.CGColor;
 
     IJSVGQuartzConfigureStroke(paint, node, _style);
+    paint.nonScalingStroke = node.resolvedVectorEffect == IJSVGVectorEffectNonScalingStroke;
+    if(paint.nonScalingStroke) {
+        _containsNonScalingStrokes = YES;
+        CGAffineTransform hostTransform = _textTransform;
+        if(_textBuildRoot != nil) {
+            // The callers CTM includes Retina/export resolution, which must
+            // still scale CSS pixels. Only SVG transforms affect this outline.
+            hostTransform = CGAffineTransformConcat(hostTransform,
+                CGAffineTransformInvert(_textRenderTransform));
+        }
+        hostTransform.tx = 0.f;
+        hostTransform.ty = 0.f;
+        paint.strokeHostTransform = hostTransform;
+    }
     IJSVGQuartzExpandStrokeBounds(paint);
 
     return paint;
@@ -2154,6 +2219,127 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
 }
 
+// Simple vector trees can resize by updating only stroke outlines. Effects and
+// resource subtrees keep the full rebuild path because their bounds/caches may
+// depend on stroke coverage.
+- (BOOL)patternContentIsViewportIndependent:(IJSVGPaint*)root
+{
+    if(root == nil) {
+        return YES;
+    }
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
+    NSMutableSet<IJSVGPaint*>* visited = [NSMutableSet set];
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if([visited containsObject:paint]) {
+            continue;
+        }
+        [visited addObject:paint];
+        if(paint.maskPaint != nil || paint.clipPaints.count != 0 ||
+           [paint isKindOfClass:IJSVGFilterPaint.class] ||
+           (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+            return NO;
+        }
+        if([paint isKindOfClass:IJSVGShapePaint.class]) {
+            IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+            if(shape.nonScalingStroke || shape.strokeStyle.nonScalingStroke) {
+                return NO;
+            }
+        }
+        if([paint isKindOfClass:IJSVGPatternPaint.class]) {
+            IJSVGPaint* content = ((IJSVGPatternPaint*)paint).pattern;
+            if(content != nil) {
+                [pending addObject:content];
+            }
+        }
+        [pending addObjectsFromArray:paint.children];
+    }
+    return YES;
+}
+
+- (NSArray<IJSVGShapePaint*>*)viewportStrokeShapesForRoot:(IJSVGRootNode*)rootNode
+{
+    if(!_containsNonScalingStrokes || _containsText || rootNode.transforms.count != 0 ||
+       rootNode.viewBox == nil) {
+        return nil;
+    }
+    NSMutableArray<IJSVGShapePaint*>* shapes = [NSMutableArray array];
+    NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:_rootPaint];
+    while(pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if(paint.maskPaint != nil || paint.clipPaints.count != 0 ||
+           [paint isKindOfClass:IJSVGFilterPaint.class] ||
+           ([paint isKindOfClass:IJSVGPatternPaint.class] &&
+            ![self patternContentIsViewportIndependent:((IJSVGPatternPaint*)paint).pattern]) ||
+           paint.sourceNode.markerStart != nil || paint.sourceNode.markerMid != nil ||
+           paint.sourceNode.markerEnd != nil ||
+           (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+            return nil;
+        }
+        if([paint isKindOfClass:IJSVGShapePaint.class]) {
+            IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+            if(shape.strokeStyle.nonScalingStroke) {
+                [shapes addObject:shape];
+            }
+        }
+        [pending addObjectsFromArray:paint.children];
+    }
+    return shapes.copy;
+}
+
+- (BOOL)updateStrokeViewportFromSize:(CGSize)previousSize
+                              toSize:(CGSize)size
+{
+    if(_viewportStrokeShapes == nil) {
+        _viewportStrokeShapes = [self viewportStrokeShapesForRoot:_rootNode];
+        if(_viewportStrokeShapes == nil) {
+            return NO;
+        }
+    }
+    CGAffineTransform previous = IJSVGViewBoxComputeTransform([_rootNode.viewBox computeValue:previousSize],
+                                                              (CGRect){ CGPointZero, previousSize },
+                                                              _rootNode.viewBoxAlignment,
+                                                              _rootNode.viewBoxMeetOrSlice);
+    CGAffineTransform next = IJSVGViewBoxComputeTransform([_rootNode.viewBox computeValue:size],
+                                                          (CGRect){ CGPointZero, size },
+                                                          _rootNode.viewBoxAlignment,
+                                                          _rootNode.viewBoxMeetOrSlice);
+    previous.tx = previous.ty = next.tx = next.ty = 0;
+    CGFloat determinant = previous.a * previous.d - previous.b * previous.c;
+    if(!isfinite(determinant) || determinant == 0) {
+        return NO;
+    }
+
+    if(_viewportStrokeTransforms == nil) {
+        NSMutableData* data = [NSMutableData dataWithLength:
+            _viewportStrokeShapes.count * sizeof(CGAffineTransform)];
+        CGAffineTransform* transforms = data.mutableBytes;
+        CGAffineTransform inverse = CGAffineTransformInvert(previous);
+        for(NSUInteger index = 0; index < _viewportStrokeShapes.count; index++) {
+            transforms[index] = CGAffineTransformConcat(_viewportStrokeShapes[index].strokeStyle.strokeHostTransform,
+                                                        inverse);
+        }
+        _viewportStrokeTransforms = data;
+    }
+
+    // Use the original geometry map each time, avoiding cumulative rounding
+    // drift during long resize/zoom sessions.
+    const CGAffineTransform* transforms = _viewportStrokeTransforms.bytes;
+    for(NSUInteger index = 0; index < _viewportStrokeShapes.count; index++) {
+        IJSVGShapePaint* shape = _viewportStrokeShapes[index];
+        IJSVGShapePaint* stroke = shape.strokeStyle;
+        stroke.strokeHostTransform = CGAffineTransformConcat(transforms[index], next);
+        if(shape.strokePaint != stroke) {
+            CGPathRef outline = [self.class newPathFromStrokedShapePaint:stroke];
+            shape.strokePaint.clipPath = outline;
+            CGPathRelease(outline);
+        }
+    }
+    return YES;
+}
+
 - (void)renderNode:(IJSVGRootNode*)rootNode
          inContext:(CGContextRef)ctx
           viewPort:(CGRect)viewPort
@@ -2175,10 +2361,18 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGAffineTransform outputTransform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
     outputTransform.tx = 0;
     outputTransform.ty = 0;
-    BOOL textScaleChanged = _containsText &&
-        (!CGAffineTransformEqualToTransform(outputTransform,
-                                            _textRenderTransform) ||
-         !CGSizeEqualToSize(frame.size, _textRenderFrameSize));
+    BOOL viewportChanged = !CGSizeEqualToSize(frame.size, _textRenderFrameSize);
+    BOOL textScaleChanged = (_containsText &&
+        !CGAffineTransformEqualToTransform(outputTransform, _textRenderTransform)) ||
+        ((_containsText || _containsNonScalingStrokes) && viewportChanged);
+
+    if(textScaleChanged && !_containsText && _rootPaint != nil && _rootNode == rootNode &&
+       CGSizeEqualToSize(_clientSize, rootNode.clientSize) &&
+       [self updateStrokeViewportFromSize:_textRenderFrameSize toSize:frame.size]) {
+        _textRenderFrameSize = frame.size;
+        textScaleChanged = NO;
+    }
+
     if(_rootPaint == nil || _rootNode != rootNode ||
        !CGSizeEqualToSize(_clientSize, rootNode.clientSize) || textScaleChanged) {
         _backingScale = backingScale;
@@ -2187,6 +2381,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
         _textTransform = outputTransform;
         _textBuildRoot = rootNode;
         _containsText = NO;
+        _containsNonScalingStrokes = NO;
         @try {
             _rootPaint = [self rootPaintForRootNode:rootNode];
         } @finally {
@@ -2195,6 +2390,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
         }
         _batchableFilters = [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint];
         _requiresBackdrop = [self paintRequiresBackdrop:_rootPaint];
+        _viewportStrokeShapes = nil;
+        _viewportStrokeTransforms = nil;
         _rootNode = rootNode;
         _clientSize = rootNode.clientSize;
     }
@@ -2232,6 +2429,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
     _hasGeometryBounds = NO;
     _hasEffectsBounds = NO;
     _rootPaint = nil;
+    _viewportStrokeShapes = nil;
+    _viewportStrokeTransforms = nil;
     _batchableFilters = nil;
     _geometryMeasurementPaint = nil;
     _effectsMeasurementPaint = nil;
@@ -2243,6 +2442,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
     _hasGeometryBounds = NO;
     _hasEffectsBounds = NO;
     _rootPaint = nil;
+    _viewportStrokeShapes = nil;
+    _viewportStrokeTransforms = nil;
     _batchableFilters = nil;
     _geometryMeasurementPaint = nil;
     _effectsMeasurementPaint = nil;

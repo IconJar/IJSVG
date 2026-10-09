@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"marker3.svg"];
+    return [IJSVG SVGNamed:@"non-scaling-stroke.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

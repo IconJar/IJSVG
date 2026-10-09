@@ -333,7 +333,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         if(node.containsRelativeUnits && isfinite(size.width) && isfinite(size.height)) {
             node.clientSize = size;
         }
-        _rootPaint = [_paintResolver rootPaintForRootNode:node];
+        _rootPaint = [_paintResolver rootPaintForRootNode:node viewportSize:size];
         _outsideViewportPaints = nil;
         if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveNodesOutsideViewBox)) {
             CGRect viewBox = [node.viewBox computeValue:node.clientSize];
@@ -2319,6 +2319,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             
             // swap this over to the actual lowest level stroke paint
             strokePaint = (IJSVGShapePaint*)paint.strokeStyle;
+            if(strokePaint.nonScalingStroke) {
+                dict[IJSVGAttributeVectorEffect] = IJSVGStringNonScalingStroke;
+            }
             
             // stroke
             if(strokePaint.miterLimit != 4.f) {

@@ -166,6 +166,14 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 
 @synthesize styleParent = _styleParent;
 
+- (IJSVGVectorEffect)resolvedVectorEffect
+{
+    if(_vectorEffect == IJSVGVectorEffectInherit) {
+        return (self.styleParent ?: self.parentNode).resolvedVectorEffect;
+    }
+    return _vectorEffect;
+}
+
 - (IJSVGFilter*)filter
 {
     return self.filters.firstObject;
@@ -454,6 +462,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeVectorEffect];
     [storage setBit:IJSVGNodeAttributeMarker];
     [storage setBit:IJSVGNodeAttributeMarkerStart];
     [storage setBit:IJSVGNodeAttributeMarkerMid];
@@ -687,6 +696,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
     self.shouldRender = node.shouldRender;
     self.blendMode = node.blendMode;
+    self.vectorEffect = node.vectorEffect;
     self.overflowVisibility = node.overflowVisibility;
 
     // dash array needs physical memory copied

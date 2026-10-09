@@ -50,6 +50,9 @@
 
 // Resolve the node graph without allocating a graphics context.
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode;
+// Resolves viewport dependent stroke outlines for vector export.
+- (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
+                           viewportSize:(CGSize)size;
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
                          inViewPort:(CGRect)viewPort;
 + (CGPathRef)newPathFromStrokedShapePaint:(IJSVGShapePaint*)paint CF_RETURNS_RETAINED;

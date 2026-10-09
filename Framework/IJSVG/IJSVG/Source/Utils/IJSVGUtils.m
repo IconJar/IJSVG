@@ -282,8 +282,8 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
     return [NSString stringWithFormat:@"%@ %@",
-                     IJSVGShortFloatString(point.x),
-                     IJSVGShortFloatString(point.y)];
+                IJSVGShortFloatString(point.x),
+                IJSVGShortFloatString(point.y)];
 };
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
@@ -498,6 +498,18 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     }
     CGFloat angle = values.firstObject.doubleValue * multiplier;
     return isfinite(angle) ? angle : 0;
+}
+
++ (IJSVGVectorEffect)vectorEffectForString:(NSString*)string
+{
+    string = [string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].lowercaseString;
+    if([string isEqualToString:IJSVGStringNonScalingStroke]) {
+        return IJSVGVectorEffectNonScalingStroke;
+    }
+    if([string isEqualToString:IJSVGStringInherit]) {
+        return IJSVGVectorEffectInherit;
+    }
+    return IJSVGVectorEffectNone;
 }
 
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string

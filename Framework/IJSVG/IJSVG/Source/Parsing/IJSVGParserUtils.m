@@ -136,6 +136,9 @@ static inline BOOL IJSVGAttributeNameEquals(const char* name, size_t length,
 
 NSUInteger IJSVGNodeAttributeForName(NSString* name)
 {
+    if([name isEqualToString:IJSVGAttributeVectorEffect]) {
+        return IJSVGNodeAttributeVectorEffect;
+    }
     const char* attributeName = name.UTF8String;
     if(attributeName == NULL) {
         return NSNotFound;
@@ -483,6 +486,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeFill: @(IJSVGNodeAttributeFill),
             IJSVGAttributeFillRule: @(IJSVGNodeAttributeFillRule),
             IJSVGAttributeBlendMode: @(IJSVGNodeAttributeBlendMode),
+            IJSVGAttributeVectorEffect: @(IJSVGNodeAttributeVectorEffect),
             IJSVGAttributeDisplay: @(IJSVGNodeAttributeDisplay),
             IJSVGAttributeStyle: @(IJSVGNodeAttributeStyle),
             IJSVGAttributeD: @(IJSVGNodeAttributeD),

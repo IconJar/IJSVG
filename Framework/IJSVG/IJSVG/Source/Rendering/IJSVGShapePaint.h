@@ -15,6 +15,9 @@
 @property (nonatomic, assign) CGColorRef fillColor;
 @property (nonatomic, assign) CGColorRef strokeColor;
 @property (nonatomic, assign) CGFloat lineWidth;
+@property (nonatomic, assign) BOOL nonScalingStroke;
+// Linear map from local geometry to the outer SVG viewport (excludes backing scale).
+@property (nonatomic, assign) CGAffineTransform strokeHostTransform;
 @property (nonatomic, assign) CGLineCap lineCap;
 @property (nonatomic, assign) CGLineJoin lineJoin;
 @property (nonatomic, assign) CGFloat miterLimit;

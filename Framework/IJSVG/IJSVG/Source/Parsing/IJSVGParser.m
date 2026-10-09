@@ -29,6 +29,7 @@ NSString* const IJSVGStringInherit = @"inherit";
 NSString* const IJSVGStringEvenOdd = @"evenodd";
 NSString* const IJSVGStringAuto = @"auto";
 NSString* const IJSVGStringStrokeWidth = @"strokeWidth";
+NSString* const IJSVGStringNonScalingStroke = @"non-scaling-stroke";
 NSString* const IJSVGStringDegrees = @"deg";
 NSString* const IJSVGStringRadians = @"rad";
 NSString* const IJSVGStringGradians = @"grad";
@@ -127,6 +128,7 @@ NSString* const IJSVGAttributeStrokeMiterLimit = @"stroke-miterlimit";
 NSString* const IJSVGAttributeFill = @"fill";
 NSString* const IJSVGAttributeFillRule = @"fill-rule";
 NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
+NSString* const IJSVGAttributeVectorEffect = @"vector-effect";
 NSString* const IJSVGAttributeDisplay = @"display";
 NSString* const IJSVGAttributeStyle = @"style";
 NSString* const IJSVGAttributeD = @"d";
@@ -918,6 +920,9 @@ typedef struct {
     
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFillOpacity, &value)) {
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
+        node.vectorEffect = [IJSVGUtils vectorEffectForString:value];
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeBlendMode, &value)) {
         node.blendMode = [IJSVGUtils blendModeForString:value];

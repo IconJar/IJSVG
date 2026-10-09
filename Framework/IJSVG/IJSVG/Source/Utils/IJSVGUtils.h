@@ -66,6 +66,7 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
                    dataStream:(IJSVGPathDataStream*)dataStream
                         count:(NSInteger*)count;
 + (CGFloat*)parseViewBox:(NSString*)string;
++ (IJSVGVectorEffect)vectorEffectForString:(NSString* _Nullable)string;
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string;
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string;

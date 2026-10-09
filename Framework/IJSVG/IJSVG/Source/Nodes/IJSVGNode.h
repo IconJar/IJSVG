@@ -207,6 +207,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeMarkerHeight,
     IJSVGNodeAttributeMarkerUnits,
     IJSVGNodeAttributeOrient,
+    IJSVGNodeAttributeVectorEffect,
     IJSVGNodeAttributeCount
 };
 
@@ -291,6 +292,12 @@ typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
     IJSVGWindingRuleNonZero,
     IJSVGWindingRuleEvenOdd,
     IJSVGWindingRuleInherit
+};
+
+typedef NS_ENUM(NSInteger, IJSVGVectorEffect) {
+    IJSVGVectorEffectNone,
+    IJSVGVectorEffectNonScalingStroke,
+    IJSVGVectorEffectInherit
 };
 
 typedef NS_ENUM(NSInteger, IJSVGLineCapStyle) {
@@ -414,6 +421,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
+@property (nonatomic, assign) IJSVGVectorEffect vectorEffect;
+@property (nonatomic, readonly) IJSVGVectorEffect resolvedVectorEffect;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
 @property (nonatomic, readonly, nullable) IJSVGRootNode* rootNode;

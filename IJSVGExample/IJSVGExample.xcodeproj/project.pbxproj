@@ -78,6 +78,8 @@
 		597CE1D930798E100026E325 /* marker1.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597CE1D830798E100026E325 /* marker1.svg */; };
 		597CE1DB30798E440026E325 /* marker2.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597CE1DA30798E440026E325 /* marker2.svg */; };
 		597CE1DD30798E6E0026E325 /* marker3.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597CE1DC30798E6E0026E325 /* marker3.svg */; };
+		597CE1E13079999A0026E325 /* IJSVGVectorEffectTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 597CE1E03079999A0026E325 /* IJSVGVectorEffectTests.m */; };
+		597CE1E330799D7E0026E325 /* non-scaling-stroke.svg in Resources */ = {isa = PBXBuildFile; fileRef = 597CE1E230799D7E0026E325 /* non-scaling-stroke.svg */; };
 		59835A9E307680FC007A1232 /* IJSVGTextRegressionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59835A9D307680FC007A1232 /* IJSVGTextRegressionTests.m */; };
 		59835AA030768604007A1232 /* text-filter.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59835A9F30768604007A1232 /* text-filter.svg */; };
 		59835AA430768FA7007A1232 /* IJSVGReferenceWebKitChecks.m in Sources */ = {isa = PBXBuildFile; fileRef = 59835AA330768FA7007A1232 /* IJSVGReferenceWebKitChecks.m */; };
@@ -239,6 +241,8 @@
 		597CE1D830798E100026E325 /* marker1.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = marker1.svg; sourceTree = "<group>"; };
 		597CE1DA30798E440026E325 /* marker2.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = marker2.svg; sourceTree = "<group>"; };
 		597CE1DC30798E6E0026E325 /* marker3.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = marker3.svg; sourceTree = "<group>"; };
+		597CE1E03079999A0026E325 /* IJSVGVectorEffectTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGVectorEffectTests.m; sourceTree = "<group>"; };
+		597CE1E230799D7E0026E325 /* non-scaling-stroke.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "non-scaling-stroke.svg"; sourceTree = "<group>"; };
 		59835A9D307680FC007A1232 /* IJSVGTextRegressionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGTextRegressionTests.m; sourceTree = "<group>"; };
 		59835A9F30768604007A1232 /* text-filter.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = "text-filter.svg"; sourceTree = "<group>"; };
 		59835AA330768FA7007A1232 /* IJSVGReferenceWebKitChecks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGReferenceWebKitChecks.m; sourceTree = "<group>"; };
@@ -352,6 +356,7 @@
 		5956657A19B62F4600D805FF /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				597CE1E230799D7E0026E325 /* non-scaling-stroke.svg */,
 				597CE1DC30798E6E0026E325 /* marker3.svg */,
 				597CE1DA30798E440026E325 /* marker2.svg */,
 				597CE1D830798E100026E325 /* marker1.svg */,
@@ -462,6 +467,7 @@
 				59883A2C307935AB0024284E /* IJSVGDetachedGradientTests.m */,
 				59883AAF30793A740024284E /* IJSVGImageExportTests.m */,
 				597CE1D530796C4A0026E325 /* IJSVGMarkerTests.m */,
+				597CE1E03079999A0026E325 /* IJSVGVectorEffectTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -647,6 +653,7 @@
 				5901B743282818CA00290525 /* clipper_edge.svg in Resources */,
 				5901B748282818CA00290525 /* noscale.svg in Resources */,
 				59B649D0307583690004EFC2 /* text-grumpy.svg in Resources */,
+				597CE1E330799D7E0026E325 /* non-scaling-stroke.svg in Resources */,
 				594385B9306C1C7E006A5F63 /* dropshadow-deep-nesting.svg in Resources */,
 				595A69DE2856457E00525065 /* aspect-ratio.svg in Resources */,
 				5919FE052FE30D0F003CAC34 /* oklch.svg in Resources */,
@@ -695,6 +702,7 @@
 				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
 				5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */,
+				597CE1E13079999A0026E325 /* IJSVGVectorEffectTests.m in Sources */,
 				59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */,
 				5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */,
 				59835AA430768FA7007A1232 /* IJSVGReferenceWebKitChecks.m in Sources */,
