@@ -83,6 +83,7 @@
 		5986308A19BA106D00CF15EA /* SVGExampleView5.m in Sources */ = {isa = PBXBuildFile; fileRef = 5986308919BA106D00CF15EA /* SVGExampleView5.m */; };
 		5986308C19BA180E00CF15EA /* dashed.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5986308B19BA180E00CF15EA /* dashed.svg */; };
 		59883A2D307935AB0024284E /* IJSVGDetachedGradientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59883A2C307935AB0024284E /* IJSVGDetachedGradientTests.m */; };
+		59883AB030793A740024284E /* IJSVGImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59883AAF30793A740024284E /* IJSVGImageExportTests.m */; };
 		598F31B9285658C4006D9A66 /* circles1.svg in Resources */ = {isa = PBXBuildFile; fileRef = 598F31B8285658C4006D9A66 /* circles1.svg */; };
 		598F31BB285658C7006D9A66 /* bloglines.svg in Resources */ = {isa = PBXBuildFile; fileRef = 598F31BA285658C7006D9A66 /* bloglines.svg */; };
 		5991A2A9201E30E600913E3B /* gradients.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5991A2A8201E30E600913E3B /* gradients.svg */; };
@@ -240,6 +241,7 @@
 		5986308919BA106D00CF15EA /* SVGExampleView5.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SVGExampleView5.m; sourceTree = "<group>"; };
 		5986308B19BA180E00CF15EA /* dashed.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dashed.svg; sourceTree = "<group>"; };
 		59883A2C307935AB0024284E /* IJSVGDetachedGradientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGDetachedGradientTests.m; sourceTree = "<group>"; };
+		59883AAF30793A740024284E /* IJSVGImageExportTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGImageExportTests.m; sourceTree = "<group>"; };
 		598F31B8285658C4006D9A66 /* circles1.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = circles1.svg; sourceTree = "<group>"; };
 		598F31BA285658C7006D9A66 /* bloglines.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bloglines.svg; sourceTree = "<group>"; };
 		5991A2A8201E30E600913E3B /* gradients.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = gradients.svg; sourceTree = "<group>"; };
@@ -447,6 +449,7 @@
 				5915E9EC3077D26500FEEC4B /* IJSVGExtentTests.m */,
 				5915EE833077F98500FEEC4B /* IJSVGVisibilityTests.m */,
 				59883A2C307935AB0024284E /* IJSVGDetachedGradientTests.m */,
+				59883AAF30793A740024284E /* IJSVGImageExportTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -671,6 +674,7 @@
 				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,
 				59835AAB3076B77C007A1232 /* IJSVGParserOptimizationTests.m in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
+				59883AB030793A740024284E /* IJSVGImageExportTests.m in Sources */,
 				5915EE843077F98500FEEC4B /* IJSVGVisibilityTests.m in Sources */,
 				59B649D23075836A0004EFC2 /* IJSVGTextTests.m in Sources */,
 				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,

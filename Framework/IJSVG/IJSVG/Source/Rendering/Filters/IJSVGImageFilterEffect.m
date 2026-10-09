@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVG/IJSVGPaint.h>
 #import <IJSVG/IJSVGQuartzRenderer.h>
+#import <IJSVG/IJSVGImageRep.h>
+#import <IJSVG/IJSVG.h>
 
 @implementation IJSVGImageFilterEffect
 
@@ -47,9 +49,26 @@
         CGContextTranslateCTM(bitmap, layer.frame.origin.x, layer.frame.origin.y);
         [layer renderInContext:bitmap];
     } else if(primitive.image != nil) {
-        CGImageRef image = [primitive.image CGImageForProposedRect:NULL
-                                                           context:nil
-                                                             hints:nil];
+        // Embedded SVGs must be drawn at the filters current resolution.
+        // Asking NSImage for a CGImage first rasterizes at its intrinsic size.
+        IJSVGImageRep* vector = nil;
+        for(NSImageRep* representation in primitive.image.representations) {
+            if([representation isKindOfClass:IJSVGImageRep.class]) {
+                vector = (IJSVGImageRep*)representation;
+                break;
+            }
+        }
+        if(vector != nil) {
+            CGRect viewBox = (CGRect){ CGPointZero, vector.viewBox.size };
+            CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);
+            IJSVGContextDrawViewBox(bitmap, viewBox, (CGRect){ CGPointZero, region.size },
+                primitive.viewBoxAlignment, primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
+                    [vector.SVG drawInRect:viewBox context:bitmap];
+                });
+        }
+        CGImageRef image = vector == nil ? [primitive.image CGImageForProposedRect:NULL
+                                                                           context:nil
+                                                                             hints:nil] : NULL;
         if(image != NULL) {
             CGRect viewBox = CGRectMake(0, 0, CGImageGetWidth(image), CGImageGetHeight(image));
             CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);

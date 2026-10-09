@@ -22,6 +22,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGFilterPaint.h>
+#import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGRootPaint.h>
 
@@ -2643,8 +2644,62 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }];
 }
 
+// A fragment feImage has a different coordinate origin in WebKit. Export a
+// standalone vector image whose viewport matches the primitive region in user
+// coordinates. Its resources belong to this document rather than the outer SVG.
+- (NSString*)imageURLForPaint:(IJSVGPaint*)paint
+                       region:(CGRect)region
+                     viewPort:(CGRect)viewPort
+{
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithRootNode:_sourceRoot
+                                                                 size:region.size
+                                                                style:_style
+                                                     renderingOptions:_renderingOptions
+                                                              options:_options
+                                                 floatingPointOptions:_floatingPointOptions];
+    exporter.delegate = self.delegate;
+    exporter->_paintResolver = _paintResolver;
+    exporter->_appliedXLink = YES;
+    NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
+    IJSVGApplyAttributesToElement(@{
+        @"xmlns": XML_DOC_NS,
+        @"xmlns:xlink": XML_DOC_NSXLINK,
+        IJSVGAttributeViewBox: [self viewBoxWithRect:region],
+        IJSVGAttributeWidth: IJSVGShortFloatStringWithOptions(region.size.width, _floatingPointOptions),
+        IJSVGAttributeHeight: IJSVGShortFloatStringWithOptions(region.size.height, _floatingPointOptions),
+        IJSVGAttributePreserveAspectRatio: @"none"
+    }, root);
+    exporter->_dom = [[NSXMLDocument alloc] initWithRootElement:root];
+    // Percentage resources still use the original viewport; only the outer
+    // image viewport is cropped to the primitive region.
+    NSXMLElement* viewport = [[NSXMLElement alloc] initWithName:@"svg"];
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeX: IJSVGShortFloatStringWithOptions(viewPort.origin.x, _floatingPointOptions),
+        IJSVGAttributeY: IJSVGShortFloatStringWithOptions(viewPort.origin.y, _floatingPointOptions),
+        IJSVGAttributeWidth: IJSVGShortFloatStringWithOptions(viewPort.size.width, _floatingPointOptions),
+        IJSVGAttributeHeight: IJSVGShortFloatStringWithOptions(viewPort.size.height, _floatingPointOptions),
+        IJSVGAttributeViewBox: [self viewBoxWithRect:viewPort],
+        IJSVGAttributeOverflow: @"visible"
+    }, viewport);
+    [root addChild:viewport];
+    [exporter _recursiveParseFromPaint:paint
+                           intoElement:viewport];
+    NSXMLElement* definitions = exporter.defElement;
+    if(definitions.childCount != 0) {
+      [viewport insertChild:definitions
+                atIndex:0];
+    }
+    [exporter _cleanup];
+    if(definitions.childCount != 0 && definitions.parent == nil) {
+        [viewport insertChild:definitions
+                  atIndex:0];
+    }
+    NSData* data = [exporter->_dom XMLDataWithOptions:[exporter XMLSerializationOptions]];
+    return [@"data:image/svg+xml;base64," stringByAppendingString:[data base64EncodedStringWithOptions:0]];
+}
+
 - (NSXMLElement*)elementForFilterPrimitive:(IJSVGFilterPrimitive*)primitive
-                                  viewPort:(CGRect)viewPort
+                                 fromPaint:(IJSVGFilterPaint*)filterPaint
 {
     NSXMLElement* child = [[NSXMLElement alloc] initWithName:primitive.name];
     NSMutableDictionary<NSString*, NSString*>* attributes = primitive.parameters.mutableCopy ?: [[NSMutableDictionary alloc] init];
@@ -2661,23 +2716,46 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         attributes[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:primitive.viewBoxAlignment
                                                                                    meetOrSlice:primitive.viewBoxMeetOrSlice];
     }
+
     if(primitive.type == IJSVGNodeTypeFilterImage && primitive.imageNode != nil) {
-        IJSVGQuartzRenderer* tree = _paintResolver;
-        IJSVGPaint* imagePaint = [tree drawablePaintForNode:primitive.imageNode
-                                                 inViewPort:viewPort];
-        NSXMLElement* imageElement = [[NSXMLElement alloc] initWithName:@"g"];
-        NSString* imageIdentifier = [self identifierForElement:imageElement];
-        [self _recursiveParseFromPaint:imagePaint intoElement:imageElement];
-        [imageElement addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeID
-                                                    stringValue:imageIdentifier]];
-        [[self defElement] addChild:imageElement];
-        attributes[IJSVGAttributeHref] = IJSVGHash(imageIdentifier);
+        IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+        graph.viewPort = filterPaint.viewPort;
+        graph.boundingBox = filterPaint.boundingBox;
+        IJSVGFilter* filter = filterPaint.filter;
+        CGRect filterRegion = [graph regionForNode:filter units:filter.units
+                                     defaultRegion:CGRectZero];
+        CGRect region = [graph regionForNode:primitive units:filter.contentUnits
+                               defaultRegion:filterRegion];
+        IJSVGPaint* imagePaint = [_paintResolver drawablePaintForNode:primitive.imageNode
+                                                           inViewPort:filterPaint.viewPort];
+        attributes[IJSVGAttributeHref] = [self imageURLForPaint:imagePaint
+                                                         region:region
+                                                       viewPort:filterPaint.viewPort];
+        // Resolve percentage origins with the same viewport as native filtering.
+        // The external image must be placed at the user region used by its viewBox.
+        CGRect placement = region;
+        if(filter.contentUnits == IJSVGUnitObjectBoundingBox) {
+            CGRect bounds = filterPaint.boundingBox;
+            if(bounds.size.width != 0 && bounds.size.height != 0) {
+                placement = CGRectMake((region.origin.x - bounds.origin.x) / bounds.size.width,
+                    (region.origin.y - bounds.origin.y) / bounds.size.height,
+                    region.size.width / bounds.size.width, region.size.height / bounds.size.height);
+            }
+        }
+        attributes[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(placement.origin.x, _floatingPointOptions);
+        attributes[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(placement.origin.y, _floatingPointOptions);
+        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(placement.size.width, _floatingPointOptions);
+        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(placement.size.height, _floatingPointOptions);
+        attributes[IJSVGAttributePreserveAspectRatio] = @"none";
         [attributes removeObjectForKey:IJSVGAttributeXLink];
     }
-    [self compressFilterAttributes:attributes type:primitive.type];
+
+    [self compressFilterAttributes:attributes
+                              type:primitive.type];
     IJSVGApplyAttributesToElement(attributes, child);
     for(IJSVGFilterPrimitive* nested in primitive.children) {
-        [child addChild:[self elementForFilterPrimitive:nested viewPort:viewPort]];
+        [child addChild:[self elementForFilterPrimitive:nested
+                                              fromPaint:filterPaint]];
     }
     return child;
 }
@@ -2699,11 +2777,14 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     CGPathRelease(path);
     proxy.fill = paintNode;
     IJSVGQuartzRenderer* tree = _paintResolver;
-    IJSVGPaint* paintPaint = [tree drawablePaintForNode:proxy inViewPort:paint.viewPort];
-    NSXMLElement* paintElement = [self elementForPaint:paintPaint fromParent:nil];
+    IJSVGPaint* paintPaint = [tree drawablePaintForNode:proxy
+                                             inViewPort:paint.viewPort];
+    NSXMLElement* paintElement = [self elementForPaint:paintPaint
+                                            fromParent:nil];
     NSString* value = [paintElement attributeForName:IJSVGAttributeFill].stringValue;
     if(value != nil) {
-        [element addAttribute:[NSXMLNode attributeWithName:name stringValue:value]];
+        [element addAttribute:[NSXMLNode attributeWithName:name
+                                               stringValue:value]];
     }
 }
 
@@ -2733,9 +2814,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         IJSVGAttributeWidth: [filter.width stringValueWithFloatingPointOptions:_floatingPointOptions],
         IJSVGAttributeHeight: [filter.height stringValueWithFloatingPointOptions:_floatingPointOptions],
         IJSVGAttributeFilterUnits: filter.units == IJSVGUnitObjectBoundingBox ?
-          IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
+            IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
         IJSVGAttributePrimitiveUnits: filter.contentUnits == IJSVGUnitObjectBoundingBox ?
-          IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse
+            IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse
     } mutableCopy];
     [self compressFilterAttributes:attributes type:IJSVGNodeTypeFilter];
     IJSVGApplyAttributesToElement(attributes, definition);
@@ -2745,7 +2826,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     for(IJSVGFilterPrimitive* primitive in filter.primitives) {
         [definition addChild:[self elementForFilterPrimitive:primitive
-                                                    viewPort:paint.viewPort]];
+                                                   fromPaint:paint]];
     }
   
     [[self defElement] addChild:definition];
@@ -2778,13 +2859,17 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     if([content isKindOfClass:IJSVGGroupPaint.class] && CGAffineTransformIsIdentity(content.affineTransform)) {
         [self applyDefaultsToElement:mask fromPaint:content];
         for(IJSVGPaint* child in content.children) {
-            [self _recursiveParseFromPaint:child intoElement:mask];
+            [self _recursiveParseFromPaint:child
+                               intoElement:mask];
         }
     } else {
-        [self _recursiveParseFromPaint:content intoElement:mask];
+        [self _recursiveParseFromPaint:content
+                           intoElement:mask];
     }
     [[self defElement] addChild:mask];
-    IJSVGApplyAttributesToElement(@{IJSVGAttributeMask: IJSVGHashURL(identifier)}, element);
+    IJSVGApplyAttributesToElement(@{
+        IJSVGAttributeMask: IJSVGHashURL(identifier)
+    }, element);
 }
 
 - (NSXMLDocument*)_dom
