@@ -1061,7 +1061,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_convertUseElements
 {
     @autoreleasepool {
-        NSArray* paths = [_dom nodesForXPath:@"//path"
+        // vector-effect is not inherited by the referenced path when moved to <use>.
+        // Keep these paths explicit so their stroke behavior survives deduplication.
+        NSArray* paths = [_dom nodesForXPath:@"//path[not(@vector-effect)]"
                                        error:nil];
 
         NSMutableDictionary<NSString*, NSXMLElement*>* firstPaths = [[NSMutableDictionary alloc] init];
@@ -2157,8 +2159,10 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     // is there a stroke paint?
     if(paint.strokeStyle != nil) {
         
-        // convert the stroke to a path
-        if(IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertStrokesToPaths) == YES) {
+        // Non-scaling strokes must remain strokes: outlining freezes their width
+        // at the export viewport and loses their behavior when the SVG is resized.
+        if(IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertStrokesToPaths) == YES &&
+           !paint.strokeStyle.nonScalingStroke) {
             IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             CGPathRef path = NULL;
             IJSVGShapePaint* strokePaint = (IJSVGStrokePaint*)paint.strokePaint;

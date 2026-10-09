@@ -164,6 +164,45 @@
          "vector-effect='non-scaling-stroke'/></g></svg>"], 4u);
 }
 
+- (void)testLocalNonScalingStrokeExampleSurvivesExport
+{
+    NSString* path = [@(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent
+        stringByAppendingPathComponent:@"IJSVGExample/non-scaling-stroke.svg"];
+    NSString* xml = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+    XCTAssertNotNil(xml);
+    if(xml == nil) return;
+    IJSVG* source = [[IJSVG alloc] initWithSVGString:xml];
+    for(NSNumber* optionValue in @[@(IJSVGExporterOptionNone),
+                                  @(IJSVGExporterOptionCreateUseForPaths),
+                                  @(IJSVGExporterOptionAll),
+                                  @(IJSVGExporterOptionAll & ~IJSVGExporterOptionConvertStrokesToPaths)]) {
+        NSString* exported = [source SVGStringWithSize:CGSizeMake(500, 240)
+                                             options:optionValue.integerValue];
+        NSXMLDocument* document = [[NSXMLDocument alloc] initWithXMLString:exported options:0 error:NULL];
+        NSArray* fixedPaths = [document nodesForXPath:@"//path[@vector-effect='non-scaling-stroke']"
+                                               error:NULL];
+        XCTAssertEqual(fixedPaths.count, 1u, @"%@", exported);
+        IJSVG* restored = [[IJSVG alloc] initWithSVGString:exported];
+        XCTAssertNotNil(restored);
+        for(NSNumber* sizeValue in @[@500, @1000]) {
+            NSUInteger size = sizeValue.unsignedIntegerValue;
+            CGRect rect = CGRectMake(0, 0, size, size * 240.0 / 500);
+            NSData* before = [self pixelsForSVG:source size:size backingScale:1 drawingRect:rect];
+            NSData* after = [self pixelsForSVG:restored size:size backingScale:1 drawingRect:rect];
+            XCTAssertEqual(before.length, after.length);
+            const uint8_t* expected = before.bytes;
+            const uint8_t* actual = after.bytes;
+            NSUInteger difference = 0;
+            for(NSUInteger index = 0; index < MIN(before.length, after.length); index++) {
+                difference += ABS((int)expected[index] - (int)actual[index]);
+            }
+            // Permit only minor outline serialization / antialiasing differences.
+            XCTAssertLessThan((double)difference / before.length, 0.01,
+                              @"options=%@ size=%@", optionValue, sizeValue);
+        }
+    }
+}
+
 - (void)testExportPreservesNonScalingStroke
 {
     for(NSString* stroke in @[@"black", @"url(#gradient)", @"url(#pattern)"]) {
@@ -181,11 +220,11 @@
             IJSVGExporterOptions options = optionValue.integerValue;
             NSNumber* convert = @((options & IJSVGExporterOptionConvertStrokesToPaths) != 0);
             NSString* exported = [svg SVGStringWithSize:CGSizeMake(100, 100) options:options];
-            XCTAssertEqual([exported containsString:@"non-scaling-stroke"], !convert.boolValue);
+            XCTAssertTrue([exported containsString:@"non-scaling-stroke"]);
             IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:exported];
             XCTAssertNotNil(roundTrip);
-            // Outlining deliberately freezes the appearance at the export size.
-            NSArray<NSNumber*>* sizes = convert.boolValue ? @[@100] : @[@100, @200];
+            // Non-scaling strokes must survive every export option and viewport size.
+            NSArray<NSNumber*>* sizes = @[@100, @200];
             for(NSNumber* sizeValue in sizes) {
                 NSUInteger size = sizeValue.unsignedIntegerValue;
                 NSData* expected = [self pixelsForSVG:svg size:size backingScale:1];
@@ -259,7 +298,7 @@
     }
 }
 
-- (void)testOutlinedExportUsesRequestedViewportSize
+- (void)testStrokeConversionPreservesNonScalingStroke
 {
     IJSVG* svg = [self documentWithBody:
         @"<path d='M 10 50 H 90' stroke='black' stroke-width='4' vector-effect='non-scaling-stroke'/>"];
@@ -267,8 +306,12 @@
         options:IJSVGExporterOptionConvertStrokesToPaths];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:exported];
     XCTAssertNotNil(roundTrip);
-    NSData* pixels = [self pixelsForSVG:roundTrip size:200 backingScale:1];
-    XCTAssertEqual([self coverage:pixels dimension:200 x:100], 4u);
+    XCTAssertTrue([exported containsString:@"non-scaling-stroke"]);
+    for(NSNumber* sizeValue in @[@100, @200, @400]) {
+        NSUInteger size = sizeValue.unsignedIntegerValue;
+        NSData* pixels = [self pixelsForSVG:roundTrip size:size backingScale:1];
+        XCTAssertEqual([self coverage:pixels dimension:size x:size / 2], 4u);
+    }
 }
 
 - (void)testSingularTransformProducesNoStroke

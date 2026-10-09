@@ -47,6 +47,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionConvertShapesToPaths = 1 << 19,
     IJSVGExporterOptionRoundTransforms = 1 << 20,
     IJSVGExporterOptionRemoveDefaultValues = 1 << 21,
+    // Non scaling strokes remain strokes to preserve their behavior when resized.
     IJSVGExporterOptionConvertStrokesToPaths = 1 << 22,
     IJSVGExporterOptionCompressFilters = 1 << 23,
     // Omits outside artwork without changing source nodes. Excluded from .all.
