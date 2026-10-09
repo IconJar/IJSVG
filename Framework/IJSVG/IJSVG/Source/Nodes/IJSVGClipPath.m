@@ -28,6 +28,11 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 
 @implementation IJSVGClipPath
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeClipPath;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

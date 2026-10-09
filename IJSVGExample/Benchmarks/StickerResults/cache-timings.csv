@@ -1,0 +1,13 @@
+variant,asset,size,process_first_ms,fresh_instance_median_ms,repeated_median_ms
+baseline,happy-orange.svg,256,73.128,17.891,0.417
+baseline,happy-orange.svg,512,78.066,25.314,1.405
+baseline,happy-orange.svg,1024,111.934,55.279,3.658
+ancestor,happy-orange.svg,256,62.830,15.012,0.406
+ancestor,happy-orange.svg,512,75.175,24.406,1.408
+ancestor,happy-orange.svg,1024,104.000,54.248,3.644
+ancestor-repeat,happy-orange.svg,256,59.813,17.006,0.417
+ancestor-repeat,happy-orange.svg,512,70.550,26.521,1.399
+ancestor-repeat,happy-orange.svg,1024,98.158,51.798,3.700
+baseline-repeat,happy-orange.svg,256,59.272,16.303,0.399
+baseline-repeat,happy-orange.svg,512,70.199,26.127,1.345
+baseline-repeat,happy-orange.svg,1024,98.048,52.510,3.558

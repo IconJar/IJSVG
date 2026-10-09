@@ -11,6 +11,11 @@
 
 @implementation IJSVGRadialGradient
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeRadialGradient;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

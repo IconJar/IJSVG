@@ -11,6 +11,9 @@
 #import <IJSVG/IJSVGFilterGraph.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGPatternPaint.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGRadialGradient.h>
 #import <CoreImage/CoreImage.h>
 #import <Metal/Metal.h>
 #import "IJSVGFilterSIMD.h"
@@ -136,6 +139,8 @@ static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent,
 
 // Nested filters already inherit the drawing transform of the supersampled bitmap.
 static _Thread_local NSUInteger IJSVGFilterRenderDepth = 0;
+// A cached ancestor already retains the completed pixels of its nested filters.
+static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 
 @interface IJSVGQuartzFilterBatchEntry : NSObject
 @property (nonatomic, strong) CIImage* output;
@@ -489,15 +494,110 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     return cache;
 }
 
+/// Restricts snapshots to detached vector data without inherited effects.
+static BOOL IJSVGFilterImageNodeIsIndependent(IJSVGNode* node)
+{
+    return node != nil && node.parentNode == nil && node.styleParent == nil &&
+        node.svg == nil && node.viewBox == nil && node.mask == nil &&
+        node.clipPath == nil && node.filters.count == 0 &&
+        CGRectIsNull(node.backgroundRect);
+}
+
+/// Copies mutable base drawing values that ordinary node copies share.
+static void IJSVGFilterDetachImageValues(IJSVGNode* copy, IJSVGNode* source)
+{
+    copy.parentNode = nil;
+    copy.styleParent = nil;
+    copy.x = source.x.copy;
+    copy.y = source.y.copy;
+    copy.width = source.width.copy;
+    copy.height = source.height.copy;
+    copy.opacity = source.opacity.copy;
+    copy.fillOpacity = source.fillOpacity.copy;
+    copy.strokeOpacity = source.strokeOpacity.copy;
+    copy.strokeWidth = source.strokeWidth.copy;
+    copy.strokeMiterLimit = source.strokeMiterLimit.copy;
+    copy.strokeDashOffset = source.strokeDashOffset.copy;
+    copy.transforms = [[NSArray alloc] initWithArray:source.transforms ?: @[] copyItems:YES];
+}
+
+/// Freezes plain colours and built in gradients without retaining live paint data.
+static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
+{
+    if(!IJSVGFilterImageNodeIsIndependent(source)) {
+        return nil;
+    }
+    if([source isMemberOfClass:IJSVGColorNode.class]) {
+        IJSVGColorNode* copy = source.copy;
+        NSColor* color = ((IJSVGColorNode*)source).color;
+        copy.color = color == nil ? nil : [NSColor colorWithCGColor:color.CGColor];
+        IJSVGFilterDetachImageValues(copy, source);
+        return copy;
+    }
+    if(![source isMemberOfClass:IJSVGLinearGradient.class] &&
+        ![source isMemberOfClass:IJSVGRadialGradient.class]) {
+        return nil;
+    }
+    // Only resolved gradient values are used for drawing this private snapshot.
+    IJSVGGradient* copy = [[source.class alloc] init];
+    [copy applyPropertiesFromNode:(IJSVGGradient*)source];
+    if([source isMemberOfClass:IJSVGRadialGradient.class]) {
+        IJSVGRadialGradient* radialSource = (IJSVGRadialGradient*)source;
+        IJSVGRadialGradient* radialCopy = (IJSVGRadialGradient*)copy;
+        radialCopy.cx = radialSource.cx.copy;
+        radialCopy.cy = radialSource.cy.copy;
+        radialCopy.fx = radialSource.fx.copy;
+        radialCopy.fy = radialSource.fy.copy;
+        radialCopy.fr = radialSource.fr.copy;
+        radialCopy.r = radialSource.r.copy;
+    }
+    IJSVGFilterDetachImageValues(copy, source);
+    NSMutableArray<NSColor*>* colors = [[NSMutableArray alloc] init];
+    for(NSColor* color in ((IJSVGGradient*)source).colors) {
+        NSColor* resolved = [NSColor colorWithCGColor:color.CGColor];
+        if(resolved == nil) {
+            return nil;
+        }
+        [colors addObject:resolved];
+    }
+    copy.colors = colors.copy;
+    return copy;
+}
+
+/// Snapshots a plain vector image while leaving unsupported inputs on the live path.
+static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
+{
+    IJSVGNode* source = primitive.imageNode;
+    if(primitive.image != nil || primitive.parameters[@"href"].length != 0 ||
+        primitive.parameters[@"xlink:href"].length != 0 ||
+        ![source isMemberOfClass:IJSVGPath.class] ||
+        !IJSVGFilterImageNodeIsIndependent(source)) {
+        return nil;
+    }
+    IJSVGNode* fill = IJSVGFilterSnapshotImagePaint(source.fill);
+    IJSVGNode* stroke = IJSVGFilterSnapshotImagePaint(source.stroke);
+    if((source.fill != nil && fill == nil) || (source.stroke != nil && stroke == nil)) {
+        return nil;
+    }
+    IJSVGPath* copy = source.copy;
+    IJSVGFilterDetachImageValues(copy, source);
+    copy.fill = fill;
+    copy.stroke = stroke;
+    return copy;
+}
+
 @interface IJSVGFilterPaint () {
     NSObject* _outputCacheKey;
     NSArray* _outputSignature;
     BOOL _checkedOutputCaching;
     BOOL _canCacheOutput;
+    IJSVGFilter* _imageSnapshotFilter;
 }
 @end
 
 @implementation IJSVGFilterPaint
+
+@synthesize cachesRenderedOutput = _cachesRenderedOutput;
 
 + (void)drawInContext:(CGContextRef)context
        pixelTransform:(CGAffineTransform)pixelTransform
@@ -611,6 +711,27 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     return NO;
 }
 
+/// Freezes eligible image inputs only for renderer owned immutable paint graphs.
+- (void)setCachesRenderedOutput:(BOOL)cachesRenderedOutput
+{
+    if(_cachesRenderedOutput == cachesRenderedOutput) {
+        return;
+    }
+    _cachesRenderedOutput = cachesRenderedOutput;
+    if(_outputCacheKey != nil) {
+        [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
+    }
+    _outputCacheKey = nil;
+    _outputSignature = nil;
+    _checkedOutputCaching = NO;
+    _canCacheOutput = NO;
+    _imageSnapshotFilter = nil;
+    if(cachesRenderedOutput) {
+        [self prepareImageSnapshots];
+    }
+}
+
+/// Caches resolved output only when its inputs are independent of later draws.
 - (BOOL)canCacheOutput
 {
     if(!self.cachesRenderedOutput) {
@@ -637,7 +758,8 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
                 return NO;
             }
             for(IJSVGFilterPrimitive* primitive in filter.primitives) {
-                if(primitive.type == IJSVGNodeTypeFilterImage) {
+                if(primitive.type == IJSVGNodeTypeFilterImage &&
+                    ((IJSVGFilterPaint*)paint)->_imageSnapshotFilter == nil) {
                     return NO;
                 }
             }
@@ -756,6 +878,35 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     }
 }
 
+/// Builds private image snapshots once and preserves the original filter for export.
+- (void)prepareImageSnapshots
+{
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSMutableDictionary<NSNumber*, IJSVGNode*>* snapshots = nil;
+    for(NSUInteger index = 0; index < primitives.count; index++) {
+        IJSVGFilterPrimitive* primitive = primitives[index];
+        if(primitive.type != IJSVGNodeTypeFilterImage) {
+            continue;
+        }
+        IJSVGNode* snapshot = IJSVGFilterSnapshotImage(primitive);
+        if(snapshot == nil) {
+            return;
+        }
+        if(snapshots == nil) {
+            snapshots = [[NSMutableDictionary alloc] init];
+        }
+        snapshots[@(index)] = snapshot;
+    }
+    if(snapshots.count == 0) {
+        return;
+    }
+    _imageSnapshotFilter = self.filter.copy;
+    NSArray<IJSVGFilterPrimitive*>* copies = _imageSnapshotFilter.primitives;
+    for(NSNumber* index in snapshots) {
+        copies[index.unsignedIntegerValue].imageNode = snapshots[index];
+    }
+}
+
 - (instancetype)initWithSourcePaint:(IJSVGPaint*)paint
                              filter:(IJSVGFilter*)filter
                            viewPort:(CGRect)viewPort
@@ -863,10 +1014,11 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     }
 }
 
+/// Evaluates owned image snapshots when every image dependency can be frozen.
 - (IJSVGFilterGraph*)filterGraph
 {
     IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
-    graph.filter = self.filter;
+    graph.filter = _imageSnapshotFilter ?: self.filter;
     // Repeated shadow readbacks can accumulate rounding differences in nested filters.
     graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
     if(!graph.hasNestedFilters && self.filter.primitives.count == 1 &&
@@ -1153,6 +1305,7 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
     CGColorSpaceRelease(colorSpace);
 }
 
+/// Renders the declared filter region on the existing source sampling grid.
 - (void)drawFilterInContext:(CGContextRef)ctx
 {
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
@@ -1184,12 +1337,16 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         return;
     }
 
-    CGRect workRect = CGRectUnion(self.outerBoundingBox, region);
-    if(IJSVGFilterRectIsFinite(workRect) == NO || CGRectIsEmpty(workRect) == YES) {
+    CGRect samplingBounds = CGRectUnion(self.outerBoundingBox, region);
+    if(IJSVGFilterRectIsFinite(samplingBounds) == NO || CGRectIsEmpty(samplingBounds) == YES) {
         return;
     }
 
-    CGFloat scale = [self renderScaleForRect:workRect context:ctx];
+    // SourceGraphic and every primitive are cropped to the filter region.
+    // Pixels beyond it cannot contribute, even when the source artwork is larger.
+    // Preserve the previous scale limits so this only changes allocated coverage.
+    CGRect workRect = region;
+    CGFloat scale = [self renderScaleForRect:samplingBounds context:ctx];
     if(!isfinite(scale) || scale <= 0.f) {
         return;
     }
@@ -1231,7 +1388,7 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
         return;
     }
     _outputSignature = nil;
-    if(self.canCacheOutput) {
+    if(!IJSVGFilterHasCachingAncestor && self.canCacheOutput) {
         _outputSignature = @[
             [NSValue valueWithRect:workRect], [NSValue valueWithSize:pixelSize],
             [NSValue valueWithRect:region], [NSValue valueWithRect:self.boundingBox],
@@ -1253,12 +1410,23 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
             return;
         }
     }
-    [self renderGraph:graph
-              context:ctx
-               region:region
-             workRect:workRect
-            pixelSize:pixelSize
-                scale:scale];
+    BOOL previousCachingAncestor = IJSVGFilterHasCachingAncestor;
+    // Only suppress inner snapshots when this output fits the cache's per-image
+    // limit. Background-dependent ancestors fail canCacheOutput and leave their
+    // independent descendants eligible for caching.
+    BOOL willCacheOutput = _outputSignature != nil && pixelSize.height > 0 &&
+        pixelSize.width <= 4194304 / pixelSize.height;
+    IJSVGFilterHasCachingAncestor = previousCachingAncestor || willCacheOutput;
+    @try {
+        [self renderGraph:graph
+                  context:ctx
+                   region:region
+                 workRect:workRect
+                pixelSize:pixelSize
+                    scale:scale];
+    } @finally {
+        IJSVGFilterHasCachingAncestor = previousCachingAncestor;
+    }
 }
 
 @end

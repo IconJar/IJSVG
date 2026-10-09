@@ -1197,8 +1197,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     IJSVGGroupPaint* paint = [node isKindOfClass:IJSVGMask.class] ? IJSVGMaskPaint.paint
         : IJSVGGroupPaint.paint;
-    paint.boundingBox = [IJSVGPaint calculateFrameForChildren:children];
-    paint.outerBoundingBox = paint.boundingBox;
+    // Keep objectBoundingBox units independent of stroke coverage, including
+    // when export introduces a group around a filtered, stroked shape.
+    paint.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:children];
+    paint.outerBoundingBox = [IJSVGPaint calculateFrameForChildren:children];
     paint.children = children;
     return paint;
 }
@@ -1522,8 +1524,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
         IJSVGGroupPaint* source = IJSVGGroupPaint.paint;
         source.children = rootPaint.children;
         rootPaint.children = @[];
-        source.boundingBox = [IJSVGPaint calculateFrameForChildren:source.children];
-        source.outerBoundingBox = source.boundingBox;
+        source.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:source.children];
+        source.outerBoundingBox = [IJSVGPaint calculateFrameForChildren:source.children];
         CGRect viewPort
             = rootPaint.viewBox != nil ? [rootPaint.viewBox computeValue:rootPaint.frame.size] : rootPaint.bounds;
         IJSVGFilterPaint* filtered = [IJSVGFilterPaint.alloc initWithSourcePaint:source

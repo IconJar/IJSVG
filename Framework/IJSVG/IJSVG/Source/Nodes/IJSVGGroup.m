@@ -11,6 +11,11 @@
 
 @implementation IJSVGGroup
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeGroup;
+}
+
 - (id)init
 {
     if((self = [super init]) != nil) {

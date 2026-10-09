@@ -10,6 +10,11 @@
 
 @implementation IJSVGStop
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeStop;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

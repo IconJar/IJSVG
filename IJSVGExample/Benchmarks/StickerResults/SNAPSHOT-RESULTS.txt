@@ -1,0 +1,66 @@
+Detached feImage snapshot benchmark, 2026-10-09, approximately 15:16
+
+Built current sources successfully with Xcode. No tests were run, and no renderer
+source was changed during this benchmark. Debug framework; -O2 standalone harness;
+Metal enabled; backing scale 1. IJSVGFilterPaint.m SHA256:
+1dac91de0e1264171cd0f6a80cf3d818954843400985ae3cf2d4cefea79120cf
+
+The new implementation permits output caching for detached vector feImage inputs
+whose drawing values can be frozen. happy-orange.svg has no feImage, so a second
+fixture exercises the changed path: detached-vector-image.svg plus an in-memory
+rounded vector path with a solid orange fill, assigned by the benchmark to the
+first feImage primitive. It is synthetic, not a replacement for the user's SVG.
+Gradients and other feImage variants were not benchmarked.
+
+Control uses the same binary with prepareImageSnapshots replaced by a no-op only
+inside the standalone process (IJSVG_BENCH_DISABLE_IMAGE_SNAPSHOTS=1). This isolates
+the new snapshot/cache behavior while retaining the previous nested-cache change.
+It is not a separately rebuilt historical revision; other new bookkeeping remains.
+
+Each process records its first draw, then medians of 15 fresh-instance and 15
+repeated-instance draws. Parsing, fixture setup and destination allocation are
+excluded. Fresh/repeated order alternates within each process. Two passes reverse
+control/current order. Timings below show the range of the two process medians,
+not confidence intervals. Process-first observations are recorded separately in
+snapshot-timings.csv and include process-wide lazy initialization.
+
+happy-orange.svg: no meaningful improvement or allocation change
+Size   Fresh control/current ms             Repeated control/current ms
+256    12.697-12.868 / 12.521-13.058         0.397-0.412 / 0.411-0.415
+512    21.940-22.667 / 22.098-22.268         1.362-1.375 / 1.343-1.379
+1024   54.562-55.320 / 54.483-54.789         3.543-3.608 / 3.503-3.506
+Fresh: 7 bitmap requests, 7 snapshots, 5 CI output conversions in both modes.
+Repeated: zero counted bitmap/snapshot/conversion calls in both modes.
+
+Detached vector feImage: much faster repeats, more expensive fresh draws
+Size   Fresh control/current ms             Repeated control/current ms
+256    1.247-1.352 / 1.396-1.451             1.163-1.368 / 0.033-0.038
+512    2.037-2.252 / 2.683-3.109             2.169-2.357 / 0.115-0.116
+1024   4.604-5.042 / 7.262-7.317             4.816-7.038 / 0.363-0.364
+At 512 px, repeats are 18.9-20.3x faster in the paired observations. Fresh draws
+are 32-38% slower in those same pairs, paying for the extra output-cache snapshot.
+Fresh bitmap requests/snapshots increase from 2 to 3; repeated requests drop from
+2 to 0. Fresh CI output conversions remain at 1; repeated conversions drop 1 to 0.
+At 512 px fresh requested bitmap bytes increase 2,097,152 -> 3,145,728; repeated
+requests drop 2,097,152 -> 0. These are cumulative requested bytes, not peak memory.
+
+Correctness observations
+All captured first-render and repeated-render pixels are byte-identical between
+control/current for both fixtures at 256, 512 and 1024 px in both passes. The
+fixtures produced nonempty images. See snapshot-pixels.csv for comparisons and
+SHA256 hashes. This narrow benchmark does not replace the correctness suites.
+
+Artifacts
+snapshot-timings.csv: all timing observations, including process-first draws.
+snapshot-allocations.csv: fresh/repeated counters from separate profiling draws.
+snapshot-pixels.csv: first/repeated output comparison results.
+Allocation counters cover explicit bitmap requests and snapshots; conversion
+counters cover CIContext createCGImage:fromRect:format:colorSpace:. They exclude
+private GPU allocations and do not capture every internal conversion.
+
+Reproduce from IJSVGExample, supplying Xcode's built products directory:
+sh Benchmarks/run-sticker.sh PRODUCTS Benchmarks/StickerResults/happy-orange.svg OUTPUT
+IJSVG_BENCH_VECTOR_IMAGE=1 sh Benchmarks/run-sticker.sh PRODUCTS \
+  Benchmarks/StickerResults/detached-vector-image.svg OUTPUT
+Prefix either command with IJSVG_BENCH_DISABLE_IMAGE_SNAPSHOTS=1 for the control.
+Use separate output directories for each variant/pass and allow Metal access.

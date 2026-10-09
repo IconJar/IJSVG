@@ -10,6 +10,11 @@
 
 @implementation IJSVGForeignObject
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeForeignObject;
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGForeignObject* node = [super copyWithZone:zone];

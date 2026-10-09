@@ -69,7 +69,81 @@ NSString* IJSVGColorInterpolationString(IJSVGColorInterpolation value)
     return nil;
 }
 
+static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
+{
+    switch(type) {
+        case IJSVGNodeTypeGroup: return @"g";
+        case IJSVGNodeTypePath: return @"path";
+        case IJSVGNodeTypeDef: return @"defs";
+        case IJSVGNodeTypePolygon: return @"polygon";
+        case IJSVGNodeTypePolyline: return @"polyline";
+        case IJSVGNodeTypeRect: return @"rect";
+        case IJSVGNodeTypeLine: return @"line";
+        case IJSVGNodeTypeCircle: return @"circle";
+        case IJSVGNodeTypeEllipse: return @"ellipse";
+        case IJSVGNodeTypeUse: return @"use";
+        case IJSVGNodeTypeLinearGradient: return @"linearGradient";
+        case IJSVGNodeTypeRadialGradient: return @"radialGradient";
+        case IJSVGNodeTypeClipPath: return @"clipPath";
+        case IJSVGNodeTypeFont: return @"font";
+        case IJSVGNodeTypeGlyph: return @"glyph";
+        case IJSVGNodeTypeMask: return @"mask";
+        case IJSVGNodeTypeImage: return @"image";
+        case IJSVGNodeTypePattern: return @"pattern";
+        case IJSVGNodeTypeSVG: return @"svg";
+        case IJSVGNodeTypeText: return @"text";
+        case IJSVGNodeTypeTextSpan: return @"tspan";
+        case IJSVGNodeTypeStyle: return @"style";
+        case IJSVGNodeTypeSwitch: return @"switch";
+        case IJSVGNodeTypeTitle: return @"title";
+        case IJSVGNodeTypeDesc: return @"desc";
+        case IJSVGNodeTypeStop: return @"stop";
+        case IJSVGNodeTypeForeignObject: return @"foreignObject";
+        case IJSVGNodeTypeFilter: return @"filter";
+        case IJSVGNodeTypeTextPath: return @"textPath";
+        case IJSVGNodeTypeAnchor: return @"a";
+        case IJSVGNodeTypeFilterDropShadow: return @"feDropShadow";
+        case IJSVGNodeTypeFilterBlend: return @"feBlend";
+        case IJSVGNodeTypeFilterColorMatrix: return @"feColorMatrix";
+        case IJSVGNodeTypeFilterComponentTransfer: return @"feComponentTransfer";
+        case IJSVGNodeTypeFilterComposite: return @"feComposite";
+        case IJSVGNodeTypeFilterConvolveMatrix: return @"feConvolveMatrix";
+        case IJSVGNodeTypeFilterDiffuseLighting: return @"feDiffuseLighting";
+        case IJSVGNodeTypeFilterDisplacementMap: return @"feDisplacementMap";
+        case IJSVGNodeTypeFilterFlood: return @"feFlood";
+        case IJSVGNodeTypeFilterGaussianBlur: return @"feGaussianBlur";
+        case IJSVGNodeTypeFilterImage: return @"feImage";
+        case IJSVGNodeTypeFilterMerge: return @"feMerge";
+        case IJSVGNodeTypeFilterMorphology: return @"feMorphology";
+        case IJSVGNodeTypeFilterOffset: return @"feOffset";
+        case IJSVGNodeTypeFilterSpecularLighting: return @"feSpecularLighting";
+        case IJSVGNodeTypeFilterTile: return @"feTile";
+        case IJSVGNodeTypeFilterTurbulence: return @"feTurbulence";
+        case IJSVGNodeTypeFilterMergeNode: return @"feMergeNode";
+        case IJSVGNodeTypeFilterFuncR: return @"feFuncR";
+        case IJSVGNodeTypeFilterFuncG: return @"feFuncG";
+        case IJSVGNodeTypeFilterFuncB: return @"feFuncB";
+        case IJSVGNodeTypeFilterFuncA: return @"feFuncA";
+        case IJSVGNodeTypeFilterDistantLight: return @"feDistantLight";
+        case IJSVGNodeTypeFilterPointLight: return @"fePointLight";
+        case IJSVGNodeTypeFilterSpotLight: return @"feSpotLight";
+        default: return nil;
+    }
+}
+
 @implementation IJSVGNode
+
+@synthesize name = _name;
+
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeUnknown;
+}
+
+- (NSString*)name
+{
+    return _name ?: IJSVGNodeNameForType(self.type);
+}
 
 // Resolves current node properties without caching stale geometry or effects.
 - (CGRect)extentWithViewPort:(CGRect)viewPort
@@ -510,6 +584,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 - (id)init
 {
     if((self = [super init]) != nil) {
+        self.type = [self.class defaultNodeType];
         self.opacity = [IJSVGUnitLength unitWithFloat:1.f];
         self.fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
         self.fillOpacity.inherit = YES;
@@ -549,7 +624,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.textStyle = node.textStyle;
     self.styleParent = node->_styleParent;
     
-    self.name = node.name;
+    // Preserve whether the name was explicit so copies still follow type changes.
+    self.name = node->_name;
     self.type = node.type;
     self.className = node.className;
     self.classNameList = node.classNameList;

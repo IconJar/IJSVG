@@ -1,0 +1,9 @@
+asset,size,phase,bitmap_requests,requested_bitmap_bytes,snapshots,ci_cgimage_calls
+happy-orange.svg,1024,fresh,7,18611968,7,5
+filter_inclusive_ms,fresh,a,49.558
+filter_inclusive_ms,fresh,c,8.966
+filter_inclusive_ms,fresh,f,32.375
+filter_inclusive_ms,fresh,h,13.987
+filter_inclusive_ms,fresh,m,6.424
+happy-orange.svg,1024,repeated,0,0,0,0
+filter_inclusive_ms,repeated,a,3.810

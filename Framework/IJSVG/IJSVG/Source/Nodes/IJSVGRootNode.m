@@ -11,6 +11,11 @@
 
 @implementation IJSVGRootNode
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeSVG;
+}
+
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];

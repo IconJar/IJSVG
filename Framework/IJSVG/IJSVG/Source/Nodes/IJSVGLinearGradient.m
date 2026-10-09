@@ -12,6 +12,11 @@
 
 @implementation IJSVGLinearGradient
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeLinearGradient;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

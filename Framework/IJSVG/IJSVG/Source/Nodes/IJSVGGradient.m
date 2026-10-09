@@ -12,6 +12,11 @@
 
 @implementation IJSVGGradient
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeUnknown;
+}
+
 - (void)_invalidateCGGradient
 {
     if(_CGGradient != NULL) {

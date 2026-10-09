@@ -997,7 +997,6 @@ typedef struct {
     IJSVGTextAttributeValue* path = node.positioning[IJSVGAttributePath];
     if(path != nil) {
         IJSVGPath* geometry = [[IJSVGPath alloc] init];
-        geometry.type = IJSVGNodeTypePath;
         geometry.name = IJSVGAttributePath;
         [self applyPathData:path.string toNode:geometry];
         node.textPath = geometry;
@@ -1455,7 +1454,6 @@ typedef struct {
 {
     IJSVGLinearGradient* node = [[IJSVGLinearGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
-    node.type = IJSVGNodeTypeLinearGradient;
     node.name = element.localName;
     [node addTraits:IJSVGNodeTraitPaintable];
     
@@ -1482,7 +1480,6 @@ typedef struct {
 {
     IJSVGRadialGradient* node = [[IJSVGRadialGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
-    node.type = IJSVGNodeTypeRadialGradient;
     node.name = element.localName;
     [node addTraits:IJSVGNodeTraitPaintable];
     
@@ -1508,7 +1505,6 @@ typedef struct {
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGStop* node = [[IJSVGStop alloc] init];
-    node.type = IJSVGNodeTypeStop;
     node.name = element.localName;
     
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
@@ -1551,7 +1547,6 @@ typedef struct {
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
-    node.type = IJSVGNodeTypePath;
     node.name = element.localName;
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -1720,7 +1715,6 @@ typedef struct {
        postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
               recursive:(BOOL)recursive
 {
-    node.type = IJSVGNodeTypeSVG;
     node.name = element.localName;
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -1806,7 +1800,6 @@ typedef struct {
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGImage* node = [[IJSVGImage alloc] init];
-    node.type = IJSVGNodeTypeImage;
     node.name = element.localName;
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -1902,7 +1895,6 @@ typedef struct {
                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGPattern* node = [[IJSVGPattern alloc] init];
-    node.type = IJSVGNodeTypePattern;
     node.name = element.localName;
     node.parentNode = parentNode;
     node.units = IJSVGUnitObjectBoundingBox;
@@ -1927,7 +1919,6 @@ typedef struct {
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGClipPath* node = [[IJSVGClipPath alloc] init];
-    node.type = IJSVGNodeTypeClipPath;
     node.name = element.localName;
     node.parentNode = parentNode;
     
@@ -2044,7 +2035,6 @@ typedef struct {
                 postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGFilter* node = [[IJSVGFilter alloc] init];
-    node.type = IJSVGNodeTypeFilter;
     node.name = element.localName;
     node.parentNode = parentNode;
 
@@ -2101,7 +2091,6 @@ typedef struct {
               postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     IJSVGMask* node = [[IJSVGMask alloc] init];
-    node.type = IJSVGNodeTypeMask;
     node.name = element.localName;
     node.parentNode = parentNode;
     

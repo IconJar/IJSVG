@@ -239,6 +239,20 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     return rect;
 }
 
++ (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children
+{
+    CGRect rect = CGRectNull;
+    for(IJSVGPaint* child in children) {
+        CGRect bounds = child.boundingBox;
+        if([child isKindOfClass:IJSVGTransformPaint.class]) {
+            bounds = CGRectApplyAffineTransform([self calculateBoundingBoxForChildren:child.children],
+                                                child.affineTransform);
+        }
+        rect = CGRectUnion(rect, bounds);
+    }
+    return rect;
+}
+
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint
 {
     return CGAffineTransformMakeTranslation(-paint.outerBoundingBox.origin.x,

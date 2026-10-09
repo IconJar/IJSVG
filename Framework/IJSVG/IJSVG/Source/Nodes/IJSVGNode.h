@@ -357,6 +357,8 @@ void IJSVGAssertPaintableObject(id object);
 // Style inheritance can follow the source document independently of rendering.
 @property (nonatomic, weak, nullable) IJSVGNode* styleParent;
 @property (nonatomic, assign) IJSVGNodeType type;
+// An explicit name overrides the canonical SVG name derived from type.
+// Setting nil restores the default; unknown types have no default name.
 @property (nonatomic, copy, nullable) NSString* name;
 @property (nonatomic, copy, nullable) NSString* className;
 @property (nonatomic, strong, nullable) NSSet<NSString*>* classNameList;
@@ -429,6 +431,9 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 // The viewport resolves relative units and style supplies rendering overrides.
 - (CGRect)extentWithViewPort:(CGRect)viewPort
                        style:(IJSVGStyle* _Nullable)style NS_SWIFT_NAME(extent(in:style:));
+
+// Subclasses with a fixed element identity override this construction default.
++ (IJSVGNodeType)defaultNodeType;
 
 - (void)setDefaults;
 - (void)postProcess;

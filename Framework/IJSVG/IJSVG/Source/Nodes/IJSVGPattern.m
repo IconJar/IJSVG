@@ -12,6 +12,11 @@
 
 @implementation IJSVGPattern
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypePattern;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];

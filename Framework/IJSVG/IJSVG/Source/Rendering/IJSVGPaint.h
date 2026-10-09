@@ -59,6 +59,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 + (instancetype)paint;
 + (IJSVGPaintFillType)fillTypeForFill:(id)fill;
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children;
+// Object-bounding-box resources use geometry bounds, excluding strokes.
++ (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children;
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint;
 + (IJSVGPaint*)rootPaintForPaint:(IJSVGPaint*)paint;
 + (void)setBackingScaleFactor:(CGFloat)scale

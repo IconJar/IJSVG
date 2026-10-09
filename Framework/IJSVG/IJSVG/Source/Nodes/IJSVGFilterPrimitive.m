@@ -147,6 +147,12 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 @synthesize parameters = _parameters;
 @synthesize edgeMode = _edgeMode;
 
++ (IJSVGNodeType)defaultNodeType
+{
+    // A primitive needs a specific operation before it has an SVG element name.
+    return IJSVGNodeTypeUnknown;
+}
+
 - (IJSVGFilterEdgeMode)edgeMode
 {
     if(_edgeMode == IJSVGFilterEdgeModeUnspecified) {
@@ -242,6 +248,7 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     self.parameters = nil;
 }
 
+/// Copies filter inputs and image references.
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];

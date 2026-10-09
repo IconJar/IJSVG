@@ -16,6 +16,11 @@
 
 @implementation IJSVGText
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeText;
+}
+
 + (IJSVGBitFlags*)allowedAttributes
 {
     IJSVGBitFlags* storage = [super allowedAttributes];

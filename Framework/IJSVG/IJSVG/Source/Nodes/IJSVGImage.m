@@ -13,6 +13,11 @@
 
 @implementation IJSVGImage
 
++ (IJSVGNodeType)defaultNodeType
+{
+    return IJSVGNodeTypeImage;
+}
+
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGImage* node = [super copyWithZone:zone];
