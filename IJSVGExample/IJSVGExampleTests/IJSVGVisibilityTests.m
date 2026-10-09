@@ -253,7 +253,7 @@
     XCTAssertTrue(CGRectIsNull(svg.artworkExtent));
 }
 
-- (void)testColdVisibilityFittingAndExportPerformance
+- (void)testColdVisibilityFittingAndExport
 {
     NSMutableString* body = [NSMutableString string];
     for(NSUInteger index = 0; index < 100; index++) {
@@ -265,25 +265,18 @@
     for(NSUInteger sample = 0; sample < 5; sample++) {
         IJSVG* svg = [self svgWithBody:body viewBox:@"0 0 100 100"];
         NSArray<IJSVGNode*>* nodes = svg.rootNode.children;
-        CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
         NSUInteger outside = 0;
         for(IJSVGNode* node in nodes) {
             outside += [svg isNodeOutsideViewBox:node];
         }
-        CFTimeInterval classification = CFAbsoluteTimeGetCurrent() - start;
         XCTAssertEqual(outside, 200U);
         [svg setNeedsDisplay];
-        start = CFAbsoluteTimeGetCurrent();
         [svg fitArtworkToViewBox:YES ignoringNodesOutsideViewBox:YES];
-        CFTimeInterval fitting = CFAbsoluteTimeGetCurrent() - start;
         XCTAssertTrue(CGRectEqualToRect(svg.artworkBounds, CGRectMake(10, 10, 10, 10)));
         [svg fitArtworkToViewBox:NO];
-        start = CFAbsoluteTimeGetCurrent();
         NSString* output = [svg SVGStringWithOptions:IJSVGExporterOptionRemoveNodesOutsideViewBox];
-        CFTimeInterval exporting = CFAbsoluteTimeGetCurrent() - start;
         XCTAssertGreaterThan(output.length, 0U);
-        NSLog(@"Cold artwork sample %lu: visibility %.3f ms, fitting %.3f ms, export %.3f ms",
-              sample, classification * 1000, fitting * 1000, exporting * 1000);
+
     }
 }
 
@@ -328,7 +321,7 @@
     XCTAssertGreaterThan(outsideCount, 0U);
 }
 
-- (void)testStrokeVisibilityPerformance
+- (void)testStrokeVisibilityClassification
 {
     NSMutableString* body = [NSMutableString string];
     for(NSUInteger index = 0; index < 1000; index++) {
@@ -337,18 +330,16 @@
     }
     for(NSUInteger sample = 0; sample < 5; sample++) {
         IJSVG* svg = [self svgWithBody:body viewBox:@"0 0 100 100"];
-        CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
         NSUInteger outside = 0;
         for(IJSVGNode* node in svg.rootNode.children) {
             outside += [svg isNodeOutsideViewBox:node];
         }
-        NSLog(@"Stroke visibility sample %lu: %.3f ms", sample,
-              (CFAbsoluteTimeGetCurrent() - start) * 1000);
+
         XCTAssertEqual(outside, 500U);
     }
 }
 
-- (void)testFilteredExtentPerformance
+- (void)testFilteredExtentAfterInvalidation
 {
     NSMutableString* body = [NSMutableString stringWithString:
         @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='100' height='100'>"
@@ -360,10 +351,8 @@
     IJSVG* svg = [self svgWithBody:body viewBox:@"0 0 100 100"];
     for(NSUInteger sample = 0; sample < 5; sample++) {
         [svg setNeedsDisplay];
-        CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
         CGRect extent = svg.artworkExtent;
-        NSLog(@"Filtered extent sample %lu: %.3f ms", sample,
-              (CFAbsoluteTimeGetCurrent() - start) * 1000);
+
         XCTAssertTrue(CGRectEqualToRect(extent, CGRectMake(0, 0, 100, 100)));
     }
 }
@@ -379,14 +368,12 @@
     XCTAssertTrue(CGRectEqualToRect(svg.artworkBounds, expected));
     XCTAssertTrue(CGRectEqualToRect(svg.artworkExtent, expected));
     for(NSUInteger sample = 0; sample < 3; sample++) {
-        CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
         CGFloat sum = 0;
         for(NSUInteger index = 0; index < 1000; index++) {
             sum += svg.artworkBounds.size.width;
             sum += svg.artworkExtent.size.width;
         }
-        NSLog(@"Artwork: 2,000 cached queries sample %lu, %.6f seconds",
-              sample, CFAbsoluteTimeGetCurrent() - start);
+
         XCTAssertEqual(sum, 400000);
     }
     // Both cached results must refresh after a geometry edit.
@@ -404,28 +391,14 @@
     }
     IJSVG* svg = [self svgWithBody:body viewBox:@"0 0 100 100"];
     NSArray<IJSVGNode*>* nodes = svg.rootNode.children;
-    CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
     NSUInteger outsideCount = 0;
     for(NSUInteger pass = 0; pass < 2; pass++) {
         for(IJSVGNode* node in nodes) {
             outsideCount += [svg isNodeOutsideViewBox:node] ? 1 : 0;
         }
     }
-    NSLog(@"Visibility: 2,000 queries, %.6f seconds", CFAbsoluteTimeGetCurrent() - start);
-    XCTAssertEqual(outsideCount, 1000U);
 
-    // Measure the hot path separately from building the classification.
-    start = CFAbsoluteTimeGetCurrent();
-    outsideCount = 0;
-    for(NSUInteger pass = 0; pass < 5000; pass++) {
-        for(IJSVGNode* node in nodes) {
-            outsideCount += [svg isNodeOutsideViewBox:node] ? 1 : 0;
-        }
-    }
-    CFTimeInterval elapsed = CFAbsoluteTimeGetCurrent() - start;
-    NSLog(@"Visibility hot: 5,000,000 queries, %.6f seconds, %.1f ns/query",
-          elapsed, elapsed * 1e9 / 5000000);
-    XCTAssertEqual(outsideCount, 2500000U);
+    XCTAssertEqual(outsideCount, 1000U);
 
 
 }

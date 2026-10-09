@@ -15,7 +15,6 @@
 
 - (NSArray<NSDictionary*>*)fixtures
 {
-    // The standalone benchmark reads this same generated corpus.
     NSString* path = [@(__FILE__).stringByDeletingLastPathComponent
         stringByAppendingPathComponent:@"Fixtures/FilterMatrix/manifest.json"];
     NSError* error = nil;

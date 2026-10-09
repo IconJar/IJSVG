@@ -11,7 +11,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void);
-void IJSVGBenchmarkCSSFontParser(void);
 NSArray<NSString*>* IJSVGTextRegressionCaseNames(void);
 NSArray<NSString*>* IJSVGRunTextRegressionCase(NSString* name);
 

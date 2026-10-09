@@ -1,7 +1,0 @@
-name,size,reference_ms,optimized_ms,max_difference,elided_blends
-health-worker,32,8.977,9.233,0,0
-health-worker,64,7.245,7.217,0,0
-health-worker,128,8.355,7.786,0,0
-health-worker,256,10.710,10.613,0,0
-health-worker,512,15.813,15.969,0,0
-health-worker,1024,38.865,38.411,0,0

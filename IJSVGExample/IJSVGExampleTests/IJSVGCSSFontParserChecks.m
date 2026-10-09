@@ -195,36 +195,3 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
           (unsigned long)checked, (unsigned long)failures.count);
     return failures;
 }
-
-void IJSVGBenchmarkCSSFontParser(void)
-{
-    NSArray<NSString*>* fixtures = @[
-        @"font:16px Helvetica",
-        @"font:italic small-caps 600 condensed 20px / 1.5 \"Helvetica Neue\", sans-serif",
-        @"font:medium Helvetica",
-        @"font:20px / + Helvetica",
-        [@"font:" stringByAppendingString:[[@"" stringByPaddingToLength:4096
-                                                            withString:@"9"
-                                                       startingAtIndex:0] stringByAppendingString:@"px Helvetica"]],
-        [NSString stringWithFormat:@"font:16px \"%@\"",
-            [@"" stringByPaddingToLength:4095 withString:@"Family" startingAtIndex:0]]
-    ];
-    for(NSUInteger fixture = 0; fixture < fixtures.count; fixture++) {
-        NSMutableArray<NSNumber*>* samples = [[NSMutableArray alloc] init];
-        NSUInteger checksum = 0;
-        for(NSUInteger sample = 0; sample < 8; sample++) {
-            CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
-            for(NSUInteger iteration = 0; iteration < 1000; iteration++) {
-                @autoreleasepool {
-                    checksum += [IJSVGStyleSheetStyle parseStyleString:fixtures[fixture]].properties.count;
-                }
-            }
-            if(sample != 0) {
-                [samples addObject:@((CFAbsoluteTimeGetCurrent() - start) * 1000)];
-            }
-        }
-        [samples sortUsingSelector:@selector(compare:)];
-        NSLog(@"CSS FONT BENCHMARK fixture=%lu median_us=%.3f checksum=%lu",
-              (unsigned long)fixture, samples[3].doubleValue, (unsigned long)checksum);
-    }
-}
