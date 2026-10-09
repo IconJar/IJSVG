@@ -20,7 +20,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
 @interface IJSVGGradientPaint () {
     BOOL _hasResolvedPlacement;
     __weak IJSVGRootPaint* _gradientRoot;
-    CGSize _resolvedRootSize;
+    CGRect _resolvedViewport;
     CGRect _resolvedBounds;
     CGAffineTransform _resolvedTransform;
     NSData* _resolvedGradientTransforms;
@@ -52,20 +52,32 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     }
 
     // Resolved paint geometry is reused until the renderer is invalidated.
-    // User-space gradients also depend on the root viewport, which can resize.
+    // Userspace gradients also depend on the root viewport, which can resize.
     BOOL userSpace = _gradient.units == IJSVGUnitUserSpaceOnUse;
     IJSVGRootPaint* root = _gradientRoot;
     if(userSpace && root == nil) {
-        root = (IJSVGRootPaint*)[IJSVGPaint rootPaintForPaint:self];
-        _gradientRoot = root;
-        _hasResolvedPlacement = NO;
+        IJSVGPaint* ancestor = [IJSVGPaint rootPaintForPaint:self];
+        if([ancestor isKindOfClass:IJSVGRootPaint.class]) {
+            root = (IJSVGRootPaint*)ancestor;
+            _gradientRoot = root;
+            _hasResolvedPlacement = NO;
+        }
     }
-    CGSize rootSize = userSpace ? root.frame.size : CGSizeZero;
-    if(!_hasResolvedPlacement || !CGSizeEqualToSize(rootSize, _resolvedRootSize)) {
+
+    // Detached feImage subtrees have no SVG root. The resolver supplies their
+    // userspace viewport here, shape bounds cannot resolve percentage lengths.
+    CGRect viewport = CGRectZero;
+    if(userSpace) {
+        viewport = root != nil ? (root.viewBox != nil ?
+            [root.viewBox computeValue:root.frame.size] : root.frame) : self.viewBox;
+    }
+    if(!_hasResolvedPlacement || !CGRectEqualToRect(viewport, _resolvedViewport)) {
         IJSVGPaint* paint = self.referencingPaint;
         CGAffineTransform transform = CGAffineTransformIdentity;
         if(userSpace) {
-            _resolvedBounds = [root.viewBox computeValue:rootSize];
+            _resolvedBounds = viewport;
+            // Undo paint local placement, not the viewport origin: absolute
+            // gradient coordinates remain in the referencing nodes user space.
             transform = [IJSVGPaint userSpaceTransformForPaint:paint];
         } else {
             _resolvedBounds = IJSVGPaintGetBoundingBoxBounds(paint);
@@ -96,7 +108,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
             values[index++] = item.CGAffineTransform;
         }
         _resolvedGradientTransforms = matrices;
-        _resolvedRootSize = rootSize;
+        _resolvedViewport = viewport;
         _hasResolvedPlacement = YES;
     }
     if(_gradientKind == IJSVGResolvedGradientKindCustom) {
