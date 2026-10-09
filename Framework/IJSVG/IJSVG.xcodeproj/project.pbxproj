@@ -86,6 +86,8 @@
 		594CF561238FF46C009B251B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF560238FF46C009B251B /* Foundation.framework */; };
 		594CF563238FF473009B251B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF562238FF473009B251B /* QuartzCore.framework */; };
 		595FD12F29EC56BA00666897 /* IJSVGUmbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		597CE1CF3079699B0026E325 /* IJSVGMarker.h in Headers */ = {isa = PBXBuildFile; fileRef = 597CE1CE3079699B0026E325 /* IJSVGMarker.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		597CE1D130796A180026E325 /* IJSVGMarker.m in Sources */ = {isa = PBXBuildFile; fileRef = 597CE1D030796A180026E325 /* IJSVGMarker.m */; };
 		599EB4D3238FF570004CB6BC /* libobjc.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 599EB4D2238FF535004CB6BC /* libobjc.tbd */; };
 		59A24EBC23F480EA0090C374 /* IJSVGUnitSize.h in Headers */ = {isa = PBXBuildFile; fileRef = 59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59A24EBD23F480EA0090C374 /* IJSVGUnitSize.m in Sources */ = {isa = PBXBuildFile; fileRef = 59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */; };
@@ -319,6 +321,8 @@
 		594CF562238FF473009B251B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUmbrella.h; sourceTree = "<group>"; };
 		596AB830298854270013110A /* IJSVG.modulemap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = "sourcecode.module-map"; path = IJSVG.modulemap; sourceTree = SOURCE_ROOT; };
+		597CE1CE3079699B0026E325 /* IJSVGMarker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGMarker.h; sourceTree = "<group>"; };
+		597CE1D030796A180026E325 /* IJSVGMarker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMarker.m; sourceTree = "<group>"; };
 		599EB4D2238FF535004CB6BC /* libobjc.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libobjc.tbd; path = usr/lib/libobjc.tbd; sourceTree = SDKROOT; };
 		59A24EBA23F480EA0090C374 /* IJSVGUnitSize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGUnitSize.h; sourceTree = "<group>"; };
 		59A24EBB23F480EA0090C374 /* IJSVGUnitSize.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGUnitSize.m; sourceTree = "<group>"; };
@@ -600,6 +604,8 @@
 				594385A6306C06FD006A5F63 /* IJSVGFilterPrimitive.m */,
 				59B649C7307580840004EFC2 /* IJSVGText.h */,
 				59B649C9307580850004EFC2 /* IJSVGText.m */,
+				597CE1CE3079699B0026E325 /* IJSVGMarker.h */,
+				597CE1D030796A180026E325 /* IJSVGMarker.m */,
 			);
 			path = Nodes;
 			sourceTree = "<group>";
@@ -935,6 +941,7 @@
 				59EB75E423905F7300F5AE63 /* IJSVGGradientUnitLength.h in Headers */,
 				593199AC2FF06EA60006D378 /* IJSVGParserUtils.h in Headers */,
 				59FC3548306EAC590028BEAC /* IJSVGTransformPaint.h in Headers */,
+				597CE1CF3079699B0026E325 /* IJSVGMarker.h in Headers */,
 				59FCC09427F2394D00BB924E /* IJSVGRootNode.h in Headers */,
 				594A10DA248D7C90001A3181 /* NSImage+IJSVGAdditions.h in Headers */,
 				5945BC12306E815000758340 /* IJSVGMetalBlurRenderer.h in Headers */,
@@ -1126,6 +1133,7 @@
 				59EB764223905F7300F5AE63 /* IJSVGStyleSheet.m in Sources */,
 				594385EC306C3E59006A5F63 /* IJSVGOffsetFilterEffect.m in Sources */,
 				59EB764023905F7300F5AE63 /* IJSVGExporterPathInstruction.m in Sources */,
+				597CE1D130796A180026E325 /* IJSVGMarker.m in Sources */,
 				59EB75FE23905F7300F5AE63 /* IJSVGStyle.m in Sources */,
 				5943860E306C3E5A006A5F63 /* IJSVGFilterEffect.m in Sources */,
 				594385DC306C3E58006A5F63 /* IJSVGDisplacementMapFilterEffect.m in Sources */,
@@ -1314,7 +1322,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.8;
+				MARKETING_VERSION = 4.1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1343,7 +1351,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.8;
+				MARKETING_VERSION = 4.1.9;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

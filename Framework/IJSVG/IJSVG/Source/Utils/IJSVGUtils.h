@@ -7,6 +7,8 @@
 //
 
 #import <IJSVG/IJSVGCommand.h>
+#import <IJSVG/IJSVGMarker.h>
+#import <IJSVG/IJSVGColorNode.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <Foundation/Foundation.h>
@@ -70,6 +72,10 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (IJSVGLineJoinStyle)lineJoinStyleForCGLineJoin:(CGLineJoin)lineJoin;
 + (IJSVGLineCapStyle)lineCapStyleForCGLineCap:(CGLineCap)lineCap;
 + (IJSVGUnitType)unitTypeForString:(NSString*)string;
++ (IJSVGMarkerUnits)markerUnitsForString:(NSString* _Nullable)string;
++ (IJSVGMarkerOrientType)markerOrientTypeForString:(NSString* _Nullable)string;
++ (IJSVGContextPaint)contextPaintForString:(NSString* _Nullable)string;
++ (CGFloat)angleForString:(NSString* _Nullable)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
 + (NSString* _Nullable)MIMETypeForImageData:(NSData*)data

@@ -28,6 +28,46 @@
     _dashLengths = lengths;
 }
 
+- (IJSVGPaint*)copyForMarker
+{
+    IJSVGShapePaint* copy = (IJSVGShapePaint*)[super copyForMarker];
+    if(copy == nil) {
+        return nil;
+    }
+
+    copy.path = _path;
+    copy.fillColor = _fillColor;
+    copy.strokeColor = _strokeColor;
+    copy->_lineWidth = _lineWidth;
+    copy->_lineCap = _lineCap;
+    copy->_lineJoin = _lineJoin;
+    copy->_miterLimit = _miterLimit;
+    copy->_lineDashPattern = _lineDashPattern;
+    copy->_dashLengths = _dashLengths;
+    copy->_lineDashPhase = _lineDashPhase;
+    copy->_primitiveType = _primitiveType;
+    NSArray<IJSVGPaint*>* children = self.children;
+
+    for(NSUInteger index = 0; index < children.count; index++) {
+        if(children[index] == _fillPaint) {
+            copy.fillPaint = copy.children[index];
+        }
+        if(children[index] == _strokePaint) {
+            copy.strokePaint = copy.children[index];
+        }
+        if(children[index] == _strokeStyle) {
+            copy.strokeStyle = (IJSVGShapePaint*)copy.children[index];
+        }
+    }
+
+    if((_fillPaint != nil && copy.fillPaint == nil) ||
+       (_strokePaint != nil && copy.strokePaint == nil) ||
+       (_strokeStyle != nil && copy.strokeStyle == nil)) {
+        return nil;
+    }
+    return copy;
+}
+
 - (void)dealloc
 {
     CGPathRelease(_path);

@@ -441,6 +441,65 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return valid ? identifiers : @[];
 }
 
++ (IJSVGMarkerUnits)markerUnitsForString:(NSString*)string
+{
+    if([string isEqualToString:IJSVGStringUserSpaceOnUse]) {
+        return IJSVGMarkerUnitsUserSpaceOnUse;
+    }
+    return IJSVGMarkerUnitsStrokeWidth;
+}
+
++ (IJSVGMarkerOrientType)markerOrientTypeForString:(NSString*)string
+{
+    if([string isEqualToString:IJSVGStringAuto]) {
+        return IJSVGMarkerOrientTypeAuto;
+    }
+    if([string isEqualToString:IJSVGStringAutoStartReverse]) {
+        return IJSVGMarkerOrientTypeAutoStartReverse;
+    }
+    return IJSVGMarkerOrientTypeAngle;
+}
+
++ (IJSVGContextPaint)contextPaintForString:(NSString*)string
+{
+    if([string isEqualToString:IJSVGStringContextFill]) {
+        return IJSVGContextPaintFill;
+    }
+    if([string isEqualToString:IJSVGStringContextStroke]) {
+        return IJSVGContextPaintStroke;
+    }
+    return IJSVGContextPaintNone;
+}
+
++ (CGFloat)angleForString:(NSString*)string
+{
+    if(string.length == 0) {
+        return 0;
+    }
+    NSCharacterSet* whitespace = NSCharacterSet.whitespaceAndNewlineCharacterSet;
+    NSString* number = [string stringByTrimmingCharactersInSet:whitespace];
+    NSString* suffix = nil;
+    CGFloat multiplier = 1;
+    if([number hasSuffix:IJSVGStringGradians]) {
+        suffix = IJSVGStringGradians;
+        multiplier = .9;
+    } else if([number hasSuffix:IJSVGStringRadians]) {
+        suffix = IJSVGStringRadians;
+        multiplier = 180 / M_PI;
+    } else if([number hasSuffix:IJSVGStringDegrees]) {
+        suffix = IJSVGStringDegrees;
+    }
+    if(suffix != nil) {
+        number = [number substringToIndex:number.length - suffix.length];
+    }
+    NSArray<NSNumber*>* values = [self numbersFromString:number];
+    if(values.count != 1) {
+        return 0;
+    }
+    CGFloat angle = values.firstObject.doubleValue * multiplier;
+    return isfinite(angle) ? angle : 0;
+}
+
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
     if([string isEqualToString:IJSVGStringEvenOdd])

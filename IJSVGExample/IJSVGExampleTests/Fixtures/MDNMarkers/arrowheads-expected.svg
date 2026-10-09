@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100">
+  <line x1="10" y1="10" x2="90" y2="90" stroke="black" />
+  <path d="M 110 10        C 120 20, 130 20, 140 10        C 150 0, 160 0, 170 10        C 180 20, 190 20, 200 10" stroke="black" fill="none" />
+  <path d="M-3 -3L3 0L-3 3Z" transform="translate(90 90) rotate(45)" />
+  <path d="M-3 -3L3 0L-3 3Z" transform="translate(110 10) rotate(225)" />
+  <path d="M-3 -3L3 0L-3 3Z" transform="translate(140 10) rotate(-45)" />
+  <path d="M-3 -3L3 0L-3 3Z" transform="translate(170 10) rotate(45)" />
+  <path d="M-3 -3L3 0L-3 3Z" transform="translate(200 10) rotate(-45)" />
+</svg>

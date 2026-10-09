@@ -5,6 +5,12 @@ IJSVG is a Cocoa library for drawing SVGs in macOS 14.6 and later. It uses Core 
 
 You can also copy an IJSVG object to the pasteboard. It provides PDF data so apps such as Sketch and Photoshop can paste the artwork as vectors.
 
+### What is new in IJSVG 4.1.9?
+
+- SVG markers with custom artwork at the start, middle and end of paths.
+- Automatic marker orientation, including `auto-start-reverse`, and `context-fill` / `context-stroke` colours.
+- Faster rendering and export for SVGs with repeated markers.
+
 ### What is new in IJSVG 4.1.0?
 
 - Text support, including `text`, `tspan` and `textPath`.
@@ -57,7 +63,7 @@ Requires Xcode 16 / Swift 6 or later and macOS 14.6 or later.
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Select version **4.1.0** or later to include SVG text support and the parser improvements.
+Select version **4.1.9** or later to include SVG text, marker support and the latest rendering improvements.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
 The package uses the existing Objective-C implementation and bundles its Metal
@@ -172,6 +178,8 @@ Use `renderingBackingScaleHelper` to supply the backing scale factor for custom 
 
 IJSVG exports its node and paint graphs back to SVG, including gradients, patterns, clipping, masks and filter definitions. Filters are serialized as SVG primitives so their effects remain editable in the exported document.
 
+Marker instances are exported as positioned vector artwork, preserving their appearance.
+
 To export an SVG:
 
     IJSVG* svg ...
@@ -199,11 +207,12 @@ the style or position of part of the text.
 
 # What it supports
 
-* Elements: svg, defs, use, g, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs).
+* Elements: svg, defs, use, g, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, marker, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs).
 * Commands: A, M, L, H, V, C, S, T, Q and Z and full support for multiple parameters of each type.
 * Transformations: matrix, rotate, translate, scale and skew transformations.
 * Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style.
 * Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns.
+* Markers: `marker`, `marker-start`, `marker-mid` and `marker-end` on paths, lines, polylines and polygons. Supports custom child artwork, `markerUnits`, reference points, marker dimensions, `viewBox`, clipping, fixed angles, `auto` and `auto-start-reverse` orientation, and `context-fill` / `context-stroke` paints.
 * Color: supports all predefined colors from the SVG spec, HEX values along with RGB(A) and HSL.
 * CSS: Embedded style sheets and inline styles, with type, class, ID and universal selectors, descendant and child combinators, and adjacent and general sibling combinators. Declaration resolution accounts for specificity, source order and `!important`.
 * Filters: `feBlend`, `feColorMatrix`, `feComponentTransfer`, `feComposite`, `feConvolveMatrix`, `feDisplacementMap`, `feMorphology`, `feTile`, `feFlood`, `feOffset`, `feImage`, `feMerge`, `feGaussianBlur`, `feDropShadow`, `feTurbulence`, `feDiffuseLighting` and `feSpecularLighting`.

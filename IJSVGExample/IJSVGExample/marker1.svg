@@ -1,0 +1,36 @@
+<svg viewBox="0 0 300 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- A marker to be used as an arrowhead -->
+    <marker
+      id="arrow"
+      viewBox="0 0 10 10"
+      refX="5"
+      refY="5"
+      markerWidth="6"
+      markerHeight="6"
+      orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+  </defs>
+
+  <!-- A line with a marker -->
+  <line
+    x1="10"
+    y1="10"
+    x2="90"
+    y2="90"
+    stroke="black"
+    marker-end="url(#arrow)" />
+
+  <!-- A curved path with markers -->
+  <path
+    d="M 110 10
+       C 120 20, 130 20, 140 10
+       C 150 0, 160 0, 170 10
+       C 180 20, 190 20, 200 10"
+    stroke="black"
+    fill="none"
+    marker-start="url(#arrow)"
+    marker-mid="url(#arrow)"
+    marker-end="url(#arrow)" />
+</svg>

@@ -2,6 +2,7 @@
 #import <IJSVG/IJSVGUmbrella.h>
 #import <IJSVGTestSupport.h>
 #import <Metal/Metal.h>
+#import <CoreImage/CoreImage.h>
 
 @interface IJSVGPackageTests: XCTestCase
 @end
@@ -45,7 +46,20 @@
 - (void)testLoadsPackagedBlurShader { [self checkPackagedShader:@"IJSVGBlur"]; }
 - (void)testLoadsPackagedInnerShadowShader { [self checkPackagedShader:@"IJSVGInnerShadow"]; }
 - (void)testLoadsPackagedSubtractShader { [self checkPackagedShader:@"IJSVGSubtract"]; }
-- (void)testLoadsPackagedSeparableBlurShader { [self checkPackagedShader:@"IJSVGSeparableBlur"]; }
+- (void)testLoadsPackagedSeparableBlurShader
+{
+    NSString* source = IJSVGPackageShaderSource(@"IJSVGSeparableBlur");
+    XCTAssertGreaterThan(source.length, 0u);
+    if(source.length == 0) {
+        return;
+    }
+    if(MTLCreateSystemDefaultDevice() != nil) {
+        NSError* error = nil;
+        NSArray<CIKernel*>* kernels = [CIKernel kernelsWithMetalString:source error:&error];
+        XCTAssertNil(error);
+        XCTAssertGreaterThan(kernels.count, 0u);
+    }
+}
 
 - (void)testInitializersWithErrors
 {

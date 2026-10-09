@@ -600,7 +600,16 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeSpacing: @(IJSVGNodeAttributeSpacing),
             IJSVGAttributeSide: @(IJSVGNodeAttributeSide),
             IJSVGAttributePath: @(IJSVGNodeAttributePath),
-            IJSVGAttributePathLength: @(IJSVGNodeAttributePathLength)
+            IJSVGAttributePathLength: @(IJSVGNodeAttributePathLength),
+            IJSVGAttributeMarkerStart: @(IJSVGNodeAttributeMarkerStart),
+            IJSVGAttributeMarkerMid: @(IJSVGNodeAttributeMarkerMid),
+            IJSVGAttributeMarkerEnd: @(IJSVGNodeAttributeMarkerEnd),
+            IJSVGAttributeRefX: @(IJSVGNodeAttributeRefX),
+            IJSVGAttributeRefY: @(IJSVGNodeAttributeRefY),
+            IJSVGAttributeMarkerWidth: @(IJSVGNodeAttributeMarkerWidth),
+            IJSVGAttributeMarkerHeight: @(IJSVGNodeAttributeMarkerHeight),
+            IJSVGAttributeMarkerUnits: @(IJSVGNodeAttributeMarkerUnits),
+            IJSVGAttributeOrient: @(IJSVGNodeAttributeOrient)
         };
     });
     NSNumber* attribute = attributes[name];

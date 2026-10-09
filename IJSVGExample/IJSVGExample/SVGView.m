@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"text-filter.svg"];
+    return [IJSVG SVGNamed:@"marker3.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

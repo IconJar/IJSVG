@@ -118,7 +118,9 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
                    origin:&origin];
 
     // transform the X and Y shift
-    transform = CGAffineTransformConcat(transform, IJSVGConcatTransforms(self.patternNode.transforms));
+    // Place the tile in user space before moving into the local space of the referencing paint.
+    transform = CGAffineTransformConcat(IJSVGConcatTransforms(self.patternNode.transforms),
+                                        transform);
     transform = CGAffineTransformTranslate(transform, origin.x, origin.y);
 
     // its possible that this paint is shifted inwards due to a stroke on the

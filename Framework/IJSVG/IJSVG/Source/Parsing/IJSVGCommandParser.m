@@ -14,7 +14,8 @@
 
 #define VALID_DIGIT(c) (((unsigned char)(c) ^ '0') <= 9)
 
-IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length)
+IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type,
+                                                           NSInteger length)
 {
     size_t size = sizeof(IJSVGPathDataSequence) * length;
     IJSVGPathDataSequence* sequence = (IJSVGPathDataSequence*)malloc(size);
@@ -34,7 +35,8 @@ IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void)
         IJSVG_STREAM_CHAR_BLOCK_SIZE);
 }
 
-IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount)
+IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount,
+                                               NSUInteger charCount)
 {
     floatCount = floatCount ?: IJSVG_STREAM_FLOAT_BLOCK_SIZE;
     charCount = charCount ?: IJSVG_STREAM_CHAR_BLOCK_SIZE;
@@ -75,9 +77,13 @@ static void* IJSVGPathDataStreamGrow(void* buffer, NSInteger* capacity,
     return resized;
 }
 
-static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
-    IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence,
-    NSInteger commandLength, NSInteger* commandsFound, NSInteger* numberCount)
+static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars,
+                                                      NSInteger commandCharLength,
+                                                      IJSVGPathDataStream* dataStream,
+                                                      IJSVGPathDataSequence* _Nullable sequence,
+                                                      NSInteger commandLength,
+                                                      NSInteger* commandsFound,
+                                                      NSInteger* numberCount)
 {
     *numberCount = 0;
     // if no command length, its completely pointless function,
@@ -213,13 +219,18 @@ static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars, 
     return dataStream->floatBuffer;
 }
 
-CGFloat* IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength,
-    IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* sequence,
-    NSInteger commandLength, NSInteger* commandsFound)
+CGFloat* IJSVGParsePathDataStreamSequence(const char* commandChars,
+                                          NSInteger commandCharLength,
+                                          IJSVGPathDataStream* dataStream,
+                                          IJSVGPathDataSequence* sequence,
+                                          NSInteger commandLength,
+                                          NSInteger* commandsFound)
 {
     NSInteger count = 0;
     const CGFloat* values = IJSVGReadPathDataStreamSequence(commandChars, commandCharLength,
-        dataStream, sequence, commandLength, commandsFound, &count);
+                                                            dataStream, sequence,
+                                                            commandLength, commandsFound,
+                                                            &count);
     if(values == NULL || count == 0) {
         return NULL;
     }
@@ -240,6 +251,8 @@ typedef struct {
     CGPoint cubicControl;
     CGPoint quadraticControl;
     char previousCommand;
+    CGPoint subpathStart;
+    __unsafe_unretained void (^segmentHandler)(char command, CGPathRef segment);
 } IJSVGPathBuilder;
 
 static NSInteger IJSVGPathCommandParameterCount(char command)
@@ -265,7 +278,8 @@ static NSInteger IJSVGPathCommandParameterCount(char command)
     return -1;
 }
 
-static CGPoint IJSVGPathParameterPoint(const CGFloat* parameters, NSUInteger index, CGPoint origin)
+static CGPoint IJSVGPathParameterPoint(const CGFloat* parameters, NSUInteger index,
+                                       CGPoint origin)
 {
     return CGPointMake(origin.x + parameters[index], origin.y + parameters[index + 1]);
 }
@@ -276,7 +290,8 @@ static CGPoint IJSVGPathReflectedPoint(CGPoint control, CGPoint current)
 }
 
 static void IJSVGPathAppendCubic(IJSVGPathBuilder* builder, char command,
-    const CGFloat* parameters, CGPoint current, CGPoint origin)
+                                 const CGFloat* parameters, CGPoint current,
+                                 CGPoint origin)
 {
     CGPoint first;
     CGPoint second;
@@ -296,7 +311,8 @@ static void IJSVGPathAppendCubic(IJSVGPathBuilder* builder, char command,
 }
 
 static void IJSVGPathAppendQuadratic(IJSVGPathBuilder* builder, char command,
-    const CGFloat* parameters, CGPoint current, CGPoint origin)
+                                     const CGFloat* parameters, CGPoint current,
+                                     CGPoint origin)
 {
     CGPoint control;
     CGPoint end;
@@ -313,7 +329,7 @@ static void IJSVGPathAppendQuadratic(IJSVGPathBuilder* builder, char command,
 }
 
 static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command,
-    BOOL relative, const CGFloat* parameters)
+                                   BOOL relative, const CGFloat* parameters)
 {
     BOOL initial = builder->previousCommand == 0;
     if(command != 'm' && initial) {
@@ -321,6 +337,21 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command,
     }
     CGPoint current = initial ? CGPointZero : CGPathGetCurrentPoint(builder->path);
     CGPoint origin = relative ? current : CGPointZero;
+    if(builder->segmentHandler != nil) {
+        // Reuse command decoding on a small isolated path, never rescan the growing path.
+        CGMutablePathRef segment = CGPathCreateMutable();
+        CGPathMoveToPoint(segment, NULL, current.x, current.y);
+        IJSVGPathBuilder isolated = *builder;
+        isolated.path = segment;
+        isolated.segmentHandler = nil;
+        if(command == 'z') {
+            CGPathAddLineToPoint(segment, NULL, builder->subpathStart.x, builder->subpathStart.y);
+        } else {
+            IJSVGPathAppendCommand(&isolated, command, relative, parameters);
+        }
+        builder->segmentHandler(command, segment);
+        CGPathRelease(segment);
+    }
     switch(command) {
         case 'm':
             CGPathMoveToPoint(builder->path, NULL, origin.x + parameters[0], origin.y + parameters[1]);
@@ -349,13 +380,15 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command,
             CGPathCloseSubpath(builder->path);
             break;
     }
+    if(command == 'm') builder->subpathStart = CGPathGetCurrentPoint(builder->path);
     builder->previousCommand = command;
 }
 
-void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteger length,
-    IJSVGPathDataStream* dataStream)
+static void IJSVGAppendPathDataWithHandler(CGMutablePathRef path, const char* characters, NSUInteger length,
+                                           IJSVGPathDataStream* dataStream,
+                                           void (^handler)(char command, CGPathRef segment))
 {
-    IJSVGPathBuilder builder = { .path = path };
+    IJSVGPathBuilder builder = { .path = path, .segmentHandler = handler };
     if(characters == NULL || length > NSIntegerMax) {
         return;
     }
@@ -408,8 +441,28 @@ void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteg
     }
 }
 
+void IJSVGAppendPathData(CGMutablePathRef path, const char* characters,
+                         NSUInteger length, IJSVGPathDataStream* dataStream)
+{
+    IJSVGAppendPathDataWithHandler(path, characters, length, dataStream, nil);
+}
+
+void IJSVGEnumeratePathDataSegments(NSString* data,
+                                    void (^handler)(char command, CGPathRef segment))
+{
+    CGMutablePathRef path = CGPathCreateMutable();
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    const char* characters = data.UTF8String;
+    if(characters != NULL) {
+        IJSVGAppendPathDataWithHandler(path, characters, strlen(characters),
+                                       stream, handler);
+    }
+    IJSVGPathDataStreamRelease(stream);
+    CGPathRelease(path);
+}
+
 CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger length,
-    IJSVGPathDataStream* dataStream)
+                                         IJSVGPathDataStream* dataStream)
 {
     CGMutablePathRef path = CGPathCreateMutable();
     IJSVGAppendPathData(path, characters, length, dataStream);
@@ -417,7 +470,7 @@ CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger leng
 }
 
 BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInteger length,
-    BOOL closePath, IJSVGPathDataStream* dataStream)
+                           BOOL closePath, IJSVGPathDataStream* dataStream)
 {
     if(characters == NULL || length > NSIntegerMax) {
         return NO;

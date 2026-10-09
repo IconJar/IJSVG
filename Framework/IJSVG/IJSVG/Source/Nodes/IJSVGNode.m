@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGMarker.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGUtils.h>
@@ -103,6 +104,8 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
         case IJSVGNodeTypeTextPath: return @"textPath";
         case IJSVGNodeTypeAnchor: return @"a";
         case IJSVGNodeTypeFilterDropShadow: return @"feDropShadow";
+        case IJSVGNodeTypeMarker:
+            return @"marker";
         case IJSVGNodeTypeFilterBlend: return @"feBlend";
         case IJSVGNodeTypeFilterColorMatrix: return @"feColorMatrix";
         case IJSVGNodeTypeFilterComponentTransfer: return @"feComponentTransfer";
@@ -175,6 +178,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 
 @synthesize fill = _fill;
 @synthesize stroke = _stroke;
+@synthesize markerStart = _markerStart, markerMid = _markerMid, markerEnd = _markerEnd;
 
 - (void)dealloc
 {
@@ -290,6 +294,9 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
             break;
         }
         case 'm': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "marker")) {
+                return IJSVGNodeTypeMarker;
+            }
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "mask") == YES) {
                 return IJSVGNodeTypeMask;
             }
@@ -447,6 +454,10 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeMarker];
+    [storage setBit:IJSVGNodeAttributeMarkerStart];
+    [storage setBit:IJSVGNodeAttributeMarkerMid];
+    [storage setBit:IJSVGNodeAttributeMarkerEnd];
     [storage setBit:IJSVGNodeAttributeColorInterpolationFilters];
     [storage setBit:IJSVGNodeAttributeEnableBackground];
     [storage setBit:IJSVGNodeAttributeClass];
@@ -623,7 +634,10 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.unicode = node.unicode;
     self.textStyle = node.textStyle;
     self.styleParent = node->_styleParent;
-    
+    self.markerStart = node->_markerStart.copy;
+    self.markerMid = node->_markerMid.copy;
+    self.markerEnd = node->_markerEnd.copy;
+
     // Preserve whether the name was explicit so copies still follow type changes.
     self.name = node->_name;
     self.type = node.type;
@@ -765,6 +779,21 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         }
     }
     return IJSVGColorInterpolationLinearRGB;
+}
+
+- (IJSVGMarker*)markerStart
+{
+    return _markerStart ?: self.styleParent.markerStart;
+}
+
+- (IJSVGMarker*)markerMid
+{
+    return _markerMid ?: self.styleParent.markerMid;
+}
+
+- (IJSVGMarker*)markerEnd
+{
+    return _markerEnd ?: self.styleParent.markerEnd;
 }
 
 - (IJSVGNode*)styleParent

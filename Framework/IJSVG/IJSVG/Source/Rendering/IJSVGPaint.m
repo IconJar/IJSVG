@@ -8,6 +8,11 @@
 
 #import <IJSVGPaint.h>
 #import <IJSVGTransformPaint.h>
+#import <IJSVGGroupPaint.h>
+#import <IJSVGShapePaint.h>
+#import <IJSVGRectPaint.h>
+#import <IJSVGStrokePaint.h>
+#import <IJSVG/IJSVGText.h>
 #import <IJSVGRootPaint.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGGradientPaint.h>
@@ -75,6 +80,60 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         _children = @[];
     }
     return self;
+}
+
+- (IJSVGPaint*)copyForMarker
+{
+    Class type = self.class;
+    if((type != IJSVGPaint.class && type != IJSVGGroupPaint.class &&
+        type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class &&
+        type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) ||
+       _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil ||
+       [_sourceNode isKindOfClass:IJSVGText.class] ||
+       (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
+        return nil;
+    }
+    NSArray<IJSVGPaint*>* children = @[];
+    if(_children.count == 1) {
+        IJSVGPaint* child = [_children.firstObject copyForMarker];
+        if(child == nil) {
+            return nil;
+        }
+        children = @[child];
+    } else if(_children.count > 1) {
+        NSMutableArray<IJSVGPaint*>* copies = [[NSMutableArray alloc] initWithCapacity:_children.count];
+        for(IJSVGPaint* child in _children) {
+            IJSVGPaint* copy = [child copyForMarker];
+            if(copy == nil) {
+                return nil;
+            }
+            [copies addObject:copy];
+        }
+        children = copies.copy;
+    }
+
+    IJSVGPaint* copy = [[type alloc] init];
+    copy->_sourceNode = _sourceNode;
+    copy->_viewPort = _viewPort;
+    copy->_frame = _frame;
+    copy->_boundingBox = _boundingBox;
+    copy->_outerBoundingBox = _outerBoundingBox;
+    copy->_affineTransform = _affineTransform;
+    copy->_clipRule = _clipRule;
+    copy->_fillRule = _fillRule;
+    copy->_maskingSourceBounds = _maskingSourceBounds;
+    copy->_maskingBoundingBox = _maskingBoundingBox;
+    copy->_maskingClippingRect = _maskingClippingRect;
+    copy->_clippingBoundingBox = _clippingBoundingBox;
+    copy->_clippingTransform = _clippingTransform;
+    copy->_opacity = _opacity;
+    copy->_hidden = _hidden;
+    copy->_blendingMode = _blendingMode;
+    copy->_backingScaleFactor = _backingScaleFactor;
+    copy->_renderQuality = _renderQuality;
+    copy.clipPath = _clipPath;
+    copy.children = children;
+    return copy;
 }
 
 - (void)dealloc

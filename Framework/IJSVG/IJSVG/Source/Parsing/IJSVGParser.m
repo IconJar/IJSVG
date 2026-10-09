@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
@@ -26,6 +27,14 @@ NSString* const IJSVGStringButt = @"butt";
 NSString* const IJSVGStringMiter = @"miter";
 NSString* const IJSVGStringInherit = @"inherit";
 NSString* const IJSVGStringEvenOdd = @"evenodd";
+NSString* const IJSVGStringAuto = @"auto";
+NSString* const IJSVGStringStrokeWidth = @"strokeWidth";
+NSString* const IJSVGStringDegrees = @"deg";
+NSString* const IJSVGStringRadians = @"rad";
+NSString* const IJSVGStringGradians = @"grad";
+NSString* const IJSVGStringAutoStartReverse = @"auto-start-reverse";
+NSString* const IJSVGStringContextFill = @"context-fill";
+NSString* const IJSVGStringContextStroke = @"context-stroke";
 
 // SVG filter attribute values and predefined inputs.
 NSString* const IJSVGStringNormal = @"normal";
@@ -141,6 +150,15 @@ NSString* const IJSVGAttributeStopOpacity = @"stop-opacity";
 NSString* const IJSVGAttributeHref = @"href";
 NSString* const IJSVGAttributeOverflow = @"overflow";
 NSString* const IJSVGAttributeMarker = @"marker";
+NSString* const IJSVGAttributeMarkerStart = @"marker-start";
+NSString* const IJSVGAttributeMarkerMid = @"marker-mid";
+NSString* const IJSVGAttributeMarkerEnd = @"marker-end";
+NSString* const IJSVGAttributeRefX = @"refX";
+NSString* const IJSVGAttributeRefY = @"refY";
+NSString* const IJSVGAttributeMarkerWidth = @"markerWidth";
+NSString* const IJSVGAttributeMarkerHeight = @"markerHeight";
+NSString* const IJSVGAttributeMarkerUnits = @"markerUnits";
+NSString* const IJSVGAttributeOrient = @"orient";
 NSString* const IJSVGAttributeFilter = @"filter";
 NSString* const IJSVGAttributeFilterUnits = @"filterUnits";
 NSString* const IJSVGAttributePrimitiveUnits = @"primitiveUnits";
@@ -699,7 +717,14 @@ typedef struct {
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
         node.unicode = value;
     }
-    
+
+    // Presentation shorthand has lower priority than CSS and explicit longhands.
+    for(NSUInteger attribute = IJSVGNodeAttributeMarkerStart; attribute <= IJSVGNodeAttributeMarkerEnd; attribute++) {
+        if(attributeValues[attribute] == nil) {
+            attributeValues[attribute] = attributeValues[IJSVGNodeAttributeMarker];
+        }
+    }
+
     IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
         [_styleSheet styleForNode:(id<IJSVGStyleSheetSelectorNode>)[self selectorNodeForElement:element] ?: node] : nil;
   
@@ -863,11 +888,7 @@ typedef struct {
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:YES];
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
-            IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
-            if(color == nil) {
-                colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
-            }
+            IJSVGColorNode* colorNode = [self colorPaintForValue:value];
             node.stroke = colorNode;
         }
     }
@@ -890,11 +911,7 @@ typedef struct {
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:NO];
         } else {
-            NSColor* color = [IJSVGColor colorFromString:value];
-            IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
-            if(color == nil) {
-                colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
-            }
+            IJSVGColorNode* colorNode = [self colorPaintForValue:value];
             node.fill = colorNode;
         }
     }
@@ -969,6 +986,22 @@ typedef struct {
         primitive.result = IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeResult);
     }
 
+    NSString* markerStart = attributeValues[IJSVGNodeAttributeMarkerStart];
+    NSString* markerMid = attributeValues[IJSVGNodeAttributeMarkerMid];
+    NSString* markerEnd = attributeValues[IJSVGNodeAttributeMarkerEnd];
+    if(markerStart != nil || markerMid != nil || markerEnd != nil) {
+        IJSVGNodeParserPostProcessBlock previous = postProcessBlock;
+        postProcessBlock = ^{
+            if(previous != nil) {
+                previous();
+            }
+            [self applyMarkerStart:markerStart
+                               mid:markerMid
+                               end:markerEnd
+                            toNode:node
+                           element:element];
+        };
+    }
     return postProcessBlock;
 }
 
@@ -1050,6 +1083,108 @@ typedef struct {
     return node;
 }
 
+- (IJSVGMarker*)markerForValue:(NSString*)value
+               referencingNode:(IJSVGNode*)node
+                       element:(NSXMLElement*)element
+{
+    NSArray<NSString*>* identifiers = [IJSVGUtils defURLs:value];
+    NSString* identifier = identifiers.count == 1 ? identifiers.firstObject : nil;
+    IJSVGNode* definition = identifier == nil ? nil : [self computeDetachedNodeWithIdentifier:identifier
+                                                                              referencingNode:node
+                                                                                      element:element];
+    // An empty marker overrides inheritance for none and invalid references.
+    return [definition isKindOfClass:IJSVGMarker.class] ?
+        (IJSVGMarker*)definition : [[IJSVGMarker alloc] init];
+}
+
+- (void)applyMarkerStart:(NSString*)start
+                     mid:(NSString*)mid
+                     end:(NSString*)end
+                  toNode:(IJSVGNode*)node
+                 element:(NSXMLElement*)element
+{
+    if(start != nil && ![start isEqualToString:IJSVGStringInherit]) {
+        node.markerStart = [self markerForValue:start
+                                referencingNode:node
+                                        element:element];
+    }
+    if(mid != nil && ![mid isEqualToString:IJSVGStringInherit]) {
+        node.markerMid = [self markerForValue:mid
+                              referencingNode:node
+                                      element:element];
+    }
+    if(end != nil && ![end isEqualToString:IJSVGStringInherit]) {
+        node.markerEnd = [self markerForValue:end
+                              referencingNode:node
+                                      element:element];
+    }
+}
+
+- (IJSVGColorNode*)colorPaintForValue:(NSString*)value
+{
+    NSColor* color = [IJSVGColor colorFromString:value];
+    IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+    colorNode.contextPaint = [IJSVGUtils contextPaintForString:value];
+    if(colorNode.contextPaint != IJSVGContextPaintNone) {
+        // A context paint outside an instantiated marker paints nothing.
+        colorNode.isNoneOrTransparent = YES;
+    } else if(color == nil) {
+        colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+    }
+    return colorNode;
+}
+
+- (IJSVGUnitLength*)markerLengthFromElement:(NSXMLElement*)element
+                                  attribute:(NSString*)attribute
+                               defaultValue:(IJSVGUnitLength*)defaultValue
+{
+    NSString* value = [element attributeForName:attribute].stringValue;
+    return value != nil ? [IJSVGUnitLength unitWithString:value] : defaultValue;
+}
+
+- (void)applyMarkerOrientation:(NSString*)orient toMarker:(IJSVGMarker*)marker
+{
+    marker.orientType = [IJSVGUtils markerOrientTypeForString:orient];
+    marker.orientAngle = [IJSVGUtils angleForString:orient];
+}
+
+- (IJSVGMarker*)parseMarkerElement:(NSXMLElement*)element
+                  postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
+{
+    // Definitions are instantiated only through a marker reference.
+    NSString* identifier = [element attributeForName:IJSVGAttributeID].stringValue;
+    if(identifier == nil || ![self.activeReferences containsObject:identifier]) {
+        return nil;
+    }
+    IJSVGMarker* marker = [[IJSVGMarker alloc] init];
+    marker.name = element.localName;
+    marker.styleParent = [self styleAncestorForElement:element.parent];
+    *postProcessBlock = [self computeAttributesFromElement:element
+                                                    onNode:marker
+                                         ignoredAttributes:nil];
+    marker.refX = [self markerLengthFromElement:element
+                                      attribute:IJSVGAttributeRefX
+                                   defaultValue:marker.refX];
+    marker.refY = [self markerLengthFromElement:element
+                                      attribute:IJSVGAttributeRefY
+                                   defaultValue:marker.refY];
+    marker.markerWidth = [self markerLengthFromElement:element
+                                             attribute:IJSVGAttributeMarkerWidth
+                                          defaultValue:marker.markerWidth];
+    marker.markerHeight = [self markerLengthFromElement:element
+                                              attribute:IJSVGAttributeMarkerHeight
+                                           defaultValue:marker.markerHeight];
+    NSString* units = [element attributeForName:IJSVGAttributeMarkerUnits].stringValue;
+    marker.markerUnits = [IJSVGUtils markerUnitsForString:units];
+    NSString* orientation = [element attributeForName:IJSVGAttributeOrient].stringValue;
+    [self applyMarkerOrientation:orientation
+                        toMarker:marker];
+    marker.shouldRender = YES; // SVG 1.1: display does not apply to marker.
+    [self computeElement:element
+              parentNode:marker];
+    return marker;
+}
+
 - (IJSVGNode*)parseElement:(NSXMLElement*)element
                 parentNode:(IJSVGNode*)node
 {
@@ -1073,6 +1208,11 @@ typedef struct {
         case IJSVGNodeTypeTextSpan:
             // A standalone tspan is not rendered.
             break;
+        case IJSVGNodeTypeMarker: {
+            computedNode = [self parseMarkerElement:element
+                                   postProcessBlock:&postProcessBlock];
+            break;
+        }
         case IJSVGNodeTypeForeignObject: {
             // do nothing for foreign objects, we dont support them
             break;
@@ -1555,6 +1695,7 @@ typedef struct {
     
     NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
     [self applyPathData:pathData toNode:node];
+    node.markerPathData = pathData;
 
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node

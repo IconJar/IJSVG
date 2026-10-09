@@ -59,7 +59,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 + (instancetype)paint;
 + (IJSVGPaintFillType)fillTypeForFill:(id)fill;
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children;
-// Object-bounding-box resources use geometry bounds, excluding strokes.
+// Object bounding box resources use geometry bounds, excluding strokes.
 + (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children;
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint;
 + (IJSVGPaint*)rootPaintForPaint:(IJSVGPaint*)paint;
@@ -73,9 +73,12 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
                     toPaint:(IJSVGPaint*)paint
                   inContext:(CGContextRef)ctx
                drawingBlock:(dispatch_block_t)drawingBlock;
-// Enable raster reuse only after a mask's resolved geometry is finalized.
+// Enable raster reuse only after a masks resolved geometry is finalized.
 // Rebuild the resolved graph when its artwork changes.
 - (void)prepareMaskCaching;
+// Copies simple marker artwork with independent parent links and shared immutable resources.
+// Returns nil when the artwork depends on its placement or rendering context.
+- (IJSVGPaint*)copyForMarker;
 - (void)addChild:(IJSVGPaint*)paint;
 - (void)renderInContext:(CGContextRef)ctx;
 - (void)drawInContext:(CGContextRef)ctx;

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+  <path d="M 10,10 30,10 h 10" stroke="black" />
+  <circle cx="10" cy="10" r="2.0" stroke-width="1.0" stroke="black" fill="black" />
+  <circle cx="30" cy="10" r="2.0" stroke-width="1.0" stroke="black" fill="black" />
+  <circle cx="40" cy="10" r="2.0" stroke-width="1.0" stroke="black" fill="black" />
+  <path d="M 10,20 30,20 h 10" stroke="blue" fill="red" />
+  <circle cx="10" cy="20" r="2.0" stroke-width="1.0" stroke="blue" fill="red" />
+  <circle cx="30" cy="20" r="2.0" stroke-width="1.0" stroke="blue" fill="red" />
+  <circle cx="40" cy="20" r="2.0" stroke-width="1.0" stroke="blue" fill="red" />
+  <path d="M 10,30 30,30 h 10" stroke="red" fill="none" />
+  <circle cx="10" cy="30" r="2.0" stroke-width="1.0" stroke="red" fill="none" />
+  <circle cx="30" cy="30" r="2.0" stroke-width="1.0" stroke="red" fill="none" />
+  <circle cx="40" cy="30" r="2.0" stroke-width="1.0" stroke="red" fill="none" />
+  <path d="M 10,40 30,40 h 10" stroke="gray" fill="blue" stroke-width="1.5" />
+  <circle cx="10" cy="40" r="3.0" stroke-width="1.5" stroke="gray" fill="blue" />
+  <circle cx="30" cy="40" r="3.0" stroke-width="1.5" stroke="gray" fill="blue" />
+  <circle cx="40" cy="40" r="3.0" stroke-width="1.5" stroke="gray" fill="blue" />
+</svg>

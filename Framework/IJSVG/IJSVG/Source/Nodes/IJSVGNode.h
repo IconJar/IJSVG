@@ -35,6 +35,7 @@ typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
 @class IJSVGUnitRect;
 @class IJSVGMask;
 @class IJSVGFilter;
+@class IJSVGMarker;
 @class IJSVGClipPath;
 @class IJSVGThreadManager;
 @class IJSVGStyle;
@@ -197,6 +198,15 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributePath,
     IJSVGNodeAttributePathLength,
     IJSVGNodeAttributeTextRendering,
+    IJSVGNodeAttributeMarkerStart,
+    IJSVGNodeAttributeMarkerMid,
+    IJSVGNodeAttributeMarkerEnd,
+    IJSVGNodeAttributeRefX,
+    IJSVGNodeAttributeRefY,
+    IJSVGNodeAttributeMarkerWidth,
+    IJSVGNodeAttributeMarkerHeight,
+    IJSVGNodeAttributeMarkerUnits,
+    IJSVGNodeAttributeOrient,
     IJSVGNodeAttributeCount
 };
 
@@ -248,6 +258,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeForeignObject,
     IJSVGNodeTypeFilter,
     IJSVGNodeTypeFilterDropShadow,
+    IJSVGNodeTypeMarker,
     IJSVGNodeTypeFilterBlend,
     IJSVGNodeTypeFilterColorMatrix,
     IJSVGNodeTypeFilterComponentTransfer,
@@ -356,6 +367,10 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, IJSVGTextAttributeValue*>* textStyle;
 // Style inheritance can follow the source document independently of rendering.
 @property (nonatomic, weak, nullable) IJSVGNode* styleParent;
+// nil inherits. An empty marker represents an explicit "none" or invalid reference.
+@property (nonatomic, strong, nullable) IJSVGMarker* markerStart;
+@property (nonatomic, strong, nullable) IJSVGMarker* markerMid;
+@property (nonatomic, strong, nullable) IJSVGMarker* markerEnd;
 @property (nonatomic, assign) IJSVGNodeType type;
 // An explicit name overrides the canonical SVG name derived from type.
 // Setting nil restores the default; unknown types have no default name.

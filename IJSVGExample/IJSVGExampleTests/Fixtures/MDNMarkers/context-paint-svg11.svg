@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50">
+  <marker id="circle-0" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="strokeWidth">
+    <circle cx="3" cy="3" r="2" stroke="black" fill="black" />
+  </marker>
+  <marker id="circle-1" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="strokeWidth">
+    <circle cx="3" cy="3" r="2" stroke="blue" fill="red" />
+  </marker>
+  <marker id="circle-2" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="strokeWidth">
+    <circle cx="3" cy="3" r="2" stroke="red" fill="none" />
+  </marker>
+  <marker id="circle-3" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="strokeWidth">
+    <circle cx="3" cy="3" r="2" stroke="gray" fill="blue" />
+  </marker>
+  <path d="M 10,10 30,10 h 10" stroke="black" marker="url(#circle-0)" />
+  <path d="M 10,20 30,20 h 10" stroke="blue" fill="red" marker="url(#circle-1)" />
+  <path d="M 10,30 30,30 h 10" stroke="red" fill="none" marker="url(#circle-2)" />
+  <path d="M 10,40 30,40 h 10" stroke="gray" fill="blue" stroke-width="1.5" marker="url(#circle-3)" />
+</svg>

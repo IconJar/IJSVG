@@ -39,6 +39,10 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, strong, nullable) IJSVGUnitLength* rx;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* ry;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* r;
+
+// Retained only to distinguish authored arc vertices from their cubic
+// approximation.
+@property (nonatomic, copy, nullable) NSString* markerPathData;
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;

@@ -9,7 +9,10 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGGroup.h>
 
-@implementation IJSVGPath
+@implementation IJSVGPath {
+    NSString* _markerPathData;
+    CGPathRef _markerSourcePath;
+}
 
 + (IJSVGNodeType)defaultNodeType
 {
@@ -63,6 +66,7 @@
 
 - (void)dealloc
 {
+    CGPathRelease(_markerSourcePath);
     if(_path != NULL) {
         (void)CGPathRelease(_path), _path = NULL;
     }
@@ -101,6 +105,7 @@
 {
     IJSVGPath* node = [super copyWithZone:zone];
     node.path = _path;
+    node.markerPathData = self.markerPathData;
     node.pathUnits = _pathUnits;
     node.primitiveType = _primitiveType;
     node.lastControlPoint = _lastControlPoint;
@@ -114,6 +119,19 @@
     node.ry = _ry.copy;
     node.r = _r.copy;
     return node;
+}
+
+- (NSString*)markerPathData
+{
+    return _markerSourcePath != NULL
+        && CGPathEqualToPath(_path, _markerSourcePath) ? _markerPathData : nil;
+}
+
+- (void)setMarkerPathData:(NSString*)data
+{
+    _markerPathData = data.copy;
+    CGPathRelease(_markerSourcePath);
+    _markerSourcePath = data == nil ? NULL : CGPathCreateCopy(_path);
 }
 
 - (void)setPath:(CGMutablePathRef)path

@@ -31,6 +31,7 @@
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node;
         self.color = colorNode.color;
         self.isNoneOrTransparent = colorNode.isNoneOrTransparent;
+        self.contextPaint = colorNode.contextPaint;
     }
 }
 

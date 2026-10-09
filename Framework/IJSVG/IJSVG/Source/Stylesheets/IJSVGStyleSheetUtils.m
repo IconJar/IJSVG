@@ -827,6 +827,11 @@ NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* p
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         expanders = @{
+            IJSVGAttributeMarker: ^(NSString* shorthand, NSMutableDictionary* values) {
+                values[IJSVGAttributeMarkerStart] = shorthand;
+                values[IJSVGAttributeMarkerMid] = shorthand;
+                values[IJSVGAttributeMarkerEnd] = shorthand;
+            },
             IJSVGAttributeFont: ^(NSString* shorthand, NSMutableDictionary* values) {
                 IJSVGStyleSheetExpandFont(shorthand, values);
             }
