@@ -9408,12 +9408,12 @@
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
       "example": "guides/applying_svg_effects_to_html_content/block-2",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
-      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"0\">\n  <mask id=\"mask-1\">\n    <linearGradient id=\"gradient-1\" y2=\"1\">\n      <stop stop-color=\"white\" offset=\"0\" />\n      <stop stop-opacity=\"0\" offset=\"1\" />\n    </linearGradient>\n    <circle cx=\"0.25\" cy=\"0.25\" r=\"0.25\" id=\"circle\" fill=\"white\" />\n    <rect x=\"0.5\" y=\"0.2\" width=\"300\" height=\"100\" fill=\"url(#gradient-1)\" />\n  </mask>\n</svg>",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"360\" height=\"180\" viewBox=\"0 0 360 180\">\n  <mask id=\"mask-1\">\n    <linearGradient id=\"gradient-1\" y2=\"1\">\n      <stop stop-color=\"white\" offset=\"0\" />\n      <stop stop-opacity=\"0\" offset=\"1\" />\n    </linearGradient>\n    <circle cx=\"0.25\" cy=\"0.25\" r=\"0.25\" id=\"circle\" fill=\"white\" />\n    <rect x=\"0.5\" y=\"0.2\" width=\"300\" height=\"100\" fill=\"url(#gradient-1)\" />\n  </mask>\n<g transform=\"translate(0 0)\"><g mask=\"url(#mask-1)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g></svg>",
       "adaptations": [
-        "Added SVG namespace"
+        "Added SVG namespace",
+        "Applied standalone definitions to colored test shapes with a gray backdrop for white specular lighting"
       ],
-      "sha256": "1417b2019d55e58a4f3298dc390f06a0ed38202448b41c8f51e5feac1f6188b2",
-      "skip": "Definition-only or non-painting snippet; no visual comparison to assert"
+      "sha256": "1bd4ac2da65ca40dab3b778de14e89ed9d1df14072d2c87834d4bdb7b0acbb33"
     },
     {
       "id": "guides_applying_svg_effects_to_html_content_block_4_1",
@@ -9437,34 +9437,34 @@
       "id": "guides_applying_svg_effects_to_html_content_block_10_1",
       "example": "guides/applying_svg_effects_to_html_content/block-10",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
-      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"0\">\n  <filter id=\"f1\">\n    <feGaussianBlur stdDeviation=\"3\" />\n  </filter>\n</svg>",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"360\" height=\"180\" viewBox=\"0 0 360 180\">\n  <filter id=\"f1\">\n    <feGaussianBlur stdDeviation=\"3\" />\n  </filter>\n<g transform=\"translate(0 0)\"><g filter=\"url(#f1)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g></svg>",
       "adaptations": [
-        "Added SVG namespace"
+        "Added SVG namespace",
+        "Applied standalone definitions to colored test shapes with a gray backdrop for white specular lighting"
       ],
-      "sha256": "2f129f1f62b1921d50c5c6ee096700c848e81090392076a6f44b1c36202296b8",
-      "skip": "Definition-only or non-painting snippet; no visual comparison to assert"
+      "sha256": "becb5093e309ca562116a75306abffe33c87b6162181cb15c80a0c3ccdc73152"
     },
     {
       "id": "guides_applying_svg_effects_to_html_content_block_11_1",
       "example": "guides/applying_svg_effects_to_html_content/block-11",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
-      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"0\">\n  <filter id=\"f2\">\n    <feColorMatrix\n      values=\"0.3333 0.3333 0.3333 0 0\n              0.3333 0.3333 0.3333 0 0\n              0.3333 0.3333 0.3333 0 0\n              0      0      0      1 0\" />\n  </filter>\n</svg>",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"360\" height=\"180\" viewBox=\"0 0 360 180\">\n  <filter id=\"f2\">\n    <feColorMatrix\n      values=\"0.3333 0.3333 0.3333 0 0\n              0.3333 0.3333 0.3333 0 0\n              0.3333 0.3333 0.3333 0 0\n              0      0      0      1 0\" />\n  </filter>\n<g transform=\"translate(0 0)\"><g filter=\"url(#f2)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g></svg>",
       "adaptations": [
-        "Added SVG namespace"
+        "Added SVG namespace",
+        "Applied standalone definitions to colored test shapes with a gray backdrop for white specular lighting"
       ],
-      "sha256": "f450cee5f65e44e4e04a58149dc838784d5eedcca25e89ce75e504c253b2fea8",
-      "skip": "Definition-only or non-painting snippet; no visual comparison to assert"
+      "sha256": "cc74b724d78d56a54ce448a1e73e40c8ba03dfef3eebbf7d778a95166bafbc01"
     },
     {
       "id": "guides_applying_svg_effects_to_html_content_block_12_1",
       "example": "guides/applying_svg_effects_to_html_content/block-12",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
-      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"0\">\n  <filter id=\"f3\">\n    <feConvolveMatrix\n      color-interpolation-filters=\"sRGB\"\n      order=\"3\"\n      kernelMatrix=\"0 -1 0\n                   -1 4 -1\n                    0 -1 0\"\n      preserveAlpha=\"true\" />\n  </filter>\n  <filter id=\"f4\">\n    <feSpecularLighting\n      surfaceScale=\"5\"\n      specularConstant=\"1\"\n      specularExponent=\"10\"\n      lighting-color=\"white\">\n      <fePointLight x=\"-5000\" y=\"-10000\" z=\"20000\" />\n    </feSpecularLighting>\n  </filter>\n  <filter id=\"f5\">\n    <feColorMatrix\n      values=\"1 0 0 0 0\n              0 1 0 0 0\n              0 0 1 0 0\n              0 1 0 0 0\"\n      color-interpolation-filters=\"sRGB\" />\n  </filter>\n</svg>",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1080\" height=\"180\" viewBox=\"0 0 1080 180\">\n  <filter id=\"f3\">\n    <feConvolveMatrix\n      color-interpolation-filters=\"sRGB\"\n      order=\"3\"\n      kernelMatrix=\"0 -1 0\n                   -1 4 -1\n                    0 -1 0\"\n      preserveAlpha=\"true\" />\n  </filter>\n  <filter id=\"f4\">\n    <feSpecularLighting\n      surfaceScale=\"5\"\n      specularConstant=\"1\"\n      specularExponent=\"10\"\n      lighting-color=\"white\">\n      <fePointLight x=\"-5000\" y=\"-10000\" z=\"20000\" />\n    </feSpecularLighting>\n  </filter>\n  <filter id=\"f5\">\n    <feColorMatrix\n      values=\"1 0 0 0 0\n              0 1 0 0 0\n              0 0 1 0 0\n              0 1 0 0 0\"\n      color-interpolation-filters=\"sRGB\" />\n  </filter>\n<g transform=\"translate(0 0)\"><g filter=\"url(#f3)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g><rect x=\"360\" width=\"360\" height=\"180\" fill=\"#808080\"/><g transform=\"translate(360 0)\"><g filter=\"url(#f4)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g><g transform=\"translate(720 0)\"><g filter=\"url(#f5)\"><rect x=\"20\" y=\"20\" width=\"120\" height=\"100\" fill=\"#e04020\"/><circle cx=\"180\" cy=\"80\" r=\"50\" fill=\"#20b060\"/><path d=\"M220 130 L280 20 L330 130 Z\" fill=\"#3050d0\"/></g></g></svg>",
       "adaptations": [
-        "Added SVG namespace"
+        "Added SVG namespace",
+        "Applied standalone definitions to colored test shapes with a gray backdrop for white specular lighting"
       ],
-      "sha256": "4b222285a59d3dddcbf38a03dc0c8d6d5e33449386f6510a8571c6aabd3e7c9e",
-      "skip": "Definition-only or non-painting snippet; no visual comparison to assert"
+      "sha256": "70d71a39b99c9049eee9d8f6a0e9c3d0e812678c0310eda225bc866dc299bcf6"
     },
     {
       "id": "guides_applying_svg_effects_to_html_content_block_14_1",
@@ -13124,8 +13124,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
       "svg": "<svg width=\"100\" height=\"100\" xmlns=\"http://www.w3.org/2000/svg\">\n  <path d=\"M10 10 90 10 90 90\" stroke=\"black\" fill=\"none\" />\n</svg>",
       "adaptations": [],
-      "sha256": "9264ca9161560af9c230033c92f79918e0ffbb60954b3a5271f25273121cda2a",
-      "skip": "Definition-only or non-painting snippet; no visual comparison to assert"
+      "sha256": "9264ca9161560af9c230033c92f79918e0ffbb60954b3a5271f25273121cda2a"
     },
     {
       "id": "tutorials_svg_from_scratch_paths_block_3_1",

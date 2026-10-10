@@ -259,6 +259,29 @@
     }
 }
 
+- (void)testTranslatedStitchedNoisePreservesPermutationPeriod
+{
+    for(NSString* type in @[@"turbulence", @"fractalNoise"]) {
+        for(NSNumber* frequency in @[@.03125, @.0625]) {
+            for(NSNumber* octaves in @[@1, @3]) {
+                NSString* filter = [NSString stringWithFormat:
+                    @"<defs><filter id='f' x='0' y='0' width='100%%' height='100%%'>"
+                     "<feTurbulence type='%@' baseFrequency='%@' numOctaves='%@' seed='7' stitchTiles='stitch'/>"
+                     "</filter></defs>", type, frequency, octaves];
+                double origin = 256 / frequency.doubleValue;
+                NSString* body = [filter stringByAppendingFormat:
+                    @"<g transform='translate(%.12g %.12g)'><rect x='%.12g' y='%.12g' width='96' height='96' filter='url(#f)'/></g>",
+                    20 - origin, 20 - origin, origin, origin];
+                NSString* reference = [filter stringByAppendingString:
+                    @"<g transform='translate(20 20)'><rect width='96' height='96' filter='url(#f)'/></g>"];
+                [self compareBody:body referenceBody:reference
+                             name:[NSString stringWithFormat:@"stitched-permutation-period-%@-%@-%@", type, frequency, octaves]
+                        tolerance:.025];
+            }
+        }
+    }
+}
+
 - (void)testInheritedTextBaselinesMatchExplicitBaselines
 {
     NSString* style = @"<style>text{font:28px Verdana;dominant-baseline:hanging;"
@@ -296,6 +319,30 @@
          "</filter></defs><text x='30' y='100' font-size='40' filter='url(#f)' "
          "style='-webkit-font-smoothing:antialiased'>Some displaced text</text>", encoded];
     [self compareBody:body name:@"displacement-text-image-A" tolerance:.16];
+}
+
+- (void)testDisplacedTextMatchesEquivalentOffsets
+{
+    NSArray* channels = @[@"R", @"G", @"B", @"A"];
+    double components[] = { 1, 128.f / 255, 0, 1 };
+    for(NSUInteger index = 0; index < channels.count; index++) {
+        for(NSNumber* scale in @[@30, @(-13.5)]) {
+            NSString* format = @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200' "
+                               "color-interpolation-filters='sRGB'>%@</filter></defs>"
+                               "<text x='30' y='100' font-size='40' filter='url(#f)' "
+                               "style='-webkit-font-smoothing:antialiased'>Some displaced text</text>";
+            NSString* primitive = [NSString stringWithFormat:
+                @"<feFlood flood-color='#ff8000' result='map'/>"
+                 "<feDisplacementMap in='SourceGraphic' in2='map' scale='%@' xChannelSelector='%@' yChannelSelector='%@'/>",
+                scale, channels[index], channels[index]];
+            double offset = -scale.doubleValue * (components[index] - .5);
+            NSString* reference = [NSString stringWithFormat:@"<feOffset dx='%.12g' dy='%.12g'/>", offset, offset];
+            [self compareBody:[NSString stringWithFormat:format, primitive]
+                referenceBody:[NSString stringWithFormat:format, reference]
+                         name:[NSString stringWithFormat:@"displaced-text-offset-%@-%@", channels[index], scale]
+                    tolerance:.16];
+        }
+    }
 }
 
 - (void)testLinearDisplacementImageMapMatchesFloodMap

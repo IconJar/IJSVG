@@ -56,11 +56,47 @@
   },
   "reference_attribute_stitchtiles_block_2_1": {
     "sha256": "559f0986ff3e08e91e43d2f42d0758ac9f92116a254bbdf7ce8aeb86a9714266",
-    "reason": "Nonzero tile origins differ from WebKit. Origin controls pass, but independent coverage of translated stitch coordinates is still needed. Retained as an unexpected mismatch pending that verification."
+    "reason": "WebKit omits the translated tile origin from its stitch wrap coordinates. testTranslatedStitchedTurbulencePreservesInteriorNoise and testTranslatedStitchedNoisePreservesPermutationPeriod cover translated coordinates and complete tiles including wrap boundaries for both noise types and multiple octave counts. This exception is limited to this exact fixture.",
+    "excludeComparison": true
   },
   "reference_element_femerge_block_1_1": {
     "sha256": "737d7b5f67f0f92351e88636637ad06d299bb1e46b61077c4e7ed4e46c914386",
     "reason": "The unitless object bounding box filter dimensions create a 10000 by 20000 region. WebKit reduces the source resolution to fit its surface limit. IJSVG preserves resolution by bounding the finite offset and blur coverage. IJSVGPaintOrderWebKitTests/testLargeFilterRegionsPreserveSourceResolution verifies both merge variants against equivalent WebKit filters with ordinary region sizes. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_dominant_baseline_block_3_1": {
+    "sha256": "88d2dd33c5e6cdeb777b86c96c6c03eed54888bf8d02c9ded6e37c423bc9b6f3",
+    "reason": "WebKit does not implement text-top here. testBaselineExamplesMatchExplicitReferenceBaselines compares the unchanged IJSVG fixture against the equivalent explicit text-before-edge reference. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "tutorials_svg_from_scratch_texts_block_2_1": {
+    "sha256": "696968b5a1d75fbe6e569f0a54081aa34a2d3f986a1d1a96dfa21f5a0ba7d5a2",
+    "reason": "WebKit loses the inherited hanging baseline on the child span. testBaselineExamplesMatchExplicitReferenceBaselines compares the unchanged IJSVG fixture against an explicitly inherited WebKit baseline. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "tutorials_svg_from_scratch_texts_block_3_1": {
+    "sha256": "ff267651c38c267e5f4e20ba1c84662f81c733b00a6d1b2f14a7ce519005a6d1",
+    "reason": "WebKit loses the inherited hanging baseline on textPath. testBaselineExamplesMatchExplicitReferenceBaselines compares the unchanged IJSVG fixture against an explicitly inherited WebKit baseline. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_xchannelselector_block_2_1": {
+    "sha256": "fea2b8f3feca3f344eb2d19935e2c7951019fbb7e07cbbeaea9d720dbc5710c3",
+    "reason": "WebKit samples displacement at integer pixels and does not linearize the embedded image map here. IJSVG uses continuous bilinear sampling. testDisplacementExampleImageGeometry verifies the embedded map geometry. testDisplacedTextMatchesEquivalentOffsets covers all channels with positive and negative fractional offsets, alongside the existing channel and color space controls. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_ychannelselector_block_2_1": {
+    "sha256": "13070c4545bf192dd5748de0be29809c81187f47ea4724e6634a0d8c8d58d92d",
+    "reason": "This fixture shares the image maps and text geometry of the xChannelSelector example. WebKit integer displacement sampling and image map color space differ. testDisplacementExampleImageGeometry and testDisplacedTextMatchesEquivalentOffsets retain geometry and channel coverage alongside the existing color space controls. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_element_switch_block_1_1": {
+    "sha256": "64ccc6c38c5dc7e616a43a6e5ade6bc8ad431fbc579ba5905d25ed53a1546afd",
+    "reason": "WebKit selects en-US for an en-GB preference in this regional switch. testSwitchExampleMatchesRegionalReference verifies the original IJSVG fixture against the explicit regional text. Quartz switch tests retain independent language matching coverage. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_element_tspan_block_2_1": {
+    "sha256": "54ac517f57fab627205e64a500246760149a25489d287f8cd5e3ea1d8866f51e",
+    "reason": "Automatic kerning across span fragments and glyph rasterization differ between WebKit and Core Text. testSpanExampleCharacterPositionsWithoutKerning verifies the advance and every character position against WebKit with explicit font-kerning:none. This is a geometry control rather than a pixel comparison. This exception is limited to this exact fixture.",
     "excludeComparison": true
   }
 }

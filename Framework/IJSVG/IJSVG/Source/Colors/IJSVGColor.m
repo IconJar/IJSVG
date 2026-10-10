@@ -836,8 +836,15 @@ static NSDictionary* _colorTree = nil;
 
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex
 {
+    return [self colorFromHEXInteger:hex
+              containsAlphaComponent:[self HEXContainsAlphaComponent:hex]];
+}
+
++ (NSColor*)colorFromHEXInteger:(NSInteger)hex
+         containsAlphaComponent:(BOOL)containsAlphaComponent
+{
     CGFloat alpha = 1.f;
-    if([self HEXContainsAlphaComponent:hex] == YES) {
+    if(containsAlphaComponent) {
         alpha = (hex & 0xFF) / 255.f;
         hex = hex >> 8;
     }
@@ -883,22 +890,21 @@ static NSDictionary* _colorTree = nil;
     // we need to work out if its shorthand
     // if it is, the length needs to be length*2
     if(length == 3 || length == 4) {
-        char* chars = NULL;
-        chars = (char*)calloc(sizeof(char),length*2+1);
+        char chars[9] = { 0 };
         for(int i = 0; i < length; i++) {
             chars[i*2] = chars[i*2+1] = str[i];
         }
         hex = strtoul(chars, NULL, 16);
-        (void)free(chars), chars = NULL;
     } else {
         hex = strtoul(str, NULL, 16);
     }
     
-    // now convert rest to hex
+    BOOL hasAlpha = length == 4 || length == 8;
     if(containsAlphaComponent != nil) {
-        *containsAlphaComponent = [self HEXContainsAlphaComponent:hex];
+        *containsAlphaComponent = hasAlpha;
     }
-    return [self colorFromHEXInteger:hex];
+    return [self colorFromHEXInteger:hex
+              containsAlphaComponent:hasAlpha];
 }
 
 @end

@@ -32,6 +32,32 @@
     XCTAssertEqualWithAccuracy(converted.alphaComponent, alpha, 0.002f);
 }
 
+- (void)testAlphaHEXColorsPreserveLeadingZeros
+{
+    NSArray* values = @[@"#00FF00A0", @"#0000FFA0", @"#00000080", @"#00000000",
+                        @"#0F0A", @"#00FA", @"#0008", @"#0000"];
+    const CGFloat components[][4] = {
+        { 0, 1, 0, 160.f / 255 },
+        { 0, 0, 1, 160.f / 255 },
+        { 0, 0, 0, 128.f / 255 },
+        { 0, 0, 0, 0 },
+        { 0, 1, 0, 170.f / 255 },
+        { 0, 0, 1, 170.f / 255 },
+        { 0, 0, 0, 136.f / 255 },
+        { 0, 0, 0, 0 }
+    };
+    for(NSUInteger index = 0; index < values.count; index++) {
+        BOOL alpha = NO;
+        NSColor* color = [IJSVGColor colorFromHEXString:values[index] containsAlphaComponent:&alpha];
+        XCTAssertTrue(alpha, @"%@", values[index]);
+        [self assertColor:color
+                      red:components[index][0]
+                    green:components[index][1]
+                     blue:components[index][2]
+                    alpha:components[index][3]];
+    }
+}
+
 - (void)testColorFromStringParsesSixDigitHEX
 {
     NSColor* color = [IJSVGColor colorFromString:@"#336699"];

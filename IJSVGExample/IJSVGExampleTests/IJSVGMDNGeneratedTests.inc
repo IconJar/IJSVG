@@ -404,11 +404,6 @@
     [self compareCase:@"reference_attribute_dominant_baseline_block_2_1"];
 }
 
-- (void)test_reference_attribute_dominant_baseline_block_3_1
-{
-    [self compareCase:@"reference_attribute_dominant_baseline_block_3_1"];
-}
-
 - (void)test_reference_attribute_download_block_2_1
 {
     [self compareCase:@"reference_attribute_download_block_2_1"];
@@ -1074,11 +1069,6 @@
     [self compareCase:@"reference_attribute_stddeviation_block_2_1"];
 }
 
-- (void)test_reference_attribute_stitchtiles_block_2_1
-{
-    [self compareCase:@"reference_attribute_stitchtiles_block_2_1"];
-}
-
 - (void)test_reference_attribute_stroke_block_2_1
 {
     [self compareCase:@"reference_attribute_stroke_block_2_1"];
@@ -1364,11 +1354,6 @@
     [self compareCase:@"reference_attribute_x2_block_6_1"];
 }
 
-- (void)test_reference_attribute_xchannelselector_block_2_1
-{
-    [self compareCase:@"reference_attribute_xchannelselector_block_2_1"];
-}
-
 - (void)test_reference_attribute_xlink_colon_actuate_block_1_1
 {
     [self compareCase:@"reference_attribute_xlink_colon_actuate_block_1_1"];
@@ -1432,11 +1417,6 @@
 - (void)test_reference_attribute_y2_block_6_1
 {
     [self compareCase:@"reference_attribute_y2_block_6_1"];
-}
-
-- (void)test_reference_attribute_ychannelselector_block_2_1
-{
-    [self compareCase:@"reference_attribute_ychannelselector_block_2_1"];
 }
 
 - (void)test_reference_attribute_z_block_2_1
@@ -1729,11 +1709,6 @@
     [self compareCase:@"reference_element_svg_block_5_1"];
 }
 
-- (void)test_reference_element_switch_block_1_1
-{
-    [self compareCase:@"reference_element_switch_block_1_1"];
-}
-
 - (void)test_reference_element_symbol_block_2_1
 {
     [self compareCase:@"reference_element_symbol_block_2_1"];
@@ -1752,11 +1727,6 @@
 - (void)test_reference_element_title_block_2_1
 {
     [self compareCase:@"reference_element_title_block_2_1"];
-}
-
-- (void)test_reference_element_tspan_block_2_1
-{
-    [self compareCase:@"reference_element_tspan_block_2_1"];
 }
 
 - (void)test_reference_element_use_block_2_1
@@ -2157,16 +2127,6 @@
 - (void)test_tutorials_svg_from_scratch_texts_block_1_1
 {
     [self compareCase:@"tutorials_svg_from_scratch_texts_block_1_1"];
-}
-
-- (void)test_tutorials_svg_from_scratch_texts_block_2_1
-{
-    [self compareCase:@"tutorials_svg_from_scratch_texts_block_2_1"];
-}
-
-- (void)test_tutorials_svg_from_scratch_texts_block_3_1
-{
-    [self compareCase:@"tutorials_svg_from_scratch_texts_block_3_1"];
 }
 
 - (void)test_tutorials_svg_from_scratch_using_fonts_block_1_1

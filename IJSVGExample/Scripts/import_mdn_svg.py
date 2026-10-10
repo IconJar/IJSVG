@@ -65,7 +65,40 @@ def normalize(xml, css, page, asset_root=None):
         end = xml.index(">") + 1
         xml = xml[:end] + "<style><![CDATA[\n" + css + "\n]]></style>" + xml[end:]
         changes.append("Included CSS from the enclosing live sample")
+    xml, definition_changes = definition_fixture(xml)
+    changes.extend(definition_changes)
     return xml, changes
+
+
+def definition_fixture(xml):
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return xml, []
+    definitions = list(root)
+    if not definitions or any(node.tag.split('}')[-1] not in {'mask', 'filter'}
+                              or not node.get('id') for node in definitions):
+        return xml, []
+    width = 360 * len(definitions)
+    opening = SVG.search(xml)
+    attributes = re.sub(r'\s+(?:width|height|viewBox)\s*=\s*(["\']).*?\1', '', opening[0])
+    attributes = attributes[:-1] + f' width="{width}" height="180" viewBox="0 0 {width} 180">'
+    xml = xml[:opening.start()] + attributes + xml[opening.end():]
+    shapes = []
+    for index, node in enumerate(definitions):
+        attribute = node.tag.split('}')[-1]
+        identifier = node.get('id')
+        if any(child.tag.split('}')[-1] == 'feSpecularLighting' for child in node):
+            shapes.append(f'<rect x="{index * 360}" width="360" height="180" fill="#808080"/>')
+        shapes.append(f'<g transform="translate({index * 360} 0)">'
+                      f'<g {attribute}="url(#{identifier})">'
+                      '<rect x="20" y="20" width="120" height="100" fill="#e04020"/>'
+                      '<circle cx="180" cy="80" r="50" fill="#20b060"/>'
+                      '<path d="M220 130 L280 20 L330 130 Z" fill="#3050d0"/>'
+                      '</g></g>')
+    end = xml.rfind('</svg>')
+    xml = xml[:end] + ''.join(shapes) + xml[end:]
+    return xml, ["Applied standalone definitions to colored test shapes with a gray backdrop for white specular lighting"]
 
 
 def exclusion(xml, javascript):
@@ -90,7 +123,12 @@ def exclusion(xml, javascript):
         if tag in {'defs', 'symbol', 'clipPath', 'mask', 'marker', 'pattern', 'filter', 'style', 'metadata'}:
             return False
         if tag == 'path':
-            return bool(re.search(r'[LlHhVvCcSsQqTtAaZz]', node.get('d', '')))
+            data = node.get('d', '')
+            if re.search(r'[LlHhVvCcSsQqTtAaZz]', data):
+                return True
+            numbers = r'[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?'
+            return any(len(re.findall(numbers, command)) >= 4
+                       for command in re.findall(r'[Mm]([^Mm]*)', data))
         if tag in {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'use', 'image'}:
             return True
         return any(paints(child) for child in node)

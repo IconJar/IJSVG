@@ -1,6 +1,8 @@
 #import <XCTest/XCTest.h>
 #import <WebKit/WebKit.h>
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGTextLayout.h>
+#import <IJSVG/IJSVGParser.h>
 
 static NSDictionary* IJSVGMDNCorpus(void)
 {
@@ -47,8 +49,11 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 @property (nonatomic, strong) WKWebView* webView;
 @property (nonatomic, strong) NSWindow* window;
 @property (nonatomic, copy) NSString* xml;
+@property (nonatomic, copy) void (^referenceTransform)(NSXMLDocument*);
 @property (nonatomic) CGSize size;
 @property (nonatomic) CGFloat background;
+@property (nonatomic, copy) void (^fixtureTransform)(NSXMLDocument*);
+@property (nonatomic) BOOL compareTextMetrics;
 @property (nonatomic, strong) NSDictionary* metrics;
 @property (nonatomic, copy) void (^completion)(NSDictionary*);
 - (void)run:(NSString*)xml completion:(void (^)(NSDictionary*))completion;
@@ -78,6 +83,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         [self finish:@{@"error": error.description ?: @"Invalid fixture XML"}];
         return;
     }
+    if(self.fixtureTransform != nil) {
+        self.fixtureTransform(document);
+    }
     NSXMLElement* root = document.rootElement;
     NSString* viewBox = [[root attributeForName:@"viewBox"] stringValue];
     NSScanner* scanner = [NSScanner scannerWithString:[viewBox stringByReplacingOccurrencesOfString:@"," withString:@" "] ?: @""];
@@ -85,9 +93,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     if([scanner scanDouble:&x] && [scanner scanDouble:&y] &&
        [scanner scanDouble:&vw] && [scanner scanDouble:&vh] && vw > 0 && vh > 0) {
         // A viewBox is a coordinate system, not an intrinsic pixel size.
-        // Render small coordinate systems at a useful reference resolution.
-        width = 400;
-        height = 400 * vh / vw;
+        // Use integral coordinate zoom to avoid fractional font rasterization noise.
+        width = MAX(1, ceil(400 / vw)) * vw;
+        height = width * vh / vw;
     }
     NSString* w = [[root attributeForName:@"width"] stringValue];
     NSString* h = [[root attributeForName:@"height"] stringValue];
@@ -123,7 +131,10 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
     self.window.releasedWhenClosed = NO;
     self.window.contentView = self.webView;
-    [self.webView loadData:[self.xml dataUsingEncoding:NSUTF8StringEncoding]
+    if(self.referenceTransform != nil) {
+        self.referenceTransform(document);
+    }
+    [self.webView loadData:[document.XMLString dataUsingEncoding:NSUTF8StringEncoding]
         MIMEType:@"image/svg+xml" characterEncodingName:@"UTF-8" baseURL:[NSURL URLWithString:@"about:blank"]];
     __weak IJSVGMDNComparison* weakSelf = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
@@ -137,8 +148,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         "return {languages:navigator.languages,viewport:[root.getBoundingClientRect().width,root.getBoundingClientRect().height], "
         "texts:Array.from(document.querySelectorAll('text')).map(t=>({text:t.textContent, "
         "textLength:t.textLength.baseVal.value,computedLength:t.getComputedTextLength(), "
-        "font:getComputedStyle(t).font,baseline:getComputedStyle(t).dominantBaseline}))};"
-        arguments:@{} inFrame:nil inContentWorld:WKContentWorld.pageWorld
+        "font:getComputedStyle(t).font,baseline:getComputedStyle(t).dominantBaseline, "
+        "positions:metrics?Array.from({length:t.getNumberOfChars()},(_,i)=>{let p=t.getStartPositionOfChar(i);return [p.x,p.y]}):null}))};"
+        arguments:@{@"metrics":@(self.compareTextMetrics)} inFrame:nil inContentWorld:WKContentWorld.pageWorld
         completionHandler:^(id value, NSError* error) {
         if(!self.completion) return;
         if(error) {
@@ -199,6 +211,25 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     }
     CGContextDrawImage(expected, CGRectMake(0, 0, width, height), reference);
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:self.xml];
+    if(self.compareTextMetrics) {
+        NSMutableArray* texts = [NSMutableArray array];
+        for(IJSVGNode* node in svg.rootNode.children) {
+            if([node isKindOfClass:IJSVGText.class]) {
+                IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:(IJSVGText*)node
+                                                                     viewport:svg.rootNode.bounds.size
+                                                                 pathResolver:nil];
+                NSMutableArray* positions = [NSMutableArray array];
+                for(NSValue* value in layout.characterPositions) {
+                    CGPoint point = value.pointValue;
+                    [positions addObject:@[@(point.x), @(point.y)]];
+                }
+                [texts addObject:@{@"advance":@(layout.advance), @"positions":positions}];
+            }
+        }
+        NSMutableDictionary* metrics = self.metrics.mutableCopy;
+        metrics[@"native"] = texts;
+        self.metrics = metrics;
+    }
     CGFloat scale = width / self.size.width;
     svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
     CGContextTranslateCTM(actual, 0, height);
@@ -238,6 +269,8 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 @end
 
 @interface IJSVGMDNWebKitTests : XCTestCase
+@property (nonatomic, copy) void (^fixtureTransform)(NSXMLDocument*);
+@property (nonatomic) BOOL compareTextMetrics;
 @end
 
 @implementation IJSVGMDNWebKitTests
@@ -270,6 +303,12 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 
 - (void)compareCase:(NSString*)identifier
 {
+    [self compareCase:identifier referenceTransform:nil];
+}
+
+- (void)compareCase:(NSString*)identifier
+ referenceTransform:(void (^)(NSXMLDocument*))referenceTransform
+{
     NSDictionary* fixture = nil;
     for(NSDictionary* candidate in IJSVGMDNCorpus()[@"cases"]) {
         if([candidate[@"id"] isEqual:identifier]) { fixture = candidate; break; }
@@ -291,11 +330,17 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         XCTAssertEqualObjects(policy[@"sha256"], fixture[@"sha256"], @"Review this expectation after updating the fixture");
         if(![policy[@"sha256"] isEqual:fixture[@"sha256"]]) return;
     }
+    if(referenceTransform != nil || self.fixtureTransform != nil) {
+        identifier = [identifier stringByAppendingString:@"_reference"];
+    }
     XCTestExpectation* done = [self expectationWithDescription:identifier];
     __block NSDictionary* result;
     __block IJSVGMDNComparison* comparison;
     dispatch_async(dispatch_get_main_queue(), ^{
         comparison = [[IJSVGMDNComparison alloc] init];
+        comparison.referenceTransform = referenceTransform;
+        comparison.fixtureTransform = self.fixtureTransform;
+        comparison.compareTextMetrics = self.compareTextMetrics;
         comparison.background = policy[@"background"] ? [policy[@"background"] doubleValue] : 1;
         [comparison run:xml completion:^(NSDictionary* value) {
             result = value;
@@ -307,6 +352,24 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     XCTAssertNil(result[@"error"], @"%@", result[@"error"]);
     if(!result || result[@"error"]) return;
     XCTAssertTrue([result[@"parsed"] boolValue], @"IJSVG could not parse %@", identifier);
+    if(self.compareTextMetrics) {
+        NSArray* native = comparison.metrics[@"native"];
+        NSArray* reference = comparison.metrics[@"texts"];
+        XCTAssertGreaterThan(native.count, 0);
+        XCTAssertEqual(native.count, reference.count);
+        for(NSUInteger index = 0; index < MIN(native.count, reference.count); index++) {
+            XCTAssertEqualWithAccuracy([native[index][@"advance"] doubleValue],
+                                       [reference[index][@"computedLength"] doubleValue], .001);
+            NSArray* actual = native[index][@"positions"];
+            NSArray* expected = reference[index][@"positions"];
+            XCTAssertEqual(actual.count, expected.count);
+            for(NSUInteger character = 0; character < MIN(actual.count, expected.count); character++) {
+                XCTAssertEqualWithAccuracy([actual[character][0] doubleValue], [expected[character][0] doubleValue], .001);
+                XCTAssertEqualWithAccuracy([actual[character][1] doubleValue], [expected[character][1] doubleValue], .001);
+            }
+        }
+        return;
+    }
     double error = [result[@"meanInkError"] doubleValue];
     BOOL blank = [result[@"inkPixels"] unsignedIntegerValue] == 0;
     NSLog(@"MDN %@ meanInkError=%.6f tolerance=%.3f ink=%@", identifier, error, tolerance, result[@"inkPixels"]);
@@ -331,6 +394,60 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     XCTAssertFalse(blank, @"%@ produced no visible ink on the comparison background; inspect the fixture and snapshots", identifier);
     XCTAssertLessThanOrEqual(error, tolerance, @"%@ (%@): %@", identifier, fixture[@"url"],
                              policy[@"reason"] ?: @"Unexpected rendering difference");
+}
+
+- (void)testBaselineExamplesMatchExplicitReferenceBaselines
+{
+    for(NSString* identifier in @[@"reference_attribute_dominant_baseline_block_3_1",
+                                  @"tutorials_svg_from_scratch_texts_block_2_1",
+                                  @"tutorials_svg_from_scratch_texts_block_3_1"]) {
+        [self compareCase:identifier referenceTransform:^(NSXMLDocument* document) {
+            for(NSXMLElement* element in [document nodesForXPath:@"//*[local-name()='tspan' or local-name()='textPath']" error:nil]) {
+                [element addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeDominantBaseline stringValue:@"hanging"]];
+            }
+            for(NSXMLElement* element in [document nodesForXPath:@"//*[@dominant-baseline='text-top']" error:nil]) {
+                [element attributeForName:IJSVGAttributeDominantBaseline].stringValue = @"text-before-edge";
+            }
+        }];
+    }
+}
+
+- (void)testDisplacementExampleImageGeometry
+{
+    self.fixtureTransform = ^(NSXMLDocument* document) {
+        for(NSXMLNode* primitive in [document nodesForXPath:@"//*[local-name()='feDisplacementMap']" error:nil]) {
+            [primitive detach];
+        }
+    };
+    [self compareCase:@"reference_attribute_xchannelselector_block_2_1"];
+}
+
+- (void)testSpanExampleCharacterPositionsWithoutKerning
+{
+    self.compareTextMetrics = YES;
+    self.fixtureTransform = ^(NSXMLDocument* document) {
+        for(NSXMLElement* element in [document nodesForXPath:@"//*[local-name()='text' or local-name()='tspan']" error:nil]) {
+            [element addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeStyle stringValue:@"font-kerning:none"]];
+        }
+    };
+    [self compareCase:@"reference_element_tspan_block_2_1"];
+}
+
+- (void)testSwitchExampleMatchesRegionalReference
+{
+    XCTAssertGreaterThan(NSLocale.preferredLanguages.count, 0);
+    NSString* language = NSLocale.preferredLanguages.firstObject.lowercaseString;
+    NSDictionary* regional = @{@"en-us":@"Howdy!", @"en-gb":@"Wotcha!", @"en-au":@"G'day!"};
+    NSString* expected = regional[language];
+    XCTSkipIf(expected == nil || NSLocale.preferredLanguages.count != 1, @"This control requires one regional English preference");
+    [self compareCase:@"reference_element_switch_block_1_1" referenceTransform:^(NSXMLDocument* document) {
+        for(NSXMLElement* element in [document nodesForXPath:@"//*[local-name()='switch']" error:nil]) {
+            NSXMLElement* text = [NSXMLElement elementWithName:@"text"];
+            text.stringValue = expected;
+            [(NSXMLElement*)element.parent insertChild:text atIndex:element.index];
+            [element detach];
+        }
+    }];
 }
 
 #include "IJSVGMDNGeneratedTests.inc"
