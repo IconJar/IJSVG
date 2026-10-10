@@ -11,12 +11,245 @@
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
+#import <IJSVG/IJSVGRendering.h>
 #import <math.h>
 
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar)
 {
     return aChar == ' ' || aChar == '\t' || aChar == '\n' ||
         aChar == '\r' || aChar == '\f';
+}
+
+typedef NS_ENUM(uint8_t, IJSVGMediaFeature) {
+    IJSVGMediaFeatureType,
+    IJSVGMediaFeatureWidth,
+    IJSVGMediaFeatureHeight,
+    IJSVGMediaFeaturePortrait,
+    IJSVGMediaFeatureLandscape
+};
+
+typedef struct {
+    IJSVGMediaFeature feature;
+    double value;
+    int comparison;
+    BOOL equal;
+    BOOL valid;
+    BOOL negate;
+    NSUInteger count;
+} IJSVGMediaCondition;
+
+// Each clause stores its media type followed by its feature conditions.
+struct IJSVGMediaQuery {
+    NSUInteger count;
+    IJSVGMediaCondition conditions[];
+};
+
+static void IJSVGMediaSkipWhitespace(const char** cursor)
+{
+    while(IJSVGStyleSheetCharIsWhitespace(**cursor)) {
+        (*cursor)++;
+    }
+}
+
+static BOOL IJSVGMediaConsume(const char** cursor, const char* token)
+{
+    size_t length = strlen(token);
+    if(strncmp(*cursor, token, length) != 0) {
+        return NO;
+    }
+    char next = (*cursor)[length];
+    if((token[length - 1] >= 'a' && token[length - 1] <= 'z') &&
+       ((next >= 'a' && next <= 'z') || next == '-')) {
+        return NO;
+    }
+    *cursor += length;
+    IJSVGMediaSkipWhitespace(cursor);
+    return YES;
+}
+
+static BOOL IJSVGMediaParseFeature(const char** cursor,
+                                   IJSVGMediaCondition* condition, BOOL* valid)
+{
+    IJSVGMediaSkipWhitespace(cursor);
+    BOOL minimum = IJSVGMediaConsume(cursor, "min-");
+    BOOL maximum = !minimum && IJSVGMediaConsume(cursor, "max-");
+    if(IJSVGMediaConsume(cursor, "width")) {
+        condition->feature = IJSVGMediaFeatureWidth;
+    } else if(IJSVGMediaConsume(cursor, "height")) {
+        condition->feature = IJSVGMediaFeatureHeight;
+    } else if(!minimum && !maximum && IJSVGMediaConsume(cursor, "orientation") &&
+              IJSVGMediaConsume(cursor, ":")) {
+        BOOL portrait = IJSVGMediaConsume(cursor, "portrait");
+        BOOL landscape = !portrait && IJSVGMediaConsume(cursor, "landscape");
+        *valid = (portrait || landscape) && IJSVGMediaConsume(cursor, ")");
+        condition->feature = portrait ? IJSVGMediaFeaturePortrait : IJSVGMediaFeatureLandscape;
+        return *valid;
+    } else {
+        *valid = NO;
+        return NO;
+    }
+    if(!minimum && !maximum && IJSVGMediaConsume(cursor, ")")) {
+        condition->comparison = 1;
+        return YES;
+    }
+    int comparison = minimum ? 1 : (maximum ? -1 : 0);
+    BOOL equal = YES;
+    if(!IJSVGMediaConsume(cursor, ":")) {
+        if(minimum || maximum) {
+            *valid = NO;
+            return NO;
+        }
+        char operation = **cursor;
+        if(operation != '<' && operation != '>' && operation != '=') {
+            *valid = NO;
+            return NO;
+        }
+        (*cursor)++;
+        comparison = operation == '<' ? -1 : (operation == '>' ? 1 : 0);
+        equal = operation == '=' || **cursor == '=';
+        if(operation != '=' && **cursor == '=') {
+            (*cursor)++;
+        }
+        IJSVGMediaSkipWhitespace(cursor);
+    }
+    CGFloat expected;
+    if(!IJSVGParseLengthNumber(cursor, NO, &expected)) {
+        *valid = NO;
+        return NO;
+    }
+    char suffix[4] = { 0 };
+    NSUInteger length = 0;
+    while(**cursor != '\0' && **cursor != ')' && !IJSVGStyleSheetCharIsWhitespace(**cursor)) {
+        if(length == sizeof(suffix) - 1) {
+            *valid = NO;
+            return NO;
+        }
+        suffix[length++] = *(*cursor)++;
+    }
+    IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(suffix);
+    if((length == 0 && expected != 0) ||
+       (length != 0 && type == IJSVGUnitLengthTypeNumber) ||
+       (length == 3 && strcmp(suffix, "rem") != 0) ||
+       type == IJSVGUnitLengthTypePercentage || type == IJSVGUnitLengthTypeEX) {
+        *valid = NO;
+        return NO;
+    }
+    expected = [IJSVGUnitLength convertUnitValue:expected
+                        toBaseFromUnitLengthType:type];
+    if(type == IJSVGUnitLengthTypeEM) {
+        expected *= IJSVGDefaultFontSize;
+    }
+    if(!isfinite(expected)) {
+        *valid = NO;
+        return NO;
+    }
+    IJSVGMediaSkipWhitespace(cursor);
+    *valid = IJSVGMediaConsume(cursor, ")");
+    condition->value = expected;
+    condition->comparison = comparison;
+    condition->equal = equal;
+    return *valid;
+}
+
+IJSVGMediaQuery* IJSVGMediaQueryCreate(NSString* media)
+{
+    NSString* clean = IJSVGStyleSheetStringByRemovingCSSComments(media ?: @"").lowercaseString;
+    const char* cursor = clean.UTF8String;
+    if(cursor == NULL) {
+        return NULL;
+    }
+    NSUInteger capacity = 1;
+    for(const char* character = cursor; *character != '\0'; character++) {
+        if(*character == '(' || *character == ',') {
+            capacity++;
+        }
+    }
+    IJSVGMediaQuery* query = calloc(1, sizeof(IJSVGMediaQuery) +
+                                      capacity * sizeof(IJSVGMediaCondition));
+    if(query == NULL) {
+        return NULL;
+    }
+    IJSVGMediaSkipWhitespace(&cursor);
+    do {
+        IJSVGMediaCondition* clause = &query->conditions[query->count++];
+        clause->feature = IJSVGMediaFeatureType;
+        clause->count = 1;
+        clause->valid = YES;
+        clause->negate = IJSVGMediaConsume(&cursor, "not");
+        BOOL only = !clause->negate && IJSVGMediaConsume(&cursor, "only");
+        if(*cursor != '(') {
+            if(IJSVGMediaConsume(&cursor, "all")) {
+                clause->value = IJSVGMediaTypeAll;
+            } else if(IJSVGMediaConsume(&cursor, "screen")) {
+                clause->value = IJSVGMediaTypeScreen;
+            } else if(IJSVGMediaConsume(&cursor, "print")) {
+                clause->value = IJSVGMediaTypePrint;
+            } else if(*cursor != '\0' || clause->negate || only || query->count != 1) {
+                clause->valid = NO;
+            }
+            if(clause->valid && *cursor != ',' && *cursor != '\0') {
+                clause->valid = IJSVGMediaConsume(&cursor, "and") && *cursor == '(';
+            }
+        } else if(only) {
+            clause->valid = NO;
+        }
+        while(clause->valid && *cursor == '(') {
+            cursor++;
+            IJSVGMediaCondition* condition = &query->conditions[query->count++];
+            clause->count++;
+            IJSVGMediaParseFeature(&cursor, condition, &clause->valid);
+            if(clause->valid && *cursor != ',' && *cursor != '\0') {
+                clause->valid = IJSVGMediaConsume(&cursor, "and") && *cursor == '(';
+            }
+        }
+        clause->valid = clause->valid && (*cursor == ',' || *cursor == '\0');
+        while(*cursor != '\0' && *cursor != ',') {
+            cursor++;
+        }
+        if(*cursor == '\0') {
+            break;
+        }
+        cursor++;
+        IJSVGMediaSkipWhitespace(&cursor);
+    } while(YES);
+    return query;
+}
+
+void IJSVGMediaQueryRelease(IJSVGMediaQuery* query)
+{
+    free(query);
+}
+
+BOOL IJSVGMediaQueryMatches(const IJSVGMediaQuery* query, IJSVGMediaEnvironment environment)
+{
+    if(query == NULL) {
+        return NO;
+    }
+    for(NSUInteger index = 0; index < query->count;) {
+        const IJSVGMediaCondition* clause = &query->conditions[index];
+        BOOL matches = clause->value == IJSVGMediaTypeAll || clause->value == environment.type;
+        for(NSUInteger offset = 1; clause->valid && offset < clause->count; offset++) {
+            const IJSVGMediaCondition* condition = &query->conditions[index + offset];
+            CGFloat actual = condition->feature == IJSVGMediaFeatureWidth ?
+                environment.viewport.width : environment.viewport.height;
+            BOOL feature;
+            if(condition->feature == IJSVGMediaFeaturePortrait) {
+                feature = environment.viewport.height >= environment.viewport.width;
+            } else if(condition->feature == IJSVGMediaFeatureLandscape) {
+                feature = environment.viewport.width > environment.viewport.height;
+            } else {
+                feature = (condition->equal && actual == condition->value) ||
+                    (condition->comparison < 0 && actual < condition->value) ||
+                    (condition->comparison > 0 && actual > condition->value);
+            }
+            matches = matches && feature;
+        }
+        if(clause->valid && (clause->negate ? !matches : matches)) {
+            return YES;
+        }
+        index += clause->count;
+    }
+    return NO;
 }
 
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar)

@@ -191,6 +191,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 @property (nonatomic, readwrite) NSString* string;
 @property (nonatomic, readwrite) NSUInteger glyphCount;
 @property (nonatomic, readwrite) CGFloat advance;
+@property (nonatomic, readwrite) CGRect boundingBox;
 @property (nonatomic, assign) CGSize viewport;
 @property (nonatomic, strong) IJSVGText* root;
 @property (nonatomic, strong) NSMutableData* glyphs;
@@ -1025,6 +1026,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (void)buildGeometry
 {
     self.group = [self geometryGroupForNode:self.root];
+    _boundingBox = CGRectNull;
+    CGFloat ascent = 0;
+    CGFloat descent = 0;
     IJSVGText* previousOwner = nil;
     IJSVGPath* path = nil;
     CGMutablePathRef destination = NULL;
@@ -1060,6 +1064,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         }
         if(previousFont != (__bridge id)glyph->font) {
             previousFont = (__bridge id)glyph->font;
+            IJSVGTextFontExtents(glyph->font, &ascent, &descent);
             id cached = [outlineFonts objectForKey:previousFont];
             if(cached == nil) {
                 CFMutableDictionaryRef cache = CFDictionaryCreateMutable(NULL, 0,
@@ -1081,6 +1086,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             CFDictionarySetValue(outlines, key, (__bridge const void*)outline);
         }
         CGAffineTransform transform = IJSVGTextGlyphTransform(c, glyph);
+        CGSize advance;
+        CTFontGetAdvancesForGlyphs(glyph->font, kCTFontOrientationHorizontal,
+                                   &glyph->glyph, &advance, 1);
+        CGRect cell = CGRectMake(0, -descent, advance.width, ascent + descent);
+        _boundingBox = CGRectUnion(_boundingBox, CGRectApplyAffineTransform(cell, transform));
         if(outline != NSNull.null) {
             IJSVGTextAppendGlyphPath(destination, (__bridge CGPathRef)outline,
                                      transform);
@@ -1445,8 +1455,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         _viewport = viewport;
         _pathResolver = [pathResolver copy];
         _glyphs = [NSMutableData data];
-        _glyphFonts = [NSHashTable hashTableWithOptions:NSPointerFunctionsStrongMemory |
-                                                      NSPointerFunctionsObjectPointerPersonality];
+        _glyphFonts = [NSHashTable hashTableWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality];
         _styles = [NSMapTable strongToStrongObjectsMapTable];
         _rangeIndices = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
         _groups = [NSMapTable strongToStrongObjectsMapTable];

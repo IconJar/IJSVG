@@ -1351,6 +1351,14 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     [self applyDefaultsToElement:element
                        fromPaint:paint];
     
+    if(paint.backgroundColor != nil) {
+        NSString* color = [self colorStringForColor:paint.backgroundColor
+                                              flag:IJSVGColorUsageTraitFill
+                                           options:self.colorOptions];
+        NSString* style = [element attributeForName:IJSVGAttributeStyle].stringValue ?: @"";
+        style = [style stringByAppendingFormat:@";%@: %@", IJSVGAttributeBackgroundColor, color];
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStyle: style }, element);
+    }
     CGFloat coordValue = 0.f;
     CGRect frame = paint.frame;
     if((coordValue = frame.origin.x) != 0.f) {

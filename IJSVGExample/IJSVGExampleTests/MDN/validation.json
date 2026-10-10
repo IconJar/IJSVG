@@ -1,11 +1,11 @@
 {
-  "recordedAt": "2026-10-10T18:28:39+00:00",
+  "recordedAt": "2026-10-10T19:00:57+00:00",
   "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
   "macOS": "27.0.1 (26A434)",
   "counts": {
     "total": 447,
-    "passed": 273,
-    "failed": 15,
+    "passed": 278,
+    "failed": 10,
     "skipped": 159,
     "expectedFailures": 0
   },
@@ -15,7 +15,7 @@
     "expectedFailures": 1,
     "failed": 0
   },
-  "note": "Observations only, not accepted baselines. Finite filter coverage now preserves source resolution. Text changes add font size adjustment and synthetic small caps, correct percentage text lengths and legacy font baselines, enable automatic kerning for ordinary text, and match grayscale font smoothing in the WebKit harness. Fourteen previously failing MDN examples now pass. Ten direct comparisons with verified WebKit differences are excluded from generated tests while their control tests remain. The nonzero origin turbulence case remains active pending stronger independent verification. The remaining 15 unexpected mismatches are retained as failures. Pixel thresholds were not widened. Text path cases were rerun after the final kerning adjustment.",
+  "note": "Observations only, not accepted baselines. Five additional MDN examples now pass after fixing SVG background color, style media conditions, generic monospace fonts, decoration metrics and transform argument units. Both comparison engines use the same initial font size. The decoration comparison now uses the standard text tolerance. Ten unresolved comparisons remain active failures and ten previously verified browser differences remain excluded. No comparison was removed in this followup.",
   "cases": [
     {
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
@@ -239,11 +239,11 @@
     },
     {
       "id": "guides_svg_in_html_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_in_HTML",
-      "meanInkError": 0.053157,
+      "meanInkError": 0.0,
       "tolerance": 0.025,
-      "inkPixels": 560401
+      "inkPixels": 513820
     },
     {
       "id": "reference_attribute_alignment_baseline_block_1_1",
@@ -731,11 +731,11 @@
     },
     {
       "id": "reference_attribute_font_family_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-family",
-      "meanInkError": 0.471623,
+      "meanInkError": 0.083269,
       "tolerance": 0.16,
-      "inkPixels": 12390
+      "inkPixels": 10090
     },
     {
       "id": "reference_attribute_font_size_block_1_1",
@@ -1051,9 +1051,9 @@
     },
     {
       "id": "reference_attribute_media_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/media",
-      "meanInkError": 0.352796,
+      "meanInkError": 0.004817,
       "tolerance": 0.16,
       "inkPixels": 454115
     },
@@ -1529,9 +1529,9 @@
       "id": "reference_attribute_slope_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/slope",
-      "meanInkError": 0.018672,
+      "meanInkError": 0.018227,
       "tolerance": 0.16,
-      "inkPixels": 33573
+      "inkPixels": 33577
     },
     {
       "id": "reference_attribute_specularconstant_block_2_1",
@@ -1774,11 +1774,11 @@
     },
     {
       "id": "reference_attribute_text_decoration_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-decoration",
-      "meanInkError": 0.3206,
-      "tolerance": 0.26,
-      "inkPixels": 12419
+      "meanInkError": 0.105321,
+      "tolerance": 0.16,
+      "inkPixels": 11039
     },
     {
       "id": "reference_attribute_text_rendering_block_2_1",
@@ -2056,9 +2056,9 @@
       "id": "reference_attribute_xchannelselector_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xChannelSelector",
-      "meanInkError": 0.417653,
+      "meanInkError": 0.418898,
       "tolerance": 0.16,
-      "inkPixels": 39527
+      "inkPixels": 40276
     },
     {
       "id": "reference_attribute_xlink_colon_actuate_block_1_1",
@@ -2164,9 +2164,9 @@
       "id": "reference_attribute_ychannelselector_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/yChannelSelector",
-      "meanInkError": 0.346298,
+      "meanInkError": 0.344875,
       "tolerance": 0.16,
-      "inkPixels": 38062
+      "inkPixels": 38321
     },
     {
       "id": "reference_attribute_z_block_2_1",
@@ -2770,9 +2770,9 @@
     },
     {
       "id": "tutorials_svg_from_scratch_basic_transformations_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
-      "meanInkError": 0.084444,
+      "meanInkError": 0.0,
       "tolerance": 0.025,
       "inkPixels": 8000
     },
@@ -3490,5 +3490,81 @@
     ],
     "note": "All affected regression suites passed. The final text suites and both text path control tests were rerun after preserving automatic spacing for text on a path."
   },
-  "excludedComparisons": 10
+  "excludedComparisons": 10,
+  "textBoundsRegressionSuites": {
+    "passed": 394,
+    "failed": 0,
+    "suites": [
+      "IJSVGTextTests",
+      "IJSVGTextWebKitTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGQuartzRendererTests",
+      "IJSVGExporterTests",
+      "IJSVGFilterTests"
+    ],
+    "note": "Automatic alignment preserves the dominant baseline. Root text filter bounds use glyph cells instead of ink outlines. The displacement alpha map control now passes. The original displacement and turbulence comparisons remain active failures. Full MDN results remain 273 passed, 15 failed and 159 skipped. No tolerances changed."
+  },
+  "fixedInStyleAndTextFollowup": [
+    "guides_svg_in_html_block_2_1",
+    "reference_attribute_font_family_block_1_1",
+    "reference_attribute_media_block_2_1",
+    "reference_attribute_text_decoration_block_2_1",
+    "tutorials_svg_from_scratch_basic_transformations_block_2_1"
+  ],
+  "styleAndTextRegressionSuites": {
+    "passed": 474,
+    "failed": 0,
+    "suites": [
+      "IJSVGTextTests",
+      "IJSVGTextWebKitTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGUtilityParsingTests",
+      "IJSVGParserTests",
+      "IJSVGStyleSheetTests",
+      "IJSVGQuartzRendererTests",
+      "IJSVGExporterTests",
+      "IJSVGFilterTests"
+    ],
+    "note": "Aggregate of the complete affected suite run and the final parsing and filter rerun. All 192 parsing and filter tests passed after preserving adjacent decimal values emitted by the compact transform exporter. Equivalent baseline controls and translated turbulence interior controls pass. Original MDN mismatches remain active."
+  },
+  "mediaParsingBenchmark": {
+    "configuration": "Local Xcode test build",
+    "method": "Median of nine measured rounds after one warmup round. Whole SVG variants alternate order each round. No hardware timing threshold.",
+    "query": "screen and (min-width:40em) and (orientation:landscape), print",
+    "queryCreateMatchReleaseMicroseconds": 1.701,
+    "retainedQueryMatchNanoseconds": 18.607,
+    "queryIterationsPerRound": 10000,
+    "matchIterationsPerRound": 1000000,
+    "documentIterationsPerRound": 200,
+    "documents": [
+      {
+        "shapes": 1,
+        "plainMicroseconds": 49.977,
+        "conditionalMicroseconds": 57.569,
+        "additionalMicroseconds": 7.592,
+        "additionalPercent": 15.19
+      },
+      {
+        "shapes": 50,
+        "plainMicroseconds": 695.112,
+        "conditionalMicroseconds": 707.744,
+        "additionalMicroseconds": 12.632,
+        "additionalPercent": 1.82
+      }
+    ],
+    "note": "Whole document measurements include XML attribute parsing and viewport resolution. Media lengths reuse the shared C number scanner, unit recognition and base unit conversion. Parsed query matching performs no allocation. Styles are evaluated at initial SVG parsing time."
+  },
+  "mediaUtilityRegressionSuites": {
+    "passed": 229,
+    "failed": 0,
+    "suites": [
+      "IJSVGParserTests",
+      "IJSVGUtilityParsingTests",
+      "IJSVGTextTests",
+      "IJSVGQuartzRendererTests",
+      "IJSVGStyleSheetTests",
+      "IJSVGMDNWebKitTests/test_reference_attribute_media_block_2_1"
+    ],
+    "note": "Final checks after sharing number parsing between geometry lengths and media conditions. Includes physical and font relative units, exponent notation, invalid lengths, query reuse and the initial parsing benchmark."
+  }
 }

@@ -241,6 +241,8 @@ extern NSString* const IJSVGAttributePointsAtZ;
 extern NSString* const IJSVGAttributeLimitingConeAngle;
 extern NSString* const IJSVGAttributeColorInterpolationFilters;
 extern NSString* const IJSVGAttributeEnableBackground;
+extern NSString* const IJSVGAttributeBackgroundColor;
+extern NSString* const IJSVGAttributeMedia;
 
 // SVG text presentation and positioning attributes.
 extern NSString* const IJSVGAttributeFont;

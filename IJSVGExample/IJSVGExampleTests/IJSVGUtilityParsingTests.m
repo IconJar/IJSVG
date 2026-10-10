@@ -218,6 +218,42 @@
     XCTAssertEqualWithAccuracy(transforms[2].parameters[1], 20.f, 0.0001f);
 }
 
+- (void)testCompactTransformDecimalsSurviveRoundTrip
+{
+    CGAffineTransform expected = CGAffineTransformMake(1, .2, .3, 1, 8, 3);
+    NSString* compact = [IJSVGTransform affineTransformToSVGMatrixString:expected];
+    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:compact];
+    XCTAssertEqual(transforms.count, 1);
+    CGAffineTransform actual = IJSVGConcatTransforms(transforms);
+    XCTAssertEqualWithAccuracy(actual.a, expected.a, .0001);
+    XCTAssertEqualWithAccuracy(actual.b, expected.b, .0001);
+    XCTAssertEqualWithAccuracy(actual.c, expected.c, .0001);
+    XCTAssertEqualWithAccuracy(actual.d, expected.d, .0001);
+    XCTAssertEqualWithAccuracy(actual.tx, expected.tx, .0001);
+    XCTAssertEqualWithAccuracy(actual.ty, expected.ty, .0001);
+}
+
+- (void)testTransformArgumentsDistinguishSVGAndCSSUnits
+{
+    for(NSString* value in @[@"skewY(24deg)", @"translate(2px 3)", @"rotate(20 1)",
+                             @"scale()", @"matrix(1 0 0 1 2)", @"scale(1junk)",
+                             @"translate(1,)", @"scale(0x10)", @"rotate(NaN)"]) {
+        XCTAssertEqual([IJSVGTransform transformsForString:value].count, 0, @"%@", value);
+    }
+    NSArray* prefix = [IJSVGTransform transformsForString:@"translate(1 2) skewY(24deg) scale(2)"];
+    XCTAssertEqual(prefix.count, 1);
+    for(NSString* angle in @[@"90deg", @"1.5707963267948966rad", @"100grad", @".25turn"]) {
+        NSString* value = [NSString stringWithFormat:@"rotate(%@)", angle];
+        IJSVGTransform* transform = [IJSVGTransform transformsForString:value allowCSSUnits:YES].firstObject;
+        XCTAssertNotNil(transform);
+        XCTAssertEqualWithAccuracy(transform.parameters[0], 90, .00001);
+    }
+    IJSVGTransform* translation = [IJSVGTransform transformsForString:@"translate(2px,3px)"
+                                                                      allowCSSUnits:YES].firstObject;
+    XCTAssertEqualWithAccuracy(translation.parameters[0], 2, .00001);
+    XCTAssertEqualWithAccuracy(translation.parameters[1], 3, .00001);
+}
+
 - (void)testTransformOriginSyntax
 {
     for(NSString* value in @[@"center", @"left top", @"top left", @"bottom", @"-2px 30%", @"20% -1em", @"center center 2px", @"TOP RiGhT", @"1EM 2PX", @"\tleft\f top\n"]) {

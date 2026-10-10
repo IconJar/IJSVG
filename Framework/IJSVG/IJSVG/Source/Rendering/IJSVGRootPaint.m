@@ -33,6 +33,22 @@
     return CGRectInfinite;
 }
 
+- (void)drawInContext:(CGContextRef)ctx
+{
+    if(self.backgroundColor == nil || self.backgroundColor.alphaComponent == 0) {
+        return;
+    }
+    CGRect bounds = IJSVGPaintGetBoundingBoxBounds(self);
+    if(self.viewBox != nil) {
+        CGRect viewBox = [self.viewBox computeValue:self.frame.size];
+        CGAffineTransform transform = IJSVGViewBoxComputeTransform(viewBox, bounds,
+            self.viewBoxAlignment, self.viewBoxMeetOrSlice);
+        bounds = CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(transform));
+    }
+    CGContextSetFillColorWithColor(ctx, self.backgroundColor.CGColor);
+    CGContextFillRect(ctx, bounds);
+}
+
 - (void)performRenderInContext:(CGContextRef)ctx
 {
     if(self.sourceNode != nil && self.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden) {

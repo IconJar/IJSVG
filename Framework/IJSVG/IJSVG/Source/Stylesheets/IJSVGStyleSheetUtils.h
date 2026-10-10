@@ -11,6 +11,24 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(uint8_t, IJSVGMediaType) {
+    IJSVGMediaTypeAll,
+    IJSVGMediaTypeScreen,
+    IJSVGMediaTypePrint
+};
+
+typedef struct {
+    CGSize viewport;
+    IJSVGMediaType type;
+} IJSVGMediaEnvironment;
+
+typedef struct IJSVGMediaQuery IJSVGMediaQuery;
+
+// The caller owns the immutable query until release.
+IJSVGMediaQuery* _Nullable IJSVGMediaQueryCreate(NSString* _Nullable media);
+void IJSVGMediaQueryRelease(IJSVGMediaQuery* _Nullable query);
+BOOL IJSVGMediaQueryMatches(const IJSVGMediaQuery* _Nullable query, IJSVGMediaEnvironment environment);
+
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);

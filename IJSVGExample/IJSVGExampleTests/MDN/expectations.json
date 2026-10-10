@@ -1,9 +1,4 @@
 {
-  "reference_attribute_text_decoration_block_2_1": {
-    "sha256": "2bd4ff0392026fb4eb48929161d9d9f8d9df50cd1e286b0116a179ce4d8e65fa",
-    "tolerance": 0.26,
-    "reason": "Core Text decoration offsets differ from WebKit. Reuses the existing IJSVGTextWebKitTests/testDecorationsAcrossSpacesMatchWebKit threshold; larger differences still fail."
-  },
   "reference_attribute_specularconstant_block_2_1": {
     "sha256": "5f4a96b76caa94d416f201ccc4527167eac3aa04267da417a04d7c10f26da777",
     "background": 0.5019607843137255,

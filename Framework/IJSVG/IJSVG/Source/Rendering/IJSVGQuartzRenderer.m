@@ -780,7 +780,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 - (IJSVGPaint*)drawablePaintForTextNode:(IJSVGText*)node
 {
-    return [self drawablePaintForGroupNode:[self textLayoutForNode:node].group];
+    IJSVGTextLayout* layout = [self textLayoutForNode:node];
+    IJSVGPaint* paint = [self drawablePaintForGroupNode:layout.group];
+    paint.boundingBox = layout.boundingBox;
+    return paint;
 }
 
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
@@ -2140,6 +2143,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGRootPaint* paint = IJSVGRootPaint.paint;
     IJSVGUnitRect* resolvedViewBox = [self.lengthFontResolver rectByResolvingFontLengths:node.viewBox node:node];
     paint.viewBox = resolvedViewBox;
+    paint.backgroundColor = node.backgroundColor;
     paint.intrinsicSize = node.intrinsicSize;
     paint.viewBoxAlignment = node.viewBoxAlignment;
     paint.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;

@@ -101,6 +101,10 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     [root removeAttributeForName:@"height"];
     [root addAttribute:[NSXMLNode attributeWithName:@"width" stringValue:[@(self.size.width) stringValue]]];
     [root addAttribute:[NSXMLNode attributeWithName:@"height" stringValue:[@(self.size.height) stringValue]]];
+    // Use the same initial font size instead of browser preference defaults.
+    if([root attributeForName:IJSVGAttributeFontSize] == nil) {
+        [root addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeFontSize stringValue:@"16"]];
+    }
     NSString* style = [root attributeForName:@"style"].stringValue ?: @"";
     style = [style stringByAppendingFormat:@";width:%gpx!important;height:%gpx!important;-webkit-font-smoothing:antialiased;", self.size.width, self.size.height];
     if(self.background != 1) {

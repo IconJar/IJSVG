@@ -15,7 +15,7 @@
 
 static NSString* const IJSVGTextSerifFontFamily = @"Times";
 static NSString* const IJSVGTextSansSerifFontFamily = @"Helvetica";
-static NSString* const IJSVGTextMonospaceFontFamily = @"Menlo";
+static NSString* const IJSVGTextMonospaceFontFamily = @"Courier";
 static NSString* const IJSVGTextCursiveFontFamily = @"Apple Chancery";
 static NSString* const IJSVGTextFantasyFontFamily = @"Papyrus";
 static NSString* const IJSVGTextSystemFontFamily = @".AppleSystemUIFont";

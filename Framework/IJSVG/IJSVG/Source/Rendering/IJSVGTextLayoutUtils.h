@@ -68,6 +68,8 @@ void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters,
                               NSUInteger* count, NSUInteger* capacity,
                               const IJSVGTextCharacter* character);
 
+void IJSVGTextFontExtents(CTFontRef font, CGFloat* ascent, CGFloat* descent);
+
 CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style);
 
 CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,

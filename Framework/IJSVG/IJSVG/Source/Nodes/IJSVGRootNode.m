@@ -23,6 +23,7 @@
         IJSVGRootNode* root = (IJSVGRootNode*)node;
         self.styleAncestors = root.styleAncestors;
         self.clientSize = root.clientSize;
+        self.backgroundColor = root.backgroundColor;
         self.refX = root.refX.copy;
         self.refY = root.refY.copy;
         self.intrinsicSize = root.intrinsicSize.copy;
@@ -45,6 +46,7 @@
     [storage setBit:IJSVGNodeAttributeOverflow];
     [storage setBit:IJSVGNodeAttributeRefX];
     [storage setBit:IJSVGNodeAttributeRefY];
+    [storage setBit:IJSVGNodeAttributeBackgroundColor];
     return storage;
 }
 

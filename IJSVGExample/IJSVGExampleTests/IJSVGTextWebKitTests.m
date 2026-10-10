@@ -250,14 +250,12 @@ didFailNavigation:(WKNavigation*)navigation
 
 - (void)testDecorationsAcrossSpacesMatchWebKit
 {
-    // Decoration offsets use Core Text font metrics; WebKit places these lines
-    // slightly differently. Exact coverage across spaces is tested geometrically.
     [self compareBody:@"<g font-family='Helvetica' font-size='30'><text x='20' y='40' "
                        "text-decoration='underline'>hello world</text><text x='20' y='90' "
                        "text-decoration='overline'>hello world</text><text x='20' y='140' "
                        "text-decoration='line-through'>hello world</text></g>"
                  name:@"decoration-spaces"
-            tolerance:.26];
+            tolerance:.16];
 }
 
 - (void)testNumericAndRelativeWeightsMatchWebKit

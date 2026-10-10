@@ -18,6 +18,18 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testSVGBackgroundFillsViewportBeforeViewBox
+{
+    [self assertBody:@"<svg width='32' height='32' viewBox='0 0 16 8' style='background-color:red'>"
+                      "<rect width='8' height='8' fill='blue'/></svg>"
+          rendersLike:@"<rect width='32' height='32' fill='red'/><rect y='8' width='16' height='16' fill='blue'/>"];
+    [self assertBody:@"<svg x='4' y='8' width='16' height='16' opacity='.5' style='background-color:red'>"
+                      "<rect width='8' height='16' fill='blue'/></svg>"
+          rendersLike:@"<g opacity='.5'><rect x='4' y='8' width='16' height='16' fill='red'/>"
+                       "<rect x='4' y='8' width='8' height='16' fill='blue'/></g>"];
+}
+
+
 - (void)testParsedPointSubpathsIncludeDegenerateCommands
 {
     NSDictionary<NSString*, NSNumber*>* cases = @{

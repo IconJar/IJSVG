@@ -70,6 +70,20 @@ void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters,
     (*characters)[(*count)++] = *character;
 }
 
+void IJSVGTextFontExtents(CTFontRef font, CGFloat* ascent, CGFloat* descent)
+{
+    *ascent = CTFontGetAscent(font);
+    *descent = CTFontGetDescent(font);
+    CFStringRef family = CTFontCopyFamilyName(font);
+    if(CFStringCompare(family, CFSTR("Times"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
+        CFStringCompare(family, CFSTR("Helvetica"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
+        CFStringCompare(family, CFSTR("Courier"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
+        // Use the conventional web ascent for these legacy font families.
+        *ascent += round((*ascent + *descent) * .15f);
+    }
+    CFRelease(family);
+}
+
 CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
 {
     // Characters sharing a style use the same baseline offset.
@@ -77,8 +91,11 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
         return style.resolvedBaseline;
     }
     CTFontRef font = (__bridge CTFontRef)style.font;
-    IJSVGTextAttributeValue* baseline = style.values[IJSVGAttributeAlignmentBaseline]
-        ?: style.values[IJSVGAttributeDominantBaseline];
+    IJSVGTextAttributeValue* baseline = style.values[IJSVGAttributeAlignmentBaseline];
+    if(baseline == nil || baseline.keyword == IJSVGTextKeywordAuto ||
+       baseline.keyword == IJSVGTextKeywordBaseline) {
+        baseline = style.values[IJSVGAttributeDominantBaseline];
+    }
     switch(baseline.keyword) {
         case IJSVGTextKeywordMathematical:
         case IJSVGTextKeywordCentral:
@@ -99,16 +116,8 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
             style.hasResolvedBaseline = YES;
             return style.resolvedBaseline;
     }
-    CGFloat ascent = CTFontGetAscent(font);
-    CGFloat descent = CTFontGetDescent(font);
-    CFStringRef family = CTFontCopyFamilyName(font);
-    if(CFStringCompare(family, CFSTR("Times"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
-        CFStringCompare(family, CFSTR("Helvetica"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
-        CFStringCompare(family, CFSTR("Courier"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
-        // Use the conventional web ascent for these legacy font families.
-        ascent += round((ascent + descent) * .15f);
-    }
-    CFRelease(family);
+    CGFloat ascent, descent;
+    IJSVGTextFontExtents(font, &ascent, &descent);
     ascent /= style.fontScale;
     descent /= style.fontScale;
     CGFloat result = style.baseline;

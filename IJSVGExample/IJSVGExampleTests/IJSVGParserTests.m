@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGTestHelpers.h>
+#import "../../Framework/IJSVG/IJSVG/Source/Stylesheets/IJSVGStyleSheetUtils.h"
 
 @interface IJSVGParserTests: XCTestCase
 @end
@@ -79,6 +80,163 @@
     XCTAssertEqualWithAccuracy(rootNode.viewBox.size.height.value, 6.f, 0.001);
     XCTAssertEqualWithAccuracy(rootNode.intrinsicSize.width.value, 12.f, 0.001);
     XCTAssertEqualWithAccuracy(rootNode.intrinsicSize.height.value, 6.f, 0.001);
+}
+
+- (void)testParsedMediaQueryCanMatchDifferentEnvironments
+{
+    IJSVGMediaQuery* query = IJSVGMediaQueryCreate(@"screen and (min-width:40em) and (orientation:landscape), print");
+    XCTAssertNotEqual(query, NULL);
+    IJSVGMediaEnvironment environment = { CGSizeMake(800, 200), IJSVGMediaTypeScreen };
+    XCTAssertTrue(IJSVGMediaQueryMatches(query, environment));
+    environment.viewport.width = 600;
+    XCTAssertFalse(IJSVGMediaQueryMatches(query, environment));
+    environment.viewport = CGSizeMake(800, 900);
+    XCTAssertFalse(IJSVGMediaQueryMatches(query, environment));
+    environment.type = IJSVGMediaTypePrint;
+    XCTAssertTrue(IJSVGMediaQueryMatches(query, environment));
+    environment.type = IJSVGMediaTypeScreen;
+    environment.viewport = CGSizeMake(800, 200);
+    XCTAssertTrue(IJSVGMediaQueryMatches(query, environment));
+    IJSVGMediaQueryRelease(query);
+
+    for(NSString* media in @[@"only (width:800px)", @"screen and", @"not (width:banana)",
+                              @"not", @",", @"(width:800px) garbage"]) {
+        query = IJSVGMediaQueryCreate(media);
+        XCTAssertFalse(IJSVGMediaQueryMatches(query, environment), @"%@", media);
+        IJSVGMediaQueryRelease(query);
+    }
+    query = IJSVGMediaQueryCreate(@"/* empty */");
+    XCTAssertTrue(IJSVGMediaQueryMatches(query, environment));
+    IJSVGMediaQueryRelease(query);
+    query = IJSVGMediaQueryCreate(@"(bad:value), screen");
+    XCTAssertTrue(IJSVGMediaQueryMatches(query, environment));
+    IJSVGMediaQueryRelease(query);
+}
+
+- (void)testMediaLengthsUseSharedUnitParsing
+{
+    IJSVGMediaEnvironment environment = { CGSizeMake(100, 50), IJSVGMediaTypeScreen };
+    for(NSString* length in @[@"96px", @"1in", @"72pt", @"6pc", @"2.54cm", @"25.4mm",
+                              @"6em", @"6rem", @".6e1EM", @"+9.6e1PX"]) {
+        NSString* media = [NSString stringWithFormat:@"(min-width:%@)", length];
+        IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
+        environment.viewport.width = 100;
+        XCTAssertTrue(IJSVGMediaQueryMatches(query, environment), @"%@", length);
+        environment.viewport.width = 90;
+        XCTAssertFalse(IJSVGMediaQueryMatches(query, environment), @"%@", length);
+        IJSVGMediaQueryRelease(query);
+    }
+    for(NSString* length in @[@"50%", @"auto", @"inherit", @"2unknown", @"1e999px",
+                              @"-1e-999px", @"0x10px", @"1e+px", @"96", @"2 px"]) {
+        NSString* media = [NSString stringWithFormat:@"not (width:%@)", length];
+        IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
+        XCTAssertFalse(IJSVGMediaQueryMatches(query, environment), @"%@", length);
+        IJSVGMediaQueryRelease(query);
+    }
+}
+
+- (void)testMediaParsingBenchmark
+{
+    NSString* media = @"screen and (min-width:40em) and (orientation:landscape), print";
+    IJSVGMediaEnvironment environment = { CGSizeMake(800, 200), IJSVGMediaTypeScreen };
+    NSUInteger matches = 0;
+    NSMutableArray<NSNumber*>* creationSamples = [NSMutableArray array];
+    NSMutableArray<NSNumber*>* matchingSamples = [NSMutableArray array];
+    for(NSUInteger round = 0; round < 10; round++) {
+        NSTimeInterval start = NSProcessInfo.processInfo.systemUptime;
+        for(NSUInteger iteration = 0; iteration < 10000; iteration++) {
+            @autoreleasepool {
+                IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
+                matches += IJSVGMediaQueryMatches(query, environment);
+                IJSVGMediaQueryRelease(query);
+            }
+        }
+        NSTimeInterval creation = NSProcessInfo.processInfo.systemUptime - start;
+        IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
+        start = NSProcessInfo.processInfo.systemUptime;
+        for(NSUInteger iteration = 0; iteration < 1000000; iteration++) {
+            matches += IJSVGMediaQueryMatches(query, environment);
+        }
+        NSTimeInterval matching = NSProcessInfo.processInfo.systemUptime - start;
+        IJSVGMediaQueryRelease(query);
+        if(round != 0) {
+            [creationSamples addObject:@(creation * 100)];
+            [matchingSamples addObject:@(matching * 1000)];
+        }
+    }
+    XCTAssertEqual(matches, 10100000U);
+    NSLog(@"Media benchmark median create match release %.3f us and retained match %.3f ns",
+          [creationSamples sortedArrayUsingSelector:@selector(compare:)][4].doubleValue,
+          [matchingSamples sortedArrayUsingSelector:@selector(compare:)][4].doubleValue);
+
+    for(NSNumber* count in @[@1, @50]) {
+        NSMutableString* body = [NSMutableString string];
+        for(NSUInteger index = 0; index < count.unsignedIntegerValue; index++) {
+            [body appendString:@"<rect width='8' height='8'/>"];
+        }
+        NSMutableArray<NSString*>* documents = [NSMutableArray array];
+        for(NSString* attribute in @[@"", [NSString stringWithFormat:@" media='%@'", media]]) {
+            [documents addObject:[NSString stringWithFormat:
+                @"<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200'>"
+                 "<style%@>rect{fill:blue}</style>%@</svg>", attribute, body]];
+        }
+        NSMutableArray<NSNumber*>* plainSamples = [NSMutableArray array];
+        NSMutableArray<NSNumber*>* mediaSamples = [NSMutableArray array];
+        NSUInteger children = 0;
+        for(NSUInteger round = 0; round < 10; round++) {
+            for(NSUInteger pass = 0; pass < 2; pass++) {
+                NSUInteger variant = (round + pass) % 2;
+                NSString* document = documents[variant];
+                NSTimeInterval start = NSProcessInfo.processInfo.systemUptime;
+                for(NSUInteger iteration = 0; iteration < 200; iteration++) {
+                    @autoreleasepool {
+                        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:document
+                                                                                 fileURL:nil
+                                                                                   error:nil];
+                        children += [parser rootNodeWithSize:environment.viewport].children.count;
+                    }
+                }
+                NSTimeInterval elapsed = NSProcessInfo.processInfo.systemUptime - start;
+                if(round != 0) {
+                    [(variant == 0 ? plainSamples : mediaSamples) addObject:@(elapsed * 5000)];
+                }
+            }
+        }
+        XCTAssertEqual(children, count.unsignedIntegerValue * 4000);
+        double plain = [plainSamples sortedArrayUsingSelector:@selector(compare:)][4].doubleValue;
+        double conditional = [mediaSamples sortedArrayUsingSelector:@selector(compare:)][4].doubleValue;
+        NSLog(@"Media benchmark %@ shapes plain %.3f us conditional %.3f us delta %.3f us %.2f percent",
+              count, plain, conditional, conditional - plain, (conditional / plain - 1) * 100);
+    }
+}
+
+- (void)testStyleMediaUsesDocumentViewport
+{
+    NSArray* queries = @[@"screen and (min-width:600px)", @"(width >= 600px)",
+                         @"print, (width > 599px) and (height:200px)",
+                         @"not screen and (max-width:599px)"];
+    for(NSString* query in queries) {
+        for(NSNumber* width in @[@400, @800]) {
+            NSString* xml = [NSString stringWithFormat:
+                @"<svg xmlns='http://www.w3.org/2000/svg' width='%@' height='200'>"
+                 "<style>rect{fill:red}</style><style media='%@'>rect{fill:blue}</style>"
+                 "<rect width='100' height='100'/></svg>", width, query];
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+            IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(300, 150)];
+            IJSVGColorNode* fill = (IJSVGColorNode*)root.children.lastObject.fill;
+            NSColor* color = [fill.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+            XCTAssertEqualWithAccuracy(color.blueComponent, width.doubleValue >= 600 ? 1 : 0, .001);
+        }
+    }
+    for(NSString* query in @[@"print", @"(unknown:600px)", @"not (width:banana)", @"(width:600garbage)"]) {
+        NSString* xml = [NSString stringWithFormat:
+            @"<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200'>"
+             "<style>rect{fill:red}</style><style media='%@'>rect{fill:blue}</style><rect width='10' height='10'/></svg>", query];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(800, 200)];
+        IJSVGColorNode* fill = (IJSVGColorNode*)root.children.lastObject.fill;
+        XCTAssertEqualWithAccuracy([fill.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace].redComponent, 1, .001);
+    }
 }
 
 - (void)testParserAppliesStyleElementRulesToNodeAttributes

@@ -275,7 +275,7 @@
                        "'Custom Family'";
     IJSVGTextAttributeValue* parsed = IJSVGParseTextAttribute(value,
                                                               IJSVGNodeAttributeFontFamily);
-    NSArray<NSString*>* expected = @[@"SERIF", @"Sans-Serif", @"Menlo", @"Apple Chancery",
+    NSArray<NSString*>* expected = @[@"SERIF", @"Sans-Serif", @"Courier", @"Apple Chancery",
                                      @"Papyrus", @".AppleSystemUIFont", @"日本語フォント", @"Custom Family"];
     XCTAssertEqualObjects(parsed.families, expected);
 }
@@ -362,6 +362,38 @@
     IJSVGTextLayout* explicit = [self layout:@"<text>A 😀é B</text>"];
     XCTAssertEqualObjects(layout.characterPositions,
                           explicit.characterPositions);
+}
+
+- (void)testTextBoundingBoxIncludesGlyphCells
+{
+    IJSVGTextLayout* layout = [self layout:@"<text x='20' y='60' font-family='Verdana' font-size='24' "
+                                            "font-kerning='none'> A </text>"];
+    IJSVGTextLayout* preserved = [self layout:@"<text x='20' y='60' font-family='Verdana' font-size='24' "
+                                               "font-kerning='none' xml:space='preserve'> A </text>"];
+    CTFontRef font = CTFontCreateWithName(CFSTR("Verdana"), 24, NULL);
+    XCTAssertEqualWithAccuracy(CGRectGetMinY(layout.boundingBox),
+                               60 - CTFontGetAscent(font), .00001);
+    XCTAssertEqualWithAccuracy(CGRectGetMaxY(layout.boundingBox),
+                               60 + CTFontGetDescent(font), .00001);
+    XCTAssertEqualWithAccuracy(CGRectGetMinX(preserved.boundingBox), 20, .00001);
+    XCTAssertEqualWithAccuracy(preserved.boundingBox.size.width, preserved.advance, .00001);
+    XCTAssertGreaterThan(preserved.boundingBox.size.width, layout.boundingBox.size.width);
+    XCTAssertGreaterThan(layout.boundingBox.size.height, layout.group.bounds.size.height);
+    CFRelease(font);
+}
+
+- (void)testAutomaticAlignmentUsesDominantBaseline
+{
+    for(NSString* baseline in @[@"hanging", @"middle", @"central", @"mathematical"]) {
+        NSString* format = @"<text x='10' y='60' font-size='24' dominant-baseline='%@' %@>ABC</text>";
+        IJSVGTextLayout* expected = [self layout:[NSString stringWithFormat:format, baseline, @""]];
+        for(NSString* alignment in @[@"auto", @"baseline"]) {
+            NSString* attribute = [NSString stringWithFormat:@"alignment-baseline='%@'", alignment];
+            IJSVGTextLayout* actual = [self layout:[NSString stringWithFormat:format, baseline, attribute]];
+            XCTAssertEqualObjects(actual.characterPositions, expected.characterPositions);
+            XCTAssertTrue(CGRectEqualToRect(actual.group.bounds, expected.group.bounds));
+        }
+    }
 }
 
 - (void)testUnstyledSpansResetNonInheritedTextProperties
@@ -947,13 +979,14 @@
         CGMutablePathRef expected = CGPathCreateMutable();
         IJSVGTextAppendDecorations(actual, &character, &glyph,
                                    CGAffineTransformIdentity, &metrics);
-        CGFloat thickness = MAX(.5 * style.fontScale,
-                                CTFontGetUnderlineThickness(font));
+        CGFloat ascent, descent;
+        IJSVGTextFontExtents(font, &ascent, &descent);
+        CGFloat thickness = CTFontGetSize(font) / 20;
         CGFloat width = character.advance * style.fontScale;
         CGFloat offsets[] = {
-            CTFontGetUnderlinePosition(font),
-            CTFontGetAscent(font),
-            CTFontGetXHeight(font) * .5
+            -2.5 * thickness,
+            ascent - 2 * thickness,
+            ascent * .375 - thickness
         };
         for(NSUInteger offset = 0; offset < 3; offset++) {
             CGRect bounds = CGRectMake(0, offsets[offset], width, thickness);

@@ -25,6 +25,59 @@ static BOOL IJSVGLengthListIsDigit(char character)
     return character >= '0' && character <= '9';
 }
 
+BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* value)
+{
+    const char* cursor = *position;
+    const char* number = cursor;
+    if(*cursor == '+' || *cursor == '-') {
+        cursor++;
+    }
+    const char* digits = cursor;
+    while(IJSVGLengthListIsDigit(*cursor)) {
+        cursor++;
+    }
+    BOOL hasDigits = cursor != digits;
+    if(*cursor == '.') {
+        digits = ++cursor;
+        while(IJSVGLengthListIsDigit(*cursor)) {
+            cursor++;
+        }
+        hasDigits |= cursor != digits;
+    }
+    if(!hasDigits) {
+        return NO;
+    }
+    // Reject negative nonzero mantissas before conversion can underflow.
+    if(!allowNegative && *number == '-') {
+        for(const char* digit = number + 1; digit < cursor; digit++) {
+            if(*digit >= '1' && *digit <= '9') {
+                return NO;
+            }
+        }
+    }
+
+    // The letter e starts an exponent only when digits follow. em/ex are units.
+    if(*cursor == 'e' || *cursor == 'E') {
+        const char* exponent = cursor + 1;
+        if(*exponent == '+' || *exponent == '-') {
+            exponent++;
+        }
+        if(IJSVGLengthListIsDigit(*exponent)) {
+            cursor = exponent + 1;
+            while(IJSVGLengthListIsDigit(*cursor)) {
+                cursor++;
+            }
+        }
+    }
+    CGFloat scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(cursor - number));
+    if(!isfinite(scalar)) {
+        return NO;
+    }
+    *value = scalar;
+    *position = cursor;
+    return YES;
+}
+
 static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
                                              NSMutableArray<IJSVGUnitLength*>* lengths,
                                              IJSVGUnitLength** singleLength)
@@ -37,52 +90,10 @@ static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegat
         cursor++;
     }
     while(*cursor != '\0') {
-        const char* number = cursor;
-        if(*cursor == '+' || *cursor == '-') {
-            cursor++;
-        }
-        const char* digits = cursor;
-        while(IJSVGLengthListIsDigit(*cursor)) {
-            cursor++;
-        }
-        BOOL hasDigits = cursor != digits;
-        if(*cursor == '.') {
-            digits = ++cursor;
-            while(IJSVGLengthListIsDigit(*cursor)) {
-                cursor++;
-            }
-            hasDigits |= cursor != digits;
-        }
-        if(!hasDigits) {
+        CGFloat scalar;
+        if(!IJSVGParseLengthNumber(&cursor, allowNegative, &scalar)) {
             valid = NO;
             break;
-        }
-        // Reject negative nonzero mantissas before conversion can underflow to
-        // signed zero. A genuinely zero value remains valid with either sign.
-        if(!allowNegative && *number == '-') {
-            for(const char* digit = number + 1; digit < cursor; digit++) {
-                if(*digit >= '1' && *digit <= '9') {
-                    valid = NO;
-                    break;
-                }
-            }
-            if(!valid) {
-                break;
-            }
-        }
-
-        // The letter e starts an exponent only when digits follow. em/ex are units.
-        if(*cursor == 'e' || *cursor == 'E') {
-            const char* exponent = cursor + 1;
-            if(*exponent == '+' || *exponent == '-') {
-                exponent++;
-            }
-            if(IJSVGLengthListIsDigit(*exponent)) {
-                cursor = exponent + 1;
-                while(IJSVGLengthListIsDigit(*cursor)) {
-                    cursor++;
-                }
-            }
         }
         const char* suffix = cursor;
         while(*cursor != '\0' && *cursor != ',' && !IJSVGLengthListIsWhitespace(*cursor)) {
@@ -102,7 +113,6 @@ static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegat
             valid = NO;
             break;
         }
-        CGFloat scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(suffix - number));
         scalar = [IJSVGUnitLength convertUnitValue:scalar
                           toBaseFromUnitLengthType:type];
         if(!isfinite(scalar) || (!allowNegative && scalar < 0.f)) {
@@ -673,9 +683,10 @@ NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
     return origin;
 }
 
-void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value)
+void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value, BOOL allowCSSUnits)
 {
-    NSMutableArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:value].mutableCopy;
+    NSMutableArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:value
+                                                                                   allowCSSUnits:allowCSSUnits].mutableCopy;
     if(transforms == nil) {
         transforms = [[NSMutableArray alloc] init];
     }
@@ -1148,6 +1159,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeLimitingConeAngle: @(IJSVGNodeAttributeLimitingConeAngle),
             IJSVGAttributeColorInterpolationFilters: @(IJSVGNodeAttributeColorInterpolationFilters),
             IJSVGAttributeEnableBackground: @(IJSVGNodeAttributeEnableBackground),
+            IJSVGAttributeBackgroundColor: @(IJSVGNodeAttributeBackgroundColor),
             IJSVGAttributeFont: @(IJSVGNodeAttributeFont),
             IJSVGAttributeFontFamily: @(IJSVGNodeAttributeFontFamily),
             IJSVGAttributeFontSize: @(IJSVGNodeAttributeFontSize),

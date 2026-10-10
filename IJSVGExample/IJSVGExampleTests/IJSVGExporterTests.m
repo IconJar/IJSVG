@@ -13,6 +13,25 @@
 
 @implementation IJSVGExporterTests
 
+- (void)testExporterPreservesSVGBackgroundColor
+{
+    IJSVG* svg = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' "
+                                    "style='background-color:#bbffff80'><rect width='2' height='2'/></svg>");
+    NSString* xml = [svg SVGStringWithSize:CGSizeMake(8, 8)
+                                  options:IJSVGExporterOptionRemoveComments];
+    IJSVG* restored = IJSVGTestSVGObject(xml);
+    NSColor* expected = [svg.rootNode.backgroundColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    NSColor* actual = [restored.rootNode.backgroundColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+    XCTAssertNotNil(actual);
+    XCTAssertEqualWithAccuracy(actual.redComponent, expected.redComponent, .005);
+    XCTAssertEqualWithAccuracy(actual.greenComponent, expected.greenComponent, .005);
+    XCTAssertEqualWithAccuracy(actual.blueComponent, expected.blueComponent, .005);
+    XCTAssertEqualWithAccuracy(actual.alphaComponent, expected.alphaComponent, .005);
+    IJSVGRootNode* copy = svg.rootNode.copy;
+    XCTAssertEqualObjects(copy.backgroundColor, svg.rootNode.backgroundColor);
+}
+
+
 - (void)testExporterIncludesRootDimensionsAndViewBoxForRequestedSize
 {
     IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(@"<rect width=\"8\" height=\"8\" fill=\"#ff0000\"/>"));

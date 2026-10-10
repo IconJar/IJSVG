@@ -11,6 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+BOOL IJSVGParseLengthNumber(const char* _Nonnull * _Nonnull position, BOOL allowNegative, CGFloat* value);
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value);
 BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute);
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute);
@@ -55,7 +56,7 @@ IJSVGUnitLength* _Nullable IJSVGSymbolReferenceFromString(NSString* _Nullable va
                                                           IJSVGNodeAttribute attribute);
 
 NSArray<IJSVGUnitLength*>* _Nullable IJSVGTransformOriginFromString(NSString* value);
-void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value);
+void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value, BOOL allowCSSUnits);
 void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value);
 
 NS_ASSUME_NONNULL_END

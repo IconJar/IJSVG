@@ -187,12 +187,14 @@ void IJSVGTextAppendDecorations(CGMutablePathRef destination,
         // A fallback font needs its own decoration measurements.
         if(metrics->font != font) {
             metrics->font = font;
-            metrics->thickness = CTFontGetUnderlineThickness(font);
-            metrics->underline = CTFontGetUnderlinePosition(font);
-            metrics->overline = CTFontGetAscent(font);
-            metrics->lineThrough = CTFontGetXHeight(font) * .5;
+            CGFloat ascent, descent;
+            IJSVGTextFontExtents(font, &ascent, &descent);
+            metrics->thickness = CTFontGetSize(font) / 20;
+            metrics->underline = -2.5 * metrics->thickness;
+            metrics->overline = ascent - 2 * metrics->thickness;
+            metrics->lineThrough = ascent * .375 - metrics->thickness;
         }
-        CGFloat thickness = MAX(.5 * c->style.fontScale, metrics->thickness);
+        CGFloat thickness = metrics->thickness;
         for(IJSVGTextDecoration flag = IJSVGTextDecorationUnderline;
             flag <= IJSVGTextDecorationLineThrough; flag <<= 1) {
             if((decorations & flag) == 0) {

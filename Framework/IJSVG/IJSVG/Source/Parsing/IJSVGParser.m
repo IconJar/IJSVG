@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGText.h>
 #import "IJSVGSwitch.h"
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVGParserTextUtils.h>
@@ -228,6 +229,8 @@ NSString* const IJSVGAttributePointsAtZ = @"pointsAtZ";
 NSString* const IJSVGAttributeLimitingConeAngle = @"limitingConeAngle";
 NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-filters";
 NSString* const IJSVGAttributeEnableBackground = @"enable-background";
+NSString* const IJSVGAttributeBackgroundColor = @"background-color";
+NSString* const IJSVGAttributeMedia = @"media";
 
 // SVG text presentation and positioning attributes.
 NSString* const IJSVGAttributeFont = @"font";
@@ -923,13 +926,15 @@ typedef struct {
         node.transformBox = [value isEqualToString:@"inherit"] ? node.styleParent.transformBox : value;
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
-        IJSVGApplyTransformAttribute(node, value);
+        BOOL css = [nodeStyle property:IJSVGAttributeTransform] != nil ||
+            [styleSheet property:IJSVGAttributeTransform] != nil;
+        IJSVGApplyTransformAttribute(node, value, css);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientTransform, &value)) {
-        IJSVGApplyTransformAttribute(node, value);
+        IJSVGApplyTransformAttribute(node, value, NO);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePatternTransform, &value)) {
-        IJSVGApplyTransformAttribute(node, value);
+        IJSVGApplyTransformAttribute(node, value, NO);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineCap, &value)) {
         node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];
@@ -979,6 +984,11 @@ typedef struct {
         } else {
             node.currentColor = [IJSVGColor colorFromString:value];
         }
+    }
+    if([node isKindOfClass:IJSVGRootNode.class] &&
+       IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeBackgroundColor, &value)) {
+        ((IJSVGRootNode*)node).backgroundColor = [value caseInsensitiveCompare:@"currentColor"] == NSOrderedSame
+            ? node.currentColor : [IJSVGColor colorFromString:value];
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFill, &value)) {
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
@@ -1699,6 +1709,25 @@ typedef struct {
 - (void)parseStyleElement:(NSXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
 {
+    NSString* media = [element attributeForName:IJSVGAttributeMedia].stringValue;
+    if(media.length != 0) {
+        CGSize viewport = _rootSize;
+        NSString* width = [_document.rootElement attributeForName:IJSVGAttributeWidth].stringValue;
+        NSString* height = [_document.rootElement attributeForName:IJSVGAttributeHeight].stringValue;
+        if(width != nil) {
+            viewport.width = [[IJSVGUnitLength unitWithString:width] computeValue:viewport.width];
+        }
+        if(height != nil) {
+            viewport.height = [[IJSVGUnitLength unitWithString:height] computeValue:viewport.height];
+        }
+        IJSVGMediaEnvironment environment = { viewport, IJSVGMediaTypeScreen };
+        IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
+        BOOL matches = IJSVGMediaQueryMatches(query, environment);
+        IJSVGMediaQueryRelease(query);
+        if(!matches) {
+            return;
+        }
+    }
     [_styleSheet parseStyleBlock:element.stringValue];
 }
 
@@ -2082,7 +2111,8 @@ typedef struct {
     node.width = parentNode.width ?: node.width ?: [IJSVGUnitLength unitWithString:@"100%"];
     node.height = parentNode.height ?: node.height ?: [IJSVGUnitLength unitWithString:@"100%"];
     node.shouldRender = YES;
-    [self computeElement:element parentNode:node];
+    [self computeElement:element
+              parentNode:node];
     if(postProcessBlock != nil) {
         postProcessBlock();
     }
@@ -2128,11 +2158,13 @@ typedef struct {
         self.selectorScope = [self.selectorScopes objectForKey:detachedElement];
         if(self.selectorScope == nil) {
             self.selectorScope = IJSVGParserElementMapTable();
-            [self buildSelectorTreeForElement:detachedElement nodes:self.selectorScope];
+            [self buildSelectorTreeForElement:detachedElement
+                                        nodes:self.selectorScope];
             if(self.selectorScopes == nil) {
                 self.selectorScopes = IJSVGParserElementMapTable();
             }
-            [self.selectorScopes setObject:self.selectorScope forKey:detachedElement];
+            [self.selectorScopes setObject:self.selectorScope
+                                    forKey:detachedElement];
         }
     }
     [self.activeReferences addObject:xlinkID];

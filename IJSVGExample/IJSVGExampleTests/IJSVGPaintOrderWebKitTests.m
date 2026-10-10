@@ -240,6 +240,64 @@
     }
 }
 
+- (void)testTranslatedStitchedTurbulencePreservesInteriorNoise
+{
+    for(NSString* type in @[@"turbulence", @"fractalNoise"]) {
+        for(NSNumber* octaves in @[@1, @3]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><clipPath id='c'><rect x='240' y='20' width='20' height='20'/></clipPath>"
+                 "<filter id='f' x='0' y='0' width='100%%' height='100%%'>"
+                 "<feTurbulence type='%@' baseFrequency='.03' numOctaves='%@' seed='7' stitchTiles='stitch'/>"
+                 "</filter></defs><g clip-path='url(#c)'>"
+                 "<rect x='220' width='100' height='100' filter='url(#f)'/></g>", type, octaves];
+            NSString* reference = [body stringByReplacingOccurrencesOfString:@"stitchTiles='stitch'"
+                                                                  withString:@"stitchTiles='noStitch'"];
+            [self compareBody:body referenceBody:reference
+                         name:[NSString stringWithFormat:@"translated-stitch-interior-%@-%@", type, octaves]
+                    tolerance:.025];
+        }
+    }
+}
+
+- (void)testInheritedTextBaselinesMatchExplicitBaselines
+{
+    NSString* style = @"<style>text{font:28px Verdana;dominant-baseline:hanging;"
+                      "-webkit-font-smoothing:antialiased}</style>";
+    NSString* body = [style stringByAppendingString:
+        @"<text x='10' y='10'>This is <tspan font-weight='bold' fill='red'>bold and red</tspan></text>"
+         "<path id='p' d='M20 100C80 140 100 120 180 100' fill='none'/>"
+         "<text><textPath href='#p'>A curve.</textPath></text>"];
+    NSString* reference = [body stringByReplacingOccurrencesOfString:@"<tspan "
+                                                          withString:@"<tspan dominant-baseline='hanging' "];
+    reference = [reference stringByReplacingOccurrencesOfString:@"<textPath "
+                                                      withString:@"<textPath dominant-baseline='hanging' "];
+    [self compareBody:body referenceBody:reference name:@"inherited-hanging-baselines" tolerance:.16];
+}
+
+- (void)testTextTopBaselineMatchesTextBeforeEdge
+{
+    NSString* body = @"<text x='20' y='20' font-family='Verdana' font-size='30' "
+                     "dominant-baseline='text-top' style='-webkit-font-smoothing:antialiased'>Top baseline</text>";
+    NSString* reference = [body stringByReplacingOccurrencesOfString:@"text-top" withString:@"text-before-edge"];
+    [self compareBody:body referenceBody:reference name:@"text-top-baseline" tolerance:.16];
+}
+
+- (void)testDisplacementTextAlphaMapMatchesWebKit
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80'>"
+                       "<defs><linearGradient id='g'><stop stop-color='red'/>"
+                       "<stop offset='1' stop-color='blue'/></linearGradient></defs>"
+                       "<rect width='100' height='80' fill='url(#g)'/></svg>";
+    NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    NSString* body = [NSString stringWithFormat:
+        @"<defs><filter id='f' color-interpolation-filters='sRGB'>"
+         "<feImage href='data:image/svg+xml;base64,%@' x='0' y='0' width='100%%' height='100%%' result='map'/>"
+         "<feDisplacementMap in='SourceGraphic' in2='map' scale='30' xChannelSelector='A' yChannelSelector='A'/>"
+         "</filter></defs><text x='30' y='100' font-size='40' filter='url(#f)' "
+         "style='-webkit-font-smoothing:antialiased'>Some displaced text</text>", encoded];
+    [self compareBody:body name:@"displacement-text-image-A" tolerance:.16];
+}
+
 - (void)testLinearDisplacementImageMapMatchesFloodMap
 {
     NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80'>"

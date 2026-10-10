@@ -164,6 +164,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeLimitingConeAngle,
     IJSVGNodeAttributeColorInterpolationFilters,
     IJSVGNodeAttributeEnableBackground,
+    IJSVGNodeAttributeBackgroundColor,
     IJSVGNodeAttributeFont,
     IJSVGNodeAttributeFontFamily,
     IJSVGNodeAttributeFontSize,
