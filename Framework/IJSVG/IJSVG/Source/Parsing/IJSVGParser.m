@@ -277,9 +277,9 @@ NSString* const IJSVGAttributePathLength = @"pathLength";
 
 static NSMapTable* IJSVGParserElementMapTable(void)
 {
-    return [NSMapTable
-        mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality
-        valueOptions:NSPointerFunctionsStrongMemory];
+    NSPointerFunctionsOptions options = NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality;
+    return [NSMapTable mapTableWithKeyOptions:options
+                                 valueOptions:NSPointerFunctionsStrongMemory];
 }
 
 typedef struct {
@@ -520,8 +520,8 @@ typedef struct {
     self.parsedPaths = nil;
     self.rawAttributes = nil;
     self.uncachedReferenceElements = nil;
-    self.styleAncestors = [NSMapTable strongToStrongObjectsMapTable];
-    self.definitionStyleParents = [NSMapTable strongToStrongObjectsMapTable];
+    self.styleAncestors = IJSVGParserElementMapTable();
+    self.definitionStyleParents = IJSVGParserElementMapTable();
     if(setup != nil) {
       setup();
     }
