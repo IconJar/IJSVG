@@ -17,6 +17,105 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)assertBody:(NSString*)body rendersLike:(NSString*)reference
+{
+    IJSVG* svg = [self svgWithBody:body];
+    IJSVG* expected = [self svgWithBody:reference];
+    XCTAssertEqualObjects([self renderSVG:svg size:128], [self renderSVG:expected size:128], @"%@", body);
+    for(NSNumber* options in @[@(IJSVGExporterOptionNone), @(IJSVGExporterOptionAll)]) {
+        NSString* actualXML = [svg SVGStringWithSize:CGSizeMake(32, 32) options:options.unsignedIntegerValue];
+        NSString* expectedXML = [expected SVGStringWithSize:CGSizeMake(32, 32) options:options.unsignedIntegerValue];
+        XCTAssertEqualObjects([self renderSVG:[[IJSVG alloc] initWithSVGString:actualXML] size:128],
+                              [self renderSVG:[[IJSVG alloc] initWithSVGString:expectedXML] size:128], @"%@", body);
+    }
+}
+
+- (void)testAutomaticRadii
+{
+    for(NSString* element in @[@"ellipse cx='16' cy='16'", @"rect x='2' y='2' width='28' height='28'"]) {
+        for(NSString* radii in @[@"rx='8'", @"ry='8'", @"rx='auto' ry='8'", @"rx='8' ry='auto'",
+                                @"rx='25%'", @"ry='25%'", @"rx='.5em'", @"ry='.5em'"]) {
+            [self assertBody:[NSString stringWithFormat:@"<%@ %@/>", element, radii]
+                rendersLike:[NSString stringWithFormat:@"<%@ rx='8' ry='8'/>", element]];
+        }
+    }
+    [self assertBody:@"<svg width='32' height='16'><ellipse cx='16' cy='8' ry='25%'/></svg>"
+        rendersLike:@"<svg width='32' height='16'><ellipse cx='16' cy='8' rx='4' ry='4'/></svg>"];
+    [self assertBody:@"<ellipse cx='16' cy='16' rx='0' ry='8'/>" rendersLike:@""];
+    [self assertBody:@"<ellipse cx='16' cy='16'/>" rendersLike:@""];
+}
+
+- (void)testAutomaticImageDimensions
+{
+    NSString* image = @"<image x='2' y='3' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=' %@/>";
+    NSArray* cases = @[@[@"", @"width='2' height='1'"],
+                       @[@"width='auto' height='auto'", @"width='2' height='1'"],
+                       @[@"width='16'", @"width='16' height='8'"],
+                       @[@"height='8'", @"width='16' height='8'"],
+                       @[@"width='auto' height='25%'", @"width='16' height='8'"],
+                       @[@"width='1em' height='auto'", @"width='16' height='8'"],
+                       @[@"width='0' height='8'", @"width='0' height='8'"],
+                       @[@"width='16' height='0'", @"width='16' height='0'"]];
+    for(NSArray* pair in cases) {
+        [self assertBody:[NSString stringWithFormat:image, pair[0]]
+            rendersLike:[NSString stringWithFormat:image, pair[1]]];
+    }
+    [self assertBody:[NSString stringWithFormat:image, @"width='0'"] rendersLike:@""];
+    [self assertBody:[NSString stringWithFormat:image, @"height='0'"] rendersLike:@""];
+}
+
+- (void)testPathLengthDashCalibration
+{
+    for(NSString* shape in @[@"path d='M2 16H30'", @"line x1='2' y1='16' x2='30' y2='16'",
+                             @"polyline points='2,16 30,16'", @"polygon points='2,2 9,2 9,9 2,9'",
+                             @"rect x='2' y='2' width='7' height='7'"]) {
+        for(NSString* transform in @[@"", @"transform='translate(1 2) scale(.8)'",
+                                     @"transform='scale(.8)' vector-effect='non-scaling-stroke'"]) {
+            NSString* format = @"<%@ %@ fill='none' stroke='red' stroke-width='2' %@/>";
+            [self assertBody:[NSString stringWithFormat:format, shape, transform,
+                              @"pathLength='14' stroke-dasharray='2 1' stroke-dashoffset='-1'"]
+                rendersLike:[NSString stringWithFormat:format, shape, transform,
+                              @"stroke-dasharray='4 2' stroke-dashoffset='-2'"]];
+            [self assertBody:[NSString stringWithFormat:format, shape, transform,
+                              @"pathLength='14' stroke-dasharray='2 10%' stroke-dashoffset='5%'"]
+                rendersLike:[NSString stringWithFormat:format, shape, transform,
+                              @"stroke-dasharray='4 10%' stroke-dashoffset='5%'"]];
+        }
+    }
+    for(NSString* invalid in @[@"-1", @"-1e-999", @"1px", @"1 2", @"nan", @"1e999"]) {
+        [self assertBody:[NSString stringWithFormat:@"<path d='M2 16H30' pathLength='%@' stroke='red' stroke-dasharray='4 2'/>", invalid]
+            rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='4 2'/>"];
+    }
+}
+
+- (void)testZeroPathLengthRenderingAndExport
+{
+    [self assertBody:@"<path d='M2 16H30' stroke='red' pathLength='0' stroke-dasharray='1 1'/>"
+        rendersLike:@"<path d='M2 16H30' stroke='red'/>"];
+    [self assertBody:@"<path d='M2 16H30' stroke='red' pathLength='0' stroke-dasharray='0 1'/>"
+        rendersLike:@""];
+    [self assertBody:@"<path d='M2 16H30' stroke='red' pathLength='0' stroke-dasharray='1 1' stroke-dashoffset='1'/>"
+        rendersLike:@""];
+    [self assertBody:@"<path d='M2 16H30' stroke='red' pathLength='0' stroke-dasharray='10% 5%'/>"
+        rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='10% 5%'/>"];
+}
+
+- (void)testPathLengthWithInheritedUnitsAndUse
+{
+    [self assertBody:@"<defs><path id='p' d='M2 16H30' pathLength='14'/></defs>"
+                      "<g font-size='2' stroke='red' stroke-dasharray='1em .5em' stroke-dashoffset='.5em'>"
+                      "<use href='#p'/></g>"
+        rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='4 2' stroke-dashoffset='2'/>"];
+    [self assertBody:@"<g pathLength='14'><path d='M2 16H30' stroke='red' stroke-dasharray='2 1'/></g>"
+        rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='2 1'/>"];
+    NSString* defs = @"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient>"
+                      "<clipPath id='c'><rect x='4' y='4' width='24' height='24'/></clipPath></defs>";
+    [self assertBody:[defs stringByAppendingString:@"<path d='M2 16H30' stroke='url(#g)' stroke-width='4' clip-path='url(#c)' pathLength='14' stroke-dasharray='2 1'/>"]
+        rendersLike:[defs stringByAppendingString:@"<path d='M2 16H30' stroke='url(#g)' stroke-width='4' clip-path='url(#c)' stroke-dasharray='4 2'/>"]];
+    [self assertBody:@"<path d='M2 16H30' stroke='red' pathLength='1e-320' stroke-dasharray='1 1'/>"
+        rendersLike:@"<path d='M2 16H30' stroke='red'/>"];
+}
+
 - (IJSVG*)svgWithBody:(NSString*)body
 {
     NSString* xml = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' "

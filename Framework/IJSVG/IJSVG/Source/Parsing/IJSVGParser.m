@@ -757,6 +757,14 @@ typedef struct {
 
     IJSVGApplyTextAttributes(node, attributeValues);
 
+    if([node isKindOfClass:IJSVGPath.class] &&
+       IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePathLength, &value)) {
+        NSArray<IJSVGUnitLength*>* lengths = IJSVGUnitLengthsFromString(value);
+        if(lengths.count == 1 && lengths.firstObject.originalType == IJSVGUnitLengthTypeNumber) {
+            ((IJSVGPath*)node).pathLength = @(lengths.firstObject.value);
+        }
+    }
+
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeEnableBackground, &value)) {
         IJSVGApplyBackgroundAttribute(node, value);
     }

@@ -77,7 +77,8 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
                 break;
             }
         }
-        // An 'e' starts an exponent only when digits follow; em/ex are units.
+
+        // The letter e starts an exponent only when digits follow. em/ex are units.
         if(*cursor == 'e' || *cursor == 'E') {
             char* exponent = cursor + 1;
             if(*exponent == '+' || *exponent == '-') {
@@ -91,8 +92,7 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
             }
         }
         char* suffix = cursor;
-        while(*cursor != '\0' && *cursor != ',' &&
-              !IJSVGLengthListIsWhitespace(*cursor)) {
+        while(*cursor != '\0' && *cursor != ',' && !IJSVGLengthListIsWhitespace(*cursor)) {
             cursor++;
         }
         size_t suffixLength = cursor - suffix;

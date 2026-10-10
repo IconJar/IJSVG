@@ -28,6 +28,8 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
+// Nil uses the measured length. Zero is a valid authored length.
+@property (nonatomic, copy, nullable) NSNumber* pathLength;
 @property (nonatomic, assign, nullable) CGMutablePathRef path;
 @property (nonatomic, assign) IJSVGUnitType pathUnits;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* x1;

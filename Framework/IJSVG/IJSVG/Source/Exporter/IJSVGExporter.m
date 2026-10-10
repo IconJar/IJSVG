@@ -2124,7 +2124,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         dict[IJSVGAttributeFillRule] = IJSVGStringEvenOdd;
     }
 
-    // A separated stroke operation must not acquire SVG's default black fill.
+    // A separated stroke operation must not acquire the default black SVG fill.
     if(paint.fillPaint == nil) {
         dict[IJSVGAttributeFill] = IJSVGStringNone;
     }
@@ -2387,7 +2387,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         }
     }
 
-    // Export the resolved paint order; text geometry can outlive its style parents.
+    // Export the resolved paint order because text geometry can outlive its style parents.
     if(paint.fillPaint != nil && paint.strokePaint != nil &&
        paint.children.firstObject == paint.strokePaint) {
         dict[IJSVGAttributePaintOrder] = IJSVGStringFromPaintOrder(IJSVGPaintOrderStrokeFillMarkers);

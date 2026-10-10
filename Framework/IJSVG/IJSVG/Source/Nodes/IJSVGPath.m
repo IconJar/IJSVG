@@ -40,6 +40,7 @@
     [storage setBit:IJSVGNodeAttributeFilter];
     [storage setBit:IJSVGNodeAttributeOpacity];
     [storage setBit:IJSVGNodeAttributeBlendMode];
+    [storage setBit:IJSVGNodeAttributePathLength];
     return storage;
 }
 
@@ -108,6 +109,7 @@
     node.markerPathData = self.markerPathData;
     node.pathUnits = _pathUnits;
     node.primitiveType = _primitiveType;
+    node.pathLength = _pathLength;
     node.lastControlPoint = _lastControlPoint;
     node.x1 = _x1.copy;
     node.y1 = _y1.copy;

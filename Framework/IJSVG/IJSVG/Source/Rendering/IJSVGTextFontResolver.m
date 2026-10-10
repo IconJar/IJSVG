@@ -199,7 +199,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         } else {
             resolved = parentWeight < 550 ? MIN(100, parentWeight) : (parentWeight < 750 ? 400 : 700);
         }
-        // Parsed values may be shared by other nodes; never mutate them.
+        // Parsed values may be shared by other nodes. Never mutate them.
         IJSVGTextAttributeValue* computed = [[IJSVGTextAttributeValue alloc] init];
         computed.number = resolved;
         values[IJSVGAttributeFontWeight] = computed;
@@ -271,8 +271,10 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         return [length computeValue:percentage];
     }
     IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
-    // SVG geometry rounds x-height to a user unit, matching WebKit.
-    return [length computeValue:percentage fontSize:style.size xHeight:ceil(style.xHeight)];
+    // SVG geometry rounds x height to a user unit, matching WebKit.
+    return [length computeValue:percentage
+                       fontSize:style.size
+                        xHeight:ceil(style.xHeight)];
 }
 
 - (CGFloat)resolveCSSLength:(IJSVGUnitLength*)length
@@ -283,7 +285,9 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         return [length computeValue:percentage];
     }
     IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
-    return [length computeValue:percentage fontSize:style.size xHeight:style.xHeight];
+    return [length computeValue:percentage
+                       fontSize:style.size
+                        xHeight:style.xHeight];
 }
 
 - (CGSize)resolveSize:(IJSVGUnitSize*)size
@@ -297,7 +301,10 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
 - (IJSVGUnitRect*)rectByResolvingFontLengths:(IJSVGUnitRect*)rect
                                       node:(IJSVGNode*)node
 {
-    IJSVGUnitLength* lengths[] = { rect.origin.x, rect.origin.y, rect.size.width, rect.size.height };
+    IJSVGUnitLength* lengths[] = {
+      rect.origin.x, rect.origin.y,
+      rect.size.width, rect.size.height
+    };
     BOOL relative = NO;
     for(NSUInteger index = 0; index < 4; index++) {
         relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||

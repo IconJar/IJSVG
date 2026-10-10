@@ -21,6 +21,69 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testAutomaticRadiiMatchesWebKit
+{
+    [self compareBody:@"<ellipse cx='50' cy='60' rx='30'/><ellipse cx='130' cy='60' ry='30'/>"
+                       "<ellipse cx='210' cy='60' rx='auto' ry='15%'/><rect x='260' y='20' width='100' height='80' ry='20'/>"
+                       "<rect x='20' y='120' width='150' height='60' rx='10%'/><ellipse cx='240' cy='150' rx='2em'/>"
+                 name:@"automatic-radii" tolerance:.025];
+}
+
+- (void)testAutomaticImagesMatchWebKit
+{
+    NSString* href = @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=";
+    [self compareBody:[NSString stringWithFormat:
+        @"<image x='10' y='10' width='120' href='%@'/><image x='150' y='10' height='60' href='%@'/>"
+         "<image x='10' y='90' width='auto' height='30%%' href='%@'/>"
+         "<image x='170' y='90' width='8em' height='auto' href='%@'/>"
+         "<image width='0' height='100' href='%@'/>", href, href, href, href, href]
+                 name:@"automatic-images" tolerance:.025];
+}
+
+- (void)testPathLengthMatchesWebKit
+{
+    NSArray* shapes = @[@"<circle cx='55' cy='55' r='40' pathLength='100'/>",
+                        @"<ellipse cx='170' cy='55' rx='60' ry='35' pathLength='100'/>",
+                        @"<rect x='255' y='15' width='120' height='80' rx='15' pathLength='100'/>",
+                        @"<path d='M10 150 Q100 70 190 150 T380 150' pathLength='100'/>"];
+    for(NSUInteger index = 0; index < shapes.count; index++) {
+        // Thin curved dashes have the same rasterization difference without
+        // calibration. Retain the baseline alongside the pathLength case.
+        NSString* baseline = [shapes[index] stringByReplacingOccurrencesOfString:@" pathLength='100'" withString:@""];
+        [self compareBody:[NSString stringWithFormat:@"<g fill='none' stroke='navy' stroke-width='4' stroke-dasharray='20 12' stroke-dashoffset='8'>%@</g>", baseline]
+                     name:[NSString stringWithFormat:@"path-length-baseline-%lu", index] tolerance:.07];
+        [self compareBody:[NSString stringWithFormat:@"<g fill='none' stroke='navy' stroke-width='4' stroke-dasharray='5 3' stroke-dashoffset='2'>%@</g>", shapes[index]]
+                     name:[NSString stringWithFormat:@"path-length-curve-%lu", index] tolerance:.07];
+    }
+}
+
+- (void)testZeroPathLengthUsesLimitingPattern
+{
+    // WebKit currently makes pathLength=0 strokes solid, including percentages.
+    // Compare the specified limit against equivalent explicit geometry instead.
+    [self compareBody:@"<g fill='none' stroke='navy' stroke-width='16'>"
+                       "<path d='M10 30H390' pathLength='0' stroke-dasharray='1 1'/>"
+                       "<path d='M10 70H390' pathLength='0' stroke-dasharray='0 1'/>"
+                       "<path d='M10 110H390' pathLength='0' stroke-dasharray='1 1' stroke-dashoffset='1'/>"
+                       "<path d='M10 150H390' pathLength='0' stroke-dasharray='10% 5%'/></g>"
+        referenceBody:@"<g fill='none' stroke='navy' stroke-width='16'>"
+                       "<path d='M10 30H390'/>"
+                       "<path d='M10 150H390' stroke-dasharray='10% 5%'/></g>"
+                 name:@"path-length-zero" tolerance:.025];
+}
+
+- (void)testPathLengthTransformsMatchWebKit
+{
+    NSString* body = @"<g stroke='navy' stroke-width='8' stroke-dasharray='4 2' fill='none'>"
+                       "<path d='M10 20H180' transform='scale(2)' pathLength='85'/>"
+                       "<path d='M10 50H180' transform='scale(2)' pathLength='85' vector-effect='non-scaling-stroke'/>"
+                       "<path d='M10 80H180' transform='scale(2 1.5)' pathLength='85' vector-effect='non-scaling-stroke'/></g>";
+    NSString* baseline = [[body stringByReplacingOccurrencesOfString:@" pathLength='85'" withString:@""]
+                          stringByReplacingOccurrencesOfString:@"stroke-dasharray='4 2'" withString:@"stroke-dasharray='8 4'"];
+    [self compareBody:baseline name:@"path-length-transform-baseline" tolerance:.05];
+    [self compareBody:body name:@"path-length-transforms" tolerance:.05];
+}
+
 - (void)webView:(WKWebView*)webView
 didFinishNavigation:(WKNavigation*)navigation
 {

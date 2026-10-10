@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVGTextFontResolver.h>
+#import <IJSVGTextPathMetrics.h>
 #import <IJSVGPaint.h>
 #import <IJSVGGroupPaint.h>
 #import <IJSVGTransformPaint.h>
@@ -867,32 +868,73 @@ inMeasurementPaint:(IJSVGPaint*)paint
             break;
         }
         case kIJSVGPrimitivePathTypeRect: {
-            IJSVGUnitLength* rx = [self unit:node.rx matchingNode:node];
-            IJSVGUnitLength* ry = [self unit:(node.ry ?: node.rx) matchingNode:node];
             CGRect rect = CGRectMake([self resolveCSSLength:[self unit:node.x matchingNode:node] percentage:width node:node],
                                      [self resolveCSSLength:[self unit:node.y matchingNode:node] percentage:height node:node],
                                      [self resolveCSSLength:[self unit:node.width matchingNode:node] percentage:width node:node],
                                      [self resolveCSSLength:[self unit:node.height matchingNode:node] percentage:height node:node]);
-            CGFloat radiusX = [self resolveCSSLength:rx percentage:width node:node];
-            CGFloat radiusY = [self resolveCSSLength:ry percentage:height node:node];
-            CGPathAddRoundedRect(path, &transform, rect, radiusX, radiusY);
+            if(rect.size.width <= 0.f || rect.size.height <= 0.f) {
+                break;
+            }
+            CGSize radii = [self resolvedRadiiForNode:node width:width height:height];
+            CGFloat rx = MIN(radii.width, rect.size.width / 2.f);
+            CGFloat ry = MIN(radii.height, rect.size.height / 2.f);
+            if(rx == 0.f || ry == 0.f) {
+                CGPathAddRect(path, &transform, rect);
+                break;
+            }
+            // SVG starts at the end of the top left arc and proceeds clockwise.
+            // The Core Graphics rounded rectangle starts elsewhere, shifting dashes.
+            CGFloat left = CGRectGetMinX(rect), right = CGRectGetMaxX(rect);
+            CGFloat top = CGRectGetMinY(rect), bottom = CGRectGetMaxY(rect);
+            CGFloat kappa = 4.f * (sqrt(2.f) - 1.f) / 3.f;
+            CGFloat dx = rx * kappa, dy = ry * kappa;
+            CGPathMoveToPoint(path, &transform, left + rx, top);
+            CGPathAddLineToPoint(path, &transform, right - rx, top);
+            CGPathAddCurveToPoint(path, &transform, right - rx + dx, top,
+                                 right, top + ry - dy, right, top + ry);
+            CGPathAddLineToPoint(path, &transform, right, bottom - ry);
+            CGPathAddCurveToPoint(path, &transform, right, bottom - ry + dy,
+                                 right - rx + dx, bottom, right - rx, bottom);
+            CGPathAddLineToPoint(path, &transform, left + rx, bottom);
+            CGPathAddCurveToPoint(path, &transform, left + rx - dx, bottom,
+                                 left, bottom - ry + dy, left, bottom - ry);
+            CGPathAddLineToPoint(path, &transform, left, top + ry);
+            CGPathAddCurveToPoint(path, &transform, left, top + ry - dy,
+                                 left + rx - dx, top, left + rx, top);
+            CGPathCloseSubpath(path);
             break;
         }
         case kIJSVGPrimitivePathTypeCircle: {
-            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node] percentage:width node:node];
-            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node] percentage:height node:node];
+            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node]
+                                     percentage:width
+                                           node:node];
+            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node]
+                                     percentage:height
+                                           node:node];
             IJSVGUnitLength* radius = [self unit:node.r matchingNode:node];
-            CGFloat rx = [self resolveCSSLength:radius percentage:width node:node];
-            CGFloat ry = [self resolveCSSLength:radius percentage:height node:node];
+            CGFloat rx = [self resolveCSSLength:radius
+                                     percentage:width
+                                           node:node];
+            CGFloat ry = [self resolveCSSLength:radius
+                                     percentage:height
+                                           node:node];
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
             CGPathAddEllipseInRect(path, &transform, rect);
             break;
         }
         case kIJSVGPrimitivePathTypeEllipse: {
-            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node] percentage:width node:node];
-            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node] percentage:height node:node];
-            CGFloat rx = [self resolveCSSLength:[self unit:node.rx matchingNode:node] percentage:width node:node];
-            CGFloat ry = [self resolveCSSLength:[self unit:node.ry matchingNode:node] percentage:height node:node];
+            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node]
+                                     percentage:width node:node];
+            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node]
+                                     percentage:height node:node];
+            CGSize radii = [self resolvedRadiiForNode:node
+                                                width:width
+                                               height:height];
+            CGFloat rx = radii.width;
+            CGFloat ry = radii.height;
+            if(rx <= 0.f || ry <= 0.f) {
+                break;
+            }
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
             CGPathAddEllipseInRect(path, &transform, rect);
             break;
@@ -904,6 +946,25 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 }
 
+- (CGSize)resolvedRadiiForNode:(IJSVGPath*)node
+                         width:(CGFloat)width
+                        height:(CGFloat)height
+{
+    BOOL autoX = node.rx == nil || node.rx.value < 0.f;
+    BOOL autoY = node.ry == nil || node.ry.value < 0.f;
+    CGFloat rx = autoX ? 0.f : [self resolveCSSLength:[self unit:node.rx matchingNode:node]
+                                         percentage:width node:node];
+    CGFloat ry = autoY ? 0.f : [self resolveCSSLength:[self unit:node.ry matchingNode:node]
+                                         percentage:height node:node];
+    if(autoX) {
+        rx = ry;
+    }
+    if(autoY) {
+        ry = rx;
+    }
+    return CGSizeMake(rx, ry);
+}
+
 - (CGPathRef)newResolvedPathForPathNode:(IJSVGPath*)node
 {
     if(node.primitiveType == kIJSVGPrimitivePathTypePath ||
@@ -911,7 +972,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
         node.primitiveType == kIJSVGPrimitivePathTypePolyLine) {
         if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
             CGRect bounds = [self unitResolutionBoundsForNode:node];
-            CGAffineTransform transform = CGAffineTransformMakeScale(bounds.size.width, bounds.size.height);
+            CGAffineTransform transform = CGAffineTransformMakeScale(bounds.size.width,
+                                                                     bounds.size.height);
             return CGPathCreateCopyByTransformingPath(node.path, &transform);
         }
         return CGPathCreateCopy(node.path);
@@ -1479,7 +1541,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
                     placed.fillPaint = component;
                     placed.fillRule = shape.fillRule;
                     if(shape.strokeStyle != nil) {
-                        // Keep the fill's export path in the padded stroke frame.
+                        // Keep the fill export path in the padded stroke frame.
                         CGFloat inset = shape.strokeStyle.lineWidth * .5f;
                         CGAffineTransform transform = CGAffineTransformMakeTranslation(inset, inset);
                         CGPathRef path = CGPathCreateCopyByTransformingPath(shape.path, &transform);
@@ -1663,6 +1725,57 @@ inMeasurementPaint:(IJSVGPaint*)paint
     return instance;
 }
 
+- (CGFloat)zeroPathLengthScaleForPattern:(NSArray<NSNumber*>*)pattern
+                                 lengths:(NSArray<IJSVGUnitLength*>*)lengths
+                                   phase:(CGFloat)phase
+                                  offset:(IJSVGUnitLength*)offset
+                              pathLength:(CGFloat)pathLength
+{
+    // Replace the infinite calibration with a finite equivalent over this path.
+    // Keep every nonzero distance to a dash boundary beyond the visible length.
+    // This also keeps Core Graphics and SVG export free of infinite values.
+    CGFloat period = 0.f;
+    CGFloat finiteLength = pathLength + fabs(phase) + 1.f;
+    NSUInteger count = pattern.count;
+    NSUInteger repeatedCount = count % 2 == 0 ? count : count * 2;
+    for(NSUInteger index = 0; index < repeatedCount; index++) {
+        NSUInteger item = index % count;
+        CGFloat value = pattern[item].doubleValue;
+        if(item < lengths.count && lengths[item].type == IJSVGUnitLengthTypePercentage) {
+            finiteLength += value;
+        } else {
+            period += value;
+        }
+    }
+    if(period == 0.f) {
+        return 1.f;
+    }
+    CGFloat position = offset.type == IJSVGUnitLengthTypePercentage ? 0.f : fmod(phase, period);
+    if(position < 0.f) {
+        position += period;
+    }
+    CGFloat minimum = period;
+    CGFloat boundary = 0.f;
+    for(NSUInteger index = 0; index < repeatedCount; index++) {
+        NSUInteger item = index % count;
+        if(item >= lengths.count || lengths[item].type != IJSVGUnitLengthTypePercentage) {
+            CGFloat value = pattern[item].doubleValue;
+            if(value > 0.f) {
+                minimum = MIN(minimum, value);
+            }
+            boundary += value;
+        }
+        CGFloat distance = fabs(boundary - position);
+        if(distance > 0.f) {
+            minimum = MIN(minimum, distance);
+        }
+        if(distance < period) {
+            minimum = MIN(minimum, period - distance);
+        }
+    }
+    return 2.f * finiteLength / minimum;
+}
+
 - (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node
                                   resolvedPath:(CGPathRef)resolvedPath
                             resolvedPathBounds:(CGRect)resolvedPathBounds
@@ -1715,6 +1828,28 @@ inMeasurementPaint:(IJSVGPaint*)paint
         }
         paint.lineDashPattern = pattern;
     }
+    if(node.pathLength != nil && paint.lineDashPattern.count != 0) {
+        IJSVGTextPathMetrics* metrics = [[IJSVGTextPathMetrics alloc] initWithPath:resolvedPath];
+        CGFloat authorLength = node.pathLength.doubleValue;
+        CGFloat scale = authorLength > 0.f ? metrics.length / authorLength : INFINITY;
+        if(!isfinite(scale)) {
+            scale = [self zeroPathLengthScaleForPattern:paint.lineDashPattern lengths:lengths
+                                                 phase:paint.lineDashPhase offset:offset
+                                            pathLength:metrics.length];
+        }
+        NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:paint.lineDashPattern.count];
+        for(NSUInteger index = 0; index < paint.lineDashPattern.count; index++) {
+            CGFloat value = paint.lineDashPattern[index].doubleValue;
+            if(index >= lengths.count || lengths[index].type != IJSVGUnitLengthTypePercentage) {
+                value = value == 0.f ? 0.f : value * scale;
+            }
+            [pattern addObject:@(value)];
+        }
+        paint.lineDashPattern = pattern;
+        if(offset.type != IJSVGUnitLengthTypePercentage && paint.lineDashPhase != 0.f) {
+            paint.lineDashPhase *= scale;
+        }
+    }
     paint.nonScalingStroke = node.resolvedVectorEffect == IJSVGVectorEffectNonScalingStroke;
     if(paint.nonScalingStroke) {
         _containsNonScalingStrokes = YES;
@@ -1750,7 +1885,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
     IJSVGUnitLength* length = node.strokeWidth;
     if(length.type == IJSVGUnitLengthTypeEM || length.type == IJSVGUnitLengthTypeEX) {
-        // Inherited stroke widths retain the declaring element's font metrics.
+        // Inherited stroke widths retain the font metrics of the declaring element.
         while(node.styleParent != nil && node.styleParent.strokeWidth == length) {
             node = node.styleParent;
         }
@@ -2404,29 +2539,40 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 - (IJSVGPaint*)drawablePaintForImageNode:(IJSVGImage*)image
 {
-    if([self hasFontRelativeRegion:image]) {
-        image = image.copy;
-        [self resolveRegionFontLengths:image css:YES];
-    }
-    IJSVGImagePaint* paint = [IJSVGImagePaint.alloc initWithImage:image];
     CGRect bounds = [self unitResolutionBoundsForNode:image];
     CGFloat width = CGRectGetWidth(bounds);
     CGFloat height = CGRectGetHeight(bounds);
+    BOOL autoWidth = image.width == nil || image.width.value < 0.f;
+    BOOL autoHeight = image.height == nil || image.height.value < 0.f;
+    CGSize intrinsic = image.intrinsicSize;
+    IJSVGNode* referencingNode = nil;
+    BOOL objectUnits = image.parentNode != nil &&
+        [image.parentNode contentUnitsWithReferencingNode:&referencingNode] == IJSVGUnitObjectBoundingBox;
+    CGFloat percentageWidth = objectUnits ? 1.f : width;
+    CGFloat percentageHeight = objectUnits ? 1.f : height;
+    CGFloat resolvedWidth = autoWidth ? intrinsic.width :
+        [self resolveCSSLength:image.width percentage:percentageWidth node:image];
+    CGFloat resolvedHeight = autoHeight ? intrinsic.height :
+        [self resolveCSSLength:image.height percentage:percentageHeight node:image];
+    if(autoWidth && !autoHeight && intrinsic.height > 0.f) {
+        resolvedWidth = resolvedHeight * intrinsic.width / intrinsic.height;
+    } else if(autoHeight && !autoWidth && intrinsic.width > 0.f) {
+        resolvedHeight = resolvedWidth * intrinsic.height / intrinsic.width;
+    }
+
+    // Keep the resolved viewport on a copy for drawing and export. Explicit
+    // zero dimensions must remain zero rather than falling back to the image.
+    image = image.copy;
+    image.width = [IJSVGUnitLength unitWithFloat:resolvedWidth];
+    image.height = [IJSVGUnitLength unitWithFloat:resolvedHeight];
+    [self resolveRegionFontLengths:image css:YES];
     CGRect frame = CGRectMake([self resolveLength:[self unit:image.x matchingNode:image] percentage:width node:image],
                               [self resolveLength:[self unit:image.y matchingNode:image] percentage:height node:image],
                               [self resolveLength:[self unit:image.width matchingNode:image] percentage:width node:image],
                               [self resolveLength:[self unit:image.height matchingNode:image] percentage:height node:image]);
-
-    if(frame.size.width == 0.f) {
-        frame.size.width = image.intrinsicSize.width;
-    }
-    if(frame.size.height == 0.f) {
-        frame.size.height = image.intrinsicSize.height;
-    }
-
+    IJSVGImagePaint* paint = [IJSVGImagePaint.alloc initWithImage:image];
     paint.frame = frame;
-
-    return (IJSVGPaint*)paint;
+    return paint;
 }
 
 // Keep earlier artwork in a bitmap so filters can read the background.

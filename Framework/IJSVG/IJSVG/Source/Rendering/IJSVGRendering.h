@@ -25,8 +25,8 @@ FOUNDATION_EXPORT const CGFloat IJSVGDefaultFontSize;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
 
-// Initial font size in user units, before SVG font-size declarations. Defaults to 16.
-// Negative and non-finite values restore the default; zero is allowed.
+// Initial font size in user units, before SVG font size declarations. Defaults to 16.
+// Negative and nonfinite values restore the default. Zero is allowed.
 @property (nonatomic, assign) CGFloat defaultFontSize;
 
 @end
