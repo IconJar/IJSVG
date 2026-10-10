@@ -1,13 +1,13 @@
 {
-  "recordedAt": "2026-10-10T17:48:13+00:00",
+  "recordedAt": "2026-10-10T18:28:39+00:00",
   "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
   "macOS": "27.0.1 (26A434)",
   "counts": {
-    "total": 457,
-    "passed": 259,
-    "failed": 35,
+    "total": 447,
+    "passed": 273,
+    "failed": 15,
     "skipped": 159,
-    "expectedFailures": 4
+    "expectedFailures": 0
   },
   "inventoryTest": "Passed",
   "existingWebKitSuites": {
@@ -15,7 +15,7 @@
     "expectedFailures": 1,
     "failed": 0
   },
-  "note": "Observations only, not accepted baselines. The foreignObject examples are excluded from the importer and corpus. Point subpaths now render explicit square or round caps. The square cap MDN fixture is a strict expected WebKit difference verified against explicit rectangles and circles. Remaining 35 unexpected mismatches are retained as failures. Pixel thresholds were not widened.",
+  "note": "Observations only, not accepted baselines. Finite filter coverage now preserves source resolution. Text changes add font size adjustment and synthetic small caps, correct percentage text lengths and legacy font baselines, enable automatic kerning for ordinary text, and match grayscale font smoothing in the WebKit harness. Fourteen previously failing MDN examples now pass. Ten direct comparisons with verified WebKit differences are excluded from generated tests while their control tests remain. The nonzero origin turbulence case remains active pending stronger independent verification. The remaining 15 unexpected mismatches are retained as failures. Pixel thresholds were not widened. Text path cases were rerun after the final kerning adjustment.",
   "cases": [
     {
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
@@ -69,9 +69,9 @@
       "id": "guides_applying_svg_effects_to_html_content_block_16_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
-      "meanInkError": 0.072254,
+      "meanInkError": 0.010888,
       "tolerance": 0.16,
-      "inkPixels": 1596
+      "inkPixels": 1422
     },
     {
       "id": "guides_linking_block_1_1",
@@ -249,9 +249,9 @@
       "id": "reference_attribute_alignment_baseline_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/alignment-baseline",
-      "meanInkError": 0.067978,
+      "meanInkError": 0.0507,
       "tolerance": 0.16,
-      "inkPixels": 35947
+      "inkPixels": 34386
     },
     {
       "id": "reference_attribute_attributename_block_2_1",
@@ -393,33 +393,33 @@
       "id": "reference_attribute_color_interpolation_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
-      "meanInkError": 0.007653,
+      "meanInkError": 0.004207,
       "tolerance": 0.16,
-      "inkPixels": 66236
+      "inkPixels": 65969
     },
     {
       "id": "reference_attribute_color_interpolation_block_3_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
-      "meanInkError": 0.122569,
+      "meanInkError": 0.11898,
       "tolerance": 0.16,
-      "inkPixels": 67066
+      "inkPixels": 66768
     },
     {
       "id": "reference_attribute_color_interpolation_block_4_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
-      "meanInkError": 0.00738,
+      "meanInkError": 0.004057,
       "tolerance": 0.16,
-      "inkPixels": 68684
+      "inkPixels": 68417
     },
     {
       "id": "reference_attribute_color_interpolation_block_5_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
-      "meanInkError": 0.039677,
+      "meanInkError": 0.034751,
       "tolerance": 0.16,
-      "inkPixels": 70935
+      "inkPixels": 70514
     },
     {
       "id": "reference_attribute_crossorigin_block_1_1",
@@ -541,9 +541,9 @@
       "id": "reference_attribute_direction_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/direction",
-      "meanInkError": 0.53185,
+      "meanInkError": 0.174303,
       "tolerance": 0.16,
-      "inkPixels": 8060
+      "inkPixels": 5826
     },
     {
       "id": "reference_attribute_display_block_2_1",
@@ -563,19 +563,19 @@
     },
     {
       "id": "reference_attribute_dominant_baseline_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dominant-baseline",
-      "meanInkError": 0.192536,
+      "meanInkError": 0.03973,
       "tolerance": 0.16,
-      "inkPixels": 20876
+      "inkPixels": 18806
     },
     {
       "id": "reference_attribute_dominant_baseline_block_3_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dominant-baseline",
-      "meanInkError": 0.423907,
+      "meanInkError": 0.285027,
       "tolerance": 0.16,
-      "inkPixels": 51957
+      "inkPixels": 45726
     },
     {
       "id": "reference_attribute_download_block_2_1",
@@ -593,33 +593,33 @@
       "id": "reference_attribute_dx_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dx",
-      "meanInkError": 0.046436,
+      "meanInkError": 0.020962,
       "tolerance": 0.16,
-      "inkPixels": 18781
+      "inkPixels": 17968
     },
     {
       "id": "reference_attribute_dx_block_5_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dx",
-      "meanInkError": 0.056946,
+      "meanInkError": 0.025552,
       "tolerance": 0.16,
-      "inkPixels": 30669
+      "inkPixels": 29436
     },
     {
       "id": "reference_attribute_dy_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dy",
-      "meanInkError": 0.046595,
+      "meanInkError": 0.020917,
       "tolerance": 0.16,
-      "inkPixels": 18748
+      "inkPixels": 17933
     },
     {
       "id": "reference_attribute_dy_block_5_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dy",
-      "meanInkError": 0.067886,
+      "meanInkError": 0.062136,
       "tolerance": 0.16,
-      "inkPixels": 17849
+      "inkPixels": 17262
     },
     {
       "id": "reference_attribute_elevation_block_2_1",
@@ -669,11 +669,9 @@
     },
     {
       "id": "reference_attribute_fill_block_3_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill",
-      "meanInkError": 0.039446,
-      "tolerance": 0.025,
-      "inkPixels": 78423
+      "reason": "This fixture repeats the context fill and context stroke marker behavior already covered by reference_element_marker_block_5_1. WebKit uses default marker paints. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the required paints against explicit WebKit colors. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_fill_opacity_block_2_1",
@@ -735,49 +733,49 @@
       "id": "reference_attribute_font_family_block_1_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-family",
-      "meanInkError": 0.472503,
+      "meanInkError": 0.471623,
       "tolerance": 0.16,
-      "inkPixels": 13190
+      "inkPixels": 12390
     },
     {
       "id": "reference_attribute_font_size_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-size",
-      "meanInkError": 0.130911,
+      "meanInkError": 0.083741,
       "tolerance": 0.16,
-      "inkPixels": 8229
+      "inkPixels": 7552
     },
     {
       "id": "reference_attribute_font_size_adjust_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-size-adjust",
-      "meanInkError": 0.445077,
+      "meanInkError": 0.133896,
       "tolerance": 0.16,
-      "inkPixels": 18816
+      "inkPixels": 14541
     },
     {
       "id": "reference_attribute_font_style_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-style",
-      "meanInkError": 0.194256,
+      "meanInkError": 0.135265,
       "tolerance": 0.16,
-      "inkPixels": 8703
+      "inkPixels": 7616
     },
     {
       "id": "reference_attribute_font_variant_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-variant",
-      "meanInkError": 0.441601,
+      "meanInkError": 0.132249,
       "tolerance": 0.16,
-      "inkPixels": 8728
+      "inkPixels": 6076
     },
     {
       "id": "reference_attribute_font_weight_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-weight",
-      "meanInkError": 0.137374,
+      "meanInkError": 0.089786,
       "tolerance": 0.16,
-      "inkPixels": 9951
+      "inkPixels": 9209
     },
     {
       "id": "reference_attribute_fr_block_2_1",
@@ -791,9 +789,9 @@
       "id": "reference_attribute_fr_block_3_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fr",
-      "meanInkError": 0.00563,
+      "meanInkError": 0.005366,
       "tolerance": 0.16,
-      "inkPixels": 72613
+      "inkPixels": 72780
     },
     {
       "id": "reference_attribute_from_block_2_1",
@@ -821,9 +819,9 @@
       "id": "reference_attribute_fy_block_3_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fy",
-      "meanInkError": 0.004464,
+      "meanInkError": 0.003639,
       "tolerance": 0.16,
-      "inkPixels": 105417
+      "inkPixels": 105592
     },
     {
       "id": "reference_attribute_gradienttransform_block_2_1",
@@ -871,11 +869,9 @@
     },
     {
       "id": "reference_attribute_in_block_1_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/in",
-      "meanInkError": 0.054077,
-      "tolerance": 0.025,
-      "inkPixels": 98686
+      "reason": "The fixture does not enable background accumulation. SVG 1.1 defines BackgroundImage as transparent black in this case. WebKit instead multiplies the source with itself. IJSVGPaintOrderWebKitTests/testBackgroundBlendWithoutEnabledBackdropMatchesTransparentInput verifies the result against an explicit transparent input. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_in_block_1_2",
@@ -953,27 +949,27 @@
     },
     {
       "id": "reference_attribute_lang_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/lang",
-      "meanInkError": 0.171868,
+      "meanInkError": 0.140007,
       "tolerance": 0.16,
-      "inkPixels": 305
+      "inkPixels": 275
     },
     {
       "id": "reference_attribute_lengthadjust_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/lengthAdjust",
-      "meanInkError": 0.172705,
+      "meanInkError": 0.125103,
       "tolerance": 0.16,
-      "inkPixels": 13953
+      "inkPixels": 12598
     },
     {
       "id": "reference_attribute_letter_spacing_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/letter-spacing",
-      "meanInkError": 0.158429,
+      "meanInkError": 0.105036,
       "tolerance": 0.16,
-      "inkPixels": 5394
+      "inkPixels": 4866
     },
     {
       "id": "reference_attribute_lighting_color_block_2_1",
@@ -1057,9 +1053,9 @@
       "id": "reference_attribute_media_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/media",
-      "meanInkError": 0.352277,
+      "meanInkError": 0.352796,
       "tolerance": 0.16,
-      "inkPixels": 454850
+      "inkPixels": 454115
     },
     {
       "id": "reference_attribute_min_block_2_1",
@@ -1103,9 +1099,9 @@
       "id": "reference_attribute_offset_block_3_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/offset",
-      "meanInkError": 0.059179,
+      "meanInkError": 0.032783,
       "tolerance": 0.16,
-      "inkPixels": 5219
+      "inkPixels": 4748
     },
     {
       "id": "reference_attribute_opacity_block_2_1",
@@ -1119,9 +1115,9 @@
       "id": "reference_attribute_operator_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/operator",
-      "meanInkError": 0.063167,
+      "meanInkError": 0.062008,
       "tolerance": 0.16,
-      "inkPixels": 63876
+      "inkPixels": 62659
     },
     {
       "id": "reference_attribute_order_block_2_1",
@@ -1141,27 +1137,25 @@
     },
     {
       "id": "reference_attribute_overflow_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/overflow",
-      "meanInkError": 0.168596,
+      "meanInkError": 0.119105,
       "tolerance": 0.16,
-      "inkPixels": 11592
+      "inkPixels": 10581
     },
     {
       "id": "reference_attribute_paint_order_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/paint-order",
-      "meanInkError": 0.002774,
+      "meanInkError": 0.001519,
       "tolerance": 0.16,
-      "inkPixels": 278556
+      "inkPixels": 277847
     },
     {
       "id": "reference_attribute_path_block_2_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/path",
-      "meanInkError": 0.6537,
-      "tolerance": 0.16,
-      "inkPixels": 65321
+      "reason": "WebKit does not render text using the inline path attribute on textPath. IJSVGPaintOrderWebKitTests/testInlineTextPathMatchesReferencedPath verifies the same geometry and text against a WebKit textPath with an equivalent referenced path. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_pathlength_block_2_1",
@@ -1437,17 +1431,17 @@
       "id": "reference_attribute_requiredfeatures_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/requiredFeatures",
-      "meanInkError": 0.019028,
+      "meanInkError": 0.020003,
       "tolerance": 0.16,
-      "inkPixels": 55137
+      "inkPixels": 55783
     },
     {
       "id": "reference_attribute_requiredfeatures_block_3_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/requiredFeatures",
-      "meanInkError": 0.067967,
+      "meanInkError": 0.009208,
       "tolerance": 0.16,
-      "inkPixels": 1346168
+      "inkPixels": 1325178
     },
     {
       "id": "reference_attribute_restart_block_2_1",
@@ -1473,9 +1467,9 @@
       "id": "reference_attribute_rotate_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rotate",
-      "meanInkError": 0.112309,
+      "meanInkError": 0.010036,
       "tolerance": 0.16,
-      "inkPixels": 2146
+      "inkPixels": 1964
     },
     {
       "id": "reference_attribute_rx_block_2_1",
@@ -1527,19 +1521,17 @@
     },
     {
       "id": "reference_attribute_side_block_2_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/side",
-      "meanInkError": 0.459551,
-      "tolerance": 0.16,
-      "inkPixels": 19265
+      "reason": "WebKit ignores side=right on textPath and paints both strings on the left side. IJSVGPaintOrderWebKitTests/testTextPathRightSideMatchesReversedPath verifies right side placement against an explicitly reversed WebKit path. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_slope_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/slope",
-      "meanInkError": 0.032171,
+      "meanInkError": 0.018672,
       "tolerance": 0.16,
-      "inkPixels": 34635
+      "inkPixels": 33573
     },
     {
       "id": "reference_attribute_specularconstant_block_2_1",
@@ -1569,19 +1561,17 @@
     },
     {
       "id": "reference_attribute_spreadmethod_block_2_1",
-      "state": "Expected failure",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/spreadMethod",
-      "meanInkError": 0.147909,
-      "tolerance": 0.025,
-      "inkPixels": 120000
+      "reason": "WebKit renders pad, reflect, and repeat identically for this radial gradient with a nonzero focal radius. IJSVGPaintOrderWebKitTests/testRadialSpreadWithFocalRadiusMatchesExplicitStops verifies both spread modes against WebKit using the equivalent zero-radius cone and explicitly expanded stops. SVG 2 requires the radial spread modes; this exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_startoffset_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/startOffset",
-      "meanInkError": 0.091108,
+      "meanInkError": 0.008579,
       "tolerance": 0.16,
-      "inkPixels": 33321
+      "inkPixels": 30645
     },
     {
       "id": "reference_attribute_stddeviation_block_2_1",
@@ -1597,7 +1587,8 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stitchTiles",
       "meanInkError": 0.042367,
       "tolerance": 0.025,
-      "inkPixels": 250245
+      "inkPixels": 250245,
+      "reason": "Nonzero tile origins differ from WebKit. Origin controls pass, but independent coverage of translated stitch coordinates is still needed. Retained as an unexpected mismatch pending that verification."
     },
     {
       "id": "reference_attribute_stroke_block_2_1",
@@ -1609,11 +1600,9 @@
     },
     {
       "id": "reference_attribute_stroke_block_3_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke",
-      "meanInkError": 0.039446,
-      "tolerance": 0.025,
-      "inkPixels": 78423
+      "reason": "This fixture is identical to reference_attribute_fill_block_3_1 and repeats the context marker difference already covered by reference_element_marker_block_5_1. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the required paints against explicit WebKit colors. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_stroke_dasharray_block_2_1",
@@ -1657,11 +1646,9 @@
     },
     {
       "id": "reference_attribute_stroke_linecap_block_8_1",
-      "state": "Expected failure",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linecap",
-      "meanInkError": 0.027581,
-      "tolerance": 0.025,
-      "inkPixels": 110604
+      "reason": "WebKit paints a diamond together with the square cap on the zero length subpath. SVG 2 requires only the centered square. IJSVGPaintOrderWebKitTests/testPointSubpathCapsMatchExplicitShapes verifies caps against explicit WebKit rectangles and circles, including rotated and non scaling strokes. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_stroke_linejoin_block_2_1",
@@ -1745,11 +1732,9 @@
     },
     {
       "id": "reference_attribute_surfacescale_block_2_1",
-      "state": "Expected failure",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/surfaceScale",
-      "meanInkError": 0.046666,
-      "tolerance": 0.025,
-      "inkPixels": 290224
+      "reason": "At the comparison backing scale, WebKit scales the point light position but leaves surfaceScale in device pixels, changing the effective light height. IJSVGPaintOrderWebKitTests/testLightingSurfaceScaleMatchesEquivalentLightHeight verifies flat surfaces against WebKit with the equivalent zero surface height and reduced light Z. IJSVGFilterTests/testLightingSurfaceHeightIsIndependentOfRenderScale checks matching sample positions at two render scales. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_attribute_systemlanguage_block_1_1",
@@ -1783,33 +1768,33 @@
       "id": "reference_attribute_text_anchor_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-anchor",
-      "meanInkError": 0.018227,
+      "meanInkError": 0.016293,
       "tolerance": 0.16,
-      "inkPixels": 64766
+      "inkPixels": 64248
     },
     {
       "id": "reference_attribute_text_decoration_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-decoration",
-      "meanInkError": 0.342946,
+      "meanInkError": 0.3206,
       "tolerance": 0.26,
-      "inkPixels": 13458
+      "inkPixels": 12419
     },
     {
       "id": "reference_attribute_text_rendering_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-rendering",
-      "meanInkError": 0.120358,
+      "meanInkError": 0.114565,
       "tolerance": 0.16,
-      "inkPixels": 31085
+      "inkPixels": 29277
     },
     {
       "id": "reference_attribute_textlength_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/textLength",
-      "meanInkError": 0.481056,
+      "meanInkError": 0.105286,
       "tolerance": 0.16,
-      "inkPixels": 16174
+      "inkPixels": 12192
     },
     {
       "id": "reference_attribute_textlength_block_4_1",
@@ -1989,27 +1974,27 @@
     },
     {
       "id": "reference_attribute_word_spacing_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/word-spacing",
-      "meanInkError": 0.193347,
+      "meanInkError": 0.138436,
       "tolerance": 0.16,
-      "inkPixels": 17286
+      "inkPixels": 15383
     },
     {
       "id": "reference_attribute_x_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x",
-      "meanInkError": 0.146134,
+      "meanInkError": 0.063177,
       "tolerance": 0.16,
-      "inkPixels": 4142
+      "inkPixels": 3735
     },
     {
       "id": "reference_attribute_x_block_5_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x",
-      "meanInkError": 0.146134,
+      "meanInkError": 0.063177,
       "tolerance": 0.16,
-      "inkPixels": 4142
+      "inkPixels": 3735
     },
     {
       "id": "reference_attribute_x_block_8_1",
@@ -2071,9 +2056,9 @@
       "id": "reference_attribute_xchannelselector_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xChannelSelector",
-      "meanInkError": 0.421667,
+      "meanInkError": 0.417653,
       "tolerance": 0.16,
-      "inkPixels": 41190
+      "inkPixels": 39527
     },
     {
       "id": "reference_attribute_xlink_colon_actuate_block_1_1",
@@ -2089,35 +2074,35 @@
     },
     {
       "id": "reference_attribute_xml_colon_lang_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xml:lang",
-      "meanInkError": 0.171868,
+      "meanInkError": 0.140007,
       "tolerance": 0.16,
-      "inkPixels": 305
+      "inkPixels": 275
     },
     {
       "id": "reference_attribute_xml_colon_space_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xml:space",
-      "meanInkError": 0.140943,
+      "meanInkError": 0.094662,
       "tolerance": 0.16,
-      "inkPixels": 20732
+      "inkPixels": 19063
     },
     {
       "id": "reference_attribute_y_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y",
-      "meanInkError": 0.165863,
+      "meanInkError": 0.113745,
       "tolerance": 0.16,
-      "inkPixels": 4192
+      "inkPixels": 3836
     },
     {
       "id": "reference_attribute_y_block_5_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y",
-      "meanInkError": 0.165863,
+      "meanInkError": 0.113745,
       "tolerance": 0.16,
-      "inkPixels": 4192
+      "inkPixels": 3836
     },
     {
       "id": "reference_attribute_y_block_8_1",
@@ -2179,9 +2164,9 @@
       "id": "reference_attribute_ychannelselector_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/yChannelSelector",
-      "meanInkError": 0.356837,
+      "meanInkError": 0.346298,
       "tolerance": 0.16,
-      "inkPixels": 39721
+      "inkPixels": 38062
     },
     {
       "id": "reference_attribute_z_block_2_1",
@@ -2273,25 +2258,25 @@
       "id": "reference_element_fecolormatrix_block_5_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feColorMatrix",
-      "meanInkError": 0.061803,
+      "meanInkError": 0.034527,
       "tolerance": 0.16,
-      "inkPixels": 190207
+      "inkPixels": 185741
     },
     {
       "id": "reference_element_fecomponenttransfer_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feComponentTransfer",
-      "meanInkError": 0.022875,
+      "meanInkError": 0.016802,
       "tolerance": 0.16,
-      "inkPixels": 138325
+      "inkPixels": 137684
     },
     {
       "id": "reference_element_fecomposite_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feComposite",
-      "meanInkError": 0.014486,
+      "meanInkError": 0.013601,
       "tolerance": 0.16,
-      "inkPixels": 71028
+      "inkPixels": 70951
     },
     {
       "id": "reference_element_feconvolvematrix_block_4_1",
@@ -2305,9 +2290,9 @@
       "id": "reference_element_fediffuselighting_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDiffuseLighting",
-      "meanInkError": 0.008776,
+      "meanInkError": 0.005823,
       "tolerance": 0.16,
-      "inkPixels": 133113
+      "inkPixels": 132604
     },
     {
       "id": "reference_element_fedisplacementmap_block_1_1",
@@ -2365,27 +2350,25 @@
     },
     {
       "id": "reference_element_femerge_block_1_1",
-      "state": "Failed",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMerge",
-      "meanInkError": 0.035222,
-      "tolerance": 0.025,
-      "inkPixels": 88142
+      "reason": "The unitless object bounding box filter dimensions create a 10000 by 20000 region. WebKit reduces the source resolution to fit its surface limit. IJSVG preserves resolution by bounding the finite offset and blur coverage. IJSVGPaintOrderWebKitTests/testLargeFilterRegionsPreserveSourceResolution verifies both merge variants against equivalent WebKit filters with ordinary region sizes. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_element_femergenode_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMergeNode",
-      "meanInkError": 0.029563,
+      "meanInkError": 0.01418,
       "tolerance": 0.025,
-      "inkPixels": 61109
+      "inkPixels": 55035
     },
     {
       "id": "reference_element_femorphology_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMorphology",
-      "meanInkError": 0.075296,
+      "meanInkError": 0.048995,
       "tolerance": 0.16,
-      "inkPixels": 48744
+      "inkPixels": 46667
     },
     {
       "id": "reference_element_femorphology_block_3_1",
@@ -2507,11 +2490,9 @@
     },
     {
       "id": "reference_element_marker_block_5_1",
-      "state": "Expected failure",
+      "state": "Excluded",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/marker",
-      "meanInkError": 0.340846,
-      "tolerance": 0.025,
-      "inkPixels": 101632
+      "reason": "WebKit renders the context-fill and context-stroke marker circles with the default black fill and no stroke. SVG 2 requires the paint of the referencing path. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the same geometry and colors against WebKit using markers with explicit paints. This exception is limited to this exact fixture."
     },
     {
       "id": "reference_element_mask_block_2_1",
@@ -2525,9 +2506,9 @@
       "id": "reference_element_metadata_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/metadata",
-      "meanInkError": 0.005704,
+      "meanInkError": 0.003853,
       "tolerance": 0.16,
-      "inkPixels": 42266
+      "inkPixels": 42132
     },
     {
       "id": "reference_element_mpath_block_1_1",
@@ -2643,9 +2624,9 @@
       "id": "reference_element_switch_block_1_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/switch",
-      "meanInkError": 0.731551,
+      "meanInkError": 0.791362,
       "tolerance": 0.16,
-      "inkPixels": 18395
+      "inkPixels": 18814
     },
     {
       "id": "reference_element_symbol_block_2_1",
@@ -2659,17 +2640,17 @@
       "id": "reference_element_text_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/text",
-      "meanInkError": 0.092367,
+      "meanInkError": 0.085803,
       "tolerance": 0.16,
-      "inkPixels": 19518
+      "inkPixels": 18603
     },
     {
       "id": "reference_element_textpath_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/textPath",
-      "meanInkError": 0.055696,
+      "meanInkError": 0.005174,
       "tolerance": 0.16,
-      "inkPixels": 69532
+      "inkPixels": 66071
     },
     {
       "id": "reference_element_title_block_2_1",
@@ -2683,9 +2664,9 @@
       "id": "reference_element_tspan_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/tspan",
-      "meanInkError": 0.380045,
+      "meanInkError": 0.512973,
       "tolerance": 0.16,
-      "inkPixels": 4258
+      "inkPixels": 4389
     },
     {
       "id": "reference_element_use_block_2_1",
@@ -2923,7 +2904,7 @@
       "id": "tutorials_svg_from_scratch_filter_effects_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
-      "meanInkError": 0.064972,
+      "meanInkError": 0.064741,
       "tolerance": 0.16,
       "inkPixels": 85384
     },
@@ -2967,9 +2948,9 @@
       "id": "tutorials_svg_from_scratch_getting_started_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Getting_started",
-      "meanInkError": 0.002435,
+      "meanInkError": 0.001953,
       "tolerance": 0.16,
-      "inkPixels": 235499
+      "inkPixels": 235661
     },
     {
       "id": "tutorials_svg_from_scratch_gradients_block_1_1",
@@ -3009,17 +2990,17 @@
       "id": "tutorials_svg_from_scratch_gradients_block_6_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
-      "meanInkError": 0.005278,
+      "meanInkError": 0.002509,
       "tolerance": 0.16,
-      "inkPixels": 38345
+      "inkPixels": 38405
     },
     {
       "id": "tutorials_svg_from_scratch_gradients_block_7_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
-      "meanInkError": 0.111061,
+      "meanInkError": 0.109637,
       "tolerance": 0.16,
-      "inkPixels": 116600
+      "inkPixels": 116668
     },
     {
       "id": "tutorials_svg_from_scratch_gradients_block_8_1",
@@ -3171,9 +3152,9 @@
       "id": "tutorials_svg_from_scratch_paths_block_37_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
-      "meanInkError": 0.182363,
+      "meanInkError": 0.172549,
       "tolerance": 0.16,
-      "inkPixels": 71451
+      "inkPixels": 70568
     },
     {
       "id": "tutorials_svg_from_scratch_paths_block_38_1",
@@ -3243,25 +3224,25 @@
       "id": "tutorials_svg_from_scratch_texts_block_2_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
-      "meanInkError": 0.489123,
+      "meanInkError": 0.503816,
       "tolerance": 0.16,
-      "inkPixels": 10541
+      "inkPixels": 10359
     },
     {
       "id": "tutorials_svg_from_scratch_texts_block_3_1",
       "state": "Failed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
-      "meanInkError": 0.837436,
+      "meanInkError": 0.827127,
       "tolerance": 0.16,
-      "inkPixels": 5521
+      "inkPixels": 5265
     },
     {
       "id": "tutorials_svg_from_scratch_using_fonts_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Using_fonts",
-      "meanInkError": 0.131835,
+      "meanInkError": 0.084609,
       "tolerance": 0.16,
-      "inkPixels": 3605
+      "inkPixels": 3328
     },
     {
       "id": "tutorials_svg_from_scratch_using_fonts_block_2_1",
@@ -3271,11 +3252,11 @@
     },
     {
       "id": "tutorials_svg_from_scratch_using_fonts_block_3_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Using_fonts",
-      "meanInkError": 0.591445,
+      "meanInkError": 0.092729,
       "tolerance": 0.16,
-      "inkPixels": 3990
+      "inkPixels": 2640
     },
     {
       "id": "asset_reference_attribute_k1_mdn_svg",
@@ -3490,5 +3471,24 @@
     "failed": 0,
     "expectedFailures": 1,
     "note": "Final renderer, command parsing, bounds, visibility, export, filter batching, and explicit WebKit cap controls passed after recording definite nonzero subpaths during C parsing. Ambiguous and changed geometry still uses the point subpath scan. The MDN square cap is the expected difference. Checks include degenerate curves, multiple subpaths, parser cache hits, mutable path edits, copies, replacement, dashed points, gradient paint, rotated caps, non scaling strokes, and export round trips."
-  }
+  },
+  "filterAndTextRegressionSuites": {
+    "passed": 444,
+    "failed": 0,
+    "expectedFailures": 0,
+    "suites": [
+      "IJSVGTextTests",
+      "IJSVGTextWebKitTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGFilterTests",
+      "IJSVGFilterBatchTests",
+      "IJSVGFilterConcurrencyTests",
+      "IJSVGQuartzRendererTests",
+      "IJSVGExporterTests",
+      "IJSVGNodeAndColorStorageTests",
+      "IJSVGParserTests"
+    ],
+    "note": "All affected regression suites passed. The final text suites and both text path control tests were rerun after preserving automatic spacing for text on a path."
+  },
+  "excludedComparisons": 10
 }

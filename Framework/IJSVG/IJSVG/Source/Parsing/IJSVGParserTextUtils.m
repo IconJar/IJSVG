@@ -216,6 +216,21 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value,
         case IJSVGNodeAttributePathLength:
             parsed.number = value.doubleValue;
             break;
+        case IJSVGNodeAttributeFontSizeAdjust: {
+            const char* start = value.UTF8String;
+            char* end = NULL;
+            parsed.number = start != NULL ? strtod(start, &end) : -1.f;
+            BOOL numeric = parsed.keyword == IJSVGTextKeywordUnspecified;
+            BOOL validKeyword = parsed.keyword == IJSVGTextKeywordNone ||
+                parsed.keyword == IJSVGTextKeywordInherit || parsed.keyword == IJSVGTextKeywordInitial ||
+                parsed.keyword == IJSVGTextKeywordUnset;
+            if((numeric && (end == start || end == NULL || *end != 0 ||
+                            !isfinite(parsed.number) || parsed.number < 0.f)) ||
+                (!numeric && !validKeyword)) {
+                parsed.keyword = IJSVGTextKeywordInherit;
+            }
+            break;
+        }
         case IJSVGNodeAttributeFontWeight:
             parsed.number = value.doubleValue;
             // Keep numeric weights intact for font matching and relative inheritance.
@@ -265,7 +280,7 @@ void IJSVGApplyTextAttributes(IJSVGNode* node,
             IJSVGAttributeTextDecoration, IJSVGAttributeTextDecorationLine,
             IJSVGAttributeWhiteSpace, IJSVGAttributeLineHeight, IJSVGAttributeInlineSize,
             IJSVGAttributeTextTransform, IJSVGAttributeTextOverflow, IJSVGAttributeXMLSpace,
-            IJSVGAttributeLang, IJSVGAttributeXMLLang
+            IJSVGAttributeLang, IJSVGAttributeXMLLang, IJSVGAttributeFontSizeAdjust
         ];
         positionNames = @[
             IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeDX, IJSVGAttributeDY,

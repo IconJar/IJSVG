@@ -1139,12 +1139,49 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 }
 
+- (CGRect)finiteWorkingBoundsForRegion:(CGRect)region
+{
+    if(self.usesBackground || self.filter.contentUnits == IJSVGUnitObjectBoundingBox ||
+        [self.filter.inputNames containsObject:IJSVGStringFillPaint] ||
+        [self.filter.inputNames containsObject:IJSVGStringStrokePaint]) {
+        return region;
+    }
+    CGRect bounds = CGRectUnion(self.outerBoundingBox,
+        CGRectOffset(self.sourcePaint.transparencyBounds,
+                     self.sourcePaint.frame.origin.x, self.sourcePaint.frame.origin.y));
+    for(IJSVGFilterPrimitive* primitive in self.filter.primitives) {
+        if(primitive.type == IJSVGNodeTypeFilterOffset) {
+            CGFloat dx = [primitive numberForParameter:IJSVGAttributeDX
+                                          defaultValue:0.f];
+            CGFloat dy = [primitive numberForParameter:IJSVGAttributeDY
+                                          defaultValue:0.f];
+            bounds = CGRectUnion(bounds, CGRectOffset(bounds, dx, dy));
+        } else if(primitive.type == IJSVGNodeTypeFilterGaussianBlur) {
+            if(primitive.edgeMode == IJSVGFilterEdgeModeWrap ||
+                primitive.edgeMode == IJSVGFilterEdgeModeDuplicate) {
+                return region;
+            }
+            CGSize deviation = [primitive pairForParameter:IJSVGAttributeStdDeviation
+                                              defaultValue:CGSizeZero];
+            bounds = CGRectInset(bounds, -ceil(4.f * MAX(0.f, deviation.width)) - 2.f,
+                                         -ceil(4.f * MAX(0.f, deviation.height)) - 2.f);
+        } else if(primitive.type != IJSVGNodeTypeFilterMerge) {
+            return region;
+        }
+        if(!IJSVGFilterRectIsFinite(bounds)) {
+            return region;
+        }
+    }
+    return CGRectIntersection(region, bounds);
+}
+
 - (CGFloat)renderScaleForRect:(CGRect)workRect context:(CGContextRef)ctx
 {
     // Local transforms extend the pixel mapping supplied by the renderer.
     // Nested bitmaps already contain their full pixel scale.
     CGAffineTransform transform = IJSVGFilterPixelTransform(ctx);
-    CGFloat scale = MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
+    CGFloat scale = MAX(hypot(transform.a, transform.b),
+                        hypot(transform.c, transform.d));
 
     // Only alpha amplifying matrices need extra coverage samples. Ordinary blurs
     // and shadows retain destination resolution instead of processing 4x the pixels.
@@ -1348,9 +1385,22 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
     // SourceGraphic and every primitive are cropped to the filter region.
     // Pixels beyond it cannot contribute, even when the source artwork is larger.
-    // Preserve the previous scale limits so this only changes allocated coverage.
+    // Restrict finite effects to their painted coverage before reducing resolution.
     CGRect workRect = region;
     CGFloat scale = [self renderScaleForRect:samplingBounds context:ctx];
+    CGAffineTransform pixelTransform = IJSVGFilterPixelTransform(ctx);
+    CGFloat destinationScale = MAX(hypot(pixelTransform.a, pixelTransform.b),
+                                   hypot(pixelTransform.c, pixelTransform.d));
+    if(scale < destinationScale) {
+        workRect = [self finiteWorkingBoundsForRegion:region];
+        if(CGRectIsEmpty(workRect)) {
+            return;
+        }
+        if(!CGRectEqualToRect(workRect, region)) {
+            scale = [self renderScaleForRect:workRect
+                                     context:ctx];
+        }
+    }
     if(!isfinite(scale) || scale <= 0.f) {
         return;
     }

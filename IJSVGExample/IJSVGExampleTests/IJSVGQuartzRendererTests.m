@@ -152,12 +152,12 @@
         rendersLike:@"<text y='24' font-size='12'><tspan fill-opacity='0'>A</tspan>B</text>"];
 }
 
-- (void)testVerticalTextLengthPercentageUsesViewportHeight
+- (void)testVerticalTextLengthPercentageUsesViewportDiagonal
 {
     [self assertBody:@"<svg width='32' height='16' viewBox='0 0 32 16'>"
                       "<text x='16' y='1' font-size='8' writing-mode='vertical-rl' textLength='50%' lengthAdjust='spacingAndGlyphs'>ABC</text></svg>"
         rendersLike:@"<svg width='32' height='16' viewBox='0 0 32 16'>"
-                      "<text x='16' y='1' font-size='8' writing-mode='vertical-rl' textLength='8' lengthAdjust='spacingAndGlyphs'>ABC</text></svg>"];
+                      "<text x='16' y='1' font-size='8' writing-mode='vertical-rl' textLength='12.649110640673518' lengthAdjust='spacingAndGlyphs'>ABC</text></svg>"];
 }
 
 - (void)testCurrentColorResolvesOnPaintedElement

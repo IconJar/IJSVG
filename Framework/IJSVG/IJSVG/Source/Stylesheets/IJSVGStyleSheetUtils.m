@@ -286,6 +286,7 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetFontProperty) {
     IJSVGStyleSheetFontLigatures,
     IJSVGStyleSheetFontFeatures,
     IJSVGStyleSheetFontKerning,
+    IJSVGStyleSheetFontSizeAdjust,
     IJSVGStyleSheetFontPropertyCount
 };
 
@@ -805,14 +806,16 @@ static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* 
             IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontStyle,
             IJSVGAttributeFontWeight, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant,
             IJSVGAttributeLineHeight, IJSVGAttributeFontVariantLigatures,
-            IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning
+            IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning,
+            IJSVGAttributeFontSizeAdjust
         };
         // Create property strings only after the whole shorthand is valid.
         for(NSUInteger property = 0; property < IJSVGStyleSheetFontPropertyCount; property++) {
             NSRange range = ranges[property];
             NSString* value = range.length != 0
                 ? IJSVGStyleSheetStringFromUTF8Bytes(chars, range.location, NSMaxRange(range))
-                : (property == IJSVGStyleSheetFontKerning ? @"auto" : IJSVGStringNormal);
+                : (property == IJSVGStyleSheetFontKerning ? @"auto" :
+                    (property == IJSVGStyleSheetFontSizeAdjust ? IJSVGStringNone : IJSVGStringNormal));
             values[attributes[property]] = value;
         }
     }

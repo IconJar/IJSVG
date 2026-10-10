@@ -79,28 +79,59 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
     CTFontRef font = (__bridge CTFontRef)style.font;
     IJSVGTextAttributeValue* baseline = style.values[IJSVGAttributeAlignmentBaseline]
         ?: style.values[IJSVGAttributeDominantBaseline];
+    switch(baseline.keyword) {
+        case IJSVGTextKeywordMathematical:
+        case IJSVGTextKeywordCentral:
+        case IJSVGTextKeywordHanging:
+        case IJSVGTextKeywordTextBeforeEdge:
+        case IJSVGTextKeywordBeforeEdge:
+        case IJSVGTextKeywordTextTop:
+        case IJSVGTextKeywordTextAfterEdge:
+        case IJSVGTextKeywordAfterEdge:
+        case IJSVGTextKeywordIdeographic:
+        case IJSVGTextKeywordTextBottom:
+            break;
+        default:
+            style.resolvedBaseline = style.baseline;
+            if(baseline.keyword == IJSVGTextKeywordMiddle) {
+                style.resolvedBaseline += (CTFontGetXHeight(font) / style.fontScale) * .5;
+            }
+            style.hasResolvedBaseline = YES;
+            return style.resolvedBaseline;
+    }
+    CGFloat ascent = CTFontGetAscent(font);
+    CGFloat descent = CTFontGetDescent(font);
+    CFStringRef family = CTFontCopyFamilyName(font);
+    if(CFStringCompare(family, CFSTR("Times"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
+        CFStringCompare(family, CFSTR("Helvetica"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
+        CFStringCompare(family, CFSTR("Courier"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
+        // Use the conventional web ascent for these legacy font families.
+        ascent += round((ascent + descent) * .15f);
+    }
+    CFRelease(family);
+    ascent /= style.fontScale;
+    descent /= style.fontScale;
     CGFloat result = style.baseline;
     switch(baseline.keyword) {
-        case IJSVGTextKeywordMiddle:
         case IJSVGTextKeywordMathematical:
-            result += (CTFontGetXHeight(font) / style.fontScale) * .5;
+            result += ascent * .5f;
             break;
         case IJSVGTextKeywordCentral:
-            result += ((CTFontGetAscent(font) / style.fontScale) - (CTFontGetDescent(font) / style.fontScale)) * .5;
+            result += (ascent - descent) * .5;
             break;
         case IJSVGTextKeywordHanging:
-            result += (CTFontGetAscent(font) / style.fontScale) * .8;
+            result += ascent * .8;
             break;
         case IJSVGTextKeywordTextBeforeEdge:
         case IJSVGTextKeywordBeforeEdge:
         case IJSVGTextKeywordTextTop:
-            result += (CTFontGetAscent(font) / style.fontScale);
+            result += ascent;
             break;
         case IJSVGTextKeywordTextAfterEdge:
         case IJSVGTextKeywordAfterEdge:
         case IJSVGTextKeywordIdeographic:
         case IJSVGTextKeywordTextBottom:
-            result -= (CTFontGetDescent(font) / style.fontScale);
+            result -= descent;
             break;
         default:
             break;
@@ -174,6 +205,7 @@ BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent,
 {
     return parent != nil && parent.size == size &&
         parent.values[IJSVGAttributeFontFamily] == values[IJSVGAttributeFontFamily] &&
+        parent.values[IJSVGAttributeFontSizeAdjust] == values[IJSVGAttributeFontSizeAdjust] &&
         parent.values[IJSVGAttributeTextRendering] == values[IJSVGAttributeTextRendering] &&
         parent.values[IJSVGAttributeFontWeight] == values[IJSVGAttributeFontWeight] &&
         parent.values[IJSVGAttributeFontStyle] == values[IJSVGAttributeFontStyle] &&

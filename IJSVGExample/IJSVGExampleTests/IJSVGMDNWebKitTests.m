@@ -15,6 +15,19 @@ static NSDictionary* IJSVGMDNCorpus(void)
     return corpus;
 }
 
+static NSDictionary* IJSVGMDNPolicies(void)
+{
+    static NSDictionary* policies;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSURL* url = [[NSBundle bundleForClass:NSClassFromString(@"IJSVGMDNWebKitTests")]
+            URLForResource:@"expectations" withExtension:@"json" subdirectory:@"MDN"];
+        NSData* data = url ? [NSData dataWithContentsOfURL:url] : nil;
+        policies = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    });
+    return policies;
+}
+
 static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat background)
 {
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
@@ -89,7 +102,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     [root addAttribute:[NSXMLNode attributeWithName:@"width" stringValue:[@(self.size.width) stringValue]]];
     [root addAttribute:[NSXMLNode attributeWithName:@"height" stringValue:[@(self.size.height) stringValue]]];
     NSString* style = [root attributeForName:@"style"].stringValue ?: @"";
-    style = [style stringByAppendingFormat:@";width:%gpx!important;height:%gpx!important;", self.size.width, self.size.height];
+    style = [style stringByAppendingFormat:@";width:%gpx!important;height:%gpx!important;-webkit-font-smoothing:antialiased;", self.size.width, self.size.height];
     if(self.background != 1) {
         int component = (int)round(self.background * 255);
         style = [style stringByAppendingFormat:@"background-color:rgb(%d,%d,%d)!important;", component, component, component];
@@ -232,10 +245,21 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     XCTAssertGreaterThan([corpus[@"pages"] count], 300u);
     XCTAssertGreaterThan([corpus[@"examples"] count], 700u);
     XCTAssertGreaterThan([corpus[@"cases"] count], 400u);
+    NSDictionary* policies = IJSVGMDNPolicies();
+    XCTAssertNotNil(policies);
     NSMutableSet* identifiers = [NSMutableSet set];
     for(NSDictionary* fixture in corpus[@"cases"]) {
         XCTAssertFalse([identifiers containsObject:fixture[@"id"]]);
         [identifiers addObject:fixture[@"id"]];
+        NSDictionary* policy = policies[fixture[@"id"]];
+        BOOL excluded = [policy[@"excludeComparison"] boolValue] &&
+            [policy[@"sha256"] isEqual:fixture[@"sha256"]];
+        NSString* method = [@"test_" stringByAppendingString:fixture[@"id"]];
+        XCTAssertEqual([self respondsToSelector:NSSelectorFromString(method)], !excluded,
+                       @"Regenerate MDN tests after changing exclusions");
+        if(excluded) {
+            XCTAssertGreaterThan([policy[@"reason"] length], 0u);
+        }
         XCTAssertTrue([fixture[@"svg"] length] > 0 || [fixture[@"skip"] length] > 0);
     }
 }
@@ -249,10 +273,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     XCTAssertNotNil(fixture, @"Missing MDN fixture %@", identifier);
     if(!fixture) return;
     XCTSkipIf(fixture[@"skip"] != nil, @"%@: %@", fixture[@"url"], fixture[@"skip"]);
-    NSURL* policyURL = [[NSBundle bundleForClass:self.class] URLForResource:@"expectations"
-        withExtension:@"json" subdirectory:@"MDN"];
-    NSData* policyData = policyURL ? [NSData dataWithContentsOfURL:policyURL] : nil;
-    NSDictionary* policies = policyData ? [NSJSONSerialization JSONObjectWithData:policyData options:0 error:nil] : nil;
+    NSDictionary* policies = IJSVGMDNPolicies();
     XCTAssertNotNil(policies, @"Missing or invalid MDN expectations");
     if(!policies) return;
     NSDictionary* policy = policies[identifier];
@@ -285,7 +306,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     double error = [result[@"meanInkError"] doubleValue];
     BOOL blank = [result[@"inkPixels"] unsignedIntegerValue] == 0;
     NSLog(@"MDN %@ meanInkError=%.6f tolerance=%.3f ink=%@", identifier, error, tolerance, result[@"inkPixels"]);
-    if(blank || error > tolerance || policy[@"expectedDifference"]) {
+    if(blank || error > tolerance) {
         NSString* directory = [NSTemporaryDirectory() stringByAppendingPathComponent:@"IJSVGMDNComparisons"];
         [NSFileManager.defaultManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:nil];
         NSLog(@"MDN comparison artifacts: %@/%@", directory, identifier);
@@ -304,14 +325,8 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         [self addAttachment:source];
     }
     XCTAssertFalse(blank, @"%@ produced no visible ink on the comparison background; inspect the fixture and snapshots", identifier);
-    void (^assertPixels)(void) = ^{
-        XCTAssertLessThanOrEqual(error, tolerance, @"%@ (%@): %@", identifier, fixture[@"url"], policy[@"reason"] ?: @"Unexpected rendering difference");
-    };
-    if([policy[@"expectedDifference"] boolValue]) {
-        XCTExpectFailureInBlock(policy[@"reason"], assertPixels);
-    } else {
-        assertPixels();
-    }
+    XCTAssertLessThanOrEqual(error, tolerance, @"%@ (%@): %@", identifier, fixture[@"url"],
+                             policy[@"reason"] ?: @"Unexpected rendering difference");
 }
 
 #include "IJSVGMDNGeneratedTests.inc"

@@ -21,6 +21,14 @@
 // Keep shaping runs separate when their text belongs to different nodes.
 static NSString* const IJSVGTextOwnerKey = @"IJSVGTextOwner";
 
+static NSString* IJSVGTextUppercaseCharacter(const IJSVGTextCharacter* character)
+{
+    unichar units[] = { character->firstCodeUnit, character->secondCodeUnit };
+    NSUInteger length = character->secondCodeUnit == 0 ? 1 : 2;
+    NSString* string = [[NSString alloc] initWithCharacters:units length:length];
+    return string.uppercaseString;
+}
+
 static NSUInteger IJSVGTextChunkEnd(IJSVGTextCharacter* characters,
                                     NSUInteger count, NSUInteger start,
                                     CGFloat inlineSize)
@@ -493,6 +501,20 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     if(ligatures == IJSVGTextKeywordNone || ligatures == IJSVGTextKeywordNoCommonLigatures) {
         attributes[(__bridge NSString*)kCTLigatureAttributeName] = @0;
     }
+    IJSVGTextKeyword kerning = style.values[IJSVGAttributeFontKerning].keyword;
+    BOOL automaticKerning = character->pathNode == nil &&
+        style.values[IJSVGAttributeTextRendering].keyword != IJSVGTextKeywordOptimizeSpeed;
+    if(kerning != IJSVGTextKeywordNormal && kerning != IJSVGTextKeywordNone) {
+        for(IJSVGText* node = character->owner; node != nil; node = (IJSVGText*)node.parentNode) {
+            if(node.positioning[IJSVGAttributeTextLength] != nil) {
+                automaticKerning = NO;
+                break;
+            }
+            if(node == self.root) {
+                break;
+            }
+        }
+    }
     IJSVGTextAttributeValue* spacing = style.values[IJSVGAttributeLetterSpacing];
     if(spacing != nil && spacing.keyword != IJSVGTextKeywordNormal) {
         CGFloat letterSpacing = IJSVGTextLength(spacing, style.size,
@@ -500,9 +522,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         CGFloat scaledSpacing = letterSpacing * style.fontScale;
         attributes[(__bridge NSString*)kCTKernAttributeName] = @(scaledSpacing);
         attributes[(__bridge NSString*)kCTLigatureAttributeName] = @0;
-    } else if(style.values[IJSVGAttributeFontKerning].keyword == IJSVGTextKeywordNone ||
-              (!style.nativeSpacing && style.values[IJSVGAttributeFontKerning].keyword != IJSVGTextKeywordNormal)) {
-        // Preserve native system font spacing unless explicitly disabled.
+    } else if(kerning == IJSVGTextKeywordNone ||
+              (kerning != IJSVGTextKeywordNormal && !automaticKerning)) {
+        // Respect explicit kerning and rendering preferences.
         attributes[(__bridge NSString*)kCTKernAttributeName] = @0;
     }
     NSString* language = style.values[IJSVGAttributeLang].string ?: style.values[IJSVGAttributeXMLLang].string;
@@ -610,7 +632,8 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         while(index < end && _characters[index].owner == first->owner) {
             IJSVGTextCharacter* character = &_characters[index];
             positions[index - range.location] = result.length + length;
-            NSUInteger units = character->secondCodeUnit == 0 ? 1 : 2;
+            NSUInteger nextOffset = index + 1 == _characterCount ? attributed.length : _characters[index + 1].utf16;
+            NSUInteger units = nextOffset - character->utf16;
             for(NSUInteger unit = 0; unit < units; unit++) {
                 [map appendBytes:&index
                           length:sizeof(index)];
@@ -622,10 +645,10 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     }
     for(IJSVGText* scope in active.reverseObjectEnumerator) {
         [self appendBidiScope:scope
-                     opening:NO
-                        text:result
-                         map:map
-                  attributes:attributes];
+                      opening:NO
+                         text:result
+                          map:map
+                   attributes:attributes];
     }
     return result;
 }
@@ -648,9 +671,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         shapedMap = [[NSMutableData alloc] init];
         offsets = [[NSMutableData alloc] init];
         substring = [self bidiTextForRange:range
-                                 attributed:attributed
-                                        map:shapedMap
-                                    offsets:offsets];
+                                attributed:attributed
+                                       map:shapedMap
+                                   offsets:offsets];
         mapStart = 0;
     } else {
         // Reuse the original character mapping when no bidi controls are needed.
@@ -726,8 +749,8 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         return;
     }
     IJSVGTextComputedStyle* style = [self styleForNode:node];
-    CGFloat target = IJSVGTextLength(specified, style.size, style.xHeight,
-                                     style.vertical ? self.viewport.height : self.viewport.width);
+    CGFloat diagonal = hypot(self.viewport.width, self.viewport.height) / M_SQRT2;
+    CGFloat target = IJSVGTextLength(specified, style.size, style.xHeight, diagonal);
     if(target < 0 || !isfinite(target)) {
         return;
     }
@@ -1039,10 +1062,8 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             previousFont = (__bridge id)glyph->font;
             id cached = [outlineFonts objectForKey:previousFont];
             if(cached == nil) {
-                CFMutableDictionaryRef cache = CFDictionaryCreateMutable(NULL,
-                                                                         0,
-                                                                         NULL,
-                                                                         &kCFTypeDictionaryValueCallBacks);
+                CFMutableDictionaryRef cache = CFDictionaryCreateMutable(NULL, 0,
+                                                                         NULL, &kCFTypeDictionaryValueCallBacks);
                 cached = CFBridgingRelease(cache);
                 [outlineFonts setObject:cached
                                  forKey:previousFont];
@@ -1097,6 +1118,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             previousOwner = character->owner;
         }
         NSUInteger length = character->secondCodeUnit == 0 ? 1 : 2;
+        if(character->style.smallCapsFont != nil && character->firstCodeUnit > 0x7f) {
+            length = IJSVGTextUppercaseCharacter(character).length;
+        }
         unitCount += length;
         runLength += length;
         maximumRunLength = MAX(maximumRunLength, runLength);
@@ -1112,15 +1136,44 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         IJSVGTextCharacter* first = &_characters[runStart];
         NSUInteger runLength = 0;
         NSUInteger runOffset = attributed.length;
+        NSMutableIndexSet* smallCaps = first->style.smallCapsFont != nil ? [[NSMutableIndexSet alloc] init] : nil;
+        BOOL previousSmallCap = NO;
         while(characterIndex < _characterCount &&
               _characters[characterIndex].owner == first->owner) {
             IJSVGTextCharacter* character = &_characters[characterIndex];
             character->utf16 = runOffset + runLength;
-            mapping[character->utf16] = characterIndex;
-            codeUnits[runLength++] = character->firstCodeUnit;
-            if(character->secondCodeUnit != 0) {
-                mapping[character->utf16 + 1] = characterIndex;
-                codeUnits[runLength++] = character->secondCodeUnit;
+            if(smallCaps != nil && character->firstCodeUnit <= 0x7f) {
+                unichar unit = character->firstCodeUnit;
+                previousSmallCap = unit >= 'a' && unit <= 'z';
+                if(previousSmallCap) {
+                    unit += 'A' - 'a';
+                    [smallCaps addIndex:character->utf16];
+                }
+                mapping[character->utf16] = characterIndex;
+                codeUnits[runLength++] = unit;
+            } else if(smallCaps != nil) {
+                NSString* upper = IJSVGTextUppercaseCharacter(character);
+                NSUInteger originalLength = character->secondCodeUnit == 0 ? 1 : 2;
+                BOOL changed = upper.length != originalLength ||
+                    [upper characterAtIndex:0] != character->firstCodeUnit ||
+                    (originalLength == 2 && [upper characterAtIndex:1] != character->secondCodeUnit);
+                BOOL combining = CFCharacterSetIsCharacterMember(
+                    CFCharacterSetGetPredefined(kCFCharacterSetNonBase), character->firstCodeUnit);
+                previousSmallCap = changed || (combining && previousSmallCap);
+                if(previousSmallCap) {
+                    [smallCaps addIndexesInRange:NSMakeRange(character->utf16, upper.length)];
+                }
+                [upper getCharacters:codeUnits + runLength range:NSMakeRange(0, upper.length)];
+                for(NSUInteger unit = 0; unit < upper.length; unit++) {
+                    mapping[runOffset + runLength++] = characterIndex;
+                }
+            } else {
+                mapping[character->utf16] = characterIndex;
+                codeUnits[runLength++] = character->firstCodeUnit;
+                if(character->secondCodeUnit != 0) {
+                    mapping[character->utf16 + 1] = characterIndex;
+                    codeUnits[runLength++] = character->secondCodeUnit;
+                }
             }
             characterIndex++;
         }
@@ -1129,6 +1182,24 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         NSAttributedString* run = [[NSAttributedString alloc] initWithString:runString
                                                                   attributes:[self attributesForCharacter:first]];
         [attributed appendAttributedString:run];
+        if(!first->style.nativeSpacing &&
+            first->style.values[IJSVGAttributeFontKerning].keyword != IJSVGTextKeywordNormal &&
+            first->style.values[IJSVGAttributeLetterSpacing] == nil) {
+            for(NSUInteger index = runStart; index < characterIndex; index++) {
+                IJSVGTextCharacter* character = &_characters[index];
+                if(character->firstCodeUnit == ' ') {
+                    NSUInteger start = index == runStart ? character->utf16 : _characters[index - 1].utf16;
+                    [attributed addAttribute:(__bridge NSString*)kCTKernAttributeName
+                                       value:@0
+                                       range:NSMakeRange(start, character->utf16 + 1 - start)];
+                }
+            }
+        }
+        [smallCaps enumerateRangesUsingBlock:^(NSRange range, BOOL* stop) {
+            [attributed addAttribute:(__bridge NSString*)kCTFontAttributeName
+                               value:first->style.smallCapsFont
+                               range:range];
+        }];
         if(first->style.wordSpacing != 0) {
             // Include word spacing in both typesetting and final glyph advances.
             NSString* kernKey = (__bridge NSString*)kCTKernAttributeName;

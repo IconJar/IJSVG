@@ -25,6 +25,68 @@
 
 @implementation IJSVGTextTests
 
+- (void)testAutomaticKerningHonoursRenderingPreference
+{
+    IJSVGTextLayout* automatic = [self layout:@"<text font-family='Times' font-size='30'>AVATAR</text>"];
+    IJSVGTextLayout* normal = [self layout:@"<text font-family='Times' font-size='30' font-kerning='normal'>AVATAR</text>"];
+    IJSVGTextLayout* disabled = [self layout:@"<text font-family='Times' font-size='30' font-kerning='none'>AVATAR</text>"];
+    IJSVGTextLayout* speed = [self layout:@"<text font-family='Times' font-size='30' text-rendering='optimizeSpeed'>AVATAR</text>"];
+    IJSVGTextLayout* explicit = [self layout:@"<text font-family='Times' font-size='30' text-rendering='optimizeSpeed' "
+                                              "font-kerning='normal'>AVATAR</text>"];
+    XCTAssertLessThan(automatic.advance, disabled.advance);
+    XCTAssertEqualWithAccuracy(automatic.advance, normal.advance, .00001);
+    XCTAssertEqualWithAccuracy(speed.advance, disabled.advance, .00001);
+    XCTAssertEqualWithAccuracy(explicit.advance, normal.advance, .00001);
+}
+
+- (void)testSyntheticSmallCapsPreserveCharacterMapping
+{
+    for(NSString* scope in @[@"", @"unicode-bidi='isolate'"]) {
+        NSString* body = [NSString stringWithFormat:@"<text font-family='Times' font-size='20' %@ "
+                                                     "font-variant='small-caps'>Aßb</text>", scope];
+        IJSVGTextLayout* actual = [self layout:body];
+        IJSVGTextLayout* expected = [self layout:@"<text font-family='Times' font-size='20'>"
+                                                 "A<tspan font-size='14'>SSB</tspan></text>"];
+        XCTAssertEqual(actual.characterPositions.count, 3);
+        XCTAssertEqualWithAccuracy(actual.advance, expected.advance, .00001);
+        XCTAssertEqualWithAccuracy(actual.characterPositions[2].pointValue.x,
+                                   expected.characterPositions[3].pointValue.x, .00001);
+    }
+}
+
+- (void)testSmallCapsInheritanceAndNormalOverride
+{
+    IJSVGTextLayout* actual = [self layout:@"<g font-family='Times' font-size='20' font-variant='small-caps'>"
+                                             "<text>a<tspan>b</tspan><tspan font-variant='normal'>c</tspan></text></g>"];
+    IJSVGTextLayout* expected = [self layout:@"<text font-family='Times' font-size='20'>"
+                                               "<tspan font-size='14'>AB</tspan>c</text>"];
+    XCTAssertEqualWithAccuracy(actual.advance, expected.advance, .00001);
+    XCTAssertEqualObjects(actual.characterPositions, expected.characterPositions);
+}
+
+- (void)testFontSizeAdjustInheritanceAndReset
+{
+    IJSVGTextLayout* adjusted = [self layout:@"<text font-family='Times' font-size='20' font-size-adjust='.7'>xxx</text>"];
+    IJSVGTextLayout* plain = [self layout:@"<text font-family='Times' font-size='20'>xxx</text>"];
+    XCTAssertGreaterThan(adjusted.advance, plain.advance);
+    IJSVGTextLayout* shorthand = [self layout:@"<g font-size-adjust='.7'>"
+                                                "<text style='font:20px Times'>xxx</text></g>"];
+    XCTAssertEqualWithAccuracy(shorthand.advance, plain.advance, .00001);
+    IJSVGTextLayout* inherited = [self layout:@"<g style='font:20px Times;font-size-adjust:.7'>"
+                                                "<text style='font:inherit'>xxx</text></g>"];
+    XCTAssertEqualWithAccuracy(inherited.advance, adjusted.advance, .00001);
+    for(NSString* value in @[@"inherit", @"unset", @"invalid", @"normal", @"-1", @"NaN", @"1px"]) {
+        NSString* body = [NSString stringWithFormat:@"<g font-family='Times' font-size='20' font-size-adjust='.7'>"
+                                                     "<text font-size-adjust='%@'>xxx</text></g>", value];
+        XCTAssertEqualWithAccuracy([self layout:body].advance, adjusted.advance, .00001);
+    }
+    for(NSString* value in @[@"none", @"initial"]) {
+        NSString* body = [NSString stringWithFormat:@"<g font-family='Times' font-size='20' font-size-adjust='.7'>"
+                                                     "<text font-size-adjust='%@'>xxx</text></g>", value];
+        XCTAssertEqualWithAccuracy([self layout:body].advance, plain.advance, .00001);
+    }
+}
+
 - (void)testExPositionsUseFontMetricsAtEveryRenderScale
 {
     CGSize viewport = CGSizeMake(400, 200);

@@ -246,6 +246,7 @@ extern NSString* const IJSVGAttributeEnableBackground;
 extern NSString* const IJSVGAttributeFont;
 extern NSString* const IJSVGAttributeFontFamily;
 extern NSString* const IJSVGAttributeFontSize;
+extern NSString* const IJSVGAttributeFontSizeAdjust;
 extern NSString* const IJSVGAttributeFontWeight;
 extern NSString* const IJSVGAttributeFontStyle;
 extern NSString* const IJSVGAttributeFontStretch;

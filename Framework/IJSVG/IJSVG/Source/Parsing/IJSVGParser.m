@@ -233,6 +233,7 @@ NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 NSString* const IJSVGAttributeFont = @"font";
 NSString* const IJSVGAttributeFontFamily = @"font-family";
 NSString* const IJSVGAttributeFontSize = @"font-size";
+NSString* const IJSVGAttributeFontSizeAdjust = @"font-size-adjust";
 NSString* const IJSVGAttributeFontWeight = @"font-weight";
 NSString* const IJSVGAttributeFontStyle = @"font-style";
 NSString* const IJSVGAttributeFontStretch = @"font-stretch";

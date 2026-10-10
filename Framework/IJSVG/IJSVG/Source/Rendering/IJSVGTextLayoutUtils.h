@@ -13,6 +13,7 @@
 
 @property (nonatomic, copy) NSDictionary<NSString*, IJSVGTextAttributeValue*>* values;
 @property (nonatomic, strong) id font;
+@property (nonatomic, strong) id smallCapsFont;
 @property (nonatomic, assign) CGFloat size;
 @property (nonatomic, assign) CGFloat xHeight;
 @property (nonatomic, assign) CGFloat baseline;

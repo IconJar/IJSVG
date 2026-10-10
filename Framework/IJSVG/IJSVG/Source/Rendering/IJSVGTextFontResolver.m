@@ -71,6 +71,25 @@ static NSArray* IJSVGTextFontFeatures(NSDictionary<NSString*, IJSVGTextAttribute
 }
 
 
+static BOOL IJSVGTextFontHasSmallCaps(CTFontRef font)
+{
+    NSArray* features = CFBridgingRelease(CTFontCopyFeatures(font));
+    for(NSDictionary* feature in features) {
+        NSInteger type = [feature[(__bridge NSString*)kCTFontFeatureTypeIdentifierKey] integerValue];
+        if(type != kLowerCaseType && type != kLetterCaseType) {
+            continue;
+        }
+        for(NSDictionary* selector in feature[(__bridge NSString*)kCTFontFeatureTypeSelectorsKey]) {
+            NSInteger value = [selector[(__bridge NSString*)kCTFontFeatureSelectorIdentifierKey] integerValue];
+            if((type == kLowerCaseType && value == kLowerCaseSmallCapsSelector) ||
+                (type == kLetterCaseType && value == kSmallCapsSelector)) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
 static CGFloat IJSVGTextFontWeight(NSDictionary<NSString*, IJSVGTextAttributeValue*>* values)
 {
     IJSVGTextAttributeValue* value = values[IJSVGAttributeFontWeight];
@@ -213,19 +232,26 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
         id initialFont = [self fontForValues:@{}
                                        size:parentSize];
         parentXHeight = IJSVGTextFontXHeight((__bridge CTFontRef)initialFont,
-                                             parentSize,
-                                             self.renderScale);
+                                             parentSize, self.renderScale);
     }
-    style.size = IJSVGTextFontSize(size, parentSize, parentXHeight, self.defaultFontSize);
+    style.size = IJSVGTextFontSize(size, parentSize, parentXHeight,
+                                   self.defaultFontSize);
     style.fontScale = self.renderScale;
     style.values = values;
     if(IJSVGTextCanReuseFont(parent, values, style.size)) {
         style.font = parent.font;
+        style.smallCapsFont = parent.smallCapsFont;
         style.xHeight = parent.xHeight;
         style.nativeSpacing = parent.nativeSpacing;
     } else {
         style.font = [self fontForValues:values
                                    size:style.size];
+        CTFontRef font = (__bridge CTFontRef)style.font;
+        if(values[IJSVGAttributeFontVariant].keyword == IJSVGTextKeywordSmallCaps &&
+            !IJSVGTextFontHasSmallCaps(font)) {
+            style.smallCapsFont = CFBridgingRelease(CTFontCreateCopyWithAttributes(font,
+                CTFontGetSize(font) * .7, NULL, NULL));
+        }
         style.nativeSpacing = [self usesNativeSpacingForFont:style.font];
         style.xHeight = IJSVGTextFontXHeight((__bridge CTFontRef)style.font,
                                              style.size, style.fontScale);
@@ -343,14 +369,14 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
 }
 
 - (IJSVGUnitLength*)unitByResolvingFontLength:(IJSVGUnitLength*)length
-                                       node:(IJSVGNode*)node
+                                         node:(IJSVGNode*)node
 {
     return [self unitByResolvingFontLength:length node:node css:NO];
 }
 
 - (IJSVGUnitLength*)unitByResolvingFontLength:(IJSVGUnitLength*)length
-                                       node:(IJSVGNode*)node
-                                        css:(BOOL)css
+                                         node:(IJSVGNode*)node
+                                          css:(BOOL)css
 {
     if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
         return length;
@@ -469,7 +495,10 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     IJSVGTextKeyword rendering = values[IJSVGAttributeTextRendering].keyword;
     CGFloat scale = rendering == IJSVGTextKeywordGeometricPrecision ? 1 : self.renderScale;
     CGFloat opticalSize = MAX(.001, size * scale);
+    IJSVGTextAttributeValue* adjustment = values[IJSVGAttributeFontSizeAdjust];
+    BOOL adjustsSize = adjustment != nil && adjustment.keyword == IJSVGTextKeywordUnspecified;
     NSArray* key = @[families, @(size), @(traits), @(weight), @(opticalSize),
+                     adjustsSize ? @(adjustment.number) : NSNull.null,
                      values[IJSVGAttributeFontFeatureSettings].features ?: @{},
                      @(values[IJSVGAttributeFontVariant].keyword)];
     id cached = self.fonts[key];
@@ -491,6 +520,27 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     }
     CTFontRef font = IJSVGTextCreateFontVariant(base, resolvedSize, traits, weight);
     CFRelease(base);
+    if(adjustsSize) {
+        UniChar character = 'x';
+        CGGlyph glyph = 0;
+        CGFloat xHeight = CTFontGetXHeight(font);
+        if(CTFontGetGlyphsForCharacters(font, &character, &glyph, 1)) {
+            CGRect bounds = CTFontGetBoundingRectsForGlyphs(font, kCTFontOrientationHorizontal,
+                                                            &glyph, NULL, 1);
+            if(CGRectGetMaxY(bounds) > 0.f) {
+                xHeight = CGRectGetMaxY(bounds);
+            }
+        }
+        if(xHeight > 0.f) {
+            CGFloat adjustedSize = resolvedSize * (resolvedSize / xHeight) * adjustment.number;
+            if(isfinite(adjustedSize)) {
+                resolvedSize = MAX(.001f, adjustedSize);
+                CTFontRef adjusted = CTFontCreateCopyWithAttributes(font, resolvedSize, NULL, NULL);
+                CFRelease(font);
+                font = adjusted;
+            }
+        }
+    }
     NSArray* features = IJSVGTextFontFeatures(values);
     NSArray* cascade = [self cascadeForDescriptors:descriptors
                                               font:font

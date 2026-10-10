@@ -194,6 +194,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeXMLSpace,
     IJSVGNodeAttributeLang,
     IJSVGNodeAttributeXMLLang,
+    IJSVGNodeAttributeFontSizeAdjust,
     IJSVGNodeAttributeRotate,
     IJSVGNodeAttributeTextLength,
     IJSVGNodeAttributeLengthAdjust,

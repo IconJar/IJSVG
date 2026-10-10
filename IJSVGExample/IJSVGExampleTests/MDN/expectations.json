@@ -16,22 +16,56 @@
   },
   "reference_attribute_spreadmethod_block_2_1": {
     "sha256": "18380bb05df8e3e4c5239c80d68e8f086221dcaa639591853408e9594572f800",
-    "expectedDifference": true,
-    "reason": "WebKit renders pad, reflect, and repeat identically for this radial gradient with a nonzero focal radius. IJSVGPaintOrderWebKitTests/testRadialSpreadWithFocalRadiusMatchesExplicitStops verifies both spread modes against WebKit using the equivalent zero-radius cone and explicitly expanded stops. SVG 2 requires the radial spread modes; this exception is limited to this exact fixture."
+    "reason": "WebKit renders pad, reflect, and repeat identically for this radial gradient with a nonzero focal radius. IJSVGPaintOrderWebKitTests/testRadialSpreadWithFocalRadiusMatchesExplicitStops verifies both spread modes against WebKit using the equivalent zero-radius cone and explicitly expanded stops. SVG 2 requires the radial spread modes; this exception is limited to this exact fixture.",
+    "excludeComparison": true
   },
   "reference_element_marker_block_5_1": {
     "sha256": "7af91fe860f0efbcf38334f60a80fdd93239d24f0dbef73dcd1b7187fe1a595f",
-    "expectedDifference": true,
-    "reason": "WebKit renders the context-fill and context-stroke marker circles with the default black fill and no stroke. SVG 2 requires the paint of the referencing path. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the same geometry and colors against WebKit using markers with explicit paints. This exception is limited to this exact fixture."
+    "reason": "WebKit renders the context-fill and context-stroke marker circles with the default black fill and no stroke. SVG 2 requires the paint of the referencing path. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the same geometry and colors against WebKit using markers with explicit paints. This exception is limited to this exact fixture.",
+    "excludeComparison": true
   },
   "reference_attribute_surfacescale_block_2_1": {
     "sha256": "803319b19c6b349cae8604d74b3a16297604249a1eb596cc89a6062c66d5f11b",
-    "expectedDifference": true,
-    "reason": "At the comparison backing scale, WebKit scales the point light position but leaves surfaceScale in device pixels, changing the effective light height. IJSVGPaintOrderWebKitTests/testLightingSurfaceScaleMatchesEquivalentLightHeight verifies flat surfaces against WebKit with the equivalent zero surface height and reduced light Z. IJSVGFilterTests/testLightingSurfaceHeightIsIndependentOfRenderScale checks matching sample positions at two render scales. This exception is limited to this exact fixture."
+    "reason": "At the comparison backing scale, WebKit scales the point light position but leaves surfaceScale in device pixels, changing the effective light height. IJSVGPaintOrderWebKitTests/testLightingSurfaceScaleMatchesEquivalentLightHeight verifies flat surfaces against WebKit with the equivalent zero surface height and reduced light Z. IJSVGFilterTests/testLightingSurfaceHeightIsIndependentOfRenderScale checks matching sample positions at two render scales. This exception is limited to this exact fixture.",
+    "excludeComparison": true
   },
   "reference_attribute_stroke_linecap_block_8_1": {
     "sha256": "92f858490fd7f9595efd90542699ed525eae4a3a8be34dd134a100f5df2ebbad",
-    "expectedDifference": true,
-    "reason": "WebKit paints a diamond together with the square cap on the zero length subpath. SVG 2 requires only the centered square. IJSVGPaintOrderWebKitTests/testPointSubpathCapsMatchExplicitShapes verifies caps against explicit WebKit rectangles and circles, including rotated and non scaling strokes. This exception is limited to this exact fixture."
+    "reason": "WebKit paints a diamond together with the square cap on the zero length subpath. SVG 2 requires only the centered square. IJSVGPaintOrderWebKitTests/testPointSubpathCapsMatchExplicitShapes verifies caps against explicit WebKit rectangles and circles, including rotated and non scaling strokes. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_fill_block_3_1": {
+    "sha256": "8b5395fdab3175a95058ad8d7ae0dbf67940f89b3ef1c92e6ef57a73c125cbdb",
+    "reason": "This fixture repeats the context fill and context stroke marker behavior already covered by reference_element_marker_block_5_1. WebKit uses default marker paints. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the required paints against explicit WebKit colors. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_stroke_block_3_1": {
+    "sha256": "8b5395fdab3175a95058ad8d7ae0dbf67940f89b3ef1c92e6ef57a73c125cbdb",
+    "reason": "This fixture is identical to reference_attribute_fill_block_3_1 and repeats the context marker difference already covered by reference_element_marker_block_5_1. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the required paints against explicit WebKit colors. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_in_block_1_1": {
+    "sha256": "ec5d8365a99e9f826fad3973cc8e20a4dbbb086e377fd19603eeb59bbfa89876",
+    "reason": "The fixture does not enable background accumulation. SVG 1.1 defines BackgroundImage as transparent black in this case. WebKit instead multiplies the source with itself. IJSVGPaintOrderWebKitTests/testBackgroundBlendWithoutEnabledBackdropMatchesTransparentInput verifies the result against an explicit transparent input. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_path_block_2_1": {
+    "sha256": "f146710a72c00cc6a95e28044e8ef424deb45c4a4304919a335c9e89677085bd",
+    "reason": "WebKit does not render text using the inline path attribute on textPath. IJSVGPaintOrderWebKitTests/testInlineTextPathMatchesReferencedPath verifies the same geometry and text against a WebKit textPath with an equivalent referenced path. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_side_block_2_1": {
+    "sha256": "1938713687386787d8e50f97e968e221bebb66b8442b17aed708e9403cc3bf20",
+    "reason": "WebKit ignores side=right on textPath and paints both strings on the left side. IJSVGPaintOrderWebKitTests/testTextPathRightSideMatchesReversedPath verifies right side placement against an explicitly reversed WebKit path. This exception is limited to this exact fixture.",
+    "excludeComparison": true
+  },
+  "reference_attribute_stitchtiles_block_2_1": {
+    "sha256": "559f0986ff3e08e91e43d2f42d0758ac9f92116a254bbdf7ce8aeb86a9714266",
+    "reason": "Nonzero tile origins differ from WebKit. Origin controls pass, but independent coverage of translated stitch coordinates is still needed. Retained as an unexpected mismatch pending that verification."
+  },
+  "reference_element_femerge_block_1_1": {
+    "sha256": "737d7b5f67f0f92351e88636637ad06d299bb1e46b61077c4e7ed4e46c914386",
+    "reason": "The unitless object bounding box filter dimensions create a 10000 by 20000 region. WebKit reduces the source resolution to fit its surface limit. IJSVG preserves resolution by bounding the finite offset and blur coverage. IJSVGPaintOrderWebKitTests/testLargeFilterRegionsPreserveSourceResolution verifies both merge variants against equivalent WebKit filters with ordinary region sizes. This exception is limited to this exact fixture.",
+    "excludeComparison": true
   }
 }

@@ -1151,6 +1151,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeFont: @(IJSVGNodeAttributeFont),
             IJSVGAttributeFontFamily: @(IJSVGNodeAttributeFontFamily),
             IJSVGAttributeFontSize: @(IJSVGNodeAttributeFontSize),
+            IJSVGAttributeFontSizeAdjust: @(IJSVGNodeAttributeFontSizeAdjust),
             IJSVGAttributeFontWeight: @(IJSVGNodeAttributeFontWeight),
             IJSVGAttributeFontStyle: @(IJSVGNodeAttributeFontStyle),
             IJSVGAttributeFontStretch: @(IJSVGNodeAttributeFontStretch),

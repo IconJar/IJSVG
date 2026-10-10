@@ -21,6 +21,68 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testInlineTextPathMatchesReferencedPath
+{
+    NSString* path = @"M20 150 Q150 150 150 90 Q150 20 80 20 Q20 20 20 70";
+    NSString* format = @"<defs><path id='p' d='%@'/></defs>"
+        "<text font-family='Times' font-size='18' style='-webkit-font-smoothing:antialiased'>"
+        "<textPath %@>Quick brown fox jumps over the lazy dog.</textPath></text>";
+    NSString* body = [NSString stringWithFormat:format, path,
+        [NSString stringWithFormat:@"path='%@'", path]];
+    NSString* reference = [NSString stringWithFormat:format, path, @"href='#p'"];
+    [self compareBody:body referenceBody:reference name:@"inline-text-path" tolerance:.16];
+}
+
+- (void)testTextPathRightSideMatchesReversedPath
+{
+    NSString* format = @"<defs><path id='p' d='M170 100 A70 70 0 1 %@ 30 100 A70 70 0 1 %@ 170 100'/></defs>"
+        "<text font-family='Helvetica' font-size='20' style='-webkit-font-smoothing:antialiased'>"
+        "<textPath href='#p' %@>Text on right of path</textPath></text>";
+    NSString* body = [NSString stringWithFormat:format, @"1", @"1", @"side='right'"];
+    NSString* reference = [NSString stringWithFormat:format, @"0", @"0", @""];
+    [self compareBody:body referenceBody:reference name:@"right-side-text-path" tolerance:.16];
+}
+
+- (void)testStitchedTurbulenceAtOriginMatchesWebKit
+{
+    for(NSString* type in @[@"turbulence", @"fractalNoise"]) {
+        for(NSNumber* octaves in @[@1, @3]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><filter id='n' x='0' y='0' width='100%%' height='100%%'>"
+                 "<feTurbulence type='%@' baseFrequency='.025 .037' seed='7' numOctaves='%@' stitchTiles='stitch'/>"
+                 "</filter></defs><g transform='translate(20 20)'><rect width='100' height='100' filter='url(#n)'/></g>"
+                 "<g transform='translate(120 20)'><rect width='100' height='100' filter='url(#n)'/></g>", type, octaves];
+            [self compareBody:body name:[NSString stringWithFormat:@"stitched-origin-%@-%@", type, octaves] tolerance:.025];
+        }
+    }
+}
+
+- (void)testLargeFilterRegionsPreserveSourceResolution
+{
+    for(NSString* input in @[@"", @"in='SourceGraphic'"]) {
+        NSString* format = @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='%@' y='%@' width='%@' height='%@'>"
+            "<feOffset dx='60' dy='30'/><feGaussianBlur %@ stdDeviation='5' result='blur'/>"
+            "<feMerge><feMergeNode in='blur'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs>"
+            "<rect x='40' y='40' width='100' height='100' stroke='black' fill='green' filter='url(#f)'/>";
+        NSString* body = [NSString stringWithFormat:format, @"-4000", @"-2000", @"10000", @"20000", input];
+        NSString* reference = [NSString stringWithFormat:format, @"0", @"0", @"240", @"200", input];
+        [self compareBody:body referenceBody:reference name:[@"large-filter-region-" stringByAppendingString:input]
+                tolerance:.025];
+    }
+}
+
+- (void)testBackgroundBlendWithoutEnabledBackdropMatchesTransparentInput
+{
+    NSString* prefix = @"<defs><filter id='f'><feBlend in='";
+    NSString* suffix = @"' in2='SourceGraphic' mode='multiply'/></filter></defs>"
+        "<rect x='10' y='10' width='180' height='180' fill='blue'/>"
+        "<circle cx='100' cy='100' r='60' fill='#cc0000' filter='url(#f)'/>";
+    NSString* body = [[prefix stringByAppendingString:@"BackgroundImage"] stringByAppendingString:suffix];
+    NSString* reference = [@"<defs><filter id='f'><feFlood flood-opacity='0' result='empty'/><feBlend in='empty"
+        stringByAppendingString:suffix];
+    [self compareBody:body referenceBody:reference name:@"background-without-enabled-backdrop" tolerance:.025];
+}
+
 - (void)testPointSubpathCapsMatchExplicitShapes
 {
     for(NSString* cap in @[@"round", @"square"]) {

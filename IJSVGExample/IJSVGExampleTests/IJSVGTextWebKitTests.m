@@ -109,7 +109,7 @@ didFailNavigation:(WKNavigation*)navigation
     self.window.releasedWhenClosed = NO;
     self.window.contentView = self.webView;
     NSString* html = [NSString stringWithFormat:@"<!doctype html><html><head><style>html,body{margin:0;"
-                                                 "padding:0;background:white;}svg{display:block;}</style>"
+                                                 "padding:0;background:white;}svg{display:block;-webkit-font-smoothing:antialiased;}</style>"
                                                  "</head><body>%@</body></html>",
                                                 svgString];
     [self.webView loadHTMLString:html
@@ -283,6 +283,24 @@ didFailNavigation:(WKNavigation*)navigation
                      name:[@"bidi-" stringByAppendingString:mode]
                 tolerance:.16];
     }
+}
+
+- (void)testSyntheticSmallCapsMatchWebKit
+{
+    [self compareBody:@"<g font-family='Times' font-size='30' font-variant='small-caps'>"
+                       "<text x='20' y='50'>Small Caps 123</text>"
+                       "<text x='20' y='100'>Nested <tspan font-variant='normal'>Normal</tspan></text></g>"
+                 name:@"syntheticSmallCaps"
+            tolerance:.16];
+}
+
+- (void)testFontSizeAdjustMatchesWebKit
+{
+    [self compareBody:@"<g font-family='Times' font-size='24' font-size-adjust='.6'>"
+                       "<text x='20' y='50'>Adjusted text</text>"
+                       "<text x='20' y='100'>Same <tspan font-size-adjust='none'>normal</tspan></text></g>"
+                 name:@"fontSizeAdjust"
+            tolerance:.16];
 }
 
 - (void)testFontRelativeLengthsMatchWebKit

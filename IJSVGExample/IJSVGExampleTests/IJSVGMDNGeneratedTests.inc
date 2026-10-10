@@ -474,11 +474,6 @@
     [self compareCase:@"reference_attribute_fill_block_2_1"];
 }
 
-- (void)test_reference_attribute_fill_block_3_1
-{
-    [self compareCase:@"reference_attribute_fill_block_3_1"];
-}
-
 - (void)test_reference_attribute_fill_opacity_block_2_1
 {
     [self compareCase:@"reference_attribute_fill_opacity_block_2_1"];
@@ -602,11 +597,6 @@
 - (void)test_reference_attribute_id_block_1_1
 {
     [self compareCase:@"reference_attribute_id_block_1_1"];
-}
-
-- (void)test_reference_attribute_in_block_1_1
-{
-    [self compareCase:@"reference_attribute_in_block_1_1"];
 }
 
 - (void)test_reference_attribute_in_block_1_2
@@ -787,11 +777,6 @@
 - (void)test_reference_attribute_paint_order_block_1_1
 {
     [self compareCase:@"reference_attribute_paint_order_block_1_1"];
-}
-
-- (void)test_reference_attribute_path_block_2_1
-{
-    [self compareCase:@"reference_attribute_path_block_2_1"];
 }
 
 - (void)test_reference_attribute_pathlength_block_2_1
@@ -1059,11 +1044,6 @@
     [self compareCase:@"reference_attribute_shape_rendering_block_2_1"];
 }
 
-- (void)test_reference_attribute_side_block_2_1
-{
-    [self compareCase:@"reference_attribute_side_block_2_1"];
-}
-
 - (void)test_reference_attribute_slope_block_1_1
 {
     [self compareCase:@"reference_attribute_slope_block_1_1"];
@@ -1084,11 +1064,6 @@
     [self compareCase:@"reference_attribute_spreadmethod_block_1_1"];
 }
 
-- (void)test_reference_attribute_spreadmethod_block_2_1
-{
-    [self compareCase:@"reference_attribute_spreadmethod_block_2_1"];
-}
-
 - (void)test_reference_attribute_startoffset_block_2_1
 {
     [self compareCase:@"reference_attribute_startoffset_block_2_1"];
@@ -1107,11 +1082,6 @@
 - (void)test_reference_attribute_stroke_block_2_1
 {
     [self compareCase:@"reference_attribute_stroke_block_2_1"];
-}
-
-- (void)test_reference_attribute_stroke_block_3_1
-{
-    [self compareCase:@"reference_attribute_stroke_block_3_1"];
 }
 
 - (void)test_reference_attribute_stroke_dasharray_block_2_1
@@ -1137,11 +1107,6 @@
 - (void)test_reference_attribute_stroke_linecap_block_6_1
 {
     [self compareCase:@"reference_attribute_stroke_linecap_block_6_1"];
-}
-
-- (void)test_reference_attribute_stroke_linecap_block_8_1
-{
-    [self compareCase:@"reference_attribute_stroke_linecap_block_8_1"];
 }
 
 - (void)test_reference_attribute_stroke_linejoin_block_2_1
@@ -1192,11 +1157,6 @@
 - (void)test_reference_attribute_style_block_2_1
 {
     [self compareCase:@"reference_attribute_style_block_2_1"];
-}
-
-- (void)test_reference_attribute_surfacescale_block_2_1
-{
-    [self compareCase:@"reference_attribute_surfacescale_block_2_1"];
 }
 
 - (void)test_reference_attribute_systemlanguage_block_1_1
@@ -1599,11 +1559,6 @@
     [self compareCase:@"reference_element_feimage_block_1_1"];
 }
 
-- (void)test_reference_element_femerge_block_1_1
-{
-    [self compareCase:@"reference_element_femerge_block_1_1"];
-}
-
 - (void)test_reference_element_femergenode_block_1_1
 {
     [self compareCase:@"reference_element_femergenode_block_1_1"];
@@ -1687,11 +1642,6 @@
 - (void)test_reference_element_marker_block_4_1
 {
     [self compareCase:@"reference_element_marker_block_4_1"];
-}
-
-- (void)test_reference_element_marker_block_5_1
-{
-    [self compareCase:@"reference_element_marker_block_5_1"];
 }
 
 - (void)test_reference_element_mask_block_2_1
