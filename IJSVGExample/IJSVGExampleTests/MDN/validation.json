@@ -1,13 +1,13 @@
 {
-  "recordedAt": "2026-10-10T17:24:39.270707+00:00",
+  "recordedAt": "2026-10-10T17:41:27.839835+00:00",
   "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
   "macOS": "27.0.1 (26A434)",
   "counts": {
     "total": 458,
-    "passed": 257,
-    "failed": 40,
+    "passed": 259,
+    "failed": 37,
     "skipped": 159,
-    "expectedFailures": 2
+    "expectedFailures": 3
   },
   "inventoryTest": "Passed",
   "existingWebKitSuites": {
@@ -15,7 +15,7 @@
     "expectedFailures": 1,
     "failed": 0
   },
-  "note": "Observations only, not accepted baselines. Marker and nested SVG controls verify viewport clipping, visible overflow with slice, and marker context paints against explicit colors. The MDN context paint marker example is now a strict expected WebKit difference tied to its fixture hash. Remaining 40 unexpected mismatches are retained as failures. The overflow example still differs in text rendering and the basic transformations example requires CSS background color support. Pixel thresholds were not widened.",
+  "note": "Observations only, not accepted baselines. Smoothing the spotlight cone boundary fixes the feSpotLight and limitingConeAngle examples. The surfaceScale example is a strict expected WebKit backing scale difference verified with equivalent light heights and matching sample positions at two render scales. All 215 related regression tests passed, including the displacement color space fixes. Remaining 37 unexpected mismatches are retained as failures. Pixel thresholds were not widened.",
   "cases": [
     {
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
@@ -985,9 +985,9 @@
     },
     {
       "id": "reference_attribute_limitingconeangle_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/limitingConeAngle",
-      "meanInkError": 0.032514,
+      "meanInkError": 0.006023,
       "tolerance": 0.025,
       "inkPixels": 222752
     },
@@ -1235,7 +1235,7 @@
       "id": "reference_attribute_pointsatx_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtX",
-      "meanInkError": 0.002831,
+      "meanInkError": 0.002874,
       "tolerance": 0.025,
       "inkPixels": 291084
     },
@@ -1243,7 +1243,7 @@
       "id": "reference_attribute_pointsaty_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtY",
-      "meanInkError": 0.004215,
+      "meanInkError": 0.004187,
       "tolerance": 0.025,
       "inkPixels": 291084
     },
@@ -1251,7 +1251,7 @@
       "id": "reference_attribute_pointsatz_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtZ",
-      "meanInkError": 0.002202,
+      "meanInkError": 0.002233,
       "tolerance": 0.025,
       "inkPixels": 291084
     },
@@ -1745,7 +1745,7 @@
     },
     {
       "id": "reference_attribute_surfacescale_block_2_1",
-      "state": "Failed",
+      "state": "Expected failure",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/surfaceScale",
       "meanInkError": 0.046666,
       "tolerance": 0.025,
@@ -2305,7 +2305,7 @@
       "id": "reference_element_fediffuselighting_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDiffuseLighting",
-      "meanInkError": 0.009538,
+      "meanInkError": 0.008776,
       "tolerance": 0.16,
       "inkPixels": 133113
     },
@@ -2419,11 +2419,11 @@
     },
     {
       "id": "reference_element_fespotlight_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feSpotLight",
-      "meanInkError": 0.127225,
+      "meanInkError": 0.004659,
       "tolerance": 0.025,
-      "inkPixels": 66196
+      "inkPixels": 66215
     },
     {
       "id": "reference_element_fetile_block_1_1",
@@ -3462,5 +3462,35 @@
       "IJSVGUtilityParsingTests"
     ],
     "note": "Nested viewport defaults, scroll and clip overflow, visible slice overflow, marker paints and clipping, and export round trips are covered. The raster visible overflow control passed on rerun using an equivalent full size reference image because WebKit clips the original despite visible overflow."
+  },
+  "displacementRegressionSuites": {
+    "passed": 211,
+    "failed": 0,
+    "suites": [
+      "IJSVGFilterTests",
+      "IJSVGFilterSamplerTests",
+      "IJSVGFilterBatchTests",
+      "IJSVGFilterConcurrencyTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGImageExportTests"
+    ],
+    "note": "Numerical tests cover source interpolation in both color spaces, named and implicit inputs, missing input fallback, and chained displacement results. WebKit controls cover all 16 channel pairs in both color spaces and embedded image maps with and without viewBox. Equivalent flood regions verify linear image maps because WebKit does not linearize the embedded map in the direct comparison."
+  },
+  "fixedInLightingFollowup": [
+    "reference_attribute_limitingconeangle_block_2_1",
+    "reference_element_fespotlight_block_1_1"
+  ],
+  "lightingRegressionSuites": {
+    "passed": 215,
+    "failed": 0,
+    "suites": [
+      "IJSVGFilterTests",
+      "IJSVGFilterSamplerTests",
+      "IJSVGFilterBatchTests",
+      "IJSVGFilterConcurrencyTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGImageExportTests"
+    ],
+    "note": "Diffuse and specular spotlight cones match WebKit at 5.5, 10, and 40 degrees. Flat surfaces at heights 1 and 15 match equivalent lowered point lights. Point and spot light samples remain stable across render scales 1 and 3."
   }
 }

@@ -82,6 +82,101 @@
     }
 }
 
+- (void)testLightingSurfaceScaleMatchesEquivalentLightHeight
+{
+    for(NSString* type in @[@"feDiffuseLighting", @"feSpecularLighting"]) {
+        for(NSNumber* height in @[@1, @15]) {
+            NSString* format = [NSString stringWithFormat:
+                @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200'>"
+                 "<%@ surfaceScale='%%g' lighting-color='cyan'><fePointLight x='100' y='80' z='%%g'/>"
+                 "</%@></filter></defs><rect width='400' height='200' filter='url(#f)'/>", type, type];
+            NSString* body = [NSString stringWithFormat:format, height.doubleValue, 20.0];
+            NSString* reference = [NSString stringWithFormat:format, 0.0, 20.0 - height.doubleValue];
+            [self compareBody:body referenceBody:reference
+                         name:[NSString stringWithFormat:@"lighting-surface-%@-%@", type, height] tolerance:.025];
+        }
+    }
+}
+
+- (void)testSpotlightConeEdgesMatchWebKit
+{
+    for(NSString* type in @[@"feDiffuseLighting", @"feSpecularLighting"]) {
+        for(NSNumber* angle in @[@5.5, @10, @40]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200'>"
+                 "<%@ surfaceScale='0' lighting-color='cyan'><feSpotLight x='20' y='20' z='80' "
+                 "pointsAtX='200' pointsAtY='100' limitingConeAngle='%@'/></%@></filter></defs>"
+                 "<rect width='400' height='200' filter='url(#f)'/>", type, angle, type];
+            [self compareBody:body name:[NSString stringWithFormat:@"spot-cone-%@-%@", type, angle] tolerance:.025];
+        }
+    }
+}
+
+- (void)testDisplacementChannelsMatchWebKit
+{
+    NSArray* channels = @[@"R", @"G", @"B", @"A"];
+    for(NSString* space in @[@"sRGB", @"linearRGB"]) {
+        for(NSString* xChannel in channels) {
+            for(NSString* yChannel in channels) {
+                NSString* body = [NSString stringWithFormat:
+                    @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200' "
+                     "color-interpolation-filters='%@'><feFlood flood-color='#ff8040' flood-opacity='.75' result='map'/>"
+                     "<feDisplacementMap in='SourceGraphic' in2='map' scale='32' xChannelSelector='%@' yChannelSelector='%@'/>"
+                     "</filter></defs><g filter='url(#f)'><rect x='60' y='50' width='140' height='90' fill='navy'/>"
+                     "<circle cx='210' cy='90' r='35' fill='orange'/></g>", space, xChannel, yChannel];
+                [self compareBody:body name:[NSString stringWithFormat:@"displacement-%@-%@-%@", space, xChannel, yChannel] tolerance:.025];
+            }
+        }
+    }
+}
+
+- (void)testDisplacementImageMapMatchesWebKit
+{
+    for(NSString* viewBox in @[@"", @"viewBox='0 0 100 80'"]) {
+        NSString* source = [NSString stringWithFormat:
+            @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80' %@>"
+             "<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs>"
+             "<rect width='100' height='30' fill='url(#g)'/><path d='M0 30H40V80H0Z' fill='#4080ff' fill-opacity='.5'/></svg>", viewBox];
+        NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+        for(NSString* channel in @[@"", @"R", @"G", @"B", @"A"]) {
+            NSString* displacement = channel.length == 0 ? @"" : [NSString stringWithFormat:
+                @"<feDisplacementMap in='SourceGraphic' in2='map' scale='30' xChannelSelector='%@' yChannelSelector='%@'/>", channel, channel];
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><filter id='f' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200'>"
+                 "<feImage href='data:image/svg+xml;base64,%@' x='0' y='0' width='100%%' height='100%%' result='map'/>%@"
+                 "</filter></defs><g filter='url(#f)'><rect x='60' y='50' width='140' height='90' fill='navy'/>"
+                 "<circle cx='210' cy='90' r='35' fill='orange'/></g>", encoded, displacement];
+            [self compareBody:body name:[NSString stringWithFormat:@"displacement-image-%@-%@", viewBox, channel] tolerance:.025];
+        }
+    }
+}
+
+- (void)testLinearDisplacementImageMapMatchesFloodMap
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80'>"
+                       "<rect width='100' height='30' fill='#ff8040'/>"
+                       "<rect y='30' width='40' height='50' fill='#4080ff' fill-opacity='.5'/></svg>";
+    NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    NSString* imageMap = [NSString stringWithFormat:
+        @"<feImage href='data:image/svg+xml;base64,%@' x='0' y='0' width='100%%' height='100%%' result='map'/>", encoded];
+    // WebKit does not linearize the embedded image map in this case.
+    // Equivalent flood regions verify the required linear channel values.
+    NSString* floodMap = @"<feFlood x='75' y='0' width='250' height='75' flood-color='#ff8040' result='top'/>"
+                         "<feFlood x='75' y='75' width='100' height='125' flood-color='#4080ff' flood-opacity='.5' result='bottom'/>"
+                         "<feMerge result='map'><feMergeNode in='top'/><feMergeNode in='bottom'/></feMerge>";
+    for(NSString* channel in @[@"R", @"G", @"B", @"A"]) {
+        NSString* format = [NSString stringWithFormat:
+            @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='400' height='200' "
+             "color-interpolation-filters='linearRGB'>%%@"
+             "<feDisplacementMap in='SourceGraphic' in2='map' scale='30' xChannelSelector='%@' yChannelSelector='%@'/>"
+             "</filter></defs><g filter='url(#f)'><rect x='60' y='50' width='140' height='90' fill='navy'/>"
+             "<circle cx='210' cy='90' r='35' fill='orange'/></g>", channel, channel];
+        [self compareBody:[NSString stringWithFormat:format, imageMap]
+            referenceBody:[NSString stringWithFormat:format, floodMap]
+                     name:[@"displacement-linear-image-" stringByAppendingString:channel] tolerance:.025];
+    }
+}
+
 - (void)testMarkerContextPaintMatchesExplicitColors
 {
     NSString* marker = @"<marker id='%@' markerWidth='6' markerHeight='6' refX='3' refY='3' markerUnits='strokeWidth'>"

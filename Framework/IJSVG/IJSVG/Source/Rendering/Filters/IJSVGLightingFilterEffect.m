@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGLightingFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
+static const double IJSVGSpotLightConeTransition = .016;
+
 typedef struct {
     IJSVGNodeType lightType;
     BOOL specular;
@@ -141,7 +143,9 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
                     double cosine = parameters.spotDirectionLength > 0 ?
                         -(ux * parameters.spotDirectionX + uy * parameters.spotDirectionY + uz * parameters.spotDirectionZ) / parameters.spotDirectionLength
                         : 0;
-                    intensity = cosine <= 0 || cosine < parameters.coneCosine ? 0 : pow(cosine, parameters.spotExponent);
+                    // Fade inside the cone boundary to keep narrow lights smooth.
+                    double coverage = IJSVGFilterClamp((cosine - parameters.coneCosine) / IJSVGSpotLightConeTransition);
+                    intensity = cosine <= 0 ? 0 : coverage * pow(cosine, parameters.spotExponent);
                 }
                 double dot;
                 if(parameters.specular) {

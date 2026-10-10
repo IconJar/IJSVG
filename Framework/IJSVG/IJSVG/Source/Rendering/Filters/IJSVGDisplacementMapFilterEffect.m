@@ -67,21 +67,30 @@
     CGRect inputRegion = input.extent;
     // SVG uses separate color channels to move pixels in each direction.
     // The Core Image displacement filter uses one gray value so it cannot do the same job.
-    return [context mapImage:input
-                       other:other
-                   operation:^(const float* src, const float* map, float* dst, NSInteger w, NSInteger h) {
-        [self displacePixels:src
-                         map:map
-                      output:dst
-                       width:w
-                      height:h
-                    xChannel:xc
-                    yChannel:yc
-                       scale:scale
-                       units:units
-                 inputRegion:inputRegion
-                outputRegion:outputRegion];
-    }];
+    NSData* map = [context pixelsForImage:other];
+    BOOL linearRGB = context.linearRGB;
+    context.linearRGB = context.inputLinearRGB;
+    @try {
+        // The map uses the primitive color space. Sample and write the source
+        // in its own color space so interpolation preserves its colors.
+        return [context mapImage:input
+                           other:nil
+                       operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
+            [self displacePixels:src
+                             map:map.bytes
+                          output:dst
+                           width:w
+                          height:h
+                        xChannel:xc
+                        yChannel:yc
+                           scale:scale
+                           units:units
+                     inputRegion:inputRegion
+                    outputRegion:outputRegion];
+        }];
+    } @finally {
+        context.linearRGB = linearRGB;
+    }
 }
 
 @end

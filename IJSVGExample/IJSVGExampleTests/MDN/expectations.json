@@ -23,5 +23,10 @@
     "sha256": "7af91fe860f0efbcf38334f60a80fdd93239d24f0dbef73dcd1b7187fe1a595f",
     "expectedDifference": true,
     "reason": "WebKit renders the context-fill and context-stroke marker circles with the default black fill and no stroke. SVG 2 requires the paint of the referencing path. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the same geometry and colors against WebKit using markers with explicit paints. This exception is limited to this exact fixture."
+  },
+  "reference_attribute_surfacescale_block_2_1": {
+    "sha256": "803319b19c6b349cae8604d74b3a16297604249a1eb596cc89a6062c66d5f11b",
+    "expectedDifference": true,
+    "reason": "At the comparison backing scale, WebKit scales the point light position but leaves surfaceScale in device pixels, changing the effective light height. IJSVGPaintOrderWebKitTests/testLightingSurfaceScaleMatchesEquivalentLightHeight verifies flat surfaces against WebKit with the equivalent zero surface height and reduced light Z. IJSVGFilterTests/testLightingSurfaceHeightIsIndependentOfRenderScale checks matching sample positions at two render scales. This exception is limited to this exact fixture."
   }
 }

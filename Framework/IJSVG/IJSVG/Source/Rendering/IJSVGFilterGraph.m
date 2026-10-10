@@ -476,6 +476,8 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
                                                                context:renderingContext];
 
     NSMutableDictionary<NSString*, CIImage*>* results = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSNumber*>* resultColorSpaces = [[NSMutableDictionary alloc] init];
+    BOOL outputLinearRGB = NO;
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
     BOOL preserveInnerShadowCoverage = self.filter.preservesInnerShadowCoverage;
     NSDictionary<NSString*, NSNumber*>* lastReferences = IJSVGFilterLastReferencesForPrimitives(primitives);
@@ -493,9 +495,18 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             NSUInteger shadowStage = index >= 2 ? (index - 2) % 6 : NSNotFound;
             renderingContext.inputIsAlphaOnly = preserveInnerShadowCoverage && shadowStage <= 4;
             renderingContext.outputIsAlphaOnly = preserveInnerShadowCoverage && shadowStage <= 3;
+            renderingContext.inputLinearRGB = outputLinearRGB;
+            if(primitive.input.length != 0) {
+                if(sources[primitive.input] != nil) {
+                    renderingContext.inputLinearRGB = NO;
+                } else if(resultColorSpaces[primitive.input] != nil) {
+                    renderingContext.inputLinearRGB = resultColorSpaces[primitive.input].boolValue;
+                }
+            }
             CIImage* input = IJSVGFilterInputNamed(primitive.input, output, sources, results);
             CIImage* other = IJSVGFilterInputNamed(primitive.input2, output, sources, results);
-            NSArray<CIImage*>* mergeInputs = IJSVGFilterMergeInputsForPrimitive(primitive, output, sources, results);
+            NSArray<CIImage*>* mergeInputs = IJSVGFilterMergeInputsForPrimitive(primitive, output,
+                                                                                sources, results);
             CGRect pixelRegion = [self pixelRegionForPrimitive:primitive
                                                          input:input
                                                          other:other
@@ -509,13 +520,18 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
                                        filterRegion:filterRegion
                                             context:renderingContext
                         preserveInnerShadowCoverage:preserveInnerShadowCoverage];
+            outputLinearRGB = primitive.type == IJSVGNodeTypeFilterDisplacementMap
+                ? renderingContext.inputLinearRGB
+                : primitive.type != IJSVGNodeTypeFilterImage && renderingContext.linearRGB;
             // Keep only named intermediates with future consumers. The previous
             // output remains available independently for implicit chaining.
             for(NSString* name in expiredNames[@(index)]) {
                 [results removeObjectForKey:name];
+                [resultColorSpaces removeObjectForKey:name];
             }
             if(primitive.result.length != 0 && lastReferences[primitive.result].unsignedIntegerValue > index) {
                 results[primitive.result] = output;
+                resultColorSpaces[primitive.result] = @(outputLinearRGB);
             }
         }
     }

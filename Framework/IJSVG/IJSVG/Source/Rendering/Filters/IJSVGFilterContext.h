@@ -21,6 +21,7 @@
 @property (nonatomic, strong) CIContext* context;
 @property (nonatomic, assign) BOOL supportsMetalKernels;
 @property (nonatomic, assign) BOOL linearRGB;
+@property (nonatomic, assign) BOOL inputLinearRGB;
 @property (nonatomic, assign) BOOL inputIsAlphaOnly;
 @property (nonatomic, assign) BOOL outputIsAlphaOnly;
 @property (nonatomic, copy) CIImage* (^imageProvider)(IJSVGFilterPrimitive* primitive, CGRect region);

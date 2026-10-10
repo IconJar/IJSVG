@@ -1042,6 +1042,32 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertTrue(IJSVGFilterPixel(biased, 15, 35, 10)[3] == 0);
 }
 
+- (void)testDisplacementPreservesSourceInterpolationSpace
+{
+    NSString* content = @"<rect width='15' height='10' fill='red'/><rect x='15' width='15' height='10' fill='blue'/>";
+    for(NSString* sourceSpace in @[@"sRGB", @"linearRGB"]) {
+        NSString* mapSpace = [sourceSpace isEqualToString:@"sRGB"] ? @"linearRGB" : @"sRGB";
+        for(NSString* input in @[@"in='source'", @"in='unchanged'", @"", @"in='missing'"]) {
+            NSString* primitives = [NSString stringWithFormat:
+                @"<feOffset color-interpolation-filters='%@' result='source'/>"
+                 "<feFlood flood-color='white' result='map'/>"
+                 "<feDisplacementMap in='source' in2='map' scale='0' color-interpolation-filters='%@' result='unchanged'/>"
+                 "<feDisplacementMap %@ in2='map' scale='1' color-interpolation-filters='%@'/>",
+                sourceSpace, mapSpace, input, mapSpace];
+            NSData* pixels = [self render:[self filtered:primitives content:content] scale:1];
+            const uint8_t* pixel = IJSVGFilterPixel(pixels, 14, 4, 1);
+            NSInteger expected = [sourceSpace isEqualToString:@"sRGB"] ? 128 : 188;
+            XCTAssertEqualWithAccuracy(pixel[0], expected, 2, @"%@ source red %@", sourceSpace, input);
+            XCTAssertEqualWithAccuracy(pixel[2], expected, 2, @"%@ source blue %@", sourceSpace, input);
+            XCTAssertEqual(pixel[3], 255);
+        }
+    }
+    NSData* source = [self render:[self filtered:@"<feDisplacementMap in2='SourceGraphic' scale='1' color-interpolation-filters='linearRGB'/>" content:content] scale:1];
+    const uint8_t* pixel = IJSVGFilterPixel(source, 14, 4, 1);
+    XCTAssertEqualWithAccuracy(pixel[0], 128, 2);
+    XCTAssertEqualWithAccuracy(pixel[2], 128, 2);
+}
+
 - (void)testDisplacementUsesUnpremultipliedMapChannels
 {
     NSData* bytes = [self render:[self filtered:@"<feFlood flood-color=\"red\" flood-opacity=\".5\" "
@@ -1399,6 +1425,37 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(displaced, 15, 15,
                                                           10), 255, 0, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(displaced, 35, 55, 10)[3] == 0);
+}
+
+- (void)testLightingSurfaceHeightIsIndependentOfRenderScale
+{
+    for(NSString* type in @[@"fePointLight", @"feSpotLight"]) {
+        for(NSNumber* height in @[@1, @15]) {
+            NSString* primitive = [NSString stringWithFormat:
+                @"<feDiffuseLighting surfaceScale='%@'><%@ x='15' y='5' z='20' pointsAtX='15' pointsAtY='5' "
+                 "limitingConeAngle='40'/></feDiffuseLighting>", height, type];
+            NSString* document = [self filtered:primitive content:@"<rect width='30' height='10'/>"];
+            NSData* normal = [self render:document scale:1];
+            NSData* enlarged = [self render:document scale:3];
+            for(NSInteger x = 3; x < 27; x++) {
+                const uint8_t* a = IJSVGFilterPixel(normal, x, 4, 1);
+                const uint8_t* b = IJSVGFilterPixel(enlarged, x * 3 + 1, 13, 3);
+                XCTAssertEqualWithAccuracy(a[0], b[0], 1, @"%@ height %@ x %ld", type, height, (long)x);
+            }
+        }
+    }
+}
+
+- (void)testNarrowSpotlightConeHasPartialCoverage
+{
+    NSString* light = @"<feDiffuseLighting surfaceScale='0'><feSpotLight x='15' y='5' z='10' "
+                      "pointsAtX='15' pointsAtY='5' limitingConeAngle='5.5'/></feDiffuseLighting>";
+    NSData* pixels = [self render:[self filtered:light content:@"<rect width='30' height='10'/>"] scale:1];
+    const uint8_t* center = IJSVGFilterPixel(pixels, 14, 4, 1);
+    XCTAssertGreaterThan(center[0], 0);
+    XCTAssertLessThan(center[0], 100);
+    XCTAssertEqual(center[3], 255);
+    XCTAssertEqual(IJSVGFilterPixel(pixels, 0, 0, 1)[0], 0);
 }
 
 - (void)testPointAndSpotLightingUseTheirChildParameters
