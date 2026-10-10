@@ -18,5 +18,10 @@
     "sha256": "18380bb05df8e3e4c5239c80d68e8f086221dcaa639591853408e9594572f800",
     "expectedDifference": true,
     "reason": "WebKit renders pad, reflect, and repeat identically for this radial gradient with a nonzero focal radius. IJSVGPaintOrderWebKitTests/testRadialSpreadWithFocalRadiusMatchesExplicitStops verifies both spread modes against WebKit using the equivalent zero-radius cone and explicitly expanded stops. SVG 2 requires the radial spread modes; this exception is limited to this exact fixture."
+  },
+  "reference_element_marker_block_5_1": {
+    "sha256": "7af91fe860f0efbcf38334f60a80fdd93239d24f0dbef73dcd1b7187fe1a595f",
+    "expectedDifference": true,
+    "reason": "WebKit renders the context-fill and context-stroke marker circles with the default black fill and no stroke. SVG 2 requires the paint of the referencing path. IJSVGPaintOrderWebKitTests/testMarkerContextPaintMatchesExplicitColors verifies the same geometry and colors against WebKit using markers with explicit paints. This exception is limited to this exact fixture."
   }
 }

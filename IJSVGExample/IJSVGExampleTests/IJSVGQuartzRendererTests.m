@@ -158,6 +158,19 @@
     }
 }
 
+- (void)testNestedViewportOverflowSurvivesExport
+{
+    for(NSString* overflow in @[@"hidden", @"visible", @"scroll", @"auto"]) {
+        for(NSString* mapping in @[@"", @"viewBox='4 4 8 16' preserveAspectRatio='xMaxYMin slice'"]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<svg x='8' y='8' width='16' height='16' overflow='%@' %@>"
+                 "<rect x='-4' y='-4' width='32' height='32' fill='red'/></svg>", overflow, mapping];
+            [self assertVectorExportPreservesQuartzPixels:body optimized:NO];
+            [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+        }
+    }
+}
+
 - (void)testNestedSVGDefaultsToContainingViewport
 {
     [self assertBody:@"<svg x='16' width='16' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"

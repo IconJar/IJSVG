@@ -35,6 +35,9 @@
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
+    if(self.sourceNode != nil && self.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden) {
+        CGContextClipToRect(ctx, IJSVGPaintGetBoundingBoxBounds(self));
+    }
     if(self.viewBox == nil) {
         [super performRenderInContext:ctx];
         return;

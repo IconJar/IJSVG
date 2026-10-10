@@ -82,6 +82,79 @@
     }
 }
 
+- (void)testMarkerContextPaintMatchesExplicitColors
+{
+    NSString* marker = @"<marker id='%@' markerWidth='6' markerHeight='6' refX='3' refY='3' markerUnits='strokeWidth'>"
+                       "<circle cx='3' cy='3' r='2' stroke='%@' fill='%@'/></marker>";
+    NSMutableString* actual = [NSMutableString stringWithString:@"<g transform='scale(4)'>"];
+    NSMutableString* reference = [NSMutableString stringWithString:@"<g transform='scale(4)'>"];
+    [actual appendFormat:marker, @"m", @"context-stroke", @"context-fill"];
+    NSArray* strokes = @[@"black", @"blue", @"red", @"gray"];
+    NSArray* fills = @[@"black", @"red", @"none", @"blue"];
+    for(NSUInteger index = 0; index < strokes.count; index++) {
+        NSString* identifier = [NSString stringWithFormat:@"m%lu", (unsigned long)index];
+        [reference appendFormat:marker, identifier, strokes[index], fills[index]];
+        NSString* path = [NSString stringWithFormat:
+            @"<path d='M10,%lu 30,%lu h10' stroke='%@' fill='%@' stroke-width='%g' style='marker:url(#%%@)'/>",
+            (unsigned long)(index + 1) * 10, (unsigned long)(index + 1) * 10,
+            strokes[index], fills[index], index == 3 ? 1.5 : 1.0];
+        [actual appendFormat:path, @"m"];
+        [reference appendFormat:path, identifier];
+    }
+    [actual appendString:@"</g>"];
+    [reference appendString:@"</g>"];
+    [self compareBody:actual referenceBody:reference name:@"marker-context-colors" tolerance:.025];
+}
+
+- (void)testMarkerViewportClippingMatchesWebKit
+{
+    for(NSString* overflow in @[@"", @"overflow='hidden'", @"overflow='visible'", @"overflow='scroll'"]) {
+        for(NSString* viewBox in @[@"", @"viewBox='5 5 10 20' preserveAspectRatio='xMaxYMin slice'"]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><marker id='m' markerWidth='20' markerHeight='14' refX='8' refY='7' "
+                 "markerUnits='userSpaceOnUse' orient='auto' %@ %@>"
+                 "<rect x='-10' y='-10' width='40' height='40' fill='orange'/>"
+                 "<circle cx='8' cy='7' r='5' fill='navy'/></marker></defs>"
+                 "<path d='M60 50L130 100L220 50' fill='none' stroke='red' stroke-width='3' style='marker:url(#m)'/>",
+                overflow, viewBox];
+            [self compareBody:body name:[NSString stringWithFormat:@"marker-clip-%@-%@", overflow, viewBox] tolerance:.025];
+        }
+    }
+}
+
+- (void)testNestedViewportClippingMatchesWebKit
+{
+    for(NSString* overflow in @[@"", @"overflow='hidden'", @"overflow='visible'", @"overflow='auto'", @"overflow='scroll'",
+                                @"overflow='inherit'", @"overflow='invalid'", @"style='overflow:clip'", @"style='overflow:visible'"]) {
+        for(NSString* viewBox in @[@"", @"viewBox='5 10 40 20' preserveAspectRatio='xMaxYMin slice'"]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<g transform='translate(40 30) rotate(12)'><svg x='20' y='10' width='120' height='80' %@ %@>"
+                 "<rect x='-30' y='-30' width='220' height='160' fill='orange'/>"
+                 "<circle cx='25' cy='20' r='15' fill='navy'/></svg></g>", overflow, viewBox];
+            [self compareBody:body name:[NSString stringWithFormat:@"nested-clip-%@-%@", overflow, viewBox] tolerance:.025];
+        }
+    }
+}
+
+- (void)testImageSliceOverflowMatchesWebKit
+{
+    NSString* image = @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=";
+    for(NSString* overflow in @[@"hidden", @"visible", @"scroll"]) {
+        NSString* body = [NSString stringWithFormat:
+            @"<image x='80' y='40' width='80' height='100' preserveAspectRatio='xMidYMid slice' overflow='%@' href='%@'/>",
+            overflow, image];
+        NSString* reference = body;
+        if([overflow isEqualToString:@"visible"]) {
+            // WebKit clips raster images even when overflow is visible.
+            // Draw the fitted image at its full size to verify the overflow.
+            reference = [NSString stringWithFormat:
+                @"<image x='20' y='40' width='200' height='100' preserveAspectRatio='none' href='%@'/>", image];
+        }
+        [self compareBody:body referenceBody:reference
+                     name:[@"image-slice-overflow-" stringByAppendingString:overflow] tolerance:.025];
+    }
+}
+
 - (void)testEmbeddedSVGFilterSourcesMatchWebKit
 {
     NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80' viewBox='0 0 100 80'>"

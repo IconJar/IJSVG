@@ -241,11 +241,8 @@ CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox,
                     drawingBlock:(IJSVGViewBoxDrawingBlock)block
 {
     CGContextSaveGState(ctx);
-    if(meetOrSlice == IJSVGViewBoxMeetOrSliceSlice) {
-        CGContextClipToRect(ctx, drawingRect);
-    }
-
-    // a missing, empty or identical viewBox maps 1:1, there is nothing to scale
+    // The element controls overflow independently of the viewBox mapping.
+    // A missing, empty or identical viewBox maps 1:1, there is nothing to scale
     // so we draw with an identity transform rather than skipping the draw.
     CGAffineTransform transform = CGAffineTransformIdentity;
     if(CGRectIsNull(viewBox) == NO && viewBox.size.width > 0.f &&

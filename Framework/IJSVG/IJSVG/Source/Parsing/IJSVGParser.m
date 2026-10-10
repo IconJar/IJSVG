@@ -1049,10 +1049,18 @@ typedef struct {
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
-        if([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame) {
+        if([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame ||
+           [value caseInsensitiveCompare:@"scroll"] == NSOrderedSame ||
+           [value caseInsensitiveCompare:@"clip"] == NSOrderedSame) {
             node.overflowVisibility = IJSVGOverflowVisibilityHidden;
-        } else {
+        } else if([value caseInsensitiveCompare:@"visible"] == NSOrderedSame ||
+                  [value caseInsensitiveCompare:IJSVGStringAuto] == NSOrderedSame ||
+                  [value caseInsensitiveCompare:@"initial"] == NSOrderedSame ||
+                  [value caseInsensitiveCompare:@"unset"] == NSOrderedSame) {
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;
+        } else if([value caseInsensitiveCompare:@"inherit"] == NSOrderedSame) {
+            node.overflowVisibility = node.parentNode != nil ? node.parentNode.overflowVisibility
+                                                              : IJSVGOverflowVisibilityVisible;
         }
     }
   
@@ -1963,6 +1971,10 @@ typedef struct {
                parentNode:node
                 recursive:NO];
     
+    if(parentNode != nil) {
+        node.overflowVisibility = IJSVGOverflowVisibilityHidden;
+    }
+
     // if we are the root node and not a nested SVG, disable transforms
     IJSVGBitFlags* ignored = nil;
     if(parentNode == nil) {

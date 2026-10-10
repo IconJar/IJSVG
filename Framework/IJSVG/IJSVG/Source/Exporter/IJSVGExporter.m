@@ -1331,6 +1331,10 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         attributes[IJSVGAttributePreserveAspectRatio] = aspectRatio;
     }
 
+    attributes[IJSVGAttributeOverflow] = paint.sourceNode != nil &&
+        paint.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden
+        ? @"hidden" : @"visible";
+
     IJSVGUnitSize* size = paint.intrinsicSize;
     if(size != nil) {
         CGSize computedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
