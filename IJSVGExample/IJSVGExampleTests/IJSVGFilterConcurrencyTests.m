@@ -142,9 +142,43 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
                callbacks:&callbacks];
     }];
     XCTAssertEqual(callbacks, 13u);
-    // Other callers may hold slots; nested leases can reuse fewer than six contexts.
-    XCTAssertGreaterThan(contexts.count, 0u);
-    XCTAssertLessThanOrEqual(contexts.count, 6u);
+    // All nested work on one thread belongs to one synchronous render task.
+    // It must not initialize extra contexts during the first draw.
+    XCTAssertEqual(contexts.count, 1u);
+}
+
+- (void)testNestedContextReuseSurvivesExceptions
+{
+    __block BOOL completed = NO;
+    [IJSVGThreadManager performBlockWithCIContext:^(CIContext* outer, BOOL supportsMetalKernels) {
+        XCTAssertEqual(IJSVGThreadManager.currentManager.CIContext, outer);
+        @try {
+            [IJSVGThreadManager performBlockWithCIContext:^(CIContext* inner, BOOL supportsMetalKernels) {
+                XCTAssertEqual(inner, outer);
+                @throw [NSException exceptionWithName:@"IJSVGTestException" reason:nil userInfo:nil];
+            }];
+        } @catch(NSException* exception) {
+            XCTAssertEqualObjects(exception.name, @"IJSVGTestException");
+        }
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* inner, BOOL supportsMetalKernels) {
+            XCTAssertEqual(inner, outer);
+            completed = YES;
+        }];
+    }];
+    XCTAssertTrue(completed);
+    @try {
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+            @throw [NSException exceptionWithName:@"IJSVGTestException" reason:nil userInfo:nil];
+        }];
+    } @catch(NSException* exception) {
+        XCTAssertEqualObjects(exception.name, @"IJSVGTestException");
+    }
+    completed = NO;
+    [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+        XCTAssertNotNil(context);
+        completed = YES;
+    }];
+    XCTAssertTrue(completed);
 }
 
 - (void)testOutputSlotsSupportNestedCallsAndWorkerReplacement

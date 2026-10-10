@@ -79,6 +79,10 @@ static void IJSVGReleaseContextSlot(IJSVGCIContextSlot* slot)
 }
 
 static _Thread_local NSUInteger IJSVGCIOutputDepth;
+// The outer synchronous lease retains this slot until its finally block.
+// Nested feImage/filter evaluation is serial on this thread and can reuse the
+// same CIContext instead of initializing another context and kernel cache.
+static _Thread_local __unsafe_unretained IJSVGCIContextSlot* IJSVGActiveContextSlot;
 
 @implementation IJSVGThreadManager
 
@@ -229,6 +233,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 - (CIContext*)CIContext
 {
     // Compatibility accessor. Callers can retain and concurrently use this context.
+    if(IJSVGActiveContextSlot != nil) {
+        return IJSVGActiveContextSlot.context;
+    }
     IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
     @try {
         return slot.context;
@@ -239,13 +246,19 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 + (void)performBlockWithCIContext:(void (^)(CIContext*, BOOL))block
 {
+    if(IJSVGActiveContextSlot != nil) {
+        block(IJSVGActiveContextSlot.context, IJSVGActiveContextSlot.supportsMetalKernels);
+        return;
+    }
     IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
     @try {
         CIContext* context = slot.context;
         if(context != nil) {
+            IJSVGActiveContextSlot = slot;
             block(context, slot.supportsMetalKernels);
         }
     } @finally {
+        IJSVGActiveContextSlot = nil;
         IJSVGReleaseContextSlot(slot);
     }
 }

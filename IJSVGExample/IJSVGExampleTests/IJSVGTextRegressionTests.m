@@ -194,15 +194,19 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
                 IJSVGTextLayout* result = [context layout:[NSString stringWithFormat:
                     @"<text font-family='Helvetica' font-size='30' y='60' text-decoration='%@'>A B</text>", decoration]];
                 CGPathRef geometry = [context decoration:result];
-                CTFontRef font = CTFontCreateWithName(CFSTR("Helvetica"), 30, NULL);
-                CGFloat offset = [decoration isEqual:@"underline"] ? CTFontGetUnderlinePosition(font) :
-                    ([decoration isEqual:@"overline"] ? CTFontGetAscent(font) : CTFontGetXHeight(font) * .5);
-                CGFloat thickness = MAX(.5, CTFontGetUnderlineThickness(font));
-                CFRelease(font);
+                // This regression checks coverage across whitespace. Decoration
+                // placement is checked separately against WebKit; Core Text's
+                // underline metrics are not the renderer's decoration positions.
+                CGRect bounds = CGPathGetPathBoundingBox(geometry);
+                IJSVGCheck(!CGRectIsEmpty(bounds));
                 CGPoint a = [context point:1 layout:result];
                 CGPoint b = [context point:2 layout:result];
-                CGPoint point = CGPointMake((a.x + b.x) * .5, 60 - offset - thickness * .5);
-                IJSVGCheck(CGPathContainsPoint(geometry, NULL, point, NO));
+                IJSVGCheck(b.x > a.x);
+                for(NSUInteger sample = 1; sample < 4; sample++) {
+                    CGPoint point = CGPointMake(a.x + (b.x - a.x) * sample / 4,
+                                                CGRectGetMidY(bounds));
+                    IJSVGCheck(CGPathContainsPoint(geometry, NULL, point, NO));
+                }
             };
             entries[[@"combiningClustersHaveOneDecoration/" stringByAppendingString:decoration]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* result = [context layout:[NSString stringWithFormat:

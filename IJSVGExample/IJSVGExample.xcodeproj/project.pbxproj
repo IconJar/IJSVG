@@ -29,7 +29,8 @@
 		590C7B7B307A68D100AD5C88 /* IJSVGCompositingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */; };
 		590C7B7D307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */; };
 		590C7B7F307A6BD700AD5C88 /* IJSVGPaintOrderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */; };
-		590C8238307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */; };
+		590C823C307AEB5900AD5C88 /* IJSVGFirstDrawTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C823B307AEB5900AD5C88 /* IJSVGFirstDrawTests.m */; };
+		590C823E307AEB7F00AD5C88 /* IJSVGBackgroundScopeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C823D307AEB7F00AD5C88 /* IJSVGBackgroundScopeTests.m */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
 		590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EC201FA08C004A1554 /* intertwingly.svg */; };
 		590C87EF201FA093004A1554 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
@@ -190,7 +191,8 @@
 		590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCompositingTests.m; sourceTree = "<group>"; };
 		590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPaintOrderWebKitTests.m; sourceTree = "<group>"; };
 		590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPaintOrderTests.m; sourceTree = "<group>"; };
-		590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGBackgroundScopeTests.swift; sourceTree = "<group>"; };
+		590C823B307AEB5900AD5C88 /* IJSVGFirstDrawTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFirstDrawTests.m; sourceTree = "<group>"; };
+		590C823D307AEB7F00AD5C88 /* IJSVGBackgroundScopeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGBackgroundScopeTests.m; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
 		590C87EC201FA08C004A1554 /* intertwingly.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = intertwingly.svg; sourceTree = "<group>"; };
 		590C87EE201FA092004A1554 /* NewTux.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = NewTux.svg; sourceTree = "<group>"; };
@@ -497,7 +499,8 @@
 				590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */,
 				590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */,
 				590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */,
-				590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */,
+				590C823B307AEB5900AD5C88 /* IJSVGFirstDrawTests.m */,
+				590C823D307AEB7F00AD5C88 /* IJSVGBackgroundScopeTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -755,18 +758,19 @@
 				59835AA630769CF0007A1232 /* IJSVGRegressionRegistration.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				590C7B7F307A6BD700AD5C88 /* IJSVGPaintOrderTests.m in Sources */,
-				590C8238307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */,
 				597CE1D630796C4A0026E325 /* IJSVGMarkerTests.m in Sources */,
 				5999231030716433004F4D18 /* IJSVGGradientGeometryTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,
+				590C823E307AEB7F00AD5C88 /* IJSVGBackgroundScopeTests.m in Sources */,
 				5929C36F306DC05A003D5C0C /* IJSVGFilterMatrixTests.m in Sources */,
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
 				5915E9ED3077D26500FEEC4B /* IJSVGExtentTests.m in Sources */,
 				5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */,
 				5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */,
 				59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */,
+				590C823C307AEB5900AD5C88 /* IJSVGFirstDrawTests.m in Sources */,
 				591F8ECA2FF01DA30012F5EB /* IJSVGTestHelpers.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -377,6 +377,20 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x,
         mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
     sourceBounds = CGRectIntersection(sourceBounds, sourceClip);
+    // A mask only contributes inside the destination clip. Map that clip back
+    // to mask source coordinates before allocating its bitmap. Keep a sampling
+    // halo and the existing pixel grid so fractional mask edges remain intact.
+    CGRect destinationClip = CGContextGetClipBoundingBox(ctx);
+    // Filters and patterns can read a backdrop outside this clip. The mask
+    // caching eligibility check already excludes those dependent subtrees.
+    if(mask->_maskCacheKey != nil &&
+        !CGRectIsInfinite(destinationClip) && !CGRectIsNull(destinationClip)) {
+        destinationClip = CGRectInset(destinationClip, -2.f / scale, -2.f / scale);
+        destinationClip = CGRectOffset(destinationClip,
+                                       mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x,
+                                       mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
+        sourceBounds = CGRectIntersection(sourceBounds, destinationClip);
+    }
     if(CGRectIsNull(sourceBounds) || CGRectIsEmpty(sourceBounds)) {
         return;
     }
@@ -479,6 +493,18 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
         return;
     }
+    // Structural groups contribute no drawing state. Their children save and
+    // restore their own state, so avoid a Quartz state stack entry per wrapper.
+    // Restrict placement to an actual zero frame to preserve floating-point
+    // rounding for translated or centred geometry.
+    if(self.class == IJSVGGroupPaint.class && _opacity == 1.f && !_isolated &&
+        _blendingMode == kCGBlendModeNormal && _clipPath == NULL && _maskPaint == nil &&
+        _clipPaints.count == 0 && (_sourceNode == nil || CGRectIsNull(_sourceNode.backgroundRect)) &&
+        (!applyingPlacement || (CGRectEqualToRect(_frame, CGRectZero) &&
+                                CGAffineTransformIsIdentity(_affineTransform)))) {
+        [self drawContentsInContext:ctx];
+        return;
+    }
     CGContextSaveGState(ctx);
     @try {
         if(applyingPlacement) {
@@ -493,6 +519,15 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
             } else {
                 CGContextClip(ctx);
             }
+        }
+        // Stop before allocating masks, filter sources or transparency layers.
+        // Query after placement and clipping; geometry alone cannot cull effects
+        // such as floods and blurs that paint outside their source paths.
+        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil ||
+            _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal ||
+            [self isKindOfClass:IJSVGFilterPaint.class];
+        if(allocatesEffects && CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
+            return;
         }
         CGContextSetBlendMode(ctx, _blendingMode);
         if(_maskPaint != nil) {

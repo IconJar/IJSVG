@@ -1085,7 +1085,9 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // Keep filter coordinates aligned with the source bitmap. The calling context
     // drawing transform handles flipped views and image exports.
     CGAffineTransform imageTransform = graph.imageTransform;
+    __block BOOL hasContext = NO;
     [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+        hasContext = YES;
         graph.context = context;
         graph.supportsMetalKernels = supportsMetalKernels;
         graph.extent = extent;
@@ -1136,7 +1138,22 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             CGImageRelease(image);
         }
     }];
-
+    if(!hasContext) {
+        // Preserve the previous unfiltered fallback on systems without Metal,
+        // while allowing CPU filters to execute without acquiring a CI context.
+        if(batch.collecting) {
+            batch.invalid = YES;
+            return;
+        }
+        CGContextSaveGState(ctx);
+        @try {
+            CGContextTranslateCTM(ctx, self.sourcePaint.frame.origin.x,
+                                  self.sourcePaint.frame.origin.y);
+            [self.sourcePaint renderInContext:ctx];
+        } @finally {
+            CGContextRestoreGState(ctx);
+        }
+    }
 }
 
 - (CGRect)finiteWorkingBoundsForRegion:(CGRect)region

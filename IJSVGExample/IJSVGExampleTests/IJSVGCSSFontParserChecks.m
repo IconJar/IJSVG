@@ -19,10 +19,22 @@ static NSDictionary* IJSVGFontProperties(NSString* property, NSString* value)
     return style.properties;
 }
 
+// The style retains the original shorthand alongside its expanded longhands.
+static BOOL IJSVGHasCompleteFontDeclaration(NSDictionary* properties)
+{
+    NSSet* expected = [NSSet setWithArray:@[
+        @"font", @"font-family", @"font-size", @"font-style", @"font-weight",
+        @"font-stretch", @"font-variant", @"line-height", @"font-variant-ligatures",
+        @"font-feature-settings", @"font-kerning", @"font-size-adjust"
+    ]];
+    return [[NSSet setWithArray:properties.allKeys] isEqualToSet:expected];
+}
+
 static void IJSVGCheckFont(NSMutableArray<NSString*>* failures, NSString* value, BOOL valid)
 {
     NSDictionary* result = IJSVGFontProperties(@"font", value);
-    if((result.count == 11) != valid || (result.count != 0 && result.count != 11)) {
+    if(IJSVGHasCompleteFontDeclaration(result) != valid ||
+       (result.count != 0 && !IJSVGHasCompleteFontDeclaration(result))) {
         if(failures.count < 100) {
             [failures addObject:[NSString stringWithFormat:@"Unexpected font acceptance: %@",
                                                           value]];
@@ -155,7 +167,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
                                                    encoding:NSUTF8StringEncoding];
             NSDictionary* first = IJSVGFontProperties(@"font", value);
             NSDictionary* second = IJSVGFontProperties(@"font", value);
-            if((first.count != 0 && first.count != 11) ||
+            if((first.count != 0 && !IJSVGHasCompleteFontDeclaration(first)) ||
                ![first isEqualToDictionary:second]) {
                 if(failures.count < 100) {
                     [failures addObject:[NSString stringWithFormat:@"Nonatomic or unstable fuzz result at %lu",
@@ -179,7 +191,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
         for(NSUInteger length = 0; length <= value.length; length++) {
             NSDictionary* result = IJSVGFontProperties(@"font",
                 [value substringToIndex:length]);
-            if(result.count != 0 && result.count != 11 && failures.count < 100) {
+            if(result.count != 0 && !IJSVGHasCompleteFontDeclaration(result) && failures.count < 100) {
                 [failures addObject:@"Truncated shorthand produced partial properties"];
             }
             checked++;

@@ -342,6 +342,8 @@ typedef struct {
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGClipPath*>* simpleClipTemplates;
+@property (nonatomic, strong) NSMapTable<NSXMLElement*, NSNumber*>* simpleClipCandidates;
 @end
 
 @implementation IJSVGParser
@@ -519,6 +521,8 @@ typedef struct {
     self.inlineStyles = nil;
     self.parsedPaths = nil;
     self.rawAttributes = nil;
+    self.simpleClipTemplates = nil;
+    self.simpleClipCandidates = nil;
     self.uncachedReferenceElements = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
     self.definitionStyleParents = IJSVGParserElementMapTable();
@@ -538,6 +542,8 @@ typedef struct {
     }
     [_rootNode postProcess];
     _rootNode.styleAncestors = self.styleAncestors.objectEnumerator.allObjects;
+    self.simpleClipTemplates = nil;
+    self.simpleClipCandidates = nil;
     self.inlineStyles = nil;
     self.parsedPaths = nil;
     self.rawAttributes = nil;
@@ -1612,6 +1618,99 @@ typedef struct {
                                           element:element]);
 }
 
+// Repeated geometric clips need independent mutable nodes, but do not need
+// repeated XML/style parsing. Context-dependent resources stay on the parser.
+- (BOOL)canReuseSimpleClipElement:(NSXMLElement*)source
+{
+    if(_styleSheet.ruleCount != 0 ||
+       [IJSVGNode typeForString:source.localName kind:source.kind] != IJSVGNodeTypeClipPath) {
+        return NO;
+    }
+    NSNumber* cached = [self.simpleClipCandidates objectForKey:source];
+    if(cached != nil) {
+        return cached.boolValue;
+    }
+    static NSSet<NSString*>* attributes;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        attributes = [NSSet setWithArray:@[
+            IJSVGAttributeID, IJSVGAttributeD, IJSVGAttributePoints,
+            IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
+            IJSVGAttributeRX, IJSVGAttributeRY, IJSVGAttributeCX, IJSVGAttributeCY,
+            IJSVGAttributeR, IJSVGAttributeX1, IJSVGAttributeX2,
+            IJSVGAttributeY1, IJSVGAttributeY2, IJSVGAttributeTransform,
+            IJSVGAttributeClipPathUnits, IJSVGAttributeClipRule, IJSVGAttributeFillRule
+        ]];
+    });
+    BOOL reusable = source.childCount <= 512;
+    NSMutableArray<NSXMLElement*>* elements = [NSMutableArray arrayWithObject:source];
+    for(NSXMLNode* child in source.children) {
+        if(child.kind != NSXMLElementKind) {
+            continue;
+        }
+        switch([IJSVGNode typeForString:child.localName
+                                   kind:child.kind]) {
+            case IJSVGNodeTypePath:
+            case IJSVGNodeTypeRect:
+            case IJSVGNodeTypeCircle:
+            case IJSVGNodeTypeEllipse:
+            case IJSVGNodeTypeLine:
+            case IJSVGNodeTypePolygon:
+            case IJSVGNodeTypePolyline:
+                break;
+            default:
+                reusable = NO;
+                break;
+        }
+        if(!reusable || child.childCount != 0) {
+            reusable = NO;
+            break;
+        }
+        [elements addObject:(NSXMLElement*)child];
+    }
+    for(NSXMLElement* item in elements) {
+        for(NSXMLNode* attribute in item.attributes) {
+            if(![attributes containsObject:attribute.name]) {
+                reusable = NO;
+                break;
+            }
+        }
+        if(!reusable) {
+            break;
+        }
+    }
+    if(self.simpleClipCandidates == nil) {
+        self.simpleClipCandidates = IJSVGParserElementMapTable();
+    }
+    [self.simpleClipCandidates setObject:@(reusable)
+                                  forKey:source];
+    return reusable;
+}
+
+- (IJSVGClipPath*)copySimpleClipTemplate:(IJSVGClipPath*)source
+{
+    IJSVGClipPath* copy = source.copy;
+    // Node copying already duplicates mutable CGPaths. Copy the mutable length
+    // and transform objects too, so editing one client's clip cannot edit another.
+    NSArray<IJSVGNode*>* nodes = [@[copy] arrayByAddingObjectsFromArray:copy.children];
+    for(IJSVGNode* node in nodes) {
+        node.x = node.x.copy;
+        node.y = node.y.copy;
+        node.width = node.width.copy;
+        node.height = node.height.copy;
+        node.opacity = node.opacity.copy;
+        node.fillOpacity = node.fillOpacity.copy;
+        node.strokeOpacity = node.strokeOpacity.copy;
+        node.transforms = [[NSArray alloc] initWithArray:node.transforms ?: @[] copyItems:YES];
+        NSMutableDictionary* lengths = [NSMutableDictionary dictionary];
+        [node.geometryLengths enumerateKeysAndObjectsUsingBlock:^(NSNumber* key, IJSVGUnitLength* value, BOOL* stop) {
+            lengths[key] = value.copy;
+        }];
+        node.geometryLengths = lengths;
+    }
+    return copy;
+}
+
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                                 referencingNode:(IJSVGNode*)node
                                         element:(NSXMLElement*)element
@@ -1627,6 +1726,11 @@ typedef struct {
                        identifier:identifier];
         return nil;
     }
+    BOOL reuseClip = [self canReuseSimpleClipElement:source];
+    IJSVGClipPath* template = reuseClip ? [self.simpleClipTemplates objectForKey:source] : nil;
+    if(template != nil) {
+        return [self copySimpleClipTemplate:template];
+    }
     [self.activeReferences addObject:identifier];
     NSMapTable* previousScope = self.selectorScope;
     self.selectorScope = nil;
@@ -1639,6 +1743,16 @@ typedef struct {
         IJSVGNode* detached = [self parseElement:source
                                       parentNode:node].detach;
         detached.styleParent = parent;
+        if(reuseClip && [detached isKindOfClass:IJSVGClipPath.class]) {
+            if(self.simpleClipTemplates == nil) {
+                self.simpleClipTemplates = IJSVGParserElementMapTable();
+            }
+            // Parsing is synchronous, clients cannot mutate this first instance
+            // until it finishes. Retain it as the template instead of making an
+            // extra copy for definitions that may only be referenced once.
+            [self.simpleClipTemplates setObject:(IJSVGClipPath*)detached
+                                         forKey:source];
+        }
         for(void (^apply)(IJSVGNode*) in self.pendingStylePaints[identifier]) {
             apply(detached);
         }

@@ -851,8 +851,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
     if(_renderingOptions.filtersEnabled && node.filters.count != 0) {
         _measurementHasFilters = YES;
     }
-    if(!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0 &&
-        (_resolvingMeasurements || IJSVGThreadManager.currentManager.CIContext != nil)) {
+
+    // Resolving geometry must not initialize the GPU. Bitmap CPU fast paths and
+    // completely clipped content may never need a Core Image context.
+    if(!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0) {
         for(IJSVGFilter* filter in node.filters) {
             paint = [self applyFilter:filter
                               toPaint:paint
