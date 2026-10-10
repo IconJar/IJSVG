@@ -57,6 +57,19 @@
     XCTAssertTrue(((IJSVGColorNode*)copy.children.firstObject.fill).usesCurrentColor);
 }
 
+- (void)testRootCopyPreservesInferredViewBox
+{
+    IJSVG* inferred = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80'/>");
+    IJSVG* explicit = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80' viewBox='0 0 100 80'/>");
+    XCTAssertTrue(inferred.rootNode.viewBoxWasInferred);
+    XCTAssertFalse(explicit.rootNode.viewBoxWasInferred);
+    IJSVGRootNode* copy = inferred.rootNode.copy;
+    XCTAssertTrue(copy.viewBoxWasInferred);
+    copy.viewBox = [IJSVGUnitRect rectWithCGRect:CGRectMake(0, 0, 50, 40)];
+    XCTAssertFalse(copy.viewBoxWasInferred);
+    XCTAssertTrue(inferred.rootNode.viewBoxWasInferred);
+}
+
 - (void)testRootCopyPreservesSizingAndChildren
 {
     IJSVGRootNode* original = [[IJSVGRootNode alloc] init];

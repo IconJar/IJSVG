@@ -51,6 +51,7 @@
     [storage setBit:IJSVGNodeAttributeHeight];
     [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
     [storage setBit:IJSVGNodeAttributeFilter];
+    [storage setBit:IJSVGNodeAttributeOverflow];
     return storage;
 }
 
@@ -59,6 +60,7 @@
     [super setDefaults];
     self.viewBoxAlignment = IJSVGViewBoxAlignmentXMidYMid;
     self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
+    self.overflowVisibility = IJSVGOverflowVisibilityHidden;
 }
 
 - (void)loadFromString:(NSString*)encodedString

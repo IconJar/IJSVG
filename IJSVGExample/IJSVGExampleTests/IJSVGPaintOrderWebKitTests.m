@@ -82,6 +82,67 @@
     }
 }
 
+- (void)testEmbeddedSVGFilterSourcesMatchWebKit
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80' viewBox='0 0 100 80'>"
+                       "<rect width='100' height='30' fill='#2075bc'/>"
+                       "<path d='M0 30H40V80H0Z' fill='#f08030'/></svg>";
+    NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    NSArray* effects = @[@"<feOffset/>",
+                         @"<feComposite in2='SourceGraphic' operator='arithmetic' k1='2'/>",
+                         @"<feConvolveMatrix kernelMatrix='1 2 0 0 0 0 0 0 -1' divisor='8'/>"];
+    for(NSUInteger index = 0; index < effects.count; index++) {
+        NSString* body = [NSString stringWithFormat:
+            @"<defs><filter id='f' x='0' y='0' width='100%%' height='100%%'>%@</filter></defs>"
+             "<image x='20' y='20' width='160' height='150' href='data:image/svg+xml;base64,%@'/>"
+             "<image x='210' y='20' width='160' height='150' href='data:image/svg+xml;base64,%@' filter='url(#f)'/>",
+             effects[index], encoded, encoded];
+        [self compareBody:body name:[NSString stringWithFormat:@"embedded-filter-source-%lu", (unsigned long)index] tolerance:.025];
+    }
+    NSString* imageFilter = [NSString stringWithFormat:
+        @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='20' y='20' width='160' height='150'>"
+         "<feImage href='data:image/svg+xml;base64,%@'/></filter></defs>"
+         "<rect x='20' y='20' width='160' height='150' filter='url(#f)'/>", encoded];
+    [self compareBody:imageFilter name:@"embedded-feimage-source" tolerance:.025];
+    [self compareBody:@"<defs><filter id='f' filterUnits='userSpaceOnUse'>"
+                       "<feFlood x='50' y='50' width='100' height='100' flood-color='green' flood-opacity='.5'/></filter></defs>"
+                       "<use filter='url(#f)'/>"
+                 name:@"empty-use-flood" tolerance:.025];
+}
+
+- (void)testEmbeddedSVGWithoutViewBoxMatchesWebKit
+{
+    NSArray* dimensions = @[@"width='100' height='80'", @"width='100' height='80' viewBox='0 0 100 80'"];
+    NSArray* alignments = @[@"xMidYMid meet", @"none", @"xMaxYMin slice"];
+    for(NSUInteger index = 0; index < dimensions.count; index++) {
+        NSString* source = [NSString stringWithFormat:
+            @"<svg xmlns='http://www.w3.org/2000/svg' %@><rect width='100' height='30' fill='navy'/>"
+             "<path d='M0 30H40V80H0Z' fill='orange'/></svg>", dimensions[index]];
+        NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+        for(NSString* alignment in alignments) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><filter id='f'><feOffset/></filter></defs>"
+                 "<image x='20' y='20' width='160' height='150' preserveAspectRatio='%@' href='data:image/svg+xml;base64,%@'/>"
+                 "<image x='210' y='20' width='160' height='150' preserveAspectRatio='%@' href='data:image/svg+xml;base64,%@' filter='url(#f)'/>",
+                 alignment, encoded, alignment, encoded];
+            NSString* reference = body;
+            if(index == 1 && [alignment containsString:@"slice"]) {
+                // WebKit fits this external SVG with meet despite the slice value.
+                // Use an inline viewport to verify the requested crop.
+                reference = @"<defs><filter id='f'><feOffset/></filter></defs>"
+                            "<svg x='20' y='20' width='160' height='150' viewBox='0 0 100 80' preserveAspectRatio='xMaxYMin slice'>"
+                            "<rect width='100' height='30' fill='navy'/><path d='M0 30H40V80H0Z' fill='orange'/></svg>"
+                            "<svg x='210' y='20' width='160' height='150' viewBox='0 0 100 80' preserveAspectRatio='xMaxYMin slice' filter='url(#f)'>"
+                            "<rect width='100' height='30' fill='navy'/><path d='M0 30H40V80H0Z' fill='orange'/></svg>";
+            }
+            [self compareBody:body
+                referenceBody:reference
+                         name:[NSString stringWithFormat:@"embedded-size-%lu-%@", (unsigned long)index, alignment]
+                    tolerance:.025];
+        }
+    }
+}
+
 - (void)testPatternCoordinateSystemsMatchWebKit
 {
     NSArray* patterns = @[

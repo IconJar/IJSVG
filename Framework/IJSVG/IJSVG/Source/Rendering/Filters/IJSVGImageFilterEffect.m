@@ -78,6 +78,8 @@
             CGRect drawingRect = (CGRect) { CGPointZero, region.size };
             IJSVGContextDrawViewBox(bitmap, viewBox, drawingRect, primitive.viewBoxAlignment,
                 primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
+                    CGContextTranslateCTM(bitmap, 0.f, viewBox.size.height);
+                    CGContextScaleCTM(bitmap, 1.f, -1.f);
                     CGContextDrawImage(bitmap, viewBox, image);
                 });
         }

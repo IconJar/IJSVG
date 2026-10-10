@@ -1,11 +1,11 @@
 {
-  "recordedAt": "2026-10-10T15:39:14.995905+00:00",
+  "recordedAt": "2026-10-10T16:53:29.751001+00:00",
   "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
   "macOS": "27.0.1 (26A434)",
   "counts": {
     "total": 458,
-    "passed": 248,
-    "failed": 50,
+    "passed": 257,
+    "failed": 41,
     "skipped": 159,
     "expectedFailures": 1
   },
@@ -15,7 +15,7 @@
     "expectedFailures": 1,
     "failed": 0
   },
-  "note": "Observations only, not accepted baselines. Pattern coordinates, CSS circle/ellipse clipping, object-bounding-box clip offsets, and empty clips fix three further MDN cases (clip-path, patternTransform, and pattern). All 139 renderer, paint-order WebKit, and node/storage regressions passed. Remaining 50 unexpected mismatches are retained as failures; thresholds and expected-difference policies were not widened.",
+  "note": "Observations only, not accepted baselines. Signed convolution kernels use the shared C and Accelerate calculation. Raster feImage orientation and filters on empty use elements fix four MDN cases. Embedded SVG images retain vector rendering and correct orientation. Distinguishing inferred viewBox values fixes five further cases involving arithmetic composites and emboss convolution. Remaining 41 unexpected mismatches are retained as failures. Thresholds and expected difference policies were not widened.",
   "cases": [
     {
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
@@ -555,11 +555,11 @@
     },
     {
       "id": "reference_attribute_divisor_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/divisor",
-      "meanInkError": 0.052613,
+      "meanInkError": 0.005901,
       "tolerance": 0.025,
-      "inkPixels": 160325
+      "inkPixels": 160571
     },
     {
       "id": "reference_attribute_dominant_baseline_block_2_1",
@@ -879,11 +879,11 @@
     },
     {
       "id": "reference_attribute_in_block_1_2",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/in",
-      "meanInkError": 0.033,
+      "meanInkError": 0.004546,
       "tolerance": 0.025,
-      "inkPixels": 98614
+      "inkPixels": 98654
     },
     {
       "id": "reference_attribute_intercept_block_2_1",
@@ -895,43 +895,43 @@
     },
     {
       "id": "reference_attribute_k1_block_3_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k1",
-      "meanInkError": 0.219776,
+      "meanInkError": 0.005451,
       "tolerance": 0.025,
-      "inkPixels": 200951
+      "inkPixels": 182425
     },
     {
       "id": "reference_attribute_k2_block_3_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k2",
-      "meanInkError": 0.13389,
+      "meanInkError": 0.004344,
       "tolerance": 0.025,
-      "inkPixels": 201997
+      "inkPixels": 183070
     },
     {
       "id": "reference_attribute_k3_block_3_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k3",
-      "meanInkError": 0.13389,
+      "meanInkError": 0.004344,
       "tolerance": 0.025,
-      "inkPixels": 201997
+      "inkPixels": 183070
     },
     {
       "id": "reference_attribute_k4_block_3_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k4",
-      "meanInkError": 0.169696,
+      "meanInkError": 0.002599,
       "tolerance": 0.025,
-      "inkPixels": 200825
+      "inkPixels": 182350
     },
     {
       "id": "reference_attribute_kernelmatrix_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/kernelMatrix",
-      "meanInkError": 0.005829,
+      "meanInkError": 0.005305,
       "tolerance": 0.025,
-      "inkPixels": 95385
+      "inkPixels": 95384
     },
     {
       "id": "reference_attribute_keypoints_block_2_1",
@@ -1071,7 +1071,7 @@
       "id": "reference_attribute_mode_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/mode",
-      "meanInkError": 0.005964,
+      "meanInkError": 0.005978,
       "tolerance": 0.025,
       "inkPixels": 208139
     },
@@ -1259,7 +1259,7 @@
       "id": "reference_attribute_preservealpha_block_2_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAlpha",
-      "meanInkError": 0.002826,
+      "meanInkError": 0.002594,
       "tolerance": 0.025,
       "inkPixels": 117046
     },
@@ -2289,17 +2289,17 @@
       "id": "reference_element_fecomposite_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feComposite",
-      "meanInkError": 0.14551,
+      "meanInkError": 0.014486,
       "tolerance": 0.16,
-      "inkPixels": 73364
+      "inkPixels": 71028
     },
     {
       "id": "reference_element_feconvolvematrix_block_4_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feConvolveMatrix",
-      "meanInkError": 0.277805,
+      "meanInkError": 0.009176,
       "tolerance": 0.025,
-      "inkPixels": 6810
+      "inkPixels": 3421
     },
     {
       "id": "reference_element_fediffuselighting_block_1_1",
@@ -2327,9 +2327,9 @@
     },
     {
       "id": "reference_element_feflood_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feFlood",
-      "meanInkError": 0.416993,
+      "meanInkError": 0.001307,
       "tolerance": 0.025,
       "inkPixels": 40000
     },
@@ -2357,11 +2357,11 @@
     },
     {
       "id": "reference_element_feimage_block_1_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feImage",
-      "meanInkError": 0.16372,
+      "meanInkError": 0.014997,
       "tolerance": 0.025,
-      "inkPixels": 104045
+      "inkPixels": 96389
     },
     {
       "id": "reference_element_femerge_block_1_1",
@@ -3417,5 +3417,36 @@
       "IJSVGPaintOrderWebKitTests",
       "IJSVGNodeAndColorStorageTests"
     ]
+  },
+  "filterRegressionSuites": {
+    "passed": 202,
+    "failed": 0,
+    "suites": [
+      "IJSVGFilterTests",
+      "IJSVGFilterSamplerTests",
+      "IJSVGFilterBatchTests",
+      "IJSVGFilterConcurrencyTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGImageExportTests"
+    ]
+  },
+  "fixedInEmbeddedSVGFollowup": [
+    "reference_attribute_k1_block_3_1",
+    "reference_attribute_k2_block_3_1",
+    "reference_attribute_k3_block_3_1",
+    "reference_attribute_k4_block_3_1",
+    "reference_element_feconvolvematrix_block_4_1"
+  ],
+  "embeddedSVGRegressionSuites": {
+    "passed": 298,
+    "failed": 0,
+    "suites": [
+      "IJSVGQuartzRendererTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGImageExportTests",
+      "IJSVGNodeAndColorStorageTests",
+      "IJSVGFilterTests"
+    ],
+    "note": "Renderer, WebKit image controls, and image export suites passed again after limiting viewport clipping to slice. The external SVG slice control uses an equivalent inline viewport because WebKit applies meet to that external image."
   }
 }

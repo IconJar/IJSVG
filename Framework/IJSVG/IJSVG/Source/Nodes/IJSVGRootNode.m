@@ -27,6 +27,7 @@
         self.refY = root.refY.copy;
         self.intrinsicSize = root.intrinsicSize.copy;
         self.intrinsicDimensions = root.intrinsicDimensions;
+        self.viewBoxWasInferred = root.viewBoxWasInferred;
         _hasCalculatedContainsRelativeUnits = NO;
     }
 }
@@ -61,6 +62,12 @@
     return self;
 }
 
+- (void)setViewBox:(IJSVGUnitRect*)viewBox
+{
+    [super setViewBox:viewBox];
+    _viewBoxWasInferred = NO;
+}
+
 - (void)inferViewBoxIfRequired
 {
   // Already have a viewBox, no need to do anything
@@ -79,6 +86,7 @@
     return;
   }
   self.viewBox = [IJSVGUnitRect rectWithCGRect:rect];
+  self.viewBoxWasInferred = YES;
 }
 
 - (BOOL)containsRelativeUnits

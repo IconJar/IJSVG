@@ -179,10 +179,20 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
     }
     CGSize units = context.pixelUnits;
     step = CGSizeEqualToSize(step, CGSizeZero) ? CGSizeMake(1, 1)
-                                               : CGSizeMake(step.width * units.width, step.height * units.height);
-    // Core Image can handle this case without changing the opacity rules.
-    // Preserving opacity or adding a bias needs the general calculation.
-    if(!preserveAlpha && bias == 0 && step.width == 1 && step.height == 1) {
+                                               : CGSizeMake(step.width * units.width,
+                                                            step.height * units.height);
+    BOOL hasNegativeWeight = NO;
+    for(NSUInteger index = 0; index < coefficients.count; index++) {
+        if(weights[index] / divisor < 0) {
+            hasNegativeWeight = YES;
+            break;
+        }
+    }
+
+    // Signed kernels can produce colors outside the resulting alpha.
+    // Use the shared C calculation so those channels are clamped together.
+    if(!hasNegativeWeight && !preserveAlpha && bias == 0 && step.width == 1 &&
+       step.height == 1) {
         NSInteger cw = 0, ch = 0;
         NSString* filterName = nil;
         if(oy == 1 && ox <= 9) {
@@ -241,7 +251,7 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
     return [context mapImage:input
                        other:nil
                    operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
-      IJSVGConvolvePixels(src, dst, w, h, kernel, parameters);
+        IJSVGConvolvePixels(src, dst, w, h, kernel, parameters);
     }];
 }
 

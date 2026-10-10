@@ -609,6 +609,7 @@ typedef struct {
     if(node.viewBox == nil) {
         node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
                                                 size:node.intrinsicSize.copy];
+        node.viewBoxWasInferred = YES;
     }
 }
 
@@ -621,6 +622,7 @@ typedef struct {
                                                     height:height];
         node.viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
                                                 size:size];
+        node.viewBoxWasInferred = YES;
     }
   
     if(node.viewBox == nil) {
@@ -2077,7 +2079,11 @@ typedef struct {
 {
     NSString* xlinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xlinkID == nil) {
-        return nil;
+        // An empty use can still produce pixels through a filter in user space.
+        return [self parseGroupElement:element
+                            parentNode:parentNode
+                              nodeType:IJSVGNodeTypeUse
+                      postProcessBlock:postProcessBlock];
     }
   
     // its important that we remove the xlink attribute or hell breaks loose

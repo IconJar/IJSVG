@@ -993,6 +993,37 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     }
 }
 
+- (void)testConvolutionSignedKernelsMatchBiasedPath
+{
+    for(NSString* divisor in @[@"1", @"8"]) {
+        NSString* template = @"<defs><linearGradient id='g'><stop stop-color='#2040e0' stop-opacity='.2'/>"
+                              "<stop offset='.5' stop-color='#e08020'/><stop offset='1' stop-color='#208040' stop-opacity='.4'/>"
+                              "</linearGradient><filter id='f' x='0' y='0' width='100%%' height='100%%'>"
+                              "<feConvolveMatrix kernelMatrix='1 2 0 0 0 0 0 0 -1' divisor='%@' bias='%@'/>"
+                              "</filter></defs><rect x='2' y='2' width='24' height='6' fill='url(#g)' filter='url(#f)'/>";
+        NSData* actual = [self render:[self document:[NSString stringWithFormat:template, divisor, @"0"]] scale:10];
+        NSData* expected = [self render:[self document:[NSString stringWithFormat:template, divisor, @"0.000000000001"]] scale:10];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 2, @"divisor=%@", divisor);
+    }
+}
+
+- (void)testConvolutionClampsPremultipliedChannels
+{
+    for(NSString* divisor in @[@"1", @"8"]) {
+        NSString* body = [NSString stringWithFormat:
+            @"<defs><filter id='f' color-interpolation-filters='sRGB'>"
+             "<feConvolveMatrix order='1' kernelMatrix='2' divisor='%@'/></filter></defs>"
+             "<rect x='2' y='2' width='8' height='6' fill='#804020' fill-opacity='.5' filter='url(#f)'/>", divisor];
+        NSData* bytes = [self render:[self document:body] scale:10];
+        const uint8_t* pixel = IJSVGFilterPixel(bytes, 50, 50, 10);
+        double factor = 2. / divisor.doubleValue;
+        XCTAssertEqualWithAccuracy(pixel[0], MIN(255, 64 * factor), 2);
+        XCTAssertEqualWithAccuracy(pixel[1], MIN(255, 32 * factor), 2);
+        XCTAssertEqualWithAccuracy(pixel[2], MIN(255, 16 * factor), 2);
+        XCTAssertEqualWithAccuracy(pixel[3], MIN(255, 128 * factor), 2);
+    }
+}
+
 - (void)testConvolutionIdentityAndBias
 {
     NSData* identity = [self render:[self filtered:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"2\" "
