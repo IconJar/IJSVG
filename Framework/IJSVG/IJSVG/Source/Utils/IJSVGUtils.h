@@ -45,6 +45,7 @@ char* IJSVGTimmedCharBufferCreate(const char* buffer);
 void IJSVGTrimCharBuffer(char* buffer);
 void IJSVGCharBufferToLower(char* buffer);
 size_t IJSVGCharBufferHash(char* buffer);
+BOOL IJSVGPathHasPointSubpaths(CGPathRef path);
 CGPoint IJSVGPathGetLastQuadraticCommandPoint(CGPathRef path);
 CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path);
 

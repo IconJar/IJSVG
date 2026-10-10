@@ -18,6 +18,95 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testParsedPointSubpathsIncludeDegenerateCommands
+{
+    NSDictionary<NSString*, NSNumber*>* cases = @{
+        @"M8 8h16": @NO,
+        @"M8 8h16z": @NO,
+        @"M8 8q8 8 0 0": @NO,
+        @"M8 8c8 8 8 8 0 0": @NO,
+        @"M8 8a4 4 0 0 0 8 0": @NO,
+        @"M8 8h0 M16 16h8": @YES,
+        @"M8 8h16 M16 16z": @YES,
+        @"M8 8q0 0 0 0": @YES,
+        @"M8 8c0 0 0 0 0 0": @YES,
+        @"M8 8h16 M16 16h0 M24 24h4": @YES
+    };
+    for(NSString* data in cases) {
+        NSString* body = [NSString stringWithFormat:
+            @"<svg xmlns='http://www.w3.org/2000/svg'><path d='%@'/><path d='%@'/></svg>", data, data];
+        IJSVG* svg = [[IJSVG alloc] initWithSVGString:body];
+        for(IJSVGPath* node in svg.rootNode.children) {
+            XCTAssertEqual(node.hasPointSubpaths, cases[data].boolValue, @"%@", data);
+        }
+    }
+}
+
+- (void)testPointSubpathCacheFollowsMutableGeometry
+{
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='%@' fill='none' stroke='red' stroke-width='4' stroke-linecap='square'/></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"M8 8h0"]];
+    IJSVGPath* node = (IJSVGPath*)svg.rootNode.children.firstObject;
+    [self renderSVG:svg size:64];
+    XCTAssertTrue(node.hasPointSubpaths);
+    CGPathAddLineToPoint(node.path, NULL, 24.f, 8.f);
+    [svg setNeedsDisplay];
+    IJSVG* reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"M8 8H24"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    XCTAssertFalse(node.hasPointSubpaths);
+    CGPathMoveToPoint(node.path, NULL, 16.f, 24.f);
+    CGPathAddLineToPoint(node.path, NULL, 16.f, 24.f);
+    [svg setNeedsDisplay];
+    reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"M8 8H24 M16 24h0"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    XCTAssertTrue(node.hasPointSubpaths);
+    IJSVGPath* copy = node.copy;
+    XCTAssertTrue(copy.hasPointSubpaths);
+    CGPathAddLineToPoint(copy.path, NULL, 24.f, 24.f);
+    XCTAssertFalse(copy.hasPointSubpaths);
+    XCTAssertTrue(node.hasPointSubpaths);
+    node.path = copy.path;
+    XCTAssertFalse(node.hasPointSubpaths);
+}
+
+- (void)testPointSubpathCapsMatchExplicitShapes
+{
+    for(NSString* data in @[@"M16 16h0", @"M16 16v0", @"M16 16z",
+                            @"M16 16q0 0 0 0", @"M16 16c0 0 0 0 0 0"]) {
+        for(NSString* cap in @[@"butt", @"round", @"square"]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<path d='%@' fill='none' stroke='red' stroke-width='8' stroke-linecap='%@'/>",
+                data, cap];
+            NSString* reference = [cap isEqualToString:@"butt"] ? @"" :
+                [cap isEqualToString:@"round"] ? @"<circle cx='16' cy='16' r='4' fill='red'/>" :
+                @"<rect x='12' y='12' width='8' height='8' fill='red'/>";
+            [self assertBody:body rendersLike:reference];
+            [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+        }
+    }
+    [self assertBody:@"<path d='M4 8h24 M16 24h0' stroke='red' stroke-width='8' stroke-linecap='square'/>"
+        rendersLike:@"<path d='M4 8h24' stroke='red' stroke-width='8' stroke-linecap='square'/><rect x='12' y='20' width='8' height='8' fill='red'/>"];
+}
+
+- (void)testPointSubpathDashesAndPaintServers
+{
+    for(NSString* pattern in @[@"4 4", @"4"]) {
+        for(NSNumber* offset in @[@0, @2, @6, @(-2)]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<path d='M16 16h0' stroke='red' stroke-width='8' stroke-linecap='square' stroke-dasharray='%@' stroke-dashoffset='%@'/>",
+                pattern, offset];
+            BOOL visible = offset.integerValue == 0 || offset.integerValue == 2;
+            [self assertBody:body rendersLike:visible ? @"<rect x='12' y='12' width='8' height='8' fill='red'/>" : @""];
+        }
+    }
+    NSString* definitions = @"<defs><linearGradient id='g' gradientUnits='userSpaceOnUse' x1='12' x2='20'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs>";
+    NSString* body = [definitions stringByAppendingString:
+        @"<path d='M16 16h0' stroke='url(#g)' stroke-width='8' stroke-linecap='square'/>"];
+    [self assertBody:body rendersLike:[definitions stringByAppendingString:
+        @"<rect x='12' y='12' width='8' height='8' fill='url(#g)'/>"]];
+    [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+}
+
 - (void)testAlphaMasksPreserveBlackContentAndOpacity
 {
     for(NSString* attribute in @[@"mask-type='alpha'", @"style='mask-type:alpha'",

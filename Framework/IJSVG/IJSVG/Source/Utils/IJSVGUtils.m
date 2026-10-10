@@ -14,6 +14,50 @@
 #import <ImageIO/ImageIO.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
+typedef struct {
+    CGPoint start;
+    BOOL active;
+    BOOL hasLength;
+    BOOL found;
+} IJSVGPointSubpathState;
+
+static void IJSVGCheckPointSubpath(void* info, const CGPathElement* element)
+{
+    IJSVGPointSubpathState* state = info;
+    if(state->found) {
+        return;
+    }
+    if(element->type == kCGPathElementMoveToPoint) {
+        state->found = state->active && !state->hasLength;
+        state->start = element->points[0];
+        state->active = YES;
+        state->hasLength = NO;
+        return;
+    }
+    if(state->hasLength) {
+        return;
+    }
+    NSUInteger count = element->type == kCGPathElementAddCurveToPoint ? 3 :
+        element->type == kCGPathElementAddQuadCurveToPoint ? 2 :
+        element->type == kCGPathElementAddLineToPoint ? 1 : 0;
+    for(NSUInteger index = 0; index < count; index++) {
+        if(!CGPointEqualToPoint(state->start, element->points[index])) {
+            state->hasLength = YES;
+            break;
+        }
+    }
+}
+
+BOOL IJSVGPathHasPointSubpaths(CGPathRef path)
+{
+    if(path == NULL) {
+        return NO;
+    }
+    IJSVGPointSubpathState state = { 0 };
+    CGPathApply(path, &state, IJSVGCheckPointSubpath);
+    return state.found || (state.active && !state.hasLength);
+}
+
 @implementation IJSVGUtils
 
 + (NSString*)MIMETypeForImageData:(NSData*)data

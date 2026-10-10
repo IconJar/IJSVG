@@ -252,6 +252,9 @@ typedef struct {
     CGPoint quadraticControl;
     char previousCommand;
     CGPoint subpathStart;
+    BOOL trackPointSubpaths;
+    BOOL subpathHasLength;
+    BOOL mayHavePointSubpaths;
     __unsafe_unretained void (^segmentHandler)(char command, CGPathRef segment);
 } IJSVGPathBuilder;
 
@@ -352,6 +355,10 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command,
         builder->segmentHandler(command, segment);
         CGPathRelease(segment);
     }
+    if(builder->trackPointSubpaths && command == 'm') {
+        builder->mayHavePointSubpaths |= !initial && !builder->subpathHasLength;
+        builder->subpathHasLength = NO;
+    }
     switch(command) {
         case 'm':
             CGPathMoveToPoint(builder->path, NULL, origin.x + parameters[0], origin.y + parameters[1]);
@@ -381,14 +388,23 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command,
             break;
     }
     if(command == 'm') builder->subpathStart = CGPathGetCurrentPoint(builder->path);
+    if(builder->trackPointSubpaths && !builder->subpathHasLength && command != 'm') {
+        builder->subpathHasLength = !CGPointEqualToPoint(builder->subpathStart,
+                                                         CGPathGetCurrentPoint(builder->path));
+    }
     builder->previousCommand = command;
 }
 
 static void IJSVGAppendPathDataWithHandler(CGMutablePathRef path, const char* characters, NSUInteger length,
                                            IJSVGPathDataStream* dataStream,
-                                           void (^handler)(char command, CGPathRef segment))
+                                           void (^handler)(char command, CGPathRef segment),
+                                           BOOL* mayHavePointSubpaths)
 {
-    IJSVGPathBuilder builder = { .path = path, .segmentHandler = handler };
+    IJSVGPathBuilder builder = { .path = path, .segmentHandler = handler,
+        .trackPointSubpaths = mayHavePointSubpaths != NULL };
+    if(mayHavePointSubpaths != NULL) {
+        *mayHavePointSubpaths = YES;
+    }
     if(characters == NULL || length > NSIntegerMax) {
         return;
     }
@@ -438,13 +454,24 @@ static void IJSVGAppendPathDataWithHandler(CGMutablePathRef path, const char* ch
             char effectiveCommand = command == 'm' && set != 0 ? 'l' : command;
             IJSVGPathAppendCommand(&builder, effectiveCommand, relative, values);
         }
+    }    if(mayHavePointSubpaths != NULL) {
+        *mayHavePointSubpaths = builder.mayHavePointSubpaths || !builder.subpathHasLength;
     }
 }
 
 void IJSVGAppendPathData(CGMutablePathRef path, const char* characters,
                          NSUInteger length, IJSVGPathDataStream* dataStream)
 {
-    IJSVGAppendPathDataWithHandler(path, characters, length, dataStream, nil);
+    IJSVGAppendPathDataWithHandler(path, characters, length, dataStream, nil, NULL);
+}
+
+BOOL IJSVGAppendPathDataCheckingPointSubpaths(CGMutablePathRef path, const char* characters,
+                                               NSUInteger length, IJSVGPathDataStream* dataStream)
+{
+    BOOL mayHavePointSubpaths = YES;
+    IJSVGAppendPathDataWithHandler(path, characters, length, dataStream, nil,
+                                   &mayHavePointSubpaths);
+    return mayHavePointSubpaths;
 }
 
 void IJSVGEnumeratePathDataSegments(NSString* data,
@@ -455,7 +482,7 @@ void IJSVGEnumeratePathDataSegments(NSString* data,
     const char* characters = data.UTF8String;
     if(characters != NULL) {
         IJSVGAppendPathDataWithHandler(path, characters, strlen(characters),
-                                       stream, handler);
+                                       stream, handler, NULL);
     }
     IJSVGPathDataStreamRelease(stream);
     CGPathRelease(path);

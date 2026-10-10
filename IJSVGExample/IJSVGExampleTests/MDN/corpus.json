@@ -2086,14 +2086,6 @@
       ]
     },
     {
-      "path": "reference/element/foreignobject",
-      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/foreignObject",
-      "blocks": 2,
-      "cases": [
-        "reference_element_foreignobject_block_2_1"
-      ]
-    },
-    {
       "path": "reference/element/g",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/g",
       "blocks": 2,
@@ -7807,24 +7799,6 @@
       "sourcePath": "files/en-us/web/svg/reference/element/filter/index.md"
     },
     {
-      "id": "reference/element/foreignobject/block-1",
-      "language": "css",
-      "info": "css hidden",
-      "source": "html,\nbody,\nsvg {\n  height: 100%;\n}\n",
-      "line": 39,
-      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/foreignObject",
-      "sourcePath": "files/en-us/web/svg/reference/element/foreignobject/index.md"
-    },
-    {
-      "id": "reference/element/foreignobject/block-2",
-      "language": "html",
-      "info": "html",
-      "source": "<svg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\">\n  <style>\n    div {\n      color: white;\n      font: 18px serif;\n      height: 100%;\n      overflow: auto;\n    }\n  </style>\n\n  <polygon points=\"5,5 195,10 185,185 10,195\" />\n\n  <!-- Common use case: embed HTML text into SVG -->\n  <foreignObject x=\"20\" y=\"20\" width=\"160\" height=\"160\">\n    <!--\n      In the context of SVG embedded in an HTML document, the XHTML\n      namespace could be omitted, but it is mandatory in the\n      context of an SVG document\n    -->\n    <div xmlns=\"http://www.w3.org/1999/xhtml\">\n      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mollis mollis\n      mi ut ultricies. Nullam magna ipsum, porta vel dui convallis, rutrum\n      imperdiet eros. Aliquam erat volutpat.\n    </div>\n  </foreignObject>\n</svg>\n",
-      "line": 47,
-      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/foreignObject",
-      "sourcePath": "files/en-us/web/svg/reference/element/foreignobject/index.md"
-    },
-    {
       "id": "reference/element/g/block-1",
       "language": "css",
       "info": "css hidden",
@@ -12469,16 +12443,6 @@
       "svg": "<svg width=\"230\" height=\"120\" xmlns=\"http://www.w3.org/2000/svg\">\n  <filter id=\"blurMe\">\n    <feGaussianBlur stdDeviation=\"5\" />\n  </filter>\n\n  <circle cx=\"60\" cy=\"60\" r=\"50\" fill=\"green\" />\n\n  <circle cx=\"170\" cy=\"60\" r=\"50\" fill=\"green\" filter=\"url(#blurMe)\" />\n</svg>",
       "adaptations": [],
       "sha256": "f5407f5a57cab79dfe9bc9de3ea2d22e67f1e5da4ee0373343bb583ab9e2b8ca"
-    },
-    {
-      "id": "reference_element_foreignobject_block_2_1",
-      "example": "reference/element/foreignobject/block-2",
-      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/foreignObject",
-      "svg": "<svg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\nhtml,\nbody,\nsvg {\n  height: 100%;\n}\n\n]]></style>\n  <style>\n    div {\n      color: white;\n      font: 18px serif;\n      height: 100%;\n      overflow: auto;\n    }\n  </style>\n\n  <polygon points=\"5,5 195,10 185,185 10,195\" />\n\n  \n  <foreignObject x=\"20\" y=\"20\" width=\"160\" height=\"160\">\n    \n    <div xmlns=\"http://www.w3.org/1999/xhtml\">\n      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mollis mollis\n      mi ut ultricies. Nullam magna ipsum, porta vel dui convallis, rutrum\n      imperdiet eros. Aliquam erat volutpat.\n    </div>\n  </foreignObject>\n</svg>",
-      "adaptations": [
-        "Included CSS from the enclosing live sample"
-      ],
-      "sha256": "3a929affac4b17d871a5e1a72007dfe2989da6e0922d82e0826e0cba748285f3"
     },
     {
       "id": "reference_element_g_block_2_1",

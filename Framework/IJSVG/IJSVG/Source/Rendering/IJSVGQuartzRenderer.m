@@ -31,6 +31,77 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
 
+// Separate point subpaths before Quartz chooses an arbitrary cap direction.
+static BOOL IJSVGQuartzSeparatePointSubpaths(CGPathRef path,
+                                            CGMutablePathRef segments,
+                                            CGMutablePathRef points)
+{
+    __block CGPoint start = CGPointZero;
+    __block BOOL active = NO;
+    __block BOOL hasLength = NO;
+    __block BOOL found = NO;
+    __block CGMutablePathRef subpath = segments != NULL ? CGPathCreateMutable() : NULL;
+    void (^finish)(void) = ^{
+        if(!active) {
+            return;
+        }
+        if(hasLength) {
+            if(segments != NULL) {
+                CGPathAddPath(segments, NULL, subpath);
+            }
+        } else {
+            found = YES;
+            if(points != NULL) {
+                CGPathMoveToPoint(points, NULL, start.x, start.y);
+                CGPathAddLineToPoint(points, NULL, start.x, start.y);
+            }
+        }
+    };
+    CGPathApplyWithBlock(path, ^(const CGPathElement* element) {
+        if(element->type == kCGPathElementMoveToPoint) {
+            finish();
+            start = element->points[0];
+            active = YES;
+            hasLength = NO;
+            if(subpath != NULL) {
+                CGPathRelease(subpath);
+                subpath = CGPathCreateMutable();
+                CGPathMoveToPoint(subpath, NULL, start.x, start.y);
+            }
+            return;
+        }
+        NSUInteger count = element->type == kCGPathElementAddCurveToPoint ? 3 :
+            element->type == kCGPathElementAddQuadCurveToPoint ? 2 :
+            element->type == kCGPathElementAddLineToPoint ? 1 : 0;
+        for(NSUInteger index = 0; index < count; index++) {
+            hasLength |= !CGPointEqualToPoint(start, element->points[index]);
+        }
+        if(subpath == NULL) {
+            return;
+        }
+        const CGPoint* p = element->points;
+        switch(element->type) {
+            case kCGPathElementAddLineToPoint:
+                CGPathAddLineToPoint(subpath, NULL, p[0].x, p[0].y);
+                break;
+            case kCGPathElementAddQuadCurveToPoint:
+                CGPathAddQuadCurveToPoint(subpath, NULL, p[0].x, p[0].y, p[1].x, p[1].y);
+                break;
+            case kCGPathElementAddCurveToPoint:
+                CGPathAddCurveToPoint(subpath, NULL, p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y);
+                break;
+            case kCGPathElementCloseSubpath:
+                CGPathCloseSubpath(subpath);
+                break;
+            default:
+                break;
+        }
+    });
+    finish();
+    CGPathRelease(subpath);
+    return found;
+}
+
 static CGLineCap IJSVGQuartzLineCap(IJSVGLineCapStyle style)
 {
     switch(style) {
@@ -1030,11 +1101,22 @@ inMeasurementPaint:(IJSVGPaint*)paint
         if(!isfinite(determinant) || determinant == 0.f) {
             return CGPathCreateMutable();
         }
-        hostPath = CGPathCreateCopyByTransformingPath(shapePaint.path, &hostTransform);
+        hostPath = CGPathCreateCopyByTransformingPath(shapePaint.path,
+                                                      &hostTransform);
     }
     CGPathRef centerline = hostPath ?: shapePaint.path;
     CGLineCap lineCap = shapePaint.lineCap;
     CGLineJoin lineJoin = shapePaint.lineJoin;
+    CGMutablePathRef segments = NULL;
+    CGMutablePathRef points = NULL;
+    BOOL hasPoints = shapePaint.hasPointSubpaths;
+    if(hasPoints) {
+        segments = CGPathCreateMutable();
+        points = CGPathCreateMutable();
+        IJSVGQuartzSeparatePointSubpaths(centerline, segments, points);
+        centerline = segments;
+    }
+    BOOL paintsPoints = YES;
     CGPathRef dashedPath = NULL;
     if(shapePaint.lineDashPattern != nil && shapePaint.lineDashPattern.count != 0.f) {
         NSUInteger count = shapePaint.lineDashPattern.count;
@@ -1043,15 +1125,57 @@ inMeasurementPaint:(IJSVGPaint*)paint
         for(NSNumber* number in shapePaint.lineDashPattern) {
             lengths[i++] = (CGFloat)number.floatValue;
         }
+        if(hasPoints) {
+            NSUInteger dashCount = count % 2 == 0 ? count : count * 2;
+            CGFloat total = 0.f;
+            for(NSUInteger index = 0; index < dashCount; index++) {
+                total += lengths[index % count];
+            }
+            if(total > 0.f) {
+                CGFloat phase = fmod(shapePaint.lineDashPhase, total);
+                if(phase < 0.f) {
+                    phase += total;
+                }
+                for(NSUInteger index = 0; index < dashCount; index++) {
+                    CGFloat length = lengths[index % count];
+                    if(phase < length || (phase == 0.f && index % 2 == 0)) {
+                        paintsPoints = index % 2 == 0;
+                        break;
+                    }
+                    phase -= length;
+                }
+            }
+        }
         dashedPath = CGPathCreateCopyByDashingPath(centerline, NULL,
                                                    shapePaint.lineDashPhase,
                                                    lengths, count);
         (void)free(lengths), lengths = NULL;
     }
     CGPathRef path = dashedPath ?: centerline;
-    CGPathRef newPath = CGPathCreateCopyByStrokingPath(path, NULL, shapePaint.lineWidth,
-                                                       lineCap, lineJoin,
+    CGPathRef newPath = CGPathCreateCopyByStrokingPath(path, NULL,
+                                                       shapePaint.lineWidth, lineCap, lineJoin,
                                                        shapePaint.miterLimit);
+    if(hasPoints && paintsPoints && lineCap != kCGLineCapButt) {
+        CGMutablePathRef outline = CGPathCreateMutableCopy(newPath);
+        CGFloat radius = shapePaint.lineWidth / 2.f;
+        CGPathApplyWithBlock(points, ^(const CGPathElement* element) {
+            if(element->type != kCGPathElementMoveToPoint) {
+                return;
+            }
+            CGPoint point = element->points[0];
+            CGRect bounds = CGRectMake(point.x - radius, point.y - radius,
+                                       shapePaint.lineWidth, shapePaint.lineWidth);
+            if(lineCap == kCGLineCapRound) {
+                CGPathAddEllipseInRect(outline, NULL, bounds);
+            } else {
+                CGPathAddRect(outline, NULL, bounds);
+            }
+        });
+        CGPathRelease(newPath);
+        newPath = outline;
+    }
+    CGPathRelease(segments);
+    CGPathRelease(points);
     if(dashedPath != NULL) {
         CGPathRelease(dashedPath);
     }
@@ -1873,6 +1997,25 @@ inMeasurementPaint:(IJSVGPaint*)paint
         paint.strokeHostTransform = hostTransform;
     }
     IJSVGQuartzExpandStrokeBounds(paint);
+
+    // Reuse source geometry metadata when resolution preserves its subpaths.
+    switch(node.primitiveType) {
+        case kIJSVGPrimitivePathTypePath:
+        case kIJSVGPrimitivePathTypePolygon:
+        case kIJSVGPrimitivePathTypePolyLine:
+            if(node.pathUnits != IJSVGUnitObjectBoundingBox) {
+                paint.hasPointSubpaths = node.hasPointSubpaths;
+            }
+            break;
+        case kIJSVGPrimitivePathTypeLine:
+            paint.hasPointSubpaths = resolvedPathBounds.size.width == 0.f &&
+                resolvedPathBounds.size.height == 0.f;
+            break;
+        default:
+            paint.hasPointSubpaths = NO;
+            break;
+    }
+
 
     return paint;
 }

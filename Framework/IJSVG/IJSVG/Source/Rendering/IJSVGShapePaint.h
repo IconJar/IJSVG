@@ -12,6 +12,7 @@
 @interface IJSVGShapePaint : IJSVGPaint
 
 @property (nonatomic, assign) CGPathRef path;
+@property (nonatomic, assign) BOOL hasPointSubpaths;
 @property (nonatomic, assign) CGColorRef fillColor;
 @property (nonatomic, assign) CGColorRef strokeColor;
 @property (nonatomic, assign) CGFloat lineWidth;

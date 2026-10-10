@@ -8,9 +8,12 @@
 
 #import <IJSVGShapePaint.h>
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @interface IJSVGShapePaint () {
     NSData* _dashLengths;
+    BOOL _hasPointSubpaths;
+    BOOL _checkedPointSubpaths;
     CGPathRef _nonScalingStrokeOutline;
     CGFloat _outlineLineWidth;
     CGFloat _outlineMiterLimit;
@@ -118,6 +121,22 @@
     _nonScalingStrokeOutline = NULL;
     CGPathRelease(_path);
     _path = CGPathRetain(path);
+    _checkedPointSubpaths = NO;
+}
+
+- (void)setHasPointSubpaths:(BOOL)hasPointSubpaths
+{
+    _hasPointSubpaths = hasPointSubpaths;
+    _checkedPointSubpaths = YES;
+}
+
+- (BOOL)hasPointSubpaths
+{
+    if(!_checkedPointSubpaths) {
+        _hasPointSubpaths = IJSVGPathHasPointSubpaths(_path);
+        _checkedPointSubpaths = YES;
+    }
+    return _hasPointSubpaths;
 }
 
 - (void)setFillColor:(CGColorRef)color
@@ -174,7 +193,7 @@
         }
     }
     if(_strokeColor != NULL && _lineWidth > 0.f) {
-        if(_nonScalingStroke) {
+        if(_nonScalingStroke || self.hasPointSubpaths) {
             CGContextAddPath(ctx, [self nonScalingStrokeOutline]);
             CGContextSetFillColorWithColor(ctx, _strokeColor);
             CGContextFillPath(ctx);

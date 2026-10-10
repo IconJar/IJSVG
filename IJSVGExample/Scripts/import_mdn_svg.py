@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Import every fenced example in MDN's English SVG tree from a pinned checkout.
+"""Import MDN SVG examples from a pinned checkout, excluding foreignObject.
 
 Usage: python3 Scripts/import_mdn_svg.py /path/to/mdn/content
 Only the standard library is needed. Tests never access the network.
@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1] / "IJSVGExampleTests"
 FENCES = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.M | re.S)
 SVG = re.compile(r"</?svg\b[^>]*>", re.I)
+FOREIGN_OBJECT = re.compile(r"<(?:[\w.-]+:)?foreignObject\b", re.I)
 
 
 def documents(code):
@@ -90,7 +91,7 @@ def exclusion(xml, javascript):
             return False
         if tag == 'path':
             return bool(re.search(r'[LlHhVvCcSsQqTtAaZz]', node.get('d', '')))
-        if tag in {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'use', 'image', 'foreignObject'}:
+        if tag in {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text', 'use', 'image'}:
             return True
         return any(paints(child) for child in node)
     if not paints(root):
@@ -111,6 +112,8 @@ def main():
     source = checkout / "files/en-us/web/svg"
     pages, examples, cases = [], [], []
     for page in sorted(source.rglob("index.md")):
+        if page.parent.name.lower() == "foreignobject":
+            continue
         text = page.read_text()
         slug = re.search(r"^slug: (.+)$", text, re.M)[1]
         page_id = str(page.parent.relative_to(source))
@@ -127,6 +130,8 @@ def main():
                     break
         page_cases = []
         for index, block in enumerate(blocks, 1):
+            if FOREIGN_OBJECT.search(block[2]):
+                continue
             language = block[1].split()[0] if block[1].strip() else "plain"
             entry = {"id": f"{page_id}/block-{index}", "language": language,
                      "info": block[1], "source": block[2], "line": text[:block.start()].count("\n") + 1,
@@ -159,6 +164,8 @@ def main():
     assets = []
     for asset in sorted(source.rglob('*.svg')):
         code = asset.read_text()
+        if FOREIGN_OBJECT.search(code):
+            continue
         case_id = 'asset_' + re.sub(r'[^a-zA-Z0-9]', '_', str(asset.relative_to(source)))
         source_path = str(asset.relative_to(checkout))
         url = f'https://github.com/mdn/content/blob/{revision}/{source_path}'

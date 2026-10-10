@@ -28,5 +28,10 @@
     "sha256": "803319b19c6b349cae8604d74b3a16297604249a1eb596cc89a6062c66d5f11b",
     "expectedDifference": true,
     "reason": "At the comparison backing scale, WebKit scales the point light position but leaves surfaceScale in device pixels, changing the effective light height. IJSVGPaintOrderWebKitTests/testLightingSurfaceScaleMatchesEquivalentLightHeight verifies flat surfaces against WebKit with the equivalent zero surface height and reduced light Z. IJSVGFilterTests/testLightingSurfaceHeightIsIndependentOfRenderScale checks matching sample positions at two render scales. This exception is limited to this exact fixture."
+  },
+  "reference_attribute_stroke_linecap_block_8_1": {
+    "sha256": "92f858490fd7f9595efd90542699ed525eae4a3a8be34dd134a100f5df2ebbad",
+    "expectedDifference": true,
+    "reason": "WebKit paints a diamond together with the square cap on the zero length subpath. SVG 2 requires only the centered square. IJSVGPaintOrderWebKitTests/testPointSubpathCapsMatchExplicitShapes verifies caps against explicit WebKit rectangles and circles, including rotated and non scaling strokes. This exception is limited to this exact fixture."
   }
 }

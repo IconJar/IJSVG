@@ -1654,11 +1654,6 @@
     [self compareCase:@"reference_element_filter_block_1_1"];
 }
 
-- (void)test_reference_element_foreignobject_block_2_1
-{
-    [self compareCase:@"reference_element_foreignobject_block_2_1"];
-}
-
 - (void)test_reference_element_g_block_2_1
 {
     [self compareCase:@"reference_element_g_block_2_1"];

@@ -8,10 +8,13 @@
 
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @implementation IJSVGPath {
     NSString* _markerPathData;
     CGPathRef _markerSourcePath;
+    CGPathRef _pointSubpathSource;
+    BOOL _hasPointSubpaths;
 }
 
 + (IJSVGNodeType)defaultNodeType
@@ -75,6 +78,7 @@
 - (void)dealloc
 {
     CGPathRelease(_markerSourcePath);
+    CGPathRelease(_pointSubpathSource);
     if(_path != NULL) {
         (void)CGPathRelease(_path), _path = NULL;
     }
@@ -152,6 +156,25 @@
         CGPathRelease(_path);
     }
     _path = copy;
+}
+
+- (void)cachePointSubpaths:(BOOL)hasPointSubpaths
+                   forPath:(CGPathRef)path
+{
+    CGPathRef snapshot = CGPathCreateCopy(path);
+    CGPathRelease(_pointSubpathSource);
+    _pointSubpathSource = snapshot;
+    _hasPointSubpaths = hasPointSubpaths;
+}
+
+- (BOOL)hasPointSubpaths
+{
+    if(_pointSubpathSource == NULL || !CGPathEqualToPath(_path, _pointSubpathSource)) {
+        CGPathRelease(_pointSubpathSource);
+        _pointSubpathSource = CGPathCreateCopy(_path);
+        _hasPointSubpaths = IJSVGPathHasPointSubpaths(_pointSubpathSource);
+    }
+    return _hasPointSubpaths;
 }
 
 - (CGRect)pathBoundingBox

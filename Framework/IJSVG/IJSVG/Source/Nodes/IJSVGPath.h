@@ -48,6 +48,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, assign) CGPoint lastControlPoint;
 @property (nonatomic, readonly) CGRect controlPointBoundingBox;
 @property (nonatomic, readonly) CGRect pathBoundingBox;
+@property (nonatomic, readonly) BOOL hasPointSubpaths;
 
 + (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
                              transform:(CGAffineTransform)transform
@@ -55,6 +56,9 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 
 // The node owns the path; the getter does not transfer ownership.
 - (CGMutablePathRef _Nullable)path CF_RETURNS_NOT_RETAINED;
+
+- (void)cachePointSubpaths:(BOOL)hasPointSubpaths
+                   forPath:(CGPathRef)path;
 
 - (void)close;
 - (NSPoint)currentPoint;

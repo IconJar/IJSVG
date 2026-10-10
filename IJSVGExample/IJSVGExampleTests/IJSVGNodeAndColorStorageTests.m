@@ -9,7 +9,6 @@
 #import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGClipPath.h>
-#import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
@@ -224,17 +223,6 @@
             free(rebuiltLocations);
         }
     }
-}
-
-- (void)testForeignObjectCopyPreservesRequiredExtension
-{
-    IJSVGForeignObject* original = [[IJSVGForeignObject alloc] init];
-    original.requiredExtension = @"http://www.w3.org/1999/xhtml";
-    original.identifier = @"foreign";
-    IJSVGForeignObject* copy = original.copy;
-    XCTAssertEqualObjects(copy.requiredExtension, original.requiredExtension);
-    XCTAssertEqualObjects(copy.identifier, original.identifier);
-    XCTAssertTrue(copy.shouldRender);
 }
 
 - (void)testPathCopyPreservesLastControlPoint

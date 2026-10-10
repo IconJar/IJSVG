@@ -21,6 +21,33 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testPointSubpathCapsMatchExplicitShapes
+{
+    for(NSString* cap in @[@"round", @"square"]) {
+        for(NSString* transform in @[@"", @"transform='rotate(25 200 100)'",
+                                     @"transform='scale(1.5 .75)' vector-effect='non-scaling-stroke'"]) {
+            BOOL nonScaling = [transform containsString:@"non-scaling-stroke"];
+            NSString* body = [NSString stringWithFormat:
+                @"<path d='M100 100h0 M200 100q0 0 0 0' fill='none' stroke='red' stroke-width='40' stroke-linecap='%@' %@/>",
+                cap, transform];
+            NSMutableString* reference = [NSMutableString string];
+            for(NSUInteger index = 1; index <= 2; index++) {
+                CGFloat x = index * (nonScaling ? 150.f : 100.f);
+                CGFloat y = nonScaling ? 75.f : 100.f;
+                NSString* attributes = nonScaling ? @"" : transform;
+                if([cap isEqualToString:@"round"]) {
+                    [reference appendFormat:@"<circle cx='%g' cy='%g' r='20' fill='red' %@/>", x, y, attributes];
+                } else {
+                    [reference appendFormat:@"<rect x='%g' y='%g' width='40' height='40' fill='red' %@/>", x - 20.f, y - 20.f, attributes];
+                }
+            }
+            [self compareBody:body referenceBody:reference
+                         name:[NSString stringWithFormat:@"point-caps-%@-%lu", cap, (unsigned long)transform.length]
+                    tolerance:.025];
+        }
+    }
+}
+
 - (void)testGradientSpreadingMatchesExplicitStops
 {
     for(NSString* method in @[@"repeat", @"reflect"]) {

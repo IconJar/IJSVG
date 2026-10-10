@@ -1783,13 +1783,17 @@ typedef struct {
     }
     const char* characters = pathData.UTF8String;
     NSUInteger length = characters != NULL ? strlen(characters) : 0;
-    IJSVGAppendPathData(node.path, characters, length, _commandDataStream);
+    BOOL mayHavePointSubpaths = IJSVGAppendPathDataCheckingPointSubpaths(node.path, characters,
+                                                                       length, _commandDataStream);
     if(self.parsedPaths == nil) {
         self.parsedPaths = [[NSCache alloc] init];
         self.parsedPaths.countLimit = 128;
         self.parsedPaths.totalCostLimit = 4 * 1024 * 1024;
     }
     CGPathRef cached = CGPathCreateCopy(node.path);
+    if(!mayHavePointSubpaths) {
+        [node cachePointSubpaths:NO forPath:cached];
+    }
     NSUInteger cost = pathData.length * sizeof(unichar);
     [self.parsedPaths setObject:(__bridge id)cached forKey:pathData cost:cost];
     CGPathRelease(cached);
