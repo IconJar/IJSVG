@@ -93,6 +93,32 @@
                 alpha:1.f];
 }
 
+- (void)testModernRGBWhitespaceAndAlpha
+{
+    for(NSString* source in @[@"rgb(51 102 153 / .5)", @"rgba(20% 40% 60% / 50%)",
+                              @"rgb(51 40% 153/.5)", @"rgb(5.1e1\t102\n153 / .5)"]) {
+        [self assertColor:[IJSVGColor colorFromString:source]
+                      red:0.2f
+                    green:0.4f
+                     blue:0.6f
+                    alpha:0.5f];
+    }
+    [self assertColor:[IJSVGColor colorFromString:@"rgb(300 -5 50%)"]
+                  red:1.f
+                green:0.f
+                 blue:0.5f
+                alpha:1.f];
+    [self assertColor:[IJSVGColor colorFromString:@"rgb(none 0 0 / none)"]
+                  red:0.f
+                green:0.f
+                 blue:0.f
+                alpha:0.f];
+    for(NSString* source in @[@"rgb(1 2)", @"rgb(1 2 3 4)", @"rgb(1 2 3 /)",
+                              @"rgb(1 2 3 / .5 junk)", @"rgb(1-2 3)", @"rgb(nan 0 0)"]) {
+        XCTAssertNil([IJSVGColor colorFromString:source], @"%@", source);
+    }
+}
+
 - (void)testColorFromStringParsesRGBIntegerComponents
 {
     NSColor* color = [IJSVGColor colorFromString:@"rgb(51, 102, 153)"];

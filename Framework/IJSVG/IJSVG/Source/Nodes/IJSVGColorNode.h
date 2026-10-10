@@ -22,6 +22,7 @@ typedef NS_ENUM(NSUInteger, IJSVGContextPaint) {
 
 @property (nonatomic, strong, nullable) NSColor* color;
 @property (nonatomic, assign) BOOL isNoneOrTransparent;
+@property (nonatomic, assign) BOOL usesCurrentColor;
 @property (nonatomic, assign) IJSVGContextPaint contextPaint;
 
 + (IJSVGNode*)colorNodeWithColor:(NSColor* _Nullable)color;

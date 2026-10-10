@@ -13,6 +13,7 @@
 #import <IJSVGRectPaint.h>
 #import <IJSVGStrokePaint.h>
 #import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGMask.h>
 #import <IJSVGRootPaint.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVGGradientPaint.h>
@@ -128,6 +129,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     copy->_clippingTransform = _clippingTransform;
     copy->_opacity = _opacity;
     copy->_hidden = _hidden;
+    copy->_hiddenByVisibility = _hiddenByVisibility;
     copy->_blendingMode = _blendingMode;
     copy->_isolated = _isolated;
     copy->_backingScaleFactor = _backingScaleFactor;
@@ -393,9 +395,15 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         CGRectEqualToRect(cached.bounds, bounds)) {
         image = CGImageRetain(cached.image);
     } else {
+        BOOL alphaMask = [mask.sourceNode isKindOfClass:IJSVGMask.class]
+            && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
+        // A color image supplies its alpha to ClipToMask; a gray image supplies
+        // luminance. Preserve RGB here so black alpha-mask content stays opaque.
+        CGColorSpaceRef colorSpace = alphaMask ? IJSVGDeviceRGBColorSpace() : IJSVGDeviceGrayColorSpace();
         CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale),
                                                     ceil(frame.size.height * scale), 8, 0,
-                                                    IJSVGDeviceGrayColorSpace(), (CGBitmapInfo)kCGImageAlphaNone);
+                                                    colorSpace,
+                                                    alphaMask ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNone);
         if(bitmap == NULL) {
             return;
         }

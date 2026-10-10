@@ -32,6 +32,7 @@
         self.color = colorNode.color;
         self.isNoneOrTransparent = colorNode.isNoneOrTransparent;
         self.contextPaint = colorNode.contextPaint;
+        self.usesCurrentColor = colorNode.usesCurrentColor;
     }
 }
 

@@ -129,6 +129,17 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     for(NSUInteger index = 0; index < count; index++) {
         CGContextConcatCTM(ctx, matrices[index]);
     }
+    if([_gradient drawSpreadInContext:ctx
+                           startPoint:_startPoint
+                             endPoint:_endPoint
+                          startRadius:_startRadius
+                            endRadius:_endRadius
+                               radial:_gradientKind == IJSVGResolvedGradientKindRadial]) {
+        if(_gradientKind == IJSVGResolvedGradientKindRadial) {
+            CGContextRestoreGState(ctx);
+        }
+        return;
+    }
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     if(_gradientKind == IJSVGResolvedGradientKindLinear) {
         CGContextDrawLinearGradient(ctx, _gradient.CGGradient, _startPoint,

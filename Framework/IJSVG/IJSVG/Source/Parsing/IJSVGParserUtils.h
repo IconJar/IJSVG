@@ -54,6 +54,7 @@ IJSVGUnitLength* _Nullable IJSVGDimensionFromString(NSString* value, IJSVGNodeTy
 IJSVGUnitLength* _Nullable IJSVGSymbolReferenceFromString(NSString* _Nullable value,
                                                           IJSVGNodeAttribute attribute);
 
+NSArray<IJSVGUnitLength*>* _Nullable IJSVGTransformOriginFromString(NSString* value);
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value);
 void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value);
 

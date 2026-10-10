@@ -486,10 +486,15 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     [storage setBit:IJSVGNodeAttributeEnableBackground];
     [storage setBit:IJSVGNodeAttributeClass];
     [storage setBit:IJSVGNodeAttributeTransform];
+    [storage setBit:IJSVGNodeAttributeTransformOrigin];
+    [storage setBit:IJSVGNodeAttributeTransformBox];
     [storage setBit:IJSVGNodeAttributeID];
     [storage setBit:IJSVGNodeAttributeUnicode];
     [storage setBit:IJSVGNodeAttributeTextRendering];
+    [storage setBit:IJSVGNodeAttributeColor];
+    [storage setBit:IJSVGNodeAttributeVisibility];
     [storage setBit:IJSVGNodeAttributeDisplay];
+    [storage setBit:IJSVGNodeAttributeClipRule];
     // Text presentation attributes inherit through every ancestor element.
     for(IJSVGNodeAttribute attribute = IJSVGNodeAttributeFont;
         attribute <= IJSVGNodeAttributeXMLLang; attribute++) {
@@ -706,6 +711,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.identifier = node.identifier;
 
     self.transforms = node.transforms;
+    self.transformOrigin = node.transformOrigin;
+    self.transformBox = node.transformBox;
     self.windingRule = node.windingRule;
     self.clipRule = node.clipRule;
     self.lineCapStyle = node.lineCapStyle;
@@ -713,6 +720,8 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.parentNode = node.parentNode;
 
     self.shouldRender = node.shouldRender;
+    self.visibility = node.visibility;
+    self.currentColor = node->_currentColor;
     self.blendMode = node.blendMode;
     self.isolated = node.isolated;
     self.paintOrder = node->_paintOrder;
@@ -757,6 +766,9 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     }
 
     IJSVGNode* fill = self.fill;
+    if([fill isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)fill).usesCurrentColor) {
+        fill = [IJSVGColorNode colorNodeWithColor:self.currentColor];
+    }
     if(fill == nil) {
         IJSVGNodeAddColorToStorage(storage,
                                    style.fillColor ?: NSColor.blackColor,
@@ -769,8 +781,12 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     }
 
     if([self matchesTraits:IJSVGNodeTraitStroked] == YES) {
+        IJSVGNode* stroke = self.stroke;
+        if([stroke isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)stroke).usesCurrentColor) {
+            stroke = [IJSVGColorNode colorNodeWithColor:self.currentColor];
+        }
         IJSVGTraitedColorStorage* strokeStorage = nil;
-        strokeStorage = [self.stroke colorsWithStyle:style
+        strokeStorage = [stroke colorsWithStyle:style
                                       matchingTraits:IJSVGColorUsageTraitStroke];
         [storage unionColorStorage:strokeStorage];
     }
@@ -825,6 +841,19 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 - (IJSVGMarker*)markerEnd
 {
     return _markerEnd ?: self.styleParent.markerEnd;
+}
+
+- (NSColor*)currentColor
+{
+    return _currentColor ?: self.styleParent.currentColor ?: NSColor.blackColor;
+}
+
+- (BOOL)visibilityHidden
+{
+    if(self.visibility == IJSVGVisibilityInherit) {
+        return self.styleParent.visibilityHidden;
+    }
+    return self.visibility == IJSVGVisibilityHidden;
 }
 
 - (IJSVGNode*)styleParent

@@ -13,11 +13,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
+    IJSVGGradientSpreadMethodPad,
+    IJSVGGradientSpreadMethodReflect,
+    IJSVGGradientSpreadMethodRepeat
+};
+
 @interface IJSVGGradient : IJSVGGroup
 
 @property (nonatomic, strong, nullable) NSArray<NSColor*>* colors;
 @property (nonatomic, assign, nullable) CGFloat* locations;
 @property (nonatomic, assign) NSUInteger numberOfStops;
+@property (nonatomic, assign) IJSVGGradientSpreadMethod spreadMethod;
 @property (nonatomic, assign, nullable) CGGradientRef CGGradient;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* x1;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* x2;
@@ -28,6 +35,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient
                        colors:(NSArray* _Nonnull * _Nonnull)someColors;
+
+- (void)parseSpreadMethod:(NSXMLElement*)element;
+- (BOOL)drawSpreadInContext:(CGContextRef)ctx
+                 startPoint:(CGPoint)start
+                   endPoint:(CGPoint)end
+                startRadius:(CGFloat)startRadius
+                  endRadius:(CGFloat)endRadius
+                     radial:(BOOL)radial;
 
 - (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;
 - (void)drawInContextRef:(CGContextRef)ctx

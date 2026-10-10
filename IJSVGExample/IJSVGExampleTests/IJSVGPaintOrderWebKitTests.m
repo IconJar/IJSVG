@@ -21,6 +21,87 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testGradientSpreadingMatchesExplicitStops
+{
+    for(NSString* method in @[@"repeat", @"reflect"]) {
+        NSMutableString* stops = [NSMutableString string];
+        for(NSUInteger index = 0; index < 8; index++) {
+            BOOL reversed = [method isEqualToString:@"reflect"] && index % 2 != 0;
+            [stops appendFormat:@"<stop offset='%g' stop-color='%@'/><stop offset='%g' stop-color='%@'/>",
+                index / 8.0, reversed ? @"blue" : @"red",
+                (index + 1) / 8.0, reversed ? @"red" : @"blue"];
+        }
+        for(NSString* geometry in @[@"linearGradient x1='0' y1='0' x2='80' y2='0'",
+                                    @"radialGradient cx='100' cy='100' r='40'"]) {
+            NSString* tag = [geometry componentsSeparatedByString:@" "].firstObject;
+            NSString* expanded = [geometry stringByReplacingOccurrencesOfString:@"x2='80'" withString:@"x2='640'"];
+            expanded = [expanded stringByReplacingOccurrencesOfString:@"r='40'" withString:@"r='320'"];
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><%@ id='g' gradientUnits='userSpaceOnUse' spreadMethod='%@'>"
+                 "<stop stop-color='red'/><stop offset='1' stop-color='blue'/></%@></defs>"
+                 "<rect width='300' height='180' fill='url(#g)'/>", geometry, method, tag];
+            NSString* reference = [NSString stringWithFormat:
+                @"<defs><%@ id='g' gradientUnits='userSpaceOnUse'>%@</%@></defs>"
+                 "<rect width='300' height='180' fill='url(#g)'/>", expanded, stops, tag];
+            [self compareBody:body referenceBody:reference
+                         name:[NSString stringWithFormat:@"spread-%@-%@", tag, method] tolerance:.025];
+        }
+    }
+}
+
+- (void)testRadialSpreadWithFocalRadiusMatchesExplicitStops
+{
+    // The MDN radial fixture uses a nonzero focal radius. WebKit pads that
+    // fixture, so use a zero-radius cone with explicitly expanded stops.
+    CGFloat minimum = -17.f / 16.f;
+    CGFloat maximum = 40.f;
+    for(NSString* method in @[@"repeat", @"reflect"]) {
+        BOOL reflect = [method isEqualToString:@"reflect"];
+        NSMutableString* stops = [NSMutableString stringWithFormat:
+            @"<stop offset='0' stop-color='rgb(255 %g %g)'/>",
+            165.f * .9375f, 255.f * (1.f - .9375f)];
+        for(NSInteger cycle = -1; cycle < (NSInteger)maximum; cycle++) {
+            BOOL reversed = reflect && labs(cycle) % 2 != 0;
+            CGFloat first = (cycle - minimum) / (maximum - minimum);
+            CGFloat last = (cycle + 1 - minimum) / (maximum - minimum);
+            [stops appendFormat:@"<stop offset='%.15g' stop-color='%@'/><stop offset='%.15g' stop-color='%@'/>",
+                first, reversed ? @"orange" : @"fuchsia", last, reversed ? @"fuchsia" : @"orange"];
+        }
+        NSString* body = [NSString stringWithFormat:
+            @"<defs><radialGradient id='g' gradientUnits='userSpaceOnUse' cx='75' cy='25' r='33'"
+             " fx='64' fy='18' fr='17' spreadMethod='%@'>"
+             "<stop stop-color='fuchsia'/><stop offset='1' stop-color='orange'/></radialGradient></defs>"
+             "<rect width='100' height='100' fill='url(#g)'/>", method];
+        NSString* reference = [NSString stringWithFormat:
+            @"<defs><radialGradient id='g' gradientUnits='userSpaceOnUse' fx='52.3125' fy='10.5625'"
+             " cx='504' cy='298' r='657'>%@</radialGradient></defs>"
+             "<rect width='100' height='100' fill='url(#g)'/>", stops];
+        [self compareBody:[NSString stringWithFormat:@"<g transform='scale(2)'>%@</g>", body]
+            referenceBody:[NSString stringWithFormat:@"<g transform='scale(2)'>%@</g>", reference]
+                     name:[@"spread-focal-radius-" stringByAppendingString:method] tolerance:.025];
+    }
+}
+
+- (void)testTransformOriginsMatchWebKit
+{
+    [self compareBody:@"<style>.box {transform-origin:center;transform-box:fill-box}</style>"
+                       "<rect class='box' x='20' y='30' width='80' height='50' transform='rotate(35)' fill='navy'/>"
+                       "<rect x='140' y='30' width='80' height='50' transform-origin='50% 50%' transform='rotate(15)' fill='red'/>"
+                       "<g style='transform-origin:bottom right;transform-box:fill-box' transform='rotate(-15)'>"
+                       "<rect x='250' y='100' width='80' height='50' fill='green'/></g>"
+                 name:@"transform-origins" tolerance:.025];
+}
+
+- (void)testLinearGradientSpreadTransformAndAlpha
+{
+    [self compareBody:@"<defs><linearGradient id='base' x1='25%' x2='45%' spreadMethod='repeat'>"
+                       "<stop offset='.2' stop-color='red' stop-opacity='.3'/>"
+                       "<stop offset='.8' stop-color='blue'/></linearGradient>"
+                       "<linearGradient id='g' href='#base' gradientTransform='rotate(25 .5 .5)'/></defs>"
+                       "<rect x='20' y='10' width='350' height='170' fill='url(#g)'/>"
+                 name:@"spread-transform-alpha-reference" tolerance:.025];
+}
+
 - (void)testCSSGeometryMatchesWebKit
 {
     [self compareBody:@"<style>.box {x:20px;y:20px;width:90px;height:60px;rx:12px;ry:8px}"

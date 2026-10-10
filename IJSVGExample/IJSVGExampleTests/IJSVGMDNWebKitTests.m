@@ -1,0 +1,318 @@
+#import <XCTest/XCTest.h>
+#import <WebKit/WebKit.h>
+#import <IJSVG/IJSVG.h>
+
+static NSDictionary* IJSVGMDNCorpus(void)
+{
+    static NSDictionary* corpus;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSURL* url = [[NSBundle bundleForClass:NSClassFromString(@"IJSVGMDNWebKitTests")]
+            URLForResource:@"corpus" withExtension:@"json" subdirectory:@"MDN"];
+        NSData* data = url ? [NSData dataWithContentsOfURL:url] : nil;
+        corpus = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+    });
+    return corpus;
+}
+
+static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat background)
+{
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space,
+        (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(space);
+    if(bitmap) {
+        CGContextSetRGBFillColor(bitmap, background, background, background, 1);
+        CGContextFillRect(bitmap, CGRectMake(0, 0, width, height));
+    }
+    return bitmap;
+}
+
+// Each comparison owns its WebKit lifetime; timeout and navigation errors are
+// infrastructure failures, never covered by a known pixel difference.
+@interface IJSVGMDNComparison : NSObject <WKNavigationDelegate>
+@property (nonatomic, strong) WKWebView* webView;
+@property (nonatomic, strong) NSWindow* window;
+@property (nonatomic, copy) NSString* xml;
+@property (nonatomic) CGSize size;
+@property (nonatomic) CGFloat background;
+@property (nonatomic, strong) NSDictionary* metrics;
+@property (nonatomic, copy) void (^completion)(NSDictionary*);
+- (void)run:(NSString*)xml completion:(void (^)(NSDictionary*))completion;
+@end
+
+@implementation IJSVGMDNComparison
+
+- (void)finish:(NSDictionary*)result
+{
+    if(!self.completion) return;
+    void (^completion)(NSDictionary*) = self.completion;
+    self.completion = nil;
+    self.webView.navigationDelegate = nil;
+    [self.webView stopLoading];
+    [self.window close];
+    self.window = nil;
+    self.webView = nil;
+    completion(result);
+}
+
+- (void)run:(NSString*)xml completion:(void (^)(NSDictionary*))completion
+{
+    self.completion = completion;
+    NSError* error = nil;
+    NSXMLDocument* document = [[NSXMLDocument alloc] initWithXMLString:xml options:0 error:&error];
+    if(!document) {
+        [self finish:@{@"error": error.description ?: @"Invalid fixture XML"}];
+        return;
+    }
+    NSXMLElement* root = document.rootElement;
+    NSString* viewBox = [[root attributeForName:@"viewBox"] stringValue];
+    NSScanner* scanner = [NSScanner scannerWithString:[viewBox stringByReplacingOccurrencesOfString:@"," withString:@" "] ?: @""];
+    double x, y, width = 300, height = 150, vw, vh;
+    if([scanner scanDouble:&x] && [scanner scanDouble:&y] &&
+       [scanner scanDouble:&vw] && [scanner scanDouble:&vh] && vw > 0 && vh > 0) {
+        // A viewBox is a coordinate system, not an intrinsic pixel size.
+        // Render small coordinate systems at a useful reference resolution.
+        width = 400;
+        height = 400 * vh / vw;
+    }
+    NSString* w = [[root attributeForName:@"width"] stringValue];
+    NSString* h = [[root attributeForName:@"height"] stringValue];
+    if(w.doubleValue > 0 && ![w containsString:@"%"] &&
+       ([w isEqualToString:[@(w.doubleValue) stringValue]] || [w hasSuffix:@"px"])) width = w.doubleValue;
+    if(h.doubleValue > 0 && ![h containsString:@"%"] &&
+       ([h isEqualToString:[@(h.doubleValue) stringValue]] || [h hasSuffix:@"px"])) height = h.doubleValue;
+    self.size = CGSizeMake(MAX(1, MIN(800, ceil(width))), MAX(1, MIN(800, ceil(height))));
+    // Supply the same definite viewport to both engines, including %/auto roots.
+    [root removeAttributeForName:@"width"];
+    [root removeAttributeForName:@"height"];
+    [root addAttribute:[NSXMLNode attributeWithName:@"width" stringValue:[@(self.size.width) stringValue]]];
+    [root addAttribute:[NSXMLNode attributeWithName:@"height" stringValue:[@(self.size.height) stringValue]]];
+    NSString* style = [root attributeForName:@"style"].stringValue ?: @"";
+    style = [style stringByAppendingFormat:@";width:%gpx!important;height:%gpx!important;", self.size.width, self.size.height];
+    if(self.background != 1) {
+        int component = (int)round(self.background * 255);
+        style = [style stringByAppendingFormat:@"background-color:rgb(%d,%d,%d)!important;", component, component, component];
+    }
+    [root removeAttributeForName:@"style"];
+    [root addAttribute:[NSXMLNode attributeWithName:@"style" stringValue:style]];
+    self.xml = document.XMLString;
+    WKWebViewConfiguration* config = [[WKWebViewConfiguration alloc] init];
+    config.websiteDataStore = WKWebsiteDataStore.nonPersistentDataStore;
+    self.webView = [[WKWebView alloc] initWithFrame:(CGRect){CGPointZero, self.size} configuration:config];
+    self.webView.underPageBackgroundColor = [NSColor colorWithSRGBRed:self.background green:self.background blue:self.background alpha:1];
+    self.webView.navigationDelegate = self;
+    self.window = [[NSWindow alloc] initWithContentRect:(CGRect){CGPointZero, self.size}
+        styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
+    self.window.releasedWhenClosed = NO;
+    self.window.contentView = self.webView;
+    [self.webView loadData:[self.xml dataUsingEncoding:NSUTF8StringEncoding]
+        MIMEType:@"image/svg+xml" characterEncodingName:@"UTF-8" baseURL:[NSURL URLWithString:@"about:blank"]];
+    __weak IJSVGMDNComparison* weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [weakSelf finish:@{@"error": @"WebKit comparison timed out"}];
+    });
+}
+
+- (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation
+{
+    [webView callAsyncJavaScript:@"await document.fonts.ready; const root = document.documentElement; "
+        "return {languages:navigator.languages,viewport:[root.getBoundingClientRect().width,root.getBoundingClientRect().height], "
+        "texts:Array.from(document.querySelectorAll('text')).map(t=>({text:t.textContent, "
+        "textLength:t.textLength.baseVal.value,computedLength:t.getComputedTextLength(), "
+        "font:getComputedStyle(t).font,baseline:getComputedStyle(t).dominantBaseline}))};"
+        arguments:@{} inFrame:nil inContentWorld:WKContentWorld.pageWorld
+        completionHandler:^(id value, NSError* error) {
+        if(!self.completion) return;
+        if(error) {
+            [self finish:@{@"error": error.description}];
+            return;
+        }
+        NSMutableDictionary* metrics = [value mutableCopy];
+        metrics[@"nativeLanguages"] = NSLocale.preferredLanguages;
+        self.metrics = metrics;
+        WKSnapshotConfiguration* config = [[WKSnapshotConfiguration alloc] init];
+        config.rect = (CGRect){CGPointZero, self.size};
+        config.snapshotWidth = @(self.size.width);
+        config.afterScreenUpdates = YES;
+        [self.webView takeSnapshotWithConfiguration:config completionHandler:^(NSImage* image, NSError* snapshotError) {
+            if(!self.completion) return;
+            if(!image || snapshotError) {
+                [self finish:@{@"error": snapshotError.description ?: @"No WebKit snapshot"}];
+                return;
+            }
+            [self compare:image];
+        }];
+    }];
+}
+
+- (void)webView:(WKWebView*)webView didFailNavigation:(WKNavigation*)navigation withError:(NSError*)error
+{
+    [self finish:@{@"error": error.description}];
+}
+
+- (void)webView:(WKWebView*)webView didFailProvisionalNavigation:(WKNavigation*)navigation withError:(NSError*)error
+{
+    [self finish:@{@"error": error.description}];
+}
+
+- (void)webViewWebContentProcessDidTerminate:(WKWebView*)webView
+{
+    [self finish:@{@"error": @"WebKit content process terminated"}];
+}
+
+- (void)compare:(NSImage*)snapshot
+{
+    CGRect rect = (CGRect){CGPointZero, self.size};
+    CGImageRef reference = [snapshot CGImageForProposedRect:&rect context:nil hints:nil];
+    if(!reference) {
+        [self finish:@{@"error": @"Snapshot has no CGImage"}];
+        return;
+    }
+    size_t width = CGImageGetWidth(reference), height = CGImageGetHeight(reference);
+    CGContextRef expected = IJSVGMDNBitmap(width, height, self.background);
+    CGContextRef actual = IJSVGMDNBitmap(width, height, self.background);
+    CGContextRef diff = IJSVGMDNBitmap(width, height, self.background);
+    if(!expected || !actual || !diff) {
+        if(expected) CGContextRelease(expected);
+        if(actual) CGContextRelease(actual);
+        if(diff) CGContextRelease(diff);
+        [self finish:@{@"error": @"Could not allocate comparison bitmaps"}];
+        return;
+    }
+    CGContextDrawImage(expected, CGRectMake(0, 0, width, height), reference);
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:self.xml];
+    CGFloat scale = width / self.size.width;
+    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    CGContextTranslateCTM(actual, 0, height);
+    CGContextScaleCTM(actual, scale, -scale);
+    [svg drawInRect:rect context:actual];
+    const unsigned char* a = CGBitmapContextGetData(actual);
+    const unsigned char* b = CGBitmapContextGetData(expected);
+    unsigned char* d = CGBitmapContextGetData(diff);
+    double difference = 0;
+    NSUInteger ink = 0;
+    for(size_t i = 0; i < width * height * 4; i += 4) {
+        BOOL marked = NO;
+        double delta = 0;
+        for(NSUInteger channel = 0; channel < 3; channel++) {
+            int background = (int)round(self.background * 255);
+            marked |= abs(a[i + channel] - background) > 10 || abs(b[i + channel] - background) > 10;
+            unsigned char distance = abs(a[i + channel] - b[i + channel]);
+            d[i + channel] = distance;
+            delta += distance;
+        }
+        d[i + 3] = 255;
+        if(marked) { ink++; difference += delta; }
+    }
+    NSMutableDictionary* result = [@{@"meanInkError": @(difference / (MAX(ink, 1) * 3. * 255.)),
+        @"inkPixels": @(ink), @"parsed": @(svg.rootNode != nil), @"svg": self.xml} mutableCopy];
+    CGContextRef contexts[] = {actual, expected, diff};
+    NSArray* names = @[@"ijsvg", @"webkit", @"diff"];
+    for(NSUInteger i = 0; i < 3; i++) {
+        CGImageRef image = CGBitmapContextCreateImage(contexts[i]);
+        NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
+        result[names[i]] = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+        CGImageRelease(image);
+        CGContextRelease(contexts[i]);
+    }
+    [self finish:result];
+}
+@end
+
+@interface IJSVGMDNWebKitTests : XCTestCase
+@end
+
+@implementation IJSVGMDNWebKitTests
+
+- (void)testCorpusInventory
+{
+    NSDictionary* corpus = IJSVGMDNCorpus();
+    XCTAssertEqualObjects(corpus[@"schemaVersion"], @1);
+    XCTAssertGreaterThan([corpus[@"pages"] count], 300u);
+    XCTAssertGreaterThan([corpus[@"examples"] count], 700u);
+    XCTAssertGreaterThan([corpus[@"cases"] count], 400u);
+    NSMutableSet* identifiers = [NSMutableSet set];
+    for(NSDictionary* fixture in corpus[@"cases"]) {
+        XCTAssertFalse([identifiers containsObject:fixture[@"id"]]);
+        [identifiers addObject:fixture[@"id"]];
+        XCTAssertTrue([fixture[@"svg"] length] > 0 || [fixture[@"skip"] length] > 0);
+    }
+}
+
+- (void)compareCase:(NSString*)identifier
+{
+    NSDictionary* fixture = nil;
+    for(NSDictionary* candidate in IJSVGMDNCorpus()[@"cases"]) {
+        if([candidate[@"id"] isEqual:identifier]) { fixture = candidate; break; }
+    }
+    XCTAssertNotNil(fixture, @"Missing MDN fixture %@", identifier);
+    if(!fixture) return;
+    XCTSkipIf(fixture[@"skip"] != nil, @"%@: %@", fixture[@"url"], fixture[@"skip"]);
+    NSURL* policyURL = [[NSBundle bundleForClass:self.class] URLForResource:@"expectations"
+        withExtension:@"json" subdirectory:@"MDN"];
+    NSData* policyData = policyURL ? [NSData dataWithContentsOfURL:policyURL] : nil;
+    NSDictionary* policies = policyData ? [NSJSONSerialization JSONObjectWithData:policyData options:0 error:nil] : nil;
+    XCTAssertNotNil(policies, @"Missing or invalid MDN expectations");
+    if(!policies) return;
+    NSDictionary* policy = policies[identifier];
+    NSString* xml = fixture[@"svg"];
+    // Existing text comparisons use .16 for Core Text/WebKit rasterization.
+    // Shape-only examples retain the existing .025 geometry threshold.
+    double tolerance = [xml containsString:@"<text"] ? .16 : .025;
+    if(policy[@"tolerance"]) tolerance = [policy[@"tolerance"] doubleValue];
+    if(policy) {
+        XCTAssertGreaterThan([policy[@"reason"] length], 0u);
+        XCTAssertEqualObjects(policy[@"sha256"], fixture[@"sha256"], @"Review this expectation after updating the fixture");
+        if(![policy[@"sha256"] isEqual:fixture[@"sha256"]]) return;
+    }
+    XCTestExpectation* done = [self expectationWithDescription:identifier];
+    __block NSDictionary* result;
+    __block IJSVGMDNComparison* comparison;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        comparison = [[IJSVGMDNComparison alloc] init];
+        comparison.background = policy[@"background"] ? [policy[@"background"] doubleValue] : 1;
+        [comparison run:xml completion:^(NSDictionary* value) {
+            result = value;
+            [done fulfill];
+        }];
+    });
+    [self waitForExpectations:@[done] timeout:20];
+    XCTAssertNotNil(result);
+    XCTAssertNil(result[@"error"], @"%@", result[@"error"]);
+    if(!result || result[@"error"]) return;
+    XCTAssertTrue([result[@"parsed"] boolValue], @"IJSVG could not parse %@", identifier);
+    double error = [result[@"meanInkError"] doubleValue];
+    BOOL blank = [result[@"inkPixels"] unsignedIntegerValue] == 0;
+    NSLog(@"MDN %@ meanInkError=%.6f tolerance=%.3f ink=%@", identifier, error, tolerance, result[@"inkPixels"]);
+    if(blank || error > tolerance || policy[@"expectedDifference"]) {
+        NSString* directory = [NSTemporaryDirectory() stringByAppendingPathComponent:@"IJSVGMDNComparisons"];
+        [NSFileManager.defaultManager createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:nil];
+        NSLog(@"MDN comparison artifacts: %@/%@", directory, identifier);
+        NSData* metrics = [NSJSONSerialization dataWithJSONObject:comparison.metrics ?: @{} options:NSJSONWritingPrettyPrinted error:nil];
+        [metrics writeToFile:[directory stringByAppendingPathComponent:[identifier stringByAppendingString:@"-metrics.json"]] atomically:YES];
+        for(NSString* name in @[@"ijsvg", @"webkit", @"diff"]) {
+            XCTAttachment* attachment = [XCTAttachment attachmentWithData:result[name] uniformTypeIdentifier:@"public.png"];
+            attachment.name = [NSString stringWithFormat:@"%@-%@.png", identifier, name];
+            attachment.lifetime = XCTAttachmentLifetimeKeepAlways;
+            [self addAttachment:attachment];
+            [result[name] writeToFile:[directory stringByAppendingPathComponent:attachment.name] atomically:YES];
+        }
+        XCTAttachment* source = [XCTAttachment attachmentWithString:result[@"svg"]];
+        source.name = [identifier stringByAppendingString:@".svg"];
+        source.lifetime = XCTAttachmentLifetimeKeepAlways;
+        [self addAttachment:source];
+    }
+    XCTAssertFalse(blank, @"%@ produced no visible ink on the comparison background; inspect the fixture and snapshots", identifier);
+    void (^assertPixels)(void) = ^{
+        XCTAssertLessThanOrEqual(error, tolerance, @"%@ (%@): %@", identifier, fixture[@"url"], policy[@"reason"] ?: @"Unexpected rendering difference");
+    };
+    if([policy[@"expectedDifference"] boolValue]) {
+        XCTExpectFailureInBlock(policy[@"reason"], assertPixels);
+    } else {
+        assertPixels();
+    }
+}
+
+#include "IJSVGMDNGeneratedTests.inc"
+@end

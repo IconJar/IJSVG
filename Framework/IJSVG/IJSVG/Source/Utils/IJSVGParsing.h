@@ -25,6 +25,12 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
                                                                        NSUInteger* count,
                                                                        BOOL* valid);
 
+// Returns a borrowed byte range without surrounding whitespace or matching quotes.
+// The source remains unchanged, quote is zero for an unquoted argument.
+// This unwraps one argument and does not decode CSS escapes.
+BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes,
+                                size_t* length, char* quote);
+
 @interface IJSVGParsing : NSObject
 
 @end

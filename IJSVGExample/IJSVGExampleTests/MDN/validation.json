@@ -1,0 +1,3412 @@
+{
+  "recordedAt": "2026-10-10T15:16:54.199467+00:00",
+  "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
+  "macOS": "27.0.1 (26A434)",
+  "counts": {
+    "total": 458,
+    "passed": 245,
+    "failed": 53,
+    "skipped": 159,
+    "expectedFailures": 1
+  },
+  "inventoryTest": "Passed",
+  "existingWebKitSuites": {
+    "passed": 62,
+    "expectedFailures": 1,
+    "failed": 0
+  },
+  "note": "Observations only, not accepted baselines. Gradient spreading and transform origins fix four further MDN cases. The exact radial spreadMethod fixture is now a strict expected WebKit difference, verified with expanded-stop controls. Remaining 53 unexpected mismatches are retained as failures; thresholds were not widened.",
+  "cases": [
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_8_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_10_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_11_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_12_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_14_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_applying_svg_effects_to_html_content_block_16_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Applying_SVG_effects_to_HTML_content",
+      "meanInkError": 0.072254,
+      "tolerance": 0.16,
+      "inkPixels": 1596
+    },
+    {
+      "id": "guides_linking_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_linking_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "guides_linking_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_linking_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "guides_linking_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 108177
+    },
+    {
+      "id": "guides_linking_block_7_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_linking_block_9_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_namespaces_crash_course_example_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course/Example",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_namespaces_crash_course_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_namespaces_crash_course_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_namespaces_crash_course_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
+      "reason": "Scripted or interactive SVG"
+    },
+    {
+      "id": "guides_namespaces_crash_course_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_namespaces_crash_course_block_10_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "guides_scripting_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "Scripted or interactive SVG"
+    },
+    {
+      "id": "guides_scripting_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior"
+    },
+    {
+      "id": "guides_scripting_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_scripting_block_7_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior"
+    },
+    {
+      "id": "guides_scripting_block_12_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_scripting_block_15_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_scripting_block_17_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Scripting",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_svg_animation_with_smil_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_animation_with_SMIL",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "guides_svg_animation_with_smil_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_animation_with_SMIL",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "guides_svg_animation_with_smil_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_animation_with_SMIL",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "guides_svg_animation_with_smil_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_animation_with_SMIL",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "guides_svg_filters_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_filters",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_svg_filters_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_filters",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_svg_in_html_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_in_HTML",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "guides_svg_in_html_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_in_HTML",
+      "meanInkError": 0.053157,
+      "tolerance": 0.025,
+      "inkPixels": 560401
+    },
+    {
+      "id": "reference_attribute_alignment_baseline_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/alignment-baseline",
+      "meanInkError": 0.067978,
+      "tolerance": 0.16,
+      "inkPixels": 35947
+    },
+    {
+      "id": "reference_attribute_attributename_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/attributeName",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_attributetype_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/attributeType",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_azimuth_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/azimuth",
+      "meanInkError": 0.009238,
+      "tolerance": 0.025,
+      "inkPixels": 245700
+    },
+    {
+      "id": "reference_attribute_basefrequency_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/baseFrequency",
+      "meanInkError": 0.001904,
+      "tolerance": 0.025,
+      "inkPixels": 227812
+    },
+    {
+      "id": "reference_attribute_basefrequency_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/baseFrequency",
+      "meanInkError": 0.009816,
+      "tolerance": 0.025,
+      "inkPixels": 105058
+    },
+    {
+      "id": "reference_attribute_baseprofile_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/baseProfile",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "reference_attribute_begin_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/begin",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_begin_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/begin",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_begin_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/begin",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_begin_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/begin",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_begin_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/begin",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_by_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/by",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_class_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/class",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_clip_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 204640
+    },
+    {
+      "id": "reference_attribute_clip_path_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip-path",
+      "meanInkError": 0.210898,
+      "tolerance": 0.025,
+      "inkPixels": 478740
+    },
+    {
+      "id": "reference_attribute_clip_rule_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip-rule",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_clip_rule_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip-rule",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_clip_rule_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip-rule",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 9778
+    },
+    {
+      "id": "reference_attribute_clippathunits_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clipPathUnits",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 518400
+    },
+    {
+      "id": "reference_attribute_color_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 211492
+    },
+    {
+      "id": "reference_attribute_color_interpolation_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
+      "meanInkError": 0.007653,
+      "tolerance": 0.16,
+      "inkPixels": 66236
+    },
+    {
+      "id": "reference_attribute_color_interpolation_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
+      "meanInkError": 0.122569,
+      "tolerance": 0.16,
+      "inkPixels": 67066
+    },
+    {
+      "id": "reference_attribute_color_interpolation_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
+      "meanInkError": 0.00738,
+      "tolerance": 0.16,
+      "inkPixels": 68684
+    },
+    {
+      "id": "reference_attribute_color_interpolation_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/color-interpolation",
+      "meanInkError": 0.039677,
+      "tolerance": 0.16,
+      "inkPixels": 70935
+    },
+    {
+      "id": "reference_attribute_crossorigin_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/crossorigin",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_cx_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/cx",
+      "meanInkError": 6e-06,
+      "tolerance": 0.025,
+      "inkPixels": 128732
+    },
+    {
+      "id": "reference_attribute_cx_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/cx",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 100560
+    },
+    {
+      "id": "reference_attribute_cy_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/cy",
+      "meanInkError": 4e-06,
+      "tolerance": 0.025,
+      "inkPixels": 513385
+    },
+    {
+      "id": "reference_attribute_cy_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/cy",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 100662
+    },
+    {
+      "id": "reference_attribute_d_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 2e-06,
+      "tolerance": 0.025,
+      "inkPixels": 19528
+    },
+    {
+      "id": "reference_attribute_d_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 2e-06,
+      "tolerance": 0.025,
+      "inkPixels": 19528
+    },
+    {
+      "id": "reference_attribute_d_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 7040
+    },
+    {
+      "id": "reference_attribute_d_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 8324
+    },
+    {
+      "id": "reference_attribute_d_block_10_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 10950
+    },
+    {
+      "id": "reference_attribute_d_block_12_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 8662
+    },
+    {
+      "id": "reference_attribute_d_block_14_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.000805,
+      "tolerance": 0.025,
+      "inkPixels": 100207
+    },
+    {
+      "id": "reference_attribute_d_block_16_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/d",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 95956
+    },
+    {
+      "id": "reference_attribute_decoding_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/decoding",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_diffuseconstant_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/diffuseConstant",
+      "meanInkError": 0.006103,
+      "tolerance": 0.025,
+      "inkPixels": 290224
+    },
+    {
+      "id": "reference_attribute_direction_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/direction",
+      "meanInkError": 0.53185,
+      "tolerance": 0.16,
+      "inkPixels": 8060
+    },
+    {
+      "id": "reference_attribute_display_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/display",
+      "meanInkError": 1.6e-05,
+      "tolerance": 0.025,
+      "inkPixels": 264992
+    },
+    {
+      "id": "reference_attribute_divisor_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/divisor",
+      "meanInkError": 0.052613,
+      "tolerance": 0.025,
+      "inkPixels": 160325
+    },
+    {
+      "id": "reference_attribute_dominant_baseline_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dominant-baseline",
+      "meanInkError": 0.192536,
+      "tolerance": 0.16,
+      "inkPixels": 20876
+    },
+    {
+      "id": "reference_attribute_dominant_baseline_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dominant-baseline",
+      "meanInkError": 0.423907,
+      "tolerance": 0.16,
+      "inkPixels": 51957
+    },
+    {
+      "id": "reference_attribute_download_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/download",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_dur_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dur",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_dx_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dx",
+      "meanInkError": 0.046436,
+      "tolerance": 0.16,
+      "inkPixels": 18781
+    },
+    {
+      "id": "reference_attribute_dx_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dx",
+      "meanInkError": 0.056946,
+      "tolerance": 0.16,
+      "inkPixels": 30669
+    },
+    {
+      "id": "reference_attribute_dy_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dy",
+      "meanInkError": 0.046595,
+      "tolerance": 0.16,
+      "inkPixels": 18748
+    },
+    {
+      "id": "reference_attribute_dy_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/dy",
+      "meanInkError": 0.067886,
+      "tolerance": 0.16,
+      "inkPixels": 17849
+    },
+    {
+      "id": "reference_attribute_elevation_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/elevation",
+      "meanInkError": 0.006461,
+      "tolerance": 0.025,
+      "inkPixels": 245035
+    },
+    {
+      "id": "reference_attribute_end_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/end",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_end_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/end",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_end_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/end",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_exponent_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/exponent",
+      "meanInkError": 0.002005,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_fetchpriority_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fetchpriority",
+      "reason": "Scripted or interactive SVG"
+    },
+    {
+      "id": "reference_attribute_fill_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_fill_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill",
+      "meanInkError": 0.039446,
+      "tolerance": 0.025,
+      "inkPixels": 78423
+    },
+    {
+      "id": "reference_attribute_fill_opacity_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-opacity",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 81192
+    },
+    {
+      "id": "reference_attribute_fill_rule_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 69628
+    },
+    {
+      "id": "reference_attribute_fill_rule_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 109253
+    },
+    {
+      "id": "reference_attribute_fill_rule_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fill-rule",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 89678
+    },
+    {
+      "id": "reference_attribute_filter_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/filter",
+      "meanInkError": 0.00119,
+      "tolerance": 0.025,
+      "inkPixels": 481964
+    },
+    {
+      "id": "reference_attribute_flood_color_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/flood-color",
+      "meanInkError": 9.6e-05,
+      "tolerance": 0.025,
+      "inkPixels": 145542
+    },
+    {
+      "id": "reference_attribute_flood_opacity_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/flood-opacity",
+      "meanInkError": 0.000239,
+      "tolerance": 0.025,
+      "inkPixels": 145542
+    },
+    {
+      "id": "reference_attribute_font_family_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-family",
+      "meanInkError": 0.472503,
+      "tolerance": 0.16,
+      "inkPixels": 13190
+    },
+    {
+      "id": "reference_attribute_font_size_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-size",
+      "meanInkError": 0.130911,
+      "tolerance": 0.16,
+      "inkPixels": 8229
+    },
+    {
+      "id": "reference_attribute_font_size_adjust_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-size-adjust",
+      "meanInkError": 0.445077,
+      "tolerance": 0.16,
+      "inkPixels": 18816
+    },
+    {
+      "id": "reference_attribute_font_style_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-style",
+      "meanInkError": 0.194256,
+      "tolerance": 0.16,
+      "inkPixels": 8703
+    },
+    {
+      "id": "reference_attribute_font_variant_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-variant",
+      "meanInkError": 0.441601,
+      "tolerance": 0.16,
+      "inkPixels": 8728
+    },
+    {
+      "id": "reference_attribute_font_weight_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/font-weight",
+      "meanInkError": 0.137374,
+      "tolerance": 0.16,
+      "inkPixels": 9951
+    },
+    {
+      "id": "reference_attribute_fr_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fr",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 134853
+    },
+    {
+      "id": "reference_attribute_fr_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fr",
+      "meanInkError": 0.00563,
+      "tolerance": 0.16,
+      "inkPixels": 72613
+    },
+    {
+      "id": "reference_attribute_from_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/from",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_fx_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fx",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 169407
+    },
+    {
+      "id": "reference_attribute_fy_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fy",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 169411
+    },
+    {
+      "id": "reference_attribute_fy_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/fy",
+      "meanInkError": 0.004464,
+      "tolerance": 0.16,
+      "inkPixels": 105417
+    },
+    {
+      "id": "reference_attribute_gradienttransform_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/gradientTransform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_height_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/height",
+      "meanInkError": 4.3e-05,
+      "tolerance": 0.025,
+      "inkPixels": 103389
+    },
+    {
+      "id": "reference_attribute_href_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/href",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_href_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/href",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 452606
+    },
+    {
+      "id": "reference_attribute_hreflang_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/hreflang",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_id_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/id",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 40804
+    },
+    {
+      "id": "reference_attribute_in_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/in",
+      "meanInkError": 0.054077,
+      "tolerance": 0.025,
+      "inkPixels": 98686
+    },
+    {
+      "id": "reference_attribute_in_block_1_2",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/in",
+      "meanInkError": 0.033,
+      "tolerance": 0.025,
+      "inkPixels": 98614
+    },
+    {
+      "id": "reference_attribute_intercept_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/intercept",
+      "meanInkError": 0.003019,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_k1_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k1",
+      "meanInkError": 0.219776,
+      "tolerance": 0.025,
+      "inkPixels": 200951
+    },
+    {
+      "id": "reference_attribute_k2_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k2",
+      "meanInkError": 0.13389,
+      "tolerance": 0.025,
+      "inkPixels": 201997
+    },
+    {
+      "id": "reference_attribute_k3_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k3",
+      "meanInkError": 0.13389,
+      "tolerance": 0.025,
+      "inkPixels": 201997
+    },
+    {
+      "id": "reference_attribute_k4_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/k4",
+      "meanInkError": 0.169696,
+      "tolerance": 0.025,
+      "inkPixels": 200825
+    },
+    {
+      "id": "reference_attribute_kernelmatrix_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/kernelMatrix",
+      "meanInkError": 0.005829,
+      "tolerance": 0.025,
+      "inkPixels": 95385
+    },
+    {
+      "id": "reference_attribute_keypoints_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/keyPoints",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_keysplines_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/keySplines",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_keytimes_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/keyTimes",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_lang_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/lang",
+      "meanInkError": 0.171868,
+      "tolerance": 0.16,
+      "inkPixels": 305
+    },
+    {
+      "id": "reference_attribute_lengthadjust_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/lengthAdjust",
+      "meanInkError": 0.172705,
+      "tolerance": 0.16,
+      "inkPixels": 13953
+    },
+    {
+      "id": "reference_attribute_letter_spacing_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/letter-spacing",
+      "meanInkError": 0.158429,
+      "tolerance": 0.16,
+      "inkPixels": 5394
+    },
+    {
+      "id": "reference_attribute_lighting_color_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/lighting-color",
+      "meanInkError": 0.004643,
+      "tolerance": 0.025,
+      "inkPixels": 290224
+    },
+    {
+      "id": "reference_attribute_limitingconeangle_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/limitingConeAngle",
+      "meanInkError": 0.032514,
+      "tolerance": 0.025,
+      "inkPixels": 222752
+    },
+    {
+      "id": "reference_attribute_marker_end_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/marker-end",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 9737
+    },
+    {
+      "id": "reference_attribute_marker_mid_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/marker-mid",
+      "meanInkError": 2e-06,
+      "tolerance": 0.025,
+      "inkPixels": 11267
+    },
+    {
+      "id": "reference_attribute_marker_start_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/marker-start",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 9384
+    },
+    {
+      "id": "reference_attribute_mask_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/mask",
+      "meanInkError": 3.9e-05,
+      "tolerance": 0.025,
+      "inkPixels": 101160
+    },
+    {
+      "id": "reference_attribute_mask_type_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/mask-type",
+      "meanInkError": 3e-06,
+      "tolerance": 0.025,
+      "inkPixels": 170682
+    },
+    {
+      "id": "reference_attribute_maskcontentunits_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/maskContentUnits",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 518400
+    },
+    {
+      "id": "reference_attribute_maskunits_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/maskUnits",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 518400
+    },
+    {
+      "id": "reference_attribute_max_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/max",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_media_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/media",
+      "meanInkError": 0.352277,
+      "tolerance": 0.16,
+      "inkPixels": 454850
+    },
+    {
+      "id": "reference_attribute_min_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/min",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_mode_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/mode",
+      "meanInkError": 0.005964,
+      "tolerance": 0.025,
+      "inkPixels": 208139
+    },
+    {
+      "id": "reference_attribute_numoctaves_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/numOctaves",
+      "meanInkError": 0.001541,
+      "tolerance": 0.025,
+      "inkPixels": 257056
+    },
+    {
+      "id": "reference_attribute_numoctaves_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/numOctaves",
+      "meanInkError": 0.00989,
+      "tolerance": 0.025,
+      "inkPixels": 104836
+    },
+    {
+      "id": "reference_attribute_offset_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/offset",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 161660
+    },
+    {
+      "id": "reference_attribute_offset_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/offset",
+      "meanInkError": 0.059179,
+      "tolerance": 0.16,
+      "inkPixels": 5219
+    },
+    {
+      "id": "reference_attribute_opacity_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/opacity",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 320000
+    },
+    {
+      "id": "reference_attribute_operator_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/operator",
+      "meanInkError": 0.063167,
+      "tolerance": 0.16,
+      "inkPixels": 63876
+    },
+    {
+      "id": "reference_attribute_order_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/order",
+      "meanInkError": 0.005851,
+      "tolerance": 0.025,
+      "inkPixels": 229507
+    },
+    {
+      "id": "reference_attribute_orient_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/orient",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 27063
+    },
+    {
+      "id": "reference_attribute_overflow_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/overflow",
+      "meanInkError": 0.168596,
+      "tolerance": 0.16,
+      "inkPixels": 11592
+    },
+    {
+      "id": "reference_attribute_paint_order_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/paint-order",
+      "meanInkError": 0.002774,
+      "tolerance": 0.16,
+      "inkPixels": 278556
+    },
+    {
+      "id": "reference_attribute_path_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/path",
+      "meanInkError": 0.6537,
+      "tolerance": 0.16,
+      "inkPixels": 65321
+    },
+    {
+      "id": "reference_attribute_pathlength_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pathLength",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 42592
+    },
+    {
+      "id": "reference_attribute_patterncontentunits_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/patternContentUnits",
+      "meanInkError": 0.003186,
+      "tolerance": 0.025,
+      "inkPixels": 175375
+    },
+    {
+      "id": "reference_attribute_patterntransform_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/patternTransform",
+      "meanInkError": 0.162695,
+      "tolerance": 0.025,
+      "inkPixels": 353263
+    },
+    {
+      "id": "reference_attribute_patternunits_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/patternUnits",
+      "meanInkError": 0.00404,
+      "tolerance": 0.025,
+      "inkPixels": 131464
+    },
+    {
+      "id": "reference_attribute_ping_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/ping",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_pointer_events_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointer-events",
+      "reason": "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior"
+    },
+    {
+      "id": "reference_attribute_points_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/points",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 14333
+    },
+    {
+      "id": "reference_attribute_points_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/points",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 19369
+    },
+    {
+      "id": "reference_attribute_points_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/points",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 24031
+    },
+    {
+      "id": "reference_attribute_pointsatx_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtX",
+      "meanInkError": 0.002831,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_pointsaty_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtY",
+      "meanInkError": 0.004215,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_pointsatz_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pointsAtZ",
+      "meanInkError": 0.002202,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_preservealpha_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAlpha",
+      "meanInkError": 0.002826,
+      "tolerance": 0.025,
+      "inkPixels": 117046
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_6_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_7_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_10_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_11_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_12_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_13_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_14_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_17_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_18_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_19_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_20_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_21_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_24_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_25_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_26_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_27_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_28_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_31_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_32_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_preserveaspectratio_block_33_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_r_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/r",
+      "meanInkError": 1.9e-05,
+      "tolerance": 0.025,
+      "inkPixels": 147829
+    },
+    {
+      "id": "reference_attribute_referrerpolicy_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/referrerpolicy",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_rel_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rel",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_repeatcount_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/repeatCount",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_repeatdur_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/repeatDur",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_requiredfeatures_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/requiredFeatures",
+      "meanInkError": 0.019028,
+      "tolerance": 0.16,
+      "inkPixels": 55137
+    },
+    {
+      "id": "reference_attribute_requiredfeatures_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/requiredFeatures",
+      "meanInkError": 0.067967,
+      "tolerance": 0.16,
+      "inkPixels": 1346168
+    },
+    {
+      "id": "reference_attribute_restart_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/restart",
+      "reason": "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior"
+    },
+    {
+      "id": "reference_attribute_result_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/result",
+      "meanInkError": 0.004849,
+      "tolerance": 0.025,
+      "inkPixels": 417464
+    },
+    {
+      "id": "reference_attribute_rotate_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rotate",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_rotate_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rotate",
+      "meanInkError": 0.112309,
+      "tolerance": 0.16,
+      "inkPixels": 2146
+    },
+    {
+      "id": "reference_attribute_rx_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rx",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 115838
+    },
+    {
+      "id": "reference_attribute_ry_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/ry",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 115838
+    },
+    {
+      "id": "reference_attribute_scale_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/scale",
+      "meanInkError": 0.012167,
+      "tolerance": 0.025,
+      "inkPixels": 114318
+    },
+    {
+      "id": "reference_attribute_seed_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/seed",
+      "meanInkError": 0.001958,
+      "tolerance": 0.025,
+      "inkPixels": 235229
+    },
+    {
+      "id": "reference_attribute_seed_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/seed",
+      "meanInkError": 0.012477,
+      "tolerance": 0.025,
+      "inkPixels": 105583
+    },
+    {
+      "id": "reference_attribute_shape_rendering_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/shape-rendering",
+      "meanInkError": 0.003153,
+      "tolerance": 0.025,
+      "inkPixels": 229266
+    },
+    {
+      "id": "reference_attribute_side_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/side",
+      "meanInkError": 0.459551,
+      "tolerance": 0.16,
+      "inkPixels": 19265
+    },
+    {
+      "id": "reference_attribute_slope_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/slope",
+      "meanInkError": 0.032171,
+      "tolerance": 0.16,
+      "inkPixels": 34635
+    },
+    {
+      "id": "reference_attribute_specularconstant_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/specularConstant",
+      "note": "No visible ink on white; inconclusive rendering comparison",
+      "meanInkError": 0.001399,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_specularexponent_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/specularExponent",
+      "note": "No visible ink on white; inconclusive rendering comparison",
+      "meanInkError": 0.001442,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_spreadmethod_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/spreadMethod",
+      "meanInkError": 0.001042,
+      "tolerance": 0.025,
+      "inkPixels": 96000
+    },
+    {
+      "id": "reference_attribute_spreadmethod_block_2_1",
+      "state": "Expected failure",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/spreadMethod",
+      "meanInkError": 0.147909,
+      "tolerance": 0.025,
+      "inkPixels": 120000
+    },
+    {
+      "id": "reference_attribute_startoffset_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/startOffset",
+      "meanInkError": 0.091108,
+      "tolerance": 0.16,
+      "inkPixels": 33321
+    },
+    {
+      "id": "reference_attribute_stddeviation_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stdDeviation",
+      "meanInkError": 0.005814,
+      "tolerance": 0.025,
+      "inkPixels": 92035
+    },
+    {
+      "id": "reference_attribute_stitchtiles_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stitchTiles",
+      "meanInkError": 0.042367,
+      "tolerance": 0.025,
+      "inkPixels": 250245
+    },
+    {
+      "id": "reference_attribute_stroke_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke",
+      "meanInkError": 0.02314,
+      "tolerance": 0.025,
+      "inkPixels": 77380
+    },
+    {
+      "id": "reference_attribute_stroke_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke",
+      "meanInkError": 0.039446,
+      "tolerance": 0.025,
+      "inkPixels": 78423
+    },
+    {
+      "id": "reference_attribute_stroke_dasharray_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-dasharray",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 86341
+    },
+    {
+      "id": "reference_attribute_stroke_dashoffset_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-dashoffset",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 79126
+    },
+    {
+      "id": "reference_attribute_stroke_linecap_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linecap",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 246692
+    },
+    {
+      "id": "reference_attribute_stroke_linecap_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linecap",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 71852
+    },
+    {
+      "id": "reference_attribute_stroke_linecap_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linecap",
+      "meanInkError": 0.000703,
+      "tolerance": 0.025,
+      "inkPixels": 99800
+    },
+    {
+      "id": "reference_attribute_stroke_linecap_block_8_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linecap",
+      "meanInkError": 0.027584,
+      "tolerance": 0.025,
+      "inkPixels": 110604
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.000551,
+      "tolerance": 0.025,
+      "inkPixels": 88705
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.000523,
+      "tolerance": 0.025,
+      "inkPixels": 150773
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 124718
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 81692
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_10_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 81692
+    },
+    {
+      "id": "reference_attribute_stroke_linejoin_block_12_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-linejoin",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 127022
+    },
+    {
+      "id": "reference_attribute_stroke_miterlimit_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-miterlimit",
+      "meanInkError": 0.020779,
+      "tolerance": 0.025,
+      "inkPixels": 59061
+    },
+    {
+      "id": "reference_attribute_stroke_opacity_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-opacity",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 102632
+    },
+    {
+      "id": "reference_attribute_stroke_width_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/stroke-width",
+      "meanInkError": 0.023389,
+      "tolerance": 0.025,
+      "inkPixels": 96668
+    },
+    {
+      "id": "reference_attribute_style_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/style",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 220416
+    },
+    {
+      "id": "reference_attribute_surfacescale_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/surfaceScale",
+      "meanInkError": 0.046666,
+      "tolerance": 0.025,
+      "inkPixels": 290224
+    },
+    {
+      "id": "reference_attribute_systemlanguage_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/systemLanguage",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_tabindex_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/tabindex",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 170742
+    },
+    {
+      "id": "reference_attribute_tablevalues_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/tableValues",
+      "meanInkError": 0.001693,
+      "tolerance": 0.025,
+      "inkPixels": 291084
+    },
+    {
+      "id": "reference_attribute_target_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/target",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_text_anchor_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-anchor",
+      "meanInkError": 0.018227,
+      "tolerance": 0.16,
+      "inkPixels": 64766
+    },
+    {
+      "id": "reference_attribute_text_decoration_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-decoration",
+      "meanInkError": 0.342946,
+      "tolerance": 0.26,
+      "inkPixels": 13458
+    },
+    {
+      "id": "reference_attribute_text_rendering_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/text-rendering",
+      "meanInkError": 0.120358,
+      "tolerance": 0.16,
+      "inkPixels": 31085
+    },
+    {
+      "id": "reference_attribute_textlength_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/textLength",
+      "meanInkError": 0.481056,
+      "tolerance": 0.16,
+      "inkPixels": 16174
+    },
+    {
+      "id": "reference_attribute_textlength_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/textLength",
+      "reason": "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior"
+    },
+    {
+      "id": "reference_attribute_textlength_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/textLength",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_title_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/title",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 5124
+    },
+    {
+      "id": "reference_attribute_to_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/to",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_attribute_transform_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 71221
+    },
+    {
+      "id": "reference_attribute_transform_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 131294
+    },
+    {
+      "id": "reference_attribute_transform_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 106200
+    },
+    {
+      "id": "reference_attribute_transform_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 409600
+    },
+    {
+      "id": "reference_attribute_transform_block_10_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 322692
+    },
+    {
+      "id": "reference_attribute_transform_block_12_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 167283
+    },
+    {
+      "id": "reference_attribute_transform_block_14_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 263921
+    },
+    {
+      "id": "reference_attribute_transform_block_16_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 263921
+    },
+    {
+      "id": "reference_attribute_transform_origin_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform-origin",
+      "meanInkError": 0.00049,
+      "tolerance": 0.025,
+      "inkPixels": 137904
+    },
+    {
+      "id": "reference_attribute_transform_origin_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform-origin",
+      "meanInkError": 0.000521,
+      "tolerance": 0.025,
+      "inkPixels": 141919
+    },
+    {
+      "id": "reference_attribute_transform_origin_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/transform-origin",
+      "meanInkError": 0.000526,
+      "tolerance": 0.025,
+      "inkPixels": 141606
+    },
+    {
+      "id": "reference_attribute_vector_effect_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/vector-effect",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 13909
+    },
+    {
+      "id": "reference_attribute_version_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/version",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 409600
+    },
+    {
+      "id": "reference_attribute_viewbox_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/viewBox",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 636896
+    },
+    {
+      "id": "reference_attribute_viewbox_block_2_2",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/viewBox",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 319232
+    },
+    {
+      "id": "reference_attribute_viewbox_block_2_3",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/viewBox",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 79808
+    },
+    {
+      "id": "reference_attribute_visibility_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/visibility",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 137520
+    },
+    {
+      "id": "reference_attribute_visibility_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/visibility",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_attribute_width_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/width",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 459849
+    },
+    {
+      "id": "reference_attribute_word_spacing_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/word-spacing",
+      "meanInkError": 0.193347,
+      "tolerance": 0.16,
+      "inkPixels": 17286
+    },
+    {
+      "id": "reference_attribute_x_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x",
+      "meanInkError": 0.146134,
+      "tolerance": 0.16,
+      "inkPixels": 4142
+    },
+    {
+      "id": "reference_attribute_x_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x",
+      "meanInkError": 0.146134,
+      "tolerance": 0.16,
+      "inkPixels": 4142
+    },
+    {
+      "id": "reference_attribute_x_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x",
+      "meanInkError": 1.1e-05,
+      "tolerance": 0.025,
+      "inkPixels": 77120
+    },
+    {
+      "id": "reference_attribute_x1_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 153996
+    },
+    {
+      "id": "reference_attribute_x1_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 204800
+    },
+    {
+      "id": "reference_attribute_x1_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 58473
+    },
+    {
+      "id": "reference_attribute_x2_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 153996
+    },
+    {
+      "id": "reference_attribute_x2_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 204800
+    },
+    {
+      "id": "reference_attribute_x2_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/x2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 58427
+    },
+    {
+      "id": "reference_attribute_xchannelselector_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xChannelSelector",
+      "meanInkError": 0.421667,
+      "tolerance": 0.16,
+      "inkPixels": 41190
+    },
+    {
+      "id": "reference_attribute_xlink_colon_actuate_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xlink:actuate",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_xlink_colon_href_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xlink:href",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_attribute_xml_colon_lang_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xml:lang",
+      "meanInkError": 0.171868,
+      "tolerance": 0.16,
+      "inkPixels": 305
+    },
+    {
+      "id": "reference_attribute_xml_colon_space_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/xml:space",
+      "meanInkError": 0.140943,
+      "tolerance": 0.16,
+      "inkPixels": 20732
+    },
+    {
+      "id": "reference_attribute_y_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y",
+      "meanInkError": 0.165863,
+      "tolerance": 0.16,
+      "inkPixels": 4192
+    },
+    {
+      "id": "reference_attribute_y_block_5_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y",
+      "meanInkError": 0.165863,
+      "tolerance": 0.16,
+      "inkPixels": 4192
+    },
+    {
+      "id": "reference_attribute_y_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y",
+      "meanInkError": 7e-06,
+      "tolerance": 0.025,
+      "inkPixels": 307840
+    },
+    {
+      "id": "reference_attribute_y1_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 153732
+    },
+    {
+      "id": "reference_attribute_y1_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 204800
+    },
+    {
+      "id": "reference_attribute_y1_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y1",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 71312
+    },
+    {
+      "id": "reference_attribute_y2_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 153808
+    },
+    {
+      "id": "reference_attribute_y2_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 204800
+    },
+    {
+      "id": "reference_attribute_y2_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/y2",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 71312
+    },
+    {
+      "id": "reference_attribute_ychannelselector_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/yChannelSelector",
+      "meanInkError": 0.356837,
+      "tolerance": 0.16,
+      "inkPixels": 39721
+    },
+    {
+      "id": "reference_attribute_z_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/z",
+      "meanInkError": 0.005869,
+      "tolerance": 0.025,
+      "inkPixels": 285176
+    },
+    {
+      "id": "reference_attribute_zoomandpan_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/zoomAndPan",
+      "meanInkError": 0.006458,
+      "tolerance": 0.025,
+      "inkPixels": 636164
+    },
+    {
+      "id": "reference_element_a_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/a",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_element_animate_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animate",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_animatemotion_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animateMotion",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_animatetransform_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/animateTransform",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_circle_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/circle",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 503903
+    },
+    {
+      "id": "reference_element_clippath_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/clipPath",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_defs_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/defs",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 503903
+    },
+    {
+      "id": "reference_element_desc_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/desc",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 322692
+    },
+    {
+      "id": "reference_element_ellipse_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/ellipse",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 252248
+    },
+    {
+      "id": "reference_element_feblend_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feBlend",
+      "meanInkError": 0.004667,
+      "tolerance": 0.025,
+      "inkPixels": 148225
+    },
+    {
+      "id": "reference_element_fecolormatrix_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feColorMatrix",
+      "meanInkError": 0.061803,
+      "tolerance": 0.16,
+      "inkPixels": 190207
+    },
+    {
+      "id": "reference_element_fecomponenttransfer_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feComponentTransfer",
+      "meanInkError": 0.022875,
+      "tolerance": 0.16,
+      "inkPixels": 138325
+    },
+    {
+      "id": "reference_element_fecomposite_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feComposite",
+      "meanInkError": 0.14551,
+      "tolerance": 0.16,
+      "inkPixels": 73364
+    },
+    {
+      "id": "reference_element_feconvolvematrix_block_4_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feConvolveMatrix",
+      "meanInkError": 0.277805,
+      "tolerance": 0.025,
+      "inkPixels": 6810
+    },
+    {
+      "id": "reference_element_fediffuselighting_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDiffuseLighting",
+      "meanInkError": 0.009538,
+      "tolerance": 0.16,
+      "inkPixels": 133113
+    },
+    {
+      "id": "reference_element_fedisplacementmap_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDisplacementMap",
+      "meanInkError": 0.009816,
+      "tolerance": 0.025,
+      "inkPixels": 105058
+    },
+    {
+      "id": "reference_element_fedropshadow_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feDropShadow",
+      "meanInkError": 0.002751,
+      "tolerance": 0.025,
+      "inkPixels": 137161
+    },
+    {
+      "id": "reference_element_feflood_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feFlood",
+      "meanInkError": 0.416993,
+      "tolerance": 0.025,
+      "inkPixels": 40000
+    },
+    {
+      "id": "reference_element_fegaussianblur_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feGaussianBlur",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_element_fegaussianblur_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feGaussianBlur",
+      "meanInkError": 0.001599,
+      "tolerance": 0.025,
+      "inkPixels": 74608
+    },
+    {
+      "id": "reference_element_fegaussianblur_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feGaussianBlur",
+      "meanInkError": 0.002101,
+      "tolerance": 0.025,
+      "inkPixels": 38168
+    },
+    {
+      "id": "reference_element_feimage_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feImage",
+      "meanInkError": 0.16372,
+      "tolerance": 0.025,
+      "inkPixels": 104045
+    },
+    {
+      "id": "reference_element_femerge_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMerge",
+      "meanInkError": 0.035222,
+      "tolerance": 0.025,
+      "inkPixels": 88142
+    },
+    {
+      "id": "reference_element_femergenode_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMergeNode",
+      "meanInkError": 0.029563,
+      "tolerance": 0.025,
+      "inkPixels": 61109
+    },
+    {
+      "id": "reference_element_femorphology_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMorphology",
+      "meanInkError": 0.075296,
+      "tolerance": 0.16,
+      "inkPixels": 48744
+    },
+    {
+      "id": "reference_element_femorphology_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feMorphology",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_element_feoffset_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feOffset",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 74078
+    },
+    {
+      "id": "reference_element_fepointlight_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/fePointLight",
+      "meanInkError": 0.002947,
+      "tolerance": 0.025,
+      "inkPixels": 43873
+    },
+    {
+      "id": "reference_element_fespecularlighting_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feSpecularLighting",
+      "meanInkError": 0.00195,
+      "tolerance": 0.025,
+      "inkPixels": 104404
+    },
+    {
+      "id": "reference_element_fespotlight_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feSpotLight",
+      "meanInkError": 0.127225,
+      "tolerance": 0.025,
+      "inkPixels": 66196
+    },
+    {
+      "id": "reference_element_fetile_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feTile",
+      "meanInkError": 0.005496,
+      "tolerance": 0.025,
+      "inkPixels": 73486
+    },
+    {
+      "id": "reference_element_feturbulence_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/feTurbulence",
+      "meanInkError": 0.009816,
+      "tolerance": 0.025,
+      "inkPixels": 105058
+    },
+    {
+      "id": "reference_element_filter_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/filter",
+      "meanInkError": 0.001599,
+      "tolerance": 0.025,
+      "inkPixels": 74608
+    },
+    {
+      "id": "reference_element_foreignobject_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/foreignObject",
+      "meanInkError": 0.027671,
+      "tolerance": 0.025,
+      "inkPixels": 534032
+    },
+    {
+      "id": "reference_element_g_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/g",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 85311
+    },
+    {
+      "id": "reference_element_image_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/image",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 103759
+    },
+    {
+      "id": "reference_element_line_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/line",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 8441
+    },
+    {
+      "id": "reference_element_lineargradient_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/linearGradient",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 322692
+    },
+    {
+      "id": "reference_element_lineargradient_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/linearGradient",
+      "meanInkError": 0.003779,
+      "tolerance": 0.025,
+      "inkPixels": 576000
+    },
+    {
+      "id": "reference_element_marker_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/marker",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 2616
+    },
+    {
+      "id": "reference_element_marker_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/marker",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 27426
+    },
+    {
+      "id": "reference_element_marker_block_5_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/marker",
+      "meanInkError": 0.340846,
+      "tolerance": 0.025,
+      "inkPixels": 101632
+    },
+    {
+      "id": "reference_element_mask_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/mask",
+      "meanInkError": 0.000205,
+      "tolerance": 0.025,
+      "inkPixels": 640000
+    },
+    {
+      "id": "reference_element_metadata_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/metadata",
+      "meanInkError": 0.005704,
+      "tolerance": 0.16,
+      "inkPixels": 42266
+    },
+    {
+      "id": "reference_element_mpath_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/mpath",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_path_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/path",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 286222
+    },
+    {
+      "id": "reference_element_pattern_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/pattern",
+      "meanInkError": 0.285549,
+      "tolerance": 0.025,
+      "inkPixels": 122076
+    },
+    {
+      "id": "reference_element_polygon_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/polygon",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 27638
+    },
+    {
+      "id": "reference_element_polyline_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/polyline",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 24992
+    },
+    {
+      "id": "reference_element_radialgradient_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/radialGradient",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 322692
+    },
+    {
+      "id": "reference_element_rect_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/rect",
+      "meanInkError": 1.1e-05,
+      "tolerance": 0.025,
+      "inkPixels": 262514
+    },
+    {
+      "id": "reference_element_script_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/script",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_element_set_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/set",
+      "reason": "Animation requires a separately defined timeline expectation"
+    },
+    {
+      "id": "reference_element_stop_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/stop",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 322692
+    },
+    {
+      "id": "reference_element_style_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/style",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 503903
+    },
+    {
+      "id": "reference_element_svg_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/svg",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 83028
+    },
+    {
+      "id": "reference_element_svg_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/svg",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_element_svg_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/svg",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 403192
+    },
+    {
+      "id": "reference_element_svg_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/svg",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "reference_element_switch_block_1_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/switch",
+      "meanInkError": 0.731551,
+      "tolerance": 0.16,
+      "inkPixels": 18395
+    },
+    {
+      "id": "reference_element_symbol_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/symbol",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 47864
+    },
+    {
+      "id": "reference_element_text_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/text",
+      "meanInkError": 0.092367,
+      "tolerance": 0.16,
+      "inkPixels": 19518
+    },
+    {
+      "id": "reference_element_textpath_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/textPath",
+      "meanInkError": 0.055696,
+      "tolerance": 0.16,
+      "inkPixels": 69532
+    },
+    {
+      "id": "reference_element_title_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/title",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 183260
+    },
+    {
+      "id": "reference_element_tspan_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/tspan",
+      "meanInkError": 0.380045,
+      "tolerance": 0.16,
+      "inkPixels": 4258
+    },
+    {
+      "id": "reference_element_use_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 90627
+    },
+    {
+      "id": "reference_element_use_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_element_use_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 70300
+    },
+    {
+      "id": "reference_element_use_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/use",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "reference_element_view_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/view",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 60972
+    },
+    {
+      "id": "reference_element_view_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/view",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 17797
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_6_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_7_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_shapes_block_8_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 800
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.084444,
+      "tolerance": 0.025,
+      "inkPixels": 8000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 1653
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 348
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_7_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 40000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_basic_transformations_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_transformations",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 40000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_clipping_and_masking_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Clipping_and_masking",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 63124
+    },
+    {
+      "id": "tutorials_svg_from_scratch_clipping_and_masking_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Clipping_and_masking",
+      "meanInkError": 0.000713,
+      "tolerance": 0.025,
+      "inkPixels": 160000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_clipping_and_masking_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Clipping_and_masking",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_clipping_and_masking_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Clipping_and_masking",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 160000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 52900
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 22104
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_3_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 30054
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_4_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 3e-06,
+      "tolerance": 0.025,
+      "inkPixels": 1220
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 20648
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_6_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_7_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 131044
+    },
+    {
+      "id": "tutorials_svg_from_scratch_fills_and_strokes_block_9_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 400
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "meanInkError": 0.064972,
+      "tolerance": 0.16,
+      "inkPixels": 85384
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_5_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_6_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_filter_effects_block_7_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Filter_effects",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_getting_started_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Getting_started",
+      "meanInkError": 0.002435,
+      "tolerance": 0.16,
+      "inkPixels": 235499
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 75408
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_5_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 78608
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_6_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "meanInkError": 0.005278,
+      "tolerance": 0.16,
+      "inkPixels": 38345
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_7_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "meanInkError": 0.111061,
+      "tolerance": 0.16,
+      "inkPixels": 116600
+    },
+    {
+      "id": "tutorials_svg_from_scratch_gradients_block_8_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Gradients",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_image_element_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Image_element",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_other_content_in_svg_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Other_content_in_SVG",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_8_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 25600
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_9_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_12_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_13_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_15_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 3004
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_16_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_19_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 1654
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_20_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_23_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 1106
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_24_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_27_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 1338
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_28_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_31_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.000273,
+      "tolerance": 0.025,
+      "inkPixels": 23642
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_32_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_34_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.0004,
+      "tolerance": 0.025,
+      "inkPixels": 16155
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_35_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_37_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "meanInkError": 0.182363,
+      "tolerance": 0.16,
+      "inkPixels": 71451
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_38_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_paths_block_40_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_patterns_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
+      "meanInkError": 0.015619,
+      "tolerance": 0.025,
+      "inkPixels": 160000
+    },
+    {
+      "id": "tutorials_svg_from_scratch_patterns_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_patterns_block_3_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_positions_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Positions",
+      "reason": "Definition-only or non-painting snippet; no visual comparison to assert"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_positions_block_2_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Positions",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 25600
+    },
+    {
+      "id": "tutorials_svg_from_scratch_svg_and_css_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/SVG_and_CSS",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_svg_and_css_block_4_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/SVG_and_CSS",
+      "reason": "External resource not embedded in the MDN source checkout"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_texts_block_1_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
+      "reason": "HTML wrapper or incomplete SVG fragment"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_texts_block_2_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
+      "meanInkError": 0.489123,
+      "tolerance": 0.16,
+      "inkPixels": 10541
+    },
+    {
+      "id": "tutorials_svg_from_scratch_texts_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
+      "meanInkError": 0.837436,
+      "tolerance": 0.16,
+      "inkPixels": 5521
+    },
+    {
+      "id": "tutorials_svg_from_scratch_using_fonts_block_1_1",
+      "state": "Passed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Using_fonts",
+      "meanInkError": 0.131835,
+      "tolerance": 0.16,
+      "inkPixels": 3605
+    },
+    {
+      "id": "tutorials_svg_from_scratch_using_fonts_block_2_1",
+      "state": "Skipped",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Using_fonts",
+      "reason": "External CSS resource"
+    },
+    {
+      "id": "tutorials_svg_from_scratch_using_fonts_block_3_1",
+      "state": "Failed",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Using_fonts",
+      "meanInkError": 0.591445,
+      "tolerance": 0.16,
+      "inkPixels": 3990
+    },
+    {
+      "id": "asset_reference_attribute_k1_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/k1/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_attribute_k2_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/k2/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_attribute_k3_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/k3/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_attribute_k4_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/k4/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_attribute_xchannelselector_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/xchannelselector/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_attribute_ychannelselector_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/attribute/ychannelselector/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_element_feconvolvematrix_mdn_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/element/feconvolvematrix/mdn.svg",
+      "meanInkError": 1e-06,
+      "tolerance": 0.025,
+      "inkPixels": 113411
+    },
+    {
+      "id": "asset_reference_element_view_example_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/reference/element/view/example.svg",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 60972
+    },
+    {
+      "id": "asset_tutorials_svg_from_scratch_introduction_dino_svg",
+      "state": "Passed",
+      "url": "https://github.com/mdn/content/blob/d6b80f43c1ddfab03b96fb3146285bbe9d0992d3/files/en-us/web/svg/tutorials/svg_from_scratch/introduction/dino.svg",
+      "meanInkError": 0.0,
+      "tolerance": 0.025,
+      "inkPixels": 66105
+    }
+  ],
+  "quoteRegressionSuites": {
+    "passed": 42,
+    "failed": 0
+  },
+  "fixedInRenderingFollowup": [
+    "reference_attribute_clip_rule_block_3_1",
+    "reference_attribute_color_block_2_1",
+    "reference_attribute_d_block_12_1",
+    "reference_attribute_mask_type_block_2_1",
+    "reference_attribute_stroke_dashoffset_block_2_1",
+    "reference_attribute_visibility_block_2_1"
+  ],
+  "renderingFollowupRegressions": {
+    "quartzRenderer": 81,
+    "colorParsing": 20,
+    "nodeAndColorStorage": 24,
+    "filters": 152,
+    "failed": 0
+  },
+  "fixedInViewportFollowup": [
+    "reference_element_svg_block_2_1"
+  ],
+  "viewportFollowupRegressions": {
+    "quartzRenderer": 83,
+    "utilityParsing": 32,
+    "text": 55,
+    "filters": 152,
+    "existingWebKitPassed": 58,
+    "existingWebKitExpectedFailures": 1,
+    "failed": 0
+  },
+  "fixedInGradientAndOriginFollowup": [
+    "reference_attribute_spreadmethod_block_1_1",
+    "reference_attribute_transform_origin_block_2_1",
+    "reference_attribute_transform_origin_block_3_1",
+    "reference_element_lineargradient_block_4_1"
+  ],
+  "gradientAndOriginFollowupRegressions": {
+    "quartzRenderer": 85,
+    "utilityParsing": 33,
+    "filters": 152,
+    "existingWebKitPassed": 62,
+    "existingWebKitExpectedFailures": 1,
+    "failed": 0
+  },
+  "parserRefactorRegressions": {
+    "passed": 257,
+    "expectedFailures": 1,
+    "failed": 0,
+    "note": "Dedicated IJSVGSwitch node, C transform-origin tokenization using the shared length parser, C language matching, and spread-method utility reuse. MDN counts above remain from the last full corpus run."
+  }
+}

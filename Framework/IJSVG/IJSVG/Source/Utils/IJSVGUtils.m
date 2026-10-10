@@ -374,14 +374,20 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
         return nil;
     }
     
-    // remove the #
-    char* parameters = method->parameters;
-    if(parameters[0] == '#') {
-        parameters++;
+    const char* parameters = NULL;
+    size_t length = 0;
+    char quote = 0;
+    if(!IJSVGParsingUnwrapArgument(method->parameters, &parameters, &length, &quote)) {
+        IJSVGParsingStringMethodsRelease(methods, count);
+        return nil;
     }
-    
-    // make the nsstring
-    NSString* foundID = [NSString stringWithUTF8String:parameters];
+    if(length > 0 && parameters[0] == '#') {
+        parameters++;
+        length--;
+    }
+    NSString* foundID = [[NSString alloc] initWithBytes:parameters
+                                                 length:length
+                                               encoding:NSUTF8StringEncoding];
     
     // release the stuff
     (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
@@ -404,14 +410,14 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
             valid = NO;
             break;
         }
-        const char* parameters = method->parameters;
-        NSUInteger length = strlen(parameters);
-        BOOL quoted = length >= 2 && (parameters[0] == '\'' || parameters[0] == '"')
-            && parameters[length - 1] == parameters[0];
-        if(quoted) {
-            parameters++;
-            length -= 2;
+        const char* parameters = NULL;
+        size_t length = 0;
+        char quote = 0;
+        if(!IJSVGParsingUnwrapArgument(method->parameters, &parameters, &length, &quote)) {
+            valid = NO;
+            break;
         }
+        BOOL quoted = quote != 0;
         if(length < 2 || parameters[0] != '#') {
             valid = NO;
             break;
@@ -419,7 +425,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
         for(NSUInteger offset = 1; offset < length; offset++) {
             unsigned char character = (unsigned char)parameters[offset];
             if(character < ' ' || character == '\x7f' || character == '\\'
-                || (quoted && character == parameters[-1])
+                || (quoted && character == quote)
                 || (!quoted && (isspace(character) || character == '(' || character == ')'
                     || character == '\'' || character == '"'))) {
                 valid = NO;
@@ -716,7 +722,9 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
             number, number, number];
         expression = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
     });
-    if([expression firstMatchInString:string options:0 range:NSMakeRange(0, string.length)] == nil) {
+    if([expression firstMatchInString:string
+                              options:0
+                                range:NSMakeRange(0, string.length)] == nil) {
         return @[];
     }
     NSInteger count = 0;

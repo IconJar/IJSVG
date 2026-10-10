@@ -854,6 +854,14 @@ NSString* IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
                     IJSVGGeometryLengthIsValid(geometryValue, attribute);
             };
         }
+        handlers[IJSVGAttributeTransformOrigin] = ^BOOL(NSString* origin, NSDictionary** values) {
+            return [@[@"inherit", @"initial", @"unset", @"revert", @"revert-layer"] containsObject:origin.lowercaseString] ||
+                IJSVGTransformOriginFromString(origin) != nil;
+        };
+        handlers[IJSVGAttributeTransformBox] = ^BOOL(NSString* box, NSDictionary** values) {
+            return [@[@"view-box", @"fill-box", @"stroke-box", @"content-box", @"border-box",
+                      @"inherit", @"initial", @"unset", @"revert", @"revert-layer"] containsObject:box.lowercaseString];
+        };
         expanders = [handlers copy];
     });
     NSString* name = [property hasPrefix:@"--"] ? property : property.lowercaseString;

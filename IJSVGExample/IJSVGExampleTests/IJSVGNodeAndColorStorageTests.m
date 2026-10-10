@@ -18,6 +18,21 @@
 
 @implementation IJSVGNodeAndColorStorageTests
 
+- (void)testCurrentColorStorageAndCopyResolveInheritedPaint
+{
+    IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(@"<g color='red' fill='currentColor' stroke='currentColor'><rect color='blue' width='8' height='8'/></g>"));
+    IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+    IJSVGNode* rect = group.children.firstObject;
+    IJSVGTraitedColorStorage* storage = [rect colorsWithStyle:[[IJSVGStyle alloc] init]];
+    XCTAssertEqual(storage.count, 1u);
+    IJSVGTraitedColor* color = storage.colors.anyObject;
+    XCTAssertEqualWithAccuracy([self rgb:color.color].blueComponent, 1.f, 0.002f);
+    XCTAssertTrue([color matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
+    IJSVGGroup* copy = group.copy;
+    XCTAssertEqualObjects(copy.children.firstObject.currentColor, rect.currentColor);
+    XCTAssertTrue(((IJSVGColorNode*)copy.children.firstObject.fill).usesCurrentColor);
+}
+
 - (void)testRootCopyPreservesSizingAndChildren
 {
     IJSVGRootNode* original = [[IJSVGRootNode alloc] init];

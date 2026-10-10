@@ -49,7 +49,7 @@ CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms)
 {
     __block CGAffineTransform trans = CGAffineTransformIdentity;
     IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) {
-        trans = CGAffineTransformConcat(trans, transform.CGAffineTransform);
+        trans = CGAffineTransformConcat(transform.CGAffineTransform, trans);
     });
     return trans;
 }

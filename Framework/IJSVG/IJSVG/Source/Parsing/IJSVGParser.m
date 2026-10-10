@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGText.h>
+#import "IJSVGSwitch.h"
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParserUtils.h>
@@ -112,12 +113,18 @@ NSString* const IJSVGAttributeClipPathUnits = @"clipPathUnits";
 NSString* const IJSVGAttributeClipRule = @"clip-rule";
 NSString* const IJSVGAttributeMask = @"mask";
 NSString* const IJSVGAttributeGradientUnits = @"gradientUnits";
+NSString* const IJSVGAttributeSpreadMethod = @"spreadMethod";
 NSString* const IJSVGAttributePatternUnits = @"patternUnits";
 NSString* const IJSVGAttributePatternContentUnits = @"patternContentUnits";
 NSString* const IJSVGAttributePatternTransform = @"patternTransform";
+NSString* const IJSVGAttributeMaskType = @"mask-type";
 NSString* const IJSVGAttributeMaskUnits = @"maskUnits";
 NSString* const IJSVGAttributeMaskContentUnits = @"maskContentUnits";
 NSString* const IJSVGAttributeTransform = @"transform";
+NSString* const IJSVGAttributeTransformOrigin = @"transform-origin";
+NSString* const IJSVGAttributeTransformBox = @"transform-box";
+NSString* const IJSVGAttributeRequiredExtensions = @"requiredExtensions";
+NSString* const IJSVGAttributeSystemLanguage = @"systemLanguage";
 NSString* const IJSVGAttributeGradientTransform = @"gradientTransform";
 NSString* const IJSVGAttributeUnicode = @"unicode";
 NSString* const IJSVGAttributeStrokeLineCap = @"stroke-linecap";
@@ -131,6 +138,8 @@ NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
 NSString* const IJSVGAttributeIsolation = @"isolation";
 NSString* const IJSVGAttributePaintOrder = @"paint-order";
 NSString* const IJSVGAttributeVectorEffect = @"vector-effect";
+NSString* const IJSVGAttributeColor = @"color";
+NSString* const IJSVGAttributeVisibility = @"visibility";
 NSString* const IJSVGAttributeDisplay = @"display";
 NSString* const IJSVGAttributeStyle = @"style";
 NSString* const IJSVGAttributeD = @"d";
@@ -877,6 +886,11 @@ typedef struct {
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskType, &value)
+        && [node isKindOfClass:IJSVGMask.class]) {
+        ((IJSVGMask*)node).maskType = [value caseInsensitiveCompare:@"alpha"] == NSOrderedSame
+            ? IJSVGMaskTypeAlpha : IJSVGMaskTypeLuminance;
+    }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
@@ -891,6 +905,17 @@ typedef struct {
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPathUnits, &value)) {
         node.contentUnits = [IJSVGUtils unitTypeForString:value];
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformOrigin, &value)) {
+        if([value isEqualToString:@"inherit"]) {
+            node.transformOrigin = node.styleParent.transformOrigin;
+        } else {
+            node.transformOrigin = IJSVGTransformOriginFromString(
+                ([@[@"initial", @"unset"] containsObject:value.lowercaseString]) ? @"center" : value);
+        }
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformBox, &value)) {
+        node.transformBox = [value isEqualToString:@"inherit"] ? node.styleParent.transformBox : value;
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
         IJSVGApplyTransformAttribute(node, value);
@@ -936,6 +961,20 @@ typedef struct {
         }
     }
 
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeColor, &value)) {
+        NSString* keyword = value.lowercaseString;
+        if([keyword isEqualToString:@"initial"]) {
+            node.currentColor = NSColor.blackColor;
+        } else if([keyword isEqualToString:@"currentcolor"] ||
+                  [keyword isEqualToString:@"inherit"] ||
+                  [keyword isEqualToString:@"unset"]) {
+            node.currentColor = nil;
+        } else if([keyword isEqualToString:@"transparent"]) {
+            node.currentColor = NSColor.clearColor;
+        } else {
+            node.currentColor = [IJSVGColor colorFromString:value];
+        }
+    }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFill, &value)) {
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
@@ -968,6 +1007,16 @@ typedef struct {
         node.clipRule = [IJSVGUtils windingRuleForString:value];
     }
   
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVisibility, &value)) {
+        NSString* keyword = value.lowercaseString;
+        if([keyword isEqualToString:@"hidden"] || [keyword isEqualToString:@"collapse"]) {
+            node.visibility = IJSVGVisibilityHidden;
+        } else if([keyword isEqualToString:@"visible"] || [keyword isEqualToString:@"initial"]) {
+            node.visibility = IJSVGVisibilityVisible;
+        } else {
+            node.visibility = IJSVGVisibilityInherit;
+        }
+    }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeDisplay, &value)) {
         if([value caseInsensitiveCompare:IJSVGStringNone] == NSOrderedSame) {
             node.shouldRender = NO;
@@ -982,7 +1031,8 @@ typedef struct {
     }
   
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
-        NSColor* color = [IJSVGColor colorFromString:value];
+        NSColor* color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame
+            ? node.currentColor : [IJSVGColor colorFromString:value];
         IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
         if(color == nil) {
             colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -1163,6 +1213,7 @@ typedef struct {
 {
     NSColor* color = [IJSVGColor colorFromString:value];
     IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+    colorNode.usesCurrentColor = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame;
     colorNode.contextPaint = [IJSVGUtils contextPaintForString:value];
     if(colorNode.contextPaint != IJSVGContextPaintNone) {
         // A context paint outside an instantiated marker paints nothing.
@@ -1417,11 +1468,19 @@ typedef struct {
     }
     [self computeDefsForElement:element
                      parentNode:node];
+    BOOL isSwitch = [node isKindOfClass:IJSVGSwitch.class];
+    NSXMLElement* selectedChild = isSwitch ?
+        [IJSVGSwitch selectedChildInElement:element preferredLanguages:NSLocale.preferredLanguages] : nil;
     for(NSXMLNode* childNode in element.children) {
         if(childNode.kind != NSXMLElementKind) {
             continue;
         }
-        [self parseElement:(NSXMLElement*)childNode
+        NSXMLElement* child = (NSXMLElement*)childNode;
+        if(isSwitch && child != selectedChild &&
+           [IJSVGNode typeForString:child.localName kind:child.kind] != IJSVGNodeTypeStyle) {
+            continue;
+        }
+        [self parseElement:child
                 parentNode:node];
     }
 }
@@ -1867,7 +1926,7 @@ typedef struct {
                        nodeType:(IJSVGNodeType)nodeType
                postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    IJSVGGroup* node = nodeType == IJSVGNodeTypeSwitch ? [[IJSVGSwitch alloc] init] : [[IJSVGGroup alloc] init];
     node.type = nodeType;
     node.name = element.localName;
     if([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
@@ -1911,9 +1970,12 @@ typedef struct {
                                                     onNode:node
                                          ignoredAttributes:ignored];
   
-    // make sure we compute the viewbox
-    [self computeViewBoxForRootNode:node];
-    [self inferDefaultIntrinsicSizeAndViewBoxForRootNode:node];
+    // Only the outer document needs intrinsic size inference. A nested SVG
+    // defaults to the containing viewport and may have no viewBox at all.
+    if(parentNode == nil) {
+        [self computeViewBoxForRootNode:node];
+        [self inferDefaultIntrinsicSizeAndViewBoxForRootNode:node];
+    }
     
     // recursively compute children
     if(recursive == YES) {

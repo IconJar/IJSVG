@@ -218,6 +218,25 @@
     XCTAssertEqualWithAccuracy(transforms[2].parameters[1], 20.f, 0.0001f);
 }
 
+- (void)testTransformOriginSyntax
+{
+    for(NSString* value in @[@"center", @"left top", @"top left", @"bottom", @"-2px 30%", @"20% -1em", @"center center 2px", @"TOP RiGhT", @"1EM 2PX", @"\tleft\f top\n"]) {
+        XCTAssertEqual(IJSVGTransformOriginFromString(value).count, 2, @"%@", value);
+    }
+    for(NSString* value in @[@"", @"left right", @"top bottom", @"top 2px", @"2px left", @"2px junk", @"0 0 20%", @"0 0 0 0", @"0,0", @"left\0right"]) {
+        XCTAssertNil(IJSVGTransformOriginFromString(value), @"%@", value);
+    }
+}
+
+- (void)testCombinedTransformUsesSVGListOrder
+{
+    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:@"translate(10 20) scale(2 3)"];
+    CGAffineTransform transform = IJSVGConcatTransforms(transforms);
+    CGPoint point = CGPointApplyAffineTransform(CGPointMake(1.f, 2.f), transform);
+    XCTAssertEqualWithAccuracy(point.x, 12.f, 0.0001f);
+    XCTAssertEqualWithAccuracy(point.y, 26.f, 0.0001f);
+}
+
 - (void)testUnitLengthParsesNumbersPercentagesAndAbsoluteUnits
 {
     IJSVGUnitLength* number = [IJSVGUnitLength unitWithString:@" 12.5px "];
@@ -511,10 +530,47 @@
     XCTAssertFalse(IJSVGIsValidContextSize(CGSizeMake(0.5f, 1.f)));
 }
 
+- (void)testArgumentUnwrappingPreservesBytes
+{
+    NSArray<NSArray<NSString*>*>* cases = @[
+        @[@"  #paint  ", @"#paint", @""],
+        @[@" '#paint' ", @"#paint", @"'"],
+        @[@"\t\"#café(x)\"\n", @"#café(x)", @"\""],
+        @[@"' #paint '", @" #paint ", @"'"],
+        @[@"''", @"", @"'"],
+        @[@"   ", @"", @""]
+    ];
+    for(NSArray<NSString*>* entry in cases) {
+        const char* source = entry[0].UTF8String;
+        const char* bytes = NULL;
+        size_t length = 0;
+        char quote = 0;
+        XCTAssertTrue(IJSVGParsingUnwrapArgument(source, &bytes, &length, &quote));
+        XCTAssertTrue(bytes >= source && bytes + length <= source + strlen(source));
+        XCTAssertEqualObjects([[NSString alloc] initWithBytes:bytes length:length
+                                                    encoding:NSUTF8StringEncoding], entry[1]);
+        XCTAssertEqual(quote, entry[2].UTF8String[0]);
+        XCTAssertEqual(strcmp(source, entry[0].UTF8String), 0);
+    }
+    const char* invalid[] = { NULL, "'", "\"#paint'", "'#paint" };
+    for(NSUInteger index = 0; index < sizeof(invalid) / sizeof(invalid[0]); index++) {
+        const char* bytes = NULL;
+        size_t length = 0;
+        char quote = 0;
+        XCTAssertFalse(IJSVGParsingUnwrapArgument(invalid[index], &bytes, &length, &quote));
+        XCTAssertTrue(bytes == NULL);
+        XCTAssertEqual(length, 0);
+        XCTAssertEqual(quote, 0);
+    }
+}
+
 - (void)testUtilsDefURL
 {
     XCTAssertEqualObjects([IJSVGUtils defURL:@"url(#gradient)"], @"gradient");
     XCTAssertEqualObjects([IJSVGUtils defURL:@"url(mask)"], @"mask");
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"url(\'#gradient\')"], @"gradient");
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"url( \"#clip\" )"], @"clip");
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"url(\'#paint with spaces\')"], @"paint with spaces");
     XCTAssertNil([IJSVGUtils defURL:@"none"]);
 }
 

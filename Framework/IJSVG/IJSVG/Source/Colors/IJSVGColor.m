@@ -15,6 +15,54 @@
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
+// Modern RGB uses whitespace between channels and an optional slash for alpha.
+static BOOL IJSVGParseModernRGB(const char* parameters, CGFloat channels[4])
+{
+    const char* cursor = parameters;
+    channels[3] = 1;
+    for(NSUInteger index = 0; index < 4; index++) {
+        while(isspace((unsigned char)*cursor)) {
+            cursor++;
+        }
+        char* end = NULL;
+        double value = 0;
+        if(strncmp(cursor, "none", 4) == 0) {
+            end = (char*)cursor + 4;
+        } else {
+            value = strtod(cursor, &end);
+            if(end == cursor || !isfinite(value)) {
+                return NO;
+            }
+            BOOL percent = *end == '%';
+            if(percent) {
+                end++;
+            }
+            value /= percent ? 100. : (index < 3 ? 255. : 1.);
+        }
+        channels[index] = MIN(1., MAX(0., value));
+        BOOL separated = isspace((unsigned char)*end) != 0;
+        cursor = end;
+        while(isspace((unsigned char)*cursor)) {
+            cursor++;
+        }
+        if(index < 2) {
+            if(!separated) {
+                return NO;
+            }
+        } else if(index == 2) {
+            if(*cursor == '\0') {
+                return YES;
+            }
+            if(*cursor++ != '/') {
+                return NO;
+            }
+        } else {
+            return *cursor == '\0';
+        }
+    }
+    return NO;
+}
+
 @implementation IJSVGColor
 
 static NSDictionary* _colorTree = nil;
@@ -272,6 +320,18 @@ static NSDictionary* _colorTree = nil;
         // we have enough channels, so there is no need to scan the floats again
         // purely to count them.
         IJSVGParsingStringMethod* method = methods[0];
+        if(strchr(method->parameters, ',') == NULL) {
+            CGFloat channels[4];
+            BOOL valid = IJSVGParseModernRGB(method->parameters, channels);
+            IJSVGParsingStringMethodsRelease(methods, count);
+            if(!valid) {
+                return nil;
+            }
+            return [self computeColorSpace:[NSColor colorWithDeviceRed:channels[0]
+                                                                 green:channels[1]
+                                                                  blue:channels[2]
+                                                                 alpha:channels[3]]];
+        }
         NSString* parameters = [NSString stringWithUTF8String:method->parameters];
         NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];
         IJSVGParsingStringMethodsRelease(methods, count);

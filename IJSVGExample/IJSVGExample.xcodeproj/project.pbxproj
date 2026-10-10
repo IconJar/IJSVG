@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AADA00000000000000000001 /* IJSVGMDNWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */; };
+		AADA00000000000000000003 /* MDN in Resources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000004 /* MDN */; };
 		5901B73D282818CA00290525 /* contour_hatching.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B730282818CA00290525 /* contour_hatching.svg */; };
 		5901B73E282818CA00290525 /* canonical.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B731282818CA00290525 /* canonical.svg */; };
 		5901B73F282818CA00290525 /* clipping.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B732282818CA00290525 /* clipping.svg */; };
@@ -165,6 +167,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMDNWebKitTests.m; sourceTree = "<group>"; };
+		AADA00000000000000000004 /* MDN */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MDN; sourceTree = "<group>"; };
 		5901B730282818CA00290525 /* contour_hatching.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = contour_hatching.svg; sourceTree = "<group>"; };
 		5901B731282818CA00290525 /* canonical.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = canonical.svg; sourceTree = "<group>"; };
 		5901B732282818CA00290525 /* clipping.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = clipping.svg; sourceTree = "<group>"; };
@@ -442,6 +446,8 @@
 		5956658D19B62F4700D805FF /* IJSVGExampleTests */ = {
 			isa = PBXGroup;
 			children = (
+				AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */,
+				AADA00000000000000000004 /* MDN */,
 				5956658E19B62F4700D805FF /* Supporting Files */,
 				591F8EC82FF01D840012F5EB /* IJSVGTestHelpers.h */,
 				591F8EC92FF01DA30012F5EB /* IJSVGTestHelpers.m */,
@@ -687,6 +693,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AADA00000000000000000003 /* MDN in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -713,6 +720,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AADA00000000000000000001 /* IJSVGMDNWebKitTests.m in Sources */,
 				591F8ECE2FF01E140012F5EB /* IJSVGParserTests.m in Sources */,
 				A53700000000000000000003 /* IJSVGCSSFontParserChecks.m in Sources */,
 				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,

@@ -25,15 +25,10 @@ static BOOL IJSVGLengthListIsDigit(char character)
     return character >= '0' && character <= '9';
 }
 
-static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL single,
-                                  NSMutableArray<IJSVGUnitLength*>* lengths,
-                                  IJSVGUnitLength** singleLength)
+static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
+                                             NSMutableArray<IJSVGUnitLength*>* lengths,
+                                             IJSVGUnitLength** singleLength)
 {
-    const char* string = value.UTF8String;
-    if(string == NULL || *string == '\0' ||
-       strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return NO;
-    }
     const char* cursor = string;
     IJSVGUnitLength* parsedLength = nil;
     NSUInteger count = 0;
@@ -146,6 +141,18 @@ static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL sing
         *singleLength = valid && count == 1 ? parsedLength : nil;
     }
     return valid && count != 0;
+}
+
+static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL single,
+                                  NSMutableArray<IJSVGUnitLength*>* lengths,
+                                  IJSVGUnitLength** singleLength)
+{
+    const char* string = value.UTF8String;
+    if(string == NULL || *string == '\0' ||
+       strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return NO;
+    }
+    return IJSVGParseUnitLengthsFromCString(string, allowNegative, single, lengths, singleLength);
 }
 
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
@@ -550,6 +557,122 @@ void IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* style,
     IJSVGStorePrioritizedStyleAttributes(inlineStyle, style, activeAttributes, attributeValues);
 }
 
+typedef NS_ENUM(NSUInteger, IJSVGOriginKeyword) {
+    IJSVGOriginKeywordNone,
+    IJSVGOriginKeywordCenter,
+    IJSVGOriginKeywordLeft,
+    IJSVGOriginKeywordRight,
+    IJSVGOriginKeywordTop,
+    IJSVGOriginKeywordBottom
+};
+
+static IJSVGOriginKeyword IJSVGOriginKeywordFromCString(const char* token)
+{
+    static const char* keywords[] = { "center", "left", "right", "top", "bottom" };
+    for(NSUInteger index = 0; index < sizeof(keywords) / sizeof(keywords[0]); index++) {
+        if(IJSVGCharBufferCaseInsensitiveCompare(token, keywords[index])) {
+            return (IJSVGOriginKeyword)(index + 1);
+        }
+    }
+    return IJSVGOriginKeywordNone;
+}
+
+static NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromCString(char* buffer)
+{
+    const char* tokens[3] = { NULL };
+    NSUInteger count = 0;
+    char* cursor = buffer;
+    while(*cursor != '\0') {
+        while(IJSVGLengthListIsWhitespace(*cursor) || *cursor == '\f') {
+            cursor++;
+        }
+        if(*cursor == '\0') {
+            break;
+        }
+        if(count == 3) {
+            return nil;
+        }
+        tokens[count++] = cursor;
+        while(*cursor != '\0' && !IJSVGLengthListIsWhitespace(*cursor) && *cursor != '\f') {
+            cursor++;
+        }
+        if(*cursor != '\0') {
+            *cursor++ = '\0';
+        }
+    }
+    if(count == 0) {
+        return nil;
+    }
+    if(count == 3) {
+        // The 2D renderer validates the depth but has no z-axis translation.
+        if(strchr(tokens[2], '%') != NULL ||
+           !IJSVGParseUnitLengthsFromCString(tokens[2], YES, YES, nil, NULL)) {
+            return nil;
+        }
+        count--;
+    }
+    IJSVGOriginKeyword keywords[2] = {
+        IJSVGOriginKeywordFromCString(tokens[0]), IJSVGOriginKeywordCenter
+    };
+    if(count == 1) {
+        tokens[1] = "center";
+        if(keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom) {
+            tokens[1] = tokens[0];
+            tokens[0] = "center";
+            keywords[1] = keywords[0];
+            keywords[0] = IJSVGOriginKeywordCenter;
+        }
+    } else {
+        keywords[1] = IJSVGOriginKeywordFromCString(tokens[1]);
+        if(keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom ||
+           keywords[1] == IJSVGOriginKeywordLeft || keywords[1] == IJSVGOriginKeywordRight) {
+            if(keywords[0] == IJSVGOriginKeywordNone || keywords[1] == IJSVGOriginKeywordNone) {
+                return nil;
+            }
+            const char* token = tokens[0];
+            tokens[0] = tokens[1];
+            tokens[1] = token;
+            IJSVGOriginKeyword keyword = keywords[0];
+            keywords[0] = keywords[1];
+            keywords[1] = keyword;
+        }
+    }
+    IJSVGUnitLength* result[2] = { nil };
+    for(NSUInteger index = 0; index < 2; index++) {
+        IJSVGOriginKeyword leading = index == 0 ? IJSVGOriginKeywordLeft : IJSVGOriginKeywordTop;
+        IJSVGOriginKeyword trailing = index == 0 ? IJSVGOriginKeywordRight : IJSVGOriginKeywordBottom;
+        IJSVGOriginKeyword keyword = keywords[index];
+        if(keyword == leading || keyword == trailing || keyword == IJSVGOriginKeywordCenter) {
+            CGFloat fraction = keyword == leading ? 0.f : (keyword == trailing ? 1.f : .5f);
+            result[index] = [IJSVGUnitLength unitWithPercentageFloat:fraction];
+        } else {
+            IJSVGUnitLength* length = nil;
+            if(keyword != IJSVGOriginKeywordNone ||
+               !IJSVGParseUnitLengthsFromCString(tokens[index], YES, YES, nil, &length)) {
+                return nil;
+            }
+            result[index] = length;
+        }
+    }
+    return @[result[0], result[1]];
+}
+
+NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
+{
+    const char* bytes = value.UTF8String;
+    if(bytes == NULL || strlen(bytes) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return nil;
+    }
+    // Tokenize one owned buffer, keeping all intermediate tokens in C.
+    char* buffer = strdup(bytes);
+    if(buffer == NULL) {
+        return nil;
+    }
+    NSArray<IJSVGUnitLength*>* origin = IJSVGTransformOriginFromCString(buffer);
+    free(buffer);
+    return origin;
+}
+
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value)
 {
     NSMutableArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:value].mutableCopy;
@@ -669,6 +792,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 5: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "color")) {
+                return IJSVGNodeAttributeColor;
+            }
             char c = attributeName[0];
             if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "class")) {
                 return IJSVGNodeAttributeClass;
@@ -752,6 +878,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-rule")) {
                 return IJSVGNodeAttributeFillRule;
             }
+            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask-type")) {
+                return IJSVGNodeAttributeMaskType;
+            }
             if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskUnits")) {
                 return IJSVGNodeAttributeMaskUnits;
             }
@@ -761,6 +890,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 10: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "visibility")) {
+                return IJSVGNodeAttributeVisibility;
+            }
             char c = attributeName[0];
             if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stop-color")) {
                 return IJSVGNodeAttributeStopColor;
@@ -807,6 +939,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 13: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "transform-box")) {
+                return IJSVGNodeAttributeTransformBox;
+            }
             if(IJSVGAttributeNameEquals(attributeName, length, "flood-opacity")) {
                 return IJSVGNodeAttributeFloodOpacity;
             }
@@ -844,6 +979,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 16: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "transform-origin")) {
+                return IJSVGNodeAttributeTransformOrigin;
+            }
             char c = attributeName[0];
             if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskContentUnits")) {
                 return IJSVGNodeAttributeMaskContentUnits;
@@ -913,6 +1051,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributePatternUnits: @(IJSVGNodeAttributePatternUnits),
             IJSVGAttributePatternContentUnits: @(IJSVGNodeAttributePatternContentUnits),
             IJSVGAttributePatternTransform: @(IJSVGNodeAttributePatternTransform),
+            IJSVGAttributeMaskType: @(IJSVGNodeAttributeMaskType),
             IJSVGAttributeMaskUnits: @(IJSVGNodeAttributeMaskUnits),
             IJSVGAttributeMaskContentUnits: @(IJSVGNodeAttributeMaskContentUnits),
             IJSVGAttributeTransform: @(IJSVGNodeAttributeTransform),
@@ -929,6 +1068,8 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeIsolation: @(IJSVGNodeAttributeIsolation),
             IJSVGAttributePaintOrder: @(IJSVGNodeAttributePaintOrder),
             IJSVGAttributeVectorEffect: @(IJSVGNodeAttributeVectorEffect),
+            IJSVGAttributeColor: @(IJSVGNodeAttributeColor),
+            IJSVGAttributeVisibility: @(IJSVGNodeAttributeVisibility),
             IJSVGAttributeDisplay: @(IJSVGNodeAttributeDisplay),
             IJSVGAttributeStyle: @(IJSVGNodeAttributeStyle),
             IJSVGAttributeD: @(IJSVGNodeAttributeD),

@@ -1090,7 +1090,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
         case IJSVGPaintFillTypeColor: {
 
             IJSVGColorNode* colorNode = (IJSVGColorNode*)node.fill;
-            NSColor* color = colorNode.color ?: NSColor.blackColor;
+            NSColor* color = colorNode.usesCurrentColor ? node.currentColor : (colorNode.color ?: NSColor.blackColor);
 
             // Use the fill color supplied by the style.
             if(_style.fillColor != nil) {
@@ -1418,6 +1418,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
         IJSVGColorNode* color = [[IJSVGColorNode alloc] initWithColor:defaultColor];
         color.isNoneOrTransparent = type == IJSVGContextPaintStroke;
         return color;
+    }
+    if([resolved isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)resolved).usesCurrentColor) {
+        return [IJSVGColorNode colorNodeWithColor:context.currentColor];
     }
     if([resolved isKindOfClass:IJSVGGradient.class]) {
         return [self contextGradient:(IJSVGGradient*)resolved
@@ -1794,7 +1797,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     NSColor* strokeColor = NSColor.blackColor;
     if([node.stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node.stroke;
-        strokeColor = colorNode.color;
+        strokeColor = colorNode.usesCurrentColor ? node.currentColor : colorNode.color;
     }
 
     // Apply any color replacement.
@@ -2002,18 +2005,32 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
     CGSize intrinsicSize = [self.lengthFontResolver resolveSize:node.intrinsicSize percentage:bounds.size node:node];
-    CGFloat width = [self resolveLength:[self unit:node.width matchingNode:node] percentage:boundsWidth node:node];
-    CGFloat height = [self resolveLength:[self unit:node.height matchingNode:node] percentage:boundsHeight node:node];
-    if(width == 0.f) {
-        width = intrinsicSize.width;
-    }
-    if(height == 0.f) {
-        height = intrinsicSize.height;
+    IJSVGUnitLength* widthUnit = [self unit:node.width matchingNode:node];
+    IJSVGUnitLength* heightUnit = [self unit:node.height matchingNode:node];
+    CGFloat width = [self resolveLength:widthUnit percentage:boundsWidth node:node];
+    CGFloat height = [self resolveLength:heightUnit percentage:boundsHeight node:node];
+    if(node.parentNode != nil) {
+        if(widthUnit == nil || widthUnit.value < 0.f) {
+            width = boundsWidth;
+        }
+        if(heightUnit == nil || heightUnit.value < 0.f) {
+            height = boundsHeight;
+        }
+    } else {
+        if(width == 0.f) {
+            width = intrinsicSize.width;
+        }
+        if(height == 0.f) {
+            height = intrinsicSize.height;
+        }
     }
     CGRect frame = CGRectMake([self resolveLength:[self unit:node.x matchingNode:node] percentage:boundsWidth node:node],
                               [self resolveLength:[self unit:node.y matchingNode:node] percentage:boundsHeight node:node],
                               width, height);
     paint.frame = frame;
+    if(node.parentNode != nil) {
+        paint.intrinsicSize = [IJSVGUnitSize sizeWithCGSize:frame.size];
+    }
 
     // Resolve child sizes using the viewBox.
     // The root applies the final scale when drawing so children must not be scaled twice.
@@ -2487,7 +2504,12 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
 
     // Hide the paint when needed.
-    if(node.shouldRender == NO) {
+    // Visibility is inherited but descendants may override it. Keep containers
+    // and geometry so hidden content still contributes to layout and bounds.
+    BOOL hiddenGraphic = node.visibilityHidden &&
+        ([node isKindOfClass:IJSVGPath.class] || [node isKindOfClass:IJSVGImage.class]);
+    paint.hiddenByVisibility = node.shouldRender && hiddenGraphic;
+    if(node.shouldRender == NO || hiddenGraphic) {
         paint.hidden = YES;
     }
 }
@@ -2533,6 +2555,24 @@ inMeasurementPaint:(IJSVGPaint*)paint
         IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits
                                                                          bounds:unitBounds];
         identity = CGAffineTransformConcat(identity, resolvedTransform.CGAffineTransform);
+    }
+    if(node.transformOrigin.count == 2 || node.transformBox != nil) {
+        CGRect reference = (CGRect) { .origin = CGPointZero, .size = unitBounds.size };
+        if([node.transformBox isEqualToString:@"fill-box"] || [node.transformBox isEqualToString:@"content-box"]) {
+            reference = paint.boundingBox;
+        } else if([node.transformBox isEqualToString:@"stroke-box"] || [node.transformBox isEqualToString:@"border-box"]) {
+            reference = paint.outerBoundingBox;
+        }
+        if(IJSVGRectIsFinite(reference)) {
+            CGPoint origin = reference.origin;
+            if(node.transformOrigin.count == 2) {
+                origin.x += [self resolveCSSLength:node.transformOrigin[0] percentage:reference.size.width node:node];
+                origin.y += [self resolveCSSLength:node.transformOrigin[1] percentage:reference.size.height node:node];
+            }
+            // The implicit SVG x/y translation belongs inside the transform.
+            identity = CGAffineTransformConcat(CGAffineTransformMakeTranslation(-origin.x, -origin.y), identity);
+            identity = CGAffineTransformConcat(identity, CGAffineTransformMakeTranslation(origin.x, origin.y));
+        }
     }
     parentPaint.affineTransform = identity;
     [parentPaint addChild:paint];

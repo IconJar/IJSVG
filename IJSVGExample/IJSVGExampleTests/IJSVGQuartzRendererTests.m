@@ -11,11 +11,220 @@
 #import <CoreText/CoreText.h>
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
+#import "../../Framework/IJSVG/IJSVG/Source/Nodes/IJSVGSwitch.h"
 
 @interface IJSVGQuartzRendererTests: XCTestCase
 @end
 
 @implementation IJSVGQuartzRendererTests
+
+- (void)testAlphaMasksPreserveBlackContentAndOpacity
+{
+    for(NSString* attribute in @[@"mask-type='alpha'", @"style='mask-type:alpha'",
+                                 @"mask-type='luminance' style='mask-type:alpha'"]) {
+        NSString* body = [NSString stringWithFormat:
+            @"<defs><mask id='m' %@><rect width='16' height='32' fill='black' fill-opacity='.5'/></mask></defs>"
+             "<rect width='32' height='32' fill='red' mask='url(#m)'/>", attribute];
+        [self assertBody:body rendersLike:@"<rect width='16' height='32' fill='red' fill-opacity='.5'/>"];
+        [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+        [self assertVectorExportPreservesQuartzPixels:body optimized:NO];
+    }
+    [self assertBody:@"<style>mask {mask-type:alpha}</style><defs><mask id='m'><rect width='16' height='32' fill='black'/></mask></defs><rect width='32' height='32' mask='url(#m)'/>"
+        rendersLike:@"<rect width='16' height='32'/>"];
+    [self assertBody:@"<defs><mask id='m' mask-type='luminance'><rect width='32' height='32' fill='black'/></mask></defs><rect width='32' height='32' mask='url(#m)'/>"
+        rendersLike:@""];
+}
+
+- (void)testClipRuleOnUseMatchesEvenOddFill
+{
+    NSString* body = @"<defs><path id='p' d='M2 2H30V30H2Z M8 8H24V24H8Z'/><clipPath id='c'><use href='#p' clip-rule='evenodd'/></clipPath></defs><rect width='32' height='32' clip-path='url(#c)'/>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:
+        @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>%@</svg>", body]];
+    IJSVGNode* rect = svg.rootNode.children.lastObject;
+    IJSVGGroup* clip = rect.clipPath;
+    IJSVGGroup* use = (IJSVGGroup*)clip.children.firstObject;
+    XCTAssertEqual(use.clipRule, IJSVGWindingRuleEvenOdd);
+    XCTAssertEqual(use.children.firstObject.clipRule, IJSVGWindingRuleEvenOdd);
+    [self assertBody:body rendersLike:@"<path d='M2 2H30V30H2Z M8 8H24V24H8Z' fill-rule='evenodd'/>"];
+}
+
+- (void)testVisibilityInheritanceAndOverrides
+{
+    [self assertBody:@"<g visibility='hidden'><rect width='32' height='32'/><rect width='16' height='16' visibility='visible'/></g>"
+        rendersLike:@"<rect width='16' height='16'/>"];
+    [self assertBody:@"<style>.hidden {visibility:hidden}</style><g class='hidden'><rect width='32' height='32'/><rect width='16' height='16' style='visibility:visible'/></g>"
+        rendersLike:@"<rect width='16' height='16'/>"];
+    [self assertBody:@"<g display='none'><rect width='32' height='32' visibility='visible'/></g>"
+        rendersLike:@""];
+    [self assertBody:@"<rect width='32' height='32' visibility='collapse'/>" rendersLike:@""];
+    [self assertBody:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient><mask id='m' maskContentUnits='objectBoundingBox'><rect width='1' height='1' fill='url(#g)'/></mask></defs><g mask='url(#m)'><rect width='16' height='32' visibility='hidden'/><rect x='16' width='16' height='32'/></g>"
+        rendersLike:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient><mask id='m' maskContentUnits='objectBoundingBox'><rect width='1' height='1' fill='url(#g)'/></mask></defs><g mask='url(#m)'><rect width='16' height='32' fill-opacity='0'/><rect x='16' width='16' height='32'/></g>"];
+    [self assertBody:@"<text y='24' visibility='hidden' font-size='12'>A<tspan visibility='visible'>B</tspan></text>"
+        rendersLike:@"<text y='24' font-size='12'><tspan fill-opacity='0'>A</tspan>B</text>"];
+}
+
+- (void)testVerticalTextLengthPercentageUsesViewportHeight
+{
+    [self assertBody:@"<svg width='32' height='16' viewBox='0 0 32 16'>"
+                      "<text x='16' y='1' font-size='8' writing-mode='vertical-rl' textLength='50%' lengthAdjust='spacingAndGlyphs'>ABC</text></svg>"
+        rendersLike:@"<svg width='32' height='16' viewBox='0 0 32 16'>"
+                      "<text x='16' y='1' font-size='8' writing-mode='vertical-rl' textLength='8' lengthAdjust='spacingAndGlyphs'>ABC</text></svg>"];
+}
+
+- (void)testCurrentColorResolvesOnPaintedElement
+{
+    [self assertBody:@"<g color='red' fill='currentColor'><rect width='16' height='32'/><rect x='16' width='16' height='32' color='blue'/></g>"
+        rendersLike:@"<rect width='16' height='32' fill='red'/><rect x='16' width='16' height='32' fill='blue'/>"];
+    [self assertBody:@"<style>g {color:green;stroke:currentColor} .blue {color:blue}</style><g><path d='M2 8H30' stroke-width='4'/><path class='blue' d='M2 24H30' stroke-width='4'/></g>"
+        rendersLike:@"<path d='M2 8H30' stroke='green' stroke-width='4'/><path d='M2 24H30' stroke='blue' stroke-width='4'/>"];
+    [self assertBody:@"<text y='24' color='red' fill='currentColor' font-size='12'>A<tspan color='blue'>B</tspan></text>"
+        rendersLike:@"<text y='24' fill='red' font-size='12'>A<tspan fill='blue'>B</tspan></text>"];
+    [self assertBody:@"<defs><linearGradient id='g' color='red'><stop stop-color='currentColor'/><stop offset='1' color='blue' stop-color='currentColor'/></linearGradient></defs><rect width='32' height='32' fill='url(#g)'/>"
+        rendersLike:@"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect width='32' height='32' fill='url(#g)'/>"];
+    [self assertBody:@"<g color='red'><rect width='32' height='32' fill='currentColor' color='transparent'/></g>"
+        rendersLike:@""];
+    [self assertBody:@"<g color='red'><rect width='32' height='32' fill='currentColor' color='initial'/></g>"
+        rendersLike:@"<rect width='32' height='32'/>"];
+    [self assertBody:@"<defs><path id='p' d='M2 2H30V30H2Z' fill='currentColor'/></defs><use href='#p' color='blue'/>"
+        rendersLike:@"<path d='M2 2H30V30H2Z' fill='blue'/>"];
+}
+
+- (void)testCurrentColorInMarkerContextPaint
+{
+    NSString* definitions = @"<defs><marker id='m' markerWidth='6' markerHeight='6' refX='3' refY='3' markerUnits='userSpaceOnUse'><circle cx='3' cy='3' r='3' fill='context-stroke'/></marker></defs>";
+    [self assertBody:[definitions stringByAppendingString:@"<path d='M4 16H28' color='red' stroke='currentColor' marker-end='url(#m)'/>"]
+        rendersLike:[definitions stringByAppendingString:@"<path d='M4 16H28' stroke='red' marker-end='url(#m)'/>"]];
+}
+
+- (void)testTransformOriginAndReferenceBoxes
+{
+    NSArray* cases = @[
+        @[@"transform-origin='center'", @"16 16"],
+        @[@"transform-origin='25% 75%'", @"8 24"],
+        @[@"transform-origin='right top'", @"32 0"],
+        @[@"transform-origin='top right'", @"32 0"],
+        @[@"transform-origin='-2 3'", @"-2 3"],
+        @[@"transform-origin='1em .5em' font-size='8'", @"8 4"],
+        @[@"style='transform-origin:center;transform-box:fill-box'", @"12 10"],
+        @[@"style='transform-origin:100% 0;transform-box:fill-box'", @"20 4"],
+        @[@"transform-origin='0 0' style='transform-origin:center!important;transform-origin:bogus'", @"16 16"],
+        @[@"style='transform-origin:center;transform-box:fill-box;transform-box:bogus'", @"12 10"]
+    ];
+    for(NSArray* item in cases) {
+        [self assertBody:[NSString stringWithFormat:
+            @"<rect x='4' y='4' width='16' height='12' transform='rotate(90)' %@/>", item[0]]
+            rendersLike:[NSString stringWithFormat:
+            @"<rect x='4' y='4' width='16' height='12' transform='rotate(90 %@)'/>", item[1]]];
+    }
+    [self assertBody:@"<svg width='16' height='24' viewBox='0 0 8 12'>"
+                      "<rect width='6' height='4' transform='rotate(90)' transform-origin='center'/></svg>"
+        rendersLike:@"<svg width='16' height='24' viewBox='0 0 8 12'>"
+                      "<rect width='6' height='4' transform='rotate(90 4 6)'/></svg>"];
+    [self assertBody:@"<g transform='rotate(90)' style='transform-origin:center;transform-box:fill-box'>"
+                      "<rect x='4' y='4' width='16' height='12'/></g>"
+        rendersLike:@"<g transform='rotate(90 12 10)'><rect x='4' y='4' width='16' height='12'/></g>"];
+    [self assertBody:@"<rect x='4' y='4' width='16' height='12' stroke='red' stroke-width='2'"
+                      " transform='rotate(90)' style='transform-origin:0 0;transform-box:stroke-box'/>"
+        rendersLike:@"<rect x='4' y='4' width='16' height='12' stroke='red' stroke-width='2' transform='rotate(90 3 3)'/>"];
+    [self assertBody:@"<text x='4' y='12' font-size='8' transform='rotate(90)' transform-origin='center'>Hi</text>"
+        rendersLike:@"<text x='4' y='12' font-size='8' transform='rotate(90 16 16)'>Hi</text>"];
+    [self assertBody:@"<defs><rect id='r' width='8' height='4'/></defs>"
+                      "<use href='#r' x='4' y='6' transform='rotate(90)' transform-origin='center'/>"
+        rendersLike:@"<defs><rect id='r' width='8' height='4'/></defs>"
+                      "<use href='#r' x='4' y='6' transform='rotate(90 16 16)'/>"];
+}
+
+- (void)testGradientSpreadExportAndReferences
+{
+    for(NSString* tag in @[@"linearGradient", @"radialGradient"]) {
+        for(NSString* method in @[@"pad", @"repeat", @"reflect"]) {
+            NSString* body = [NSString stringWithFormat:
+                @"<defs><%@ id='base' x1='.25' x2='.5' r='.2' spreadMethod='%@'>"
+                 "<stop stop-color='red'/><stop offset='1' stop-color='blue'/></%@>"
+                 "<%@ id='g' href='#base'/></defs><rect width='32' height='32' fill='url(#g)'/>",
+                tag, method, tag, tag];
+            NSString* reference = [NSString stringWithFormat:
+                @"<defs><%@ id='g' x1='.25' x2='.5' r='.2' spreadMethod='%@'>"
+                 "<stop stop-color='red'/><stop offset='1' stop-color='blue'/></%@></defs>"
+                 "<rect width='32' height='32' fill='url(#g)'/>", tag, method, tag];
+            [self assertBody:body rendersLike:reference];
+            IJSVG* svg = [self svgWithBody:body];
+            NSData* expected = [self renderSVG:svg size:128];
+            for(NSNumber* options in @[@(IJSVGExporterOptionNone), @(IJSVGExporterOptionAll)]) {
+                NSString* xml = [svg SVGStringWithSize:CGSizeMake(32, 32) options:options.unsignedIntegerValue];
+                XCTAssertEqualObjects(expected, [self renderSVG:[[IJSVG alloc] initWithSVGString:xml] size:128]);
+            }
+        }
+    }
+}
+
+- (void)testNestedSVGDefaultsToContainingViewport
+{
+    [self assertBody:@"<svg x='16' width='16' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"
+        rendersLike:@"<svg x='16' width='16' height='32' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"];
+    [self assertBody:@"<svg height='16' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"
+        rendersLike:@"<svg width='32' height='16' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"];
+    [self assertBody:@"<svg width='16'><rect width='8' height='8'/></svg>"
+        rendersLike:@"<rect width='8' height='8'/>"];
+    [self assertBody:@"<svg style='width:auto;height:auto' viewBox='0 0 8 8'><circle cx='4' cy='4' r='4'/></svg>"
+        rendersLike:@"<circle cx='16' cy='16' r='16'/>"];
+    [self assertBody:@"<svg width='0' viewBox='0 0 8 8'><rect width='8' height='8'/></svg>"
+        rendersLike:@""];
+}
+
+- (void)testSwitchNodeSelectsLanguagesAndCopies
+{
+    NSString* xml = @"<switch><!-- comment --><style>rect {fill:red}</style>"
+                    "<rect id='extension' requiredExtensions='urn:unsupported'/>"
+                    "<rect id='regional' systemLanguage='de, EN-gb'/>"
+                    "<rect id='english' systemLanguage='en' display='none'/>"
+                    "<rect id='fallback'/></switch>";
+    NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:xml error:nil];
+    NSArray* cases = @[
+        @[@[@"en-GB"], @"regional"],
+        @[@[@"en-GB-x-private"], @"regional"],
+        @[@[@"en-US"], @"english"],
+        @[@[@"en"], @"english"],
+        @[@[@"eng"], @"fallback"],
+        @[@[@"fr", @"DE"], @"regional"],
+        @[@[], @"fallback"]
+    ];
+    for(NSArray* item in cases) {
+        NSXMLElement* selected = [IJSVGSwitch selectedChildInElement:element preferredLanguages:item[0]];
+        XCTAssertEqualObjects([selected attributeForName:IJSVGAttributeID].stringValue, item[1]);
+    }
+    NSXMLElement* noMatch = [[NSXMLElement alloc] initWithXMLString:
+        @"<switch><rect systemLanguage=' , '/><rect requiredExtensions=''/></switch>" error:nil];
+    XCTAssertNil([IJSVGSwitch selectedChildInElement:noMatch preferredLanguages:@[@"en-GB"]]);
+    IJSVG* svg = [self svgWithBody:@"<switch><rect width='8' height='8'/><circle r='4'/></switch>"];
+    IJSVGSwitch* node = (IJSVGSwitch*)svg.rootNode.children.firstObject;
+    XCTAssertTrue([node isKindOfClass:IJSVGSwitch.class]);
+    IJSVGSwitch* copy = node.copy;
+    XCTAssertTrue([copy isKindOfClass:IJSVGSwitch.class]);
+    XCTAssertEqual(copy.type, IJSVGNodeTypeSwitch);
+    XCTAssertEqual(copy.children.count, 1);
+    XCTAssertEqual(copy.children.firstObject.parentNode, copy);
+    XCTAssertEqual(node.children.firstObject.parentNode, node);
+}
+
+- (void)testSwitchSelectsFirstMatchingChild
+{
+    [self assertBody:@"<switch><rect width='16' height='16' fill='red'/><rect width='32' height='32' fill='blue'/></switch>"
+        rendersLike:@"<rect width='16' height='16' fill='red'/>"];
+    [self assertBody:@"<switch><rect requiredExtensions='https://example.org/extension' width='32' height='32'/><rect systemLanguage='zz-ZZ' width='32' height='32'/><rect width='16' height='16'/></switch>"
+        rendersLike:@"<rect width='16' height='16'/>"];
+    [self assertBody:@"<switch><rect display='none' width='16' height='16'/><rect width='32' height='32'/></switch>"
+        rendersLike:@""];
+    [self assertBody:@"<switch><rect systemLanguage='' width='32' height='32'/><rect requiredExtensions='' width='32' height='32'/></switch>"
+        rendersLike:@""];
+    NSString* preferred = NSLocale.preferredLanguages.firstObject;
+    if(preferred.length != 0) {
+        NSString* body = [NSString stringWithFormat:
+            @"<switch><rect systemLanguage='zz-ZZ, %@' width='16' height='16'/><rect width='32' height='32'/></switch>",
+            preferred.uppercaseString];
+        [self assertBody:body rendersLike:@"<rect width='16' height='16'/>"];
+    }
+}
 
 - (void)testCSSGeometryParsingPerformance
 {

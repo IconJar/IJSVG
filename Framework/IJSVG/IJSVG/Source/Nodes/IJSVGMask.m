@@ -24,6 +24,7 @@
     [storage setBit:IJSVGNodeAttributeY];
     [storage setBit:IJSVGNodeAttributeWidth];
     [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributeMaskType];
     [storage setBit:IJSVGNodeAttributeMaskUnits];
     [storage setBit:IJSVGNodeAttributeMaskContentUnits];
     return storage;
@@ -40,6 +41,14 @@
     self.units = IJSVGUnitObjectBoundingBox;
     self.contentUnits = IJSVGUnitUserSpaceOnUse;
     self.overflowVisibility = IJSVGOverflowVisibilityHidden;
+}
+
+- (void)applyPropertiesFromNode:(IJSVGNode*)node
+{
+    [super applyPropertiesFromNode:node];
+    if([node isKindOfClass:IJSVGMask.class]) {
+        self.maskType = ((IJSVGMask*)node).maskType;
+    }
 }
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect *)bounds

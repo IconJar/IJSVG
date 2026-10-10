@@ -51,6 +51,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) CGAffineTransform clippingTransform;
 @property (nonatomic, assign) CGFloat opacity;
 @property (nonatomic, assign) BOOL hidden;
+@property (nonatomic, assign) BOOL hiddenByVisibility;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) BOOL isolated;
 @property (nonatomic, assign) CGFloat backingScaleFactor;

@@ -1,0 +1,22 @@
+{
+  "reference_attribute_text_decoration_block_2_1": {
+    "sha256": "2bd4ff0392026fb4eb48929161d9d9f8d9df50cd1e286b0116a179ce4d8e65fa",
+    "tolerance": 0.26,
+    "reason": "Core Text decoration offsets differ from WebKit. Reuses the existing IJSVGTextWebKitTests/testDecorationsAcrossSpacesMatchWebKit threshold; larger differences still fail."
+  },
+  "reference_attribute_specularconstant_block_2_1": {
+    "sha256": "5f4a96b76caa94d416f201ccc4527167eac3aa04267da417a04d7c10f26da777",
+    "background": 0.5019607843137255,
+    "reason": "White specular highlights require a non-white backdrop to test their alpha and intensity; both renderers use the same neutral gray."
+  },
+  "reference_attribute_specularexponent_block_2_1": {
+    "sha256": "62c00732d3126f7f3cc77bbe9876528824ac7612fd025df0c76b0aa033fc4288",
+    "background": 0.5019607843137255,
+    "reason": "White specular highlights require a non-white backdrop to test their alpha and intensity; both renderers use the same neutral gray."
+  },
+  "reference_attribute_spreadmethod_block_2_1": {
+    "sha256": "18380bb05df8e3e4c5239c80d68e8f086221dcaa639591853408e9594572f800",
+    "expectedDifference": true,
+    "reason": "WebKit renders pad, reflect, and repeat identically for this radial gradient with a nonzero focal radius. IJSVGPaintOrderWebKitTests/testRadialSpreadWithFocalRadiusMatchesExplicitStops verifies both spread modes against WebKit using the equivalent zero-radius cone and explicitly expanded stops. SVG 2 requires the radial spread modes; this exception is limited to this exact fixture."
+  }
+}

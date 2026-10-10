@@ -177,6 +177,37 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
     return methods;
 }
 
+BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes,
+                                size_t* length, char* quote)
+{
+    *bytes = NULL;
+    *length = 0;
+    *quote = 0;
+    if(argument == NULL) {
+        return NO;
+    }
+    const char* start = argument;
+    const char* end = start + strlen(start);
+    while(start < end && isspace((unsigned char)*start)) {
+        start++;
+    }
+    while(end > start && isspace((unsigned char)end[-1])) {
+        end--;
+    }
+    if(start < end && (*start == '\'' || *start == '"')) {
+        char delimiter = *start;
+        if(end - start < 2 || end[-1] != delimiter) {
+            return NO;
+        }
+        *quote = delimiter;
+        start++;
+        end--;
+    }
+    *bytes = start;
+    *length = (size_t)(end - start);
+    return YES;
+}
+
 @implementation IJSVGParsing
 
 @end

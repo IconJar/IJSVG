@@ -50,6 +50,7 @@
     }
   
     // compute the color stops and colours
+    [aGradient parseSpreadMethod:element];
     NSArray* colors = nil;
     CGFloat* stopsParams = [self.class computeColorStops:aGradient
                                                   colors:&colors];
@@ -90,11 +91,18 @@
     // concat the gradient transform into the context
     IJSVGConcatTransformsCTM(ctx, self.transforms);
     
+    if([self drawSpreadInContext:ctx
+                      startPoint:gradientStartPoint
+                        endPoint:gradientEndPoint
+                     startRadius:0.f
+                       endRadius:0.f
+                          radial:NO]) {
+        return;
+    }
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
-
     CGContextDrawLinearGradient(ctx, self.CGGradient, gradientStartPoint,
-        gradientEndPoint, options);
+                                gradientEndPoint, options);
 }
 
 @end

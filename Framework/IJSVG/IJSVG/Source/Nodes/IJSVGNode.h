@@ -16,6 +16,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, IJSVGVisibility) {
+    IJSVGVisibilityInherit,
+    IJSVGVisibilityVisible,
+    IJSVGVisibilityHidden
+};
+
 typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
     IJSVGBackgroundEnabledUnspecified,
     IJSVGBackgroundEnabledAccumulate,
@@ -210,6 +216,11 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeVectorEffect,
     IJSVGNodeAttributeIsolation,
     IJSVGNodeAttributePaintOrder,
+    IJSVGNodeAttributeColor,
+    IJSVGNodeAttributeVisibility,
+    IJSVGNodeAttributeMaskType,
+    IJSVGNodeAttributeTransformOrigin,
+    IJSVGNodeAttributeTransformBox,
     IJSVGNodeAttributeCount
 };
 
@@ -399,6 +410,9 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy, nullable) NSString* className;
 @property (nonatomic, strong, nullable) NSSet<NSString*>* classNameList;
 @property (nonatomic, assign) BOOL shouldRender;
+@property (nonatomic, strong, nullable) NSColor* currentColor;
+@property (nonatomic, assign) IJSVGVisibility visibility;
+@property (nonatomic, readonly) BOOL visibilityHidden;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* x;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* y;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* width;
@@ -427,6 +441,8 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* strokeMiterLimit;
 @property (nonatomic, strong, nullable) NSArray<IJSVGTransform*>* transforms;
+@property (nonatomic, copy, nullable) NSArray<IJSVGUnitLength*>* transformOrigin;
+@property (nonatomic, copy, nullable) NSString* transformBox;
 @property (nonatomic, assign, nullable) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;

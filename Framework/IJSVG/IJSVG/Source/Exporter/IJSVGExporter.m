@@ -1551,6 +1551,10 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }, gradientElement);
 
     // apply the units
+    if(gradient.spreadMethod != IJSVGGradientSpreadMethodPad) {
+        IJSVGApplyAttributesToElement(@{IJSVGAttributeSpreadMethod:
+            gradient.spreadMethod == IJSVGGradientSpreadMethodReflect ? @"reflect" : @"repeat"}, gradientElement);
+    }
     if(paint.gradient.units == IJSVGUnitUserSpaceOnUse) {
         IJSVGApplyAttributesToElement(@{
             IJSVGAttributeGradientUnits: IJSVGStringUserSpaceOnUse
@@ -2422,7 +2426,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
                 [group addChild:stroke];
             }
         }
-        objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, nil, OBJC_ASSOCIATION_RETAIN);
+        objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, nil,
+                                 OBJC_ASSOCIATION_RETAIN);
         return group;
     }
     return e;
@@ -2473,9 +2478,13 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         }
     }
 
-    // hidden?
+    // Visibility preserves geometry used by objectBoundingBox effects.
     if(paint.hidden) {
-        style[IJSVGAttributeDisplay] = IJSVGStringNone;
+        if(paint.hiddenByVisibility) {
+            style[IJSVGAttributeVisibility] = @"hidden";
+        } else {
+            style[IJSVGAttributeDisplay] = IJSVGStringNone;
+        }
     }
 
     if(style.count != 0) {
@@ -2884,6 +2893,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     IJSVGApplyAttributesToElement(@{
         IJSVGAttributeID: identifier,
         IJSVGAttributeMaskUnits: node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
+        IJSVGAttributeMaskType: node.maskType == IJSVGMaskTypeAlpha ? @"alpha" : @"luminance",
         IJSVGAttributeMaskContentUnits: node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
         IJSVGAttributeX: [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
         IJSVGAttributeY: [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],

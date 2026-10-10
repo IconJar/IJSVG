@@ -13,6 +13,29 @@
 
 @implementation IJSVGRenderingTests
 
+- (void)testQuotedLocalURLsMatchUnquotedPaintAndEffects
+{
+    NSArray<NSString*>* bodies = @[
+        @"<defs><linearGradient id=\"target\"><stop stop-color=\"red\"/><stop offset=\"1\" stop-color=\"blue\"/></linearGradient></defs><rect width=\"8\" height=\"8\" fill=\"url(#target)\"/>",
+        @"<defs><linearGradient id=\"target\"><stop stop-color=\"red\"/><stop offset=\"1\" stop-color=\"blue\"/></linearGradient></defs><path d=\"M1 4H7\" stroke-width=\"2\" stroke=\"url(#target)\"/>",
+        @"<defs><pattern id=\"target\" width=\"2\" height=\"2\" patternUnits=\"userSpaceOnUse\"><rect width=\"1\" height=\"2\" fill=\"green\"/></pattern></defs><rect width=\"8\" height=\"8\" fill=\"url(#target)\"/>",
+        @"<defs><clipPath id=\"target\"><circle cx=\"4\" cy=\"4\" r=\"3\"/></clipPath></defs><rect width=\"8\" height=\"8\" fill=\"red\" clip-path=\"url(#target)\"/>",
+        @"<defs><mask id=\"target\"><rect width=\"4\" height=\"8\" fill=\"white\"/></mask></defs><rect width=\"8\" height=\"8\" fill=\"blue\" mask=\"url(#target)\"/>",
+        @"<defs><marker id=\"target\" markerWidth=\"2\" markerHeight=\"2\" refX=\"1\" refY=\"1\"><circle cx=\"1\" cy=\"1\" r=\"1\" fill=\"red\"/></marker></defs><path d=\"M1 4H6\" stroke=\"blue\" marker-end=\"url(#target)\"/>",
+        @"<defs><filter id=\"target\" filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"8\" height=\"8\"><feOffset dx=\"1\" dy=\"1\"/></filter></defs><rect width=\"4\" height=\"4\" fill=\"green\" filter=\"url(#target)\"/>",
+        @"<defs><linearGradient id=\"target\"><stop stop-color=\"red\"/><stop offset=\"1\" stop-color=\"blue\"/></linearGradient></defs><style>rect {fill:url(#target)}</style><rect width=\"8\" height=\"8\"/>",
+        @"<defs><linearGradient id=\"target\"><stop stop-color=\"red\"/><stop offset=\"1\" stop-color=\"blue\"/></linearGradient></defs><rect width=\"8\" height=\"8\" style=\"fill:url(#target)\"/>"
+    ];
+    for(NSString* body in bodies) {
+        NSData* reference = IJSVGTestRGBADataForSVG(IJSVGTestSVG(body), CGSizeMake(8, 8));
+        for(NSString* url in @[@"url('#target')", @"url(&quot;#target&quot;)", @"url( '#target' )"]) {
+            NSString* quoted = [body stringByReplacingOccurrencesOfString:@"url(#target)" withString:url];
+            NSData* actual = IJSVGTestRGBADataForSVG(IJSVGTestSVG(quoted), CGSizeMake(8, 8));
+            XCTAssertEqualObjects(actual, reference, @"%@: %@", url, body);
+        }
+    }
+}
+
 - (void)testRenderingUsesPresentationAttributes
 {
     NSString* svg = IJSVGTestSVG(@"<rect width=\"8\" height=\"8\" fill=\"#ff0000\"/>");

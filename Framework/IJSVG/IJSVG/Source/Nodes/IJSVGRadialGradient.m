@@ -97,6 +97,7 @@
                                          fromUnitType:gradient.units] ?: gradient.fy;
     }
 
+    [gradient parseSpreadMethod:element];
     NSArray* colors = nil;
     CGFloat* colorStops = [self.class computeColorStops:gradient
                                                  colors:&colors];
@@ -153,6 +154,15 @@
     // concat the gradient transform into the context
     IJSVGConcatTransformsCTM(ctx, self.transforms);
 
+    if([self drawSpreadInContext:ctx
+                      startPoint:gradientEndPoint
+                        endPoint:gradientStartPoint
+                     startRadius:focalRadius
+                       endRadius:radius
+                          radial:YES]) {
+        CGContextRestoreGState(ctx);
+        return;
+    }
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient,

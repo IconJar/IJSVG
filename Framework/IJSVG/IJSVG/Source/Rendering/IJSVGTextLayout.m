@@ -727,7 +727,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     }
     IJSVGTextComputedStyle* style = [self styleForNode:node];
     CGFloat target = IJSVGTextLength(specified, style.size, style.xHeight,
-                                     self.viewport.width);
+                                     style.vertical ? self.viewport.height : self.viewport.width);
     if(target < 0 || !isfinite(target)) {
         return;
     }
