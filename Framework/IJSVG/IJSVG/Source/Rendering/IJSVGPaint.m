@@ -475,7 +475,8 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (void)renderInContext:(CGContextRef)ctx
       applyingPlacement:(BOOL)applyingPlacement
 {
-    if(_hidden || _opacity == 0.f || ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
+    if(_hidden || _opacity == 0.f || (_clipPath != NULL && CGPathIsEmpty(_clipPath)) ||
+        ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
         return;
     }
     CGContextSaveGState(ctx);

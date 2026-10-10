@@ -1,11 +1,11 @@
 {
-  "recordedAt": "2026-10-10T15:16:54.199467+00:00",
+  "recordedAt": "2026-10-10T15:39:14.995905+00:00",
   "mdnRevision": "d6b80f43c1ddfab03b96fb3146285bbe9d0992d3",
   "macOS": "27.0.1 (26A434)",
   "counts": {
     "total": 458,
-    "passed": 245,
-    "failed": 53,
+    "passed": 248,
+    "failed": 50,
     "skipped": 159,
     "expectedFailures": 1
   },
@@ -15,7 +15,7 @@
     "expectedFailures": 1,
     "failed": 0
   },
-  "note": "Observations only, not accepted baselines. Gradient spreading and transform origins fix four further MDN cases. The exact radial spreadMethod fixture is now a strict expected WebKit difference, verified with expanded-stop controls. Remaining 53 unexpected mismatches are retained as failures; thresholds were not widened.",
+  "note": "Observations only, not accepted baselines. Pattern coordinates, CSS circle/ellipse clipping, object-bounding-box clip offsets, and empty clips fix three further MDN cases (clip-path, patternTransform, and pattern). All 139 renderer, paint-order WebKit, and node/storage regressions passed. Remaining 50 unexpected mismatches are retained as failures; thresholds and expected-difference policies were not widened.",
   "cases": [
     {
       "id": "guides_applying_svg_effects_to_html_content_block_2_1",
@@ -347,11 +347,11 @@
     },
     {
       "id": "reference_attribute_clip_path_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/clip-path",
-      "meanInkError": 0.210898,
+      "meanInkError": 0.0,
       "tolerance": 0.025,
-      "inkPixels": 478740
+      "inkPixels": 371829
     },
     {
       "id": "reference_attribute_clip_rule_block_1_1",
@@ -1181,11 +1181,11 @@
     },
     {
       "id": "reference_attribute_patterntransform_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/patternTransform",
-      "meanInkError": 0.162695,
+      "meanInkError": 0.007642,
       "tolerance": 0.025,
-      "inkPixels": 353263
+      "inkPixels": 328412
     },
     {
       "id": "reference_attribute_patternunits_block_2_1",
@@ -2553,11 +2553,11 @@
     },
     {
       "id": "reference_element_pattern_block_2_1",
-      "state": "Failed",
+      "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Element/pattern",
-      "meanInkError": 0.285549,
+      "meanInkError": 0.000377,
       "tolerance": 0.025,
-      "inkPixels": 122076
+      "inkPixels": 105414
     },
     {
       "id": "reference_element_polygon_block_2_1",
@@ -3199,7 +3199,7 @@
       "id": "tutorials_svg_from_scratch_patterns_block_1_1",
       "state": "Passed",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
-      "meanInkError": 0.015619,
+      "meanInkError": 0.001235,
       "tolerance": 0.025,
       "inkPixels": 160000
     },
@@ -3408,5 +3408,14 @@
     "expectedFailures": 1,
     "failed": 0,
     "note": "Dedicated IJSVGSwitch node, C transform-origin tokenization using the shared length parser, C language matching, and spread-method utility reuse. MDN counts above remain from the last full corpus run."
+  },
+  "patternAndClipRegressionSuites": {
+    "passed": 139,
+    "failed": 0,
+    "suites": [
+      "IJSVGQuartzRendererTests",
+      "IJSVGPaintOrderWebKitTests",
+      "IJSVGNodeAndColorStorageTests"
+    ]
   }
 }

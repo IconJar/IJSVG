@@ -82,6 +82,73 @@
     }
 }
 
+- (void)testPatternCoordinateSystemsMatchWebKit
+{
+    NSArray* patterns = @[
+        @"patternUnits='userSpaceOnUse' width='20' height='20'",
+        @"patternUnits='userSpaceOnUse' x='5' y='7' width='20' height='20'",
+        @"width='.25' height='.25'",
+        @"width='.25' height='.25' patternTransform='rotate(20) skewX(30) scale(1 .5)'",
+        @"patternUnits='userSpaceOnUse' width='10%' height='20%'",
+        @"width='.25' height='.25' viewBox='0 0 20 20' patternContentUnits='objectBoundingBox'"
+    ];
+    for(NSUInteger index = 0; index < patterns.count; index++) {
+        NSString* body = [NSString stringWithFormat:
+            @"<defs><pattern id='p' %@><circle cx='10' cy='10' r='10' fill='navy'/></pattern></defs>"
+             "<rect x='30' y='20' width='160' height='120' fill='url(#p)'/>", patterns[index]];
+        [self compareBody:body name:[NSString stringWithFormat:@"pattern-coordinates-%lu", (unsigned long)index] tolerance:.025];
+        NSString* stroked = [body stringByReplacingOccurrencesOfString:@"fill='url(#p)'"
+                                                            withString:@"fill='url(#p)' stroke='green' stroke-width='12'"];
+        [self compareBody:stroked name:[NSString stringWithFormat:@"pattern-stroked-coordinates-%lu", (unsigned long)index] tolerance:.025];
+    }
+}
+
+- (void)testBasicShapeClippingMatchesWebKit
+{
+    NSArray* clips = @[
+        @"circle()", @"circle() fill-box", @"circle() stroke-box",
+        @"circle(35% at 30% 60%) fill-box", @"fill-box circle(farthest-side at left top)",
+        @"ellipse(40% 30%) fill-box", @"ellipse(closest-side farthest-side at 25% 70%)",
+        @"fill-box", @"circle(2em at center) fill-box", @"circle(0) fill-box"
+    ];
+    for(NSUInteger index = 0; index < clips.count; index++) {
+        NSString* body = [NSString stringWithFormat:
+            @"<rect x='40' y='30' width='180' height='120' fill='navy' stroke='green' stroke-width='12'"
+             " font-size='18' clip-path='%@'/><rect x='300' y='20' width='20' height='20' fill='red'/>", clips[index]];
+        [self compareBody:body name:[NSString stringWithFormat:@"clip-shape-%lu", (unsigned long)index] tolerance:.025];
+    }
+    [self compareBody:@"<defs><clipPath id='c' clipPathUnits='objectBoundingBox'><circle cx='.5' cy='.5' r='.5'/></clipPath></defs>"
+                       "<rect x='40' y='30' width='180' height='120' fill='navy' stroke='green' stroke-width='12' clip-path='url(#c)'/>"
+                 name:@"clip-object-bounds-stroke" tolerance:.025];
+}
+
+- (void)testViewBoxClippingMatchesExplicitGeometry
+{
+    NSString* content = @"<rect x='110' y='110' width='80' height='80' stroke='green' stroke-width='10' %@/>";
+    NSString* body = [NSString stringWithFormat:content, @"clip-path='circle() view-box'"];
+    NSString* reference = [@"<defs><clipPath id='c'><circle cx='200' cy='100' r='100'/></clipPath></defs>"
+        stringByAppendingString:[NSString stringWithFormat:content, @"clip-path='url(#c)'"]];
+    [self compareBody:body referenceBody:reference name:@"clip-viewbox-explicit" tolerance:.025];
+    body = @"<svg x='30' width='200' height='200' viewBox='0 0 20 20'>"
+            "<rect x='11' y='11' width='8' height='8' stroke='green' clip-path='circle() view-box'/></svg>";
+    reference = @"<svg x='30' width='200' height='200' viewBox='0 0 20 20'>"
+                 "<defs><clipPath id='c'><circle cx='10' cy='10' r='10'/></clipPath></defs>"
+                 "<rect x='11' y='11' width='8' height='8' stroke='green' clip-path='url(#c)'/></svg>";
+    [self compareBody:body referenceBody:reference name:@"clip-nested-viewbox-explicit" tolerance:.025];
+}
+
+- (void)testStrokedPatternMatchesExplicitGeometry
+{
+    NSString* body = @"<defs><pattern id='p' viewBox='0 0 10 10' width='.25' height='.25'>"
+                     "<polygon points='0,0 2,5 0,10 5,8 10,10 8,5 10,0 5,2'/></pattern></defs>"
+                     "<circle cx='180' cy='90' r='40' fill='none' stroke-width='20' stroke='url(#p)'/>";
+    NSString* reference = [body stringByReplacingOccurrencesOfString:@"width='.25' height='.25'"
+                                                          withString:@"patternUnits='userSpaceOnUse' x='140' y='50' width='20' height='20'"];
+    [self compareBody:[NSString stringWithFormat:@"<g transform='translate(-200 -80) scale(2)'>%@</g>", body]
+        referenceBody:[NSString stringWithFormat:@"<g transform='translate(-200 -80) scale(2)'>%@</g>", reference]
+                 name:@"pattern-stroke-explicit" tolerance:.025];
+}
+
 - (void)testTransformOriginsMatchWebKit
 {
     [self compareBody:@"<style>.box {transform-origin:center;transform-box:fill-box}</style>"

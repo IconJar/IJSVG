@@ -72,21 +72,19 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
         yLength = yLength.lengthByMatchingPercentage;
     }
 
-    *origin = CGPointMake([xLength computeValue:rect.size.width],
-                          [yLength computeValue:rect.size.height]);
+    CGSize percentageSize = _patternNode.units == IJSVGUnitUserSpaceOnUse ? self.viewPort.size : rect.size;
+    *origin = CGPointMake([xLength computeValue:percentageSize.width],
+                          [yLength computeValue:percentageSize.height]);
 
-    CGFloat width = [wLength computeValue:rect.size.width];
-    CGFloat height = [hLength computeValue:rect.size.height];
+    CGFloat width = [wLength computeValue:percentageSize.width];
+    CGFloat height = [hLength computeValue:percentageSize.height];
     *cellSize = CGSizeMake(width, height);
 
-    // who knew that patterns have viewBoxes? Not me, but here is an implementation
+    // Who knew that patterns have viewBoxes? Not me, but here is an implementation
     // of it anyway
     if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
-        IJSVGUnitRect* nViewBox = _patternNode.viewBox;
-        if(_patternNode.contentUnits == IJSVGUnitObjectBoundingBox) {
-            nViewBox = [nViewBox copyByConvertingToUnitsLengthType:IJSVGUnitLengthTypePercentage];
-        }
-        *viewBox = [nViewBox computeValue:rect.size];
+        // A viewBox establishes its own coordinates, regardless of content units.
+        *viewBox = [_patternNode.viewBox computeValue:rect.size];
     } else {
         // no viewbox is assigned, so just map it 1:1 with its cellSize
         *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
@@ -107,10 +105,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGPaint* paint = (IJSVGPaint*)self.referencingPaint;
 
     // transform us back into the correct space
-    CGAffineTransform transform = CGAffineTransformIdentity;
-    if(_patternNode.units == IJSVGUnitUserSpaceOnUse) {
-        transform = [IJSVGPaint userSpaceTransformForPaint:paint];
-    }
+    CGAffineTransform transform = [IJSVGPaint userSpaceTransformForPaint:paint];
 
     CGPoint origin = CGPointZero;
     [self computeCellSize:&_cellSize
@@ -121,6 +116,10 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     // Place the tile in user space before moving into the local space of the referencing paint.
     transform = CGAffineTransformConcat(IJSVGConcatTransforms(self.patternNode.transforms),
                                         transform);
+    if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
+        origin.x += paint.boundingBox.origin.x;
+        origin.y += paint.boundingBox.origin.y;
+    }
     transform = CGAffineTransformTranslate(transform, origin.x, origin.y);
 
     // its possible that this paint is shifted inwards due to a stroke on the

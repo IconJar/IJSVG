@@ -860,6 +860,8 @@ typedef struct {
                 node.clipPath = (id)[self computeDetachedNodeWithIdentifier:identifier
                                                             referencingNode:node
                                                                     element:element];
+            } else {
+                node.clipPath = [IJSVGClipPath clipPathWithBasicShape:clipPathValue];
             }
         };
     }

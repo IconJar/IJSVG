@@ -2159,18 +2159,25 @@ inMeasurementPaint:(IJSVGPaint*)paint
         .size = paint.outerBoundingBox.size
     };
 
-    CGRect unitBounds = pattern.units == IJSVGUnitUserSpaceOnUse ? self.viewPort : paint.boundingBox;
+    CGRect unitBounds = pattern.contentUnits == IJSVGUnitUserSpaceOnUse ? self.viewPort : paint.boundingBox;
     NSArray<NSValue*>* contextBounds = [_contextPatternBounds objectForKey:pattern];
     CGRect viewport = self.viewPort;
     if(contextBounds != nil) {
         viewport = contextBounds[1].rectValue;
         unitBounds = pattern.contentUnits == IJSVGUnitObjectBoundingBox ?
             contextBounds[0].rectValue : viewport;
-        // Placement belongs to the tile, never to the artwork inside that tile.
-        pattern = [pattern copy];
-        pattern.transforms = @[];
-        pattern.x = [IJSVGUnitLength unitWithFloat:0];
-        pattern.y = [IJSVGUnitLength unitWithFloat:0];
+    }
+    patternPaint.viewPort = viewport;
+
+    // Placement belongs to the tile, never to the artwork inside that tile.
+    pattern = [pattern copy];
+    pattern.transforms = @[];
+    pattern.x = [IJSVGUnitLength unitWithFloat:0];
+    pattern.y = [IJSVGUnitLength unitWithFloat:0];
+    if(pattern.viewBox != nil && !pattern.viewBox.isZeroRect) {
+        unitBounds = [pattern.viewBox computeValue:paint.boundingBox.size];
+        viewport = unitBounds;
+        pattern.contentUnits = IJSVGUnitUserSpaceOnUse;
     }
     __block IJSVGPaint* patternFill = nil;
     [self withViewPort:viewport
@@ -2342,10 +2349,27 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (CGPathRef)newClipPathFromNode:(IJSVGClipPath*)node
                        fromPaint:(IJSVGPaint*)paint
 {
+    if(node.hasBasicShape) {
+        CGAffineTransform transform = [IJSVGPaint userSpaceTransformForPaint:paint];
+        CGRect fillBox = CGRectApplyAffineTransform(paint.boundingBox, transform);
+        CGRect strokeBox = CGRectApplyAffineTransform(paint.outerBoundingBox, transform);
+        CGRect viewBox = CGRectApplyAffineTransform(self.viewPort, transform);
+        return [node newBasicShapePathWithFillBox:fillBox
+                                        strokeBox:strokeBox
+                                          viewBox:viewBox
+                                   lengthResolver:^CGFloat(IJSVGUnitLength* length, CGFloat percentage) {
+            return [self resolveCSSLength:length
+                               percentage:percentage
+                                     node:paint.sourceNode];
+        }];
+    }
     CGMutablePathRef mPath = CGPathCreateMutable();
     CGAffineTransform transform = CGAffineTransformIdentity;
     if(node.contentUnits == IJSVGUnitUserSpaceOnUse) {
         transform = [IJSVGPaint userSpaceTransformForPaint:paint];
+    } else {
+        transform = CGAffineTransformMakeTranslation(paint.boundingBox.origin.x - paint.outerBoundingBox.origin.x,
+                                                      paint.boundingBox.origin.y - paint.outerBoundingBox.origin.y);
     }
     CGRect paintRect = paint.innerBoundingBox;
     CGAffineTransform paintTransform = CGAffineTransformMakeTranslation(CGRectGetMinX(paintRect),
@@ -2834,7 +2858,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
     CGRect frame = viewPort;
     if(!_renderingOptions.ignoreIntrinsicSize && rootNode.intrinsicSize != nil) {
-        CGSize size = [self.lengthFontResolver resolveSize:rootNode.intrinsicSize percentage:viewPort.size node:rootNode];
+        CGSize size = [self.lengthFontResolver resolveSize:rootNode.intrinsicSize
+                                                percentage:viewPort.size
+                                                      node:rootNode];
         if(size.width != 0.f) {
             frame.size.width = size.width;
         }

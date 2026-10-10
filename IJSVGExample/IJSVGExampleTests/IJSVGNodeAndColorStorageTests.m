@@ -8,6 +8,7 @@
 
 #import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGTraitedColor.h>
@@ -17,6 +18,29 @@
 @end
 
 @implementation IJSVGNodeAndColorStorageTests
+
+- (void)testBasicClipShapeValidationAndCopy
+{
+    NSArray* invalid = @[@"circle(-1)", @"circle(10 20)", @"ellipse(10)", @"circle(at)",
+                         @"circle(at 10 20 30)", @"circle(10) unknown", @"circle(10) fill-box stroke-box",
+                         @"fill-box circle(10) stroke-box", @"circle(10", @"circle(10))", @"circle(calc(10px))"];
+    for(NSString* value in invalid) {
+        XCTAssertNil([IJSVGClipPath clipPathWithBasicShape:value], @"%@", value);
+    }
+    IJSVGClipPath* original = [IJSVGClipPath clipPathWithBasicShape:@"ellipse(25% 40% at 30% 60%) fill-box"];
+    IJSVGClipPath* copy = original.copy;
+    XCTAssertNotNil(copy);
+    XCTAssertTrue(copy.hasBasicShape);
+    CGFloat (^resolver)(IJSVGUnitLength*, CGFloat) = ^CGFloat(IJSVGUnitLength* length, CGFloat percentage) {
+        return [length computeValue:percentage];
+    };
+    CGPathRef path = [copy newBasicShapePathWithFillBox:CGRectMake(10, 20, 200, 100)
+                                            strokeBox:CGRectMake(0, 10, 220, 120)
+                                              viewBox:CGRectMake(0, 0, 400, 200)
+                                       lengthResolver:resolver];
+    XCTAssertTrue(CGRectEqualToRect(CGPathGetBoundingBox(path), CGRectMake(20, 40, 100, 80)));
+    CGPathRelease(path);
+}
 
 - (void)testCurrentColorStorageAndCopyResolveInheritedPaint
 {
