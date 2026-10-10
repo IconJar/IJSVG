@@ -676,6 +676,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
     self.x = node.x;
     self.y = node.y;
+    self.geometryLengths = node.geometryLengths;
     self.width = node.width;
     self.height = node.height;
     self.offset = node.offset.copy;

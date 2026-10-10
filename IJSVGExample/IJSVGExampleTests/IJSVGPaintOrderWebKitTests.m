@@ -21,6 +21,46 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testCSSGeometryMatchesWebKit
+{
+    [self compareBody:@"<style>.box {x:20px;y:20px;width:90px;height:60px;rx:12px;ry:8px}"
+                       "circle {cx:180px;cy:55px;r:30px} ellipse {cx:290px;cy:55px;rx:40px;ry:25px}</style>"
+                       "<rect class='box' width='2' height='2' fill='navy'/>"
+                       "<circle cx='1' cy='1' r='1' fill='red'/><ellipse rx='1' ry='1' fill='green'/>"
+                       "<rect x='10' y='110' width='120' height='60' style='x:20px;width:90px;rx:auto;ry:15px' fill='purple'/>"
+                 name:@"css-geometry" tolerance:.025];
+}
+
+- (void)testCSSGeometryInheritanceAndCascadeMatchesWebKit
+{
+    [self compareBody:@"<style>#a {r:30px!important} circle {r:10px} .position {cx:50%;cy:50%}</style>"
+                       "<circle id='a' class='position' cx='20' cy='20' r='5' style='r:20px' fill='navy'/>"
+                       "<g font-family='Helvetica' font-size='20' style='r:1em;cx:50px;cy:50px'>"
+                       "<circle font-size='50' style='r:inherit;cx:inherit;cy:inherit' fill='red'/></g>"
+                       "<rect x='280' y='30' width='80' height='70' style='width:100px;width:invalid' fill='green'/>"
+                 name:@"css-geometry-cascade" tolerance:.025];
+}
+
+- (void)testCSSGeometryPercentagesMatchesWebKit
+{
+    [self compareBody:@"<circle style='cx:25%;cy:50%;r:12%' fill='navy'/>"
+                       "<ellipse style='cx:60%;cy:50%;rx:12%;ry:auto' fill='green'/>"
+                 name:@"css-geometry-percentages" tolerance:.025];
+}
+
+- (void)testCSSGeometryImagesAndUseMatchWebKit
+{
+    // WebKit does not apply these image and use positioning declarations.
+    // Compare against explicit geometry for those elements.
+    [self compareBody:@"<style>.sized {x:20px;y:20px;width:120px;height:auto} use {x:200px;y:30px;width:100px;height:100px}</style>"
+                       "<image class='sized' width='10' height='10' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII='/>"
+                       "<symbol id='s' viewBox='0 0 10 10'><rect width='10' height='10' fill='navy'/></symbol>"
+                       "<use href='#s' x='5' y='5' width='10' height='10'/>"
+        referenceBody:@"<image x='20' y='20' width='120' height='60' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII='/>"
+                       "<rect x='200' y='30' width='100' height='100' fill='navy'/>"
+                 name:@"css-geometry-image-use" tolerance:.025];
+}
+
 - (void)testAutomaticRadiiMatchesWebKit
 {
     [self compareBody:@"<ellipse cx='50' cy='60' rx='30'/><ellipse cx='130' cy='60' ry='30'/>"

@@ -501,7 +501,12 @@ BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInt
 // it does not look or skip white space as the previous method
 // handles this for us
 // inspired and modified from http://www.leapsecond.com/tools/fast_atof.c
-CGFloat IJSVGParseFloat(const char* buffer)
+static inline char IJSVGFloatCharacter(const char* buffer, const char* end)
+{
+    return buffer == end ? '\0' : *buffer;
+}
+
+static inline CGFloat IJSVGParseFloatRange(const char* buffer, const char* end)
 {
     const char* start = buffer;
     int fraction;
@@ -509,24 +514,24 @@ CGFloat IJSVGParseFloat(const char* buffer)
 
     // work out a sign, if any, might not be, who knows
     sign = 1.f;
-    if(*buffer == '-') {
+    if(IJSVGFloatCharacter(buffer, end) == '-') {
         sign = -1.f;
         buffer += 1;
-    } else if(*buffer == '+') {
+    } else if(IJSVGFloatCharacter(buffer, end) == '+') {
         buffer += 1;
     }
 
     // get numbers before decimal point or exponent
-    for (value = 0.f; VALID_DIGIT(*buffer); buffer += 1) {
-        value = value * 10.f + (*buffer - '0');
+    for(value = 0.f; VALID_DIGIT(IJSVGFloatCharacter(buffer, end)); buffer += 1) {
+        value = value * 10.f + (IJSVGFloatCharacter(buffer, end) - '0');
     }
 
     // get digits after decimal point
-    if(*buffer == '.') {
+    if(IJSVGFloatCharacter(buffer, end) == '.') {
         double pow10 = 10.f;
         buffer += 1;
-        while (VALID_DIGIT(*buffer)) {
-            value += (*buffer - '0') / pow10;
+        while(VALID_DIGIT(IJSVGFloatCharacter(buffer, end))) {
+            value += (IJSVGFloatCharacter(buffer, end) - '0') / pow10;
             pow10 *= 10.f;
             buffer += 1;
         }
@@ -535,34 +540,36 @@ CGFloat IJSVGParseFloat(const char* buffer)
     // handle exponent
     fraction = 0;
     scale = 1.f;
-    if((*buffer | ('E' ^ 'e')) == 'e') {
+    if((IJSVGFloatCharacter(buffer, end) | ('E' ^ 'e')) == 'e') {
         unsigned int exponent;
         buffer += 1;
-        if(*buffer == '-') {
+        if(IJSVGFloatCharacter(buffer, end) == '-') {
             fraction = 1;
             buffer += 1;
-        } else if(*buffer == '+') {
+        } else if(IJSVGFloatCharacter(buffer, end) == '+') {
             buffer += 1;
         }
-        for (exponent = 0; VALID_DIGIT(*buffer); buffer += 1) {
+        for(exponent = 0; VALID_DIGIT(IJSVGFloatCharacter(buffer, end)); buffer += 1) {
             if(exponent <= 308) {
-                exponent = exponent * 10 + (*buffer - '0');
+                exponent = exponent * 10 + (IJSVGFloatCharacter(buffer, end) - '0');
             }
         }
         if(exponent > 308) {
             // Preserve overflow and subnormal values instead of silently clamping
             // the exponent. Keep the fast conversion for ordinary SVG numbers.
-            return (CGFloat)[[NSString stringWithUTF8String:start] doubleValue];
+            return (CGFloat)[[[NSString alloc] initWithBytes:start
+                                                       length:end == NULL ? strlen(start) : (NSUInteger)(end - start)
+                                                     encoding:NSUTF8StringEncoding] doubleValue];
         }
-        while (exponent >= 50) {
+        while(exponent >= 50) {
             scale *= 1E50;
             exponent -= 50;
         }
-        while (exponent >= 8) {
+        while(exponent >= 8) {
             scale *= 1E8;
             exponent -= 8;
         }
-        while (exponent > 0) {
+        while(exponent > 0) {
             scale *= 10.f;
             exponent -= 1;
         }
@@ -570,6 +577,16 @@ CGFloat IJSVGParseFloat(const char* buffer)
 
     // make sure we cast this to a CGFloat before return
     return (CGFloat)(sign * (fraction ? (value / scale) : (value * scale)));
+}
+
+CGFloat IJSVGParseFloat(const char* buffer)
+{
+    return IJSVGParseFloatRange(buffer, NULL);
+}
+
+CGFloat IJSVGParseFloatWithLength(const char* buffer, NSUInteger length)
+{
+    return IJSVGParseFloatRange(buffer, buffer + length);
 }
 
 @end

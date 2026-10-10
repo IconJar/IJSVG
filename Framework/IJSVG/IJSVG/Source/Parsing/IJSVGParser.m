@@ -729,13 +729,9 @@ typedef struct {
         }
     }
 
-    IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
+    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
         [_styleSheet styleForNode:(id<IJSVGStyleSheetSelectorNode>)[self selectorNodeForElement:element] ?: node] : nil;
   
-    if(styleSheet != nil) {
-        IJSVGStoreStyleAttributes(styleSheet, activeAttributes, attributeValues);
-    }
-
     __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* nodeStyle = nil;
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
         nodeStyle = [self.inlineStyles objectForKey:value];
@@ -749,12 +745,10 @@ typedef struct {
             NSUInteger cost = value.length * sizeof(unichar);
             [self.inlineStyles setObject:nodeStyle forKey:value cost:cost];
         }
-        if(styleSheet != nil) {
-            nodeStyle = [styleSheet mergedStyle:nodeStyle];
-        }
-        IJSVGStoreStyleAttributes(nodeStyle, activeAttributes, attributeValues);
+
     }
 
+    IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
     IJSVGApplyTextAttributes(node, attributeValues);
 
     if([node isKindOfClass:IJSVGPath.class] &&
@@ -785,30 +779,36 @@ typedef struct {
         primitive.input2 = parameters[IJSVGAttributeIn2];
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeX, &value)) {
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeX, &value) &&
+       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeX, node)) {
         node.x = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeY, &value)) {
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeY, &value) &&
+       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeY, node)) {
         node.y = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeWidth, &value)) {
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeWidth, &value) &&
+       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeWidth, node)) {
         IJSVGUnitLength* width = IJSVGDimensionFromString(value, node.type);
         if(width != nil) {
             node.width = width;
         }
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeHeight, &value)) {
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeHeight, &value) &&
+       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeHeight, node)) {
         IJSVGUnitLength* height = IJSVGDimensionFromString(value, node.type);
         if(height != nil) {
             node.height = height;
         }
     }
+    IJSVGApplyGeometryAttributes(node, attributeValues, styleSheet, nodeStyle);
+
     if(node.type == IJSVGNodeTypeSymbol) {
         IJSVGRootNode* symbol = (IJSVGRootNode*)node;
-        symbol.refX = IJSVGSymbolReferenceFromString(
-            IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefX), IJSVGNodeAttributeRefX);
-        symbol.refY = IJSVGSymbolReferenceFromString(
-            IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefY), IJSVGNodeAttributeRefY);
+        symbol.refX = IJSVGSymbolReferenceFromString(IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefX),
+                                                     IJSVGNodeAttributeRefX);
+        symbol.refY = IJSVGSymbolReferenceFromString(IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefY),
+                                                     IJSVGNodeAttributeRefY);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOpacity, &value)) {
         node.opacity = [IJSVGUnitLength unitWithString:value];
@@ -1838,10 +1838,6 @@ typedef struct {
                                                     onNode:node
                                          ignoredAttributes:nil];
     
-    node.cx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCX].stringValue];
-    node.cy = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCY].stringValue];
-    node.rx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRX].stringValue];
-    node.ry = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRY].stringValue];
     return node;
 }
 
@@ -1858,10 +1854,6 @@ typedef struct {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
-    
-    node.cx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCX].stringValue];
-    node.cy = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeCY].stringValue];
-    node.r = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeR].stringValue];
     
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
@@ -1958,22 +1950,9 @@ typedef struct {
         [group addChild:node];
     }
     
-    node.x = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeX].stringValue];
-    node.y = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeY].stringValue];
-    node.width = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeWidth].stringValue];
-    node.height = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeHeight].stringValue];
-    node.rx = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRX].stringValue];
-    node.ry = [IJSVGUnitLength unitWithString:[element attributeForName:IJSVGAttributeRY].stringValue];
-    
-    IJSVGBitFlags64* flags = [[IJSVGBitFlags64 alloc] init];
-    [flags setBit:IJSVGNodeAttributeX];
-    [flags setBit:IJSVGNodeAttributeY];
-    [flags setBit:IJSVGNodeAttributeWidth];
-    [flags setBit:IJSVGNodeAttributeHeight];
-    
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
-                                         ignoredAttributes:flags];
+                                         ignoredAttributes:nil];
     
     return node;
 }

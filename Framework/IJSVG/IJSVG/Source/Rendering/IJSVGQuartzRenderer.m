@@ -912,12 +912,17 @@ inMeasurementPaint:(IJSVGPaint*)paint
                                      percentage:height
                                            node:node];
             IJSVGUnitLength* radius = [self unit:node.r matchingNode:node];
+            BOOL objectUnits = radius != node.r;
+            CGFloat diagonal = hypot(width, height) / M_SQRT2;
             CGFloat rx = [self resolveCSSLength:radius
-                                     percentage:width
+                                     percentage:objectUnits ? width : diagonal
                                            node:node];
-            CGFloat ry = [self resolveCSSLength:radius
-                                     percentage:height
-                                           node:node];
+            CGFloat ry = objectUnits ? [self resolveCSSLength:radius
+                                                   percentage:height
+                                                         node:node] : rx;
+            if(rx <= 0.f || ry <= 0.f) {
+                break;
+            }
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
             CGPathAddEllipseInRect(path, &transform, rect);
             break;

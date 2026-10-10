@@ -263,6 +263,23 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     return self;
 }
 
+- (IJSVGNode*)geometryFontOwnerForLength:(IJSVGUnitLength*)length
+                                    node:(IJSVGNode*)node
+{
+    NSDictionary<NSNumber*, IJSVGUnitLength*>* lengths = node.geometryLengths;
+    for(NSNumber* attribute in lengths) {
+        if(lengths[attribute] != length) {
+            continue;
+        }
+        while(node.styleParent != nil &&
+              node.styleParent.geometryLengths[attribute] == length) {
+            node = node.styleParent;
+        }
+        break;
+    }
+    return node;
+}
+
 - (CGFloat)resolveLength:(IJSVGUnitLength*)length
               percentage:(CGFloat)percentage
                     node:(IJSVGNode*)node
@@ -270,6 +287,8 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
         return [length computeValue:percentage];
     }
+    node = [self geometryFontOwnerForLength:length
+                                       node:node];
     IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
     // SVG geometry rounds x height to a user unit, matching WebKit.
     return [length computeValue:percentage
@@ -284,6 +303,8 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
         return [length computeValue:percentage];
     }
+    node = [self geometryFontOwnerForLength:length
+                                       node:node];
     IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
     return [length computeValue:percentage
                        fontSize:style.size

@@ -56,6 +56,7 @@ CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger leng
 // Visits authored commands, keeping an arcs cubic approximation in one segment.
 void IJSVGEnumeratePathDataSegments(NSString* data, void (^handler)(char command, CGPathRef segment));
 CGFloat IJSVGParseFloat(const char* buffer);
+CGFloat IJSVGParseFloatWithLength(const char* buffer, NSUInteger length);
 
 @end
 

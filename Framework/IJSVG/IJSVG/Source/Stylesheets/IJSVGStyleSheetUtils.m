@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <math.h>
@@ -818,35 +819,61 @@ static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* 
     free(chars);
 }
 
-typedef void (^IJSVGStyleSheetDeclarationExpander)(NSString*, NSMutableDictionary*);
+typedef BOOL (^IJSVGStyleSheetDeclarationExpander)(NSString*, NSDictionary**);
 
-NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
-                                                                     NSString* value)
+NSString* IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
+                                            NSDictionary<NSString*, NSString*>** expanded)
 {
     static NSDictionary<NSString*, IJSVGStyleSheetDeclarationExpander>* expanders;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        expanders = @{
-            IJSVGAttributeMarker: ^(NSString* shorthand, NSMutableDictionary* values) {
-                values[IJSVGAttributeMarkerStart] = shorthand;
-                values[IJSVGAttributeMarkerMid] = shorthand;
-                values[IJSVGAttributeMarkerEnd] = shorthand;
+        NSMutableDictionary<NSString*, IJSVGStyleSheetDeclarationExpander>* handlers = [@{
+            IJSVGAttributeMarker: ^BOOL(NSString* shorthand, NSDictionary** values) {
+                *values = @{
+                    IJSVGAttributeMarkerStart: shorthand,
+                    IJSVGAttributeMarkerMid: shorthand,
+                    IJSVGAttributeMarkerEnd: shorthand
+                };
+                return YES;
             },
-            IJSVGAttributeFont: ^(NSString* shorthand, NSMutableDictionary* values) {
-                IJSVGStyleSheetExpandFont(shorthand, values);
+            IJSVGAttributeFont: ^BOOL(NSString* shorthand, NSDictionary** values) {
+                NSMutableDictionary* properties = [[NSMutableDictionary alloc] init];
+                IJSVGStyleSheetExpandFont(shorthand, properties);
+                *values = properties;
+                return properties.count != 0;
             }
-        };
+        } mutableCopy];
+        NSArray<NSString*>* geometryProperties = @[
+            IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
+            IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX, IJSVGAttributeRY
+        ];
+        for(NSString* geometryProperty in geometryProperties) {
+            IJSVGNodeAttribute attribute = (IJSVGNodeAttribute)IJSVGNodeAttributeForName(geometryProperty);
+            handlers[geometryProperty] = ^BOOL(NSString* geometryValue, NSDictionary** values) {
+                return [geometryValue isKindOfClass:NSString.class] &&
+                    IJSVGGeometryLengthIsValid(geometryValue, attribute);
+            };
+        }
+        expanders = [handlers copy];
     });
     NSString* name = [property hasPrefix:@"--"] ? property : property.lowercaseString;
     IJSVGStyleSheetDeclarationExpander expander = expanders[name];
-    if(expander == nil) {
+    *expanded = nil;
+    return expander == nil || expander(value, expanded) ? name : nil;
+}
+
+NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
+                                                                     NSString* value)
+{
+    NSDictionary* expanded = nil;
+    NSString* name = IJSVGStyleSheetResolveDeclaration(property, value, &expanded);
+    if(name == nil) {
+        return @{};
+    }
+    if(expanded == nil) {
         return @{name: value};
     }
-    NSMutableDictionary* expanded = [[NSMutableDictionary alloc] init];
-    expander(value, expanded);
-    // Invalid shorthands leave earlier declarations intact.
-    if(expanded.count != 0) {
-        expanded[name] = value;
-    }
-    return expanded;
+    NSMutableDictionary* declarations = [expanded mutableCopy];
+    declarations[name] = value;
+    return declarations;
 }

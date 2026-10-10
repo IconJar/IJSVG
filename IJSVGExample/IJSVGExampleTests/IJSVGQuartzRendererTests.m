@@ -17,6 +17,106 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testCSSGeometryParsingPerformance
+{
+    NSMutableString* source = [NSMutableString stringWithString:@"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><style>.a {cx:16px;cy:16px;r:8px} .b {x:2px;y:4px;width:20px;height:18px;rx:2px;ry:3px}</style>"];
+    for(NSUInteger index = 0; index < 100; index++) {
+        [source appendString:@"<circle class='a'/><rect class='b' style='width:1em;height:50%'/>"];
+    }
+    [source appendString:@"</svg>"];
+    [self measureBlock:^{
+        for(NSUInteger index = 0; index < 100; index++) {
+            @autoreleasepool {
+                IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+                XCTAssertNotNil(svg);
+            }
+        }
+    }];
+}
+
+- (void)testCSSGeometryOverridesPresentationAttributes
+{
+    [self assertBody:@"<style>.box { x:4px; y:6px; width:20px; height:18px; rx:3px; ry:4px; }</style>"
+                      "<rect class='box' x='1' y='1' width='2' height='2' rx='1' ry='1'/>"
+        rendersLike:@"<rect x='4' y='6' width='20' height='18' rx='3' ry='4'/>"];
+    [self assertBody:@"<style>circle {cx:16px;cy:17px;r:8px} ellipse {cx:16px;cy:16px;rx:9px;ry:6px}</style>"
+                      "<circle cx='1' cy='1' r='1'/><ellipse cx='1' cy='1' rx='1' ry='1' fill='red'/>"
+        rendersLike:@"<circle cx='16' cy='17' r='8'/><ellipse cx='16' cy='16' rx='9' ry='6' fill='red'/>"];
+    [self assertBody:@"<style>#a {width:20px!important} .a {width:5px;height:12px} rect {width:2px}</style>"
+                      "<rect id='a' class='a' width='1' height='1' style='width:10px;x:3px;y:4px'/>"
+        rendersLike:@"<rect x='3' y='4' width='20' height='12'/>"];
+}
+
+- (void)testCSSGeometryKeywordsAndInheritance
+{
+    [self assertBody:@"<style>.a {r:1em;cx:16px;cy:16px}</style>"
+                      "<g class='a' font-size='4'><circle class='a' font-size='8'/></g>"
+        rendersLike:@"<circle r='8' cx='16' cy='16'/>"];
+    [self assertBody:@"<g style='r:1em;cx:50%;cy:50%' font-size='4'>"
+                      "<circle style='r:inherit;cx:inherit;cy:inherit' font-size='12'/></g>"
+        rendersLike:@"<circle r='4' cx='16' cy='16'/>"];
+    [self assertBody:@"<g style='r:8px;cx:16px;cy:16px'><circle/></g>" rendersLike:@""];
+    for(NSString* keyword in @[@"initial", @"unset", @"revert", @"revert-layer"]) {
+        [self assertBody:[NSString stringWithFormat:@"<circle r='8' cx='16' cy='16' style='r:%@'/>", keyword]
+            rendersLike:@""];
+    }
+    [self assertBody:@"<rect x='3' y='4' width='20' height='20' rx='8' ry='4' style='rx:auto'/>"
+        rendersLike:@"<rect x='3' y='4' width='20' height='20' rx='4' ry='4'/>"];
+}
+
+- (void)testInlineStylesPreserveImportantValuesAndCachedRules
+{
+    [self assertBody:@"<style>.a {width:10px!important;height:8px;fill:red!important;stroke:blue;stroke-width:1px}</style>"
+                      "<rect class='a' style='width:2px;height:6px;fill:green;stroke:none'/>"
+                      "<rect class='a' y='10' style='width:20px!important;height:6px;fill:green!important;stroke:none'/>"
+                      "<rect class='a' y='20' style='width:bad!important;height:6px;stroke:none'/>"
+        rendersLike:@"<rect width='10' height='6' fill='red'/>"
+                      "<rect y='10' width='20' height='6' fill='green'/>"
+                      "<rect y='20' width='10' height='6' fill='red'/>"];
+}
+
+- (void)testCSSGeometryUnitsAndInvalidDeclarations
+{
+    [self assertBody:@"<rect style='x:-.5em;y:25%;width:1in;height:.5em' font-size='16'/>"
+        rendersLike:@"<rect x='-8' y='8' width='96' height='8'/>"];
+    [self assertBody:@"<circle style='cx:16px;cy:16px;r:4px;r:banana;r:-1px;r:2px 3px'/>"
+        rendersLike:@"<circle cx='16' cy='16' r='4'/>"];
+    [self assertBody:@"<style>rect { width:20px;height:10px } #a {width:invalid!important}</style>"
+                      "<rect id='a' style='width:8px;width:invalid'/>"
+        rendersLike:@"<rect width='8' height='10'/>"];
+    CGFloat radius = hypot(32.f, 16.f) / M_SQRT2 * .25;
+    [self assertBody:@"<svg width='32' height='16'><circle style='cx:50%;cy:50%;r:25%'/></svg>"
+        rendersLike:[NSString stringWithFormat:@"<svg width='32' height='16'><circle cx='16' cy='8' r='%.12g'/></svg>", radius]];
+}
+
+- (void)testCSSGeometryWithTransformsClipsAndMasks
+{
+    [self assertBody:@"<defs><clipPath id='c'><circle style='cx:16px;cy:16px;r:10px'/></clipPath>"
+                      "<mask id='m'><rect style='x:0;y:0;width:100%;height:50%' fill='white'/></mask></defs>"
+                      "<g transform='translate(2 1)' clip-path='url(#c)' mask='url(#m)'>"
+                      "<rect style='x:3px;y:4px;width:25px;height:24px;rx:3px' transform='rotate(10 16 16)'/></g>"
+        rendersLike:@"<defs><clipPath id='c'><circle cx='16' cy='16' r='10'/></clipPath>"
+                      "<mask id='m'><rect x='0' y='0' width='100%' height='50%' fill='white'/></mask></defs>"
+                      "<g transform='translate(2 1)' clip-path='url(#c)' mask='url(#m)'>"
+                      "<rect x='3' y='4' width='25' height='24' rx='3' transform='rotate(10 16 16)'/></g>"];
+    [self assertBody:@"<defs><clipPath id='c' clipPathUnits='objectBoundingBox'>"
+                      "<circle style='cx:50%;cy:50%;r:50%'/></clipPath></defs>"
+                      "<rect width='32' height='16' clip-path='url(#c)'/>"
+        rendersLike:@"<defs><clipPath id='c' clipPathUnits='objectBoundingBox'>"
+                      "<circle cx='50%' cy='50%' r='50%'/></clipPath></defs>"
+                      "<rect width='32' height='16' clip-path='url(#c)'/>"];
+}
+
+- (void)testCSSGeometryOnNestedViewportsAndUses
+{
+    [self assertBody:@"<svg x='0' y='0' width='32' height='32' style='x:4px;y:6px;width:20px;height:16px' viewBox='0 0 10 8'>"
+                      "<rect style='width:100%;height:100%'/></svg>"
+        rendersLike:@"<rect x='4' y='6' width='20' height='16'/>"];
+    [self assertBody:@"<defs><symbol id='s' viewBox='0 0 10 10'><circle style='cx:5px;cy:5px;r:5px'/></symbol></defs>"
+                      "<use href='#s' style='x:4px;y:6px;width:20px;height:20px'/>"
+        rendersLike:@"<circle cx='14' cy='16' r='10'/>"];
+}
+
 - (void)assertBody:(NSString*)body rendersLike:(NSString*)reference
 {
     IJSVG* svg = [self svgWithBody:body];

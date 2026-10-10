@@ -89,7 +89,16 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
             return;
         }
     }
-    NSDictionary* declarations = IJSVGStyleSheetExpandDeclaration(key, value);
+    NSDictionary* declarations = nil;
+    NSString* name = IJSVGStyleSheetResolveDeclaration(key, value, &declarations);
+    if(name == nil) {
+        return;
+    }
+
+    [self setResolvedValue:value
+               forProperty:name
+                 important:important];
+
     for(NSString* property in declarations) {
         [self setResolvedValue:declarations[property]
                    forProperty:property

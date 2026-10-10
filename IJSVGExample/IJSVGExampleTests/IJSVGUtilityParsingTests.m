@@ -15,6 +15,7 @@
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>
+#import "../../Framework/IJSVG/IJSVG/Source/Parsing/IJSVGParserUtils.h"
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGUnitRect.h>
@@ -26,6 +27,34 @@
 @end
 
 @implementation IJSVGUtilityParsingTests
+
+- (void)testBoundedFloatParsingStopsAtTheRequestedLength
+{
+    const char number[] = { '1', '2', '.', '5' };
+    XCTAssertEqual(IJSVGParseFloatWithLength(number, sizeof(number)), 12.5);
+    XCTAssertEqual(IJSVGParseFloatWithLength("12.5e2", 4), 12.5);
+    XCTAssertEqual(IJSVGParseFloatWithLength("+4.25e2px", 7), 425.0);
+    XCTAssertEqual(IJSVGParseFloatWithLength(number, 0), 0.0);
+    XCTAssertEqualWithAccuracy(IJSVGParseFloatWithLength("1e-32099", 6), 1e-320, 1e-323);
+    XCTAssertTrue(isinf(IJSVGParseFloatWithLength("1e999px", 5)));
+}
+
+- (void)testGeometryValidationMatchesLengthParsing
+{
+    NSArray<NSString*>* values = @[@"12.5", @"-2em", @"50%", @"1e-320", @"-1e-999",
+                                   @"auto", @"inherit", @"initial", @"1,2", @"1 2", @"1e999",
+                                   @"4unknown", @"", @"1\0em", @" 2ex "];
+    for(NSNumber* attribute in @[@(IJSVGNodeAttributeX), @(IJSVGNodeAttributeR), @(IJSVGNodeAttributeWidth)]) {
+        for(NSString* value in values) {
+            XCTAssertEqual(IJSVGGeometryLengthIsValid(value, attribute.unsignedIntegerValue),
+                           IJSVGGeometryLengthFromString(value, attribute.unsignedIntegerValue) != nil, @"%@", value);
+        }
+    }
+    XCTAssertFalse(IJSVGGeometryLengthIsValid(@"-1e-999", IJSVGNodeAttributeR));
+    XCTAssertTrue(IJSVGGeometryLengthIsValid(@"-1e-999", IJSVGNodeAttributeX));
+    XCTAssertFalse(IJSVGGeometryLengthIsValid(@"auto", IJSVGNodeAttributeR));
+    XCTAssertTrue(IJSVGGeometryLengthIsValid(@"auto", IJSVGNodeAttributeWidth));
+}
 
 - (void)testParseFloatHandlesSignsDecimalsAndExponents
 {

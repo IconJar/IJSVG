@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGPath.h>
 #import <string.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -24,31 +25,28 @@ static BOOL IJSVGLengthListIsDigit(char character)
     return character >= '0' && character <= '9';
 }
 
-NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
+static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL single,
+                                  NSMutableArray<IJSVGUnitLength*>* lengths,
+                                  IJSVGUnitLength** singleLength)
 {
     const char* string = value.UTF8String;
     if(string == NULL || *string == '\0' ||
        strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return nil;
+        return NO;
     }
-    // One mutable buffer lets the existing number and unit parsers read bounded
-    // tokens without allocating strings or parsing each number twice.
-    char* buffer = strdup(string);
-    if(buffer == NULL) {
-        return nil;
-    }
-    char* cursor = buffer;
-    NSMutableArray<IJSVGUnitLength*>* lengths = [[NSMutableArray alloc] init];
+    const char* cursor = string;
+    IJSVGUnitLength* parsedLength = nil;
+    NSUInteger count = 0;
     BOOL valid = YES;
     while(IJSVGLengthListIsWhitespace(*cursor)) {
         cursor++;
     }
     while(*cursor != '\0') {
-        char* number = cursor;
+        const char* number = cursor;
         if(*cursor == '+' || *cursor == '-') {
             cursor++;
         }
-        char* digits = cursor;
+        const char* digits = cursor;
         while(IJSVGLengthListIsDigit(*cursor)) {
             cursor++;
         }
@@ -66,7 +64,7 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
         }
         // Reject negative nonzero mantissas before conversion can underflow to
         // signed zero. A genuinely zero value remains valid with either sign.
-        if(*number == '-') {
+        if(!allowNegative && *number == '-') {
             for(const char* digit = number + 1; digit < cursor; digit++) {
                 if(*digit >= '1' && *digit <= '9') {
                     valid = NO;
@@ -80,7 +78,7 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
 
         // The letter e starts an exponent only when digits follow. em/ex are units.
         if(*cursor == 'e' || *cursor == 'E') {
-            char* exponent = cursor + 1;
+            const char* exponent = cursor + 1;
             if(*exponent == '+' || *exponent == '-') {
                 exponent++;
             }
@@ -91,38 +89,45 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
                 }
             }
         }
-        char* suffix = cursor;
+        const char* suffix = cursor;
         while(*cursor != '\0' && *cursor != ',' && !IJSVGLengthListIsWhitespace(*cursor)) {
             cursor++;
         }
         size_t suffixLength = cursor - suffix;
-        char delimiter = *cursor;
-        *cursor = '\0';
-        IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(suffix);
+        if(suffixLength > 2) {
+            valid = NO;
+            break;
+        }
+        char unit[3] = { 0 };
+        memcpy(unit, suffix, suffixLength);
+        IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(unit);
         if(suffixLength != 0 &&
            (type == IJSVGUnitLengthTypeNumber ||
             (type == IJSVGUnitLengthTypePercentage ? suffixLength != 1 : suffixLength != 2))) {
             valid = NO;
             break;
         }
-        char saved = *suffix;
-        *suffix = '\0';
-        CGFloat scalar = IJSVGParseFloat(number);
-        *suffix = saved;
-        *cursor = delimiter;
+        CGFloat scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(suffix - number));
         scalar = [IJSVGUnitLength convertUnitValue:scalar
                           toBaseFromUnitLengthType:type];
-        if(!isfinite(scalar) || scalar < 0.f) {
+        if(!isfinite(scalar) || (!allowNegative && scalar < 0.f)) {
             valid = NO;
             break;
         }
-        IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar];
-        length.originalType = type;
-        if(type == IJSVGUnitLengthTypePercentage ||
-           type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX) {
-            length.type = type;
+        count++;
+        if(single && count > 1) {
+            return NO;
         }
-        [lengths addObject:length];
+        if(lengths != nil || singleLength != NULL) {
+            IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar];
+            length.originalType = type;
+            if(type == IJSVGUnitLengthTypePercentage ||
+               type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX) {
+                length.type = type;
+            }
+            parsedLength = length;
+            [lengths addObject:length];
+        }
         while(IJSVGLengthListIsWhitespace(*cursor)) {
             cursor++;
         }
@@ -137,8 +142,210 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
             }
         }
     }
-    free(buffer);
-    return valid && lengths.count != 0 ? lengths : nil;
+    if(singleLength != NULL) {
+        *singleLength = valid && count == 1 ? parsedLength : nil;
+    }
+    return valid && count != 0;
+}
+
+NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
+{
+    NSMutableArray<IJSVGUnitLength*>* lengths = [[NSMutableArray alloc] init];
+    return IJSVGParseUnitLengths(value, NO, NO, lengths, NULL) ? lengths : nil;
+}
+
+BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute)
+{
+    switch(attribute) {
+        case IJSVGNodeAttributeX:
+        case IJSVGNodeAttributeY:
+        case IJSVGNodeAttributeWidth:
+        case IJSVGNodeAttributeHeight:
+        case IJSVGNodeAttributeCX:
+        case IJSVGNodeAttributeCY:
+        case IJSVGNodeAttributeR:
+        case IJSVGNodeAttributeRX:
+        case IJSVGNodeAttributeRY:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
+static BOOL IJSVGGeometryPropertyAllowsAuto(IJSVGNodeAttribute attribute)
+{
+    return attribute == IJSVGNodeAttributeWidth || attribute == IJSVGNodeAttributeHeight ||
+        attribute == IJSVGNodeAttributeRX || attribute == IJSVGNodeAttributeRY;
+}
+
+static BOOL IJSVGGeometryPropertyAllowsNegative(IJSVGNodeAttribute attribute)
+{
+    return attribute == IJSVGNodeAttributeX || attribute == IJSVGNodeAttributeY ||
+        attribute == IJSVGNodeAttributeCX || attribute == IJSVGNodeAttributeCY;
+}
+
+typedef NS_ENUM(NSUInteger, IJSVGGeometryKeyword) {
+    IJSVGGeometryKeywordNone,
+    IJSVGGeometryKeywordInitial,
+    IJSVGGeometryKeywordInherit,
+    IJSVGGeometryKeywordAuto
+};
+
+static IJSVGGeometryKeyword IJSVGGeometryKeywordFromString(NSString* value)
+{
+    if([value isEqualToString:@"inherit"]) {
+        return IJSVGGeometryKeywordInherit;
+    }
+    if([value isEqualToString:@"initial"] || [value isEqualToString:@"unset"] ||
+       [value isEqualToString:@"revert"] || [value isEqualToString:@"revert-layer"]) {
+        return IJSVGGeometryKeywordInitial;
+    }
+    return [value isEqualToString:@"auto"] ? IJSVGGeometryKeywordAuto : IJSVGGeometryKeywordNone;
+}
+
+static IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
+{
+    return [IJSVGUnitLength unitWithFloat:0.f type:IJSVGGeometryPropertyAllowsAuto(attribute) ?
+        IJSVGUnitLengthTypeAuto : IJSVGUnitLengthTypeNumber];
+}
+
+static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribute,
+                                     IJSVGUnitLength** parsedLength)
+{
+    const char* chars = value.UTF8String;
+    if(chars == NULL) {
+        return NO;
+    }
+    while(IJSVGLengthListIsWhitespace(*chars)) {
+        chars++;
+    }
+    if((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z')) {
+        NSString* keywordString = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        IJSVGGeometryKeyword keyword = IJSVGGeometryKeywordFromString(keywordString);
+        if(keyword == IJSVGGeometryKeywordNone ||
+           (keyword == IJSVGGeometryKeywordAuto && !IJSVGGeometryPropertyAllowsAuto(attribute))) {
+            return NO;
+        }
+        if(parsedLength != NULL) {
+            IJSVGUnitLength* length = IJSVGGeometryInitialLength(attribute);
+            length.inherit = keyword == IJSVGGeometryKeywordInherit;
+            *parsedLength = length;
+        }
+        return YES;
+    }
+    return IJSVGParseUnitLengths(value, IJSVGGeometryPropertyAllowsNegative(attribute),
+        YES, nil, parsedLength);
+}
+
+BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute)
+{
+    return IJSVGParseGeometryLength(value, attribute, NULL);
+}
+
+IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute)
+{
+    IJSVGUnitLength* length = nil;
+    return IJSVGParseGeometryLength(value, attribute, &length) ? length : nil;
+}
+
+BOOL IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttribute attribute, IJSVGNode* node)
+{
+    switch(attribute) {
+        case IJSVGNodeAttributeCX:
+        case IJSVGNodeAttributeCY:
+            return node.type == IJSVGNodeTypeCircle || node.type == IJSVGNodeTypeEllipse;
+        case IJSVGNodeAttributeR:
+            return node.type == IJSVGNodeTypeCircle;
+        case IJSVGNodeAttributeRX:
+        case IJSVGNodeAttributeRY:
+            return node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeEllipse;
+        default:
+            return node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeImage ||
+                node.type == IJSVGNodeTypeSVG || node.type == IJSVGNodeTypeUse ||
+                node.type == IJSVGNodeTypeSymbol || node.type == IJSVGNodeTypeForeignObject;
+    }
+}
+
+void IJSVGApplyGeometryAttributes(IJSVGNode* node,
+                                  NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength],
+                                  IJSVGStyleSheetStyle* style,
+                                  IJSVGStyleSheetStyle* inlineStyle)
+{
+    const IJSVGNodeAttribute attributes[] = {
+        IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeWidth, IJSVGNodeAttributeHeight,
+        IJSVGNodeAttributeCX, IJSVGNodeAttributeCY, IJSVGNodeAttributeR,
+        IJSVGNodeAttributeRX, IJSVGNodeAttributeRY
+    };
+    NSString* names[] = {
+        IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
+        IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX,
+        IJSVGAttributeRY
+    };
+    NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* lengths = nil;
+    for(NSUInteger index = 0; index < sizeof(attributes) / sizeof(*attributes); index++) {
+        IJSVGNodeAttribute attribute = attributes[index];
+        NSString* name = names[index];
+        NSString* value = [inlineStyle property:name];
+        if(value == nil || ([style isPropertyImportant:name] && ![inlineStyle isPropertyImportant:name])) {
+            value = [style property:name];
+        }
+        if(value == nil && attributeValues[attribute] == nil) {
+            continue;
+        }
+        BOOL applies = IJSVGGeometryPropertyAppliesToNode(attribute, node);
+        if(value == nil) {
+            if(!applies) {
+                continue;
+            }
+            value = attributeValues[attribute];
+        }
+        IJSVGUnitLength* length = IJSVGGeometryLengthFromString(value, attribute)
+            ?: IJSVGGeometryInitialLength(attribute);
+        if(length.inherit) {
+            length = node.styleParent.geometryLengths[@(attribute)]
+                ?: IJSVGGeometryInitialLength(attribute);
+        }
+        if(lengths == nil) {
+            lengths = [[NSMutableDictionary alloc] init];
+        }
+        lengths[@(attribute)] = length;
+        if(!applies) {
+            continue;
+        }
+        IJSVGUnitLength* used = length.type == IJSVGUnitLengthTypeAuto ? nil : length;
+        switch(attribute) {
+            case IJSVGNodeAttributeX:
+                node.x = used;
+                break;
+            case IJSVGNodeAttributeY:
+                node.y = used;
+                break;
+            case IJSVGNodeAttributeWidth:
+                node.width = used;
+                break;
+            case IJSVGNodeAttributeHeight:
+                node.height = used;
+                break;
+            case IJSVGNodeAttributeCX:
+                ((IJSVGPath*)node).cx = used;
+                break;
+            case IJSVGNodeAttributeCY:
+                ((IJSVGPath*)node).cy = used;
+                break;
+            case IJSVGNodeAttributeR:
+                ((IJSVGPath*)node).r = used;
+                break;
+            case IJSVGNodeAttributeRX:
+                ((IJSVGPath*)node).rx = used;
+                break;
+            case IJSVGNodeAttributeRY:
+                ((IJSVGPath*)node).ry = used;
+                break;
+            default:
+                break;
+        }
+    }
+    node.geometryLengths = lengths;
 }
 
 IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
@@ -305,14 +512,19 @@ NSSet<NSString*>* IJSVGClassNameList(NSString* value)
     return [NSSet setWithArray:[value ijsvg_componentsSplitByWhiteSpace] ?: @[]];
 }
 
-void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style,
-                               IJSVGBitFlags* activeAttributes,
-                               NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+static void IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style,
+                                                 IJSVGStyleSheetStyle* fallback,
+                                                 IJSVGBitFlags* activeAttributes,
+                                                 NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
     NSDictionary* properties = style.properties;
     for(NSString* key in properties) {
+        if([fallback isPropertyImportant:key] && ![style isPropertyImportant:key]) {
+            continue;
+        }
         NSUInteger attribute = IJSVGNodeAttributeForName(key);
-        if(attribute == NSNotFound || [activeAttributes bitIsSet:(int)attribute] == NO) {
+        if(attribute == NSNotFound || IJSVGAttributeIsGeometryProperty(attribute) ||
+           [activeAttributes bitIsSet:(int)attribute] == NO) {
             continue;
         }
         NSString* value = properties[key];
@@ -323,10 +535,24 @@ void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style,
     }
 }
 
+void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style,
+                               IJSVGBitFlags* activeAttributes,
+                               NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+{
+    IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
+}
+
+void IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* style,
+                                       IJSVGStyleSheetStyle* inlineStyle, IJSVGBitFlags* activeAttributes,
+                                       NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+{
+    IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
+    IJSVGStorePrioritizedStyleAttributes(inlineStyle, style, activeAttributes, attributeValues);
+}
+
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value)
 {
-    NSMutableArray<IJSVGTransform*>* transforms =
-        [IJSVGTransform transformsForString:value].mutableCopy;
+    NSMutableArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:value].mutableCopy;
     if(transforms == nil) {
         transforms = [[NSMutableArray alloc] init];
     }

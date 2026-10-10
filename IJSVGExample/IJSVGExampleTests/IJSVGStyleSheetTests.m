@@ -37,6 +37,19 @@ IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSele
 
 @implementation IJSVGStyleSheetTests
 
+- (void)testGeometryDeclarationParsingPerformance
+{
+    NSString* declarations = @"x:1px;y:2px;width:30px;height:40px;cx:5px;cy:6px;r:7px;rx:8px;ry:9px;fill:red;stroke:blue";
+    [self measureBlock:^{
+        for(NSUInteger index = 0; index < 10000; index++) {
+            @autoreleasepool {
+                IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:declarations];
+                XCTAssertEqualObjects([style property:@"width"], @"30px");
+            }
+        }
+    }];
+}
+
 - (void)testStyleSheetMatchesTagIdentifierAndClassSelector
 {
     IJSVGStyleSheet* styleSheet = IJSVGTestStyleSheet(@"rect#primary.warning.active { fill: #ff0000; }");

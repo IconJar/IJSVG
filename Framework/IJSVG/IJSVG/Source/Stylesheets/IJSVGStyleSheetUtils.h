@@ -36,6 +36,8 @@ NSString* _Nullable IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* impor
 BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,
                                            void (^handler)(NSString* family, BOOL quoted));
 NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string);
+NSString* _Nullable IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
+                                                      NSDictionary<NSString*, NSString*>* _Nullable * _Nonnull expanded);
 NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
                                                                      NSString* value);
 

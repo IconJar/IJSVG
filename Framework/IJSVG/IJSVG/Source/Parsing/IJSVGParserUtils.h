@@ -12,6 +12,13 @@
 NS_ASSUME_NONNULL_BEGIN
 
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value);
+BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute);
+BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute);
+IJSVGUnitLength* _Nullable IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute);
+BOOL IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttribute attribute, IJSVGNode* node);
+void IJSVGApplyGeometryAttributes(IJSVGNode* node,
+                                  NSString* _Nullable __unsafe_unretained attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength],
+                                  IJSVGStyleSheetStyle* _Nullable style, IJSVGStyleSheetStyle* _Nullable inlineStyle);
 
 IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value);
 NSString* IJSVGStringFromPaintOrder(IJSVGPaintOrder order);
@@ -33,6 +40,10 @@ NSString* _Nullable IJSVGAttributeValue(NSString* _Nullable __unsafe_unretained 
 BOOL IJSVGAttributeHasValue(NSString* _Nullable __unsafe_unretained const attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength],
                             IJSVGNodeAttribute attribute,
                             NSString* _Nullable __autoreleasing* _Nullable value);
+
+void IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* _Nullable style,
+    IJSVGStyleSheetStyle* _Nullable inlineStyle, IJSVGBitFlags* activeAttributes,
+    NSString* _Nullable __unsafe_unretained attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength]);
 
 void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* _Nullable style,
                                IJSVGBitFlags* activeAttributes,

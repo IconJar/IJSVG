@@ -273,6 +273,9 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (NSString*)stringValue
 {
+    if(self.type == IJSVGUnitLengthTypeAuto) {
+        return @"auto";
+    }
     if(self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
         NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
         return [NSString stringWithFormat:@"%@%@", IJSVGShortFloatString(self.value), suffix];
@@ -286,6 +289,9 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
+    if(self.type == IJSVGUnitLengthTypeAuto) {
+        return @"auto";
+    }
     if(self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
         NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
         NSString* number = IJSVGShortFloatStringWithOptions(self.value, options);

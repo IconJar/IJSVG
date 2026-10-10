@@ -438,6 +438,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
 @property (nonatomic, assign) BOOL isolated;
 @property (nonatomic, assign) IJSVGPaintOrder paintOrder;
+@property (nonatomic, copy, nullable) NSDictionary<NSNumber*, IJSVGUnitLength*>* geometryLengths;
 @property (nonatomic, assign) IJSVGVectorEffect vectorEffect;
 @property (nonatomic, readonly) IJSVGVectorEffect resolvedVectorEffect;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;

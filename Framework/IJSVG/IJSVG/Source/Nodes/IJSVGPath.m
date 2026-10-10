@@ -41,6 +41,13 @@
     [storage setBit:IJSVGNodeAttributeOpacity];
     [storage setBit:IJSVGNodeAttributeBlendMode];
     [storage setBit:IJSVGNodeAttributePathLength];
+    [storage setBit:IJSVGNodeAttributeWidth];
+    [storage setBit:IJSVGNodeAttributeHeight];
+    [storage setBit:IJSVGNodeAttributeCX];
+    [storage setBit:IJSVGNodeAttributeCY];
+    [storage setBit:IJSVGNodeAttributeR];
+    [storage setBit:IJSVGNodeAttributeRX];
+    [storage setBit:IJSVGNodeAttributeRY];
     return storage;
 }
 
