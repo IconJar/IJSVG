@@ -285,7 +285,8 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeFilterPointLight,
     IJSVGNodeTypeFilterSpotLight,
     IJSVGNodeTypeTextPath,
-    IJSVGNodeTypeAnchor
+    IJSVGNodeTypeAnchor,
+    IJSVGNodeTypeSymbol
 };
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {

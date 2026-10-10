@@ -9,28 +9,34 @@
 #import <IJSVG/IJSVGNode.h>
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute);
-NSUInteger IJSVGNodeAttributeForName(NSString* name);
+NSUInteger IJSVGNodeAttributeForName(NSString* _Nullable name);
 
 // Read a known attribute with a nonempty value.
 // Pass nil for activeAttributes to read all known attributes when building the cache.
-BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
-    NSUInteger* attribute, NSString* __autoreleasing* value);
-NSSet<NSString*>* IJSVGClassNameList(NSString* value);
+BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* _Nullable activeAttributes,
+                           NSUInteger* attribute, NSString* _Nullable __autoreleasing* _Nonnull value);
+NSSet<NSString*>* IJSVGClassNameList(NSString* _Nullable value);
 
-NSString* IJSVGAttributeValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute);
+NSString* _Nullable IJSVGAttributeValue(NSString* _Nullable __unsafe_unretained const attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength],
+                                        IJSVGNodeAttribute attribute);
 
-BOOL IJSVGAttributeHasValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute,
-    NSString* __autoreleasing* value);
+BOOL IJSVGAttributeHasValue(NSString* _Nullable __unsafe_unretained const attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength],
+                            IJSVGNodeAttribute attribute,
+                            NSString* _Nullable __autoreleasing* _Nullable value);
 
-void IJSVGStoreStyleAttributes(
-    IJSVGStyleSheetStyle* style,
-    IJSVGBitFlags* activeAttributes,
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength]);
+void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* _Nullable style,
+                               IJSVGBitFlags* activeAttributes,
+                               NSString* _Nullable __unsafe_unretained attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength]);
+
+// Auto and negative dimensions on use/symbol leave the default size in effect.
+IJSVGUnitLength* _Nullable IJSVGDimensionFromString(NSString* value, IJSVGNodeType type);
+IJSVGUnitLength* _Nullable IJSVGSymbolReferenceFromString(NSString* _Nullable value,
+                                                          IJSVGNodeAttribute attribute);
 
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value);
 void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value);
+
+NS_ASSUME_NONNULL_END

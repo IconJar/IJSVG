@@ -23,6 +23,8 @@
         IJSVGRootNode* root = (IJSVGRootNode*)node;
         self.styleAncestors = root.styleAncestors;
         self.clientSize = root.clientSize;
+        self.refX = root.refX.copy;
+        self.refY = root.refY.copy;
         self.intrinsicSize = root.intrinsicSize.copy;
         self.intrinsicDimensions = root.intrinsicDimensions;
         _hasCalculatedContainsRelativeUnits = NO;
@@ -39,6 +41,9 @@
     [storage setBit:IJSVGNodeAttributeHeight];
     [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
     [storage setBit:IJSVGNodeAttributeViewBox];
+    [storage setBit:IJSVGNodeAttributeOverflow];
+    [storage setBit:IJSVGNodeAttributeRefX];
+    [storage setBit:IJSVGNodeAttributeRefY];
     return storage;
 }
 

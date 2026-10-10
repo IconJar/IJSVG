@@ -24,7 +24,7 @@
 
 - (IJSVG *)svg
 {
-    return [IJSVG SVGNamed:@"non-scaling-stroke.svg"];
+    return [IJSVG SVGNamed:@"symbols.svg"];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

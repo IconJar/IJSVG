@@ -25,6 +25,10 @@ NS_ASSUME_NONNULL_BEGIN
 // The document owns style ancestors so paint references cannot form retain cycles.
 @property (nonatomic, copy) NSArray<IJSVGNode*>* styleAncestors;
 
+// Optional reference point for an instantiated symbol, in its content coordinates.
+@property (nonatomic, strong, nullable) IJSVGUnitLength* refX;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* refY;
+
 - (void)inferViewBoxIfRequired;
 
 @end

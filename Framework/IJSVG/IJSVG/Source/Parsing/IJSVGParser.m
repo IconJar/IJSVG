@@ -782,10 +782,23 @@ typedef struct {
         node.y = [IJSVGUnitLength unitWithString:value];
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeWidth, &value)) {
-        node.width = [IJSVGUnitLength unitWithString:value];
+        IJSVGUnitLength* width = IJSVGDimensionFromString(value, node.type);
+        if(width != nil) {
+            node.width = width;
+        }
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeHeight, &value)) {
-        node.height = [IJSVGUnitLength unitWithString:value];
+        IJSVGUnitLength* height = IJSVGDimensionFromString(value, node.type);
+        if(height != nil) {
+            node.height = height;
+        }
+    }
+    if(node.type == IJSVGNodeTypeSymbol) {
+        IJSVGRootNode* symbol = (IJSVGRootNode*)node;
+        symbol.refX = IJSVGSymbolReferenceFromString(
+            IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefX), IJSVGNodeAttributeRefX);
+        symbol.refY = IJSVGSymbolReferenceFromString(
+            IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefY), IJSVGNodeAttributeRefY);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOpacity, &value)) {
         node.opacity = [IJSVGUnitLength unitWithString:value];
@@ -1209,6 +1222,9 @@ typedef struct {
             return [self parseTextElement:element
                                      type:nodeType
                                parentNode:node];
+        case IJSVGNodeTypeSymbol:
+            // Symbols are instantiated only as the direct target of a use.
+            break;
         case IJSVGNodeTypeTextPath:
         case IJSVGNodeTypeTextSpan:
             // A standalone tspan is not rendered.
@@ -1963,12 +1979,38 @@ typedef struct {
     return node;
 }
 
+- (IJSVGNode*)parseSymbolElement:(NSXMLElement*)element
+                      parentNode:(IJSVGGroup*)parentNode
+{
+    IJSVGRootNode* node = [[IJSVGRootNode alloc] init];
+    node.type = IJSVGNodeTypeSymbol;
+    node.name = element.localName;
+    node.parentNode = parentNode;
+    node.overflowVisibility = IJSVGOverflowVisibilityHidden;
+    // Symbols inherit presentation properties from their use element.
+    node.lineCapStyle = IJSVGLineCapStyleInherit;
+    node.lineJoinStyle = IJSVGLineJoinStyleInherit;
+    node.strokeMiterLimit.inherit = YES;
+    node.strokeDashArrayCount = IJSVGInheritedIntegerValue;
+    IJSVGNodeParserPostProcessBlock postProcessBlock = [self computeAttributesFromElement:element
+                                                                                   onNode:node
+                                                                        ignoredAttributes:nil];
+    node.width = parentNode.width ?: node.width ?: [IJSVGUnitLength unitWithString:@"100%"];
+    node.height = parentNode.height ?: node.height ?: [IJSVGUnitLength unitWithString:@"100%"];
+    node.shouldRender = YES;
+    [self computeElement:element parentNode:node];
+    if(postProcessBlock != nil) {
+        postProcessBlock();
+    }
+    [node postProcess];
+    return node;
+}
+
 - (IJSVGNode*)parseUseElement:(NSXMLElement*)element
                    parentNode:(IJSVGNode*)parentNode
              postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
-    NSString* xlink = [self resolveXLinkAttributeForElement:element].stringValue;
-    NSString* xlinkID = [xlink substringFromIndex:1];
+    NSString* xlinkID = [self resolveXLinkAttributeStringForElement:element];
     if(xlinkID == nil) {
         return nil;
     }
@@ -2007,8 +2049,11 @@ typedef struct {
     }
     [self.activeReferences addObject:xlinkID];
     @try {
-        IJSVGNode* shadowNode = [self parseElement:detachedElement
-                                        parentNode:node];
+        IJSVGNodeType type = [IJSVGNode typeForString:detachedElement.localName
+                                                 kind:detachedElement.kind];
+        IJSVGNode* shadowNode = type == IJSVGNodeTypeSymbol
+            ? [self parseSymbolElement:detachedElement parentNode:node]
+            : [self parseElement:detachedElement parentNode:node];
         if(shadowNode != nil) {
             [node addChild:shadowNode];
         }

@@ -22,6 +22,9 @@
 		5901B749282818CA00290525 /* poison.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B73C282818CA00290525 /* poison.svg */; };
 		59069A2922D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */; };
 		59069A2B22D0EE0E004DDEA5 /* test (1).svg in Resources */ = {isa = PBXBuildFile; fileRef = 59069A2A22D0EE0E004DDEA5 /* test (1).svg */; };
+		590C7B73307A600E00AD5C88 /* IJSVGSymbolTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */; };
+		590C7B75307A630100AD5C88 /* symbols.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C7B74307A630100AD5C88 /* symbols.svg */; };
+		590C7B77307A660400AD5C88 /* IJSVGSymbolWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
 		590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EC201FA08C004A1554 /* intertwingly.svg */; };
 		590C87EF201FA093004A1554 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
@@ -173,6 +176,9 @@
 		5901B73C282818CA00290525 /* poison.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = poison.svg; sourceTree = "<group>"; };
 		59069A2822D0ED85004DDEA5 /* compuserver_msn_Ford_Focus.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = compuserver_msn_Ford_Focus.svg; sourceTree = "<group>"; };
 		59069A2A22D0EE0E004DDEA5 /* test (1).svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "test (1).svg"; sourceTree = "<group>"; };
+		590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGSymbolTests.m; sourceTree = "<group>"; };
+		590C7B74307A630100AD5C88 /* symbols.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = symbols.svg; sourceTree = "<group>"; };
+		590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGSymbolWebKitTests.m; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
 		590C87EC201FA08C004A1554 /* intertwingly.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = intertwingly.svg; sourceTree = "<group>"; };
 		590C87EE201FA092004A1554 /* NewTux.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = NewTux.svg; sourceTree = "<group>"; };
@@ -384,6 +390,7 @@
 				5901B738282818CA00290525 /* contour_colorbar.svg */,
 				5901B730282818CA00290525 /* contour_hatching.svg */,
 				5901B733282818CA00290525 /* hand.svg */,
+				590C7B74307A630100AD5C88 /* symbols.svg */,
 				5901B734282818CA00290525 /* mask.svg */,
 				5901B73B282818CA00290525 /* noscale.svg */,
 				5901B73A282818CA00290525 /* pcolormesh.svg */,
@@ -468,6 +475,8 @@
 				59883AAF30793A740024284E /* IJSVGImageExportTests.m */,
 				597CE1D530796C4A0026E325 /* IJSVGMarkerTests.m */,
 				597CE1E03079999A0026E325 /* IJSVGVectorEffectTests.m */,
+				590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */,
+				590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -629,6 +638,7 @@
 				591F8EC12FF016980012F5EB /* advanced-css.svg in Resources */,
 				59F799E219B880CE00096CB7 /* htc_one.svg in Resources */,
 				59B93C6F19B7D32C0063E823 /* products.svg in Resources */,
+				590C7B75307A630100AD5C88 /* symbols.svg in Resources */,
 				5991A2A9201E30E600913E3B /* gradients.svg in Resources */,
 				595A69DC285644E700525065 /* Bayer_matrix.svg in Resources */,
 				5901B742282818CA00290525 /* transistor.svg in Resources */,
@@ -696,6 +706,7 @@
 				59FC38EC306EC6E50028BEAC /* IJSVGResourceExportTests.m in Sources */,
 				59835AAB3076B77C007A1232 /* IJSVGParserOptimizationTests.m in Sources */,
 				591F8ED42FF02B030012F5EB /* IJSVGUtilityParsingTests.m in Sources */,
+				590C7B73307A600E00AD5C88 /* IJSVGSymbolTests.m in Sources */,
 				59883AB030793A740024284E /* IJSVGImageExportTests.m in Sources */,
 				5915EE843077F98500FEEC4B /* IJSVGVisibilityTests.m in Sources */,
 				59B649D23075836A0004EFC2 /* IJSVGTextTests.m in Sources */,
@@ -704,6 +715,7 @@
 				5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */,
 				597CE1E13079999A0026E325 /* IJSVGVectorEffectTests.m in Sources */,
 				59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */,
+				590C7B77307A660400AD5C88 /* IJSVGSymbolWebKitTests.m in Sources */,
 				5929C373306DC0D7003D5C0C /* IJSVGMetalShadowTests.m in Sources */,
 				59835AA430768FA7007A1232 /* IJSVGReferenceWebKitChecks.m in Sources */,
 				5999230E3071601B004F4D18 /* IJSVGMaskCacheTests.m in Sources */,

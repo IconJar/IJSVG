@@ -745,6 +745,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
         paint = [self drawablePaintForTextNode:(IJSVGText*)node];
     } else if([node isKindOfClass:IJSVGPath.class]) {
         paint = [self drawablePaintForPathNode:(IJSVGPath*)node];
+    } else if(node.type == IJSVGNodeTypeSymbol) {
+        paint = [self drawablePaintForSymbolNode:(IJSVGRootNode*)node];
     } else if([node isKindOfClass:IJSVGRootNode.class]) {
         paint = [self drawablePaintForRootNode:(IJSVGRootNode*)node];
     } else if([node isKindOfClass:IJSVGGroup.class]) {
@@ -753,23 +755,39 @@ inMeasurementPaint:(IJSVGPaint*)paint
         paint = [self drawablePaintForImageNode:(IJSVGImage*)node];
     }
     if(paint != nil) {
-        if(_renderingOptions.filtersEnabled && node.filters.count != 0) {
-            _measurementHasFilters = YES;
+        if(![self hasSymbolContentEffects:node]) {
+            paint = [self applyEffectsToPaint:paint fromNode:node];
         }
-        if(!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0 &&
-            (_resolvingMeasurements || IJSVGThreadManager.currentManager.CIContext != nil)) {
-            for(IJSVGFilter* filter in node.filters) {
-                paint = [self applyFilter:filter
-                                  toPaint:paint
-                                 fromNode:node];
-            }
-        }
-        [self applyDefaultsToPaint:paint
-                          fromNode:node];
         return [self applyTransforms:node.transforms
                              toPaint:paint
                             fromNode:node];
     }
+    return paint;
+}
+
+- (BOOL)hasSymbolContentEffects:(IJSVGNode*)node
+{
+    return node.type == IJSVGNodeTypeSymbol &&
+        (node.clipPath != nil || node.mask != nil || node.filters.count != 0 ||
+         node.opacity.value != 1.f || node.blendMode != IJSVGBlendModeNormal ||
+         !CGRectIsNull(node.backgroundRect));
+}
+
+- (IJSVGPaint*)applyEffectsToPaint:(IJSVGPaint*)paint
+                         fromNode:(IJSVGNode*)node
+{
+    if(_renderingOptions.filtersEnabled && node.filters.count != 0) {
+        _measurementHasFilters = YES;
+    }
+    if(!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0 &&
+        (_resolvingMeasurements || IJSVGThreadManager.currentManager.CIContext != nil)) {
+        for(IJSVGFilter* filter in node.filters) {
+            paint = [self applyFilter:filter
+                              toPaint:paint
+                             fromNode:node];
+        }
+    }
+    [self applyDefaultsToPaint:paint fromNode:node];
     return paint;
 }
 
@@ -1580,6 +1598,75 @@ inMeasurementPaint:(IJSVGPaint*)paint
     return paint;
 }
 
+- (IJSVGPaint*)drawablePaintForSymbolNode:(IJSVGRootNode*)node
+{
+    CGRect bounds = [self unitResolutionBoundsForNode:node];
+    CGSize size = CGSizeMake([node.width computeValue:bounds.size.width],
+                             [node.height computeValue:bounds.size.height]);
+    CGRect viewport = (CGRect) { CGPointZero, size };
+    CGRect viewBox = node.viewBox == nil ? viewport : [node.viewBox computeValue:size];
+    if(!IJSVGRectIsFinite(viewport) || CGRectIsEmpty(viewport) ||
+       !IJSVGRectIsFinite(viewBox) || CGRectIsEmpty(viewBox)) {
+        return nil;
+    }
+
+    CGAffineTransform mapping = IJSVGViewBoxComputeTransform(viewBox, viewport,
+                                                             node.viewBoxAlignment,
+                                                             node.viewBoxMeetOrSlice);
+    CGPoint reference = CGPointMake([node.refX computeValue:viewBox.size.width],
+                                    [node.refY computeValue:viewBox.size.height]);
+    reference = CGPointApplyAffineTransform(reference, mapping);
+    // An absent reference leaves the viewport edge at the symbol's position.
+    CGAffineTransform placement = CGAffineTransformMakeTranslation(node.refX == nil ? 0 : -reference.x,
+                                                                   node.refY == nil ? 0 : -reference.y);
+    CGAffineTransform previous = _textTransform;
+    _textTransform = CGAffineTransformConcat(CGAffineTransformConcat(mapping, placement),
+                                             previous);
+    __block NSArray<IJSVGPaint*>* children = nil;
+    @try {
+        [self withViewPort:viewBox
+                unitBounds:viewBox
+                   handler:^{
+            children = [self drawablePaintsForNodes:node.children];
+            if([self hasSymbolContentEffects:node]) {
+                // User-space effects share the children's coordinates, before viewBox mapping.
+                IJSVGPaint* effects = [self drawablePaintForGroupNode:node children:children];
+                effects = [self applyEffectsToPaint:effects fromNode:node];
+                children = @[effects];
+            }
+        }];
+    } @finally {
+        _textTransform = previous;
+    }
+
+    // Avoid allocating and drawing a transform container for an identity viewBox.
+    if(!CGAffineTransformIsIdentity(mapping)) {
+        IJSVGTransformPaint* mapped = IJSVGTransformPaint.paint;
+        mapped.affineTransform = mapping;
+        mapped.children = children;
+        children = @[mapped];
+    }
+    IJSVGGroupPaint* content = IJSVGGroupPaint.paint;
+    content.children = children;
+    content.boundingBox = [IJSVGPaint calculateBoundingBoxForChildren:content.children];
+    content.outerBoundingBox = [IJSVGPaint calculateFrameForChildren:content.children];
+    if(node.overflowVisibility != IJSVGOverflowVisibilityVisible) {
+        CGPathRef clip = CGPathCreateWithRect(viewport, NULL);
+        content.clipPath = clip;
+        CGPathRelease(clip);
+        content.outerBoundingBox = CGRectIntersection(content.outerBoundingBox, viewport);
+    }
+
+    // Reference offsets keep a transform paint for parent bounds calculations.
+    if(CGAffineTransformIsIdentity(placement)) {
+        return content;
+    }
+    IJSVGTransformPaint* paint = IJSVGTransformPaint.paint;
+    paint.affineTransform = placement;
+    paint.children = @[content];
+    return paint;
+}
+
 - (IJSVGPaint*)drawablePaintForRootNode:(IJSVGRootNode*)node
 {
     IJSVGRootPaint* paint = IJSVGRootPaint.paint;
@@ -1592,20 +1679,16 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
     CGSize intrinsicSize = [node.intrinsicSize computeValue:bounds.size];
-    CGFloat width = [[self unit:node.width
-                   matchingNode:node] computeValue:boundsWidth];
-    CGFloat height = [[self unit:node.height
-                    matchingNode:node] computeValue:boundsHeight];
+    CGFloat width = [[self unit:node.width matchingNode:node] computeValue:boundsWidth];
+    CGFloat height = [[self unit:node.height matchingNode:node] computeValue:boundsHeight];
     if(width == 0.f) {
         width = intrinsicSize.width;
     }
     if(height == 0.f) {
         height = intrinsicSize.height;
     }
-    CGRect frame = CGRectMake([[self unit:node.x
-                             matchingNode:node] computeValue:boundsWidth],
-                              [[self unit:node.y
-                             matchingNode:node] computeValue:boundsHeight],
+    CGRect frame = CGRectMake([[self unit:node.x matchingNode:node] computeValue:boundsWidth],
+                              [[self unit:node.y matchingNode:node] computeValue:boundsHeight],
                               width, height);
     paint.frame = frame;
 

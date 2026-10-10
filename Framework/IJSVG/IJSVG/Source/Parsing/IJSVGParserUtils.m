@@ -12,6 +12,43 @@
 #import <string.h>
 #import <IJSVG/IJSVGUtils.h>
 
+IJSVGUnitLength* IJSVGDimensionFromString(NSString* value, IJSVGNodeType type)
+{
+    IJSVGUnitLength* length = [IJSVGUnitLength unitWithString:value];
+    BOOL viewportUse = type == IJSVGNodeTypeUse || type == IJSVGNodeTypeSymbol;
+    if(viewportUse && ([value isEqualToString:@"auto"] || length.value < 0.f)) {
+        return nil;
+    }
+    return length;
+}
+
+IJSVGUnitLength* IJSVGSymbolReferenceFromString(NSString* value,
+                                                IJSVGNodeAttribute attribute)
+{
+    if(value == nil) {
+        return nil;
+    }
+    BOOL horizontal;
+    switch(attribute) {
+        case IJSVGNodeAttributeRefX:
+            horizontal = YES;
+            break;
+        case IJSVGNodeAttributeRefY:
+            horizontal = NO;
+            break;
+        default:
+            return nil;
+    }
+    if([value isEqualToString:horizontal ? @"left" : @"top"]) {
+        value = @"0%";
+    } else if([value isEqualToString:@"center"]) {
+        value = @"50%";
+    } else if([value isEqualToString:horizontal ? @"right" : @"bottom"]) {
+        value = @"100%";
+    }
+    return [IJSVGUnitLength unitWithString:value];
+}
+
 void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
 {
     char* buffer = IJSVGTimmedCharBufferCreate(value.UTF8String);
@@ -53,16 +90,14 @@ BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
     return (mask & (1ULL << attribute)) != 0;
 }
 
-NSString* IJSVGAttributeValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute)
+NSString* IJSVGAttributeValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+                              IJSVGNodeAttribute attribute)
 {
     return attributeValues[attribute];
 }
 
-BOOL IJSVGAttributeHasValue(
-    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-    IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
+BOOL IJSVGAttributeHasValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
+                            IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
     NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
     if(attributeValue.length == 0) {
@@ -75,7 +110,7 @@ BOOL IJSVGAttributeHasValue(
 }
 
 BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
-    NSUInteger* attribute, NSString* __autoreleasing* value)
+                           NSUInteger* attribute, NSString* __autoreleasing* value)
 {
     NSUInteger index = IJSVGNodeAttributeForName(node.name);
     if(index == NSNotFound ||
@@ -96,10 +131,9 @@ NSSet<NSString*>* IJSVGClassNameList(NSString* value)
     return [NSSet setWithArray:[value ijsvg_componentsSplitByWhiteSpace] ?: @[]];
 }
 
-void IJSVGStoreStyleAttributes(
-    IJSVGStyleSheetStyle* style,
-    IJSVGBitFlags* activeAttributes,
-    NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style,
+                               IJSVGBitFlags* activeAttributes,
+                               NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
     NSDictionary* properties = style.properties;
     for(NSString* key in properties) {

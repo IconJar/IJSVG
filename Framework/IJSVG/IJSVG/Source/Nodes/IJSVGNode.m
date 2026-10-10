@@ -92,6 +92,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
         case IJSVGNodeTypeImage: return @"image";
         case IJSVGNodeTypePattern: return @"pattern";
         case IJSVGNodeTypeSVG: return @"svg";
+        case IJSVGNodeTypeSymbol: return @"symbol";
         case IJSVGNodeTypeText: return @"text";
         case IJSVGNodeTypeTextSpan: return @"tspan";
         case IJSVGNodeTypeStyle: return @"style";
@@ -239,6 +240,9 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
             break;
         }
         case 's': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "symbol") == YES) {
+                return IJSVGNodeTypeSymbol;
+            }
             if(IJSVGCharBufferCaseInsensitiveCompare(nodeType, "style") == YES) {
                 return IJSVGNodeTypeStyle;
             }
