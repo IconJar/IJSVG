@@ -42,6 +42,9 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 @property (nonatomic, assign) BOOL inherit;
 @property (nonatomic, assign) BOOL isRelativeUnit;
 
++ (CGFloat)convertUnitValue:(CGFloat)unit
+   toBaseFromUnitLengthType:(IJSVGUnitLengthType)type;
+
 + (IJSVGUnitLength*)zeroUnitLength;
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number;

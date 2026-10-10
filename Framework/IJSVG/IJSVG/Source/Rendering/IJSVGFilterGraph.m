@@ -326,6 +326,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
 {
     IJSVGFilterContext* renderingContext = [[IJSVGFilterContext alloc] init];
     renderingContext.filter = self.filter;
+    renderingContext.renderingOptions = self.renderingOptions;
     renderingContext.boundingBox = self.boundingBox;
     renderingContext.viewPort = self.viewPort;
     renderingContext.extent = self.extent;

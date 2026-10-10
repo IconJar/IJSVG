@@ -11,6 +11,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value);
+
+IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value);
+NSString* IJSVGStringFromPaintOrder(IJSVGPaintOrder order);
+
 BOOL IJSVGIsolationFromString(NSString* value, BOOL parentIsolation);
 
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute);

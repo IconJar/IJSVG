@@ -209,6 +209,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeOrient,
     IJSVGNodeAttributeVectorEffect,
     IJSVGNodeAttributeIsolation,
+    IJSVGNodeAttributePaintOrder,
     IJSVGNodeAttributeCount
 };
 
@@ -318,6 +319,17 @@ typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) {
     IJSVGLineJoinStyleInherit
 };
 
+// Two bits per operation: fill = 0, stroke = 1, markers = 2.
+typedef NS_ENUM(NSInteger, IJSVGPaintOrder) {
+    IJSVGPaintOrderInherit = -1,
+    IJSVGPaintOrderNormal = 0x24,
+    IJSVGPaintOrderFillMarkersStroke = 0x18,
+    IJSVGPaintOrderStrokeFillMarkers = 0x21,
+    IJSVGPaintOrderStrokeMarkersFill = 0x09,
+    IJSVGPaintOrderMarkersFillStroke = 0x12,
+    IJSVGPaintOrderMarkersStrokeFill = 0x06
+};
+
 typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeNormal = kCGBlendModeNormal,
     IJSVGBlendModeMultiply = kCGBlendModeMultiply,
@@ -418,12 +430,14 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign, nullable) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;
+@property (nonatomic, copy, nullable) NSArray<IJSVGUnitLength*>* strokeDashLengths;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* strokeDashOffset;
 @property (nonatomic, strong, nullable) IJSVG* svg;
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
 @property (nonatomic, assign) BOOL isolated;
+@property (nonatomic, assign) IJSVGPaintOrder paintOrder;
 @property (nonatomic, assign) IJSVGVectorEffect vectorEffect;
 @property (nonatomic, readonly) IJSVGVectorEffect resolvedVectorEffect;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;

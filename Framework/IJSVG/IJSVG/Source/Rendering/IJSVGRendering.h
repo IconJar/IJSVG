@@ -16,12 +16,18 @@ typedef NS_ENUM(NSInteger, IJSVGRenderQuality) {
     kIJSVGRenderQualityLow // fast rendering
 };
 
+FOUNDATION_EXPORT const CGFloat IJSVGDefaultFontSize;
+
 // Independent rendering settings with the standard SVG defaults.
 @interface IJSVGRenderingOptions : NSObject <NSCopying>
 
 @property (nonatomic, assign) BOOL filtersEnabled;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, assign) BOOL ignoreIntrinsicSize;
+
+// Initial font size in user units, before SVG font-size declarations. Defaults to 16.
+// Negative and non-finite values restore the default; zero is allowed.
+@property (nonatomic, assign) CGFloat defaultFontSize;
 
 @end
 

@@ -7,11 +7,13 @@
 //
 
 #import <IJSVG/IJSVGFilter.h>
+#import <IJSVG/IJSVGRendering.h>
 #import <CoreImage/CoreImage.h>
 
 @interface IJSVGFilterContext : NSObject
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, assign) CGRect viewPort;
 @property (nonatomic, assign) CGRect extent;

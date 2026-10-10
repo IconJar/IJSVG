@@ -292,9 +292,6 @@ didFailNavigation:(WKNavigation*)navigation
 
 - (void)testFontRelativeDimensionsMatchesWebKit
 {
-    // Known IJSVG limitation: symbol viewport lengths currently resolve without
-    // the font metrics required by em/ex. Do not relax the pixel tolerance.
-    self.expectedDifference = @"IJSVG symbol viewport dimensions do not yet resolve em/ex using font metrics.";
     [self compareBody:@"<symbol id='s' viewBox='0 0 20 10'><rect width='20' height='10' fill='navy'/></symbol>"
                        "<use href='#s' x='20' y='20' width='10em' height='5em' font-size='20'/>"
                  name:@"symbol-FontRelativeDimensions"

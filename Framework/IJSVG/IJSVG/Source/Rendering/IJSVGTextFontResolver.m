@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGTextFontResolver.h>
+#import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGParser.h>
 #import <CoreText/CoreText.h>
 
@@ -160,14 +161,175 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
 
 @implementation IJSVGTextFontResolver
 
+- (IJSVGTextComputedStyle*)fontStyleForNode:(IJSVGNode*)node
+                              parentStyle:(IJSVGTextComputedStyle*)parent
+{
+    NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* values = [parent.values mutableCopy] ?: [[NSMutableDictionary alloc] init];
+    [values removeObjectForKey:IJSVGAttributeInlineSize];
+    [values removeObjectForKey:IJSVGAttributeAlignmentBaseline];
+    [values removeObjectForKey:IJSVGAttributeBaselineShift];
+    [values removeObjectForKey:IJSVGAttributeUnicodeBidi];
+    NSDictionary<NSString*, IJSVGTextAttributeValue*>* specified = node.textStyle;
+    for(NSString* key in specified) {
+        IJSVGTextAttributeValue* value = specified[key];
+        switch(value.keyword) {
+            case IJSVGTextKeywordInherit:
+                if(parent.values[key] != nil) {
+                    values[key] = parent.values[key];
+                }
+                break;
+            case IJSVGTextKeywordUnset:
+                break;
+            case IJSVGTextKeywordInitial:
+                [values removeObjectForKey:key];
+                break;
+            default:
+                values[key] = value;
+                break;
+        }
+    }
+    IJSVGTextAttributeValue* weight = values[IJSVGAttributeFontWeight];
+    if(weight.keyword == IJSVGTextKeywordBolder || weight.keyword == IJSVGTextKeywordLighter) {
+        IJSVGTextAttributeValue* inherited = parent.values[IJSVGAttributeFontWeight];
+        CGFloat parentWeight = inherited.keyword == IJSVGTextKeywordBold ? 700 :
+            (inherited.number > 0 ? inherited.number : 400);
+        CGFloat resolved;
+        if(weight.keyword == IJSVGTextKeywordBolder) {
+            resolved = parentWeight < 350 ? 400 : (parentWeight < 550 ? 700 : MAX(900, parentWeight));
+        } else {
+            resolved = parentWeight < 550 ? MIN(100, parentWeight) : (parentWeight < 750 ? 400 : 700);
+        }
+        // Parsed values may be shared by other nodes; never mutate them.
+        IJSVGTextAttributeValue* computed = [[IJSVGTextAttributeValue alloc] init];
+        computed.number = resolved;
+        values[IJSVGAttributeFontWeight] = computed;
+    }
+    IJSVGTextComputedStyle* style = [[IJSVGTextComputedStyle alloc] init];
+    CGFloat parentSize = parent != nil ? parent.size : self.defaultFontSize;
+    IJSVGTextAttributeValue* size = specified[IJSVGAttributeFontSize];
+    CGFloat parentXHeight = parent.xHeight;
+    if(parent == nil && size.lengthBasis == IJSVGTextLengthBasisXHeight) {
+        // Font size uses parent metrics, or the initial font at the root.
+        id initialFont = [self fontForValues:@{}
+                                       size:parentSize];
+        parentXHeight = IJSVGTextFontXHeight((__bridge CTFontRef)initialFont,
+                                             parentSize,
+                                             self.renderScale);
+    }
+    style.size = IJSVGTextFontSize(size, parentSize, parentXHeight, self.defaultFontSize);
+    style.fontScale = self.renderScale;
+    style.values = values;
+    if(IJSVGTextCanReuseFont(parent, values, style.size)) {
+        style.font = parent.font;
+        style.xHeight = parent.xHeight;
+        style.nativeSpacing = parent.nativeSpacing;
+    } else {
+        style.font = [self fontForValues:values
+                                   size:style.size];
+        style.nativeSpacing = [self usesNativeSpacingForFont:style.font];
+        style.xHeight = IJSVGTextFontXHeight((__bridge CTFontRef)style.font,
+                                             style.size, style.fontScale);
+    }
+    return style;
+}
+
+- (IJSVGTextComputedStyle*)fontStyleForNode:(IJSVGNode*)node
+{
+    if(node == nil) {
+        return nil;
+    }
+    return [self fontStyleForNode:node parentStyle:[self fontStyleForNode:node.styleParent]];
+}
+
+
 - (instancetype)init
 {
     if((self = [super init])) {
         _renderScale = 1;
+        _defaultFontSize = IJSVGDefaultFontSize;
         _fonts = [[NSMutableDictionary alloc] init];
         _descriptors = [[NSMutableDictionary alloc] init];
     }
     return self;
+}
+
+- (instancetype)initWithRenderingOptions:(IJSVGRenderingOptions*)options
+{
+    if((self = [self init])) {
+        if(options != nil) {
+            _defaultFontSize = options.defaultFontSize;
+        }
+    }
+    return self;
+}
+
+- (CGFloat)resolveLength:(IJSVGUnitLength*)length
+              percentage:(CGFloat)percentage
+                    node:(IJSVGNode*)node
+{
+    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        return [length computeValue:percentage];
+    }
+    IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
+    // SVG geometry rounds x-height to a user unit, matching WebKit.
+    return [length computeValue:percentage fontSize:style.size xHeight:ceil(style.xHeight)];
+}
+
+- (CGFloat)resolveCSSLength:(IJSVGUnitLength*)length
+                 percentage:(CGFloat)percentage
+                       node:(IJSVGNode*)node
+{
+    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        return [length computeValue:percentage];
+    }
+    IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
+    return [length computeValue:percentage fontSize:style.size xHeight:style.xHeight];
+}
+
+- (CGSize)resolveSize:(IJSVGUnitSize*)size
+           percentage:(CGSize)percentage
+                 node:(IJSVGNode*)node
+{
+    return CGSizeMake([self resolveLength:size.width percentage:percentage.width node:node],
+                       [self resolveLength:size.height percentage:percentage.height node:node]);
+}
+
+- (IJSVGUnitRect*)rectByResolvingFontLengths:(IJSVGUnitRect*)rect
+                                      node:(IJSVGNode*)node
+{
+    IJSVGUnitLength* lengths[] = { rect.origin.x, rect.origin.y, rect.size.width, rect.size.height };
+    BOOL relative = NO;
+    for(NSUInteger index = 0; index < 4; index++) {
+        relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||
+            lengths[index].type == IJSVGUnitLengthTypeEX;
+    }
+    if(!relative) {
+        return rect;
+    }
+    IJSVGUnitRect* result = rect.copy;
+    result.origin.x = [self unitByResolvingFontLength:rect.origin.x node:node];
+    result.origin.y = [self unitByResolvingFontLength:rect.origin.y node:node];
+    result.size.width = [self unitByResolvingFontLength:rect.size.width node:node];
+    result.size.height = [self unitByResolvingFontLength:rect.size.height node:node];
+    return result;
+}
+
+- (IJSVGUnitLength*)unitByResolvingFontLength:(IJSVGUnitLength*)length
+                                       node:(IJSVGNode*)node
+{
+    return [self unitByResolvingFontLength:length node:node css:NO];
+}
+
+- (IJSVGUnitLength*)unitByResolvingFontLength:(IJSVGUnitLength*)length
+                                       node:(IJSVGNode*)node
+                                        css:(BOOL)css
+{
+    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        return length;
+    }
+    CGFloat value = css ? [self resolveCSSLength:length percentage:0 node:node]
+        : [self resolveLength:length percentage:0 node:node];
+    return [IJSVGUnitLength unitWithFloat:value];
 }
 
 - (BOOL)usesNativeSpacingForFont:(id)font

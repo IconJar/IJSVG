@@ -7,10 +7,176 @@
 //
 
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <string.h>
 #import <IJSVG/IJSVGUtils.h>
+
+static BOOL IJSVGLengthListIsWhitespace(char character)
+{
+    return character == ' ' || character == '\t' ||
+        character == '\r' || character == '\n';
+}
+
+static BOOL IJSVGLengthListIsDigit(char character)
+{
+    return character >= '0' && character <= '9';
+}
+
+NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
+{
+    const char* string = value.UTF8String;
+    if(string == NULL || *string == '\0' ||
+       strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+        return nil;
+    }
+    // One mutable buffer lets the existing number and unit parsers read bounded
+    // tokens without allocating strings or parsing each number twice.
+    char* buffer = strdup(string);
+    if(buffer == NULL) {
+        return nil;
+    }
+    char* cursor = buffer;
+    NSMutableArray<IJSVGUnitLength*>* lengths = [[NSMutableArray alloc] init];
+    BOOL valid = YES;
+    while(IJSVGLengthListIsWhitespace(*cursor)) {
+        cursor++;
+    }
+    while(*cursor != '\0') {
+        char* number = cursor;
+        if(*cursor == '+' || *cursor == '-') {
+            cursor++;
+        }
+        char* digits = cursor;
+        while(IJSVGLengthListIsDigit(*cursor)) {
+            cursor++;
+        }
+        BOOL hasDigits = cursor != digits;
+        if(*cursor == '.') {
+            digits = ++cursor;
+            while(IJSVGLengthListIsDigit(*cursor)) {
+                cursor++;
+            }
+            hasDigits |= cursor != digits;
+        }
+        if(!hasDigits) {
+            valid = NO;
+            break;
+        }
+        // Reject negative nonzero mantissas before conversion can underflow to
+        // signed zero. A genuinely zero value remains valid with either sign.
+        if(*number == '-') {
+            for(const char* digit = number + 1; digit < cursor; digit++) {
+                if(*digit >= '1' && *digit <= '9') {
+                    valid = NO;
+                    break;
+                }
+            }
+            if(!valid) {
+                break;
+            }
+        }
+        // An 'e' starts an exponent only when digits follow; em/ex are units.
+        if(*cursor == 'e' || *cursor == 'E') {
+            char* exponent = cursor + 1;
+            if(*exponent == '+' || *exponent == '-') {
+                exponent++;
+            }
+            if(IJSVGLengthListIsDigit(*exponent)) {
+                cursor = exponent + 1;
+                while(IJSVGLengthListIsDigit(*cursor)) {
+                    cursor++;
+                }
+            }
+        }
+        char* suffix = cursor;
+        while(*cursor != '\0' && *cursor != ',' &&
+              !IJSVGLengthListIsWhitespace(*cursor)) {
+            cursor++;
+        }
+        size_t suffixLength = cursor - suffix;
+        char delimiter = *cursor;
+        *cursor = '\0';
+        IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(suffix);
+        if(suffixLength != 0 &&
+           (type == IJSVGUnitLengthTypeNumber ||
+            (type == IJSVGUnitLengthTypePercentage ? suffixLength != 1 : suffixLength != 2))) {
+            valid = NO;
+            break;
+        }
+        char saved = *suffix;
+        *suffix = '\0';
+        CGFloat scalar = IJSVGParseFloat(number);
+        *suffix = saved;
+        *cursor = delimiter;
+        scalar = [IJSVGUnitLength convertUnitValue:scalar
+                          toBaseFromUnitLengthType:type];
+        if(!isfinite(scalar) || scalar < 0.f) {
+            valid = NO;
+            break;
+        }
+        IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar];
+        length.originalType = type;
+        if(type == IJSVGUnitLengthTypePercentage ||
+           type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX) {
+            length.type = type;
+        }
+        [lengths addObject:length];
+        while(IJSVGLengthListIsWhitespace(*cursor)) {
+            cursor++;
+        }
+        if(*cursor == ',') {
+            cursor++;
+            while(IJSVGLengthListIsWhitespace(*cursor)) {
+                cursor++;
+            }
+            if(*cursor == '\0') {
+                valid = NO;
+                break;
+            }
+        }
+    }
+    free(buffer);
+    return valid && lengths.count != 0 ? lengths : nil;
+}
+
+IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
+{
+    value = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if([value isEqualToString:@"normal"] || [value isEqualToString:@"initial"]) {
+        return IJSVGPaintOrderNormal;
+    }
+    NSArray* names = @[@"fill", @"stroke", @"markers"];
+    NSUInteger seen = 0, order = 0, count = 0;
+    for(NSString* token in [value componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]) {
+        if(token.length == 0) {
+            continue;
+        }
+        NSUInteger operation = [names indexOfObject:token];
+        if(operation == NSNotFound || (seen & (1 << operation)) != 0) {
+            return IJSVGPaintOrderInherit;
+        }
+        seen |= 1 << operation;
+        order |= operation << (2 * count++);
+    }
+    if(count == 0) {
+        return IJSVGPaintOrderInherit;
+    }
+    for(NSUInteger operation = 0; operation < 3; operation++) {
+        if((seen & (1 << operation)) == 0) {
+            order |= operation << (2 * count++);
+        }
+    }
+    return (IJSVGPaintOrder)order;
+}
+
+NSString* IJSVGStringFromPaintOrder(IJSVGPaintOrder order)
+{
+    NSArray* names = @[@"fill", @"stroke", @"markers"];
+    return [NSString stringWithFormat:@"%@ %@ %@", names[order & 3],
+            names[(order >> 2) & 3], names[(order >> 4) & 3]];
+}
 
 BOOL IJSVGIsolationFromString(NSString* value, BOOL parentIsolation)
 {
@@ -379,6 +545,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             break;
         }
         case 11: {
+            if(IJSVGAttributeNameEquals(attributeName, length, "paint-order")) {
+                return IJSVGNodeAttributePaintOrder;
+            }
             if(IJSVGAttributeNameEquals(attributeName, length, "flood-color")) {
                 return IJSVGNodeAttributeFloodColor;
             }
@@ -532,6 +701,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeFillRule: @(IJSVGNodeAttributeFillRule),
             IJSVGAttributeBlendMode: @(IJSVGNodeAttributeBlendMode),
             IJSVGAttributeIsolation: @(IJSVGNodeAttributeIsolation),
+            IJSVGAttributePaintOrder: @(IJSVGNodeAttributePaintOrder),
             IJSVGAttributeVectorEffect: @(IJSVGNodeAttributeVectorEffect),
             IJSVGAttributeDisplay: @(IJSVGNodeAttributeDisplay),
             IJSVGAttributeStyle: @(IJSVGNodeAttributeStyle),

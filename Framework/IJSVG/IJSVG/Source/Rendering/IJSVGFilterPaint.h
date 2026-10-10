@@ -8,10 +8,12 @@
 
 #import <IJSVGGroupPaint.h>
 #import <IJSVG/IJSVGFilter.h>
+#import <IJSVG/IJSVGRendering.h>
 
 @interface IJSVGFilterPaint : IJSVGGroupPaint
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
 @property (nonatomic, readonly) BOOL usesBackground;
 
 // Only enable for resolved, immutable paint graphs. Rebuild the graph to invalidate.

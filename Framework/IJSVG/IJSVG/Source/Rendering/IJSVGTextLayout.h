@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGText.h>
+#import <IJSVG/IJSVGRendering.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -31,6 +32,12 @@ typedef CGPathRef _Nullable (^IJSVGTextPathResolver)(IJSVGPath* node);
 - (instancetype)initWithText:(IJSVGText*)text
                     viewport:(CGSize)viewport
                  renderScale:(CGFloat)renderScale
+                pathResolver:(nullable IJSVGTextPathResolver)pathResolver;
+
+- (instancetype)initWithText:(IJSVGText*)text
+                    viewport:(CGSize)viewport
+                 renderScale:(CGFloat)renderScale
+            renderingOptions:(nullable IJSVGRenderingOptions*)renderingOptions
                 pathResolver:(nullable IJSVGTextPathResolver)pathResolver;
 
 @end

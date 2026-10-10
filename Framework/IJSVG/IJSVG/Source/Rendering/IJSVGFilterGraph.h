@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGFilter.h>
+#import <IJSVG/IJSVGRendering.h>
 #import <CoreImage/CoreImage.h>
 #import <IJSVGMetalShadowRenderer.h>
 #import <IJSVGMetalBlurRenderer.h>
@@ -14,6 +15,7 @@
 @interface IJSVGFilterGraph : NSObject
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+@property (nonatomic, copy) IJSVGRenderingOptions* renderingOptions;
 @property (nonatomic, assign) CGRect boundingBox;
 @property (nonatomic, assign) CGRect viewPort;
 @property (nonatomic, assign) CGRect extent;

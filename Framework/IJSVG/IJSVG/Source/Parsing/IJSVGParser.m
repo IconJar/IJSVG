@@ -129,6 +129,7 @@ NSString* const IJSVGAttributeFill = @"fill";
 NSString* const IJSVGAttributeFillRule = @"fill-rule";
 NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
 NSString* const IJSVGAttributeIsolation = @"isolation";
+NSString* const IJSVGAttributePaintOrder = @"paint-order";
 NSString* const IJSVGAttributeVectorEffect = @"vector-effect";
 NSString* const IJSVGAttributeDisplay = @"display";
 NSString* const IJSVGAttributeStyle = @"style";
@@ -912,13 +913,18 @@ typedef struct {
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashArray, &value)) {
         if([value isEqualToString:IJSVGStringNone]) {
             node.strokeDashArrayCount = 0;
+            node.strokeDashLengths = nil;
         } else {
-            NSInteger paramCount = 0;
-            CGFloat* params = [IJSVGUtils commandParameters:value
-                                                 dataStream:_commandDataStream
-                                                      count:&paramCount];
-            node.strokeDashArray = params;
-            node.strokeDashArrayCount = paramCount;
+            NSArray<IJSVGUnitLength*>* lengths = IJSVGUnitLengthsFromString(value);
+            if(lengths != nil) {
+                CGFloat* params = malloc(lengths.count * sizeof(CGFloat));
+                for(NSUInteger index = 0; index < lengths.count; index++) {
+                    params[index] = lengths[index].value;
+                }
+                node.strokeDashArray = params;
+                node.strokeDashArrayCount = lengths.count;
+                node.strokeDashLengths = lengths;
+            }
         }
     }
 
@@ -937,6 +943,9 @@ typedef struct {
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
         node.vectorEffect = [IJSVGUtils vectorEffectForString:value];
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePaintOrder, &value)) {
+        node.paintOrder = IJSVGPaintOrderFromString(value);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeIsolation, &value)) {
         node.isolated = IJSVGIsolationFromString(value, node.parentNode.isolated);
@@ -1991,6 +2000,7 @@ typedef struct {
     node.name = element.localName;
     node.parentNode = parentNode;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
+
     // Symbols inherit presentation properties from their use element.
     node.lineCapStyle = IJSVGLineCapStyleInherit;
     node.lineJoinStyle = IJSVGLineJoinStyleInherit;

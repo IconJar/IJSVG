@@ -29,10 +29,12 @@
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
                       fromUnitType:(IJSVGUnitType)units
 {
-    if(units == IJSVGUnitObjectBoundingBox) {
-        return [self unitWithPercentageString:string];
+    IJSVGUnitLength* length = [self unitWithString:string];
+    if(units == IJSVGUnitObjectBoundingBox &&
+       length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        length.type = IJSVGUnitLengthTypePercentage;
     }
-    return [self unitWithString:string];
+    return length;
 }
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number

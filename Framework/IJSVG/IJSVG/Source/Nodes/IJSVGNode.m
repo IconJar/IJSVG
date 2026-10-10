@@ -166,6 +166,15 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 }
 
 @synthesize styleParent = _styleParent;
+@synthesize paintOrder = _paintOrder;
+
+- (IJSVGPaintOrder)paintOrder
+{
+    if(_paintOrder == IJSVGPaintOrderInherit) {
+        return self.styleParent != nil ? self.styleParent.paintOrder : IJSVGPaintOrderNormal;
+    }
+    return _paintOrder;
+}
 
 - (IJSVGVectorEffect)resolvedVectorEffect
 {
@@ -467,6 +476,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
     [storage setBit:IJSVGNodeAttributeIsolation];
+    [storage setBit:IJSVGNodeAttributePaintOrder];
     [storage setBit:IJSVGNodeAttributeVectorEffect];
     [storage setBit:IJSVGNodeAttributeMarker];
     [storage setBit:IJSVGNodeAttributeMarkerStart];
@@ -616,6 +626,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
         self.strokeDashArrayCount = IJSVGInheritedIntegerValue;
         self.strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
+        self.strokeDashOffset.inherit = YES;
         self.shouldRender = YES;
 
         self.strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
@@ -632,6 +643,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         self.contentUnits = IJSVGUnitInherit;
 
         self.blendMode = IJSVGBlendModeNormal;
+        self.paintOrder = IJSVGPaintOrderInherit;
         self.overflowVisibility = IJSVGOverflowVisibilityVisible;
         
         // peform basic init
@@ -702,6 +714,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     self.shouldRender = node.shouldRender;
     self.blendMode = node.blendMode;
     self.isolated = node.isolated;
+    self.paintOrder = node->_paintOrder;
     self.vectorEffect = node.vectorEffect;
     self.overflowVisibility = node.overflowVisibility;
 
@@ -714,6 +727,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
         self.strokeDashArray = nStrokeDashArray;
     }
     self.strokeDashArrayCount = strokeDashArrayCount;
+    self.strokeDashLengths = node.strokeDashLengths;
     self.strokeDashOffset = node.strokeDashOffset;
 }
 
@@ -895,6 +909,14 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     return _strokeWidth;
 }
 
+- (NSArray<IJSVGUnitLength*>*)strokeDashLengths
+{
+    if(_strokeDashLengths == nil && _strokeDashArrayCount == IJSVGInheritedIntegerValue) {
+        return self.styleParent.strokeDashLengths;
+    }
+    return _strokeDashLengths;
+}
+
 - (NSArray<NSNumber*>*)lineDashPattern
 {
     NSMutableArray* arr = [[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount];
@@ -932,7 +954,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 - (IJSVGUnitLength *)strokeDashOffset
 {
-    if(_strokeDashOffset == nil && self.styleParent != nil) {
+    if((_strokeDashOffset == nil || _strokeDashOffset.inherit) && self.styleParent != nil) {
         return self.styleParent.strokeDashOffset;
     }
     return _strokeDashOffset;

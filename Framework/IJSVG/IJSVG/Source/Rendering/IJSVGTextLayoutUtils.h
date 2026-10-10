@@ -70,7 +70,7 @@ void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters,
 CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style);
 
 CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
-                          CGFloat parentXHeight);
+                          CGFloat parentXHeight, CGFloat defaultFontSize);
 CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale);
 
 BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent,

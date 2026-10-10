@@ -144,6 +144,7 @@ extern NSString* const IJSVGAttributeFill;
 extern NSString* const IJSVGAttributeFillRule;
 extern NSString* const IJSVGAttributeBlendMode;
 extern NSString* const IJSVGAttributeIsolation;
+extern NSString* const IJSVGAttributePaintOrder;
 extern NSString* const IJSVGAttributeVectorEffect;
 extern NSString* const IJSVGAttributeDisplay;
 extern NSString* const IJSVGAttributeStyle;

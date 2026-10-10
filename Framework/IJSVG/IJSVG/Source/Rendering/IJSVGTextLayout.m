@@ -223,61 +223,8 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
                         forKey:node];
         return parent;
     }
-    NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* values = [parent.values mutableCopy] ?: [[NSMutableDictionary alloc] init];
-    [values removeObjectForKey:IJSVGAttributeInlineSize];
-    [values removeObjectForKey:IJSVGAttributeAlignmentBaseline];
-    [values removeObjectForKey:IJSVGAttributeBaselineShift];
-    [values removeObjectForKey:IJSVGAttributeUnicodeBidi];
-    NSDictionary<NSString*, IJSVGTextAttributeValue*>* specified = node.textStyle;
-    for(NSString* key in specified) {
-        IJSVGTextAttributeValue* value = specified[key];
-        switch(value.keyword) {
-            case IJSVGTextKeywordInherit:
-                if(parent.values[key] != nil) {
-                    values[key] = parent.values[key];
-                }
-                break;
-            case IJSVGTextKeywordUnset:
-                break;
-            case IJSVGTextKeywordInitial:
-                [values removeObjectForKey:key];
-                break;
-            default:
-                values[key] = value;
-                break;
-        }
-    }
-    IJSVGTextAttributeValue* weight = values[IJSVGAttributeFontWeight];
-    if(weight.keyword == IJSVGTextKeywordBolder || weight.keyword == IJSVGTextKeywordLighter) {
-        IJSVGTextAttributeValue* inherited = parent.values[IJSVGAttributeFontWeight];
-        CGFloat parentWeight = inherited.keyword == IJSVGTextKeywordBold ? 700 :
-            (inherited.number > 0 ? inherited.number : 400);
-        CGFloat resolved;
-        if(weight.keyword == IJSVGTextKeywordBolder) {
-            resolved = parentWeight < 350 ? 400 : (parentWeight < 550 ? 700 : MAX(900, parentWeight));
-        } else {
-            resolved = parentWeight < 550 ? MIN(100, parentWeight) : (parentWeight < 750 ? 400 : 700);
-        }
-        // Parsed values may be shared by other nodes; never mutate them.
-        IJSVGTextAttributeValue* computed = [[IJSVGTextAttributeValue alloc] init];
-        computed.number = resolved;
-        values[IJSVGAttributeFontWeight] = computed;
-    }
-    style = [[IJSVGTextComputedStyle alloc] init];
-    CGFloat parentSize = parent != nil ? parent.size : 16.;
-    IJSVGTextAttributeValue* size = specified[IJSVGAttributeFontSize];
-    CGFloat parentXHeight = parent.xHeight;
-    if(parent == nil && size.lengthBasis == IJSVGTextLengthBasisXHeight) {
-        // Font size uses parent metrics, or the initial font at the root.
-        id initialFont = [self.fontResolver fontForValues:@{}
-                                                     size:parentSize];
-        parentXHeight = IJSVGTextFontXHeight((__bridge CTFontRef)initialFont,
-                                             parentSize,
-                                             self.fontResolver.renderScale);
-    }
-    style.size = IJSVGTextFontSize(size, parentSize, parentXHeight);
-    style.fontScale = self.fontResolver.renderScale;
-    style.values = values;
+    style = [self.fontResolver fontStyleForNode:node parentStyle:parent];
+    NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* values = [style.values mutableCopy];
     IJSVGTextKeyword bidi = values[IJSVGAttributeUnicodeBidi].keyword;
     if(bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride ||
        bidi == IJSVGTextKeywordIsolate || bidi == IJSVGTextKeywordIsolateOverride ||
@@ -288,17 +235,6 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     IJSVGTextAttributeValue* decoration = values[IJSVGAttributeTextDecorationLine]
         ?: values[IJSVGAttributeTextDecoration];
     style.decorations = decoration.decorations;
-    if(IJSVGTextCanReuseFont(parent, values, style.size)) {
-        style.font = parent.font;
-        style.xHeight = parent.xHeight;
-        style.nativeSpacing = parent.nativeSpacing;
-    } else {
-        style.font = [self.fontResolver fontForValues:values
-                                                 size:style.size];
-        style.nativeSpacing = [self.fontResolver usesNativeSpacingForFont:style.font];
-        style.xHeight = IJSVGTextFontXHeight((__bridge CTFontRef)style.font,
-                                             style.size, style.fontScale);
-    }
     style.wordSpacing = IJSVGTextLength(values[IJSVGAttributeWordSpacing],
                                         style.size, style.xHeight, style.size);
     style.rtl = values[IJSVGAttributeDirection].keyword == IJSVGTextKeywordRTL;
@@ -1420,6 +1356,19 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
                  renderScale:(CGFloat)renderScale
                 pathResolver:(IJSVGTextPathResolver)pathResolver
 {
+    return [self initWithText:text
+                     viewport:viewport
+                  renderScale:renderScale
+             renderingOptions:nil
+                 pathResolver:pathResolver];
+}
+
+- (instancetype)initWithText:(IJSVGText*)text
+                    viewport:(CGSize)viewport
+                 renderScale:(CGFloat)renderScale
+            renderingOptions:(IJSVGRenderingOptions*)renderingOptions
+                pathResolver:(IJSVGTextPathResolver)pathResolver
+{
     if((self = [super init])) {
         _root = text;
         _viewport = viewport;
@@ -1431,6 +1380,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         _rangeIndices = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
         _groups = [NSMapTable strongToStrongObjectsMapTable];
         _fontResolver = [[IJSVGTextFontResolver alloc] init];
+        if(renderingOptions != nil) {
+            _fontResolver.defaultFontSize = renderingOptions.defaultFontSize;
+        }
         _fontResolver.renderScale = isfinite(renderScale) && renderScale > 0 ? renderScale : 1;
         if(IJSVGTextRenderingForNode(text) == IJSVGTextKeywordGeometricPrecision) {
             _fontResolver.renderScale = 1;

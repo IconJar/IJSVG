@@ -43,6 +43,9 @@
     CGContextClipToRect(bitmap, region);
     if(primitive.imageNode != nil) {
         IJSVGQuartzRenderer* tree = [[IJSVGQuartzRenderer alloc] init];
+        if(context.renderingOptions != nil) {
+            tree.renderingOptions = context.renderingOptions;
+        }
         IJSVGPaint* layer = [tree drawablePaintForNode:primitive.imageNode
                                             inViewPort:context.viewPort];
         CGContextConcatCTM(bitmap, context.imageTransform);

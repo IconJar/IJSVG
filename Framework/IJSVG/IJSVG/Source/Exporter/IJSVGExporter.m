@@ -20,6 +20,8 @@
 #import <IJSVG/IJSVGStrokePaint.h>
 #import <IJSVG/IJSVGTransformPaint.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGTextFontResolver.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGFilterGraph.h>
@@ -263,7 +265,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         if([self hasDynamicSize] == YES) {
             dimensions = IJSVGIntrinsicDimensionNone;
         }
-        proposedSize = [_sourceRoot.intrinsicSize computeValue:IJSVG_SIZE_DEFAULT_CLIENT];
+        proposedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
+            resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
     } else if(CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INFINITE) == YES) {
         dimensions = IJSVGIntrinsicDimensionNone;
     }
@@ -322,7 +325,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     CGSize size = _size;
     if(CGSizeEqualToSize(size, IJSVG_SIZE_INFINITE) ||
        CGSizeEqualToSize(size, IJSVG_SIZE_INTRINSIC) || CGSizeEqualToSize(size, CGSizeZero)) {
-        size = [_sourceRoot.intrinsicSize computeValue:IJSVG_SIZE_DEFAULT_CLIENT];
+        size = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
+            resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
     }
     IJSVGRootNode* node = _sourceRoot;
     CGSize previousSize = node.clientSize;
@@ -1329,7 +1333,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     IJSVGUnitSize* size = paint.intrinsicSize;
     if(size != nil) {
-        CGSize computedSize = [size computeValue:parentSize];
+        CGSize computedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
+            resolveSize:size percentage:parentSize node:paint.sourceNode];
         attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(computedSize.width,
                                                                            _floatingPointOptions);
         attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(computedSize.height,
@@ -2119,6 +2124,11 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         dict[IJSVGAttributeFillRule] = IJSVGStringEvenOdd;
     }
 
+    // A separated stroke operation must not acquire SVG's default black fill.
+    if(paint.fillPaint == nil) {
+        dict[IJSVGAttributeFill] = IJSVGStringNone;
+    }
+
     // fill color
     IJSVGShapePaint* fillPaint = (IJSVGShapePaint*)([paint.fillPaint isKindOfClass:IJSVGShapePaint.class] ? paint.fillPaint : nil);
     if(fillPaint != nil) {
@@ -2377,6 +2387,11 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         }
     }
 
+    // Export the resolved paint order; text geometry can outlive its style parents.
+    if(paint.fillPaint != nil && paint.strokePaint != nil &&
+       paint.children.firstObject == paint.strokePaint) {
+        dict[IJSVGAttributePaintOrder] = IJSVGStringFromPaintOrder(IJSVGPaintOrderStrokeFillMarkers);
+    }
     // apply the attributes
     IJSVGApplyAttributesToElement(dict, e);
 
@@ -2395,8 +2410,18 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             [e removeAttributeForName:attribute];
             for(NSXMLElement* stroke in strokes) [stroke removeAttributeForName:attribute];
         }
+        BOOL strokeFirst = paint.strokePaint != nil && paint.children.firstObject == paint.strokePaint;
+        if(strokeFirst) {
+            for(NSXMLElement* stroke in strokes) {
+                [group addChild:stroke];
+            }
+        }
         if(!ignore.boolValue) [group addChild:e];
-        for(NSXMLElement* stroke in strokes) [group addChild:stroke];
+        if(!strokeFirst) {
+            for(NSXMLElement* stroke in strokes) {
+                [group addChild:stroke];
+            }
+        }
         objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, nil, OBJC_ASSOCIATION_RETAIN);
         return group;
     }
@@ -2853,16 +2878,17 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     if(node == nil) {
         return;
     }
+    IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
     NSXMLElement* mask = [[NSXMLElement alloc] initWithName:@"mask"];
     NSString* identifier = [self identifierForElement:mask];
     IJSVGApplyAttributesToElement(@{
         IJSVGAttributeID: identifier,
         IJSVGAttributeMaskUnits: node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
         IJSVGAttributeMaskContentUnits: node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
-        IJSVGAttributeX: [node.x stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeY: [node.y stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeWidth: [node.width stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeHeight: [node.height stringValueWithFloatingPointOptions:_floatingPointOptions]
+        IJSVGAttributeX: [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeY: [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeWidth: [[resolver unitByResolvingFontLength:node.width node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
+        IJSVGAttributeHeight: [[resolver unitByResolvingFontLength:node.height node:node] stringValueWithFloatingPointOptions:_floatingPointOptions]
     }, mask);
     CGRect bounds = node.contentUnits == IJSVGUnitObjectBoundingBox ? CGRectMake(0, 0, 1, 1) : paint.viewPort;
     IJSVGPaint* content = [_paintResolver drawablePaintForNode:node inViewPort:bounds];

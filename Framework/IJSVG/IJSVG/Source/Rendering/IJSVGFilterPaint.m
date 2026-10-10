@@ -955,6 +955,9 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGRect region = CGRectApplyAffineTransform(graph.extent,
                                                CGAffineTransformInvert(graph.imageTransform));
     IJSVGQuartzRenderer* tree = [[IJSVGQuartzRenderer alloc] init];
+    if(self.renderingOptions != nil) {
+        tree.renderingOptions = self.renderingOptions;
+    }
     [tree drawPaint:paint
         boundingBox:self.boundingBox
            viewPort:self.viewPort
@@ -1019,6 +1022,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
     graph.filter = _imageSnapshotFilter ?: self.filter;
+    graph.renderingOptions = self.renderingOptions;
     // Repeated shadow readbacks can accumulate rounding differences in nested filters.
     graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
     if(!graph.hasNestedFilters && self.filter.primitives.count == 1 &&

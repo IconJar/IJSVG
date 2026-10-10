@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGRendering.h>
 
+const CGFloat IJSVGDefaultFontSize = 16.f;
+
 @implementation IJSVGRenderingOptions
 
 // Preserves the rendering defaults used by existing SVG clients.
@@ -17,8 +19,15 @@
         _filtersEnabled = YES;
         _renderQuality = kIJSVGRenderQualityFullResolution;
         _ignoreIntrinsicSize = YES;
+        _defaultFontSize = IJSVGDefaultFontSize;
     }
     return self;
+}
+
+- (void)setDefaultFontSize:(CGFloat)defaultFontSize
+{
+    _defaultFontSize = isfinite(defaultFontSize) && defaultFontSize >= 0.f
+        ? defaultFontSize : IJSVGDefaultFontSize;
 }
 
 // Copies settings so SVG instances never share mutable rendering options.
@@ -28,6 +37,7 @@
     options.filtersEnabled = self.filtersEnabled;
     options.renderQuality = self.renderQuality;
     options.ignoreIntrinsicSize = self.ignoreIntrinsicSize;
+    options.defaultFontSize = self.defaultFontSize;
     return options;
 }
 

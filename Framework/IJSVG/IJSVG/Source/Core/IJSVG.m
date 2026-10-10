@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVG.h>
+#import <IJSVGTextFontResolver.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGThreadManager.h>
@@ -261,13 +262,15 @@
     _nodesOutsideViewBox = nil;
     _artworkRenderer = nil;
     CGSize resolvingSize = _rootNode.clientSize;
-    _viewBox = [_rootNode.viewBox computeValue:resolvingSize];
+    IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
+    _viewBox = [[resolver rectByResolvingFontLengths:_rootNode.viewBox node:_rootNode] computeValue:resolvingSize];
     _intrinsicSize = _rootNode.intrinsicSize;
 }
 
 - (CGSize)size
 {
-    return [_intrinsicSize computeValue:IJSVG_SIZE_DEFAULT_CLIENT];
+    IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
+    return [resolver resolveSize:_intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_rootNode];
 }
 
 - (IJSVGUnitSize*)intrinsicUnitSize
@@ -663,7 +666,8 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize
 {
-    CGSize ogSize = [_rootNode.intrinsicSize computeValue:aSize];
+    IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
+    CGSize ogSize = [resolver resolveSize:_rootNode.intrinsicSize percentage:aSize node:_rootNode];
     CGFloat ratio = 0.f;
     CGFloat imageWidth = ogSize.width;
     CGFloat imageHeight = ogSize.height;
@@ -854,7 +858,8 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 // Captures options and rebuilds the resolved Quartz paints.
 - (void)setRenderingOptions:(IJSVGRenderingOptions*)renderingOptions
 {
-    _renderingOptions = renderingOptions.copy;
+    _renderingOptions = renderingOptions.copy ?: [[IJSVGRenderingOptions alloc] init];
+    [self _setupBasicInfoFromGroup];
     _quartzRenderer = nil;
     _nodesOutsideViewBox = nil;
     _artworkRenderer = nil;

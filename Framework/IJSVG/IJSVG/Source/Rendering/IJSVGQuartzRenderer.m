@@ -9,6 +9,7 @@
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGTextLayout.h>
+#import <IJSVGTextFontResolver.h>
 #import <IJSVGPaint.h>
 #import <IJSVGGroupPaint.h>
 #import <IJSVGTransformPaint.h>
@@ -48,14 +49,8 @@ static CGLineJoin IJSVGQuartzLineJoin(IJSVGLineJoinStyle style)
 }
 
 static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
-                                       IJSVGStyle* style)
+                                       IJSVGStyle* style, CGFloat lineWidth)
 {
-    // Calculate the stroke width.
-    CGFloat lineWidth = [node.strokeWidth computeValue:paint.frame.size.width];
-
-    if(style.lineWidth != IJSVGInheritedFloatValue) {
-        lineWidth = style.lineWidth;
-    }
 
     // Read the stroke cap and join settings.
     IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
@@ -146,6 +141,7 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 @end
 
 @interface IJSVGQuartzRenderer () {
+    IJSVGTextFontResolver* _lengthFontResolver;
     NSMutableArray<NSValue*>* _viewPortStack;
     NSMutableArray<NSValue*>* _unitBoundsStack;
     IJSVGRootPaint* _rootPaint;
@@ -698,6 +694,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:node
                                                            viewport:[self unitResolutionBoundsForNode:node].size
                                                         renderScale:scale
+                                                   renderingOptions:_renderingOptions
                                                        pathResolver:^CGPathRef(IJSVGPath* pathNode) {
             CGMutablePathRef path = CGPathCreateMutable();
             CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
@@ -831,6 +828,11 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
     if(contentUnits == IJSVGUnitObjectBoundingBox) {
+        if(unit.type == IJSVGUnitLengthTypeEM || unit.type == IJSVGUnitLengthTypeEX) {
+            BOOL css = node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeCircle ||
+                node.type == IJSVGNodeTypeEllipse || node.type == IJSVGNodeTypeImage;
+            unit = [self.lengthFontResolver unitByResolvingFontLength:unit node:node css:css];
+        }
         return [unit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
     }
     return unit;
@@ -856,10 +858,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
     switch(node.primitiveType) {
         case kIJSVGPrimitivePathTypeLine: {
-            CGFloat x1 = [[self unit:node.x1 matchingNode:node] computeValue:width];
-            CGFloat y1 = [[self unit:node.y1 matchingNode:node] computeValue:height];
-            CGFloat x2 = [[self unit:node.x2 matchingNode:node] computeValue:width];
-            CGFloat y2 = [[self unit:node.y2 matchingNode:node] computeValue:height];
+            CGFloat x1 = [self resolveLength:[self unit:node.x1 matchingNode:node] percentage:width node:node];
+            CGFloat y1 = [self resolveLength:[self unit:node.y1 matchingNode:node] percentage:height node:node];
+            CGFloat x2 = [self resolveLength:[self unit:node.x2 matchingNode:node] percentage:width node:node];
+            CGFloat y2 = [self resolveLength:[self unit:node.y2 matchingNode:node] percentage:height node:node];
             CGPathMoveToPoint(path, &transform, x1, y1);
             CGPathAddLineToPoint(path, &transform, x2, y2);
             break;
@@ -867,30 +869,30 @@ inMeasurementPaint:(IJSVGPaint*)paint
         case kIJSVGPrimitivePathTypeRect: {
             IJSVGUnitLength* rx = [self unit:node.rx matchingNode:node];
             IJSVGUnitLength* ry = [self unit:(node.ry ?: node.rx) matchingNode:node];
-            CGRect rect = CGRectMake([[self unit:node.x matchingNode:node] computeValue:width],
-                                     [[self unit:node.y matchingNode:node] computeValue:height],
-                                     [[self unit:node.width matchingNode:node] computeValue:width],
-                                     [[self unit:node.height matchingNode:node] computeValue:height]);
-            CGFloat radiusX = [rx computeValue:width];
-            CGFloat radiusY = [ry computeValue:height];
+            CGRect rect = CGRectMake([self resolveCSSLength:[self unit:node.x matchingNode:node] percentage:width node:node],
+                                     [self resolveCSSLength:[self unit:node.y matchingNode:node] percentage:height node:node],
+                                     [self resolveCSSLength:[self unit:node.width matchingNode:node] percentage:width node:node],
+                                     [self resolveCSSLength:[self unit:node.height matchingNode:node] percentage:height node:node]);
+            CGFloat radiusX = [self resolveCSSLength:rx percentage:width node:node];
+            CGFloat radiusY = [self resolveCSSLength:ry percentage:height node:node];
             CGPathAddRoundedRect(path, &transform, rect, radiusX, radiusY);
             break;
         }
         case kIJSVGPrimitivePathTypeCircle: {
-            CGFloat cx = [[self unit:node.cx matchingNode:node] computeValue:width];
-            CGFloat cy = [[self unit:node.cy matchingNode:node] computeValue:height];
+            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node] percentage:width node:node];
+            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node] percentage:height node:node];
             IJSVGUnitLength* radius = [self unit:node.r matchingNode:node];
-            CGFloat rx = [radius computeValue:width];
-            CGFloat ry = [radius computeValue:height];
+            CGFloat rx = [self resolveCSSLength:radius percentage:width node:node];
+            CGFloat ry = [self resolveCSSLength:radius percentage:height node:node];
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
             CGPathAddEllipseInRect(path, &transform, rect);
             break;
         }
         case kIJSVGPrimitivePathTypeEllipse: {
-            CGFloat cx = [[self unit:node.cx matchingNode:node] computeValue:width];
-            CGFloat cy = [[self unit:node.cy matchingNode:node] computeValue:height];
-            CGFloat rx = [[self unit:node.rx matchingNode:node] computeValue:width];
-            CGFloat ry = [[self unit:node.ry matchingNode:node] computeValue:height];
+            CGFloat cx = [self resolveCSSLength:[self unit:node.cx matchingNode:node] percentage:width node:node];
+            CGFloat cy = [self resolveCSSLength:[self unit:node.cy matchingNode:node] percentage:height node:node];
+            CGFloat rx = [self resolveCSSLength:[self unit:node.rx matchingNode:node] percentage:width node:node];
+            CGFloat ry = [self resolveCSSLength:[self unit:node.ry matchingNode:node] percentage:height node:node];
             CGRect rect = CGRectMake(cx - rx, cy - ry, rx * 2.f, ry * 2.f);
             CGPathAddEllipseInRect(path, &transform, rect);
             break;
@@ -1180,6 +1182,19 @@ inMeasurementPaint:(IJSVGPaint*)paint
                       fromNode:node];
     }
 
+    if(paint.fillPaint != nil && paint.strokePaint != nil) {
+        IJSVGPaintOrder order = node.paintOrder;
+        for(NSUInteger index = 0; index < 3; index++) {
+            NSUInteger operation = (order >> (index * 2)) & 3;
+            if(operation == 0) {
+                break;
+            }
+            if(operation == 1) {
+                paint.children = @[paint.strokePaint, paint.fillPaint];
+                break;
+            }
+        }
+    }
     IJSVGPaint* result = [self paintByAddingMarkersToPaint:paint
                                                    forNode:node
                                               resolvedPath:resolvedPath
@@ -1187,6 +1202,62 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGPathRelease(paintPath);
     CGPathRelease(resolvedPath);
     return result;
+}
+
+- (IJSVGGradient*)gradientByResolvingFontLengths:(IJSVGGradient*)gradient
+{
+    IJSVGRadialGradient* radial = [gradient isKindOfClass:IJSVGRadialGradient.class]
+        ? (IJSVGRadialGradient*)gradient : nil;
+    IJSVGUnitLength* lengths[] = { gradient.x1, gradient.y1, gradient.x2, gradient.y2,
+        radial.cx, radial.cy, radial.fx, radial.fy, radial.r, radial.fr };
+    BOOL relative = NO;
+    for(NSUInteger index = 0; index < 10; index++) {
+        relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||
+            lengths[index].type == IJSVGUnitLengthTypeEX;
+    }
+    if(!relative) {
+        return gradient;
+    }
+    IJSVGGradient* copy = gradient.copy;
+    copy.x1 = [self.lengthFontResolver unitByResolvingFontLength:gradient.x1 node:gradient];
+    copy.y1 = [self.lengthFontResolver unitByResolvingFontLength:gradient.y1 node:gradient];
+    copy.x2 = [self.lengthFontResolver unitByResolvingFontLength:gradient.x2 node:gradient];
+    copy.y2 = [self.lengthFontResolver unitByResolvingFontLength:gradient.y2 node:gradient];
+    if(radial != nil) {
+        IJSVGRadialGradient* result = (IJSVGRadialGradient*)copy;
+        result.cx = [self.lengthFontResolver unitByResolvingFontLength:radial.cx node:radial];
+        result.cy = [self.lengthFontResolver unitByResolvingFontLength:radial.cy node:radial];
+        result.fx = [self.lengthFontResolver unitByResolvingFontLength:radial.fx node:radial];
+        result.fy = [self.lengthFontResolver unitByResolvingFontLength:radial.fy node:radial];
+        result.r = [self.lengthFontResolver unitByResolvingFontLength:radial.r node:radial];
+        result.fr = [self.lengthFontResolver unitByResolvingFontLength:radial.fr node:radial];
+    }
+    return copy;
+}
+
+- (BOOL)hasFontRelativeRegion:(IJSVGNode*)node
+{
+    IJSVGUnitLength* lengths[] = { node.x, node.y, node.width, node.height };
+    for(NSUInteger index = 0; index < 4; index++) {
+        if(lengths[index].type == IJSVGUnitLengthTypeEM ||
+           lengths[index].type == IJSVGUnitLengthTypeEX) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)resolveRegionFontLengths:(IJSVGNode*)node
+{
+    [self resolveRegionFontLengths:node css:NO];
+}
+
+- (void)resolveRegionFontLengths:(IJSVGNode*)node css:(BOOL)css
+{
+    node.x = [self.lengthFontResolver unitByResolvingFontLength:node.x node:node css:css];
+    node.y = [self.lengthFontResolver unitByResolvingFontLength:node.y node:node css:css];
+    node.width = [self.lengthFontResolver unitByResolvingFontLength:node.width node:node css:css];
+    node.height = [self.lengthFontResolver unitByResolvingFontLength:node.height node:node css:css];
 }
 
 #pragma mark Marker Context Paint
@@ -1197,7 +1268,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
                         transform:(CGAffineTransform)transform
 {
     // Context gradients retain the coordinate space of the referencing shape.
-    IJSVGGradient* gradient = [source copy];
+    IJSVGGradient* gradient = [[self gradientByResolvingFontLengths:source] copy];
     BOOL objectUnits = gradient.units == IJSVGUnitObjectBoundingBox;
     CGSize size = objectUnits ? CGSizeMake(1, 1) : viewport.size;
     if([gradient isKindOfClass:IJSVGRadialGradient.class]) {
@@ -1233,6 +1304,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
                       transform:(CGAffineTransform)transform
 {
     IJSVGPattern* pattern = [source copy];
+    if([self hasFontRelativeRegion:pattern]) {
+        [self resolveRegionFontLengths:pattern];
+    }
     BOOL objectUnits = pattern.units == IJSVGUnitObjectBoundingBox;
     CGSize size = objectUnits ? bounds.size : viewport.size;
     if(objectUnits) {
@@ -1377,6 +1451,49 @@ inMeasurementPaint:(IJSVGPaint*)paint
         return paint;
     }
 
+    if(node.paintOrder != IJSVGPaintOrderNormal) {
+        NSArray* markers = [children subarrayWithRange:NSMakeRange(1, children.count - 1)];
+        [children removeAllObjects];
+        IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+        for(NSUInteger index = 0; index < 3; index++) {
+            NSUInteger operation = (node.paintOrder >> (index * 2)) & 3;
+            if(operation == 2) {
+                [children addObjectsFromArray:markers];
+                continue;
+            }
+            IJSVGPaint* component = operation == 0 ? shape.fillPaint : shape.strokePaint;
+            if(component != nil) {
+                // Retain shape metadata so vector export can reconstruct paint servers
+                // and stroke geometry, even when markers separate the two operations.
+                IJSVGShapePaint* placed = IJSVGShapePaint.paint;
+                placed.path = shape.path;
+                placed.primitiveType = shape.primitiveType;
+                placed.sourceNode = shape.sourceNode;
+                placed.viewPort = shape.viewPort;
+                placed.frame = shape.frame;
+                placed.affineTransform = shape.affineTransform;
+                placed.boundingBox = shape.boundingBox;
+                placed.outerBoundingBox = shape.outerBoundingBox;
+                placed.children = @[component];
+                if(operation == 0) {
+                    placed.fillPaint = component;
+                    placed.fillRule = shape.fillRule;
+                    if(shape.strokeStyle != nil) {
+                        // Keep the fill's export path in the padded stroke frame.
+                        CGFloat inset = shape.strokeStyle.lineWidth * .5f;
+                        CGAffineTransform transform = CGAffineTransformMakeTranslation(inset, inset);
+                        CGPathRef path = CGPathCreateCopyByTransformingPath(shape.path, &transform);
+                        placed.path = path;
+                        CGPathRelease(path);
+                    }
+                } else {
+                    placed.strokePaint = component;
+                    placed.strokeStyle = shape.strokeStyle;
+                }
+                [children addObject:placed];
+            }
+        }
+    }
     IJSVGPaint* result = [self drawablePaintForGroupNode:node
                                                 children:children];
     // Markers contribute to visual coverage, never to objectBoundingBox geometry.
@@ -1411,13 +1528,11 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
 
     CGRect bounds = [self unitResolutionBoundsForNode:node];
-    CGSize size = CGSizeMake([marker.markerWidth computeValue:bounds.size.width],
-                             [marker.markerHeight computeValue:bounds.size.height]);
+    CGSize size = CGSizeMake([self resolveLength:marker.markerWidth percentage:bounds.size.width node:marker],
+                             [self resolveLength:marker.markerHeight percentage:bounds.size.height node:marker]);
 
     CGFloat normalizedDiagonal = hypot(bounds.size.width, bounds.size.height) / M_SQRT2;
-    CGFloat strokeWidth = _style.lineWidth != IJSVGInheritedFloatValue
-        ? _style.lineWidth
-        : [node.strokeWidth computeValue:normalizedDiagonal];
+    CGFloat strokeWidth = [self resolveStrokeWidthForNode:node percentage:normalizedDiagonal];
 
     CGFloat scale = marker.markerUnits == IJSVGMarkerUnitsStrokeWidth ? strokeWidth : 1;
     if(size.width <= 0 || size.height <= 0 || scale <= 0 || !isfinite(size.width)
@@ -1434,8 +1549,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGAffineTransform mapping = IJSVGViewBoxComputeTransform(viewBox, viewport,
                                                              marker.viewBoxAlignment,
                                                              marker.viewBoxMeetOrSlice);
-    CGPoint reference = CGPointMake([marker.refX computeValue:viewBox.size.width],
-                                    [marker.refY computeValue:viewBox.size.height]);
+    CGPoint reference = CGPointMake([self resolveLength:marker.refX percentage:viewBox.size.width node:marker],
+                                    [self resolveLength:marker.refY percentage:viewBox.size.height node:marker]);
     reference = CGPointApplyAffineTransform(reference, mapping);
     CGAffineTransform transform = [self transformForMarker:marker
                                                   position:position
@@ -1578,7 +1693,28 @@ inMeasurementPaint:(IJSVGPaint*)paint
     paint.fillColor = nil;
     paint.strokeColor = strokeColor.CGColor;
 
-    IJSVGQuartzConfigureStroke(paint, node, _style);
+    CGFloat lineWidth = [self resolveStrokeWidthForNode:node percentage:paint.frame.size.width];
+    IJSVGQuartzConfigureStroke(paint, node, _style, lineWidth);
+    CGRect unitBounds = [self unitResolutionBoundsForNode:node];
+    CGFloat diagonal = hypot(unitBounds.size.width, unitBounds.size.height) / M_SQRT2;
+    IJSVGNode* offsetOwner = node;
+    IJSVGUnitLength* offset = node.strokeDashOffset;
+    while(offsetOwner.styleParent != nil && offsetOwner.styleParent.strokeDashOffset == offset) {
+        offsetOwner = offsetOwner.styleParent;
+    }
+    paint.lineDashPhase = [self resolveCSSLength:offset percentage:diagonal node:offsetOwner];
+    NSArray<IJSVGUnitLength*>* lengths = node.strokeDashLengths;
+    if(lengths != nil && node.strokeDashArrayCount != 0) {
+        IJSVGNode* owner = node;
+        while(owner.styleParent != nil && owner.styleParent.strokeDashLengths == lengths) {
+            owner = owner.styleParent;
+        }
+        NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:lengths.count];
+        for(IJSVGUnitLength* length in lengths) {
+            [pattern addObject:@([self resolveCSSLength:length percentage:diagonal node:owner])];
+        }
+        paint.lineDashPattern = pattern;
+    }
     paint.nonScalingStroke = node.resolvedVectorEffect == IJSVGVectorEffectNonScalingStroke;
     if(paint.nonScalingStroke) {
         _containsNonScalingStrokes = YES;
@@ -1598,11 +1734,57 @@ inMeasurementPaint:(IJSVGPaint*)paint
     return paint;
 }
 
+- (IJSVGTextFontResolver*)lengthFontResolver
+{
+    if(_lengthFontResolver == nil) {
+        _lengthFontResolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
+    }
+    return _lengthFontResolver;
+}
+
+- (CGFloat)resolveStrokeWidthForNode:(IJSVGNode*)node
+                         percentage:(CGFloat)percentage
+{
+    if(_style.lineWidth != IJSVGInheritedFloatValue) {
+        return _style.lineWidth;
+    }
+    IJSVGUnitLength* length = node.strokeWidth;
+    if(length.type == IJSVGUnitLengthTypeEM || length.type == IJSVGUnitLengthTypeEX) {
+        // Inherited stroke widths retain the declaring element's font metrics.
+        while(node.styleParent != nil && node.styleParent.strokeWidth == length) {
+            node = node.styleParent;
+        }
+    }
+    return [self resolveCSSLength:length percentage:percentage node:node];
+}
+
+- (CGFloat)resolveCSSLength:(IJSVGUnitLength*)length
+                 percentage:(CGFloat)percentage
+                       node:(IJSVGNode*)node
+{
+    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        return [length computeValue:percentage];
+    }
+    return [self.lengthFontResolver resolveCSSLength:length percentage:percentage node:node];
+}
+
+- (CGFloat)resolveLength:(IJSVGUnitLength*)length
+              percentage:(CGFloat)percentage
+                    node:(IJSVGNode*)node
+{
+    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+        return [length computeValue:percentage];
+    }
+    return [self.lengthFontResolver resolveLength:length percentage:percentage node:node];
+}
+
 - (IJSVGPaint*)drawablePaintForSymbolNode:(IJSVGRootNode*)node
 {
     CGRect bounds = [self unitResolutionBoundsForNode:node];
-    CGSize size = CGSizeMake([node.width computeValue:bounds.size.width],
-                             [node.height computeValue:bounds.size.height]);
+    CGSize size = CGSizeMake([self resolveLength:node.width percentage:bounds.size.width
+                                              node:node.width == node.parentNode.width ? node.parentNode : node],
+                             [self resolveLength:node.height percentage:bounds.size.height
+                                               node:node.height == node.parentNode.height ? node.parentNode : node]);
     CGRect viewport = (CGRect) { CGPointZero, size };
     CGRect viewBox = node.viewBox == nil ? viewport : [node.viewBox computeValue:size];
     if(!IJSVGRectIsFinite(viewport) || CGRectIsEmpty(viewport) ||
@@ -1613,8 +1795,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGAffineTransform mapping = IJSVGViewBoxComputeTransform(viewBox, viewport,
                                                              node.viewBoxAlignment,
                                                              node.viewBoxMeetOrSlice);
-    CGPoint reference = CGPointMake([node.refX computeValue:viewBox.size.width],
-                                    [node.refY computeValue:viewBox.size.height]);
+    CGPoint reference = CGPointMake([self resolveLength:node.refX percentage:viewBox.size.width node:node],
+                                    [self resolveLength:node.refY percentage:viewBox.size.height node:node]);
     reference = CGPointApplyAffineTransform(reference, mapping);
     // An absent reference leaves the viewport edge at the symbol's position.
     CGAffineTransform placement = CGAffineTransformMakeTranslation(node.refX == nil ? 0 : -reference.x,
@@ -1670,7 +1852,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (IJSVGPaint*)drawablePaintForRootNode:(IJSVGRootNode*)node
 {
     IJSVGRootPaint* paint = IJSVGRootPaint.paint;
-    paint.viewBox = node.viewBox;
+    IJSVGUnitRect* resolvedViewBox = [self.lengthFontResolver rectByResolvingFontLengths:node.viewBox node:node];
+    paint.viewBox = resolvedViewBox;
     paint.intrinsicSize = node.intrinsicSize;
     paint.viewBoxAlignment = node.viewBoxAlignment;
     paint.viewBoxMeetOrSlice = node.viewBoxMeetOrSlice;
@@ -1678,17 +1861,17 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
-    CGSize intrinsicSize = [node.intrinsicSize computeValue:bounds.size];
-    CGFloat width = [[self unit:node.width matchingNode:node] computeValue:boundsWidth];
-    CGFloat height = [[self unit:node.height matchingNode:node] computeValue:boundsHeight];
+    CGSize intrinsicSize = [self.lengthFontResolver resolveSize:node.intrinsicSize percentage:bounds.size node:node];
+    CGFloat width = [self resolveLength:[self unit:node.width matchingNode:node] percentage:boundsWidth node:node];
+    CGFloat height = [self resolveLength:[self unit:node.height matchingNode:node] percentage:boundsHeight node:node];
     if(width == 0.f) {
         width = intrinsicSize.width;
     }
     if(height == 0.f) {
         height = intrinsicSize.height;
     }
-    CGRect frame = CGRectMake([[self unit:node.x matchingNode:node] computeValue:boundsWidth],
-                              [[self unit:node.y matchingNode:node] computeValue:boundsHeight],
+    CGRect frame = CGRectMake([self resolveLength:[self unit:node.x matchingNode:node] percentage:boundsWidth node:node],
+                              [self resolveLength:[self unit:node.y matchingNode:node] percentage:boundsHeight node:node],
                               width, height);
     paint.frame = frame;
 
@@ -1699,13 +1882,13 @@ inMeasurementPaint:(IJSVGPaint*)paint
         .size = paint.frame.size
     };
     if(node.viewBox != nil) {
-        childBounds = [node.viewBox computeValue:paint.frame.size];
+        childBounds = [resolvedViewBox computeValue:paint.frame.size];
     }
 
     CGAffineTransform previous = _textTransform;
     if(node.viewBox != nil) {
         CGSize size = node == _textBuildRoot ? _textRenderFrameSize : frame.size;
-        CGRect viewBox = [node.viewBox computeValue:size];
+        CGRect viewBox = [resolvedViewBox computeValue:size];
         CGAffineTransform transform = IJSVGViewBoxComputeTransform(viewBox,
                                                                    (CGRect){ CGPointZero, size },
                                                                    node.viewBoxAlignment,
@@ -1782,7 +1965,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
         gradient.colors = colors;
     }
 
-    gradientPaint.gradient = gradient;
+    gradientPaint.gradient = [self gradientByResolvingFontLengths:gradient];
     gradientPaint.frame = paint.bounds;
     gradientPaint.viewBox = self.viewPort;
     gradientPaint.opacity = paint.opacity;
@@ -1807,6 +1990,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (IJSVGPatternPaint*)drawableBasicPatternPaintForPaint:(IJSVGPaint*)paint
                                                 pattern:(IJSVGPattern*)pattern
 {
+    if([self hasFontRelativeRegion:pattern]) {
+        pattern = pattern.copy;
+        [self resolveRegionFontLengths:pattern];
+    }
     // Create the pattern fill.
     IJSVGPatternPaint* patternPaint = IJSVGPatternPaint.paint;
     patternPaint.patternNode = pattern;
@@ -1883,17 +2070,21 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
     // Treat these values as fractions of the object bounds.
     if(maskNode.units == IJSVGUnitObjectBoundingBox) {
-        xUnit = [xUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        yUnit = [yUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        widthUnit = [widthUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
-        heightUnit = [heightUnit lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        xUnit = [[self.lengthFontResolver unitByResolvingFontLength:xUnit node:maskNode]
+            lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        yUnit = [[self.lengthFontResolver unitByResolvingFontLength:yUnit node:maskNode]
+            lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        widthUnit = [[self.lengthFontResolver unitByResolvingFontLength:widthUnit node:maskNode]
+            lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        heightUnit = [[self.lengthFontResolver unitByResolvingFontLength:heightUnit node:maskNode]
+            lengthWithUnitType:IJSVGUnitLengthTypePercentage];
     }
 
     // Calculate the mask clip rectangle.
-    rect.origin.x = [xUnit computeValue:width];
-    rect.origin.y = [yUnit computeValue:height];
-    rect.size.width = [widthUnit computeValue:width];
-    rect.size.height = [heightUnit computeValue:height];
+    rect.origin.x = [self resolveLength:xUnit percentage:width node:maskNode];
+    rect.origin.y = [self resolveLength:yUnit percentage:height node:maskNode];
+    rect.size.width = [self resolveLength:widthUnit percentage:width node:maskNode];
+    rect.size.height = [self resolveLength:heightUnit percentage:height node:maskNode];
 
     // Find the bounds where the mask will be drawn.
     CGRect paintBounds = paint.innerBoundingBox;
@@ -2032,7 +2223,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
             CGContextFillRect(context, region);
         }
     } else if([paint isKindOfClass:IJSVGGradient.class]) {
-        IJSVGGradient* gradient = (IJSVGGradient*)paint;
+        IJSVGGradient* gradient = [self gradientByResolvingFontLengths:(IJSVGGradient*)paint];
         if(gradient.units == IJSVGUnitObjectBoundingBox) {
             CGContextTranslateCTM(context, boundingBox.origin.x, boundingBox.origin.y);
         }
@@ -2070,6 +2261,18 @@ inMeasurementPaint:(IJSVGPaint*)paint
         return paint;
     }
 
+    BOOL relative = [self hasFontRelativeRegion:filter];
+    for(IJSVGFilterPrimitive* primitive in filter.primitives) {
+        relative |= [self hasFontRelativeRegion:primitive];
+    }
+    if(relative) {
+        filter = filter.copy;
+        [self resolveRegionFontLengths:filter];
+        for(IJSVGFilterPrimitive* primitive in filter.primitives) {
+            [self resolveRegionFontLengths:primitive];
+        }
+    }
+
     if([paint isKindOfClass:IJSVGRootPaint.class]) {
         // Filter root contents in viewBox coordinates.
         // Apply root opacity and clipping afterward.
@@ -2084,6 +2287,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
         IJSVGFilterPaint* filtered = [IJSVGFilterPaint.alloc initWithSourcePaint:source
                                                                           filter:filter
                                                                         viewPort:viewPort];
+        filtered.renderingOptions = _renderingOptions;
         filtered.sourceNode = node;
         filtered.cachesRenderedOutput = YES;
         [rootPaint addChild:filtered];
@@ -2093,6 +2297,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGFilterPaint* filtered = [IJSVGFilterPaint.alloc initWithSourcePaint:paint
                                                                       filter:filter
                                                                     viewPort:self.viewPort];
+    filtered.renderingOptions = _renderingOptions;
     filtered.sourceNode = node;
     filtered.cachesRenderedOutput = YES;
     return filtered;
@@ -2163,8 +2368,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
     BOOL shouldApplyImplicitOrigin = paint.treatImplicitOriginAsTransform == YES;
     if(shouldApplyImplicitOrigin == YES) {
-        x = [[self unit:node.x matchingNode:node] computeValue:unitWidth];
-        y = [[self unit:node.y matchingNode:node] computeValue:unitHeight];
+        x = [self resolveLength:[self unit:node.x matchingNode:node] percentage:unitWidth node:node];
+        y = [self resolveLength:[self unit:node.y matchingNode:node] percentage:unitHeight node:node];
     }
 
     // Skip the wrapper when the position and transform are unchanged.
@@ -2199,14 +2404,18 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 - (IJSVGPaint*)drawablePaintForImageNode:(IJSVGImage*)image
 {
+    if([self hasFontRelativeRegion:image]) {
+        image = image.copy;
+        [self resolveRegionFontLengths:image css:YES];
+    }
     IJSVGImagePaint* paint = [IJSVGImagePaint.alloc initWithImage:image];
     CGRect bounds = [self unitResolutionBoundsForNode:image];
     CGFloat width = CGRectGetWidth(bounds);
     CGFloat height = CGRectGetHeight(bounds);
-    CGRect frame = CGRectMake([[self unit:image.x matchingNode:image] computeValue:width],
-                              [[self unit:image.y matchingNode:image] computeValue:height],
-                              [[self unit:image.width matchingNode:image] computeValue:width],
-                              [[self unit:image.height matchingNode:image] computeValue:height]);
+    CGRect frame = CGRectMake([self resolveLength:[self unit:image.x matchingNode:image] percentage:width node:image],
+                              [self resolveLength:[self unit:image.y matchingNode:image] percentage:height node:image],
+                              [self resolveLength:[self unit:image.width matchingNode:image] percentage:width node:image],
+                              [self resolveLength:[self unit:image.height matchingNode:image] percentage:height node:image]);
 
     if(frame.size.width == 0.f) {
         frame.size.width = image.intrinsicSize.width;
@@ -2382,11 +2591,11 @@ inMeasurementPaint:(IJSVGPaint*)paint
             return NO;
         }
     }
-    CGAffineTransform previous = IJSVGViewBoxComputeTransform([_rootNode.viewBox computeValue:previousSize],
+    CGAffineTransform previous = IJSVGViewBoxComputeTransform([[self.lengthFontResolver rectByResolvingFontLengths:_rootNode.viewBox node:_rootNode] computeValue:previousSize],
                                                               (CGRect){ CGPointZero, previousSize },
                                                               _rootNode.viewBoxAlignment,
                                                               _rootNode.viewBoxMeetOrSlice);
-    CGAffineTransform next = IJSVGViewBoxComputeTransform([_rootNode.viewBox computeValue:size],
+    CGAffineTransform next = IJSVGViewBoxComputeTransform([[self.lengthFontResolver rectByResolvingFontLengths:_rootNode.viewBox node:_rootNode] computeValue:size],
                                                           (CGRect){ CGPointZero, size },
                                                           _rootNode.viewBoxAlignment,
                                                           _rootNode.viewBoxMeetOrSlice);
@@ -2434,7 +2643,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
     CGRect frame = viewPort;
     if(!_renderingOptions.ignoreIntrinsicSize && rootNode.intrinsicSize != nil) {
-        CGSize size = [rootNode.intrinsicSize computeValue:viewPort.size];
+        CGSize size = [self.lengthFontResolver resolveSize:rootNode.intrinsicSize percentage:viewPort.size node:rootNode];
         if(size.width != 0.f) {
             frame.size.width = size.width;
         }
@@ -2523,6 +2732,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (void)setRenderingOptions:(IJSVGRenderingOptions*)options
 {
     _renderingOptions = options.copy;
+    _lengthFontResolver = nil;
     _hasGeometryBounds = NO;
     _hasEffectsBounds = NO;
     _rootPaint = nil;

@@ -121,7 +121,7 @@ CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale)
 }
 
 CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
-                          CGFloat parentXHeight)
+                          CGFloat parentXHeight, CGFloat defaultFontSize)
 {
     CGFloat result = parentSize;
     if(size == nil || size.keyword == IJSVGTextKeywordInherit ||
@@ -130,7 +130,7 @@ CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
     } else {
         switch(size.keyword) {
             case IJSVGTextKeywordInitial:
-                result = 16.;
+                result = defaultFontSize;
                 break;
             case IJSVGTextKeywordSmaller:
                 result = parentSize / 1.2;
@@ -139,25 +139,25 @@ CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
                 result = parentSize * 1.2;
                 break;
             case IJSVGTextKeywordXXSmall:
-                result = 9;
+                result = defaultFontSize * (9. / 16.);
                 break;
             case IJSVGTextKeywordXSmall:
-                result = 10;
+                result = defaultFontSize * (10. / 16.);
                 break;
             case IJSVGTextKeywordSmall:
-                result = 13;
+                result = defaultFontSize * (13. / 16.);
                 break;
             case IJSVGTextKeywordMedium:
-                result = 16;
+                result = defaultFontSize;
                 break;
             case IJSVGTextKeywordLarge:
-                result = 18;
+                result = defaultFontSize * (18. / 16.);
                 break;
             case IJSVGTextKeywordXLarge:
-                result = 24;
+                result = defaultFontSize * (24. / 16.);
                 break;
             case IJSVGTextKeywordXXLarge:
-                result = 32;
+                result = defaultFontSize * (32. / 16.);
                 break;
             default:
                 result = IJSVGTextLength(size, parentSize, parentXHeight,
