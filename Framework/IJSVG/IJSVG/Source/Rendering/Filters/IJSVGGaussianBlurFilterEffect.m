@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGGaussianBlurFilterEffect.h>
+#import <IJSVGGaussianBlurFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 #import <Accelerate/Accelerate.h>
 

@@ -6,11 +6,11 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGFilterGraph.h>
-#import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVGFilterGraph.h>
+#import <IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
-#import "IJSVGFilterSIMD.h"
+#import <IJSVGFilterSIMD.h>
 #import <IJSVGMetalBlurRenderer.h>
 
 // Gaussian. Calibration is shared across icons. Complex artwork can use more

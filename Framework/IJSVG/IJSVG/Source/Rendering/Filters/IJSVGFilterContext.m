@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVGFilterContext.h>
 
 // Read shader text from the framework or Swift package resource bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)

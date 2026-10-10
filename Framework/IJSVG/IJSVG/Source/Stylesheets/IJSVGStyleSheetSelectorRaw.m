@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 
 @implementation IJSVGStyleSheetSelectorRaw
 

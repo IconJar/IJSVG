@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGColorUtils.h>
+#import <IJSVGColorUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGUnitLength.h>
 

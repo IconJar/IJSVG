@@ -6,9 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGRendering.h>

@@ -8,10 +8,10 @@
 
 // Some algorithms in this file are adapted from or inspired by WebKit.
 
-#import "IJSVGFilterSIMD.h"
-#import <IJSVG/IJSVGFilterGraph.h>
+#import <IJSVGFilterSIMD.h>
+#import <IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGColorMatrixFilterEffect.h>
+#import <IJSVGColorMatrixFilterEffect.h>
 #import <simd/simd.h>
 #import <Accelerate/Accelerate.h>
 #import <float.h>

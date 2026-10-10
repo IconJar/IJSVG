@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVGFilterEffect.h>
 
 @interface IJSVGCompositeFilterEffect : IJSVGFilterEffect
 @end

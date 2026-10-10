@@ -11,7 +11,7 @@
 #import <CoreText/CoreText.h>
 #import <IJSVG/IJSVG.h>
 #import <XCTest/XCTest.h>
-#import "../../Framework/IJSVG/IJSVG/Source/Nodes/IJSVGSwitch.h"
+#import <IJSVGSwitch.h>
 
 @interface IJSVGQuartzRendererTests: XCTestCase
 @end

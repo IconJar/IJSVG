@@ -9,24 +9,24 @@
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
-#import <IJSVG/IJSVGGradientPaint.h>
-#import <IJSVG/IJSVGGroupPaint.h>
-#import <IJSVG/IJSVGImagePaint.h>
+#import <IJSVGGradientPaint.h>
+#import <IJSVGGroupPaint.h>
+#import <IJSVGImagePaint.h>
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGMath.h>
-#import <IJSVG/IJSVGPatternPaint.h>
+#import <IJSVGPatternPaint.h>
 #import <IJSVG/IJSVGRadialGradient.h>
-#import <IJSVG/IJSVGShapePaint.h>
-#import <IJSVG/IJSVGStrokePaint.h>
-#import <IJSVG/IJSVGTransformPaint.h>
+#import <IJSVGShapePaint.h>
+#import <IJSVGStrokePaint.h>
+#import <IJSVGTransformPaint.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVGTextFontResolver.h>
 #import <IJSVG/IJSVGThreadManager.h>
-#import <IJSVG/IJSVGFilterPaint.h>
-#import <IJSVG/IJSVGFilterGraph.h>
-#import <IJSVG/IJSVGQuartzRenderer.h>
-#import <IJSVG/IJSVGRootPaint.h>
+#import <IJSVGFilterPaint.h>
+#import <IJSVGFilterGraph.h>
+#import <IJSVGQuartzRenderer.h>
+#import <IJSVGRootPaint.h>
 
 @interface IJSVGExporter () {
     IJSVGRootPaint* _rootPaint;

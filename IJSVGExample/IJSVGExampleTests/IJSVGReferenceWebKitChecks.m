@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGCSSFontParserChecks.h"
+#import <IJSVGCSSFontParserChecks.h>
 #import <AppKit/AppKit.h>
 #import <WebKit/WebKit.h>
 #import <IJSVG/IJSVG.h>

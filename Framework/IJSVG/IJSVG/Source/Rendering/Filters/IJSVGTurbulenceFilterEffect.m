@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGTurbulenceFilterEffect.h>
+#import <IJSVGTurbulenceFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 // Build the noise here so the seed and repeating edges follow SVG rules.
 // Each render keeps its own noise data.

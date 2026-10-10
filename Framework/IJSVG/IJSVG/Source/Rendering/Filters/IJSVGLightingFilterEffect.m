@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColor.h>
-#import <IJSVG/IJSVGLightingFilterEffect.h>
+#import <IJSVGLightingFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 static const double IJSVGSpotLightConeTransition = .016;

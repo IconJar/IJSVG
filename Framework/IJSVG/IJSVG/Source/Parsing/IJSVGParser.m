@@ -8,11 +8,11 @@
 
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGText.h>
-#import "IJSVGSwitch.h"
+#import <IJSVGSwitch.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGMarker.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGUnitRect.h>

@@ -8,7 +8,7 @@
 
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
 typedef struct {

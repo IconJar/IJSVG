@@ -6,9 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGDropShadowFilterEffect.h>
+#import <IJSVGDropShadowFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGGaussianBlurFilterEffect.h>
+#import <IJSVGGaussianBlurFilterEffect.h>
 
 @implementation IJSVGDropShadowFilterEffect
 

@@ -15,7 +15,7 @@
 #import <IJSVG/IJSVGGradientUnitLength.h>
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGParsing.h>
-#import "../../Framework/IJSVG/IJSVG/Source/Parsing/IJSVGParserUtils.h"
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGUnitRect.h>

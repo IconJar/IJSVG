@@ -8,7 +8,7 @@
 
 #import <Metal/Metal.h>
 #import <IJSVGMetalShadowRenderer.h>
-#import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVGFilterContext.h>
 
 @interface IJSVGMetalShadowJob ()
 

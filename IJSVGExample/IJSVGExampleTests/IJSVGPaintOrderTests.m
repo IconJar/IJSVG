@@ -1,5 +1,5 @@
-#import "IJSVGTestHelpers.h"
-#import "../../Framework/IJSVG/IJSVG/Source/Parsing/IJSVGParserUtils.h"
+#import <IJSVGTestHelpers.h>
+#import <IJSVGParserUtils.h>
 
 @interface IJSVGPaintOrderTests: XCTestCase
 @end

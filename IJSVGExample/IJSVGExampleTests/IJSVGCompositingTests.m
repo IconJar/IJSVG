@@ -1,4 +1,4 @@
-#import "IJSVGTestHelpers.h"
+#import <IJSVGTestHelpers.h>
 
 @interface IJSVGCompositingTests: XCTestCase
 @end

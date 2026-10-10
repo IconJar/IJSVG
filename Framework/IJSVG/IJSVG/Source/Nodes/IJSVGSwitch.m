@@ -5,7 +5,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGSwitch.h"
+#import <IJSVGSwitch.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <ctype.h>

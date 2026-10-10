@@ -6,24 +6,24 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGFilterEffect.h>
-#import <IJSVG/IJSVGBlendFilterEffect.h>
-#import <IJSVG/IJSVGColorMatrixFilterEffect.h>
-#import <IJSVG/IJSVGComponentTransferFilterEffect.h>
-#import <IJSVG/IJSVGCompositeFilterEffect.h>
-#import <IJSVG/IJSVGConvolveMatrixFilterEffect.h>
-#import <IJSVG/IJSVGDisplacementMapFilterEffect.h>
-#import <IJSVG/IJSVGMorphologyFilterEffect.h>
-#import <IJSVG/IJSVGTileFilterEffect.h>
-#import <IJSVG/IJSVGFloodFilterEffect.h>
-#import <IJSVG/IJSVGOffsetFilterEffect.h>
-#import <IJSVG/IJSVGImageFilterEffect.h>
-#import <IJSVG/IJSVGMergeFilterEffect.h>
-#import <IJSVG/IJSVGGaussianBlurFilterEffect.h>
-#import <IJSVG/IJSVGDropShadowFilterEffect.h>
-#import <IJSVG/IJSVGTurbulenceFilterEffect.h>
-#import <IJSVG/IJSVGDiffuseLightingFilterEffect.h>
-#import <IJSVG/IJSVGSpecularLightingFilterEffect.h>
+#import <IJSVGFilterEffect.h>
+#import <IJSVGBlendFilterEffect.h>
+#import <IJSVGColorMatrixFilterEffect.h>
+#import <IJSVGComponentTransferFilterEffect.h>
+#import <IJSVGCompositeFilterEffect.h>
+#import <IJSVGConvolveMatrixFilterEffect.h>
+#import <IJSVGDisplacementMapFilterEffect.h>
+#import <IJSVGMorphologyFilterEffect.h>
+#import <IJSVGTileFilterEffect.h>
+#import <IJSVGFloodFilterEffect.h>
+#import <IJSVGOffsetFilterEffect.h>
+#import <IJSVGImageFilterEffect.h>
+#import <IJSVGMergeFilterEffect.h>
+#import <IJSVGGaussianBlurFilterEffect.h>
+#import <IJSVGDropShadowFilterEffect.h>
+#import <IJSVGTurbulenceFilterEffect.h>
+#import <IJSVGDiffuseLightingFilterEffect.h>
+#import <IJSVGSpecularLightingFilterEffect.h>
 
 @implementation IJSVGFilterEffect
 

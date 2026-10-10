@@ -8,7 +8,7 @@
 
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 
 @interface IJSVGStyleSheetWinner : NSObject {

@@ -8,7 +8,7 @@
 
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGCommandParser.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGPath.h>
 #import <string.h>

@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGMergeFilterEffect.h>
+#import <IJSVGMergeFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGMergeFilterEffect

@@ -7,7 +7,7 @@
 //
 
 #import <IJSVGTestHelpers.h>
-#import "../../Framework/IJSVG/IJSVG/Source/Stylesheets/IJSVGStyleSheetUtils.h"
+#import <IJSVGStyleSheetUtils.h>
 
 @interface IJSVGParserTests: XCTestCase
 @end

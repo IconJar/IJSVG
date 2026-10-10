@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVGFilterContext.h>
 
 // Effects read their input images and return a Core Image result.
 // Most effects use one or two inputs. Merge uses all inputs in order.

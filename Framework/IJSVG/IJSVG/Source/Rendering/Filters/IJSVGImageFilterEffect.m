@@ -6,10 +6,10 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGImageFilterEffect.h>
+#import <IJSVGImageFilterEffect.h>
 #import <IJSVG/IJSVGViewBox.h>
-#import <IJSVG/IJSVGPaint.h>
-#import <IJSVG/IJSVGQuartzRenderer.h>
+#import <IJSVGPaint.h>
+#import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVG.h>
 

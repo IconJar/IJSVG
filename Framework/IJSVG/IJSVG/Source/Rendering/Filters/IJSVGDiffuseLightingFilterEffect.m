@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGDiffuseLightingFilterEffect.h>
+#import <IJSVGDiffuseLightingFilterEffect.h>
 
 @implementation IJSVGDiffuseLightingFilterEffect
 @end

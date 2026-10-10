@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGColor.h>
-#import <IJSVG/IJSVGColorUtils.h>
+#import <IJSVGColorUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGParsing.h>

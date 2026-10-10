@@ -9,7 +9,7 @@
 #import <IJSVGMetalBlurRenderer.h>
 #import <Metal/Metal.h>
 #if SWIFT_PACKAGE
-#import <IJSVG/IJSVGFilterContext.h>
+#import <IJSVGFilterContext.h>
 #endif
 #import <simd/simd.h>
 #import <AppKit/NSColorSpace.h>

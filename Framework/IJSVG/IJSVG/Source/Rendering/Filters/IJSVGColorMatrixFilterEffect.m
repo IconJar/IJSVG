@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGColorMatrixFilterEffect.h>
+#import <IJSVGColorMatrixFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGColorMatrixFilterEffect

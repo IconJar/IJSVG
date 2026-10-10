@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGOffsetFilterEffect.h>
+#import <IJSVGOffsetFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGOffsetFilterEffect

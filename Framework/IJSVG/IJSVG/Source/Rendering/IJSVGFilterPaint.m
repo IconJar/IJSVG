@@ -8,7 +8,7 @@
 
 #import <IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGThreadManager.h>
-#import <IJSVG/IJSVGFilterGraph.h>
+#import <IJSVGFilterGraph.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGPatternPaint.h>
 #import <IJSVG/IJSVGPath.h>
@@ -16,7 +16,7 @@
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <CoreImage/CoreImage.h>
 #import <Metal/Metal.h>
-#import "IJSVGFilterSIMD.h"
+#import <IJSVGFilterSIMD.h>
 #import <limits.h>
 
 static _Thread_local CGContextRef IJSVGFilterBitmapContext;

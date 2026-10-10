@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGSpecularLightingFilterEffect.h>
+#import <IJSVGSpecularLightingFilterEffect.h>
 
 @implementation IJSVGSpecularLightingFilterEffect
 @end

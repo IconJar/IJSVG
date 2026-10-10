@@ -6,7 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGTileFilterEffect.h>
+#import <IJSVGTileFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGTileFilterEffect

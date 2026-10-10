@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetStyle.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
 static BOOL IJSVGStyleSheetPropertyNameIsValid(const char* chars, NSUInteger start,

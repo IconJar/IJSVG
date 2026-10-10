@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGFilter.h>
-#import <IJSVG/IJSVGFilterEffect.h>
+#import <IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 
 @implementation IJSVGFilter

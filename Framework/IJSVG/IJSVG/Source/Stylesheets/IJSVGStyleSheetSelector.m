@@ -7,7 +7,7 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetSelector.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGGroup.h>
 

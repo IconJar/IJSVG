@@ -23,7 +23,7 @@
 #import <IJSVGPatternPaint.h>
 #import <IJSVGImagePaint.h>
 #import <IJSVGFilterPaint.h>
-#import <IJSVG/IJSVGFilterGraph.h>
+#import <IJSVGFilterGraph.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>

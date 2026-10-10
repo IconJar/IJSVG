@@ -935,6 +935,8 @@
 					"$(SRCROOT)/IJSVGExampleTests",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Parsing",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Nodes",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Stylesheets",
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -963,6 +965,8 @@
 					"$(SRCROOT)/IJSVGExampleTests",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Parsing",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Nodes",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Stylesheets",
 				);
 				INFOPLIST_FILE = IJSVGExampleTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

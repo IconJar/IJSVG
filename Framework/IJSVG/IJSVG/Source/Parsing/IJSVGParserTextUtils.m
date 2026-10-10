@@ -8,10 +8,10 @@
 
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGParser.h>
-#import <IJSVG/IJSVGParserUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <string.h>
-#import <IJSVG/IJSVGStyleSheetUtils.h>
+#import <IJSVGStyleSheetUtils.h>
 
 static NSString* const IJSVGTextSerifFontFamily = @"Times";
 static NSString* const IJSVGTextSansSerifFontFamily = @"Helvetica";

@@ -7,7 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
-#import "IJSVGCSSFontParserChecks.h"
+#import <IJSVGCSSFontParserChecks.h>
 
 @interface IJSVGRegressionRegistration: XCTestCase
 @end

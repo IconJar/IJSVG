@@ -450,5 +450,5 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     }];
 }
 
-#include "IJSVGMDNGeneratedTests.inc"
+#include <IJSVGMDNGeneratedTests.inc>
 @end
