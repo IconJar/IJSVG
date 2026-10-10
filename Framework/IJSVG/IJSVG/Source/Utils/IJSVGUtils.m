@@ -633,7 +633,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
 {
     switch (blendMode) {
     case IJSVGBlendModeMultiply: {
-        return @"multiple";
+        return @"multiply";
     }
     case IJSVGBlendModeScreen: {
         return @"screen";

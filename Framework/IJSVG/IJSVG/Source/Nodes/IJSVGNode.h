@@ -208,6 +208,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeMarkerUnits,
     IJSVGNodeAttributeOrient,
     IJSVGNodeAttributeVectorEffect,
+    IJSVGNodeAttributeIsolation,
     IJSVGNodeAttributeCount
 };
 
@@ -422,6 +423,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, assign) IJSVGUnitType contentUnits;
 @property (nonatomic, assign) IJSVGUnitType units;
 @property (nonatomic, assign) IJSVGBlendMode blendMode;
+@property (nonatomic, assign) BOOL isolated;
 @property (nonatomic, assign) IJSVGVectorEffect vectorEffect;
 @property (nonatomic, readonly) IJSVGVectorEffect resolvedVectorEffect;
 @property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;

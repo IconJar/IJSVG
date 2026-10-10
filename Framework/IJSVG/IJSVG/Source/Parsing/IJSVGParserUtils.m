@@ -12,6 +12,14 @@
 #import <string.h>
 #import <IJSVG/IJSVGUtils.h>
 
+BOOL IJSVGIsolationFromString(NSString* value, BOOL parentIsolation)
+{
+    if([value isEqualToString:@"inherit"]) {
+        return parentIsolation;
+    }
+    return [value isEqualToString:@"isolate"];
+}
+
 IJSVGUnitLength* IJSVGDimensionFromString(NSString* value, IJSVGNodeType type)
 {
     IJSVGUnitLength* length = [IJSVGUnitLength unitWithString:value];
@@ -338,6 +346,9 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
         }
         case 9: {
             char c = attributeName[0];
+            if(c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "isolation")) {
+                return IJSVGNodeAttributeIsolation;
+            }
             if(c == 'c') {
                 if(IJSVGAttributeNameEquals(attributeName, length, "clip-path")) {
                     return IJSVGNodeAttributeClipPath;
@@ -520,6 +531,7 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
             IJSVGAttributeFill: @(IJSVGNodeAttributeFill),
             IJSVGAttributeFillRule: @(IJSVGNodeAttributeFillRule),
             IJSVGAttributeBlendMode: @(IJSVGNodeAttributeBlendMode),
+            IJSVGAttributeIsolation: @(IJSVGNodeAttributeIsolation),
             IJSVGAttributeVectorEffect: @(IJSVGNodeAttributeVectorEffect),
             IJSVGAttributeDisplay: @(IJSVGNodeAttributeDisplay),
             IJSVGAttributeStyle: @(IJSVGNodeAttributeStyle),

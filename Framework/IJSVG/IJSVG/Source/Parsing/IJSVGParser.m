@@ -128,6 +128,7 @@ NSString* const IJSVGAttributeStrokeMiterLimit = @"stroke-miterlimit";
 NSString* const IJSVGAttributeFill = @"fill";
 NSString* const IJSVGAttributeFillRule = @"fill-rule";
 NSString* const IJSVGAttributeBlendMode = @"mix-blend-mode";
+NSString* const IJSVGAttributeIsolation = @"isolation";
 NSString* const IJSVGAttributeVectorEffect = @"vector-effect";
 NSString* const IJSVGAttributeDisplay = @"display";
 NSString* const IJSVGAttributeStyle = @"style";
@@ -936,6 +937,9 @@ typedef struct {
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
         node.vectorEffect = [IJSVGUtils vectorEffectForString:value];
+    }
+    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeIsolation, &value)) {
+        node.isolated = IJSVGIsolationFromString(value, node.parentNode.isolated);
     }
     if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeBlendMode, &value)) {
         node.blendMode = [IJSVGUtils blendModeForString:value];

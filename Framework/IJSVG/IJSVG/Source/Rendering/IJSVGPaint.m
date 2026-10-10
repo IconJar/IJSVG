@@ -129,6 +129,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     copy->_opacity = _opacity;
     copy->_hidden = _hidden;
     copy->_blendingMode = _blendingMode;
+    copy->_isolated = _isolated;
     copy->_backingScaleFactor = _backingScaleFactor;
     copy->_renderQuality = _renderQuality;
     copy.clipPath = _clipPath;
@@ -502,7 +503,8 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    BOOL isolated = _opacity != 1.f && _children.count != 0;
+    // Composite the group's completed contents once; children set their own blend modes.
+    BOOL isolated = (_isolated || _opacity != 1.f || _blendingMode != kCGBlendModeNormal) && _children.count != 0;
     if(_opacity != 1.f) {
         CGContextSetAlpha(ctx, _opacity);
     }

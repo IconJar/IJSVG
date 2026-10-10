@@ -52,6 +52,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) CGFloat opacity;
 @property (nonatomic, assign) BOOL hidden;
 @property (nonatomic, assign) CGBlendMode blendingMode;
+@property (nonatomic, assign) BOOL isolated;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;

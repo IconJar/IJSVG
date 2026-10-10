@@ -143,6 +143,7 @@ extern NSString* const IJSVGAttributeStrokeMiterLimit;
 extern NSString* const IJSVGAttributeFill;
 extern NSString* const IJSVGAttributeFillRule;
 extern NSString* const IJSVGAttributeBlendMode;
+extern NSString* const IJSVGAttributeIsolation;
 extern NSString* const IJSVGAttributeVectorEffect;
 extern NSString* const IJSVGAttributeDisplay;
 extern NSString* const IJSVGAttributeStyle;

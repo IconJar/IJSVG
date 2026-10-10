@@ -769,7 +769,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     return node.type == IJSVGNodeTypeSymbol &&
         (node.clipPath != nil || node.mask != nil || node.filters.count != 0 ||
-         node.opacity.value != 1.f || node.blendMode != IJSVGBlendModeNormal ||
+         node.isolated || node.opacity.value != 1.f || node.blendMode != IJSVGBlendModeNormal ||
          !CGRectIsNull(node.backgroundRect));
 }
 
@@ -1518,7 +1518,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     NSArray<IJSVGPaint*>* children = @[content];
     if(content.class == IJSVGGroupPaint.class && content.opacity == 1.f &&
-       !content.hidden && content.blendingMode == kCGBlendModeNormal &&
+       !content.hidden && !content.isolated && content.blendingMode == kCGBlendModeNormal &&
        content.clipPath == NULL && content.clipPaints.count == 0 &&
        content.maskPaint == nil && CGRectIsNull(content.sourceNode.backgroundRect) &&
        CGAffineTransformIsIdentity(content.placementTransform)) {
@@ -2105,6 +2105,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     paint.sourceNode = node;
     paint.viewPort = self.viewPort;
+    paint.isolated = node.isolated;
 
     // Apply the mask.
     if(node.mask != nil) {

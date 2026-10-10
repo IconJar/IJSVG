@@ -11,6 +11,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+BOOL IJSVGIsolationFromString(NSString* value, BOOL parentIsolation);
+
 BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute);
 NSUInteger IJSVGNodeAttributeForName(NSString* _Nullable name);
 

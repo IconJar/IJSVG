@@ -2438,6 +2438,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     // blendmode, we only every apply a stylesheet blend mode
     NSMutableDictionary* style = [[NSMutableDictionary alloc] init];
+    if(paint.isolated) {
+        style[IJSVGAttributeIsolation] = @"isolate";
+    }
     if(paint.blendingMode != kCGBlendModeNormal) {
         NSString* str = [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)paint.blendingMode];
         if(str != nil) {

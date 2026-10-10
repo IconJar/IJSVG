@@ -25,6 +25,8 @@
 		590C7B73307A600E00AD5C88 /* IJSVGSymbolTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */; };
 		590C7B75307A630100AD5C88 /* symbols.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C7B74307A630100AD5C88 /* symbols.svg */; };
 		590C7B77307A660400AD5C88 /* IJSVGSymbolWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */; };
+		590C7B79307A685B00AD5C88 /* IJSVGCompositingWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B78307A685B00AD5C88 /* IJSVGCompositingWebKitTests.m */; };
+		590C7B7B307A68D100AD5C88 /* IJSVGCompositingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
 		590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EC201FA08C004A1554 /* intertwingly.svg */; };
 		590C87EF201FA093004A1554 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
@@ -179,6 +181,8 @@
 		590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGSymbolTests.m; sourceTree = "<group>"; };
 		590C7B74307A630100AD5C88 /* symbols.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = symbols.svg; sourceTree = "<group>"; };
 		590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGSymbolWebKitTests.m; sourceTree = "<group>"; };
+		590C7B78307A685B00AD5C88 /* IJSVGCompositingWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCompositingWebKitTests.m; sourceTree = "<group>"; };
+		590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCompositingTests.m; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
 		590C87EC201FA08C004A1554 /* intertwingly.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = intertwingly.svg; sourceTree = "<group>"; };
 		590C87EE201FA092004A1554 /* NewTux.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = NewTux.svg; sourceTree = "<group>"; };
@@ -477,6 +481,8 @@
 				597CE1E03079999A0026E325 /* IJSVGVectorEffectTests.m */,
 				590C7B72307A600E00AD5C88 /* IJSVGSymbolTests.m */,
 				590C7B76307A660400AD5C88 /* IJSVGSymbolWebKitTests.m */,
+				590C7B78307A685B00AD5C88 /* IJSVGCompositingWebKitTests.m */,
+				590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -709,9 +715,11 @@
 				590C7B73307A600E00AD5C88 /* IJSVGSymbolTests.m in Sources */,
 				59883AB030793A740024284E /* IJSVGImageExportTests.m in Sources */,
 				5915EE843077F98500FEEC4B /* IJSVGVisibilityTests.m in Sources */,
+				590C7B79307A685B00AD5C88 /* IJSVGCompositingWebKitTests.m in Sources */,
 				59B649D23075836A0004EFC2 /* IJSVGTextTests.m in Sources */,
 				5929C36D306DC05A003D5C0C /* IJSVGFilterTestHelpers.m in Sources */,
 				591F8ED62FF02F7D0012F5EB /* IJSVGColorParsingTests.m in Sources */,
+				590C7B7B307A68D100AD5C88 /* IJSVGCompositingTests.m in Sources */,
 				5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */,
 				597CE1E13079999A0026E325 /* IJSVGVectorEffectTests.m in Sources */,
 				59FC3869306EBD560028BEAC /* IJSVGQuartzRendererTests.m in Sources */,

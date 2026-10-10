@@ -466,6 +466,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 {
     IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
     [storage setBit:IJSVGNodeAttributeStyle];
+    [storage setBit:IJSVGNodeAttributeIsolation];
     [storage setBit:IJSVGNodeAttributeVectorEffect];
     [storage setBit:IJSVGNodeAttributeMarker];
     [storage setBit:IJSVGNodeAttributeMarkerStart];
@@ -700,6 +701,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
     self.shouldRender = node.shouldRender;
     self.blendMode = node.blendMode;
+    self.isolated = node.isolated;
     self.vectorEffect = node.vectorEffect;
     self.overflowVisibility = node.overflowVisibility;
 
