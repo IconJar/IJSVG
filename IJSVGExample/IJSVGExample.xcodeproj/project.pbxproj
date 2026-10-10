@@ -7,8 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AADA00000000000000000001 /* IJSVGMDNWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */; };
-		AADA00000000000000000003 /* MDN in Resources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000004 /* MDN */; };
 		5901B73D282818CA00290525 /* contour_hatching.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B730282818CA00290525 /* contour_hatching.svg */; };
 		5901B73E282818CA00290525 /* canonical.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B731282818CA00290525 /* canonical.svg */; };
 		5901B73F282818CA00290525 /* clipping.svg in Resources */ = {isa = PBXBuildFile; fileRef = 5901B732282818CA00290525 /* clipping.svg */; };
@@ -31,6 +29,7 @@
 		590C7B7B307A68D100AD5C88 /* IJSVGCompositingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */; };
 		590C7B7D307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */; };
 		590C7B7F307A6BD700AD5C88 /* IJSVGPaintOrderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */; };
+		590C8238307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */; };
 		590C87EB201F9888004A1554 /* json.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EA201F9888004A1554 /* json.svg */; };
 		590C87ED201FA08C004A1554 /* intertwingly.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EC201FA08C004A1554 /* intertwingly.svg */; };
 		590C87EF201FA093004A1554 /* NewTux.svg in Resources */ = {isa = PBXBuildFile; fileRef = 590C87EE201FA092004A1554 /* NewTux.svg */; };
@@ -127,6 +126,8 @@
 		59FC3A73306FE5DC0028BEAC /* man-bowing-color-light.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59FC3A72306FE5DC0028BEAC /* man-bowing-color-light.svg */; };
 		A53700000000000000000003 /* IJSVGCSSFontParserChecks.m in Sources */ = {isa = PBXBuildFile; fileRef = A53700000000000000000002 /* IJSVGCSSFontParserChecks.m */; };
 		A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A87B53C04E204BEB8D002101 /* IJSVGArtworkFittingTests.m */; };
+		AADA00000000000000000001 /* IJSVGMDNWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */; };
+		AADA00000000000000000003 /* MDN in Resources */ = {isa = PBXBuildFile; fileRef = AADA00000000000000000004 /* MDN */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -167,8 +168,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMDNWebKitTests.m; sourceTree = "<group>"; };
-		AADA00000000000000000004 /* MDN */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MDN; sourceTree = "<group>"; };
 		5901B730282818CA00290525 /* contour_hatching.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = contour_hatching.svg; sourceTree = "<group>"; };
 		5901B731282818CA00290525 /* canonical.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = canonical.svg; sourceTree = "<group>"; };
 		5901B732282818CA00290525 /* clipping.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = clipping.svg; sourceTree = "<group>"; };
@@ -191,6 +190,7 @@
 		590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCompositingTests.m; sourceTree = "<group>"; };
 		590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPaintOrderWebKitTests.m; sourceTree = "<group>"; };
 		590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPaintOrderTests.m; sourceTree = "<group>"; };
+		590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IJSVGBackgroundScopeTests.swift; sourceTree = "<group>"; };
 		590C87EA201F9888004A1554 /* json.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = json.svg; sourceTree = "<group>"; };
 		590C87EC201FA08C004A1554 /* intertwingly.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = intertwingly.svg; sourceTree = "<group>"; };
 		590C87EE201FA092004A1554 /* NewTux.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = NewTux.svg; sourceTree = "<group>"; };
@@ -303,6 +303,8 @@
 		A53700000000000000000001 /* IJSVGCSSFontParserChecks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGCSSFontParserChecks.h; sourceTree = "<group>"; };
 		A53700000000000000000002 /* IJSVGCSSFontParserChecks.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCSSFontParserChecks.m; sourceTree = "<group>"; };
 		A87B53C04E204BEB8D002101 /* IJSVGArtworkFittingTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGArtworkFittingTests.m; sourceTree = "<group>"; };
+		AADA00000000000000000002 /* IJSVGMDNWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMDNWebKitTests.m; sourceTree = "<group>"; };
+		AADA00000000000000000004 /* MDN */ = {isa = PBXFileReference; lastKnownFileType = folder; path = MDN; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -495,6 +497,7 @@
 				590C7B7A307A68D100AD5C88 /* IJSVGCompositingTests.m */,
 				590C7B7C307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m */,
 				590C7B7E307A6BD700AD5C88 /* IJSVGPaintOrderTests.m */,
+				590C8237307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -752,6 +755,7 @@
 				59835AA630769CF0007A1232 /* IJSVGRegressionRegistration.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				590C7B7F307A6BD700AD5C88 /* IJSVGPaintOrderTests.m in Sources */,
+				590C8238307ADF4300AD5C88 /* IJSVGBackgroundScopeTests.swift in Sources */,
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */,
 				597CE1D630796C4A0026E325 /* IJSVGMarkerTests.m in Sources */,
@@ -946,6 +950,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "";
 			};
 			name = Debug;
@@ -976,6 +981,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.IJSVGExampleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
 				TEST_HOST = "";
 			};
 			name = Release;
