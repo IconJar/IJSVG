@@ -787,11 +787,23 @@ typedef struct {
         node.filterColorInterpolation = IJSVGColorInterpolationForString(value);
     }
     if([node isKindOfClass:IJSVGFilterPrimitive.class]) {
+        static NSDictionary<NSString*, NSNumber*>* parameterAttributes;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSMutableDictionary<NSString*, NSNumber*>* attributes = [[NSMutableDictionary alloc] init];
+            for(NSString* name in IJSVGFilterPrimitive.parameterNames) {
+                NSUInteger attribute = IJSVGNodeAttributeForName(name);
+                if(attribute != NSNotFound) {
+                    attributes[name] = @(attribute);
+                }
+            }
+            parameterAttributes = attributes.copy;
+        });
+
         NSMutableDictionary<NSString*, NSString*>* parameters = [[NSMutableDictionary alloc] init];
-        for(NSString* name in IJSVGFilterPrimitive.parameterNames) {
-            NSUInteger attribute = IJSVGNodeAttributeForName(name);
-            if(attribute != NSNotFound &&
-                IJSVGAttributeHasValue(attributeValues, (IJSVGNodeAttribute)attribute, &value)) {
+        for(NSString* name in parameterAttributes) {
+            IJSVGNodeAttribute attribute = (IJSVGNodeAttribute)parameterAttributes[name].unsignedIntegerValue;
+            if(IJSVGAttributeHasValue(attributeValues, attribute, &value)) {
                 parameters[name] = value;
             }
         }
