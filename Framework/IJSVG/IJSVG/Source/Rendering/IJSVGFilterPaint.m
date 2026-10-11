@@ -179,6 +179,7 @@ static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 @property (nonatomic, strong) NSMapTable<IJSVGFilterPaint*, IJSVGQuartzFilterBatchEntry*>* entries;
 @property (nonatomic, strong) NSMutableArray<IJSVGQuartzFilterBatchEntry*>* orderedEntries;
 @property (nonatomic, assign) BOOL collecting;
+@property (nonatomic, assign) NSUInteger renderDepth;
 @property (nonatomic, assign) BOOL preflighting;
 @property (nonatomic, strong) NSMutableSet<IJSVGFilterPaint*>* preflightPaints;
 @property (nonatomic, assign) BOOL invalid;
@@ -197,14 +198,18 @@ static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 // pointer is cleared in @finally. No state survives the synchronous draw.
 static _Thread_local __unsafe_unretained IJSVGQuartzFilterBatch* IJSVGCurrentFilterBatch;
 
-static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGFilterPaint*>* eligiblePaints)
+static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root,
+                                           NSMutableSet<IJSVGFilterPaint*>* eligiblePaints)
 {
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
     NSUInteger filters = 0;
     while(pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
-        if(paint.maskPaint != nil || paint.clipPaints.count != 0) {
+        // Nested source batches replay ancestor clips in Quartz. Keep the
+        // top level eligibility rules and reject masks in either scope.
+        if(paint.maskPaint != nil || (paint.clipPaints.count != 0 &&
+            (IJSVGFilterRenderDepth == 0 || [paint isKindOfClass:IJSVGFilterPaint.class]))) {
             return NO;
         }
         if([paint isKindOfClass:IJSVGFilterPaint.class]) {
@@ -212,7 +217,7 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
             if(filtered.usesBackground) {
                 return NO;
             }
-            for(IJSVGPaint* parent = paint.parentPaint; parent != nil;
+            for(IJSVGPaint* parent = paint.parentPaint; parent != nil && parent != root.parentPaint;
                 parent = parent.parentPaint) {
                 if([parent isKindOfClass:IJSVGFilterPaint.class]) {
                     return NO;
@@ -830,7 +835,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
     // Filter source bitmaps still need their complete subtree.
-    return !batch.collecting || IJSVGFilterRenderDepth != 0
+    return !batch.collecting || IJSVGFilterRenderDepth > batch.renderDepth
         || [batch.collectionPaints containsObject:paint];
 }
 
@@ -853,6 +858,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
     IJSVGQuartzFilterBatch* batch __attribute__((objc_precise_lifetime)) = [[IJSVGQuartzFilterBatch alloc] init];
     batch.eligiblePaints = eligiblePaints;
+    batch.renderDepth = IJSVGFilterRenderDepth;
     batch.scratchBytes = CGBitmapContextGetBytesPerRow(scratch) * CGBitmapContextGetHeight(scratch);
     batch.collectionPaints = IJSVGFilterCollectionPaintsForFilters(eligiblePaints);
     batch.entries = NSMapTable.strongToStrongObjectsMapTable;
@@ -1431,7 +1437,20 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
     IJSVGPaint* sourcePaint = self.sourcePaint;
     CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
-    [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
+    // Batch independent child effects before applying this enclosing filter.
+    // Preserve the actual depth for nested sampling and rounding rules.
+    NSSet<IJSVGFilterPaint*>* childFilters = IJSVGCurrentFilterBatch == nil
+        ? [IJSVGFilterPaint batchableFiltersForPaint:sourcePaint] : nil;
+    BOOL batched = childFilters.count != 0 &&
+        [IJSVGFilterPaint renderBatchedPaints:childFilters inContext:bitmap
+                              drawingBlock:^(CGContextRef sourceContext) {
+            [IJSVGFilterPaint renderPaint:sourcePaint
+                          inBitmapContext:sourceContext];
+        }];
+    if(!batched) {
+        [IJSVGFilterPaint renderPaint:sourcePaint
+                      inBitmapContext:bitmap];
+    }
     // Try the targeted CPU/SIMD filters before the general Core Image path.
     CGContextRef backdrop = NULL;
     if(self.usesBackground && IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting &&
@@ -1499,7 +1518,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 - (void)drawFilterInContext:(CGContextRef)ctx
 {
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
-    if(batch.collecting && (batch.invalid || IJSVGFilterRenderDepth != 1 ||
+    if(batch.collecting && (batch.invalid || IJSVGFilterRenderDepth != batch.renderDepth + 1 ||
         ![batch.eligiblePaints containsObject:self])) {
         // Indirect SVGs/patterns may introduce filters absent from the paint scan.
         // Discard the collection pass and use the general renderer in that case.
@@ -1578,6 +1597,24 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     graph.extent = (CGRect){ CGPointZero, pixelSize };
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
         -workRect.origin.x * scale, -workRect.origin.y * scale);
+    // Collection retains the complete sampling rectangle. Reuse it before
+    // destination clipping shrinks the transient work rectangle: the cached
+    // pixels already contain the required halo and Quartz applies the clip.
+    // Compare in pixels to tolerate transform roundoff without accepting a
+    // different sampling grid (the dimensions must still match exactly).
+    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
+    if(!batch.collecting && cached.renderedImage != NULL &&
+        CGSizeEqualToSize(cached.pixelSize, pixelSize) &&
+        fabs(cached.workRect.origin.x - workRect.origin.x) * scale < 1e-7 &&
+        fabs(cached.workRect.origin.y - workRect.origin.y) * scale < 1e-7 &&
+        fabs(cached.workRect.size.width - workRect.size.width) * scale < 1e-7 &&
+        fabs(cached.workRect.size.height - workRect.size.height) * scale < 1e-7) {
+        [self drawFilteredImage:cached.renderedImage
+                        context:ctx
+                         region:region
+                       workRect:workRect];
+        return;
+    }
     CGRect required = [self requiredSourceExtentForGraph:graph context:ctx];
     // Keep the allocation on the original sampling grid, including rotations.
     if(!CGRectIsEmpty(required) && !CGRectIsNull(required) &&
@@ -1588,15 +1625,6 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
     if(batch.preflighting) {
         [self preflightPixelSize:pixelSize batch:batch];
-        return;
-    }
-    IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
-    if(!batch.collecting && cached.renderedImage != NULL &&
-        CGRectEqualToRect(cached.workRect, workRect) && CGSizeEqualToSize(cached.pixelSize, pixelSize)) {
-        [self drawFilteredImage:cached.renderedImage
-                        context:ctx
-                         region:region
-                       workRect:workRect];
         return;
     }
     if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
