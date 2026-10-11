@@ -227,6 +227,8 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 }
 @end
 
+
+
 @interface IJSVGQuartzRenderer () {
     NSMutableArray<IJSVGQuartzClipPath*>* _sharedClipPaths;
     IJSVGTextFontResolver* _lengthFontResolver;
@@ -245,6 +247,7 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     CGAffineTransform _textRenderTransform;
     CGSize _textRenderFrameSize;
     IJSVGRootNode* _textBuildRoot;
+    NSMutableDictionary<NSNumber*, id>* _outlinePaths;
     IJSVGRootNode* _measurementRootNode;
     CGSize _measurementClientSize;
     IJSVGRootPaint* _geometryMeasurementPaint;
@@ -608,16 +611,25 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return outside.copy;
 }
 
+- (NSMutableDictionary<NSNumber*, id>*)outlinePathCache
+{
+    if(_outlinePaths == nil) {
+        _outlinePaths = [[NSMutableDictionary alloc] initWithCapacity:4];
+    }
+    return _outlinePaths;
+}
+
 // Measurement uses viewBox-space text geometry, independently of the drawing
 // context's pixel scale. Cache the two filter modes without changing options.
 - (IJSVGRootPaint*)measurementPaintForRootNode:(IJSVGRootNode*)rootNode
-                            includingFilters:(BOOL)includingFilters
+                              includingFilters:(BOOL)includingFilters
 {
     if(_measurementRootNode != rootNode ||
        !CGSizeEqualToSize(_measurementClientSize, rootNode.clientSize)) {
         _geometryMeasurementPaint = nil;
         _effectsMeasurementPaint = nil;
         _hasGeometryBounds = NO;
+        _outlinePaths = nil;
         _hasEffectsBounds = NO;
         _measurementRootNode = rootNode;
         _measurementClientSize = rootNode.clientSize;
@@ -634,7 +646,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     _measurementHasFilters = NO;
     IJSVGRootPaint* paint = nil;
     @try {
-        paint = [self rootPaintForRootNode:rootNode];
+        CGRect viewport = (CGRect) { CGPointZero, rootNode.clientSize };
+        CGRect frame = [self renderFrameForRootNode:rootNode viewport:viewport];
+        paint = [self rootPaintForRootNode:rootNode viewportSize:frame.size];
     } @finally {
         _resolvingGeometryOnly = previousGeometryOnly;
         _resolvingMeasurements = previousMeasurements;
@@ -676,6 +690,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
      inMeasurementPaint:_effectsMeasurementPaint];
     }
     _hasGeometryBounds = NO;
+    _outlinePaths = nil;
     _hasEffectsBounds = NO;
 }
 
@@ -687,7 +702,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 }
 
 - (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode
-                 includingFilters:(BOOL)includingFilters
+                  includingFilters:(BOOL)includingFilters
 {
     IJSVGRootPaint* paint = [self measurementPaintForRootNode:rootNode
                                              includingFilters:includingFilters];
@@ -713,7 +728,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (CGRect)extentForNode:(IJSVGNode*)node
              inViewPort:(CGRect)viewPort
 {
-    IJSVGPaint* paint = [self drawablePaintForNode:node inViewPort:viewPort];
+    IJSVGPaint* paint = [self drawablePaintForNode:node
+                                        inViewPort:viewPort];
     if(paint == nil || paint.hidden || paint.opacity <= 0.f) {
         return CGRectNull;
     }
@@ -723,7 +739,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 }
 
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode
-                         viewportSize:(CGSize)size
+                           viewportSize:(CGSize)size
 {
     if(!isfinite(size.width) || !isfinite(size.height) || size.width <= 0
        || size.height <= 0) {
@@ -938,8 +954,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
 }
 
 - (void)appendResolvedPathForPathNode:(IJSVGPath*)node
-                             transform:(CGAffineTransform)transform
-                                toPath:(CGMutablePathRef)path
+                            transform:(CGAffineTransform)transform
+                               toPath:(CGMutablePathRef)path
 {
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     CGFloat width = CGRectGetWidth(bounds);
@@ -3077,14 +3093,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
     return YES;
 }
 
-- (void)renderNode:(IJSVGRootNode*)rootNode
-         inContext:(CGContextRef)ctx
-          viewPort:(CGRect)viewPort
-      backingScale:(CGFloat)backingScale
+- (CGRect)renderFrameForRootNode:(IJSVGRootNode*)rootNode
+                        viewport:(CGRect)viewPort
 {
-    if(ctx == NULL || rootNode == nil || !IJSVGRectIsFinite(viewPort) || CGRectIsEmpty(viewPort)) {
-        return;
-    }
     CGRect frame = viewPort;
     if(!_renderingOptions.ignoreIntrinsicSize && rootNode.intrinsicSize != nil) {
         CGSize size = [self.lengthFontResolver resolveSize:rootNode.intrinsicSize
@@ -3097,6 +3108,18 @@ inMeasurementPaint:(IJSVGPaint*)paint
             frame.size.height = size.height;
         }
     }
+    return frame;
+}
+
+- (void)renderNode:(IJSVGRootNode*)rootNode
+         inContext:(CGContextRef)ctx
+          viewPort:(CGRect)viewPort
+      backingScale:(CGFloat)backingScale
+{
+    if(ctx == NULL || rootNode == nil || !IJSVGRectIsFinite(viewPort) || CGRectIsEmpty(viewPort)) {
+        return;
+    }
+    CGRect frame = [self renderFrameForRootNode:rootNode viewport:viewPort];
     CGAffineTransform outputTransform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
     outputTransform.tx = 0;
     outputTransform.ty = 0;
@@ -3166,6 +3189,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     _style = style;
     _hasGeometryBounds = NO;
+    _outlinePaths = nil;
     _hasEffectsBounds = NO;
     _rootPaint = nil;
     _viewportStrokeShapes = nil;
@@ -3180,6 +3204,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     _renderingOptions = options.copy;
     _lengthFontResolver = nil;
     _hasGeometryBounds = NO;
+    _outlinePaths = nil;
     _hasEffectsBounds = NO;
     _rootPaint = nil;
     _viewportStrokeShapes = nil;

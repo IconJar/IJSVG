@@ -166,6 +166,9 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside NS_SWIFT_NAME(fitArtworkToViewBo
 - (NSData*)PDFDataWithRect:(CGRect)rect
                      error:(NSError* _Nullable * _Nullable)error __attribute__((swift_error(nonnull_error))) NS_SWIFT_NAME(renderPDF(in:));
 
+- (CGPathRef _Nullable)outlinePathIncludingFilterExtents:(BOOL)includingFilterExtents
+                                         preservingHoles:(BOOL)preservingHoles CF_RETURNS_NOT_RETAINED NS_SWIFT_NAME(outlinePath(includingFilterExtents:preservingHoles:));
+
 // call this to invalidate the render tree when you change the style
 - (void)setNeedsDisplay;
 

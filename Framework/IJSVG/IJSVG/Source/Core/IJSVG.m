@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVG.h>
 #import <IJSVGTextFontResolver.h>
 #import <IJSVGQuartzRenderer.h>
+#import <IJSVGQuartzRenderer+Outlines.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
@@ -486,6 +487,14 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     }
     return [self.artworkRenderer artworkBoundsForRootNode:root
                                          includingFilters:NO];
+}
+
+- (CGPathRef)outlinePathIncludingFilterExtents:(BOOL)includingFilterExtents
+                               preservingHoles:(BOOL)preservingHoles
+{
+    return [self.artworkRenderer outlinePathForRootNode:self.rootNode
+                                 includingFilterExtents:includingFilterExtents
+                                        preservingHoles:preservingHoles];
 }
 
 - (BOOL)isNodeOutsideViewBox:(IJSVGNode* __unsafe_unretained)node

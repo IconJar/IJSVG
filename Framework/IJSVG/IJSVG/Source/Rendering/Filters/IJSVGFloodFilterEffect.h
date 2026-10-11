@@ -9,4 +9,8 @@
 #import <IJSVGFilterEffect.h>
 
 @interface IJSVGFloodFilterEffect : IJSVGFilterEffect
+
++ (NSColor*)colorForPrimitive:(IJSVGFilterPrimitive*)primitive;
++ (CGFloat)opacityForPrimitive:(IJSVGFilterPrimitive*)primitive;
+
 @end

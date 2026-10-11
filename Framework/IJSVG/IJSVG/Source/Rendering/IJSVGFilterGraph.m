@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVGFilterSIMD.h>
 #import <IJSVGColorMatrixFilterEffect.h>
+#import <IJSVGFloodFilterEffect.h>
 #import <IJSVGMetalBlurRenderer.h>
 
 // Gaussian. Calibration is shared across icons. Complex artwork can use more
@@ -256,12 +257,8 @@ static NSArray<CIImage*>* IJSVGFilterMergeInputsForPrimitive(
 
 static CGColorRef IJSVGFilterNewShadowTintForPrimitive(IJSVGFilterPrimitive* primitive)
 {
-    NSString* value = [primitive.parameters[IJSVGAttributeFloodOpacity]
-        stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    NSString* number = [value hasSuffix:@"%"] ? [value substringToIndex:value.length - 1] : value;
-    CGFloat opacity = [IJSVGUtils numbersFromString:number].count == 1
-        ? [IJSVGUtils floatValue:value fallBackForPercent:1] : 1;
-    NSColor* color = [[IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack]
+    CGFloat opacity = [IJSVGFloodFilterEffect opacityForPrimitive:primitive];
+    NSColor* color = [[IJSVGFloodFilterEffect colorForPrimitive:primitive]
         colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
     if(color == nil) {
         return NULL;
