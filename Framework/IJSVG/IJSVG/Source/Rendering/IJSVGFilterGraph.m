@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVGFilterSIMD.h>
+#import <IJSVGColorMatrixFilterEffect.h>
 #import <IJSVGMetalBlurRenderer.h>
 
 // Gaussian. Calibration is shared across icons. Complex artwork can use more
@@ -102,11 +103,9 @@ static BOOL IJSVGFilterUsesLinearRGB(IJSVGNode* node)
 }
 
 
-static CIImage* IJSVGFilterInputNamed(
-    NSString* name,
-    CIImage* previous,
-    NSDictionary<NSString*, CIImage*>* sources,
-    NSDictionary<NSString*, CIImage*>* results)
+static CIImage* IJSVGFilterInputNamed(NSString* name, CIImage* previous,
+                                      NSDictionary<NSString*, CIImage*>* sources,
+                                      NSDictionary<NSString*, CIImage*>* results)
 {
     if(name.length == 0) {
         return previous;
@@ -114,6 +113,59 @@ static CIImage* IJSVGFilterInputNamed(
     return sources[name] ?: results[name] ?: previous;
 }
 
+
+// Track alpha only results across named branches, not just recognised shadows.
+// Unknown names use the implicit previous input fallback in the evaluator.
+static BOOL IJSVGFilterInputIsAlphaOnly(NSString* name, BOOL previous,
+                                        NSDictionary* sources,
+                                        NSDictionary* results)
+{
+    if(name.length == 0) return previous;
+    if(sources[name] != nil) {
+        return [name isEqualToString:IJSVGStringSourceAlpha] ||
+            [name isEqualToString:IJSVGStringBackgroundAlpha];
+    }
+    NSNumber* value = results[name];
+    return value != nil ? value.boolValue : previous;
+}
+
+static BOOL IJSVGFilterResultIsAlphaOnly(IJSVGFilterPrimitive* primitive, BOOL input,
+                                         BOOL other, BOOL merged)
+{
+    switch(primitive.type) {
+        case IJSVGNodeTypeFilterOffset:
+        case IJSVGNodeTypeFilterGaussianBlur:
+        case IJSVGNodeTypeFilterTile:
+        case IJSVGNodeTypeFilterMorphology:
+            return input;
+        case IJSVGNodeTypeFilterMerge:
+            return merged;
+        case IJSVGNodeTypeFilterComposite:
+            if(primitive.compositeOperator == IJSVGFilterCompositeOperatorIn ||
+               primitive.compositeOperator == IJSVGFilterCompositeOperatorOut) {
+              return input;
+            }
+            return input && other && (primitive.compositeOperator != IJSVGFilterCompositeOperatorArithmetic ||
+                [primitive numberForParameter:IJSVGAttributeK4 defaultValue:0] == 0);
+        case IJSVGNodeTypeFilterBlend:
+            return input && other;
+        case IJSVGNodeTypeFilterColorMatrix: {
+            NSData* coefficients = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive][@"matrix"];
+            if(coefficients.length != 20 * sizeof(double)) return NO;
+            const double* matrix = coefficients.bytes;
+            for(NSUInteger row = 0; row < 3; row++) {
+                for(NSUInteger column = 0; column < 5; column++) {
+                    if((column >= 3 || !input) && matrix[row * 5 + column] != 0) {
+                        return NO;
+                    }
+                }
+            }
+            return YES;
+        }
+        default:
+            return NO;
+    }
+}
 
 static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
                                                        NSArray<IJSVGFilterPrimitive*>* primitives)
@@ -296,6 +348,51 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
 }
 
 
+static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
+                                                  CGRect sourceCrop, CGRect outputCrop)
+{
+    NSUInteger width = CGBitmapContextGetWidth(bitmap);
+    NSUInteger height = CGBitmapContextGetHeight(bitmap);
+    CGContextRef output = CGBitmapContextCreate(NULL, width, height, 8, 0,
+        CGBitmapContextGetColorSpace(bitmap), kCGImageAlphaPremultipliedLast);
+    if(output == NULL) {
+        return NULL;
+    }
+    const uint8_t* source = CGBitmapContextGetData(bitmap);
+    uint8_t* destination = CGBitmapContextGetData(output);
+    NSUInteger sourceStride = CGBitmapContextGetBytesPerRow(bitmap);
+    NSUInteger outputStride = CGBitmapContextGetBytesPerRow(output);
+    // Crop coverage varies only at the boundary. Compute columns once and
+    // rows once, leaving the interior as a byte copy with replicated alpha.
+    NSMutableData* columns = [NSMutableData dataWithLength:width * sizeof(float)];
+    float* horizontal = columns.mutableBytes;
+    for(NSUInteger x = 0; x < width; x++) {
+        horizontal[x] = fmax(0, fmin(x + 1, CGRectGetMaxX(sourceCrop)) - fmax(x, CGRectGetMinX(sourceCrop))) *
+            fmax(0, fmin(x + 1, CGRectGetMaxX(outputCrop)) - fmax(x, CGRectGetMinX(outputCrop)));
+    }
+    for(NSUInteger y = 0; y < height; y++) {
+        CGFloat bottom = height - y - 1;
+        float vertical = fmax(0, fmin(bottom + 1, CGRectGetMaxY(sourceCrop)) - fmax(bottom, CGRectGetMinY(sourceCrop))) *
+            fmax(0, fmin(bottom + 1, CGRectGetMaxY(outputCrop)) - fmax(bottom, CGRectGetMinY(outputCrop)));
+        if(vertical == 0.f) {
+            continue;
+        }
+        const uint8_t* row = source + y * sourceStride;
+        uint32_t* outputRow = (uint32_t*)(destination + y * outputStride);
+        for(NSUInteger x = 0; x < width; x++) {
+            float coverage = horizontal[x] * vertical;
+            uint8_t alpha = row[x * 4 + 3];
+            if(coverage != 1.f) {
+                alpha = (uint8_t)lrintf(alpha * coverage);
+            }
+            outputRow[x] = alpha * 0x01010101u;
+        }
+    }
+    CGImageRef image = CGBitmapContextCreateImage(output);
+    CGContextRelease(output);
+    return image;
+}
+
 @implementation IJSVGFilterGraph
 
 - (CGRect)regionForNode:(IJSVGNode*)node
@@ -477,6 +574,8 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
 
     NSMutableDictionary<NSString*, CIImage*>* results = [[NSMutableDictionary alloc] init];
     NSMutableDictionary<NSString*, NSNumber*>* resultColorSpaces = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSNumber*>* resultAlphaOnly = [NSMutableDictionary dictionary];
+    BOOL outputAlphaOnly = NO;
     BOOL outputLinearRGB = NO;
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
     BOOL preserveInnerShadowCoverage = self.filter.preservesInnerShadowCoverage;
@@ -493,8 +592,27 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             // hard alpha, offset, blur and subtract stages. Colour matching those
             // intermediates cannot change their pixels, only their graph cost.
             NSUInteger shadowStage = index >= 2 ? (index - 2) % 6 : NSNotFound;
-            renderingContext.inputIsAlphaOnly = preserveInnerShadowCoverage && shadowStage <= 4;
-            renderingContext.outputIsAlphaOnly = preserveInnerShadowCoverage && shadowStage <= 3;
+            BOOL inputAlpha = IJSVGFilterInputIsAlphaOnly(primitive.input, outputAlphaOnly,
+                                                          sources, resultAlphaOnly);
+            BOOL otherAlpha = IJSVGFilterInputIsAlphaOnly(primitive.input2, outputAlphaOnly,
+                                                          sources, resultAlphaOnly);
+            BOOL mergedAlpha = YES;
+            if(primitive.type == IJSVGNodeTypeFilterMerge) {
+                for(IJSVGFilterPrimitive* child in primitive.children) {
+                    mergedAlpha &= IJSVGFilterInputIsAlphaOnly(child.input, outputAlphaOnly,
+                                                               sources, resultAlphaOnly);
+                }
+            }
+            BOOL binary = primitive.type == IJSVGNodeTypeFilterComposite ||
+                primitive.type == IJSVGNodeTypeFilterBlend || primitive.type == IJSVGNodeTypeFilterDisplacementMap;
+            BOOL allInputsAlpha = primitive.type == IJSVGNodeTypeFilterMerge ? mergedAlpha
+                : inputAlpha && (!binary || otherAlpha);
+            outputAlphaOnly = IJSVGFilterResultIsAlphaOnly(primitive, inputAlpha,
+                                                           otherAlpha, mergedAlpha);
+            renderingContext.inputIsAlphaOnly = allInputsAlpha ||
+                (preserveInnerShadowCoverage && shadowStage <= 4);
+            renderingContext.outputIsAlphaOnly = outputAlphaOnly ||
+                (preserveInnerShadowCoverage && shadowStage <= 3);
             renderingContext.inputLinearRGB = outputLinearRGB;
             if(primitive.input.length != 0) {
                 if(sources[primitive.input] != nil) {
@@ -528,14 +646,85 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
             for(NSString* name in expiredNames[@(index)]) {
                 [results removeObjectForKey:name];
                 [resultColorSpaces removeObjectForKey:name];
+                [resultAlphaOnly removeObjectForKey:name];
             }
             if(primitive.result.length != 0 && lastReferences[primitive.result].unsignedIntegerValue > index) {
                 results[primitive.result] = output;
                 resultColorSpaces[primitive.result] = @(outputLinearRGB);
+                resultAlphaOnly[primitive.result] = @(outputAlphaOnly);
             }
         }
     }
     return primitives.count == 0 ? CIImage.emptyImage : output;
+}
+
+- (IJSVGFilterPrimitive*)whiteAlphaPrimitive
+{
+    if(self.filter.children.count != 1 ||
+        self.filter.children.firstObject.type != IJSVGNodeTypeFilterColorMatrix) {
+        return nil;
+    }
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    if(primitives.count != 1) {
+        return nil;
+    }
+    IJSVGFilterPrimitive* primitive = primitives.firstObject;
+    if(primitive.type != IJSVGNodeTypeFilterColorMatrix ||
+        (primitive.input.length != 0 &&
+         ![primitive.input isEqualToString:IJSVGStringSourceGraphic] &&
+         ![primitive.input isEqualToString:IJSVGStringSourceAlpha])) {
+        return nil;
+    }
+    NSData* coefficients = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive][@"matrix"];
+    if(coefficients.length != 20 * sizeof(double)) {
+        return nil;
+    }
+    const double* matrix = coefficients.bytes;
+    for(NSUInteger index = 0; index < 20; index++) {
+        double expected = index == 4 || index == 9 || index == 14 || index == 18 ? 1 : 0;
+        if(matrix[index] != expected) {
+            return nil;
+        }
+    }
+    return primitive;
+}
+
+// White with unchanged alpha needs no colour conversion, even in linearRGB.
+// Keep the source and primitive crops separate to preserve fractional coverage.
+- (CGImageRef)newCGImageForWhiteAlpha:(CGContextRef)bitmap
+{
+    IJSVGFilterPrimitive* primitive = [self whiteAlphaPrimitive];
+    if(primitive == nil) {
+        return NULL;
+    }
+    NSUInteger width = CGBitmapContextGetWidth(bitmap);
+    NSUInteger height = CGBitmapContextGetHeight(bitmap);
+    if(width == 0 || height == 0 || width > 4194304 / height ||
+        CGBitmapContextGetBitsPerPixel(bitmap) != 32 ||
+        CGBitmapContextGetData(bitmap) == NULL ||
+        self.imageTransform.b != 0 || self.imageTransform.c != 0 ||
+        self.imageTransform.a <= 0 || self.imageTransform.d <= 0) {
+        return NULL;
+    }
+    CGRect region = [self regionForNode:self.filter
+                                  units:self.filter.units
+                          defaultRegion:CGRectZero];
+    CGRect sourceCrop = CGRectApplyAffineTransform(region, self.imageTransform);
+    if(!IJSVGFilterValidRect(sourceCrop)) {
+        return NULL;
+    }
+    CGRect sourceExtent = CGRectIntersection(self.extent, sourceCrop);
+    CGRect defaultRegion = IJSVGFilterValidRect(sourceExtent) ?
+        CGRectApplyAffineTransform(sourceExtent, CGAffineTransformInvert(self.imageTransform)) : region;
+    CGRect primitiveRegion = [self regionForNode:primitive
+                                           units:self.filter.contentUnits
+                                   defaultRegion:defaultRegion];
+    CGRect outputCrop = CGRectIntersection(sourceCrop,
+        CGRectApplyAffineTransform(primitiveRegion, self.imageTransform));
+    if(!IJSVGFilterValidRect(outputCrop)) {
+        return NULL;
+    }
+    return IJSVGFilterNewWhiteAlphaImage(bitmap, sourceCrop, outputCrop);
 }
 
 - (BOOL)populateShadowParameters:(IJSVGMetalShadowParameters*)parameters
@@ -802,7 +991,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
                                     sourceCrops:sourceCrops];
 }
 
-- (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap
+- (CGImageRef)newCGImageForDirectBlur:(CGContextRef)bitmap
 {
     IJSVGMetalBlurJob* shadow = [self metalDropShadowJobForBitmap:bitmap];
     if(shadow != nil && [IJSVGMetalBlurRenderer renderJobs:@[shadow]]) {

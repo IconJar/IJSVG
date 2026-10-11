@@ -32,8 +32,13 @@
           defaultRegion:(CGRect)region;
 - (CIImage*)imageByFilteringSource:(CIImage*)source;
 
-// Returns NULL when the graph needs the general evaluator.
-- (CGImageRef)newCGImageForSmallBlur:(CGContextRef)bitmap;
+// A single matrix producing white with unchanged source alpha. Returns NULL otherwise.
+// The source must be a renderer owned RGBA8 bitmap and stays unchanged.
+- (CGImageRef)newCGImageForWhiteAlpha:(CGContextRef)bitmap;
+
+// Plans direct blur/shadow rendering, choosing CPU or Metal by working set size.
+// Returns NULL when Core Image is required.
+- (CGImageRef)newCGImageForDirectBlur:(CGContextRef)bitmap;
 - (IJSVGMetalShadowJob*)metalShadowJobForBitmap:(CGContextRef)bitmap;
 - (IJSVGMetalBlurJob*)metalBlurJobForBitmap:(CGContextRef)bitmap;
 

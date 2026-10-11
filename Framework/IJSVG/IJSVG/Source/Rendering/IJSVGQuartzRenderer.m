@@ -212,7 +212,23 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 
 @end
 
+// Immutable snapshots shared only while one paint tree is being built.
+@interface IJSVGQuartzClipPath : NSObject
+@property (nonatomic, assign) CGPathRef source;
+@property (nonatomic, assign) CGPathRef path;
+@property (nonatomic, assign) CGAffineTransform transform;
+@end
+
+@implementation IJSVGQuartzClipPath
+- (void)dealloc
+{
+    CGPathRelease(_source);
+    CGPathRelease(_path);
+}
+@end
+
 @interface IJSVGQuartzRenderer () {
+    NSMutableArray<IJSVGQuartzClipPath*>* _sharedClipPaths;
     IJSVGTextFontResolver* _lengthFontResolver;
     NSMutableArray<NSValue*>* _viewPortStack;
     NSMutableArray<NSValue*>* _unitBoundsStack;
@@ -738,11 +754,17 @@ inMeasurementPaint:(IJSVGPaint*)paint
       .size = rootNode.clientSize
     };
     __block IJSVGRootPaint* paint = nil;
-    [self withViewPort:clientBounds
-            unitBounds:clientBounds
-               handler:^{
-        paint = (IJSVGRootPaint*)[self drawablePaintForNode:rootNode];
-    }];
+    NSMutableArray<IJSVGQuartzClipPath*>* previousClips = _sharedClipPaths;
+    _sharedClipPaths = [[NSMutableArray alloc] init];
+    @try {
+        [self withViewPort:clientBounds
+                unitBounds:clientBounds
+                   handler:^{
+            paint = (IJSVGRootPaint*)[self drawablePaintForNode:rootNode];
+        }];
+    } @finally {
+        _sharedClipPaths = previousClips;
+    }
     return paint;
 }
 
@@ -2494,6 +2516,56 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
 }
 
+// Single explicit paths need no recursive geometry resolution. Identical
+// geometry and placement can share the finished path, including across <use>.
+- (CGPathRef)newSharedClipPathForNode:(IJSVGClipPath*)clip
+                            transform:(CGAffineTransform)transform
+{
+    if(clip.clipPath != nil || clip.children.count != 1) {
+        return NULL;
+    }
+    IJSVGNode* child = clip.children.firstObject;
+    // <use> introduces group wrappers around its referenced path. Their
+    // transforms are already resolved into geometry by the parser.
+    while([child isKindOfClass:IJSVGGroup.class] &&
+        ![child isKindOfClass:IJSVGText.class] &&
+        ((IJSVGGroup*)child).children.count == 1) {
+        child = ((IJSVGGroup*)child).children.firstObject;
+    }
+    if(![child isKindOfClass:IJSVGPath.class]) {
+        return NULL;
+    }
+    IJSVGPath* node = (IJSVGPath*)child;
+    if(![node matchesTraits:IJSVGNodeTraitPathed] ||
+        (node.primitiveType != kIJSVGPrimitivePathTypePath &&
+         node.primitiveType != kIJSVGPrimitivePathTypePolygon &&
+         node.primitiveType != kIJSVGPrimitivePathTypePolyLine)) {
+        return NULL;
+    }
+    if(node.pathUnits == IJSVGUnitObjectBoundingBox) {
+        CGRect bounds = [self unitResolutionBoundsForNode:node];
+        transform = CGAffineTransformConcat(CGAffineTransformMakeScale(bounds.size.width,
+                                                                       bounds.size.height),
+                                            transform);
+    }
+    for(IJSVGQuartzClipPath* cached in _sharedClipPaths) {
+        if(CGAffineTransformEqualToTransform(cached.transform, transform) &&
+            CGPathEqualToPath(cached.source, node.path)) {
+            return CGPathRetain(cached.path);
+        }
+    }
+    CGPathRef path = CGPathCreateCopyByTransformingPath(node.path, &transform);
+    // Bound comparisons and retained snapshots for documents with many unique clips.
+    if(path != NULL && _sharedClipPaths.count < 64) {
+        IJSVGQuartzClipPath* cached = [[IJSVGQuartzClipPath alloc] init];
+        cached.source = CGPathCreateCopy(node.path);
+        cached.path = CGPathRetain(path);
+        cached.transform = transform;
+        [_sharedClipPaths addObject:cached];
+    }
+    return path;
+}
+
 // Combine the clip shapes in the same coordinate space as the paint.
 - (CGPathRef)newClipPathFromNode:(IJSVGClipPath*)node
                        fromPaint:(IJSVGPaint*)paint
@@ -2512,7 +2584,6 @@ inMeasurementPaint:(IJSVGPaint*)paint
                                      node:paint.sourceNode];
         }];
     }
-    CGMutablePathRef mPath = CGPathCreateMutable();
     CGAffineTransform transform = CGAffineTransformIdentity;
     if(node.contentUnits == IJSVGUnitUserSpaceOnUse) {
         transform = [IJSVGPaint userSpaceTransformForPaint:paint];
@@ -2525,6 +2596,15 @@ inMeasurementPaint:(IJSVGPaint*)paint
                                                                         CGRectGetMinY(paintRect));
     transform = CGAffineTransformConcat(transform, paintTransform);
     CGRect contentBounds = node.contentUnits == IJSVGUnitUserSpaceOnUse ? self.viewPort : paint.boundingBox;
+    __block CGPathRef sharedPath = NULL;
+    [self withUnitBounds:contentBounds handler:^{
+        sharedPath = [self newSharedClipPathForNode:node
+                                          transform:transform];
+    }];
+    if(sharedPath != NULL) {
+        return sharedPath;
+    }
+    CGMutablePathRef mPath = CGPathCreateMutable();
     IJSVGClipPath* clipPath = node;
     while(clipPath != nil) {
         [self withUnitBounds:contentBounds

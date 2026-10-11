@@ -10,6 +10,12 @@
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGUtils.h>
 
+static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
+{
+    return isfinite(bounds.origin.x) && isfinite(bounds.origin.y) &&
+        isfinite(bounds.size.width) && isfinite(bounds.size.height);
+}
+
 @interface IJSVGShapePaint () {
     NSData* _dashLengths;
     BOOL _hasPointSubpaths;
@@ -178,9 +184,38 @@
     return bounds;
 }
 
+// Control point bounds are conservative and avoid constructing stroke outlines.
+// Cull only drawing for this shape. Children and filter source sampling still run.
+- (BOOL)isPathOutsideClipInContext:(CGContextRef)ctx
+{
+    if(_nonScalingStroke && _strokeColor != NULL) {
+        return NO;
+    }
+    CGRect bounds = CGPathGetBoundingBox(_path);
+    if(!IJSVGShapeBoundsAreFinite(bounds)) {
+        return NO;
+    }
+    if(_strokeColor != NULL && _lineWidth > 0.f) {
+        CGFloat padding = _lineWidth * MAX(2.f, _miterLimit);
+        bounds = CGRectInset(bounds, -padding, -padding);
+    }
+    CGAffineTransform transform = CGContextGetCTM(ctx);
+    CGFloat determinant = transform.a * transform.d - transform.b * transform.c;
+    if(!isfinite(determinant) || determinant == 0.f) {
+        return NO;
+    }
+    CGAffineTransform inverse = CGAffineTransformInvert(transform);
+    bounds = CGRectInset(bounds, -2.f * (fabs(inverse.a) + fabs(inverse.c)),
+                                 -2.f * (fabs(inverse.b) + fabs(inverse.d)));
+    CGRect clip = CGContextGetClipBoundingBox(ctx);
+    return IJSVGShapeBoundsAreFinite(bounds) && IJSVGShapeBoundsAreFinite(clip) &&
+        !CGRectIntersectsRect(bounds, clip);
+}
+
 - (void)drawInContext:(CGContextRef)ctx
 {
-    if(_path == NULL) {
+    if(_path == NULL || (_fillColor == NULL && _strokeColor == NULL) ||
+        [self isPathOutsideClipInContext:ctx]) {
         return;
     }
     if(_fillColor != NULL) {

@@ -41,6 +41,18 @@ static BOOL IJSVGFilterRectIsFinite(CGRect rect)
 }
 
 
+// Align to 16 pixel tiles to keep multiresolution blur sampling stable as the
+// destination clip moves. Output tiles use the top left corner of the original
+// primitive bounds, since Core Image renders CGImage rows from top to bottom.
+static CGRect IJSVGFilterAlignedRect(CGRect rect, CGPoint origin)
+{
+    const CGFloat tileSize = 16.f;
+    CGAffineTransform grid = CGAffineTransformMake(1.f / tileSize, 0, 0, -1.f / tileSize,
+        -origin.x / tileSize, origin.y / tileSize);
+    rect = CGRectIntegral(CGRectApplyAffineTransform(rect, grid));
+    return CGRectApplyAffineTransform(rect, CGAffineTransformInvert(grid));
+}
+
 // A shared Metal buffer lets Quartz consume completed filter pixels directly.
 // Keep placement, clipping and source-over in Quartz: replacing those operations
 // with Core Image changes fractional coverage and accumulated 8-bit rounding.
@@ -1071,6 +1083,105 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return;
 }
 
+// Trim only transient output. Cached images and atlas entries must retain
+// their complete coverage for later draws with a different destination clip.
+- (CGRect)requestedOutputExtentForGraph:(IJSVGFilterGraph*)graph
+                               context:(CGContextRef)ctx
+{
+    CGRect extent = graph.extent;
+    if(_outputSignature != nil || IJSVGCurrentFilterBatch.collecting ||
+        IJSVGCurrentFilterBatch.preflighting) {
+        return extent;
+    }
+    CGRect clip = CGContextGetClipBoundingBox(ctx);
+    if(!IJSVGFilterRectIsFinite(clip)) {
+        return extent;
+    }
+    CGAffineTransform pixels = IJSVGFilterPixelTransform(ctx);
+    CGFloat determinant = pixels.a * pixels.d - pixels.b * pixels.c;
+    if(!isfinite(determinant) || determinant == 0.f) {
+        return extent;
+    }
+    // Allow two destination pixels for Quartz image interpolation, then
+    // snap outwards on the original filter grid. Source and blur halos stay intact.
+    CGAffineTransform inverse = CGAffineTransformInvert(pixels);
+    CGFloat paddingX = 2.f * (fabs(inverse.a) + fabs(inverse.c));
+    CGFloat paddingY = 2.f * (fabs(inverse.b) + fabs(inverse.d));
+    clip = CGRectInset(clip, -paddingX, -paddingY);
+    CGRect requested = CGRectApplyAffineTransform(clip, graph.imageTransform);
+    if(!IJSVGFilterRectIsFinite(requested)) {
+        return extent;
+    }
+    return CGRectIntersection(extent, CGRectIntegral(requested));
+}
+
+// Walk backwards conservatively: retain both the original and shifted region
+// for named branches, and accumulate every blur halo. Unknown sampling falls back.
+- (CGRect)requiredSourceExtentForGraph:(IJSVGFilterGraph*)graph
+                             context:(CGContextRef)ctx
+{
+    CGRect extent = graph.extent;
+    CGRect required = [self requestedOutputExtentForGraph:graph
+                                                  context:ctx];
+    if(CGRectEqualToRect(required, extent) || !self.canCacheOutput) {
+        return extent;
+    }
+    BOOL hasBlur = NO;
+    CGFloat scale = graph.imageTransform.a;
+    CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox ?
+        CGSizeMake(self.boundingBox.size.width * scale, self.boundingBox.size.height * scale) :
+        CGSizeMake(scale, scale);
+    for(IJSVGFilterPrimitive* primitive in self.filter.primitives.reverseObjectEnumerator) {
+        switch(primitive.type) {
+            case IJSVGNodeTypeFilterGaussianBlur:
+            case IJSVGNodeTypeFilterDropShadow: {
+                if(primitive.edgeMode != IJSVGFilterEdgeModeNone) {
+                    return extent;
+                }
+                CGSize deviation = [primitive pairForParameter:IJSVGAttributeStdDeviation
+                                                  defaultValue:CGSizeZero];
+                if(deviation.width < 0.f || deviation.height < 0.f) {
+                    return extent;
+                }
+                hasBlur |= deviation.width > 0.f || deviation.height > 0.f;
+                required = CGRectInset(required, -ceil(4.f * deviation.width * units.width) - 2.f,
+                                                 -ceil(4.f * deviation.height * units.height) - 2.f);
+                if(primitive.type != IJSVGNodeTypeFilterDropShadow) {
+                    break;
+                }
+                // A drop shadow also samples the original, untranslated source.
+                __attribute__((fallthrough));
+            }
+            case IJSVGNodeTypeFilterOffset: {
+                CGFloat dx = [primitive numberForParameter:IJSVGAttributeDX
+                                              defaultValue:0.f] * units.width;
+                CGFloat dy = [primitive numberForParameter:IJSVGAttributeDY
+                                              defaultValue:0.f] * units.height;
+                required = CGRectUnion(required, CGRectOffset(required, -dx, -dy));
+                break;
+            }
+            case IJSVGNodeTypeFilterColorMatrix:
+            case IJSVGNodeTypeFilterComponentTransfer:
+            case IJSVGNodeTypeFilterComposite:
+            case IJSVGNodeTypeFilterBlend:
+            case IJSVGNodeTypeFilterMerge:
+            case IJSVGNodeTypeFilterFlood:
+                break;
+            default:
+                return extent;
+        }
+        if(!IJSVGFilterRectIsFinite(required)) {
+            return extent;
+        }
+    }
+    if(!hasBlur) {
+        // Cheap pointwise effects retain their raster bounds. Moving them can
+        // change nested Quartz edge coverage without saving blur work.
+        return extent;
+    }
+    return CGRectIntersection(extent, CGRectIntegral(required));
+}
+
 - (void)renderSource:(CIImage*)source
                graph:(IJSVGFilterGraph*)graph
              context:(CGContextRef)ctx
@@ -1081,6 +1192,10 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
     IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     CGRect extent = graph.extent;
+    CGRect requestedExtent = [self requestedOutputExtentForGraph:graph context:ctx];
+    if(CGRectIsEmpty(requestedExtent) || CGRectIsNull(requestedExtent)) {
+        return;
+    }
     CGSize pixelSize = extent.size;
     // Keep filter coordinates aligned with the source bitmap. The calling context
     // drawing transform handles flipped views and image exports.
@@ -1116,25 +1231,37 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             [batch.orderedEntries addObject:entry];
             return;
         }
+        CGRect outputExtent = extent;
+        if(!CGRectEqualToRect(requestedExtent, extent) && IJSVGFilterRectIsFinite(output.extent)) {
+            CGRect anchor = CGRectIntegral(output.extent);
+            CGPoint origin = CGPointMake(CGRectGetMinX(anchor), CGRectGetMaxY(anchor));
+            outputExtent = CGRectIntersection(extent, IJSVGFilterAlignedRect(requestedExtent, origin));
+        }
         CGImageRef image = NULL;
         // Only renderer-owned bitmap storage can supply pixels for the Metal shortcut.
         if(IJSVGFilterSIMDUsesBackdropAddition(self.filter) &&
             supportsMetalKernels && IJSVGFilterRenderDepth == 1 &&
             ctx == IJSVGFilterBitmapContext) {
-            image = IJSVGFilterNewSharedMetalImage(output, extent, colorSpace);
+            image = IJSVGFilterNewSharedMetalImage(output, outputExtent, colorSpace);
         }
         if(image == NULL) {
             image = [context createCGImage:output
-                                  fromRect:extent
+                                  fromRect:outputExtent
                                     format:kCIFormatRGBA8
                                 colorSpace:colorSpace];
         }
 
         if(image != NULL) {
-            [self drawFilteredImage:image
-                            context:ctx
-                             region:region
-                           workRect:workRect];
+            if(CGRectEqualToRect(outputExtent, extent)) {
+                [self drawFilteredImage:image
+                                context:ctx
+                                 region:region
+                               workRect:workRect];
+            } else {
+                CGRect outputRect = CGRectApplyAffineTransform(outputExtent,
+                                                               CGAffineTransformInvert(imageTransform));
+                IJSVGFilterDrawFilteredImage(image, ctx, region, outputRect);
+            }
             CGImageRelease(image);
         }
     }];
@@ -1292,31 +1419,33 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
 
-    CGContextScaleCTM(bitmap, scale, scale);
-    CGContextTranslateCTM(bitmap, -workRect.origin.x, -workRect.origin.y);
-    IJSVGPaint* sourcePaint = self.sourcePaint;
-    CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
-    [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
     graph.extent = CGRectMake(0, 0, pixelSize.width, pixelSize.height);
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
         -workRect.origin.x * scale, -workRect.origin.y * scale);
-    CGImageRef composite = NULL;
+    CGRect sourceExtent = [self requiredSourceExtentForGraph:graph context:ctx];
+    CGContextScaleCTM(bitmap, scale, scale);
+    CGContextTranslateCTM(bitmap, -workRect.origin.x, -workRect.origin.y);
+    if(!CGRectEqualToRect(sourceExtent, graph.extent)) {
+        CGContextClipToRect(bitmap, CGRectApplyAffineTransform(sourceExtent,
+            CGAffineTransformInvert(graph.imageTransform)));
+    }
+    IJSVGPaint* sourcePaint = self.sourcePaint;
+    CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
+    [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
+    // Try the targeted CPU/SIMD filters before the general Core Image path.
+    CGContextRef backdrop = NULL;
     if(self.usesBackground && IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting &&
         ctx == IJSVGFilterBitmapContext &&
         (ctx != IJSVGFilterBackgroundContext || CGRectIsInfinite(IJSVGFilterBackgroundClip))) {
-        composite = IJSVGFilterSIMDNewComposite(bitmap, ctx, graph, region);
+        backdrop = ctx;
     }
-    if(composite != NULL) {
-        [self drawFilteredImage:composite
-                        context:ctx
-                         region:region
-                       workRect:workRect];
-        CGImageRelease(composite);
-        CGContextRelease(bitmap);
-        CGColorSpaceRelease(colorSpace);
-        return;
+    CGImageRef localImage = [graph newCGImageForWhiteAlpha:bitmap];
+    if(localImage == NULL && backdrop != NULL) {
+        localImage = IJSVGFilterSIMDNewComposite(bitmap, backdrop, graph, region);
     }
-    CGImageRef localImage = IJSVGFilterSIMDNewLocalFilter(bitmap, graph, region);
+    if(localImage == NULL) {
+        localImage = IJSVGFilterSIMDNewLocalFilter(bitmap, graph, region);
+    }
     if([self renderDirectImage:localImage
                        context:ctx
                         region:region
@@ -1326,6 +1455,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGColorSpaceRelease(colorSpace);
         return;
     }
+    // Direct blur/shadow rendering: batch Metal work when possible, otherwise
+    // use the measured CPU/Metal blur policy for the graph.
     if([self collectMetalBitmap:bitmap
                           graph:graph
                        workRect:workRect]) {
@@ -1333,8 +1464,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGColorSpaceRelease(colorSpace);
         return;
     }
-    CGImageRef smallBlur = [graph newCGImageForSmallBlur:bitmap];
-    if([self renderDirectImage:smallBlur
+    CGImageRef directBlur = [graph newCGImageForDirectBlur:bitmap];
+    if([self renderDirectImage:directBlur
                        context:ctx
                         region:region
                       workRect:workRect
@@ -1343,6 +1474,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGColorSpaceRelease(colorSpace);
         return;
     }
+    // Core Image handles graphs unsupported by the direct paths above.
     CGImageRef sourceImage = CGBitmapContextCreateImage(bitmap);
     CGContextRelease(bitmap);
 
@@ -1374,6 +1506,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         batch.invalid = YES;
         return;
     }
+    _outputSignature = nil;
     IJSVGFilterGraph* graph = self.filterGraph;
     CGRect region = [graph regionForNode:_filter
                                    units:_filter.units
@@ -1442,6 +1575,17 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformInvert(grid));
     CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale),
                                   round(workRect.size.height * scale));
+    graph.extent = (CGRect){ CGPointZero, pixelSize };
+    graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale,
+        -workRect.origin.x * scale, -workRect.origin.y * scale);
+    CGRect required = [self requiredSourceExtentForGraph:graph context:ctx];
+    // Keep the allocation on the original sampling grid, including rotations.
+    if(!CGRectIsEmpty(required) && !CGRectIsNull(required) &&
+        !CGRectEqualToRect(required, graph.extent)) {
+        required = CGRectIntersection(graph.extent, IJSVGFilterAlignedRect(required, CGPointZero));
+        workRect = CGRectApplyAffineTransform(required, CGAffineTransformInvert(graph.imageTransform));
+        pixelSize = required.size;
+    }
     if(batch.preflighting) {
         [self preflightPixelSize:pixelSize batch:batch];
         return;
@@ -1458,7 +1602,6 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if(!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
         return;
     }
-    _outputSignature = nil;
     if(!IJSVGFilterHasCachingAncestor && self.canCacheOutput) {
         _outputSignature = @[
             [NSValue valueWithRect:workRect], [NSValue valueWithSize:pixelSize],
