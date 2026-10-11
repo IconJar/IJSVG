@@ -344,10 +344,10 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
             continue;
         }
         NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
-        CGFloat opacity = stopNode.fillOpacity.value;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
         if(color == nil) {
+            CGFloat opacity = stopNode.fillOpacity.value;
             color = [IJSVGColor colorFromHEXInteger:0x000000];
             if(opacity != 1.f) {
                 color = [IJSVGColor changeAlphaOnColor:color

@@ -496,8 +496,9 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         NSError* anError = nil;
         NSXMLDocument* document = nil;
         @try {
+            // Keep XML content, but not source-formatting whitespace that is never rendered.
             document = [[NSXMLDocument alloc] initWithXMLString:string
-                                                        options:NSXMLNodePreserveWhitespace
+                                                        options:0
                                                           error:&anError];
         }
         @catch (NSException* exception) {
@@ -521,8 +522,9 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         NSError* anError = nil;
         NSXMLDocument* document = nil;
         @try {
+            // Keep XML content, but not source-formatting whitespace that is never rendered.
             document = [[NSXMLDocument alloc] initWithData:data
-                                                   options:NSXMLNodePreserveWhitespace
+                                                   options:0
                                                      error:&anError];
         }
         @catch (NSException* exception) {
@@ -793,6 +795,33 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 }
 
 // The following method is highly tuned for performance rather than readability.
+- (void)applyStopAttributes:(NSString* __unsafe_unretained const*)attributeValues
+                     toNode:(IJSVGNode*)node
+{
+    NSString* value = nil;
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOffset, &value)) {
+        node.offset = [IJSVGUnitLength unitWithString:value];
+    }
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopOpacity, &value)) {
+        node.fillOpacity = [IJSVGUnitLength unitWithString:value];
+    }
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
+        NSColor* color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame
+            ? node.currentColor : [self parsedStopColorForValue:value];
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+        if(color == nil) {
+            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
+        } else {
+            CGFloat opacity = node.fillOpacity.value;
+            if(opacity != 1.f) {
+                colorNode.color = [IJSVGColor changeAlphaOnColor:color to:opacity];
+            }
+        }
+        node.fill = colorNode;
+    }
+}
+
 - (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
                                                          onNode:(IJSVGNode*)node
                                               ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes
@@ -800,6 +829,59 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     IJSVGNode* definitionParent = [self.definitionStyleParents objectForKey:element];
     if(definitionParent != nil) {
         node.styleParent = definitionParent;
+    }
+    // Coordinate-only gradients need no style cascade. Their coordinates are
+    // resolved by parseGradient after the stop children have been constructed.
+    if(node.type == IJSVGNodeTypeLinearGradient && _styleSheet.ruleCount == 0 &&
+        ignoringAttributes == nil) {
+        NSArray<NSXMLNode*>* attributes = element.attributes;
+        NSString* identifier = nil;
+        BOOL plainGradient = YES;
+        for(NSXMLNode* attribute in attributes) {
+            NSString* name = attribute.name;
+            if([name isEqualToString:IJSVGAttributeID]) {
+                identifier = attribute.stringValue;
+            } else if(![name isEqualToString:IJSVGAttributeX1] &&
+                      ![name isEqualToString:IJSVGAttributeX2] &&
+                      ![name isEqualToString:IJSVGAttributeY1] &&
+                      ![name isEqualToString:IJSVGAttributeY2]) {
+                plainGradient = NO;
+                break;
+            }
+        }
+        if(plainGradient) {
+            if(identifier.length != 0) {
+                node.identifier = identifier;
+                [self detachElement:element withIdentifier:identifier];
+            }
+            return nil;
+        }
+    }
+    // Plain stops have no cascade to resolve. Avoid allocating reference caches
+    // and resolving the general node attribute set for these small leaf nodes.
+    if(node.type == IJSVGNodeTypeStop && _styleSheet.ruleCount == 0 && ignoringAttributes == nil) {
+        NSString* __unsafe_unretained values[kIJSVGNodeAttributeStorageLength] = { nil };
+        NSArray<NSXMLNode*>* attributes = element.attributes;
+        BOOL plainStop = YES;
+        for(NSXMLNode* attribute in attributes) {
+            NSString* name = attribute.name;
+            NSUInteger index;
+            if([name isEqualToString:IJSVGAttributeOffset]) {
+                index = IJSVGNodeAttributeOffset;
+            } else if([name isEqualToString:IJSVGAttributeStopColor]) {
+                index = IJSVGNodeAttributeStopColor;
+            } else if([name isEqualToString:IJSVGAttributeStopOpacity]) {
+                index = IJSVGNodeAttributeStopOpacity;
+            } else {
+                plainStop = NO;
+                break;
+            }
+            values[index] = attribute.stringValue;
+        }
+        if(plainStop) {
+            [self applyStopAttributes:values toNode:node];
+            return nil;
+        }
     }
     __attribute__((objc_precise_lifetime)) IJSVGParserRawAttributes* raw = nil;
     // Cache attributes for referenced elements because they may be parsed again.
@@ -1189,26 +1271,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         }
     }
 
-    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOffset, &value)) {
-        node.offset = [IJSVGUnitLength unitWithString:value];
-    }
-    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopOpacity, &value)) {
-        node.fillOpacity = [IJSVGUnitLength unitWithString:value];
-    }
-
-    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
-        NSColor* color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame
-            ? node.currentColor : [self parsedStopColorForValue:value];
-        IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
-        if(color == nil) {
-            colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
-        } else if(node.fillOpacity.value != 1.f) {
-            color = [IJSVGColor changeAlphaOnColor:color
-                                                to:node.fillOpacity.value];
-            colorNode.color = color;
-        }
-        node.fill = colorNode;
-    }
+    [self applyStopAttributes:attributeValues toNode:node];
 
     if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
         if([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame ||
@@ -1411,7 +1474,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 
 - (NSColor*)parsedStopColorForValue:(NSString*)value
 {
-    if(![value hasPrefix:@"#"]) {
+    if(value.length == 0 || [value characterAtIndex:0] != '#') {
         return [IJSVGColor colorFromString:value];
     }
     NSColor* color = _parsedColors[value];

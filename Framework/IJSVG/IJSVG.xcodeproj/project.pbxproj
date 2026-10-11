@@ -77,7 +77,7 @@
 		5943860E306C3E5A006A5F63 /* IJSVGFilterEffect.m in Sources */ = {isa = PBXBuildFile; fileRef = 5943860D306C3E5A006A5F63 /* IJSVGFilterEffect.m */; };
 		594393DB306D40C6006A5F63 /* IJSVGMetalShadowRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = 594393DA306D40C6006A5F63 /* IJSVGMetalShadowRenderer.h */; };
 		594393DD306D40C6006A5F63 /* IJSVGMetalShadowRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 594393DC306D40C6006A5F63 /* IJSVGMetalShadowRenderer.m */; };
-		594394A0306D438B006A5F63 /* IJSVGInnerShadow.metal in Resources */ = {isa = PBXBuildFile; fileRef = 5943949F306D438B006A5F63 /* IJSVGInnerShadow.metal */; };
+		594394A0306D438B006A5F63 /* IJSVGInnerShadow.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5943949F306D438B006A5F63 /* IJSVGInnerShadow.metal */; settings = {COMPILER_FLAGS = "-fno-fast-math"; }; };
 		594394A2306D438B006A5F63 /* IJSVGSubtract.metal in Resources */ = {isa = PBXBuildFile; fileRef = 594394A1306D438B006A5F63 /* IJSVGSubtract.metal */; };
 		5945BC12306E815000758340 /* IJSVGMetalBlurRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5945BC11306E815000758340 /* IJSVGMetalBlurRenderer.h */; };
 		5945BC14306E815000758340 /* IJSVGBlur.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5945BC13306E815000758340 /* IJSVGBlur.metal */; };
@@ -317,7 +317,7 @@
 		5943860D306C3E5A006A5F63 /* IJSVGFilterEffect.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterEffect.m; sourceTree = "<group>"; };
 		594393DA306D40C6006A5F63 /* IJSVGMetalShadowRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGMetalShadowRenderer.h; sourceTree = "<group>"; };
 		594393DC306D40C6006A5F63 /* IJSVGMetalShadowRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMetalShadowRenderer.m; sourceTree = "<group>"; };
-		5943949F306D438B006A5F63 /* IJSVGInnerShadow.metal */ = {isa = PBXFileReference; lastKnownFileType = text; path = IJSVGInnerShadow.metal; sourceTree = "<group>"; };
+		5943949F306D438B006A5F63 /* IJSVGInnerShadow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = IJSVGInnerShadow.metal; sourceTree = "<group>"; };
 		594394A1306D438B006A5F63 /* IJSVGSubtract.metal */ = {isa = PBXFileReference; lastKnownFileType = text; path = IJSVGSubtract.metal; sourceTree = "<group>"; };
 		5945BC11306E815000758340 /* IJSVGMetalBlurRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGMetalBlurRenderer.h; sourceTree = "<group>"; };
 		5945BC13306E815000758340 /* IJSVGBlur.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = IJSVGBlur.metal; sourceTree = "<group>"; };
@@ -1063,7 +1063,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				59FC3A71306FDBCA0028BEAC /* IJSVGSeparableBlur.metal in Resources */,
-				594394A0306D438B006A5F63 /* IJSVGInnerShadow.metal in Resources */,
 				594394A2306D438B006A5F63 /* IJSVGSubtract.metal in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1119,6 +1118,7 @@
 				594385F4306C3E59006A5F63 /* IJSVGMergeFilterEffect.m in Sources */,
 				59CEBB15307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.m in Sources */,
 				59FDBF0127F3454800AF7038 /* IJSVGColorNode.m in Sources */,
+				594394A0306D438B006A5F63 /* IJSVGInnerShadow.metal in Sources */,
 				5945BC14306E815000758340 /* IJSVGBlur.metal in Sources */,
 				594385FC306C3E5A006A5F63 /* IJSVGDropShadowFilterEffect.m in Sources */,
 				594385D4306C3E58006A5F63 /* IJSVGCompositeFilterEffect.m in Sources */,

@@ -93,7 +93,7 @@
 
 - (void)testShadowsMatchGeneralEvaluator
 {
-    for(NSNumber* radius in @[@0.1, @0.2, @0.5, @1.0, @2.0]) {
+    for(NSNumber* radius in @[@0.1, @0.2, @0.5, @1.0, @2.0, @2.5, @2.625, @3.0, @4.0]) {
         for(NSNumber* shadows in @[@1, @2, @4]) {
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@ shadows=%@",
                                                                     radius,

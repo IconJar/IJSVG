@@ -832,6 +832,18 @@ inMeasurementPaint:(IJSVGPaint*)paint
 
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node
 {
+    // A plain single child group contributes neither geometry nor drawing state.
+    // Keep the source tree intact for inherited styles and resource coordinates;
+    // omit only its redundant paint allocation and bounds calculation.
+    // Measurement trees retain every source node for visibility queries.
+    if(!_resolvingMeasurements && [node isMemberOfClass:IJSVGGroup.class] && [node.name isEqualToString:@"g"] &&
+        ((IJSVGGroup*)node).children.count == 1 && node.shouldRender &&
+        node.transforms.count == 0 && node.x.value == 0.f && node.y.value == 0.f &&
+        node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal &&
+        node.clipPath == nil && node.mask == nil && node.filters.count == 0 &&
+        CGRectIsNull(node.backgroundRect)) {
+        return [self drawablePaintForNode:((IJSVGGroup*)node).children.firstObject];
+    }
     if(node.transforms.count == 0) {
         return [self drawablePaintForNodeWithTextTransform:node];
     }

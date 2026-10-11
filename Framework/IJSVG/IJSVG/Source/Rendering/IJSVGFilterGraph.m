@@ -807,14 +807,14 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
                                                   defaultValue:0] * units.height;
         CGFloat dx = [primitives[index + 1] numberForParameter:IJSVGAttributeDX
                                                   defaultValue:0] * units.width;
-        if(!isfinite(sigma) || sigma < .2 || sigma > 4 || !isfinite(deviation.height * units.height) ||
+        if(!isfinite(sigma) || sigma < .2 || sigma > 8 || !isfinite(deviation.height * units.height) ||
             fabs(sigma - deviation.height * units.height) > .00001 || !isfinite(dx) || !isfinite(dy) ||
             fabs(dx) >= region.size.width || fabs(dy) >= region.size.height ||
             blur.edgeMode != IJSVGFilterEdgeModeNone) {
             return NO;
         }
         NSData* weights = IJSVGSmallBlurWeights(sigma);
-        if(weights == nil || weights.length > 32 * sizeof(float)) {
+        if(weights == nil || weights.length > 64 * sizeof(float)) {
             return NO;
         }
         CGFloat gain = [primitives[index] numbersForParameter:IJSVGAttributeValues][18].doubleValue;
@@ -824,7 +824,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
         NSArray<NSNumber*>* tint = [primitives[index + 4] numbersForParameter:IJSVGAttributeValues];
         parameters->offsets[stage] = (simd_float4){dx, dy, gain, weights.length / sizeof(float)};
         parameters->tints[stage] = (simd_float4){tint[4].doubleValue, tint[9].doubleValue, tint[14].doubleValue, 1};
-        memcpy(parameters->weights + stage * 32, weights.bytes, weights.length);
+        memcpy(parameters->weights + stage * 64, weights.bytes, weights.length);
     }
     return YES;
 }

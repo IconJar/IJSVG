@@ -162,6 +162,7 @@ static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 @property (nonatomic, assign) CGSize pixelSize;
 @property (nonatomic, assign) CGRect atlasRect;
 @property (nonatomic, assign) CGImageRef renderedImage;
+@property (nonatomic, assign) BOOL hasAtlasBacking;
 @end
 
 @implementation IJSVGQuartzFilterBatchEntry
@@ -322,14 +323,8 @@ static CIImage* IJSVGFilterAtlasForEntries(
 }
 
 
-static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
+static BOOL IJSVGFilterRenderCIEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
 {
-    if(!IJSVGFilterRenderShadowEntries(entries)) {
-        return NO;
-    }
-    if(!IJSVGFilterRenderBlurEntries(entries)) {
-        return NO;
-    }
     NSUInteger pixels = 0;
     NSMutableArray<IJSVGQuartzFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
     for(IJSVGQuartzFilterBatchEntry* entry in entries) {
@@ -356,8 +351,8 @@ static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntr
             return NO;
         }
         NSUInteger middle = ciEntries.count / 2;
-        return IJSVGFilterRenderCollectedEntries([ciEntries subarrayWithRange:NSMakeRange(0, middle)]) &&
-            IJSVGFilterRenderCollectedEntries(
+        return IJSVGFilterRenderCIEntries([ciEntries subarrayWithRange:NSMakeRange(0, middle)]) &&
+            IJSVGFilterRenderCIEntries(
                 [ciEntries subarrayWithRange:NSMakeRange(middle, ciEntries.count - middle)]);
     }
     CGImageRef rendered = IJSVGFilterNewImageForAtlas(atlas, CGSizeMake(atlasWidth, atlasHeight));
@@ -371,6 +366,7 @@ static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntr
         CGRect crop = entry.atlasRect;
         crop.origin.y = atlasHeight - CGRectGetMaxY(crop);
         entry.renderedImage = CGImageCreateWithImageInRect(rendered, crop);
+        entry.hasAtlasBacking = YES;
         entry.output = nil;
         if(entry.renderedImage == NULL) {
             CGImageRelease(rendered);
@@ -381,6 +377,46 @@ static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntr
     return YES;
 }
 
+
+static BOOL IJSVGFilterRenderCollectedEntries(NSArray<IJSVGQuartzFilterBatchEntry*>* entries)
+{
+    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* metalEntries = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGQuartzFilterBatchEntry*>* ciEntries = [[NSMutableArray alloc] init];
+    for(IJSVGQuartzFilterBatchEntry* entry in entries) {
+        if(entry.metalShadow != nil || entry.metalBlur != nil) {
+            [metalEntries addObject:entry];
+        } else if(entry.output != nil) {
+            [ciEntries addObject:entry];
+        }
+    }
+    if(ciEntries.count == 0 || metalEntries.count == 0) {
+        return IJSVGFilterRenderShadowEntries(metalEntries) &&
+            IJSVGFilterRenderBlurEntries(metalEntries) &&
+            IJSVGFilterRenderCIEntries(ciEntries);
+    }
+
+    // Jobs own their input pixels and the two arrays contain disjoint entries.
+    // Submit the direct Metal work while Core Image prepares/renders its graph,
+    // then join before Quartz replays any image. Keep shadow and blur leases
+    // sequential so their scratch buffers do not overlap.
+    dispatch_group_t group = dispatch_group_create();
+    __block BOOL metalSucceeded = NO;
+    dispatch_group_async(group, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        @autoreleasepool {
+            metalSucceeded = IJSVGFilterRenderShadowEntries(metalEntries) &&
+                IJSVGFilterRenderBlurEntries(metalEntries);
+        }
+    });
+    BOOL ciSucceeded = NO;
+    @try {
+        ciSucceeded = IJSVGFilterRenderCIEntries(ciEntries);
+    } @finally {
+        // A failed Core Image render must not leave work running after the
+        // synchronous draw releases its batch and source images.
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    }
+    return metalSucceeded && ciSucceeded;
+}
 
 static CGContextRef IJSVGFilterNewCollectionContext(CGContextRef context)
 {
@@ -821,21 +857,30 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             // An atlas crop can retain a much larger backing image. Materialize
             // independent RGBA8 pixels so cache cost reflects retained storage.
             if(width != 0 && height != 0 && width <= 4194304 / height) {
-                CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4,
-                    CGImageGetColorSpace(image), kCGImageAlphaPremultipliedLast);
-                if(bitmap != NULL) {
-                    CGContextSetBlendMode(bitmap, kCGBlendModeCopy);
-                    CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), image);
-                    CGImageRef copy = CGBitmapContextCreateImage(bitmap);
-                    CGContextRelease(bitmap);
-                    if(copy != NULL) {
-                        cached = [[IJSVGFilterCachedImage alloc] init];
-                        cached.image = copy;
-                        cached.signature = _outputSignature;
-                        [IJSVGFilterOutputCache() setObject:cached
-                                                     forKey:_outputCacheKey
-                                                       cost:width * height * 4];
+                IJSVGQuartzFilterBatchEntry* entry = [IJSVGCurrentFilterBatch.entries objectForKey:self];
+                CGImageRef copy = NULL;
+                // Direct batch jobs already own independent, immutable pixels.
+                // Retaining them avoids another allocation and Quartz image draw
+                // during the first render. Atlas crops still need detaching.
+                if(entry.renderedImage == image && !entry.hasAtlasBacking) {
+                    copy = CGImageRetain(image);
+                } else {
+                    CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4,
+                        CGImageGetColorSpace(image), kCGImageAlphaPremultipliedLast);
+                    if(bitmap != NULL) {
+                        CGContextSetBlendMode(bitmap, kCGBlendModeCopy);
+                        CGContextDrawImage(bitmap, CGRectMake(0, 0, width, height), image);
+                        copy = CGBitmapContextCreateImage(bitmap);
+                        CGContextRelease(bitmap);
                     }
+                }
+                if(copy != NULL) {
+                    cached = [[IJSVGFilterCachedImage alloc] init];
+                    cached.image = copy;
+                    cached.signature = _outputSignature;
+                    [IJSVGFilterOutputCache() setObject:cached
+                                                 forKey:_outputCacheKey
+                                                   cost:CGImageGetBytesPerRow(copy) * height];
                 }
             }
         }

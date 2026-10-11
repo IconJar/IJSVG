@@ -16,7 +16,7 @@ struct ShadowJob {
     float4 offsets[4];
     float4 tints[4];
     uint4 config;
-    float weights[128];
+    float weights[256];
 };
 
 float coverage(float2 p, float4 r)
@@ -84,7 +84,7 @@ kernel void shadowHorizontal(device const uchar4* src [[buffer(0)]],
                           mix(bottomLeft, bottomRight, fraction.x), fraction.y);
         alpha = clamp(alpha * coverage(samplePoint, job.region) * job.offsets[stage].z,
                       0.0f, 1.0f);
-        value += alpha * coverage(q, region) * job.weights[stage * 32 + k];
+        value += alpha * coverage(q, region) * job.weights[stage * 64 + k];
     }
     horizontal[i] = value;
 }
@@ -111,7 +111,7 @@ kernel void shadowVertical(device const uchar4* src [[buffer(0)]],
         int row = y + k - radius;
         if(row >= 0 && row < int(job.geometry.y)) {
             blurred += horizontal[job.geometry.z + row * job.geometry.x + x]
-                * job.weights[stage * 32 + k];
+                * job.weights[stage * 64 + k];
         }
     }
 

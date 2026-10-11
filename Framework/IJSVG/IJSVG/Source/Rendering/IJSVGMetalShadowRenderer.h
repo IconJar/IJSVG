@@ -17,7 +17,7 @@ typedef struct {
     simd_float4 offsets[4];
     simd_float4 tints[4];
     simd_uint4 config;
-    float weights[128];
+    float weights[256];
 } IJSVGMetalShadowParameters;
 
 // Each job owns its pixels, no graphics context or thread local state crosses

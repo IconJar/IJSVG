@@ -45,6 +45,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
         // Core Graphics bitmap rows run from top to bottom. Translated crops fuse
         // before blur, but the next primitive uses the integral Core Image extent.
         // Keep those two regions distinct to preserve fractional edge coverage.
+#if SWIFT_PACKAGE
         NSString* source = IJSVGFilterShaderSource(@"IJSVGInnerShadow");
         if(source == nil) {
             return;
@@ -54,6 +55,12 @@ static BOOL IJSVGPrepareMetalShadows(void)
         id<MTLLibrary> library = [IJSVGShadowDevice newLibraryWithSource:source
                                                                  options:options
                                                                    error:NULL];
+#else
+        // Xcode compiles this shader with -fno-fast-math to match the package path.
+        NSBundle* bundle = [NSBundle bundleForClass:IJSVGMetalShadowJob.class];
+        id<MTLLibrary> library = [IJSVGShadowDevice newDefaultLibraryWithBundle:bundle
+                                                                          error:NULL];
+#endif
         if(library == nil) {
             return;
         }
