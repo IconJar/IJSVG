@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGFilterTestHelpers.h>
+#import <IJSVGFilterGraph.h>
 
 @interface IJSVGMetalShadowTests: XCTestCase
 @end
@@ -163,6 +164,128 @@
                                              exportImage:exportImage.boolValue];
                 }];
             }
+        }
+    }
+}
+
+- (NSString*)dropShadowDocumentWithRadius:(double)radius
+                                   offset:(double)offset
+                               colorSpace:(NSString*)colorSpace
+                             forceGeneral:(BOOL)forceGeneral
+{
+    NSMutableString* shapes = [[NSMutableString alloc] init];
+    for(NSUInteger index = 0; index < 4; index++) {
+        [shapes appendFormat:@"<g filter='url(#drop)' opacity='.8'>"
+                              "<circle cx='%lu' cy='%lu' r='9' fill='#4080c0' opacity='.63'/>"
+                              "<rect x='%lu' y='%lu' width='14' height='23' rx='2.1' "
+                              "fill='#b06030' opacity='.41'/></g>",
+                             (unsigned long)(9 + index * 5), (unsigned long)(10 + index * 3),
+                             (unsigned long)(index * 2), (unsigned long)(index * 3)];
+    }
+    return [NSString stringWithFormat:
+        @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><defs>"
+         "<filter id='drop' filterUnits='userSpaceOnUse' x='.175' y='.31' width='31.2' "
+         "height='30.5' color-interpolation-filters='%@'>"
+         "<feFlood flood-opacity='0' result='empty'/>"
+         "<feColorMatrix in='SourceAlpha' type='matrix' result='hardAlpha' "
+         "values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/>"
+         "<feOffset dx='%.9g' dy='%.9g'/><feGaussianBlur stdDeviation='%.9g'/>"
+         "<feComposite in2='hardAlpha' operator='out'/>"
+         "<feColorMatrix type='matrix' values='0 0 0 0 .8 0 0 0 0 .23 0 0 0 0 .47 0 0 0 1 0'/>"
+         "<feBlend in2='empty' mode='normal' result='shadow'/>"
+         "<feBlend in='SourceGraphic' in2='shadow' mode='normal'/></filter>"
+         "<clipPath id='canvas'><rect width='32' height='32'/></clipPath></defs>"
+         "<g %@>%@</g></svg>", colorSpace, offset, -offset, radius,
+        forceGeneral ? @"clip-path='url(#canvas)'" : @"", shapes];
+}
+
+- (void)testDropShadowsMatchGeneralEvaluator
+{
+    for(NSNumber* radius in @[@0.1, @0.5, @1.125, @2, @2.5]) {
+        for(NSNumber* offset in @[@0, @-0.75, @0.35, @0.999999]) {
+            for(NSNumber* flipped in @[@NO, @YES]) {
+                NSString* actual = [self dropShadowDocumentWithRadius:radius.doubleValue
+                                                               offset:offset.doubleValue
+                                                           colorSpace:@"sRGB"
+                                                         forceGeneral:NO];
+                NSString* expected = [self dropShadowDocumentWithRadius:radius.doubleValue
+                                                                 offset:offset.doubleValue
+                                                             colorSpace:@"sRGB"
+                                                           forceGeneral:YES];
+                XCTAssertLessThanOrEqual([self maximumDifference:[self renderDocument:actual
+                                                                               flipped:flipped.boolValue]
+                                                            other:[self renderDocument:expected
+                                                                               flipped:flipped.boolValue]],
+                                         2, @"radius=%@ offset=%@ flipped=%@", radius, offset, flipped);
+            }
+        }
+    }
+}
+
+- (void)testConcurrentDropShadowsMatchGeneralEvaluator
+{
+    NSString* actual = [self dropShadowDocumentWithRadius:1.125 offset:-0.75
+                                              colorSpace:@"sRGB" forceGeneral:NO];
+    NSString* reference = [self dropShadowDocumentWithRadius:1.125 offset:-0.75
+                                                 colorSpace:@"sRGB" forceGeneral:YES];
+    NSData* expected = [self renderDocument:reference flipped:NO];
+    [self runWorkers:12 freshThreads:YES block:^(NSUInteger index) {
+        XCTAssertLessThanOrEqual([self maximumDifference:[self renderDocument:actual flipped:NO]
+                                                   other:expected], 2);
+    }];
+}
+
+- (void)testDropShadowSelectionAndFallbacks
+{
+    NSString* document = [self dropShadowDocumentWithRadius:1.125 offset:-0.75
+                                                colorSpace:@"sRGB" forceGeneral:NO];
+    NSArray<NSArray<NSString*>*>* changes = @[
+        @[@"sRGB", @"linearRGB"],
+        @[@"operator='out'", @"operator='in'"],
+        @[@"<feOffset", @"<feOffset x='0'"],
+        @[@"<feGaussianBlur", @"<feGaussianBlur edgeMode='duplicate'"],
+        @[@"result='hardAlpha'", @"result='SourceGraphic'"],
+        @[@"result='shadow'", @"result='empty'"],
+        @[@"in2='empty' mode='normal'", @"in2='empty' mode='multiply'"],
+        @[@"stdDeviation='1.125'", @"stdDeviation='1 2'"]
+    ];
+    CGContextRef bitmap = [self newBitmapWithSize:64 flipped:NO];
+    XCTAssertTrue(bitmap != NULL);
+    if(bitmap == NULL) {
+        return;
+    }
+    for(NSUInteger index = 0; index <= changes.count; index++) {
+        NSString* xml = index == 0 ? document : [document
+            stringByReplacingOccurrencesOfString:changes[index - 1][0]
+                                      withString:changes[index - 1][1]];
+        IJSVG* svg = IJSVGTestSVGObject(xml);
+        IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+        IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+        graph.filter = group.children.firstObject.filter;
+        XCTAssertNotNil(graph.filter);
+        graph.imageTransform = CGAffineTransformMakeScale(2, 2);
+        graph.viewPort = CGRectMake(0, 0, 32, 32);
+        graph.boundingBox = graph.viewPort;
+        graph.extent = CGRectMake(0, 0, 64, 64);
+        IJSVGMetalShadowJob* job = [graph metalShadowJobForBitmap:bitmap];
+        if(index == 0 && IJSVGMetalShadowJob.isAvailable) {
+            XCTAssertNotNil(job);
+            XCTAssertEqual(job.parameters.config.y, 1);
+        } else {
+            XCTAssertNil(job, @"fallback=%lu", (unsigned long)index);
+        }
+    }
+    CGContextRelease(bitmap);
+}
+
+- (void)testDropShadowRenderingOptions
+{
+    NSString* document = [self dropShadowDocumentWithRadius:1.125 offset:-0.75
+                                                colorSpace:@"sRGB" forceGeneral:NO];
+    for(NSNumber* flipped in @[@NO, @YES]) {
+        for(NSNumber* exportImage in @[@NO, @YES]) {
+            [self assertFilterOptionsForDocument:document flipped:flipped.boolValue
+                                     exportImage:exportImage.boolValue];
         }
     }
 }

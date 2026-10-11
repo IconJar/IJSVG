@@ -791,6 +791,78 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     return IJSVGFilterNewWhiteAlphaImage(bitmap, sourceCrop, outputCrop);
 }
 
+- (BOOL)supportsDirectDropShadow
+{
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
+    if(primitives.count != 8 || primitives[1].type != IJSVGNodeTypeFilterColorMatrix) {
+        return NO;
+    }
+    IJSVGNodeType types[] = {
+        IJSVGNodeTypeFilterFlood, IJSVGNodeTypeFilterColorMatrix,
+        IJSVGNodeTypeFilterOffset, IJSVGNodeTypeFilterGaussianBlur,
+        IJSVGNodeTypeFilterComposite, IJSVGNodeTypeFilterColorMatrix,
+        IJSVGNodeTypeFilterBlend, IJSVGNodeTypeFilterBlend
+    };
+    NSSet* sources = [NSSet setWithArray:@[
+        IJSVGStringSourceGraphic, IJSVGStringSourceAlpha,
+        IJSVGStringBackgroundImage, IJSVGStringBackgroundAlpha,
+        IJSVGStringFillPaint, IJSVGStringStrokePaint
+    ]];
+    NSMutableSet* names = [[NSMutableSet alloc] init];
+    for(NSUInteger index = 0; index < 8; index++) {
+        IJSVGFilterPrimitive* primitive = primitives[index];
+        if(primitive.type != types[index] || primitive.x != nil || primitive.y != nil ||
+            primitive.width != nil || primitive.height != nil || primitive.children.count != 0) {
+            return NO;
+        }
+        if(primitive.result.length != 0) {
+            if([sources containsObject:primitive.result] || [names containsObject:primitive.result]) {
+                return NO;
+            }
+            [names addObject:primitive.result];
+        }
+        if(index >= 2 && index <= 5 &&
+            (primitive.input.length != 0 || primitive.result.length != 0)) {
+            return NO;
+        }
+    }
+    if([primitives[0] numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] != 0 ||
+        primitives[0].result.length == 0 || primitives[1].result.length == 0 ||
+        primitives[6].result.length == 0 ||
+        ![primitives[1].input isEqualToString:IJSVGStringSourceAlpha] ||
+        ![primitives[4].input2 isEqualToString:primitives[1].result] ||
+        primitives[4].compositeOperator != IJSVGFilterCompositeOperatorOut ||
+        primitives[6].input.length != 0 ||
+        ![primitives[6].input2 isEqualToString:primitives[0].result] ||
+        primitives[6].filterBlendMode != IJSVGBlendModeNormal ||
+        ![primitives[7].input isEqualToString:IJSVGStringSourceGraphic] ||
+        ![primitives[7].input2 isEqualToString:primitives[6].result] ||
+        primitives[7].filterBlendMode != IJSVGBlendModeNormal) {
+        return NO;
+    }
+    NSArray<NSNumber*>* alpha = [primitives[1] numbersForParameter:IJSVGAttributeValues];
+    NSArray<NSNumber*>* tint = [primitives[5] numbersForParameter:IJSVGAttributeValues];
+    if(primitives[1].colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
+        primitives[5].colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
+        alpha.count != 20 || tint.count != 20) {
+        return NO;
+    }
+    for(NSUInteger index = 0; index < 20; index++) {
+        double a = alpha[index].doubleValue, c = tint[index].doubleValue;
+        if(!isfinite(a) || !isfinite(c) || (index == 18 ? a <= 1 : a != 0)) {
+            return NO;
+        }
+        if(index == 4 || index == 9 || index == 14) {
+            if(c < 0 || c > 1) {
+                return NO;
+            }
+        } else if(c != (index == 18 ? 1 : 0)) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (BOOL)populateShadowParameters:(IJSVGMetalShadowParameters*)parameters
                           region:(CGRect)region
                            units:(CGSize)units
@@ -798,7 +870,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     NSUInteger shadows = parameters->config.x;
     for(NSUInteger stage = 0; stage < shadows; stage++) {
-        NSUInteger index = 2 + stage * 6;
+        NSUInteger index = parameters->config.y == 1 ? 1 : 2 + stage * 6;
         IJSVGFilterPrimitive* blur = primitives[index + 2];
         CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation
                                      defaultValue:CGSizeZero];
@@ -831,11 +903,12 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
 
 - (IJSVGMetalShadowJob*)metalShadowJobForBitmap:(CGContextRef)bitmap
 {
+    BOOL dropShadow = [self supportsDirectDropShadow];
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     if(width == 0 || height == 0 || width > 512 || height > 512 ||
         self.imageTransform.b != 0 || self.imageTransform.c != 0 ||
         self.imageTransform.a <= 0 || self.imageTransform.a != self.imageTransform.d ||
-        !self.filter.preservesInnerShadowCoverage) {
+        (!dropShadow && !self.filter.preservesInnerShadowCoverage)) {
         return nil;
     }
     NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
@@ -866,6 +939,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
       CGRectGetMaxX(region), CGRectGetMaxY(region)
     };
     parameters.config.x = (uint32_t)shadows;
+    parameters.config.y = dropShadow ? 1 : 0;
     if(![self populateShadowParameters:&parameters
                                 region:region
                                  units:units]) {

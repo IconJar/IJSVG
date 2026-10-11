@@ -124,6 +124,15 @@ kernel void shadowVertical(device const uchar4* src [[buffer(0)]],
     // p lies exactly at the centre of this source pixel, so interpolation is unnecessary.
     float4 source = float4(src[i]) / 255.0f;
     float hardAlpha = clamp(source.a * crop * job.offsets[stage].z, 0.0f, 1.0f) * crop;
+    // Outer shadows go behind SourceGraphic after excluding its hard alpha
+    if(job.config.y == 1) {
+        float shadow = blurred * (1 - hardAlpha) * crop * crop * crop;
+        float4 foreground = source * crop;
+        float4 value = (foreground + float4(job.tints[stage].rgb, 1) * shadow *
+                        (1 - foreground.a)) * crop;
+        result[i] = uchar4(rint(clamp(value, 0.0f, 1.0f) * 255.0f));
+        return;
+    }
     float shadow = clamp(hardAlpha - blurred, 0.0f, 1.0f) * crop * crop;
     float4 background = stage == 0 ? source * crop * crop : accumulated[i];
     float4 value = float4(job.tints[stage].rgb * shadow * background.a + background.rgb * (1 - shadow),
