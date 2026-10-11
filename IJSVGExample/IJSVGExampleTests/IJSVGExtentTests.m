@@ -235,7 +235,7 @@
     node.shouldRender = NO;
     XCTAssertTrue(CGRectIsNull([node extentWithViewPort:svg.viewBox style:nil]));
     node.shouldRender = YES;
-    node.filter.width.value = 3;
+    node.filter.width = [node.filter.width lengthWithValue:3];
     [self assertRect:[node extentWithViewPort:svg.viewBox style:nil] equals:CGRectMake(0, 20, 120, 40)];
     node.filters = @[];
     [self assertRect:[node extentWithViewPort:svg.viewBox style:nil] equals:CGRectMake(20, 30, 40, 20)];

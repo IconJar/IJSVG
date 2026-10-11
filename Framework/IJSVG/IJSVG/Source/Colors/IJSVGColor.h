@@ -169,7 +169,7 @@ typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
     IJSVGColorYellowgreen
 };
 
-extern NSString* const IJSVGColorCurrentColorName;
+FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 
 @interface IJSVGColor : NSObject
 

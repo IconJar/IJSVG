@@ -167,7 +167,7 @@
     IJSVGPath* leftRect = (IJSVGPath*)left.children[0];
     IJSVGPath* rightRect = (IJSVGPath*)right.children[0];
     CGFloat rightWidth = rightRect.width.value;
-    leftRect.width.value = 5;
+    leftRect.width = [leftRect.width lengthWithValue:5];
     XCTAssertEqual(rightRect.width.value, rightWidth);
     IJSVGPath* leftPath = (IJSVGPath*)left.children[1];
     IJSVGPath* rightPath = (IJSVGPath*)right.children[1];
@@ -175,7 +175,7 @@
     CGPathAddRect(leftPath.path, NULL, CGRectMake(100, 100, 20, 20));
     XCTAssertTrue(CGRectEqualToRect(CGPathGetBoundingBox(rightPath.path), rightBounds));
     NSData* before = [self pixelsForSVG:svg clip:CGRectNull];
-    rightRect.width.value = 2;
+    rightRect.width = [rightRect.width lengthWithValue:2];
     [svg setNeedsDisplay];
     XCTAssertNotEqualObjects([self pixelsForSVG:svg clip:CGRectNull], before);
 }

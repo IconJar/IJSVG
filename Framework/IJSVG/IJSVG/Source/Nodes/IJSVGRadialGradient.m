@@ -66,7 +66,7 @@
                                       fromUnitType:gradient.units];
         }
         // spec says to say 50% for missing property default
-        unit = unit ?: [IJSVGUnitLength unitWithPercentageFloat:.5f];
+        unit = unit ?: IJSVGHalfPercentageUnitLength;
         [gradient setValue:unit
                     forKey:kv[key]];
     }
@@ -78,7 +78,7 @@
                                          fromUnitType:gradient.units];
     }
   
-    gradient.fr = gradient.fr ?: [IJSVGUnitLength unitWithPercentageFloat:0.f];
+    gradient.fr = gradient.fr ?: IJSVGZeroPercentageUnitLength;
 
     // fx and fy are the same unless specified otherwise
     gradient.fx = gradient.cx;

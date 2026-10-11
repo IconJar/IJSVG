@@ -124,12 +124,13 @@ static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegat
             return NO;
         }
         if(lengths != nil || singleLength != NULL) {
-            IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar];
-            length.originalType = type;
-            if(type == IJSVGUnitLengthTypePercentage ||
-               type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX) {
-                length.type = type;
-            }
+            IJSVGUnitLengthType resolvedType = type == IJSVGUnitLengthTypePercentage ||
+                type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ?
+                type : IJSVGUnitLengthTypeNumber;
+            IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar
+                                                                type:resolvedType
+                                                        originalType:type
+                                                             inherit:NO];
             parsedLength = length;
             [lengths addObject:length];
         }
@@ -222,8 +223,8 @@ static IJSVGGeometryKeyword IJSVGGeometryKeywordFromString(NSString* value)
 
 static IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
 {
-    return [IJSVGUnitLength unitWithFloat:0.f type:IJSVGGeometryPropertyAllowsAuto(attribute) ?
-        IJSVGUnitLengthTypeAuto : IJSVGUnitLengthTypeNumber];
+    return IJSVGGeometryPropertyAllowsAuto(attribute) ?
+        IJSVGAutoUnitLength : IJSVGZeroUnitLength;
 }
 
 static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribute,
@@ -244,9 +245,12 @@ static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribu
             return NO;
         }
         if(parsedLength != NULL) {
-            IJSVGUnitLength* length = IJSVGGeometryInitialLength(attribute);
-            length.inherit = keyword == IJSVGGeometryKeywordInherit;
-            *parsedLength = length;
+            if(keyword == IJSVGGeometryKeywordInherit) {
+                *parsedLength = IJSVGGeometryPropertyAllowsAuto(attribute) ?
+                    IJSVGInheritedAutoUnitLength : IJSVGInheritedZeroUnitLength;
+            } else {
+                *parsedLength = IJSVGGeometryInitialLength(attribute);
+            }
         }
         return YES;
     }
@@ -447,11 +451,11 @@ IJSVGUnitLength* IJSVGSymbolReferenceFromString(NSString* value,
             return nil;
     }
     if([value isEqualToString:horizontal ? @"left" : @"top"]) {
-        value = @"0%";
+        return IJSVGZeroPercentageUnitLength;
     } else if([value isEqualToString:@"center"]) {
-        value = @"50%";
+        return IJSVGHalfPercentageUnitLength;
     } else if([value isEqualToString:horizontal ? @"right" : @"bottom"]) {
-        value = @"100%";
+        return IJSVGOnePercentageUnitLength;
     }
     return [IJSVGUnitLength unitWithString:value];
 }
@@ -669,8 +673,9 @@ static NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromCString(char* buffer)
         IJSVGOriginKeyword trailing = index == 0 ? IJSVGOriginKeywordRight : IJSVGOriginKeywordBottom;
         IJSVGOriginKeyword keyword = keywords[index];
         if(keyword == leading || keyword == trailing || keyword == IJSVGOriginKeywordCenter) {
-            CGFloat fraction = keyword == leading ? 0.f : (keyword == trailing ? 1.f : .5f);
-            result[index] = [IJSVGUnitLength unitWithPercentageFloat:fraction];
+            result[index] = keyword == leading ? IJSVGZeroPercentageUnitLength :
+                (keyword == trailing ? IJSVGOnePercentageUnitLength :
+                    IJSVGHalfPercentageUnitLength);
         } else {
             IJSVGUnitLength* length = nil;
             if(keyword != IJSVGOriginKeywordNone ||

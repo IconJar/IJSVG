@@ -33,10 +33,10 @@
 - (void)setDefaults
 {
     [super setDefaults];
-    self.x = [IJSVGUnitLength unitWithPercentageFloat:-.1f];
-    self.y = [IJSVGUnitLength unitWithPercentageFloat:-.1f];
-    self.width = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
-    self.height = [IJSVGUnitLength unitWithPercentageFloat:1.2f];
+    self.x = IJSVGNegativeTenPercentageUnitLength;
+    self.y = IJSVGNegativeTenPercentageUnitLength;
+    self.width = IJSVGOneHundredTwentyPercentageUnitLength;
+    self.height = IJSVGOneHundredTwentyPercentageUnitLength;
     self.units = IJSVGUnitObjectBoundingBox;
     self.contentUnits = IJSVGUnitUserSpaceOnUse;
     self.shouldRender = NO;

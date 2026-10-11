@@ -34,10 +34,10 @@
 - (instancetype)init
 {
     if((self = [super init]) != nil) {
-        _refX = [IJSVGUnitLength unitWithFloat:0];
-        _refY = [IJSVGUnitLength unitWithFloat:0];
-        _markerWidth = [IJSVGUnitLength unitWithFloat:3];
-        _markerHeight = [IJSVGUnitLength unitWithFloat:3];
+        _refX = IJSVGZeroUnitLength;
+        _refY = IJSVGZeroUnitLength;
+        _markerWidth = IJSVGThreeUnitLength;
+        _markerHeight = IJSVGThreeUnitLength;
         _markerUnits = IJSVGMarkerUnitsStrokeWidth;
         _orientType = IJSVGMarkerOrientTypeAngle;
         self.overflowVisibility = IJSVGOverflowVisibilityHidden;

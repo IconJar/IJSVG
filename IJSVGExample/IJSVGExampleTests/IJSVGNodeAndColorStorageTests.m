@@ -160,8 +160,8 @@
     XCTAssertEqual(copy.offset.value, 0.75);
     XCTAssertEqual(copy.fillOpacity.value, 0.5);
     XCTAssertEqual(copy.type, IJSVGNodeTypeStop);
-    XCTAssertNotEqual(copy.offset, original.offset);
-    original.offset.value = 0.25;
+    XCTAssertEqual(copy.offset, original.offset);
+    original.offset = [original.offset lengthWithValue:0.25];
     XCTAssertEqual(copy.offset.value, 0.75);
 }
 
@@ -558,7 +558,7 @@
     parent.lineJoinStyle = IJSVGLineJoinStyleBevel;
     [parent addChild:child];
 
-    child.opacity.inherit = YES;
+    child.opacity = [child.opacity lengthWithInheritance:YES];
     XCTAssertEqualWithAccuracy(child.opacity.value, 0.5f, 0.0001f);
     XCTAssertEqualWithAccuracy(child.fillOpacity.value, 0.25f, 0.0001f);
     XCTAssertEqualWithAccuracy(child.strokeWidth.value, 3.f, 0.0001f);

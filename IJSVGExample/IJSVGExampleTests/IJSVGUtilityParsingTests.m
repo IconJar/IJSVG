@@ -41,7 +41,7 @@
         XCTAssertEqual(user.type, IJSVGUnitLengthTypeNumber);
         XCTAssertEqual(box.type, IJSVGUnitLengthTypePercentage);
         XCTAssertEqual(box.originalType, IJSVGUnitLengthTypeIN);
-        user.value = 99;
+        user = [user lengthWithValue:99];
         XCTAssertEqual(box.value, 192);
         XCTAssertEqual([IJSVGUnitLength unitWithString:input].value, 192);
         [input setString:@"2em"];
@@ -70,7 +70,7 @@
                     length.originalType != IJSVGUnitLengthTypePercentage) {
                     counts[worker]++;
                 }
-                length.value = -1;
+                length = [length lengthWithValue:-1];
             }
         }
     });
@@ -103,7 +103,7 @@
     }
 }
 
-- (void)testSingleDigitLengthsKeepNumericUnitsAndIndependentStorage
+- (void)testSingleDigitLengthsKeepNumericUnitsAndIndependentReplacements
 {
     for(NSUInteger digit = 0; digit <= 9; digit++) {
         NSString* value = [NSString stringWithFormat:@"%lu", digit];
@@ -118,7 +118,7 @@
         XCTAssertEqual(bounded.value, digit);
         XCTAssertEqual(bounded.type, IJSVGUnitLengthTypePercentage);
         XCTAssertEqual(bounded.originalType, IJSVGUnitLengthTypeNumber);
-        first.value = 100;
+        first = [first lengthWithValue:100];
         XCTAssertEqual(second.value, digit);
     }
     XCTAssertEqual([IJSVGUnitLength unitWithString:@"12"].value, 12);
@@ -540,7 +540,8 @@
     XCTAssertEqualWithAccuracy(matched.value, 0.5f, 0.0001f);
     XCTAssertEqualObjects([[IJSVGUnitLength unitWithString:@"25%"] stringValue],
                           @"25%");
-    XCTAssertNotEqual(copied, cm);
+    XCTAssertEqual(copied, cm);
+    XCTAssertThrowsSpecificNamed([cm setValue:@1 forKey:@"value"], NSException, NSUndefinedKeyException);
     XCTAssertEqual(copied.originalType, cm.originalType);
     XCTAssertEqualWithAccuracy(copied.value, cm.value, 0.0001f);
 }
@@ -548,16 +549,16 @@
 - (void)testGradientUnitLengthStringValueKeepsNormalizedPercentages
 {
     IJSVGGradientUnitLength* gradient = [[IJSVGGradientUnitLength alloc] init];
-    gradient.value = 0.25f;
-    gradient.type = IJSVGUnitLengthTypePercentage;
+    gradient = (IJSVGGradientUnitLength*)[gradient lengthWithValue:0.25f];
+    gradient = (IJSVGGradientUnitLength*)[gradient lengthBySettingType:IJSVGUnitLengthTypePercentage];
 
     XCTAssertEqualObjects(gradient.stringValue, @"0.25");
 
-    gradient.type = IJSVGUnitLengthTypeNumber;
+    gradient = (IJSVGGradientUnitLength*)[gradient lengthBySettingType:IJSVGUnitLengthTypeNumber];
     XCTAssertEqualObjects(gradient.stringValue, @".25");
 }
 
-- (void)testUnitPointComputesRelativeCoordinatesAndCopiesDeeply
+- (void)testUnitPointComputesRelativeCoordinatesAndSharesImmutableLengths
 {
     IJSVGUnitPoint* point = [IJSVGUnitPoint pointWithX:[IJSVGUnitLength unitWithString:@"25%"]
                                                      y:[IJSVGUnitLength unitWithString:@"10"]];
@@ -568,7 +569,7 @@
     XCTAssertEqualWithAccuracy(computed.x, 50.f, 0.0001f);
     XCTAssertEqualWithAccuracy(computed.y, 10.f, 0.0001f);
     XCTAssertNotEqual(copy, point);
-    XCTAssertNotEqual(copy.x, point.x);
+    XCTAssertEqual(copy.x, point.x);
     XCTAssertEqualWithAccuracy(copy.x.value, point.x.value, 0.0001f);
 
     [copy convertUnitsToLengthType:IJSVGUnitLengthTypePX];
@@ -590,7 +591,7 @@
     XCTAssertTrue(size.containsRelativeUnits);
     XCTAssertEqualWithAccuracy(computed.width, 60.f, 0.0001f);
     XCTAssertEqualWithAccuracy(computed.height, 20.f, 0.0001f);
-    XCTAssertNotEqual(copy.width, size.width);
+    XCTAssertEqual(copy.width, size.width);
 
     [copy convertUnitsToLengthType:IJSVGUnitLengthTypeNumber];
     XCTAssertEqual(copy.width.type, IJSVGUnitLengthTypeNumber);

@@ -400,7 +400,8 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 - (IJSVGPaintOrder)paintOrder
 {
     if(_paintOrder == IJSVGPaintOrderInherit) {
-        return self.styleParent != nil ? self.styleParent.paintOrder : IJSVGPaintOrderNormal;
+        IJSVGNode* parent = self.styleParent;
+        return parent != nil ? parent.paintOrder : IJSVGPaintOrderNormal;
     }
     return _paintOrder;
 }
@@ -859,16 +860,22 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 // winding rule can inherit..
 - (IJSVGWindingRule)windingRule
 {
-    if(_windingRule == IJSVGWindingRuleInherit && self.styleParent != nil) {
-        return self.styleParent.windingRule;
+    if(_windingRule == IJSVGWindingRuleInherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.windingRule;
+        }
     }
     return _windingRule;
 }
 
 - (IJSVGWindingRule)clipRule
 {
-    if(_clipRule == IJSVGWindingRuleInherit && self.styleParent != nil) {
-        return self.styleParent.clipRule;
+    if(_clipRule == IJSVGWindingRuleInherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.clipRule;
+        }
     }
     return _clipRule;
 }
@@ -876,8 +883,9 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 - (IJSVGLineCapStyle)lineCapStyle
 {
     if(_lineCapStyle == IJSVGLineCapStyleInherit) {
-        if(self.styleParent != nil) {
-            return self.styleParent.lineCapStyle;
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.lineCapStyle;
         }
     }
     return _lineCapStyle;
@@ -886,8 +894,9 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 - (IJSVGLineJoinStyle)lineJoinStyle
 {
     if(_lineJoinStyle == IJSVGLineJoinStyleInherit) {
-        if(self.styleParent != nil) {
-            return self.styleParent.lineJoinStyle;
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.lineJoinStyle;
         }
     }
     return _lineJoinStyle;
@@ -916,10 +925,13 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
     if((_initializedDefaultLengths & 1) == 0) {
         _initializedDefaultLengths |= 1;
-        _opacity = [IJSVGUnitLength unitWithFloat:1.f];
+        _opacity = IJSVGOneUnitLength;
     }
-    if(_opacity.inherit && self.styleParent != nil) {
-        return self.styleParent.opacity;
+    if(_opacity.inherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.opacity;
+        }
     }
     return _opacity;
 }
@@ -932,15 +944,20 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     _fillOpacity = value;
 }
 
+// Inherited defaults only need storage at the node that supplies the value.
+// Keep resolution live so reparenting and later parent edits still take effect.
 - (IJSVGUnitLength*)fillOpacity
 {
-    if((_initializedDefaultLengths & 2) == 0) {
-        _initializedDefaultLengths |= 2;
-        _fillOpacity = [IJSVGUnitLength unitWithFloat:1.f];
-        _fillOpacity.inherit = YES;
+    BOOL needsDefault = (_initializedDefaultLengths & 2) == 0;
+    if(needsDefault || _fillOpacity.inherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.fillOpacity;
+        }
     }
-    if(_fillOpacity.inherit && self.styleParent != nil) {
-        return self.styleParent.fillOpacity;
+    if(needsDefault) {
+        _initializedDefaultLengths |= 2;
+        _fillOpacity = IJSVGInheritedOneUnitLength;
     }
     return _fillOpacity;
 }
@@ -955,13 +972,16 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 - (IJSVGUnitLength*)strokeWidth
 {
-    if((_initializedDefaultLengths & 8) == 0) {
-        _initializedDefaultLengths |= 8;
-        _strokeWidth = [IJSVGUnitLength unitWithFloat:1.f];
-        _strokeWidth.inherit = YES;
+    BOOL needsDefault = (_initializedDefaultLengths & 8) == 0;
+    if(needsDefault || _strokeWidth.inherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.strokeWidth;
+        }
     }
-    if(_strokeWidth.inherit && self.styleParent != nil) {
-        return self.styleParent.strokeWidth;
+    if(needsDefault) {
+        _initializedDefaultLengths |= 8;
+        _strokeWidth = IJSVGInheritedOneUnitLength;
     }
     return _strokeWidth;
 }
@@ -987,24 +1007,21 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 // if they dont exist on this specific node
 - (IJSVGNode*)stroke
 {
-    if(_stroke == nil && self.styleParent != nil) {
-        return self.styleParent.stroke;
-    }
-    return _stroke;
+    return _stroke ?: self.styleParent.stroke;
 }
 
 - (CGFloat*)strokeDashArray
 {
-    if(_strokeDashArray == NULL && self.styleParent != nil) {
-        return self.styleParent.strokeDashArray;
-    }
-    return _strokeDashArray;
+    return _strokeDashArray ?: self.styleParent.strokeDashArray;
 }
 
 - (NSInteger)strokeDashArrayCount
 {
-    if(_strokeDashArrayCount == IJSVGInheritedIntegerValue && self.styleParent != nil) {
-        return self.styleParent.strokeDashArrayCount;
+    if(_strokeDashArrayCount == IJSVGInheritedIntegerValue) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.strokeDashArrayCount;
+        }
     }
     return _strokeDashArrayCount;
 }
@@ -1015,15 +1032,18 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
     _strokeDashOffset = value;
 }
 
-- (IJSVGUnitLength *)strokeDashOffset
+- (IJSVGUnitLength*)strokeDashOffset
 {
-    if((_initializedDefaultLengths & 16) == 0) {
-        _initializedDefaultLengths |= 16;
-        _strokeDashOffset = [IJSVGUnitLength unitWithFloat:0.f];
-        _strokeDashOffset.inherit = YES;
+    BOOL needsDefault = (_initializedDefaultLengths & 16) == 0;
+    if(needsDefault || _strokeDashOffset.inherit || _strokeDashOffset == nil) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.strokeDashOffset;
+        }
     }
-    if((_strokeDashOffset == nil || _strokeDashOffset.inherit) && self.styleParent != nil) {
-        return self.styleParent.strokeDashOffset;
+    if(needsDefault) {
+        _initializedDefaultLengths |= 16;
+        _strokeDashOffset = IJSVGInheritedZeroUnitLength;
     }
     return _strokeDashOffset;
 }
@@ -1036,13 +1056,16 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 - (IJSVGUnitLength*)strokeOpacity
 {
-    if((_initializedDefaultLengths & 4) == 0) {
-        _initializedDefaultLengths |= 4;
-        _strokeOpacity = [IJSVGUnitLength unitWithFloat:1.f];
-        _strokeOpacity.inherit = YES;
+    BOOL needsDefault = (_initializedDefaultLengths & 4) == 0;
+    if(needsDefault || _strokeOpacity.inherit) {
+        IJSVGNode* parent = self.styleParent;
+        if(parent != nil) {
+            return parent.strokeOpacity;
+        }
     }
-    if(_strokeOpacity.inherit && self.styleParent != nil) {
-        return self.styleParent.strokeOpacity;
+    if(needsDefault) {
+        _initializedDefaultLengths |= 4;
+        _strokeOpacity = IJSVGInheritedOneUnitLength;
     }
     return _strokeOpacity;
 }
@@ -1051,10 +1074,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 // must be on the path, it can also be on the
 - (IJSVGNode*)fill
 {
-    if(_fill == nil && self.styleParent != nil) {
-        return self.styleParent.fill;
-    }
-    return _fill;
+    return _fill ?: self.styleParent.fill;
 }
 
 - (IJSVGUnitType)units
@@ -1075,10 +1095,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 - (IJSVGUnitLength*)strokeMiterLimit
 {
-    if(_strokeMiterLimit == nil && self.styleParent != nil) {
-        return self.styleParent.strokeMiterLimit;
-    }
-    return _strokeMiterLimit;
+    return _strokeMiterLimit ?: self.styleParent.strokeMiterLimit;
 }
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds

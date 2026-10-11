@@ -162,10 +162,10 @@
     XCTAssertEqual(first.children.firstObject.lineCapStyle, IJSVGLineCapStyleSquare);
     XCTAssertEqual(second.children.firstObject.lineCapStyle, IJSVGLineCapStyleSquare);
     XCTAssertEqual(third.children.firstObject.lineCapStyle, IJSVGLineCapStyleRound);
-    first.children.firstObject.width.value = 99;
+    first.children.firstObject.width = [first.children.firstObject.width lengthWithValue:99];
     XCTAssertEqual(second.children.firstObject.width.value, 10);
     XCTAssertEqual(third.children.firstObject.width.value, 10);
-    first.children.firstObject.strokeWidth.value = 7;
+    first.children.firstObject.strokeWidth = [first.children.firstObject.strokeWidth lengthWithValue:7];
     XCTAssertEqual(second.children.firstObject.strokeWidth.value, 2);
     XCTAssertEqual(third.children.firstObject.strokeWidth.value, 2);
 }
@@ -226,8 +226,8 @@
         NSColor* color = fill.usesCurrentColor ? rectangle.currentColor : fill.color;
         NSString* expectedName = index == 2 ? @"green" : (index == 0 ? @"red" : @"blue");
         XCTAssertEqualObjects(color, [IJSVGColor colorFromString:expectedName]);
-        rectangle.width.value = 999;
-        rectangle.opacity.value = 0;
+        rectangle.width = [rectangle.width lengthWithValue:999];
+        rectangle.opacity = [rectangle.opacity lengthWithValue:0];
     }
 }
 
@@ -291,7 +291,7 @@
                     valid = rectangle.width.value == index + 1 &&
                         rectangle.height.value == 20 &&
                         group.children[1].type == IJSVGNodeTypeCircle;
-                    rectangle.width.value = 999;
+                    rectangle.width = [rectangle.width lengthWithValue:999];
                 }
             }
             results[index] = valid;
@@ -547,7 +547,7 @@
         IJSVGFilter* second = root.children[1].filters.firstObject;
         XCTAssertNotEqual(first, second);
         XCTAssertNotEqual(first.primitives.firstObject, second.primitives.firstObject);
-        first.x.value = 5;
+        first.x = [first.x lengthWithValue:5];
         first.primitives.firstObject.parameters = @{ @"dx": @"99" };
         XCTAssertEqualWithAccuracy(second.x.value, -.1, .0001);
         XCTAssertEqualObjects(second.primitives.firstObject.parameters[@"dx"], @"1");
@@ -577,8 +577,8 @@
             XCTAssertEqual(first.x1.originalType, IJSVGUnitLengthTypeNumber);
             XCTAssertEqual(first.x2.originalType, IJSVGUnitLengthTypePercentage);
             XCTAssertEqual(first.x1.type, [units isEqualToString:@"objectBoundingBox"] ? IJSVGUnitLengthTypePercentage : IJSVGUnitLengthTypeNumber);
-            first.x1.value = 7;
-            first.y1.value = 8;
+            first.x1 = [first.x1 lengthWithValue:7];
+            first.y1 = [first.y1 lengthWithValue:8];
             XCTAssertEqual(first.y2.value, 0);
             XCTAssertEqual(second.x1.value, 0);
         }
@@ -662,14 +662,14 @@
     }
 }
 
-- (void)testNodeDefaultsKeepIndependentMutableLengths
+- (void)testNodeDefaultsKeepIndependentReplacements
 {
     IJSVGPath* first = [[IJSVGPath alloc] init];
     IJSVGPath* second = [[IJSVGPath alloc] init];
-    first.fillOpacity.value = .25;
-    first.strokeOpacity.inherit = NO;
-    first.strokeWidth.value = 7;
-    first.strokeDashOffset.value = 3;
+    first.fillOpacity = [first.fillOpacity lengthWithValue:.25];
+    first.strokeOpacity = [first.strokeOpacity lengthWithInheritance:NO];
+    first.strokeWidth = [first.strokeWidth lengthWithValue:7];
+    first.strokeDashOffset = [first.strokeDashOffset lengthWithValue:3];
     XCTAssertEqual(second.fillOpacity.value, 1);
     XCTAssertTrue(second.fillOpacity.inherit);
     XCTAssertTrue(second.strokeOpacity.inherit);
@@ -692,7 +692,7 @@
     IJSVGNode* parent = [[IJSVGNode alloc] init];
     IJSVGNode* child = [[IJSVGNode alloc] init];
     child.parentNode = parent;
-    parent.strokeWidth.value = 8;
+    parent.strokeWidth = [parent.strokeWidth lengthWithValue:8];
     XCTAssertEqual(child.strokeWidth, parent.strokeWidth);
     child.parentNode = nil;
     XCTAssertEqual(child.strokeWidth.value, 1);

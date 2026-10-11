@@ -1010,7 +1010,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         group.filters = @[];
         group.mask = nil;
         group.clipPath = nil;
-        group.opacity = [IJSVGUnitLength unitWithFloat:1];
+        group.opacity = IJSVGOneUnitLength;
         group.parentNode = node.parentNode;
     } else {
         // Inline text content does not establish a transformed coordinate system.

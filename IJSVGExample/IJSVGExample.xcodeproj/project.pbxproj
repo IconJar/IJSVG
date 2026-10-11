@@ -118,6 +118,7 @@
 		59B93C6F19B7D32C0063E823 /* products.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59B93C6E19B7D32C0063E823 /* products.svg */; };
 		59CEB9DC307B10700051BE00 /* IJSVGNestedFilterBatchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEB9DB307B10700051BE00 /* IJSVGNestedFilterBatchTests.m */; };
 		59CEBB11307B92240051BE00 /* IJSVGOutlineTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBB10307B92240051BE00 /* IJSVGOutlineTests.m */; };
+		59CEBDCE307C0F490051BE00 /* IJSVGInheritedLengthTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */; };
 		59D1E3A0202279CA00C54672 /* Group.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D1E39F202279CA00C54672 /* Group.svg */; };
 		59D6B1A3284F669B0058DE6B /* pattern-alignment.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */; };
 		59D6B1A5284F67FC0058DE6B /* gump-bench.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A4284F67FC0058DE6B /* gump-bench.svg */; };
@@ -300,6 +301,7 @@
 		59B93C6E19B7D32C0063E823 /* products.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = products.svg; sourceTree = "<group>"; };
 		59CEB9DB307B10700051BE00 /* IJSVGNestedFilterBatchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGNestedFilterBatchTests.m; sourceTree = "<group>"; };
 		59CEBB10307B92240051BE00 /* IJSVGOutlineTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGOutlineTests.m; sourceTree = "<group>"; };
+		59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGInheritedLengthTests.m; sourceTree = "<group>"; };
 		59D1E39F202279CA00C54672 /* Group.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Group.svg; sourceTree = "<group>"; };
 		59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "pattern-alignment.svg"; sourceTree = "<group>"; };
 		59D6B1A4284F67FC0058DE6B /* gump-bench.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "gump-bench.svg"; sourceTree = "<group>"; };
@@ -513,6 +515,7 @@
 				590C8247307B042D00AD5C88 /* IJSVGVisibleRegionTests.m */,
 				59CEB9DB307B10700051BE00 /* IJSVGNestedFilterBatchTests.m */,
 				59CEBB10307B92240051BE00 /* IJSVGOutlineTests.m */,
+				59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -768,6 +771,7 @@
 				590C8246307AFFD000AD5C88 /* IJSVGMaskClipOptimizationTests.m in Sources */,
 				594385AD306C080B006A5F63 /* IJSVGFilterTests.m in Sources */,
 				590C7B7D307A6B6B00AD5C88 /* IJSVGPaintOrderWebKitTests.m in Sources */,
+				59CEBDCE307C0F490051BE00 /* IJSVGInheritedLengthTests.m in Sources */,
 				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				59B649D4307584280004EFC2 /* IJSVGTextWebKitTests.m in Sources */,
 				59835AA630769CF0007A1232 /* IJSVGRegressionRegistration.m in Sources */,

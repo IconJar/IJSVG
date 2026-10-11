@@ -114,7 +114,7 @@
     IJSVGPath* circle = (IJSVGPath*)reused.rootNode.children.firstObject.mask.children.firstObject;
     XCTAssertTrue([circle isKindOfClass:IJSVGPath.class]);
     XCTAssertNotNil(circle.r);
-    circle.r.value = 6.f;
+    circle.r = [circle.r lengthWithValue:6.f];
     [reused setNeedsDisplay];
     NSData* after = [self render:reused
                             size:size
@@ -122,7 +122,7 @@
                       translated:NO];
     IJSVG* fresh = [[IJSVG alloc] initWithSVGString:self.document];
     IJSVGPath* freshCircle = (IJSVGPath*)fresh.rootNode.children.firstObject.mask.children.firstObject;
-    freshCircle.r.value = 6.f;
+    freshCircle.r = [freshCircle.r lengthWithValue:6.f];
     NSData* expected = [self render:fresh
                                size:size
                               scale:1.f

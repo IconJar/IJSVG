@@ -29,7 +29,8 @@
 
 + (IJSVGUnitRect*)zeroRect
 {
-    return [self rectWithCGRect:CGRectZero];
+    return [self rectWithOrigin:[IJSVGUnitPoint zeroPoint]
+                           size:[IJSVGUnitSize zeroSize]];
 }
 
 + (IJSVGUnitRect*)rectWithX:(CGFloat)x

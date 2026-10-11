@@ -32,7 +32,8 @@
 
 + (IJSVGUnitSize*)zeroSize
 {
-    return [self sizeWithCGSize:CGSizeZero];
+    return [self sizeWithWidth:IJSVGZeroUnitLength
+                        height:IJSVGZeroUnitLength];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -50,7 +51,8 @@
 
 - (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType
 {
-    _width.type = _height.type = lengthType;
+    _width = [_width lengthBySettingType:lengthType];
+    _height = [_height lengthBySettingType:lengthType];
 }
 
 - (CGSize)computeValue:(CGSize)size

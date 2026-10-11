@@ -389,8 +389,11 @@
     XCTAssertNotEqual(symbol, second.children.firstObject);
     XCTAssertEqual(symbol.parentNode, first);
     XCTAssertEqual(copy.type, IJSVGNodeTypeSymbol);
-    XCTAssertNotEqual(copy.refX, symbol.refX);
+    XCTAssertEqual(copy.refX, symbol.refX);
     XCTAssertEqualWithAccuracy([copy.refX computeValue:8.f], 4.f, 0.001);
+    copy.refX = [copy.refX lengthWithValue:0.25f];
+    XCTAssertEqualWithAccuracy([copy.refX computeValue:8.f], 2.f, 0.001);
+    XCTAssertEqualWithAccuracy([symbol.refX computeValue:8.f], 4.f, 0.001);
 }
 
 @end

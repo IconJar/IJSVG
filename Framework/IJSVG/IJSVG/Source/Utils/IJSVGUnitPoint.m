@@ -32,7 +32,8 @@
 
 + (IJSVGUnitPoint*)zeroPoint
 {
-    return [self pointWithCGPoint:CGPointZero];
+    return [self pointWithX:IJSVGZeroUnitLength
+                          y:IJSVGZeroUnitLength];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -45,7 +46,8 @@
 
 - (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType
 {
-    _x.type = _y.type = lengthType;
+    _x = [_x lengthBySettingType:lengthType];
+    _y = [_y lengthBySettingType:lengthType];
 }
 
 - (CGPoint)computeValue:(CGSize)size

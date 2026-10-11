@@ -57,7 +57,7 @@
         self.viewBoxMeetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
         self.lineCapStyle = IJSVGLineCapStyleButt;
         self.lineJoinStyle = IJSVGLineJoinStyleMiter;
-        self.strokeMiterLimit = [IJSVGUnitLength unitWithFloat:4.f];
+        self.strokeMiterLimit = IJSVGFourUnitLength;
         self.strokeDashArrayCount = 0;
         _intrinsicDimensions = IJSVGIntrinsicDimensionNone;
     }

@@ -2377,8 +2377,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
     // Placement belongs to the tile, never to the artwork inside that tile.
     pattern = [pattern copy];
     pattern.transforms = @[];
-    pattern.x = [IJSVGUnitLength unitWithFloat:0];
-    pattern.y = [IJSVGUnitLength unitWithFloat:0];
+    pattern.x = IJSVGZeroUnitLength;
+    pattern.y = IJSVGZeroUnitLength;
     if(pattern.viewBox != nil && !pattern.viewBox.isZeroRect) {
         unitBounds = [pattern.viewBox computeValue:paint.boundingBox.size];
         viewport = unitBounds;

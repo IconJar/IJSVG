@@ -16,17 +16,14 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(NSString* value,
 {
     IJSVGUnitLength* length = value != nil ?
         [IJSVGUnitLength unitWithString:value
-                           fromUnitType:units] :
-        nil;
+                           fromUnitType:units] : nil;
     if(length == nil) {
-        IJSVGUnitLengthType type = endPoint ?
-            IJSVGUnitLengthTypePercentage :
-            IJSVGUnitLengthTypeNumber;
-        length = [IJSVGUnitLength unitWithFloat:endPoint ? 1.f : 0.f
-                                           type:type];
-        if(units == IJSVGUnitObjectBoundingBox) {
-            length.type = IJSVGUnitLengthTypePercentage;
+        if(endPoint) {
+            return IJSVGOnePercentageUnitLength;
         }
+        return units == IJSVGUnitObjectBoundingBox ?
+            IJSVGZeroBoundingBoxUnitLength :
+            IJSVGZeroUnitLength;
     }
     return length;
 }

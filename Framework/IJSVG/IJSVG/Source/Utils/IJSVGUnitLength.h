@@ -37,16 +37,25 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 
 @interface IJSVGUnitLength: NSObject <NSCopying>
 
-@property (nonatomic, assign) IJSVGUnitLengthType type;
-@property (nonatomic, assign) IJSVGUnitLengthType originalType;
-@property (nonatomic, assign) CGFloat value;
-@property (nonatomic, assign) BOOL inherit;
-@property (nonatomic, assign) BOOL isRelativeUnit;
+@property (nonatomic, readonly) IJSVGUnitLengthType type;
+@property (nonatomic, readonly) IJSVGUnitLengthType originalType;
+@property (nonatomic, readonly) CGFloat value;
+@property (nonatomic, readonly) BOOL inherit;
+@property (nonatomic, readonly) BOOL isRelativeUnit;
 
 + (CGFloat)convertUnitValue:(CGFloat)unit
    toBaseFromUnitLengthType:(IJSVGUnitLengthType)type;
 
-+ (IJSVGUnitLength*)zeroUnitLength;
+// Immutable values may be shared. Replace the length on a node to change it.
++ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
+                             type:(IJSVGUnitLengthType)type
+                     originalType:(IJSVGUnitLengthType)originalType
+                          inherit:(BOOL)inherit;
+
+// Replacement helpers preserve unit metadata. Setting a value makes it explicit.
+- (IJSVGUnitLength*)lengthWithValue:(CGFloat)value;
+- (IJSVGUnitLength*)lengthWithInheritance:(BOOL)inherit;
+- (IJSVGUnitLength*)lengthBySettingType:(IJSVGUnitLengthType)type;
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number;
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
@@ -70,3 +79,21 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options;
 
 @end
+
+// Shared immutable defaults, initialized when the framework loads. Do not reassign.
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGThreeUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGHalfPercentageUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGOnePercentageUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGNegativeTenPercentageUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGOneHundredTwentyPercentageUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGZeroBoundingBoxUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGAutoUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGInheritedAutoUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGDefaultViewportWidthUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGDefaultViewportHeightUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGZeroUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGOneUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGFourUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGInheritedZeroUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGInheritedOneUnitLength;
+FOUNDATION_EXPORT IJSVGUnitLength* IJSVGZeroPercentageUnitLength;

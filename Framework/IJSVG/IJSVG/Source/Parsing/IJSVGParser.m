@@ -21,9 +21,8 @@
 #import <IJSVG/IJSVGThreadManager.h>
 
 // Keep absent attributes from causing ARC output parameter writeback.
-static BOOL IJSVGParserAttributeHasValue(
-    NSString* __unsafe_unretained const* attributeValues,
-    IJSVGNodeAttribute attribute, NSString* __strong* value)
+static BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* attributeValues,
+                                         IJSVGNodeAttribute attribute, NSString* __strong* value)
 {
     NSString* __unsafe_unretained attributeValue = attributeValues[attribute];
     if(attributeValue == nil || attributeValue.length == 0) {
@@ -718,8 +717,8 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     } else if(width == nil && height != nil) {
       width = [IJSVGUnitLength unitWithFloat:height.value*ratio];
     } else {
-      width = [IJSVGUnitLength unitWithFloat:defaultSize.width];
-      height = [IJSVGUnitLength unitWithFloat:defaultSize.height];
+      width = IJSVGDefaultViewportWidthUnitLength;
+      height = IJSVGDefaultViewportHeightUnitLength;
     }
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:width
                                                height:height];
@@ -2366,13 +2365,13 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     // Symbols inherit presentation properties from their use element.
     node.lineCapStyle = IJSVGLineCapStyleInherit;
     node.lineJoinStyle = IJSVGLineJoinStyleInherit;
-    node.strokeMiterLimit.inherit = YES;
+    node.strokeMiterLimit = [node.strokeMiterLimit lengthWithInheritance:YES];
     node.strokeDashArrayCount = IJSVGInheritedIntegerValue;
     IJSVGNodeParserPostProcessBlock postProcessBlock = [self computeAttributesFromElement:element
                                                                                    onNode:node
                                                                         ignoredAttributes:nil];
-    node.width = parentNode.width ?: node.width ?: [IJSVGUnitLength unitWithString:@"100%"];
-    node.height = parentNode.height ?: node.height ?: [IJSVGUnitLength unitWithString:@"100%"];
+    node.width = parentNode.width ?: node.width ?: IJSVGOnePercentageUnitLength;
+    node.height = parentNode.height ?: node.height ?: IJSVGOnePercentageUnitLength;
     node.shouldRender = YES;
     [self computeElement:element
               parentNode:node];
