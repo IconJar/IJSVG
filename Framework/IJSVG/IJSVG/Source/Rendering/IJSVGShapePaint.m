@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGShapePaint.h>
+#import <IJSVG/IJSVGGradient.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -56,6 +57,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
     copy.path = _path;
     copy.fillColor = _fillColor;
+    copy.fillGradient = _fillGradient;
     copy.strokeColor = _strokeColor;
     copy->_lineWidth = _lineWidth;
     copy->_nonScalingStroke = _nonScalingStroke;
@@ -171,7 +173,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 - (CGRect)transparencyBounds
 {
     CGRect bounds = [super transparencyBounds];
-    if(self.path != NULL && (self.fillColor != NULL || self.strokeColor != NULL)) {
+    if(self.path != NULL && (self.fillColor != NULL || self.fillGradient != nil || self.strokeColor != NULL)) {
         CGRect pathBounds = CGPathGetBoundingBox(self.path);
         if(self.strokeColor != NULL && self.nonScalingStroke) {
             pathBounds = CGRectUnion(pathBounds, CGPathGetBoundingBox([self nonScalingStrokeOutline]));
@@ -214,6 +216,27 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (void)drawInContext:(CGContextRef)ctx
 {
+    if(_fillGradient != nil && _path != NULL) {
+        CGContextSaveGState(ctx);
+        // Preserve the placement operations used by a separate fill paint
+        CGRect bounds = self.bounds;
+        CGContextTranslateCTM(ctx, CGRectGetMidX(bounds), CGRectGetMidY(bounds));
+        CGContextConcatCTM(ctx, CGAffineTransformIdentity);
+        CGContextTranslateCTM(ctx, -bounds.size.width * .5f, -bounds.size.height * .5f);
+        CGContextAddPath(ctx, _path);
+        if(self.fillRule == IJSVGWindingRuleEvenOdd) {
+            CGContextEOClip(ctx);
+        } else {
+            CGContextClip(ctx);
+        }
+        if(!CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
+            [_fillGradient drawInContextRef:ctx
+                                     bounds:IJSVGPaintGetBoundingBoxBounds(self)
+                                  transform:CGAffineTransformIdentity];
+        }
+        CGContextRestoreGState(ctx);
+        return;
+    }
     if(_path == NULL || (_fillColor == NULL && _strokeColor == NULL) ||
         [self isPathOutsideClipInContext:ctx]) {
         return;

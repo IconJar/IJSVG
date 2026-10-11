@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGTestHelpers.h"
+#import <IJSVGQuartzRenderer.h>
 
 @interface IJSVGFirstDrawTests : XCTestCase
 @end
@@ -41,6 +42,53 @@
     NSData* data = [NSData dataWithBytes:CGBitmapContextGetData(context) length:128 * 128 * 4];
     CGContextRelease(context);
     return data;
+}
+
+- (NSData*)pixelsForRoot:(IJSVGRootNode*)root renderer:(IJSVGQuartzRenderer*)renderer
+{
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef context = CGBitmapContextCreate(NULL, 128, 128, 8, 512, space,
+        (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(space);
+    XCTAssertNotEqual(context, NULL);
+    if(context == NULL) {
+        return nil;
+    }
+    CGContextTranslateCTM(context, 0, 128);
+    CGContextScaleCTM(context, 1, -1);
+    root.clientSize = CGSizeMake(128, 128);
+    [renderer renderNode:root inContext:context
+                viewPort:CGRectMake(0, 0, 128, 128) backingScale:1];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:128 * 128 * 4];
+    CGContextRelease(context);
+    return pixels;
+}
+
+- (void)testFilterDiscoveryResetsWhenRendererChangesRoots
+{
+    IJSVG* plain = [self svgWithContents:@"<rect width='128' height='128' fill='blue'/>"];
+    IJSVG* filtered = [self svgWithContents:
+        @"<g enable-background='new'><defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='128' height='128'>"
+         "<feColorMatrix in='BackgroundImage' values='0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 0'/>"
+         "</filter></defs><rect width='128' height='128' fill='blue'/>"
+         "<rect width='128' height='128' fill='red' filter='url(#f)'/></g>"];
+    IJSVG* green = [self svgWithContents:@"<rect width='128' height='128' fill='#00ff00'/>"];
+    NSData* bluePixels = [self pixelsForSVG:plain clip:CGRectNull];
+    NSData* greenPixels = [self pixelsForSVG:green clip:CGRectNull];
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    for(NSUInteger index = 0; index < 3; index++) {
+        XCTAssertEqualObjects([self pixelsForRoot:plain.rootNode renderer:renderer], bluePixels);
+        XCTAssertEqualObjects([self pixelsForRoot:filtered.rootNode renderer:renderer], greenPixels);
+    }
+    IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
+    options.filtersEnabled = NO;
+    renderer.renderingOptions = options;
+    IJSVG* red = [self svgWithContents:@"<rect width='128' height='128' fill='red'/>"];
+    XCTAssertEqualObjects([self pixelsForRoot:filtered.rootNode renderer:renderer],
+                          [self pixelsForSVG:red clip:CGRectNull]);
+    options.filtersEnabled = YES;
+    renderer.renderingOptions = options;
+    XCTAssertEqualObjects([self pixelsForRoot:filtered.rootNode renderer:renderer], greenPixels);
 }
 
 - (void)testClippedMasksMatchFullRaster

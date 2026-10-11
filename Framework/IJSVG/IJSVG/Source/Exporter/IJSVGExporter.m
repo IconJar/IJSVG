@@ -2141,7 +2141,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 
     // A separated stroke operation must not acquire the default black SVG fill.
-    if(paint.fillPaint == nil) {
+    if(paint.fillPaint == nil && paint.fillGradient == nil) {
         dict[IJSVGAttributeFill] = IJSVGStringNone;
     }
 
@@ -2166,6 +2166,10 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     // is there a gradient fill?
     IJSVGGradientPaint* gradientPaint = (IJSVGGradientPaint*)([paint.fillPaint isKindOfClass:IJSVGGradientPaint.class] ? paint.fillPaint : nil);
+    if(paint.fillGradient != nil) {
+        gradientPaint = IJSVGGradientPaint.paint;
+        gradientPaint.gradient = paint.fillGradient;
+    }
     if(gradientPaint != nil) {
         [self applyGradientFromPaint:gradientPaint
                          parentPaint:(IJSVGPaint*)paint

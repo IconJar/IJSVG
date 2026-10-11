@@ -629,7 +629,11 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if(shape.path == NULL) {
         return YES;
     }
-    if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0) {
+    BOOL visibleFill = shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0;
+    for(NSColor* color in shape.fillGradient.colors) {
+        visibleFill |= color.alphaComponent > 0;
+    }
+    if(visibleFill) {
         CGPathRef fill = shape.fillRule == IJSVGWindingRuleEvenOdd ?
             CGPathCreateCopyByNormalizing(shape.path, true) : CGPathCreateCopy(shape.path);
         if(fill == NULL) {

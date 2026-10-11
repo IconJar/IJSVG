@@ -9,8 +9,11 @@
 #import <IJSVGPaint.h>
 #import <IJSVG/IJSVGPath.h>
 
+@class IJSVGGradient;
+
 @interface IJSVGShapePaint : IJSVGPaint
 
+@property (nonatomic, strong) IJSVGGradient* fillGradient;
 @property (nonatomic, assign) CGPathRef path;
 @property (nonatomic, assign) BOOL hasPointSubpaths;
 @property (nonatomic, assign) CGColorRef fillColor;

@@ -239,6 +239,7 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     CGSize _clientSize;
     NSSet<IJSVGFilterPaint*>* _batchableFilters;
     BOOL _requiresBackdrop;
+    BOOL _buildHasFilters;
     BOOL _containsText;
     BOOL _containsNonScalingStrokes;
     NSArray<IJSVGShapePaint*>* _viewportStrokeShapes;
@@ -400,7 +401,8 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     } else if([paint isKindOfClass:IJSVGShapePaint.class]) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         if(shape.path != NULL) {
-            if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f) {
+            if(shape.fillGradient != nil ||
+               (shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f)) {
                 bounds = CGRectUnion(bounds, CGPathGetPathBoundingBox(shape.path));
             }
             if(shape.strokeColor != NULL && CGColorGetAlpha(shape.strokeColor) > 0.f &&
@@ -486,7 +488,8 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 {
     if([paint isKindOfClass:IJSVGShapePaint.class]) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
-        if(shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f &&
+        if((shape.fillGradient != nil ||
+            (shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0.f)) &&
            IJSVGPathMayIntersectViewBox(shape.path, transform, viewBox, viewport,
                                        shape.fillRule == IJSVGWindingRuleEvenOdd)) {
             return YES;
@@ -1410,15 +1413,37 @@ inMeasurementPaint:(IJSVGPaint*)paint
         paint.outerBoundingBox = paint.frame;
     }
 
-    IJSVGPaint* fillPaint = [self drawableFillPaintForPathNode:node
-                                                         paint:paint
-                                                  resolvedPath:paintPath
-                                            resolvedPathBounds:resolvedPathBounds];
+    CGFloat fillOpacity = node.fillOpacity.value;
+    IJSVGGradient* gradient = [node.fill isMemberOfClass:IJSVGLinearGradient.class]
+        ? (IJSVGGradient*)node.fill : nil;
+    IJSVGPrimitivePathType primitiveType = node.primitiveType;
+    BOOL needsMarkers = primitiveType == kIJSVGPrimitivePathTypePath ||
+        primitiveType == kIJSVGPrimitivePathTypeLine ||
+        primitiveType == kIJSVGPrimitivePathTypePolygon ||
+        primitiveType == kIJSVGPrimitivePathTypePolyLine ||
+        (gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox);
+    IJSVGMarker* markerStart = needsMarkers ? node.markerStart : nil;
+    IJSVGMarker* markerMid = needsMarkers ? node.markerMid : nil;
+    IJSVGMarker* markerEnd = needsMarkers ? node.markerEnd : nil;
+    BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox &&
+        strokePaint == nil && fillOpacity == 1.f && node.opacity.value == 1.f &&
+        !node.isolated && node.blendMode == IJSVGBlendModeNormal &&
+        markerStart == nil && markerMid == nil && markerEnd == nil &&
+        paint.class == IJSVGShapePaint.class && _style.colors.replacedColorCount == 0;
+    IJSVGPaint* fillPaint = nil;
+    if(directGradient) {
+        paint.fillGradient = [self gradientByResolvingFontLengths:gradient];
+    } else {
+        fillPaint = [self drawableFillPaintForPathNode:node
+                                                 paint:paint
+                                          resolvedPath:paintPath
+                                    resolvedPathBounds:resolvedPathBounds];
+    }
 
     if(fillPaint != nil) {
         // Apply the fill opacity.
-        if(node.fillOpacity.value != 1.f) {
-            fillPaint.opacity = node.fillOpacity.value;
+        if(fillOpacity != 1.f) {
+            fillPaint.opacity = fillOpacity;
         }
         fillPaint.affineTransform = CGAffineTransformTranslate(fillPaint.affineTransform,
                                                                    strokeWidthDifference,
@@ -1450,7 +1475,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGPaint* result = [self paintByAddingMarkersToPaint:paint
                                                    forNode:node
                                               resolvedPath:resolvedPath
-                                                    bounds:resolvedPathBounds];
+                                                    bounds:resolvedPathBounds
+                                               markerStart:markerStart
+                                                 markerMid:markerMid
+                                                 markerEnd:markerEnd];
     CGPathRelease(paintPath);
     CGPathRelease(resolvedPath);
     return result;
@@ -1460,8 +1488,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     IJSVGRadialGradient* radial = [gradient isKindOfClass:IJSVGRadialGradient.class]
         ? (IJSVGRadialGradient*)gradient : nil;
-    IJSVGUnitLength* lengths[] = { gradient.x1, gradient.y1, gradient.x2, gradient.y2,
-        radial.cx, radial.cy, radial.fx, radial.fy, radial.r, radial.fr };
+    IJSVGUnitLength* lengths[] = {
+        gradient.x1, gradient.y1, gradient.x2, gradient.y2,
+        radial.cx, radial.cy, radial.fx, radial.fy, radial.r, radial.fr
+    };
     BOOL relative = NO;
     for(NSUInteger index = 0; index < 10; index++) {
         relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||
@@ -1504,12 +1534,21 @@ inMeasurementPaint:(IJSVGPaint*)paint
     [self resolveRegionFontLengths:node css:NO];
 }
 
-- (void)resolveRegionFontLengths:(IJSVGNode*)node css:(BOOL)css
+- (void)resolveRegionFontLengths:(IJSVGNode*)node
+                             css:(BOOL)css
 {
-    node.x = [self.lengthFontResolver unitByResolvingFontLength:node.x node:node css:css];
-    node.y = [self.lengthFontResolver unitByResolvingFontLength:node.y node:node css:css];
-    node.width = [self.lengthFontResolver unitByResolvingFontLength:node.width node:node css:css];
-    node.height = [self.lengthFontResolver unitByResolvingFontLength:node.height node:node css:css];
+    node.x = [self.lengthFontResolver unitByResolvingFontLength:node.x
+                                                           node:node
+                                                            css:css];
+    node.y = [self.lengthFontResolver unitByResolvingFontLength:node.y
+                                                           node:node
+                                                            css:css];
+    node.width = [self.lengthFontResolver unitByResolvingFontLength:node.width
+                                                               node:node
+                                                                css:css];
+    node.height = [self.lengthFontResolver unitByResolvingFontLength:node.height
+                                                                node:node
+                                                                 css:css];
 }
 
 #pragma mark Marker Context Paint
@@ -1662,6 +1701,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
                                    forNode:(IJSVGPath*)node
                               resolvedPath:(CGPathRef)resolvedPath
                                     bounds:(CGRect)resolvedPathBounds
+                               markerStart:(IJSVGMarker*)markerStart
+                                 markerMid:(IJSVGMarker*)markerMid
+                                 markerEnd:(IJSVGMarker*)markerEnd
 {
     switch(node.primitiveType) {
         case kIJSVGPrimitivePathTypePath:
@@ -1672,9 +1714,9 @@ inMeasurementPaint:(IJSVGPaint*)paint
         default:
             return paint;
     }
-    if(node.markerStart.children.count == 0 &&
-       node.markerMid.children.count == 0 &&
-       node.markerEnd.children.count == 0) {
+    if(markerStart.children.count == 0 &&
+       markerMid.children.count == 0 &&
+       markerEnd.children.count == 0) {
         return paint;
     }
 
@@ -1682,11 +1724,11 @@ inMeasurementPaint:(IJSVGPaint*)paint
     NSArray<IJSVGMarkerPosition*>* positions = IJSVGMarkerPositions(resolvedPath, data);
     NSMutableArray<IJSVGPaint*>* children = [[NSMutableArray alloc] initWithCapacity:positions.count + 1];
     [children addObject:paint];
-    IJSVGMarkerTemplate* start = [IJSVGMarkerTemplate templateWithMarker:node.markerStart];
-    IJSVGMarkerTemplate* mid = node.markerMid == start.marker
-        ? start : [IJSVGMarkerTemplate templateWithMarker:node.markerMid];
-    IJSVGMarkerTemplate* end = node.markerEnd == start.marker ? start
-        : (node.markerEnd == mid.marker ? mid : [IJSVGMarkerTemplate templateWithMarker:node.markerEnd]);
+    IJSVGMarkerTemplate* start = [IJSVGMarkerTemplate templateWithMarker:markerStart];
+    IJSVGMarkerTemplate* mid = markerMid == start.marker
+        ? start : [IJSVGMarkerTemplate templateWithMarker:markerMid];
+    IJSVGMarkerTemplate* end = markerEnd == start.marker ? start
+        : (markerEnd == mid.marker ? mid : [IJSVGMarkerTemplate templateWithMarker:markerEnd]);
     for(IJSVGMarkerPosition* position in positions) {
         IJSVGMarkerTemplate* prototype = mid;
         if(position.type == IJSVGMarkerPositionStart) {
@@ -2704,6 +2746,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     if(filter == nil) {
         return paint;
     }
+    _buildHasFilters = YES;
 
     BOOL relative = [self hasFontRelativeRegion:filter];
     for(IJSVGFilterPrimitive* primitive in filter.primitives) {
@@ -3162,14 +3205,16 @@ inMeasurementPaint:(IJSVGPaint*)paint
         _textBuildRoot = rootNode;
         _containsText = NO;
         _containsNonScalingStrokes = NO;
+        _buildHasFilters = NO;
         @try {
             _rootPaint = [self rootPaintForRootNode:rootNode];
         } @finally {
             _textTransform = CGAffineTransformIdentity;
             _textBuildRoot = nil;
         }
-        _batchableFilters = [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint];
-        _requiresBackdrop = [self paintRequiresBackdrop:_rootPaint];
+        _batchableFilters = _buildHasFilters ?
+            [IJSVGFilterPaint batchableFiltersForPaint:_rootPaint] : nil;
+        _requiresBackdrop = _buildHasFilters && [self paintRequiresBackdrop:_rootPaint];
         _viewportStrokeShapes = nil;
         _viewportStrokeTransforms = nil;
         _rootNode = rootNode;
