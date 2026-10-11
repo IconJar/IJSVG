@@ -114,6 +114,8 @@
 		59CEBB15307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBB14307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.m */; };
 		59CEBB17307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.h in Headers */ = {isa = PBXBuildFile; fileRef = 59CEBB16307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.h */; };
 		59CEBB19307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBB18307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.m */; };
+		59CEBB1B307BD1310051BE00 /* IJSVGParsedPathCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 59CEBB1A307BD1310051BE00 /* IJSVGParsedPathCache.h */; };
+		59CEBB1D307BD1310051BE00 /* IJSVGParsedPathCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBB1C307BD1310051BE00 /* IJSVGParsedPathCache.m */; };
 		59DB84E028C9F70000A9696A /* IJSVGBitFlags64.h in Headers */ = {isa = PBXBuildFile; fileRef = 59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59DB84E128C9F70000A9696A /* IJSVGBitFlags64.m in Sources */ = {isa = PBXBuildFile; fileRef = 59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */; };
 		59E6690D287D6C810085EDF5 /* IJSVGFeatureFlag.h in Headers */ = {isa = PBXBuildFile; fileRef = 59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -355,6 +357,8 @@
 		59CEBB14307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "IJSVGQuartzRenderer+Outlines.m"; sourceTree = "<group>"; };
 		59CEBB16307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "IJSVGFilterGraph+Outlines.h"; sourceTree = "<group>"; };
 		59CEBB18307B98FF0051BE00 /* IJSVGFilterGraph+Outlines.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "IJSVGFilterGraph+Outlines.m"; sourceTree = "<group>"; };
+		59CEBB1A307BD1310051BE00 /* IJSVGParsedPathCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGParsedPathCache.h; sourceTree = "<group>"; };
+		59CEBB1C307BD1310051BE00 /* IJSVGParsedPathCache.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGParsedPathCache.m; sourceTree = "<group>"; };
 		59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGBitFlags64.h; sourceTree = "<group>"; };
 		59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGBitFlags64.m; sourceTree = "<group>"; };
 		59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFeatureFlag.h; sourceTree = "<group>"; };
@@ -575,6 +579,8 @@
 				59B649D530758ADA0004EFC2 /* IJSVGParserTextUtils.h */,
 				59B649D730758ADA0004EFC2 /* IJSVGParserTextUtils.m */,
 				59B649EA3075A9C60004EFC2 /* IJSVGParserTextKeywords.m */,
+				59CEBB1A307BD1310051BE00 /* IJSVGParsedPathCache.h */,
+				59CEBB1C307BD1310051BE00 /* IJSVGParsedPathCache.m */,
 			);
 			path = Parsing;
 			sourceTree = "<group>";
@@ -963,6 +969,7 @@
 				59FC3548306EAC590028BEAC /* IJSVGTransformPaint.h in Headers */,
 				597CE1CF3079699B0026E325 /* IJSVGMarker.h in Headers */,
 				59FCC09427F2394D00BB924E /* IJSVGRootNode.h in Headers */,
+				59CEBB1B307BD1310051BE00 /* IJSVGParsedPathCache.h in Headers */,
 				594A10DA248D7C90001A3181 /* NSImage+IJSVGAdditions.h in Headers */,
 				5945BC12306E815000758340 /* IJSVGMetalBlurRenderer.h in Headers */,
 				59FDBF0027F3454800AF7038 /* IJSVGColorNode.h in Headers */,
@@ -1162,6 +1169,7 @@
 				5943860E306C3E5A006A5F63 /* IJSVGFilterEffect.m in Sources */,
 				594385DC306C3E58006A5F63 /* IJSVGDisplacementMapFilterEffect.m in Sources */,
 				59EB75F223905F7300F5AE63 /* IJSVGStyleSheetSelectorRaw.m in Sources */,
+				59CEBB1D307BD1310051BE00 /* IJSVGParsedPathCache.m in Sources */,
 				59FC3554306EAC5A0028BEAC /* IJSVGRectPaint.m in Sources */,
 				594385F8306C3E5A006A5F63 /* IJSVGGaussianBlurFilterEffect.m in Sources */,
 				59EB75EE23905F7300F5AE63 /* IJSVGImageRep.m in Sources */,
@@ -1346,7 +1354,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.13;
+				MARKETING_VERSION = 4.1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1375,7 +1383,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.1.13;
+				MARKETING_VERSION = 4.1.14;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iconjar.ijsvg;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

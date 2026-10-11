@@ -13,6 +13,7 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGParsedPathCache.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGUnitRect.h>
@@ -359,8 +360,8 @@ typedef struct {
 @end
 
 static void IJSVGParserCacheFilterAttributes(IJSVGParserRawAttributes* raw,
-    NSString* __unsafe_unretained const attributes[kIJSVGNodeAttributeStorageLength],
-    IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* inlineStyle, NSUInteger ruleCount)
+                                             NSString* __unsafe_unretained const attributes[kIJSVGNodeAttributeStorageLength],
+                                             IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* inlineStyle, NSUInteger ruleCount)
 {
     NSMutableData* data = [[NSMutableData alloc] init];
     NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] init];
@@ -419,6 +420,9 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 }
 
 @interface IJSVGParser ()
+@property (nonatomic) IJSVGParsedPathCache* parsedPathCache;
+@property (nonatomic) NSUInteger inlineStyleCost;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<NSString*>*>* parsedFilterReferences;
 @property (nonatomic, strong) NSMutableDictionary<Class, IJSVGBitFlags*>* allowedAttributesByClass;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSColor*>* parsedColors;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* parsedSVGTransforms;
@@ -426,8 +430,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGParserRawAttributes*>* rawAttributes;
 @property (nonatomic, strong) NSHashTable<NSXMLElement*>* uncachedReferenceElements;
 @property (nonatomic, strong) NSXMLElement* lastParsedStyleElement;
-@property (nonatomic, strong) NSCache<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
-@property (nonatomic, strong) NSCache<NSString*, id>* parsedPaths;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeReferences;
@@ -436,11 +439,14 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGClipPath*>* simpleClipTemplates;
-@property (nonatomic, strong) NSMapTable<NSXMLElement*, NSNumber*>* simpleClipCandidates;
 @end
 
 @implementation IJSVGParser
+
+- (void)dealloc
+{
+    IJSVGParsedPathCacheDestroy(_parsedPathCache);
+}
 
 + (IJSVGParser*)parserForFileURL:(NSURL*)aURL
 {
@@ -614,13 +620,11 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     self.selectorScopes = nil;
     self.inlineStyles = nil;
     self.parsedColors = nil;
+    self.parsedFilterReferences = nil;
     self.allowedAttributesByClass = nil;
     self.parsedSVGTransforms = nil;
     self.parsedCSSTransforms = nil;
-    self.parsedPaths = nil;
     self.rawAttributes = nil;
-    self.simpleClipTemplates = nil;
-    self.simpleClipCandidates = nil;
     self.uncachedReferenceElements = nil;
     self.lastParsedStyleElement = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
@@ -641,14 +645,12 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     }
     [_rootNode postProcess];
     _rootNode.styleAncestors = self.styleAncestors.objectEnumerator.allObjects;
-    self.simpleClipTemplates = nil;
-    self.simpleClipCandidates = nil;
     self.inlineStyles = nil;
     self.parsedColors = nil;
+    self.parsedFilterReferences = nil;
     self.allowedAttributesByClass = nil;
     self.parsedSVGTransforms = nil;
     self.parsedCSSTransforms = nil;
-    self.parsedPaths = nil;
     self.rawAttributes = nil;
     self.uncachedReferenceElements = nil;
     self.lastParsedStyleElement = nil;
@@ -757,6 +759,24 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     node.intrinsicDimensions = dimensions;
     node.intrinsicSize = [IJSVGUnitSize sizeWithWidth:wl
                                                height:hl];
+}
+
+- (IJSVGStyleSheetStyle*)parsedInlineStyleForValue:(NSString*)value
+{
+    if(_inlineStyles == nil) {
+        _inlineStyles = [[NSMutableDictionary alloc] init];
+        _inlineStyleCost = 0;
+    }
+    IJSVGStyleSheetStyle* style = [_inlineStyles objectForKey:value];
+    if(style == nil) {
+        style = [IJSVGStyleSheetStyle parseStyleString:value];
+        NSUInteger cost = value.length * sizeof(unichar);
+        if(_inlineStyles.count < 1024 && cost <= 1024 * 1024 - _inlineStyleCost) {
+            [_inlineStyles setObject:style forKey:value];
+            _inlineStyleCost += cost;
+        }
+    }
+    return style;
 }
 
 - (IJSVGBitFlags*)allowedAttributesForNodeClass:(Class)nodeClass
@@ -887,19 +907,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
             nil;
 
         if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
-            nodeStyle = [self.inlineStyles objectForKey:value];
-            if(nodeStyle == nil) {
-                nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
-                if(self.inlineStyles == nil) {
-                    self.inlineStyles = [[NSCache alloc] init];
-                    self.inlineStyles.countLimit = 1024;
-                    self.inlineStyles.totalCostLimit = 1024 * 1024;
-                }
-                NSUInteger cost = value.length * sizeof(unichar);
-                [self.inlineStyles setObject:nodeStyle
-                                      forKey:value
-                                        cost:cost];
-            }
+            nodeStyle = [self parsedInlineStyleForValue:value];
         }
 
         IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes,
@@ -1798,98 +1806,6 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                                           element:element]);
 }
 
-// Repeated geometric clips need independent mutable nodes, but do not need
-// repeated XML/style parsing. Context-dependent resources stay on the parser.
-- (BOOL)canReuseSimpleClipElement:(NSXMLElement*)source
-{
-    if(_styleSheet.ruleCount != 0 ||
-       IJSVGNodeTypeForString(source.localName, source.kind) != IJSVGNodeTypeClipPath) {
-        return NO;
-    }
-    NSNumber* cached = [self.simpleClipCandidates objectForKey:source];
-    if(cached != nil) {
-        return cached.boolValue;
-    }
-    static NSSet<NSString*>* attributes;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        attributes = [NSSet setWithArray:@[
-            IJSVGAttributeID, IJSVGAttributeD, IJSVGAttributePoints,
-            IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
-            IJSVGAttributeRX, IJSVGAttributeRY, IJSVGAttributeCX, IJSVGAttributeCY,
-            IJSVGAttributeR, IJSVGAttributeX1, IJSVGAttributeX2,
-            IJSVGAttributeY1, IJSVGAttributeY2, IJSVGAttributeTransform,
-            IJSVGAttributeClipPathUnits, IJSVGAttributeClipRule, IJSVGAttributeFillRule
-        ]];
-    });
-    BOOL reusable = source.childCount <= 512;
-    NSMutableArray<NSXMLElement*>* elements = [NSMutableArray arrayWithObject:source];
-    for(NSXMLNode* child in source.children) {
-        if(child.kind != NSXMLElementKind) {
-            continue;
-        }
-        switch(IJSVGNodeTypeForString(child.localName, child.kind)) {
-            case IJSVGNodeTypePath:
-            case IJSVGNodeTypeRect:
-            case IJSVGNodeTypeCircle:
-            case IJSVGNodeTypeEllipse:
-            case IJSVGNodeTypeLine:
-            case IJSVGNodeTypePolygon:
-            case IJSVGNodeTypePolyline:
-                break;
-            default:
-                reusable = NO;
-                break;
-        }
-        if(!reusable || child.childCount != 0) {
-            reusable = NO;
-            break;
-        }
-        [elements addObject:(NSXMLElement*)child];
-    }
-    for(NSXMLElement* item in elements) {
-        for(NSXMLNode* attribute in item.attributes) {
-            if(![attributes containsObject:attribute.name]) {
-                reusable = NO;
-                break;
-            }
-        }
-        if(!reusable) {
-            break;
-        }
-    }
-    if(self.simpleClipCandidates == nil) {
-        self.simpleClipCandidates = IJSVGParserElementMapTable();
-    }
-    [self.simpleClipCandidates setObject:@(reusable)
-                                  forKey:source];
-    return reusable;
-}
-
-- (IJSVGClipPath*)copySimpleClipTemplate:(IJSVGClipPath*)source
-{
-    IJSVGClipPath* copy = source.copy;
-    // Node copying already duplicates mutable CGPaths. Copy the mutable length
-    // and transform objects too, so editing one client's clip cannot edit another.
-    NSArray<IJSVGNode*>* nodes = [@[copy] arrayByAddingObjectsFromArray:copy.children];
-    for(IJSVGNode* node in nodes) {
-        node.x = node.x.copy;
-        node.y = node.y.copy;
-        node.width = node.width.copy;
-        node.height = node.height.copy;
-        node.opacity = node.opacity.copy;
-        node.fillOpacity = node.fillOpacity.copy;
-        node.strokeOpacity = node.strokeOpacity.copy;
-        node.transforms = [[NSArray alloc] initWithArray:node.transforms ?: @[] copyItems:YES];
-        NSMutableDictionary* lengths = [NSMutableDictionary dictionary];
-        [node.geometryLengths enumerateKeysAndObjectsUsingBlock:^(NSNumber* key, IJSVGUnitLength* value, BOOL* stop) {
-            lengths[key] = value.copy;
-        }];
-        node.geometryLengths = lengths;
-    }
-    return copy;
-}
-
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier
                                 referencingNode:(IJSVGNode*)node
                                         element:(NSXMLElement*)element
@@ -1905,11 +1821,6 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                        identifier:identifier];
         return nil;
     }
-    BOOL reuseClip = [self canReuseSimpleClipElement:source];
-    IJSVGClipPath* template = reuseClip ? [self.simpleClipTemplates objectForKey:source] : nil;
-    if(template != nil) {
-        return [self copySimpleClipTemplate:template];
-    }
     [self.activeReferences addObject:identifier];
     NSMapTable* previousScope = self.selectorScope;
     self.selectorScope = nil;
@@ -1922,16 +1833,6 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         IJSVGNode* detached = [self parseElement:source
                                       parentNode:node].detach;
         detached.styleParent = parent;
-        if(reuseClip && [detached isKindOfClass:IJSVGClipPath.class]) {
-            if(self.simpleClipTemplates == nil) {
-                self.simpleClipTemplates = IJSVGParserElementMapTable();
-            }
-            // Parsing is synchronous, clients cannot mutate this first instance
-            // until it finishes. Retain it as the template instead of making an
-            // extra copy for definitions that may only be referenced once.
-            [self.simpleClipTemplates setObject:(IJSVGClipPath*)detached
-                                         forKey:source];
-        }
         for(void (^apply)(IJSVGNode*) in self.pendingStylePaints[identifier]) {
             apply(detached);
         }
@@ -2100,31 +2001,31 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 }
 
 - (void)applyPathData:(NSString*)pathData
-                 toNode:(IJSVGPath*)node
+               toNode:(IJSVGPath*)node
 {
     if(pathData == nil) {
         return;
     }
-    id cachedPath = [self.parsedPaths objectForKey:pathData];
-    if(cachedPath != nil) {
-        node.path = (__bridge CGMutablePathRef)cachedPath;
+    if(_parsedPathCache == NULL) {
+        _parsedPathCache = IJSVGParsedPathCacheCreate();
+    }
+    CGPathRef cachedPath = IJSVGParsedPathCacheCopy(_parsedPathCache, pathData,
+                                                    IJSVGParsedPathData);
+    if(cachedPath != NULL) {
+        node.path = (CGMutablePathRef)cachedPath;
+        CGPathRelease(cachedPath);
         return;
     }
     const char* characters = pathData.UTF8String;
     NSUInteger length = characters != NULL ? strlen(characters) : 0;
     BOOL mayHavePointSubpaths = IJSVGAppendPathDataCheckingPointSubpaths(node.path, characters,
-                                                                       length, _commandDataStream);
-    if(self.parsedPaths == nil) {
-        self.parsedPaths = [[NSCache alloc] init];
-        self.parsedPaths.countLimit = 128;
-        self.parsedPaths.totalCostLimit = 4 * 1024 * 1024;
-    }
+                                                                         length, _commandDataStream);
     CGPathRef cached = CGPathCreateCopy(node.path);
     if(!mayHavePointSubpaths) {
-        [node cachePointSubpaths:NO forPath:cached];
+        [node cachePointSubpaths:NO
+                         forPath:cached];
     }
-    NSUInteger cost = pathData.length * sizeof(unichar);
-    [self.parsedPaths setObject:(__bridge id)cached forKey:pathData cost:cost];
+    IJSVGParsedPathCacheStore(_parsedPathCache, pathData, IJSVGParsedPathData, cached);
     CGPathRelease(cached);
 }
 
@@ -2572,11 +2473,26 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     }
 }
 
+- (NSArray<NSString*>*)filterIdentifiersForValue:(NSString*)value
+{
+    NSArray<NSString*>* identifiers = _parsedFilterReferences[value];
+    if(identifiers == nil) {
+        identifiers = [IJSVGUtils defURLs:value];
+        if(value.length <= 4096 && _parsedFilterReferences.count < 128) {
+            if(_parsedFilterReferences == nil) {
+                _parsedFilterReferences = [[NSMutableDictionary alloc] init];
+            }
+            _parsedFilterReferences[value] = identifiers.copy;
+        }
+    }
+    return identifiers;
+}
+
 - (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value
                           referencingNode:(IJSVGNode*)node
                                   element:(NSXMLElement*)element
 {
-    NSArray<NSString*>* identifiers = [IJSVGUtils defURLs:value];
+    NSArray<NSString*>* identifiers = [self filterIdentifiersForValue:value];
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
     for(NSString* identifier in identifiers) {
         NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
@@ -2768,16 +2684,25 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 
 - (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
 {
-    // SVG href takes precedence and legacy links resolve through their namespace.
-    NSXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
-    if(attributeNode == nil) {
-        attributeNode = [element attributeForLocalName:IJSVGAttributeHref
-                                                   URI:@"http://www.w3.org/1999/xlink"];
+    NSXMLNode* legacyAttribute = nil;
+    BOOL hasQualifiedHref = NO;
+    for(NSXMLNode* attribute in element.attributes) {
+        NSString* name = attribute.name;
+        if([name isEqualToString:IJSVGAttributeHref]) {
+            return attribute;
+        }
+        if([name hasSuffix:@":href"]) {
+            hasQualifiedHref = YES;
+            if([name isEqualToString:IJSVGAttributeXLink]) {
+                legacyAttribute = attribute;
+            }
+        }
     }
-    if(attributeNode == nil) {
-        attributeNode = [element attributeForName:IJSVGAttributeXLink];
+    if(!hasQualifiedHref) {
+        return nil;
     }
-    return attributeNode;
+    return [element attributeForLocalName:IJSVGAttributeHref
+                                     URI:@"http://www.w3.org/1999/xlink"] ?: legacyAttribute;
 }
 
 - (NSString*)resolveXLinkAttributeStringForElement:(NSXMLElement*)element
@@ -2795,9 +2720,25 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                intoPath:(IJSVGPath*)path
               closePath:(BOOL)closePath
 {
-    const char* characters = points.UTF8String;
-    NSUInteger length = characters != NULL ? strlen(characters) : 0;
-    if(IJSVGAppendPolyPoints(path.path, characters, length, closePath, _commandDataStream)) {
+    BOOL cacheable = points != nil && CGPathIsEmpty(path.path);
+    if(cacheable && _parsedPathCache == NULL) {
+        _parsedPathCache = IJSVGParsedPathCacheCreate();
+    }
+    IJSVGParsedPathKind kind = closePath ? IJSVGParsedPathPolygon : IJSVGParsedPathPolyline;
+    CGPathRef cached = cacheable ? IJSVGParsedPathCacheCopy(_parsedPathCache, points, kind) : NULL;
+    BOOL parsed = cached != NULL;
+    if(parsed) {
+        path.path = (CGMutablePathRef)cached;
+        CGPathRelease(cached);
+    } else {
+        const char* characters = points.UTF8String;
+        NSUInteger length = characters != NULL ? strlen(characters) : 0;
+        parsed = IJSVGAppendPolyPoints(path.path, characters, length, closePath, _commandDataStream);
+        if(parsed && cacheable) {
+            IJSVGParsedPathCacheStore(_parsedPathCache, points, kind, path.path);
+        }
+    }
+    if(parsed) {
         IJSVGNode* referencingNode = nil;
         path.pathUnits = [path contentUnitsWithReferencingNode:&referencingNode];
     }

@@ -8,6 +8,7 @@
 
 #import <IJSVGTestHelpers.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGParsedPathCache.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 
@@ -15,6 +16,249 @@
 @end
 
 @implementation IJSVGParserOptimizationTests
+
+- (void)testLocalPathCacheKeepsVariantsAndImmutableSnapshots
+{
+    IJSVGParsedPathCache* cache = IJSVGParsedPathCacheCreate();
+    IJSVGParsedPathCache* otherCache = IJSVGParsedPathCacheCreate();
+    XCTAssertNotEqual(cache, NULL);
+    XCTAssertNotEqual(otherCache, NULL);
+    NSString* key = @"same source";
+    for(NSUInteger index = 0; index < IJSVGParsedPathKindCount; index++) {
+        CGMutablePathRef path = CGPathCreateMutable();
+        CGPathAddRect(path, NULL, CGRectMake(0, 0, index + 1, 10));
+        IJSVGParsedPathCacheStore(cache, key, (IJSVGParsedPathKind)index, path);
+        CGPathAddRect(path, NULL, CGRectMake(0, 0, 999, 999));
+        CGPathRelease(path);
+    }
+    for(NSUInteger index = 0; index < IJSVGParsedPathKindCount; index++) {
+        CGPathRef snapshot = IJSVGParsedPathCacheCopy(cache, key, (IJSVGParsedPathKind)index);
+        XCTAssertNotEqual(snapshot, NULL);
+        if(snapshot != NULL) {
+            XCTAssertEqual(CGPathGetPathBoundingBox(snapshot).size.width, index + 1);
+            CGPathRelease(snapshot);
+        }
+    }
+    CGPathRef absent = IJSVGParsedPathCacheCopy(otherCache, key, IJSVGParsedPathData);
+    XCTAssertEqual(absent, NULL);
+    CGPathRelease(absent);
+    CGPathRef otherPath = CGPathCreateWithRect(CGRectMake(0, 0, 42, 10), NULL);
+    IJSVGParsedPathCacheStore(otherCache, key, IJSVGParsedPathData, otherPath);
+    CGPathRelease(otherPath);
+    CGPathRef snapshot = IJSVGParsedPathCacheCopy(cache, key, IJSVGParsedPathData);
+    CGPathRef otherSnapshot = IJSVGParsedPathCacheCopy(otherCache, key, IJSVGParsedPathData);
+    XCTAssertEqual(IJSVGParsedPathCacheCopy(cache, nil, IJSVGParsedPathData), NULL);
+    XCTAssertEqual(IJSVGParsedPathCacheCopy(cache, key, IJSVGParsedPathKindCount), NULL);
+    XCTAssertEqual(IJSVGParsedPathCacheCopy(NULL, key, IJSVGParsedPathData), NULL);
+    IJSVGParsedPathCacheDestroy(cache);
+    IJSVGParsedPathCacheDestroy(otherCache);
+    IJSVGParsedPathCacheDestroy(NULL);
+    XCTAssertNotEqual(snapshot, NULL);
+    XCTAssertNotEqual(otherSnapshot, NULL);
+    if(snapshot != NULL && otherSnapshot != NULL) {
+        XCTAssertEqual(CGPathGetPathBoundingBox(snapshot).size.width, 1);
+        XCTAssertEqual(CGPathGetPathBoundingBox(otherSnapshot).size.width, 42);
+    }
+    CGPathRelease(snapshot);
+    CGPathRelease(otherSnapshot);
+}
+
+- (void)testCachedPolygonPathsPreserveClosureAndIndependentTransforms
+{
+    NSString* source = IJSVGTestSVG(
+        @"<polygon points='1,2 11,2 6,12' transform='translate(10)'/>"
+         "<polyline points='1,2 11,2 6,12'/>"
+         "<polygon points='1,2 11,2 6,12' transform='translate(20)'/>");
+    CGMutablePathRef open = CGPathCreateMutable();
+    CGPathMoveToPoint(open, NULL, 1, 2);
+    CGPathAddLineToPoint(open, NULL, 11, 2);
+    CGPathAddLineToPoint(open, NULL, 6, 12);
+    CGMutablePathRef closed = CGPathCreateMutableCopy(open);
+    CGPathCloseSubpath(closed);
+    for(NSUInteger iteration = 0; iteration < 2; iteration++) {
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        XCTAssertEqual(root.children.count, 3);
+        if(root.children.count != 3) {
+            continue;
+        }
+        IJSVGPath* first = (IJSVGPath*)root.children[0];
+        IJSVGPath* line = (IJSVGPath*)root.children[1];
+        IJSVGPath* second = (IJSVGPath*)root.children[2];
+        XCTAssertTrue(CGPathEqualToPath(first.path, closed));
+        XCTAssertTrue(CGPathEqualToPath(line.path, open));
+        XCTAssertTrue(CGPathEqualToPath(second.path, closed));
+        XCTAssertEqual(first.transforms.firstObject.CGAffineTransform.tx, 10);
+        XCTAssertEqual(second.transforms.firstObject.CGAffineTransform.tx, 20);
+        CGPathAddRect(first.path, NULL, CGRectMake(0, 0, 999, 999));
+        XCTAssertTrue(CGPathEqualToPath(second.path, closed));
+        XCTAssertTrue(CGPathEqualToPath(line.path, open));
+    }
+    CGPathRelease(closed);
+    CGPathRelease(open);
+}
+
+- (void)testCachedClipGeometryKeepsIndependentTransformsAndRules
+{
+    NSString* source = IJSVGTestSVG(
+        @"<defs>"
+         "<clipPath id='first'><path d='M0 0H10V10H0Z' transform='translate(10)' clip-rule='evenodd'/></clipPath>"
+         "<clipPath id='second'><path d='M0 0H10V10H0Z' transform='translate(20)' clip-rule='nonzero'/></clipPath>"
+         "</defs>"
+         "<rect width='100' height='100' clip-path='url(#first)'/>"
+         "<rect width='100' height='100' clip-path='url(#second)'/>"
+         "<rect width='100' height='100' clip-path='url(#first)'/>");
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+    XCTAssertEqual(root.children.count, 3);
+    if(root.children.count != 3) {
+        return;
+    }
+    IJSVGPath* first = (IJSVGPath*)root.children[0].clipPath.children.firstObject;
+    IJSVGPath* second = (IJSVGPath*)root.children[1].clipPath.children.firstObject;
+    IJSVGPath* third = (IJSVGPath*)root.children[2].clipPath.children.firstObject;
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(second);
+    XCTAssertNotNil(third);
+    if(first == nil || second == nil || third == nil) {
+        return;
+    }
+    XCTAssertTrue(CGPathEqualToPath(first.path, second.path));
+    XCTAssertTrue(CGPathEqualToPath(first.path, third.path));
+    XCTAssertEqual(CGPathGetPathBoundingBox(first.path).origin.x, 0);
+    XCTAssertEqual(first.transforms.firstObject.CGAffineTransform.tx, 10);
+    XCTAssertEqual(second.transforms.firstObject.CGAffineTransform.tx, 20);
+    XCTAssertEqual(third.transforms.firstObject.CGAffineTransform.tx, 10);
+    XCTAssertEqual(first.clipRule, IJSVGWindingRuleEvenOdd);
+    XCTAssertEqual(second.clipRule, IJSVGWindingRuleNonZero);
+    CGPathAddRect(first.path, NULL, CGRectMake(0, 0, 999, 999));
+    XCTAssertEqual(CGPathGetPathBoundingBox(second.path).size.width, 10);
+    XCTAssertEqual(CGPathGetPathBoundingBox(third.path).size.width, 10);
+}
+
+- (void)testRepeatedClipsRemainIndependentAndTrackNewRules
+{
+    NSString* source = IJSVGTestSVG(
+        @"<style>*{stroke-linecap:square;stroke-linejoin:round}</style>"
+         "<defs><clipPath id='clip'><rect width='10' height='20' stroke-width='2'/></clipPath></defs>"
+         "<rect width='100' height='100' clip-path='url(#clip)'/>"
+         "<rect width='100' height='100' clip-path='url(#clip)'/>"
+         "<g><style>*{stroke-linecap:round}</style>"
+         "<rect width='100' height='100' clip-path='url(#clip)'/></g>");
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+    XCTAssertEqual(root.children.count, 3);
+    if(root.children.count != 3) {
+        return;
+    }
+    IJSVGClipPath* first = root.children[0].clipPath;
+    IJSVGClipPath* second = root.children[1].clipPath;
+    IJSVGGroup* group = (IJSVGGroup*)root.children[2];
+    IJSVGClipPath* third = group.children.firstObject.clipPath;
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(second);
+    XCTAssertNotNil(third);
+    XCTAssertNotEqual(first, second);
+    XCTAssertEqual(first.children.firstObject.lineCapStyle, IJSVGLineCapStyleSquare);
+    XCTAssertEqual(second.children.firstObject.lineCapStyle, IJSVGLineCapStyleSquare);
+    XCTAssertEqual(third.children.firstObject.lineCapStyle, IJSVGLineCapStyleRound);
+    first.children.firstObject.width.value = 99;
+    XCTAssertEqual(second.children.firstObject.width.value, 10);
+    XCTAssertEqual(third.children.firstObject.width.value, 10);
+    first.children.firstObject.strokeWidth.value = 7;
+    XCTAssertEqual(second.children.firstObject.strokeWidth.value, 2);
+    XCTAssertEqual(third.children.firstObject.strokeWidth.value, 2);
+}
+
+- (void)testReferenceLookupPreservesNamespacesAndHrefPrecedence
+{
+    NSString* source = IJSVGTestSVG(
+        @"<defs><rect id='first' width='3' height='4'/>"
+         "<rect id='second' width='7' height='8'/></defs>"
+         "<g xmlns:link='http://www.w3.org/1999/xlink' xmlns:other='urn:other'>"
+         "<use link:href='#first'/>"
+         "<use link:href='#first' href='#second'/>"
+         "<use xmlns:xlink='urn:legacy' xlink:href='#first'/>"
+         "<use other:href='#first'/>"
+         "<use/></g>");
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source
+                                                       fileURL:nil
+                                                         error:nil];
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+    IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+    XCTAssertEqual(group.children.count, 5);
+    if(group.children.count != 5) {
+        return;
+    }
+    const CGFloat widths[] = { 3, 7, 3 };
+    for(NSUInteger index = 0; index < group.children.count; index++) {
+        IJSVGGroup* use = (IJSVGGroup*)group.children[index];
+        XCTAssertEqual(use.children.count, index < 3 ? 1 : 0);
+        if(index < 3) {
+            XCTAssertEqual(use.children.firstObject.width.value, widths[index]);
+        }
+    }
+}
+
+- (void)testCachedInlineStylesResolveAgainstEachDocument
+{
+    for(NSUInteger index = 0; index < 3; index++) {
+        NSString* rules = index == 2 ?
+            @"<style>rect { fill:green!important; width:17px!important }</style>" : @"";
+        NSString* content = [[NSString alloc] initWithFormat:
+            @"%@<g color='%@'><rect height='20' style='fill:currentColor;width:13px;opacity:0.5'/></g>",
+            rules, index == 0 ? @"red" : @"blue"];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(content)
+                                                           fileURL:nil
+                                                             error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        XCTAssertEqual(root.children.count, 1);
+        if(root.children.count != 1) {
+            continue;
+        }
+        IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+        XCTAssertEqual(group.children.count, 1);
+        IJSVGNode* rectangle = group.children.firstObject;
+        XCTAssertEqual(rectangle.width.value, index == 2 ? 17 : 13);
+        XCTAssertEqual(rectangle.opacity.value, 0.5);
+        IJSVGColorNode* fill = (IJSVGColorNode*)rectangle.fill;
+        XCTAssertEqual(fill.usesCurrentColor, index != 2);
+        NSColor* color = fill.usesCurrentColor ? rectangle.currentColor : fill.color;
+        NSString* expectedName = index == 2 ? @"green" : (index == 0 ? @"red" : @"blue");
+        XCTAssertEqualObjects(color, [IJSVGColor colorFromString:expectedName]);
+        rectangle.width.value = 999;
+        rectangle.opacity.value = 0;
+    }
+}
+
+- (void)testCachedPathCacheKeepsDocumentsAndMutablePathsIndependent
+{
+    for(NSUInteger index = 0; index < 3; index++) {
+        NSString* data = index == 2 ? @"M0 0H40V20H0Z" : @"M0 0H10V20H0Z";
+        NSString* content = [[NSString alloc] initWithFormat:
+            @"<path d='%@' fill='%@'/><path d='%@'/>",
+            data, index == 0 ? @"red" : @"blue", data];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(content)
+                                                           fileURL:nil
+                                                             error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        XCTAssertEqual(root.children.count, 2);
+        if(root.children.count != 2) {
+            continue;
+        }
+        IJSVGPath* first = (IJSVGPath*)root.children[0];
+        IJSVGPath* second = (IJSVGPath*)root.children[1];
+        CGFloat width = index == 2 ? 40 : 10;
+        XCTAssertEqual(CGPathGetPathBoundingBox(first.path).size.width, width);
+        XCTAssertEqual(CGPathGetPathBoundingBox(second.path).size.width, width);
+        XCTAssertNotEqual(first.path, second.path);
+        NSColor* color = ((IJSVGColorNode*)first.fill).color;
+        NSColor* expected = [IJSVGColor colorFromString:index == 0 ? @"red" : @"blue"];
+        XCTAssertEqualObjects(color, expected);
+        CGPathAddRect(first.path, NULL, CGRectMake(0, 0, 999, 999));
+        XCTAssertEqual(CGPathGetPathBoundingBox(second.path).size.width, width);
+    }
+}
 
 - (void)testConcurrentParsersKeepAttributeStateIndependent
 {
