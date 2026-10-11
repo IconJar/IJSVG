@@ -3203,8 +3203,7 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
         NSString* (^block)(void) = ^NSString*(void) {
             return [weakSelf generateID];
         };
-        IJSVGNodeType type = [IJSVGNode typeForString:element.localName
-                                                 kind:element.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(element.localName, element.kind);
         identifier = [_delegate svgExporter:self
                        identifierForElement:element
                                        type:type

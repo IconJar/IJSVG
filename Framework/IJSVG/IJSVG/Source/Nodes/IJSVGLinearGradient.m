@@ -10,6 +10,27 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGParser.h>
 
+static IJSVGUnitLength* IJSVGLinearGradientCoordinate(NSString* value,
+                                                      IJSVGUnitType units,
+                                                      BOOL endPoint)
+{
+    IJSVGUnitLength* length = value != nil ?
+        [IJSVGUnitLength unitWithString:value
+                           fromUnitType:units] :
+        nil;
+    if(length == nil) {
+        IJSVGUnitLengthType type = endPoint ?
+            IJSVGUnitLengthTypePercentage :
+            IJSVGUnitLengthTypeNumber;
+        length = [IJSVGUnitLength unitWithFloat:endPoint ? 1.f : 0.f
+                                           type:type];
+        if(units == IJSVGUnitObjectBoundingBox) {
+            length.type = IJSVGUnitLengthTypePercentage;
+        }
+    }
+    return length;
+}
+
 @implementation IJSVGLinearGradient
 
 + (IJSVGNodeType)defaultNodeType
@@ -31,24 +52,26 @@
 + (void)parseGradient:(NSXMLElement*)element
              gradient:(IJSVGLinearGradient*)aGradient
 {
-    // Work out x1, x2, y1, y2
-    NSDictionary *dict = @{
-      IJSVGAttributeX1: @"0",
-      IJSVGAttributeX2: @"100%",
-      IJSVGAttributeY1: @"0",
-      IJSVGAttributeY2: @"0",
-    };
-    
-    for (NSString* key in dict) {
-      NSString *value = [element attributeForName:key].stringValue ?: dict[key];
-      IJSVGUnitLength *length = [IJSVGUnitLength unitWithString:value
-                                                   fromUnitType:aGradient.units];
-      length = length ?: [IJSVGUnitLength unitWithString:dict[key]
-                                            fromUnitType:aGradient.units];
-      [aGradient setValue:length
-                   forKey:key];
+    NSString* values[4] = { nil };
+    for(NSXMLNode* attribute in element.attributes) {
+        NSString* name = attribute.name;
+        if(name.length != 2) {
+            continue;
+        }
+        const char* chars = name.UTF8String;
+        if(chars == NULL || (chars[0] != 'x' && chars[0] != 'y') ||
+            (chars[1] != '1' && chars[1] != '2')) {
+            continue;
+        }
+        NSUInteger index = (chars[0] == 'y' ? 2 : 0) + (chars[1] - '1');
+        values[index] = attribute.stringValue;
     }
-  
+    IJSVGUnitType units = aGradient.units;
+    aGradient.x1 = IJSVGLinearGradientCoordinate(values[0], units, NO);
+    aGradient.x2 = IJSVGLinearGradientCoordinate(values[1], units, YES);
+    aGradient.y1 = IJSVGLinearGradientCoordinate(values[2], units, NO);
+    aGradient.y2 = IJSVGLinearGradientCoordinate(values[3], units, NO);
+
     // compute the color stops and colours
     [aGradient parseSpreadMethod:element];
     NSArray* colors = nil;

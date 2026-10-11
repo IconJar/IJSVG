@@ -19,8 +19,8 @@
                          height:(IJSVGUnitLength*)height
 {
     IJSVGUnitSize* size = [[self alloc] init];
-    size.width = width;
-    size.height = height;
+    size->_width = width;
+    size->_height = height;
     return size;
 }
 
@@ -38,8 +38,8 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitSize* size = [[self.class alloc] init];
-    size.width = _width.copy;
-    size.height = _height.copy;
+    size->_width = _width.copy;
+    size->_height = _height.copy;
     return size;
 }
 

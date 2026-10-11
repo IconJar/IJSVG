@@ -18,13 +18,14 @@
     return self;
 }
 
+- (instancetype)initWithLength:(int)length
+{
+    return [self init];
+}
+
 - (void)addBits:(IJSVGBitFlags*)storage
 {
-    for(int i = 0; i < 64; i++) {
-        if([storage bitIsSet:i] == YES) {
-            [self setBit:i];
-        }
-    }
+    _storage64 |= storage.bitMask;
 }
 
 - (int)length
@@ -44,17 +45,21 @@
 
 - (void)setBit:(int)bit
 {
-    _storage64 |= (1ULL << bit);
+    if(bit >= 0 && bit < 64) {
+        _storage64 |= (1ULL << bit);
+    }
 }
 
 - (void)unsetBit:(int)bit
 {
-  _storage64 &= ~(1ULL << bit);
+    if(bit >= 0 && bit < 64) {
+        _storage64 &= ~(1ULL << bit);
+    }
 }
 
 - (void)setAllBits
 {
-  _storage64 = 1ULL;
+    _storage64 = UINT64_MAX;
 }
 
 @end

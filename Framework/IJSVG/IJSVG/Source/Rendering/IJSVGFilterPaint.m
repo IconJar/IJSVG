@@ -609,6 +609,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     BOOL _checkedOutputCaching;
     BOOL _canCacheOutput;
     IJSVGFilter* _imageSnapshotFilter;
+    IJSVGFilterMetadata* _filterMetadata;
 }
 @end
 
@@ -708,11 +709,21 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
 }
 
+- (IJSVGFilterMetadata*)filterMetadata
+{
+    if(!self.cachesRenderedOutput) {
+        return [[IJSVGFilterMetadata alloc] initWithFilter:self.filter];
+    }
+    if(_filterMetadata.filter != self.filter) {
+        _filterMetadata = [[IJSVGFilterMetadata alloc] initWithFilter:self.filter];
+    }
+    return _filterMetadata;
+}
+
 - (BOOL)usesBackground
 {
-    NSSet* names = self.filter.inputNames;
-    if(![names containsObject:IJSVGStringBackgroundImage] &&
-        ![names containsObject:IJSVGStringBackgroundAlpha]) {
+    IJSVGFilterInputs inputs = self.filterMetadata.inputs;
+    if((inputs & (IJSVGFilterInputBackgroundImage | IJSVGFilterInputBackgroundAlpha)) == 0) {
         return NO;
     }
     // A new canvas on the filtered container has no earlier contents.
@@ -735,6 +746,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     _cachesRenderedOutput = cachesRenderedOutput;
+    _filterMetadata = nil;
     if(_outputCacheKey != nil) {
         [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
     }
@@ -899,7 +911,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 /// Builds private image snapshots once and preserves the original filter for export.
 - (void)prepareImageSnapshots
 {
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterMetadata.primitives;
     NSMutableDictionary<NSNumber*, IJSVGNode*>* snapshots = nil;
     for(NSUInteger index = 0; index < primitives.count; index++) {
         IJSVGFilterPrimitive* primitive = primitives[index];
@@ -1040,11 +1052,14 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
     graph.filter = _imageSnapshotFilter ?: self.filter;
+    if(self.cachesRenderedOutput && _imageSnapshotFilter == nil) {
+        graph.resolvedMetadata = self.filterMetadata;
+    }
     graph.renderingOptions = self.renderingOptions;
     // Repeated shadow readbacks can accumulate rounding differences in nested filters.
     graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
-    if(!graph.hasNestedFilters && self.filter.primitives.count == 1 &&
-        self.filter.primitives.firstObject.type == IJSVGNodeTypeFilterDropShadow) {
+    if(!graph.hasNestedFilters && self.filterMetadata.primitives.count == 1 &&
+        self.filterMetadata.primitives.firstObject.type == IJSVGNodeTypeFilterDropShadow) {
         NSMutableArray<IJSVGPaint*>* pending = self.children.mutableCopy;
         while(pending.count != 0) {
             IJSVGPaint* paint = pending.lastObject;
@@ -1137,7 +1152,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox ?
         CGSizeMake(self.boundingBox.size.width * scale, self.boundingBox.size.height * scale) :
         CGSizeMake(scale, scale);
-    for(IJSVGFilterPrimitive* primitive in self.filter.primitives.reverseObjectEnumerator) {
+    for(IJSVGFilterPrimitive* primitive in self.filterMetadata.primitives.reverseObjectEnumerator) {
         switch(primitive.type) {
             case IJSVGNodeTypeFilterGaussianBlur:
             case IJSVGNodeTypeFilterDropShadow: {
@@ -1292,14 +1307,14 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 - (CGRect)finiteWorkingBoundsForRegion:(CGRect)region
 {
     if(self.usesBackground || self.filter.contentUnits == IJSVGUnitObjectBoundingBox ||
-        [self.filter.inputNames containsObject:IJSVGStringFillPaint] ||
-        [self.filter.inputNames containsObject:IJSVGStringStrokePaint]) {
+        (self.filterMetadata.inputs & IJSVGFilterInputFillPaint) ||
+        (self.filterMetadata.inputs & IJSVGFilterInputStrokePaint)) {
         return region;
     }
     CGRect bounds = CGRectUnion(self.outerBoundingBox,
         CGRectOffset(self.sourcePaint.transparencyBounds,
                      self.sourcePaint.frame.origin.x, self.sourcePaint.frame.origin.y));
-    for(IJSVGFilterPrimitive* primitive in self.filter.primitives) {
+    for(IJSVGFilterPrimitive* primitive in self.filterMetadata.primitives) {
         if(primitive.type == IJSVGNodeTypeFilterOffset) {
             CGFloat dx = [primitive numberForParameter:IJSVGAttributeDX
                                           defaultValue:0.f];
@@ -1535,7 +1550,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
 
-    IJSVGFilterPrimitive* primitive = self.filter.primitives.firstObject;
+    IJSVGFilterPrimitive* primitive = self.filterMetadata.primitives.firstObject;
     if(!self.usesBackground && IJSVGFilterSIMDUsesBackdropAddition(self.filter) &&
         primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
         // Adding transparent black leaves the source unchanged.
@@ -1583,7 +1598,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         fabs(destination.b) <= 1e-9 && fabs(destination.c) <= 1e-9 &&
         fabs(fabs(destination.a) - scale) <= scale * 1e-9 &&
         fabs(fabs(destination.d) - scale) <= scale * 1e-9 &&
-        [self.filter.inputNames containsObject:IJSVGStringBackgroundImage]) {
+        (self.filterMetadata.inputs & IJSVGFilterInputBackgroundImage)) {
         // Include destination translation when snapping backdrop-dependent
         // surfaces. Snapping only in local coordinates introduces a fractional
         // resample and prevents direct CPU access to the background pixel grid.

@@ -9,6 +9,70 @@
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGParserUtils.h>
+
+static BOOL IJSVGParseScalarUnit(const char* bytes, CGFloat* value,
+                                 IJSVGUnitLengthType* type)
+{
+    if(bytes == NULL) {
+        return NO;
+    }
+    if(bytes[0] >= '0' && bytes[0] <= '9' && bytes[1] == '\0') {
+        *value = bytes[0] - '0';
+        *type = IJSVGUnitLengthTypeNumber;
+        return YES;
+    }
+    const char* end = bytes;
+    if(!IJSVGParseLengthNumber(&end, YES, value)) {
+        return NO;
+    }
+    if(*end == '\0') {
+        *type = IJSVGUnitLengthTypeNumber;
+        return YES;
+    }
+    if(end[0] == '%' && end[1] == '\0') {
+        *type = IJSVGUnitLengthTypePercentage;
+        return YES;
+    }
+    return NO;
+}
+
+typedef struct {
+    CGFloat value;
+    IJSVGUnitLengthType originalType;
+} IJSVGParsedUnitLength;
+
+static BOOL IJSVGParseUnitBytes(const char* bytes, IJSVGParsedUnitLength* parsed)
+{
+    if(bytes == NULL) {
+        return NO;
+    }
+    if(IJSVGParseScalarUnit(bytes, &parsed->value, &parsed->originalType)) {
+        return YES;
+    }
+    char* chars = IJSVGTimmedCharBufferCreate(bytes);
+    if(chars == NULL) {
+        return NO;
+    }
+    size_t count = strlen(chars);
+    if(count == 0 || IJSVGCharBufferCaseInsensitiveCompare(chars, "inherit")) {
+        free(chars);
+        return NO;
+    }
+    NSInteger numberCount = 0;
+    CGFloat* numbers = [IJSVGUtils scanFloatsFromCString:chars
+                                              floatCount:1
+                                               charCount:count
+                                                    size:&numberCount];
+    BOOL valid = numbers != NULL && numberCount > 0;
+    if(valid) {
+        parsed->value = numbers[0];
+        parsed->originalType = IJSVGUnitLengthTypeForCString(chars);
+    }
+    free(numbers);
+    free(chars);
+    return valid;
+}
 
 @implementation IJSVGUnitLength
 
@@ -21,8 +85,8 @@
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
 {
     IJSVGUnitLength* unit = [[self alloc] init];
-    unit.value = number;
-    unit.type = IJSVGUnitLengthTypeNumber;
+    unit->_value = number;
+    unit->_type = IJSVGUnitLengthTypeNumber;
     return unit;
 }
 
@@ -41,9 +105,9 @@
                              type:(IJSVGUnitLengthType)type
 {
     IJSVGUnitLength* unit = [[self alloc] init];
-    unit.value = number;
-    unit.type = type;
-    unit.originalType = type;
+    unit->_value = number;
+    unit->_type = type;
+    unit->_originalType = type;
     return unit;
 }
 
@@ -151,74 +215,31 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
 {
-    // just return noting for inherit, node will deal
-    // with the rest...hopefully
-    if(string == nil) {
+    IJSVGParsedUnitLength parsed = { 0 };
+    if(!IJSVGParseUnitBytes(string.UTF8String, &parsed)) {
         return nil;
     }
-    
-    char* chars = IJSVGTimmedCharBufferCreate(string.UTF8String);
-
-    // is inherit or just nothing
-    size_t strl = strlen(chars);
-    if(IJSVGCharBufferCaseInsensitiveCompare(chars, "inherit") == YES || strl == 0) {
-        (void)free(chars), chars = NULL;
-        return nil;
-    }
-    
-    // grab the float value from the string
-    NSInteger length;
-    CGFloat* floats = [IJSVGUtils scanFloatsFromCString:chars
-                                             floatCount:1
-                                              charCount:(NSUInteger)strl
-                                                   size:&length];
-    // not sure how this ended up but nothing returned
-    // even though there should had been
-    if(length == 0) {
-        (void)free(floats), floats = NULL;
-        (void)free(chars), chars = NULL;
-        return nil;
-    }
-    
+    IJSVGUnitLengthType type = parsed.originalType;
+    BOOL fontRelative = type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX;
+    CGFloat value = fontRelative ? parsed.value :
+                                   [self convertUnitValue:parsed.value
+                                 toBaseFromUnitLengthType:type];
+    IJSVGUnitLengthType resolvedType = fontRelative ||
+        type == IJSVGUnitLengthTypePercentage ? type : IJSVGUnitLengthTypeNumber;
     IJSVGUnitLength* unit = [[self alloc] init];
-    unit.value = floats[0];
-    unit.type = IJSVGUnitLengthTypeNumber;
-    
-    
-    IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(chars);
-    unit.originalType = type;
-    
-    // memory free
-    (void)(free(floats)), floats = NULL;
-    (void)free(chars), chars = NULL;
-    
-    switch(type) {
-        case IJSVGUnitLengthTypeEM:
-        case IJSVGUnitLengthTypeEX:
-            // Keep font relative values until the font metrics are known.
-            unit.type = type;
-            break;
-        case IJSVGUnitLengthTypePercentage: {
-            unit.value = [self convertUnitValue:unit.value
-                       toBaseFromUnitLengthType:type];
-            unit.type = IJSVGUnitLengthTypePercentage;
-            break;
-        }
-        default:
-            unit.value = [self convertUnitValue:unit.value
-                       toBaseFromUnitLengthType:type];
-            break;
-    }
+    unit->_value = value;
+    unit->_type = resolvedType;
+    unit->_originalType = type;
     return unit;
 }
 
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitLength* length = [[IJSVGUnitLength alloc] init];
-    length.value = self.value;
-    length.type = self.type;
-    length.originalType = self.originalType;
-    length.inherit = self.inherit;
+    length->_value = self.value;
+    length->_type = self.type;
+    length->_originalType = self.originalType;
+    length->_inherit = self.inherit;
     return length;
 }
 

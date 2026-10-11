@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGFilterGraph.h>
+#import <IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGFilterSIMD.h>
 #import <XCTest/XCTest.h>
@@ -37,6 +38,78 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 @end
 
 @implementation IJSVGFilterOutputCacheTests
+
+- (void)testFilterMetadataReadsNestedInputsAndRejectsNamedResults
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPrimitive* merge = [[IJSVGFilterPrimitive alloc] init];
+    merge.input = @"SourceAlpha";
+    merge.input2 = @"FillPaint";
+    IJSVGFilterPrimitive* child = [[IJSVGFilterPrimitive alloc] init];
+    child.input = @"BackgroundAlpha";
+    [merge addChild:child];
+    [filter addChild:merge];
+    IJSVGFilterMetadata* metadata = [[IJSVGFilterMetadata alloc] initWithFilter:filter];
+    XCTAssertEqual(metadata.primitives.count, 1U);
+    XCTAssertEqual(metadata.inputs, IJSVGFilterInputSourceAlpha | IJSVGFilterInputFillPaint | IJSVGFilterInputBackgroundAlpha);
+    for(NSString* name in @[@"BackgroundImage", @"StrokePaint", @"BackgroundImageX",
+            @"backgroundimage", @"SourceAlphaé", @"FillPainté"]) {
+        merge.input = name;
+        merge.input2 = nil;
+        [merge removeChild:child];
+        metadata = [[IJSVGFilterMetadata alloc] initWithFilter:filter];
+        IJSVGFilterInputs expected = [name isEqualToString:@"BackgroundImage"] ?
+            IJSVGFilterInputBackgroundImage :
+            [name isEqualToString:@"StrokePaint"] ?
+            IJSVGFilterInputStrokePaint :
+            0;
+        XCTAssertEqual(metadata.inputs, expected, @"%@", name);
+    }
+}
+
+- (void)testFilterPaintMetadataFollowsLiveEditsAndCacheTransitions
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    primitive.input = @"SourceAlpha";
+    [filter addChild:primitive];
+    IJSVGGroupPaint* source = [[IJSVGGroupPaint alloc] init];
+    IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] initWithSourcePaint:source
+                                                                     filter:filter
+                                                                   viewPort:CGRectMake(0, 0, 100, 100)];
+    XCTAssertEqual(paint.filterMetadata.inputs, IJSVGFilterInputSourceAlpha);
+    primitive.input = @"BackgroundImage";
+    XCTAssertEqual(paint.filterMetadata.inputs, IJSVGFilterInputBackgroundImage);
+    paint.cachesRenderedOutput = YES;
+    IJSVGFilterMetadata* first = paint.filterMetadata;
+    XCTAssertEqual(first, paint.filterMetadata);
+    paint.cachesRenderedOutput = NO;
+    primitive.input = @"StrokePaint";
+    paint.cachesRenderedOutput = YES;
+    XCTAssertNotEqual(first, paint.filterMetadata);
+    XCTAssertEqual(paint.filterMetadata.inputs, IJSVGFilterInputStrokePaint);
+    paint.filter = [[IJSVGFilter alloc] init];
+    XCTAssertEqual(paint.filterMetadata.primitives.count, 0U);
+    XCTAssertEqual(paint.filterMetadata.inputs, 0U);
+}
+
+- (void)testFilterGraphMetadataDoesNotFreezeLiveFilters
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    primitive.input = @"SourceAlpha";
+    [filter addChild:primitive];
+    IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
+    graph.filter = filter;
+    XCTAssertEqual(graph.filterInputs, IJSVGFilterInputSourceAlpha);
+    primitive.input = @"BackgroundAlpha";
+    XCTAssertEqual(graph.filterInputs, IJSVGFilterInputBackgroundAlpha);
+    graph.resolvedMetadata = [[IJSVGFilterMetadata alloc] initWithFilter:filter];
+    XCTAssertEqual(graph.filterInputs, IJSVGFilterInputBackgroundAlpha);
+    graph.filter = [[IJSVGFilter alloc] init];
+    XCTAssertEqual(graph.filterInputs, 0U);
+    XCTAssertEqual(graph.filterPrimitives.count, 0U);
+}
 
 - (IJSVG *)svgForDocument:(NSUInteger)index
 {
@@ -875,6 +948,58 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     });
     primitive.parameters = nil;
     XCTAssertEqualObjects([primitive numbersForParameter:@"values"], @[]);
+}
+
+- (void)testEmptyParametersRestoreFilterDefaults
+{
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    IJSVGFilterPrimitive* defaults = [[IJSVGFilterPrimitive alloc] init];
+    NSArray<NSString*>* types = @[@"hueRotate", @"gamma", @"fractalNoise"];
+    for(NSString* type in types) {
+        for(NSString* operation in @[@"arithmetic", @"dilate"]) {
+            for(NSUInteger reset = 0; reset < 2; reset++) {
+                primitive.parameters = @{
+                    @"type": type,
+                    @"operator": operation,
+                    @"edgeMode": @"wrap",
+                    @"xChannelSelector": @"R",
+                    @"yChannelSelector": @"G",
+                    @"mode": @"multiply",
+                    @"preserveAlpha": @"true",
+                    @"stitchTiles": @"stitch",
+                    @"values": @"7"
+                };
+                XCTAssertTrue(primitive.preserveAlpha);
+                XCTAssertTrue(primitive.stitchTiles);
+                XCTAssertEqual([primitive numberForParameter:@"values" defaultValue:0], 7);
+                [primitive preparedValueForKey:@"reset"
+                                       builder:^id {
+                                           return @"before";
+                                       }];
+                primitive.parameters = reset == 0 ? [[NSDictionary alloc] init] : nil;
+                XCTAssertEqual(primitive.compositeOperator, defaults.compositeOperator);
+                XCTAssertEqual(primitive.edgeMode, defaults.edgeMode);
+                XCTAssertEqual(primitive.colorMatrixType, defaults.colorMatrixType);
+                XCTAssertEqual(primitive.transferType, defaults.transferType);
+                XCTAssertEqual(primitive.morphologyOperator, defaults.morphologyOperator);
+                XCTAssertEqual(primitive.turbulenceType, defaults.turbulenceType);
+                XCTAssertEqual(primitive.xChannel, defaults.xChannel);
+                XCTAssertEqual(primitive.yChannel, defaults.yChannel);
+                XCTAssertEqual(primitive.filterBlendMode, defaults.filterBlendMode);
+                XCTAssertFalse(primitive.preserveAlpha);
+                XCTAssertFalse(primitive.stitchTiles);
+                XCTAssertEqual([primitive numberForParameter:@"values" defaultValue:3], 3);
+                XCTAssertEqualObjects([primitive preparedValueForKey:@"reset"
+                                                             builder:^id {
+                                                                 return @"after";
+                                                             }],
+                    @"after");
+                primitive.type = IJSVGNodeTypeFilterConvolveMatrix;
+                defaults.type = primitive.type;
+                XCTAssertEqual(primitive.edgeMode, defaults.edgeMode);
+            }
+        }
+    }
 }
 
 - (void)testColorMatricesMatchGeneralEvaluator

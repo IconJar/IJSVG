@@ -19,7 +19,7 @@
 - (id)initWithColor:(NSColor*)color {
     if((self = [super init]) != nil) {
         [self addTraits:IJSVGNodeTraitPaintable];
-        self.color = color;
+        _color = color;
     }
     return self;
 }

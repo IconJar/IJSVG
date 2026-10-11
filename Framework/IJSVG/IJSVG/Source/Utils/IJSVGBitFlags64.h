@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGBitFlags.h>
 
+// Fixed capacity of 64 bits with no integer array storage.
+// initWithLength preserves this capacity and storage returns NULL.
 @interface IJSVGBitFlags64 : IJSVGBitFlags {
 @private
     uint64_t _storage64;

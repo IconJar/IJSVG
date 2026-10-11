@@ -8,6 +8,7 @@
 
 #import <IJSVGFilterGraph+Outlines.h>
 #import <IJSVGFilterContext.h>
+#import <IJSVGFilterSIMD.h>
 #import <IJSVGFloodFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
 #import <simd/simd.h>
@@ -162,7 +163,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
         return NULL;
     }
     CGPathRef edge = CGPathCreateCopyByStrokingPath(flattened, NULL, 2 * (M_SQRT2 + 3 * tolerance),
-                                                   kCGLineCapRound, kCGLineJoinRound, 0);
+                                                    kCGLineCapRound, kCGLineJoinRound, 0);
     CGPathRef polygon = edge == NULL ? NULL : CGPathCreateCopyByFlattening(edge, tolerance);
     CGPathRef expanded = polygon == NULL ? NULL : CGPathCreateCopyByUnioningPath(flattened, polygon, false);
     CGPathRelease(polygon);
@@ -368,16 +369,17 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
     }
 }
 
-+ (BOOL)canOutlineFilter:(IJSVGFilter*)filter
++ (BOOL)canOutlineMetadata:(IJSVGFilterMetadata*)metadata
+         backgroundIsEmpty:(BOOL)backgroundIsEmpty
 {
-    NSSet<NSString*>* names = filter.inputNames;
-    if([names containsObject:IJSVGStringBackgroundImage] ||
-       [names containsObject:IJSVGStringBackgroundAlpha] ||
-       [names containsObject:IJSVGStringFillPaint] ||
-       [names containsObject:IJSVGStringStrokePaint]) {
+    IJSVGFilterInputs names = metadata.inputs;
+    if((!backgroundIsEmpty && ((names & IJSVGFilterInputBackgroundImage) ||
+                               (names & IJSVGFilterInputBackgroundAlpha))) ||
+        (names & IJSVGFilterInputFillPaint) ||
+        (names & IJSVGFilterInputStrokePaint)) {
         return NO;
     }
-    for(IJSVGFilterPrimitive* primitive in filter.primitives) {
+    for(IJSVGFilterPrimitive* primitive in metadata.primitives) {
         switch(primitive.type) {
             case IJSVGNodeTypeFilterGaussianBlur:
                 if(primitive.edgeMode == IJSVGFilterEdgeModeWrap ||
@@ -401,6 +403,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
 }
 
 - (CGPathRef)newOutlineForSourcePath:(CGPathRef)source
+                   backgroundIsEmpty:(BOOL)backgroundIsEmpty
 {
     CGRect region = [self regionForNode:self.filter
                                   units:self.filter.units
@@ -415,17 +418,31 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
     if(self.filter.preservesInnerShadowCoverage) {
         return CGPathCreateCopy((__bridge CGPathRef)clippedSource);
     }
-    NSMutableDictionary<NSString*, id>* results = [[NSMutableDictionary alloc] initWithCapacity:self.filter.primitives.count];
+    if(backgroundIsEmpty && IJSVGFilterSIMDUsesBackdropAddition(self.filter)) {
+        IJSVGFilterPrimitive* primitive = self.filterPrimitives.firstObject;
+        CGRect primitiveRegion = [self regionForNode:primitive
+                                               units:self.filter.contentUnits
+                                       defaultRegion:region];
+        return IJSVGOutlineClip((__bridge CGPathRef)clippedSource, primitiveRegion);
+    }
+    NSMutableDictionary<NSString*, id>* results = [[NSMutableDictionary alloc] initWithCapacity:self.filterPrimitives.count];
+    IJSVGFilterInputs inputNames = self.filterInputs;
+    BOOL needsBackground = (inputNames & IJSVGFilterInputBackgroundImage) ||
+        (inputNames & IJSVGFilterInputBackgroundAlpha);
+    id background = backgroundIsEmpty && needsBackground ? CFBridgingRelease(CGPathCreateMutable()) : nil;
     __block id output = clippedSource;
     id (^inputNamed)(NSString*) = ^id(NSString* name) {
         if(name.length == 0) {
             return output;
         }
-        // These inputs require compositing or paint server sampling.
+        // Match the transparent backdrop supplied by the renderer outside a background scope.
         if([name isEqualToString:IJSVGStringBackgroundImage] ||
-           [name isEqualToString:IJSVGStringBackgroundAlpha] ||
-           [name isEqualToString:IJSVGStringFillPaint] ||
-           [name isEqualToString:IJSVGStringStrokePaint]) {
+            [name isEqualToString:IJSVGStringBackgroundAlpha]) {
+            return background;
+        }
+        // These inputs require paint server sampling.
+        if([name isEqualToString:IJSVGStringFillPaint] ||
+            [name isEqualToString:IJSVGStringStrokePaint]) {
             return nil;
         }
         if([name isEqualToString:IJSVGStringSourceGraphic] ||
@@ -434,7 +451,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
         }
         return results[name] ?: output;
     };
-    for(IJSVGFilterPrimitive* primitive in self.filter.primitives) {
+    for(IJSVGFilterPrimitive* primitive in self.filterPrimitives) {
         CGPathRef next = [self newOutlineForPrimitive:primitive
                                                region:region
                                            inputNamed:inputNamed];

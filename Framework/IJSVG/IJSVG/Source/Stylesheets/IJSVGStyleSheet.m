@@ -205,6 +205,12 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
 - (IJSVGStyleSheetStyle*)styleForNode:(id<IJSVGStyleSheetSelectorNode>)node
 {
+    if(_rules.count == 1) {
+        IJSVGStyleSheetRule* rule = _rules.firstObject;
+        IJSVGStyleSheetSelector* selector = nil;
+        return [rule matchesNode:node
+                        selector:&selector] ? rule.style : nil;
+    }
     NSMutableIndexSet* candidates = [_universalRules mutableCopy];
     if(node.identifier != nil) {
         NSIndexSet* entries = _identifierRules[node.identifier];

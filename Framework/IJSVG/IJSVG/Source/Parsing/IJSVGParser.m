@@ -19,6 +19,19 @@
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGThreadManager.h>
 
+// Keep absent attributes from causing ARC output parameter writeback.
+static BOOL IJSVGParserAttributeHasValue(
+    NSString* __unsafe_unretained const* attributeValues,
+    IJSVGNodeAttribute attribute, NSString* __strong* value)
+{
+    NSString* __unsafe_unretained attributeValue = attributeValues[attribute];
+    if(attributeValue == nil || attributeValue.length == 0) {
+        return NO;
+    }
+    *value = attributeValue;
+    return YES;
+}
+
 NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
 NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
 NSString* const IJSVGStringNone = @"none";
@@ -275,6 +288,16 @@ NSString* const IJSVGAttributeSide = @"side";
 NSString* const IJSVGAttributePath = @"path";
 NSString* const IJSVGAttributePathLength = @"pathLength";
 
+static NSString* IJSVGParserElementIdentifier(NSXMLElement* element)
+{
+    for(NSXMLNode* attribute in element.attributes) {
+        if([attribute.name isEqualToString:IJSVGAttributeID]) {
+            return attribute.stringValue;
+        }
+    }
+    return nil;
+}
+
 static NSMapTable* IJSVGParserElementMapTable(void)
 {
     NSPointerFunctionsOptions options = NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality;
@@ -295,6 +318,12 @@ typedef struct {
     BOOL hasAttributes;
     NSArray<NSString*>* values;
     NSSet<NSString*>* classNameList;
+    NSData* filterEntries;
+    NSArray<NSString*>* filterValues;
+    IJSVGStyleSheetStyle* filterStyle;
+    IJSVGStyleSheetStyle* filterInlineStyle;
+    NSDictionary<NSString*, NSString*>* filterParameters;
+    NSUInteger filterRuleCount;
 }
 - (instancetype)initWithElement:(NSXMLElement*)element;
 @end
@@ -329,9 +358,74 @@ typedef struct {
 
 @end
 
+static void IJSVGParserCacheFilterAttributes(IJSVGParserRawAttributes* raw,
+    NSString* __unsafe_unretained const attributes[kIJSVGNodeAttributeStorageLength],
+    IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* inlineStyle, NSUInteger ruleCount)
+{
+    NSMutableData* data = [[NSMutableData alloc] init];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] init];
+    for(NSUInteger index = 0; index < kIJSVGNodeAttributeStorageLength; index++) {
+        NSString* value = attributes[index];
+        if(value != nil) {
+            [strings addObject:value];
+            IJSVGParserRawAttribute entry = { index, value };
+            [data appendBytes:&entry length:sizeof(entry)];
+        }
+    }
+    raw->filterValues = strings.copy;
+    raw->filterEntries = data.copy;
+    raw->filterStyle = style;
+    raw->filterInlineStyle = inlineStyle;
+    raw->filterRuleCount = ruleCount;
+    raw->filterParameters = nil;
+}
+
+static void IJSVGParserRestoreFilterAttributes(IJSVGParserRawAttributes* raw,
+    NSString* __unsafe_unretained attributes[kIJSVGNodeAttributeStorageLength])
+{
+    memset(attributes, 0, sizeof(*attributes) * kIJSVGNodeAttributeStorageLength);
+    const IJSVGParserRawAttribute* entries = raw->filterEntries.bytes;
+    NSUInteger count = raw->filterEntries.length / sizeof(*entries);
+    for(NSUInteger index = 0; index < count; index++) {
+        attributes[entries[index].attribute] = entries[index].value;
+    }
+}
+
+static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
+    NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength])
+{
+    static NSString* names[kIJSVGNodeAttributeStorageLength];
+    static IJSVGNodeAttribute attributes[kIJSVGNodeAttributeStorageLength];
+    static NSUInteger count;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        for(NSString* name in IJSVGFilterPrimitive.parameterNames) {
+            NSUInteger attribute = IJSVGNodeAttributeForName(name);
+            if(attribute != NSNotFound) {
+                names[count] = name;
+                attributes[count++] = (IJSVGNodeAttribute)attribute;
+            }
+        }
+    });
+
+    NSMutableDictionary<NSString*, NSString*>* parameters = [[NSMutableDictionary alloc] init];
+    for(NSUInteger index = 0; index < count; index++) {
+        NSString* value = nil;
+        if(IJSVGParserAttributeHasValue(attributeValues, attributes[index], &value)) {
+            parameters[names[index]] = value;
+        }
+    }
+    return parameters;
+}
+
 @interface IJSVGParser ()
+@property (nonatomic, strong) NSMutableDictionary<Class, IJSVGBitFlags*>* allowedAttributesByClass;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSColor*>* parsedColors;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* parsedSVGTransforms;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* parsedCSSTransforms;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGParserRawAttributes*>* rawAttributes;
 @property (nonatomic, strong) NSHashTable<NSXMLElement*>* uncachedReferenceElements;
+@property (nonatomic, strong) NSXMLElement* lastParsedStyleElement;
 @property (nonatomic, strong) NSCache<NSString*, IJSVGStyleSheetStyle*>* inlineStyles;
 @property (nonatomic, strong) NSCache<NSString*, id>* parsedPaths;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
@@ -519,11 +613,16 @@ typedef struct {
     self.selectorScope = nil;
     self.selectorScopes = nil;
     self.inlineStyles = nil;
+    self.parsedColors = nil;
+    self.allowedAttributesByClass = nil;
+    self.parsedSVGTransforms = nil;
+    self.parsedCSSTransforms = nil;
     self.parsedPaths = nil;
     self.rawAttributes = nil;
     self.simpleClipTemplates = nil;
     self.simpleClipCandidates = nil;
     self.uncachedReferenceElements = nil;
+    self.lastParsedStyleElement = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
     self.definitionStyleParents = IJSVGParserElementMapTable();
     if(setup != nil) {
@@ -545,9 +644,14 @@ typedef struct {
     self.simpleClipTemplates = nil;
     self.simpleClipCandidates = nil;
     self.inlineStyles = nil;
+    self.parsedColors = nil;
+    self.allowedAttributesByClass = nil;
+    self.parsedSVGTransforms = nil;
+    self.parsedCSSTransforms = nil;
     self.parsedPaths = nil;
     self.rawAttributes = nil;
     self.uncachedReferenceElements = nil;
+    self.lastParsedStyleElement = nil;
     self.selectorScopes = nil;
     _detachedReferences = nil;
 }
@@ -577,8 +681,7 @@ typedef struct {
         return;
     }
     for(NSXMLElement* childElement in element.children) {
-        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
-                                                 kind:childElement.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(childElement.localName, childElement.kind);
         if(type != IJSVGNodeTypeDef) {
             continue;
         }
@@ -656,6 +759,19 @@ typedef struct {
                                                height:hl];
 }
 
+- (IJSVGBitFlags*)allowedAttributesForNodeClass:(Class)nodeClass
+{
+    IJSVGBitFlags* attributes = _allowedAttributesByClass[nodeClass];
+    if(attributes == nil) {
+        attributes = [nodeClass computedAllowedAttributes];
+        if(_allowedAttributesByClass == nil) {
+            _allowedAttributesByClass = [[NSMutableDictionary alloc] init];
+        }
+        _allowedAttributesByClass[(id<NSCopying>)nodeClass] = attributes;
+    }
+    return attributes;
+}
+
 // The following method is highly tuned for performance rather than readability.
 - (IJSVGNodeParserPostProcessBlock)computeAttributesFromElement:(NSXMLElement*)element
                                                          onNode:(IJSVGNode*)node
@@ -696,7 +812,7 @@ typedef struct {
         return nil;
     }
 
-    IJSVGBitFlags* activeAttributes = [node.class computedAllowedAttributes];
+    IJSVGBitFlags* activeAttributes = [self allowedAttributesForNodeClass:node.class];
     if(ignoringAttributes != nil) {
         IJSVGBitFlags* attributes = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
         [attributes addBits:activeAttributes];
@@ -712,9 +828,11 @@ typedef struct {
   
     if(raw != nil) {
         const IJSVGParserRawAttribute* entries = raw->entries.bytes;
+        const int* allowed = activeAttributes.storage;
+        NSUInteger allowedCount = MAX(0, activeAttributes.length);
         for(NSUInteger index = 0; index < attributeCount; index++) {
             NSUInteger attribute = entries[index].attribute;
-            if([activeAttributes bitIsSet:(int)attribute]) {
+            if(attribute < allowedCount && allowed[attribute] == 1) {
                 attributeValues[attribute] = entries[index].value;
             }
         }
@@ -729,17 +847,17 @@ typedef struct {
     }
 
     NSString* value = nil;
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeID, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeID, &value)) {
         node.identifier = value;
         [self detachElement:element
              withIdentifier:value];
     }
-    
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClass, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClass, &value)) {
         node.className = value;
         node.classNameList = raw != nil ? raw->classNameList : IJSVGClassNameList(value);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeUnicode, &value)) {
         node.unicode = value;
     }
 
@@ -750,85 +868,93 @@ typedef struct {
         }
     }
 
-    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* styleSheet = hasStyleSheetRules == YES ?
-        [_styleSheet styleForNode:(id<IJSVGStyleSheetSelectorNode>)[self selectorNodeForElement:element] ?: node] : nil;
-  
+    BOOL isFilterPrimitive = [node isKindOfClass:IJSVGFilterPrimitive.class];
+    // Reuse declarations while resolving inherited values on each new node.
+    BOOL cacheFilterAttributes = raw != nil && ignoringAttributes == nil &&
+        self.selectorScope == nil && (isFilterPrimitive || node.type == IJSVGNodeTypeFilter);
+    NSUInteger styleRuleCount = _styleSheet.ruleCount;
+    BOOL reuseFilterAttributes = cacheFilterAttributes && raw->filterEntries != nil &&
+        raw->filterRuleCount == styleRuleCount;
+    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* styleSheet = nil;
     __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* nodeStyle = nil;
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
-        nodeStyle = [self.inlineStyles objectForKey:value];
-        if(nodeStyle == nil) {
-            nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
-            if(self.inlineStyles == nil) {
-                self.inlineStyles = [[NSCache alloc] init];
-                self.inlineStyles.countLimit = 256;
-                self.inlineStyles.totalCostLimit = 1024 * 1024;
+    if(reuseFilterAttributes) {
+        IJSVGParserRestoreFilterAttributes(raw, attributeValues);
+        styleSheet = raw->filterStyle;
+        nodeStyle = raw->filterInlineStyle;
+    } else {
+        styleSheet = hasStyleSheetRules == YES ?
+            [_styleSheet styleForNode:(id<IJSVGStyleSheetSelectorNode>)[self selectorNodeForElement:element] ?: node] :
+            nil;
+
+        if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStyle, &value)) {
+            nodeStyle = [self.inlineStyles objectForKey:value];
+            if(nodeStyle == nil) {
+                nodeStyle = [IJSVGStyleSheetStyle parseStyleString:value];
+                if(self.inlineStyles == nil) {
+                    self.inlineStyles = [[NSCache alloc] init];
+                    self.inlineStyles.countLimit = 1024;
+                    self.inlineStyles.totalCostLimit = 1024 * 1024;
+                }
+                NSUInteger cost = value.length * sizeof(unichar);
+                [self.inlineStyles setObject:nodeStyle
+                                      forKey:value
+                                        cost:cost];
             }
-            NSUInteger cost = value.length * sizeof(unichar);
-            [self.inlineStyles setObject:nodeStyle forKey:value cost:cost];
         }
 
-    }
+        IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes,
+            attributeValues);
 
-    IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
+        if(cacheFilterAttributes) {
+            IJSVGParserCacheFilterAttributes(raw, attributeValues, styleSheet,
+                nodeStyle, styleRuleCount);
+        }
+    }
     IJSVGApplyTextAttributes(node, attributeValues);
 
-    if([node isKindOfClass:IJSVGPath.class] &&
-       IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePathLength, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePathLength, &value) &&
+        [node isKindOfClass:IJSVGPath.class]) {
         NSArray<IJSVGUnitLength*>* lengths = IJSVGUnitLengthsFromString(value);
         if(lengths.count == 1 && lengths.firstObject.originalType == IJSVGUnitLengthTypeNumber) {
             ((IJSVGPath*)node).pathLength = @(lengths.firstObject.value);
         }
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeEnableBackground, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeEnableBackground, &value)) {
         IJSVGApplyBackgroundAttribute(node, value);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeColorInterpolationFilters, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeColorInterpolationFilters, &value)) {
         node.filterColorInterpolation = IJSVGColorInterpolationForString(value);
     }
-    if([node isKindOfClass:IJSVGFilterPrimitive.class]) {
-        static NSDictionary<NSString*, NSNumber*>* parameterAttributes;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            NSMutableDictionary<NSString*, NSNumber*>* attributes = [[NSMutableDictionary alloc] init];
-            for(NSString* name in IJSVGFilterPrimitive.parameterNames) {
-                NSUInteger attribute = IJSVGNodeAttributeForName(name);
-                if(attribute != NSNotFound) {
-                    attributes[name] = @(attribute);
-                }
-            }
-            parameterAttributes = attributes.copy;
-        });
-
-        NSMutableDictionary<NSString*, NSString*>* parameters = [[NSMutableDictionary alloc] init];
-        for(NSString* name in parameterAttributes) {
-            IJSVGNodeAttribute attribute = (IJSVGNodeAttribute)parameterAttributes[name].unsignedIntegerValue;
-            if(IJSVGAttributeHasValue(attributeValues, attribute, &value)) {
-                parameters[name] = value;
-            }
-        }
+    if(isFilterPrimitive) {
+        NSDictionary<NSString*, NSString*>* parameters = reuseFilterAttributes ?
+            raw->filterParameters :
+            IJSVGFilterParametersFromAttributes(attributeValues);
         IJSVGFilterPrimitive* primitive = (IJSVGFilterPrimitive*)node;
         primitive.parameters = parameters;
+        if(cacheFilterAttributes) {
+            raw->filterParameters = primitive.parameters;
+        }
         primitive.input2 = parameters[IJSVGAttributeIn2];
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeX, &value) &&
-       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeX, node)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeX, &value) &&
+        !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeX, node)) {
         node.x = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeY, &value) &&
-       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeY, node)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeY, &value) &&
+        !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeY, node)) {
         node.y = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeWidth, &value) &&
-       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeWidth, node)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeWidth, &value) &&
+        !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeWidth, node)) {
         IJSVGUnitLength* width = IJSVGDimensionFromString(value, node.type);
         if(width != nil) {
             node.width = width;
         }
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeHeight, &value) &&
-       !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeHeight, node)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeHeight, &value) &&
+        !IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttributeHeight, node)) {
         IJSVGUnitLength* height = IJSVGDimensionFromString(value, node.type);
         if(height != nil) {
             node.height = height;
@@ -843,24 +969,24 @@ typedef struct {
         symbol.refY = IJSVGSymbolReferenceFromString(IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeRefY),
                                                      IJSVGNodeAttributeRefY);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOpacity, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOpacity, &value)) {
         node.opacity = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeOpacity, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeOpacity, &value)) {
         node.strokeOpacity = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeWidth, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeWidth, &value)) {
         node.strokeWidth = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashOffset, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashOffset, &value)) {
         node.strokeDashOffset = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeMiterLimit, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeMiterLimit, &value)) {
         node.strokeMiterLimit = [IJSVGUnitLength unitWithString:value];
     }
 
     IJSVGNodeParserPostProcessBlock postProcessBlock = nil;
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMask, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMask, &value)) {
         NSString* maskValue = value;
         postProcessBlock = ^{
             NSString* identifier = [IJSVGUtils defURL:maskValue];
@@ -871,8 +997,8 @@ typedef struct {
             }
         };
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPath, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPath, &value)) {
         NSString* clipPathValue = value;
         IJSVGNodeParserPostProcessBlock previousPostProcessBlock = postProcessBlock;
         postProcessBlock = ^{
@@ -890,7 +1016,7 @@ typedef struct {
         };
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFilter, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFilter, &value)) {
         NSString* filterValue = value;
         IJSVGNodeParserPostProcessBlock previousPostProcessBlock = postProcessBlock;
         postProcessBlock = ^{
@@ -903,36 +1029,35 @@ typedef struct {
         };
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFilterUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFilterUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePrimitiveUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePrimitiveUnits, &value)) {
         node.contentUnits = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskType, &value)
-        && [node isKindOfClass:IJSVGMask.class]) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskType, &value) && [node isKindOfClass:IJSVGMask.class]) {
         ((IJSVGMask*)node).maskType = [value caseInsensitiveCompare:@"alpha"] == NSOrderedSame
             ? IJSVGMaskTypeAlpha : IJSVGMaskTypeLuminance;
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePatternUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternUnits, &value)) {
         node.units = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskContentUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskContentUnits, &value)) {
         node.contentUnits = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePatternContentUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternContentUnits, &value)) {
         node.contentUnits = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPathUnits, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPathUnits, &value)) {
         node.contentUnits = [IJSVGUtils unitTypeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformOrigin, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformOrigin, &value)) {
         if([value isEqualToString:@"inherit"]) {
             node.transformOrigin = node.styleParent.transformOrigin;
         } else {
@@ -940,28 +1065,28 @@ typedef struct {
                 ([@[@"initial", @"unset"] containsObject:value.lowercaseString]) ? @"center" : value);
         }
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformBox, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformBox, &value)) {
         node.transformBox = [value isEqualToString:@"inherit"] ? node.styleParent.transformBox : value;
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
         BOOL css = [nodeStyle property:IJSVGAttributeTransform] != nil ||
             [styleSheet property:IJSVGAttributeTransform] != nil;
-        IJSVGApplyTransformAttribute(node, value, css);
+        IJSVGApplyParsedTransforms(node, [self parsedTransformsForValue:value allowCSSUnits:css]);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientTransform, &value)) {
-        IJSVGApplyTransformAttribute(node, value, NO);
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientTransform, &value)) {
+        IJSVGApplyParsedTransforms(node, [self parsedTransformsForValue:value allowCSSUnits:NO]);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePatternTransform, &value)) {
-        IJSVGApplyTransformAttribute(node, value, NO);
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternTransform, &value)) {
+        IJSVGApplyParsedTransforms(node, [self parsedTransformsForValue:value allowCSSUnits:NO]);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineCap, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineCap, &value)) {
         node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineJoin, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineJoin, &value)) {
         node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value];
     }
-    
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStroke, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStroke, &value)) {
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:YES];
@@ -971,7 +1096,7 @@ typedef struct {
         }
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashArray, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashArray, &value)) {
         if([value isEqualToString:IJSVGStringNone]) {
             node.strokeDashArrayCount = 0;
             node.strokeDashLengths = nil;
@@ -989,7 +1114,7 @@ typedef struct {
         }
     }
 
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeColor, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeColor, &value)) {
         NSString* keyword = value.lowercaseString;
         if([keyword isEqualToString:@"initial"]) {
             node.currentColor = NSColor.blackColor;
@@ -1003,12 +1128,12 @@ typedef struct {
             node.currentColor = [IJSVGColor colorFromString:value];
         }
     }
-    if([node isKindOfClass:IJSVGRootNode.class] &&
-       IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeBackgroundColor, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeBackgroundColor, &value) &&
+        [node isKindOfClass:IJSVGRootNode.class]) {
         ((IJSVGRootNode*)node).backgroundColor = [value caseInsensitiveCompare:@"currentColor"] == NSOrderedSame
             ? node.currentColor : [IJSVGColor colorFromString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFill, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFill, &value)) {
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
         if(fillIdentifier != nil) {
             [self applyPaintReference:fillIdentifier node:node element:element stroke:NO];
@@ -1017,30 +1142,30 @@ typedef struct {
             node.fill = colorNode;
         }
     }
-    
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFillOpacity, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFillOpacity, &value)) {
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
         node.vectorEffect = [IJSVGUtils vectorEffectForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePaintOrder, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePaintOrder, &value)) {
         node.paintOrder = IJSVGPaintOrderFromString(value);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeIsolation, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeIsolation, &value)) {
         node.isolated = IJSVGIsolationFromString(value, node.parentNode.isolated);
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeBlendMode, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeBlendMode, &value)) {
         node.blendMode = [IJSVGUtils blendModeForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeFillRule, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFillRule, &value)) {
         node.windingRule = [IJSVGUtils windingRuleForString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeClipRule, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipRule, &value)) {
         node.clipRule = [IJSVGUtils windingRuleForString:value];
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeVisibility, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeVisibility, &value)) {
         NSString* keyword = value.lowercaseString;
         if([keyword isEqualToString:@"hidden"] || [keyword isEqualToString:@"collapse"]) {
             node.visibility = IJSVGVisibilityHidden;
@@ -1050,22 +1175,22 @@ typedef struct {
             node.visibility = IJSVGVisibilityInherit;
         }
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeDisplay, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeDisplay, &value)) {
         if([value caseInsensitiveCompare:IJSVGStringNone] == NSOrderedSame) {
             node.shouldRender = NO;
         }
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOffset, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOffset, &value)) {
         node.offset = [IJSVGUnitLength unitWithString:value];
     }
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStopOpacity, &value)) {
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopOpacity, &value)) {
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStopColor, &value)) {
         NSColor* color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame
-            ? node.currentColor : [IJSVGColor colorFromString:value];
+            ? node.currentColor : [self parsedStopColorForValue:value];
         IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
         if(color == nil) {
             colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
@@ -1076,8 +1201,8 @@ typedef struct {
         }
         node.fill = colorNode;
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
         if([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame ||
            [value caseInsensitiveCompare:@"scroll"] == NSOrderedSame ||
            [value caseInsensitiveCompare:@"clip"] == NSOrderedSame) {
@@ -1092,8 +1217,8 @@ typedef struct {
                                                               : IJSVGOverflowVisibilityVisible;
         }
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributeViewBox, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeViewBox, &value)) {
         CGFloat* floats = [IJSVGUtils parseViewBox:value];
         node.viewBox = [IJSVGUnitRect rectWithX:floats[0]
                                               y:floats[1]
@@ -1101,8 +1226,8 @@ typedef struct {
                                          height:floats[3]];
         ((void)free(floats)), floats = NULL;
     }
-  
-    if(IJSVGAttributeHasValue(attributeValues, IJSVGNodeAttributePreserveAspectRatio, &value)) {
+
+    if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePreserveAspectRatio, &value)) {
         IJSVGViewBoxMeetOrSlice meetOrSlice;
         IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value
                                                                meetOrSlice:&meetOrSlice];
@@ -1142,8 +1267,7 @@ typedef struct {
     if(identifier != nil) {
         NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
         // Only geometry is valid here; do not recurse through arbitrary references.
-        IJSVGNodeType type = [IJSVGNode typeForString:definition.localName
-                                                 kind:definition.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(definition.localName, definition.kind);
         if([IJSVGNode typeIsPathable:type]) {
             node.textPath = (IJSVGPath*)[self computeDetachedNodeWithIdentifier:identifier
                                                                 referencingNode:nil
@@ -1190,8 +1314,8 @@ typedef struct {
         if(child.kind == NSXMLTextKind) {
             [content addObject:child.stringValue ?: @""];
         } else {
-            IJSVGNodeType childType = [IJSVGNode typeForString:child.localName
-                                                        kind:child.kind];
+            IJSVGNodeType childType = IJSVGNodeTypeForString(child.localName,
+                                                             child.kind);
             if(childType == IJSVGNodeTypeTextSpan || childType == IJSVGNodeTypeTextPath ||
                childType == IJSVGNodeTypeAnchor) {
                 IJSVGText* span = [self parseTextElement:(NSXMLElement*)child
@@ -1250,6 +1374,51 @@ typedef struct {
     }
 }
 
+- (NSArray<IJSVGTransform*>*)parsedTransformsForValue:(NSString*)value
+                                        allowCSSUnits:(BOOL)allowCSSUnits
+{
+    NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* cache = allowCSSUnits
+        ? _parsedCSSTransforms : _parsedSVGTransforms;
+    NSArray<IJSVGTransform*>* transforms = cache[value];
+    if(transforms != nil) {
+        return [[NSArray alloc] initWithArray:transforms
+                                    copyItems:YES];
+    }
+    transforms = [IJSVGTransform transformsForString:value
+                                       allowCSSUnits:allowCSSUnits];
+    if(value.length <= 1024 && cache.count < 128) {
+        if(cache == nil) {
+            cache = [[NSMutableDictionary alloc] init];
+            if(allowCSSUnits) {
+                _parsedCSSTransforms = cache;
+            } else {
+                _parsedSVGTransforms = cache;
+            }
+        }
+        cache[value] = [[NSArray alloc] initWithArray:transforms
+                                            copyItems:YES];
+    }
+    return transforms;
+}
+
+- (NSColor*)parsedStopColorForValue:(NSString*)value
+{
+    if(![value hasPrefix:@"#"]) {
+        return [IJSVGColor colorFromString:value];
+    }
+    NSColor* color = _parsedColors[value];
+    if(color == nil) {
+        color = [IJSVGColor colorFromString:value];
+        if(color != nil && _parsedColors.count < 256) {
+            if(_parsedColors == nil) {
+                _parsedColors = [[NSMutableDictionary alloc] init];
+            }
+            _parsedColors[value] = color;
+        }
+    }
+    return color;
+}
+
 - (IJSVGColorNode*)colorPaintForValue:(NSString*)value
 {
     NSColor* color = [IJSVGColor colorFromString:value];
@@ -1283,7 +1452,7 @@ typedef struct {
                   postProcessBlock:(IJSVGNodeParserPostProcessBlock*)postProcessBlock
 {
     // Definitions are instantiated only through a marker reference.
-    NSString* identifier = [element attributeForName:IJSVGAttributeID].stringValue;
+    NSString* identifier = IJSVGParserElementIdentifier(element);
     if(identifier == nil || ![self.activeReferences containsObject:identifier]) {
         return nil;
     }
@@ -1321,8 +1490,7 @@ typedef struct {
 {
     NSString* name = element.localName;
     NSXMLNodeKind nodeKind = element.kind;
-    IJSVGNodeType nodeType = [IJSVGNode typeForString:name
-                                                 kind:nodeKind];
+    IJSVGNodeType nodeType = IJSVGNodeTypeForString(name, nodeKind);
         
     [self parseDefElement:element
                parentNode:node
@@ -1518,7 +1686,7 @@ typedef struct {
         }
         NSXMLElement* child = (NSXMLElement*)childNode;
         if(isSwitch && child != selectedChild &&
-           [IJSVGNode typeForString:child.localName kind:child.kind] != IJSVGNodeTypeStyle) {
+           IJSVGNodeTypeForString(child.localName, child.kind) != IJSVGNodeTypeStyle) {
             continue;
         }
         [self parseElement:child
@@ -1546,7 +1714,7 @@ typedef struct {
 {
     IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
     node.name = element.localName;
-    node.identifier = [element attributeForName:IJSVGAttributeID].stringValue;
+    node.identifier = IJSVGParserElementIdentifier(element);
     NSString* className = [element attributeForName:IJSVGAttributeClass].stringValue;
     node.classNameList = IJSVGClassNameList(className);
     [nodes setObject:node forKey:element];
@@ -1635,7 +1803,7 @@ typedef struct {
 - (BOOL)canReuseSimpleClipElement:(NSXMLElement*)source
 {
     if(_styleSheet.ruleCount != 0 ||
-       [IJSVGNode typeForString:source.localName kind:source.kind] != IJSVGNodeTypeClipPath) {
+       IJSVGNodeTypeForString(source.localName, source.kind) != IJSVGNodeTypeClipPath) {
         return NO;
     }
     NSNumber* cached = [self.simpleClipCandidates objectForKey:source];
@@ -1660,8 +1828,7 @@ typedef struct {
         if(child.kind != NSXMLElementKind) {
             continue;
         }
-        switch([IJSVGNode typeForString:child.localName
-                                   kind:child.kind]) {
+        switch(IJSVGNodeTypeForString(child.localName, child.kind)) {
             case IJSVGNodeTypePath:
             case IJSVGNodeTypeRect:
             case IJSVGNodeTypeCircle:
@@ -1835,6 +2002,11 @@ typedef struct {
 - (void)parseStyleElement:(NSXMLElement*)element
                parentNode:(IJSVGNode*)parentNode
 {
+    // Repeating the latest style block cannot change the cascade.
+    // Keep registrations separated by other blocks in their existing order.
+    if(_lastParsedStyleElement == element) {
+        return;
+    }
     NSString* media = [element attributeForName:IJSVGAttributeMedia].stringValue;
     if(media.length != 0) {
         CGSize viewport = _rootSize;
@@ -1854,6 +2026,7 @@ typedef struct {
             return;
         }
     }
+    _lastParsedStyleElement = element;
     [_styleSheet parseStyleBlock:element.stringValue];
 }
 
@@ -2295,8 +2468,8 @@ typedef struct {
     }
     [self.activeReferences addObject:xlinkID];
     @try {
-        IJSVGNodeType type = [IJSVGNode typeForString:detachedElement.localName
-                                                 kind:detachedElement.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(detachedElement.localName,
+                                                    detachedElement.kind);
         IJSVGNode* shadowNode = type == IJSVGNodeTypeSymbol
             ? [self parseSymbolElement:detachedElement parentNode:node]
             : [self parseElement:detachedElement parentNode:node];
@@ -2372,7 +2545,7 @@ typedef struct {
 - (void)parseFilterChildren:(NSXMLElement*)element parentNode:(IJSVGGroup*)node
 {
     for(NSXMLNode* child in element.children) {
-        IJSVGNodeType type = [IJSVGNode typeForString:child.localName kind:child.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(child.localName, child.kind);
         if([IJSVGFilterPrimitive type:node.type acceptsChildType:type]) {
             [self parseFilterPrimitiveElement:(NSXMLElement*)child parentNode:node];
         }
@@ -2407,8 +2580,7 @@ typedef struct {
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
     for(NSString* identifier in identifiers) {
         NSXMLElement* definition = [self detachedElementWithIdentifier:identifier];
-        if([IJSVGNode typeForString:definition.localName
-                               kind:definition.kind] != IJSVGNodeTypeFilter) {
+        if(IJSVGNodeTypeForString(definition.localName, definition.kind) != IJSVGNodeTypeFilter) {
             return @[];
         }
         IJSVGFilter* filter = (IJSVGFilter*)[self filterReferenceWithIdentifier:identifier
@@ -2425,7 +2597,7 @@ typedef struct {
 - (IJSVGFilterPrimitive*)parseFilterPrimitiveElement:(NSXMLElement*)element
                                           parentNode:(IJSVGGroup*)parentNode
 {
-    IJSVGNodeType type = [IJSVGNode typeForString:element.localName kind:element.kind];
+    IJSVGNodeType type = IJSVGNodeTypeForString(element.localName, element.kind);
     IJSVGFilterPrimitive* node = [[IJSVGFilterPrimitive alloc] init];
     node.type = type;
     node.name = element.localName;
@@ -2548,8 +2720,8 @@ typedef struct {
         return;
     }
     for(NSXMLElement* childElement in element.children) {
-        IJSVGNodeType type = [IJSVGNode typeForString:childElement.localName
-                                                 kind:childElement.kind];
+        IJSVGNodeType type = IJSVGNodeTypeForString(childElement.localName,
+                                                    childElement.kind);
         
         // we can exit early, not a node we know of
         if(type == IJSVGNodeTypeNotFound) {
@@ -2557,7 +2729,7 @@ typedef struct {
         }
         
         // we always want style elements to be passed
-        NSString* identifier = [childElement attributeForName:IJSVGAttributeID].stringValue;
+        NSString* identifier = IJSVGParserElementIdentifier(childElement);
         if(identifier != nil) {
             [self detachElement:childElement
                  withIdentifier:identifier];
@@ -2596,7 +2768,7 @@ typedef struct {
 
 - (NSXMLNode*)resolveXLinkAttributeForElement:(NSXMLElement*)element
 {
-    // SVG 2 href takes precedence; resolve legacy links by namespace so aliases work.
+    // SVG href takes precedence and legacy links resolve through their namespace.
     NSXMLNode* attributeNode = [element attributeForName:IJSVGAttributeHref];
     if(attributeNode == nil) {
         attributeNode = [element attributeForLocalName:IJSVGAttributeHref
@@ -2610,9 +2782,9 @@ typedef struct {
 
 - (NSString*)resolveXLinkAttributeStringForElement:(NSXMLElement*)element
 {
-    NSXMLNode* node = [self resolveXLinkAttributeForElement:element];
-    if([node.stringValue hasPrefix:@"#"] && node.stringValue.length > 1) {
-        return [node.stringValue substringFromIndex:1];
+    NSString* value = [self resolveXLinkAttributeForElement:element].stringValue;
+    if([value hasPrefix:@"#"] && value.length > 1) {
+        return [value substringFromIndex:1];
     }
     return nil;
 }

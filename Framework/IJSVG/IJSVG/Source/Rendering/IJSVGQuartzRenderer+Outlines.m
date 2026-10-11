@@ -25,6 +25,7 @@
 - (IJSVGRootPaint*)measurementPaintForRootNode:(IJSVGRootNode*)rootNode
                               includingFilters:(BOOL)includingFilters;
 - (NSMutableDictionary<NSNumber*, id>*)outlinePathCache;
+- (BOOL)outlineFilterModesSharePaint;
 - (CGRect)artworkBoundsForPaint:(IJSVGPaint*)paint;
 
 @end
@@ -101,7 +102,8 @@ static void IJSVGOutlinePerformWork(NSUInteger workers, void (^work)(size_t))
         }
     };
     if(workers > 1) {
-        dispatch_apply(workers, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), perform);
+        dispatch_apply(workers, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
+                       perform);
     } else {
         perform(0);
     }
@@ -157,7 +159,8 @@ static IJSVGOutlinePathEntry IJSVGOutlineJoinEntries(IJSVGOutlinePathEntry a,
         a.maximum = simd_max(a.maximum, b.maximum);
         return a;
     }
-    return IJSVGOutlineEntry(CGPathCreateCopyByUnioningPath(a.path, b.path, false), a.order);
+    return IJSVGOutlineEntry(CGPathCreateCopyByUnioningPath(a.path, b.path, false),
+                             a.order);
 }
 
 static BOOL IJSVGOutlineUnionEntries(const IJSVGOutlinePathEntry* input,
@@ -183,7 +186,8 @@ static BOOL IJSVGOutlineUnionEntries(const IJSVGOutlinePathEntry* input,
     return complete;
 }
 
-static void IJSVGOutlineReleaseEntries(IJSVGOutlinePathEntry* entries, NSUInteger count)
+static void IJSVGOutlineReleaseEntries(IJSVGOutlinePathEntry* entries,
+                                       NSUInteger count)
 {
     for(NSUInteger index = 0; index < count; index++) {
         CGPathRelease(entries[index].path);
@@ -470,7 +474,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
                                        pendingFilters:pending];
     }
     if(pending != nil && [paint isKindOfClass:IJSVGFilterPaint.class]) {
-        NSArray<IJSVGFilterPrimitive*>* primitives = ((IJSVGFilterPaint*)paint).filter.primitives;
+        NSArray<IJSVGFilterPrimitive*>* primitives = ((IJSVGFilterPaint*)paint).filterMetadata.primitives;
         // Containment pays for itself on expanding filters, not cheap inner shadows.
         if(primitives.count == 1 && (primitives[0].type == IJSVGNodeTypeFilterGaussianBlur ||
                                     primitives[0].type == IJSVGNodeTypeFilterDropShadow)) {
@@ -706,9 +710,11 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 {
     IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
     graph.filter = paint.filter;
+    graph.resolvedMetadata = paint.filterMetadata;
     graph.boundingBox = paint.boundingBox;
     graph.viewPort = paint.viewPort;
-    return [graph newOutlineForSourcePath:outline];
+    return [graph newOutlineForSourcePath:outline
+                        backgroundIsEmpty:!paint.usesBackground];
 }
 
 - (CGPathRef)newViewportOutline:(CGPathRef)outline
@@ -806,9 +812,12 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
             (void)shape.hasPointSubpaths;
         }
     }
-    if([paint isKindOfClass:IJSVGFilterPaint.class] &&
-       ![IJSVGFilterGraph canOutlineFilter:((IJSVGFilterPaint*)paint).filter]) {
-        return NO;
+    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        IJSVGFilterPaint* filterPaint = (IJSVGFilterPaint*)paint;
+        if(![IJSVGFilterGraph canOutlineMetadata:filterPaint.filterMetadata
+                               backgroundIsEmpty:!filterPaint.usesBackground]) {
+            return NO;
+        }
     }
     for(IJSVGPaint* child in paint.children) {
         if(![self canOutlinePaint:child]) {
@@ -843,6 +852,10 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
         }
         cached = path == NULL ? NSNull.null : CFBridgingRelease(path);
         cache[key] = cached;
+        // Keep separate mode entries while sharing identical resolved coverage.
+        if([self outlineFilterModesSharePaint]) {
+            cache[@(key.unsignedIntegerValue ^ 2)] = cached;
+        }
     }
     return cached == NSNull.null ? NULL : (__bridge CGPathRef)cached;
 }

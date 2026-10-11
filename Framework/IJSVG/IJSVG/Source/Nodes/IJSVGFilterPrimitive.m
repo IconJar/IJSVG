@@ -162,23 +162,69 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     return _edgeMode;
 }
 
+- (void)resetParameterState
+{
+    _preparedValues = nil;
+    _parsedNumbers = nil;
+    _compositeOperator = IJSVGFilterCompositeOperatorOver;
+    _edgeMode = IJSVGFilterEdgeModeUnspecified;
+    _colorMatrixType = IJSVGFilterColorMatrixTypeMatrix;
+    _transferType = IJSVGFilterTransferTypeIdentity;
+    _morphologyOperator = IJSVGFilterMorphologyOperatorErode;
+    _turbulenceType = IJSVGFilterTurbulenceTypeTurbulence;
+    _xChannel = IJSVGFilterColorChannelAlpha;
+    _yChannel = IJSVGFilterColorChannelAlpha;
+    _filterBlendMode = IJSVGBlendModeNormal;
+    _preserveAlpha = NO;
+    _stitchTiles = NO;
+}
+
+- (void)parseParameterOperators
+{
+    NSString* value = _parameters[IJSVGAttributeOperator];
+    if(value != nil) {
+        _compositeOperator = IJSVGFilterCompositeOperatorForString(value);
+        _morphologyOperator = IJSVGFilterMorphologyOperatorForString(value);
+    }
+    value = _parameters[IJSVGAttributeType];
+    if(value != nil) {
+        _colorMatrixType = IJSVGFilterColorMatrixTypeForString(value);
+        _transferType = IJSVGFilterTransferTypeForString(value);
+        _turbulenceType = IJSVGFilterTurbulenceTypeForString(value);
+    }
+}
+
+- (void)parseParameterOptions
+{
+    NSString* value = _parameters[IJSVGAttributeEdgeMode];
+    if(value != nil) {
+        _edgeMode = IJSVGFilterEdgeModeForString(value);
+    }
+    value = _parameters[IJSVGAttributeXChannelSelector];
+    if(value != nil) {
+        _xChannel = IJSVGFilterColorChannelForString(value);
+    }
+    value = _parameters[IJSVGAttributeYChannelSelector];
+    if(value != nil) {
+        _yChannel = IJSVGFilterColorChannelForString(value);
+    }
+    value = _parameters[IJSVGAttributeMode];
+    if(value != nil) {
+        _filterBlendMode = IJSVGBlendModeForString(value);
+    }
+    _preserveAlpha = [_parameters[IJSVGAttributePreserveAlpha] isEqualToString:IJSVGStringTrue];
+    _stitchTiles = [_parameters[IJSVGAttributeStitchTiles] isEqualToString:IJSVGStringStitch];
+}
+
 - (void)setParameters:(NSDictionary<NSString*, NSString*>*)parameters
 {
     @synchronized(self) {
         _parameters = parameters.copy;
-        _preparedValues = nil;
-        _parsedNumbers = nil;
-        _compositeOperator = IJSVGFilterCompositeOperatorForString(_parameters[IJSVGAttributeOperator]);
-        _edgeMode = IJSVGFilterEdgeModeForString(_parameters[IJSVGAttributeEdgeMode]);
-        _colorMatrixType = IJSVGFilterColorMatrixTypeForString(_parameters[IJSVGAttributeType]);
-        _transferType = IJSVGFilterTransferTypeForString(_parameters[IJSVGAttributeType]);
-        _morphologyOperator = IJSVGFilterMorphologyOperatorForString(_parameters[IJSVGAttributeOperator]);
-        _turbulenceType = IJSVGFilterTurbulenceTypeForString(_parameters[IJSVGAttributeType]);
-        _xChannel = IJSVGFilterColorChannelForString(_parameters[IJSVGAttributeXChannelSelector]);
-        _yChannel = IJSVGFilterColorChannelForString(_parameters[IJSVGAttributeYChannelSelector]);
-        _filterBlendMode = IJSVGBlendModeForString(_parameters[IJSVGAttributeMode]);
-        _preserveAlpha = [_parameters[IJSVGAttributePreserveAlpha] isEqualToString:IJSVGStringTrue];
-        _stitchTiles = [_parameters[IJSVGAttributeStitchTiles] isEqualToString:IJSVGStringStitch];
+        [self resetParameterState];
+        if(_parameters.count != 0) {
+            [self parseParameterOperators];
+            [self parseParameterOptions];
+        }
     }
 }
 
@@ -245,7 +291,8 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 {
     [super setDefaults];
     self.shouldRender = NO;
-    self.parameters = nil;
+    _parameters = nil;
+    [self resetParameterState];
 }
 
 /// Copies filter inputs and image references.
@@ -280,7 +327,7 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 }
 
 + (BOOL)type:(IJSVGNodeType)parentType
-    acceptsChildType:(IJSVGNodeType)childType
+acceptsChildType:(IJSVGNodeType)childType
 {
     if(parentType == IJSVGNodeTypeFilter) {
         return [self isPrimitiveType:childType];

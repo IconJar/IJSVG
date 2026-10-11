@@ -159,7 +159,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
                                          y:(CGFloat)y
 {
     IJSVGTransform* transform = [[self alloc] init];
-    transform.command = IJSVGTransformCommandTranslate;
+    transform->_command = IJSVGTransformCommandTranslate;
     CGFloat params[2] = { x, y };
     [transform setParameters:params
                        count:2];
@@ -170,7 +170,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
                                    y:(CGFloat)y
 {
     IJSVGTransform* transform = [[self alloc] init];
-    transform.command = IJSVGTransformCommandScale;
+    transform->_command = IJSVGTransformCommandScale;
     CGFloat params[2] = { x, y };
     [transform setParameters:params
                        count:2];
@@ -257,8 +257,8 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
         
         // create a new transform object and parse the parameters
         IJSVGTransform* transform = [[self.class alloc] init];
-        transform.command = commandType;
-        transform.sort = [self.class sortForTransformCommand:commandType];
+        transform->_command = commandType;
+        transform->_sort = [self.class sortForTransformCommand:commandType];
         [transform setParameters:params
                            count:parameterCount];
 

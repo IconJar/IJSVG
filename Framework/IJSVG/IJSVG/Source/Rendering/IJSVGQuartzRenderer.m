@@ -611,6 +611,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return outside.copy;
 }
 
+- (BOOL)outlineFilterModesSharePaint
+{
+    return !_renderingOptions.filtersEnabled ||
+        (_geometryMeasurementPaint != nil && _geometryMeasurementPaint == _effectsMeasurementPaint);
+}
+
 - (NSMutableDictionary<NSNumber*, id>*)outlinePathCache
 {
     if(_outlinePaths == nil) {

@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGBitFlags.h>
+#import <IJSVG/IJSVGBitFlags64.h>
 
 @implementation IJSVGBitFlags
 
@@ -28,8 +29,31 @@
 
 - (void)addBits:(IJSVGBitFlags*)storage
 {
-    for(int i = 0; i < MIN(_length, storage.length); i++) {
-        if([storage bitIsSet:i] == YES) {
+    int count = MIN(_length, storage.length);
+    Class sourceClass = storage.class;
+    if(sourceClass == IJSVGBitFlags64.class) {
+        uint64_t mask = storage.bitMask;
+        while(mask != 0) {
+            int bit = __builtin_ctzll(mask);
+            if(bit >= count) {
+                break;
+            }
+            _storage[bit] = 1;
+            mask &= mask - 1;
+        }
+        return;
+    }
+    if(sourceClass != IJSVGBitFlags.class) {
+        for(int i = 0; i < count; i++) {
+            if([storage bitIsSet:i]) {
+                _storage[i] = 1;
+            }
+        }
+        return;
+    }
+    const int* source = storage.storage;
+    for(int i = 0; i < count; i++) {
+        if(source[i] == 1) {
             _storage[i] = 1;
         }
     }
@@ -53,12 +77,16 @@
 
 - (void)setBit:(int)bit
 {
-    *(_storage + bit) = 1;
+    if(bit >= 0 && bit < _length) {
+        _storage[bit] = 1;
+    }
 }
 
 - (void)unsetBit:(int)bit
 {
-    *(_storage + bit) = 0;
+    if(bit >= 0 && bit < _length) {
+        _storage[bit] = 0;
+    }
 }
 
 - (void)setAllBits

@@ -28,6 +28,105 @@
 
 @implementation IJSVGUtilityParsingTests
 
+- (void)testParsedLengthsKeepMutableInputAndCoordinateContextsIndependent
+{
+    NSMutableString* input = [[NSMutableString alloc] initWithString:@"2in"];
+    for(NSUInteger iteration = 0; iteration < 3; iteration++) {
+        [input setString:@"2in"];
+        IJSVGUnitLength* user = [IJSVGUnitLength unitWithString:input
+                                                   fromUnitType:IJSVGUnitUserSpaceOnUse];
+        IJSVGUnitLength* box = [IJSVGUnitLength unitWithString:input
+                                                  fromUnitType:IJSVGUnitObjectBoundingBox];
+        XCTAssertEqual(user.value, 192);
+        XCTAssertEqual(user.type, IJSVGUnitLengthTypeNumber);
+        XCTAssertEqual(box.type, IJSVGUnitLengthTypePercentage);
+        XCTAssertEqual(box.originalType, IJSVGUnitLengthTypeIN);
+        user.value = 99;
+        XCTAssertEqual(box.value, 192);
+        XCTAssertEqual([IJSVGUnitLength unitWithString:input].value, 192);
+        [input setString:@"2em"];
+        IJSVGUnitLength* font = [IJSVGUnitLength unitWithString:input
+                                                   fromUnitType:IJSVGUnitObjectBoundingBox];
+        XCTAssertEqual(font.value, 2);
+        XCTAssertEqual(font.type, IJSVGUnitLengthTypeEM);
+        [input setString:@"inherit"];
+        XCTAssertNil([IJSVGUnitLength unitWithString:input]);
+        [input setString:@"25%"];
+        XCTAssertEqualWithAccuracy([IJSVGUnitLength unitWithString:input].value, .25, .0001);
+    }
+}
+
+- (void)testParsedLengthsRemainIndependentAcrossThreads
+{
+    NSUInteger failures[4] = { 0 };
+    NSUInteger* counts = failures;
+    dispatch_apply(4, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t worker) {
+        @autoreleasepool {
+            for(NSUInteger index = 0; index < 256; index++) {
+                NSUInteger scalar = worker * 256 + index;
+                NSString* input = [NSString stringWithFormat:@"%lu%%", scalar];
+                IJSVGUnitLength* length = [IJSVGUnitLength unitWithString:input];
+                if(length == nil || fabs(length.value - scalar / 100.0) > .000001 ||
+                    length.originalType != IJSVGUnitLengthTypePercentage) {
+                    counts[worker]++;
+                }
+                length.value = -1;
+            }
+        }
+    });
+    for(NSUInteger worker = 0; worker < 4; worker++) {
+        XCTAssertEqual(failures[worker], 0);
+    }
+}
+
+- (void)testScalarUnitFastPathMatchesGeneralParsing
+{
+    NSArray<NSString*>* values = @[
+        @"0", @"-0", @"+0", @"12.5", @"+.25", @"-.5", @"1.", @"1.e2",
+        @"1e-10", @"-2E+3", @"25%", @"-.5%", @"1e2%", @"-0%",
+        @"2em", @"2ex", @"12px", @"2in", @"inherit", @"invalid",
+        @"1e309", @"-1e309", @"1e-320", @"1e", @"1.2.3"
+    ];
+    for(NSString* value in values) {
+        IJSVGUnitLength* compact = [IJSVGUnitLength unitWithString:value];
+        IJSVGUnitLength* spaced = [IJSVGUnitLength unitWithString:
+                [NSString stringWithFormat:@" %@ ", value]];
+        XCTAssertEqual(compact == nil, spaced == nil, @"%@", value);
+        if(compact == nil || spaced == nil) {
+            continue;
+        }
+        XCTAssertEqual(compact.value, spaced.value, @"%@", value);
+        XCTAssertEqual(signbit(compact.value), signbit(spaced.value), @"%@", value);
+        XCTAssertEqual(compact.type, spaced.type, @"%@", value);
+        XCTAssertEqual(compact.originalType, spaced.originalType, @"%@", value);
+        XCTAssertEqual(compact.inherit, spaced.inherit, @"%@", value);
+    }
+}
+
+- (void)testSingleDigitLengthsKeepNumericUnitsAndIndependentStorage
+{
+    for(NSUInteger digit = 0; digit <= 9; digit++) {
+        NSString* value = [NSString stringWithFormat:@"%lu", digit];
+        IJSVGUnitLength* first = [IJSVGUnitLength unitWithString:value];
+        IJSVGUnitLength* second = [IJSVGUnitLength unitWithString:value];
+        IJSVGUnitLength* bounded = [IJSVGUnitLength unitWithString:value
+                                                      fromUnitType:IJSVGUnitObjectBoundingBox];
+        XCTAssertEqual(first.value, digit);
+        XCTAssertEqual(first.type, IJSVGUnitLengthTypeNumber);
+        XCTAssertEqual(first.originalType, IJSVGUnitLengthTypeNumber);
+        XCTAssertFalse(first.inherit);
+        XCTAssertEqual(bounded.value, digit);
+        XCTAssertEqual(bounded.type, IJSVGUnitLengthTypePercentage);
+        XCTAssertEqual(bounded.originalType, IJSVGUnitLengthTypeNumber);
+        first.value = 100;
+        XCTAssertEqual(second.value, digit);
+    }
+    XCTAssertEqual([IJSVGUnitLength unitWithString:@"12"].value, 12);
+    XCTAssertEqual([IJSVGUnitLength unitWithString:@"-1"].value, -1);
+    XCTAssertEqual([IJSVGUnitLength unitWithString:@" 1 "].value, 1);
+    XCTAssertEqualWithAccuracy([IJSVGUnitLength unitWithString:@"1%"].value, .01, .0001);
+}
+
 - (void)testBoundedFloatParsingStopsAtTheRequestedLength
 {
     const char number[] = { '1', '2', '.', '5' };
@@ -649,6 +748,65 @@
     [other setBit:4];
     [flags addBits:other];
     XCTAssertTrue([flags bitIsSet:4]);
+}
+
+- (void)testBitFlags64SetsEveryBitAndRejectsInvalidIndices
+{
+    IJSVGBitFlags64* flags = [[IJSVGBitFlags64 alloc] initWithLength:8];
+    XCTAssertEqual(flags.length, 64);
+    XCTAssertTrue(flags.storage == NULL);
+    [flags setAllBits];
+    XCTAssertEqual(flags.bitMask, UINT64_MAX);
+    for(int bit = 0; bit < 64; bit++) {
+        XCTAssertTrue([flags bitIsSet:bit]);
+    }
+    for(NSNumber* index in @[@(-1), @64, @95]) {
+        [flags unsetBit:index.intValue];
+        XCTAssertEqual(flags.bitMask, UINT64_MAX);
+        XCTAssertFalse([flags bitIsSet:index.intValue]);
+    }
+    [flags unsetBit:63];
+    uint64_t expected = UINT64_MAX >> 1;
+    XCTAssertEqual(flags.bitMask, expected);
+    [flags setBit:-1];
+    [flags setBit:64];
+    XCTAssertEqual(flags.bitMask, expected);
+    [flags addBits:flags];
+    XCTAssertEqual(flags.bitMask, expected);
+    [flags addBits:nil];
+    XCTAssertEqual(flags.bitMask, expected);
+}
+
+- (void)testBitFlagsMergeBothRepresentationsAndRespectDestinationLength
+{
+    IJSVGBitFlags* wide = [[IJSVGBitFlags alloc] initWithLength:96];
+    [wide setBit:0];
+    [wide setBit:63];
+    [wide setBit:64];
+    [wide setBit:95];
+    IJSVGBitFlags64* compact = [[IJSVGBitFlags64 alloc] init];
+    [compact addBits:wide];
+    XCTAssertEqual(compact.bitMask, (1ULL << 63) | 1ULL);
+    [compact setAllBits];
+
+    for(NSNumber* size in @[@0, @8, @64, @96]) {
+        int length = size.intValue;
+        IJSVGBitFlags* destination = [[IJSVGBitFlags alloc] initWithLength:length];
+        [destination addBits:compact];
+        for(int bit = 0; bit < length; bit++) {
+            XCTAssertEqual([destination bitIsSet:bit], bit < 64);
+        }
+        uint64_t mask = destination.bitMask;
+        [destination setBit:-1];
+        [destination setBit:length];
+        [destination unsetBit:-1];
+        [destination unsetBit:length];
+        [destination addBits:nil];
+        [destination addBits:destination];
+        XCTAssertEqual(destination.bitMask, mask);
+    }
+    XCTAssertTrue([wide bitIsSet:64]);
+    XCTAssertTrue([wide bitIsSet:95]);
 }
 
 - (void)testFeatureFlagsExposeDefaultStates

@@ -15,7 +15,7 @@
 - (id)initWithImage:(IJSVGImage*)image
 {
     if((self = [super init]) != nil) {
-        self.image = image;
+        _image = image;
     }
     return self;
 }

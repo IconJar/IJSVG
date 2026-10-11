@@ -304,6 +304,9 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeSymbol
 };
 
+FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string,
+                                                       NSXMLNodeKind kind);
+
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
     IJSVGWindingRuleNonZero,
     IJSVGWindingRuleEvenOdd,

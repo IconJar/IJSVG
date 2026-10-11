@@ -288,12 +288,18 @@ void IJSVGApplyGeometryAttributes(IJSVGNode* node,
                                   IJSVGStyleSheetStyle* style,
                                   IJSVGStyleSheetStyle* inlineStyle)
 {
+    if(!style.hasGeometryProperties) {
+        style = nil;
+    }
+    if(!inlineStyle.hasGeometryProperties) {
+        inlineStyle = nil;
+    }
     const IJSVGNodeAttribute attributes[] = {
         IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeWidth, IJSVGNodeAttributeHeight,
         IJSVGNodeAttributeCX, IJSVGNodeAttributeCY, IJSVGNodeAttributeR,
         IJSVGNodeAttributeRX, IJSVGNodeAttributeRY
     };
-    NSString* names[] = {
+    NSString* __unsafe_unretained const names[] = {
         IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
         IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX,
         IJSVGAttributeRY
@@ -301,6 +307,9 @@ void IJSVGApplyGeometryAttributes(IJSVGNode* node,
     NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* lengths = nil;
     for(NSUInteger index = 0; index < sizeof(attributes) / sizeof(*attributes); index++) {
         IJSVGNodeAttribute attribute = attributes[index];
+        if(attributeValues[attribute] == nil && style == nil && inlineStyle == nil) {
+            continue;
+        }
         NSString* name = names[index];
         NSString* value = [inlineStyle property:name];
         if(value == nil || ([style isPropertyImportant:name] && ![inlineStyle isPropertyImportant:name])) {
@@ -497,8 +506,8 @@ NSString* IJSVGAttributeValue(NSString* __unsafe_unretained const attributeValue
 BOOL IJSVGAttributeHasValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
                             IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
-    NSString* attributeValue = IJSVGAttributeValue(attributeValues, attribute);
-    if(attributeValue.length == 0) {
+    NSString* __unsafe_unretained attributeValue = attributeValues[attribute];
+    if(attributeValue == nil || attributeValue.length == 0) {
         return NO;
     }
     if(value != NULL) {
@@ -534,21 +543,28 @@ static void IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style,
                                                  IJSVGBitFlags* activeAttributes,
                                                  NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
-    NSDictionary* properties = style.properties;
-    for(NSString* key in properties) {
-        if([fallback isPropertyImportant:key] && ![style isPropertyImportant:key]) {
+    if(style == nil) {
+        return;
+    }
+    if(!fallback.hasImportantProperties) {
+        fallback = nil;
+    }
+    NSUInteger count = 0;
+    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* owner = style;
+    const IJSVGStyleSheetAttribute* entries = [owner attributesWithCount:&count];
+    const int* allowed = activeAttributes.storage;
+    NSUInteger allowedCount = MAX(0, activeAttributes.length);
+    for(NSUInteger index = 0; index < count; index++) {
+        IJSVGStyleSheetAttribute entry = entries[index];
+        if(entry.attribute >= allowedCount || allowed[entry.attribute] != 1) {
             continue;
         }
-        NSUInteger attribute = IJSVGNodeAttributeForName(key);
-        if(attribute == NSNotFound || IJSVGAttributeIsGeometryProperty(attribute) ||
-           [activeAttributes bitIsSet:(int)attribute] == NO) {
+        if(!entry.important && [fallback isPropertyImportant:entry.name]) {
             continue;
         }
-        NSString* value = properties[key];
-        if(value.length == 0) {
-            continue;
+        if(entry.value.length != 0) {
+            attributeValues[entry.attribute] = entry.value;
         }
-        attributeValues[attribute] = value;
     }
 }
 
@@ -685,8 +701,14 @@ NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
 
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value, BOOL allowCSSUnits)
 {
-    NSMutableArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:value
-                                                                                   allowCSSUnits:allowCSSUnits].mutableCopy;
+    IJSVGApplyParsedTransforms(node, [IJSVGTransform transformsForString:value
+                                                           allowCSSUnits:allowCSSUnits]);
+}
+
+void IJSVGApplyParsedTransforms(IJSVGNode* node,
+                                NSArray<IJSVGTransform*>* parsedTransforms)
+{
+    NSMutableArray<IJSVGTransform*>* transforms = parsedTransforms.mutableCopy;
     if(transforms == nil) {
         transforms = [[NSMutableArray alloc] init];
     }

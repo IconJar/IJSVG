@@ -16,7 +16,7 @@
 {
     IJSVGTraitedColor* type = [[self alloc] init];
     type.color = color;
-    type.traits = traits;
+    type->_traits = traits;
     return type;
 }
 

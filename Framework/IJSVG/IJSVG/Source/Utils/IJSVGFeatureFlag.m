@@ -13,7 +13,7 @@
 + (instancetype)featureFlagWithEnabled:(BOOL)enabled
 {
     IJSVGFeatureFlag* flag = [[self alloc] init];
-    flag.enabled = enabled;
+    flag->_enabled = enabled;
     return flag;
 }
 

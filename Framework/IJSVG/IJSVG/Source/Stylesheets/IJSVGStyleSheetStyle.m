@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
 static BOOL IJSVGStyleSheetPropertyNameIsValid(const char* chars, NSUInteger start,
@@ -59,7 +60,6 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 {
     if((self = [super init]) != nil) {
         _dict = [[NSMutableDictionary alloc] init];
-        _importantProperties = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -72,7 +72,12 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
         return;
     }
     _dict[key] = value;
+    _geometryPropertiesKnown = NO;
+    [self invalidateAttributeEntries];
     if(important) {
+        if(_importantProperties == nil) {
+            _importantProperties = [[NSMutableSet alloc] init];
+        }
         [_importantProperties addObject:key];
     } else {
         [_importantProperties removeObject:key];
@@ -106,6 +111,11 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
     }
 }
 
+- (BOOL)hasImportantProperties
+{
+    return _importantProperties.count != 0;
+}
+
 - (BOOL)isPropertyImportant:(NSString*)key
 {
     return [_importantProperties containsObject:key];
@@ -114,6 +124,70 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 - (NSDictionary*)properties
 {
     return _dict;
+}
+
+- (void)dealloc
+{
+    free(_attributes);
+}
+
+- (void)invalidateAttributeEntries
+{
+    free(_attributes);
+    _attributes = NULL;
+    _attributeCount = 0;
+    _attributesReady = NO;
+}
+
+- (void)buildAttributeEntries
+{
+    NSUInteger capacity = _dict.count;
+    _attributes = capacity == 0 ? NULL : malloc(capacity * sizeof(IJSVGStyleSheetAttribute));
+    if(capacity != 0 && _attributes == NULL) {
+        [NSException raise:NSMallocException
+                    format:@"Unable to allocate style attributes"];
+    }
+    _attributeCount = 0;
+    _hasGeometryProperties = NO;
+    for(NSString* name in _dict) {
+        NSUInteger attribute = IJSVGNodeAttributeForName(name);
+        if(attribute == NSNotFound) {
+            continue;
+        }
+        if(IJSVGAttributeIsGeometryProperty(attribute)) {
+            _hasGeometryProperties = YES;
+            continue;
+        }
+        _attributes[_attributeCount++] = (IJSVGStyleSheetAttribute) {
+            attribute, name, _dict[name], [_importantProperties containsObject:name]
+        };
+    }
+    _geometryPropertiesKnown = YES;
+    _attributesReady = YES;
+}
+
+- (const IJSVGStyleSheetAttribute*)attributesWithCount:(NSUInteger*)count
+{
+    if(!_attributesReady) {
+        [self buildAttributeEntries];
+    }
+    *count = _attributeCount;
+    return _attributes;
+}
+
+- (BOOL)hasGeometryProperties
+{
+    if(!_geometryPropertiesKnown) {
+        _hasGeometryProperties = NO;
+        for(NSString* name in _dict) {
+            if(IJSVGAttributeIsGeometryProperty(IJSVGNodeAttributeForName(name))) {
+                _hasGeometryProperties = YES;
+                break;
+            }
+        }
+        _geometryPropertiesKnown = YES;
+    }
+    return _hasGeometryProperties;
 }
 
 - (id)property:(NSString*)key
@@ -172,6 +246,8 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 {
     if(flag) {
         [_dict removeAllObjects];
+        _geometryPropertiesKnown = NO;
+        [self invalidateAttributeEntries];
         [_importantProperties removeAllObjects];
     }
     for(NSString* key in properties) {

@@ -58,7 +58,7 @@ static BOOL IJSVGSwitchLanguageMatches(const char* languages,
 {
     for(NSXMLNode* child in element.children) {
         if(child.kind != NSXMLElementKind ||
-           [IJSVGNode typeForString:child.localName kind:child.kind] == IJSVGNodeTypeStyle) {
+           IJSVGNodeTypeForString(child.localName, child.kind) == IJSVGNodeTypeStyle) {
             continue;
         }
         NSXMLElement* candidate = (NSXMLElement*)child;

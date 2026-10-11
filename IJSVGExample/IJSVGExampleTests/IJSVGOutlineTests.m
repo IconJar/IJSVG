@@ -261,6 +261,82 @@
     [self assertPath:path bounds:CGRectMake(40, 20, 10, 10)];
 }
 
+- (void)testEmptyBackdropAdditionPreservesHolesAndFilterRegion
+{
+    for(NSString* input in @[@"BackgroundImage", @"BackgroundAlpha"]) {
+        IJSVG* svg = [self svgWithBody:[NSString stringWithFormat:
+                                               @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='20' y='20' width='60' height='60'>"
+                                                "<feComposite in='SourceGraphic' in2='%@' operator='arithmetic' k2='1' k3='1'/>"
+                                                "</filter></defs><path fill-rule='evenodd' filter='url(#f)' "
+                                                "d='M10 10H90V90H10Z M30 30H70V70H30Z'/>",
+                                           input]];
+        for(NSNumber* holes in @[@YES, @NO]) {
+            CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:holes.boolValue];
+            [self assertPath:path bounds:CGRectMake(20, 20, 60, 60)];
+            [self assertPath:path contains:CGPointMake(25, 25) expected:YES];
+            [self assertPath:path contains:CGPointMake(50, 50) expected:!holes.boolValue];
+            [self assertPath:path contains:CGPointMake(15, 25) expected:NO];
+        }
+    }
+}
+
+- (void)testEmptyBackdropAdditionKeepsPrimitiveRegionClipping
+{
+    IJSVG* svg = [self svgWithBody:
+            @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='100' height='100'>"
+             "<feComposite in='SourceGraphic' in2='BackgroundImage' operator='arithmetic' "
+             "k2='1' k3='1' x='25' y='30' width='10' height='15'/></filter></defs>"
+             "<rect x='10' y='10' width='60' height='60' filter='url(#f)'/>"];
+    CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:YES];
+    [self assertPath:path bounds:CGRectMake(25, 30, 10, 15)];
+}
+
+- (void)testEmptyBackdropInputProducesEmptyOutline
+{
+    for(NSString* input in @[@"BackgroundImage", @"BackgroundAlpha"]) {
+        IJSVG* svg = [self svgWithBody:[NSString stringWithFormat:
+                                               @"<defs><filter id='f'><feOffset in='%@' dx='10'/></filter></defs>"
+                                                "<rect width='20' height='20' filter='url(#f)'/>",
+                                           input]];
+        for(NSNumber* holes in @[@YES, @NO]) {
+            CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:holes.boolValue];
+            XCTAssertTrue(path != NULL);
+            if(path != NULL) {
+                XCTAssertTrue(CGPathIsEmpty(path));
+            }
+        }
+    }
+}
+
+- (void)testActiveBackdropCannotReturnPartialOutline
+{
+    for(NSString* input in @[@"BackgroundImage", @"BackgroundAlpha"]) {
+        IJSVG* svg = [self svgWithBody:[NSString stringWithFormat:
+                                               @"<defs><filter id='f'><feComposite in='SourceGraphic' in2='%@' "
+                                                "operator='arithmetic' k2='1' k3='1'/></filter></defs>"
+                                                "<g enable-background='new'><rect width='100' height='100'/>"
+                                                "<rect x='20' y='20' width='20' height='20' filter='url(#f)'/></g>",
+                                           input]];
+        XCTAssertTrue([svg outlinePathIncludingFilterExtents:NO preservingHoles:YES] != NULL);
+        for(NSNumber* holes in @[@YES, @NO]) {
+            XCTAssertTrue([svg outlinePathIncludingFilterExtents:YES preservingHoles:holes.boolValue] == NULL);
+        }
+    }
+}
+
+- (void)testFilteredContainerStartsWithEmptyBackdrop
+{
+    IJSVG* svg = [self svgWithBody:
+            @"<defs><filter id='f'><feComposite in='BackgroundImage' in2='BackgroundAlpha' "
+             "operator='arithmetic' k2='1' k3='1'/></filter></defs>"
+             "<g enable-background='new'><rect x='5' y='5' width='10' height='10'/>"
+             "<g enable-background='new' filter='url(#f)'>"
+             "<rect x='20' y='20' width='20' height='20'/></g></g>"];
+    CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:YES];
+    [self assertPath:path bounds:CGRectMake(5, 5, 10, 10)];
+    [self assertPath:path contains:CGPointMake(30, 30) expected:NO];
+}
+
 - (void)testNamedShadowBranches
 {
     IJSVG* svg = [self svgWithBody:
@@ -284,7 +360,9 @@
                 CGPathRef path = [svg outlinePathIncludingFilterExtents:filters.boolValue
                                                       preservingHoles:holes.boolValue];
                 XCTAssertTrue(path != NULL);
-                if(path != NULL) XCTAssertTrue(CGPathIsEmpty(path));
+                if(path != NULL) {
+                    XCTAssertTrue(CGPathIsEmpty(path));
+                }
             }
         }
     }
@@ -297,7 +375,9 @@
          "<rect x='10' y='10' width='20' height='20' filter='url(#f)'/>"];
     CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:YES];
     XCTAssertTrue(path != NULL);
-    if(path != NULL) XCTAssertTrue(CGPathIsEmpty(path));
+    if(path != NULL) {
+        XCTAssertTrue(CGPathIsEmpty(path));
+    }
 }
 
 - (void)testFloodOpacityUnitsAndDefaults
@@ -316,7 +396,9 @@
         for(NSUInteger holes = 0; holes < 2; holes++) {
             CGPathRef path = [svg outlinePathIncludingFilterExtents:YES preservingHoles:holes != 0];
             [self assertPath:path contains:CGPointMake(50, 50) expected:visible];
-            if(!visible && path != NULL) XCTAssertTrue(CGPathIsEmpty(path));
+            if(!visible && path != NULL) {
+                XCTAssertTrue(CGPathIsEmpty(path));
+            }
         }
     }
 }
@@ -394,7 +476,52 @@
         for(NSNumber* holes in @[@NO, @YES]) {
             CGPathRef path = [svg outlinePathIncludingFilterExtents:filters.boolValue preservingHoles:holes.boolValue];
             XCTAssertTrue(path != NULL);
-            if(path != NULL) XCTAssertTrue(CGPathIsEmpty(path));
+            if(path != NULL) {
+                XCTAssertTrue(CGPathIsEmpty(path));
+            }
+        }
+    }
+}
+
+- (void)testSharedUnfilteredModesInvalidateTogether
+{
+    for(NSUInteger firstMode = 0; firstMode < 2; firstMode++) {
+        IJSVG* svg = [self svgWithBody:
+                @"<path fill-rule='evenodd' d='M10 10h30v30H10z M20 20h10v10H20z'/>"];
+        for(NSUInteger index = 0; index < 4; index++) {
+            BOOL filters = (index / 2) != firstMode;
+            BOOL holes = index % 2 != 0;
+            CGPathRef path = [svg outlinePathIncludingFilterExtents:filters preservingHoles:holes];
+            [self assertPath:path contains:CGPointMake(15, 15) expected:YES];
+            [self assertPath:path contains:CGPointMake(25, 25) expected:!holes];
+        }
+        svg.rootNode.shouldRender = NO;
+        [svg setNeedsDisplay];
+        for(NSUInteger index = 0; index < 4; index++) {
+            CGPathRef path = [svg outlinePathIncludingFilterExtents:index / 2 != 0
+                                                    preservingHoles:index % 2 != 0];
+            XCTAssertTrue(path != NULL && CGPathIsEmpty(path));
+        }
+    }
+}
+
+- (void)testFilterOptionChangesInvalidateSharedCoverage
+{
+    IJSVG* svg = [self svgWithBody:
+            @"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='100' height='100'>"
+             "<feDropShadow dx='50' dy='0' stdDeviation='0'/></filter></defs>"
+             "<path filter='url(#f)' fill-rule='evenodd' d='M10 10h30v30H10z M20 20h10v10H20z'/>"];
+    for(NSUInteger pass = 0; pass < 3; pass++) {
+        BOOL enabled = pass == 1;
+        IJSVGRenderingOptions* options = svg.renderingOptions;
+        options.filtersEnabled = enabled;
+        svg.renderingOptions = options;
+        for(NSUInteger index = 0; index < 4; index++) {
+            BOOL filters = index / 2 != 0;
+            BOOL holes = index % 2 != 0;
+            CGPathRef path = [svg outlinePathIncludingFilterExtents:filters preservingHoles:holes];
+            [self assertPath:path contains:CGPointMake(25, 25) expected:!holes];
+            [self assertPath:path contains:CGPointMake(65, 15) expected:filters && enabled];
         }
     }
 }

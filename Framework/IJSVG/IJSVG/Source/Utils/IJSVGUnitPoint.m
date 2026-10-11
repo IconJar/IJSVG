@@ -19,8 +19,8 @@
                             y:(IJSVGUnitLength*)y
 {
     IJSVGUnitPoint* point = [[self alloc] init];
-    point.x = x;
-    point.y = y;
+    point->_x = x;
+    point->_y = y;
     return point;
 }
 
@@ -38,8 +38,8 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitPoint* point = [[self.class alloc] init];
-    point.x = _x.copy;
-    point.y = _y.copy;
+    point->_x = _x.copy;
+    point->_y = _y.copy;
     return point;
 }
 

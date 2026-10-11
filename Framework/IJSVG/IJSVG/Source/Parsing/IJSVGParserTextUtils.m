@@ -298,8 +298,12 @@ void IJSVGApplyTextAttributes(IJSVGNode* node,
         expanded = IJSVGStyleSheetExpandDeclaration(IJSVGAttributeFont, shorthand);
     }
     NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* parsed = nil;
-    for(NSUInteger index = 1; index < styleNames.count; index++) {
+    NSUInteger styleCount = styleNames.count;
+    for(NSUInteger index = 1; index < styleCount; index++) {
         IJSVGNodeAttribute attribute = IJSVGNodeAttributeFont + index;
+        if(attributeValues[attribute] == nil && expanded == nil) {
+            continue;
+        }
         NSString* name = styleNames[index];
         NSString* value = IJSVGAttributeValue(attributeValues, attribute) ?: expanded[name];
         if(value == nil) {

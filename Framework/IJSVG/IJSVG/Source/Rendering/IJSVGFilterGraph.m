@@ -390,7 +390,71 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
     return image;
 }
 
+static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
+{
+    NSUInteger length = name.length;
+    if(length != 9 && length != 11 && length != 15) {
+        return 0;
+    }
+    const char* bytes = name.UTF8String;
+    if(bytes == NULL) {
+        return 0;
+    }
+    switch(length) {
+        case 9:
+            return memcmp(bytes, "FillPaint", 9) == 0 ? IJSVGFilterInputFillPaint : 0;
+        case 11:
+            if(memcmp(bytes, "SourceAlpha", 11) == 0) {
+                return IJSVGFilterInputSourceAlpha;
+            }
+            if(memcmp(bytes, "StrokePaint", 11) == 0) {
+                return IJSVGFilterInputStrokePaint;
+            }
+            break;
+        case 15:
+            if(memcmp(bytes, "BackgroundImage", 15) == 0) {
+                return IJSVGFilterInputBackgroundImage;
+            }
+            if(memcmp(bytes, "BackgroundAlpha", 15) == 0) {
+                return IJSVGFilterInputBackgroundAlpha;
+            }
+            break;
+    }
+    return 0;
+}
+
+@implementation IJSVGFilterMetadata
+
+- (instancetype)initWithFilter:(IJSVGFilter*)filter
+{
+    if((self = [super init]) != nil) {
+        _filter = filter;
+        _primitives = filter.primitives;
+        for(IJSVGFilterPrimitive* primitive in _primitives) {
+            _inputs |= IJSVGFilterInputsForName(primitive.input);
+            _inputs |= IJSVGFilterInputsForName(primitive.input2);
+            for(IJSVGFilterPrimitive* child in primitive.children) {
+                _inputs |= IJSVGFilterInputsForName(child.input);
+            }
+        }
+    }
+    return self;
+}
+@end
+
 @implementation IJSVGFilterGraph
+
+- (NSArray<IJSVGFilterPrimitive*>*)filterPrimitives
+{
+    return _resolvedMetadata.filter == self.filter ?
+        _resolvedMetadata.primitives : self.filter.primitives;
+}
+
+- (IJSVGFilterInputs)filterInputs
+{
+    return _resolvedMetadata.filter == self.filter ? _resolvedMetadata.inputs :
+                                                     [[IJSVGFilterMetadata alloc] initWithFilter:self.filter].inputs;
+}
 
 - (CGRect)regionForNode:(IJSVGNode*)node
                   units:(IJSVGUnitType)units
@@ -399,7 +463,10 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
     CGRect bounds = units == IJSVGUnitObjectBoundingBox ? self.boundingBox : self.viewPort;
     BOOL objectUnits = units == IJSVGUnitObjectBoundingBox;
     IJSVGUnitLength* lengths[] = { node.x, node.y, node.width, node.height };
-    CGFloat values[] = { region.origin.x, region.origin.y, region.size.width, region.size.height };
+    CGFloat values[] = {
+      region.origin.x, region.origin.y,
+      region.size.width, region.size.height
+    };
     for(NSUInteger index = 0; index < 4; index++) {
         IJSVGUnitLength* length = lengths[index];
         if(length == nil) {
@@ -435,7 +502,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
                                                region:(CGRect)filterRegion
                                               context:(IJSVGFilterContext*)renderingContext
 {
-    NSSet<NSString*>* inputNames = self.filter.inputNames;
+    IJSVGFilterInputs inputNames = self.filterInputs;
     // Transparent inputs still need bounds when a filter creates visible pixels.
     CIImage* transparent = [[CIImage imageWithColor:CIColor.clearColor] imageByCroppingToRect:filterRegion];
     NSMutableDictionary<NSString*, CIImage*>* sources = [@{
@@ -445,29 +512,29 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
     } mutableCopy];
 
     // Ordinary blurs and drop shadows do not reference SourceAlpha in the graph.
-    if([inputNames containsObject:IJSVGStringSourceAlpha]) {
+    if((inputNames & IJSVGFilterInputSourceAlpha)) {
         sources[IJSVGStringSourceAlpha] = [renderingContext alphaForImage:source];
     }
 
     if(self.backgroundProvider != nil &&
-        ([inputNames containsObject:IJSVGStringBackgroundImage] ||
-        [inputNames containsObject:IJSVGStringBackgroundAlpha])) {
+        ((inputNames & IJSVGFilterInputBackgroundImage) ||
+            (inputNames & IJSVGFilterInputBackgroundAlpha))) {
         CIImage* background = [self.backgroundProvider() imageByCroppingToRect:filterRegion];
         if(background == nil || !IJSVGFilterValidRect(background.extent)) {
             background = transparent;
         }
         sources[IJSVGStringBackgroundImage] = background;
-        if([inputNames containsObject:IJSVGStringBackgroundAlpha]) {
+        if((inputNames & IJSVGFilterInputBackgroundAlpha)) {
             sources[IJSVGStringBackgroundAlpha] = [renderingContext alphaForImage:background];
         }
     }
 
     if(self.paintProvider != nil) {
-        if([inputNames containsObject:IJSVGStringFillPaint]) {
+        if((inputNames & IJSVGFilterInputFillPaint)) {
             sources[IJSVGStringFillPaint] = [self.paintProvider(NO) imageByCroppingToRect:filterRegion]
                 ?: CIImage.emptyImage;
         }
-        if([inputNames containsObject:IJSVGStringStrokePaint]) {
+        if((inputNames & IJSVGFilterInputStrokePaint)) {
             sources[IJSVGStringStrokePaint] = [self.paintProvider(YES) imageByCroppingToRect:filterRegion]
                 ?: CIImage.emptyImage;
         }
@@ -485,7 +552,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
                              context:(IJSVGFilterContext*)renderingContext
          preserveInnerShadowCoverage:(BOOL)preserveInnerShadowCoverage
 {
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     IJSVGFilterPrimitive* primitive = primitives[index];
     CIImage* output;
     if(!IJSVGFilterValidRect(pixelRegion)) {
@@ -574,7 +641,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
     NSMutableDictionary<NSString*, NSNumber*>* resultAlphaOnly = [NSMutableDictionary dictionary];
     BOOL outputAlphaOnly = NO;
     BOOL outputLinearRGB = NO;
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     BOOL preserveInnerShadowCoverage = self.filter.preservesInnerShadowCoverage;
     NSDictionary<NSString*, NSNumber*>* lastReferences = IJSVGFilterLastReferencesForPrimitives(primitives);
 
@@ -661,7 +728,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
         self.filter.children.firstObject.type != IJSVGNodeTypeFilterColorMatrix) {
         return nil;
     }
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     if(primitives.count != 1) {
         return nil;
     }
@@ -728,7 +795,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
                           region:(CGRect)region
                            units:(CGSize)units
 {
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     NSUInteger shadows = parameters->config.x;
     for(NSUInteger stage = 0; stage < shadows; stage++) {
         NSUInteger index = 2 + stage * 6;
@@ -771,7 +838,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
         !self.filter.preservesInnerShadowCoverage) {
         return nil;
     }
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     NSUInteger shadows = (primitives.count - 2) / 6;
     if(shadows > 4) {
         return nil;
@@ -794,8 +861,10 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
         : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
     IJSVGMetalShadowParameters parameters = {0};
     parameters.geometry = (simd_uint4){(uint32_t)width, (uint32_t)height, 0, 0};
-    parameters.region = (simd_float4){CGRectGetMinX(region), CGRectGetMinY(region),
-        CGRectGetMaxX(region), CGRectGetMaxY(region)};
+    parameters.region = (simd_float4){
+      CGRectGetMinX(region), CGRectGetMinY(region),
+      CGRectGetMaxX(region), CGRectGetMaxY(region)
+    };
     parameters.config.x = (uint32_t)shadows;
     if(![self populateShadowParameters:&parameters
                                 region:region
@@ -819,7 +888,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
 
 - (BOOL)supportsDirectBlurPrimitives
 {
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     if(primitives.count != 1 && primitives.count != 3) {
         return NO;
     }
@@ -872,12 +941,12 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
     if(![self supportsDirectBlurPrimitives]) {
         return NO;
     }
-    NSArray<IJSVGFilterPrimitive*>* primitives = self.filter.primitives;
+    NSArray<IJSVGFilterPrimitive*>* primitives = self.filterPrimitives;
     IJSVGFilterPrimitive* blur = primitives.lastObject;
     BOOL linearRGB = IJSVGFilterUsesLinearRGB(blur);
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox
-        ? CGSizeMake(
-              self.boundingBox.size.width * self.imageTransform.a, self.boundingBox.size.height * self.imageTransform.a)
+        ? CGSizeMake( self.boundingBox.size.width * self.imageTransform.a,
+                     self.boundingBox.size.height * self.imageTransform.a)
         : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
     CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation
                                  defaultValue:CGSizeZero];
@@ -911,11 +980,11 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
 {
     // Direct shadow dispatch wins for icons; Core Image scales better for large surfaces.
     if(self.hasNestedFilters || CGBitmapContextGetWidth(bitmap) * CGBitmapContextGetHeight(bitmap) > 4096 ||
-        self.filter.primitives.count != 1 || self.imageTransform.b != 0 || self.imageTransform.c != 0 ||
+        self.filterPrimitives.count != 1 || self.imageTransform.b != 0 || self.imageTransform.c != 0 ||
         self.imageTransform.a <= 0 || self.imageTransform.a != self.imageTransform.d) {
         return nil;
     }
-    IJSVGFilterPrimitive* primitive = self.filter.primitives.firstObject;
+    IJSVGFilterPrimitive* primitive = self.filterPrimitives.firstObject;
     if(primitive.type != IJSVGNodeTypeFilterDropShadow || primitive.x != nil || primitive.y != nil ||
         primitive.width != nil || primitive.height != nil || primitive.children.count != 0 ||
         (primitive.input.length != 0 && ![primitive.input isEqualToString:IJSVGStringSourceGraphic])) {

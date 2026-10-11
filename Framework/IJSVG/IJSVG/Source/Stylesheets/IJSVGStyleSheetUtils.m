@@ -440,6 +440,10 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
         return string;
     }
 
+    if(strstr(chars, "/*") == NULL) {
+        return IJSVGStyleSheetStringFromUTF8Bytes(chars, 0, length);
+    }
+
     NSMutableString* cleanString = [[NSMutableString alloc] initWithCapacity:length];
     NSUInteger marker = 0;
     char quote = 0;
