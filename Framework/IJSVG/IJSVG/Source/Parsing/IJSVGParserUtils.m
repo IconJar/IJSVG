@@ -707,9 +707,9 @@ static IJSVGOriginKeyword IJSVGOriginKeywordFromCString(const char* token)
     return IJSVGOriginKeywordNone;
 }
 
-static NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromCString(char* buffer)
+static NSUInteger IJSVGPositionTokenize(char* buffer, const char* tokens[3],
+                                         NSUInteger capacity)
 {
-    const char* tokens[3] = { NULL };
     NSUInteger count = 0;
     char* cursor = buffer;
     while(*cursor != '\0') {
@@ -719,8 +719,8 @@ static NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromCString(char* buffer)
         if(*cursor == '\0') {
             break;
         }
-        if(count == 3) {
-            return nil;
+        if(count == capacity) {
+            return 0;
         }
         tokens[count++] = cursor;
         while(*cursor != '\0' && !IJSVGLengthListIsWhitespace(*cursor) && *cursor != '\f') {
@@ -730,11 +730,19 @@ static NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromCString(char* buffer)
             *cursor++ = '\0';
         }
     }
+    return count;
+}
+
+NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax)
+{
+    const char* tokens[3] = { NULL };
+    NSUInteger count = IJSVGPositionTokenize(buffer, tokens,
+        syntax == IJSVGPositionSyntaxBasicShape ? 2 : 3);
     if(count == 0) {
         return nil;
     }
     if(count == 3) {
-        // The 2D renderer validates the depth but has no z-axis translation.
+        // The renderer validates depth without applying a depth translation.
         if(strchr(tokens[2], '%') != NULL ||
            !IJSVGParseUnitLengthsFromCString(tokens[2], YES, YES, nil, NULL)) {
             return nil;
@@ -799,7 +807,7 @@ NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
     if(buffer == NULL) {
         return nil;
     }
-    NSArray<IJSVGUnitLength*>* origin = IJSVGTransformOriginFromCString(buffer);
+    NSArray<IJSVGUnitLength*>* origin = IJSVGPositionFromBuffer(buffer, IJSVGPositionSyntaxTransformOrigin);
     free(buffer);
     return origin;
 }

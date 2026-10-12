@@ -11,6 +11,7 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <time.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGCSSMathExpression.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGParsing.h>
@@ -377,6 +378,70 @@
                           [self pixels:literal width:100 height:100]);
 }
 
+- (void)testImmediateNumbersMatchOwnedExpressions
+{
+    NSMutableArray<NSString*>* sources = [@[
+        @"calc(2 + 3 * 4)", @"min(20%, 50%)", @"max(-0, 0)", @"min(-0, 0)",
+        @"clamp(20%, 10%, 5%)", @"calc(1 / 0)", @"calc(0 / 0)", @"calc(1px)",
+        @"calc(2em)", @"min(1, 2%)", @"unknown(1)", @"calc(1 +)"
+    ] mutableCopy];
+    [sources addObject:[NSString stringWithFormat:@"calc(%@1)",
+        [@"" stringByPaddingToLength:600 withString:@"1 + " startingAtIndex:0]]];
+    for(NSString* source in sources) {
+        IJSVGStringBytes bytes = IJSVGStringGetBytes(source);
+        IJSVGCSSComponents components;
+        XCTAssertTrue(IJSVGCSSComponentsCreate(bytes.bytes, bytes.length, &components));
+        IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:&components atIndex:0];
+        IJSVGCSSNumericValue result = { 123, NO };
+        BOOL valid = IJSVGCSSMathExpressionEvaluateNumber(&components, 0, 100, &result);
+        BOOL expectedValid = expression != nil && !expression.usesLength && !expression.usesFontMetrics;
+        XCTAssertEqual(valid, expectedValid, @"%@", source);
+        if(valid) {
+            CGFloat expected = [expression evaluate:(IJSVGCSSCalculationContext) { 100, 0, 0 }];
+            if(isnan(expected)) {
+                XCTAssertTrue(isnan(result.value));
+            } else {
+                XCTAssertEqual(result.value, expected, @"%@", source);
+                XCTAssertEqual(!!signbit(result.value), !!signbit(expected));
+            }
+            XCTAssertEqual(result.percentage, expression.lengthExponent == 1);
+        } else {
+            XCTAssertEqual(result.value, 123);
+        }
+        IJSVGCSSComponentsRelease(&components);
+    }
+}
+
+- (void)testCalculatedColourBenchmark
+{
+    NSArray<NSString*>* colors = @[
+        @"rgb(calc(20 + 31) min(120, 102) clamp(100, 153, 200) / calc(25% + 25%))",
+        @"hsl(calc(60 + 60) calc(50% + 50%) max(25%, 50%) / calc(1 / 2))",
+        @"oklch(calc(50% + 12.8%) calc(.1 + .15) calc(30 - .77) / calc(.25 * 2))"
+    ];
+    NSArray<NSString*>* literals = @[
+        @"rgb(51 102 153 / 50%)", @"hsl(120 100% 50% / .5)", @"oklch(62.8% .25 29.23 / .5)"
+    ];
+    for(NSUInteger index = 0; index < colors.count; index++) {
+        NSColor* actual = [IJSVGColor colorFromString:colors[index]];
+        NSColor* expected = [IJSVGColor colorFromString:literals[index]];
+        XCTAssertNotNil(actual);
+        XCTAssertEqualWithAccuracy(actual.redComponent, expected.redComponent, .00001);
+        XCTAssertEqualWithAccuracy(actual.greenComponent, expected.greenComponent, .00001);
+        XCTAssertEqualWithAccuracy(actual.blueComponent, expected.blueComponent, .00001);
+        XCTAssertEqualWithAccuracy(actual.alphaComponent, expected.alphaComponent, .00001);
+    }
+    [self benchmark:@"calculated colour functions"
+         iterations:3000
+               work:^NSUInteger {
+        NSUInteger count = 0;
+        for(NSString* source in colors) {
+            count += [IJSVGColor colorFromString:source] != nil;
+        }
+        return count;
+    }];
+}
+
 - (void)testSharedFunctionBenchmarks
 {
     NSArray<NSString*>* colors = @[
@@ -716,6 +781,59 @@
                               @"rgb(1,2,3))", @"oklch(1 .2 30) rgb(1 2 3)"]) {
         XCTAssertNil([IJSVGColor colorFromString:source], @"%@", source);
     }
+}
+
+- (void)testSharedTransformNumbersAndSeparators
+{
+    for(NSString* source in @[@"translate(1-2)", @"translate(1,-2)", @"translate(1 -2)",
+                              @"translate(1. -2.)", @"translate(1e0 -2e0)"]) {
+        NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:source];
+        XCTAssertEqual(transforms.count, 1, @"%@", source);
+        if(transforms.count == 1) {
+            XCTAssertEqual(transforms[0].parameters[0], 1);
+            XCTAssertEqual(transforms[0].parameters[1], -2);
+        }
+    }
+    for(NSString* arguments in @[@"", @",1", @"1,", @"1,,2", @"1 2 3", @"1/**/2",
+                                 @"1 /* comment */ 2", @"0x10", @"1e999", @"NaN",
+                                 @"calc(1)", @"1pxjunk", @"1PX", @"1\\\\px", @"1deg"]) {
+        NSString* source = [NSString stringWithFormat:@"translate(%@)", arguments];
+        for(NSNumber* css in @[@NO, @YES]) {
+            XCTAssertEqual([IJSVGTransform transformsForString:source allowCSSUnits:css.boolValue].count,
+                0, @"%@", source);
+            source = [@"scale(2) " stringByAppendingString:source];
+            XCTAssertEqual([IJSVGTransform transformsForString:source allowCSSUnits:css.boolValue].count,
+                1, @"%@", source);
+            source = [NSString stringWithFormat:@"translate(%@)", arguments];
+        }
+    }
+    IJSVGTransform* negativeZero = [IJSVGTransform transformsForString:@"scale(-0)"].firstObject;
+    XCTAssertNotNil(negativeZero);
+    XCTAssertTrue(signbit(negativeZero.parameters[0]));
+}
+
+- (void)testShapePositionsReuseBuffers
+{
+    for(NSString* shape in @[@"circle(25%)", @"ellipse(25% 30%)"]) {
+        NSString* centered = [shape stringByReplacingOccurrencesOfString:@")" withString:@" at center)"];
+        NSString* prefix = @"<rect width='200' height='100' clip-path='";
+        NSString* suffix = @"'/>";
+        NSData* implicit = [self pixels:[NSString stringWithFormat:@"%@%@%@", prefix, shape, suffix]];
+        NSData* explicit = [self pixels:[NSString stringWithFormat:@"%@%@%@", prefix, centered, suffix]];
+        XCTAssertEqualObjects(implicit, explicit);
+    }
+    for(NSString* source in @[@"circle(20% at)", @"circle(20% at 10% 20% 0)",
+                              @"circle(20% at left right)", @"ellipse(20% at center)"]) {
+        XCTAssertNil([IJSVGClipPath clipPathWithBasicShape:source], @"%@", source);
+    }
+    for(NSString* source in @[@"circle(CLOSEST-SIDE AT center)", @"ellipse(farthest-side closest-side at top left)",
+                              @"circle(20% at 10% 20%)", @"circle(at bottom)"]) {
+        XCTAssertNotNil([IJSVGClipPath clipPathWithBasicShape:source], @"%@", source);
+    }
+    NSMutableString* source = [@"width:calc(1px + 2px)" mutableCopy];
+    NSString* clean = IJSVGStyleSheetStringByRemovingCSSComments(source);
+    [source setString:@"height:4px"];
+    XCTAssertEqualObjects(clean, @"width:calc(1px + 2px)");
 }
 
 - (void)testSharedTransformAndShapeFunctionNames

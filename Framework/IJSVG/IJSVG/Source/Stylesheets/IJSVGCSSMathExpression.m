@@ -501,6 +501,37 @@ BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components,
     return valid;
 }
 
+BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components,
+                                          NSUInteger index, CGFloat percentage,
+                                          IJSVGCSSNumericValue* result)
+{
+    if(index >= components->count || components->values[index].kind != IJSVGCSSComponentFunction) {
+        return NO;
+    }
+    NSUInteger end = components->values[index].next;
+    uint32_t capacity = (uint32_t)(end - index);
+    IJSVGCalculationNode inlineNodes[IJSVGCSSParserInlineCapacity];
+    IJSVGCalculationNode* nodes = capacity <= IJSVGCSSParserInlineCapacity
+        ? inlineNodes : malloc(capacity * sizeof(*nodes));
+    if(nodes == NULL) {
+        return NO;
+    }
+    IJSVGCalculationParser parser = { components->values, nodes, 0, capacity, YES };
+    uint32_t root = IJSVGCalculationParseRoot(&parser, index, end);
+    BOOL valid = root != IJSVGCalculationInvalid &&
+        (nodes[root].dependencies & (IJSVGCalculationLength | IJSVGCalculationFont)) == 0;
+    if(valid) {
+        result->value = IJSVGCalculationEvaluate(nodes, root, (IJSVGCSSCalculationContext) {
+            percentage, 0, 0
+        });
+        result->percentage = nodes[root].exponent == 1;
+    }
+    if(nodes != inlineNodes) {
+        free(nodes);
+    }
+    return valid;
+}
+
 @implementation IJSVGCSSMathExpression {
     IJSVGCalculationNode* _nodes;
     uint32_t _count;

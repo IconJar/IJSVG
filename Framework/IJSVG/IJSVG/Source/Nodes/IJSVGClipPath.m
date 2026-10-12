@@ -66,6 +66,41 @@ static BOOL IJSVGClipParseReferenceBox(const char* value, IJSVGClipReferenceBox*
     return YES;
 }
 
+typedef NS_ENUM(uint8_t, IJSVGClipArgument) {
+    IJSVGClipArgumentRadius,
+    IJSVGClipArgumentPosition,
+    IJSVGClipArgumentClosestSide,
+    IJSVGClipArgumentFarthestSide
+};
+
+static IJSVGClipArgument IJSVGClipArgumentForName(const char* name)
+{
+    switch(IJSVGCharToLower(name[0])) {
+        case 'a': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(name, "at")) {
+                return IJSVGClipArgumentPosition;
+            }
+            break;
+        }
+        case 'c': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(name, "closest-side")) {
+                return IJSVGClipArgumentClosestSide;
+            }
+            break;
+        }
+        case 'f': {
+            if(IJSVGCharBufferCaseInsensitiveCompare(name, "farthest-side")) {
+                return IJSVGClipArgumentFarthestSide;
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    return IJSVGClipArgumentRadius;
+}
+
 static CGFloat IJSVGClipSideRadius(CGFloat position, CGFloat dimension, BOOL farthest)
 {
     CGFloat start = fabs(position);
@@ -174,7 +209,6 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         return nil;
     }
     clipPath.referenceBox = box;
-    clipPath.shapePosition = IJSVGTransformOriginFromString(@"center");
     char* cursor = opening + 1;
     NSUInteger radiusCount = 0;
     while(*cursor != '\0') {
@@ -191,21 +225,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         if(*cursor != '\0') {
             *cursor++ = '\0';
         }
-        if(IJSVGCharBufferCaseInsensitiveCompare(token, "at")) {
-            // A shape position has no transform-origin depth component.
-            NSUInteger positionCount = 0;
-            BOOL inToken = NO;
-            for(const char* position = cursor; *position != '\0'; position++) {
-                BOOL whitespace = isspace((unsigned char)*position);
-                if(!whitespace && !inToken) {
-                    positionCount++;
-                }
-                inToken = !whitespace;
-            }
-            if(positionCount > 2) {
-                return nil;
-            }
-            NSArray* position = IJSVGTransformOriginFromString([NSString stringWithUTF8String:cursor]);
+        IJSVGClipArgument argument = IJSVGClipArgumentForName(token);
+        if(argument == IJSVGClipArgumentPosition) {
+            NSArray* position = IJSVGPositionFromBuffer(cursor, IJSVGPositionSyntaxBasicShape);
             if(position.count != 2) {
                 return nil;
             }
@@ -215,10 +237,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         if(radiusCount >= (clipPath.basicShape == IJSVGClipShapeCircle ? 1 : 2)) {
             return nil;
         }
-        BOOL farthest = IJSVGCharBufferCaseInsensitiveCompare(token, "farthest-side");
-        BOOL closest = IJSVGCharBufferCaseInsensitiveCompare(token, "closest-side");
+        BOOL farthest = argument == IJSVGClipArgumentFarthestSide;
         IJSVGUnitLength* radius = nil;
-        if(!farthest && !closest) {
+        if(argument == IJSVGClipArgumentRadius) {
             radius = IJSVGGeometryLengthFromString([NSString stringWithUTF8String:token],
                                                    IJSVGNodeAttributeR);
             if(radius == nil) {
@@ -236,6 +257,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     }
     if(clipPath.basicShape == IJSVGClipShapeEllipse && radiusCount == 1) {
         return nil;
+    }
+    if(clipPath.shapePosition == nil) {
+        clipPath.shapePosition = @[IJSVGHalfPercentageUnitLength, IJSVGHalfPercentageUnitLength];
     }
     return clipPath;
 }

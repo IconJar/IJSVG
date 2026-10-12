@@ -461,7 +461,7 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
     }
 
     if(strstr(chars, "/*") == NULL) {
-        return IJSVGStyleSheetStringFromUTF8Bytes(chars, 0, length);
+        return [string copy];
     }
 
     char* clean = malloc(length);

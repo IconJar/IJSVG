@@ -20,6 +20,15 @@ typedef struct {
 BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components,
                                    NSUInteger index);
 
+typedef struct {
+    CGFloat value;
+    BOOL percentage;
+} IJSVGCSSNumericValue;
+
+BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components,
+                                          NSUInteger index, CGFloat percentage,
+                                          IJSVGCSSNumericValue* result);
+
 // Owns one immutable C arena. Parsing, type checking, simplification and
 // evaluation use C nodes. Objective C provides ownership and the API boundary.
 @interface IJSVGCSSMathExpression: NSObject

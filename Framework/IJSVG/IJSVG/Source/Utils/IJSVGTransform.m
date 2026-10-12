@@ -13,66 +13,8 @@
 #import <ctype.h>
 #import <stdlib.h>
 
-static NSInteger IJSVGTransformParseParameters(const char* cursor, const char* limit,
-                                                IJSVGTransformCommand command,
-                                                BOOL css, CGFloat values[IJSVGTransformParameterCapacity])
+static NSInteger IJSVGTransformParameterCount(IJSVGTransformCommand command, NSInteger count)
 {
-    NSInteger count = 0;
-    while(cursor < limit && isspace((unsigned char)*cursor)) {
-        cursor++;
-    }
-    while(cursor < limit && count < IJSVGTransformParameterCapacity) {
-        if(!isdigit((unsigned char)*cursor) && *cursor != '+' && *cursor != '-' && *cursor != '.') {
-            return -1;
-        }
-        const char* start = cursor;
-        char* end = NULL;
-        double value = strtod(cursor, &end);
-        if(end == cursor || end > limit || !isfinite(value) || memchr(start, 'x', end - start) != NULL ||
-           memchr(start, 'X', end - start) != NULL) {
-            return -1;
-        }
-        cursor = end;
-        if(css) {
-            BOOL angle = count == 0 && (command == IJSVGTransformCommandRotate ||
-                command == IJSVGTransformCommandSkewX || command == IJSVGTransformCommandSkewY);
-            if(angle && strncmp(cursor, "deg", 3) == 0) {
-                cursor += 3;
-            } else if(angle && strncmp(cursor, "rad", 3) == 0) {
-                value *= 180 / M_PI;
-                cursor += 3;
-            } else if(angle && strncmp(cursor, "grad", 4) == 0) {
-                value *= .9;
-                cursor += 4;
-            } else if(angle && strncmp(cursor, "turn", 4) == 0) {
-                value *= 360;
-                cursor += 4;
-            } else if((command == IJSVGTransformCommandTranslate ||
-                       command == IJSVGTransformCommandTranslateX ||
-                       command == IJSVGTransformCommandTranslateY) && strncmp(cursor, "px", 2) == 0) {
-                cursor += 2;
-            }
-        }
-        values[count++] = value;
-        BOOL whitespace = isspace((unsigned char)*cursor);
-        while(cursor < limit && isspace((unsigned char)*cursor)) {
-            cursor++;
-        }
-        if(*cursor == ',') {
-            cursor++;
-            while(cursor < limit && isspace((unsigned char)*cursor)) {
-                cursor++;
-            }
-            if(cursor == limit) {
-                return -1;
-            }
-        } else if(cursor < limit && !whitespace && *cursor != '+' && *cursor != '-' && *cursor != '.') {
-            return -1;
-        }
-    }
-    if(cursor != limit) {
-        return -1;
-    }
     switch(command) {
         case IJSVGTransformCommandMatrix: {
             return count == 6 ? count : -1;
@@ -88,6 +30,110 @@ static NSInteger IJSVGTransformParseParameters(const char* cursor, const char* l
             return count == 1 ? count : -1;
         }
     }
+}
+
+static BOOL IJSVGTransformParameterValue(const IJSVGCSSComponents* components,
+                                           const IJSVGCSSComponent* token,
+                                           IJSVGTransformCommand command, BOOL css,
+                                           NSInteger index, CGFloat* value)
+{
+    *value = token->number;
+    if(token->kind == IJSVGCSSComponentNumber) {
+        return YES;
+    }
+    if(!css || token->kind != IJSVGCSSComponentDimension) {
+        return NO;
+    }
+    const char* unit = NULL;
+    NSUInteger length = 0;
+    BOOL angle = index == 0 && (command == IJSVGTransformCommandRotate ||
+        command == IJSVGTransformCommandSkewX || command == IJSVGTransformCommandSkewY);
+    if(angle) {
+        switch(token->angleUnit) {
+            case IJSVGCSSAngleUnitDegrees: {
+                unit = "deg";
+                length = 3;
+                break;
+            }
+            case IJSVGCSSAngleUnitRadians: {
+                unit = "rad";
+                length = 3;
+                *value *= 180 / M_PI;
+                break;
+            }
+            case IJSVGCSSAngleUnitGradians: {
+                unit = "grad";
+                length = 4;
+                *value *= .9;
+                break;
+            }
+            case IJSVGCSSAngleUnitTurns: {
+                unit = "turn";
+                length = 4;
+                *value *= 360;
+                break;
+            }
+            default: {
+                return NO;
+            }
+        }
+    } else if(token->unit == IJSVGUnitLengthTypePX &&
+              (command == IJSVGTransformCommandTranslate ||
+               command == IJSVGTransformCommandTranslateX ||
+               command == IJSVGTransformCommandTranslateY)) {
+        unit = "px";
+        length = 2;
+    } else {
+        return NO;
+    }
+    const char* bytes = components->bytes + token->offset;
+    return token->length > length && memchr(bytes, '\\', token->length) == NULL &&
+        memcmp(bytes + token->length - length, unit, length) == 0;
+}
+
+static NSInteger IJSVGTransformParseParameters(const IJSVGCSSComponents* components,
+                                                NSUInteger index, IJSVGTransformCommand command,
+                                                BOOL css, CGFloat values[IJSVGTransformParameterCapacity])
+{
+    const IJSVGCSSComponent* function = components->values + index++;
+    const char* cursor = components->bytes + function->argumentOffset;
+    const char* limit = cursor + function->argumentLength;
+    NSInteger count = 0;
+    while(cursor < limit && isspace((unsigned char)*cursor)) {
+        cursor++;
+    }
+    while(index < function->next && count < IJSVGTransformParameterCapacity) {
+        const IJSVGCSSComponent* token = components->values + index++;
+        if(components->bytes + token->offset != cursor ||
+           !IJSVGTransformParameterValue(components, token, command, css, count, values + count)) {
+            return -1;
+        }
+        count++;
+        cursor += token->length;
+        BOOL whitespace = cursor < limit && isspace((unsigned char)*cursor);
+        while(cursor < limit && isspace((unsigned char)*cursor)) {
+            cursor++;
+        }
+        if(cursor < limit && *cursor == ',') {
+            if(index == function->next || components->values[index].symbol != IJSVGCSSSymbolComma) {
+                return -1;
+            }
+            index++;
+            cursor++;
+            while(cursor < limit && isspace((unsigned char)*cursor)) {
+                cursor++;
+            }
+            if(cursor == limit) {
+                return -1;
+            }
+        } else if(cursor < limit && !whitespace && *cursor != '+' && *cursor != '-' && *cursor != '.') {
+            return -1;
+        }
+    }
+    if(cursor != limit || index != function->next) {
+        return -1;
+    }
+    return IJSVGTransformParameterCount(command, count);
 }
 
 static IJSVGTransformCommand IJSVGTransformCommandForFunction(IJSVGCSSFunction function)
@@ -258,10 +304,8 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
             break;
         }
         IJSVGTransformCommand commandType = IJSVGTransformCommandForFunction(component->function);
-        const char* arguments = source.bytes + component->argumentOffset;
         CGFloat params[IJSVGTransformParameterCapacity];
-        NSInteger parameterCount = IJSVGTransformParseParameters(arguments,
-                                                                 arguments + component->argumentLength,
+        NSInteger parameterCount = IJSVGTransformParseParameters(&components, index,
                                                                  commandType, allowCSSUnits, params);
         if(commandType == IJSVGTransformCommandNotImplemented || parameterCount < 0) {
             break;

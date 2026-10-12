@@ -58,6 +58,13 @@ IJSVGUnitLength* _Nullable IJSVGDimensionFromString(NSString* value, IJSVGNodeTy
 IJSVGUnitLength* _Nullable IJSVGSymbolReferenceFromString(NSString* _Nullable value,
                                                           IJSVGNodeAttribute attribute);
 
+typedef NS_ENUM(uint8_t, IJSVGPositionSyntax) {
+    IJSVGPositionSyntaxTransformOrigin,
+    IJSVGPositionSyntaxBasicShape
+};
+
+// Splits a mutable NUL terminated buffer in place without retaining its bytes.
+NSArray<IJSVGUnitLength*>* _Nullable IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax);
 NSArray<IJSVGUnitLength*>* _Nullable IJSVGTransformOriginFromString(NSString* value);
 void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value, BOOL allowCSSUnits);
 void IJSVGApplyParsedTransforms(IJSVGNode* node, NSArray<IJSVGTransform*>* transforms);

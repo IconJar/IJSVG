@@ -34,13 +34,12 @@ static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components,
         CGFloat value = token->number;
         BOOL percent = token->kind == IJSVGCSSComponentPercentage;
         if(token->kind == IJSVGCSSComponentFunction) {
-            IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:components
-                                                                                         atIndex:index];
-            if(expression == nil || expression.usesLength || expression.usesFontMetrics) {
+            IJSVGCSSNumericValue result;
+            if(!IJSVGCSSMathExpressionEvaluateNumber(components, index, 100, &result)) {
                 return -1;
             }
-            percent = expression.lengthExponent == 1;
-            value = [expression evaluate:(IJSVGCSSCalculationContext){ 100, 0, 0 }];
+            percent = result.percentage;
+            value = result.value;
             if(isnan(value)) {
                 value = 0;
             }
