@@ -127,7 +127,7 @@
                             percentage:percentage.boolValue reference:&reference];
                         IJSVGFilterPrimitive* primitive = svg.rootNode.children.firstObject.filter.primitives.firstObject;
                         IJSVGNode* originalNode = primitive.imageNode;
-                        NSDictionary* parameters = primitive.parameters.copy;
+                        NSDictionary<NSString*, NSString*>* parameters = primitive.parameters.copy;
                         NSString* label = [NSString stringWithFormat:@"origin=%@ corner=%lu percentage=%@ compressed=%@",
                             origin, (unsigned long)corner, percentage, compressed];
                         IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(128, 128)

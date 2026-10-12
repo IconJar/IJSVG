@@ -920,9 +920,9 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 - (void)testPreparedParametersInvalidateAndCopiesRemainIndependent
 {
     IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
-    NSMutableDictionary* attributes = [@{@"values": @".25 .75", @"dx": @"invalid"} mutableCopy];
+    NSMutableDictionary<NSString*, NSString*>* attributes = [@{@"values": @".25 .75", @"dx": @"invalid"} mutableCopy];
     primitive.parameters = attributes;
-    NSArray* numbers = [primitive numbersForParameter:@"values"];
+    NSArray<NSNumber*>* numbers = [primitive numbersForParameter:@"values"];
     XCTAssertEqual(numbers, [primitive numbersForParameter:@"values"]);
     XCTAssertEqualObjects(numbers, (@[@.25, @.75]));
     XCTAssertEqual([primitive numberForParameter:@"dx"
@@ -934,10 +934,10 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     XCTAssertEqual([primitive numberForParameter:@"values"
                                     defaultValue:0], 2);
     XCTAssertEqualObjects([copy numbersForParameter:@"values"], numbers);
-    NSDictionary* first = [primitive preparedValueForKey:@"test"
+    NSDictionary<NSString*, NSString*>* first = [primitive preparedValueForKey:@"test"
                                                  builder:^id { return primitive.parameters; }];
     primitive.parameters = @{@"type": @"hueRotate", @"values": @"45"};
-    NSDictionary* second = [primitive preparedValueForKey:@"test"
+    NSDictionary<NSString*, NSString*>* second = [primitive preparedValueForKey:@"test"
                                                   builder:^id { return primitive.parameters; }];
     XCTAssertNotEqualObjects(first, second);
     dispatch_apply(32, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),

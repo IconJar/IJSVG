@@ -251,7 +251,7 @@
                value:(NSString*)value
          onPrimitive:(IJSVGFilterPrimitive*)primitive
 {
-    NSMutableDictionary* parameters = [primitive.parameters mutableCopy] ?: [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* parameters = [primitive.parameters mutableCopy] ?: [[NSMutableDictionary alloc] init];
     parameters[key] = value;
     primitive.parameters = parameters;
 }

@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGCommandParser.h>
+#import <xlocale.h>
 #import <IJSVG/IJSVGCommandEllipticalArc.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -533,6 +534,34 @@ static inline char IJSVGFloatCharacter(const char* buffer, const char* end)
     return buffer == end ? '\0' : *buffer;
 }
 
+static CGFloat IJSVGParseExtremeFloat(const char* start, const char* end)
+{
+    static locale_t locale;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        locale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+    });
+    if(locale == NULL) {
+        return NAN;
+    }
+    if(end == NULL) {
+        return (CGFloat)strtod_l(start, NULL, locale);
+    }
+    size_t length = (size_t)(end - start);
+    char storage[128];
+    char* bytes = length < sizeof(storage) ? storage : malloc(length + 1);
+    if(bytes == NULL) {
+        return NAN;
+    }
+    memcpy(bytes, start, length);
+    bytes[length] = '\0';
+    CGFloat value = (CGFloat)strtod_l(bytes, NULL, locale);
+    if(bytes != storage) {
+        free(bytes);
+    }
+    return value;
+}
+
 static inline CGFloat IJSVGParseFloatRange(const char* buffer, const char* end)
 {
     const char* start = buffer;
@@ -584,9 +613,7 @@ static inline CGFloat IJSVGParseFloatRange(const char* buffer, const char* end)
         if(exponent > 308) {
             // Preserve overflow and subnormal values instead of silently clamping
             // the exponent. Keep the fast conversion for ordinary SVG numbers.
-            return (CGFloat)[[[NSString alloc] initWithBytes:start
-                                                       length:end == NULL ? strlen(start) : (NSUInteger)(end - start)
-                                                     encoding:NSUTF8StringEncoding] doubleValue];
+            return IJSVGParseExtremeFloat(start, end);
         }
         while(exponent >= 50) {
             scale *= 1E50;

@@ -329,10 +329,10 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 }
 
 + (CGFloat*)computeColorStops:(IJSVGGradient*)gradient
-                       colors:(NSArray**)someColors
+                       colors:(NSArray<NSColor*>**)someColors
 {
     NSUInteger childCount = gradient.children.count;
-    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:childCount];
+    NSMutableArray<NSColor*>* colors = [[NSMutableArray alloc] initWithCapacity:childCount];
     CGFloat* stopsParams = NULL;
     if(childCount != 0) {
         stopsParams = (CGFloat*)malloc(childCount * sizeof(CGFloat));
@@ -359,7 +359,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     if(i == 0 && stopsParams != NULL) {
         (void)free(stopsParams), stopsParams = NULL;
     }
-    *someColors = (NSArray*)colors;
+    *someColors = (NSArray<NSColor*>*)colors;
     return stopsParams;
 }
 

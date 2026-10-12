@@ -93,7 +93,7 @@
     NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/><path d=\"M0 0 H4 V4 H0 Z\" "
                       "fill=\"#ff0000\"/><path d=\"M4 0 H8 V4 H4 Z\" fill=\"#00ff00\"/><path d=\"M0 4 H4 "
                       "V8 H0 Z\" fill=\"#0000ff\"/><path d=\"M4 4 H8 V8 H4 Z\" fill=\"#000000\"/>";
-    NSDictionary* palette = @{
+    NSDictionary<NSString*, NSColor*>* palette = @{
         @"R": [NSColor colorWithCalibratedRed:1.f
                                         green:0.f
                                          blue:0.f
@@ -130,7 +130,7 @@
                       "id=\"canvas\"><rect class=\"hot\" x=\"0\" y=\"0\" width=\"2\" height=\"8\"/><rect "
                       "class=\"cool\" x=\"2\" y=\"0\" width=\"2\" height=\"8\"/><rect class=\"hidden\" "
                       "x=\"4\" y=\"0\" width=\"2\" height=\"8\" fill=\"#00ff00\"/></g>";
-    NSDictionary* palette = @{
+    NSDictionary<NSString*, NSColor*>* palette = @{
         @"R": [NSColor colorWithCalibratedRed:1.f
                                         green:0.f
                                          blue:0.f
@@ -169,7 +169,7 @@
 {
     NSString* body = @"<rect width=\"8\" height=\"8\" fill=\"#ffffff\"/><g transform=\"translate(4,0)\">"
                       "<path d=\"M0 0 H4 V8 H0 Z\" fill=\"#0000ff\"/></g>";
-    NSDictionary* palette = @{
+    NSDictionary<NSString*, NSColor*>* palette = @{
         @"B": [NSColor colorWithCalibratedRed:0.f
                                         green:0.f
                                          blue:1.f

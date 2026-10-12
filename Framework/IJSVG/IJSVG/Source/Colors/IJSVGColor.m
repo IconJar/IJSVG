@@ -104,7 +104,7 @@ static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components,
 
 @implementation IJSVGColor
 
-static NSDictionary* _colorTree = nil;
+static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
 
 + (void)load
 {

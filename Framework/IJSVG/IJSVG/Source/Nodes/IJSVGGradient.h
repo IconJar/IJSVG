@@ -34,7 +34,7 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 @property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
 
 + (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient
-                       colors:(NSArray* _Nonnull * _Nonnull)someColors;
+                       colors:(NSArray<NSColor*>* _Nonnull * _Nonnull)someColors;
 
 - (void)parseSpreadMethod:(NSXMLElement*)element;
 - (BOOL)drawSpreadInContext:(CGContextRef)ctx

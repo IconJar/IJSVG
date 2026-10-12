@@ -525,7 +525,7 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx,
 // memory pressure, and a paint removes its entry when its resolved graph dies.
 @interface IJSVGFilterCachedImage : NSObject
 @property (nonatomic, assign) CGImageRef image;
-@property (nonatomic, copy) NSArray* signature;
+@property (nonatomic, copy) NSArray<id>* signature;
 @end
 
 @implementation IJSVGFilterCachedImage
@@ -641,7 +641,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 @interface IJSVGFilterPaint () {
     NSObject* _outputCacheKey;
-    NSArray* _outputSignature;
+    NSArray<id>* _outputSignature;
     BOOL _checkedOutputCaching;
     BOOL _canCacheOutput;
     IJSVGFilter* _imageSnapshotFilter;

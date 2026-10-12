@@ -47,7 +47,7 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGText* copy = [super copyWithZone:zone];
-    NSMutableArray* content = [NSMutableArray arrayWithCapacity:self.textContent.count];
+    NSMutableArray<id>* content = [NSMutableArray arrayWithCapacity:self.textContent.count];
     for(id item in self.textContent) {
         if([item isKindOfClass:IJSVGText.class]) {
             // Point mixed text content at the copied children.

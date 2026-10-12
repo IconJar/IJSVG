@@ -142,9 +142,11 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
 
     // Use Core Image for functions that fit a simple polynomial.
     // Other functions use the pixel calculation below.
-    NSMutableDictionary* polynomial = [[NSMutableDictionary alloc] init];
-    NSArray* coefficientKeys = @[@"inputRedCoefficients", @"inputGreenCoefficients",
-                                 @"inputBlueCoefficients", @"inputAlphaCoefficients"];
+    NSMutableDictionary<NSString*, CIVector*>* polynomial = [[NSMutableDictionary alloc] init];
+    NSArray<NSString*>* coefficientKeys = @[
+        @"inputRedCoefficients", @"inputGreenCoefficients",
+        @"inputBlueCoefficients", @"inputAlphaCoefficients"
+    ];
     BOOL supportsPolynomial = YES;
     const double* tableValues = tables.bytes;
     for(NSUInteger c = 0; c < 4; c++) {

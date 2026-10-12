@@ -33,7 +33,7 @@
     return strings;
 }
 
-- (NSArray*)ijsvg_componentsSplitByWhiteSpace
+- (NSArray<NSString*>*)ijsvg_componentsSplitByWhiteSpace
 {
     return [self ijsvg_componentsSeparatedByChars:"\t\n\r "];
 }

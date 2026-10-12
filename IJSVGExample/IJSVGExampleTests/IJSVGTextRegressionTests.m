@@ -225,28 +225,28 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             };
         }
 
-        NSArray* capitals = @[
+        NSArray<NSArray<NSString*>*>* capitals = @[
             @[ @"hel<tspan>lo</tspan>", @"Hello" ],
             @[ @"hELLO <tspan>wORLD</tspan>", @"HELLO WORLD" ],
             @[ @"he<![CDATA[llo]]> world", @"Hello World" ],
             @[ @"<tspan style='text-transform:none'>hel</tspan>lo", @"hello" ],
             @[ @"one <tspan>two</tspan> three", @"One Two Three" ]
         ];
-        for(NSArray* fixture in capitals) {
+        for(NSArray<NSString*>* fixture in capitals) {
             entries[[@"capitalizationPreservesWordBoundaries/" stringByAppendingString:fixture[0]]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* result = [context layout:[NSString stringWithFormat:
                     @"<text style='text-transform:capitalize'>%@</text>", fixture[0]]];
                 IJSVGCheck([result.string isEqual:fixture[1]]);
             };
         }
-        for(NSArray* fixture in @[ @[ @"150%", @30 ], @[ @"1.5em", @30 ], @[ @"1.5", @60 ] ]) {
+        for(NSArray<id>* fixture in @[ @[ @"150%", @30 ], @[ @"1.5em", @30 ], @[ @"1.5", @60 ] ]) {
             entries[[@"lineHeightInheritsComputedLengths/" stringByAppendingString:fixture[0]]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* result = [context layout:[NSString stringWithFormat:
                     @"<g font-size='20' style='line-height:%@'><text font-size='40' style='white-space:pre'>A\nB</text></g>", fixture[0]]];
                 IJSVGNear([context point:2 layout:result].y - [context point:0 layout:result].y, [fixture[1] doubleValue]);
             };
         }
-        for(NSArray* fixture in @[ @[ @20, @70, @2 ], @[ @(-10), @55, @1 ] ]) {
+        for(NSArray<NSNumber*>* fixture in @[ @[ @20, @70, @2 ], @[ @(-10), @55, @1 ] ]) {
             entries[[NSString stringWithFormat:@"wordSpacingParticipatesInWrapping/%@", fixture[0]]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* result = [context layout:[NSString stringWithFormat:
                     @"<text font-family='Courier' font-size='20' style='inline-size:%@;word-spacing:%@'>AA BB</text>", fixture[1], fixture[0]]];
@@ -285,7 +285,7 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             };
         }
 
-        NSArray* shorthands = @[
+        NSArray<NSArray<NSString*>*>* shorthands = @[
             @[ @"medium Helvetica", @"font-size:medium;font-family:Helvetica" ],
             @[ @"+2e1PX / +1.25 Helvetica", @"font-size:20px;line-height:1.25;font-family:Helvetica" ],
             @[ @"1.25em / 2ex Helvetica", @"font-size:1.25em;line-height:2ex;font-family:Helvetica" ],
@@ -299,14 +299,14 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             @[ @"small-caps bold larger Helvetica", @"font-variant:small-caps;font-weight:bold;font-size:larger;font-family:Helvetica" ],
             @[ @"20px &quot;Helvetica Neue&quot;", @"font-size:20px;font-family:&quot;Helvetica Neue&quot;" ]
         ];
-        for(NSArray* fixture in shorthands) {
+        for(NSArray<NSString*>* fixture in shorthands) {
             entries[[@"fontShorthandMatchesLonghands/" stringByAppendingString:fixture[0]]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* actual = [context layout:[NSString stringWithFormat:@"<text style='white-space:pre;font:%@'>Abc\nDef</text>", fixture[0]]];
                 IJSVGTextLayout* expected = [context layout:[NSString stringWithFormat:@"<text style='white-space:pre;%@'>Abc\nDef</text>", fixture[1]]];
                 [context compare:actual reference:expected];
             };
         }
-        NSArray* declarations = @[
+        NSArray<NSArray<NSString*>*>* declarations = @[
             @[ @"font-weight:bold;font:20px Helvetica", @"font-size:20px;font-family:Helvetica" ],
             @[ @"FONT-WEIGHT:bold;FONT:20px Helvetica", @"font-size:20px;font-family:Helvetica" ],
             @[ @"font:20px Helvetica;font-weight:bold", @"font-size:20px;font-family:Helvetica;font-weight:bold" ],
@@ -315,7 +315,7 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             @[ @"font:italic 30px Helvetica;font:20px / Helvetica", @"font-style:italic;font-size:30px;font-family:Helvetica" ],
             @[ @"font:italic 30px Helvetica;font:italic italic 20px Helvetica", @"font-style:italic;font-size:30px;font-family:Helvetica" ]
         ];
-        for(NSArray* fixture in declarations) {
+        for(NSArray<NSString*>* fixture in declarations) {
             entries[[@"fontDeclarationsRespectOrderAndValidity/" stringByAppendingString:fixture[0]]] = ^(IJSVGTextRegressionContext* context) {
                 IJSVGTextLayout* expected = [context layout:[NSString stringWithFormat:@"<text style='%@'>Text</text>", fixture[1]]];
                 for(NSString* body in @[
@@ -360,7 +360,7 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
                 IJSVGNear([context point:4 layout:result].x - [context point:2 layout:result].x, step);
             };
         }
-        for(NSArray* fixture in @[ @[ @300, @"bolder", @400 ], @[ @400, @"bolder", @700 ],
+        for(NSArray<id>* fixture in @[ @[ @300, @"bolder", @400 ], @[ @400, @"bolder", @700 ],
                                   @[ @700, @"bolder", @900 ], @[ @900, @"lighter", @700 ],
                                   @[ @700, @"lighter", @400 ], @[ @400, @"lighter", @100 ] ]) {
             entries[[NSString stringWithFormat:@"relativeWeightsResolveAgainstParent/%@/%@", fixture[0], fixture[1]]] = ^(IJSVGTextRegressionContext* context) {
@@ -378,7 +378,7 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
             IJSVGCheck(!CGRectEqualToRect(light.group.bounds, regular.group.bounds));
             IJSVGCheck(!CGRectEqualToRect(medium.group.bounds, regular.group.bounds));
         };
-        for(NSArray* fixture in @[ @[ @"embed", @"\u202B", @"\u202C" ],
+        for(NSArray<NSString*>* fixture in @[ @[ @"embed", @"\u202B", @"\u202C" ],
                                   @[ @"bidi-override", @"\u202E", @"\u202C" ],
                                   @[ @"isolate", @"\u2067", @"\u2069" ],
                                   @[ @"isolate-override", @"\u2068\u202E", @"\u202C\u2069" ],

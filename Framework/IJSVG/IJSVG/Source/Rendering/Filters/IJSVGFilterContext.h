@@ -44,7 +44,7 @@
 - (CIImage*)imageFromPrimitiveColorSpace:(CIImage*)image;
 - (CIImage*)applyFilter:(NSString*)name
                 toImage:(CIImage*)image
-             parameters:(NSDictionary*)parameters;
+             parameters:(NSDictionary<NSString*, id>*)parameters;
 - (CIImage*)alphaForImage:(CIImage*)image;
 - (CIImage*)offsetImage:(CIImage*)input
                      dx:(CGFloat)dx

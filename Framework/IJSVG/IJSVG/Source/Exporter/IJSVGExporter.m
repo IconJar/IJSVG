@@ -55,7 +55,7 @@ BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option)
 
 const NSArray<NSString*>* IJSVGShortCharacterArray(void)
 {
-    static NSArray* _array;
+    static NSArray<NSString*>* _array;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l",
@@ -68,7 +68,7 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
 
 const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
 {
-    static NSDictionary* _defaults;
+    static NSDictionary<NSString*, NSString*>* _defaults;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         _defaults = @{
@@ -129,15 +129,15 @@ const NSSet* IJSVGInheritableAttributeSet(void)
     return _attributes;
 }
 
-void IJSVGApplyAttributesToElement(NSDictionary* _Nonnull attributes, NSXMLElement* element)
+void IJSVGApplyAttributesToElement(NSDictionary<NSString*, NSString*>* _Nonnull attributes, NSXMLElement* element)
 {
     [element setAttributesAsDictionary:attributes];
 };
 
 NSDictionary<NSString*, NSString*>* IJSVGElementAttributeDictionary(NSXMLElement* element)
 {
-    NSArray* atts = element.attributes;
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] initWithCapacity:atts.count];
+    NSArray<NSXMLNode*>* atts = element.attributes;
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] initWithCapacity:atts.count];
     for (NSXMLNode* attribute in atts) {
         dict[attribute.name] = attribute.stringValue;
     }
@@ -243,7 +243,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     // sort out viewbox
     CGRect viewBox = [_rootPaint.viewBox computeValue:_rootPaint.frame.size];
-    NSMutableDictionary* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
+    NSMutableDictionary<NSString*, NSString*>* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
         IJSVGAttributeXMLNS: XML_DOC_NS,
         IJSVGAttributeViewBox: [self viewBoxWithRect:viewBox]
     }];
@@ -309,7 +309,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (NSString*)generateID
 {
-    const NSArray* chars = IJSVGShortCharacterArray();
+    const NSArray<NSString*>* chars = IJSVGShortCharacterArray();
     if(_idCount < chars.count) {
         return chars[_idCount++];
     }
@@ -739,7 +739,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             IJSVGApplyAttributesToElement(@{IJSVGAttributeXLink: IJSVGHash(identifier)}, matchingGradient);
         }
         NSString* idString = [template attributeForName:IJSVGAttributeID].stringValue;
-        NSDictionary* atts = @{
+        NSDictionary<NSString*, NSString*>* atts = @{
             IJSVGAttributeXLink: IJSVGHash(idString)
         };
         IJSVGApplyAttributesToElement(atts, gradient);
@@ -899,10 +899,10 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 }
 
-- (NSDictionary*)intersectableAttributes:(NSDictionary*)atts
-                   inheritableAttributes:(const NSSet*)inheritable
+- (NSDictionary<NSString*, NSString*>*)intersectableAttributes:(NSDictionary<NSString*, NSString*>*)atts
+                                         inheritableAttributes:(const NSSet*)inheritable
 {
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in atts.allKeys) {
         if([inheritable containsObject:key]) {
             dict[key] = atts[key];
@@ -911,11 +911,11 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     return dict;
 }
 
-- (NSDictionary*)intersectionInheritableAttributes:(NSDictionary*)newAttributes
-                                 currentAttributes:(NSDictionary*)currentAttributes
-                             inheritableAttributes:(const NSSet*)inheritableAtts
+- (NSDictionary<NSString*, NSString*>*)intersectionInheritableAttributes:(NSDictionary<NSString*, NSString*>*)newAttributes
+                                                       currentAttributes:(NSDictionary<NSString*, NSString*>*)currentAttributes
+                                                   inheritableAttributes:(const NSSet*)inheritableAtts
 {
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in newAttributes.allKeys) {
         NSString* currentValue = currentAttributes[key];
         if(currentValue != nil &&
@@ -1054,7 +1054,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSXMLElement*)defPathElementForPathData:(NSString*)data
 {
     NSXMLElement* element = [[NSXMLElement alloc] initWithName:@"path"];
-    NSDictionary* atts = @{
+    NSDictionary<NSString*, NSString*>* atts = @{
         IJSVGAttributeD: data,
         IJSVGAttributeID: [self identifierForElement:element]
     };
@@ -1067,8 +1067,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     @autoreleasepool {
         // vector-effect is not inherited by the referenced path when moved to <use>.
         // Keep these paths explicit so their stroke behavior survives deduplication.
-        NSArray* paths = [_dom nodesForXPath:@"//path[not(@vector-effect)]"
-                                       error:nil];
+        NSArray<NSXMLNode*>* paths = [_dom nodesForXPath:@"//path[not(@vector-effect)]"
+                                                   error:nil];
 
         NSMutableDictionary<NSString*, NSXMLElement*>* firstPaths = [[NSMutableDictionary alloc] init];
         NSMutableDictionary<NSString*, NSXMLElement*>* defs = [[NSMutableDictionary alloc] init];
@@ -1243,7 +1243,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (NSString*)transformAttributeStringForTransforms:(NSArray<IJSVGTransform*>*)transforms
 {
-    NSMutableArray* strings = [[NSMutableArray alloc] initWithCapacity:transforms.count];
+    NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:transforms.count];
     for(IJSVGTransform* transform in transforms) {
         [strings addObject:[self transformAttributeStringForTransform:transform.CGAffineTransform]];
     }
@@ -1456,7 +1456,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     
     // compute the attributes
     NSString* identifier = [self identifierForElement:patternElement];
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributePatternUnits] = IJSVGStringUserSpaceOnUse;
     dict[IJSVGAttributeID] = identifier;
     
@@ -1530,7 +1530,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     if(gradient.class == IJSVGLinearGradient.class) {
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
-        NSDictionary* dict = @{
+        NSDictionary<NSString*, NSString*>* dict = @{
             IJSVGAttributeX1: [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
             IJSVGAttributeY1: [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
             IJSVGAttributeX2: [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
@@ -1543,7 +1543,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         // assume radial
         IJSVGRadialGradient* rGradient = (IJSVGRadialGradient*)gradient;
         gradientElement.name = @"radialGradient";
-        NSDictionary* dict = @{
+        NSDictionary<NSString*, NSString*>* dict = @{
             IJSVGAttributeCX: [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
             IJSVGAttributeCY: [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
             IJSVGAttributeFX: [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
@@ -1589,7 +1589,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         NSXMLElement* stop = [[NSXMLElement alloc] init];
         stop.name = @"stop";
 
-        NSMutableDictionary* atts = [[NSMutableDictionary alloc] init];
+        NSMutableDictionary<NSString*, NSString*>* atts = [[NSMutableDictionary alloc] init];
         atts[IJSVGAttributeOffset] = [NSString stringWithFormat:@"%g%%", (location * 100)];
 
         // add the color
@@ -1622,7 +1622,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     [[self defElement] addChild:gradientElement];
 
     // work out the transform
-    NSArray* transforms = paint.gradient.transforms;
+    NSArray<IJSVGTransform*>* transforms = paint.gradient.transforms;
     if(transforms.count != 0.f) {
         NSString* transformString = [self transformAttributeStringForTransforms:transforms];
         IJSVGApplyAttributesToElement(@{
@@ -1708,7 +1708,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         ratio = maxHeight / imageHeight;
     }
     
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
     // Image paints resolve their origin inside drawInContext:, rather than
     // adding it to the enclosing transform. Preserve that position on export.
@@ -1818,7 +1818,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     
     CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
 
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     BOOL cleanupPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths);
     BOOL convertArcs = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertArcs);
     BOOL convertShapesToPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertShapesToPaths);
@@ -1844,7 +1844,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         if(cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
             // construct array of instructions to do
             e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray* instructions = [[NSMutableArray alloc] initWithCapacity:5];
+            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = [[NSMutableArray alloc] initWithCapacity:5];
 
             // M to H to V to H to z
             // M
@@ -2452,7 +2452,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)applyDefaultsToElement:(NSXMLElement*)element
                      fromPaint:(IJSVGPaint*)paint
 {
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
 
     IJSVGNode* node = paint.sourceNode;
     switch(node.backgroundEnabled) {
@@ -2483,7 +2483,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 
     // blendmode, we only every apply a stylesheet blend mode
-    NSMutableDictionary* style = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* style = [[NSMutableDictionary alloc] init];
     if(paint.isolated) {
         style[IJSVGAttributeIsolation] = @"isolate";
     }
@@ -2546,7 +2546,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     
     // create the key
     NSString* clipKey = [self identifierForElement:clip];
-    NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = clipKey;
     
     // convert the path back to userSpaceOnUse, note this is the inverse
@@ -2561,7 +2561,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     clipPath = CGPathCreateCopyByTransformingPath(clipPath, &transform);
     
     // create the path
-    NSMutableDictionary* pathAtts = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* pathAtts = [[NSMutableDictionary alloc] init];
     NSXMLElement* path = [[NSXMLElement alloc] init];
     path.name = @"path";
     pathAtts[IJSVGAttributeD] = [self pathFromCGPath:clipPath];
@@ -3051,8 +3051,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSString*)pathFromCGPath:(CGPathRef)path
 {
     // string to store the path in
-    NSArray* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path
-                                                          floatingPointOptions:_floatingPointOptions];
+    NSArray<IJSVGExporterPathInstruction*>* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path
+                                                                                         floatingPointOptions:_floatingPointOptions];
     return [self pathFromInstructions:instructions];
 }
 
@@ -3167,7 +3167,7 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     }
 
     // sort the attributes using a custom sort
-    NSArray* sorted = [attributes sortedArrayUsingComparator:^NSComparisonResult(id _Nonnull obj1, id _Nonnull obj2) {
+    NSArray<NSXMLNode*>* sorted = [attributes sortedArrayUsingComparator:^NSComparisonResult(id _Nonnull obj1, id _Nonnull obj2) {
         // tell compiler we are nodes
         NSXMLNode* attribute1 = (NSXMLNode*)obj1;
         NSXMLNode* attribute2 = (NSXMLNode*)obj2;

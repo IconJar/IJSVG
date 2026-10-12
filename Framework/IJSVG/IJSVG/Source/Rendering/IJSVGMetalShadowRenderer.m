@@ -146,7 +146,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
             NSUInteger sizes[] = {capacity * 4, capacity * sizeof(float),
                 capacity * sizeof(simd_float4), capacity * 4, capacity * sizeof(uint32_t),
                 128 * sizeof(IJSVGMetalShadowParameters)};
-            NSMutableArray* buffers = [[NSMutableArray alloc] init];
+            NSMutableArray<id<MTLBuffer>>* buffers = [[NSMutableArray alloc] init];
             for(NSUInteger index = 0; index < 6; index++) {
                 id<MTLBuffer> buffer = [IJSVGShadowDevice newBufferWithLength:sizes[index]
                                                                       options:MTLResourceStorageModeShared];

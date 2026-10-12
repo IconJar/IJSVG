@@ -20,7 +20,7 @@
 
 - (void)testBasicClipShapeValidationAndCopy
 {
-    NSArray* invalid = @[@"circle(-1)", @"circle(10 20)", @"ellipse(10)", @"circle(at)",
+    NSArray<NSString*>* invalid = @[@"circle(-1)", @"circle(10 20)", @"ellipse(10)", @"circle(at)",
                          @"circle(at 10 20 30)", @"circle(10) unknown", @"circle(10) fill-box stroke-box",
                          @"fill-box circle(10) stroke-box", @"circle(10", @"circle(10))", @"circle(calc(10px))"];
     for(NSString* value in invalid) {
@@ -211,7 +211,7 @@
         }
         XCTAssertNil(weakOriginal);
         XCTAssertTrue(copy.CGGradient != NULL);
-        NSArray* rebuiltColors = nil;
+        NSArray<NSColor*>* rebuiltColors = nil;
         CGFloat* rebuiltLocations = [IJSVGGradient computeColorStops:copy colors:&rebuiltColors];
         XCTAssertEqualObjects(rebuiltColors, copy.colors);
         XCTAssertTrue(rebuiltLocations != NULL);

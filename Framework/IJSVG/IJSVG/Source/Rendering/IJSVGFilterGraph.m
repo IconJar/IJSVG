@@ -118,10 +118,12 @@ static CIImage* IJSVGFilterInputNamed(NSString* name, CIImage* previous,
 // Track alpha only results across named branches, not just recognised shadows.
 // Unknown names use the implicit previous input fallback in the evaluator.
 static BOOL IJSVGFilterInputIsAlphaOnly(NSString* name, BOOL previous,
-                                        NSDictionary* sources,
-                                        NSDictionary* results)
+                                        NSDictionary<NSString*, CIImage*>* sources,
+                                        NSDictionary<NSString*, NSNumber*>* results)
 {
-    if(name.length == 0) return previous;
+    if(name.length == 0) {
+        return previous;
+    }
     if(sources[name] != nil) {
         return [name isEqualToString:IJSVGStringSourceAlpha] ||
             [name isEqualToString:IJSVGStringBackgroundAlpha];
@@ -195,8 +197,7 @@ static BOOL IJSVGFilterCanElideTransparentBlendAtIndex(NSUInteger index,
 }
 
 
-static NSDictionary<NSString*, NSNumber*>* IJSVGFilterLastReferencesForPrimitives(
-    NSArray<IJSVGFilterPrimitive*>* primitives)
+static NSDictionary<NSString*, NSNumber*>* IJSVGFilterLastReferencesForPrimitives(NSArray<IJSVGFilterPrimitive*>* primitives)
 {
     NSMutableDictionary<NSString*, NSNumber*>* lastReferences = [[NSMutableDictionary alloc] init];
 
@@ -219,8 +220,7 @@ static NSDictionary<NSString*, NSNumber*>* IJSVGFilterLastReferencesForPrimitive
 }
 
 
-static NSDictionary<NSNumber*, NSArray<NSString*>*>* IJSVGFilterExpiredNamesForReferences(
-    NSDictionary<NSString*, NSNumber*>* lastReferences)
+static NSDictionary<NSNumber*, NSArray<NSString*>*>* IJSVGFilterExpiredNamesForReferences(NSDictionary<NSString*, NSNumber*>* lastReferences)
 {
     // Schedule the release of each named result once instead of scanning all live results per primitive.
     NSMutableDictionary<NSNumber*, NSMutableArray<NSString*>*>* expiredNames = [[NSMutableDictionary alloc] init];
@@ -238,11 +238,10 @@ static NSDictionary<NSNumber*, NSArray<NSString*>*>* IJSVGFilterExpiredNamesForR
 }
 
 
-static NSArray<CIImage*>* IJSVGFilterMergeInputsForPrimitive(
-    IJSVGFilterPrimitive* primitive,
-    CIImage* output,
-    NSDictionary<NSString*, CIImage*>* sources,
-    NSDictionary<NSString*, CIImage*>* results)
+static NSArray<CIImage*>* IJSVGFilterMergeInputsForPrimitive(IJSVGFilterPrimitive* primitive,
+                                                             CIImage* output,
+                                                             NSDictionary<NSString*, CIImage*>* sources,
+                                                             NSDictionary<NSString*, CIImage*>* results)
 {
     if(primitive.type != IJSVGNodeTypeFilterMerge) {
         return nil;
@@ -272,11 +271,8 @@ static CGColorRef IJSVGFilterNewShadowTintForPrimitive(IJSVGFilterPrimitive* pri
 }
 
 
-static NSData* IJSVGFilterBlurPixelsForBitmap(
-    CGContextRef bitmap,
-    CGRect region,
-    BOOL linearRGB,
-    NSUInteger sourceCrops)
+static NSData* IJSVGFilterBlurPixelsForBitmap(CGContextRef bitmap, CGRect region,
+                                              BOOL linearRGB, NSUInteger sourceCrops)
 {
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger count = width * height;
@@ -346,7 +342,7 @@ static CGImageRef IJSVGFilterNewImageForBlurPixels(NSData* output, CGContextRef 
 
 
 static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap,
-                                                  CGRect sourceCrop, CGRect outputCrop)
+                                                CGRect sourceCrop, CGRect outputCrop)
 {
     NSUInteger width = CGBitmapContextGetWidth(bitmap);
     NSUInteger height = CGBitmapContextGetHeight(bitmap);

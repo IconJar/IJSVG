@@ -49,7 +49,7 @@ static void IJSVGParseTextPositions(NSString* value,
                                     IJSVGTextAttributeValue* parsed)
 {
     NSArray<NSString*>* tokens = [value ijsvg_componentsSeparatedByChars:" ,\t\r\n"];
-    NSMutableArray* lengths = [[NSMutableArray alloc] initWithCapacity:tokens.count];
+    NSMutableArray<IJSVGTextAttributeValue*>* lengths = [[NSMutableArray alloc] initWithCapacity:tokens.count];
     for(NSString* token in tokens) {
         IJSVGTextAttributeValue* length = IJSVGParseTextAttribute(token,
                                                                   IJSVGNodeAttributeTextLength);
@@ -61,14 +61,13 @@ static void IJSVGParseTextPositions(NSString* value,
 static void IJSVGParseTextRotations(NSString* value,
                                     IJSVGTextAttributeValue* parsed)
 {
-    NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:value];
-    NSMutableArray* rotations = [[NSMutableArray alloc] initWithCapacity:numbers.count];
-    for(NSNumber* number in numbers) {
+    NSMutableArray<IJSVGTextAttributeValue*>* rotations = [[NSMutableArray alloc] init];
+    IJSVGEnumerateNumbers(value, ^(CGFloat number) {
         IJSVGTextAttributeValue* rotation = [[IJSVGTextAttributeValue alloc] init];
         // Store radians so layout does not convert every rotation again.
-        rotation.number = IJSVGDegreesToRadians(number.doubleValue);
+        rotation.number = IJSVGDegreesToRadians(number);
         [rotations addObject:rotation];
-    }
+    });
     parsed.lengths = rotations;
 }
 
@@ -129,7 +128,7 @@ static void IJSVGParseTextFeatures(NSString* value,
         quotes = [NSCharacterSet characterSetWithCharactersInString:@"'\""];
     });
     NSArray<NSString*>* entries = [value ijsvg_componentsSeparatedByChars:","];
-    NSMutableDictionary* features = [[NSMutableDictionary alloc] initWithCapacity:entries.count];
+    NSMutableDictionary<NSString*, NSNumber*>* features = [[NSMutableDictionary alloc] initWithCapacity:entries.count];
     for(NSString* entry in entries) {
         NSArray<NSString*>* tokens = [entry ijsvg_componentsSplitByWhiteSpace];
         NSString* tag = [tokens.firstObject stringByTrimmingCharactersInSet:quotes];

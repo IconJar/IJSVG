@@ -59,7 +59,7 @@
 
 - (void)testPaintedGeometry
 {
-    NSArray<NSArray*>* cases = @[
+    NSArray<NSArray<id>*>* cases = @[
         @[@"<rect x='-50' y='-50' width='200' height='200' fill='none' stroke='blue' stroke-width='8'/>", @YES],
         @[@"<rect x='-50' y='-50' width='200' height='200'/>", @NO],
         @[@"<path fill-rule='evenodd' d='M-50-50h200v200h-200z M-20-20h140v140h-140z'/>", @YES],
@@ -68,7 +68,7 @@
         @[@"<rect x='99' y='20' width='100' height='20'/>", @NO],
         @[@"<rect x='101' y='20' width='100' height='20'/>", @YES]
     ];
-    for(NSArray* entry in cases) {
+    for(NSArray<id>* entry in cases) {
         IJSVG* svg = [self svgWithBody:entry[0] viewBox:@"0 0 100 100"];
         XCTAssertEqual([svg isNodeOutsideViewBox:svg.rootNode.children[0]],
                        [entry[1] boolValue], @"%@", entry[0]);

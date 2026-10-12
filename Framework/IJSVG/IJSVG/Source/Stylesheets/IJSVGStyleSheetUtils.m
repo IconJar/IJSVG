@@ -70,8 +70,8 @@ static BOOL IJSVGMediaConsume(const char** cursor, const char* token)
     return YES;
 }
 
-static BOOL IJSVGMediaParseFeature(const char** cursor,
-                                   IJSVGMediaCondition* condition, BOOL* valid)
+static BOOL IJSVGMediaParseFeature(const char** cursor, IJSVGMediaCondition* condition,
+                                   BOOL* valid)
 {
     IJSVGMediaSkipWhitespace(cursor);
     BOOL minimum = IJSVGMediaConsume(cursor, "min-");
@@ -368,7 +368,7 @@ BOOL IJSVGStyleSheetConsumeQuotedCharacter(char c, char* quote, BOOL* escaped)
 }
 
 static NSRange IJSVGStyleSheetTrimRange(const char* chars, NSUInteger start,
-                                         NSUInteger end)
+                                        NSUInteger end)
 {
     start = IJSVGStyleSheetIndexBySkippingWhitespace(chars, start, end);
     while(end > start && IJSVGStyleSheetCharIsWhitespace(chars[end - 1])) {
@@ -389,27 +389,20 @@ static NSString* IJSVGStyleSheetTrimmedDeclaration(NSString* value, const char* 
     return IJSVGStyleSheetStringFromUTF8Bytes(chars, range.location, NSMaxRange(range));
 }
 
-NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
+NSRange IJSVGStyleSheetDeclarationRange(const char* chars, NSUInteger length,
+                                        BOOL* important)
 {
     *important = NO;
-    const char* chars = value.UTF8String;
-    if(chars == NULL) {
-        return nil;
-    }
-    NSUInteger length = strlen(chars);
-    if(length != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return nil;
-    }
     NSRange range = IJSVGStyleSheetTrimRange(chars, 0, length);
     NSUInteger end = NSMaxRange(range);
     if(range.length < 10) {
-        return IJSVGStyleSheetTrimmedDeclaration(value, chars, range, length);
+        return range;
     }
     NSUInteger word = end - 9;
     const char* keyword = "important";
     for(NSUInteger index = 0; index < 9; index++) {
         if(IJSVGCharToLower(chars[word + index]) != keyword[index]) {
-            return IJSVGStyleSheetTrimmedDeclaration(value, chars, range, length);
+            return range;
         }
     }
     NSUInteger marker = word;
@@ -417,7 +410,7 @@ NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
         marker--;
     }
     if(marker == range.location || chars[marker - 1] != '!') {
-        return IJSVGStyleSheetTrimmedDeclaration(value, chars, range, length);
+        return range;
     }
     marker--;
     char quote = 0;
@@ -427,8 +420,7 @@ NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
         char c = chars[index];
         if(IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
             if(index == marker) {
-                return IJSVGStyleSheetTrimmedDeclaration(value, chars, range,
-                                                         length);
+                return range;
             }
             continue;
         }
@@ -442,7 +434,20 @@ NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
         *important = YES;
         range = IJSVGStyleSheetTrimRange(chars, range.location, marker);
     }
-    return IJSVGStyleSheetTrimmedDeclaration(value, chars, range, length);
+    return range;
+}
+
+NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
+{
+    *important = NO;
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    if(source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
+        return nil;
+    }
+    NSRange range = IJSVGStyleSheetDeclarationRange(source.bytes, source.length,
+                                                    important);
+    return IJSVGStyleSheetTrimmedDeclaration(value, source.bytes, range,
+                                             source.length);
 }
 
 static BOOL IJSVGStyleSheetSkipIdentifier(const char* chars, NSUInteger length,
@@ -807,7 +812,7 @@ BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length,
     return NO;
 }
 
-static BOOL IJSVGStyleSheetFontFamilyIsReserved(char* chars, NSRange name)
+static BOOL IJSVGStyleSheetFontFamilyIsReserved(const char* chars, NSRange name)
 {
     return IJSVGStyleSheetTokenEquals(chars, name, "inherit") ||
         IJSVGStyleSheetTokenEquals(chars, name, "initial") ||
@@ -846,7 +851,7 @@ static BOOL IJSVGStyleSheetSkipIdentifier(const char* chars, NSUInteger length,
     return YES;
 }
 
-static BOOL IJSVGStyleSheetSkipFamilyIdentifier(char* chars, NSUInteger length,
+static BOOL IJSVGStyleSheetSkipFamilyIdentifier(const char* chars, NSUInteger length,
                                                 NSUInteger* index)
 {
     NSUInteger start = *index;
@@ -854,8 +859,8 @@ static BOOL IJSVGStyleSheetSkipFamilyIdentifier(char* chars, NSUInteger length,
         !IJSVGStyleSheetFontFamilyIsReserved(chars, NSMakeRange(start, *index - start));
 }
 
-static BOOL IJSVGStyleSheetSkipUnquotedFamily(char* chars, NSUInteger length,
-                                               NSUInteger* index)
+static BOOL IJSVGStyleSheetSkipUnquotedFamily(const char* chars, NSUInteger length,
+                                              NSUInteger* index)
 {
     while(*index < length) {
         if(!IJSVGStyleSheetSkipFamilyIdentifier(chars, length, index)) {
@@ -947,13 +952,28 @@ static NSUInteger IJSVGStyleSheetDecodeEscape(const char* chars, NSUInteger inde
 }
 
 static NSString* IJSVGStyleSheetDecodeFamily(const char* chars, NSUInteger start,
-                                              NSUInteger end, BOOL quoted)
+                                             NSUInteger end, BOOL quoted)
 {
     if(quoted) {
         start++;
         end--;
     } else {
         start = IJSVGStyleSheetIndexBySkippingWhitespace(chars, start, end);
+    }
+    if(!quoted) {
+        while(end > start && IJSVGStyleSheetCharIsWhitespace(chars[end - 1])) {
+            end--;
+        }
+    }
+    BOOL decode = NO;
+    for(NSUInteger index = start; index < end; index++) {
+        if(chars[index] == '\\' || (!quoted && IJSVGStyleSheetCharIsWhitespace(chars[index]))) {
+            decode = YES;
+            break;
+        }
+    }
+    if(!decode) {
+        return start == end ? @"" : IJSVGStyleSheetStringFromUTF8Bytes(chars, start, end);
     }
     NSMutableData* data = [[NSMutableData alloc] initWithCapacity:end - start];
     for(NSUInteger index = start; index < end;) {
@@ -970,10 +990,12 @@ static NSString* IJSVGStyleSheetDecodeFamily(const char* chars, NSUInteger start
                   (quoted || !IJSVGStyleSheetCharIsWhitespace(chars[index]))) {
                 index++;
             }
-            [data appendBytes:chars + marker length:index - marker];
+            [data appendBytes:chars + marker
+                       length:index - marker];
         }
     }
-    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    return [[NSString alloc] initWithData:data
+                                 encoding:NSUTF8StringEncoding];
 }
 
 NSString* IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start,
@@ -1032,7 +1054,7 @@ BOOL IJSVGStyleSheetConsumeASCIIIdentifier(const char* chars, NSUInteger length,
 }
 
 NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
-                                         NSUInteger* index)
+                                           NSUInteger* index)
 {
     NSUInteger start = *index;
     NSUInteger cursor = start;
@@ -1046,9 +1068,9 @@ NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
     return IJSVGStyleSheetDecodeFamily(chars, start, cursor, NO);
 }
 
-static BOOL IJSVGStyleSheetScanFontFamilies(char* chars, NSUInteger index,
-                                             NSUInteger length,
-                                             void (^handler)(NSString*, BOOL))
+static BOOL IJSVGStyleSheetScanFontFamilies(const char* chars, NSUInteger index,
+                                            NSUInteger length,
+                                            void (^handler)(NSString*, BOOL))
 {
     while(index < length) {
         NSUInteger start = index;
@@ -1080,24 +1102,18 @@ static BOOL IJSVGStyleSheetScanFontFamilies(char* chars, NSUInteger index,
 BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,
                                            void (^handler)(NSString* family, BOOL quoted))
 {
-    const char* source = value.UTF8String;
-    if(source == NULL) {
+    __attribute__((objc_precise_lifetime)) NSString* snapshot = [value copy];
+    IJSVGStringBytes source = IJSVGStringGetBytes(snapshot);
+    if(source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
         return NO;
     }
-    NSUInteger length = strlen(source);
-    if(length != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return NO;
-    }
-    char* chars = strdup(source);
-    if(chars == NULL) {
-        return NO;
-    }
+    const char* chars = source.bytes;
+    NSUInteger length = source.length;
     NSUInteger start = IJSVGStyleSheetIndexBySkippingWhitespace(chars, 0, length);
     BOOL valid = IJSVGStyleSheetScanFontFamilies(chars, start, length, nil);
     if(valid) {
         valid = IJSVGStyleSheetScanFontFamilies(chars, start, length, handler);
     }
-    free(chars);
     return valid;
 }
 
@@ -1187,7 +1203,7 @@ static BOOL IJSVGStyleSheetParseFont(char* chars, NSUInteger length, NSRange* ra
     return NO;
 }
 
-static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* values,
+static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary<NSString*, NSString*>* values,
                                       BOOL pending)
 {
     NSString* attributes[IJSVGStyleSheetFontPropertyCount] = {
@@ -1245,15 +1261,16 @@ static NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandMarker(NSString*
 }
 
 static NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandFontDeclaration(NSString* value,
-    BOOL pending)
+                                                                                BOOL pending)
 {
-    NSMutableDictionary* properties = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* properties = [[NSMutableDictionary alloc] init];
     IJSVGStyleSheetExpandFont(value, properties, pending);
     return properties;
 }
 
 static BOOL IJSVGStyleSheetExpandShorthand(NSUInteger attribute, NSString* value,
-                                           BOOL pending, NSDictionary<NSString*, NSString*>** expanded)
+                                           BOOL pending,
+                                           NSDictionary<NSString*, NSString*>** expanded)
 {
     switch(attribute) {
         case IJSVGNodeAttributeMarker:
@@ -1300,7 +1317,8 @@ static BOOL IJSVGStyleSheetTransformBoxIsValid(NSString* value)
     }
 }
 
-static BOOL IJSVGStyleSheetDeclarationValueIsValid(NSUInteger attribute, NSString* value)
+static BOOL IJSVGStyleSheetDeclarationValueIsValid(NSUInteger attribute,
+                                                   NSString* value)
 {
     if(IJSVGAttributeIsGeometryProperty(attribute)) {
         return [value isKindOfClass:NSString.class] &&
@@ -1371,7 +1389,7 @@ NSString* IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString
 NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
                                                                      NSString* value)
 {
-    NSDictionary* expanded = nil;
+    NSDictionary<NSString*, NSString*>* expanded = nil;
     NSString* name = IJSVGStyleSheetResolveDeclaration(property, value,
                                                        &expanded);
     if(name == nil) {
@@ -1380,7 +1398,7 @@ NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* p
     if(expanded == nil) {
         return @{name: value};
     }
-    NSMutableDictionary* declarations = [expanded mutableCopy];
+    NSMutableDictionary<NSString*, NSString*>* declarations = [expanded mutableCopy];
     declarations[name] = value;
     return declarations;
 }

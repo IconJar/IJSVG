@@ -45,7 +45,7 @@ CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms);
 void IJSVGConcatTransformsCTM(CGContextRef context, NSArray<IJSVGTransform*>* transforms);
 NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 
-+ (NSArray<NSDictionary*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform;
++ (NSArray<NSDictionary<NSString*, id>*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform;
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform
                                      floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform;

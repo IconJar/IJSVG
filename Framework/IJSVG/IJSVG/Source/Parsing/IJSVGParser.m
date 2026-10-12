@@ -435,12 +435,12 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, NSMapTable*>* selectorScopes;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeFilterReferences;
 @property (nonatomic, strong) NSMutableSet<NSString*>* activeReferences;
-@property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray*>* pendingStylePaints;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<void (^)(IJSVGNode*)>*>* pendingStylePaints;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorNodes;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
 @property (nonatomic, strong) NSMapTable<IJSVGNode*, NSString*>* inheritedPathData;
-@property (nonatomic, strong) NSMapTable<IJSVGNode*, NSDictionary*>* customProperties;
+@property (nonatomic, strong) NSMapTable<IJSVGNode*, NSDictionary<NSString*, id>*>* customProperties;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
 @end
 
@@ -1015,9 +1015,9 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                 nodeStyle, styleRuleCount);
         }
     }
-    NSDictionary* customProperties = [self customPropertiesForNode:node
-                                                             style:styleSheet
-                                                       inlineStyle:nodeStyle];
+    NSDictionary<NSString*, id>* customProperties = [self customPropertiesForNode:node
+                                                                            style:styleSheet
+                                                                      inlineStyle:nodeStyle];
     IJSVGStyleSheetStyle* resolvedStyle = [styleSheet styleByResolvingVariables:customProperties];
     IJSVGStyleSheetStyle* resolvedInline = [nodeStyle styleByResolvingVariables:customProperties];
     BOOL resolvedVariables = resolvedStyle != styleSheet || resolvedInline != nodeStyle;
@@ -1026,7 +1026,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         nodeStyle = resolvedInline;
         IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
     }
-    __attribute__((objc_precise_lifetime)) NSMutableArray* resolvedAttributeValues = nil;
+    __attribute__((objc_precise_lifetime)) NSMutableArray<NSString*>* resolvedAttributeValues = nil;
     if(variableAttributeCount != 0) {
         resolvedAttributeValues = [[NSMutableArray alloc] initWithCapacity:variableAttributeCount];
         for(NSUInteger index = 0; index < variableAttributeCount; index++) {
@@ -1396,9 +1396,8 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                                                                         element:element];
             NSString* length = [definition attributeForName:IJSVGAttributePathLength].stringValue;
             if(length.length != 0) {
-                NSMutableDictionary* positioning = [node.positioning mutableCopy];
-                positioning[IJSVGAttributePathLength] = IJSVGParseTextAttribute(length,
-                                                                                IJSVGNodeAttributePathLength);
+                NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* positioning = [node.positioning mutableCopy];
+                positioning[IJSVGAttributePathLength] = IJSVGParseTextAttribute(length, IJSVGNodeAttributePathLength);
                 node.positioning = positioning;
             }
         }
@@ -1431,7 +1430,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     node.x = nil;
     node.y = nil;
     NSArray<NSXMLNode*>* children = element.children;
-    NSMutableArray* content = [[NSMutableArray alloc] initWithCapacity:children.count];
+    NSMutableArray<id>* content = [[NSMutableArray alloc] initWithCapacity:children.count];
     for(NSXMLNode* child in children) {
         if(child.kind == NSXMLTextKind) {
             [content addObject:child.stringValue ?: @""];
@@ -1907,7 +1906,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     };
     if([self.styleAncestors objectForKey:element] == node &&
        [self.activeReferences containsObject:identifier]) {
-        NSMutableArray* pending = self.pendingStylePaints[identifier];
+        NSMutableArray<void (^)(IJSVGNode*)>* pending = self.pendingStylePaints[identifier];
         if(pending == nil) {
             pending = [[NSMutableArray alloc] init];
             self.pendingStylePaints[identifier] = pending;
@@ -2114,11 +2113,11 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     return node;
 }
 
-- (NSDictionary*)customPropertiesForNode:(IJSVGNode*)node
+- (NSDictionary<NSString*, id>*)customPropertiesForNode:(IJSVGNode*)node
                                    style:(IJSVGStyleSheetStyle*)style
                              inlineStyle:(IJSVGStyleSheetStyle*)inlineStyle
 {
-    NSDictionary* inherited = nil;
+    NSDictionary<NSString*, id>* inherited = nil;
     if(self.customProperties != nil) {
         for(IJSVGNode* parent = node.styleParent; parent != nil; parent = parent.styleParent) {
             inherited = [self.customProperties objectForKey:parent];
@@ -2130,7 +2129,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     if(!style.hasCustomProperties && !inlineStyle.hasCustomProperties) {
         return inherited;
     }
-    NSMutableDictionary* declarations = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* declarations = [[NSMutableDictionary alloc] init];
     IJSVGStyleSheetStyle* __unsafe_unretained sources[] = { style, inlineStyle };
     for(NSUInteger index = 0; index < 2; index++) {
         IJSVGStyleSheetStyle* source = sources[index];
@@ -2148,7 +2147,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
             declarations[property] = [source property:property];
         }
     }
-    NSDictionary* result = IJSVGCSSResolveCustomProperties(declarations, inherited);
+    NSDictionary<NSString*, id>* result = IJSVGCSSResolveCustomProperties(declarations, inherited);
     if(self.customProperties == nil) {
         self.customProperties = [NSMapTable weakToStrongObjectsMapTable];
     }
@@ -2742,7 +2741,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         NSString* href = [self resolveXLinkAttributeForElement:element].stringValue;
         NSString* identifier = [self resolveXLinkAttributeStringForElement:element];
         if(href != nil) {
-            NSMutableDictionary* parameters = node.parameters.mutableCopy;
+            NSMutableDictionary<NSString*, NSString*>* parameters = node.parameters.mutableCopy;
             parameters[IJSVGAttributeHref] = href;
             [parameters removeObjectForKey:IJSVGAttributeXLink];
             node.parameters = parameters;

@@ -227,7 +227,7 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         }
         IJSVGClipArgument argument = IJSVGClipArgumentForName(token);
         if(argument == IJSVGClipArgumentPosition) {
-            NSArray* position = IJSVGPositionFromBuffer(cursor, IJSVGPositionSyntaxBasicShape);
+            NSArray<IJSVGUnitLength*>* position = IJSVGPositionFromBuffer(cursor, IJSVGPositionSyntaxBasicShape);
             if(position.count != 2) {
                 return nil;
             }

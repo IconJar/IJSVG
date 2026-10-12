@@ -11,7 +11,7 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGText.h>
 
-static NSDictionary* IJSVGFontProperties(NSString* property, NSString* value)
+static NSDictionary<NSString*, id>* IJSVGFontProperties(NSString* property, NSString* value)
 {
     IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     [style setPropertyValue:value
@@ -20,7 +20,7 @@ static NSDictionary* IJSVGFontProperties(NSString* property, NSString* value)
 }
 
 // The style retains the original shorthand alongside its expanded longhands.
-static BOOL IJSVGHasCompleteFontDeclaration(NSDictionary* properties)
+static BOOL IJSVGHasCompleteFontDeclaration(NSDictionary<NSString*, id>* properties)
 {
     NSSet* expected = [NSSet setWithArray:@[
         @"font", @"font-family", @"font-size", @"font-style", @"font-weight",
@@ -32,7 +32,7 @@ static BOOL IJSVGHasCompleteFontDeclaration(NSDictionary* properties)
 
 static void IJSVGCheckFont(NSMutableArray<NSString*>* failures, NSString* value, BOOL valid)
 {
-    NSDictionary* result = IJSVGFontProperties(@"font", value);
+    NSDictionary<NSString*, id>* result = IJSVGFontProperties(@"font", value);
     if(IJSVGHasCompleteFontDeclaration(result) != valid ||
        (result.count != 0 && !IJSVGHasCompleteFontDeclaration(result))) {
         if(failures.count < 100) {
@@ -41,7 +41,7 @@ static void IJSVGCheckFont(NSMutableArray<NSString*>* failures, NSString* value,
         }
     }
     IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:@"font:italic 30px Helvetica"];
-    NSDictionary* previous = [style.properties copy];
+    NSDictionary<NSString*, id>* previous = [style.properties copy];
     [style setPropertyValue:value
                 forProperty:@"font"];
     if(!valid && ![previous isEqualToDictionary:style.properties] && failures.count < 100) {
@@ -51,7 +51,7 @@ static void IJSVGCheckFont(NSMutableArray<NSString*>* failures, NSString* value,
 
 static void IJSVGCheckCSSDeclarations(NSMutableArray<NSString*>* failures)
 {
-    NSArray* fixtures = @[
+    NSArray<NSArray<id>*>* fixtures = @[
         @[ @";fill:red", @"fill", @"red" ],
         @[ @"fill:red;;stroke:blue", @"stroke", @"blue" ],
         @[ @"garbage;fill:red", @"fill", @"red" ],
@@ -60,13 +60,13 @@ static void IJSVGCheckCSSDeclarations(NSMutableArray<NSString*>* failures)
         @[ @"font-weight:bold!important;font:20px Helvetica", @"font-weight", @"bold" ],
         @[ @"font:20px Helvetica!important;font-weight:bold", @"font-weight", @"normal" ]
     ];
-    for(NSArray* fixture in fixtures) {
+    for(NSArray<id>* fixture in fixtures) {
         IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:fixture[0]];
         if(![style.properties[fixture[1]] isEqual:fixture[2]]) {
             [failures addObject:[NSString stringWithFormat:@"Declaration recovery or priority failed: %@", fixture[0]]];
         }
     }
-    for(NSArray* fixture in @[
+    for(NSArray<id>* fixture in @[
         @[ @"} rect {fill:red}", @1 ],
         @[ @"}} rect {fill:red} } circle {stroke:blue}", @2 ],
         @[ @"text {font:20px \"A\\\\\";} rect {fill:red}", @2 ]
@@ -81,7 +81,7 @@ static void IJSVGCheckCSSDeclarations(NSMutableArray<NSString*>* failures)
 
 static void IJSVGCheckCSSIntegration(NSMutableArray<NSString*>* failures)
 {
-    NSArray* fixtures = @[
+    NSArray<NSArray<id>*>* fixtures = @[
         @[ @"<text font-family='&quot;A,B&quot;, Helvetica'>A</text>", @"font-family", @[ @"A,B", @"Helvetica" ] ],
         @[ @"<text font-family='Helve\\74 ica'>A</text>", @"font-family", @[ @"Helvetica" ] ],
         @[ @"<text font-family='&quot;serif&quot;, serif'>A</text>", @"font-family", @[ @"serif", @"Times" ] ],
@@ -89,7 +89,7 @@ static void IJSVGCheckCSSIntegration(NSMutableArray<NSString*>* failures)
         @[ @"<style>text {font-size:20px!important}</style><text style='font-size:40px!important'>A</text>", @"font-size", @"40px" ],
         @[ @"<style>#t {font-size:30px!important} text {font-size:20px!important}</style><text id='t'>A</text>", @"font-size", @"30px" ]
     ];
-    for(NSArray* fixture in fixtures) {
+    for(NSArray<id>* fixture in fixtures) {
         NSString* xml = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg'>%@</svg>", fixture[0]];
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
         IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(400, 200)];
@@ -113,7 +113,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
     NSMutableArray<NSString*>* failures = [[NSMutableArray alloc] init];
     IJSVGCheckCSSDeclarations(failures);
     IJSVGCheckCSSIntegration(failures);
-    NSArray* invalid = @[
+    NSArray<NSString*>* invalid = @[
         @"", @"/", @"20px", @"20px /", @"20px //2 Helvetica",
         @"20px 'Helvetica", @"20px Helvetica'", @"20px \"Helvetica\"junk",
         @"20px Helvetica,,Arial", @"20px ,Helvetica", @"20px Helvetica,",
@@ -127,7 +127,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
     for(NSString* value in invalid) {
         IJSVGCheckFont(failures, value, NO);
     }
-    NSArray* valid = @[
+    NSArray<NSString*>* valid = @[
         @"16px Helvetica", @"italic small-caps 600 condensed 20px / 1.5 Helvetica",
         @"  MEDIUM Helvetica  ", @"20px \"Helvetica Neue\", sans-serif",
         @"20px 不存在, Helvetica", @"20px \"A,B\"", @"20px \"A\\\"B\"",
@@ -165,8 +165,8 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
             NSString* value = [[NSString alloc] initWithBytes:bytes
                                                      length:length
                                                    encoding:NSUTF8StringEncoding];
-            NSDictionary* first = IJSVGFontProperties(@"font", value);
-            NSDictionary* second = IJSVGFontProperties(@"font", value);
+            NSDictionary<NSString*, id>* first = IJSVGFontProperties(@"font", value);
+            NSDictionary<NSString*, id>* second = IJSVGFontProperties(@"font", value);
             if((first.count != 0 && !IJSVGHasCompleteFontDeclaration(first)) ||
                ![first isEqualToDictionary:second]) {
                 if(failures.count < 100) {
@@ -189,7 +189,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
     }
     for(NSString* value in valid) {
         for(NSUInteger length = 0; length <= value.length; length++) {
-            NSDictionary* result = IJSVGFontProperties(@"font",
+            NSDictionary<NSString*, id>* result = IJSVGFontProperties(@"font",
                 [value substringToIndex:length]);
             if(result.count != 0 && !IJSVGHasCompleteFontDeclaration(result) && failures.count < 100) {
                 [failures addObject:@"Truncated shorthand produced partial properties"];

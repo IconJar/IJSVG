@@ -4,9 +4,9 @@
 #import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVG/IJSVGParser.h>
 
-static NSDictionary* IJSVGMDNCorpus(void)
+static NSDictionary<NSString*, id>* IJSVGMDNCorpus(void)
 {
-    static NSDictionary* corpus;
+    static NSDictionary<NSString*, id>* corpus;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         NSURL* url = [[NSBundle bundleForClass:NSClassFromString(@"IJSVGMDNWebKitTests")]
@@ -17,9 +17,9 @@ static NSDictionary* IJSVGMDNCorpus(void)
     return corpus;
 }
 
-static NSDictionary* IJSVGMDNPolicies(void)
+static NSDictionary<NSString*, NSDictionary<NSString*, id>*>* IJSVGMDNPolicies(void)
 {
-    static NSDictionary* policies;
+    static NSDictionary<NSString*, NSDictionary<NSString*, id>*>* policies;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
         NSURL* url = [[NSBundle bundleForClass:NSClassFromString(@"IJSVGMDNWebKitTests")]
@@ -54,17 +54,17 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 @property (nonatomic) CGFloat background;
 @property (nonatomic, copy) void (^fixtureTransform)(NSXMLDocument*);
 @property (nonatomic) BOOL compareTextMetrics;
-@property (nonatomic, strong) NSDictionary* metrics;
-@property (nonatomic, copy) void (^completion)(NSDictionary*);
-- (void)run:(NSString*)xml completion:(void (^)(NSDictionary*))completion;
+@property (nonatomic, strong) NSDictionary<NSString*, id>* metrics;
+@property (nonatomic, copy) void (^completion)(NSDictionary<NSString*, id>*);
+- (void)run:(NSString*)xml completion:(void (^)(NSDictionary<NSString*, id>*))completion;
 @end
 
 @implementation IJSVGMDNComparison
 
-- (void)finish:(NSDictionary*)result
+- (void)finish:(NSDictionary<NSString*, id>*)result
 {
     if(!self.completion) return;
-    void (^completion)(NSDictionary*) = self.completion;
+    void (^completion)(NSDictionary<NSString*, id>*) = self.completion;
     self.completion = nil;
     self.webView.navigationDelegate = nil;
     [self.webView stopLoading];
@@ -74,7 +74,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     completion(result);
 }
 
-- (void)run:(NSString*)xml completion:(void (^)(NSDictionary*))completion
+- (void)run:(NSString*)xml completion:(void (^)(NSDictionary<NSString*, id>*))completion
 {
     self.completion = completion;
     NSError* error = nil;
@@ -157,7 +157,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
             [self finish:@{@"error": error.description}];
             return;
         }
-        NSMutableDictionary* metrics = [value mutableCopy];
+        NSMutableDictionary<NSString*, id>* metrics = [value mutableCopy];
         metrics[@"nativeLanguages"] = NSLocale.preferredLanguages;
         self.metrics = metrics;
         WKSnapshotConfiguration* config = [[WKSnapshotConfiguration alloc] init];
@@ -212,13 +212,13 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     CGContextDrawImage(expected, CGRectMake(0, 0, width, height), reference);
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:self.xml];
     if(self.compareTextMetrics) {
-        NSMutableArray* texts = [NSMutableArray array];
+        NSMutableArray<NSDictionary<NSString*, id>*>* texts = [NSMutableArray array];
         for(IJSVGNode* node in svg.rootNode.children) {
             if([node isKindOfClass:IJSVGText.class]) {
                 IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:(IJSVGText*)node
                                                                      viewport:svg.rootNode.bounds.size
                                                                  pathResolver:nil];
-                NSMutableArray* positions = [NSMutableArray array];
+                NSMutableArray<NSArray<NSNumber*>*>* positions = [NSMutableArray array];
                 for(NSValue* value in layout.characterPositions) {
                     CGPoint point = value.pointValue;
                     [positions addObject:@[@(point.x), @(point.y)]];
@@ -226,7 +226,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
                 [texts addObject:@{@"advance":@(layout.advance), @"positions":positions}];
             }
         }
-        NSMutableDictionary* metrics = self.metrics.mutableCopy;
+        NSMutableDictionary<NSString*, id>* metrics = self.metrics.mutableCopy;
         metrics[@"native"] = texts;
         self.metrics = metrics;
     }
@@ -253,10 +253,10 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         d[i + 3] = 255;
         if(marked) { ink++; difference += delta; }
     }
-    NSMutableDictionary* result = [@{@"meanInkError": @(difference / (MAX(ink, 1) * 3. * 255.)),
+    NSMutableDictionary<NSString*, id>* result = [@{@"meanInkError": @(difference / (MAX(ink, 1) * 3. * 255.)),
         @"inkPixels": @(ink), @"parsed": @(svg.rootNode != nil), @"svg": self.xml} mutableCopy];
     CGContextRef contexts[] = {actual, expected, diff};
-    NSArray* names = @[@"ijsvg", @"webkit", @"diff"];
+    NSArray<NSString*>* names = @[@"ijsvg", @"webkit", @"diff"];
     for(NSUInteger i = 0; i < 3; i++) {
         CGImageRef image = CGBitmapContextCreateImage(contexts[i]);
         NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
@@ -277,18 +277,18 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 
 - (void)testCorpusInventory
 {
-    NSDictionary* corpus = IJSVGMDNCorpus();
+    NSDictionary<NSString*, id>* corpus = IJSVGMDNCorpus();
     XCTAssertEqualObjects(corpus[@"schemaVersion"], @1);
     XCTAssertGreaterThan([corpus[@"pages"] count], 300u);
     XCTAssertGreaterThan([corpus[@"examples"] count], 700u);
     XCTAssertGreaterThan([corpus[@"cases"] count], 400u);
-    NSDictionary* policies = IJSVGMDNPolicies();
+    NSDictionary<NSString*, NSDictionary<NSString*, id>*>* policies = IJSVGMDNPolicies();
     XCTAssertNotNil(policies);
     NSMutableSet* identifiers = [NSMutableSet set];
-    for(NSDictionary* fixture in corpus[@"cases"]) {
+    for(NSDictionary<NSString*, id>* fixture in corpus[@"cases"]) {
         XCTAssertFalse([identifiers containsObject:fixture[@"id"]]);
         [identifiers addObject:fixture[@"id"]];
-        NSDictionary* policy = policies[fixture[@"id"]];
+        NSDictionary<NSString*, id>* policy = policies[fixture[@"id"]];
         BOOL excluded = [policy[@"excludeComparison"] boolValue] &&
             [policy[@"sha256"] isEqual:fixture[@"sha256"]];
         NSString* method = [@"test_" stringByAppendingString:fixture[@"id"]];
@@ -309,17 +309,17 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 - (void)compareCase:(NSString*)identifier
  referenceTransform:(void (^)(NSXMLDocument*))referenceTransform
 {
-    NSDictionary* fixture = nil;
-    for(NSDictionary* candidate in IJSVGMDNCorpus()[@"cases"]) {
+    NSDictionary<NSString*, id>* fixture = nil;
+    for(NSDictionary<NSString*, id>* candidate in IJSVGMDNCorpus()[@"cases"]) {
         if([candidate[@"id"] isEqual:identifier]) { fixture = candidate; break; }
     }
     XCTAssertNotNil(fixture, @"Missing MDN fixture %@", identifier);
     if(!fixture) return;
     XCTSkipIf(fixture[@"skip"] != nil, @"%@: %@", fixture[@"url"], fixture[@"skip"]);
-    NSDictionary* policies = IJSVGMDNPolicies();
+    NSDictionary<NSString*, NSDictionary<NSString*, id>*>* policies = IJSVGMDNPolicies();
     XCTAssertNotNil(policies, @"Missing or invalid MDN expectations");
     if(!policies) return;
-    NSDictionary* policy = policies[identifier];
+    NSDictionary<NSString*, id>* policy = policies[identifier];
     NSString* xml = fixture[@"svg"];
     // Existing text comparisons use .16 for Core Text/WebKit rasterization.
     // Shape-only examples retain the existing .025 geometry threshold.
@@ -334,7 +334,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         identifier = [identifier stringByAppendingString:@"_reference"];
     }
     XCTestExpectation* done = [self expectationWithDescription:identifier];
-    __block NSDictionary* result;
+    __block NSDictionary<NSString*, id>* result;
     __block IJSVGMDNComparison* comparison;
     dispatch_async(dispatch_get_main_queue(), ^{
         comparison = [[IJSVGMDNComparison alloc] init];
@@ -342,7 +342,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         comparison.fixtureTransform = self.fixtureTransform;
         comparison.compareTextMetrics = self.compareTextMetrics;
         comparison.background = policy[@"background"] ? [policy[@"background"] doubleValue] : 1;
-        [comparison run:xml completion:^(NSDictionary* value) {
+        [comparison run:xml completion:^(NSDictionary<NSString*, id>* value) {
             result = value;
             [done fulfill];
         }];
@@ -353,15 +353,15 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     if(!result || result[@"error"]) return;
     XCTAssertTrue([result[@"parsed"] boolValue], @"IJSVG could not parse %@", identifier);
     if(self.compareTextMetrics) {
-        NSArray* native = comparison.metrics[@"native"];
-        NSArray* reference = comparison.metrics[@"texts"];
+        NSArray<NSDictionary<NSString*, id>*>* native = comparison.metrics[@"native"];
+        NSArray<NSDictionary<NSString*, id>*>* reference = comparison.metrics[@"texts"];
         XCTAssertGreaterThan(native.count, 0);
         XCTAssertEqual(native.count, reference.count);
         for(NSUInteger index = 0; index < MIN(native.count, reference.count); index++) {
             XCTAssertEqualWithAccuracy([native[index][@"advance"] doubleValue],
                                        [reference[index][@"computedLength"] doubleValue], .001);
-            NSArray* actual = native[index][@"positions"];
-            NSArray* expected = reference[index][@"positions"];
+            NSArray<NSArray<NSNumber*>*>* actual = native[index][@"positions"];
+            NSArray<NSArray<NSNumber*>*>* expected = reference[index][@"positions"];
             XCTAssertEqual(actual.count, expected.count);
             for(NSUInteger character = 0; character < MIN(actual.count, expected.count); character++) {
                 XCTAssertEqualWithAccuracy([actual[character][0] doubleValue], [expected[character][0] doubleValue], .001);
@@ -437,7 +437,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 {
     XCTAssertGreaterThan(NSLocale.preferredLanguages.count, 0);
     NSString* language = NSLocale.preferredLanguages.firstObject.lowercaseString;
-    NSDictionary* regional = @{@"en-us":@"Howdy!", @"en-gb":@"Wotcha!", @"en-au":@"G'day!"};
+    NSDictionary<NSString*, NSString*>* regional = @{@"en-us":@"Howdy!", @"en-gb":@"Wotcha!", @"en-au":@"G'day!"};
     NSString* expected = regional[language];
     XCTSkipIf(expected == nil || NSLocale.preferredLanguages.count != 1, @"This control requires one regional English preference");
     [self compareCase:@"reference_element_switch_block_1_1" referenceTransform:^(NSXMLDocument* document) {

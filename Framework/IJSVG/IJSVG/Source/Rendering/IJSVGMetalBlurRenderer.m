@@ -78,7 +78,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
         if(library == nil) {
             return;
         }
-        NSMutableArray* pipelines = [[NSMutableArray alloc] init];
+        NSMutableArray<id<MTLComputePipelineState>>* pipelines = [[NSMutableArray alloc] init];
         for(NSString* name in @[@"blurPrepare", @"blurHorizontal", @"blurVertical"]) {
             id<MTLFunction> function = [library newFunctionWithName:name];
             if(function == nil) {
@@ -234,7 +234,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
             NSUInteger sizes[] = {capacity * 4, capacity * sizeof(simd_float4),
                 capacity * sizeof(simd_float4), capacity * 4,
                 capacity * sizeof(uint32_t), 128 * sizeof(IJSVGMetalBlurParameters)};
-            NSMutableArray* buffers = [[NSMutableArray alloc] init];
+            NSMutableArray<id<MTLBuffer>>* buffers = [[NSMutableArray alloc] init];
             for(NSUInteger i = 0; i < 6; i++) {
                 id<MTLBuffer> buffer = [IJSVGBlurDevice newBufferWithLength:sizes[i]
                                                                     options:MTLResourceStorageModeShared];

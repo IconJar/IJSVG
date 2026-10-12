@@ -36,11 +36,11 @@
     NSColor* gray = [NSColor colorWithGenericGamma22White:0.4 alpha:0.3];
     NSColor* p3 = [NSColor colorWithDisplayP3Red:0.9 green:0.2 blue:0.4 alpha:0.7];
     NSColor* rgb = [NSColor colorWithSRGBRed:0.1 green:0.8 blue:0.3 alpha:0.5];
-    NSMutableArray* many = [NSMutableArray array];
+    NSMutableArray<NSColor*>* many = [NSMutableArray array];
     for(NSUInteger index = 0; index < 12; index++) {
         [many addObject:index % 2 == 0 ? rgb : gray];
     }
-    NSArray* cases = @[
+    NSArray<NSArray<NSColor*>*>* cases = @[
         @[NSColor.redColor, NSColor.blueColor],
         @[gray, NSColor.whiteColor],
         @[p3, rgb],
@@ -60,7 +60,7 @@
                 }
                 gradient.locations = locations;
             }
-            NSMutableArray* cgColors = [NSMutableArray array];
+            NSMutableArray<id>* cgColors = [NSMutableArray array];
             for(NSColor* color in colors) {
                 [cgColors addObject:(__bridge id)color.CGColor];
             }

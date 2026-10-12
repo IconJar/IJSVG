@@ -71,7 +71,7 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(NSString* value,
 
     // compute the color stops and colours
     [aGradient parseSpreadMethod:element];
-    NSArray* colors = nil;
+    NSArray<NSColor*>* colors = nil;
     CGFloat* stopsParams = [self.class computeColorStops:aGradient
                                                   colors:&colors];
     aGradient.colors = colors;

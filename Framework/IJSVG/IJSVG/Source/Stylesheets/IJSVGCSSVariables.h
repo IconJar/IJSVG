@@ -19,4 +19,7 @@ NSString* IJSVGCSSResolvedPaintValue(NSString* value, NSUInteger attribute);
 IJSVGCSSVariableSyntax IJSVGCSSValidateVariables(NSString* value);
 NSDictionary<NSString*, id>* IJSVGCSSResolveCustomProperties(NSDictionary<NSString*, NSString*>* declarations,
                                                              NSDictionary<NSString*, id>* inherited);
-NSString* IJSVGCSSResolveVariables(NSString* value, NSDictionary<NSString*, id>* properties);
+NSString* IJSVGCSSResolveVariables(NSString* value,
+                                   NSDictionary<NSString*, id>* properties);
+NSString* IJSVGCSSResolveDeclarationVariables(NSString* value,
+                                              NSDictionary<NSString*, id>* properties);

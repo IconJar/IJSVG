@@ -390,7 +390,7 @@ static CGImageRef IJSVGLocalColorMatrix(CGContextRef source,
         ![primitive.input isEqualToString:IJSVGStringSourceGraphic]) {
         return NULL;
     }
-    NSDictionary* prepared = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive];
+    NSDictionary<NSString*, id>* prepared = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive];
     NSData* coefficients = prepared[@"matrix"];
     if(coefficients.length != 20 * sizeof(double)) {
         return NULL;

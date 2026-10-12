@@ -10,6 +10,6 @@
 
 @interface IJSVGColorMatrixFilterEffect : IJSVGFilterEffect
 
-+ (NSDictionary*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive;
++ (NSDictionary<NSString*, id>*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive;
 
 @end

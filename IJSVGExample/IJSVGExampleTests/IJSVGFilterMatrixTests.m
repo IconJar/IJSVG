@@ -13,7 +13,7 @@
 
 @implementation IJSVGFilterMatrixTests
 
-- (NSArray<NSDictionary*>*)fixtures
+- (NSArray<NSDictionary<NSString*, id>*>*)fixtures
 {
     NSString* path = [@(__FILE__).stringByDeletingLastPathComponent
         stringByAppendingPathComponent:@"Fixtures/FilterMatrix/manifest.json"];
@@ -26,7 +26,7 @@
     if(data == nil) {
         return nil;
     }
-    NSArray* fixtures = [NSJSONSerialization JSONObjectWithData:data
+    NSArray<NSDictionary<NSString*, id>*>* fixtures = [NSJSONSerialization JSONObjectWithData:data
                                                         options:0
                                                           error:&error];
     XCTAssertNil(error);
@@ -36,7 +36,7 @@
 
 - (void)testCorpusCoversEveryRegisteredFilter
 {
-    NSArray<NSDictionary*>* fixtures = [self fixtures];
+    NSArray<NSDictionary<NSString*, id>*>* fixtures = [self fixtures];
     XCTAssertEqual(fixtures.count, 80u);
     if(fixtures == nil) return;
     XCTAssertEqual([NSSet setWithArray:[fixtures valueForKey:@"name"]].count,
@@ -56,9 +56,9 @@
 
 - (void)testRenderingOptionsToggleEveryFilterRecipe
 {
-    NSArray<NSDictionary*>* fixtures = [self fixtures];
+    NSArray<NSDictionary<NSString*, id>*>* fixtures = [self fixtures];
     XCTAssertEqual(fixtures.count, 80u);
-    for(NSDictionary* fixture in fixtures) {
+    for(NSDictionary<NSString*, id>* fixture in fixtures) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             for(NSNumber* exportImage in @[@NO, @YES]) {
                 NSString* name = [NSString stringWithFormat:@"%@ flipped=%@ exportImage=%@",
@@ -80,11 +80,11 @@
 
 - (void)testCombinedMatchesIndependentRendering
 {
-    NSArray<NSDictionary*>* fixtures = [self fixtures];
+    NSArray<NSDictionary<NSString*, id>*>* fixtures = [self fixtures];
     XCTAssertEqual(fixtures.count, 80u);
     // Individual renders check batching, layering and transforms. Existing
     // numeric filter tests remain the oracle for primitive mathematics.
-    for(NSDictionary* fixture in fixtures) {
+    for(NSDictionary<NSString*, id>* fixture in fixtures) {
         for(NSNumber* flipped in @[@NO, @YES]) {
             NSString* name = [NSString stringWithFormat:@"%@ flipped=%@",
                                                         fixture[@"name"],
@@ -94,7 +94,7 @@
                 @autoreleasepool {
                     NSData* actual = [self renderDocument:fixture[@"document"]
                                                   flipped:flipped.boolValue];
-                    NSArray* references = fixture[@"references"];
+                    NSArray<NSString*>* references = fixture[@"references"];
                     XCTAssertEqual(references.count, 3u);
                     NSData* reference = [self compositeDocuments:references
                                                          flipped:flipped.boolValue

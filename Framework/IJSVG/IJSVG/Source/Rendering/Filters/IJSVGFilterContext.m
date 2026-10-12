@@ -36,15 +36,16 @@ BOOL IJSVGFilterValidRect(CGRect rect)
 }
 
 // Find the pixel limits once so each sample can reuse them.
-IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height,
-    CGRect region, IJSVGFilterEdgeMode edgeMode)
+IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width,
+                                          NSInteger height, CGRect region,
+                                          IJSVGFilterEdgeMode edgeMode)
 {
     IJSVGFilterSampler sampler = {
-      .pixels = pixels,
-      .width = width,
-      .right = -1,
-      .bottom = -1,
-      .edgeMode = edgeMode
+        .pixels = pixels,
+        .width = width,
+        .right = -1,
+        .bottom = -1,
+        .edgeMode = edgeMode
     };
     if(CGRectIsEmpty(region)) {
         return sampler;
@@ -298,7 +299,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 - (CIImage*)applyFilter:(NSString*)name
                 toImage:(CIImage*)image
-             parameters:(NSDictionary*)parameters
+             parameters:(NSDictionary<NSString*, id>*)parameters
 {
     CIImage* result = [[self imageInPrimitiveColorSpace:image] imageByApplyingFilter:name
                                                                  withInputParameters:parameters];

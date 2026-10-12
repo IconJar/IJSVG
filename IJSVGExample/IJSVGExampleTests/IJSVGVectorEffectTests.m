@@ -179,7 +179,7 @@
         NSString* exported = [source SVGStringWithSize:CGSizeMake(500, 240)
                                              options:optionValue.integerValue];
         NSXMLDocument* document = [[NSXMLDocument alloc] initWithXMLString:exported options:0 error:NULL];
-        NSArray* fixedPaths = [document nodesForXPath:@"//path[@vector-effect='non-scaling-stroke']"
+        NSArray<NSXMLNode*>* fixedPaths = [document nodesForXPath:@"//path[@vector-effect='non-scaling-stroke']"
                                                error:NULL];
         XCTAssertEqual(fixedPaths.count, 1u, @"%@", exported);
         IJSVG* restored = [[IJSVG alloc] initWithSVGString:exported];

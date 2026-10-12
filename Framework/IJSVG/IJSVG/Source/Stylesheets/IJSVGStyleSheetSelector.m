@@ -195,7 +195,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
     }
 
     NSUInteger length = strlen(chars);
-    NSMutableArray* parsedSelectors = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGStyleSheetSelectorRaw*>* parsedSelectors = [[NSMutableArray alloc] init];
     IJSVGStyleSheetSelectorCombinator pendingCombinator = IJSVGStyleSheetSelectorCombinatorDescendant;
     IJSVGStyleSheetSelectorRaw* rawSelector = IJSVGStyleSheetCreateRawSelector(pendingCombinator);
     BOOL hasUniversalSelector = NO;

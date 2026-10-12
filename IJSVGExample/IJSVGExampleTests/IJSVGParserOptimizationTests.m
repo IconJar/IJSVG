@@ -850,7 +850,7 @@
     NSArray<NSNumber*>* specificities = @[@1, @10, @100, @1];
     for(NSUInteger seed = 0; seed < 8; seed++) {
         IJSVGStyleSheet* sheet = [[IJSVGStyleSheet alloc] init];
-        NSMutableArray<NSDictionary*>* rules = [[NSMutableArray alloc] init];
+        NSMutableArray<NSDictionary<NSString*, id>*>* rules = [[NSMutableArray alloc] init];
         for(NSUInteger index = 0; index < 96; index++) {
             NSUInteger selectorIndex = (index * 7 + seed) % selectors.count;
             NSString* important = (index + seed) % 5 == 0 ? @" !important" : @"";
@@ -862,12 +862,12 @@
             [rules addObject:@{@"specificity": specificities[selectorIndex],
                 @"index": @(index), @"declaration": declaration}];
         }
-        [rules sortUsingComparator:^NSComparisonResult(NSDictionary* first, NSDictionary* second) {
+        [rules sortUsingComparator:^NSComparisonResult(NSDictionary<NSString*, id>* first, NSDictionary<NSString*, id>* second) {
             NSComparisonResult order = [first[@"specificity"] compare:second[@"specificity"]];
             return order != NSOrderedSame ? order : [first[@"index"] compare:second[@"index"]];
         }];
         IJSVGStyleSheetStyle* expected = [[IJSVGStyleSheetStyle alloc] init];
-        for(NSDictionary* rule in rules) {
+        for(NSDictionary<NSString*, id>* rule in rules) {
             [expected addPropertiesFromStyle:
                 [IJSVGStyleSheetStyle parseStyleString:rule[@"declaration"]]];
         }

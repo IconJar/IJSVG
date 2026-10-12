@@ -15,7 +15,7 @@
 @interface IJSVGStyleSheet : NSObject {
 
 @private
-    NSMutableDictionary* _selectors;
+    NSMutableDictionary<NSString*, IJSVGStyleSheetSelector*>* _selectors;
     NSMutableArray<IJSVGStyleSheetRule*>* _rules;
 }
 

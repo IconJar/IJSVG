@@ -491,10 +491,10 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     }
 }
 
-- (NSDictionary*)attributesForCharacter:(IJSVGTextCharacter*)character
+- (NSDictionary<NSAttributedStringKey, id>*)attributesForCharacter:(IJSVGTextCharacter*)character
 {
     IJSVGTextComputedStyle* style = character->style;
-    NSMutableDictionary* attributes = [NSMutableDictionary dictionaryWithDictionary:@{
+    NSMutableDictionary<NSAttributedStringKey, id>* attributes = [NSMutableDictionary dictionaryWithDictionary:@{
         (__bridge NSString*)kCTFontAttributeName: style.font,
         IJSVGTextOwnerKey: character->owner
     }];
@@ -538,9 +538,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     return attributes;
 }
 
-- (NSArray<IJSVGText*>*)bidiScopesForNode:(IJSVGText*)node
+- (NSArray<IJSVGNode*>*)bidiScopesForNode:(IJSVGText*)node
 {
-    NSMutableArray* scopes = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGNode*>* scopes = [[NSMutableArray alloc] init];
     for(IJSVGNode* current = node; current != nil; current = current.parentNode) {
         IJSVGTextKeyword bidi = [self styleForNode:current].values[IJSVGAttributeUnicodeBidi].keyword;
         if(bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride ||
@@ -555,11 +555,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     return scopes;
 }
 
-- (void)appendBidiScope:(IJSVGText*)node
+- (void)appendBidiScope:(IJSVGNode*)node
                 opening:(BOOL)opening
                    text:(NSMutableAttributedString*)text
                     map:(NSMutableData*)map
-             attributes:(NSDictionary*)attributes
+             attributes:(NSDictionary<NSAttributedStringKey, id>*)attributes
 {
     IJSVGTextComputedStyle* style = [self styleForNode:node];
     IJSVGTextKeyword bidi = style.values[IJSVGAttributeUnicodeBidi].keyword;
@@ -601,14 +601,14 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSMutableAttributedString* result = [[NSMutableAttributedString alloc] init];
     [offsets setLength:range.length * sizeof(NSUInteger)];
     NSUInteger* positions = offsets.mutableBytes;
-    NSArray<IJSVGText*>* active = @[];
-    NSDictionary* attributes = nil;
+    NSArray<IJSVGNode*>* active = @[];
+    NSDictionary<NSAttributedStringKey, id>* attributes = nil;
     NSUInteger end = NSMaxRange(range);
     for(NSUInteger index = range.location; index < end;) {
         IJSVGTextCharacter* first = &_characters[index];
         attributes = [attributed attributesAtIndex:first->utf16
-                                      effectiveRange:NULL];
-        NSArray<IJSVGText*>* next = [self bidiScopesForNode:first->owner];
+                                    effectiveRange:NULL];
+        NSArray<IJSVGNode*>* next = [self bidiScopesForNode:first->owner];
         NSUInteger common = 0;
         while(common < active.count && common < next.count && active[common] == next[common]) {
             common++;
@@ -644,7 +644,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         }
         [result appendAttributedString:[attributed attributedSubstringFromRange:NSMakeRange(start, length)]];
     }
-    for(IJSVGText* scope in active.reverseObjectEnumerator) {
+    for(IJSVGNode* scope in active.reverseObjectEnumerator) {
         [self appendBidiScope:scope
                       opening:NO
                          text:result

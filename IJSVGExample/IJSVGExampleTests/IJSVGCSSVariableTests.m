@@ -59,7 +59,7 @@
 
 - (void)testNestedFallbacksAndEmptyValues
 {
-    NSDictionary* properties = IJSVGCSSResolveCustomProperties(@{@"--empty": @"", @"--red": @"red"}, nil);
+    NSDictionary<NSString*, id>* properties = IJSVGCSSResolveCustomProperties(@{@"--empty": @"", @"--red": @"red"}, nil);
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"var(--missing,var(--red,blue))", properties), @"red");
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"var(--missing,)", properties), @"");
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"var(--empty,red)", properties), @"");
@@ -72,7 +72,7 @@
 
 - (void)testCyclesIncludeUnusedFallbacks
 {
-    NSDictionary* properties = IJSVGCSSResolveCustomProperties(@{
+    NSDictionary<NSString*, id>* properties = IJSVGCSSResolveCustomProperties(@{
         @"--a": @"var(--b,red)", @"--b": @"var(--a,blue)", @"--ok": @"green",
         @"--self": @"var(--ok,var(--self))", @"--result": @"var(--a,red)"
     }, nil);
@@ -114,7 +114,7 @@
 
 - (void)testSubstitutionPreservesTokensAndStrings
 {
-    NSDictionary* properties = @{@"--n": @"20", @"--color": @"red"};
+    NSDictionary<NSString*, id>* properties = @{@"--n": @"20", @"--color": @"red"};
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"'var(--color)'", properties), @"'var(--color)'");
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"url('var(--color)')", properties), @"url('var(--color)')");
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"var(--n)px", properties), @"20/**/px");
@@ -220,15 +220,31 @@
         @{@"--value": unicode}), ([NSString stringWithFormat:@"%@,%@", unicode, unicode]));
 }
 
+- (void)testShorthandResolutionPreservesDifferentCascadeSources
+{
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:
+        @"font:var(--first);font-size:var(--size)!important;font:var(--second)"];
+    NSDictionary<NSString*, id>* first = @{@"--first": @"italic 12px Arial",
+        @"--second": @"bold 20px Helvetica", @"--size": @"30px"};
+    IJSVGStyleSheetStyle* resolved = [style styleByResolvingVariables:first];
+    XCTAssertEqualObjects([resolved property:@"font-size"], @"30px");
+    XCTAssertEqualObjects([resolved property:@"font-family"], @"Helvetica");
+    XCTAssertTrue([resolved isPropertyImportant:@"font-size"]);
+    IJSVGStyleSheetStyle* next = [style styleByResolvingVariables:
+        @{@"--second": @"italic 10px Courier", @"--size": @"15px"}];
+    XCTAssertEqualObjects([next property:@"font-family"], @"Courier");
+    XCTAssertEqualObjects([resolved property:@"font-family"], @"Helvetica");
+}
+
 - (void)testExpansionLimits
 {
-    NSMutableDictionary* declarations = [NSMutableDictionary dictionaryWithObject:@"x" forKey:@"--v0"];
+    NSMutableDictionary<NSString*, NSString*>* declarations = [NSMutableDictionary dictionaryWithObject:@"x" forKey:@"--v0"];
     for(NSUInteger index = 1; index < 24; index++) {
         declarations[[NSString stringWithFormat:@"--v%lu", (unsigned long)index]] =
             [NSString stringWithFormat:@"var(--v%lu) var(--v%lu)",
                 (unsigned long)(index - 1), (unsigned long)(index - 1)];
     }
-    NSDictionary* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
+    NSDictionary<NSString*, id>* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
     XCTAssertEqualObjects(properties[@"--v23"], NSNull.null);
     XCTAssertEqualObjects(IJSVGCSSResolveVariables(@"var(--v23,red)", properties), @"red");
 }

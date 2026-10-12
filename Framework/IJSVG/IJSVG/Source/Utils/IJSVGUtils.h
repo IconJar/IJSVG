@@ -16,6 +16,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Calls the handler only after the complete number list is valid.
+BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat));
+
+// The C input must be terminated and is consumed before callbacks begin.
+BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat));
+
 @interface IJSVGUtils : NSObject
 
 CG_EXTERN const CGSize IJSVG_SIZE_INFINITE;

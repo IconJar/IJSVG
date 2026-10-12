@@ -53,7 +53,7 @@
              gradient:(IJSVGRadialGradient*)gradient
 {
     // cx defaults to 50% if not specified
-    NSDictionary* kv = @{
+    NSDictionary<NSString*, NSString*>* kv = @{
         IJSVGAttributeCX : @"cx",
         IJSVGAttributeCY : @"cy",
         IJSVGAttributeR : @"r" };
@@ -98,7 +98,7 @@
     }
 
     [gradient parseSpreadMethod:element];
-    NSArray* colors = nil;
+    NSArray<NSColor*>* colors = nil;
     CGFloat* colorStops = [self.class computeColorStops:gradient
                                                  colors:&colors];
     gradient.locations = colorStops;

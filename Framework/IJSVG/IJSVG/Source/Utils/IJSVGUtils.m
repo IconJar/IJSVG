@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
@@ -107,8 +108,8 @@ CGSize const IJSVG_SIZE_INTRINSIC = (CGSize) {
 // if the viewBox or intrinisic sized needs to be inferred where there are no
 // measurements given from the SVG.
 CGSize const IJSVG_SIZE_DEFAULT_CLIENT = (CGSize) {
-  .width = 300,
-  .height = 150
+    .width = 300,
+    .height = 150
 };
 
 BOOL IJSVGIsValidContextSize(CGSize size) {
@@ -348,7 +349,8 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
     return NO;
 }
 
-void IJSVGPathGetLastQuadraticCommandPointEnumerationCallback(void *info, const CGPathElement *element)
+void IJSVGPathGetLastQuadraticCommandPointEnumerationCallback(void *info,
+                                                              const CGPathElement *element)
 {
     // this will just iterate over the path and keep changing the point
     // when we come across a quad curve, we cant break when we find one as we
@@ -739,41 +741,93 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components,
                                         size:count];
 }
 
+typedef struct {
+    CGFloat* values;
+    NSUInteger count;
+    NSUInteger capacity;
+    CGFloat storage[32];
+} IJSVGNumberList;
+
+static BOOL IJSVGNumberListAppend(IJSVGNumberList* list, CGFloat value)
+{
+    if(list->count == list->capacity) {
+        NSUInteger capacity = list->capacity * 2;
+        CGFloat* values = malloc(capacity * sizeof(*values));
+        if(values == NULL) {
+            return NO;
+        }
+        memcpy(values, list->values, list->count * sizeof(*values));
+        if(list->values != list->storage) {
+            free(list->values);
+        }
+        list->values = values;
+        list->capacity = capacity;
+    }
+    list->values[list->count++] = value;
+    return YES;
+}
+
+static BOOL IJSVGNumberListParse(const char* cursor, IJSVGNumberList* list)
+{
+    cursor += strspn(cursor, " \t\r\n");
+    for(;;) {
+        CGFloat value;
+        if(!IJSVGParseLengthNumber(&cursor, YES, &value) ||
+           !IJSVGNumberListAppend(list, value)) {
+            return NO;
+        }
+        const char* end = cursor;
+        cursor += strspn(cursor, " \t\r\n");
+        if(*cursor == '\0') {
+            return YES;
+        }
+        if(*cursor == ',') {
+            cursor++;
+            cursor += strspn(cursor, " \t\r\n");
+        } else if(cursor == end) {
+            return NO;
+        }
+    }
+}
+
+BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat))
+{
+    if(string == NULL) {
+        return NO;
+    }
+    IJSVGNumberList list;
+    list.values = list.storage;
+    list.count = 0;
+    list.capacity = sizeof(list.storage) / sizeof(*list.storage);
+    BOOL valid = IJSVGNumberListParse(string, &list);
+    if(valid) {
+        for(NSUInteger index = 0; index < list.count; index++) {
+            handler(list.values[index]);
+        }
+    }
+    if(list.values != list.storage) {
+        free(list.values);
+    }
+    return valid;
+}
+
+BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat))
+{
+    __attribute__((objc_precise_lifetime)) NSString* owner = string;
+    IJSVGStringBytes source = IJSVGStringGetBytes(owner);
+    if(source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
+        return NO;
+    }
+    return IJSVGEnumerateNumbersFromCString(source.bytes, handler);
+}
+
 + (NSArray<NSNumber*>*)numbersFromString:(NSString*)string
 {
-    if(string.length == 0) {
-        return @[];
-    }
-    // The path scanner deliberately tolerates separators and invalid text. Validate
-    // attribute grammar first so a partial value cannot replace an SVG default.
-    static NSRegularExpression* expression;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
-        NSString* number = @"[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?";
-        NSString* pattern = [NSString stringWithFormat:
-            @"\\A[ \\t\\r\\n]*%@(?:[ \\t\\r\\n]*,[ \\t\\r\\n]*%@|[ \\t\\r\\n]+%@)*[ \\t\\r\\n]*\\z",
-            number, number, number];
-        expression = [NSRegularExpression regularExpressionWithPattern:pattern options:0 error:NULL];
+    NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] init];
+    BOOL valid = IJSVGEnumerateNumbers(string, ^(CGFloat value) {
+        [numbers addObject:@(value)];
     });
-    if([expression firstMatchInString:string
-                              options:0
-                                range:NSMakeRange(0, string.length)] == nil) {
-        return @[];
-    }
-    NSInteger count = 0;
-    CGFloat* values = [self scanFloatsFromCString:string.UTF8String
-                                       dataStream:IJSVGThreadManager.currentManager.pathDataStream
-                                             size:&count];
-    NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] initWithCapacity:count];
-    for(NSInteger index = 0; index < count; index++) {
-        if(isfinite(values[index]) == NO) {
-            free(values);
-            return @[];
-        }
-        [numbers addObject:@(values[index])];
-    }
-    free(values);
-    return numbers;
+    return valid ? numbers : @[];
 }
 
 + (CGFloat*)scanFloatsFromString:(NSString*)string

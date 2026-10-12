@@ -1637,7 +1637,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testFilterURLByteParserPreservesIdentifiersAndOrder
 {
-    NSArray<NSArray*>* cases = @[
+    NSArray<NSArray<id>*>* cases = @[
         @[@"", @[]],
         @[@" \t\r\n", @[]],
         @[@"url(#first)", @[@"first"]],
@@ -1646,7 +1646,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         @[@"url(#éclair) url('#影')", @[@"éclair", @"影"]],
         @[@"url('#shape(1)')", @[@"shape(1)"]]
     ];
-    for(NSArray* entry in cases) {
+    for(NSArray<id>* entry in cases) {
         XCTAssertEqualObjects([IJSVGUtils defURLs:entry[0]], entry[1],
                               @"Input: %@", entry[0]);
     }

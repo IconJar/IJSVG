@@ -203,7 +203,7 @@
 
 - (void)testDisplacementChannelsMatchWebKit
 {
-    NSArray* channels = @[@"R", @"G", @"B", @"A"];
+    NSArray<NSString*>* channels = @[@"R", @"G", @"B", @"A"];
     for(NSString* space in @[@"sRGB", @"linearRGB"]) {
         for(NSString* xChannel in channels) {
             for(NSString* yChannel in channels) {
@@ -323,7 +323,7 @@
 
 - (void)testDisplacedTextMatchesEquivalentOffsets
 {
-    NSArray* channels = @[@"R", @"G", @"B", @"A"];
+    NSArray<NSString*>* channels = @[@"R", @"G", @"B", @"A"];
     double components[] = { 1, 128.f / 255, 0, 1 };
     for(NSUInteger index = 0; index < channels.count; index++) {
         for(NSNumber* scale in @[@30, @(-13.5)]) {
@@ -378,8 +378,8 @@
     NSMutableString* actual = [NSMutableString stringWithString:@"<g transform='scale(4)'>"];
     NSMutableString* reference = [NSMutableString stringWithString:@"<g transform='scale(4)'>"];
     [actual appendFormat:marker, @"m", @"context-stroke", @"context-fill"];
-    NSArray* strokes = @[@"black", @"blue", @"red", @"gray"];
-    NSArray* fills = @[@"black", @"red", @"none", @"blue"];
+    NSArray<NSString*>* strokes = @[@"black", @"blue", @"red", @"gray"];
+    NSArray<NSString*>* fills = @[@"black", @"red", @"none", @"blue"];
     for(NSUInteger index = 0; index < strokes.count; index++) {
         NSString* identifier = [NSString stringWithFormat:@"m%lu", (unsigned long)index];
         [reference appendFormat:marker, identifier, strokes[index], fills[index]];
@@ -450,7 +450,7 @@
                        "<rect width='100' height='30' fill='#2075bc'/>"
                        "<path d='M0 30H40V80H0Z' fill='#f08030'/></svg>";
     NSString* encoded = [[source dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
-    NSArray* effects = @[@"<feOffset/>",
+    NSArray<NSString*>* effects = @[@"<feOffset/>",
                          @"<feComposite in2='SourceGraphic' operator='arithmetic' k1='2'/>",
                          @"<feConvolveMatrix kernelMatrix='1 2 0 0 0 0 0 0 -1' divisor='8'/>"];
     for(NSUInteger index = 0; index < effects.count; index++) {
@@ -474,8 +474,8 @@
 
 - (void)testEmbeddedSVGWithoutViewBoxMatchesWebKit
 {
-    NSArray* dimensions = @[@"width='100' height='80'", @"width='100' height='80' viewBox='0 0 100 80'"];
-    NSArray* alignments = @[@"xMidYMid meet", @"none", @"xMaxYMin slice"];
+    NSArray<NSString*>* dimensions = @[@"width='100' height='80'", @"width='100' height='80' viewBox='0 0 100 80'"];
+    NSArray<NSString*>* alignments = @[@"xMidYMid meet", @"none", @"xMaxYMin slice"];
     for(NSUInteger index = 0; index < dimensions.count; index++) {
         NSString* source = [NSString stringWithFormat:
             @"<svg xmlns='http://www.w3.org/2000/svg' %@><rect width='100' height='30' fill='navy'/>"
@@ -507,7 +507,7 @@
 
 - (void)testPatternCoordinateSystemsMatchWebKit
 {
-    NSArray* patterns = @[
+    NSArray<NSString*>* patterns = @[
         @"patternUnits='userSpaceOnUse' width='20' height='20'",
         @"patternUnits='userSpaceOnUse' x='5' y='7' width='20' height='20'",
         @"width='.25' height='.25'",
@@ -528,7 +528,7 @@
 
 - (void)testBasicShapeClippingMatchesWebKit
 {
-    NSArray* clips = @[
+    NSArray<NSString*>* clips = @[
         @"circle()", @"circle() fill-box", @"circle() stroke-box",
         @"circle(35% at 30% 60%) fill-box", @"fill-box circle(farthest-side at left top)",
         @"ellipse(40% 30%) fill-box", @"ellipse(closest-side farthest-side at 25% 70%)",
@@ -653,7 +653,7 @@
 
 - (void)testPathLengthMatchesWebKit
 {
-    NSArray* shapes = @[@"<circle cx='55' cy='55' r='40' pathLength='100'/>",
+    NSArray<NSString*>* shapes = @[@"<circle cx='55' cy='55' r='40' pathLength='100'/>",
                         @"<ellipse cx='170' cy='55' rx='60' ry='35' pathLength='100'/>",
                         @"<rect x='255' y='15' width='120' height='80' rx='15' pathLength='100'/>",
                         @"<path d='M10 150 Q100 70 190 150 T380 150' pathLength='100'/>"];

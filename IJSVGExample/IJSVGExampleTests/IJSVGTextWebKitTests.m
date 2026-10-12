@@ -117,7 +117,7 @@ didFailNavigation:(WKNavigation*)navigation
     [self waitForExpectations:@[self.navigation]
                       timeout:20];
     XCTestExpectation* metrics = [self expectationWithDescription:@"WebKit character metrics"];
-    __block NSArray* referenceMetrics = nil;
+    __block NSArray<NSArray<NSArray<NSNumber*>*>*>* referenceMetrics = nil;
     [self.webView evaluateJavaScript:@"Array.from(document.querySelectorAll('text')).map(t => "
                                       "Array.from({length:t.getNumberOfChars()}, (_,i) => {let "
                                       "p=t.getStartPositionOfChar(i); return "
@@ -204,7 +204,7 @@ didFailNavigation:(WKNavigation*)navigation
     self.window = nil;
 }
 
-- (void)compareMetrics:(NSArray*)expected
+- (void)compareMetrics:(NSArray<NSArray<NSArray<NSNumber*>*>*>*)expected
                    svg:(NSString*)xml
                  scale:(CGFloat)scale
 {
@@ -226,7 +226,7 @@ didFailNavigation:(WKNavigation*)navigation
                                                            viewport:CGSizeMake(400, 200)
                                                         renderScale:scale
                                                        pathResolver:nil];
-        NSArray* characters = expected[index];
+        NSArray<NSArray<NSNumber*>*>* characters = expected[index];
         XCTAssertEqual(layout.characterPositions.count, characters.count);
         for(NSUInteger character = 0; character < MIN(layout.characterPositions.count, characters.count); character++) {
             CGPoint point = layout.characterPositions[character].pointValue;
@@ -270,7 +270,7 @@ didFailNavigation:(WKNavigation*)navigation
 
 - (void)testNestedBidiScopesMatchWebKit
 {
-    NSArray* modes = @[@"embed", @"bidi-override", @"isolate", @"isolate-override", @"plaintext"];
+    NSArray<NSString*>* modes = @[@"embed", @"bidi-override", @"isolate", @"isolate-override", @"plaintext"];
     for(NSString* mode in modes) {
         NSString* body = [NSString stringWithFormat:@"<text x='20' y='70' font-family='Helvetica' "
                                                      "font-size='32'>A<tspan direction='rtl' "

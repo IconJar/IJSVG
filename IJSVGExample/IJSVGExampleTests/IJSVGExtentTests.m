@@ -418,10 +418,10 @@
     XCTAssertNil(error);
     XCTAssertNotNil(data);
     if(data == nil) return;
-    NSArray<NSDictionary*>* fixtures = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
+    NSArray<NSDictionary<NSString*, id>*>* fixtures = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
     XCTAssertNil(error);
     XCTAssertEqual(fixtures.count, 80u);
-    for(NSDictionary* fixture in fixtures) {
+    for(NSDictionary<NSString*, id>* fixture in fixtures) {
         [XCTContext runActivityNamed:fixture[@"name"] block:^(id<XCTActivity> activity) {
             NSMutableArray<NSString*>* documents = [fixture[@"references"] mutableCopy];
             [documents addObject:fixture[@"document"]];

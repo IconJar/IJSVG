@@ -28,6 +28,77 @@
 
 @implementation IJSVGUtilityParsingTests
 
+- (void)testBackgroundBoundsUseCompleteNumberLists
+{
+    IJSVGNode* node = [[IJSVGNode alloc] init];
+    IJSVGApplyBackgroundAttribute(node, @"new 1,2 3 4");
+    XCTAssertEqual(node.backgroundEnabled, IJSVGBackgroundEnabledNew);
+    XCTAssertTrue(CGRectEqualToRect(node.backgroundBounds, CGRectMake(1, 2, 3, 4)));
+    for(NSString* value in @[@"new 1 2 3", @"new 1 2 3 4 5", @"new 1 2 3 bad",
+                             @"new 1 2 -3 4", @"new 1 2 3 1e999"]) {
+        IJSVGApplyBackgroundAttribute(node, value);
+        XCTAssertEqual(node.backgroundEnabled, IJSVGBackgroundEnabledUnspecified);
+        XCTAssertTrue(CGRectIsNull(node.backgroundBounds));
+    }
+}
+
+- (void)testNumberEnumerationValidatesBeforeCallbacks
+{
+    for(NSString* invalid in @[@"1,2,bad", @"1,", @",1", @"1,,2", @"1-2", @"1e+",
+                               @"1e999", @"1\f2", @"1\0 2", @"NaN", @"Infinity", @" "]) {
+        __block NSUInteger count = 0;
+        XCTAssertFalse(IJSVGEnumerateNumbers(invalid, ^(CGFloat value) {
+            count++;
+        }), @"%@", invalid);
+        XCTAssertEqual(count, 0);
+    }
+    NSMutableString* source = [@"1." mutableCopy];
+    for(NSUInteger index = 1; index < 100; index++) {
+        [source appendFormat:@",%lu", (unsigned long)(index + 1)];
+    }
+    __block NSUInteger count = 0;
+    XCTAssertTrue(IJSVGEnumerateNumbers(source, ^(CGFloat value) {
+        XCTAssertEqual(value, ++count);
+        [source setString:@"changed"];
+    }));
+    XCTAssertEqual(count, 100);
+    XCTAssertEqualObjects([IJSVGUtils numbersFromString:@"+1. .5 -2e1"], (@[@1, @.5, @-20]));
+}
+
+- (void)testExtremeFloatsRespectByteBoundaries
+{
+    const char bytes[] = { '1', 'e', '-', '3', '1', '0', '9' };
+    XCTAssertEqual(IJSVGParseFloatWithLength(bytes, 6), [@"1e-310" doubleValue]);
+    XCTAssertTrue(isinf(IJSVGParseFloat("1e309")));
+    CGFloat negative = IJSVGParseFloat("-1e-999");
+    XCTAssertEqual(negative, 0);
+    XCTAssertTrue(signbit(negative));
+    NSString* longValue = [[@"" stringByPaddingToLength:256 withString:@"0" startingAtIndex:0]
+        stringByAppendingString:@"1e-310"];
+    XCTAssertEqual(IJSVGParseFloatWithLength(longValue.UTF8String, longValue.length),
+        [@"1e-310" doubleValue]);
+}
+
+- (void)testLegacyMethodsOwnTrimmedCopies
+{
+    NSMutableString* source = [[NSMutableString alloc] init];
+    for(NSUInteger index = 0; index < 64; index++) {
+        [source appendString:@"translate ( 1 2 ) "];
+    }
+    NSUInteger count = 0;
+    BOOL valid = NO;
+    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseStringWithValidation(
+        source.UTF8String, &count, &valid);
+    [source setString:@"changed"];
+    XCTAssertTrue(valid);
+    XCTAssertEqual(count, 64);
+    for(NSUInteger index = 0; index < count; index++) {
+        XCTAssertEqual(strcmp(methods[index]->name, "translate"), 0);
+        XCTAssertEqual(strcmp(methods[index]->parameters, "1 2"), 0);
+    }
+    IJSVGParsingStringMethodsRelease(methods, count);
+}
+
 - (void)testParsedLengthsKeepMutableInputAndCoordinateContextsIndependent
 {
     NSMutableString* input = [[NSMutableString alloc] initWithString:@"2in"];
@@ -339,7 +410,7 @@
                              @"translate(1,)", @"scale(0x10)", @"rotate(NaN)"]) {
         XCTAssertEqual([IJSVGTransform transformsForString:value].count, 0, @"%@", value);
     }
-    NSArray* prefix = [IJSVGTransform transformsForString:@"translate(1 2) skewY(24deg) scale(2)"];
+    NSArray<IJSVGTransform*>* prefix = [IJSVGTransform transformsForString:@"translate(1 2) skewY(24deg) scale(2)"];
     XCTAssertEqual(prefix.count, 1);
     for(NSString* angle in @[@"90deg", @"1.5707963267948966rad", @"100grad", @".25turn"]) {
         NSString* value = [NSString stringWithFormat:@"rotate(%@)", angle];

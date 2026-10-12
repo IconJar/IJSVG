@@ -20,7 +20,7 @@ typedef struct {
 @interface IJSVGStyleSheetStyle : NSObject {
 
 @private
-    NSMutableDictionary* _dict;
+    NSMutableDictionary<NSString*, id>* _dict;
     NSMutableSet<NSString*>* _importantProperties;
     BOOL _geometryPropertiesKnown;
     BOOL _hasGeometryProperties;
@@ -32,6 +32,9 @@ typedef struct {
     NSMutableDictionary<NSString*, NSString*>* _variableSources;
 }
 
+// Parses a borrowed declaration slice with comments already removed.
++ (IJSVGStyleSheetStyle*)parseStyleBytes:(const char*)bytes
+                                  length:(NSUInteger)length;
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
                            removeComments:(BOOL)removeComments;
@@ -39,7 +42,7 @@ typedef struct {
 - (void)setPropertyValue:(id)value
              forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
-- (NSDictionary*)properties;
+- (NSDictionary<NSString*, id>*)properties;
 - (BOOL)hasGeometryProperties;
 - (BOOL)hasCustomProperties;
 - (void)copyProperty:(NSString*)property

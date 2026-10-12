@@ -13,7 +13,7 @@
 
 static NSDictionary<NSString*, NSString*>* IJSVGReferenceFixtures(void)
 {
-    static NSDictionary* fixtures;
+    static NSDictionary<NSString*, NSString*>* fixtures;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSString* mask = @"<defs><mask id='m'><path fill='white' d='M43 31 H128 V57 H69 V112 H43 Z'/><text x='145' y='91' fill='white' font-family='Helvetica' font-size='40'>Mask F</text></mask></defs>";

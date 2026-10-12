@@ -997,7 +997,7 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 
 - (NSArray<NSNumber*>*)lineDashPattern
 {
-    NSMutableArray* arr = [[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount];
+    NSMutableArray<NSNumber*>* arr = [[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount];
     for (NSInteger i = 0; i < self.strokeDashArrayCount; i++) {
         [arr addObject:@((CGFloat)self.strokeDashArray[i])];
     }

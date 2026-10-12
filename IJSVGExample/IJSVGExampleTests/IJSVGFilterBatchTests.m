@@ -248,7 +248,7 @@
 
 - (void)testShapeOpacityClipPreservesPaint
 {
-    NSArray* styles = @[
+    NSArray<NSString*>* styles = @[
         @"solid",
         @"round",
         @"square-dash",
@@ -257,7 +257,7 @@
         @"both-gradients",
         @"curve-dash"
     ];
-    NSDictionary* strokes = @{
+    NSDictionary<NSString*, NSString*>* strokes = @{
         @"solid": @"",
         @"round": @"stroke='#d08020' stroke-width='3.7' stroke-linecap='round' stroke-linejoin='round'",
         @"square-dash": @"stroke='#d08020' stroke-width='3.7' stroke-linecap='square' "
@@ -471,9 +471,9 @@
 
 - (NSString*)batchedDocumentWithIndices:(NSArray<NSNumber*>*)indices
 {
-    NSArray* effects = @[@"<feOffset dx='.4' dy='-.6'/>", @"<feGaussianBlur stdDeviation='.6 1.2'/>",
+    NSArray<NSString*>* effects = @[@"<feOffset dx='.4' dy='-.6'/>", @"<feGaussianBlur stdDeviation='.6 1.2'/>",
         @"<feColorMatrix type='saturate' values='.4'/>", @"<feGaussianBlur stdDeviation='.4'/>"];
-    NSArray* colors = @[@"#a03080", @"#40b020", @"#3080c0", @"#d08020"];
+    NSArray<NSString*>* colors = @[@"#a03080", @"#40b020", @"#3080c0", @"#d08020"];
     NSMutableString* definitions = [[NSMutableString alloc] init];
     NSMutableString* content = [[NSMutableString alloc] init];
     for(NSNumber* value in indices) {
@@ -503,8 +503,8 @@
                                                                     count,
                                                                     flipped]
                                    block:^(id<XCTActivity> activity) {
-                NSMutableArray* indices = [[NSMutableArray alloc] init];
-                NSMutableArray* references = [[NSMutableArray alloc] init];
+                NSMutableArray<NSNumber*>* indices = [[NSMutableArray alloc] init];
+                NSMutableArray<NSString*>* references = [[NSMutableArray alloc] init];
                 for(NSUInteger index = 0; index < count.unsignedIntegerValue; index++) {
                     [indices addObject:@(index)];
                     [references addObject:[self batchedDocumentWithIndices:@[@(index)]]];

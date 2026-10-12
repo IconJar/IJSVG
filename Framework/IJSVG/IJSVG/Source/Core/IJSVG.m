@@ -912,7 +912,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 
 #pragma mark NSPasteboard
 
-- (NSArray*)writableTypesForPasteboard:(NSPasteboard*)pasteboard
+- (NSArray<NSPasteboardType>*)writableTypesForPasteboard:(NSPasteboard*)pasteboard
 {
     return @[ NSPasteboardTypePDF ];
 }

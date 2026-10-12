@@ -34,7 +34,7 @@
 
 - (void)testAlphaHEXColorsPreserveLeadingZeros
 {
-    NSArray* values = @[@"#00FF00A0", @"#0000FFA0", @"#00000080", @"#00000000",
+    NSArray<NSString*>* values = @[@"#00FF00A0", @"#0000FFA0", @"#00000080", @"#00000000",
                         @"#0F0A", @"#00FA", @"#0008", @"#0000"];
     const CGFloat components[][4] = {
         { 0, 1, 0, 160.f / 255 },

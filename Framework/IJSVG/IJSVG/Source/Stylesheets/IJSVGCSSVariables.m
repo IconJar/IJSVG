@@ -20,9 +20,9 @@ enum {
 };
 
 typedef struct {
-    __unsafe_unretained NSDictionary* declarations;
-    __unsafe_unretained NSDictionary* inherited;
-    __unsafe_unretained NSMutableDictionary* computed;
+    __unsafe_unretained NSDictionary<NSString*, NSString*>* declarations;
+    __unsafe_unretained NSDictionary<NSString*, id>* inherited;
+    __unsafe_unretained NSMutableDictionary<NSString*, id>* computed;
     __unsafe_unretained NSMutableSet* cyclic;
     __unsafe_unretained NSString* stack[IJSVGCSSVariableMaximumDepth];
     NSUInteger depth;
@@ -162,7 +162,8 @@ typedef struct {
     char storage[512];
 } IJSVGCSSVariableBuffer;
 
-static BOOL IJSVGCSSVariableBufferReserve(IJSVGCSSVariableBuffer* output, NSUInteger length)
+static BOOL IJSVGCSSVariableBufferReserve(IJSVGCSSVariableBuffer* output,
+                                          NSUInteger length)
 {
     if(length > IJSVGCSSVariableMaximumBytes - output->length) {
         return NO;
@@ -186,7 +187,7 @@ static BOOL IJSVGCSSVariableBufferReserve(IJSVGCSSVariableBuffer* output, NSUInt
 }
 
 static BOOL IJSVGCSSVariableAppend(IJSVGCSSVariableBuffer* output, const char* bytes,
-    NSUInteger length)
+                                   NSUInteger length)
 {
     if(length == 0) {
         return YES;
@@ -225,11 +226,11 @@ static BOOL IJSVGCSSVariableAppendBoundary(IJSVGCSSVariableBuffer* output, const
 static BOOL IJSVGCSSVariableSubstitute(const IJSVGCSSComponents* components,
                                         NSUInteger first, NSUInteger end,
                                         NSUInteger start, NSUInteger finish,
-                                        NSDictionary* properties, IJSVGCSSVariableBuffer* output,
+                                        NSDictionary<NSString*, id>* properties, IJSVGCSSVariableBuffer* output,
                                         BOOL boundary);
 
 static BOOL IJSVGCSSVariableAppendReference(const IJSVGCSSComponents* components,
-                                             NSUInteger index, NSDictionary* properties,
+                                             NSUInteger index, NSDictionary<NSString*, id>* properties,
                                              IJSVGCSSVariableBuffer* output)
 {
     const IJSVGCSSComponent* token = components->values + index;
@@ -237,7 +238,8 @@ static BOOL IJSVGCSSVariableAppendReference(const IJSVGCSSComponents* components
     id value = properties[name];
     if(value != nil && value != NSNull.null) {
         IJSVGStringBytes replacement = IJSVGStringGetBytes(value);
-        return IJSVGCSSVariableAppendBoundary(output, replacement.bytes, replacement.length);
+        return IJSVGCSSVariableAppendBoundary(output, replacement.bytes,
+                                              replacement.length);
     }
     NSUInteger fallback = components->values[index + 1].next;
     if(fallback == token->next) {
@@ -253,7 +255,7 @@ static BOOL IJSVGCSSVariableAppendReference(const IJSVGCSSComponents* components
 static BOOL IJSVGCSSVariableSubstitute(const IJSVGCSSComponents* components,
                                         NSUInteger first, NSUInteger end,
                                         NSUInteger start, NSUInteger finish,
-                                        NSDictionary* properties, IJSVGCSSVariableBuffer* output,
+                                        NSDictionary<NSString*, id>* properties, IJSVGCSSVariableBuffer* output,
                                         BOOL boundary)
 {
     NSUInteger marker = start;
@@ -267,7 +269,8 @@ static BOOL IJSVGCSSVariableSubstitute(const IJSVGCSSComponents* components,
         BOOL appended = boundary
             ? IJSVGCSSVariableAppendBoundary(output, components->bytes + marker, length)
             : IJSVGCSSVariableAppend(output, components->bytes + marker, length);
-        if(!appended || !IJSVGCSSVariableAppendReference(components, index, properties, output)) {
+        if(!appended || !IJSVGCSSVariableAppendReference(components, index,
+                                                         properties, output)) {
             return NO;
         }
         marker = token->offset + token->length;
@@ -279,7 +282,8 @@ static BOOL IJSVGCSSVariableSubstitute(const IJSVGCSSComponents* components,
 }
 
 static NSString* IJSVGCSSVariableExpand(const IJSVGCSSComponents* components,
-                                        NSUInteger length, NSDictionary* properties)
+                                        NSUInteger length, NSDictionary<NSString*, id>* properties,
+                                        BOOL declaration)
 {
     IJSVGCSSVariableBuffer output;
     output.bytes = output.storage;
@@ -288,9 +292,13 @@ static NSString* IJSVGCSSVariableExpand(const IJSVGCSSComponents* components,
     NSString* result = nil;
     if(IJSVGCSSVariableSubstitute(components, 0, components->count, 0,
         length, properties, &output, NO)) {
-        result = [[NSString alloc] initWithBytes:output.bytes
-                                        length:output.length
-                                      encoding:NSUTF8StringEncoding];
+        BOOL important = NO;
+        NSRange range = declaration
+            ? IJSVGStyleSheetDeclarationRange(output.bytes, output.length, &important)
+            : NSMakeRange(0, output.length);
+        result = [[NSString alloc] initWithBytes:output.bytes + range.location
+                                          length:range.length
+                                        encoding:NSUTF8StringEncoding];
     }
     if(output.bytes != output.storage) {
         free(output.bytes);
@@ -323,7 +331,7 @@ static NSString* IJSVGCSSVariableResolveValue(IJSVGCSSVariableContext* context,
         }
         if(![context->cyclic containsObject:name]) {
             result = IJSVGCSSVariableExpand(&components, source.length,
-                                            context->computed);
+                                            context->computed, NO);
         }
     }
     IJSVGCSSComponentsRelease(&components);
@@ -371,7 +379,7 @@ NSDictionary<NSString*, id>* IJSVGCSSResolveCustomProperties(NSDictionary<NSStri
     if(declarations.count == 0) {
         return inherited;
     }
-    NSMutableDictionary* computed = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, id>* computed = [[NSMutableDictionary alloc] init];
     NSMutableSet* cyclic = [[NSMutableSet alloc] init];
     IJSVGCSSVariableContext context = { declarations, inherited, computed, cyclic, { nil }, 0 };
     for(NSString* name in declarations) {
@@ -380,25 +388,29 @@ NSDictionary<NSString*, id>* IJSVGCSSResolveCustomProperties(NSDictionary<NSStri
     if(inherited.count == 0) {
         return [computed copy];
     }
-    NSMutableDictionary* result = [inherited mutableCopy];
+    NSMutableDictionary<NSString*, id>* result = [inherited mutableCopy];
     [result addEntriesFromDictionary:computed];
     return [result copy];
 }
 
-NSString* IJSVGCSSResolveVariables(NSString* value,
-                                   NSDictionary<NSString*, id>* properties)
+static NSString* IJSVGCSSResolveVariableValue(NSString* value,
+                                              NSDictionary<NSString*, id>* properties,
+                                              BOOL declaration)
 {
     IJSVGStringBytes source = IJSVGStringGetBytes(value);
     IJSVGCSSComponents components;
     NSString* result = nil;
     if(IJSVGCSSComponentsCreate(source.bytes, source.length, &components)) {
         switch(IJSVGCSSValidateVariableComponents(&components)) {
-            case IJSVGCSSVariableSyntaxLiteral:
-                result = [value copy];
+            case IJSVGCSSVariableSyntaxLiteral: {
+                BOOL important = NO;
+                result = declaration ? IJSVGStyleSheetDeclarationValue(value, &important) :
+                    [value copy];
                 break;
+            }
             case IJSVGCSSVariableSyntaxReferences:
                 result = IJSVGCSSVariableExpand(&components, source.length,
-                                                properties);
+                                                properties, declaration);
                 break;
             case IJSVGCSSVariableSyntaxInvalid:
                 break;
@@ -406,4 +418,16 @@ NSString* IJSVGCSSResolveVariables(NSString* value,
     }
     IJSVGCSSComponentsRelease(&components);
     return result;
+}
+
+NSString* IJSVGCSSResolveVariables(NSString* value,
+                                   NSDictionary<NSString*, id>* properties)
+{
+    return IJSVGCSSResolveVariableValue(value, properties, NO);
+}
+
+NSString* IJSVGCSSResolveDeclarationVariables(NSString* value,
+                                              NSDictionary<NSString*, id>* properties)
+{
+    return IJSVGCSSResolveVariableValue(value, properties, YES);
 }

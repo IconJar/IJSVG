@@ -326,7 +326,7 @@
 {
     NSMutableString* str = [[NSMutableString alloc] init];
     [str appendFormat:@"%c ",_command];
-    NSMutableArray* args = [[NSMutableArray alloc] initWithCapacity:_parameterCount];
+    NSMutableArray<NSString*>* args = [[NSMutableArray alloc] initWithCapacity:_parameterCount];
     for(int i = 0; i < _parameterCount; i++) {
         [args addObject:[NSString stringWithFormat:@"%f",_parameters[i]]];
     }

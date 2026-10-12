@@ -84,11 +84,10 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     return self;
 }
 
-- (NSArray*)selectorsWithSelectorString:(NSString*)string
+- (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithSelectorString:(NSString*)string
 {
-    NSMutableArray* array = [[NSMutableArray alloc] init];
-
-    NSArray* comp = [string componentsSeparatedByString:@","];
+    NSMutableArray<IJSVGStyleSheetSelector*>* array = [[NSMutableArray alloc] init];
+    NSArray<NSString*>* comp = [string componentsSeparatedByString:@","];
     NSCharacterSet* whiteSpaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
 
     for (__strong NSString* selectorName in comp) {
@@ -173,13 +172,10 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
                 continue;
             }
             if(depth == 1) {
-                NSString* rule = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
-                rule = [rule stringByTrimmingCharactersInSet:whitespaceCharSet];
-
-                NSArray* selectors = [self selectorsWithSelectorString:selector];
-                if(rule.length != 0 && selectors.count != 0) {
-                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:rule
-                                                                          removeComments:NO];
+                NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector];
+                if(i != marker && selectors.count != 0) {
+                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars + marker
+                                                                                 length:i - marker];
                     [self addParsedStyle:style
                            withSelectors:selectors];
                 }
@@ -191,14 +187,14 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 }
 
 - (void)addStyleRule:(NSString*)rule
-       withSelectors:(NSArray*)selectors
+       withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
 {
     [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule]
            withSelectors:selectors];
 }
 
 - (void)addParsedStyle:(IJSVGStyleSheetStyle*)style
-         withSelectors:(NSArray*)selectors
+         withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
 {
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = style;

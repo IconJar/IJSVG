@@ -11,7 +11,7 @@
 @interface NSString (IJSVGAdditions)
 
 - (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar;
-- (NSArray*)ijsvg_componentsSplitByWhiteSpace;
+- (NSArray<NSString*>*)ijsvg_componentsSplitByWhiteSpace;
 - (BOOL)ijsvg_isHexString;
 
 @end

@@ -199,7 +199,7 @@
 
 - (void)testTransformOriginAndReferenceBoxes
 {
-    NSArray* cases = @[
+    NSArray<NSArray<NSString*>*>* cases = @[
         @[@"transform-origin='center'", @"16 16"],
         @[@"transform-origin='25% 75%'", @"8 24"],
         @[@"transform-origin='right top'", @"32 0"],
@@ -211,7 +211,7 @@
         @[@"transform-origin='0 0' style='transform-origin:center!important;transform-origin:bogus'", @"16 16"],
         @[@"style='transform-origin:center;transform-box:fill-box;transform-box:bogus'", @"12 10"]
     ];
-    for(NSArray* item in cases) {
+    for(NSArray<id>* item in cases) {
         [self assertBody:[NSString stringWithFormat:
             @"<rect x='4' y='4' width='16' height='12' transform='rotate(90)' %@/>", item[0]]
             rendersLike:[NSString stringWithFormat:
@@ -294,7 +294,7 @@
                     "<rect id='english' systemLanguage='en' display='none'/>"
                     "<rect id='fallback'/></switch>";
     NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:xml error:nil];
-    NSArray* cases = @[
+    NSArray<NSArray<id>*>* cases = @[
         @[@[@"en-GB"], @"regional"],
         @[@[@"en-GB-x-private"], @"regional"],
         @[@[@"en-US"], @"english"],
@@ -303,7 +303,7 @@
         @[@[@"fr", @"DE"], @"regional"],
         @[@[], @"fallback"]
     ];
-    for(NSArray* item in cases) {
+    for(NSArray<id>* item in cases) {
         NSXMLElement* selected = [IJSVGSwitch selectedChildInElement:element preferredLanguages:item[0]];
         XCTAssertEqualObjects([selected attributeForName:IJSVGAttributeID].stringValue, item[1]);
     }
@@ -471,7 +471,7 @@
 - (void)testAutomaticImageDimensions
 {
     NSString* image = @"<image x='2' y='3' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=' %@/>";
-    NSArray* cases = @[@[@"", @"width='2' height='1'"],
+    NSArray<NSArray<NSString*>*>* cases = @[@[@"", @"width='2' height='1'"],
                        @[@"width='auto' height='auto'", @"width='2' height='1'"],
                        @[@"width='16'", @"width='16' height='8'"],
                        @[@"height='8'", @"width='16' height='8'"],
@@ -479,7 +479,7 @@
                        @[@"width='1em' height='auto'", @"width='16' height='8'"],
                        @[@"width='0' height='8'", @"width='0' height='8'"],
                        @[@"width='16' height='0'", @"width='16' height='0'"]];
-    for(NSArray* pair in cases) {
+    for(NSArray<NSString*>* pair in cases) {
         [self assertBody:[NSString stringWithFormat:image, pair[0]]
             rendersLike:[NSString stringWithFormat:image, pair[1]]];
     }

@@ -20,7 +20,7 @@
         && values[18].doubleValue > 1.;
 }
 
-+ (NSDictionary*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive
++ (NSDictionary<NSString*, id>*)preparedMatrixForPrimitive:(IJSVGFilterPrimitive*)primitive
 {
     return [primitive preparedValueForKey:@"colorMatrix"
                                   builder:^id {
@@ -62,8 +62,8 @@
                 opacityOnly = NO;
             }
         }
-        NSMutableDictionary* parameters = [[NSMutableDictionary alloc] init];
-        NSArray* keys = @[@"inputRVector", @"inputGVector", @"inputBVector", @"inputAVector"];
+        NSMutableDictionary<NSString*, CIVector*>* parameters = [[NSMutableDictionary alloc] init];
+        NSArray<NSString*>* keys = @[@"inputRVector", @"inputGVector", @"inputBVector", @"inputAVector"];
         for(NSUInteger c = 0; c < 4; c++) {
             parameters[keys[c]] = [CIVector vectorWithX:matrix[c * 5]
                                                       Y:matrix[c * 5 + 1]
@@ -86,12 +86,12 @@
                             context:(IJSVGFilterContext*)context
 {
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
-    NSDictionary* prepared = [self.class preparedMatrixForPrimitive:primitive];
+    NSDictionary<NSString*, id>* prepared = [self.class preparedMatrixForPrimitive:primitive];
     if(prepared.count == 0) {
         return CIImage.emptyImage;
     }
     BOOL opacityOnly = [prepared[@"opacityOnly"] boolValue];
-    NSDictionary* parameters = prepared[@"parameters"];
+    NSDictionary<NSString*, CIVector*>* parameters = prepared[@"parameters"];
     CIImage* image = [(opacityOnly ? input : [context imageInPrimitiveColorSpace:input]) imageByApplyingFilter:@"CIColorMatrix"
                                                                                            withInputParameters:parameters];
     image = [image imageByApplyingFilter:@"CIColorClamp"

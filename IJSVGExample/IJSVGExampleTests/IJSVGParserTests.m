@@ -212,7 +212,7 @@
 
 - (void)testStyleMediaUsesDocumentViewport
 {
-    NSArray* queries = @[@"screen and (min-width:600px)", @"(width >= 600px)",
+    NSArray<NSString*>* queries = @[@"screen and (min-width:600px)", @"(width >= 600px)",
                          @"print, (width > 599px) and (height:200px)",
                          @"not screen and (max-width:599px)"];
     for(NSString* query in queries) {

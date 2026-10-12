@@ -1747,7 +1747,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     }
 
     if(node.paintOrder != IJSVGPaintOrderNormal) {
-        NSArray* markers = [children subarrayWithRange:NSMakeRange(1, children.count - 1)];
+        NSArray<IJSVGPaint*>* markers = [children subarrayWithRange:NSMakeRange(1, children.count - 1)];
         [children removeAllObjects];
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         for(NSUInteger index = 0; index < 3; index++) {
@@ -2393,7 +2393,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     if(_style.colors.replacedColorCount != 0 &&
         [_style.colors matchesReplacementTraits:traits] == YES) {
         gradient = gradient.copy;
-        NSMutableArray* colors = nil;
+        NSMutableArray<NSColor*>* colors = nil;
         colors = [NSMutableArray.alloc initWithCapacity:gradient.numberOfStops];
         for(NSColor* color in gradient.colors) {
             NSColor* repColor = [self colorForColor:color

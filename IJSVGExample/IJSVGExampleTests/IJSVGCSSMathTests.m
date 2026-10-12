@@ -210,10 +210,10 @@
 
 - (void)testVariableDictionaryBenchmark
 {
-    NSMutableDictionary* dictionary = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* dictionary = [[NSMutableDictionary alloc] init];
     CFMutableDictionaryRef coreDictionary = CFDictionaryCreateMutable(NULL, 128,
         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-    NSMutableArray* queries = [[NSMutableArray alloc] init];
+    NSMutableArray<NSString*>* queries = [[NSMutableArray alloc] init];
     for(NSUInteger index = 0; index < 128; index++) {
         NSString* key = [NSString stringWithFormat:@"--variable%lu", (unsigned long)index];
         NSString* value = [NSString stringWithFormat:@"%lupx", (unsigned long)index];
@@ -244,7 +244,7 @@
 
 - (void)testVariableResolutionBenchmark
 {
-    NSMutableDictionary* declarations = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary<NSString*, NSString*>* declarations = [[NSMutableDictionary alloc] init];
     for(NSUInteger index = 0; index < 64; index++) {
         declarations[[NSString stringWithFormat:@"--size%lu", (unsigned long)index]] =
             [NSString stringWithFormat:@"calc(var(--base, 10px) + %lupx)", (unsigned long)index];
@@ -253,7 +253,7 @@
     [self benchmark:@"custom property scope resolution" iterations:100 work:^NSUInteger {
         return IJSVGCSSResolveCustomProperties(declarations, nil).count;
     }];
-    NSDictionary* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
+    NSDictionary<NSString*, id>* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
     IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:
         @"width:var(--size20);height:var(--missing,var(--size30));fill:rgb(var(--red,128),0,0)"];
     [self benchmark:@"variable style resolution" iterations:1000 work:^NSUInteger {
@@ -836,6 +836,21 @@
     XCTAssertEqual(sheet.ruleCount, 0);
 }
 
+- (void)testBoundedDeclarationSlices
+{
+    char bytes[] = { ' ', 'f', 'i', 'l', 'l', ':', 'r', 'e', 'd', ' ', ';', 'x' };
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:bytes length:11];
+    memset(bytes, 'z', sizeof(bytes));
+    XCTAssertEqualObjects([style property:@"fill"], @"red");
+    const char important[] = "fill:blue!important;--empty: !important";
+    style = [IJSVGStyleSheetStyle parseStyleBytes:important length:sizeof(important) - 1];
+    XCTAssertTrue([style isPropertyImportant:@"fill"]);
+    XCTAssertTrue([style isPropertyImportant:@"--empty"]);
+    XCTAssertEqualObjects([style property:@"--empty"], @"");
+    const char invalid[] = { 'f', 'i', 'l', 'l', ':', 'r', 0, 'd' };
+    XCTAssertEqual([IJSVGStyleSheetStyle parseStyleBytes:invalid length:sizeof(invalid)].properties.count, 0);
+}
+
 - (void)testDeclarationKeywordsUseExactMatches
 {
     for(NSString* value in @[@"VIEW-BOX", @"fill-box", @"STROKE-BOX", @"content-box",
@@ -880,6 +895,51 @@
                              @"\\75rlxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(#paint)"]) {
         XCTAssertNil([IJSVGUtils defURL:value]);
     }
+}
+
+- (void)testFontFamilyEnumerationOwnsSnapshot
+{
+    NSMutableString* source = [@"Arial, 'Times New Roman', sans-serif" mutableCopy];
+    NSMutableArray<NSString*>* families = [[NSMutableArray alloc] init];
+    XCTAssertTrue(IJSVGStyleSheetEnumerateFontFamilies(source, ^(NSString* family, BOOL quoted) {
+        [families addObject:family];
+        [source setString:@"changed"];
+    }));
+    XCTAssertEqualObjects(families, (@[@"Arial", @"Times New Roman", @"sans-serif"]));
+}
+
+- (void)testNumberListBenchmark
+{
+    [self benchmark:@"number list utilities"
+         iterations:3000
+               work:^NSUInteger {
+        return [IJSVGUtils numbersFromString:@"10,20 -30.5 40e-2 .5 6. 7 8 9 10"].count;
+    }];
+}
+
+- (void)testFontFamilyParsingBenchmark
+{
+    [self benchmark:@"font family parsing"
+         iterations:3000
+               work:^NSUInteger {
+        __block NSUInteger count = 0;
+        IJSVGStyleSheetEnumerateFontFamilies(@"Arial, 'Times New Roman', Helvetica, serif",
+            ^(NSString* family, BOOL quoted) {
+                count += family.length != 0;
+            });
+        return count;
+    }];
+}
+
+- (void)testVariableFontResolutionBenchmark
+{
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:@"font:var(--font)"];
+    NSDictionary<NSString*, id>* properties = @{@"--font": @"italic bold 20px/1.5 Arial"};
+    [self benchmark:@"variable font resolution"
+         iterations:1000
+               work:^NSUInteger {
+        return [style styleByResolvingVariables:properties].properties.count;
+    }];
 }
 
 - (void)testEscapedFunctionBenchmark

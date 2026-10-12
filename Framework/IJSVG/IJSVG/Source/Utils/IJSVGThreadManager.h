@@ -17,7 +17,7 @@
 
 @interface IJSVGThreadManager : NSObject {
 @private
-    NSMutableDictionary* _userInfo;
+    NSMutableDictionary<id<NSCopying>, id>* _userInfo;
     NSHashTable* _allocedSVGs;
 }
 

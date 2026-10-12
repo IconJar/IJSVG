@@ -54,6 +54,18 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
     return IJSVGParsingMethodParseStringWithValidation(string, count, &valid);
 }
 
+static char* IJSVGParsingCopyTrimmedBytes(const char* bytes, NSUInteger length)
+{
+    while(length != 0 && isspace((unsigned char)*bytes)) {
+        bytes++;
+        length--;
+    }
+    while(length != 0 && isspace((unsigned char)bytes[length - 1])) {
+        length--;
+    }
+    return strndup(bytes, length);
+}
+
 IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string,
                                                                        NSUInteger* count,
                                                                        BOOL* valid)
@@ -62,35 +74,32 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
     IJSVGCSSComponents components;
     *valid = IJSVGCSSComponentsCreateWithOptions(string, string == NULL ? 0 : strlen(string),
                                                  IJSVGCSSParserOptionSVG, &components);
-    IJSVGParsingStringMethod** methods = NULL;
+    IJSVGParsingStringMethod** methods = components.count == 0 ? NULL :
+        malloc(components.count * sizeof(*methods));
+    if(components.count != 0 && methods == NULL) {
+        *valid = NO;
+        IJSVGCSSComponentsRelease(&components);
+        return NULL;
+    }
     for(NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
         if(component->kind != IJSVGCSSComponentFunction || component->next <= index) {
             *valid = NO;
             break;
         }
-        IJSVGParsingStringMethod** resized = realloc(methods, (*count + 1) * sizeof(*methods));
-        if(resized == NULL) {
-            *valid = NO;
-            break;
-        }
-        methods = resized;
         IJSVGParsingStringMethod* method = IJSVGParsingStringMethodCreate();
         if(method == NULL) {
             *valid = NO;
             break;
         }
         NSUInteger nameLength = component->argumentOffset - component->offset - 1;
-        method->name = strndup(string + component->offset, nameLength);
-        method->parameters = IJSVGCSSComponentCopyArguments(&components, component);
+        method->name = IJSVGParsingCopyTrimmedBytes(string + component->offset, nameLength);
+        method->parameters = IJSVGParsingCopyTrimmedBytes(string + component->argumentOffset,
+                                                          component->argumentLength);
         if(method->name == NULL || method->parameters == NULL) {
             IJSVGParsingStringMethodRelease(method);
             *valid = NO;
             break;
-        }
-        IJSVGTrimCharBuffer(method->name);
-        if(method->parameters[0] != '\0') {
-            IJSVGTrimCharBuffer(method->parameters);
         }
         methods[(*count)++] = method;
         index = component->next;

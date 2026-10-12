@@ -538,7 +538,7 @@ IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
     if([value isEqualToString:@"normal"] || [value isEqualToString:@"initial"]) {
         return IJSVGPaintOrderNormal;
     }
-    NSArray* names = @[@"fill", @"stroke", @"markers"];
+    NSArray<NSString*>* names = @[@"fill", @"stroke", @"markers"];
     NSUInteger seen = 0, order = 0, count = 0;
     for(NSString* token in [value componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]) {
         if(token.length == 0) {
@@ -564,7 +564,7 @@ IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
 
 NSString* IJSVGStringFromPaintOrder(IJSVGPaintOrder order)
 {
-    NSArray* names = @[@"fill", @"stroke", @"markers"];
+    NSArray<NSString*>* names = @[@"fill", @"stroke", @"markers"];
     return [NSString stringWithFormat:@"%@ %@ %@", names[order & 3],
             names[(order >> 2) & 3], names[(order >> 4) & 3]];
 }
@@ -637,11 +637,18 @@ void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
             mode = IJSVGBackgroundEnabledNew;
             bounds = CGRectInfinite;
         } else {
-            NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:@(parameters)];
-            if(numbers.count == 4 && numbers[2].doubleValue > 0 && numbers[3].doubleValue > 0) {
+            CGFloat values[4];
+            CGFloat* output = values;
+            __block NSUInteger count = 0;
+            BOOL valid = IJSVGEnumerateNumbersFromCString(parameters, ^(CGFloat number) {
+                if(count < 4) {
+                    output[count] = number;
+                }
+                count++;
+            });
+            if(valid && count == 4 && values[2] > 0 && values[3] > 0) {
                 mode = IJSVGBackgroundEnabledNew;
-                bounds = CGRectMake(numbers[0].doubleValue, numbers[1].doubleValue,
-                                    numbers[2].doubleValue, numbers[3].doubleValue);
+                bounds = CGRectMake(values[0], values[1], values[2], values[3]);
             }
         }
     }

@@ -129,7 +129,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
 // Retains mixed XML content in document order. Strings are never replaced by outlines.
 @interface IJSVGText: IJSVGGroup
 
-@property (nonatomic, copy) NSArray* textContent;
+@property (nonatomic, copy) NSArray<id>* textContent;
 
 // Whether this node owns text rather than only containing styled child spans.
 @property (nonatomic, readonly) BOOL hasTextContent;

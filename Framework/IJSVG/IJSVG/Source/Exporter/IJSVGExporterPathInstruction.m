@@ -819,7 +819,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length,
     // keep track of the current point
     __block CGPoint currentPoint = CGPointZero;
     __block CGPoint subpathStart = CGPointZero;
-    NSMutableArray* instructions = [[NSMutableArray alloc] init];
+    NSMutableArray<IJSVGExporterPathInstruction*>* instructions = [[NSMutableArray alloc] init];
 
     // create the path callback
     IJSVGCGPathHandler callback = ^(const CGPathElement* pathElement) {
