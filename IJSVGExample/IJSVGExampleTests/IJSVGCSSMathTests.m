@@ -576,12 +576,40 @@
 
 - (void)testFunctionNamesUseExactASCIIMatches
 {
-    const char* names[] = { "calc", "min", "max", "clamp", "url", "rgb", "rgba",
-        "hsl", "hsla", "oklch", "matrix", "translate", "translatex", "translatey",
-        "scale", "rotate", "skewx", "skewy", "circle", "ellipse" };
-    for(NSUInteger index = 0; index < sizeof(names) / sizeof(*names); index++) {
-        NSString* name = [NSString stringWithUTF8String:names[index]];
-        IJSVGCSSFunction expected = (IJSVGCSSFunction)(index + IJSVGCSSFunctionCalc);
+    const struct {
+        const char* name;
+        IJSVGCSSFunction function;
+    } cases[] = {
+        { "calc", IJSVGCSSFunctionCalc },
+        { "min", IJSVGCSSFunctionMin },
+        { "max", IJSVGCSSFunctionMax },
+        { "clamp", IJSVGCSSFunctionClamp },
+        { "url", IJSVGCSSFunctionURL },
+        { "path", IJSVGCSSFunctionPath },
+        { "inset", IJSVGCSSFunctionInset },
+        { "rect", IJSVGCSSFunctionRect },
+        { "xywh", IJSVGCSSFunctionXYWH },
+        { "polygon", IJSVGCSSFunctionPolygon },
+        { "shape", IJSVGCSSFunctionShape },
+        { "rgb", IJSVGCSSFunctionRGB },
+        { "rgba", IJSVGCSSFunctionRGBA },
+        { "hsl", IJSVGCSSFunctionHSL },
+        { "hsla", IJSVGCSSFunctionHSLA },
+        { "oklch", IJSVGCSSFunctionOKLCH },
+        { "matrix", IJSVGCSSFunctionMatrix },
+        { "translate", IJSVGCSSFunctionTranslate },
+        { "translatex", IJSVGCSSFunctionTranslateX },
+        { "translatey", IJSVGCSSFunctionTranslateY },
+        { "scale", IJSVGCSSFunctionScale },
+        { "rotate", IJSVGCSSFunctionRotate },
+        { "skewx", IJSVGCSSFunctionSkewX },
+        { "skewy", IJSVGCSSFunctionSkewY },
+        { "circle", IJSVGCSSFunctionCircle },
+        { "ellipse", IJSVGCSSFunctionEllipse }
+    };
+    for(NSUInteger index = 0; index < sizeof(cases) / sizeof(*cases); index++) {
+        NSString* name = [NSString stringWithUTF8String:cases[index].name];
+        IJSVGCSSFunction expected = cases[index].function;
         XCTAssertEqual(IJSVGCSSFunctionForName(name.UTF8String), expected);
         XCTAssertEqual(IJSVGCSSFunctionForName(name.uppercaseString.UTF8String), expected);
         XCTAssertEqual(IJSVGCSSFunctionForName([name stringByAppendingString:@"extra"].UTF8String),

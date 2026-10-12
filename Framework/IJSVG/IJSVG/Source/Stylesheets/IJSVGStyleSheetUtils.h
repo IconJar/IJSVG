@@ -59,6 +59,9 @@ NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* chars,
                                                        NSUInteger start,
                                                        NSUInteger end);
 
+NSString* _Nullable IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start,
+                                                NSUInteger end);
+
 BOOL IJSVGStyleSheetConsumeQuotedCharacter(char c, char* quote, BOOL* escaped);
 NSString* _Nullable IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important);
 BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,

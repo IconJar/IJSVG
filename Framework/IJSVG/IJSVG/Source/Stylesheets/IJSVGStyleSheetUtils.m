@@ -956,6 +956,25 @@ static NSString* IJSVGStyleSheetDecodeFamily(const char* chars, NSUInteger start
     return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
+NSString* IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start,
+                                      NSUInteger end)
+{
+    if(end < start + 2 || (chars[start] != '"' && chars[start] != '\'')) {
+        return nil;
+    }
+    NSUInteger cursor = start;
+    if(!IJSVGStyleSheetSkipQuotedString(chars, end, &cursor) || cursor != end) {
+        return nil;
+    }
+    if(end == start + 2) {
+        return @"";
+    }
+    if(memchr(chars + start, '\\', end - start) == NULL) {
+        return IJSVGStyleSheetStringFromUTF8Bytes(chars, start + 1, end - 1);
+    }
+    return IJSVGStyleSheetDecodeFamily(chars, start, end, YES);
+}
+
 NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
                                          NSUInteger* index)
 {
@@ -1147,26 +1166,7 @@ static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* 
 
 static BOOL IJSVGStyleSheetValueIsCSSWideKeyword(NSString* value)
 {
-    const char* bytes = value.UTF8String;
-    if(bytes == NULL) {
-        return NO;
-    }
-    switch(IJSVGCharToLower(bytes[0])) {
-        case 'i': {
-            return (IJSVGCharBufferCaseInsensitiveCompare(bytes, "inherit") && value.length == 7) ||
-                (IJSVGCharBufferCaseInsensitiveCompare(bytes, "initial") && value.length == 7);
-        }
-        case 'u': {
-            return (IJSVGCharBufferCaseInsensitiveCompare(bytes, "unset") && value.length == 5);
-        }
-        case 'r': {
-            return (IJSVGCharBufferCaseInsensitiveCompare(bytes, "revert") && value.length == 6) ||
-                (IJSVGCharBufferCaseInsensitiveCompare(bytes, "revert-layer") && value.length == 12);
-        }
-        default: {
-            return NO;
-        }
-    }
+    return IJSVGCSSWideKeywordFromString(value) != IJSVGCSSWideKeywordUnknown;
 }
 
 typedef BOOL (^IJSVGStyleSheetDeclarationExpander)(NSString*, NSDictionary**);
@@ -1219,6 +1219,9 @@ NSString* IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
                     IJSVGGeometryLengthIsValid(geometryValue, attribute);
             };
         }
+        handlers[IJSVGAttributeD] = ^BOOL(NSString* value, NSDictionary** values) {
+            return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGCSSPathDataFromString(value) != nil;
+        };
         handlers[IJSVGAttributeTransformOrigin] = ^BOOL(NSString* origin, NSDictionary** values) {
             return IJSVGStyleSheetValueIsCSSWideKeyword(origin) ||
                 IJSVGTransformOriginFromString(origin) != nil;

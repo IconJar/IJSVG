@@ -13,6 +13,7 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVGParsedPathCache.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
@@ -437,6 +438,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorNodes;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
+@property (nonatomic, strong) NSMapTable<IJSVGNode*, NSString*>* inheritedPathData;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
 @end
 
@@ -629,6 +631,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     self.uncachedReferenceElements = nil;
     self.lastParsedStyleElement = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
+    self.inheritedPathData = nil;
     self.definitionStyleParents = IJSVGParserElementMapTable();
     if(setup != nil) {
       setup();
@@ -998,6 +1001,15 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
             IJSVGParserCacheFilterAttributes(raw, attributeValues, styleSheet,
                 nodeStyle, styleRuleCount);
         }
+    }
+    NSString* pathValue = IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeD);
+    if(pathValue != nil) {
+        BOOL cssPath = [nodeStyle property:IJSVGAttributeD] != nil ||
+            [styleSheet property:IJSVGAttributeD] != nil;
+        [self applyPathValue:pathValue
+                      toNode:node
+                         css:cssPath
+                    fallback:[element attributeForName:IJSVGAttributeD].stringValue];
     }
     IJSVGApplyTextAttributes(node, attributeValues);
 
@@ -2062,6 +2074,63 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     return node;
 }
 
+- (void)applyPathValue:(NSString*)value
+                toNode:(IJSVGNode*)node
+                   css:(BOOL)css
+              fallback:(NSString*)fallback
+{
+    if(!css && node.type != IJSVGNodeTypePath) {
+        return;
+    }
+    NSString* pathData = value;
+    if(css) {
+        switch(IJSVGCSSWideKeywordFromString(value)) {
+            case IJSVGCSSWideKeywordInherit: {
+                IJSVGNode* parent = node.styleParent;
+                pathData = parent.type == IJSVGNodeTypePath
+                    ? ((IJSVGPath*)parent).markerPathData
+                    : [self.inheritedPathData objectForKey:parent];
+                break;
+            }
+            case IJSVGCSSWideKeywordInitial:
+            case IJSVGCSSWideKeywordUnset: {
+                pathData = nil;
+                break;
+            }
+            case IJSVGCSSWideKeywordRevert:
+            case IJSVGCSSWideKeywordRevertLayer: {
+                pathData = fallback;
+                break;
+            }
+            case IJSVGCSSWideKeywordUnknown: {
+                pathData = IJSVGCSSPathDataFromString(value);
+                break;
+            }
+        }
+    }
+    if(node.type != IJSVGNodeTypePath) {
+        if(pathData != nil) {
+            if(self.inheritedPathData == nil) {
+                self.inheritedPathData = [NSMapTable weakToStrongObjectsMapTable];
+            }
+            [self.inheritedPathData setObject:pathData
+                                       forKey:node];
+        } else {
+            [self.inheritedPathData removeObjectForKey:node];
+        }
+    } else {
+        IJSVGPath* path = (IJSVGPath*)node;
+        if(!CGPathIsEmpty(path.path)) {
+            CGMutablePathRef empty = CGPathCreateMutable();
+            path.path = empty;
+            CGPathRelease(empty);
+        }
+        [self applyPathData:pathData
+                     toNode:path];
+        path.markerPathData = pathData;
+    }
+}
+
 - (void)applyPathData:(NSString*)pathData
                toNode:(IJSVGPath*)node
 {
@@ -2087,7 +2156,8 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         [node cachePointSubpaths:NO
                          forPath:cached];
     }
-    IJSVGParsedPathCacheStore(_parsedPathCache, pathData, IJSVGParsedPathData, cached);
+    IJSVGParsedPathCacheStore(_parsedPathCache, pathData, IJSVGParsedPathData,
+                              cached);
     CGPathRelease(cached);
 }
 
@@ -2102,10 +2172,6 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         [group addChild:node];
     }
     
-    NSString* pathData = [element attributeForName:IJSVGAttributeD].stringValue;
-    [self applyPathData:pathData toNode:node];
-    node.markerPathData = pathData;
-
     *postProcessBlock = [self computeAttributesFromElement:element
                                                     onNode:node
                                          ignoredAttributes:nil];

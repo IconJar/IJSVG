@@ -9,6 +9,17 @@
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUnitLength.h>
 
+typedef NS_ENUM(uint8_t, IJSVGCSSWideKeyword) {
+    IJSVGCSSWideKeywordUnknown,
+    IJSVGCSSWideKeywordInherit,
+    IJSVGCSSWideKeywordInitial,
+    IJSVGCSSWideKeywordUnset,
+    IJSVGCSSWideKeywordRevert,
+    IJSVGCSSWideKeywordRevertLayer
+};
+
+IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value);
+
 typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionUnknown,
     IJSVGCSSFunctionCalc,
@@ -16,6 +27,12 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionMax,
     IJSVGCSSFunctionClamp,
     IJSVGCSSFunctionURL,
+    IJSVGCSSFunctionPath,
+    IJSVGCSSFunctionInset,
+    IJSVGCSSFunctionRect,
+    IJSVGCSSFunctionXYWH,
+    IJSVGCSSFunctionPolygon,
+    IJSVGCSSFunctionShape,
     IJSVGCSSFunctionRGB,
     IJSVGCSSFunctionRGBA,
     IJSVGCSSFunctionHSL,
@@ -125,5 +142,6 @@ BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length,
                                          IJSVGCSSParserOptions options,
                                          IJSVGCSSComponents* components);
 BOOL IJSVGCSSFunctionIsCalculation(IJSVGCSSFunction function);
+NSString* IJSVGCSSPathDataFromString(NSString* value);
 char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components,
                                      const IJSVGCSSComponent* component);

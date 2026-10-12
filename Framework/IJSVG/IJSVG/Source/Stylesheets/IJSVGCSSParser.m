@@ -10,6 +10,48 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVG/IJSVGParsing.h>
+
+IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    if(source.bytes == NULL) {
+        return IJSVGCSSWideKeywordUnknown;
+    }
+    switch(source.length) {
+        case 5: {
+            if(IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "unset")) {
+                return IJSVGCSSWideKeywordUnset;
+            }
+            break;
+        }
+        case 6: {
+            if(IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "revert")) {
+                return IJSVGCSSWideKeywordRevert;
+            }
+            break;
+        }
+        case 7: {
+            if(IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "inherit")) {
+                return IJSVGCSSWideKeywordInherit;
+            }
+            if(IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "initial")) {
+                return IJSVGCSSWideKeywordInitial;
+            }
+            break;
+        }
+        case 12: {
+            if(IJSVGCharBufferCaseInsensitiveCompare(source.bytes, "revert-layer")) {
+                return IJSVGCSSWideKeywordRevertLayer;
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    return IJSVGCSSWideKeywordUnknown;
+}
 
 IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
 {
@@ -50,6 +92,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             break;
         }
         case 'r': {
+            if(strcmp(normalized, "rect") == 0) {
+                return IJSVGCSSFunctionRect;
+            }
             if(strcmp(normalized, "rgb") == 0) {
                 return IJSVGCSSFunctionRGB;
             }
@@ -71,6 +116,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             break;
         }
         case 's': {
+            if(strcmp(normalized, "shape") == 0) {
+                return IJSVGCSSFunctionShape;
+            }
             if(strcmp(normalized, "scale") == 0) {
                 return IJSVGCSSFunctionScale;
             }
@@ -93,6 +141,21 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
                 return IJSVGCSSFunctionTranslateY;
             }
             break;
+        }
+        case 'p': {
+            if(strcmp(normalized, "polygon") == 0) {
+                return IJSVGCSSFunctionPolygon;
+            }
+            return strcmp(normalized, "path") == 0
+                ? IJSVGCSSFunctionPath : IJSVGCSSFunctionUnknown;
+        }
+        case 'i': {
+            return strcmp(normalized, "inset") == 0
+                ? IJSVGCSSFunctionInset : IJSVGCSSFunctionUnknown;
+        }
+        case 'x': {
+            return strcmp(normalized, "xywh") == 0
+                ? IJSVGCSSFunctionXYWH : IJSVGCSSFunctionUnknown;
         }
         case 'u': {
             return strcmp(normalized, "url") == 0
@@ -472,6 +535,28 @@ char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components,
 {
     return strndup(components->bytes + component->argumentOffset,
                    component->argumentLength);
+}
+
+NSString* IJSVGCSSPathDataFromString(NSString* value)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    IJSVGCSSComponents components;
+    NSString* result = nil;
+    if(IJSVGCSSComponentsCreate(source.bytes, source.length, &components)) {
+        const IJSVGCSSComponent* root = components.values;
+        if(components.count == 1 && root->kind == IJSVGCSSComponentIdentifier &&
+           root->numericKeyword == IJSVGCSSNumericKeywordNone) {
+            result = @"";
+        } else if(components.count == 2 && root->kind == IJSVGCSSComponentFunction &&
+                  root->function == IJSVGCSSFunctionPath && root->next == components.count &&
+                  components.values[1].kind == IJSVGCSSComponentString) {
+            const IJSVGCSSComponent* string = components.values + 1;
+            result = IJSVGStyleSheetDecodeString(source.bytes, string->offset,
+                                                 string->offset + string->length);
+        }
+    }
+    IJSVGCSSComponentsRelease(&components);
+    return result;
 }
 
 void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components)

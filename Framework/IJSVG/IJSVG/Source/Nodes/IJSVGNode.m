@@ -502,6 +502,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     [storage setBit:IJSVGNodeAttributeVisibility];
     [storage setBit:IJSVGNodeAttributeDisplay];
     [storage setBit:IJSVGNodeAttributeClipRule];
+    [storage setBit:IJSVGNodeAttributeD];
 
     // Text presentation attributes inherit through every ancestor element.
     for(IJSVGNodeAttribute attribute = IJSVGNodeAttributeFont;
