@@ -23,7 +23,8 @@ let package = Package(
                 .headerSearchPath("PrivateHeaders/IJSVG"),
                 .headerSearchPath("Source/Nodes"),
                 .headerSearchPath("Source/Rendering"),
-                .headerSearchPath("Source/Parsing")
+                .headerSearchPath("Source/Parsing"),
+                .headerSearchPath("Source/Stylesheets")
             ],
             linkerSettings: [
                 .linkedFramework("AppKit"),
