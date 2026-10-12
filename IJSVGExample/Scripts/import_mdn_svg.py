@@ -62,6 +62,12 @@ def normalize(xml, css, page, asset_root=None):
         xml = xml.replace("<svg", '<svg xmlns:xlink="http://www.w3.org/1999/xlink"', 1)
         changes.append("Added xlink namespace")
     if css:
+        # The flower tutorial prints style8.css in its CSS blocks but retains
+        # an external link in both SVG variants. Use those same rules offline.
+        if page.parent.name == "svg_and_css":
+            xml, replaced = re.subn(r'<link\b[^>]*\bhref="style8\.css"[^>]*/>', '', xml)
+            if replaced:
+                changes.append("Replaced external style8.css with CSS from the same MDN tutorial for static comparison")
         end = xml.index(">") + 1
         xml = xml[:end] + "<style><![CDATA[\n" + css + "\n]]></style>" + xml[end:]
         changes.append("Included CSS from the enclosing live sample")
@@ -183,6 +189,9 @@ def main():
             group = next(((a, b) for a, b in groups if a <= block.start() < b), None)
             companions = [b for b in blocks if group and group[0] <= b.start() < group[1]]
             css = "\n".join(b[2] for b in companions if b[1].split()[0] == "css")
+            if page_id == "tutorials/svg_from_scratch/svg_and_css":
+                # The later <use> variant shares the first live sample's CSS.
+                css = "\n".join(b[2] for b in blocks if b[1].split()[0] == "css")
             javascript = any(b[1].split()[0] in {"js", "javascript"} for b in companions)
             if not docs:
                 docs = [None]

@@ -37,6 +37,23 @@ class MDNImportTests(unittest.TestCase):
             self.assertIn('Embedded local asset: example.png', changes)
         self.assertIsNotNone(exclusion('<svg><image href="https://example.org/a.png"/></svg>', False))
 
+    def test_flower_stylesheet_is_embedded_without_ignoring_other_resources(self):
+        source = '<svg><link href="style8.css"/><circle r="10"/></svg>'
+        page = Path('/tmp/svg_and_css/index.md')
+        css = 'circle {fill: var(--petal)}'
+        xml, changes = normalize(source, css, page)
+        self.assertNotIn('<link', xml)
+        self.assertIn(css, xml)
+        self.assertIsNone(exclusion(xml, False))
+        self.assertTrue(any('style8.css' in change for change in changes))
+        for document, stylesheet, location in [
+            (source, '', page),
+            (source, css, Path('/tmp/other/index.md')),
+            (source.replace('style8.css', 'other.css'), css, page),
+        ]:
+            normalized, _ = normalize(document, stylesheet, location)
+            self.assertIsNotNone(exclusion(normalized, False))
+
     def test_static_fragment_urls_do_not_count_as_external_resources(self):
         self.assertIsNone(exclusion('<svg><rect fill="url(\'#paint\')"/></svg>', False))
         self.assertIsNotNone(exclusion('<svg><style>rect {fill: url(https://example.org/a)}</style></svg>', False))
