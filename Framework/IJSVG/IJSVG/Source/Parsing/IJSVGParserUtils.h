@@ -17,6 +17,7 @@ IJSVGUnitLength* _Nullable IJSVGLengthFromString(NSString* value, BOOL allowNega
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value);
 BOOL IJSVGUnitLengthsAreValid(NSString* value, BOOL allowNegative, BOOL single);
 BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute);
+BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute);
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute);
 IJSVGUnitLength* _Nullable IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute);
 BOOL IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttribute attribute, IJSVGNode* node);

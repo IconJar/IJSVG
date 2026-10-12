@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGCSSVariables.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -28,13 +30,19 @@ static BOOL IJSVGStyleSheetPropertyNameIsValid(const char* chars, NSUInteger sta
 }
 
 static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
-                                             const char* chars, NSUInteger start,
-                                             NSUInteger end)
+                                            const char* chars, NSUInteger start,
+                                            NSUInteger end)
 {
     start = IJSVGStyleSheetIndexBySkippingWhitespace(chars, start, end);
     NSUInteger colon = start;
     while(colon < end && chars[colon] != ':') {
-        colon++;
+        if(chars[colon] == '\\') {
+            if(!IJSVGStyleSheetSkipEscape(chars, end, &colon, NO)) {
+                return;
+            }
+        } else {
+            colon++;
+        }
     }
     if(colon == end) {
         return;
@@ -43,12 +51,21 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
     while(keyEnd > start && IJSVGStyleSheetCharIsWhitespace(chars[keyEnd - 1])) {
         keyEnd--;
     }
-    if(!IJSVGStyleSheetPropertyNameIsValid(chars, start, keyEnd)) {
-        return;
+    NSString* key;
+    if(memchr(chars + start, '\\', keyEnd - start) != NULL) {
+        NSUInteger cursor = start;
+        key = IJSVGStyleSheetConsumeIdentifier(chars, keyEnd, &cursor);
+        if(key == nil || cursor != keyEnd) {
+            return;
+        }
+    } else {
+        if(!IJSVGStyleSheetPropertyNameIsValid(chars, start, keyEnd)) {
+            return;
+        }
+        key = IJSVGStyleSheetStringFromUTF8Bytes(chars, start, keyEnd);
     }
-    NSString* key = IJSVGStyleSheetStringFromUTF8Bytes(chars, start, keyEnd);
-    NSString* value = IJSVGStyleSheetStringFromUTF8Bytes(chars, colon + 1, end);
-    if(value.length != 0) {
+    NSString* value = colon + 1 == end ? @"" : IJSVGStyleSheetStringFromUTF8Bytes(chars, colon + 1, end);
+    if(value.length != 0 || [key hasPrefix:@"--"]) {
         [style setPropertyValue:value
                     forProperty:key];
     }
@@ -68,10 +85,34 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
              forProperty:(NSString*)key
                important:(BOOL)important
 {
+    NSString* source = [value isKindOfClass:NSString.class] && IJSVGCSSValueMayContainVariables(value)
+        ? key : nil;
+    [self storeResolvedValue:value
+                 forProperty:key
+                   important:important
+              variableSource:source];
+}
+
+- (void)storeResolvedValue:(id)value
+               forProperty:(NSString*)key
+                 important:(BOOL)important
+            variableSource:(NSString*)source
+{
     if(!important && [_importantProperties containsObject:key]) {
         return;
     }
     _dict[key] = value;
+    [_invalidVariableProperties removeObject:key];
+    if([key hasPrefix:@"--"]) {
+        _hasCustomProperties = YES;
+    } else if(source != nil) {
+        if(_variableSources == nil) {
+            _variableSources = [[NSMutableDictionary alloc] init];
+        }
+        _variableSources[key] = source;
+    } else {
+        [_variableSources removeObjectForKey:key];
+    }
     _geometryPropertiesKnown = NO;
     [self invalidateAttributeEntries];
     if(important) {
@@ -89,26 +130,101 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 {
     BOOL important = NO;
     if([value isKindOfClass:NSString.class]) {
+        NSString* original = value;
         value = IJSVGStyleSheetDeclarationValue(value, &important);
         if([value length] == 0) {
-            return;
+            const char* bytes = original.UTF8String;
+            BOOL emptyCustom = [key hasPrefix:@"--"] && bytes != NULL &&
+                strlen(bytes) == [original lengthOfBytesUsingEncoding:NSUTF8StringEncoding] &&
+                (important || strspn(bytes, " \t\r\n\f") == strlen(bytes));
+            if(!emptyCustom) {
+                return;
+            }
+            value = @"";
         }
     }
     NSDictionary* declarations = nil;
-    NSString* name = IJSVGStyleSheetResolveDeclaration(key, value, &declarations);
+    BOOL variables = NO;
+    NSString* name = IJSVGStyleSheetResolveVariableDeclaration(key, value,
+                                                               &declarations, &variables);
     if(name == nil) {
         return;
     }
 
-    [self setResolvedValue:value
-               forProperty:name
-                 important:important];
+    [self storeResolvedValue:value
+                 forProperty:name
+                   important:important
+              variableSource:variables ? name : nil];
 
     for(NSString* property in declarations) {
-        [self setResolvedValue:declarations[property]
-                   forProperty:property
-                     important:important];
+        if(!important && [self isPropertyImportant:property]) {
+            continue;
+        }
+        [self storeResolvedValue:declarations[property]
+                     forProperty:property
+                       important:important
+                  variableSource:variables ? name : nil];
     }
+}
+
+- (BOOL)hasCustomProperties
+{
+    return _hasCustomProperties;
+}
+
+- (void)copyProperty:(NSString*)property
+           fromStyle:(IJSVGStyleSheetStyle*)style
+{
+    BOOL important = [style isPropertyImportant:property];
+    if(!important && [self isPropertyImportant:property]) {
+        return;
+    }
+    [self storeResolvedValue:[style property:property]
+                 forProperty:property
+                   important:important
+              variableSource:style->_variableSources[property]];
+    if([style->_invalidVariableProperties containsObject:property]) {
+        if(_invalidVariableProperties == nil) {
+            _invalidVariableProperties = [[NSMutableSet alloc] init];
+        }
+        [_invalidVariableProperties addObject:property];
+    }
+}
+
+- (IJSVGStyleSheetStyle*)styleByResolvingVariables:(NSDictionary<NSString*, id>*)properties
+{
+    if(_variableSources.count == 0) {
+        return self;
+    }
+    IJSVGStyleSheetStyle* result = [[IJSVGStyleSheetStyle alloc] init];
+    result->_dict = [_dict mutableCopy];
+    result->_importantProperties = [_importantProperties mutableCopy];
+    result->_invalidVariableProperties = [_invalidVariableProperties mutableCopy];
+    result->_hasCustomProperties = _hasCustomProperties;
+    for(NSString* property in _variableSources) {
+        NSString* source = _variableSources[property];
+        NSString* value = IJSVGCSSResolveVariables(_dict[property], properties);
+        BOOL important = NO;
+        value = IJSVGStyleSheetDeclarationValue(value, &important);
+        NSDictionary* expanded = nil;
+        NSString* valid = value != nil ? IJSVGStyleSheetResolveDeclaration(source, value, &expanded) : nil;
+        if(![source isEqualToString:property]) {
+            value = expanded[property];
+        }
+        value = IJSVGCSSResolvedPaintValue(value, IJSVGNodeAttributeForName(property));
+        BOOL invalid = valid == nil || value.length == 0;
+        [result storeResolvedValue:invalid ? @"" : value
+                       forProperty:property
+                         important:[self isPropertyImportant:property]
+                    variableSource:nil];
+        if(invalid) {
+            if(result->_invalidVariableProperties == nil) {
+                result->_invalidVariableProperties = [[NSMutableSet alloc] init];
+            }
+            [result->_invalidVariableProperties addObject:property];
+        }
+    }
+    return result;
 }
 
 - (BOOL)hasImportantProperties
@@ -159,7 +275,8 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
             continue;
         }
         _attributes[_attributeCount++] = (IJSVGStyleSheetAttribute) {
-            attribute, name, _dict[name], [_importantProperties containsObject:name]
+            attribute, name, _dict[name], [_importantProperties containsObject:name],
+            [_invalidVariableProperties containsObject:name]
         };
     }
     _geometryPropertiesKnown = YES;
@@ -257,6 +374,9 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 {
     if(flag) {
         [_dict removeAllObjects];
+        [_variableSources removeAllObjects];
+        [_invalidVariableProperties removeAllObjects];
+        _hasCustomProperties = NO;
         _geometryPropertiesKnown = NO;
         [self invalidateAttributeEntries];
         [_importantProperties removeAllObjects];
@@ -275,9 +395,8 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 - (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style
 {
     for(NSString* key in style->_dict) {
-        [self setResolvedValue:style->_dict[key]
-                    forProperty:key
-                      important:[style->_importantProperties containsObject:key]];
+        [self copyProperty:key
+                 fromStyle:style];
     }
 }
 

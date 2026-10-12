@@ -39,6 +39,11 @@ BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length,
 NSString* _Nullable IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
                                                      NSUInteger* index);
 
+// A valid name that cannot fit or is not ASCII produces an empty output.
+BOOL IJSVGStyleSheetConsumeASCIIIdentifier(const char* chars, NSUInteger length,
+                                           NSUInteger* index, char* name,
+                                           NSUInteger capacity);
+
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);
@@ -69,6 +74,9 @@ BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,
 NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string);
 NSString* _Nullable IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
                                                       NSDictionary<NSString*, NSString*>* _Nullable * _Nonnull expanded);
+NSString* _Nullable IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString* value,
+                                                              NSDictionary<NSString*, NSString*>* _Nullable * _Nonnull expanded,
+                                                              BOOL* variables);
 NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
                                                                      NSString* value);
 

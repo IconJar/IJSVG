@@ -11,6 +11,7 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <time.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGCSSVariables.h>
 #import <IJSVGCSSMathExpression.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
@@ -205,6 +206,75 @@
     }
     NSLog(@"CSS benchmark %@ iterations %lu median %.3f ms range %.3f to %.3f ms",
           name, (unsigned long)iterations, samples[3], samples[0], samples[6]);
+}
+
+- (void)testVariableDictionaryBenchmark
+{
+    NSMutableDictionary* dictionary = [[NSMutableDictionary alloc] init];
+    CFMutableDictionaryRef coreDictionary = CFDictionaryCreateMutable(NULL, 128,
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    NSMutableArray* queries = [[NSMutableArray alloc] init];
+    for(NSUInteger index = 0; index < 128; index++) {
+        NSString* key = [NSString stringWithFormat:@"--variable%lu", (unsigned long)index];
+        NSString* value = [NSString stringWithFormat:@"%lupx", (unsigned long)index];
+        dictionary[key] = value;
+        CFDictionarySetValue(coreDictionary, (__bridge const void*)key, (__bridge const void*)value);
+        [queries addObject:[NSString stringWithFormat:@"--variable%lu", (unsigned long)index]];
+    }
+    for(NSString* key in queries) {
+        XCTAssertEqualObjects(dictionary[key],
+            (__bridge id)CFDictionaryGetValue(coreDictionary, (__bridge const void*)key));
+    }
+    [self benchmark:@"NS variable dictionary lookups" iterations:3000 work:^NSUInteger {
+        NSUInteger count = 0;
+        for(NSString* key in queries) {
+            count += dictionary[key] != nil;
+        }
+        return count;
+    }];
+    [self benchmark:@"CF variable dictionary lookups" iterations:3000 work:^NSUInteger {
+        NSUInteger count = 0;
+        for(NSString* key in queries) {
+            count += CFDictionaryGetValue(coreDictionary, (__bridge const void*)key) != NULL;
+        }
+        return count;
+    }];
+    CFRelease(coreDictionary);
+}
+
+- (void)testVariableResolutionBenchmark
+{
+    NSMutableDictionary* declarations = [[NSMutableDictionary alloc] init];
+    for(NSUInteger index = 0; index < 64; index++) {
+        declarations[[NSString stringWithFormat:@"--size%lu", (unsigned long)index]] =
+            [NSString stringWithFormat:@"calc(var(--base, 10px) + %lupx)", (unsigned long)index];
+    }
+    declarations[@"--base"] = @"20px";
+    [self benchmark:@"custom property scope resolution" iterations:100 work:^NSUInteger {
+        return IJSVGCSSResolveCustomProperties(declarations, nil).count;
+    }];
+    NSDictionary* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:
+        @"width:var(--size20);height:var(--missing,var(--size30));fill:rgb(var(--red,128),0,0)"];
+    [self benchmark:@"variable style resolution" iterations:1000 work:^NSUInteger {
+        return [style styleByResolvingVariables:properties].properties.count;
+    }];
+}
+
+- (void)testPathStyleBenchmark
+{
+    NSMutableString* path = [NSMutableString stringWithString:@"M0 0"];
+    for(NSUInteger index = 0; index < 256; index++) {
+        [path appendFormat:@"L%lu %lu", (unsigned long)index, (unsigned long)(index % 31)];
+    }
+    NSString* style = [NSString stringWithFormat:@"d:path('%@');fill:red", path];
+    XCTAssertEqualObjects(IJSVGCSSPathDataFromString(
+        [[IJSVGStyleSheetStyle parseStyleString:style] property:@"d"]), path);
+    [self benchmark:@"path declaration validation"
+         iterations:1000
+               work:^NSUInteger {
+        return [IJSVGStyleSheetStyle parseStyleString:style].properties.count;
+    }];
 }
 
 - (void)testComplexStyleBenchmarks
@@ -605,7 +675,8 @@
         { "skewx", IJSVGCSSFunctionSkewX },
         { "skewy", IJSVGCSSFunctionSkewY },
         { "circle", IJSVGCSSFunctionCircle },
-        { "ellipse", IJSVGCSSFunctionEllipse }
+        { "ellipse", IJSVGCSSFunctionEllipse },
+        { "var", IJSVGCSSFunctionVar }
     };
     for(NSUInteger index = 0; index < sizeof(cases) / sizeof(*cases); index++) {
         NSString* name = [NSString stringWithUTF8String:cases[index].name];
@@ -765,8 +836,87 @@
     XCTAssertEqual(sheet.ruleCount, 0);
 }
 
+- (void)testDeclarationKeywordsUseExactMatches
+{
+    for(NSString* value in @[@"VIEW-BOX", @"fill-box", @"STROKE-BOX", @"content-box",
+                             @"border-box", @"INITIAL", @"unset", @"revert", @"revert-layer"]) {
+        IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
+        [style setPropertyValue:value forProperty:@"transform-box"];
+        XCTAssertEqualObjects([style property:@"transform-box"], value);
+    }
+    for(NSString* value in @[@"fill-box-extra", @"fill-box\0junk", @"none\0junk"]) {
+        IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
+        [style setPropertyValue:value forProperty:@"transform-box"];
+        XCTAssertNil([style property:@"transform-box"]);
+        [style setPropertyValue:value forProperty:@"stroke-dasharray"];
+        XCTAssertNil([style property:@"stroke-dasharray"]);
+    }
+}
+
+- (void)testDeclarationAllocationBenchmark
+{
+    [self benchmark:@"pending font declarations"
+         iterations:3000
+               work:^NSUInteger {
+        return [IJSVGStyleSheetStyle parseStyleString:@"font:var(--font)"].properties.count;
+    }];
+    [self benchmark:@"keyword declarations"
+         iterations:3000
+               work:^NSUInteger {
+        return [IJSVGStyleSheetStyle parseStyleString:
+            @"transform-box:FILL-BOX;stroke-dasharray:NONE"].properties.count;
+    }];
+}
+
+- (void)testEscapedFunctionNameBoundaries
+{
+    NSArray<NSString*>* valid = @[@"\\75rl(#paint)", @"\\000075rl(#paint)",
+        @"\\75\r\nrl(#paint)", @"u\\r\\l(#paint)"];
+    for(NSString* value in valid) {
+        XCTAssertEqualObjects([IJSVGUtils defURL:value], @"paint");
+    }
+    for(NSString* value in @[@"\\0rl(#paint)", @"\\d800rl(#paint)",
+                             @"\\110000rl(#paint)", @"\\e9rl(#paint)",
+                             @"\\75rlxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(#paint)"]) {
+        XCTAssertNil([IJSVGUtils defURL:value]);
+    }
+}
+
+- (void)testEscapedFunctionBenchmark
+{
+    [self benchmark:@"escaped URL functions"
+         iterations:3000
+               work:^NSUInteger {
+        return [IJSVGUtils defURLs:@"u\\72l('#first') \\55RL(#second) \\75\\72\\6c('#third')"].count;
+    }];
+}
+
+- (void)testDefinitionLookupBenchmark
+{
+    NSArray<NSString*>* values = @[
+        @"none", @"red", @"#ff0000", @"currentColor",
+        @"rgb(calc(255 / 2) min(10, 20) 0 / calc(1 / 2))",
+        @"url(#paint)", @" URL('#paint') red", @"u\\\\72l(#paint)"
+    ];
+    [self benchmark:@"mixed definition lookups"
+         iterations:3000
+               work:^NSUInteger {
+        NSUInteger count = 0;
+        for(NSString* value in values) {
+            count += [IJSVGUtils defURL:value] != nil;
+        }
+        return count;
+    }];
+}
+
 - (void)testSharedURLParsing
 {
+    XCTAssertNil([IJSVGUtils defURL:@"url(#paint) rgb("]);
+    XCTAssertEqualObjects([IJSVGUtils defURL:@" /* leading */ URL(#paint) red"], @"paint");
+    for(NSString* source in @[@"red", @"none", @"#fff", @"rgba(1,2,3,.5)", @"urlwrong(#paint)"]) {
+        XCTAssertNil([IJSVGUtils defURL:source]);
+        XCTAssertEqual([IJSVGUtils defURLs:source].count, 0);
+    }
     for(NSString* source in @[@"url(#first)\0url(#second)", @"url('#é')\0url(#second)"]) {
         XCTAssertNil([IJSVGUtils defURL:source]);
         XCTAssertEqual([IJSVGUtils defURLs:source].count, 0);

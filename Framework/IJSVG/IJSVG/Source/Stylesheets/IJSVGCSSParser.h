@@ -47,7 +47,8 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionSkewX,
     IJSVGCSSFunctionSkewY,
     IJSVGCSSFunctionCircle,
-    IJSVGCSSFunctionEllipse
+    IJSVGCSSFunctionEllipse,
+    IJSVGCSSFunctionVar
 };
 
 typedef NS_ENUM(uint8_t, IJSVGCSSNumericKeyword) {
@@ -135,13 +136,15 @@ void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components);
 
 typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) {
     IJSVGCSSParserOptionNone = 0,
-    IJSVGCSSParserOptionSVG = 1 << 0
+    IJSVGCSSParserOptionSVG = 1 << 0,
+    IJSVGCSSParserOptionLeadingURL = 1 << 1
 };
 
 BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length,
                                          IJSVGCSSParserOptions options,
                                          IJSVGCSSComponents* components);
 BOOL IJSVGCSSFunctionIsCalculation(IJSVGCSSFunction function);
+BOOL IJSVGCSSPathDataIsValid(NSString* value);
 NSString* IJSVGCSSPathDataFromString(NSString* value);
 char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components,
                                      const IJSVGCSSComponent* component);

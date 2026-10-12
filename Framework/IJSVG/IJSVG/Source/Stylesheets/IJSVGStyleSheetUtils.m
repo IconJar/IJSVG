@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGCSSVariables.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGRendering.h>
@@ -260,7 +262,7 @@ BOOL IJSVGStyleSheetCharIsCombinator(char aChar)
 
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar)
 {
-    return aChar == '#' || aChar == '.' || aChar == '*' || aChar == '|' ||
+    return aChar == ':' || aChar == '#' || aChar == '.' || aChar == '*' || aChar == '|' ||
         IJSVGStyleSheetCharIsCombinator(aChar) ||
         IJSVGStyleSheetCharIsWhitespace(aChar);
 }
@@ -331,7 +333,8 @@ NSString* IJSVGStyleSheetCombinatorStringForCombinator(IJSVGStyleSheetSelectorCo
     }
 }
 
-NSString* IJSVGStyleSheetStringFromUTF8Bytes(const char* chars, NSUInteger start, NSUInteger end)
+NSString* IJSVGStyleSheetStringFromUTF8Bytes(const char* chars, NSUInteger start,
+                                             NSUInteger end)
 {
     if(chars == NULL || end <= start) {
         return nil;
@@ -472,6 +475,7 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
     NSUInteger marker = 0;
     NSUInteger depth = 0;
     NSUInteger mathDepth = 0;
+    BOOL customValue = NO;
     char quote = 0;
     BOOL escaped = NO;
     for(NSUInteger i = 0; i < length; i++) {
@@ -491,20 +495,27 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
         // would merge tokens (1/**/px) or change binary operator whitespace.
         NSUInteger identifierEnd = i;
         if(IJSVGStyleSheetSkipIdentifier(chars, length, &identifierEnd)) {
+            if(chars[i] == '-' && i + 1 < identifierEnd && chars[i + 1] == '-') {
+                NSUInteger colon = IJSVGStyleSheetIndexBySkippingWhitespace(chars, identifierEnd, length);
+                if(colon < length && chars[colon] == ':') {
+                    customValue = YES;
+                }
+            }
             if(identifierEnd < length && chars[identifierEnd] == '(' && mathDepth == 0) {
                 NSUInteger nameLength = identifierEnd - i;
                 IJSVGCSSFunction function = IJSVGCSSFunctionUnknown;
                 if(memchr(chars + i, '\\', nameLength) != NULL) {
                     NSUInteger cursor = i;
-                    NSString* name = IJSVGStyleSheetConsumeIdentifier(chars, length, &cursor);
-                    function = IJSVGCSSFunctionForName(name.UTF8String);
+                    char name[6] = { 0 };
+                    IJSVGStyleSheetConsumeASCIIIdentifier(chars, length, &cursor, name, sizeof(name));
+                    function = IJSVGCSSFunctionForName(name);
                 } else if(nameLength <= 5) {
                     char name[6];
                     memcpy(name, chars + i, nameLength);
                     name[nameLength] = '\0';
                     function = IJSVGCSSFunctionForName(name);
                 }
-                if(IJSVGCSSFunctionIsCalculation(function)) {
+                if(IJSVGCSSFunctionIsCalculation(function) || function == IJSVGCSSFunctionVar) {
                     mathDepth = depth + 1;
                 }
             }
@@ -519,11 +530,14 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
             }
             depth--;
         }
+        if(depth == 0 && (c == ';' || c == '}')) {
+            customValue = NO;
+        }
         if(c == '/' && i + 1 < length && chars[i + 1] == '*') {
             memcpy(clean + written, chars + marker, i - marker);
             written += i - marker;
             const char* end = strstr(chars + i + 2, "*/");
-            if(mathDepth != 0) {
+            if(mathDepth != 0 || customValue) {
                 NSUInteger boundaryLength = end == NULL ? 2 : 4;
                 memcpy(clean + written, "/**/", boundaryLength);
                 written += boundaryLength;
@@ -547,7 +561,7 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
 
 BOOL IJSVGStyleSheetSelectorRawHasSimpleSelector(IJSVGStyleSheetSelectorRaw* rawSelector)
 {
-    return rawSelector.tag != nil || rawSelector.identifier != nil
+    return rawSelector.rootCount != 0 || rawSelector.tag != nil || rawSelector.identifier != nil
         || rawSelector.classes.count != 0;
 }
 
@@ -591,17 +605,17 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetFontProperty) {
     IJSVGStyleSheetFontPropertyCount
 };
 
-static BOOL IJSVGStyleSheetTokenEquals(char* chars, NSRange token, const char* keyword)
+static BOOL IJSVGStyleSheetTokenEquals(const char* chars, NSRange token, const char* keyword)
 {
     if(token.length != strlen(keyword)) {
         return NO;
     }
-    NSUInteger end = NSMaxRange(token);
-    char saved = chars[end];
-    chars[end] = '\0';
-    BOOL equal = IJSVGCharBufferCaseInsensitiveCompare(chars + token.location, keyword);
-    chars[end] = saved;
-    return equal;
+    for(NSUInteger index = 0; index < token.length; index++) {
+        if(IJSVGCharToLower(chars[token.location + index]) != keyword[index]) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 static NSRange IJSVGStyleSheetNextFontToken(const char* chars, NSUInteger length,
@@ -888,6 +902,23 @@ static void IJSVGStyleSheetAppendCodePoint(NSMutableData* data, uint32_t scalar)
     [data appendBytes:bytes length:count];
 }
 
+static uint32_t IJSVGStyleSheetReadHexEscape(const char* chars, NSUInteger end,
+                                             NSUInteger* index)
+{
+    uint32_t scalar = 0;
+    for(NSUInteger digits = 0; *index < end && digits < 6; digits++) {
+        char c = IJSVGCharToLower(chars[*index]);
+        int digit = c >= '0' && c <= '9' ? c - '0' :
+            (c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1);
+        if(digit < 0) {
+            break;
+        }
+        scalar = scalar * 16 + digit;
+        (*index)++;
+    }
+    return scalar;
+}
+
 static NSUInteger IJSVGStyleSheetDecodeEscape(const char* chars, NSUInteger index,
                                                NSUInteger end, NSMutableData* data)
 {
@@ -899,20 +930,9 @@ static NSUInteger IJSVGStyleSheetDecodeEscape(const char* chars, NSUInteger inde
         char c = chars[index++];
         return c == '\r' && index < end && chars[index] == '\n' ? index + 1 : index;
     }
-    uint32_t scalar = 0;
-    NSUInteger digits = 0;
-    while(index < end && digits < 6) {
-        char c = IJSVGCharToLower(chars[index]);
-        int digit = c >= '0' && c <= '9' ? c - '0' :
-            (c >= 'a' && c <= 'f' ? c - 'a' + 10 : -1);
-        if(digit < 0) {
-            break;
-        }
-        scalar = scalar * 16 + digit;
-        digits++;
-        index++;
-    }
-    if(digits == 0) {
+    NSUInteger start = index;
+    uint32_t scalar = IJSVGStyleSheetReadHexEscape(chars, end, &index);
+    if(index == start) {
         [data appendBytes:chars + index length:1];
         return index + 1;
     }
@@ -975,6 +995,42 @@ NSString* IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start,
     return IJSVGStyleSheetDecodeFamily(chars, start, end, YES);
 }
 
+BOOL IJSVGStyleSheetConsumeASCIIIdentifier(const char* chars, NSUInteger length,
+                                           NSUInteger* index, char* name,
+                                           NSUInteger capacity)
+{
+    NSUInteger start = *index;
+    NSUInteger end = start;
+    if(!IJSVGStyleSheetSkipIdentifier(chars, length, &end)) {
+        return NO;
+    }
+    *index = end;
+    if(capacity == 0) {
+        return YES;
+    }
+    NSUInteger count = 0;
+    while(start < end) {
+        uint32_t scalar = (unsigned char)chars[start++];
+        if(scalar == '\\') {
+            NSUInteger escape = start - 1;
+            NSUInteger digits = start;
+            scalar = IJSVGStyleSheetReadHexEscape(chars, end, &digits);
+            if(digits == start) {
+                scalar = (unsigned char)chars[start];
+            }
+            IJSVGStyleSheetSkipEscape(chars, end, &escape, NO);
+            start = escape;
+        }
+        if(scalar == 0 || scalar >= 0x80 || count == capacity - 1) {
+            name[0] = '\0';
+            return YES;
+        }
+        name[count++] = (char)scalar;
+    }
+    name[count] = '\0';
+    return YES;
+}
+
 NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
                                          NSUInteger* index)
 {
@@ -984,6 +1040,9 @@ NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
         return nil;
     }
     *index = cursor;
+    if(memchr(chars + start, '\\', cursor - start) == NULL) {
+        return IJSVGStyleSheetStringFromUTF8Bytes(chars, start, cursor);
+    }
     return IJSVGStyleSheetDecodeFamily(chars, start, cursor, NO);
 }
 
@@ -1128,8 +1187,22 @@ static BOOL IJSVGStyleSheetParseFont(char* chars, NSUInteger length, NSRange* ra
     return NO;
 }
 
-static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* values)
+static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* values,
+                                      BOOL pending)
 {
+    NSString* attributes[IJSVGStyleSheetFontPropertyCount] = {
+        IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontStyle,
+        IJSVGAttributeFontWeight, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant,
+        IJSVGAttributeLineHeight, IJSVGAttributeFontVariantLigatures,
+        IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning,
+        IJSVGAttributeFontSizeAdjust
+    };
+    if(pending) {
+        for(NSUInteger property = 0; property < IJSVGStyleSheetFontPropertyCount; property++) {
+            values[attributes[property]] = shorthand;
+        }
+        return;
+    }
     const char* source = shorthand.UTF8String;
     if(source == NULL) {
         return;
@@ -1144,13 +1217,6 @@ static void IJSVGStyleSheetExpandFont(NSString* shorthand, NSMutableDictionary* 
     }
     NSRange ranges[IJSVGStyleSheetFontPropertyCount] = { 0 };
     if(IJSVGStyleSheetParseFont(chars, length, ranges)) {
-        NSString* attributes[IJSVGStyleSheetFontPropertyCount] = {
-            IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontStyle,
-            IJSVGAttributeFontWeight, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant,
-            IJSVGAttributeLineHeight, IJSVGAttributeFontVariantLigatures,
-            IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning,
-            IJSVGAttributeFontSizeAdjust
-        };
         // Create property strings only after the whole shorthand is valid.
         for(NSUInteger property = 0; property < IJSVGStyleSheetFontPropertyCount; property++) {
             NSRange range = ranges[property];
@@ -1169,80 +1235,145 @@ static BOOL IJSVGStyleSheetValueIsCSSWideKeyword(NSString* value)
     return IJSVGCSSWideKeywordFromString(value) != IJSVGCSSWideKeywordUnknown;
 }
 
-typedef BOOL (^IJSVGStyleSheetDeclarationExpander)(NSString*, NSDictionary**);
+static NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandMarker(NSString* value)
+{
+    return @{
+        IJSVGAttributeMarkerStart: value,
+        IJSVGAttributeMarkerMid: value,
+        IJSVGAttributeMarkerEnd: value
+    };
+}
+
+static NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandFontDeclaration(NSString* value,
+    BOOL pending)
+{
+    NSMutableDictionary* properties = [[NSMutableDictionary alloc] init];
+    IJSVGStyleSheetExpandFont(value, properties, pending);
+    return properties;
+}
+
+static BOOL IJSVGStyleSheetExpandShorthand(NSUInteger attribute, NSString* value,
+                                           BOOL pending, NSDictionary<NSString*, NSString*>** expanded)
+{
+    switch(attribute) {
+        case IJSVGNodeAttributeMarker:
+            *expanded = IJSVGStyleSheetExpandMarker(value);
+            return YES;
+
+        case IJSVGNodeAttributeFont:
+            *expanded = IJSVGStyleSheetExpandFontDeclaration(value, pending);
+            return (*expanded).count != 0;
+
+        default:
+            return YES;
+    }
+}
+
+static BOOL IJSVGStyleSheetStrokeValueIsValid(NSUInteger attribute, NSString* value)
+{
+    if(IJSVGStyleSheetValueIsCSSWideKeyword(value)) {
+        return YES;
+    }
+    if(attribute == IJSVGNodeAttributeStrokeDashArray) {
+        IJSVGStringBytes source = IJSVGStringGetBytes(value);
+        return IJSVGStyleSheetTokenEquals(source.bytes, NSMakeRange(0, source.length), "none") ||
+            IJSVGUnitLengthsAreValid(value, NO, NO);
+    }
+    return IJSVGUnitLengthsAreValid(value, attribute == IJSVGNodeAttributeStrokeDashOffset, YES);
+}
+
+static BOOL IJSVGStyleSheetTransformBoxIsValid(NSString* value)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    NSRange token = NSMakeRange(0, source.length);
+    switch(source.length) {
+        case 8:
+            return IJSVGStyleSheetTokenEquals(source.bytes, token, "view-box") ||
+                IJSVGStyleSheetTokenEquals(source.bytes, token, "fill-box");
+        case 10:
+            return IJSVGStyleSheetTokenEquals(source.bytes, token, "stroke-box") ||
+                IJSVGStyleSheetTokenEquals(source.bytes, token, "border-box");
+        case 11:
+            return IJSVGStyleSheetTokenEquals(source.bytes, token, "content-box");
+        default:
+            return IJSVGStyleSheetValueIsCSSWideKeyword(value);
+    }
+}
+
+static BOOL IJSVGStyleSheetDeclarationValueIsValid(NSUInteger attribute, NSString* value)
+{
+    if(IJSVGAttributeIsGeometryProperty(attribute)) {
+        return [value isKindOfClass:NSString.class] &&
+            IJSVGGeometryLengthIsValid(value, (IJSVGNodeAttribute)attribute);
+    }
+    switch(attribute) {
+        case IJSVGNodeAttributeStrokeWidth:
+        case IJSVGNodeAttributeStrokeDashOffset:
+        case IJSVGNodeAttributeStrokeDashArray:
+            return IJSVGStyleSheetStrokeValueIsValid(attribute, value);
+
+        case IJSVGNodeAttributeD:
+            return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGCSSPathDataIsValid(value);
+
+        case IJSVGNodeAttributeTransformOrigin:
+            return IJSVGStyleSheetValueIsCSSWideKeyword(value) ||
+                IJSVGTransformOriginFromString(value) != nil;
+
+        case IJSVGNodeAttributeTransformBox:
+            return IJSVGStyleSheetTransformBoxIsValid(value);
+
+        default:
+            return YES;
+    }
+}
+
+static IJSVGCSSVariableSyntax IJSVGStyleSheetDeclarationVariableSyntax(NSString* value,
+                                                                       BOOL custom)
+{
+    if(custom || IJSVGCSSValueMayContainVariables(value)) {
+        return IJSVGCSSValidateVariables(value);
+    }
+    return IJSVGCSSVariableSyntaxLiteral;
+}
 
 NSString* IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
-                                            NSDictionary<NSString*, NSString*>** expanded)
+                                            NSDictionary<NSString*,
+                                            NSString*>** expanded)
 {
-    static NSDictionary<NSString*, IJSVGStyleSheetDeclarationExpander>* expanders;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSMutableDictionary<NSString*, IJSVGStyleSheetDeclarationExpander>* handlers = [@{
-            IJSVGAttributeMarker: ^BOOL(NSString* shorthand, NSDictionary** values) {
-                *values = @{
-                    IJSVGAttributeMarkerStart: shorthand,
-                    IJSVGAttributeMarkerMid: shorthand,
-                    IJSVGAttributeMarkerEnd: shorthand
-                };
-                return YES;
-            },
-            IJSVGAttributeFont: ^BOOL(NSString* shorthand, NSDictionary** values) {
-                NSMutableDictionary* properties = [[NSMutableDictionary alloc] init];
-                IJSVGStyleSheetExpandFont(shorthand, properties);
-                *values = properties;
-                return properties.count != 0;
-            }
-        } mutableCopy];
-        for(NSString* property in @[IJSVGAttributeStrokeWidth, IJSVGAttributeStrokeDashOffset,
-                                    IJSVGAttributeStrokeDashArray]) {
-            BOOL isDashArray = [property isEqualToString:IJSVGAttributeStrokeDashArray];
-            BOOL allowNegative = [property isEqualToString:IJSVGAttributeStrokeDashOffset];
-            handlers[property] = ^BOOL(NSString* value, NSDictionary** values) {
-                if(IJSVGStyleSheetValueIsCSSWideKeyword(value)) {
-                    return YES;
-                }
-                if(isDashArray) {
-                    return [value.lowercaseString isEqualToString:@"none"] ||
-                        IJSVGUnitLengthsAreValid(value, NO, NO);
-                }
-                return IJSVGUnitLengthsAreValid(value, allowNegative, YES);
-            };
-        }
-        NSArray<NSString*>* geometryProperties = @[
-            IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
-            IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX, IJSVGAttributeRY
-        ];
-        for(NSString* geometryProperty in geometryProperties) {
-            IJSVGNodeAttribute attribute = (IJSVGNodeAttribute)IJSVGNodeAttributeForName(geometryProperty);
-            handlers[geometryProperty] = ^BOOL(NSString* geometryValue, NSDictionary** values) {
-                return [geometryValue isKindOfClass:NSString.class] &&
-                    IJSVGGeometryLengthIsValid(geometryValue, attribute);
-            };
-        }
-        handlers[IJSVGAttributeD] = ^BOOL(NSString* value, NSDictionary** values) {
-            return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGCSSPathDataFromString(value) != nil;
-        };
-        handlers[IJSVGAttributeTransformOrigin] = ^BOOL(NSString* origin, NSDictionary** values) {
-            return IJSVGStyleSheetValueIsCSSWideKeyword(origin) ||
-                IJSVGTransformOriginFromString(origin) != nil;
-        };
-        handlers[IJSVGAttributeTransformBox] = ^BOOL(NSString* box, NSDictionary** values) {
-            return [@[@"view-box", @"fill-box", @"stroke-box", @"content-box", @"border-box",
-                      @"inherit", @"initial", @"unset", @"revert", @"revert-layer"] containsObject:box.lowercaseString];
-        };
-        expanders = [handlers copy];
-    });
-    NSString* name = [property hasPrefix:@"--"] ? property : property.lowercaseString;
-    IJSVGStyleSheetDeclarationExpander expander = expanders[name];
+    BOOL variables = NO;
+    return IJSVGStyleSheetResolveVariableDeclaration(property, value, expanded, &variables);
+}
+
+NSString* IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString* value,
+                                                    NSDictionary<NSString*, NSString*>** expanded,
+                                                    BOOL* variables)
+{
     *expanded = nil;
-    return expander == nil || expander(value, expanded) ? name : nil;
+    *variables = NO;
+    BOOL custom = [property hasPrefix:@"--"];
+    NSString* name = custom ? property : property.lowercaseString;
+    IJSVGCSSVariableSyntax syntax = IJSVGStyleSheetDeclarationVariableSyntax(value, custom);
+    if(syntax == IJSVGCSSVariableSyntaxInvalid || (custom && name.length == 2)) {
+        return nil;
+    }
+    if(custom) {
+        return name;
+    }
+
+    NSUInteger attribute = IJSVGNodeAttributeForName(name);
+    *variables = syntax == IJSVGCSSVariableSyntaxReferences;
+    if(!*variables && !IJSVGStyleSheetDeclarationValueIsValid(attribute, value)) {
+        return nil;
+    }
+    return IJSVGStyleSheetExpandShorthand(attribute, value, *variables, expanded) ? name : nil;
 }
 
 NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
                                                                      NSString* value)
 {
     NSDictionary* expanded = nil;
-    NSString* name = IJSVGStyleSheetResolveDeclaration(property, value, &expanded);
+    NSString* name = IJSVGStyleSheetResolveDeclaration(property, value,
+                                                       &expanded);
     if(name == nil) {
         return @{};
     }

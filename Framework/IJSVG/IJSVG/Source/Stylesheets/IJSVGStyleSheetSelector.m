@@ -50,6 +50,10 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
         return NO;
     }
 
+    if(rawSelector.rootCount != 0 && node.selectorParent != nil) {
+        return NO;
+    }
+
     if(rawSelector.classes.count != 0) {
         for(NSString* className in rawSelector.classes) {
             if([node.classNameList containsObject:className] == NO) {
@@ -70,7 +74,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (BOOL)requiresSelectorTree
 {
-    return _rawSelectors.count > 1;
+    return _rawSelectors.count > 1 || _rawSelectors.firstObject.rootCount != 0;
 }
 
 - (IJSVGStyleSheetSelectorRaw*)matchingSelector
@@ -160,7 +164,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
             _specificity += SPECIFICITY_IDENTIFIER;
         }
 
-        _specificity += (rawSelector.classes.count * SPECIFICITY_CLASS);
+        _specificity += ((rawSelector.classes.count + rawSelector.rootCount) * SPECIFICITY_CLASS);
     }
 }
 
@@ -172,7 +176,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
     }
 
     for(NSUInteger i = 0, length = strlen(chars); i < length; i++) {
-        if(IJSVGStyleSheetCharIsInvalidSelectorChar(chars[i]) == YES) {
+        if(chars[i] != ':' && IJSVGStyleSheetCharIsInvalidSelectorChar(chars[i]) == YES) {
             return NO;
         }
     }
@@ -246,6 +250,19 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
         if(c == '*') {
             hasUniversalSelector = YES;
             expectingSelectorAfterCombinator = NO;
+            continue;
+        }
+
+        if(c == ':') {
+            NSUInteger end = i + 1;
+            NSString* name = IJSVGStyleSheetConsumeIdentifier(chars, length, &end);
+            if([name caseInsensitiveCompare:@"root"] != NSOrderedSame || name == nil) {
+                failed = YES;
+                break;
+            }
+            rawSelector.rootCount++;
+            expectingSelectorAfterCombinator = NO;
+            i = end - 1;
             continue;
         }
 

@@ -120,6 +120,8 @@
 		59CECBED307D3EE10051BE00 /* IJSVGCSSMathExpression.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CECBEC307D3EE10051BE00 /* IJSVGCSSMathExpression.m */; };
 		59CECBF1307D42E60051BE00 /* IJSVGCSSParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 59CECBF0307D42E60051BE00 /* IJSVGCSSParser.h */; };
 		59CECBF3307D42E60051BE00 /* IJSVGCSSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CECBF2307D42E60051BE00 /* IJSVGCSSParser.m */; };
+		59CECBFB307D63640051BE00 /* IJSVGCSSVariables.h in Headers */ = {isa = PBXBuildFile; fileRef = 59CECBFA307D63640051BE00 /* IJSVGCSSVariables.h */; };
+		59CECBFD307D63640051BE00 /* IJSVGCSSVariables.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CECBFC307D63640051BE00 /* IJSVGCSSVariables.m */; };
 		59DB84E028C9F70000A9696A /* IJSVGBitFlags64.h in Headers */ = {isa = PBXBuildFile; fileRef = 59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59DB84E128C9F70000A9696A /* IJSVGBitFlags64.m in Sources */ = {isa = PBXBuildFile; fileRef = 59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */; };
 		59E6690D287D6C810085EDF5 /* IJSVGFeatureFlag.h in Headers */ = {isa = PBXBuildFile; fileRef = 59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -367,6 +369,8 @@
 		59CECBEC307D3EE10051BE00 /* IJSVGCSSMathExpression.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCSSMathExpression.m; sourceTree = "<group>"; };
 		59CECBF0307D42E60051BE00 /* IJSVGCSSParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGCSSParser.h; sourceTree = "<group>"; };
 		59CECBF2307D42E60051BE00 /* IJSVGCSSParser.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCSSParser.m; sourceTree = "<group>"; };
+		59CECBFA307D63640051BE00 /* IJSVGCSSVariables.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGCSSVariables.h; sourceTree = "<group>"; };
+		59CECBFC307D63640051BE00 /* IJSVGCSSVariables.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCSSVariables.m; sourceTree = "<group>"; };
 		59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGBitFlags64.h; sourceTree = "<group>"; };
 		59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGBitFlags64.m; sourceTree = "<group>"; };
 		59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFeatureFlag.h; sourceTree = "<group>"; };
@@ -560,6 +564,8 @@
 				59CECBF2307D42E60051BE00 /* IJSVGCSSParser.m */,
 				59CECBEA307D3EE10051BE00 /* IJSVGCSSMathExpression.h */,
 				59CECBEC307D3EE10051BE00 /* IJSVGCSSMathExpression.m */,
+				59CECBFA307D63640051BE00 /* IJSVGCSSVariables.h */,
+				59CECBFC307D63640051BE00 /* IJSVGCSSVariables.m */,
 			);
 			path = Stylesheets;
 			sourceTree = "<group>";
@@ -917,6 +923,7 @@
 				59CEBB13307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.h in Headers */,
 				594385A1306BFEB0006A5F63 /* IJSVGFilter.h in Headers */,
 				59EB762023905F7300F5AE63 /* IJSVGCommandMove.h in Headers */,
+				59CECBFB307D63640051BE00 /* IJSVGCSSVariables.h in Headers */,
 				59EB762C23905F7300F5AE63 /* IJSVGPattern.h in Headers */,
 				59EB762923905F7300F5AE63 /* IJSVGStringAdditions.h in Headers */,
 				594385CA306C3E57006A5F63 /* IJSVGColorMatrixFilterEffect.h in Headers */,
@@ -1168,6 +1175,7 @@
 				59EB75DD23905F7300F5AE63 /* IJSVGCommandQuadraticCurve.m in Sources */,
 				59FC3562306EAC5C0028BEAC /* IJSVGGradientPaint.m in Sources */,
 				59438604306C3E5A006A5F63 /* IJSVGLightingFilterEffect.m in Sources */,
+				59CECBFD307D63640051BE00 /* IJSVGCSSVariables.m in Sources */,
 				594393DD306D40C6006A5F63 /* IJSVGMetalShadowRenderer.m in Sources */,
 				594385D8306C3E58006A5F63 /* IJSVGConvolveMatrixFilterEffect.m in Sources */,
 				59EB763723905F7300F5AE63 /* IJSVGCommandClose.m in Sources */,

@@ -66,56 +66,51 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
         }
         normalized[index] = IJSVGCharToLower(name[index]);
     } while(normalized[index++] != '\0');
-    switch(normalized[0]) {
-        case 'c': {
-            if(strcmp(normalized, "calc") == 0) {
-                return IJSVGCSSFunctionCalc;
+    switch(index - 1) {
+        case 3:
+            if(strcmp(normalized, "url") == 0) {
+                return IJSVGCSSFunctionURL;
             }
-            if(strcmp(normalized, "clamp") == 0) {
-                return IJSVGCSSFunctionClamp;
+            if(strcmp(normalized, "var") == 0) {
+                return IJSVGCSSFunctionVar;
             }
-            if(strcmp(normalized, "circle") == 0) {
-                return IJSVGCSSFunctionCircle;
-            }
-            break;
-        }
-        case 'm': {
             if(strcmp(normalized, "min") == 0) {
                 return IJSVGCSSFunctionMin;
             }
             if(strcmp(normalized, "max") == 0) {
                 return IJSVGCSSFunctionMax;
             }
-            if(strcmp(normalized, "matrix") == 0) {
-                return IJSVGCSSFunctionMatrix;
-            }
-            break;
-        }
-        case 'r': {
-            if(strcmp(normalized, "rect") == 0) {
-                return IJSVGCSSFunctionRect;
-            }
             if(strcmp(normalized, "rgb") == 0) {
                 return IJSVGCSSFunctionRGB;
+            }
+            if(strcmp(normalized, "hsl") == 0) {
+                return IJSVGCSSFunctionHSL;
+            }
+            break;
+        case 4:
+            if(strcmp(normalized, "calc") == 0) {
+                return IJSVGCSSFunctionCalc;
+            }
+            if(strcmp(normalized, "rect") == 0) {
+                return IJSVGCSSFunctionRect;
             }
             if(strcmp(normalized, "rgba") == 0) {
                 return IJSVGCSSFunctionRGBA;
             }
-            if(strcmp(normalized, "rotate") == 0) {
-                return IJSVGCSSFunctionRotate;
-            }
-            break;
-        }
-        case 'h': {
-            if(strcmp(normalized, "hsl") == 0) {
-                return IJSVGCSSFunctionHSL;
-            }
             if(strcmp(normalized, "hsla") == 0) {
                 return IJSVGCSSFunctionHSLA;
             }
+            if(strcmp(normalized, "path") == 0) {
+                return IJSVGCSSFunctionPath;
+            }
+            if(strcmp(normalized, "xywh") == 0) {
+                return IJSVGCSSFunctionXYWH;
+            }
             break;
-        }
-        case 's': {
+        case 5:
+            if(strcmp(normalized, "clamp") == 0) {
+                return IJSVGCSSFunctionClamp;
+            }
             if(strcmp(normalized, "shape") == 0) {
                 return IJSVGCSSFunctionShape;
             }
@@ -128,12 +123,38 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             if(strcmp(normalized, "skewy") == 0) {
                 return IJSVGCSSFunctionSkewY;
             }
+            if(strcmp(normalized, "inset") == 0) {
+                return IJSVGCSSFunctionInset;
+            }
+            if(strcmp(normalized, "oklch") == 0) {
+                return IJSVGCSSFunctionOKLCH;
+            }
             break;
-        }
-        case 't': {
+        case 6:
+            if(strcmp(normalized, "circle") == 0) {
+                return IJSVGCSSFunctionCircle;
+            }
+            if(strcmp(normalized, "matrix") == 0) {
+                return IJSVGCSSFunctionMatrix;
+            }
+            if(strcmp(normalized, "rotate") == 0) {
+                return IJSVGCSSFunctionRotate;
+            }
+            break;
+        case 7:
+            if(strcmp(normalized, "polygon") == 0) {
+                return IJSVGCSSFunctionPolygon;
+            }
+            if(strcmp(normalized, "ellipse") == 0) {
+                return IJSVGCSSFunctionEllipse;
+            }
+            break;
+        case 9:
             if(strcmp(normalized, "translate") == 0) {
                 return IJSVGCSSFunctionTranslate;
             }
+            break;
+        case 10:
             if(strcmp(normalized, "translatex") == 0) {
                 return IJSVGCSSFunctionTranslateX;
             }
@@ -141,37 +162,8 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
                 return IJSVGCSSFunctionTranslateY;
             }
             break;
-        }
-        case 'p': {
-            if(strcmp(normalized, "polygon") == 0) {
-                return IJSVGCSSFunctionPolygon;
-            }
-            return strcmp(normalized, "path") == 0
-                ? IJSVGCSSFunctionPath : IJSVGCSSFunctionUnknown;
-        }
-        case 'i': {
-            return strcmp(normalized, "inset") == 0
-                ? IJSVGCSSFunctionInset : IJSVGCSSFunctionUnknown;
-        }
-        case 'x': {
-            return strcmp(normalized, "xywh") == 0
-                ? IJSVGCSSFunctionXYWH : IJSVGCSSFunctionUnknown;
-        }
-        case 'u': {
-            return strcmp(normalized, "url") == 0
-                ? IJSVGCSSFunctionURL : IJSVGCSSFunctionUnknown;
-        }
-        case 'o': {
-            return strcmp(normalized, "oklch") == 0
-                ? IJSVGCSSFunctionOKLCH : IJSVGCSSFunctionUnknown;
-        }
-        case 'e': {
-            return strcmp(normalized, "ellipse") == 0
-                ? IJSVGCSSFunctionEllipse : IJSVGCSSFunctionUnknown;
-        }
-        default: {
+        default:
             break;
-        }
     }
     return IJSVGCSSFunctionUnknown;
 }
@@ -213,7 +205,7 @@ static BOOL IJSVGCSSParserNameStart(char c)
         c == '_' || (unsigned char)c >= 0x80;
 }
 
-// Common ASCII names never allocate. Escaped names reuse the stylesheet decoder.
+// Names use stack storage and share stylesheet escape validation.
 static BOOL IJSVGCSSParserConsumeName(IJSVGCSSParserCursor* cursor, char name[32])
 {
     NSUInteger start = cursor->index;
@@ -228,20 +220,9 @@ static BOOL IJSVGCSSParserConsumeName(IJSVGCSSParserCursor* cursor, char name[32
     while(index < cursor->length) {
         char c = cursor->bytes[index];
         if(c == '\\') {
-            NSUInteger end = start;
-            NSString* decoded = IJSVGStyleSheetConsumeIdentifier(cursor->bytes,
-                                                                 cursor->length, &end);
-            if(decoded == nil) {
-                return NO;
-            }
-            const char* bytes = decoded.UTF8String;
-            size_t length = strlen(bytes);
-            name[0] = '\0';
-            if(length < 32) {
-                memcpy(name, bytes, length + 1);
-            }
-            cursor->index = end;
-            return YES;
+            cursor->index = start;
+            return IJSVGStyleSheetConsumeASCIIIdentifier(cursor->bytes, cursor->length,
+                &cursor->index, name, 32);
         }
         if(!IJSVGCSSParserNameStart(c) && c != '-' && !(c >= '0' && c <= '9')) {
             break;
@@ -483,6 +464,11 @@ static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing,
         if(!IJSVGCSSParserConsumeComponent(cursor, &component, &childClosing)) {
             return NO;
         }
+        if(cursor->components->count == 0 &&
+           (cursor->options & IJSVGCSSParserOptionLeadingURL) &&
+           (component.kind != IJSVGCSSComponentFunction || component.function != IJSVGCSSFunctionURL)) {
+            return NO;
+        }
         NSUInteger index;
         if(!IJSVGCSSParserAppend(cursor, component, &index)) {
             return NO;
@@ -508,7 +494,8 @@ static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing,
 BOOL IJSVGCSSComponentsCreate(const char* bytes, NSUInteger length,
                               IJSVGCSSComponents* components)
 {
-    return IJSVGCSSComponentsCreateWithOptions(bytes, length, IJSVGCSSParserOptionNone,
+    return IJSVGCSSComponentsCreateWithOptions(bytes, length,
+                                               IJSVGCSSParserOptionNone,
                                                components);
 }
 
@@ -537,25 +524,44 @@ char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components,
                    component->argumentLength);
 }
 
-NSString* IJSVGCSSPathDataFromString(NSString* value)
+static BOOL IJSVGCSSParsePathData(NSString* value, NSString** result)
 {
     IJSVGStringBytes source = IJSVGStringGetBytes(value);
     IJSVGCSSComponents components;
-    NSString* result = nil;
+    BOOL valid = NO;
     if(IJSVGCSSComponentsCreate(source.bytes, source.length, &components)) {
         const IJSVGCSSComponent* root = components.values;
         if(components.count == 1 && root->kind == IJSVGCSSComponentIdentifier &&
            root->numericKeyword == IJSVGCSSNumericKeywordNone) {
-            result = @"";
+            valid = YES;
+            if(result != NULL) {
+                *result = @"";
+            }
         } else if(components.count == 2 && root->kind == IJSVGCSSComponentFunction &&
                   root->function == IJSVGCSSFunctionPath && root->next == components.count &&
                   components.values[1].kind == IJSVGCSSComponentString) {
-            const IJSVGCSSComponent* string = components.values + 1;
-            result = IJSVGStyleSheetDecodeString(source.bytes, string->offset,
-                                                 string->offset + string->length);
+            valid = YES;
+            if(result != NULL) {
+                const IJSVGCSSComponent* string = components.values + 1;
+                *result = IJSVGStyleSheetDecodeString(source.bytes, string->offset,
+                                                      string->offset + string->length);
+                valid = *result != nil;
+            }
         }
     }
     IJSVGCSSComponentsRelease(&components);
+    return valid;
+}
+
+BOOL IJSVGCSSPathDataIsValid(NSString* value)
+{
+    return IJSVGCSSParsePathData(value, NULL);
+}
+
+NSString* IJSVGCSSPathDataFromString(NSString* value)
+{
+    NSString* result = nil;
+    IJSVGCSSParsePathData(value, &result);
     return result;
 }
 

@@ -22,7 +22,8 @@
 @implementation IJSVGStyleSheetWinner
 @end
 
-static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*, IJSVGStyleSheetWinner*>* winners,
+static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*,
+                                         IJSVGStyleSheetWinner*>* winners,
     IJSVGStyleSheetRule* rule, NSUInteger specificity)
 {
     for(NSString* property in rule.style.properties) {
@@ -193,7 +194,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
        withSelectors:(NSArray*)selectors
 {
     [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule]
-          withSelectors:selectors];
+           withSelectors:selectors];
 }
 
 - (void)addParsedStyle:(IJSVGStyleSheetStyle*)style
@@ -274,9 +275,8 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
     for(NSString* property in winners) {
         IJSVGStyleSheetWinner* winner = winners[property];
-        [style setResolvedValue:[winner->rule.style property:property]
-                    forProperty:property
-                      important:winner->important];
+        [style copyProperty:property
+                  fromStyle:winner->rule.style];
     }
     return style;
 }

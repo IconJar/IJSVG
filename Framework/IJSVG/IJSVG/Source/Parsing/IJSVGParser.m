@@ -14,6 +14,7 @@
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGCSSVariables.h>
 #import <IJSVGParsedPathCache.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
@@ -439,6 +440,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGStyleSheetSelectorRecord*>* selectorScope;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* styleAncestors;
 @property (nonatomic, strong) NSMapTable<IJSVGNode*, NSString*>* inheritedPathData;
+@property (nonatomic, strong) NSMapTable<IJSVGNode*, NSDictionary*>* customProperties;
 @property (nonatomic, strong) NSMapTable<NSXMLElement*, IJSVGNode*>* definitionStyleParents;
 @end
 
@@ -632,6 +634,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     self.lastParsedStyleElement = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
     self.inheritedPathData = nil;
+    self.customProperties = nil;
     self.definitionStyleParents = IJSVGParserElementMapTable();
     if(setup != nil) {
       setup();
@@ -929,6 +932,8 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
     }
     
     NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength] = { nil };
+    NSUInteger variableAttributes[kIJSVGNodeAttributeStorageLength];
+    NSUInteger variableAttributeCount = 0;
   
     if(raw != nil) {
         const IJSVGParserRawAttribute* entries = raw->entries.bytes;
@@ -938,6 +943,10 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
             NSUInteger attribute = entries[index].attribute;
             if(attribute < allowedCount && allowed[attribute] == 1) {
                 attributeValues[attribute] = entries[index].value;
+                if(IJSVGAttributeSupportsVariables(attribute) &&
+                   IJSVGCSSValueMayContainVariables(entries[index].value)) {
+                    variableAttributes[variableAttributeCount++] = attribute;
+                }
             }
         }
     } else {
@@ -946,6 +955,9 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
             NSString* value = nil;
             if(IJSVGReadXMLAttribute(attributeNode, activeAttributes, &attribute, &value)) {
                 attributeValues[attribute] = value;
+                if(IJSVGAttributeSupportsVariables(attribute) && IJSVGCSSValueMayContainVariables(value)) {
+                    variableAttributes[variableAttributeCount++] = attribute;
+                }
             }
         }
     }
@@ -972,6 +984,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         }
     }
 
+    NSString* attributePathData = IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeD);
     BOOL isFilterPrimitive = [node isKindOfClass:IJSVGFilterPrimitive.class];
     // Reuse declarations while resolving inherited values on each new node.
     BOOL cacheFilterAttributes = raw != nil && ignoringAttributes == nil &&
@@ -1002,6 +1015,33 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                 nodeStyle, styleRuleCount);
         }
     }
+    NSDictionary* customProperties = [self customPropertiesForNode:node
+                                                             style:styleSheet
+                                                       inlineStyle:nodeStyle];
+    IJSVGStyleSheetStyle* resolvedStyle = [styleSheet styleByResolvingVariables:customProperties];
+    IJSVGStyleSheetStyle* resolvedInline = [nodeStyle styleByResolvingVariables:customProperties];
+    BOOL resolvedVariables = resolvedStyle != styleSheet || resolvedInline != nodeStyle;
+    if(resolvedVariables) {
+        styleSheet = resolvedStyle;
+        nodeStyle = resolvedInline;
+        IJSVGStoreCascadedStyleAttributes(styleSheet, nodeStyle, activeAttributes, attributeValues);
+    }
+    __attribute__((objc_precise_lifetime)) NSMutableArray* resolvedAttributeValues = nil;
+    if(variableAttributeCount != 0) {
+        resolvedAttributeValues = [[NSMutableArray alloc] initWithCapacity:variableAttributeCount];
+        for(NSUInteger index = 0; index < variableAttributeCount; index++) {
+            NSUInteger attribute = variableAttributes[index];
+            NSString* source = attributeValues[attribute];
+            if(!IJSVGCSSValueMayContainVariables(source)) {
+                continue;
+            }
+            NSString* resolved = IJSVGCSSResolveVariables(source, customProperties);
+            resolved = IJSVGCSSResolvedPaintValue(resolved, attribute);
+            [resolvedAttributeValues addObject:resolved ?: @""];
+            attributeValues[attribute] = resolved ?: @"";
+        }
+    }
+    BOOL variableFilterParameters = variableAttributeCount != 0 || resolvedVariables;
     NSString* pathValue = IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeD);
     if(pathValue != nil) {
         BOOL cssPath = [nodeStyle property:IJSVGAttributeD] != nil ||
@@ -1009,7 +1049,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         [self applyPathValue:pathValue
                       toNode:node
                          css:cssPath
-                    fallback:[element attributeForName:IJSVGAttributeD].stringValue];
+                    fallback:attributePathData];
     }
     IJSVGApplyTextAttributes(node, attributeValues);
 
@@ -1028,7 +1068,7 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         node.filterColorInterpolation = IJSVGColorInterpolationForString(value);
     }
     if(isFilterPrimitive) {
-        NSDictionary<NSString*, NSString*>* parameters = reuseFilterAttributes ?
+        NSDictionary<NSString*, NSString*>* parameters = reuseFilterAttributes && !variableFilterParameters ?
             raw->filterParameters :
             IJSVGFilterParametersFromAttributes(attributeValues);
         IJSVGFilterPrimitive* primitive = (IJSVGFilterPrimitive*)node;
@@ -2072,6 +2112,49 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
                                                     onNode:node
                                          ignoredAttributes:nil];
     return node;
+}
+
+- (NSDictionary*)customPropertiesForNode:(IJSVGNode*)node
+                                   style:(IJSVGStyleSheetStyle*)style
+                             inlineStyle:(IJSVGStyleSheetStyle*)inlineStyle
+{
+    NSDictionary* inherited = nil;
+    if(self.customProperties != nil) {
+        for(IJSVGNode* parent = node.styleParent; parent != nil; parent = parent.styleParent) {
+            inherited = [self.customProperties objectForKey:parent];
+            if(inherited != nil) {
+                break;
+            }
+        }
+    }
+    if(!style.hasCustomProperties && !inlineStyle.hasCustomProperties) {
+        return inherited;
+    }
+    NSMutableDictionary* declarations = [[NSMutableDictionary alloc] init];
+    IJSVGStyleSheetStyle* __unsafe_unretained sources[] = { style, inlineStyle };
+    for(NSUInteger index = 0; index < 2; index++) {
+        IJSVGStyleSheetStyle* source = sources[index];
+        if(!source.hasCustomProperties) {
+            continue;
+        }
+        for(NSString* property in source.properties) {
+            if(![property hasPrefix:@"--"]) {
+                continue;
+            }
+            if(source == inlineStyle && [style isPropertyImportant:property] &&
+               ![inlineStyle isPropertyImportant:property]) {
+                continue;
+            }
+            declarations[property] = [source property:property];
+        }
+    }
+    NSDictionary* result = IJSVGCSSResolveCustomProperties(declarations, inherited);
+    if(self.customProperties == nil) {
+        self.customProperties = [NSMapTable weakToStrongObjectsMapTable];
+    }
+    [self.customProperties setObject:result
+                              forKey:node];
+    return result;
 }
 
 - (void)applyPathValue:(NSString*)value

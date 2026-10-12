@@ -22,6 +22,7 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 @interface IJSVGStyleSheetSelectorRaw : NSObject {
 }
 
+@property (nonatomic, assign) NSUInteger rootCount;
 @property (nonatomic, copy) NSString* tag;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, readonly) NSString* combinatorString;

@@ -288,6 +288,60 @@ BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute)
     }
 }
 
+BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute)
+{
+    if(IJSVGAttributeIsGeometryProperty(attribute) ||
+       (attribute >= IJSVGNodeAttributeFont && attribute <= IJSVGNodeAttributeTextOverflow)) {
+        return YES;
+    }
+    switch(attribute) {
+        case IJSVGNodeAttributeOpacity:
+        case IJSVGNodeAttributeStrokeOpacity:
+        case IJSVGNodeAttributeStrokeWidth:
+        case IJSVGNodeAttributeStrokeDashOffset:
+        case IJSVGNodeAttributeFillOpacity:
+        case IJSVGNodeAttributeClipPath:
+        case IJSVGNodeAttributeClipRule:
+        case IJSVGNodeAttributeMask:
+        case IJSVGNodeAttributeTransform:
+        case IJSVGNodeAttributeStrokeLineCap:
+        case IJSVGNodeAttributeStrokeLineJoin:
+        case IJSVGNodeAttributeStroke:
+        case IJSVGNodeAttributeStrokeDashArray:
+        case IJSVGNodeAttributeStrokeMiterLimit:
+        case IJSVGNodeAttributeFill:
+        case IJSVGNodeAttributeFillRule:
+        case IJSVGNodeAttributeBlendMode:
+        case IJSVGNodeAttributeDisplay:
+        case IJSVGNodeAttributeStopColor:
+        case IJSVGNodeAttributeStopOpacity:
+        case IJSVGNodeAttributeOverflow:
+        case IJSVGNodeAttributeMarker:
+        case IJSVGNodeAttributeFilter:
+        case IJSVGNodeAttributeFloodColor:
+        case IJSVGNodeAttributeFloodOpacity:
+        case IJSVGNodeAttributeLightingColor:
+        case IJSVGNodeAttributeColorInterpolationFilters:
+        case IJSVGNodeAttributeEnableBackground:
+        case IJSVGNodeAttributeFontSizeAdjust:
+        case IJSVGNodeAttributeTextRendering:
+        case IJSVGNodeAttributeMarkerStart:
+        case IJSVGNodeAttributeMarkerMid:
+        case IJSVGNodeAttributeMarkerEnd:
+        case IJSVGNodeAttributeVectorEffect:
+        case IJSVGNodeAttributeIsolation:
+        case IJSVGNodeAttributePaintOrder:
+        case IJSVGNodeAttributeColor:
+        case IJSVGNodeAttributeVisibility:
+        case IJSVGNodeAttributeMaskType:
+        case IJSVGNodeAttributeTransformOrigin:
+        case IJSVGNodeAttributeTransformBox:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
 static BOOL IJSVGGeometryPropertyAllowsAuto(IJSVGNodeAttribute attribute)
 {
     return attribute == IJSVGNodeAttributeWidth || attribute == IJSVGNodeAttributeHeight ||
@@ -666,7 +720,9 @@ static void IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style,
         if(!entry.important && [fallback isPropertyImportant:entry.name]) {
             continue;
         }
-        if(entry.value.length != 0) {
+        if(entry.invalidAtComputedValue) {
+            attributeValues[entry.attribute] = nil;
+        } else if(entry.value.length != 0) {
             attributeValues[entry.attribute] = entry.value;
         }
     }

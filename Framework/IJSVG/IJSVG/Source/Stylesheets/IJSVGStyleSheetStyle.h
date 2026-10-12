@@ -14,6 +14,7 @@ typedef struct {
     __unsafe_unretained NSString* name;
     __unsafe_unretained NSString* value;
     BOOL important;
+    BOOL invalidAtComputedValue;
 } IJSVGStyleSheetAttribute;
 
 @interface IJSVGStyleSheetStyle : NSObject {
@@ -26,6 +27,9 @@ typedef struct {
     IJSVGStyleSheetAttribute* _attributes;
     NSUInteger _attributeCount;
     BOOL _attributesReady;
+    BOOL _hasCustomProperties;
+    NSMutableSet<NSString*>* _invalidVariableProperties;
+    NSMutableDictionary<NSString*, NSString*>* _variableSources;
 }
 
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
@@ -37,6 +41,11 @@ typedef struct {
 - (id)property:(NSString*)key;
 - (NSDictionary*)properties;
 - (BOOL)hasGeometryProperties;
+- (BOOL)hasCustomProperties;
+- (void)copyProperty:(NSString*)property
+           fromStyle:(IJSVGStyleSheetStyle*)style;
+- (IJSVGStyleSheetStyle*)styleByResolvingVariables:(NSDictionary<NSString*, id>*)properties;
+
 // Borrowed entries remain valid until the style changes or is released.
 - (const IJSVGStyleSheetAttribute*)attributesWithCount:(NSUInteger*)count;
 - (BOOL)isPropertyImportant:(NSString*)key;
