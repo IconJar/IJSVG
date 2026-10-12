@@ -964,7 +964,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     IJSVGNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
     if(contentUnits == IJSVGUnitObjectBoundingBox) {
-        if(unit.type == IJSVGUnitLengthTypeEM || unit.type == IJSVGUnitLengthTypeEX) {
+        if(unit.usesFontMetrics) {
             BOOL css = node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeCircle ||
                 node.type == IJSVGNodeTypeEllipse || node.type == IJSVGNodeTypeImage;
             unit = [self.lengthFontResolver unitByResolvingFontLength:unit node:node css:css];
@@ -1494,8 +1494,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
     };
     BOOL relative = NO;
     for(NSUInteger index = 0; index < 10; index++) {
-        relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||
-            lengths[index].type == IJSVGUnitLengthTypeEX;
+        relative |= lengths[index].usesFontMetrics;
     }
     if(!relative) {
         return gradient;
@@ -1521,8 +1520,7 @@ inMeasurementPaint:(IJSVGPaint*)paint
 {
     IJSVGUnitLength* lengths[] = { node.x, node.y, node.width, node.height };
     for(NSUInteger index = 0; index < 4; index++) {
-        if(lengths[index].type == IJSVGUnitLengthTypeEM ||
-           lengths[index].type == IJSVGUnitLengthTypeEX) {
+        if(lengths[index].usesFontMetrics) {
             return YES;
         }
     }
@@ -2041,25 +2039,30 @@ inMeasurementPaint:(IJSVGPaint*)paint
     paint.fillColor = nil;
     paint.strokeColor = strokeColor.CGColor;
 
-    CGFloat lineWidth = [self resolveStrokeWidthForNode:node percentage:paint.frame.size.width];
-    IJSVGQuartzConfigureStroke(paint, node, _style, lineWidth);
     CGRect unitBounds = [self unitResolutionBoundsForNode:node];
     CGFloat diagonal = hypot(unitBounds.size.width, unitBounds.size.height) / M_SQRT2;
+    CGFloat lineWidth = [self resolveStrokeWidthForNode:node
+                                             percentage:diagonal];
+    IJSVGQuartzConfigureStroke(paint, node, _style, lineWidth);
     IJSVGNode* offsetOwner = node;
     IJSVGUnitLength* offset = node.strokeDashOffset;
     while(offsetOwner.styleParent != nil && offsetOwner.styleParent.strokeDashOffset == offset) {
         offsetOwner = offsetOwner.styleParent;
     }
-    paint.lineDashPhase = [self resolveCSSLength:offset percentage:diagonal node:offsetOwner];
+    paint.lineDashPhase = [self resolveCSSLength:offset
+                                      percentage:diagonal
+                                            node:offsetOwner];
     NSArray<IJSVGUnitLength*>* lengths = node.strokeDashLengths;
+    IJSVGNode* owner = node;
+    while(owner.styleParent != nil && owner.styleParent.strokeDashLengths == lengths) {
+        owner = owner.styleParent;
+    }
     if(lengths != nil && node.strokeDashArrayCount != 0) {
-        IJSVGNode* owner = node;
-        while(owner.styleParent != nil && owner.styleParent.strokeDashLengths == lengths) {
-            owner = owner.styleParent;
-        }
         NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:lengths.count];
         for(IJSVGUnitLength* length in lengths) {
-            [pattern addObject:@([self resolveCSSLength:length percentage:diagonal node:owner])];
+            [pattern addObject:@([self resolveCSSLength:length
+                                             percentage:diagonal
+                                                   node:owner])];
         }
         paint.lineDashPattern = pattern;
     }
@@ -2068,20 +2071,31 @@ inMeasurementPaint:(IJSVGPaint*)paint
         CGFloat authorLength = node.pathLength.doubleValue;
         CGFloat scale = authorLength > 0.f ? metrics.length / authorLength : INFINITY;
         if(!isfinite(scale)) {
-            scale = [self zeroPathLengthScaleForPattern:paint.lineDashPattern lengths:lengths
-                                                 phase:paint.lineDashPhase offset:offset
-                                            pathLength:metrics.length];
+            scale = [self zeroPathLengthScaleForPattern:paint.lineDashPattern
+                                                lengths:lengths
+                                                  phase:paint.lineDashPhase
+                                                 offset:offset
+                                             pathLength:metrics.length];
         }
         NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:paint.lineDashPattern.count];
         for(NSUInteger index = 0; index < paint.lineDashPattern.count; index++) {
             CGFloat value = paint.lineDashPattern[index].doubleValue;
-            if(index >= lengths.count || lengths[index].type != IJSVGUnitLengthTypePercentage) {
+            if(index < lengths.count && lengths[index].isCalculated) {
+                IJSVGUnitLength* scaled = [lengths[index] lengthByScalingAbsoluteUnits:scale];
+                value = [self resolveCSSLength:scaled
+                                    percentage:diagonal
+                                          node:owner];
+            } else if(index >= lengths.count || lengths[index].type != IJSVGUnitLengthTypePercentage) {
                 value = value == 0.f ? 0.f : value * scale;
             }
             [pattern addObject:@(value)];
         }
         paint.lineDashPattern = pattern;
-        if(offset.type != IJSVGUnitLengthTypePercentage && paint.lineDashPhase != 0.f) {
+        if(offset.isCalculated) {
+            paint.lineDashPhase = [self resolveCSSLength:[offset lengthByScalingAbsoluteUnits:scale]
+                                              percentage:diagonal
+                                                    node:offsetOwner];
+        } else if(offset.type != IJSVGUnitLengthTypePercentage && paint.lineDashPhase != 0.f) {
             paint.lineDashPhase *= scale;
         }
     }
@@ -2138,41 +2152,49 @@ inMeasurementPaint:(IJSVGPaint*)paint
         return _style.lineWidth;
     }
     IJSVGUnitLength* length = node.strokeWidth;
-    if(length.type == IJSVGUnitLengthTypeEM || length.type == IJSVGUnitLengthTypeEX) {
+    if(length.usesFontMetrics) {
         // Inherited stroke widths retain the font metrics of the declaring element.
         while(node.styleParent != nil && node.styleParent.strokeWidth == length) {
             node = node.styleParent;
         }
     }
-    return [self resolveCSSLength:length percentage:percentage node:node];
+    return [self resolveCSSLength:length
+                       percentage:percentage
+                             node:node];
 }
 
 - (CGFloat)resolveCSSLength:(IJSVGUnitLength*)length
                  percentage:(CGFloat)percentage
                        node:(IJSVGNode*)node
 {
-    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+    if(!length.usesFontMetrics) {
         return [length computeValue:percentage];
     }
-    return [self.lengthFontResolver resolveCSSLength:length percentage:percentage node:node];
+    return [self.lengthFontResolver resolveCSSLength:length
+                                          percentage:percentage
+                                                node:node];
 }
 
 - (CGFloat)resolveLength:(IJSVGUnitLength*)length
               percentage:(CGFloat)percentage
                     node:(IJSVGNode*)node
 {
-    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+    if(!length.usesFontMetrics) {
         return [length computeValue:percentage];
     }
-    return [self.lengthFontResolver resolveLength:length percentage:percentage node:node];
+    return [self.lengthFontResolver resolveLength:length
+                                       percentage:percentage
+                                             node:node];
 }
 
 - (IJSVGPaint*)drawablePaintForSymbolNode:(IJSVGRootNode*)node
 {
     CGRect bounds = [self unitResolutionBoundsForNode:node];
-    CGSize size = CGSizeMake([self resolveLength:node.width percentage:bounds.size.width
-                                              node:node.width == node.parentNode.width ? node.parentNode : node],
-                             [self resolveLength:node.height percentage:bounds.size.height
+    CGSize size = CGSizeMake([self resolveLength:node.width
+                                      percentage:bounds.size.width
+                                            node:node.width == node.parentNode.width ? node.parentNode : node],
+                             [self resolveLength:node.height
+                                      percentage:bounds.size.height
                                                node:node.height == node.parentNode.height ? node.parentNode : node]);
     CGRect viewport = (CGRect) { CGPointZero, size };
     CGRect viewBox = node.viewBox == nil ? viewport : [node.viewBox computeValue:size];
@@ -2201,8 +2223,10 @@ inMeasurementPaint:(IJSVGPaint*)paint
             children = [self drawablePaintsForNodes:node.children];
             if([self hasSymbolContentEffects:node]) {
                 // User-space effects share the children's coordinates, before viewBox mapping.
-                IJSVGPaint* effects = [self drawablePaintForGroupNode:node children:children];
-                effects = [self applyEffectsToPaint:effects fromNode:node];
+                IJSVGPaint* effects = [self drawablePaintForGroupNode:node
+                                                             children:children];
+                effects = [self applyEffectsToPaint:effects
+                                           fromNode:node];
                 children = @[effects];
             }
         }];
@@ -2241,7 +2265,8 @@ inMeasurementPaint:(IJSVGPaint*)paint
 - (IJSVGPaint*)drawablePaintForRootNode:(IJSVGRootNode*)node
 {
     IJSVGRootPaint* paint = IJSVGRootPaint.paint;
-    IJSVGUnitRect* resolvedViewBox = [self.lengthFontResolver rectByResolvingFontLengths:node.viewBox node:node];
+    IJSVGUnitRect* resolvedViewBox = [self.lengthFontResolver rectByResolvingFontLengths:node.viewBox
+                                                                                    node:node];
     paint.viewBox = resolvedViewBox;
     paint.backgroundColor = node.backgroundColor;
     paint.intrinsicSize = node.intrinsicSize;
@@ -2251,11 +2276,17 @@ inMeasurementPaint:(IJSVGPaint*)paint
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     CGFloat boundsWidth = CGRectGetWidth(bounds);
     CGFloat boundsHeight = CGRectGetHeight(bounds);
-    CGSize intrinsicSize = [self.lengthFontResolver resolveSize:node.intrinsicSize percentage:bounds.size node:node];
+    CGSize intrinsicSize = [self.lengthFontResolver resolveSize:node.intrinsicSize
+                                                     percentage:bounds.size
+                                                           node:node];
     IJSVGUnitLength* widthUnit = [self unit:node.width matchingNode:node];
     IJSVGUnitLength* heightUnit = [self unit:node.height matchingNode:node];
-    CGFloat width = [self resolveLength:widthUnit percentage:boundsWidth node:node];
-    CGFloat height = [self resolveLength:heightUnit percentage:boundsHeight node:node];
+    CGFloat width = [self resolveLength:widthUnit
+                             percentage:boundsWidth
+                                   node:node];
+    CGFloat height = [self resolveLength:heightUnit
+                              percentage:boundsHeight
+                                    node:node];
     if(node.parentNode != nil) {
         if(widthUnit == nil || widthUnit.value < 0.f) {
             width = boundsWidth;
@@ -2271,8 +2302,12 @@ inMeasurementPaint:(IJSVGPaint*)paint
             height = intrinsicSize.height;
         }
     }
-    CGRect frame = CGRectMake([self resolveLength:[self unit:node.x matchingNode:node] percentage:boundsWidth node:node],
-                              [self resolveLength:[self unit:node.y matchingNode:node] percentage:boundsHeight node:node],
+    CGRect frame = CGRectMake([self resolveLength:[self unit:node.x matchingNode:node]
+                                       percentage:boundsWidth
+                                             node:node],
+                              [self resolveLength:[self unit:node.y matchingNode:node]
+                                       percentage:boundsHeight
+                                             node:node],
                               width, height);
     paint.frame = frame;
     if(node.parentNode != nil) {

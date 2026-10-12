@@ -26,63 +26,24 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
 
 @implementation IJSVGColor (Utils)
 
-+ (CGFloat)componentFromOKLCHString:(NSString*)string
-                     percentageBase:(CGFloat)percentageBase
-{
-    IJSVGUnitLength* unit = [IJSVGUnitLength unitWithString:string];
-    if(unit == nil) {
-        return NAN;
-    }
-    if(unit.type == IJSVGUnitLengthTypePercentage) {
-        return [unit computeValue:percentageBase];
-    }
-    return unit.value;
-}
-
-+ (NSArray<NSString*>*)OKLCHComponentsFromParameters:(NSString*)parameters
-{
-    // split on commas, the alpha slash and any whitespace in a single pass.
-    // the slash is consumed as a delimiter, so alpha is simply the 4th component.
-    return [parameters ijsvg_componentsSeparatedByChars:", /\t\n\r"];
-}
-
 + (NSColor*)colorFromOKLCHParameters:(NSString*)parameters
 {
-    NSArray<NSString*>* components = [self OKLCHComponentsFromParameters:parameters];
-    if(components.count < 3) {
-        return nil;
-    }
+    return [self colorFromString:[NSString stringWithFormat:@"oklch(%@)", parameters]];
+}
 
-    CGFloat lightness = [self componentFromOKLCHString:components[0]
-                                        percentageBase:1.f];
-    if(isnan(lightness) == YES) {
-        return nil;
-    }
++ (NSColor*)colorFromOKLCHLightness:(CGFloat)lightness
+                             chroma:(CGFloat)chroma
+                                hue:(CGFloat)hue
+                              alpha:(CGFloat)alpha
+{
     if(lightness > 1.f) {
         lightness /= 100.f;
     }
     lightness = IJSVGColorClamp(lightness, 0.f, 1.f);
-
-    CGFloat chroma = [self componentFromOKLCHString:components[1]
-                                     percentageBase:0.4f];
-    CGFloat hue = [self componentFromOKLCHString:components[2]
-                                  percentageBase:360.f];
-    if(isnan(chroma) || isnan(hue)) {
-        return nil;
-    }
     chroma = fmax(0.f, chroma);
+    alpha = IJSVGColorClamp(alpha, 0.f, 1.f);
 
-    CGFloat alpha = 1.f;
-    if(components.count >= 4) {
-        alpha = [self componentFromOKLCHString:components[3]
-                                percentageBase:1.f];
-        if(isnan(alpha) == YES) {
-            return nil;
-        }
-        alpha = IJSVGColorClamp(alpha, 0.f, 1.f);
-    }
-
-    CGFloat hueRadians = hue * ((CGFloat)M_PI / 180.f);
+    CGFloat hueRadians = fmod(hue, 360.f) * ((CGFloat)M_PI / 180.f);
     CGFloat a = chroma * cos(hueRadians);
     CGFloat b = chroma * sin(hueRadians);
 

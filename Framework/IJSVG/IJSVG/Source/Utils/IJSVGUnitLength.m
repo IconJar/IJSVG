@@ -10,6 +10,8 @@
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGCSSMathExpression.h>
+#import <float.h>
 
 static BOOL IJSVGParseScalarUnit(const char* bytes, CGFloat* value,
                                  IJSVGUnitLengthType* type)
@@ -90,6 +92,14 @@ IJSVGUnitLength* IJSVGFourUnitLength;
 IJSVGUnitLength* IJSVGInheritedZeroUnitLength;
 IJSVGUnitLength* IJSVGInheritedOneUnitLength;
 IJSVGUnitLength* IJSVGZeroPercentageUnitLength;
+
+@interface IJSVGUnitLength ()
+
+@property (nonatomic, strong) IJSVGCSSMathExpression* calculation;
+@property (nonatomic) BOOL calculationNonnegative;
+@property (nonatomic) BOOL calculationObjectUnits;
+
+@end
 
 @implementation IJSVGUnitLength
 
@@ -183,12 +193,13 @@ IJSVGUnitLength* IJSVGZeroPercentageUnitLength;
 
 - (IJSVGUnitLength*)lengthWithValue:(CGFloat)value
 {
-    if(value == self.value && signbit(value) == signbit(self.value) && !self.inherit) {
+    if(!self.isCalculated && value == self.value &&
+       signbit(value) == signbit(self.value) && !self.inherit) {
         return self;
     }
     return [self.class unitWithFloat:value
-                                type:self.type
-                        originalType:self.originalType
+                                type:self.isCalculated ? IJSVGUnitLengthTypeNumber : self.type
+                        originalType:self.isCalculated ? IJSVGUnitLengthTypeNumber : self.originalType
                              inherit:NO];
 }
 
@@ -197,8 +208,14 @@ IJSVGUnitLength* IJSVGZeroPercentageUnitLength;
     if(inherit == self.inherit) {
         return self;
     }
-    return [self.class unitWithFloat:self.value type:self.type
-                        originalType:self.originalType inherit:inherit];
+    IJSVGUnitLength* result = [self.class unitWithFloat:self.value
+                                                   type:self.type
+                                           originalType:self.originalType
+                                                inherit:inherit];
+    result.calculation = _calculation;
+    result.calculationNonnegative = _calculationNonnegative;
+    result.calculationObjectUnits = _calculationObjectUnits;
+    return result;
 }
 
 - (IJSVGUnitLength*)lengthBySettingType:(IJSVGUnitLengthType)type
@@ -206,10 +223,15 @@ IJSVGUnitLength* IJSVGZeroPercentageUnitLength;
     if(type == self.type) {
         return self;
     }
-    return [self.class unitWithFloat:self.value
-                                type:type
-                        originalType:self.originalType
-                             inherit:self.inherit];
+    IJSVGUnitLength* result = [self.class unitWithFloat:self.value
+                                                   type:type
+                                           originalType:self.originalType
+                                                inherit:self.inherit];
+    result.calculation = _calculation;
+    result.calculationNonnegative = _calculationNonnegative;
+    result.calculationObjectUnits = _calculationObjectUnits ||
+        type == IJSVGUnitLengthTypePercentage;
+    return result;
 }
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
@@ -310,16 +332,14 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
     return IJSVGUnitLengthTypeForCString(string.UTF8String);
 }
 
-+ (CGFloat)convertUnitValue:(CGFloat)unit
-   toBaseFromUnitLengthType:(IJSVGUnitLengthType)type
+CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
 {
     switch(type) {
         case IJSVGUnitLengthTypeCM: {
             return unit * (96.f / 2.54f);
         }
         case IJSVGUnitLengthTypeMM: {
-            return [self convertUnitValue:unit
-                 toBaseFromUnitLengthType:IJSVGUnitLengthTypeCM] / 10.f;
+            return IJSVGConvertUnitValue(unit, IJSVGUnitLengthTypeCM) / 10.f;
         }
         case IJSVGUnitLengthTypePercentage: {
             return unit / 100.f;
@@ -342,10 +362,21 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
     return unit;
 }
 
++ (CGFloat)convertUnitValue:(CGFloat)unit
+   toBaseFromUnitLengthType:(IJSVGUnitLengthType)type
+{
+    return IJSVGConvertUnitValue(unit, type);
+}
+
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
 {
+    // Never let the legacy float scanner extract a number from an unsupported function.
+    const char* bytes = string.UTF8String;
+    if(bytes != NULL && strchr(bytes, '(') != NULL) {
+        return nil;
+    }
     IJSVGParsedUnitLength parsed = { 0 };
-    if(!IJSVGParseUnitBytes(string.UTF8String, &parsed)) {
+    if(!IJSVGParseUnitBytes(bytes, &parsed)) {
         return nil;
     }
     IJSVGUnitLengthType type = parsed.originalType;
@@ -355,7 +386,10 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
                                  toBaseFromUnitLengthType:type];
     IJSVGUnitLengthType resolvedType = fontRelative ||
         type == IJSVGUnitLengthTypePercentage ? type : IJSVGUnitLengthTypeNumber;
-    return [self unitWithFloat:value type:resolvedType originalType:type inherit:NO];
+    return [self unitWithFloat:value
+                          type:resolvedType
+                  originalType:type
+                       inherit:NO];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -365,12 +399,16 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type
 {
-    return [self.class unitWithFloat:self.value
-                                type:type];
+    return self.isCalculated ? [self lengthBySettingType:type] :
+        [self.class unitWithFloat:self.value
+                             type:type];
 }
 
 - (IJSVGUnitLength*)lengthByMatchingPercentage
 {
+    if(self.isCalculated) {
+        return [self lengthBySettingType:IJSVGUnitLengthTypePercentage];
+    }
     if(!self.isRelativeUnit && self.value <= 1.f) {
         return [self.class unitWithFloat:self.value
                                     type:IJSVGUnitLengthTypePercentage];
@@ -381,12 +419,16 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (BOOL)isRelativeUnit
 {
-    return self.type == IJSVGUnitLengthTypePercentage ||
-        self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX;
+    return self.usesPercentage || self.usesFontMetrics;
 }
 
 - (CGFloat)computeValue:(CGFloat)anotherValue
 {
+    if(_calculation != nil) {
+        return [self computeValue:anotherValue
+                         fontSize:0
+                          xHeight:0];
+    }
     if(self.type == IJSVGUnitLengthTypePercentage) {
         return ((anotherValue / 100.f) * (_value * 100.f));
     }
@@ -397,6 +439,21 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
                fontSize:(CGFloat)fontSize
                 xHeight:(CGFloat)xHeight
 {
+    if(_calculation != nil) {
+        CGFloat basis = _calculationObjectUnits ? 1.f : anotherValue;
+        CGFloat result = [_calculation evaluate:(IJSVGCSSCalculationContext) {
+          basis, fontSize, xHeight
+        }];
+        if(_calculationObjectUnits) {
+            result *= anotherValue;
+        }
+        // CSS censors NaN/signed zero at the top level and clamps to the supported range.
+        if(isnan(result) || result == 0.f) {
+            return 0.f;
+        }
+        result = fmax(-FLT_MAX, fmin(FLT_MAX, result));
+        return _calculationNonnegative ? fmax(0.f, result) : result;
+    }
     switch(self.type) {
         case IJSVGUnitLengthTypeEM:
             return self.value * fontSize;
@@ -414,6 +471,11 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (NSString*)stringValue
 {
+    if(_calculation != nil) {
+        NSString* expression = _calculation.stringValue;
+        return [expression containsString:@"("] ? expression :
+            [NSString stringWithFormat:@"calc(%@)", expression];
+    }
     if(self.type == IJSVGUnitLengthTypeAuto) {
         return @"auto";
     }
@@ -430,6 +492,9 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
 
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options
 {
+    if(_calculation != nil) {
+        return self.stringValue;
+    }
     if(self.type == IJSVGUnitLengthTypeAuto) {
         return @"auto";
     }
@@ -445,10 +510,107 @@ IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars)
     return IJSVGShortFloatStringWithOptions(_value, options);
 }
 
++ (IJSVGUnitLength*)unitWithCalculationString:(NSString*)string
+                              allowNegative:(BOOL)allowNegative
+{
+    const char* bytes = string.UTF8String;
+    IJSVGCSSComponents components;
+    IJSVGUnitLength* result = nil;
+    if(IJSVGCSSComponentsCreate(bytes, &components) &&
+       components.count != 0 && components.values[0].next == components.count) {
+        result = [self unitWithCalculationComponents:&components
+                                             atIndex:0
+                                       allowNegative:allowNegative];
+    }
+    IJSVGCSSComponentsRelease(&components);
+    return result;
+}
+
++ (IJSVGUnitLength*)unitWithCalculationComponents:(const IJSVGCSSComponents*)components
+                                        atIndex:(NSUInteger)index
+                                  allowNegative:(BOOL)allowNegative
+{
+    IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:components
+                                                                                  atIndex:index];
+    if(expression == nil) {
+        return nil;
+    }
+    BOOL percentageOnly = expression.usesPercentage && !expression.usesLength &&
+        expression.lengthExponent == 1;
+    IJSVGUnitLength* result = [self unitWithFloat:0
+                                          type:percentageOnly ? IJSVGUnitLengthTypePercentage : IJSVGUnitLengthTypeCalculation];
+    result.calculation = expression;
+    result.calculationNonnegative = !allowNegative;
+    if(!expression.usesPercentage && !expression.usesFontMetrics) {
+        result->_value = [result computeValue:0];
+    }
+    return result;
+}
+
+- (IJSVGUnitLength*)lengthByScalingAbsoluteUnits:(CGFloat)scale
+{
+    if(_calculation == nil) {
+        return self.type == IJSVGUnitLengthTypePercentage ? self
+            : [self lengthWithValue:self.value * scale];
+    }
+    IJSVGUnitLength* result = [self.class unitWithFloat:0
+                                                   type:self.type
+                                           originalType:self.originalType
+                                                inherit:self.inherit];
+    result.calculation = [_calculation expressionByScalingLengths:scale];
+    result.calculationNonnegative = _calculationNonnegative;
+    result.calculationObjectUnits = _calculationObjectUnits;
+    if(!result.isRelativeUnit) {
+        result->_value = [result computeValue:0];
+    }
+    return result;
+}
+
+- (BOOL)isCalculated
+{
+    return _calculation != nil;
+}
+
+- (BOOL)usesFontMetrics
+{
+    return _calculation.usesFontMetrics || self.type == IJSVGUnitLengthTypeEM ||
+        self.type == IJSVGUnitLengthTypeEX;
+}
+
+- (BOOL)usesPercentage
+{
+    return _calculation.usesPercentage || self.type == IJSVGUnitLengthTypePercentage;
+}
+
+- (IJSVGUnitLength*)lengthByResolvingFontSize:(CGFloat)fontSize
+                                      xHeight:(CGFloat)xHeight
+{
+    if(!self.usesFontMetrics) {
+        return self;
+    }
+    if(_calculation == nil) {
+        return [self.class unitWithFloat:[self computeValue:0
+                                                   fontSize:fontSize
+                                                    xHeight:xHeight]];
+    }
+    IJSVGUnitLength* result = [self.class unitWithFloat:0
+                                                   type:self.type
+                                           originalType:self.originalType
+                                                inherit:self.inherit];
+    result.calculation = [_calculation expressionByResolvingFontSize:fontSize
+                                                             xHeight:xHeight];
+    result.calculationNonnegative = _calculationNonnegative;
+    result.calculationObjectUnits = _calculationObjectUnits;
+    if(!result.usesPercentage) {
+        result->_value = [result computeValue:0];
+    }
+    return result;
+}
+
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%f%@",
-                     _value, (_value == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
+            _value, (_value == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
 }
 
 @end

@@ -226,8 +226,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (BOOL)hasDynamicSize
 {
-    return _sourceRoot.intrinsicSize.width.type == IJSVGUnitLengthTypePercentage ||
-        _sourceRoot.intrinsicSize.height.type == IJSVGUnitLengthTypePercentage;
+    return _sourceRoot.intrinsicSize.width.usesPercentage ||
+        _sourceRoot.intrinsicSize.height.usesPercentage;
 }
 
 - (NSXMLElement*)rootNode

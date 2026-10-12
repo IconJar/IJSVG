@@ -29,6 +29,16 @@ IJSVGMediaQuery* _Nullable IJSVGMediaQueryCreate(NSString* _Nullable media);
 void IJSVGMediaQueryRelease(IJSVGMediaQuery* _Nullable query);
 BOOL IJSVGMediaQueryMatches(const IJSVGMediaQuery* _Nullable query, IJSVGMediaEnvironment environment);
 
+
+BOOL IJSVGStyleSheetSkipEscape(const char* chars, NSUInteger length,
+                               NSUInteger* index, BOOL quoted);
+BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length,
+                                     NSUInteger* index);
+
+// Consumes one CSS identifier, decoding escapes. Does not skip leading whitespace.
+NSString* _Nullable IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
+                                                     NSUInteger* index);
+
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);

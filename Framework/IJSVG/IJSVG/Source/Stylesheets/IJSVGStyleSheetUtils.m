@@ -9,6 +9,7 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGRendering.h>
@@ -428,6 +429,9 @@ NSString* IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important)
     return IJSVGStyleSheetStringFromUTF8Bytes(chars, range.location, NSMaxRange(range));
 }
 
+static BOOL IJSVGStyleSheetSkipIdentifier(const char* chars, NSUInteger length,
+                                          NSUInteger* index);
+
 NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
 {
     const char* chars = string.UTF8String;
@@ -446,6 +450,8 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
 
     NSMutableString* cleanString = [[NSMutableString alloc] initWithCapacity:length];
     NSUInteger marker = 0;
+    NSUInteger depth = 0;
+    NSUInteger mathDepth = 0;
     char quote = 0;
     BOOL escaped = NO;
     for(NSUInteger i = 0; i < length; i++) {
@@ -455,7 +461,58 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
             continue;
         }
 
+        // Keep comments inside calculations until tokenization: deleting them
+        // would merge tokens (1/**/px) or change binary operator whitespace.
+        NSUInteger identifierEnd = i;
+        if(IJSVGStyleSheetSkipIdentifier(chars, length, &identifierEnd)) {
+            if(identifierEnd < length && chars[identifierEnd] == '(' && mathDepth == 0) {
+                NSUInteger nameLength = identifierEnd - i;
+                IJSVGCSSFunction function = IJSVGCSSFunctionUnknown;
+                if(memchr(chars + i, '\\', nameLength) != NULL) {
+                    NSUInteger cursor = i;
+                    NSString* name = IJSVGStyleSheetConsumeIdentifier(chars, length, &cursor);
+                    function = IJSVGCSSFunctionForName(name.UTF8String);
+                } else if(nameLength <= 5) {
+                    char name[6];
+                    memcpy(name, chars + i, nameLength);
+                    name[nameLength] = '\0';
+                    function = IJSVGCSSFunctionForName(name);
+                }
+                if(IJSVGCSSFunctionIsCalculation(function)) {
+                    mathDepth = depth + 1;
+                }
+            }
+            i = identifierEnd - 1;
+            continue;
+        }
+        if(c == '(') {
+            depth++;
+        } else if(c == ')' && depth != 0) {
+            if(mathDepth == depth) {
+                mathDepth = 0;
+            }
+            depth--;
+        }
         if(c == '/' && i + 1 < length && chars[i + 1] == '*') {
+            if(mathDepth != 0) {
+                NSString* chunk = [[NSString alloc] initWithBytes:chars + marker
+                                                           length:i - marker
+                                                         encoding:NSUTF8StringEncoding];
+                [cleanString appendString:chunk ?: @""];
+                i += 2;
+                while(i + 1 < length && !(chars[i] == '*' && chars[i + 1] == '/')) {
+                    i++;
+                }
+                if(i + 1 >= length) {
+                    [cleanString appendString:@"/*"];
+                    marker = length;
+                    break;
+                }
+                [cleanString appendString:@"/**/"];
+                i++;
+                marker = i + 1;
+                continue;
+            }
             NSString* chunk = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
             if(chunk != nil) {
                 [cleanString appendString:chunk];
@@ -664,7 +721,7 @@ static NSUInteger IJSVGStyleSheetFontKeywordProperty(char* chars, NSRange token)
     return NSNotFound;
 }
 
-static BOOL IJSVGStyleSheetSkipEscape(const char* chars, NSUInteger length,
+BOOL IJSVGStyleSheetSkipEscape(const char* chars, NSUInteger length,
                                        NSUInteger* index, BOOL quoted)
 {
     if(++*index == length) {
@@ -707,7 +764,7 @@ static BOOL IJSVGStyleSheetNameStart(char c)
     return (lower >= 'a' && lower <= 'z') || c == '_' || (unsigned char)c >= 0x80;
 }
 
-static BOOL IJSVGStyleSheetSkipQuotedFamily(const char* chars, NSUInteger length,
+BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length,
                                              NSUInteger* index)
 {
     char quote = chars[(*index)++];
@@ -739,10 +796,12 @@ static BOOL IJSVGStyleSheetFontFamilyIsReserved(char* chars, NSRange name)
         IJSVGStyleSheetTokenEquals(chars, name, "revert-layer");
 }
 
-static BOOL IJSVGStyleSheetSkipFamilyIdentifier(char* chars, NSUInteger length,
-                                                 NSUInteger* index)
+static BOOL IJSVGStyleSheetSkipIdentifier(const char* chars, NSUInteger length,
+                                          NSUInteger* index)
 {
-    NSUInteger start = *index;
+    if(*index >= length) {
+        return NO;
+    }
     if(chars[*index] == '-') {
         (*index)++;
     }
@@ -763,7 +822,15 @@ static BOOL IJSVGStyleSheetSkipFamilyIdentifier(char* chars, NSUInteger length,
             break;
         }
     }
-    return !IJSVGStyleSheetFontFamilyIsReserved(chars, NSMakeRange(start, *index - start));
+    return YES;
+}
+
+static BOOL IJSVGStyleSheetSkipFamilyIdentifier(char* chars, NSUInteger length,
+                                                NSUInteger* index)
+{
+    NSUInteger start = *index;
+    return IJSVGStyleSheetSkipIdentifier(chars, length, index) &&
+        !IJSVGStyleSheetFontFamilyIsReserved(chars, NSMakeRange(start, *index - start));
 }
 
 static BOOL IJSVGStyleSheetSkipUnquotedFamily(char* chars, NSUInteger length,
@@ -882,6 +949,18 @@ static NSString* IJSVGStyleSheetDecodeFamily(const char* chars, NSUInteger start
     return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
+NSString* IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
+                                         NSUInteger* index)
+{
+    NSUInteger start = *index;
+    NSUInteger cursor = start;
+    if(!IJSVGStyleSheetSkipIdentifier(chars, length, &cursor)) {
+        return nil;
+    }
+    *index = cursor;
+    return IJSVGStyleSheetDecodeFamily(chars, start, cursor, NO);
+}
+
 static BOOL IJSVGStyleSheetScanFontFamilies(char* chars, NSUInteger index,
                                              NSUInteger length,
                                              void (^handler)(NSString*, BOOL))
@@ -889,7 +968,7 @@ static BOOL IJSVGStyleSheetScanFontFamilies(char* chars, NSUInteger index,
     while(index < length) {
         NSUInteger start = index;
         BOOL quoted = chars[index] == '\'' || chars[index] == '"';
-        BOOL valid = quoted ? IJSVGStyleSheetSkipQuotedFamily(chars, length, &index) :
+        BOOL valid = quoted ? IJSVGStyleSheetSkipQuotedString(chars, length, &index) :
             IJSVGStyleSheetSkipUnquotedFamily(chars, length, &index);
         if(!valid) {
             return NO;
@@ -1083,6 +1162,19 @@ NSString* IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
                 return properties.count != 0;
             }
         } mutableCopy];
+        for(NSString* property in @[IJSVGAttributeStrokeWidth, IJSVGAttributeStrokeDashOffset,
+                                    IJSVGAttributeStrokeDashArray]) {
+            handlers[property] = ^BOOL(NSString* value, NSDictionary** values) {
+                if([@[@"inherit", @"initial", @"unset", @"revert", @"revert-layer"] containsObject:value.lowercaseString]) {
+                    return YES;
+                }
+                if([property isEqualToString:IJSVGAttributeStrokeDashArray]) {
+                    return [value.lowercaseString isEqualToString:@"none"] ||
+                        IJSVGUnitLengthsFromString(value) != nil;
+                }
+                return IJSVGLengthFromString(value, [property isEqualToString:IJSVGAttributeStrokeDashOffset]) != nil;
+            };
+        }
         NSArray<NSString*>* geometryProperties = @[
             IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
             IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX, IJSVGAttributeRY

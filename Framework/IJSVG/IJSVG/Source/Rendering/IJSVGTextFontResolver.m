@@ -310,7 +310,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
               percentage:(CGFloat)percentage
                     node:(IJSVGNode*)node
 {
-    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+    if(!length.usesFontMetrics) {
         return [length computeValue:percentage];
     }
     node = [self geometryFontOwnerForLength:length
@@ -326,7 +326,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
                  percentage:(CGFloat)percentage
                        node:(IJSVGNode*)node
 {
-    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+    if(!length.usesFontMetrics) {
         return [length computeValue:percentage];
     }
     node = [self geometryFontOwnerForLength:length
@@ -354,17 +354,20 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
     };
     BOOL relative = NO;
     for(NSUInteger index = 0; index < 4; index++) {
-        relative |= lengths[index].type == IJSVGUnitLengthTypeEM ||
-            lengths[index].type == IJSVGUnitLengthTypeEX;
+        relative |= lengths[index].usesFontMetrics;
     }
     if(!relative) {
         return rect;
     }
     IJSVGUnitRect* result = rect.copy;
-    result.origin.x = [self unitByResolvingFontLength:rect.origin.x node:node];
-    result.origin.y = [self unitByResolvingFontLength:rect.origin.y node:node];
-    result.size.width = [self unitByResolvingFontLength:rect.size.width node:node];
-    result.size.height = [self unitByResolvingFontLength:rect.size.height node:node];
+    result.origin.x = [self unitByResolvingFontLength:rect.origin.x
+                                                 node:node];
+    result.origin.y = [self unitByResolvingFontLength:rect.origin.y
+                                                 node:node];
+    result.size.width = [self unitByResolvingFontLength:rect.size.width
+                                                   node:node];
+    result.size.height = [self unitByResolvingFontLength:rect.size.height
+                                                    node:node];
     return result;
 }
 
@@ -378,12 +381,13 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size,
                                          node:(IJSVGNode*)node
                                           css:(BOOL)css
 {
-    if(length.type != IJSVGUnitLengthTypeEM && length.type != IJSVGUnitLengthTypeEX) {
+    if(!length.usesFontMetrics) {
         return length;
     }
-    CGFloat value = css ? [self resolveCSSLength:length percentage:0 node:node]
-        : [self resolveLength:length percentage:0 node:node];
-    return [IJSVGUnitLength unitWithFloat:value];
+    node = [self geometryFontOwnerForLength:length node:node];
+    IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
+    return [length lengthByResolvingFontSize:style.size
+                                    xHeight:css ? style.xHeight : ceil(style.xHeight)];
 }
 
 - (BOOL)usesNativeSpacingForFont:(id)font

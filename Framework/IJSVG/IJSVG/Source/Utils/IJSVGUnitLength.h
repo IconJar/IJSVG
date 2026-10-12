@@ -24,16 +24,20 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypePX,
     IJSVGUnitLengthTypeEM,
     IJSVGUnitLengthTypeEX,
-    IJSVGUnitLengthTypeAuto
+    IJSVGUnitLengthTypeAuto,
+    IJSVGUnitLengthTypeCalculation
 };
 
 IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars);
+CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type);
 
 typedef NS_ENUM(NSInteger, IJSVGUnitType) {
     IJSVGUnitUserSpaceOnUse,
     IJSVGUnitObjectBoundingBox,
     IJSVGUnitInherit
 };
+
+typedef struct IJSVGCSSComponents IJSVGCSSComponents;
 
 @interface IJSVGUnitLength: NSObject <NSCopying>
 
@@ -42,6 +46,23 @@ typedef NS_ENUM(NSInteger, IJSVGUnitType) {
 @property (nonatomic, readonly) CGFloat value;
 @property (nonatomic, readonly) BOOL inherit;
 @property (nonatomic, readonly) BOOL isRelativeUnit;
+@property (nonatomic, readonly) BOOL isCalculated;
+@property (nonatomic, readonly) BOOL usesFontMetrics;
+@property (nonatomic, readonly) BOOL usesPercentage;
+
+// Property parsers explicitly enable CSS calculations separately from legacy scalar parsing.
++ (IJSVGUnitLength*)unitWithCalculationString:(NSString*)string
+                                allowNegative:(BOOL)allowNegative;
++ (IJSVGUnitLength*)unitWithCalculationComponents:(const IJSVGCSSComponents*)components
+                                          atIndex:(NSUInteger)index
+                                    allowNegative:(BOOL)allowNegative;
+
+// SVG pathLength calibration affects absolute length terms, not percentages.
+- (IJSVGUnitLength*)lengthByScalingAbsoluteUnits:(CGFloat)scale;
+
+// Resolve font terms while retaining percentages for later viewport resolution.
+- (IJSVGUnitLength*)lengthByResolvingFontSize:(CGFloat)fontSize
+                                      xHeight:(CGFloat)xHeight;
 
 + (CGFloat)convertUnitValue:(CGFloat)unit
    toBaseFromUnitLengthType:(IJSVGUnitLengthType)type;

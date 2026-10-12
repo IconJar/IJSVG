@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
 #import <IJSVG/IJSVGParsing.h>
@@ -400,94 +401,76 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return isupper(commandChar) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
 }
 
+static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components,
+                                    const IJSVGCSSComponent* component,
+                                    BOOL requireFragment)
+{
+    if(component->kind != IJSVGCSSComponentFunction || component->function != IJSVGCSSFunctionURL) {
+        return nil;
+    }
+    const char* start = components->bytes + component->argumentOffset;
+    const char* end = start + component->argumentLength;
+    while(start < end && isspace((unsigned char)*start)) {
+        start++;
+    }
+    while(end > start && isspace((unsigned char)end[-1])) {
+        end--;
+    }
+    char quote = 0;
+    if(end > start && (*start == '\'' || *start == '"')) {
+        quote = *start++;
+        end--;
+    }
+    if(start == end || (requireFragment && (*start != '#' || end - start < 2))) {
+        return nil;
+    }
+    if(*start == '#') {
+        start++;
+    }
+    if(requireFragment) {
+        for(const char* cursor = start; cursor < end; cursor++) {
+            unsigned char character = (unsigned char)*cursor;
+            if(character < ' ' || character == '\x7f' || character == '\\' ||
+               (quote != 0 && character == quote) ||
+               (quote == 0 && (isspace(character) || character == '(' || character == ')' ||
+                              character == '\'' || character == '"'))) {
+                return nil;
+            }
+        }
+    }
+    return [[NSString alloc] initWithBytes:start
+                                    length:end - start
+                                  encoding:NSUTF8StringEncoding];
+}
+
 + (NSString* _Nullable)defURL:(NSString*)string
 {
-    const char* str = string.UTF8String;
-    NSUInteger count = 0;
-    IJSVGParsingStringMethod** methods;
-    methods = IJSVGParsingMethodParseString(str, &count);
-    if(count == 0) {
-        IJSVGParsingStringMethodsRelease(methods, count);
-        return nil;
-    }
-    
-    // what type of method is it?
-    IJSVGParsingStringMethod* method = methods[0];
-    if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
-        (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
-        return nil;
-    }
-    
-    const char* parameters = NULL;
-    size_t length = 0;
-    char quote = 0;
-    if(!IJSVGParsingUnwrapArgument(method->parameters, &parameters, &length, &quote)) {
-        IJSVGParsingStringMethodsRelease(methods, count);
-        return nil;
-    }
-    if(length > 0 && parameters[0] == '#') {
-        parameters++;
-        length--;
-    }
-    NSString* foundID = [[NSString alloc] initWithBytes:parameters
-                                                 length:length
-                                               encoding:NSUTF8StringEncoding];
-    
-    // release the stuff
-    (void)IJSVGParsingStringMethodsRelease(methods, count), methods = NULL;
-    return foundID;
+    const char* bytes = string.UTF8String;
+    IJSVGCSSComponents components;
+    BOOL valid = IJSVGCSSComponentsCreate(bytes, &components);
+    NSString* identifier = valid && components.count != 0
+        ? IJSVGURLIdentifier(&components, components.values, NO) : nil;
+    IJSVGCSSComponentsRelease(&components);
+    return identifier;
 }
 
 + (NSArray<NSString*>*)defURLs:(NSString*)string
 {
-    const char* characters = string.UTF8String;
-    if(characters == NULL || strlen(characters) != [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return @[];
-    }
-    NSUInteger count = 0;
-    BOOL valid = NO;
-    IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseStringWithValidation(characters, &count, &valid);
+    const char* bytes = string.UTF8String;
+    IJSVGCSSComponents components;
+    BOOL valid = IJSVGCSSComponentsCreate(bytes, &components);
     NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] init];
-    for(NSUInteger index = 0; valid && index < count; index++) {
-        IJSVGParsingStringMethod* method = methods[index];
-        if(IJSVGCharBufferCaseInsensitiveCompare(method->name, "url") == NO) {
+    for(NSUInteger index = 0; valid && index < components.count;) {
+        const IJSVGCSSComponent* component = components.values + index;
+        NSString* identifier = IJSVGURLIdentifier(&components, component, YES);
+        if(identifier == nil) {
             valid = NO;
             break;
         }
-        const char* parameters = NULL;
-        size_t length = 0;
-        char quote = 0;
-        if(!IJSVGParsingUnwrapArgument(method->parameters, &parameters, &length, &quote)) {
-            valid = NO;
-            break;
-        }
-        BOOL quoted = quote != 0;
-        if(length < 2 || parameters[0] != '#') {
-            valid = NO;
-            break;
-        }
-        for(NSUInteger offset = 1; offset < length; offset++) {
-            unsigned char character = (unsigned char)parameters[offset];
-            if(character < ' ' || character == '\x7f' || character == '\\'
-                || (quoted && character == quote)
-                || (!quoted && (isspace(character) || character == '(' || character == ')'
-                    || character == '\'' || character == '"'))) {
-                valid = NO;
-                break;
-            }
-        }
-        if(valid) {
-            NSString* identifier = [[NSString alloc] initWithBytes:parameters + 1
-                                                            length:length - 1
-                                                          encoding:NSUTF8StringEncoding];
-            if(identifier == nil) {
-                valid = NO;
-                break;
-            }
-            [identifiers addObject:identifier];
-        }
+        [identifiers addObject:identifier];
+        index = component->next;
     }
-    IJSVGParsingStringMethodsRelease(methods, count);
+    IJSVGCSSComponentsRelease(&components);
     return valid ? identifiers : @[];
 }
 

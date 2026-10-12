@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGText.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGCSSParser.h>
 #import <ctype.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -93,7 +94,7 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 + (instancetype)clipPathWithBasicShape:(NSString*)value
 {
     const char* bytes = value.UTF8String;
-    if(bytes == NULL || strlen(bytes) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+    if(bytes == NULL) {
         return nil;
     }
     char* buffer = strdup(bytes);
@@ -110,8 +111,32 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     char* value = IJSVGClipTrim(buffer);
     IJSVGClipPath* clipPath = [[self alloc] init];
     IJSVGClipReferenceBox box = IJSVGClipReferenceBoxStroke;
-    char* opening = strchr(value, '(');
-    if(opening == NULL) {
+    IJSVGCSSComponents components;
+    BOOL valid = IJSVGCSSComponentsCreate(value, &components);
+    IJSVGCSSComponent function = { 0 };
+    BOOL hasFunction = NO;
+    for(NSUInteger index = 0; valid && index < components.count;) {
+        const IJSVGCSSComponent* component = components.values + index;
+        if(component->kind == IJSVGCSSComponentFunction) {
+            if(hasFunction) {
+                valid = NO;
+                break;
+            }
+            function = *component;
+            hasFunction = YES;
+            for(NSUInteger child = index + 1; child < component->next; child++) {
+                if(components.values[child].kind == IJSVGCSSComponentFunction) {
+                    valid = NO;
+                }
+            }
+        }
+        index = component->next;
+    }
+    IJSVGCSSComponentsRelease(&components);
+    if(!valid) {
+        return nil;
+    }
+    if(!hasFunction) {
         if(!IJSVGClipParseReferenceBox(value, &box)) {
             return nil;
         }
@@ -119,10 +144,8 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         clipPath.referenceBox = box;
         return clipPath;
     }
-    char* closing = strchr(opening, ')');
-    if(closing == NULL || strchr(opening + 1, '(') != NULL) {
-        return nil;
-    }
+    char* opening = value + function.argumentOffset - 1;
+    char* closing = value + function.argumentOffset + function.argumentLength;
     *opening = '\0';
     *closing = '\0';
     char* name = IJSVGClipTrim(value);
@@ -141,9 +164,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     } else if(*suffix != '\0' && !IJSVGClipParseReferenceBox(suffix, &box)) {
         return nil;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "circle")) {
+    if(function.function == IJSVGCSSFunctionCircle) {
         clipPath.basicShape = IJSVGClipShapeCircle;
-    } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "ellipse")) {
+    } else if(function.function == IJSVGCSSFunctionEllipse) {
         clipPath.basicShape = IJSVGClipShapeEllipse;
     } else {
         return nil;
@@ -194,7 +217,8 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         BOOL closest = IJSVGCharBufferCaseInsensitiveCompare(token, "closest-side");
         IJSVGUnitLength* radius = nil;
         if(!farthest && !closest) {
-            radius = IJSVGGeometryLengthFromString([NSString stringWithUTF8String:token], IJSVGNodeAttributeR);
+            radius = IJSVGGeometryLengthFromString([NSString stringWithUTF8String:token],
+                                                   IJSVGNodeAttributeR);
             if(radius == nil) {
                 return nil;
             }

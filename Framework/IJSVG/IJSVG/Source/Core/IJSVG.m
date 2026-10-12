@@ -298,8 +298,7 @@
 - (BOOL)hasDynamicSize
 {
     IJSVGUnitSize* size = _intrinsicSize;
-    return size.width.type == IJSVGUnitLengthTypePercentage ||
-        size.height.type == IJSVGUnitLengthTypePercentage;
+    return size.width.usesPercentage || size.height.usesPercentage;
 }
 
 - (IJSVGIntrinsicDimensions)intrinsicDimensions

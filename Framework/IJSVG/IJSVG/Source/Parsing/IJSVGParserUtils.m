@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGPath.h>
 #import <string.h>
+#import <IJSVGCSSParser.h>
 #import <IJSVG/IJSVGUtils.h>
 
 static BOOL IJSVGLengthListIsWhitespace(char character)
@@ -80,8 +81,73 @@ BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* 
 
 static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
                                              NSMutableArray<IJSVGUnitLength*>* lengths,
+                                             IJSVGUnitLength** singleLength);
+
+static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOOL single,
+                                      NSMutableArray<IJSVGUnitLength*>* lengths,
+                                      IJSVGUnitLength** singleLength)
+{
+    IJSVGCSSComponents components;
+    BOOL valid = IJSVGCSSComponentsCreate(string, &components);
+    NSUInteger count = 0;
+    BOOL afterComma = NO;
+    IJSVGUnitLength* length = nil;
+    for(NSUInteger index = 0; valid && index < components.count;) {
+        const IJSVGCSSComponent* component = components.values + index;
+        if(component->kind == IJSVGCSSComponentDelimiter && component->symbol == IJSVGCSSSymbolComma) {
+            if(count == 0 || afterComma || single) {
+                valid = NO;
+                break;
+            }
+            afterComma = YES;
+            index = component->next;
+            continue;
+        }
+        if(count != 0 && (single || (!afterComma && !component->precedingWhitespace))) {
+            valid = NO;
+            break;
+        }
+        length = nil;
+        if(component->kind == IJSVGCSSComponentFunction) {
+            length = [IJSVGUnitLength unitWithCalculationComponents:&components atIndex:index allowNegative:allowNegative];
+        } else if(component->kind == IJSVGCSSComponentNumber ||
+                  component->kind == IJSVGCSSComponentDimension ||
+                  component->kind == IJSVGCSSComponentPercentage) {
+            IJSVGUnitLengthType type = component->unit;
+            CGFloat scalar = IJSVGConvertUnitValue(component->number, type);
+            if((component->kind == IJSVGCSSComponentDimension && type == IJSVGUnitLengthTypeNumber) ||
+               !isfinite(scalar) || (!allowNegative && component->negativeNonzero)) {
+                valid = NO;
+                break;
+            }
+            IJSVGUnitLengthType resolved = type == IJSVGUnitLengthTypePercentage ||
+                type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ? type : IJSVGUnitLengthTypeNumber;
+            length = [IJSVGUnitLength unitWithFloat:scalar type:resolved originalType:type inherit:NO];
+        }
+        if(length == nil) {
+            valid = NO;
+            break;
+        }
+        [lengths addObject:length];
+        afterComma = NO;
+        count++;
+        index = component->next;
+    }
+    valid = valid && count != 0 && !afterComma;
+    if(singleLength != NULL) {
+        *singleLength = valid && count == 1 ? length : nil;
+    }
+    IJSVGCSSComponentsRelease(&components);
+    return valid;
+}
+
+static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
+                                             NSMutableArray<IJSVGUnitLength*>* lengths,
                                              IJSVGUnitLength** singleLength)
 {
+    if(strchr(string, '(') != NULL || strchr(string, '\\') != NULL || strstr(string, "/*") != NULL) {
+        return IJSVGParseCSSUnitLengths(string, allowNegative, single, lengths, singleLength);
+    }
     const char* cursor = string;
     IJSVGUnitLength* parsedLength = nil;
     NSUInteger count = 0;
@@ -166,6 +232,12 @@ static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL sing
     return IJSVGParseUnitLengthsFromCString(string, allowNegative, single, lengths, singleLength);
 }
 
+IJSVGUnitLength* IJSVGLengthFromString(NSString* value, BOOL allowNegative)
+{
+    IJSVGUnitLength* length = nil;
+    return IJSVGParseUnitLengths(value, allowNegative, YES, nil, &length) ? length : nil;
+}
+
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
 {
     NSMutableArray<IJSVGUnitLength*>* lengths = [[NSMutableArray alloc] init];
@@ -237,7 +309,8 @@ static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribu
     while(IJSVGLengthListIsWhitespace(*chars)) {
         chars++;
     }
-    if((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z')) {
+    if(strchr(chars, '(') == NULL &&
+       ((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z'))) {
         NSString* keywordString = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
         IJSVGGeometryKeyword keyword = IJSVGGeometryKeywordFromString(keywordString);
         if(keyword == IJSVGGeometryKeywordNone ||
@@ -255,7 +328,7 @@ static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribu
         return YES;
     }
     return IJSVGParseUnitLengths(value, IJSVGGeometryPropertyAllowsNegative(attribute),
-        YES, nil, parsedLength);
+                                 YES, nil, parsedLength);
 }
 
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute)
@@ -263,7 +336,8 @@ BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute)
     return IJSVGParseGeometryLength(value, attribute, NULL);
 }
 
-IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute)
+IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value,
+                                               IJSVGNodeAttribute attribute)
 {
     IJSVGUnitLength* length = nil;
     return IJSVGParseGeometryLength(value, attribute, &length) ? length : nil;

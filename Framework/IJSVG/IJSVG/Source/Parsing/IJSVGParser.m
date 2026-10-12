@@ -1065,10 +1065,10 @@ static NSDictionary<NSString*, NSString*>* IJSVGFilterParametersFromAttributes(
         node.strokeOpacity = [IJSVGUnitLength unitWithString:value];
     }
     if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeWidth, &value)) {
-        node.strokeWidth = [IJSVGUnitLength unitWithString:value];
+        node.strokeWidth = IJSVGLengthFromString(value, NO);
     }
     if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashOffset, &value)) {
-        node.strokeDashOffset = [IJSVGUnitLength unitWithString:value];
+        node.strokeDashOffset = IJSVGLengthFromString(value, YES);
     }
     if(IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeMiterLimit, &value)) {
         node.strokeMiterLimit = [IJSVGUnitLength unitWithString:value];

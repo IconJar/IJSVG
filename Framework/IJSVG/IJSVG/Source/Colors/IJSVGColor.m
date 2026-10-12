@@ -10,57 +10,96 @@
 #import <IJSVGColorUtils.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
-#import <IJSVG/IJSVGParsing.h>
+#import <IJSVGCSSParser.h>
+#import <IJSVGCSSMathExpression.h>
+#import <float.h>
 #import <IJSVG/IJSVGParser.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
 
-// Modern RGB uses whitespace between channels and an optional slash for alpha.
-static BOOL IJSVGParseModernRGB(const char* parameters, CGFloat channels[4])
+static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components,
+                                           CGFloat channels[4], BOOL percentages[4],
+                                           BOOL* legacy)
 {
-    const char* cursor = parameters;
+    const IJSVGCSSComponent* root = components->values;
+    NSUInteger index = 1;
+    *legacy = NO;
     channels[3] = 1;
-    for(NSUInteger index = 0; index < 4; index++) {
-        while(isspace((unsigned char)*cursor)) {
-            cursor++;
+    for(NSUInteger channel = 0; channel < 4; channel++) {
+        if(index >= root->next) {
+            return -1;
         }
-        char* end = NULL;
-        double value = 0;
-        if(strncmp(cursor, "none", 4) == 0) {
-            end = (char*)cursor + 4;
-        } else {
-            value = strtod(cursor, &end);
-            if(end == cursor || !isfinite(value)) {
-                return NO;
+        const IJSVGCSSComponent* token = components->values + index;
+        CGFloat value = token->number;
+        BOOL percent = token->kind == IJSVGCSSComponentPercentage;
+        if(token->kind == IJSVGCSSComponentFunction) {
+            IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:components
+                                                                                         atIndex:index];
+            if(expression == nil || expression.usesLength || expression.usesFontMetrics) {
+                return -1;
             }
-            BOOL percent = *end == '%';
-            if(percent) {
-                end++;
+            percent = expression.lengthExponent == 1;
+            value = [expression evaluate:(IJSVGCSSCalculationContext){ 100, 0, 0 }];
+            if(isnan(value)) {
+                value = 0;
             }
-            value /= percent ? 100. : (index < 3 ? 255. : 1.);
+        } else if(token->kind == IJSVGCSSComponentIdentifier) {
+            if(token->numericKeyword != IJSVGCSSNumericKeywordNone) {
+                return -1;
+            }
+            value = 0;
+        } else if(token->kind == IJSVGCSSComponentDimension && token->angleUnit != IJSVGCSSAngleUnitNone) {
+            BOOL hue = (channel == 0 && (root->function == IJSVGCSSFunctionHSL ||
+                                         root->function == IJSVGCSSFunctionHSLA)) ||
+                (channel == 2 && root->function == IJSVGCSSFunctionOKLCH);
+            if(!hue) {
+                return -1;
+            }
+            switch(token->angleUnit) {
+                case IJSVGCSSAngleUnitRadians: {
+                    value *= 180.f / M_PI;
+                    break;
+                }
+                case IJSVGCSSAngleUnitGradians: {
+                    value *= .9f;
+                    break;
+                }
+                case IJSVGCSSAngleUnitTurns: {
+                    value *= 360.f;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        } else if(token->kind != IJSVGCSSComponentNumber && !percent) {
+            return -1;
         }
-        channels[index] = MIN(1., MAX(0., value));
-        BOOL separated = isspace((unsigned char)*end) != 0;
-        cursor = end;
-        while(isspace((unsigned char)*cursor)) {
-            cursor++;
+        channels[channel] = fmin(FLT_MAX, fmax(-FLT_MAX, value));
+        percentages[channel] = percent;
+        index = token->next;
+        if(index == root->next) {
+            return channel == 2 || channel == 3 || *legacy ? (NSInteger)channel + 1 : -1;
         }
-        if(index < 2) {
-            if(!separated) {
-                return NO;
+        const IJSVGCSSComponent* separator = components->values + index;
+        if(channel == 0) {
+            *legacy = separator->kind == IJSVGCSSComponentDelimiter &&
+                separator->symbol == IJSVGCSSSymbolComma;
+        }
+        if(channel == 3) {
+            return -1;
+        }
+        if(*legacy || channel == 2) {
+            IJSVGCSSSymbol symbol = *legacy ? IJSVGCSSSymbolComma : IJSVGCSSSymbolDivide;
+            if(separator->kind != IJSVGCSSComponentDelimiter || separator->symbol != symbol) {
+                return -1;
             }
-        } else if(index == 2) {
-            if(*cursor == '\0') {
-                return YES;
-            }
-            if(*cursor++ != '/') {
-                return NO;
-            }
-        } else {
-            return *cursor == '\0';
+            index = separator->next;
+        } else if(!separator->precedingWhitespace) {
+            return -1;
         }
     }
-    return NO;
+    return -1;
 }
 
 @implementation IJSVGColor
@@ -288,7 +327,7 @@ static NSDictionary* _colorTree = nil;
     }
     
     const char* oString = string.UTF8String;
-    if(strlen(oString) == 0) {
+    if(oString == NULL || oString[0] == '\0') {
         return nil;
     }
     
@@ -299,115 +338,70 @@ static NSDictionary* _colorTree = nil;
         return [self.class colorFromHEXString:string];
     }
 
-    // is it RGB?
-    if(IJSVGCharBufferHasPrefix(str, "rgb") == YES) {
-        NSUInteger count = 0;
-        IJSVGParsingStringMethod** methods = IJSVGParsingMethodParseString(str, &count);
-
-        // memory clean for the string
-        (void)free(str), str = NULL;
-
-        // nothing to return, just mem clean and get out of here
-        if(count == 0 || methods == NULL) {
-            if(methods != NULL) {
-                IJSVGParsingStringMethodsRelease(methods, count);
-                methods = NULL;
+    if(strchr(str, '(') != NULL) {
+        IJSVGCSSComponents components;
+        BOOL valid = IJSVGCSSComponentsCreate(str, &components);
+        NSColor* color = nil;
+        if(valid && components.count != 0 && components.values[0].kind == IJSVGCSSComponentFunction &&
+           components.values[0].next == components.count) {
+            CGFloat channels[4] = { 0, 0, 0, 1 };
+            BOOL percentages[4] = { NO, NO, NO, NO };
+            BOOL legacy = NO;
+            NSInteger count = IJSVGParseColorComponents(&components, channels,
+                                                        percentages, &legacy);
+            IJSVGCSSFunction function = components.values[0].function;
+            if(count >= 3) {
+                CGFloat alpha = percentages[3] ? channels[3] / 100.f : channels[3];
+                alpha = fmin(1.f, fmax(0.f, alpha));
+                switch(function) {
+                    case IJSVGCSSFunctionRGB:
+                    case IJSVGCSSFunctionRGBA: {
+                        for(NSUInteger channel = 0; channel < 3; channel++) {
+                            CGFloat divisor = percentages[channel] ? 100.f : 255.f;
+                            channels[channel] = fmin(1.f, fmax(0.f, channels[channel] / divisor));
+                        }
+                        color = [NSColor colorWithDeviceRed:channels[0]
+                                                      green:channels[1]
+                                                       blue:channels[2]
+                                                      alpha:alpha];
+                        break;
+                    }
+                    case IJSVGCSSFunctionHSL:
+                    case IJSVGCSSFunctionHSLA: {
+                        CGFloat* hsb = [self.class HSBFromCSSHSLHue:fmod(channels[0], 360.f)
+                                                         saturation:fmin(100.f, fmax(0.f, channels[1]))
+                                                          lightness:fmin(100.f, fmax(0.f, channels[2]))];
+                        color = [NSColor colorWithDeviceHue:hsb[0]
+                                                 saturation:hsb[1]
+                                                 brightness:hsb[2]
+                                                      alpha:alpha];
+                        free(hsb);
+                        break;
+                    }
+                    case IJSVGCSSFunctionOKLCH: {
+                        color = [self.class colorFromOKLCHLightness:percentages[0] ? channels[0] / 100.f : channels[0]
+                                                             chroma:percentages[1] ? channels[1] * .004f : channels[1]
+                                                                hue:percentages[2] ? channels[2] * 3.6f : channels[2]
+                                                              alpha:alpha];
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            } else if(count > 0 && legacy &&
+                      (function == IJSVGCSSFunctionRGB || function == IJSVGCSSFunctionRGBA)) {
+                color = NSColor.blackColor;
             }
-            return nil;
         }
-
-        // split the parameters once, the component count tells us whether
-        // we have enough channels, so there is no need to scan the floats again
-        // purely to count them.
-        IJSVGParsingStringMethod* method = methods[0];
-        if(strchr(method->parameters, ',') == NULL) {
-            CGFloat channels[4];
-            BOOL valid = IJSVGParseModernRGB(method->parameters, channels);
-            IJSVGParsingStringMethodsRelease(methods, count);
-            if(!valid) {
-                return nil;
-            }
-            return [self computeColorSpace:[NSColor colorWithDeviceRed:channels[0]
-                                                                 green:channels[1]
-                                                                  blue:channels[2]
-                                                                 alpha:channels[3]]];
-        }
-        NSString* parameters = [NSString stringWithUTF8String:method->parameters];
-        NSArray* parts = [parameters ijsvg_componentsSeparatedByChars:","];
-        IJSVGParsingStringMethodsRelease(methods, count);
-        methods = NULL;
-
-        // not enough components, fallback to black
-        if(parts.count < 3) {
-            return [self computeColorSpace:NSColor.blackColor];
-        }
-
-        NSString* alpha = parts.count == 4 ? parts[3] : @"100%";
-        return [self colorFromRString:parts[0]
-                              gString:parts[1]
-                              bString:parts[2]
-                              aString:alpha];
+        IJSVGCSSComponentsRelease(&components);
+        free(str);
+        return color == nil ? nil : [self computeColorSpace:color];
     }
 
-    // is it OKLCH?
-    if(IJSVGCharBufferHasPrefix(str, "oklch") == YES) {
-        NSUInteger count = 0;
-        IJSVGParsingStringMethod** methods = NULL;
-        methods = IJSVGParsingMethodParseString(str, &count);
-        
-        // memory clean for the string
-        (void)free(str), str = NULL;
-        
-        if(count == 0 || methods == NULL) {
-            if(methods != NULL) {
-                IJSVGParsingStringMethodsRelease(methods, count);
-                methods = NULL;
-            }
-            return nil;
-        }
-        
-        IJSVGParsingStringMethod* method = methods[0];
-        NSString* parameters = [NSString stringWithUTF8String:method->parameters];
-        NSColor* color = [self.class colorFromOKLCHParameters:parameters];
-        IJSVGParsingStringMethodsRelease(methods, count);
-        methods = NULL;
-        if(color == nil) {
-            return nil;
-        }
-        return [self computeColorSpace:color];
-    }
-
-    // is it HSL?
-    if(IJSVGCharBufferHasPrefix(str, "hsl")) {
-        NSInteger count = 0;
-        CGFloat* params = [IJSVGUtils scanFloatsFromCString:str
-                                                       size:&count];
-        CGFloat alpha = 1;
-        if(count == 4) {
-            alpha = params[3];
-        }
-
-        // convert HSL to HSB
-        CGFloat* hsb = [self.class HSBFromCSSHSLHue:params[0]
-                                         saturation:params[1]
-                                          lightness:params[2]];
-        NSColor* color = [NSColor colorWithDeviceHue:hsb[0]
-                                          saturation:hsb[1]
-                                          brightness:hsb[2]
-                                               alpha:alpha];
-
-        color = [self computeColorSpace:color];
-
-        // memory clean!
-        (void)free(str), str = NULL;
-        (void)free(hsb), hsb = NULL;
-        (void)free(params), params = NULL;
-        return color;
-    }
-    
     // is simply a clear color, dont fill
     if(IJSVGCharBufferCompare(str, "none") == YES ||
-        IJSVGCharBufferCompare(str, "transparent") == YES) {
+       IJSVGCharBufferCompare(str, "transparent") == YES) {
         (void)free(str), str = NULL;
         return nil;
     }

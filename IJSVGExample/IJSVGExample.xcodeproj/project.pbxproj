@@ -121,6 +121,7 @@
 		59CEBDCE307C0F490051BE00 /* IJSVGInheritedLengthTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */; };
 		59CEBDD0307C13FA0051BE00 /* IJSVGGradientComponentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBDCF307C13FA0051BE00 /* IJSVGGradientComponentTests.m */; };
 		59CEBDD4307C1D410051BE00 /* IJSVGDirectGradientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBDD3307C1D410051BE00 /* IJSVGDirectGradientTests.m */; };
+		59CECBF5307D487A0051BE00 /* IJSVGCSSMathTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CECBF4307D487A0051BE00 /* IJSVGCSSMathTests.m */; };
 		59D1E3A0202279CA00C54672 /* Group.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D1E39F202279CA00C54672 /* Group.svg */; };
 		59D6B1A3284F669B0058DE6B /* pattern-alignment.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */; };
 		59D6B1A5284F67FC0058DE6B /* gump-bench.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A4284F67FC0058DE6B /* gump-bench.svg */; };
@@ -306,6 +307,7 @@
 		59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGInheritedLengthTests.m; sourceTree = "<group>"; };
 		59CEBDCF307C13FA0051BE00 /* IJSVGGradientComponentTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientComponentTests.m; sourceTree = "<group>"; };
 		59CEBDD3307C1D410051BE00 /* IJSVGDirectGradientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGDirectGradientTests.m; sourceTree = "<group>"; };
+		59CECBF4307D487A0051BE00 /* IJSVGCSSMathTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGCSSMathTests.m; sourceTree = "<group>"; };
 		59D1E39F202279CA00C54672 /* Group.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Group.svg; sourceTree = "<group>"; };
 		59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "pattern-alignment.svg"; sourceTree = "<group>"; };
 		59D6B1A4284F67FC0058DE6B /* gump-bench.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "gump-bench.svg"; sourceTree = "<group>"; };
@@ -522,6 +524,7 @@
 				59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */,
 				59CEBDCF307C13FA0051BE00 /* IJSVGGradientComponentTests.m */,
 				59CEBDD3307C1D410051BE00 /* IJSVGDirectGradientTests.m */,
+				59CECBF4307D487A0051BE00 /* IJSVGCSSMathTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -787,6 +790,7 @@
 				591F8ED82FF033BD0012F5EB /* IJSVGNodeAndColorStorageTests.m in Sources */,
 				A87B53C04E204BEB8D002102 /* IJSVGArtworkFittingTests.m in Sources */,
 				597CE1D630796C4A0026E325 /* IJSVGMarkerTests.m in Sources */,
+				59CECBF5307D487A0051BE00 /* IJSVGCSSMathTests.m in Sources */,
 				59CEBDD0307C13FA0051BE00 /* IJSVGGradientComponentTests.m in Sources */,
 				5999231030716433004F4D18 /* IJSVGGradientGeometryTests.m in Sources */,
 				591F8ECC2FF01DCC0012F5EB /* IJSVGStyleSheetTests.m in Sources */,

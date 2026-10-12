@@ -9,25 +9,26 @@
 #import <IJSVG/IJSVGMath.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGParsing.h>
-
+#import <IJSVGCSSParser.h>
 #import <ctype.h>
 #import <stdlib.h>
 
-static NSInteger IJSVGTransformParseParameters(const char* cursor, IJSVGTransformCommand command,
+static NSInteger IJSVGTransformParseParameters(const char* cursor, const char* limit,
+                                                IJSVGTransformCommand command,
                                                 BOOL css, CGFloat values[IJSVGTransformParameterCapacity])
 {
     NSInteger count = 0;
-    while(isspace((unsigned char)*cursor)) {
+    while(cursor < limit && isspace((unsigned char)*cursor)) {
         cursor++;
     }
-    while(*cursor != '\0' && count < IJSVGTransformParameterCapacity) {
+    while(cursor < limit && count < IJSVGTransformParameterCapacity) {
         if(!isdigit((unsigned char)*cursor) && *cursor != '+' && *cursor != '-' && *cursor != '.') {
             return -1;
         }
         const char* start = cursor;
         char* end = NULL;
         double value = strtod(cursor, &end);
-        if(end == cursor || !isfinite(value) || memchr(start, 'x', end - start) != NULL ||
+        if(end == cursor || end > limit || !isfinite(value) || memchr(start, 'x', end - start) != NULL ||
            memchr(start, 'X', end - start) != NULL) {
             return -1;
         }
@@ -54,22 +55,22 @@ static NSInteger IJSVGTransformParseParameters(const char* cursor, IJSVGTransfor
         }
         values[count++] = value;
         BOOL whitespace = isspace((unsigned char)*cursor);
-        while(isspace((unsigned char)*cursor)) {
+        while(cursor < limit && isspace((unsigned char)*cursor)) {
             cursor++;
         }
         if(*cursor == ',') {
             cursor++;
-            while(isspace((unsigned char)*cursor)) {
+            while(cursor < limit && isspace((unsigned char)*cursor)) {
                 cursor++;
             }
-            if(*cursor == '\0') {
+            if(cursor == limit) {
                 return -1;
             }
-        } else if(*cursor != '\0' && !whitespace && *cursor != '+' && *cursor != '-' && *cursor != '.') {
+        } else if(cursor < limit && !whitespace && *cursor != '+' && *cursor != '-' && *cursor != '.') {
             return -1;
         }
     }
-    if(*cursor != '\0') {
+    if(cursor != limit) {
         return -1;
     }
     switch(command) {
@@ -85,6 +86,39 @@ static NSInteger IJSVGTransformParseParameters(const char* cursor, IJSVGTransfor
         }
         default: {
             return count == 1 ? count : -1;
+        }
+    }
+}
+
+static IJSVGTransformCommand IJSVGTransformCommandForFunction(IJSVGCSSFunction function)
+{
+    switch(function) {
+        case IJSVGCSSFunctionMatrix: {
+            return IJSVGTransformCommandMatrix;
+        }
+        case IJSVGCSSFunctionTranslate: {
+            return IJSVGTransformCommandTranslate;
+        }
+        case IJSVGCSSFunctionTranslateX: {
+            return IJSVGTransformCommandTranslateX;
+        }
+        case IJSVGCSSFunctionTranslateY: {
+            return IJSVGTransformCommandTranslateY;
+        }
+        case IJSVGCSSFunctionScale: {
+            return IJSVGTransformCommandScale;
+        }
+        case IJSVGCSSFunctionRotate: {
+            return IJSVGTransformCommandRotate;
+        }
+        case IJSVGCSSFunctionSkewX: {
+            return IJSVGTransformCommandSkewX;
+        }
+        case IJSVGCSSFunctionSkewY: {
+            return IJSVGTransformCommandSkewY;
+        }
+        default: {
+            return IJSVGTransformCommandNotImplemented;
         }
     }
 }
@@ -138,7 +172,8 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform)
     return [IJSVGTransform affineTransformToSVGMatrixString:transform];
 }
 
-void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms, IJSVGTransformApplyBlock block)
+void IJSVGApplyTransform(NSArray<IJSVGTransform*>* transforms,
+                         IJSVGTransformApplyBlock block)
 {
     for (IJSVGTransform* transform in transforms) {
         block(transform);
@@ -179,31 +214,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
 + (IJSVGTransformCommand)commandForCommandCString:(char*)str
 {
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "matrix") == YES) {
-        return IJSVGTransformCommandMatrix;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translate") == YES) {
-        return IJSVGTransformCommandTranslate;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translatex") == YES) {
-        return IJSVGTransformCommandTranslateX;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "translatey") == YES) {
-        return IJSVGTransformCommandTranslateY;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "scale") == YES) {
-        return IJSVGTransformCommandScale;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "skewx") == YES) {
-        return IJSVGTransformCommandSkewX;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "skewy") == YES) {
-        return IJSVGTransformCommandSkewY;
-    }
-    if(IJSVGCharBufferCaseInsensitiveCompare(str, "rotate") == YES) {
-        return IJSVGTransformCommandRotate;
-    }
-    return IJSVGTransformCommandNotImplemented;
+    return IJSVGTransformCommandForFunction(IJSVGCSSFunctionForName(str));
 }
 
 + (NSInteger)sortForTransformCommand:(IJSVGTransformCommand)command
@@ -237,36 +248,32 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     NSMutableArray<IJSVGTransform*>* transforms = nil;
     transforms = [[NSMutableArray alloc] init];
     
-    const char* charString = string.UTF8String;
-    IJSVGParsingStringMethod** methods = NULL;
-    NSUInteger count = 0;
-    methods = IJSVGParsingMethodParseString(charString, &count);
-    BOOL invalid = NO;
-    for(int i = 0; i < count; i++) {
-        IJSVGParsingStringMethod* method = methods[i];
-        IJSVGTransformCommand commandType;
-        commandType = [self.class commandForCommandCString:method->name];
-        CGFloat params[IJSVGTransformParameterCapacity];
-        NSInteger parameterCount = invalid ? -1 : IJSVGTransformParseParameters(method->parameters,
-                                                                                commandType, allowCSSUnits, params);
-        if(commandType == IJSVGTransformCommandNotImplemented || parameterCount < 0) {
-            invalid = YES;
-            (void)IJSVGParsingStringMethodRelease(method), method = NULL;
-            continue;
+    const char* bytes = string.UTF8String;
+    IJSVGCSSComponents components;
+    IJSVGCSSComponentsCreateWithOptions(bytes, IJSVGCSSParserOptionSVG, &components);
+    for(NSUInteger index = 0; index < components.count;) {
+        const IJSVGCSSComponent* component = components.values + index;
+        if(component->kind != IJSVGCSSComponentFunction || component->next <= index) {
+            break;
         }
-        
-        // create a new transform object and parse the parameters
+        IJSVGTransformCommand commandType = IJSVGTransformCommandForFunction(component->function);
+        const char* arguments = bytes + component->argumentOffset;
+        CGFloat params[IJSVGTransformParameterCapacity];
+        NSInteger parameterCount = IJSVGTransformParseParameters(arguments,
+                                                                 arguments + component->argumentLength,
+                                                                 commandType, allowCSSUnits, params);
+        if(commandType == IJSVGTransformCommandNotImplemented || parameterCount < 0) {
+            break;
+        }
         IJSVGTransform* transform = [[self.class alloc] init];
         transform->_command = commandType;
         transform->_sort = [self.class sortForTransformCommand:commandType];
         [transform setParameters:params
                            count:parameterCount];
-
-        // add to the list of transforms to return
         [transforms addObject:transform];
-        (void)IJSVGParsingStringMethodRelease(method), method = NULL;
+        index = component->next;
     }
-    (void)free(methods), methods = NULL;
+    IJSVGCSSComponentsRelease(&components);
     return transforms;
 }
 
