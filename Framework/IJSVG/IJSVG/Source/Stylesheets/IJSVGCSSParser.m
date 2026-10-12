@@ -16,86 +16,94 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
     if(name == NULL) {
         return IJSVGCSSFunctionUnknown;
     }
-    switch(IJSVGCharToLower(name[0])) {
+    char normalized[11];
+    NSUInteger index = 0;
+    do {
+        if(index == sizeof(normalized)) {
+            return IJSVGCSSFunctionUnknown;
+        }
+        normalized[index] = IJSVGCharToLower(name[index]);
+    } while(normalized[index++] != '\0');
+    switch(normalized[0]) {
         case 'c': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "calc")) {
+            if(strcmp(normalized, "calc") == 0) {
                 return IJSVGCSSFunctionCalc;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "clamp")) {
+            if(strcmp(normalized, "clamp") == 0) {
                 return IJSVGCSSFunctionClamp;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "circle")) {
+            if(strcmp(normalized, "circle") == 0) {
                 return IJSVGCSSFunctionCircle;
             }
             break;
         }
         case 'm': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "min")) {
+            if(strcmp(normalized, "min") == 0) {
                 return IJSVGCSSFunctionMin;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "max")) {
+            if(strcmp(normalized, "max") == 0) {
                 return IJSVGCSSFunctionMax;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "matrix")) {
+            if(strcmp(normalized, "matrix") == 0) {
                 return IJSVGCSSFunctionMatrix;
             }
             break;
         }
         case 'r': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "rgb")) {
+            if(strcmp(normalized, "rgb") == 0) {
                 return IJSVGCSSFunctionRGB;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "rgba")) {
+            if(strcmp(normalized, "rgba") == 0) {
                 return IJSVGCSSFunctionRGBA;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "rotate")) {
+            if(strcmp(normalized, "rotate") == 0) {
                 return IJSVGCSSFunctionRotate;
             }
             break;
         }
         case 'h': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "hsl")) {
+            if(strcmp(normalized, "hsl") == 0) {
                 return IJSVGCSSFunctionHSL;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "hsla")) {
+            if(strcmp(normalized, "hsla") == 0) {
                 return IJSVGCSSFunctionHSLA;
             }
             break;
         }
         case 's': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "scale")) {
+            if(strcmp(normalized, "scale") == 0) {
                 return IJSVGCSSFunctionScale;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "skewx")) {
+            if(strcmp(normalized, "skewx") == 0) {
                 return IJSVGCSSFunctionSkewX;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "skewy")) {
+            if(strcmp(normalized, "skewy") == 0) {
                 return IJSVGCSSFunctionSkewY;
             }
             break;
         }
         case 't': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "translate")) {
+            if(strcmp(normalized, "translate") == 0) {
                 return IJSVGCSSFunctionTranslate;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "translatex")) {
+            if(strcmp(normalized, "translatex") == 0) {
                 return IJSVGCSSFunctionTranslateX;
             }
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "translatey")) {
+            if(strcmp(normalized, "translatey") == 0) {
                 return IJSVGCSSFunctionTranslateY;
             }
             break;
         }
         case 'u': {
-            return IJSVGCharBufferCaseInsensitiveCompare(name, "url")
+            return strcmp(normalized, "url") == 0
                 ? IJSVGCSSFunctionURL : IJSVGCSSFunctionUnknown;
         }
         case 'o': {
-            return IJSVGCharBufferCaseInsensitiveCompare(name, "oklch")
+            return strcmp(normalized, "oklch") == 0
                 ? IJSVGCSSFunctionOKLCH : IJSVGCSSFunctionUnknown;
         }
         case 'e': {
-            return IJSVGCharBufferCaseInsensitiveCompare(name, "ellipse")
+            return strcmp(normalized, "ellipse") == 0
                 ? IJSVGCSSFunctionEllipse : IJSVGCSSFunctionUnknown;
         }
         default: {
@@ -138,8 +146,8 @@ typedef struct {
 
 static BOOL IJSVGCSSParserNameStart(char c)
 {
-    c = IJSVGCharToLower(c);
-    return (c >= 'a' && c <= 'z') || c == '_' || (unsigned char)c >= 0x80;
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+        c == '_' || (unsigned char)c >= 0x80;
 }
 
 // Common ASCII names never allocate. Escaped names reuse the stylesheet decoder.
@@ -195,10 +203,16 @@ static BOOL IJSVGCSSParserAppend(IJSVGCSSParserCursor* cursor, IJSVGCSSComponent
         return NO;
     }
     if(components->count == cursor->capacity) {
-        NSUInteger capacity = cursor->capacity == 0 ? 32 : cursor->capacity * 2;
-        IJSVGCSSComponent* values = realloc(components->values, capacity * sizeof(*values));
+        NSUInteger capacity = cursor->capacity * 2;
+        BOOL usesInlineValues = components->values == components->inlineValues;
+        IJSVGCSSComponent* values = usesInlineValues
+            ? malloc(capacity * sizeof(*values))
+            : realloc(components->values, capacity * sizeof(*values));
         if(values == NULL) {
             return NO;
+        }
+        if(usesInlineValues) {
+            memcpy(values, components->values, components->count * sizeof(*values));
         }
         components->values = values;
         cursor->capacity = capacity;
@@ -257,6 +271,111 @@ static BOOL IJSVGCSSParserConsumeURL(IJSVGCSSParserCursor* cursor)
     return NO;
 }
 
+static void IJSVGCSSParserConsumeNumericComponent(IJSVGCSSParserCursor* cursor,
+                                                  const char* numberEnd, CGFloat number,
+                                                  IJSVGCSSComponent* component)
+{
+    const char* bytes = cursor->bytes;
+    NSUInteger start = cursor->index;
+    cursor->index = numberEnd - bytes;
+    component->number = number;
+    component->kind = IJSVGCSSComponentNumber;
+    if(bytes[start] == '-') {
+        for(const char* digit = bytes + start + 1; digit < numberEnd &&
+            *digit != 'e' && *digit != 'E'; digit++) {
+            component->negativeNonzero |= *digit >= '1' && *digit <= '9';
+        }
+    }
+    char name[32];
+    if(IJSVGCSSParserConsumeName(cursor, name)) {
+        component->kind = IJSVGCSSComponentDimension;
+        NSUInteger nameLength = strlen(name);
+        component->unit = nameLength == 2 ? IJSVGUnitLengthTypeForCString(name)
+            : IJSVGUnitLengthTypeNumber;
+        if(nameLength == 3 || nameLength == 4) {
+            if(IJSVGCharBufferCaseInsensitiveCompare(name, "deg")) {
+                component->angleUnit = IJSVGCSSAngleUnitDegrees;
+            } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "rad")) {
+                component->angleUnit = IJSVGCSSAngleUnitRadians;
+            } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "grad")) {
+                component->angleUnit = IJSVGCSSAngleUnitGradians;
+            } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "turn")) {
+                component->angleUnit = IJSVGCSSAngleUnitTurns;
+            }
+        }
+    } else if(cursor->index < cursor->length && bytes[cursor->index] == '%') {
+        cursor->index++;
+        component->kind = IJSVGCSSComponentPercentage;
+        component->unit = IJSVGUnitLengthTypePercentage;
+    }
+}
+
+static void IJSVGCSSParserConsumeNamedComponent(IJSVGCSSParserCursor* cursor,
+                                                IJSVGCSSComponent* component,
+                                                char* childClosing)
+{
+    const char* bytes = cursor->bytes;
+    char name[32];
+    if(IJSVGCSSParserConsumeName(cursor, name)) {
+        NSUInteger nameEnd = cursor->index;
+        if(cursor->options & IJSVGCSSParserOptionSVG) {
+            while(cursor->index < cursor->length &&
+                  IJSVGStyleSheetCharIsWhitespace(bytes[cursor->index])) {
+                cursor->index++;
+            }
+            if(cursor->index == cursor->length || bytes[cursor->index] != '(') {
+                cursor->index = nameEnd;
+            }
+        }
+        if(cursor->index < cursor->length && bytes[cursor->index] == '(') {
+            cursor->index++;
+            component->kind = IJSVGCSSComponentFunction;
+            component->function = IJSVGCSSFunctionForName(name);
+            *childClosing = ')';
+            component->argumentOffset = (uint32_t)cursor->index;
+        } else {
+            component->kind = IJSVGCSSComponentIdentifier;
+            component->numericKeyword = IJSVGCSSNumericKeywordForName(name);
+        }
+    } else {
+        component->kind = IJSVGCSSComponentDelimiter;
+        component->symbol = (IJSVGCSSSymbol)bytes[cursor->index++];
+    }
+}
+
+static BOOL IJSVGCSSParserConsumeComponent(IJSVGCSSParserCursor* cursor,
+                                           IJSVGCSSComponent* component,
+                                           char* childClosing)
+{
+    const char* bytes = cursor->bytes;
+    char c = bytes[cursor->index];
+    if(c == '\'' || c == '"') {
+        component->kind = IJSVGCSSComponentString;
+        return IJSVGStyleSheetSkipQuotedString(bytes, cursor->length,
+                                               &cursor->index);
+    }
+    if(c == '(' || c == '[' || c == '{') {
+        cursor->index++;
+        component->kind = IJSVGCSSComponentBlock;
+        component->symbol = (IJSVGCSSSymbol)c;
+        *childClosing = c == '(' ? ')' : (c == '[' ? ']' : '}');
+        return YES;
+    }
+    const char* numberEnd = bytes + cursor->index;
+    CGFloat number;
+    BOOL startsNumber = (c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-';
+    if(startsNumber && IJSVGParseLengthNumber(&numberEnd, YES, &number)) {
+        if(numberEnd[-1] == '.' && !(cursor->options & IJSVGCSSParserOptionSVG)) {
+            return NO;
+        }
+        IJSVGCSSParserConsumeNumericComponent(cursor, numberEnd, number,
+                                              component);
+    } else {
+        IJSVGCSSParserConsumeNamedComponent(cursor, component, childClosing);
+    }
+    return YES;
+}
+
 static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing,
                                     NSUInteger depth)
 {
@@ -298,83 +417,8 @@ static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing,
         char childClosing = 0;
         NSUInteger start = cursor->index;
         component.offset = (uint32_t)start;
-        if(c == '\'' || c == '"') {
-            if(!IJSVGStyleSheetSkipQuotedString(bytes, cursor->length,
-                                                &cursor->index)) {
-                return NO;
-            }
-            component.kind = IJSVGCSSComponentString;
-        } else if(c == '(' || c == '[' || c == '{') {
-            cursor->index++;
-            component.kind = IJSVGCSSComponentBlock;
-            component.symbol = (IJSVGCSSSymbol)c;
-            childClosing = c == '(' ? ')' : (c == '[' ? ']' : '}');
-        } else {
-            const char* numberEnd = bytes + start;
-            CGFloat number;
-            if(IJSVGParseLengthNumber(&numberEnd, YES, &number)) {
-                if(numberEnd[-1] == '.' && !(cursor->options & IJSVGCSSParserOptionSVG)) {
-                    return NO;
-                }
-                cursor->index = numberEnd - bytes;
-                component.number = number;
-                component.kind = IJSVGCSSComponentNumber;
-                if(bytes[start] == '-') {
-                    for(const char* digit = bytes + start + 1; digit < numberEnd &&
-                        *digit != 'e' && *digit != 'E'; digit++) {
-                        component.negativeNonzero |= *digit >= '1' && *digit <= '9';
-                    }
-                }
-                char name[32];
-                if(IJSVGCSSParserConsumeName(cursor, name)) {
-                    component.kind = IJSVGCSSComponentDimension;
-                    NSUInteger nameLength = strlen(name);
-                    component.unit = nameLength == 2 ? IJSVGUnitLengthTypeForCString(name)
-                        : IJSVGUnitLengthTypeNumber;
-                    if(nameLength == 3 || nameLength == 4) {
-                        if(IJSVGCharBufferCaseInsensitiveCompare(name, "deg")) {
-                            component.angleUnit = IJSVGCSSAngleUnitDegrees;
-                        } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "rad")) {
-                            component.angleUnit = IJSVGCSSAngleUnitRadians;
-                        } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "grad")) {
-                            component.angleUnit = IJSVGCSSAngleUnitGradians;
-                        } else if(IJSVGCharBufferCaseInsensitiveCompare(name, "turn")) {
-                            component.angleUnit = IJSVGCSSAngleUnitTurns;
-                        }
-                    }
-                } else if(cursor->index < cursor->length && bytes[cursor->index] == '%') {
-                    cursor->index++;
-                    component.kind = IJSVGCSSComponentPercentage;
-                    component.unit = IJSVGUnitLengthTypePercentage;
-                }
-            } else {
-                char name[32];
-                if(IJSVGCSSParserConsumeName(cursor, name)) {
-                    NSUInteger nameEnd = cursor->index;
-                    if(cursor->options & IJSVGCSSParserOptionSVG) {
-                        while(cursor->index < cursor->length &&
-                              IJSVGStyleSheetCharIsWhitespace(bytes[cursor->index])) {
-                            cursor->index++;
-                        }
-                        if(cursor->index == cursor->length || bytes[cursor->index] != '(') {
-                            cursor->index = nameEnd;
-                        }
-                    }
-                    if(cursor->index < cursor->length && bytes[cursor->index] == '(') {
-                        cursor->index++;
-                        component.kind = IJSVGCSSComponentFunction;
-                        component.function = IJSVGCSSFunctionForName(name);
-                        childClosing = ')';
-                        component.argumentOffset = (uint32_t)cursor->index;
-                    } else {
-                        component.kind = IJSVGCSSComponentIdentifier;
-                        component.numericKeyword = IJSVGCSSNumericKeywordForName(name);
-                    }
-                } else {
-                    component.kind = IJSVGCSSComponentDelimiter;
-                    component.symbol = (IJSVGCSSSymbol)bytes[cursor->index++];
-                }
-            }
+        if(!IJSVGCSSParserConsumeComponent(cursor, &component, &childClosing)) {
+            return NO;
         }
         NSUInteger index;
         if(!IJSVGCSSParserAppend(cursor, component, &index)) {
@@ -398,26 +442,28 @@ static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing,
     return closing == 0;
 }
 
-BOOL IJSVGCSSComponentsCreate(const char* bytes,
+BOOL IJSVGCSSComponentsCreate(const char* bytes, NSUInteger length,
                               IJSVGCSSComponents* components)
 {
-    return IJSVGCSSComponentsCreateWithOptions(bytes, IJSVGCSSParserOptionNone, components);
+    return IJSVGCSSComponentsCreateWithOptions(bytes, length, IJSVGCSSParserOptionNone,
+                                               components);
 }
 
-BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes,
+BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length,
                                          IJSVGCSSParserOptions options,
                                          IJSVGCSSComponents* components)
 {
-    *components = (IJSVGCSSComponents){ 0 };
-    if(bytes == NULL) {
-        return NO;
-    }
-    NSUInteger length = strlen(bytes);
-    if(length > IJSVGCSSParserMaximumBytes) {
+    components->values = NULL;
+    components->count = 0;
+    components->bytes = NULL;
+    if(bytes == NULL || length > IJSVGCSSParserMaximumBytes || strlen(bytes) != length) {
         return NO;
     }
     components->bytes = bytes;
-    IJSVGCSSParserCursor cursor = { bytes, length, 0, 0, components, options };
+    components->values = components->inlineValues;
+    IJSVGCSSParserCursor cursor = {
+      bytes, length, 0, IJSVGCSSParserInlineCapacity, components, options
+    };
     return IJSVGCSSParseComponents(&cursor, 0, 0);
 }
 
@@ -430,6 +476,10 @@ char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components,
 
 void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components)
 {
-    free(components->values);
-    *components = (IJSVGCSSComponents){ 0 };
+    if(components->values != components->inlineValues) {
+        free(components->values);
+    }
+    components->values = NULL;
+    components->count = 0;
+    components->bytes = NULL;
 }

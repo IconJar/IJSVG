@@ -12,6 +12,7 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGCSSMathExpression.h>
 #import <float.h>
+#import <IJSVG/IJSVGParsing.h>
 
 static BOOL IJSVGParseScalarUnit(const char* bytes, CGFloat* value,
                                  IJSVGUnitLengthType* type)
@@ -371,8 +372,10 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
 + (IJSVGUnitLength*)unitWithString:(NSString*)string
 {
     // Never let the legacy float scanner extract a number from an unsupported function.
-    const char* bytes = string.UTF8String;
-    if(bytes != NULL && strchr(bytes, '(') != NULL) {
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    const char* bytes = source.bytes;
+    if(bytes == NULL || strlen(bytes) != source.length ||
+       strchr(bytes, '(') != NULL) {
         return nil;
     }
     IJSVGParsedUnitLength parsed = { 0 };
@@ -513,10 +516,10 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
 + (IJSVGUnitLength*)unitWithCalculationString:(NSString*)string
                               allowNegative:(BOOL)allowNegative
 {
-    const char* bytes = string.UTF8String;
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
     IJSVGCSSComponents components;
     IJSVGUnitLength* result = nil;
-    if(IJSVGCSSComponentsCreate(bytes, &components) &&
+    if(IJSVGCSSComponentsCreate(source.bytes, source.length, &components) &&
        components.count != 0 && components.values[0].next == components.count) {
         result = [self unitWithCalculationComponents:&components
                                              atIndex:0

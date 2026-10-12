@@ -445,9 +445,10 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components,
 
 + (NSString* _Nullable)defURL:(NSString*)string
 {
-    const char* bytes = string.UTF8String;
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
     IJSVGCSSComponents components;
-    BOOL valid = IJSVGCSSComponentsCreate(bytes, &components);
+    BOOL valid = IJSVGCSSComponentsCreate(source.bytes, source.length,
+                                          &components);
     NSString* identifier = valid && components.count != 0
         ? IJSVGURLIdentifier(&components, components.values, NO) : nil;
     IJSVGCSSComponentsRelease(&components);
@@ -456,9 +457,10 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components,
 
 + (NSArray<NSString*>*)defURLs:(NSString*)string
 {
-    const char* bytes = string.UTF8String;
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
     IJSVGCSSComponents components;
-    BOOL valid = IJSVGCSSComponentsCreate(bytes, &components);
+    BOOL valid = IJSVGCSSComponentsCreate(source.bytes, source.length,
+                                          &components);
     NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] init];
     for(NSUInteger index = 0; valid && index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;

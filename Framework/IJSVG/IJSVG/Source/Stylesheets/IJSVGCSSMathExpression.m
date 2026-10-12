@@ -47,6 +47,7 @@ typedef struct {
     IJSVGCalculationNode* nodes;
     uint32_t count;
     uint32_t capacity;
+    BOOL validatesOnly;
 } IJSVGCalculationParser;
 
 static CGFloat IJSVGCalculationMinimum(CGFloat left, CGFloat right)
@@ -134,7 +135,8 @@ static CGFloat IJSVGCalculationEvaluate(const IJSVGCalculationNode* nodes, uint3
     return value;
 }
 
-static void IJSVGCalculationUpdate(IJSVGCalculationNode* nodes, uint32_t index)
+static void IJSVGCalculationUpdate(IJSVGCalculationNode* nodes, uint32_t index,
+                                   BOOL evaluate)
 {
     IJSVGCalculationNode* node = nodes + index;
     node->constant = NO;
@@ -154,7 +156,7 @@ static void IJSVGCalculationUpdate(IJSVGCalculationNode* nodes, uint32_t index)
             node->dependencies |= nodes[argument].dependencies;
         }
     }
-    if((node->dependencies & (IJSVGCalculationPercentage | IJSVGCalculationFont)) == 0) {
+    if(evaluate && (node->dependencies & (IJSVGCalculationPercentage | IJSVGCalculationFont)) == 0) {
         node->constantValue = IJSVGCalculationEvaluate(nodes, index, (IJSVGCSSCalculationContext) {
           0, 0, 0
         });
@@ -171,7 +173,7 @@ static uint32_t IJSVGCalculationAppend(IJSVGCalculationParser* parser,
     uint32_t index = parser->count++;
     node.next = IJSVGCalculationInvalid;
     parser->nodes[index] = node;
-    IJSVGCalculationUpdate(parser->nodes, index);
+    IJSVGCalculationUpdate(parser->nodes, index, !parser->validatesOnly);
     return index;
 }
 
@@ -211,6 +213,85 @@ static uint32_t IJSVGCalculationMake(IJSVGCalculationParser* parser,
 static uint32_t IJSVGCalculationSum(IJSVGCalculationParser* parser, NSUInteger* index,
                                     NSUInteger end);
 
+static uint32_t IJSVGCalculationFunctionValue(IJSVGCalculationParser* parser,
+                                              const IJSVGCSSComponent* token,
+                                              NSUInteger child)
+{
+    if(!IJSVGCSSFunctionIsCalculation(token->function)) {
+        return IJSVGCalculationInvalid;
+    }
+    uint32_t first = IJSVGCalculationInvalid, last = IJSVGCalculationInvalid;
+    NSUInteger count = 0;
+    do {
+        uint32_t value = IJSVGCalculationSum(parser, &child, token->next);
+        if(value == IJSVGCalculationInvalid) {
+            return value;
+        }
+        if(first == IJSVGCalculationInvalid) {
+            first = value;
+        } else {
+            parser->nodes[last].next = value;
+        }
+        last = value;
+        count++;
+        if(child == token->next) {
+            break;
+        }
+        const IJSVGCSSComponent* comma = parser->tokens + child;
+        if(comma->kind != IJSVGCSSComponentDelimiter || comma->symbol != IJSVGCSSSymbolComma) {
+            return IJSVGCalculationInvalid;
+        }
+        child = comma->next;
+    } while(child <= token->next);
+    switch(token->function) {
+        case IJSVGCSSFunctionCalc:
+            return count == 1 ? first : IJSVGCalculationInvalid;
+        case IJSVGCSSFunctionMin:
+            return IJSVGCalculationMake(parser, IJSVGCalculationMin, first);
+        case IJSVGCSSFunctionMax:
+            return IJSVGCalculationMake(parser, IJSVGCalculationMax, first);
+        case IJSVGCSSFunctionClamp:
+            return count == 3 ? IJSVGCalculationMake(parser, IJSVGCalculationClamp,
+                                                     first) : IJSVGCalculationInvalid;
+        default: {
+            return IJSVGCalculationInvalid;
+        }
+    }
+}
+
+static uint32_t IJSVGCalculationKeywordValue(IJSVGCalculationParser* parser,
+                                             IJSVGCSSNumericKeyword keyword)
+{
+    CGFloat value;
+    switch(keyword) {
+        case IJSVGCSSNumericKeywordPi: {
+            value = M_PI;
+            break;
+        }
+        case IJSVGCSSNumericKeywordE: {
+            value = M_E;
+            break;
+        }
+        case IJSVGCSSNumericKeywordInfinity: {
+            value = INFINITY;
+            break;
+        }
+        case IJSVGCSSNumericKeywordNegativeInfinity: {
+            value = -INFINITY;
+            break;
+        }
+        case IJSVGCSSNumericKeywordNaN: {
+            value = NAN;
+            break;
+        }
+        default: {
+            return IJSVGCalculationInvalid;
+        }
+    }
+    return IJSVGCalculationLiteralValue(parser, value,
+                                        IJSVGUnitLengthTypeNumber);
+}
+
 static uint32_t IJSVGCalculationValue(IJSVGCalculationParser* parser,
                                       NSUInteger* index, NSUInteger end)
 {
@@ -222,46 +303,7 @@ static uint32_t IJSVGCalculationValue(IJSVGCalculationParser* parser,
     *index = token->next;
     switch(token->kind) {
         case IJSVGCSSComponentFunction: {
-            if(!IJSVGCSSFunctionIsCalculation(token->function)) {
-                return IJSVGCalculationInvalid;
-            }
-            uint32_t first = IJSVGCalculationInvalid, last = IJSVGCalculationInvalid;
-            NSUInteger count = 0;
-            do {
-                uint32_t value = IJSVGCalculationSum(parser, &child, token->next);
-                if(value == IJSVGCalculationInvalid) {
-                    return value;
-                }
-                if(first == IJSVGCalculationInvalid) {
-                    first = value;
-                } else {
-                    parser->nodes[last].next = value;
-                }
-                last = value;
-                count++;
-                if(child == token->next) {
-                    break;
-                }
-                const IJSVGCSSComponent* comma = parser->tokens + child;
-                if(comma->kind != IJSVGCSSComponentDelimiter || comma->symbol != IJSVGCSSSymbolComma) {
-                    return IJSVGCalculationInvalid;
-                }
-                child = comma->next;
-            } while(child <= token->next);
-            switch(token->function) {
-                case IJSVGCSSFunctionCalc:
-                    return count == 1 ? first : IJSVGCalculationInvalid;
-                case IJSVGCSSFunctionMin:
-                    return IJSVGCalculationMake(parser, IJSVGCalculationMin, first);
-                case IJSVGCSSFunctionMax:
-                    return IJSVGCalculationMake(parser, IJSVGCalculationMax, first);
-                case IJSVGCSSFunctionClamp:
-                    return count == 3 ? IJSVGCalculationMake(parser, IJSVGCalculationClamp, first) :
-                        IJSVGCalculationInvalid;
-                default: {
-                    return IJSVGCalculationInvalid;
-                }
-            }
+            return IJSVGCalculationFunctionValue(parser, token, child);
         }
         case IJSVGCSSComponentBlock: {
             if(token->symbol != IJSVGCSSSymbolParenthesis) {
@@ -288,34 +330,7 @@ static uint32_t IJSVGCalculationValue(IJSVGCalculationParser* parser,
             return IJSVGCalculationLiteralValue(parser, number, unit);
         }
         case IJSVGCSSComponentIdentifier: {
-            CGFloat value;
-            switch(token->numericKeyword) {
-                case IJSVGCSSNumericKeywordPi: {
-                    value = M_PI;
-                    break;
-                }
-                case IJSVGCSSNumericKeywordE: {
-                    value = M_E;
-                    break;
-                }
-                case IJSVGCSSNumericKeywordInfinity: {
-                    value = INFINITY;
-                    break;
-                }
-                case IJSVGCSSNumericKeywordNegativeInfinity: {
-                    value = -INFINITY;
-                    break;
-                }
-                case IJSVGCSSNumericKeywordNaN: {
-                    value = NAN;
-                    break;
-                }
-                default: {
-                    return IJSVGCalculationInvalid;
-                }
-            }
-            return IJSVGCalculationLiteralValue(parser, value,
-                                                IJSVGUnitLengthTypeNumber);
+            return IJSVGCalculationKeywordValue(parser, token->numericKeyword);
         }
         default: {
             return IJSVGCalculationInvalid;
@@ -453,6 +468,39 @@ static void IJSVGCalculationSerialize(const IJSVGCalculationNode* nodes,
     }
 }
 
+static uint32_t IJSVGCalculationParseRoot(IJSVGCalculationParser* parser,
+                                          NSUInteger index, NSUInteger end)
+{
+    uint32_t root = IJSVGCalculationValue(parser, &index, end);
+    if(root == IJSVGCalculationInvalid || index != end ||
+       (parser->nodes[root].exponent != 0 && parser->nodes[root].exponent != 1)) {
+        return IJSVGCalculationInvalid;
+    }
+    return root;
+}
+
+BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components,
+                                   NSUInteger index)
+{
+    if(index >= components->count || components->values[index].kind != IJSVGCSSComponentFunction) {
+        return NO;
+    }
+    NSUInteger end = components->values[index].next;
+    uint32_t capacity = (uint32_t)(end - index);
+    IJSVGCalculationNode inlineNodes[IJSVGCSSParserInlineCapacity];
+    IJSVGCalculationNode* nodes = capacity <= IJSVGCSSParserInlineCapacity
+        ? inlineNodes : malloc(capacity * sizeof(*nodes));
+    if(nodes == NULL) {
+        return NO;
+    }
+    IJSVGCalculationParser parser = { components->values, nodes, 0, capacity, YES };
+    BOOL valid = IJSVGCalculationParseRoot(&parser, index, end) != IJSVGCalculationInvalid;
+    if(nodes != inlineNodes) {
+        free(nodes);
+    }
+    return valid;
+}
+
 @implementation IJSVGCSSMathExpression {
     IJSVGCalculationNode* _nodes;
     uint32_t _count;
@@ -471,10 +519,11 @@ static void IJSVGCalculationSerialize(const IJSVGCalculationNode* nodes,
     if(nodes == NULL) {
         return nil;
     }
-    IJSVGCalculationParser parser = { components->values, nodes, 0, capacity };
-    uint32_t root = IJSVGCalculationValue(&parser, &index, end);
-    if(root == IJSVGCalculationInvalid || index != end ||
-       (nodes[root].exponent != 0 && nodes[root].exponent != 1)) {
+    IJSVGCalculationParser parser = {
+      components->values, nodes, 0, capacity, NO
+    };
+    uint32_t root = IJSVGCalculationParseRoot(&parser, index, end);
+    if(root == IJSVGCalculationInvalid) {
         free(nodes);
         return nil;
     }
@@ -543,7 +592,7 @@ static void IJSVGCalculationSerialize(const IJSVGCalculationNode* nodes,
             node->scalar *= node->unit == IJSVGUnitLengthTypeEM ? fontSize : xHeight;
             node->unit = IJSVGUnitLengthTypePX;
         }
-        IJSVGCalculationUpdate(result->_nodes, index);
+        IJSVGCalculationUpdate(result->_nodes, index, YES);
     }
     return result;
 }
@@ -557,8 +606,9 @@ static void IJSVGCalculationSerialize(const IJSVGCalculationNode* nodes,
     if(self.lengthExponent == 0) {
         // Only the final SVG number is a length in user units. Intermediate numbers
         // remain dimensionless multipliers.
-        IJSVGCalculationParser parser = { NULL, result->_nodes, _count, _count + 2 };
-        uint32_t multiplier = IJSVGCalculationLiteralValue(&parser, scale, IJSVGUnitLengthTypeNumber);
+        IJSVGCalculationParser parser = { NULL, result->_nodes, _count, _count + 2, NO };
+        uint32_t multiplier = IJSVGCalculationLiteralValue(&parser, scale,
+                                                           IJSVGUnitLengthTypeNumber);
         result->_nodes[_root].next = multiplier;
         result->_root = IJSVGCalculationMake(&parser, IJSVGCalculationMultiply, _root);
         result->_count = parser.count;
@@ -569,7 +619,7 @@ static void IJSVGCalculationSerialize(const IJSVGCalculationNode* nodes,
                node->unit != IJSVGUnitLengthTypePercentage) {
                 node->scalar *= scale;
             }
-            IJSVGCalculationUpdate(result->_nodes, index);
+            IJSVGCalculationUpdate(result->_nodes, index, YES);
         }
     }
     return result;

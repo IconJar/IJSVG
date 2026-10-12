@@ -29,6 +29,8 @@ typedef struct {
 }
 
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
++ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
+                           removeComments:(BOOL)removeComments;
 
 - (void)setPropertyValue:(id)value
              forProperty:(NSString*)key;

@@ -248,16 +248,17 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     NSMutableArray<IJSVGTransform*>* transforms = nil;
     transforms = [[NSMutableArray alloc] init];
     
-    const char* bytes = string.UTF8String;
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
     IJSVGCSSComponents components;
-    IJSVGCSSComponentsCreateWithOptions(bytes, IJSVGCSSParserOptionSVG, &components);
+    IJSVGCSSComponentsCreateWithOptions(source.bytes, source.length,
+                                        IJSVGCSSParserOptionSVG, &components);
     for(NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
         if(component->kind != IJSVGCSSComponentFunction || component->next <= index) {
             break;
         }
         IJSVGTransformCommand commandType = IJSVGTransformCommandForFunction(component->function);
-        const char* arguments = bytes + component->argumentOffset;
+        const char* arguments = source.bytes + component->argumentOffset;
         CGFloat params[IJSVGTransformParameterCapacity];
         NSInteger parameterCount = IJSVGTransformParseParameters(arguments,
                                                                  arguments + component->argumentLength,

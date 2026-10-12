@@ -197,15 +197,23 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
 
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
 {
+    return [self parseStyleString:string
+                   removeComments:YES];
+}
+
++ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
+                           removeComments:(BOOL)removeComments
+{
     IJSVGStyleSheetStyle* style = [[self.class alloc] init];
-    NSString* cleanString = IJSVGStyleSheetStringByRemovingCSSComments(string);
+    NSString* cleanString = removeComments ? IJSVGStyleSheetStringByRemovingCSSComments(string) : string;
     const char* chars = cleanString.UTF8String;
     if(chars == NULL) {
         return style;
     }
 
     NSUInteger length = strlen(chars);
-    if(length == 0) {
+    if(length == 0 || (!removeComments &&
+       length != [cleanString lengthOfBytesUsingEncoding:NSUTF8StringEncoding])) {
         return style;
     }
 
@@ -214,6 +222,9 @@ static void IJSVGStyleSheetApplyDeclaration(IJSVGStyleSheetStyle* style,
     BOOL escaped = NO;
     NSUInteger depth = 0;
     for(NSUInteger index = 0; index <= length; index++) {
+        if(quote == 0 && !escaped) {
+            index += strcspn(chars + index, ";()[]{}'\"\\");
+        }
         char c = index == length ? ';' : chars[index];
         if(IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
             continue;

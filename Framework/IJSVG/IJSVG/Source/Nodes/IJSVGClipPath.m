@@ -12,6 +12,7 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGCSSParser.h>
 #import <ctype.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUtils.h>
 
 typedef NS_ENUM(NSUInteger, IJSVGClipShape) {
@@ -93,8 +94,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 
 + (instancetype)clipPathWithBasicShape:(NSString*)value
 {
-    const char* bytes = value.UTF8String;
-    if(bytes == NULL) {
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    const char* bytes = source.bytes;
+    if(bytes == NULL || strlen(bytes) != source.length) {
         return nil;
     }
     char* buffer = strdup(bytes);
@@ -112,7 +114,7 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     IJSVGClipPath* clipPath = [[self alloc] init];
     IJSVGClipReferenceBox box = IJSVGClipReferenceBoxStroke;
     IJSVGCSSComponents components;
-    BOOL valid = IJSVGCSSComponentsCreate(value, &components);
+    BOOL valid = IJSVGCSSComponentsCreate(value, strlen(value), &components);
     IJSVGCSSComponent function = { 0 };
     BOOL hasFunction = NO;
     for(NSUInteger index = 0; valid && index < components.count;) {

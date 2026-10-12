@@ -13,6 +13,7 @@
 #import <IJSVG/IJSVGPath.h>
 #import <string.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGCSSMathExpression.h>
 #import <IJSVG/IJSVGUtils.h>
 
 static BOOL IJSVGLengthListIsWhitespace(char character)
@@ -30,51 +31,62 @@ BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* 
 {
     const char* cursor = *position;
     const char* number = cursor;
-    if(*cursor == '+' || *cursor == '-') {
+    BOOL negative = *cursor == '-';
+    if(*cursor == '+' || negative) {
         cursor++;
     }
+    BOOL rejectsNegative = negative && !allowNegative;
     const char* digits = cursor;
+    double scalar = 0;
     while(IJSVGLengthListIsDigit(*cursor)) {
-        cursor++;
+        if(rejectsNegative && *cursor != '0') {
+            return NO;
+        }
+        scalar = scalar * 10.f + (*cursor++ - '0');
     }
     BOOL hasDigits = cursor != digits;
     if(*cursor == '.') {
         digits = ++cursor;
+        double scale = 10.f;
         while(IJSVGLengthListIsDigit(*cursor)) {
-            cursor++;
+            // Check the mantissa before conversion can underflow.
+            if(rejectsNegative && *cursor != '0') {
+                return NO;
+            }
+            scalar += (*cursor++ - '0') / scale;
+            scale *= 10.f;
         }
         hasDigits |= cursor != digits;
     }
     if(!hasDigits) {
         return NO;
     }
-    // Reject negative nonzero mantissas before conversion can underflow.
-    if(!allowNegative && *number == '-') {
-        for(const char* digit = number + 1; digit < cursor; digit++) {
-            if(*digit >= '1' && *digit <= '9') {
-                return NO;
-            }
-        }
-    }
 
     // The letter e starts an exponent only when digits follow. em/ex are units.
+    BOOL hasExponent = NO;
     if(*cursor == 'e' || *cursor == 'E') {
         const char* exponent = cursor + 1;
         if(*exponent == '+' || *exponent == '-') {
             exponent++;
         }
         if(IJSVGLengthListIsDigit(*exponent)) {
+            hasExponent = YES;
             cursor = exponent + 1;
             while(IJSVGLengthListIsDigit(*cursor)) {
                 cursor++;
             }
         }
     }
-    CGFloat scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(cursor - number));
-    if(!isfinite(scalar)) {
+    if(hasExponent) {
+        scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(cursor - number));
+    } else if(negative) {
+        scalar = -scalar;
+    }
+    CGFloat converted = (CGFloat)scalar;
+    if(!isfinite(converted)) {
         return NO;
     }
-    *value = scalar;
+    *value = converted;
     *position = cursor;
     return YES;
 }
@@ -88,9 +100,10 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
                                       IJSVGUnitLength** singleLength)
 {
     IJSVGCSSComponents components;
-    BOOL valid = IJSVGCSSComponentsCreate(string, &components);
+    BOOL valid = IJSVGCSSComponentsCreate(string, strlen(string), &components);
     NSUInteger count = 0;
     BOOL afterComma = NO;
+    BOOL validatesOnly = lengths == nil && singleLength == NULL;
     IJSVGUnitLength* length = nil;
     for(NSUInteger index = 0; valid && index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
@@ -109,7 +122,11 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
         }
         length = nil;
         if(component->kind == IJSVGCSSComponentFunction) {
-            length = [IJSVGUnitLength unitWithCalculationComponents:&components atIndex:index allowNegative:allowNegative];
+            if(validatesOnly) {
+                valid = IJSVGCSSMathExpressionIsValid(&components, index);
+            } else {
+                length = [IJSVGUnitLength unitWithCalculationComponents:&components atIndex:index allowNegative:allowNegative];
+            }
         } else if(component->kind == IJSVGCSSComponentNumber ||
                   component->kind == IJSVGCSSComponentDimension ||
                   component->kind == IJSVGCSSComponentPercentage) {
@@ -122,9 +139,13 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
             }
             IJSVGUnitLengthType resolved = type == IJSVGUnitLengthTypePercentage ||
                 type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ? type : IJSVGUnitLengthTypeNumber;
-            length = [IJSVGUnitLength unitWithFloat:scalar type:resolved originalType:type inherit:NO];
+            if(!validatesOnly) {
+                length = [IJSVGUnitLength unitWithFloat:scalar type:resolved originalType:type inherit:NO];
+            }
+        } else {
+            valid = NO;
         }
-        if(length == nil) {
+        if(!valid || (!validatesOnly && length == nil)) {
             valid = NO;
             break;
         }
@@ -236,6 +257,11 @@ IJSVGUnitLength* IJSVGLengthFromString(NSString* value, BOOL allowNegative)
 {
     IJSVGUnitLength* length = nil;
     return IJSVGParseUnitLengths(value, allowNegative, YES, nil, &length) ? length : nil;
+}
+
+BOOL IJSVGUnitLengthsAreValid(NSString* value, BOOL allowNegative, BOOL single)
+{
+    return IJSVGParseUnitLengths(value, allowNegative, single, nil, NULL);
 }
 
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)

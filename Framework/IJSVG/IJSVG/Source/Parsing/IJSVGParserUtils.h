@@ -11,9 +11,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-BOOL IJSVGParseLengthNumber(const char* _Nonnull * _Nonnull position, BOOL allowNegative, CGFloat* value);
+BOOL IJSVGParseLengthNumber(const char* _Nonnull * _Nonnull position,
+                            BOOL allowNegative, CGFloat* value);
 IJSVGUnitLength* _Nullable IJSVGLengthFromString(NSString* value, BOOL allowNegative);
 NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value);
+BOOL IJSVGUnitLengthsAreValid(NSString* value, BOOL allowNegative, BOOL single);
 BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute);
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute);
 IJSVGUnitLength* _Nullable IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute);

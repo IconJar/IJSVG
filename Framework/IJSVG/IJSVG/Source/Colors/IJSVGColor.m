@@ -13,6 +13,7 @@
 #import <IJSVGCSSParser.h>
 #import <IJSVGCSSMathExpression.h>
 #import <float.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGParser.h>
 
 NSString* const IJSVGColorCurrentColorName = @"currentColor";
@@ -314,7 +315,11 @@ static NSDictionary* _colorTree = nil;
 
 + (BOOL)isNoneOrTransparent:(NSString*)string
 {
-    const char* str = string.UTF8String;
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    const char* str = source.bytes;
+    if(str == NULL || strlen(str) != source.length) {
+        return NO;
+    }
     return IJSVGCharBufferCaseInsensitiveCompare(str, "none") == YES ||
         IJSVGCharBufferCaseInsensitiveCompare(str, "transparent") == YES;
 }
@@ -326,8 +331,9 @@ static NSDictionary* _colorTree = nil;
         return nil;
     }
     
-    const char* oString = string.UTF8String;
-    if(oString == NULL || oString[0] == '\0') {
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    const char* oString = source.bytes;
+    if(oString == NULL || oString[0] == '\0' || strlen(oString) != source.length) {
         return nil;
     }
     
@@ -340,7 +346,7 @@ static NSDictionary* _colorTree = nil;
 
     if(strchr(str, '(') != NULL) {
         IJSVGCSSComponents components;
-        BOOL valid = IJSVGCSSComponentsCreate(str, &components);
+        BOOL valid = IJSVGCSSComponentsCreate(str, strlen(str), &components);
         NSColor* color = nil;
         if(valid && components.count != 0 && components.values[0].kind == IJSVGCSSComponentFunction &&
            components.values[0].next == components.count) {

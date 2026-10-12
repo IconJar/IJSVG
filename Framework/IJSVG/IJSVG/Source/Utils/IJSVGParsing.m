@@ -60,7 +60,8 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
 {
     *count = 0;
     IJSVGCSSComponents components;
-    *valid = IJSVGCSSComponentsCreateWithOptions(string, IJSVGCSSParserOptionSVG, &components);
+    *valid = IJSVGCSSComponentsCreateWithOptions(string, string == NULL ? 0 : strlen(string),
+                                                 IJSVGCSSParserOptionSVG, &components);
     IJSVGParsingStringMethod** methods = NULL;
     for(NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;

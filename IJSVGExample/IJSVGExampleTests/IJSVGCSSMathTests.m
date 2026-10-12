@@ -11,6 +11,8 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <time.h>
 #import <IJSVGCSSParser.h>
+#import <IJSVGParserUtils.h>
+#import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -407,11 +409,193 @@
     }];
 }
 
+
+
+
+- (void)testDecimalParsingMatchesGeneralConversion
+{
+    NSMutableArray<NSString*>* numbers = [NSMutableArray array];
+    for(NSUInteger index = 0; index < 256; index++) {
+        [numbers addObject:[NSString stringWithFormat:@"%lu.%06lu", index * 7919,
+                              (index * 104729) % 1000000]];
+        [numbers addObject:[NSString stringWithFormat:@"-.%06lu", index * 997]];
+        [numbers addObject:[NSString stringWithFormat:@"%lu.%lue%ld", index, index * 13,
+                              (long)index - 128]];
+    }
+    NSString* zeros = [@"" stringByPaddingToLength:400 withString:@"0" startingAtIndex:0];
+    [numbers addObject:[NSString stringWithFormat:@"-0.%@1", zeros]];
+    [numbers addObject:[NSString stringWithFormat:@"0.%@1e400", zeros]];
+    [numbers addObjectsFromArray:@[@"1e309", @"1e-999", @"-0e999", @"1.", @".5", @"+.25"]];
+    for(NSString* number in numbers) {
+        CGFloat expected = IJSVGParseFloatWithLength(number.UTF8String, strlen(number.UTF8String));
+        for(NSString* suffix in @[@"px", @"em", @"ex", @"%"]) {
+            NSString* source = [number stringByAppendingString:suffix];
+            const char* bytes = source.UTF8String;
+            const char* end = bytes;
+            CGFloat value = 123;
+            BOOL valid = IJSVGParseLengthNumber(&end, YES, &value);
+            XCTAssertEqual(valid, isfinite(expected), @"%@", source);
+            if(valid) {
+                XCTAssertEqual(value, expected, @"%@", source);
+                XCTAssertEqual(!!signbit(value), !!signbit(expected), @"%@", source);
+                XCTAssertEqual(end - bytes, strlen(number.UTF8String));
+            } else {
+                XCTAssertEqual(end, bytes);
+                XCTAssertEqual(value, 123);
+            }
+        }
+    }
+}
+
+- (void)testValidationMatchesConstructedLengths
+{
+    NSArray<NSString*>* sources = @[
+        @"calc(1px + 2px)", @"calc(2px - 5px)", @"calc(1 / 0)",
+        @"min(NaN * 1px, 10px)", @"clamp(1px, 20%, 30px)",
+        @"calc(2px * 3px / 1px)", @"calc(2px * 3px)", @"calc(1px + 1)",
+        @"calc(1px + 2px) 3px", @"1px, calc(2px + 1em)", @"1px,",
+        @"1px/**/2px", @"-1px", @"-1e-999px", @"calc(-1px)",
+        @"1px/**/ 2px", @"calc()", @"calc(1px", @"url(#paint)",
+        @"calc(1px) unknown", @"calc(1px),,2px", @""
+    ];
+    NSMutableArray<NSString*>* expanded = [sources mutableCopy];
+    NSString* terms = [@"" stringByPaddingToLength:100 * 6 withString:@" + 1px" startingAtIndex:0];
+    [expanded addObject:[NSString stringWithFormat:@"calc(1px%@)", terms]];
+    [expanded addObject:[NSString stringWithFormat:@"calc(1px%@ + 1)", terms]];
+    for(NSString* source in expanded) {
+        XCTAssertEqual(IJSVGUnitLengthsAreValid(source, NO, NO),
+                       IJSVGUnitLengthsFromString(source) != nil, @"%@", source);
+        for(NSUInteger negative = 0; negative < 2; negative++) {
+            XCTAssertEqual(IJSVGUnitLengthsAreValid(source, negative != 0, YES),
+                           IJSVGLengthFromString(source, negative != 0) != nil, @"%@", source);
+        }
+    }
+}
+
+- (void)testCommentBufferPreservesUnicodeAndEscapes
+{
+    NSArray<NSArray<NSString*>*>* pairs = @[
+        @[@"/*全部*/", @""],
+        @[@"a/*一*/b/*二*/c", @"abc"],
+        @[@"é/*一*/😀", @"é😀"],
+        @[@"calc(1px/*一*/ + 2px)/*二*/", @"calc(1px/**/ + 2px)"],
+        @[@"calc(min(1px, 2px)/*一*/)/*二*/", @"calc(min(1px, 2px)/**/)"],
+        @[@"calc(1px/*未完成", @"calc(1px/*"],
+        @[@"é/*未完成", @"é"],
+        @[@"calc('é/*literal*/😀' + 1px)/*remove*/", @"calc('é/*literal*/😀' + 1px)"],
+        @[@"calc(foo\\)/*keep*/ + 1px)/*remove*/", @"calc(foo\\)/**/ + 1px)"],
+        @[@"calc(foo\\/*literal*/ + 1px)/*remove*/", @"calc(foo\\/*literal*/ + 1px)"]
+    ];
+    for(NSArray<NSString*>* pair in pairs) {
+        XCTAssertEqualObjects(IJSVGStyleSheetStringByRemovingCSSComments(pair[0]), pair[1]);
+    }
+}
+
+- (void)testTrimmedDeclarationsOwnMutableInput
+{
+    NSMutableString* source = [NSMutableString stringWithString:@"calc(1px + 2px)"];
+    BOOL important = YES;
+    NSString* value = IJSVGStyleSheetDeclarationValue(source, &important);
+    [source setString:@"changed"];
+    XCTAssertEqualObjects(value, @"calc(1px + 2px)");
+    XCTAssertFalse(important);
+    XCTAssertNil(IJSVGStyleSheetDeclarationValue(@"", &important));
+    XCTAssertNil(IJSVGStyleSheetDeclarationValue(@"   ", &important));
+    XCTAssertEqualObjects(IJSVGStyleSheetDeclarationValue(@"  calc(1px + 2px) !IMPORTANT  ", &important),
+                          @"calc(1px + 2px)");
+    XCTAssertTrue(important);
+    XCTAssertEqualObjects(IJSVGStyleSheetDeclarationValue(@"url('!important')", &important),
+                          @"url('!important')");
+    XCTAssertFalse(important);
+}
+
+- (void)testFunctionNamesUseExactASCIIMatches
+{
+    const char* names[] = { "calc", "min", "max", "clamp", "url", "rgb", "rgba",
+        "hsl", "hsla", "oklch", "matrix", "translate", "translatex", "translatey",
+        "scale", "rotate", "skewx", "skewy", "circle", "ellipse" };
+    for(NSUInteger index = 0; index < sizeof(names) / sizeof(*names); index++) {
+        NSString* name = [NSString stringWithUTF8String:names[index]];
+        IJSVGCSSFunction expected = (IJSVGCSSFunction)(index + IJSVGCSSFunctionCalc);
+        XCTAssertEqual(IJSVGCSSFunctionForName(name.UTF8String), expected);
+        XCTAssertEqual(IJSVGCSSFunctionForName(name.uppercaseString.UTF8String), expected);
+        XCTAssertEqual(IJSVGCSSFunctionForName([name stringByAppendingString:@"extra"].UTF8String),
+                       IJSVGCSSFunctionUnknown);
+        XCTAssertEqual(IJSVGCSSFunctionForName([name substringToIndex:name.length - 1].UTF8String),
+                       [name isEqualToString:@"rgba"] ? IJSVGCSSFunctionRGB :
+                           ([name isEqualToString:@"hsla"] ? IJSVGCSSFunctionHSL :
+                               ([name hasPrefix:@"translate"] && name.length == 10 ?
+                                   IJSVGCSSFunctionTranslate : IJSVGCSSFunctionUnknown)));
+    }
+    XCTAssertEqual(IJSVGCSSFunctionForName(NULL), IJSVGCSSFunctionUnknown);
+    XCTAssertEqual(IJSVGCSSFunctionForName(""), IJSVGCSSFunctionUnknown);
+    XCTAssertEqual(IJSVGCSSFunctionForName("cälc"), IJSVGCSSFunctionUnknown);
+}
+
+- (void)testComponentStorageGrowthAndFailure
+{
+    for(NSUInteger count = 31; count <= 129; count++) {
+        NSMutableString* source = [NSMutableString stringWithString:@"calc("];
+        for(NSUInteger index = 1; index < count; index++) {
+            [source appendString:@"1 "];
+        }
+        [source appendString:@")"];
+        IJSVGCSSComponents components;
+        XCTAssertTrue(IJSVGCSSComponentsCreate(source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &components));
+        XCTAssertEqual(components.count, count);
+        XCTAssertEqual(components.values[0].next, count);
+        for(NSUInteger index = 1; index < components.count; index++) {
+            XCTAssertEqual(components.values[index].number, 1);
+            XCTAssertEqual(components.values[index].next, index + 1);
+        }
+        IJSVGCSSComponentsRelease(&components);
+        [source deleteCharactersInRange:NSMakeRange(source.length - 1, 1)];
+        XCTAssertFalse(IJSVGCSSComponentsCreate(source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &components));
+        IJSVGCSSComponentsRelease(&components);
+        XCTAssertFalse(IJSVGCSSComponentsCreate(NULL, 0, &components));
+        IJSVGCSSComponentsRelease(&components);
+        XCTAssertTrue(IJSVGCSSComponentsCreate("", 0, &components));
+        XCTAssertEqual(components.count, 0);
+        IJSVGCSSComponentsRelease(&components);
+    }
+}
+
+- (void)testIntegerParsingMatchesGeneralConversion
+{
+    NSArray<NSString*>* numbers = @[
+        @"0", @"-0", @"+0", @"00012", @"-00012", @"123456789",
+        @"9007199254740991", @"9007199254740993", @"999999999999999999999999",
+        @"12.25", @"-0.0", @"1e2", @"-1e-320"
+    ];
+    for(NSString* number in numbers) {
+        for(NSString* suffix in @[@"", @"px", @"em", @"ex", @"%", @","]) {
+            NSString* source = [number stringByAppendingString:suffix];
+            const char* bytes = source.UTF8String;
+            const char* end = bytes;
+            CGFloat value = 0;
+            CGFloat expected = IJSVGParseFloatWithLength(number.UTF8String, strlen(number.UTF8String));
+            XCTAssertTrue(IJSVGParseLengthNumber(&end, YES, &value), @"%@", source);
+            XCTAssertEqual(value, expected, @"%@", source);
+            XCTAssertEqual(!!signbit(value), !!signbit(expected), @"%@", source);
+            XCTAssertEqual(end - bytes, strlen(number.UTF8String));
+        }
+    }
+    for(NSString* number in @[@"-1px", @"-1e-999px", @"1e999px",
+                              [@"" stringByPaddingToLength:400 withString:@"9" startingAtIndex:0]]) {
+        const char* bytes = number.UTF8String;
+        const char* end = bytes;
+        CGFloat value = 123;
+        XCTAssertFalse(IJSVGParseLengthNumber(&end, NO, &value));
+        XCTAssertEqual(end, bytes);
+        XCTAssertEqual(value, 123);
+    }
+}
+
 - (void)testSharedFunctionComponentsAndCompatibilityAdapter
 {
     const char* source = "rgba(calc(1 + max(2, 3)), 0, 0, .5) url('#paint(with spaces)')";
     IJSVGCSSComponents components;
-    XCTAssertTrue(IJSVGCSSComponentsCreate(source, &components));
+    XCTAssertTrue(IJSVGCSSComponentsCreate(source, strlen(source), &components));
     XCTAssertGreaterThan(components.count, 0);
     if(components.count == 0) {
         IJSVGCSSComponentsRelease(&components);
@@ -439,13 +623,66 @@
     IJSVGParsingStringMethodsRelease(methods, count);
 }
 
+- (void)testStringBytesPreserveEncodedLength
+{
+    IJSVGStringBytes missing = IJSVGStringGetBytes(nil);
+    XCTAssertEqual(missing.bytes, NULL);
+    XCTAssertEqual(missing.length, 0);
+    for(NSString* string in @[@"", @"calc(1px)", @"é😀", @"url(#first)\0url(#second)"]) {
+        IJSVGStringBytes source = IJSVGStringGetBytes(string);
+        NSData* expected = [string dataUsingEncoding:NSUTF8StringEncoding];
+        XCTAssertNotEqual(source.bytes, NULL);
+        XCTAssertEqual(source.length, expected.length);
+        XCTAssertEqual(memcmp(source.bytes, expected.bytes, source.length), 0);
+        XCTAssertEqual(source.bytes[source.length], '\0');
+    }
+}
+
+- (void)testExplicitByteLengthsRejectEmbeddedNUL
+{
+    for(NSString* source in @[@"calc(1px + 2px)\0calc(3px)", @"url('#é')\0url(#second)",
+                              @"\0calc(1px)", @"calc(1px)\0"]) {
+        IJSVGCSSComponents components;
+        XCTAssertFalse(IJSVGCSSComponentsCreate(source.UTF8String,
+            [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &components));
+        XCTAssertEqual(components.count, 0);
+        IJSVGCSSComponentsRelease(&components);
+    }
+    const char* source = "calc(1px)";
+    for(NSUInteger length = strlen(source) - 1; length <= strlen(source) + 1; length++) {
+        IJSVGCSSComponents components;
+        XCTAssertEqual(IJSVGCSSComponentsCreate(source, length, &components), length == strlen(source));
+        IJSVGCSSComponentsRelease(&components);
+    }
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"url('#é')"], @"é");
+    XCTAssertNil([IJSVGUnitLength unitWithCalculationString:@"calc(1px)\0junk" allowNegative:YES]);
+    XCTAssertNil([IJSVGUnitLength unitWithString:@"12px\0junk"]);
+    XCTAssertFalse(IJSVGUnitLengthsAreValid(@"12px\0junk", YES, YES));
+    XCTAssertNil([IJSVGColor colorFromString:@"rgba(1,2,3,1)\0junk"]);
+    XCTAssertNil([IJSVGColor colorFromString:@"red\0junk"]);
+    XCTAssertFalse([IJSVGColor isNoneOrTransparent:@"none\0junk"]);
+    XCTAssertEqual([IJSVGTransform transformsForString:@"translate(1 2)\0scale(2)"].count, 0);
+    XCTAssertNil([IJSVGClipPath clipPathWithBasicShape:@"circle(20%)\0junk"]);
+    NSString* declaration = @"width:calc(1px + 2px)\0;height:4px";
+    XCTAssertNil(IJSVGStyleSheetStringByRemovingCSSComments(declaration));
+    XCTAssertEqual([IJSVGStyleSheetStyle parseStyleString:declaration].properties.count, 0);
+    XCTAssertEqual([IJSVGStyleSheetStyle parseStyleString:declaration removeComments:NO].properties.count, 0);
+    IJSVGStyleSheet* sheet = [[IJSVGStyleSheet alloc] init];
+    [sheet parseStyleBlock:@"rect { width:1px }\0circle { width:2px }"];
+    XCTAssertEqual(sheet.ruleCount, 0);
+}
+
 - (void)testSharedURLParsing
 {
+    for(NSString* source in @[@"url(#first)\0url(#second)", @"url('#é')\0url(#second)"]) {
+        XCTAssertNil([IJSVGUtils defURL:source]);
+        XCTAssertEqual([IJSVGUtils defURLs:source].count, 0);
+    }
     XCTAssertEqualObjects([IJSVGUtils defURL:@"u\\72l('#paint(with spaces)')"], @"paint(with spaces)");
     XCTAssertEqualObjects([IJSVGUtils defURL:@"URL(#paint/**/literal)"], @"paint/**/literal");
     const char* escaped = "url(#paint\\20 name)";
     IJSVGCSSComponents components;
-    XCTAssertTrue(IJSVGCSSComponentsCreate(escaped, &components));
+    XCTAssertTrue(IJSVGCSSComponentsCreate(escaped, strlen(escaped), &components));
     IJSVGCSSComponentsRelease(&components);
     XCTAssertEqualObjects([IJSVGUtils defURLs:@"url('#first') /* gap */ URL(#second)"],
                           (@[@"first", @"second"]));

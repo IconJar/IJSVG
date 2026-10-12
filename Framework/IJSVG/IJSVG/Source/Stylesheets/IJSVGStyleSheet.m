@@ -134,6 +134,12 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     NSString* selector = nil;
 
     for(NSUInteger i = 0; i < length; i++) {
+        if(quote == 0 && !escaped) {
+            i += strcspn(chars + i, "{}()'\"\\");
+            if(i == length) {
+                break;
+            }
+        }
         char c = chars[i];
 
         if(IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
@@ -171,8 +177,10 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
                 NSArray* selectors = [self selectorsWithSelectorString:selector];
                 if(rule.length != 0 && selectors.count != 0) {
-                    [self addStyleRule:rule
-                         withSelectors:selectors];
+                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:rule
+                                                                          removeComments:NO];
+                    [self addParsedStyle:style
+                           withSelectors:selectors];
                 }
                 marker = i + 1;
             }
@@ -184,8 +192,15 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 - (void)addStyleRule:(NSString*)rule
        withSelectors:(NSArray*)selectors
 {
+    [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule]
+          withSelectors:selectors];
+}
+
+- (void)addParsedStyle:(IJSVGStyleSheetStyle*)style
+         withSelectors:(NSArray*)selectors
+{
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
-    aRule.style = [IJSVGStyleSheetStyle parseStyleString:rule];
+    aRule.style = style;
     aRule.selectors = selectors;
     aRule.sourceIndex = _rules.count;
   

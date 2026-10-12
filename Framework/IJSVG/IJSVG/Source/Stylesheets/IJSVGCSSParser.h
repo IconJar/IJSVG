@@ -96,15 +96,23 @@ typedef struct {
     uint32_t argumentLength;
 } IJSVGCSSComponent;
 
+enum {
+    IJSVGCSSParserInlineCapacity = 32
+};
+
+// Keep common expressions in caller storage and grow only for larger trees.
+// This owns its storage and must not be copied by value.
 typedef struct IJSVGCSSComponents {
     IJSVGCSSComponent* values;
     NSUInteger count;
     const char* bytes;
+    IJSVGCSSComponent inlineValues[IJSVGCSSParserInlineCapacity];
 } IJSVGCSSComponents;
 
-// The caller releases the buffer, including on failure. The source must remain
+// The source must be NUL terminated and length must include every UTF8 byte before the terminator.
+// Embedded NUL bytes are rejected. The caller releases the buffer, including on failure. The source must remain
 // alive while accessing component source ranges. Limits: 64 nested blocks, 4096 components, 64 KiB of UTF8.
-BOOL IJSVGCSSComponentsCreate(const char* bytes,
+BOOL IJSVGCSSComponentsCreate(const char* bytes, NSUInteger length,
                               IJSVGCSSComponents* components);
 void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components);
 
@@ -113,7 +121,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) {
     IJSVGCSSParserOptionSVG = 1 << 0
 };
 
-BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes,
+BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length,
                                          IJSVGCSSParserOptions options,
                                          IJSVGCSSComponents* components);
 BOOL IJSVGCSSFunctionIsCalculation(IJSVGCSSFunction function);
