@@ -9,7 +9,14 @@
 #import "IJSVGXML.h"
 #import <IJSVG/IJSVGStop.h>
 
-@interface IJSVGGradientStopData : NSObject
-- (instancetype)initWithStop:(IJSVGStop*)stop element:(IJSVGXMLNode*)element;
-- (IJSVGStop*)newStop;
-@end
+typedef struct {
+    CFTypeRef offset;
+    CFTypeRef opacity;
+    CFTypeRef color;
+    BOOL hasFill;
+    BOOL isNoneOrTransparent;
+} IJSVGGradientStopData;
+
+IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element);
+void IJSVGGradientStopDataRelease(IJSVGGradientStopData* data);
+IJSVGStop* IJSVGGradientStopDataCreateStop(const IJSVGGradientStopData* data);

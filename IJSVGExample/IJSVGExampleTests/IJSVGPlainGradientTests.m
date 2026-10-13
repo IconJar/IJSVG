@@ -99,6 +99,62 @@
     }
 }
 
+- (void)testLateStyledStopDoesNotLeavePartialChildren
+{
+    for (NSString* type in @[ @"linearGradient", @"radialGradient" ]) {
+        NSString* source = [NSString stringWithFormat:@"<defs><%@ id='paint'>"
+                                                       "<stop offset='0' stop-color='red'/>"
+                                                       "<stop offset='.5' stop-color='blue'/>"
+                                                       "<stop offset='1' style='stop-color:green'/></%@></defs>"
+                                                       "<rect width='64' height='64' fill='url(#paint)'/>",
+            type, type];
+        IJSVG* svg = [self document:source];
+        IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children.firstObject).fill;
+        XCTAssertEqual(gradient.children.count, 3u);
+        XCTAssertEqual(gradient.numberOfStops, 3u);
+        XCTAssertEqualObjects(gradient.colors.lastObject, [IJSVGColor colorFromString:@"green"]);
+        for (IJSVGNode* stop in gradient.children) {
+            XCTAssertEqual(stop.parentNode, gradient);
+            XCTAssertEqual(stop.type, IJSVGNodeTypeStop);
+        }
+    }
+}
+
+- (void)testCachedStopValuesSurviveParserRelease
+{
+    IJSVGRootNode* root = nil;
+    @autoreleasepool {
+        NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+                            "<defs><linearGradient id='paint'>"
+                            "<stop offset='25%' stop-color='#ff0000' stop-opacity='.5'/>"
+                            "<stop offset='1' stop-color='#0000ff'/></linearGradient></defs>"
+                            "<rect width='16' height='64' fill='url(#paint)'/>"
+                            "<rect x='16' width='16' height='64' fill='url(#paint)'/>"
+                            "<rect x='32' width='16' height='64' fill='url(#paint)'/>"
+                            "<rect x='48' width='16' height='64' fill='url(#paint)'/></svg>";
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+        root = [parser rootNodeWithSize:CGSizeMake(64, 64)];
+    }
+    XCTAssertEqual(root.children.count, 4u);
+    IJSVGGradient* first = (IJSVGGradient*)((IJSVGPaintNode*)root.children[2]).fill;
+    IJSVGGradient* second = (IJSVGGradient*)((IJSVGPaintNode*)root.children[3]).fill;
+    IJSVGStop* firstStop = (IJSVGStop*)first.children.firstObject;
+    IJSVGStop* secondStop = (IJSVGStop*)second.children.firstObject;
+    XCTAssertEqualWithAccuracy(secondStop.offset.value, .25, .0001);
+    XCTAssertEqual(secondStop.offset.originalType, IJSVGUnitLengthTypePercentage);
+    XCTAssertEqualWithAccuracy(secondStop.fillOpacity.value, .5, .0001);
+    XCTAssertEqualWithAccuracy(((IJSVGColorNode*)secondStop.fill).color.alphaComponent, .5, .0001);
+    firstStop.offset = [firstStop.offset lengthWithValue:.75];
+    firstStop.fillOpacity = [firstStop.fillOpacity lengthWithValue:.8];
+    ((IJSVGColorNode*)firstStop.fill).color = NSColor.greenColor;
+    XCTAssertEqualWithAccuracy(secondStop.offset.value, .25, .0001);
+    XCTAssertEqualWithAccuracy(secondStop.fillOpacity.value, .5, .0001);
+    XCTAssertEqualWithAccuracy(((IJSVGColorNode*)secondStop.fill).color.alphaComponent, .5, .0001);
+    XCTAssertNotEqual(firstStop, secondStop);
+    XCTAssertNotEqual(firstStop.fill, secondStop.fill);
+    XCTAssertEqual(secondStop.parentNode, second);
+}
+
 - (void)testRepeatedReferencesKeepIndependentNodes
 {
     IJSVG* svg = [self document:[NSString stringWithFormat:@"<defs><linearGradient id='base'>%@</linearGradient>"

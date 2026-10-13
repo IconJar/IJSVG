@@ -10,41 +10,44 @@
 #import <IJSVG/IJSVGColorNode.h>
 #import <IJSVGGradientStopData.h>
 
-@implementation IJSVGGradientStopData {
-    IJSVGUnitLength* _offset;
-    IJSVGUnitLength* _opacity;
-    NSColor* _color;
-    BOOL _hasFill;
-    BOOL _isNoneOrTransparent;
-}
-
-- (instancetype)initWithStop:(IJSVGStop*)stop element:(IJSVGXMLNode*)element
+IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element)
 {
-    if ((self = [super init]) != nil) {
-        _offset = stop.offset;
-        _opacity = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStopOpacity)).length == 0 ? nil : stop.fillOpacity;
-        IJSVGColorNode* fill = (IJSVGColorNode*)stop.fill;
-        _hasFill = fill != nil;
-        _color = fill.color;
-        _isNoneOrTransparent = fill.isNoneOrTransparent;
-    }
-    return self;
+    IJSVGXMLAttribute* opacity = IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStopOpacity);
+    IJSVGColorNode* fill = (IJSVGColorNode*)stop.fill;
+    return (IJSVGGradientStopData) {
+        .offset = CFBridgingRetain(stop.offset),
+        .opacity = opacity == NULL || opacity->value.length == 0 ? NULL : CFBridgingRetain(stop.fillOpacity),
+        .color = CFBridgingRetain(fill.color),
+        .hasFill = fill != nil,
+        .isNoneOrTransparent = fill.isNoneOrTransparent
+    };
 }
 
-- (IJSVGStop*)newStop
+void IJSVGGradientStopDataRelease(IJSVGGradientStopData* data)
+{
+    if (data->offset != NULL) {
+        CFRelease(data->offset);
+    }
+    if (data->opacity != NULL) {
+        CFRelease(data->opacity);
+    }
+    if (data->color != NULL) {
+        CFRelease(data->color);
+    }
+}
+
+IJSVGStop* IJSVGGradientStopDataCreateStop(const IJSVGGradientStopData* data)
 {
     IJSVGStop* stop = [[IJSVGStop alloc] init];
     stop.name = @"stop";
-    stop.offset = _offset;
-    if (_opacity != nil) {
-        stop.fillOpacity = _opacity;
+    stop.offset = (__bridge IJSVGUnitLength*)data->offset;
+    if (data->opacity != NULL) {
+        stop.fillOpacity = (__bridge IJSVGUnitLength*)data->opacity;
     }
-    if (_hasFill) {
-        IJSVGColorNode* fill = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:_color];
-        fill.isNoneOrTransparent = _isNoneOrTransparent;
+    if (data->hasFill) {
+        IJSVGColorNode* fill = [[IJSVGColorNode alloc] initWithColor:(__bridge NSColor*)data->color];
+        fill.isNoneOrTransparent = data->isNoneOrTransparent;
         stop.fill = fill;
     }
     return stop;
 }
-
-@end

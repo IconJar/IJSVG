@@ -1615,7 +1615,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         [data applyToGradient:gradient];
         return;
     }
-    [self computeElement:element parentNode:gradient];
+    if (!cacheable || !IJSVGPopulatePlainGradientStops(gradient, element, self)) {
+        [self computeElement:element parentNode:gradient];
+    }
     [gradient parseColorStops];
     if (!cacheable || _styleSheet.ruleCount != 0) {
         return;

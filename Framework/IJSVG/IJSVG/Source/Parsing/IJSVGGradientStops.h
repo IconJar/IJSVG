@@ -9,6 +9,10 @@
 #import "IJSVGXML.h"
 #import <IJSVG/IJSVGGradient.h>
 
+@class IJSVGParser;
+
+BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* element, IJSVGParser* parser);
+
 @interface IJSVGGradientStops : NSObject
 + (BOOL)canCacheElement:(IJSVGXMLNode*)element;
 @property (nonatomic, readonly) CGFloat inheritedOpacity;

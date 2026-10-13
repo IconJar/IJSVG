@@ -9,9 +9,35 @@
 #import "IJSVGXML.h"
 #import <IJSVGGradientStopData.h>
 #import <IJSVGGradientStops.h>
+#import <IJSVGNodeParsing.h>
+
+BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* element, IJSVGParser* parser)
+{
+    // Validate every child before changing the gradient.
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        if (IJSVGXMLType(child) != IJSVGNodeTypeStop || child->childCount != 0) {
+            return NO;
+        }
+        IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(child);
+        for (NSUInteger index = 0; index < attributes.count; index++) {
+            IJSVGNodeAttribute identifier = attributes.first[index].identifier;
+            if (identifier != IJSVGNodeAttributeOffset && identifier != IJSVGNodeAttributeStopColor && identifier != IJSVGNodeAttributeStopOpacity) {
+                return NO;
+            }
+        }
+    }
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        IJSVGStop* stop = [[IJSVGStop alloc] init];
+        stop.name = @"stop";
+        [gradient addChild:stop];
+        [stop consumeXMLAttributes:IJSVGXMLAttributes(child) parser:parser];
+    }
+    return YES;
+}
 
 @implementation IJSVGGradientStops {
-    NSArray<IJSVGGradientStopData*>* _stops;
+    IJSVGGradientStopData* _stops;
+    NSUInteger _stopCount;
     NSArray<NSColor*>* _colors;
     NSData* _locations;
 }
@@ -43,24 +69,37 @@
 - (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element
 {
     if ((self = [super init]) != nil) {
-        NSMutableArray<IJSVGGradientStopData*>* stops = [[NSMutableArray alloc] init];
+        NSUInteger count = gradient.children.count;
+        if (count != 0) {
+            _stops = calloc(count, sizeof(*_stops));
+            if (_stops == NULL) {
+                return nil;
+            }
+        }
         _inheritedOpacity = gradient.fillOpacity.value;
         IJSVGXMLNode* source = IJSVGXMLFirstChild(element);
         for (IJSVGStop* stop in gradient.children) {
-            [stops addObject:[[IJSVGGradientStopData alloc] initWithStop:stop element:source]];
+            _stops[_stopCount++] = IJSVGGradientStopDataCreate(stop, source);
             source = IJSVGXMLNext(source);
         }
-        _stops = stops.copy;
         _colors = gradient.colors.copy;
         _locations = [NSData dataWithBytes:gradient.locations length:gradient.numberOfStops * sizeof(CGFloat)];
     }
     return self;
 }
 
+- (void)dealloc
+{
+    for (NSUInteger index = 0; index < _stopCount; index++) {
+        IJSVGGradientStopDataRelease(_stops + index);
+    }
+    free(_stops);
+}
+
 - (void)applyToGradient:(IJSVGGradient*)gradient
 {
-    for (IJSVGGradientStopData* data in _stops) {
-        [gradient addChild:[data newStop]];
+    for (NSUInteger index = 0; index < _stopCount; index++) {
+        [gradient addChild:IJSVGGradientStopDataCreateStop(_stops + index)];
     }
     gradient.colors = _colors;
     gradient.numberOfStops = _colors.count;
