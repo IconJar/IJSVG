@@ -1,0 +1,17 @@
+//
+//  IJSVGGradientStops.h
+//  IJSVG
+//
+//  Created by Curtis Hard on 13/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
+#import <IJSVG/IJSVGGradient.h>
+
+@interface IJSVGGradientStops : NSObject
++ (BOOL)canCacheElement:(NSXMLElement*)element;
+@property (nonatomic, readonly) CGFloat inheritedOpacity;
+
+- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(NSXMLElement*)element;
+- (void)applyToGradient:(IJSVGGradient*)gradient;
+@end

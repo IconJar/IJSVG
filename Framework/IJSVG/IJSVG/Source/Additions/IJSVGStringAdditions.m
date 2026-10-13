@@ -14,7 +14,7 @@
 - (NSArray<NSString*>*)ijsvg_componentsSeparatedByChars:(const char*)aChar
 {
     char* chars = (char*)self.UTF8String;
-    if(chars == NULL || strlen(chars) == 0) {
+    if (chars == NULL || strlen(chars) == 0) {
         return @[];
     }
     NSMutableArray<NSString*>* strings = nil;
@@ -22,9 +22,9 @@
     char* copy = strdup(chars);
     char* spt = NULL;
     char* ptr = strtok_r(copy, aChar, &spt);
-    while(ptr != NULL) {
+    while (ptr != NULL) {
         NSString* possibleString = nil;
-        if((possibleString = [NSString stringWithUTF8String:ptr]) != nil) {
+        if ((possibleString = [NSString stringWithUTF8String:ptr]) != nil) {
             [strings addObject:possibleString];
         }
         ptr = strtok_r(NULL, aChar, &spt);

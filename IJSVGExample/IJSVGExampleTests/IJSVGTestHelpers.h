@@ -7,7 +7,6 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import <XCTest/XCTest.h>
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGColorNode.h>
@@ -23,13 +22,12 @@
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <XCTest/XCTest.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-IJSVGNode* IJSVGTestNode(NSString* name, NSString* _Nullable identifier,
-                         NSArray<NSString*>* _Nullable classes);
-IJSVGGroup* IJSVGTestGroup(NSString* _Nullable identifier,
-                           NSArray<NSString*>* _Nullable classes);
+IJSVGNode* IJSVGTestNode(NSString* name, NSString* _Nullable identifier, NSArray<NSString*>* _Nullable classes);
+IJSVGGroup* IJSVGTestGroup(NSString* _Nullable identifier, NSArray<NSString*>* _Nullable classes);
 IJSVGStyleSheet* IJSVGTestStyleSheet(NSString* styleBlock);
 NSString* IJSVGTestSVG(NSString* body);
 IJSVG* IJSVGTestSVGObject(NSString* svgString);
@@ -37,10 +35,7 @@ NSXMLDocument* IJSVGTestXMLDocument(NSString* xmlString);
 NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size);
 NSColor* IJSVGTestColorFromRGBAData(NSData* data, CGSize size, CGPoint point);
 NSColor* IJSVGTestColorFromSVGAtPoint(NSString* svgString, CGPoint point);
-void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green,
-                                CGFloat blue, CGFloat alpha);
-void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString,
-                                      NSArray<NSString*>* rows,
-                                      NSDictionary<NSString*, NSColor*>* palette);
+void IJSVGAssertColorComponents(NSColor* color, CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha);
+void IJSVGAssertRenderedSVGMatchesMap(NSString* svgString, NSArray<NSString*>* rows, NSDictionary<NSString*, NSColor*>* palette);
 
 NS_ASSUME_NONNULL_END

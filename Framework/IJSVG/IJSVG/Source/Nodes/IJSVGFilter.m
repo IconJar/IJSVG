@@ -2,32 +2,26 @@
 //  IJSVGFilter.m
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
 #import <IJSVG/IJSVGFilter.h>
-#import <IJSVGFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVGFilterEffect.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGFilter
+
+- (void)applyPropertiesFromNode:(IJSVGFilter*)node
+{
+    [super applyPropertiesFromNode:node];
+    self.reference = node.reference;
+}
 
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeFilter;
-}
-
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
-    [storage addBits:[IJSVGNode allowedAttributes]];
-    [storage setBit:IJSVGNodeAttributeX];
-    [storage setBit:IJSVGNodeAttributeY];
-    [storage setBit:IJSVGNodeAttributeWidth];
-    [storage setBit:IJSVGNodeAttributeHeight];
-    [storage setBit:IJSVGNodeAttributeFilterUnits];
-    [storage setBit:IJSVGNodeAttributePrimitiveUnits];
-    return storage;
 }
 
 - (void)setDefaults
@@ -45,8 +39,8 @@
 - (NSArray<IJSVGFilterPrimitive*>*)primitives
 {
     NSMutableArray<IJSVGFilterPrimitive*>* primitives = [[NSMutableArray alloc] init];
-    for(IJSVGNode* node in self.children) {
-        if([node isKindOfClass:IJSVGFilterPrimitive.class]) {
+    for (IJSVGNode* node in self.children) {
+        if ([node isKindOfClass:IJSVGFilterPrimitive.class]) {
             [primitives addObject:(IJSVGFilterPrimitive*)node];
         }
     }
@@ -56,15 +50,15 @@
 - (NSSet<NSString*>*)inputNames
 {
     NSMutableSet<NSString*>* inputNames = [[NSMutableSet alloc] init];
-    for(IJSVGFilterPrimitive* primitive in self.primitives) {
-        if(primitive.input != nil) {
+    for (IJSVGFilterPrimitive* primitive in self.primitives) {
+        if (primitive.input != nil) {
             [inputNames addObject:primitive.input];
         }
-        if(primitive.input2 != nil) {
+        if (primitive.input2 != nil) {
             [inputNames addObject:primitive.input2];
         }
-        for(IJSVGFilterPrimitive* child in primitive.children) {
-            if(child.input != nil) {
+        for (IJSVGFilterPrimitive* child in primitive.children) {
+            if (child.input != nil) {
                 [inputNames addObject:child.input];
             }
         }
@@ -77,99 +71,68 @@
     // Recognise the complete exported inner shadow graph, not just an alpha
     // matrix. Keep its SourceGraphic and final blend at destination resolution:
     // supersampling the whole graph softens the otherwise crisp foreground.
-    if(primitives.count < 8 || (primitives.count - 2) % 6 != 0) {
+    if (primitives.count < 8 || (primitives.count - 2) % 6 != 0) {
         return NO;
     }
-    for(IJSVGFilterPrimitive* primitive in primitives) {
-        if(primitive.x != nil || primitive.y != nil || primitive.width != nil ||
-            primitive.height != nil || primitive.children.count != 0) {
+    for (IJSVGFilterPrimitive* primitive in primitives) {
+        if (primitive.x != nil || primitive.y != nil || primitive.width != nil || primitive.height != nil || primitive.children.count != 0) {
             return NO;
         }
     }
     IJSVGFilterPrimitive* flood = primitives[0];
     IJSVGFilterPrimitive* shape = primitives[1];
-    if(flood.type != IJSVGNodeTypeFilterFlood ||
-        [flood numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] != 0 ||
-        flood.result.length == 0 || shape.result.length == 0 ||
-        shape.type != IJSVGNodeTypeFilterBlend ||
-        ![shape.input isEqualToString:IJSVGStringSourceGraphic] ||
-        ![shape.input2 isEqualToString:flood.result] ||
-        shape.filterBlendMode != IJSVGBlendModeNormal) {
+    if (flood.type != IJSVGNodeTypeFilterFlood || [flood numberForParameter:IJSVGAttributeFloodOpacity defaultValue:1] != 0 || flood.result.length == 0 || shape.result.length == 0 || shape.type != IJSVGNodeTypeFilterBlend || ![shape.input isEqualToString:IJSVGStringSourceGraphic] || ![shape.input2 isEqualToString:flood.result] || shape.filterBlendMode != IJSVGBlendModeNormal) {
         return NO;
     }
 
     // Named sources take precedence over results. Reject collisions rather than
     // incorrectly identifying a different graph as an inner shadow.
-    NSSet<NSString*>* sources = [NSSet setWithArray:@[
-        IJSVGStringSourceGraphic, IJSVGStringSourceAlpha,
-        IJSVGStringBackgroundImage, IJSVGStringBackgroundAlpha,
-        IJSVGStringFillPaint, IJSVGStringStrokePaint
-    ]];
-    if([sources containsObject:flood.result] || [sources containsObject:shape.result] ||
-        [flood.result isEqualToString:shape.result]) {
+    NSSet<NSString*>* sources = [NSSet setWithArray:@[ IJSVGStringSourceGraphic, IJSVGStringSourceAlpha, IJSVGStringBackgroundImage, IJSVGStringBackgroundAlpha, IJSVGStringFillPaint, IJSVGStringStrokePaint ]];
+    if ([sources containsObject:flood.result] || [sources containsObject:shape.result] || [flood.result isEqualToString:shape.result]) {
         return NO;
     }
     NSString* previousShape = shape.result;
-    for(NSUInteger index = 2; index < primitives.count; index += 6) {
+    for (NSUInteger index = 2; index < primitives.count; index += 6) {
         IJSVGFilterPrimitive* hardAlpha = primitives[index];
         IJSVGFilterPrimitive* offset = primitives[index + 1];
         IJSVGFilterPrimitive* blur = primitives[index + 2];
         IJSVGFilterPrimitive* subtract = primitives[index + 3];
         IJSVGFilterPrimitive* color = primitives[index + 4];
         IJSVGFilterPrimitive* blend = primitives[index + 5];
-        if(hardAlpha.type != IJSVGNodeTypeFilterColorMatrix ||
-            ![hardAlpha.input isEqualToString:IJSVGStringSourceAlpha] ||
-            hardAlpha.result.length == 0 || [sources containsObject:hardAlpha.result] ||
-            [hardAlpha.result isEqualToString:previousShape] ||
-            offset.type != IJSVGNodeTypeFilterOffset ||
-            blur.type != IJSVGNodeTypeFilterGaussianBlur ||
-            subtract.type != IJSVGNodeTypeFilterComposite ||
-            color.type != IJSVGNodeTypeFilterColorMatrix ||
-            blend.type != IJSVGNodeTypeFilterBlend) {
+        if (hardAlpha.type != IJSVGNodeTypeFilterColorMatrix || ![hardAlpha.input isEqualToString:IJSVGStringSourceAlpha] || hardAlpha.result.length == 0 || [sources containsObject:hardAlpha.result] || [hardAlpha.result isEqualToString:previousShape] || offset.type != IJSVGNodeTypeFilterOffset || blur.type != IJSVGNodeTypeFilterGaussianBlur || subtract.type != IJSVGNodeTypeFilterComposite || color.type != IJSVGNodeTypeFilterColorMatrix || blend.type != IJSVGNodeTypeFilterBlend) {
             return NO;
         }
         // Only implicit chaining is recognised here. Unfamiliar named branches
         // continue through the existing supersampling fallback.
-        for(IJSVGFilterPrimitive* stage in @[offset, blur, subtract, color]) {
-            if(stage.input.length != 0 || stage.result.length != 0) {
+        for (IJSVGFilterPrimitive* stage in @[ offset, blur, subtract, color ]) {
+            if (stage.input.length != 0 || stage.result.length != 0) {
                 return NO;
             }
         }
-        if(![subtract.input2 isEqualToString:hardAlpha.result] ||
-            subtract.compositeOperator != IJSVGFilterCompositeOperatorArithmetic ||
-            [subtract numberForParameter:IJSVGAttributeK1 defaultValue:0] != 0 ||
-            [subtract numberForParameter:IJSVGAttributeK2 defaultValue:0] != -1 ||
-            [subtract numberForParameter:IJSVGAttributeK3 defaultValue:0] != 1 ||
-            [subtract numberForParameter:IJSVGAttributeK4 defaultValue:0] != 0 ||
-            blend.input.length != 0 || ![blend.input2 isEqualToString:previousShape] ||
-            blend.filterBlendMode != IJSVGBlendModeNormal ||
-            (blend.result.length != 0 && [sources containsObject:blend.result])) {
+        if (![subtract.input2 isEqualToString:hardAlpha.result] || subtract.compositeOperator != IJSVGFilterCompositeOperatorArithmetic || [subtract numberForParameter:IJSVGAttributeK1 defaultValue:0] != 0 || [subtract numberForParameter:IJSVGAttributeK2 defaultValue:0] != -1 || [subtract numberForParameter:IJSVGAttributeK3 defaultValue:0] != 1 || [subtract numberForParameter:IJSVGAttributeK4 defaultValue:0] != 0 || blend.input.length != 0 || ![blend.input2 isEqualToString:previousShape] || blend.filterBlendMode != IJSVGBlendModeNormal || (blend.result.length != 0 && [sources containsObject:blend.result])) {
             return NO;
         }
         NSArray<NSNumber*>* alphaValues = [hardAlpha numbersForParameter:IJSVGAttributeValues];
         NSArray<NSNumber*>* colorValues = [color numbersForParameter:IJSVGAttributeValues];
-        if(hardAlpha.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
-            color.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix ||
-            alphaValues.count != 20 || colorValues.count != 20) {
+        if (hardAlpha.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix || color.colorMatrixType != IJSVGFilterColorMatrixTypeMatrix || alphaValues.count != 20 || colorValues.count != 20) {
             return NO;
         }
-        for(NSUInteger component = 0; component < 20; component++) {
+        for (NSUInteger component = 0; component < 20; component++) {
             double alpha = alphaValues[component].doubleValue;
             double tint = colorValues[component].doubleValue;
-            if(!isfinite(alpha) || !isfinite(tint) ||
-                (component == 18 ? alpha <= 1 : alpha != 0)) {
+            if (!isfinite(alpha) || !isfinite(tint) || (component == 18 ? alpha <= 1 : alpha != 0)) {
                 return NO;
             }
-            if(component == 4 || component == 9 || component == 14) {
-                if(tint < 0 || tint > 1) {
+            if (component == 4 || component == 9 || component == 14) {
+                if (tint < 0 || tint > 1) {
                     return NO;
                 }
-            } else if(tint != (component == 18 ? 1 : 0)) {
+            } else if (tint != (component == 18 ? 1 : 0)) {
                 return NO;
             }
         }
         previousShape = blend.result;
-        if(index + 6 < primitives.count && previousShape.length == 0) {
+        if (index + 6 < primitives.count && previousShape.length == 0) {
             return NO;
         }
     }
@@ -184,16 +147,67 @@
 - (BOOL)requiresSupersampling
 {
     NSArray<IJSVGFilterPrimitive*>* primitives = self.primitives;
-    if([self containsOnlyInnerShadows:primitives]) {
+    if ([self containsOnlyInnerShadows:primitives]) {
         return NO;
     }
-    for(IJSVGFilterPrimitive* primitive in primitives) {
+    for (IJSVGFilterPrimitive* primitive in primitives) {
         IJSVGFilterEffect* effect = [IJSVGFilterEffect effectForType:primitive.type];
-        if([effect requiresSupersamplingForPrimitive:primitive]) {
+        if ([effect requiresSupersamplingForPrimitive:primitive]) {
             return YES;
         }
     }
     return NO;
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGFilter (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGCommonAttributes();
+    [attributes setBit:IJSVGNodeAttributeX];
+    [attributes setBit:IJSVGNodeAttributeY];
+    [attributes setBit:IJSVGNodeAttributeWidth];
+    [attributes setBit:IJSVGNodeAttributeHeight];
+    [attributes setBit:IJSVGNodeAttributeFilterUnits];
+    [attributes setBit:IJSVGNodeAttributePrimitiveUnits];
+    [attributes setBit:IJSVGNodeAttributeColorInterpolationFilters];
+    [attributes setBit:IJSVGNodeAttributeHref];
+    [attributes setBit:IJSVGNodeAttributeXLink];
+    IJSVGAddTextStyleAttributes(attributes);
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    self.reference = context->reference;
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    NSString* geometryValue = nil;
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeX, &geometryValue)) {
+        self.x = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeY, &geometryValue)) {
+        self.y = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeWidth, &geometryValue)) {
+        IJSVGUnitLength* length = IJSVGDimensionFromString(geometryValue, self.type);
+        if (length != nil) {
+            self.width = length;
+        }
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeHeight, &geometryValue)) {
+        IJSVGUnitLength* length = IJSVGDimensionFromString(geometryValue, self.type);
+        if (length != nil) {
+            self.height = length;
+        }
+    }
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParseFilterAttributes(self, context);
 }
 
 @end

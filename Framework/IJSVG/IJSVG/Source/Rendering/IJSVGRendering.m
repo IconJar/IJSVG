@@ -15,7 +15,7 @@ const CGFloat IJSVGDefaultFontSize = 16.f;
 // Preserves the rendering defaults used by existing SVG clients.
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _filtersEnabled = YES;
         _renderQuality = kIJSVGRenderQualityFullResolution;
         _ignoreIntrinsicSize = YES;
@@ -26,8 +26,7 @@ const CGFloat IJSVGDefaultFontSize = 16.f;
 
 - (void)setDefaultFontSize:(CGFloat)defaultFontSize
 {
-    _defaultFontSize = isfinite(defaultFontSize) && defaultFontSize >= 0.f
-        ? defaultFontSize : IJSVGDefaultFontSize;
+    _defaultFontSize = isfinite(defaultFontSize) && defaultFontSize >= 0.f ? defaultFontSize : IJSVGDefaultFontSize;
 }
 
 // Copies settings so SVG instances never share mutable rendering options.

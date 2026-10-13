@@ -2,7 +2,7 @@
 //  IJSVGFilterPrimitive.h
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
@@ -10,54 +10,40 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, IJSVGFilterCompositeOperator) {
-    IJSVGFilterCompositeOperatorOver,
+typedef NS_ENUM(NSInteger, IJSVGFilterCompositeOperator) { IJSVGFilterCompositeOperatorOver,
     IJSVGFilterCompositeOperatorIn,
     IJSVGFilterCompositeOperatorOut,
     IJSVGFilterCompositeOperatorAtop,
     IJSVGFilterCompositeOperatorXor,
     IJSVGFilterCompositeOperatorArithmetic,
-    IJSVGFilterCompositeOperatorLighter
-};
+    IJSVGFilterCompositeOperatorLighter };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterEdgeMode) {
-    IJSVGFilterEdgeModeUnspecified = -1,
+typedef NS_ENUM(NSInteger, IJSVGFilterEdgeMode) { IJSVGFilterEdgeModeUnspecified = -1,
     IJSVGFilterEdgeModeNone,
     IJSVGFilterEdgeModeDuplicate,
-    IJSVGFilterEdgeModeWrap
-};
+    IJSVGFilterEdgeModeWrap };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterColorMatrixType) {
-    IJSVGFilterColorMatrixTypeMatrix,
+typedef NS_ENUM(NSInteger, IJSVGFilterColorMatrixType) { IJSVGFilterColorMatrixTypeMatrix,
     IJSVGFilterColorMatrixTypeSaturate,
     IJSVGFilterColorMatrixTypeHueRotate,
-    IJSVGFilterColorMatrixTypeLuminanceToAlpha
-};
+    IJSVGFilterColorMatrixTypeLuminanceToAlpha };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterTransferType) {
-    IJSVGFilterTransferTypeIdentity,
+typedef NS_ENUM(NSInteger, IJSVGFilterTransferType) { IJSVGFilterTransferTypeIdentity,
     IJSVGFilterTransferTypeTable,
     IJSVGFilterTransferTypeDiscrete,
     IJSVGFilterTransferTypeLinear,
-    IJSVGFilterTransferTypeGamma
-};
+    IJSVGFilterTransferTypeGamma };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterMorphologyOperator) {
-    IJSVGFilterMorphologyOperatorErode,
-    IJSVGFilterMorphologyOperatorDilate
-};
+typedef NS_ENUM(NSInteger, IJSVGFilterMorphologyOperator) { IJSVGFilterMorphologyOperatorErode,
+    IJSVGFilterMorphologyOperatorDilate };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterTurbulenceType) {
-    IJSVGFilterTurbulenceTypeTurbulence,
-    IJSVGFilterTurbulenceTypeFractalNoise
-};
+typedef NS_ENUM(NSInteger, IJSVGFilterTurbulenceType) { IJSVGFilterTurbulenceTypeTurbulence,
+    IJSVGFilterTurbulenceTypeFractalNoise };
 
-typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) {
-    IJSVGFilterColorChannelRed,
+typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) { IJSVGFilterColorChannelRed,
     IJSVGFilterColorChannelGreen,
     IJSVGFilterColorChannelBlue,
-    IJSVGFilterColorChannelAlpha
-};
+    IJSVGFilterColorChannelAlpha };
 
 @interface IJSVGFilterPrimitive : IJSVGGroup
 
@@ -83,17 +69,13 @@ typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) {
 
 + (NSSet<NSString*>*)parameterNames;
 + (BOOL)isPrimitiveType:(IJSVGNodeType)type;
-+ (BOOL)type:(IJSVGNodeType)parentType
-    acceptsChildType:(IJSVGNodeType)childType;
++ (BOOL)type:(IJSVGNodeType)parentType acceptsChildType:(IJSVGNodeType)childType;
 
 // Immutable derived setup, discarded whenever parameters are replaced.
-- (id _Nullable)preparedValueForKey:(NSString*)key
-                  builder:(id _Nullable (^)(void))builder;
+- (id _Nullable)preparedValueForKey:(NSString*)key builder:(id _Nullable (^)(void))builder;
 - (NSArray<NSNumber*>*)numbersForParameter:(NSString*)name;
-- (CGFloat)numberForParameter:(NSString*)name
-                 defaultValue:(CGFloat)value;
-- (CGSize)pairForParameter:(NSString*)name
-              defaultValue:(CGSize)value;
+- (CGFloat)numberForParameter:(NSString*)name defaultValue:(CGFloat)value;
+- (CGSize)pairForParameter:(NSString*)name defaultValue:(CGSize)value;
 
 @end
 

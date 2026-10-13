@@ -6,14 +6,13 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGPath.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGViewportNode.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface IJSVGGroup : IJSVGNode {
-
+@interface IJSVGGroup : IJSVGViewportNode {
 @private
     NSMutableArray<IJSVGNode*>* _children;
 }

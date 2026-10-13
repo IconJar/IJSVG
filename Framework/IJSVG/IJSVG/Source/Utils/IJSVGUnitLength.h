@@ -13,8 +13,7 @@ typedef struct {
     int precision;
 } IJSVGFloatingPointOptions;
 
-typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
-    IJSVGUnitLengthTypeNumber,
+typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) { IJSVGUnitLengthTypeNumber,
     IJSVGUnitLengthTypePercentage,
     IJSVGUnitLengthTypeCM,
     IJSVGUnitLengthTypeMM,
@@ -25,21 +24,18 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeEM,
     IJSVGUnitLengthTypeEX,
     IJSVGUnitLengthTypeAuto,
-    IJSVGUnitLengthTypeCalculation
-};
+    IJSVGUnitLengthTypeCalculation };
 
 IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars);
 CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type);
 
-typedef NS_ENUM(NSInteger, IJSVGUnitType) {
-    IJSVGUnitUserSpaceOnUse,
+typedef NS_ENUM(NSInteger, IJSVGUnitType) { IJSVGUnitUserSpaceOnUse,
     IJSVGUnitObjectBoundingBox,
-    IJSVGUnitInherit
-};
+    IJSVGUnitInherit };
 
 typedef struct IJSVGCSSComponents IJSVGCSSComponents;
 
-@interface IJSVGUnitLength: NSObject <NSCopying>
+@interface IJSVGUnitLength : NSObject <NSCopying>
 
 @property (nonatomic, readonly) IJSVGUnitLengthType type;
 @property (nonatomic, readonly) IJSVGUnitLengthType originalType;
@@ -50,58 +46,49 @@ typedef struct IJSVGCSSComponents IJSVGCSSComponents;
 @property (nonatomic, readonly) BOOL usesFontMetrics;
 @property (nonatomic, readonly) BOOL usesPercentage;
 
-// Property parsers explicitly enable CSS calculations separately from legacy scalar parsing.
-+ (IJSVGUnitLength*)unitWithCalculationString:(NSString*)string
-                                allowNegative:(BOOL)allowNegative;
-+ (IJSVGUnitLength*)unitWithCalculationComponents:(const IJSVGCSSComponents*)components
-                                          atIndex:(NSUInteger)index
-                                    allowNegative:(BOOL)allowNegative;
+// Property parsers explicitly enable CSS calculations separately from legacy
+// scalar parsing.
++ (IJSVGUnitLength*)unitWithCalculationString:(NSString*)string allowNegative:(BOOL)allowNegative;
++ (IJSVGUnitLength*)unitWithCalculationComponents:(const IJSVGCSSComponents*)components atIndex:(NSUInteger)index allowNegative:(BOOL)allowNegative;
 
 // SVG pathLength calibration affects absolute length terms, not percentages.
 - (IJSVGUnitLength*)lengthByScalingAbsoluteUnits:(CGFloat)scale;
 
 // Resolve font terms while retaining percentages for later viewport resolution.
-- (IJSVGUnitLength*)lengthByResolvingFontSize:(CGFloat)fontSize
-                                      xHeight:(CGFloat)xHeight;
+- (IJSVGUnitLength*)lengthByResolvingFontSize:(CGFloat)fontSize xHeight:(CGFloat)xHeight;
 
-+ (CGFloat)convertUnitValue:(CGFloat)unit
-   toBaseFromUnitLengthType:(IJSVGUnitLengthType)type;
++ (CGFloat)convertUnitValue:(CGFloat)unit toBaseFromUnitLengthType:(IJSVGUnitLengthType)type;
 
 // Immutable values may be shared. Replace the length on a node to change it.
-+ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
-                             type:(IJSVGUnitLengthType)type
-                     originalType:(IJSVGUnitLengthType)originalType
-                          inherit:(BOOL)inherit;
++ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number type:(IJSVGUnitLengthType)type originalType:(IJSVGUnitLengthType)originalType inherit:(BOOL)inherit;
 
-// Replacement helpers preserve unit metadata. Setting a value makes it explicit.
+// Replacement helpers preserve unit metadata. Setting a value makes it
+// explicit.
 - (IJSVGUnitLength*)lengthWithValue:(CGFloat)value;
 - (IJSVGUnitLength*)lengthWithInheritance:(BOOL)inherit;
 - (IJSVGUnitLength*)lengthBySettingType:(IJSVGUnitLengthType)type;
 
 + (IJSVGUnitLength*)unitWithFloat:(CGFloat)number;
-+ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number
-                             type:(IJSVGUnitLengthType)type;
++ (IJSVGUnitLength*)unitWithFloat:(CGFloat)number type:(IJSVGUnitLengthType)type;
 + (IJSVGUnitLength*)unitWithPercentageFloat:(CGFloat)number;
 + (IJSVGUnitLength*)unitWithString:(NSString*)string;
 + (IJSVGUnitLength*)unitWithPercentageString:(NSString*)string;
 
-+ (IJSVGUnitLength*)unitWithString:(NSString*)string
-                      fromUnitType:(IJSVGUnitType)units;
++ (IJSVGUnitLength*)unitWithString:(NSString*)string fromUnitType:(IJSVGUnitType)units;
 
 - (IJSVGUnitLength*)lengthWithUnitType:(IJSVGUnitLengthType)type;
 - (IJSVGUnitLength*)lengthByMatchingPercentage;
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
 // Supply font metrics when resolving em and ex values.
-- (CGFloat)computeValue:(CGFloat)anotherValue
-               fontSize:(CGFloat)fontSize
-                xHeight:(CGFloat)xHeight;
+- (CGFloat)computeValue:(CGFloat)anotherValue fontSize:(CGFloat)fontSize xHeight:(CGFloat)xHeight;
 - (NSString*)stringValue;
 - (NSString*)stringValueWithFloatingPointOptions:(IJSVGFloatingPointOptions)options;
 
 @end
 
-// Shared immutable defaults, initialized when the framework loads. Do not reassign.
+// Shared immutable defaults, initialized when the framework loads. Do not
+// reassign.
 FOUNDATION_EXPORT IJSVGUnitLength* IJSVGThreeUnitLength;
 FOUNDATION_EXPORT IJSVGUnitLength* IJSVGHalfPercentageUnitLength;
 FOUNDATION_EXPORT IJSVGUnitLength* IJSVGOnePercentageUnitLength;

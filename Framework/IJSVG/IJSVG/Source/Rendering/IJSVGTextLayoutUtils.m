@@ -2,15 +2,15 @@
 //  IJSVGTextLayoutUtils.m
 //  IJSVG
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGTextLayoutUtils.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVGTextLayoutUtils.h>
 #import <math.h>
-#import <stdlib.h>
 #import <stdint.h>
+#import <stdlib.h>
 
 @implementation IJSVGTextComputedStyle
 
@@ -18,23 +18,21 @@
 
 IJSVGTextKeyword IJSVGTextRenderingForNode(IJSVGNode* node)
 {
-    for(IJSVGNode* current = node; current != nil; current = current.styleParent) {
+    for (IJSVGNode* current = node; current != nil; current = current.styleParent) {
         IJSVGTextKeyword keyword = current.textStyle[IJSVGAttributeTextRendering].keyword;
-        if(keyword == IJSVGTextKeywordInitial) {
+        if (keyword == IJSVGTextKeywordInitial) {
             return IJSVGTextKeywordAuto;
         }
-        if(keyword != IJSVGTextKeywordUnspecified &&
-           keyword != IJSVGTextKeywordInherit && keyword != IJSVGTextKeywordUnset) {
+        if (keyword != IJSVGTextKeywordUnspecified && keyword != IJSVGTextKeywordInherit && keyword != IJSVGTextKeywordUnset) {
             return keyword;
         }
     }
     return IJSVGTextKeywordAuto;
 }
 
-CGFloat IJSVGTextLength(IJSVGTextAttributeValue* value, CGFloat fontSize,
-                        CGFloat xHeight, CGFloat percentage)
+CGFloat IJSVGTextLength(IJSVGTextAttributeValue* value, CGFloat fontSize, CGFloat xHeight, CGFloat percentage)
 {
-    switch(value.lengthBasis) {
+    switch (value.lengthBasis) {
         case IJSVGTextLengthBasisFontSize:
             return value.number * fontSize;
         case IJSVGTextLengthBasisXHeight:
@@ -47,22 +45,17 @@ CGFloat IJSVGTextLength(IJSVGTextAttributeValue* value, CGFloat fontSize,
     return 0;
 }
 
-void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters,
-                              NSUInteger* count, NSUInteger* capacity,
-                              const IJSVGTextCharacter* character)
+void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters, NSUInteger* count, NSUInteger* capacity, const IJSVGTextCharacter* character)
 {
     // Leave room for more characters instead of reallocating each time.
-    if(*count == *capacity) {
-        if(*capacity > SIZE_MAX / (2 * sizeof(IJSVGTextCharacter))) {
-            [NSException raise:NSMallocException
-                        format:@"SVG text character capacity exceeded"];
+    if (*count == *capacity) {
+        if (*capacity > SIZE_MAX / (2 * sizeof(IJSVGTextCharacter))) {
+            [NSException raise:NSMallocException format:@"SVG text character capacity exceeded"];
         }
         NSUInteger next = MAX((NSUInteger)32, *capacity * 2);
-        IJSVGTextCharacter* resized = realloc(*characters,
-                                              next * sizeof(IJSVGTextCharacter));
-        if(resized == NULL) {
-            [NSException raise:NSMallocException
-                        format:@"Unable to allocate SVG text characters"];
+        IJSVGTextCharacter* resized = realloc(*characters, next * sizeof(IJSVGTextCharacter));
+        if (resized == NULL) {
+            [NSException raise:NSMallocException format:@"Unable to allocate SVG text characters"];
         }
         *characters = resized;
         *capacity = next;
@@ -75,9 +68,7 @@ void IJSVGTextFontExtents(CTFontRef font, CGFloat* ascent, CGFloat* descent)
     *ascent = CTFontGetAscent(font);
     *descent = CTFontGetDescent(font);
     CFStringRef family = CTFontCopyFamilyName(font);
-    if(CFStringCompare(family, CFSTR("Times"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
-        CFStringCompare(family, CFSTR("Helvetica"), kCFCompareCaseInsensitive) == kCFCompareEqualTo ||
-        CFStringCompare(family, CFSTR("Courier"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
+    if (CFStringCompare(family, CFSTR("Times"), kCFCompareCaseInsensitive) == kCFCompareEqualTo || CFStringCompare(family, CFSTR("Helvetica"), kCFCompareCaseInsensitive) == kCFCompareEqualTo || CFStringCompare(family, CFSTR("Courier"), kCFCompareCaseInsensitive) == kCFCompareEqualTo) {
         // Use the conventional web ascent for these legacy font families.
         *ascent += round((*ascent + *descent) * .15f);
     }
@@ -87,16 +78,15 @@ void IJSVGTextFontExtents(CTFontRef font, CGFloat* ascent, CGFloat* descent)
 CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
 {
     // Characters sharing a style use the same baseline offset.
-    if(style.hasResolvedBaseline == YES) {
+    if (style.hasResolvedBaseline == YES) {
         return style.resolvedBaseline;
     }
     CTFontRef font = (__bridge CTFontRef)style.font;
     IJSVGTextAttributeValue* baseline = style.values[IJSVGAttributeAlignmentBaseline];
-    if(baseline == nil || baseline.keyword == IJSVGTextKeywordAuto ||
-       baseline.keyword == IJSVGTextKeywordBaseline) {
+    if (baseline == nil || baseline.keyword == IJSVGTextKeywordAuto || baseline.keyword == IJSVGTextKeywordBaseline) {
         baseline = style.values[IJSVGAttributeDominantBaseline];
     }
-    switch(baseline.keyword) {
+    switch (baseline.keyword) {
         case IJSVGTextKeywordMathematical:
         case IJSVGTextKeywordCentral:
         case IJSVGTextKeywordHanging:
@@ -110,7 +100,7 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
             break;
         default:
             style.resolvedBaseline = style.baseline;
-            if(baseline.keyword == IJSVGTextKeywordMiddle) {
+            if (baseline.keyword == IJSVGTextKeywordMiddle) {
                 style.resolvedBaseline += (CTFontGetXHeight(font) / style.fontScale) * .5;
             }
             style.hasResolvedBaseline = YES;
@@ -121,7 +111,7 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
     ascent /= style.fontScale;
     descent /= style.fontScale;
     CGFloat result = style.baseline;
-    switch(baseline.keyword) {
+    switch (baseline.keyword) {
         case IJSVGTextKeywordMathematical:
             result += ascent * .5f;
             break;
@@ -152,7 +142,7 @@ CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style)
 
 CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale)
 {
-    if(fontSize == 0) {
+    if (fontSize == 0) {
         return 0;
     }
     CGFloat xHeight = CTFontGetXHeight(font) / scale;
@@ -160,15 +150,13 @@ CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale)
     return isfinite(xHeight) && xHeight > 0 ? xHeight : fontSize * .5;
 }
 
-CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
-                          CGFloat parentXHeight, CGFloat defaultFontSize)
+CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize, CGFloat parentXHeight, CGFloat defaultFontSize)
 {
     CGFloat result = parentSize;
-    if(size == nil || size.keyword == IJSVGTextKeywordInherit ||
-       size.keyword == IJSVGTextKeywordUnset) {
+    if (size == nil || size.keyword == IJSVGTextKeywordInherit || size.keyword == IJSVGTextKeywordUnset) {
         result = parentSize;
     } else {
-        switch(size.keyword) {
+        switch (size.keyword) {
             case IJSVGTextKeywordInitial:
                 result = defaultFontSize;
                 break;
@@ -200,33 +188,19 @@ CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
                 result = defaultFontSize * (32. / 16.);
                 break;
             default:
-                result = IJSVGTextLength(size, parentSize, parentXHeight,
-                                         parentSize);
+                result = IJSVGTextLength(size, parentSize, parentXHeight, parentSize);
                 break;
         }
     }
     return MAX(0, MIN(1000000, result));
 }
 
-BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent,
-                           NSDictionary<NSString*, IJSVGTextAttributeValue*>* values,
-                           CGFloat size)
+BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent, NSDictionary<NSString*, IJSVGTextAttributeValue*>* values, CGFloat size)
 {
-    return parent != nil && parent.size == size &&
-        parent.values[IJSVGAttributeFontFamily] == values[IJSVGAttributeFontFamily] &&
-        parent.values[IJSVGAttributeFontSizeAdjust] == values[IJSVGAttributeFontSizeAdjust] &&
-        parent.values[IJSVGAttributeTextRendering] == values[IJSVGAttributeTextRendering] &&
-        parent.values[IJSVGAttributeFontWeight] == values[IJSVGAttributeFontWeight] &&
-        parent.values[IJSVGAttributeFontStyle] == values[IJSVGAttributeFontStyle] &&
-        parent.values[IJSVGAttributeFontStretch] == values[IJSVGAttributeFontStretch] &&
-        parent.values[IJSVGAttributeFontVariant] == values[IJSVGAttributeFontVariant] &&
-        parent.values[IJSVGAttributeFontFeatureSettings] == values[IJSVGAttributeFontFeatureSettings];
+    return parent != nil && parent.size == size && parent.values[IJSVGAttributeFontFamily] == values[IJSVGAttributeFontFamily] && parent.values[IJSVGAttributeFontSizeAdjust] == values[IJSVGAttributeFontSizeAdjust] && parent.values[IJSVGAttributeTextRendering] == values[IJSVGAttributeTextRendering] && parent.values[IJSVGAttributeFontWeight] == values[IJSVGAttributeFontWeight] && parent.values[IJSVGAttributeFontStyle] == values[IJSVGAttributeFontStyle] && parent.values[IJSVGAttributeFontStretch] == values[IJSVGAttributeFontStretch] && parent.values[IJSVGAttributeFontVariant] == values[IJSVGAttributeFontVariant] && parent.values[IJSVGAttributeFontFeatureSettings] == values[IJSVGAttributeFontFeatureSettings];
 }
 
-
-NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters,
-                                      NSRange range, IJSVGText* node,
-                                      NSUInteger* spacingUnits)
+NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters, NSRange range, IJSVGText* node, NSUInteger* spacingUnits)
 {
     CFMutableDictionaryRef units = NULL;
     IJSVGText* previousOwner = nil;
@@ -234,28 +208,27 @@ NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters,
     NSUInteger ownerUnit = 0;
     NSUInteger unitCount = 0;
     NSUInteger end = NSMaxRange(range);
-    for(NSUInteger index = range.location; index < end; index++) {
+    for (NSUInteger index = range.location; index < end; index++) {
         IJSVGTextCharacter* character = &characters[index];
-        if(character->middle) {
+        if (character->middle) {
             continue;
         }
-        if(character->owner != previousOwner) {
+        if (character->owner != previousOwner) {
             previousOwner = character->owner;
             resolved = nil;
-            for(IJSVGNode* parent = previousOwner; parent != nil && parent != node; parent = parent.parentNode) {
-                if([parent isKindOfClass:IJSVGText.class] &&
-                   ((IJSVGText*)parent).positioning[IJSVGAttributeTextLength] != nil) {
+            for (IJSVGNode* parent = previousOwner; parent != nil && parent != node; parent = parent.parentNode) {
+                if ([parent isKindOfClass:IJSVGText.class] && ((IJSVGText*)parent).positioning[IJSVGAttributeTextLength] != nil) {
                     resolved = (IJSVGText*)parent;
                 }
             }
             // Keep a child with its own textLength together as one spacing unit.
-            if(resolved != nil) {
-                if(units == NULL) {
+            if (resolved != nil) {
+                if (units == NULL) {
                     units = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
                 }
                 const void* key = (__bridge const void*)resolved;
                 uintptr_t stored = (uintptr_t)CFDictionaryGetValue(units, key);
-                if(stored != 0) {
+                if (stored != 0) {
                     ownerUnit = stored - 1;
                 } else {
                     ownerUnit = unitCount++;
@@ -266,7 +239,7 @@ NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters,
         }
         spacingUnits[index - range.location] = resolved != nil ? ownerUnit : unitCount++;
     }
-    if(units != NULL) {
+    if (units != NULL) {
         CFRelease(units);
     }
     return unitCount;

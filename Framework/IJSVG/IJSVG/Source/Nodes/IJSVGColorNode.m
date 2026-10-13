@@ -11,13 +11,14 @@
 
 @implementation IJSVGColorNode
 
-+ (IJSVGNode*)colorNodeWithColor:(NSColor *)color
++ (IJSVGNode*)colorNodeWithColor:(NSColor*)color
 {
     return [[self alloc] initWithColor:color];
 }
 
-- (id)initWithColor:(NSColor*)color {
-    if((self = [super init]) != nil) {
+- (id)initWithColor:(NSColor*)color
+{
+    if ((self = [super init]) != nil) {
         [self addTraits:IJSVGNodeTraitPaintable];
         _color = color;
     }
@@ -27,7 +28,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];
-    if([node isKindOfClass:IJSVGColorNode.class]) {
+    if ([node isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node;
         self.color = colorNode.color;
         self.isNoneOrTransparent = colorNode.isNoneOrTransparent;
@@ -36,30 +37,25 @@
     }
 }
 
-- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
-                              matchingTraits:(IJSVGColorUsageTraits)traits
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style matchingTraits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    if(self.isNoneOrTransparent == YES) {
+    if (self.isNoneOrTransparent == YES) {
         return storage;
     }
 
     NSColor* color = self.color ?: NSColor.blackColor;
-    if((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill &&
-       style.fillColor != nil) {
+    if ((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill && style.fillColor != nil) {
         color = style.fillColor;
-    } else if((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke &&
-              style.strokeColor != nil) {
+    } else if ((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke && style.strokeColor != nil) {
         color = style.strokeColor;
     } else {
-        NSColor* replacement = [style.colors colorForColor:color
-                                            matchingTraits:traits];
+        NSColor* replacement = [style.colors colorForColor:color matchingTraits:traits];
         color = replacement ?: color;
     }
 
     IJSVGTraitedColor* traited = nil;
-    traited = [IJSVGTraitedColor colorWithColor:color
-                                         traits:traits];
+    traited = [IJSVGTraitedColor colorWithColor:color traits:traits];
     [storage addColor:traited];
     return storage;
 }

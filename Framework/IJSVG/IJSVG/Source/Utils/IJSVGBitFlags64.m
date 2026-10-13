@@ -12,7 +12,7 @@
 
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _storage64 = 0ULL;
     }
     return self;
@@ -45,14 +45,14 @@
 
 - (void)setBit:(int)bit
 {
-    if(bit >= 0 && bit < 64) {
+    if (bit >= 0 && bit < 64) {
         _storage64 |= (1ULL << bit);
     }
 }
 
 - (void)unsetBit:(int)bit
 {
-    if(bit >= 0 && bit < 64) {
+    if (bit >= 0 && bit < 64) {
         _storage64 &= ~(1ULL << bit);
     }
 }

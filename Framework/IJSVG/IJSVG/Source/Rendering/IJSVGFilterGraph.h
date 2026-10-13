@@ -2,23 +2,21 @@
 //  IJSVGFilterGraph.h
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <CoreImage/CoreImage.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGRendering.h>
-#import <CoreImage/CoreImage.h>
-#import <IJSVGMetalShadowRenderer.h>
 #import <IJSVGMetalBlurRenderer.h>
+#import <IJSVGMetalShadowRenderer.h>
 
-typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
-    IJSVGFilterInputSourceAlpha = 1 << 0,
+typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) { IJSVGFilterInputSourceAlpha = 1 << 0,
     IJSVGFilterInputBackgroundImage = 1 << 1,
     IJSVGFilterInputBackgroundAlpha = 1 << 2,
     IJSVGFilterInputFillPaint = 1 << 3,
-    IJSVGFilterInputStrokePaint = 1 << 4
-};
+    IJSVGFilterInputStrokePaint = 1 << 4 };
 
 @interface IJSVGFilterMetadata : NSObject
 @property (nonatomic, strong, readonly) IJSVGFilter* filter;
@@ -46,17 +44,16 @@ typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
 @property (nonatomic, copy) CIImage* (^paintProvider)(BOOL stroke);
 @property (nonatomic, copy) CIImage* (^backgroundProvider)(void);
 
-- (CGRect)regionForNode:(IJSVGNode*)node
-                  units:(IJSVGUnitType)units
-          defaultRegion:(CGRect)region;
+- (CGRect)regionForNode:(IJSVGGraphicsNode*)node units:(IJSVGUnitType)units defaultRegion:(CGRect)region;
 - (CIImage*)imageByFilteringSource:(CIImage*)source;
 
-// A single matrix producing white with unchanged source alpha. Returns NULL otherwise.
-// The source must be a renderer owned RGBA8 bitmap and stays unchanged.
+// A single matrix producing white with unchanged source alpha. Returns NULL
+// otherwise. The source must be a renderer owned RGBA8 bitmap and stays
+// unchanged.
 - (CGImageRef)newCGImageForWhiteAlpha:(CGContextRef)bitmap;
 
-// Plans direct blur/shadow rendering, choosing CPU or Metal by working set size.
-// Returns NULL when Core Image is required.
+// Plans direct blur/shadow rendering, choosing CPU or Metal by working set
+// size. Returns NULL when Core Image is required.
 - (CGImageRef)newCGImageForDirectBlur:(CGContextRef)bitmap;
 - (IJSVGMetalShadowJob*)metalShadowJobForBitmap:(CGContextRef)bitmap;
 - (IJSVGMetalBlurJob*)metalBlurJobForBitmap:(CGContextRef)bitmap;

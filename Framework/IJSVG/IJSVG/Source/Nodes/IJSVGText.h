@@ -2,7 +2,7 @@
 //  IJSVGText.h
 //  IJSVG
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
@@ -11,8 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Parsed SVG/CSS text keywords. Numeric values and names retain their own data.
-typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) {
-    IJSVGTextKeywordUnspecified,
+typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) { IJSVGTextKeywordUnspecified,
     IJSVGTextKeywordInherit,
     IJSVGTextKeywordUnset,
     IJSVGTextKeywordInitial,
@@ -94,25 +93,20 @@ typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) {
     IJSVGTextKeywordUltraExpanded,
     IJSVGTextKeywordGeometricPrecision,
     IJSVGTextKeywordOptimizeLegibility,
-    IJSVGTextKeywordOptimizeSpeed
-};
+    IJSVGTextKeywordOptimizeSpeed };
 
-typedef NS_ENUM(NSUInteger, IJSVGTextLengthBasis) {
-    IJSVGTextLengthBasisAbsolute,
+typedef NS_ENUM(NSUInteger, IJSVGTextLengthBasis) { IJSVGTextLengthBasisAbsolute,
     IJSVGTextLengthBasisFontSize,
     IJSVGTextLengthBasisXHeight,
-    IJSVGTextLengthBasisPercentage
-};
+    IJSVGTextLengthBasisPercentage };
 
-typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
-    IJSVGTextDecorationNone = 0,
+typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) { IJSVGTextDecorationNone = 0,
     IJSVGTextDecorationUnderline = 1 << 0,
     IJSVGTextDecorationOverline = 1 << 1,
-    IJSVGTextDecorationLineThrough = 1 << 2
-};
+    IJSVGTextDecorationLineThrough = 1 << 2 };
 
 // Parser produced values are shared unchanged when styles inherit.
-@interface IJSVGTextAttributeValue: NSObject
+@interface IJSVGTextAttributeValue : NSObject
 
 @property (nonatomic, copy) NSString* string;
 @property (nonatomic, assign) IJSVGTextKeyword keyword;
@@ -126,8 +120,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
 
 @end
 
-// Retains mixed XML content in document order. Strings are never replaced by outlines.
-@interface IJSVGText: IJSVGGroup
+// Retains mixed XML content in document order. Strings are never replaced by
+// outlines.
+@interface IJSVGText : IJSVGGroup
 
 @property (nonatomic, copy) NSArray<id>* textContent;
 

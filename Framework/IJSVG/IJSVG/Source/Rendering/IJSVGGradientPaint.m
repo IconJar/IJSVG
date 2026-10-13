@@ -2,20 +2,18 @@
 //  IJSVGGradientPaint.m
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGGradientPaint.h>
-#import <IJSVGRootPaint.h>
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVGGradientPaint.h>
+#import <IJSVGRootPaint.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
-    IJSVGResolvedGradientKindCustom,
+typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) { IJSVGResolvedGradientKindCustom,
     IJSVGResolvedGradientKindLinear,
-    IJSVGResolvedGradientKindRadial
-};
+    IJSVGResolvedGradientKindRadial };
 
 @interface IJSVGGradientPaint () {
     BOOL _hasResolvedPlacement;
@@ -40,14 +38,12 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     _gradientRoot = nil;
     _hasResolvedPlacement = NO;
     _resolvedGradientTransforms = nil;
-    _gradientKind = [gradient isMemberOfClass:IJSVGLinearGradient.class] ? IJSVGResolvedGradientKindLinear :
-        ([gradient isMemberOfClass:IJSVGRadialGradient.class] ? IJSVGResolvedGradientKindRadial :
-            IJSVGResolvedGradientKindCustom);
+    _gradientKind = [gradient isMemberOfClass:IJSVGLinearGradient.class] ? IJSVGResolvedGradientKindLinear : ([gradient isMemberOfClass:IJSVGRadialGradient.class] ? IJSVGResolvedGradientKindRadial : IJSVGResolvedGradientKindCustom);
 }
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    if(_gradient == nil) {
+    if (_gradient == nil) {
         return;
     }
 
@@ -55,9 +51,9 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     // Userspace gradients also depend on the root viewport, which can resize.
     BOOL userSpace = _gradient.units == IJSVGUnitUserSpaceOnUse;
     IJSVGRootPaint* root = _gradientRoot;
-    if(userSpace && root == nil) {
+    if (userSpace && root == nil) {
         IJSVGPaint* ancestor = [IJSVGPaint rootPaintForPaint:self];
-        if([ancestor isKindOfClass:IJSVGRootPaint.class]) {
+        if ([ancestor isKindOfClass:IJSVGRootPaint.class]) {
             root = (IJSVGRootPaint*)ancestor;
             _gradientRoot = root;
             _hasResolvedPlacement = NO;
@@ -67,14 +63,13 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     // Detached feImage subtrees have no SVG root. The resolver supplies their
     // userspace viewport here, shape bounds cannot resolve percentage lengths.
     CGRect viewport = CGRectZero;
-    if(userSpace) {
-        viewport = root != nil ? (root.viewBox != nil ?
-            [root.viewBox computeValue:root.frame.size] : root.frame) : self.viewBox;
+    if (userSpace) {
+        viewport = root != nil ? (root.viewBox != nil ? [root.viewBox computeValue:root.frame.size] : root.frame) : self.viewBox;
     }
-    if(!_hasResolvedPlacement || !CGRectEqualToRect(viewport, _resolvedViewport)) {
+    if (!_hasResolvedPlacement || !CGRectEqualToRect(viewport, _resolvedViewport)) {
         IJSVGPaint* paint = self.referencingPaint;
         CGAffineTransform transform = CGAffineTransformIdentity;
-        if(userSpace) {
+        if (userSpace) {
             _resolvedBounds = viewport;
             // Undo paint local placement, not the viewport origin: absolute
             // gradient coordinates remain in the referencing nodes user space.
@@ -82,71 +77,55 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
         } else {
             _resolvedBounds = IJSVGPaintGetBoundingBoxBounds(paint);
         }
-        _resolvedTransform = CGAffineTransformConcat(transform,
-            [IJSVGPaint userSpaceTransformForPaint:self]);
+        _resolvedTransform = CGAffineTransformConcat(transform, [IJSVGPaint userSpaceTransformForPaint:self]);
         CGFloat width = userSpace ? _resolvedBounds.size.width : 1.f;
         CGFloat height = userSpace ? _resolvedBounds.size.height : 1.f;
-        if(_gradientKind == IJSVGResolvedGradientKindLinear) {
-            _startPoint = CGPointMake([_gradient.x1 computeValue:width],
-                                      [_gradient.y1 computeValue:height]);
-            _endPoint = CGPointMake([_gradient.x2 computeValue:width],
-                                    [_gradient.y2 computeValue:height]);
-        } else if(_gradientKind == IJSVGResolvedGradientKindRadial) {
+        if (_gradientKind == IJSVGResolvedGradientKindLinear) {
+            _startPoint = CGPointMake([_gradient.x1 computeValue:width], [_gradient.y1 computeValue:height]);
+            _endPoint = CGPointMake([_gradient.x2 computeValue:width], [_gradient.y2 computeValue:height]);
+        } else if (_gradientKind == IJSVGResolvedGradientKindRadial) {
             IJSVGRadialGradient* radial = (IJSVGRadialGradient*)_gradient;
-            _startPoint = CGPointMake([radial.fx computeValue:width],
-                                      [radial.fy computeValue:height]);
-            _endPoint = CGPointMake([radial.cx computeValue:width],
-                                    [radial.cy computeValue:height]);
+            _startPoint = CGPointMake([radial.fx computeValue:width], [radial.fy computeValue:height]);
+            _endPoint = CGPointMake([radial.cx computeValue:width], [radial.cy computeValue:height]);
             _startRadius = [radial.fr computeValue:MIN(width, height)];
             _endRadius = [radial.r computeValue:MIN(width, height)];
         }
-        NSMutableData* matrices = [NSMutableData dataWithLength:
-            _gradient.transforms.count * sizeof(CGAffineTransform)];
+        NSMutableData* matrices = [NSMutableData dataWithLength:_gradient.transforms.count * sizeof(CGAffineTransform)];
         CGAffineTransform* values = matrices.mutableBytes;
         NSUInteger index = 0;
-        for(IJSVGTransform* item in _gradient.transforms) {
+        for (IJSVGTransform* item in _gradient.transforms) {
             values[index++] = item.CGAffineTransform;
         }
         _resolvedGradientTransforms = matrices;
         _resolvedViewport = viewport;
         _hasResolvedPlacement = YES;
     }
-    if(_gradientKind == IJSVGResolvedGradientKindCustom) {
-        [_gradient drawInContextRef:ctx
-                             bounds:_resolvedBounds
-                          transform:_resolvedTransform];
+    if (_gradientKind == IJSVGResolvedGradientKindCustom) {
+        [_gradient drawInContextRef:ctx bounds:_resolvedBounds transform:_resolvedTransform];
         return;
     }
-    if(_gradientKind == IJSVGResolvedGradientKindRadial) {
+    if (_gradientKind == IJSVGResolvedGradientKindRadial) {
         CGContextSaveGState(ctx);
     }
-    CGContextConcatCTM(ctx, userSpace ? _resolvedTransform :
-        CGAffineTransformMakeScale(_resolvedBounds.size.width, _resolvedBounds.size.height));
+    CGContextConcatCTM(ctx, userSpace ? _resolvedTransform : CGAffineTransformMakeScale(_resolvedBounds.size.width, _resolvedBounds.size.height));
     // Replay each matrix in its original order. Combining them changes
-    // floating-point rounding and can move antialiased edge pixels.
+    // floating point rounding and can move antialiased edge pixels.
     const CGAffineTransform* matrices = _resolvedGradientTransforms.bytes;
     NSUInteger count = _resolvedGradientTransforms.length / sizeof(CGAffineTransform);
-    for(NSUInteger index = 0; index < count; index++) {
+    for (NSUInteger index = 0; index < count; index++) {
         CGContextConcatCTM(ctx, matrices[index]);
     }
-    if([_gradient drawSpreadInContext:ctx
-                           startPoint:_startPoint
-                             endPoint:_endPoint
-                          startRadius:_startRadius
-                            endRadius:_endRadius
-                               radial:_gradientKind == IJSVGResolvedGradientKindRadial]) {
-        if(_gradientKind == IJSVGResolvedGradientKindRadial) {
+    if ([_gradient drawSpreadInContext:ctx startPoint:_startPoint endPoint:_endPoint startRadius:_startRadius endRadius:_endRadius radial:_gradientKind == IJSVGResolvedGradientKindRadial]) {
+        if (_gradientKind == IJSVGResolvedGradientKindRadial) {
             CGContextRestoreGState(ctx);
         }
         return;
     }
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
-    if(_gradientKind == IJSVGResolvedGradientKindLinear) {
-        CGContextDrawLinearGradient(ctx, _gradient.CGGradient, _startPoint,
-                                    _endPoint, options);
+    if (_gradientKind == IJSVGResolvedGradientKindLinear) {
+        CGContextDrawLinearGradient(ctx, _gradient.CGGradient, _startPoint, _endPoint, options);
     } else {
-        CGContextDrawRadialGradient(ctx, _gradient.CGGradient, _startPoint, _startRadius,
-                                    _endPoint, _endRadius, options);
+        CGContextDrawRadialGradient(ctx, _gradient.CGGradient, _startPoint, _startRadius, _endPoint, _endRadius, options);
         CGContextRestoreGState(ctx);
     }
 }

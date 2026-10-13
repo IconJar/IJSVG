@@ -6,14 +6,13 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGStyleSheetRule.h>
 #import <IJSVG/IJSVGStyleSheetSelector.h>
-#import <Foundation/Foundation.h>
 
 @class IJSVGNode;
 
 @interface IJSVGStyleSheet : NSObject {
-
 @private
     NSMutableDictionary<NSString*, IJSVGStyleSheetSelector*>* _selectors;
     NSMutableArray<IJSVGStyleSheetRule*>* _rules;

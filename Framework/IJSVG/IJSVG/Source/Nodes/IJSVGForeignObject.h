@@ -7,11 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGGraphicsNode.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface IJSVGForeignObject : IJSVGNode {
+@interface IJSVGForeignObject : IJSVGGraphicsNode {
 }
 
 @property (nonatomic, copy, nullable) NSString* requiredExtension;

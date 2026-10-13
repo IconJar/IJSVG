@@ -6,20 +6,23 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGCommandParser.h>
-#import <IJSVGParserUtils.h>
-#import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGEllipse.h>
+#import <IJSVG/IJSVGGraphicsNode.h>
+#import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGPath.h>
-#import <string.h>
-#import <IJSVGCSSParser.h>
-#import <IJSVGCSSMathExpression.h>
+#import <IJSVG/IJSVGRoundedShape.h>
+#import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGCSSMathExpression.h>
+#import <IJSVGCSSParser.h>
+#import <IJSVGParserUtils.h>
+#import <string.h>
 
 static BOOL IJSVGLengthListIsWhitespace(char character)
 {
-    return character == ' ' || character == '\t' ||
-        character == '\r' || character == '\n';
+    return character == ' ' || character == '\t' || character == '\r' || character == '\n';
 }
 
 static BOOL IJSVGLengthListIsDigit(char character)
@@ -32,25 +35,25 @@ BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* 
     const char* cursor = *position;
     const char* number = cursor;
     BOOL negative = *cursor == '-';
-    if(*cursor == '+' || negative) {
+    if (*cursor == '+' || negative) {
         cursor++;
     }
     BOOL rejectsNegative = negative && !allowNegative;
     const char* digits = cursor;
     double scalar = 0;
-    while(IJSVGLengthListIsDigit(*cursor)) {
-        if(rejectsNegative && *cursor != '0') {
+    while (IJSVGLengthListIsDigit(*cursor)) {
+        if (rejectsNegative && *cursor != '0') {
             return NO;
         }
         scalar = scalar * 10.f + (*cursor++ - '0');
     }
     BOOL hasDigits = cursor != digits;
-    if(*cursor == '.') {
+    if (*cursor == '.') {
         digits = ++cursor;
         double scale = 10.f;
-        while(IJSVGLengthListIsDigit(*cursor)) {
+        while (IJSVGLengthListIsDigit(*cursor)) {
             // Check the mantissa before conversion can underflow.
-            if(rejectsNegative && *cursor != '0') {
+            if (rejectsNegative && *cursor != '0') {
                 return NO;
             }
             scalar += (*cursor++ - '0') / scale;
@@ -58,32 +61,32 @@ BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* 
         }
         hasDigits |= cursor != digits;
     }
-    if(!hasDigits) {
+    if (!hasDigits) {
         return NO;
     }
 
     // The letter e starts an exponent only when digits follow. em/ex are units.
     BOOL hasExponent = NO;
-    if(*cursor == 'e' || *cursor == 'E') {
+    if (*cursor == 'e' || *cursor == 'E') {
         const char* exponent = cursor + 1;
-        if(*exponent == '+' || *exponent == '-') {
+        if (*exponent == '+' || *exponent == '-') {
             exponent++;
         }
-        if(IJSVGLengthListIsDigit(*exponent)) {
+        if (IJSVGLengthListIsDigit(*exponent)) {
             hasExponent = YES;
             cursor = exponent + 1;
-            while(IJSVGLengthListIsDigit(*cursor)) {
+            while (IJSVGLengthListIsDigit(*cursor)) {
                 cursor++;
             }
         }
     }
-    if(hasExponent) {
+    if (hasExponent) {
         scalar = IJSVGParseFloatWithLength(number, (NSUInteger)(cursor - number));
-    } else if(negative) {
+    } else if (negative) {
         scalar = -scalar;
     }
     CGFloat converted = (CGFloat)scalar;
-    if(!isfinite(converted)) {
+    if (!isfinite(converted)) {
         return NO;
     }
     *value = converted;
@@ -91,13 +94,9 @@ BOOL IJSVGParseLengthNumber(const char** position, BOOL allowNegative, CGFloat* 
     return YES;
 }
 
-static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
-                                             NSMutableArray<IJSVGUnitLength*>* lengths,
-                                             IJSVGUnitLength** singleLength);
+static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single, NSMutableArray<IJSVGUnitLength*>* lengths, IJSVGUnitLength** singleLength);
 
-static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOOL single,
-                                      NSMutableArray<IJSVGUnitLength*>* lengths,
-                                      IJSVGUnitLength** singleLength)
+static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOOL single, NSMutableArray<IJSVGUnitLength*>* lengths, IJSVGUnitLength** singleLength)
 {
     IJSVGCSSComponents components;
     BOOL valid = IJSVGCSSComponentsCreate(string, strlen(string), &components);
@@ -105,10 +104,10 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
     BOOL afterComma = NO;
     BOOL validatesOnly = lengths == nil && singleLength == NULL;
     IJSVGUnitLength* length = nil;
-    for(NSUInteger index = 0; valid && index < components.count;) {
+    for (NSUInteger index = 0; valid && index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
-        if(component->kind == IJSVGCSSComponentDelimiter && component->symbol == IJSVGCSSSymbolComma) {
-            if(count == 0 || afterComma || single) {
+        if (component->kind == IJSVGCSSComponentDelimiter && component->symbol == IJSVGCSSSymbolComma) {
+            if (count == 0 || afterComma || single) {
                 valid = NO;
                 break;
             }
@@ -116,36 +115,32 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
             index = component->next;
             continue;
         }
-        if(count != 0 && (single || (!afterComma && !component->precedingWhitespace))) {
+        if (count != 0 && (single || (!afterComma && !component->precedingWhitespace))) {
             valid = NO;
             break;
         }
         length = nil;
-        if(component->kind == IJSVGCSSComponentFunction) {
-            if(validatesOnly) {
+        if (component->kind == IJSVGCSSComponentFunction) {
+            if (validatesOnly) {
                 valid = IJSVGCSSMathExpressionIsValid(&components, index);
             } else {
                 length = [IJSVGUnitLength unitWithCalculationComponents:&components atIndex:index allowNegative:allowNegative];
             }
-        } else if(component->kind == IJSVGCSSComponentNumber ||
-                  component->kind == IJSVGCSSComponentDimension ||
-                  component->kind == IJSVGCSSComponentPercentage) {
+        } else if (component->kind == IJSVGCSSComponentNumber || component->kind == IJSVGCSSComponentDimension || component->kind == IJSVGCSSComponentPercentage) {
             IJSVGUnitLengthType type = component->unit;
             CGFloat scalar = IJSVGConvertUnitValue(component->number, type);
-            if((component->kind == IJSVGCSSComponentDimension && type == IJSVGUnitLengthTypeNumber) ||
-               !isfinite(scalar) || (!allowNegative && component->negativeNonzero)) {
+            if ((component->kind == IJSVGCSSComponentDimension && type == IJSVGUnitLengthTypeNumber) || !isfinite(scalar) || (!allowNegative && component->negativeNonzero)) {
                 valid = NO;
                 break;
             }
-            IJSVGUnitLengthType resolved = type == IJSVGUnitLengthTypePercentage ||
-                type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ? type : IJSVGUnitLengthTypeNumber;
-            if(!validatesOnly) {
+            IJSVGUnitLengthType resolved = type == IJSVGUnitLengthTypePercentage || type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ? type : IJSVGUnitLengthTypeNumber;
+            if (!validatesOnly) {
                 length = [IJSVGUnitLength unitWithFloat:scalar type:resolved originalType:type inherit:NO];
             }
         } else {
             valid = NO;
         }
-        if(!valid || (!validatesOnly && length == nil)) {
+        if (!valid || (!validatesOnly && length == nil)) {
             valid = NO;
             break;
         }
@@ -155,99 +150,86 @@ static BOOL IJSVGParseCSSUnitLengths(const char* string, BOOL allowNegative, BOO
         index = component->next;
     }
     valid = valid && count != 0 && !afterComma;
-    if(singleLength != NULL) {
+    if (singleLength != NULL) {
         *singleLength = valid && count == 1 ? length : nil;
     }
     IJSVGCSSComponentsRelease(&components);
     return valid;
 }
 
-static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single,
-                                             NSMutableArray<IJSVGUnitLength*>* lengths,
-                                             IJSVGUnitLength** singleLength)
+static BOOL IJSVGParseUnitLengthsFromCString(const char* string, BOOL allowNegative, BOOL single, NSMutableArray<IJSVGUnitLength*>* lengths, IJSVGUnitLength** singleLength)
 {
-    if(strchr(string, '(') != NULL || strchr(string, '\\') != NULL || strstr(string, "/*") != NULL) {
+    if (strchr(string, '(') != NULL || strchr(string, '\\') != NULL || strstr(string, "/*") != NULL) {
         return IJSVGParseCSSUnitLengths(string, allowNegative, single, lengths, singleLength);
     }
     const char* cursor = string;
     IJSVGUnitLength* parsedLength = nil;
     NSUInteger count = 0;
     BOOL valid = YES;
-    while(IJSVGLengthListIsWhitespace(*cursor)) {
+    while (IJSVGLengthListIsWhitespace(*cursor)) {
         cursor++;
     }
-    while(*cursor != '\0') {
+    while (*cursor != '\0') {
         CGFloat scalar;
-        if(!IJSVGParseLengthNumber(&cursor, allowNegative, &scalar)) {
+        if (!IJSVGParseLengthNumber(&cursor, allowNegative, &scalar)) {
             valid = NO;
             break;
         }
         const char* suffix = cursor;
-        while(*cursor != '\0' && *cursor != ',' && !IJSVGLengthListIsWhitespace(*cursor)) {
+        while (*cursor != '\0' && *cursor != ',' && !IJSVGLengthListIsWhitespace(*cursor)) {
             cursor++;
         }
         size_t suffixLength = cursor - suffix;
-        if(suffixLength > 2) {
+        if (suffixLength > 2) {
             valid = NO;
             break;
         }
         char unit[3] = { 0 };
         memcpy(unit, suffix, suffixLength);
         IJSVGUnitLengthType type = IJSVGUnitLengthTypeForCString(unit);
-        if(suffixLength != 0 &&
-           (type == IJSVGUnitLengthTypeNumber ||
-            (type == IJSVGUnitLengthTypePercentage ? suffixLength != 1 : suffixLength != 2))) {
+        if (suffixLength != 0 && (type == IJSVGUnitLengthTypeNumber || (type == IJSVGUnitLengthTypePercentage ? suffixLength != 1 : suffixLength != 2))) {
             valid = NO;
             break;
         }
-        scalar = [IJSVGUnitLength convertUnitValue:scalar
-                          toBaseFromUnitLengthType:type];
-        if(!isfinite(scalar) || (!allowNegative && scalar < 0.f)) {
+        scalar = [IJSVGUnitLength convertUnitValue:scalar toBaseFromUnitLengthType:type];
+        if (!isfinite(scalar) || (!allowNegative && scalar < 0.f)) {
             valid = NO;
             break;
         }
         count++;
-        if(single && count > 1) {
+        if (single && count > 1) {
             return NO;
         }
-        if(lengths != nil || singleLength != NULL) {
-            IJSVGUnitLengthType resolvedType = type == IJSVGUnitLengthTypePercentage ||
-                type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ?
-                type : IJSVGUnitLengthTypeNumber;
-            IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar
-                                                                type:resolvedType
-                                                        originalType:type
-                                                             inherit:NO];
+        if (lengths != nil || singleLength != NULL) {
+            IJSVGUnitLengthType resolvedType = type == IJSVGUnitLengthTypePercentage || type == IJSVGUnitLengthTypeEM || type == IJSVGUnitLengthTypeEX ? type : IJSVGUnitLengthTypeNumber;
+            IJSVGUnitLength* length = [IJSVGUnitLength unitWithFloat:scalar type:resolvedType originalType:type inherit:NO];
             parsedLength = length;
             [lengths addObject:length];
         }
-        while(IJSVGLengthListIsWhitespace(*cursor)) {
+        while (IJSVGLengthListIsWhitespace(*cursor)) {
             cursor++;
         }
-        if(*cursor == ',') {
+        if (*cursor == ',') {
             cursor++;
-            while(IJSVGLengthListIsWhitespace(*cursor)) {
+            while (IJSVGLengthListIsWhitespace(*cursor)) {
                 cursor++;
             }
-            if(*cursor == '\0') {
+            if (*cursor == '\0') {
                 valid = NO;
                 break;
             }
         }
     }
-    if(singleLength != NULL) {
+    if (singleLength != NULL) {
         *singleLength = valid && count == 1 ? parsedLength : nil;
     }
     return valid && count != 0;
 }
 
-static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL single,
-                                  NSMutableArray<IJSVGUnitLength*>* lengths,
-                                  IJSVGUnitLength** singleLength)
+static BOOL IJSVGParseUnitLengths(NSString* value, BOOL allowNegative, BOOL single, NSMutableArray<IJSVGUnitLength*>* lengths, IJSVGUnitLength** singleLength)
 {
     const char* string = value.UTF8String;
-    if(string == NULL || *string == '\0' ||
-       strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+    if (string == NULL || *string == '\0' || strlen(string) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
         return NO;
     }
     return IJSVGParseUnitLengthsFromCString(string, allowNegative, single, lengths, singleLength);
@@ -272,7 +254,7 @@ NSArray<IJSVGUnitLength*>* IJSVGUnitLengthsFromString(NSString* value)
 
 BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute)
 {
-    switch(attribute) {
+    switch (attribute) {
         case IJSVGNodeAttributeX:
         case IJSVGNodeAttributeY:
         case IJSVGNodeAttributeWidth:
@@ -290,11 +272,10 @@ BOOL IJSVGAttributeIsGeometryProperty(NSUInteger attribute)
 
 BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute)
 {
-    if(IJSVGAttributeIsGeometryProperty(attribute) ||
-       (attribute >= IJSVGNodeAttributeFont && attribute <= IJSVGNodeAttributeTextOverflow)) {
+    if (IJSVGAttributeIsGeometryProperty(attribute) || (attribute >= IJSVGNodeAttributeFont && attribute <= IJSVGNodeAttributeTextOverflow)) {
         return YES;
     }
-    switch(attribute) {
+    switch (attribute) {
         case IJSVGNodeAttributeOpacity:
         case IJSVGNodeAttributeStrokeOpacity:
         case IJSVGNodeAttributeStrokeWidth:
@@ -344,71 +325,60 @@ BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute)
 
 static BOOL IJSVGGeometryPropertyAllowsAuto(IJSVGNodeAttribute attribute)
 {
-    return attribute == IJSVGNodeAttributeWidth || attribute == IJSVGNodeAttributeHeight ||
-        attribute == IJSVGNodeAttributeRX || attribute == IJSVGNodeAttributeRY;
+    return attribute == IJSVGNodeAttributeWidth || attribute == IJSVGNodeAttributeHeight || attribute == IJSVGNodeAttributeRX || attribute == IJSVGNodeAttributeRY;
 }
 
 static BOOL IJSVGGeometryPropertyAllowsNegative(IJSVGNodeAttribute attribute)
 {
-    return attribute == IJSVGNodeAttributeX || attribute == IJSVGNodeAttributeY ||
-        attribute == IJSVGNodeAttributeCX || attribute == IJSVGNodeAttributeCY;
+    return attribute == IJSVGNodeAttributeX || attribute == IJSVGNodeAttributeY || attribute == IJSVGNodeAttributeCX || attribute == IJSVGNodeAttributeCY;
 }
 
-typedef NS_ENUM(NSUInteger, IJSVGGeometryKeyword) {
-    IJSVGGeometryKeywordNone,
+typedef NS_ENUM(NSUInteger, IJSVGGeometryKeyword) { IJSVGGeometryKeywordNone,
     IJSVGGeometryKeywordInitial,
     IJSVGGeometryKeywordInherit,
-    IJSVGGeometryKeywordAuto
-};
+    IJSVGGeometryKeywordAuto };
 
 static IJSVGGeometryKeyword IJSVGGeometryKeywordFromString(NSString* value)
 {
-    if([value isEqualToString:@"inherit"]) {
+    if ([value isEqualToString:@"inherit"]) {
         return IJSVGGeometryKeywordInherit;
     }
-    if([value isEqualToString:@"initial"] || [value isEqualToString:@"unset"] ||
-       [value isEqualToString:@"revert"] || [value isEqualToString:@"revert-layer"]) {
+    if ([value isEqualToString:@"initial"] || [value isEqualToString:@"unset"] || [value isEqualToString:@"revert"] || [value isEqualToString:@"revert-layer"]) {
         return IJSVGGeometryKeywordInitial;
     }
     return [value isEqualToString:@"auto"] ? IJSVGGeometryKeywordAuto : IJSVGGeometryKeywordNone;
 }
 
-static IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
+IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
 {
-    return IJSVGGeometryPropertyAllowsAuto(attribute) ?
-        IJSVGAutoUnitLength : IJSVGZeroUnitLength;
+    return IJSVGGeometryPropertyAllowsAuto(attribute) ? IJSVGAutoUnitLength : IJSVGZeroUnitLength;
 }
 
-static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribute,
-                                     IJSVGUnitLength** parsedLength)
+static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribute, IJSVGUnitLength** parsedLength)
 {
     const char* chars = value.UTF8String;
-    if(chars == NULL) {
+    if (chars == NULL) {
         return NO;
     }
-    while(IJSVGLengthListIsWhitespace(*chars)) {
+    while (IJSVGLengthListIsWhitespace(*chars)) {
         chars++;
     }
-    if(strchr(chars, '(') == NULL &&
-       ((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z'))) {
+    if (strchr(chars, '(') == NULL && ((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z'))) {
         NSString* keywordString = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
         IJSVGGeometryKeyword keyword = IJSVGGeometryKeywordFromString(keywordString);
-        if(keyword == IJSVGGeometryKeywordNone ||
-           (keyword == IJSVGGeometryKeywordAuto && !IJSVGGeometryPropertyAllowsAuto(attribute))) {
+        if (keyword == IJSVGGeometryKeywordNone || (keyword == IJSVGGeometryKeywordAuto && !IJSVGGeometryPropertyAllowsAuto(attribute))) {
             return NO;
         }
-        if(parsedLength != NULL) {
-            if(keyword == IJSVGGeometryKeywordInherit) {
-                *parsedLength = IJSVGGeometryPropertyAllowsAuto(attribute) ?
-                    IJSVGInheritedAutoUnitLength : IJSVGInheritedZeroUnitLength;
+        if (parsedLength != NULL) {
+            if (keyword == IJSVGGeometryKeywordInherit) {
+                *parsedLength = IJSVGGeometryPropertyAllowsAuto(attribute) ? IJSVGInheritedAutoUnitLength : IJSVGInheritedZeroUnitLength;
             } else {
                 *parsedLength = IJSVGGeometryInitialLength(attribute);
             }
         }
         return YES;
     }
-    return IJSVGParseUnitLengths(value, IJSVGGeometryPropertyAllowsNegative(attribute),
-                                 YES, nil, parsedLength);
+    return IJSVGParseUnitLengths(value, IJSVGGeometryPropertyAllowsNegative(attribute), YES, nil, parsedLength);
 }
 
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute)
@@ -416,146 +386,36 @@ BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute)
     return IJSVGParseGeometryLength(value, attribute, NULL);
 }
 
-IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value,
-                                               IJSVGNodeAttribute attribute)
+IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute)
 {
     IJSVGUnitLength* length = nil;
     return IJSVGParseGeometryLength(value, attribute, &length) ? length : nil;
 }
 
-BOOL IJSVGGeometryPropertyAppliesToNode(IJSVGNodeAttribute attribute, IJSVGNode* node)
-{
-    switch(attribute) {
-        case IJSVGNodeAttributeCX:
-        case IJSVGNodeAttributeCY:
-            return node.type == IJSVGNodeTypeCircle || node.type == IJSVGNodeTypeEllipse;
-        case IJSVGNodeAttributeR:
-            return node.type == IJSVGNodeTypeCircle;
-        case IJSVGNodeAttributeRX:
-        case IJSVGNodeAttributeRY:
-            return node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeEllipse;
-        default:
-            return node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeImage ||
-                node.type == IJSVGNodeTypeSVG || node.type == IJSVGNodeTypeUse ||
-                node.type == IJSVGNodeTypeSymbol || node.type == IJSVGNodeTypeForeignObject;
-    }
-}
-
-void IJSVGApplyGeometryAttributes(IJSVGNode* node,
-                                  NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength],
-                                  IJSVGStyleSheetStyle* style,
-                                  IJSVGStyleSheetStyle* inlineStyle)
-{
-    if(!style.hasGeometryProperties) {
-        style = nil;
-    }
-    if(!inlineStyle.hasGeometryProperties) {
-        inlineStyle = nil;
-    }
-    const IJSVGNodeAttribute attributes[] = {
-        IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeWidth, IJSVGNodeAttributeHeight,
-        IJSVGNodeAttributeCX, IJSVGNodeAttributeCY, IJSVGNodeAttributeR,
-        IJSVGNodeAttributeRX, IJSVGNodeAttributeRY
-    };
-    NSString* __unsafe_unretained const names[] = {
-        IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeWidth, IJSVGAttributeHeight,
-        IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeRX,
-        IJSVGAttributeRY
-    };
-    NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* lengths = nil;
-    for(NSUInteger index = 0; index < sizeof(attributes) / sizeof(*attributes); index++) {
-        IJSVGNodeAttribute attribute = attributes[index];
-        if(attributeValues[attribute] == nil && style == nil && inlineStyle == nil) {
-            continue;
-        }
-        NSString* name = names[index];
-        NSString* value = [inlineStyle property:name];
-        if(value == nil || ([style isPropertyImportant:name] && ![inlineStyle isPropertyImportant:name])) {
-            value = [style property:name];
-        }
-        if(value == nil && attributeValues[attribute] == nil) {
-            continue;
-        }
-        BOOL applies = IJSVGGeometryPropertyAppliesToNode(attribute, node);
-        if(value == nil) {
-            if(!applies) {
-                continue;
-            }
-            value = attributeValues[attribute];
-        }
-        IJSVGUnitLength* length = IJSVGGeometryLengthFromString(value, attribute)
-            ?: IJSVGGeometryInitialLength(attribute);
-        if(length.inherit) {
-            length = node.styleParent.geometryLengths[@(attribute)]
-                ?: IJSVGGeometryInitialLength(attribute);
-        }
-        if(lengths == nil) {
-            lengths = [[NSMutableDictionary alloc] init];
-        }
-        lengths[@(attribute)] = length;
-        if(!applies) {
-            continue;
-        }
-        IJSVGUnitLength* used = length.type == IJSVGUnitLengthTypeAuto ? nil : length;
-        switch(attribute) {
-            case IJSVGNodeAttributeX:
-                node.x = used;
-                break;
-            case IJSVGNodeAttributeY:
-                node.y = used;
-                break;
-            case IJSVGNodeAttributeWidth:
-                node.width = used;
-                break;
-            case IJSVGNodeAttributeHeight:
-                node.height = used;
-                break;
-            case IJSVGNodeAttributeCX:
-                ((IJSVGPath*)node).cx = used;
-                break;
-            case IJSVGNodeAttributeCY:
-                ((IJSVGPath*)node).cy = used;
-                break;
-            case IJSVGNodeAttributeR:
-                ((IJSVGPath*)node).r = used;
-                break;
-            case IJSVGNodeAttributeRX:
-                ((IJSVGPath*)node).rx = used;
-                break;
-            case IJSVGNodeAttributeRY:
-                ((IJSVGPath*)node).ry = used;
-                break;
-            default:
-                break;
-        }
-    }
-    node.geometryLengths = lengths;
-}
-
 IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
 {
     value = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    if([value isEqualToString:@"normal"] || [value isEqualToString:@"initial"]) {
+    if ([value isEqualToString:@"normal"] || [value isEqualToString:@"initial"]) {
         return IJSVGPaintOrderNormal;
     }
-    NSArray<NSString*>* names = @[@"fill", @"stroke", @"markers"];
+    NSArray<NSString*>* names = @[ @"fill", @"stroke", @"markers" ];
     NSUInteger seen = 0, order = 0, count = 0;
-    for(NSString* token in [value componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]) {
-        if(token.length == 0) {
+    for (NSString* token in [value componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]) {
+        if (token.length == 0) {
             continue;
         }
         NSUInteger operation = [names indexOfObject:token];
-        if(operation == NSNotFound || (seen & (1 << operation)) != 0) {
+        if (operation == NSNotFound || (seen & (1 << operation)) != 0) {
             return IJSVGPaintOrderInherit;
         }
         seen |= 1 << operation;
         order |= operation << (2 * count++);
     }
-    if(count == 0) {
+    if (count == 0) {
         return IJSVGPaintOrderInherit;
     }
-    for(NSUInteger operation = 0; operation < 3; operation++) {
-        if((seen & (1 << operation)) == 0) {
+    for (NSUInteger operation = 0; operation < 3; operation++) {
+        if ((seen & (1 << operation)) == 0) {
             order |= operation << (2 * count++);
         }
     }
@@ -564,14 +424,13 @@ IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
 
 NSString* IJSVGStringFromPaintOrder(IJSVGPaintOrder order)
 {
-    NSArray<NSString*>* names = @[@"fill", @"stroke", @"markers"];
-    return [NSString stringWithFormat:@"%@ %@ %@", names[order & 3],
-            names[(order >> 2) & 3], names[(order >> 4) & 3]];
+    NSArray<NSString*>* names = @[ @"fill", @"stroke", @"markers" ];
+    return [NSString stringWithFormat:@"%@ %@ %@", names[order & 3], names[(order >> 2) & 3], names[(order >> 4) & 3]];
 }
 
 BOOL IJSVGIsolationFromString(NSString* value, BOOL parentIsolation)
 {
-    if([value isEqualToString:@"inherit"]) {
+    if ([value isEqualToString:@"inherit"]) {
         return parentIsolation;
     }
     return [value isEqualToString:@"isolate"];
@@ -581,20 +440,19 @@ IJSVGUnitLength* IJSVGDimensionFromString(NSString* value, IJSVGNodeType type)
 {
     IJSVGUnitLength* length = [IJSVGUnitLength unitWithString:value];
     BOOL viewportUse = type == IJSVGNodeTypeUse || type == IJSVGNodeTypeSymbol;
-    if(viewportUse && ([value isEqualToString:@"auto"] || length.value < 0.f)) {
+    if (viewportUse && ([value isEqualToString:@"auto"] || length.value < 0.f)) {
         return nil;
     }
     return length;
 }
 
-IJSVGUnitLength* IJSVGSymbolReferenceFromString(NSString* value,
-                                                IJSVGNodeAttribute attribute)
+IJSVGUnitLength* IJSVGSymbolReferenceFromString(NSString* value, IJSVGNodeAttribute attribute)
 {
-    if(value == nil) {
+    if (value == nil) {
         return nil;
     }
     BOOL horizontal;
-    switch(attribute) {
+    switch (attribute) {
         case IJSVGNodeAttributeRefX:
             horizontal = YES;
             break;
@@ -604,36 +462,36 @@ IJSVGUnitLength* IJSVGSymbolReferenceFromString(NSString* value,
         default:
             return nil;
     }
-    if([value isEqualToString:horizontal ? @"left" : @"top"]) {
+    if ([value isEqualToString:horizontal ? @"left" : @"top"]) {
         return IJSVGZeroPercentageUnitLength;
-    } else if([value isEqualToString:@"center"]) {
+    } else if ([value isEqualToString:@"center"]) {
         return IJSVGHalfPercentageUnitLength;
-    } else if([value isEqualToString:horizontal ? @"right" : @"bottom"]) {
+    } else if ([value isEqualToString:horizontal ? @"right" : @"bottom"]) {
         return IJSVGOnePercentageUnitLength;
     }
     return [IJSVGUnitLength unitWithString:value];
 }
 
-void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
+void IJSVGApplyBackgroundAttribute(IJSVGGraphicsNode* node, NSString* value)
 {
     char* buffer = IJSVGTimmedCharBufferCreate(value.UTF8String);
-    if(buffer == NULL) {
+    if (buffer == NULL) {
         return;
     }
     size_t length = strcspn(buffer, " \t\r\n");
     char* parameters = buffer + length;
-    if(*parameters != 0) {
+    if (*parameters != 0) {
         *parameters++ = 0;
         IJSVGTrimCharBuffer(parameters);
     }
     IJSVGBackgroundEnabled mode = IJSVGBackgroundEnabledUnspecified;
     CGRect bounds = CGRectNull;
-    if(IJSVGCharBufferCompare(buffer, "inherit") && *parameters == 0) {
+    if (IJSVGCharBufferCompare(buffer, "inherit") && *parameters == 0) {
         mode = IJSVGBackgroundEnabledInherit;
-    } else if(IJSVGCharBufferCompare(buffer, "accumulate") && *parameters == 0) {
+    } else if (IJSVGCharBufferCompare(buffer, "accumulate") && *parameters == 0) {
         mode = IJSVGBackgroundEnabledAccumulate;
-    } else if(IJSVGCharBufferCompare(buffer, "new")) {
-        if(*parameters == 0) {
+    } else if (IJSVGCharBufferCompare(buffer, "new")) {
+        if (*parameters == 0) {
             mode = IJSVGBackgroundEnabledNew;
             bounds = CGRectInfinite;
         } else {
@@ -641,12 +499,12 @@ void IJSVGApplyBackgroundAttribute(IJSVGNode* node, NSString* value)
             CGFloat* output = values;
             __block NSUInteger count = 0;
             BOOL valid = IJSVGEnumerateNumbersFromCString(parameters, ^(CGFloat number) {
-                if(count < 4) {
+                if (count < 4) {
                     output[count] = number;
                 }
                 count++;
             });
-            if(valid && count == 4 && values[2] > 0 && values[3] > 0) {
+            if (valid && count == 4 && values[2] > 0 && values[3] > 0) {
                 mode = IJSVGBackgroundEnabledNew;
                 bounds = CGRectMake(values[0], values[1], values[2], values[3]);
             }
@@ -662,35 +520,35 @@ BOOL IJSVGAttributeMaskContains(uint64_t mask, IJSVGNodeAttribute attribute)
     return (mask & (1ULL << attribute)) != 0;
 }
 
-NSString* IJSVGAttributeValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-                              IJSVGNodeAttribute attribute)
+NSString* IJSVGAttributeValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength], IJSVGNodeAttribute attribute)
 {
     return attributeValues[attribute];
 }
 
-BOOL IJSVGAttributeHasValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength],
-                            IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
+BOOL IJSVGAttributeHasValue(NSString* __unsafe_unretained const attributeValues[kIJSVGNodeAttributeStorageLength], IJSVGNodeAttribute attribute, NSString* __autoreleasing* value)
 {
     NSString* __unsafe_unretained attributeValue = attributeValues[attribute];
-    if(attributeValue == nil || attributeValue.length == 0) {
+    if (attributeValue == nil || attributeValue.length == 0) {
         return NO;
     }
-    if(value != NULL) {
+    if (value != NULL) {
         *value = attributeValue;
     }
     return YES;
 }
 
-BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes,
-                           NSUInteger* attribute, NSString* __autoreleasing* value)
+BOOL IJSVGReadXMLAttribute(NSXMLNode* node, IJSVGBitFlags* activeAttributes, NSUInteger* attribute, NSString* __autoreleasing* value, IJSVGReferenceAttributes* reference)
 {
-    NSUInteger index = IJSVGNodeAttributeForName(node.name);
-    if(index == NSNotFound ||
-       (activeAttributes != nil && ![activeAttributes bitIsSet:(int)index])) {
+    NSString* name = node.name;
+    NSUInteger index = IJSVGNodeAttributeForName(name);
+    if (reference != NULL && (index == IJSVGNodeAttributeHref || index == IJSVGNodeAttributeXLink || index == NSNotFound)) {
+        IJSVGReadReferenceAttribute(node, name, reference);
+    }
+    if (index == NSNotFound || (activeAttributes != nil && ![activeAttributes bitIsSet:(int)index])) {
         return NO;
     }
     NSString* string = node.stringValue;
-    if(string.length == 0) {
+    if (string.length == 0) {
         return NO;
     }
     *attribute = index;
@@ -703,93 +561,86 @@ NSSet<NSString*>* IJSVGClassNameList(NSString* value)
     return [NSSet setWithArray:[value ijsvg_componentsSplitByWhiteSpace] ?: @[]];
 }
 
-static void IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style,
-                                                 IJSVGStyleSheetStyle* fallback,
-                                                 IJSVGBitFlags* activeAttributes,
-                                                 NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+static uint64_t IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* fallback, IJSVGBitFlags* activeAttributes, NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
-    if(style == nil) {
-        return;
+    if (style == nil) {
+        return 0;
     }
-    if(!fallback.hasImportantProperties) {
+    if (!fallback.hasImportantProperties) {
         fallback = nil;
     }
+    uint64_t textAttributes = 0;
     NSUInteger count = 0;
     __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* owner = style;
     const IJSVGStyleSheetAttribute* entries = [owner attributesWithCount:&count];
     const int* allowed = activeAttributes.storage;
     NSUInteger allowedCount = MAX(0, activeAttributes.length);
-    for(NSUInteger index = 0; index < count; index++) {
+    for (NSUInteger index = 0; index < count; index++) {
         IJSVGStyleSheetAttribute entry = entries[index];
-        if(entry.attribute >= allowedCount || allowed[entry.attribute] != 1) {
+        if (entry.attribute >= allowedCount || allowed[entry.attribute] != 1) {
             continue;
         }
-        if(!entry.important && [fallback isPropertyImportant:entry.name]) {
+        if (!entry.important && [fallback isPropertyImportant:entry.name]) {
             continue;
         }
-        if(entry.invalidAtComputedValue) {
+        if (entry.invalidAtComputedValue) {
             attributeValues[entry.attribute] = nil;
-        } else if(entry.value.length != 0) {
+        } else if (entry.value.length != 0) {
             attributeValues[entry.attribute] = entry.value;
+            textAttributes |= IJSVGTextStyleBit(entry.attribute);
         }
     }
+    return textAttributes;
 }
 
-void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style,
-                               IJSVGBitFlags* activeAttributes,
-                               NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+void IJSVGStoreStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGBitFlags* activeAttributes, NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
     IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
 }
 
-void IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* style,
-                                       IJSVGStyleSheetStyle* inlineStyle, IJSVGBitFlags* activeAttributes,
-                                       NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
+uint64_t IJSVGStoreCascadedStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* inlineStyle, IJSVGBitFlags* activeAttributes, NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
 {
-    IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
-    IJSVGStorePrioritizedStyleAttributes(inlineStyle, style, activeAttributes, attributeValues);
+    uint64_t textAttributes = IJSVGStorePrioritizedStyleAttributes(style, nil, activeAttributes, attributeValues);
+    return textAttributes | IJSVGStorePrioritizedStyleAttributes(inlineStyle, style, activeAttributes, attributeValues);
 }
 
-typedef NS_ENUM(NSUInteger, IJSVGOriginKeyword) {
-    IJSVGOriginKeywordNone,
+typedef NS_ENUM(NSUInteger, IJSVGOriginKeyword) { IJSVGOriginKeywordNone,
     IJSVGOriginKeywordCenter,
     IJSVGOriginKeywordLeft,
     IJSVGOriginKeywordRight,
     IJSVGOriginKeywordTop,
-    IJSVGOriginKeywordBottom
-};
+    IJSVGOriginKeywordBottom };
 
 static IJSVGOriginKeyword IJSVGOriginKeywordFromCString(const char* token)
 {
     static const char* keywords[] = { "center", "left", "right", "top", "bottom" };
-    for(NSUInteger index = 0; index < sizeof(keywords) / sizeof(keywords[0]); index++) {
-        if(IJSVGCharBufferCaseInsensitiveCompare(token, keywords[index])) {
+    for (NSUInteger index = 0; index < sizeof(keywords) / sizeof(keywords[0]); index++) {
+        if (IJSVGCharBufferCaseInsensitiveCompare(token, keywords[index])) {
             return (IJSVGOriginKeyword)(index + 1);
         }
     }
     return IJSVGOriginKeywordNone;
 }
 
-static NSUInteger IJSVGPositionTokenize(char* buffer, const char* tokens[3],
-                                         NSUInteger capacity)
+static NSUInteger IJSVGPositionTokenize(char* buffer, const char* tokens[3], NSUInteger capacity)
 {
     NSUInteger count = 0;
     char* cursor = buffer;
-    while(*cursor != '\0') {
-        while(IJSVGLengthListIsWhitespace(*cursor) || *cursor == '\f') {
+    while (*cursor != '\0') {
+        while (IJSVGLengthListIsWhitespace(*cursor) || *cursor == '\f') {
             cursor++;
         }
-        if(*cursor == '\0') {
+        if (*cursor == '\0') {
             break;
         }
-        if(count == capacity) {
+        if (count == capacity) {
             return 0;
         }
         tokens[count++] = cursor;
-        while(*cursor != '\0' && !IJSVGLengthListIsWhitespace(*cursor) && *cursor != '\f') {
+        while (*cursor != '\0' && !IJSVGLengthListIsWhitespace(*cursor) && *cursor != '\f') {
             cursor++;
         }
-        if(*cursor != '\0') {
+        if (*cursor != '\0') {
             *cursor++ = '\0';
         }
     }
@@ -799,25 +650,21 @@ static NSUInteger IJSVGPositionTokenize(char* buffer, const char* tokens[3],
 NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax)
 {
     const char* tokens[3] = { NULL };
-    NSUInteger count = IJSVGPositionTokenize(buffer, tokens,
-        syntax == IJSVGPositionSyntaxBasicShape ? 2 : 3);
-    if(count == 0) {
+    NSUInteger count = IJSVGPositionTokenize(buffer, tokens, syntax == IJSVGPositionSyntaxBasicShape ? 2 : 3);
+    if (count == 0) {
         return nil;
     }
-    if(count == 3) {
+    if (count == 3) {
         // The renderer validates depth without applying a depth translation.
-        if(strchr(tokens[2], '%') != NULL ||
-           !IJSVGParseUnitLengthsFromCString(tokens[2], YES, YES, nil, NULL)) {
+        if (strchr(tokens[2], '%') != NULL || !IJSVGParseUnitLengthsFromCString(tokens[2], YES, YES, nil, NULL)) {
             return nil;
         }
         count--;
     }
-    IJSVGOriginKeyword keywords[2] = {
-        IJSVGOriginKeywordFromCString(tokens[0]), IJSVGOriginKeywordCenter
-    };
-    if(count == 1) {
+    IJSVGOriginKeyword keywords[2] = { IJSVGOriginKeywordFromCString(tokens[0]), IJSVGOriginKeywordCenter };
+    if (count == 1) {
         tokens[1] = "center";
-        if(keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom) {
+        if (keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom) {
             tokens[1] = tokens[0];
             tokens[0] = "center";
             keywords[1] = keywords[0];
@@ -825,9 +672,8 @@ NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSy
         }
     } else {
         keywords[1] = IJSVGOriginKeywordFromCString(tokens[1]);
-        if(keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom ||
-           keywords[1] == IJSVGOriginKeywordLeft || keywords[1] == IJSVGOriginKeywordRight) {
-            if(keywords[0] == IJSVGOriginKeywordNone || keywords[1] == IJSVGOriginKeywordNone) {
+        if (keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom || keywords[1] == IJSVGOriginKeywordLeft || keywords[1] == IJSVGOriginKeywordRight) {
+            if (keywords[0] == IJSVGOriginKeywordNone || keywords[1] == IJSVGOriginKeywordNone) {
                 return nil;
             }
             const char* token = tokens[0];
@@ -839,35 +685,32 @@ NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSy
         }
     }
     IJSVGUnitLength* result[2] = { nil };
-    for(NSUInteger index = 0; index < 2; index++) {
+    for (NSUInteger index = 0; index < 2; index++) {
         IJSVGOriginKeyword leading = index == 0 ? IJSVGOriginKeywordLeft : IJSVGOriginKeywordTop;
         IJSVGOriginKeyword trailing = index == 0 ? IJSVGOriginKeywordRight : IJSVGOriginKeywordBottom;
         IJSVGOriginKeyword keyword = keywords[index];
-        if(keyword == leading || keyword == trailing || keyword == IJSVGOriginKeywordCenter) {
-            result[index] = keyword == leading ? IJSVGZeroPercentageUnitLength :
-                (keyword == trailing ? IJSVGOnePercentageUnitLength :
-                    IJSVGHalfPercentageUnitLength);
+        if (keyword == leading || keyword == trailing || keyword == IJSVGOriginKeywordCenter) {
+            result[index] = keyword == leading ? IJSVGZeroPercentageUnitLength : (keyword == trailing ? IJSVGOnePercentageUnitLength : IJSVGHalfPercentageUnitLength);
         } else {
             IJSVGUnitLength* length = nil;
-            if(keyword != IJSVGOriginKeywordNone ||
-               !IJSVGParseUnitLengthsFromCString(tokens[index], YES, YES, nil, &length)) {
+            if (keyword != IJSVGOriginKeywordNone || !IJSVGParseUnitLengthsFromCString(tokens[index], YES, YES, nil, &length)) {
                 return nil;
             }
             result[index] = length;
         }
     }
-    return @[result[0], result[1]];
+    return @[ result[0], result[1] ];
 }
 
 NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
 {
     const char* bytes = value.UTF8String;
-    if(bytes == NULL || strlen(bytes) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+    if (bytes == NULL || strlen(bytes) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
         return nil;
     }
     // Tokenize one owned buffer, keeping all intermediate tokens in C.
     char* buffer = strdup(bytes);
-    if(buffer == NULL) {
+    if (buffer == NULL) {
         return nil;
     }
     NSArray<IJSVGUnitLength*>* origin = IJSVGPositionFromBuffer(buffer, IJSVGPositionSyntaxTransformOrigin);
@@ -875,113 +718,110 @@ NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
     return origin;
 }
 
-void IJSVGApplyTransformAttribute(IJSVGNode* node, NSString* value, BOOL allowCSSUnits)
+void IJSVGApplyTransformAttribute(IJSVGGraphicsNode* node, NSString* value, BOOL allowCSSUnits)
 {
-    IJSVGApplyParsedTransforms(node, [IJSVGTransform transformsForString:value
-                                                           allowCSSUnits:allowCSSUnits]);
+    IJSVGApplyParsedTransforms(node, [IJSVGTransform transformsForString:value allowCSSUnits:allowCSSUnits]);
 }
 
-void IJSVGApplyParsedTransforms(IJSVGNode* node,
-                                NSArray<IJSVGTransform*>* parsedTransforms)
+void IJSVGApplyParsedTransforms(IJSVGGraphicsNode* node, NSArray<IJSVGTransform*>* parsedTransforms)
 {
     NSMutableArray<IJSVGTransform*>* transforms = parsedTransforms.mutableCopy;
-    if(transforms == nil) {
+    if (transforms == nil) {
         transforms = [[NSMutableArray alloc] init];
     }
-    if(node.transforms != nil) {
+    if (node.transforms != nil) {
         [transforms addObjectsFromArray:node.transforms];
     }
     node.transforms = transforms;
 }
 
-static inline BOOL IJSVGAttributeNameEquals(const char* name, size_t length,
-                                            const char* expected)
+static inline BOOL IJSVGAttributeNameEquals(const char* name, size_t length, const char* expected)
 {
     return expected[length] == '\0' && memcmp(name, expected, length) == 0;
 }
 
 NSUInteger IJSVGNodeAttributeForName(NSString* name)
 {
-    if([name isEqualToString:IJSVGAttributeVectorEffect]) {
+    if ([name isEqualToString:IJSVGAttributeVectorEffect]) {
         return IJSVGNodeAttributeVectorEffect;
     }
     const char* attributeName = name.UTF8String;
-    if(attributeName == NULL) {
+    if (attributeName == NULL) {
         return NSNotFound;
     }
 
     size_t length = strlen(attributeName);
-    switch(length) {
+    switch (length) {
         case 1: {
             char c = attributeName[0];
-            if(c == 'd') {
+            if (c == 'd') {
                 return IJSVGNodeAttributeD;
             }
-            if(c == 'x') {
+            if (c == 'x') {
                 return IJSVGNodeAttributeX;
             }
-            if(c == 'y') {
+            if (c == 'y') {
                 return IJSVGNodeAttributeY;
             }
-            if(c == 'r') {
+            if (c == 'r') {
                 return IJSVGNodeAttributeR;
             }
             break;
         }
         case 2: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "dx")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "dx")) {
                 return IJSVGNodeAttributeDX;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "dy")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "dy")) {
                 return IJSVGNodeAttributeDY;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "in")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "in")) {
                 return IJSVGNodeAttributeIn;
             }
             char c = attributeName[0];
-            if(c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "id")) {
+            if (c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "id")) {
                 return IJSVGNodeAttributeID;
             }
-            if(c == 'c') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "cx")) {
+            if (c == 'c') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "cx")) {
                     return IJSVGNodeAttributeCX;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "cy")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "cy")) {
                     return IJSVGNodeAttributeCY;
                 }
             }
-            if(c == 'f') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "fx")) {
+            if (c == 'f') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "fx")) {
                     return IJSVGNodeAttributeFX;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "fy")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "fy")) {
                     return IJSVGNodeAttributeFY;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "fr")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "fr")) {
                     return IJSVGNodeAttributeFR;
                 }
             }
-            if(c == 'r') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "rx")) {
+            if (c == 'r') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "rx")) {
                     return IJSVGNodeAttributeRX;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "ry")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "ry")) {
                     return IJSVGNodeAttributeRY;
                 }
             }
-            if(c == 'x') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "x1")) {
+            if (c == 'x') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "x1")) {
                     return IJSVGNodeAttributeX1;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "x2")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "x2")) {
                     return IJSVGNodeAttributeX2;
                 }
             }
-            if(c == 'y') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "y1")) {
+            if (c == 'y') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "y1")) {
                     return IJSVGNodeAttributeY1;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "y2")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "y2")) {
                     return IJSVGNodeAttributeY2;
                 }
             }
@@ -989,230 +829,230 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
         }
         case 4: {
             char c = attributeName[0];
-            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill")) {
+            if (c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill")) {
                 return IJSVGNodeAttributeFill;
             }
-            if(c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "href")) {
+            if (c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "href")) {
                 return IJSVGNodeAttributeHref;
             }
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask")) {
                 return IJSVGNodeAttributeMask;
             }
             break;
         }
         case 5: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "color")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "color")) {
                 return IJSVGNodeAttributeColor;
             }
             char c = attributeName[0];
-            if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "class")) {
+            if (c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "class")) {
                 return IJSVGNodeAttributeClass;
             }
-            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "style")) {
+            if (c == 's' && IJSVGAttributeNameEquals(attributeName, length, "style")) {
                 return IJSVGNodeAttributeStyle;
             }
-            if(c == 'w' && IJSVGAttributeNameEquals(attributeName, length, "width")) {
+            if (c == 'w' && IJSVGAttributeNameEquals(attributeName, length, "width")) {
                 return IJSVGNodeAttributeWidth;
             }
-            if(c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xmlns")) {
+            if (c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xmlns")) {
                 return IJSVGNodeAttributeXMLNS;
             }
             break;
         }
         case 6: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "result")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "result")) {
                 return IJSVGNodeAttributeResult;
             }
             char c = attributeName[0];
-            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "filter")) {
+            if (c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "filter")) {
                 return IJSVGNodeAttributeFilter;
             }
-            if(c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "height")) {
+            if (c == 'h' && IJSVGAttributeNameEquals(attributeName, length, "height")) {
                 return IJSVGNodeAttributeHeight;
             }
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "marker")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "marker")) {
                 return IJSVGNodeAttributeMarker;
             }
-            if(c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "offset")) {
+            if (c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "offset")) {
                 return IJSVGNodeAttributeOffset;
             }
-            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "points")) {
+            if (c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "points")) {
                 return IJSVGNodeAttributePoints;
             }
-            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke")) {
+            if (c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke")) {
                 return IJSVGNodeAttributeStroke;
             }
             break;
         }
         case 7: {
             char c = attributeName[0];
-            if(c == 'd' && IJSVGAttributeNameEquals(attributeName, length, "display")) {
+            if (c == 'd' && IJSVGAttributeNameEquals(attributeName, length, "display")) {
                 return IJSVGNodeAttributeDisplay;
             }
-            if(c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "opacity")) {
+            if (c == 'o' && IJSVGAttributeNameEquals(attributeName, length, "opacity")) {
                 return IJSVGNodeAttributeOpacity;
             }
-            if(c == 'u' && IJSVGAttributeNameEquals(attributeName, length, "unicode")) {
+            if (c == 'u' && IJSVGAttributeNameEquals(attributeName, length, "unicode")) {
                 return IJSVGNodeAttributeUnicode;
             }
-            if(c == 'v') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "version")) {
+            if (c == 'v') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "version")) {
                     return IJSVGNodeAttributeVersion;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "viewBox")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "viewBox")) {
                     return IJSVGNodeAttributeViewBox;
                 }
             }
             break;
         }
         case 8: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "overflow")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "overflow")) {
                 return IJSVGNodeAttributeOverflow;
             }
             break;
         }
         case 9: {
             char c = attributeName[0];
-            if(c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "isolation")) {
+            if (c == 'i' && IJSVGAttributeNameEquals(attributeName, length, "isolation")) {
                 return IJSVGNodeAttributeIsolation;
             }
-            if(c == 'c') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "clip-path")) {
+            if (c == 'c') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "clip-path")) {
                     return IJSVGNodeAttributeClipPath;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "clip-rule")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "clip-rule")) {
                     return IJSVGNodeAttributeClipRule;
                 }
             }
-            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-rule")) {
+            if (c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-rule")) {
                 return IJSVGNodeAttributeFillRule;
             }
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask-type")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mask-type")) {
                 return IJSVGNodeAttributeMaskType;
             }
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskUnits")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskUnits")) {
                 return IJSVGNodeAttributeMaskUnits;
             }
-            if(c == 't' && IJSVGAttributeNameEquals(attributeName, length, "transform")) {
+            if (c == 't' && IJSVGAttributeNameEquals(attributeName, length, "transform")) {
                 return IJSVGNodeAttributeTransform;
             }
             break;
         }
         case 10: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "visibility")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "visibility")) {
                 return IJSVGNodeAttributeVisibility;
             }
             char c = attributeName[0];
-            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stop-color")) {
+            if (c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stop-color")) {
                 return IJSVGNodeAttributeStopColor;
             }
-            if(c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xlink:href")) {
+            if (c == 'x' && IJSVGAttributeNameEquals(attributeName, length, "xlink:href")) {
                 return IJSVGNodeAttributeXLink;
             }
             break;
         }
         case 11: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "paint-order")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "paint-order")) {
                 return IJSVGNodeAttributePaintOrder;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "flood-color")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "flood-color")) {
                 return IJSVGNodeAttributeFloodColor;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "filterUnits")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "filterUnits")) {
                 return IJSVGNodeAttributeFilterUnits;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "xmlns:xlink")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "xmlns:xlink")) {
                 return IJSVGNodeAttributeXMLNSXlink;
             }
             break;
         }
         case 12: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "stdDeviation")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "stdDeviation")) {
                 return IJSVGNodeAttributeStdDeviation;
             }
             char c = attributeName[0];
-            if(c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-opacity")) {
+            if (c == 'f' && IJSVGAttributeNameEquals(attributeName, length, "fill-opacity")) {
                 return IJSVGNodeAttributeFillOpacity;
             }
-            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternUnits")) {
+            if (c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternUnits")) {
                 return IJSVGNodeAttributePatternUnits;
             }
-            if(c == 's') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-width")) {
+            if (c == 's') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stroke-width")) {
                     return IJSVGNodeAttributeStrokeWidth;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "stop-opacity")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stop-opacity")) {
                     return IJSVGNodeAttributeStopOpacity;
                 }
             }
             break;
         }
         case 13: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "transform-box")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "transform-box")) {
                 return IJSVGNodeAttributeTransformBox;
             }
-            if(IJSVGAttributeNameEquals(attributeName, length, "flood-opacity")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "flood-opacity")) {
                 return IJSVGNodeAttributeFloodOpacity;
             }
             char c = attributeName[0];
-            if(c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "clipPathUnits")) {
+            if (c == 'c' && IJSVGAttributeNameEquals(attributeName, length, "clipPathUnits")) {
                 return IJSVGNodeAttributeClipPathUnits;
             }
-            if(c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientUnits")) {
+            if (c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientUnits")) {
                 return IJSVGNodeAttributeGradientUnits;
             }
             break;
         }
         case 14: {
             char c = attributeName[0];
-            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "primitiveUnits")) {
+            if (c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "primitiveUnits")) {
                 return IJSVGNodeAttributePrimitiveUnits;
             }
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mix-blend-mode")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "mix-blend-mode")) {
                 return IJSVGNodeAttributeBlendMode;
             }
-            if(c == 's') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-linecap")) {
+            if (c == 's') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stroke-linecap")) {
                     return IJSVGNodeAttributeStrokeLineCap;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-opacity")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stroke-opacity")) {
                     return IJSVGNodeAttributeStrokeOpacity;
                 }
             }
             break;
         }
         case 15: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "stroke-linejoin")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "stroke-linejoin")) {
                 return IJSVGNodeAttributeStrokeLineJoin;
             }
             break;
         }
         case 16: {
-            if(IJSVGAttributeNameEquals(attributeName, length, "transform-origin")) {
+            if (IJSVGAttributeNameEquals(attributeName, length, "transform-origin")) {
                 return IJSVGNodeAttributeTransformOrigin;
             }
             char c = attributeName[0];
-            if(c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskContentUnits")) {
+            if (c == 'm' && IJSVGAttributeNameEquals(attributeName, length, "maskContentUnits")) {
                 return IJSVGNodeAttributeMaskContentUnits;
             }
-            if(c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternTransform")) {
+            if (c == 'p' && IJSVGAttributeNameEquals(attributeName, length, "patternTransform")) {
                 return IJSVGNodeAttributePatternTransform;
             }
-            if(c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke-dasharray")) {
+            if (c == 's' && IJSVGAttributeNameEquals(attributeName, length, "stroke-dasharray")) {
                 return IJSVGNodeAttributeStrokeDashArray;
             }
             break;
         }
         case 17: {
             char c = attributeName[0];
-            if(c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientTransform")) {
+            if (c == 'g' && IJSVGAttributeNameEquals(attributeName, length, "gradientTransform")) {
                 return IJSVGNodeAttributeGradientTransform;
             }
-            if(c == 's') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-dashoffset")) {
+            if (c == 's') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stroke-dashoffset")) {
                     return IJSVGNodeAttributeStrokeDashOffset;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "stroke-miterlimit")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "stroke-miterlimit")) {
                     return IJSVGNodeAttributeStrokeMiterLimit;
                 }
             }
@@ -1220,11 +1060,11 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
         }
         case 19: {
             char c = attributeName[0];
-            if(c == 'p') {
-                if(IJSVGAttributeNameEquals(attributeName, length, "patternContentUnits")) {
+            if (c == 'p') {
+                if (IJSVGAttributeNameEquals(attributeName, length, "patternContentUnits")) {
                     return IJSVGNodeAttributePatternContentUnits;
                 }
-                if(IJSVGAttributeNameEquals(attributeName, length, "preserveAspectRatio")) {
+                if (IJSVGAttributeNameEquals(attributeName, length, "preserveAspectRatio")) {
                     return IJSVGNodeAttributePreserveAspectRatio;
                 }
             }
@@ -1234,182 +1074,178 @@ NSUInteger IJSVGNodeAttributeForName(NSString* name)
 
     static NSDictionary<NSString*, NSNumber*>* attributes = nil;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        attributes = @{
-            IJSVGAttributeVersion: @(IJSVGNodeAttributeVersion),
-            IJSVGAttributeXMLNS: @(IJSVGNodeAttributeXMLNS),
-            IJSVGAttributeXMLNSXlink: @(IJSVGNodeAttributeXMLNSXlink),
-            IJSVGAttributeViewBox: @(IJSVGNodeAttributeViewBox),
-            IJSVGAttributePreserveAspectRatio: @(IJSVGNodeAttributePreserveAspectRatio),
-            IJSVGAttributeID: @(IJSVGNodeAttributeID),
-            IJSVGAttributeClass: @(IJSVGNodeAttributeClass),
-            IJSVGAttributeX: @(IJSVGNodeAttributeX),
-            IJSVGAttributeY: @(IJSVGNodeAttributeY),
-            IJSVGAttributeWidth: @(IJSVGNodeAttributeWidth),
-            IJSVGAttributeHeight: @(IJSVGNodeAttributeHeight),
-            IJSVGAttributeOpacity: @(IJSVGNodeAttributeOpacity),
-            IJSVGAttributeStrokeOpacity: @(IJSVGNodeAttributeStrokeOpacity),
-            IJSVGAttributeStrokeWidth: @(IJSVGNodeAttributeStrokeWidth),
-            IJSVGAttributeStrokeDashOffset: @(IJSVGNodeAttributeStrokeDashOffset),
-            IJSVGAttributeFillOpacity: @(IJSVGNodeAttributeFillOpacity),
-            IJSVGAttributeClipPath: @(IJSVGNodeAttributeClipPath),
-            IJSVGAttributeClipPathUnits: @(IJSVGNodeAttributeClipPathUnits),
-            IJSVGAttributeClipRule: @(IJSVGNodeAttributeClipRule),
-            IJSVGAttributeMask: @(IJSVGNodeAttributeMask),
-            IJSVGAttributeGradientUnits: @(IJSVGNodeAttributeGradientUnits),
-            IJSVGAttributePatternUnits: @(IJSVGNodeAttributePatternUnits),
-            IJSVGAttributePatternContentUnits: @(IJSVGNodeAttributePatternContentUnits),
-            IJSVGAttributePatternTransform: @(IJSVGNodeAttributePatternTransform),
-            IJSVGAttributeMaskType: @(IJSVGNodeAttributeMaskType),
-            IJSVGAttributeMaskUnits: @(IJSVGNodeAttributeMaskUnits),
-            IJSVGAttributeMaskContentUnits: @(IJSVGNodeAttributeMaskContentUnits),
-            IJSVGAttributeTransform: @(IJSVGNodeAttributeTransform),
-            IJSVGAttributeGradientTransform: @(IJSVGNodeAttributeGradientTransform),
-            IJSVGAttributeUnicode: @(IJSVGNodeAttributeUnicode),
-            IJSVGAttributeStrokeLineCap: @(IJSVGNodeAttributeStrokeLineCap),
-            IJSVGAttributeStrokeLineJoin: @(IJSVGNodeAttributeStrokeLineJoin),
-            IJSVGAttributeStroke: @(IJSVGNodeAttributeStroke),
-            IJSVGAttributeStrokeDashArray: @(IJSVGNodeAttributeStrokeDashArray),
-            IJSVGAttributeStrokeMiterLimit: @(IJSVGNodeAttributeStrokeMiterLimit),
-            IJSVGAttributeFill: @(IJSVGNodeAttributeFill),
-            IJSVGAttributeFillRule: @(IJSVGNodeAttributeFillRule),
-            IJSVGAttributeBlendMode: @(IJSVGNodeAttributeBlendMode),
-            IJSVGAttributeIsolation: @(IJSVGNodeAttributeIsolation),
-            IJSVGAttributePaintOrder: @(IJSVGNodeAttributePaintOrder),
-            IJSVGAttributeVectorEffect: @(IJSVGNodeAttributeVectorEffect),
-            IJSVGAttributeColor: @(IJSVGNodeAttributeColor),
-            IJSVGAttributeVisibility: @(IJSVGNodeAttributeVisibility),
-            IJSVGAttributeDisplay: @(IJSVGNodeAttributeDisplay),
-            IJSVGAttributeStyle: @(IJSVGNodeAttributeStyle),
-            IJSVGAttributeD: @(IJSVGNodeAttributeD),
-            IJSVGAttributeXLink: @(IJSVGNodeAttributeXLink),
-            IJSVGAttributeX1: @(IJSVGNodeAttributeX1),
-            IJSVGAttributeX2: @(IJSVGNodeAttributeX2),
-            IJSVGAttributeY1: @(IJSVGNodeAttributeY1),
-            IJSVGAttributeY2: @(IJSVGNodeAttributeY2),
-            IJSVGAttributeRX: @(IJSVGNodeAttributeRX),
-            IJSVGAttributeRY: @(IJSVGNodeAttributeRY),
-            IJSVGAttributeCX: @(IJSVGNodeAttributeCX),
-            IJSVGAttributeCY: @(IJSVGNodeAttributeCY),
-            IJSVGAttributeR: @(IJSVGNodeAttributeR),
-            IJSVGAttributeFX: @(IJSVGNodeAttributeFX),
-            IJSVGAttributeFY: @(IJSVGNodeAttributeFY),
-            IJSVGAttributeFR: @(IJSVGNodeAttributeFR),
-            IJSVGAttributePoints: @(IJSVGNodeAttributePoints),
-            IJSVGAttributeOffset: @(IJSVGNodeAttributeOffset),
-            IJSVGAttributeStopColor: @(IJSVGNodeAttributeStopColor),
-            IJSVGAttributeStopOpacity: @(IJSVGNodeAttributeStopOpacity),
-            IJSVGAttributeHref: @(IJSVGNodeAttributeHref),
-            IJSVGAttributeOverflow: @(IJSVGNodeAttributeOverflow),
-            IJSVGAttributeMarker: @(IJSVGNodeAttributeMarker),
-            IJSVGAttributeFilter: @(IJSVGNodeAttributeFilter),
-            IJSVGAttributeFilterUnits: @(IJSVGNodeAttributeFilterUnits),
-            IJSVGAttributePrimitiveUnits: @(IJSVGNodeAttributePrimitiveUnits),
-            IJSVGAttributeDX: @(IJSVGNodeAttributeDX),
-            IJSVGAttributeDY: @(IJSVGNodeAttributeDY),
-            IJSVGAttributeStdDeviation: @(IJSVGNodeAttributeStdDeviation),
-            IJSVGAttributeFloodColor: @(IJSVGNodeAttributeFloodColor),
-            IJSVGAttributeFloodOpacity: @(IJSVGNodeAttributeFloodOpacity),
-            IJSVGAttributeIn: @(IJSVGNodeAttributeIn),
-            IJSVGAttributeResult: @(IJSVGNodeAttributeResult),
-            IJSVGAttributeIn2: @(IJSVGNodeAttributeIn2),
-            IJSVGAttributeMode: @(IJSVGNodeAttributeMode),
-            IJSVGAttributeType: @(IJSVGNodeAttributeType),
-            IJSVGAttributeValues: @(IJSVGNodeAttributeValues),
-            IJSVGAttributeOperator: @(IJSVGNodeAttributeOperator),
-            IJSVGAttributeK1: @(IJSVGNodeAttributeK1),
-            IJSVGAttributeK2: @(IJSVGNodeAttributeK2),
-            IJSVGAttributeK3: @(IJSVGNodeAttributeK3),
-            IJSVGAttributeK4: @(IJSVGNodeAttributeK4),
-            IJSVGAttributeOrder: @(IJSVGNodeAttributeOrder),
-            IJSVGAttributeKernelMatrix: @(IJSVGNodeAttributeKernelMatrix),
-            IJSVGAttributeDivisor: @(IJSVGNodeAttributeDivisor),
-            IJSVGAttributeBias: @(IJSVGNodeAttributeBias),
-            IJSVGAttributeTargetX: @(IJSVGNodeAttributeTargetX),
-            IJSVGAttributeTargetY: @(IJSVGNodeAttributeTargetY),
-            IJSVGAttributeEdgeMode: @(IJSVGNodeAttributeEdgeMode),
-            IJSVGAttributeKernelUnitLength: @(IJSVGNodeAttributeKernelUnitLength),
-            IJSVGAttributePreserveAlpha: @(IJSVGNodeAttributePreserveAlpha),
-            IJSVGAttributeSurfaceScale: @(IJSVGNodeAttributeSurfaceScale),
-            IJSVGAttributeDiffuseConstant: @(IJSVGNodeAttributeDiffuseConstant),
-            IJSVGAttributeSpecularConstant: @(IJSVGNodeAttributeSpecularConstant),
-            IJSVGAttributeSpecularExponent: @(IJSVGNodeAttributeSpecularExponent),
-            IJSVGAttributeLightingColor: @(IJSVGNodeAttributeLightingColor),
-            IJSVGAttributeScale: @(IJSVGNodeAttributeScale),
-            IJSVGAttributeXChannelSelector: @(IJSVGNodeAttributeXChannelSelector),
-            IJSVGAttributeYChannelSelector: @(IJSVGNodeAttributeYChannelSelector),
-            IJSVGAttributeRadius: @(IJSVGNodeAttributeRadius),
-            IJSVGAttributeBaseFrequency: @(IJSVGNodeAttributeBaseFrequency),
-            IJSVGAttributeNumOctaves: @(IJSVGNodeAttributeNumOctaves),
-            IJSVGAttributeSeed: @(IJSVGNodeAttributeSeed),
-            IJSVGAttributeStitchTiles: @(IJSVGNodeAttributeStitchTiles),
-            IJSVGAttributeTableValues: @(IJSVGNodeAttributeTableValues),
-            IJSVGAttributeSlope: @(IJSVGNodeAttributeSlope),
-            IJSVGAttributeIntercept: @(IJSVGNodeAttributeIntercept),
-            IJSVGAttributeAmplitude: @(IJSVGNodeAttributeAmplitude),
-            IJSVGAttributeExponent: @(IJSVGNodeAttributeExponent),
-            IJSVGAttributeAzimuth: @(IJSVGNodeAttributeAzimuth),
-            IJSVGAttributeElevation: @(IJSVGNodeAttributeElevation),
-            IJSVGAttributeZ: @(IJSVGNodeAttributeZ),
-            IJSVGAttributePointsAtX: @(IJSVGNodeAttributePointsAtX),
-            IJSVGAttributePointsAtY: @(IJSVGNodeAttributePointsAtY),
-            IJSVGAttributePointsAtZ: @(IJSVGNodeAttributePointsAtZ),
-            IJSVGAttributeLimitingConeAngle: @(IJSVGNodeAttributeLimitingConeAngle),
-            IJSVGAttributeColorInterpolationFilters: @(IJSVGNodeAttributeColorInterpolationFilters),
-            IJSVGAttributeEnableBackground: @(IJSVGNodeAttributeEnableBackground),
-            IJSVGAttributeBackgroundColor: @(IJSVGNodeAttributeBackgroundColor),
-            IJSVGAttributeFont: @(IJSVGNodeAttributeFont),
-            IJSVGAttributeFontFamily: @(IJSVGNodeAttributeFontFamily),
-            IJSVGAttributeFontSize: @(IJSVGNodeAttributeFontSize),
-            IJSVGAttributeFontSizeAdjust: @(IJSVGNodeAttributeFontSizeAdjust),
-            IJSVGAttributeFontWeight: @(IJSVGNodeAttributeFontWeight),
-            IJSVGAttributeFontStyle: @(IJSVGNodeAttributeFontStyle),
-            IJSVGAttributeFontStretch: @(IJSVGNodeAttributeFontStretch),
-            IJSVGAttributeFontVariant: @(IJSVGNodeAttributeFontVariant),
-            IJSVGAttributeFontVariantLigatures: @(IJSVGNodeAttributeFontVariantLigatures),
-            IJSVGAttributeFontFeatureSettings: @(IJSVGNodeAttributeFontFeatureSettings),
-            IJSVGAttributeFontKerning: @(IJSVGNodeAttributeFontKerning),
-            IJSVGAttributeLetterSpacing: @(IJSVGNodeAttributeLetterSpacing),
-            IJSVGAttributeWordSpacing: @(IJSVGNodeAttributeWordSpacing),
-            IJSVGAttributeTextAnchor: @(IJSVGNodeAttributeTextAnchor),
-            IJSVGAttributeDirection: @(IJSVGNodeAttributeDirection),
-            IJSVGAttributeUnicodeBidi: @(IJSVGNodeAttributeUnicodeBidi),
-            IJSVGAttributeWritingMode: @(IJSVGNodeAttributeWritingMode),
-            IJSVGAttributeTextOrientation: @(IJSVGNodeAttributeTextOrientation),
-            IJSVGAttributeDominantBaseline: @(IJSVGNodeAttributeDominantBaseline),
-            IJSVGAttributeAlignmentBaseline: @(IJSVGNodeAttributeAlignmentBaseline),
-            IJSVGAttributeBaselineShift: @(IJSVGNodeAttributeBaselineShift),
-            IJSVGAttributeTextDecoration: @(IJSVGNodeAttributeTextDecoration),
-            IJSVGAttributeTextDecorationLine: @(IJSVGNodeAttributeTextDecorationLine),
-            IJSVGAttributeWhiteSpace: @(IJSVGNodeAttributeWhiteSpace),
-            IJSVGAttributeLineHeight: @(IJSVGNodeAttributeLineHeight),
-            IJSVGAttributeInlineSize: @(IJSVGNodeAttributeInlineSize),
-            IJSVGAttributeTextTransform: @(IJSVGNodeAttributeTextTransform),
-            IJSVGAttributeTextOverflow: @(IJSVGNodeAttributeTextOverflow),
-            IJSVGAttributeXMLSpace: @(IJSVGNodeAttributeXMLSpace),
-            IJSVGAttributeLang: @(IJSVGNodeAttributeLang),
-            IJSVGAttributeXMLLang: @(IJSVGNodeAttributeXMLLang),
-            IJSVGAttributeTextRendering: @(IJSVGNodeAttributeTextRendering),
-            IJSVGAttributeRotate: @(IJSVGNodeAttributeRotate),
-            IJSVGAttributeTextLength: @(IJSVGNodeAttributeTextLength),
-            IJSVGAttributeLengthAdjust: @(IJSVGNodeAttributeLengthAdjust),
-            IJSVGAttributeStartOffset: @(IJSVGNodeAttributeStartOffset),
-            IJSVGAttributeMethod: @(IJSVGNodeAttributeMethod),
-            IJSVGAttributeSpacing: @(IJSVGNodeAttributeSpacing),
-            IJSVGAttributeSide: @(IJSVGNodeAttributeSide),
-            IJSVGAttributePath: @(IJSVGNodeAttributePath),
-            IJSVGAttributePathLength: @(IJSVGNodeAttributePathLength),
-            IJSVGAttributeMarkerStart: @(IJSVGNodeAttributeMarkerStart),
-            IJSVGAttributeMarkerMid: @(IJSVGNodeAttributeMarkerMid),
-            IJSVGAttributeMarkerEnd: @(IJSVGNodeAttributeMarkerEnd),
-            IJSVGAttributeRefX: @(IJSVGNodeAttributeRefX),
-            IJSVGAttributeRefY: @(IJSVGNodeAttributeRefY),
-            IJSVGAttributeMarkerWidth: @(IJSVGNodeAttributeMarkerWidth),
-            IJSVGAttributeMarkerHeight: @(IJSVGNodeAttributeMarkerHeight),
-            IJSVGAttributeMarkerUnits: @(IJSVGNodeAttributeMarkerUnits),
-            IJSVGAttributeOrient: @(IJSVGNodeAttributeOrient)
-        };
-    });
+    dispatch_once(&onceToken, ^{ attributes = @{IJSVGAttributeVersion : @(IJSVGNodeAttributeVersion),
+                                     IJSVGAttributeXMLNS : @(IJSVGNodeAttributeXMLNS),
+                                     IJSVGAttributeXMLNSXlink : @(IJSVGNodeAttributeXMLNSXlink),
+                                     IJSVGAttributeViewBox : @(IJSVGNodeAttributeViewBox),
+                                     IJSVGAttributePreserveAspectRatio : @(IJSVGNodeAttributePreserveAspectRatio),
+                                     IJSVGAttributeID : @(IJSVGNodeAttributeID),
+                                     IJSVGAttributeClass : @(IJSVGNodeAttributeClass),
+                                     IJSVGAttributeX : @(IJSVGNodeAttributeX),
+                                     IJSVGAttributeY : @(IJSVGNodeAttributeY),
+                                     IJSVGAttributeWidth : @(IJSVGNodeAttributeWidth),
+                                     IJSVGAttributeHeight : @(IJSVGNodeAttributeHeight),
+                                     IJSVGAttributeOpacity : @(IJSVGNodeAttributeOpacity),
+                                     IJSVGAttributeStrokeOpacity : @(IJSVGNodeAttributeStrokeOpacity),
+                                     IJSVGAttributeStrokeWidth : @(IJSVGNodeAttributeStrokeWidth),
+                                     IJSVGAttributeStrokeDashOffset : @(IJSVGNodeAttributeStrokeDashOffset),
+                                     IJSVGAttributeFillOpacity : @(IJSVGNodeAttributeFillOpacity),
+                                     IJSVGAttributeClipPath : @(IJSVGNodeAttributeClipPath),
+                                     IJSVGAttributeClipPathUnits : @(IJSVGNodeAttributeClipPathUnits),
+                                     IJSVGAttributeClipRule : @(IJSVGNodeAttributeClipRule),
+                                     IJSVGAttributeMask : @(IJSVGNodeAttributeMask),
+                                     IJSVGAttributeGradientUnits : @(IJSVGNodeAttributeGradientUnits),
+                                     IJSVGAttributePatternUnits : @(IJSVGNodeAttributePatternUnits),
+                                     IJSVGAttributePatternContentUnits : @(IJSVGNodeAttributePatternContentUnits),
+                                     IJSVGAttributePatternTransform : @(IJSVGNodeAttributePatternTransform),
+                                     IJSVGAttributeMaskType : @(IJSVGNodeAttributeMaskType),
+                                     IJSVGAttributeMaskUnits : @(IJSVGNodeAttributeMaskUnits),
+                                     IJSVGAttributeMaskContentUnits : @(IJSVGNodeAttributeMaskContentUnits),
+                                     IJSVGAttributeTransform : @(IJSVGNodeAttributeTransform),
+                                     IJSVGAttributeGradientTransform : @(IJSVGNodeAttributeGradientTransform),
+                                     IJSVGAttributeUnicode : @(IJSVGNodeAttributeUnicode),
+                                     IJSVGAttributeStrokeLineCap : @(IJSVGNodeAttributeStrokeLineCap),
+                                     IJSVGAttributeStrokeLineJoin : @(IJSVGNodeAttributeStrokeLineJoin),
+                                     IJSVGAttributeStroke : @(IJSVGNodeAttributeStroke),
+                                     IJSVGAttributeStrokeDashArray : @(IJSVGNodeAttributeStrokeDashArray),
+                                     IJSVGAttributeStrokeMiterLimit : @(IJSVGNodeAttributeStrokeMiterLimit),
+                                     IJSVGAttributeFill : @(IJSVGNodeAttributeFill),
+                                     IJSVGAttributeFillRule : @(IJSVGNodeAttributeFillRule),
+                                     IJSVGAttributeBlendMode : @(IJSVGNodeAttributeBlendMode),
+                                     IJSVGAttributeIsolation : @(IJSVGNodeAttributeIsolation),
+                                     IJSVGAttributePaintOrder : @(IJSVGNodeAttributePaintOrder),
+                                     IJSVGAttributeVectorEffect : @(IJSVGNodeAttributeVectorEffect),
+                                     IJSVGAttributeColor : @(IJSVGNodeAttributeColor),
+                                     IJSVGAttributeVisibility : @(IJSVGNodeAttributeVisibility),
+                                     IJSVGAttributeDisplay : @(IJSVGNodeAttributeDisplay),
+                                     IJSVGAttributeStyle : @(IJSVGNodeAttributeStyle),
+                                     IJSVGAttributeD : @(IJSVGNodeAttributeD),
+                                     IJSVGAttributeXLink : @(IJSVGNodeAttributeXLink),
+                                     IJSVGAttributeX1 : @(IJSVGNodeAttributeX1),
+                                     IJSVGAttributeX2 : @(IJSVGNodeAttributeX2),
+                                     IJSVGAttributeY1 : @(IJSVGNodeAttributeY1),
+                                     IJSVGAttributeY2 : @(IJSVGNodeAttributeY2),
+                                     IJSVGAttributeRX : @(IJSVGNodeAttributeRX),
+                                     IJSVGAttributeRY : @(IJSVGNodeAttributeRY),
+                                     IJSVGAttributeCX : @(IJSVGNodeAttributeCX),
+                                     IJSVGAttributeCY : @(IJSVGNodeAttributeCY),
+                                     IJSVGAttributeR : @(IJSVGNodeAttributeR),
+                                     IJSVGAttributeFX : @(IJSVGNodeAttributeFX),
+                                     IJSVGAttributeFY : @(IJSVGNodeAttributeFY),
+                                     IJSVGAttributeFR : @(IJSVGNodeAttributeFR),
+                                     IJSVGAttributePoints : @(IJSVGNodeAttributePoints),
+                                     IJSVGAttributeOffset : @(IJSVGNodeAttributeOffset),
+                                     IJSVGAttributeStopColor : @(IJSVGNodeAttributeStopColor),
+                                     IJSVGAttributeStopOpacity : @(IJSVGNodeAttributeStopOpacity),
+                                     IJSVGAttributeHref : @(IJSVGNodeAttributeHref),
+                                     IJSVGAttributeOverflow : @(IJSVGNodeAttributeOverflow),
+                                     IJSVGAttributeMarker : @(IJSVGNodeAttributeMarker),
+                                     IJSVGAttributeFilter : @(IJSVGNodeAttributeFilter),
+                                     IJSVGAttributeFilterUnits : @(IJSVGNodeAttributeFilterUnits),
+                                     IJSVGAttributePrimitiveUnits : @(IJSVGNodeAttributePrimitiveUnits),
+                                     IJSVGAttributeDX : @(IJSVGNodeAttributeDX),
+                                     IJSVGAttributeDY : @(IJSVGNodeAttributeDY),
+                                     IJSVGAttributeStdDeviation : @(IJSVGNodeAttributeStdDeviation),
+                                     IJSVGAttributeFloodColor : @(IJSVGNodeAttributeFloodColor),
+                                     IJSVGAttributeFloodOpacity : @(IJSVGNodeAttributeFloodOpacity),
+                                     IJSVGAttributeIn : @(IJSVGNodeAttributeIn),
+                                     IJSVGAttributeResult : @(IJSVGNodeAttributeResult),
+                                     IJSVGAttributeIn2 : @(IJSVGNodeAttributeIn2),
+                                     IJSVGAttributeMode : @(IJSVGNodeAttributeMode),
+                                     IJSVGAttributeType : @(IJSVGNodeAttributeType),
+                                     IJSVGAttributeValues : @(IJSVGNodeAttributeValues),
+                                     IJSVGAttributeOperator : @(IJSVGNodeAttributeOperator),
+                                     IJSVGAttributeK1 : @(IJSVGNodeAttributeK1),
+                                     IJSVGAttributeK2 : @(IJSVGNodeAttributeK2),
+                                     IJSVGAttributeK3 : @(IJSVGNodeAttributeK3),
+                                     IJSVGAttributeK4 : @(IJSVGNodeAttributeK4),
+                                     IJSVGAttributeOrder : @(IJSVGNodeAttributeOrder),
+                                     IJSVGAttributeKernelMatrix : @(IJSVGNodeAttributeKernelMatrix),
+                                     IJSVGAttributeDivisor : @(IJSVGNodeAttributeDivisor),
+                                     IJSVGAttributeBias : @(IJSVGNodeAttributeBias),
+                                     IJSVGAttributeTargetX : @(IJSVGNodeAttributeTargetX),
+                                     IJSVGAttributeTargetY : @(IJSVGNodeAttributeTargetY),
+                                     IJSVGAttributeEdgeMode : @(IJSVGNodeAttributeEdgeMode),
+                                     IJSVGAttributeKernelUnitLength : @(IJSVGNodeAttributeKernelUnitLength),
+                                     IJSVGAttributePreserveAlpha : @(IJSVGNodeAttributePreserveAlpha),
+                                     IJSVGAttributeSurfaceScale : @(IJSVGNodeAttributeSurfaceScale),
+                                     IJSVGAttributeDiffuseConstant : @(IJSVGNodeAttributeDiffuseConstant),
+                                     IJSVGAttributeSpecularConstant : @(IJSVGNodeAttributeSpecularConstant),
+                                     IJSVGAttributeSpecularExponent : @(IJSVGNodeAttributeSpecularExponent),
+                                     IJSVGAttributeLightingColor : @(IJSVGNodeAttributeLightingColor),
+                                     IJSVGAttributeScale : @(IJSVGNodeAttributeScale),
+                                     IJSVGAttributeXChannelSelector : @(IJSVGNodeAttributeXChannelSelector),
+                                     IJSVGAttributeYChannelSelector : @(IJSVGNodeAttributeYChannelSelector),
+                                     IJSVGAttributeRadius : @(IJSVGNodeAttributeRadius),
+                                     IJSVGAttributeBaseFrequency : @(IJSVGNodeAttributeBaseFrequency),
+                                     IJSVGAttributeNumOctaves : @(IJSVGNodeAttributeNumOctaves),
+                                     IJSVGAttributeSeed : @(IJSVGNodeAttributeSeed),
+                                     IJSVGAttributeStitchTiles : @(IJSVGNodeAttributeStitchTiles),
+                                     IJSVGAttributeTableValues : @(IJSVGNodeAttributeTableValues),
+                                     IJSVGAttributeSlope : @(IJSVGNodeAttributeSlope),
+                                     IJSVGAttributeIntercept : @(IJSVGNodeAttributeIntercept),
+                                     IJSVGAttributeAmplitude : @(IJSVGNodeAttributeAmplitude),
+                                     IJSVGAttributeExponent : @(IJSVGNodeAttributeExponent),
+                                     IJSVGAttributeAzimuth : @(IJSVGNodeAttributeAzimuth),
+                                     IJSVGAttributeElevation : @(IJSVGNodeAttributeElevation),
+                                     IJSVGAttributeZ : @(IJSVGNodeAttributeZ),
+                                     IJSVGAttributePointsAtX : @(IJSVGNodeAttributePointsAtX),
+                                     IJSVGAttributePointsAtY : @(IJSVGNodeAttributePointsAtY),
+                                     IJSVGAttributePointsAtZ : @(IJSVGNodeAttributePointsAtZ),
+                                     IJSVGAttributeLimitingConeAngle : @(IJSVGNodeAttributeLimitingConeAngle),
+                                     IJSVGAttributeColorInterpolationFilters : @(IJSVGNodeAttributeColorInterpolationFilters),
+                                     IJSVGAttributeEnableBackground : @(IJSVGNodeAttributeEnableBackground),
+                                     IJSVGAttributeBackgroundColor : @(IJSVGNodeAttributeBackgroundColor),
+                                     IJSVGAttributeFont : @(IJSVGNodeAttributeFont),
+                                     IJSVGAttributeFontFamily : @(IJSVGNodeAttributeFontFamily),
+                                     IJSVGAttributeFontSize : @(IJSVGNodeAttributeFontSize),
+                                     IJSVGAttributeFontSizeAdjust : @(IJSVGNodeAttributeFontSizeAdjust),
+                                     IJSVGAttributeFontWeight : @(IJSVGNodeAttributeFontWeight),
+                                     IJSVGAttributeFontStyle : @(IJSVGNodeAttributeFontStyle),
+                                     IJSVGAttributeFontStretch : @(IJSVGNodeAttributeFontStretch),
+                                     IJSVGAttributeFontVariant : @(IJSVGNodeAttributeFontVariant),
+                                     IJSVGAttributeFontVariantLigatures : @(IJSVGNodeAttributeFontVariantLigatures),
+                                     IJSVGAttributeFontFeatureSettings : @(IJSVGNodeAttributeFontFeatureSettings),
+                                     IJSVGAttributeFontKerning : @(IJSVGNodeAttributeFontKerning),
+                                     IJSVGAttributeLetterSpacing : @(IJSVGNodeAttributeLetterSpacing),
+                                     IJSVGAttributeWordSpacing : @(IJSVGNodeAttributeWordSpacing),
+                                     IJSVGAttributeTextAnchor : @(IJSVGNodeAttributeTextAnchor),
+                                     IJSVGAttributeDirection : @(IJSVGNodeAttributeDirection),
+                                     IJSVGAttributeUnicodeBidi : @(IJSVGNodeAttributeUnicodeBidi),
+                                     IJSVGAttributeWritingMode : @(IJSVGNodeAttributeWritingMode),
+                                     IJSVGAttributeTextOrientation : @(IJSVGNodeAttributeTextOrientation),
+                                     IJSVGAttributeDominantBaseline : @(IJSVGNodeAttributeDominantBaseline),
+                                     IJSVGAttributeAlignmentBaseline : @(IJSVGNodeAttributeAlignmentBaseline),
+                                     IJSVGAttributeBaselineShift : @(IJSVGNodeAttributeBaselineShift),
+                                     IJSVGAttributeTextDecoration : @(IJSVGNodeAttributeTextDecoration),
+                                     IJSVGAttributeTextDecorationLine : @(IJSVGNodeAttributeTextDecorationLine),
+                                     IJSVGAttributeWhiteSpace : @(IJSVGNodeAttributeWhiteSpace),
+                                     IJSVGAttributeLineHeight : @(IJSVGNodeAttributeLineHeight),
+                                     IJSVGAttributeInlineSize : @(IJSVGNodeAttributeInlineSize),
+                                     IJSVGAttributeTextTransform : @(IJSVGNodeAttributeTextTransform),
+                                     IJSVGAttributeTextOverflow : @(IJSVGNodeAttributeTextOverflow),
+                                     IJSVGAttributeXMLSpace : @(IJSVGNodeAttributeXMLSpace),
+                                     IJSVGAttributeLang : @(IJSVGNodeAttributeLang),
+                                     IJSVGAttributeXMLLang : @(IJSVGNodeAttributeXMLLang),
+                                     IJSVGAttributeTextRendering : @(IJSVGNodeAttributeTextRendering),
+                                     IJSVGAttributeRotate : @(IJSVGNodeAttributeRotate),
+                                     IJSVGAttributeTextLength : @(IJSVGNodeAttributeTextLength),
+                                     IJSVGAttributeLengthAdjust : @(IJSVGNodeAttributeLengthAdjust),
+                                     IJSVGAttributeStartOffset : @(IJSVGNodeAttributeStartOffset),
+                                     IJSVGAttributeMethod : @(IJSVGNodeAttributeMethod),
+                                     IJSVGAttributeSpacing : @(IJSVGNodeAttributeSpacing),
+                                     IJSVGAttributeSide : @(IJSVGNodeAttributeSide),
+                                     IJSVGAttributePath : @(IJSVGNodeAttributePath),
+                                     IJSVGAttributePathLength : @(IJSVGNodeAttributePathLength),
+                                     IJSVGAttributeMarkerStart : @(IJSVGNodeAttributeMarkerStart),
+                                     IJSVGAttributeMarkerMid : @(IJSVGNodeAttributeMarkerMid),
+                                     IJSVGAttributeMarkerEnd : @(IJSVGNodeAttributeMarkerEnd),
+                                     IJSVGAttributeRefX : @(IJSVGNodeAttributeRefX),
+                                     IJSVGAttributeRefY : @(IJSVGNodeAttributeRefY),
+                                     IJSVGAttributeMarkerWidth : @(IJSVGNodeAttributeMarkerWidth),
+                                     IJSVGAttributeMarkerHeight : @(IJSVGNodeAttributeMarkerHeight),
+                                     IJSVGAttributeMarkerUnits : @(IJSVGNodeAttributeMarkerUnits),
+                                     IJSVGAttributeOrient : @(IJSVGNodeAttributeOrient)}; });
     NSNumber* attribute = attributes[name];
     return attribute == nil ? NSNotFound : attribute.unsignedIntegerValue;
 }

@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView5
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"dashed"];
 }

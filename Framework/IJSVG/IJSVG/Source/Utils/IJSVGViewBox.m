@@ -6,17 +6,16 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGViewBox.h>
-#import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGStringAdditions.h>
+#import <IJSVG/IJSVGViewBox.h>
 
 @implementation IJSVGViewBox
 
-+ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment
-                          meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
++ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
 {
     NSString* str = nil;
-    switch(alignment) {
+    switch (alignment) {
         default:
         case IJSVGViewBoxAlignmentUnknown: {
             return nil;
@@ -61,17 +60,16 @@
             break;
         }
     }
-    if(meetOrSlice == IJSVGViewBoxMeetOrSliceMeet) {
+    if (meetOrSlice == IJSVGViewBoxMeetOrSliceMeet) {
         return str;
     }
     return [str stringByAppendingString:@" slice"];
 }
 
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
-                                meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice
++ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice
 {
     NSArray<NSString*>* parts = [string ijsvg_componentsSplitByWhiteSpace];
-    if(parts.count == 1) {
+    if (parts.count == 1) {
         *meetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
         return [self alignmentForString:parts[0]];
     }
@@ -81,18 +79,18 @@
 
 + (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string
 {
-    if(string == nil) {
+    if (string == nil) {
         return IJSVGViewBoxMeetOrSliceUnknown;
     }
 
     const char* name = string.UTF8String;
-    if(name == NULL) {
+    if (name == NULL) {
         return IJSVGViewBoxMeetOrSliceUnknown;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "meet") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "meet") == YES) {
         return IJSVGViewBoxMeetOrSliceMeet;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "slice") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "slice") == YES) {
         return IJSVGViewBoxMeetOrSliceSlice;
     }
     return IJSVGViewBoxMeetOrSliceUnknown;
@@ -100,51 +98,50 @@
 
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
 {
-    if(string == nil) {
+    if (string == nil) {
         return IJSVGViewBoxAlignmentUnknown;
     }
 
     const char* name = string.UTF8String;
-    if(name == NULL) {
+    if (name == NULL) {
         return IJSVGViewBoxAlignmentUnknown;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "none") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "none") == YES) {
         return IJSVGViewBoxAlignmentNone;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymin") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xminymin") == YES) {
         return IJSVGViewBoxAlignmentXMinYMin;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymin") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymin") == YES) {
         return IJSVGViewBoxAlignmentXMidYMin;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymin") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymin") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMin;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymid") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xminymid") == YES) {
         return IJSVGViewBoxAlignmentXMinYMid;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymid") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymid") == YES) {
         return IJSVGViewBoxAlignmentXMidYMid;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymid") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymid") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMid;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xminymax") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xminymax") == YES) {
         return IJSVGViewBoxAlignmentXMinYMax;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymax") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmidymax") == YES) {
         return IJSVGViewBoxAlignmentXMidYMax;
     }
-    if(IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymax") == YES) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(name, "xmaxymax") == YES) {
         return IJSVGViewBoxAlignmentXMaxYMax;
     }
     return IJSVGViewBoxAlignmentUnknown;
 }
 
-static void IJSVGViewBoxAlignmentFactors(IJSVGViewBoxAlignment alignment,
-                                         CGFloat* fx, CGFloat* fy)
+static void IJSVGViewBoxAlignmentFactors(IJSVGViewBoxAlignment alignment, CGFloat* fx, CGFloat* fy)
 {
-    switch(alignment) {
+    switch (alignment) {
         case IJSVGViewBoxAlignmentXMinYMin:
             *fx = 0.f;
             *fy = 0.f;
@@ -184,26 +181,21 @@ static void IJSVGViewBoxAlignmentFactors(IJSVGViewBoxAlignment alignment,
     }
 }
 
-CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRect,
-                                               IJSVGViewBoxAlignment alignment,
-                                               IJSVGViewBoxMeetOrSlice meetOrSlice)
+CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRect, IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice)
 {
     CGFloat scaleX = drawingRect.size.width / viewBox.size.width;
     CGFloat scaleY = drawingRect.size.height / viewBox.size.height;
 
     // none stretches each axis independently to fill the drawing rect, with no
     // aspect ratio preservation and nothing to align, just offset the origin.
-    if(alignment == IJSVGViewBoxAlignmentNone) {
+    if (alignment == IJSVGViewBoxAlignmentNone) {
         CGAffineTransform transform = CGAffineTransformMakeScale(scaleX, scaleY);
-        return CGAffineTransformConcat(transform,
-                                       CGAffineTransformMakeTranslation(-(viewBox.origin.x * scaleX),
-                                                                        -(viewBox.origin.y * scaleY)));
+        return CGAffineTransformConcat(transform, CGAffineTransformMakeTranslation(-(viewBox.origin.x * scaleX), -(viewBox.origin.y * scaleY)));
     }
 
     // meet fits the whole viewBox inside the rect (smallest scale), slice covers
     // the rect entirely (largest scale).
-    CGFloat ratio = (meetOrSlice == IJSVGViewBoxMeetOrSliceSlice) ?
-        MAX(scaleX, scaleY) : MIN(scaleX, scaleY);
+    CGFloat ratio = (meetOrSlice == IJSVGViewBoxMeetOrSliceSlice) ? MAX(scaleX, scaleY) : MIN(scaleX, scaleY);
 
     CGFloat fx = .5f;
     CGFloat fy = .5f;
@@ -211,44 +203,27 @@ CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRec
 
     // position the scaled viewBox within the rect by its alignment factor, then
     // pull back the viewBox origin (also in scaled space).
-    CGFloat tx = (drawingRect.size.width - (viewBox.size.width * ratio)) *
-        fx - (viewBox.origin.x * ratio);
-    CGFloat ty = (drawingRect.size.height - (viewBox.size.height * ratio)) *
-        fy - (viewBox.origin.y * ratio);
+    CGFloat tx = (drawingRect.size.width - (viewBox.size.width * ratio)) * fx - (viewBox.origin.x * ratio);
+    CGFloat ty = (drawingRect.size.height - (viewBox.size.height * ratio)) * fy - (viewBox.origin.y * ratio);
 
     CGAffineTransform transform = CGAffineTransformMakeScale(ratio, ratio);
     return CGAffineTransformConcat(transform, CGAffineTransformMakeTranslation(tx, ty));
 }
 
-CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox,
-                                          CGRect boundingBox,
-                                          IJSVGViewBoxAlignment alignment,
-                                          IJSVGViewBoxMeetOrSlice meetOrSlice,
-                                          IJSVGViewBoxDrawingBlock block) {
-    return [IJSVGViewBox drawViewBox:viewBox
-                              inRect:boundingBox
-                           alignment:alignment
-                         meetOrSlice:meetOrSlice
-                           inContext:ctx
-                        drawingBlock:block];
+CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox, IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice, IJSVGViewBoxDrawingBlock block)
+{
+    return [IJSVGViewBox drawViewBox:viewBox inRect:boundingBox alignment:alignment meetOrSlice:meetOrSlice inContext:ctx drawingBlock:block];
 }
 
-+ (CGAffineTransform)drawViewBox:(CGRect)viewBox
-                          inRect:(CGRect)drawingRect
-                       alignment:(IJSVGViewBoxAlignment)alignment
-                     meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
-                       inContext:(CGContextRef)ctx
-                    drawingBlock:(IJSVGViewBoxDrawingBlock)block
++ (CGAffineTransform)drawViewBox:(CGRect)viewBox inRect:(CGRect)drawingRect alignment:(IJSVGViewBoxAlignment)alignment meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice inContext:(CGContextRef)ctx drawingBlock:(IJSVGViewBoxDrawingBlock)block
 {
     CGContextSaveGState(ctx);
     // The element controls overflow independently of the viewBox mapping.
     // A missing, empty or identical viewBox maps 1:1, there is nothing to scale
     // so we draw with an identity transform rather than skipping the draw.
     CGAffineTransform transform = CGAffineTransformIdentity;
-    if(CGRectIsNull(viewBox) == NO && viewBox.size.width > 0.f &&
-       viewBox.size.height > 0.f && CGRectEqualToRect(viewBox, drawingRect) == NO) {
-        transform = IJSVGViewBoxComputeTransform(viewBox, drawingRect,
-                                                 alignment, meetOrSlice);
+    if (CGRectIsNull(viewBox) == NO && viewBox.size.width > 0.f && viewBox.size.height > 0.f && CGRectEqualToRect(viewBox, drawingRect) == NO) {
+        transform = IJSVGViewBoxComputeTransform(viewBox, drawingRect, alignment, meetOrSlice);
         CGContextConcatCTM(ctx, transform);
     }
 

@@ -6,16 +6,14 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(uint8_t, IJSVGMediaType) {
-    IJSVGMediaTypeAll,
+typedef NS_ENUM(uint8_t, IJSVGMediaType) { IJSVGMediaTypeAll,
     IJSVGMediaTypeScreen,
-    IJSVGMediaTypePrint
-};
+    IJSVGMediaTypePrint };
 
 typedef struct {
     CGSize viewport;
@@ -29,66 +27,45 @@ IJSVGMediaQuery* _Nullable IJSVGMediaQueryCreate(NSString* _Nullable media);
 void IJSVGMediaQueryRelease(IJSVGMediaQuery* _Nullable query);
 BOOL IJSVGMediaQueryMatches(const IJSVGMediaQuery* _Nullable query, IJSVGMediaEnvironment environment);
 
+BOOL IJSVGStyleSheetSkipEscape(const char* chars, NSUInteger length, NSUInteger* index, BOOL quoted);
+BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length, NSUInteger* index);
 
-BOOL IJSVGStyleSheetSkipEscape(const char* chars, NSUInteger length,
-                               NSUInteger* index, BOOL quoted);
-BOOL IJSVGStyleSheetSkipQuotedString(const char* chars, NSUInteger length,
-                                     NSUInteger* index);
-
-// Consumes one CSS identifier, decoding escapes. Does not skip leading whitespace.
-NSString* _Nullable IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length,
-                                                     NSUInteger* index);
+// Consumes one CSS identifier, decoding escapes. Does not skip leading
+// whitespace.
+NSString* _Nullable IJSVGStyleSheetConsumeIdentifier(const char* chars, NSUInteger length, NSUInteger* index);
 
 // A valid name that cannot fit or is not ASCII produces an empty output.
-BOOL IJSVGStyleSheetConsumeASCIIIdentifier(const char* chars, NSUInteger length,
-                                           NSUInteger* index, char* name,
-                                           NSUInteger capacity);
+BOOL IJSVGStyleSheetConsumeASCIIIdentifier(const char* chars, NSUInteger length, NSUInteger* index, char* name, NSUInteger capacity);
 
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);
 BOOL IJSVGStyleSheetCharIsInvalidSelectorChar(char aChar);
 
-BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* chars,
-                                                    NSUInteger index,
-                                                    NSUInteger length);
+BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* chars, NSUInteger index, NSUInteger length);
 
-NSUInteger IJSVGStyleSheetIndexBySkippingWhitespace(const char* chars,
-                                                    NSUInteger index,
-                                                    NSUInteger length);
+NSUInteger IJSVGStyleSheetIndexBySkippingWhitespace(const char* chars, NSUInteger index, NSUInteger length);
 
 IJSVGStyleSheetSelectorCombinator IJSVGStyleSheetCombinatorForChar(char aChar);
 NSString* IJSVGStyleSheetCombinatorStringForCombinator(IJSVGStyleSheetSelectorCombinator combinator);
 
-NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* chars,
-                                                       NSUInteger start,
-                                                       NSUInteger end);
+NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* chars, NSUInteger start, NSUInteger end);
 
-NSString* _Nullable IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start,
-                                                NSUInteger end);
+NSString* _Nullable IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start, NSUInteger end);
 
 BOOL IJSVGStyleSheetConsumeQuotedCharacter(char c, char* quote, BOOL* escaped);
-NSRange IJSVGStyleSheetDeclarationRange(const char* chars, NSUInteger length,
-                                        BOOL* important);
+NSRange IJSVGStyleSheetDeclarationRange(const char* chars, NSUInteger length, BOOL* important);
 NSString* _Nullable IJSVGStyleSheetDeclarationValue(NSString* value, BOOL* important);
-BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value,
-                                           void (^handler)(NSString* family, BOOL quoted));
+BOOL IJSVGStyleSheetEnumerateFontFamilies(NSString* value, void (^handler)(NSString* family, BOOL quoted));
 NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string);
-NSString* _Nullable IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value,
-                                                      NSDictionary<NSString*, NSString*>* _Nullable * _Nonnull expanded);
-NSString* _Nullable IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString* value,
-                                                              NSDictionary<NSString*, NSString*>* _Nullable * _Nonnull expanded,
-                                                              BOOL* variables);
-NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property,
-                                                                     NSString* value);
+NSString* _Nullable IJSVGStyleSheetResolveDeclaration(NSString* property, NSString* value, NSDictionary<NSString*, NSString*>* _Nullable* _Nonnull expanded);
+NSString* _Nullable IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString* value, NSDictionary<NSString*, NSString*>* _Nullable* _Nonnull expanded, BOOL* variables);
+NSDictionary<NSString*, NSString*>* IJSVGStyleSheetExpandDeclaration(NSString* property, NSString* value);
 
 BOOL IJSVGStyleSheetSelectorRawHasSimpleSelector(IJSVGStyleSheetSelectorRaw* rawSelector);
-BOOL IJSVGStyleSheetSelectorRawHasAnySelector(IJSVGStyleSheetSelectorRaw* rawSelector,
-                                              BOOL hasUniversalSelector);
+BOOL IJSVGStyleSheetSelectorRawHasAnySelector(IJSVGStyleSheetSelectorRaw* rawSelector, BOOL hasUniversalSelector);
 
-BOOL IJSVGStyleSheetSelectorCommitRawSelector(NSMutableArray<IJSVGStyleSheetSelectorRaw*>* parsedSelectors,
-                                              IJSVGStyleSheetSelectorRaw* rawSelector,
-                                              BOOL hasUniversalSelector);
+BOOL IJSVGStyleSheetSelectorCommitRawSelector(NSMutableArray<IJSVGStyleSheetSelectorRaw*>* parsedSelectors, IJSVGStyleSheetSelectorRaw* rawSelector, BOOL hasUniversalSelector);
 
 IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSelectorCombinator combinator);
 

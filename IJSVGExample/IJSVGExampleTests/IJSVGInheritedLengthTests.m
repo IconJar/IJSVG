@@ -6,21 +6,21 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGTestHelpers.h>
 #import <IJSVG/IJSVGGradientUnitLength.h>
+#import <IJSVGTestHelpers.h>
 #import <math.h>
 
-@interface IJSVGInheritedLengthTests: XCTestCase
+@interface IJSVGInheritedLengthTests : XCTestCase
 @end
 
 @implementation IJSVGInheritedLengthTests
 
 - (void)testInheritedLengthsFollowParentReplacements
 {
-    for(NSString* property in @[@"fillOpacity", @"strokeOpacity", @"strokeWidth", @"strokeDashOffset"]) {
-        IJSVGNode* first = [[IJSVGNode alloc] init];
-        IJSVGNode* second = [[IJSVGNode alloc] init];
-        IJSVGNode* child = [[IJSVGNode alloc] init];
+    for (NSString* property in @[ @"fillOpacity", @"strokeOpacity", @"strokeWidth", @"strokeDashOffset" ]) {
+        IJSVGGraphicsNode* first = [[IJSVGGraphicsNode alloc] init];
+        IJSVGGraphicsNode* second = [[IJSVGGraphicsNode alloc] init];
+        IJSVGGraphicsNode* child = [[IJSVGGraphicsNode alloc] init];
         IJSVGUnitLength* firstValue = [IJSVGUnitLength unitWithFloat:0.25f];
         IJSVGUnitLength* secondValue = [IJSVGUnitLength unitWithFloat:0.75f];
         [first setValue:firstValue forKey:property];
@@ -51,7 +51,7 @@
         child.parentNode = first;
         XCTAssertEqual([child valueForKey:property], explicit);
         [child setValue:nil forKey:property];
-        if([property isEqualToString:@"strokeDashOffset"]) {
+        if ([property isEqualToString:@"strokeDashOffset"]) {
             XCTAssertEqual([child valueForKey:property], replacement);
         } else {
             XCTAssertNil([child valueForKey:property]);
@@ -61,8 +61,8 @@
 
 - (void)testOpacityPreservesReplacementNilAndExplicitInheritance
 {
-    IJSVGNode* parent = [[IJSVGNode alloc] init];
-    IJSVGNode* child = [[IJSVGNode alloc] init];
+    IJSVGGraphicsNode* parent = [[IJSVGGraphicsNode alloc] init];
+    IJSVGGraphicsNode* child = [[IJSVGGraphicsNode alloc] init];
     child.parentNode = parent;
     parent.opacity = [IJSVGUnitLength unitWithFloat:0.25f];
     XCTAssertEqual(child.opacity.value, 1.f);
@@ -74,7 +74,7 @@
     parent.opacity = [IJSVGUnitLength unitWithFloat:0.5f];
     XCTAssertEqual(child.opacity.value, 0.5f);
 
-    IJSVGNode* styleParent = [[IJSVGNode alloc] init];
+    IJSVGGraphicsNode* styleParent = [[IJSVGGraphicsNode alloc] init];
     styleParent.opacity = [IJSVGUnitLength unitWithFloat:0.75f];
     child.styleParent = styleParent;
     XCTAssertEqual(child.opacity.value, 0.75f);
@@ -94,8 +94,8 @@
     XCTAssertNotEqual(one, parsed);
     XCTAssertEqual(one.value, parsed.value);
 
-    IJSVGNode* firstNode = [[IJSVGNode alloc] init];
-    IJSVGNode* secondNode = [[IJSVGNode alloc] init];
+    IJSVGGraphicsNode* firstNode = [[IJSVGGraphicsNode alloc] init];
+    IJSVGGraphicsNode* secondNode = [[IJSVGGraphicsNode alloc] init];
     XCTAssertNotNil(firstNode.opacity);
     XCTAssertNotNil(firstNode.fillOpacity);
     XCTAssertNotNil(firstNode.strokeDashOffset);

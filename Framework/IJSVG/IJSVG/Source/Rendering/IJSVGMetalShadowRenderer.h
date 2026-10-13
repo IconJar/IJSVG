@@ -2,12 +2,12 @@
 //  IJSVGMetalShadowRenderer.h
 //  IJSVG
 //
-//  Created on 30/09/2026.
+//  Created by Curtis Hard on 30/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <Foundation/Foundation.h>
 #import <simd/simd.h>
 
 // Private fixed size descriptors shared by the CPU encoder and Metal kernels.
@@ -21,7 +21,8 @@ typedef struct {
 } IJSVGMetalShadowParameters;
 
 // Each job owns its pixels, no graphics context or thread local state crosses
-// the GPU submission. Results are copied before the pooled buffers are released.
+// the GPU submission. Results are copied before the pooled buffers are
+// released.
 @interface IJSVGMetalShadowJob : NSObject
 
 @property (nonatomic, strong) NSData* source;

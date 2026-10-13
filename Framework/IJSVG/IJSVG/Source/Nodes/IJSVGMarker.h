@@ -10,17 +10,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, IJSVGMarkerUnits) { IJSVGMarkerUnitsStrokeWidth,
+    IJSVGMarkerUnitsUserSpaceOnUse };
 
-typedef NS_ENUM(NSUInteger, IJSVGMarkerUnits) {
-    IJSVGMarkerUnitsStrokeWidth,
-    IJSVGMarkerUnitsUserSpaceOnUse
-};
-
-typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) {
-    IJSVGMarkerOrientTypeAngle,
+typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) { IJSVGMarkerOrientTypeAngle,
     IJSVGMarkerOrientTypeAuto,
-    IJSVGMarkerOrientTypeAutoStartReverse
-};
+    IJSVGMarkerOrientTypeAutoStartReverse };
 
 @interface IJSVGMarker : IJSVGGroup
 @property (nonatomic, strong) IJSVGUnitLength* refX;
@@ -33,11 +28,9 @@ typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) {
 
 @end
 
-typedef NS_ENUM(NSUInteger, IJSVGMarkerPositionType) {
-    IJSVGMarkerPositionStart,
+typedef NS_ENUM(NSUInteger, IJSVGMarkerPositionType) { IJSVGMarkerPositionStart,
     IJSVGMarkerPositionMid,
-    IJSVGMarkerPositionEnd
-};
+    IJSVGMarkerPositionEnd };
 
 @interface IJSVGMarkerPosition : NSObject
 
@@ -47,8 +40,8 @@ typedef NS_ENUM(NSUInteger, IJSVGMarkerPositionType) {
 
 @end
 
-// Source data preserves SVG vertices when an arc is represented by several CG curves.
-NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
-                                                    NSString* _Nullable sourceData);
+// Source data preserves SVG vertices when an arc is represented by several CG
+// curves.
+NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* _Nullable sourceData);
 
 NS_ASSUME_NONNULL_END

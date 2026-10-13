@@ -6,7 +6,9 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGUnitLength.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,7 +21,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface IJSVGExporterPathInstruction : NSObject {
-
 @private
     NSInteger _dataCount;
     CGFloat* _data;
@@ -33,29 +34,20 @@ NS_ASSUME_NONNULL_BEGIN
 void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSVGFloatingPointOptions options);
 CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
 
-+ (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path
-                                           floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSArray<IJSVGExporterPathInstruction*>*)instructionsFromPath:(CGPathRef)path floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
-- (id)initWithInstruction:(char)instruction
-                dataCount:(NSInteger)floatCount;
+- (id)initWithInstruction:(char)instruction dataCount:(NSInteger)floatCount;
 
 - (CGFloat*)data;
 - (NSInteger)dataLength;
 
-+ (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                                                floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (void)convertInstructionsToMixedAbsoluteRelative:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (void)convertInstructionsDataToRounded:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                    floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (void)convertInstructionsDataToRoundedAndRecalculateCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                                             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
-                   floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-+ (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets
-                     floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSArray<IJSVGExporterPathInstruction*>*)convertInstructionsCurves:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (void)convertInstructionsToMixedAbsoluteRelative:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (void)convertInstructionsDataToRounded:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (void)convertInstructionsDataToRoundedAndRecalculateCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 @end
 NS_ASSUME_NONNULL_END

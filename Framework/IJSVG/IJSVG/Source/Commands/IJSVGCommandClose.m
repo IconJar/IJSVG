@@ -15,12 +15,7 @@
     return 0;
 }
 
-+ (void)runWithParams:(CGFloat*)params
-           paramCount:(NSInteger)count
-              command:(IJSVGCommand*)currentCommand
-      previousCommand:(IJSVGCommand*)command
-                 type:(IJSVGCommandType)type
-                 path:(CGMutablePathRef)path
++ (void)runWithParams:(CGFloat*)params paramCount:(NSInteger)count command:(IJSVGCommand*)currentCommand previousCommand:(IJSVGCommand*)command type:(IJSVGCommandType)type path:(CGMutablePathRef)path
 {
     CGPathCloseSubpath(path);
 }

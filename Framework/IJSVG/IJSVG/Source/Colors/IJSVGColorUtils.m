@@ -6,19 +6,18 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGColorUtils.h>
 #import <IJSVG/IJSVGStringAdditions.h>
 #import <IJSVG/IJSVGUnitLength.h>
+#import <IJSVGColorUtils.h>
 
-static CGFloat IJSVGColorClamp(CGFloat value, CGFloat minimumValue,
-                               CGFloat maximumValue)
+static CGFloat IJSVGColorClamp(CGFloat value, CGFloat minimumValue, CGFloat maximumValue)
 {
     return fmin(maximumValue, fmax(minimumValue, value));
 }
 
 static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
 {
-    if(value <= 0.0031308f) {
+    if (value <= 0.0031308f) {
         return 12.92f * value;
     }
     return 1.055f * pow(value, 1.f / 2.4f) - 0.055f;
@@ -31,12 +30,9 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     return [self colorFromString:[NSString stringWithFormat:@"oklch(%@)", parameters]];
 }
 
-+ (NSColor*)colorFromOKLCHLightness:(CGFloat)lightness
-                             chroma:(CGFloat)chroma
-                                hue:(CGFloat)hue
-                              alpha:(CGFloat)alpha
++ (NSColor*)colorFromOKLCHLightness:(CGFloat)lightness chroma:(CGFloat)chroma hue:(CGFloat)hue alpha:(CGFloat)alpha
 {
-    if(lightness > 1.f) {
+    if (lightness > 1.f) {
         lightness /= 100.f;
     }
     lightness = IJSVGColorClamp(lightness, 0.f, 1.f);
@@ -63,15 +59,10 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     green = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(green), 0.f, 1.f);
     blue = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(blue), 0.f, 1.f);
 
-    return [NSColor colorWithDeviceRed:red
-                                 green:green
-                                  blue:blue
-                                 alpha:alpha];
+    return [NSColor colorWithDeviceRed:red green:green blue:blue alpha:alpha];
 }
 
-+ (CGFloat*)HSBFromCSSHSLHue:(CGFloat)hue
-                  saturation:(CGFloat)saturation
-                   lightness:(CGFloat)lightness
++ (CGFloat*)HSBFromCSSHSLHue:(CGFloat)hue saturation:(CGFloat)saturation lightness:(CGFloat)lightness
 {
     hue *= (1.f / 360.f);
     hue = (hue - floorf(hue));
@@ -81,7 +72,7 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
 
     CGFloat s = saturation * ((lightness < 1.f) ? lightness : (2.f - lightness));
     CGFloat brightness = (lightness + s) * .5f;
-    if(s != 0.f) {
+    if (s != 0.f) {
         s = (2.f * s) / (lightness + s);
     }
     CGFloat* floats = (CGFloat*)malloc(3 * sizeof(CGFloat));

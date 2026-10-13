@@ -12,7 +12,7 @@
 
 - (id)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _lineCapStyle = IJSVGLineCapStyleNone;
         _lineJoinStyle = IJSVGLineJoinStyleNone;
         _lineWidth = IJSVGInheritedFloatValue;
@@ -24,7 +24,7 @@
 - (IJSVGTraitedColorStorage*)colors
 {
     // this can be lazy as most users wont use this functionality
-    if(_colors == nil) {
+    if (_colors == nil) {
         _colors = [[IJSVGTraitedColorStorage alloc] init];
     }
     return _colors;

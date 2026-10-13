@@ -2,46 +2,46 @@
 //  IJSVGGroupPaint.m
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGGroupPaint.h>
 #import <IJSVGFilterPaint.h>
+#import <IJSVGGroupPaint.h>
 #import <IJSVGPatternPaint.h>
 
 static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
 {
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:root];
     NSMutableSet<IJSVGPaint*>* visited = [[NSMutableSet alloc] init];
-    while(pending.count != 0) {
+    while (pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
-        if([visited containsObject:paint]) {
+        if ([visited containsObject:paint]) {
             continue;
         }
         [visited addObject:paint];
-        if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
             IJSVGFilterPaint* filtered = (IJSVGFilterPaint*)paint;
-            if(filtered.usesBackground) {
+            if (filtered.usesBackground) {
                 return YES;
             }
             // Referenced image trees are resolved during filter evaluation,
             // so their background dependencies are not in this paint tree.
-            for(IJSVGFilterPrimitive* primitive in filtered.filter.primitives) {
-                if(primitive.type == IJSVGNodeTypeFilterImage) {
+            for (IJSVGFilterPrimitive* primitive in filtered.filter.primitives) {
+                if (primitive.type == IJSVGNodeTypeFilterImage) {
                     return YES;
                 }
             }
         }
         [pending addObjectsFromArray:paint.children ?: @[]];
         [pending addObjectsFromArray:paint.clipPaints ?: @[]];
-        if(paint.maskPaint != nil) {
+        if (paint.maskPaint != nil) {
             [pending addObject:paint.maskPaint];
         }
-        if([paint isKindOfClass:IJSVGPatternPaint.class]) {
+        if ([paint isKindOfClass:IJSVGPatternPaint.class]) {
             IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
-            if(pattern != nil) {
+            if (pattern != nil) {
                 [pending addObject:pattern];
             }
         }
@@ -53,24 +53,20 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    if(self.sourceNode != nil && !CGRectIsNull(self.sourceNode.backgroundRect)) {
-        if(IJSVGGroupNeedsBackgroundPixels(self)) {
-            [IJSVGFilterPaint drawBackgroundForPaint:self context:ctx
-                                        drawingBlock:^(CGContextRef bitmap) {
-                [self drawContentsInContext:bitmap];
-            }];
+    if (self.sourceNode != nil && !CGRectIsNull(self.sourceNode.backgroundRect)) {
+        if (IJSVGGroupNeedsBackgroundPixels(self)) {
+            [IJSVGFilterPaint drawBackgroundForPaint:self context:ctx drawingBlock:^(CGContextRef bitmap) { [self drawContentsInContext:bitmap]; }];
         } else {
             // A background scope with no readers only needs group isolation.
             // Let Quartz composite it directly instead of rasterizing and
-            // resampling a full clip-sized bitmap for every exported group.
+            // resampling a full clip sized bitmap for every exported group.
             CGRect bounds = self.transparencyBounds;
-            if(!CGRectIsNull(bounds) && !CGRectIsInfinite(bounds)) {
+            if (!CGRectIsNull(bounds) && !CGRectIsInfinite(bounds)) {
                 // Match the ordinary opacity path: small details must not
                 // allocate and composite a layer as large as their ancestor.
                 CGAffineTransform transform = CGContextGetCTM(ctx);
-                CGFloat scale = MIN(hypot(transform.a, transform.b),
-                                    hypot(transform.c, transform.d));
-                if(scale > 0.f) {
+                CGFloat scale = MIN(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
+                if (scale > 0.f) {
                     CGContextClipToRect(ctx, CGRectInset(bounds, -2.f / scale, -2.f / scale));
                 }
             }

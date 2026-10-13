@@ -2,7 +2,7 @@
 //  IJSVGFilterEffect.h
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
@@ -14,8 +14,5 @@
 @interface IJSVGFilterEffect : NSObject
 + (instancetype)effectForType:(IJSVGNodeType)type;
 - (BOOL)requiresSupersamplingForPrimitive:(IJSVGFilterPrimitive*)primitive;
-- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
-                             inputs:(NSArray<CIImage*>*)inputs
-                             region:(CGRect)region
-                            context:(IJSVGFilterContext*)context;
+- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context;
 @end

@@ -6,27 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGRadialGradient
 
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeRadialGradient;
-}
-
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
-    [storage addBits:[super allowedAttributes]];
-    [storage setBit:IJSVGNodeAttributeFX];
-    [storage setBit:IJSVGNodeAttributeFY];
-    [storage setBit:IJSVGNodeAttributeFR];
-    [storage setBit:IJSVGNodeAttributeCX];
-    [storage setBit:IJSVGNodeAttributeCY];
-    [storage setBit:IJSVGNodeAttributeR];
-    return storage;
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -43,72 +31,56 @@
 
 - (BOOL)containsRelativeUnits
 {
-    return _fx.isRelativeUnit == YES || _fy.isRelativeUnit == YES ||
-        _fr.isRelativeUnit == YES || _cx.isRelativeUnit == YES ||
-        _cy.isRelativeUnit == YES || _r.isRelativeUnit == YES ||
-        [super containsRelativeUnits] == YES;
+    return _fx.isRelativeUnit == YES || _fy.isRelativeUnit == YES || _fr.isRelativeUnit == YES || _cx.isRelativeUnit == YES || _cy.isRelativeUnit == YES || _r.isRelativeUnit == YES || [super containsRelativeUnits] == YES;
 }
 
-+ (void)parseGradient:(NSXMLElement*)element
-             gradient:(IJSVGRadialGradient*)gradient
+#pragma mark - Parsing
+
++ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGRadialGradient*)gradient
 {
-    // cx defaults to 50% if not specified
-    NSDictionary<NSString*, NSString*>* kv = @{
-        IJSVGAttributeCX : @"cx",
-        IJSVGAttributeCY : @"cy",
-        IJSVGAttributeR : @"r" };
-
-    for (NSString* key in kv.allKeys) {
-        NSString* str = [element attributeForName:key].stringValue;
-        IJSVGUnitLength* unit = nil;
-        if(str != nil) {
-            unit = [IJSVGUnitLength unitWithString:str
-                                      fromUnitType:gradient.units];
-        }
-        // spec says to say 50% for missing property default
-        unit = unit ?: IJSVGHalfPercentageUnitLength;
-        [gradient setValue:unit
-                    forKey:kv[key]];
-    }
-    
-    // fr
-    NSString* fr = [element attributeForName:IJSVGAttributeFR].stringValue;
-    if(fr != nil) {
-        gradient.fr = [IJSVGUnitLength unitWithString:fr
-                                         fromUnitType:gradient.units];
-    }
-  
-    gradient.fr = gradient.fr ?: IJSVGZeroPercentageUnitLength;
-
-    // fx and fy are the same unless specified otherwise
-    gradient.fx = gradient.cx;
-    gradient.fy = gradient.cy;
-
-    // needs fixing
-    NSString* fx = [element attributeForName:IJSVGAttributeFX].stringValue;
-    if(fx != nil) {
-        gradient.fx = [IJSVGUnitLength unitWithString:fx
-                                         fromUnitType:gradient.units] ?: gradient.fx;
-    }
-
-    NSString* fy = [element attributeForName:IJSVGAttributeFY].stringValue;
-    if(fy != nil) {
-        gradient.fy = [IJSVGUnitLength unitWithString:fy
-                                         fromUnitType:gradient.units] ?: gradient.fy;
-    }
-
-    [gradient parseSpreadMethod:element];
-    NSArray<NSColor*>* colors = nil;
-    CGFloat* colorStops = [self.class computeColorStops:gradient
-                                                 colors:&colors];
-    gradient.locations = colorStops;
-    gradient.colors = colors;
-    gradient.numberOfStops = colors.count;
+    [self parseGeometryFromAttributes:element.attributes gradient:gradient];
+    [gradient parseColorStops];
 }
 
-- (void)drawInContextRef:(CGContextRef)ctx
-                  bounds:(NSRect)objectRect
-               transform:(CGAffineTransform)absoluteTransform
++ (void)parseGeometryFromAttributes:(NSArray<NSXMLNode*>*)attributes gradient:(IJSVGRadialGradient*)gradient
+{
+    NSString* values[6] = { nil };
+    for (NSXMLNode* attribute in attributes) {
+        NSString* name = attribute.name;
+        NSUInteger index = NSNotFound;
+        if ([name isEqualToString:IJSVGAttributeCX])
+            index = 0;
+        else if ([name isEqualToString:IJSVGAttributeCY])
+            index = 1;
+        else if ([name isEqualToString:IJSVGAttributeR])
+            index = 2;
+        else if ([name isEqualToString:IJSVGAttributeFX])
+            index = 3;
+        else if ([name isEqualToString:IJSVGAttributeFY])
+            index = 4;
+        else if ([name isEqualToString:IJSVGAttributeFR])
+            index = 5;
+        if (index != NSNotFound)
+            values[index] = attribute.stringValue;
+    }
+    IJSVGUnitLength* lengths[6] = { nil };
+    for (NSUInteger index = 0; index < 6; index++) {
+        if (values[index] != nil) {
+            lengths[index] = [IJSVGUnitLength unitWithString:values[index] fromUnitType:gradient.units];
+        }
+    }
+    gradient.cx = lengths[0] ?: IJSVGHalfPercentageUnitLength;
+    gradient.cy = lengths[1] ?: IJSVGHalfPercentageUnitLength;
+    gradient.r = lengths[2] ?: IJSVGHalfPercentageUnitLength;
+    gradient.fx = lengths[3] ?: gradient.cx;
+    gradient.fy = lengths[4] ?: gradient.cy;
+    gradient.fr = lengths[5] ?: IJSVGZeroPercentageUnitLength;
+    [gradient parseSpreadMethodFromAttributes:attributes];
+}
+
+#pragma mark - Drawing
+
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform
 {
     CGContextSaveGState(ctx);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
@@ -117,18 +89,18 @@
     CGPoint gradientStartPoint = CGPointZero;
     CGPoint gradientEndPoint = CGPointZero;
     CGRect boundingBox = objectRect;
-    
+
     // compute size based on percentages
     CGFloat width = 0.f;
     CGFloat height = 0.f;
-    if(inUserSpace == YES) {
+    if (inUserSpace == YES) {
         width = CGRectGetWidth(boundingBox);
         height = CGRectGetHeight(boundingBox);
     } else {
         width = 1.f;
         height = 1.f;
     }
-    
+
     CGFloat cx = [_cx computeValue:width];
     CGFloat cy = [_cy computeValue:height];
     startPoint = CGPointMake(cx, cy);
@@ -144,32 +116,56 @@
 
     // transform if width or height is not equal, this can only
     // be done if we are using objectBoundingBox
-    if(inUserSpace == YES) {
+    if (inUserSpace == YES) {
         CGContextConcatCTM(ctx, absoluteTransform);
     } else {
-        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(CGRectGetWidth(boundingBox),
-                                                           CGRectGetHeight(boundingBox)));
+        CGContextConcatCTM(ctx, CGAffineTransformMakeScale(CGRectGetWidth(boundingBox), CGRectGetHeight(boundingBox)));
     }
-    
+
     // concat the gradient transform into the context
     IJSVGConcatTransformsCTM(ctx, self.transforms);
 
-    if([self drawSpreadInContext:ctx
-                      startPoint:gradientEndPoint
-                        endPoint:gradientStartPoint
-                     startRadius:focalRadius
-                       endRadius:radius
-                          radial:YES]) {
+    if ([self drawSpreadInContext:ctx startPoint:gradientEndPoint endPoint:gradientStartPoint startRadius:focalRadius endRadius:radius radial:YES]) {
         CGContextRestoreGState(ctx);
         return;
     }
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
-    CGContextDrawRadialGradient(ctx, self.CGGradient,
-        gradientEndPoint, focalRadius,
-        gradientStartPoint,
-        radius, options);
+    CGContextDrawRadialGradient(ctx, self.CGGradient, gradientEndPoint, focalRadius, gradientStartPoint, radius, options);
     CGContextRestoreGState(ctx);
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGRadialGradient (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGCommonAttributes();
+    [attributes setBit:IJSVGNodeAttributeGradientUnits];
+    [attributes setBit:IJSVGNodeAttributeGradientTransform];
+    [attributes setBit:IJSVGNodeAttributeCX];
+    [attributes setBit:IJSVGNodeAttributeCY];
+    [attributes setBit:IJSVGNodeAttributeR];
+    [attributes setBit:IJSVGNodeAttributeFX];
+    [attributes setBit:IJSVGNodeAttributeFY];
+    [attributes setBit:IJSVGNodeAttributeFR];
+    [attributes setBit:IJSVGNodeAttributeHref];
+    [attributes setBit:IJSVGNodeAttributeXLink];
+    IJSVGAddTextStyleAttributes(attributes);
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    if (self.reference == nil) {
+        self.reference = context->reference;
+    }
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGradientAttributes(self, context);
 }
 
 @end

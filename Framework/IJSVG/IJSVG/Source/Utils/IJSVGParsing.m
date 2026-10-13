@@ -14,7 +14,7 @@
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void)
 {
     IJSVGParsingStringMethod* method = (IJSVGParsingStringMethod*)malloc(sizeof(IJSVGParsingStringMethod));
-    if(method == NULL) {
+    if (method == NULL) {
         return NULL;
     }
     method->name = NULL;
@@ -24,31 +24,29 @@ IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void)
 
 void IJSVGParsingStringMethodRelease(IJSVGParsingStringMethod* stringMethod)
 {
-    if(stringMethod == NULL) {
+    if (stringMethod == NULL) {
         return;
     }
-    if(stringMethod->name != NULL) {
+    if (stringMethod->name != NULL) {
         (void)free(stringMethod->name), stringMethod->name = NULL;
     }
-    if(stringMethod->parameters != NULL) {
+    if (stringMethod->parameters != NULL) {
         (void)free(stringMethod->parameters), stringMethod->parameters = NULL;
     }
-    if(stringMethod != NULL) {
+    if (stringMethod != NULL) {
         (void)free(stringMethod), stringMethod = NULL;
     }
 }
 
-void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
-                                      NSUInteger count)
+void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods, NSUInteger count)
 {
-    for(int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         IJSVGParsingStringMethodRelease(methods[i]);
     }
     (void)free(methods), methods = NULL;
 }
 
-IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
-                                                         NSUInteger* count)
+IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string, NSUInteger* count)
 {
     BOOL valid;
     return IJSVGParsingMethodParseStringWithValidation(string, count, &valid);
@@ -56,47 +54,42 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
 
 static char* IJSVGParsingCopyTrimmedBytes(const char* bytes, NSUInteger length)
 {
-    while(length != 0 && isspace((unsigned char)*bytes)) {
+    while (length != 0 && isspace((unsigned char)*bytes)) {
         bytes++;
         length--;
     }
-    while(length != 0 && isspace((unsigned char)bytes[length - 1])) {
+    while (length != 0 && isspace((unsigned char)bytes[length - 1])) {
         length--;
     }
     return strndup(bytes, length);
 }
 
-IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string,
-                                                                       NSUInteger* count,
-                                                                       BOOL* valid)
+IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string, NSUInteger* count, BOOL* valid)
 {
     *count = 0;
     IJSVGCSSComponents components;
-    *valid = IJSVGCSSComponentsCreateWithOptions(string, string == NULL ? 0 : strlen(string),
-                                                 IJSVGCSSParserOptionSVG, &components);
-    IJSVGParsingStringMethod** methods = components.count == 0 ? NULL :
-        malloc(components.count * sizeof(*methods));
-    if(components.count != 0 && methods == NULL) {
+    *valid = IJSVGCSSComponentsCreateWithOptions(string, string == NULL ? 0 : strlen(string), IJSVGCSSParserOptionSVG, &components);
+    IJSVGParsingStringMethod** methods = components.count == 0 ? NULL : malloc(components.count * sizeof(*methods));
+    if (components.count != 0 && methods == NULL) {
         *valid = NO;
         IJSVGCSSComponentsRelease(&components);
         return NULL;
     }
-    for(NSUInteger index = 0; index < components.count;) {
+    for (NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
-        if(component->kind != IJSVGCSSComponentFunction || component->next <= index) {
+        if (component->kind != IJSVGCSSComponentFunction || component->next <= index) {
             *valid = NO;
             break;
         }
         IJSVGParsingStringMethod* method = IJSVGParsingStringMethodCreate();
-        if(method == NULL) {
+        if (method == NULL) {
             *valid = NO;
             break;
         }
         NSUInteger nameLength = component->argumentOffset - component->offset - 1;
         method->name = IJSVGParsingCopyTrimmedBytes(string + component->offset, nameLength);
-        method->parameters = IJSVGParsingCopyTrimmedBytes(string + component->argumentOffset,
-                                                          component->argumentLength);
-        if(method->name == NULL || method->parameters == NULL) {
+        method->parameters = IJSVGParsingCopyTrimmedBytes(string + component->argumentOffset, component->argumentLength);
+        if (method->name == NULL || method->parameters == NULL) {
             IJSVGParsingStringMethodRelease(method);
             *valid = NO;
             break;
@@ -108,26 +101,25 @@ IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const cha
     return methods;
 }
 
-BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes,
-                                size_t* length, char* quote)
+BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes, size_t* length, char* quote)
 {
     *bytes = NULL;
     *length = 0;
     *quote = 0;
-    if(argument == NULL) {
+    if (argument == NULL) {
         return NO;
     }
     const char* start = argument;
     const char* end = start + strlen(start);
-    while(start < end && isspace((unsigned char)*start)) {
+    while (start < end && isspace((unsigned char)*start)) {
         start++;
     }
-    while(end > start && isspace((unsigned char)end[-1])) {
+    while (end > start && isspace((unsigned char)end[-1])) {
         end--;
     }
-    if(start < end && (*start == '\'' || *start == '"')) {
+    if (start < end && (*start == '\'' || *start == '"')) {
         char delimiter = *start;
-        if(end - start < 2 || end[-1] != delimiter) {
+        if (end - start < 2 || end[-1] != delimiter) {
             return NO;
         }
         *quote = delimiter;

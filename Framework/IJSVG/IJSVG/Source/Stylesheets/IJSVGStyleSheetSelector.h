@@ -6,8 +6,8 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 
 #import <IJSVG/IJSVGNode.h>
 
@@ -34,9 +34,8 @@
 @end
 
 @interface IJSVGStyleSheetSelector : NSObject {
-
     NSString* selector;
-    
+
 @private
     NSMutableArray<IJSVGStyleSheetSelectorRaw*>* _rawSelectors;
 }

@@ -13,10 +13,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGRootNode : IJSVGGroup {
-  BOOL _hasCalculatedContainsRelativeUnits;
-  BOOL _containsRelativeUnits;
+    BOOL _hasCalculatedContainsRelativeUnits;
+    BOOL _containsRelativeUnits;
 }
 
+@property (nonatomic, strong, nullable) IJSVG* svg;
 @property (nonatomic, assign) CGSize clientSize;
 @property (nonatomic, strong, nullable) NSColor* backgroundColor;
 @property (nonatomic, assign) BOOL viewBoxWasInferred;
@@ -24,12 +25,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitSize* intrinsicSize;
 @property (nonatomic, readonly) CGRect bounds;
 
-// The document owns style ancestors so paint references cannot form retain cycles.
+// The document owns style ancestors so paint references cannot form retain
+// cycles.
 @property (nonatomic, copy) NSArray<IJSVGNode*>* styleAncestors;
-
-// Optional reference point for an instantiated symbol, in its content coordinates.
-@property (nonatomic, strong, nullable) IJSVGUnitLength* refX;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* refY;
 
 - (void)inferViewBoxIfRequired;
 

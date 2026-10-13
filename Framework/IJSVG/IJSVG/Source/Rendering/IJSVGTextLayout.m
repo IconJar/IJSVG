@@ -2,21 +2,21 @@
 //  IJSVGTextLayout.m
 //  IJSVG
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGTextLayout.h>
-#import <IJSVG/IJSVGParser.h>
 #import <CoreText/CoreText.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGTextFontResolver.h>
+#import <IJSVGTextGlyphUtils.h>
+#import <IJSVGTextLayoutUtils.h>
+#import <IJSVGTextPathMetrics.h>
 #import <math.h>
 #import <stdlib.h>
-#import <IJSVGTextFontResolver.h>
-#import <IJSVGTextLayoutUtils.h>
-#import <IJSVGTextGlyphUtils.h>
-#import <IJSVGTextPathMetrics.h>
 
 // Keep shaping runs separate when their text belongs to different nodes.
 static NSString* const IJSVGTextOwnerKey = @"IJSVGTextOwner";
@@ -29,19 +29,16 @@ static NSString* IJSVGTextUppercaseCharacter(const IJSVGTextCharacter* character
     return string.uppercaseString;
 }
 
-static NSUInteger IJSVGTextChunkEnd(IJSVGTextCharacter* characters,
-                                    NSUInteger count, NSUInteger start,
-                                    CGFloat inlineSize)
+static NSUInteger IJSVGTextChunkEnd(IJSVGTextCharacter* characters, NSUInteger count, NSUInteger start, CGFloat inlineSize)
 {
     IJSVGTextCharacter* first = &characters[start];
     NSUInteger end = start + 1;
-    while(end < count) {
+    while (end < count) {
         IJSVGTextCharacter* next = &characters[end];
-        if(next->firstCodeUnit == '\n' || next->firstCodeUnit == '\r') {
+        if (next->firstCodeUnit == '\n' || next->firstCodeUnit == '\r') {
             break;
         }
-        if(inlineSize <= 0 &&
-           (!isnan(next->x) || !isnan(next->y) || next->pathNode != first->pathNode)) {
+        if (inlineSize <= 0 && (!isnan(next->x) || !isnan(next->y) || next->pathNode != first->pathNode)) {
             break;
         }
         end++;
@@ -49,24 +46,17 @@ static NSUInteger IJSVGTextChunkEnd(IJSVGTextCharacter* characters,
     return end;
 }
 
-static NSUInteger IJSVGTextWrappedEnd(CTTypesetterRef typesetter,
-                                      IJSVGTextCharacter* first,
-                                      NSUInteger start, NSUInteger end,
-                                      CGFloat inlineSize,
-                                      NSAttributedString* attributed,
-                                      NSData* map)
+static NSUInteger IJSVGTextWrappedEnd(CTTypesetterRef typesetter, IJSVGTextCharacter* first, NSUInteger start, NSUInteger end, CGFloat inlineSize, NSAttributedString* attributed, NSData* map)
 {
-    if(inlineSize > 0) {
+    if (inlineSize > 0) {
         CGFloat scaledWidth = inlineSize * first->style.fontScale;
-        CFIndex length = CTTypesetterSuggestLineBreak(typesetter, first->utf16,
-                                                      scaledWidth);
-        if(length <= 0) {
-            length = CTTypesetterSuggestClusterBreak(typesetter, first->utf16,
-                                                     scaledWidth);
+        CFIndex length = CTTypesetterSuggestLineBreak(typesetter, first->utf16, scaledWidth);
+        if (length <= 0) {
+            length = CTTypesetterSuggestClusterBreak(typesetter, first->utf16, scaledWidth);
         }
-        if(length > 0 && first->utf16 + length < attributed.length) {
+        if (length > 0 && first->utf16 + length < attributed.length) {
             NSUInteger candidate = ((const NSUInteger*)map.bytes)[first->utf16 + length];
-            if(candidate < end && candidate > start) {
+            if (candidate < end && candidate > start) {
                 end = candidate;
             }
         }
@@ -83,43 +73,30 @@ typedef struct {
     BOOL vertical;
 } IJSVGTextPathPositioning;
 
-static IJSVGTextPathPositioning IJSVGTextResolvePathPositioning(IJSVGText* node,
-                                                                IJSVGTextComputedStyle* style,
-                                                                IJSVGTextComputedStyle* pathStyle,
-                                                                IJSVGTextPathMetrics* metrics)
+static IJSVGTextPathPositioning IJSVGTextResolvePathPositioning(IJSVGText* node, IJSVGTextComputedStyle* style, IJSVGTextComputedStyle* pathStyle, IJSVGTextPathMetrics* metrics)
 {
     IJSVGTextAttributeValue* offsetValue = node.positioning[IJSVGAttributeStartOffset];
     CGFloat length = metrics.length;
-    CGFloat offset = IJSVGTextLength(offsetValue, pathStyle.size, pathStyle.xHeight,
-                                     length);
+    CGFloat offset = IJSVGTextLength(offsetValue, pathStyle.size, pathStyle.xHeight, length);
     CGFloat authorLength = node.positioning[IJSVGAttributePathLength].number;
-    if(authorLength > 0 && offsetValue.lengthBasis != IJSVGTextLengthBasisPercentage) {
+    if (authorLength > 0 && offsetValue.lengthBasis != IJSVGTextLengthBasisPercentage) {
         offset *= length / authorLength;
     }
     IJSVGTextKeyword anchor = style.values[IJSVGAttributeTextAnchor].keyword;
     BOOL anchoredAtEnd = (anchor == IJSVGTextKeywordEnd) != style.rtl;
     CGFloat anchorStart = anchor == IJSVGTextKeywordMiddle ? -length * .5 : (anchoredAtEnd ? -length : 0);
-    IJSVGTextPathPositioning positioning = {
-        .length = length,
-        .offset = offset,
-        .anchorStart = anchorStart,
-        .closed = metrics.closed,
-        .reverse = node.positioning[IJSVGAttributeSide].keyword == IJSVGTextKeywordRight,
-        .vertical = style.vertical
-    };
+    IJSVGTextPathPositioning positioning = { .length = length, .offset = offset, .anchorStart = anchorStart, .closed = metrics.closed, .reverse = node.positioning[IJSVGAttributeSide].keyword == IJSVGTextKeywordRight, .vertical = style.vertical };
     return positioning;
 }
 
-static void IJSVGTextPositionOnPath(IJSVGTextCharacter* c,
-                                    const IJSVGTextPathPositioning* positioning,
-                                    IJSVGTextPathMetrics* metrics)
+static void IJSVGTextPositionOnPath(IJSVGTextCharacter* c, const IJSVGTextPathPositioning* positioning, IJSVGTextPathMetrics* metrics)
 {
     CGFloat length = positioning->length;
     CGFloat offset = positioning->offset;
     BOOL vertical = positioning->vertical;
     CGFloat inlinePosition = vertical ? c->position.y : c->position.x;
     CGFloat middle = inlinePosition + c->advance * .5 + offset;
-    if(positioning->closed) {
+    if (positioning->closed) {
         CGFloat low = positioning->anchorStart;
         c->hidden = middle - offset < low || middle - offset > low + length;
         CGFloat wrappedPosition = fmod(middle, length) + length;
@@ -130,10 +107,8 @@ static void IJSVGTextPositionOnPath(IJSVGTextCharacter* c,
     BOOL reverse = positioning->reverse;
     CGPoint point, tangent;
     CGFloat pathPosition = reverse ? length - middle : middle;
-    [metrics pointAt:pathPosition
-               point:&point
-             tangent:&tangent];
-    if(reverse) {
+    [metrics pointAt:pathPosition point:&point tangent:&tangent];
+    if (reverse) {
         tangent = CGPointMake(-tangent.x, -tangent.y);
     }
     CGFloat cross = vertical ? -c->position.x : c->position.y;
@@ -143,25 +118,21 @@ static void IJSVGTextPositionOnPath(IJSVGTextCharacter* c,
     c->rotation += atan2(tangent.y, tangent.x) - (vertical ? M_PI_2 : 0);
 }
 
-static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
-                                         CFMutableDictionaryRef indices,
-                                         NSRange* ranges, NSUInteger* count)
+static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef indices, NSRange* ranges, NSUInteger* count)
 {
     const void* key = (__bridge const void*)node;
     uintptr_t entry = (uintptr_t)CFDictionaryGetValue(indices, key);
     NSRange range = entry != 0 ? ranges[entry - 1] : NSMakeRange(NSNotFound, 0);
-    for(IJSVGText* child in node.children) {
+    for (IJSVGText* child in node.children) {
         // Include child text without walking back through every ancestor.
-        NSRange childRange = IJSVGTextAccumulateRanges(child, indices, ranges,
-                                                       count);
-        if(childRange.location == NSNotFound) {
+        NSRange childRange = IJSVGTextAccumulateRanges(child, indices, ranges, count);
+        if (childRange.location == NSNotFound) {
             continue;
         }
-        range = range.location == NSNotFound ? childRange : NSUnionRange(range,
-                                                                         childRange);
+        range = range.location == NSNotFound ? childRange : NSUnionRange(range, childRange);
     }
-    if(range.location != NSNotFound) {
-        if(entry == 0) {
+    if (range.location != NSNotFound) {
+        if (entry == 0) {
             entry = ++*count;
             CFDictionarySetValue(indices, key, (const void*)entry);
         }
@@ -207,7 +178,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 
 - (void)dealloc
 {
-    if(_rangeIndices != NULL) {
+    if (_rangeIndices != NULL) {
         CFRelease(_rangeIndices);
     }
     free(_characters);
@@ -215,43 +186,34 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 
 - (IJSVGTextComputedStyle*)styleForNode:(IJSVGNode*)node
 {
-    if(node == nil) {
+    if (node == nil) {
         return nil;
     }
     IJSVGTextComputedStyle* style = [self.styles objectForKey:node];
-    if(style != nil) {
+    if (style != nil) {
         return style;
     }
     IJSVGTextComputedStyle* parent = [self styleForNode:node.styleParent];
-    if(parent != nil && node.textStyle.count == 0 &&
-       parent.values[IJSVGAttributeInlineSize] == nil &&
-       parent.values[IJSVGAttributeAlignmentBaseline] == nil &&
-       parent.values[IJSVGAttributeBaselineShift] == nil &&
-       parent.values[IJSVGAttributeUnicodeBidi] == nil) {
-        [self.styles setObject:parent
-                        forKey:node];
+    if (parent != nil && node.textStyle.count == 0 && parent.values[IJSVGAttributeInlineSize] == nil && parent.values[IJSVGAttributeAlignmentBaseline] == nil && parent.values[IJSVGAttributeBaselineShift] == nil && parent.values[IJSVGAttributeUnicodeBidi] == nil) {
+        [self.styles setObject:parent forKey:node];
         return parent;
     }
     style = [self.fontResolver fontStyleForNode:node parentStyle:parent];
     NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* values = [style.values mutableCopy];
     IJSVGTextKeyword bidi = values[IJSVGAttributeUnicodeBidi].keyword;
-    if(bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride ||
-       bidi == IJSVGTextKeywordIsolate || bidi == IJSVGTextKeywordIsolateOverride ||
-       bidi == IJSVGTextKeywordPlaintext) {
+    if (bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride || bidi == IJSVGTextKeywordIsolate || bidi == IJSVGTextKeywordIsolateOverride || bidi == IJSVGTextKeywordPlaintext) {
         _hasBidiScopes = YES;
     }
     style.orientation = values[IJSVGAttributeTextOrientation].keyword;
-    IJSVGTextAttributeValue* decoration = values[IJSVGAttributeTextDecorationLine]
-        ?: values[IJSVGAttributeTextDecoration];
+    IJSVGTextAttributeValue* decoration = values[IJSVGAttributeTextDecorationLine] ?: values[IJSVGAttributeTextDecoration];
     style.decorations = decoration.decorations;
-    style.wordSpacing = IJSVGTextLength(values[IJSVGAttributeWordSpacing],
-                                        style.size, style.xHeight, style.size);
+    style.wordSpacing = IJSVGTextLength(values[IJSVGAttributeWordSpacing], style.size, style.xHeight, style.size);
     style.rtl = values[IJSVGAttributeDirection].keyword == IJSVGTextKeywordRTL;
     IJSVGTextKeyword writing = values[IJSVGAttributeWritingMode].keyword;
     style.vertical = writing == IJSVGTextKeywordVerticalRL || writing == IJSVGTextKeywordVerticalLR;
     style.baseline = parent.baseline;
     IJSVGTextAttributeValue* shift = values[IJSVGAttributeBaselineShift];
-    switch(shift.keyword) {
+    switch (shift.keyword) {
         case IJSVGTextKeywordSuper:
             style.baseline -= .6 * style.size;
             break;
@@ -268,12 +230,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     }
     IJSVGTextAttributeValue* lineHeight = values[IJSVGAttributeLineHeight];
     style.lineHeight = style.size * 1.2;
-    if(lineHeight != nil && lineHeight.keyword != IJSVGTextKeywordNormal) {
-        style.lineHeight = lineHeight.unitless
-            ? lineHeight.number * style.size
-            : IJSVGTextLength(lineHeight, style.size, style.xHeight,
-                              style.size);
-        if(!lineHeight.unitless && lineHeight.lengthBasis != IJSVGTextLengthBasisAbsolute) {
+    if (lineHeight != nil && lineHeight.keyword != IJSVGTextKeywordNormal) {
+        style.lineHeight = lineHeight.unitless ? lineHeight.number * style.size : IJSVGTextLength(lineHeight, style.size, style.xHeight, style.size);
+        if (!lineHeight.unitless && lineHeight.lengthBasis != IJSVGTextLengthBasisAbsolute) {
             // Resolve relative line heights before passing the length to child nodes.
             IJSVGTextAttributeValue* computed = [[IJSVGTextAttributeValue alloc] init];
             computed.number = style.lineHeight;
@@ -281,46 +240,39 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             style.values = values;
         }
     }
-    [self.styles setObject:style
-                    forKey:node];
+    [self.styles setObject:style forKey:node];
     return style;
 }
 
-- (void)appendString:(NSString*)string
-               owner:(IJSVGText*)owner
-                path:(IJSVGText*)path
+- (void)appendString:(NSString*)string owner:(IJSVGText*)owner path:(IJSVGText*)path
 {
     IJSVGTextComputedStyle* style = [self styleForNode:owner];
     IJSVGTextKeyword whitespace = style.values[IJSVGAttributeWhiteSpace].keyword;
-    BOOL preserve = (whitespace == IJSVGTextKeywordPre || whitespace == IJSVGTextKeywordPreWrap ||
-                     whitespace == IJSVGTextKeywordBreakSpaces) ||
-        (!whitespace && style.values[IJSVGAttributeXMLSpace].keyword == IJSVGTextKeywordPreserve);
+    BOOL preserve = (whitespace == IJSVGTextKeywordPre || whitespace == IJSVGTextKeywordPreWrap || whitespace == IJSVGTextKeywordBreakSpaces) || (!whitespace && style.values[IJSVGAttributeXMLSpace].keyword == IJSVGTextKeywordPreserve);
     BOOL preserveLines = preserve || whitespace == IJSVGTextKeywordPreLine;
     IJSVGTextKeyword transform = style.values[IJSVGAttributeTextTransform].keyword;
-    if(transform == IJSVGTextKeywordUppercase) {
+    if (transform == IJSVGTextKeywordUppercase) {
         string = string.uppercaseString;
-    } else if(transform == IJSVGTextKeywordLowercase) {
+    } else if (transform == IJSVGTextKeywordLowercase) {
         string = string.lowercaseString;
-    } else if(transform == IJSVGTextKeywordCapitalize) {
+    } else if (transform == IJSVGTextKeywordCapitalize) {
         _hasCapitalization = YES;
     }
-    for(NSUInteger index = 0; index < string.length;) {
+    for (NSUInteger index = 0; index < string.length;) {
         unichar first = [string characterAtIndex:index];
-        NSUInteger length = CFStringIsSurrogateHighCharacter(first) && index + 1 < string.length &&
-                CFStringIsSurrogateLowCharacter([string characterAtIndex:index + 1]) ? 2 : 1;
+        NSUInteger length = CFStringIsSurrogateHighCharacter(first) && index + 1 < string.length && CFStringIsSurrogateLowCharacter([string characterAtIndex:index + 1]) ? 2 : 1;
         unichar second = length == 2 ? [string characterAtIndex:index + 1] : 0;
         index += length;
         BOOL line = first == '\n' || first == '\r';
         BOOL space = first == ' ' || first == '\t' || line;
-        if(line && !whitespace && !preserve) {
+        if (line && !whitespace && !preserve) {
             continue; // SVG 1.1 xml:space default.
         }
         BOOL collapse = space && !preserve && !(line && preserveLines);
-        if(collapse && (_hasPendingSpace || _characterCount == 0 ||
-                        _characters[_characterCount - 1].firstCodeUnit == '\n')) {
+        if (collapse && (_hasPendingSpace || _characterCount == 0 || _characters[_characterCount - 1].firstCodeUnit == '\n')) {
             continue;
         }
-        if(space && (!preserveLines || (preserve && !whitespace))) {
+        if (space && (!preserveLines || (preserve && !whitespace))) {
             first = ' ';
         }
         IJSVGTextCharacter record = { 0 };
@@ -333,63 +285,53 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         character->x = character->y = NAN;
         character->scale = 1;
         // Wait for more text before keeping a space at the end.
-        if(collapse) {
+        if (collapse) {
             _pendingSpace = record;
             _hasPendingSpace = YES;
             continue;
         }
-        if(line && preserveLines) {
+        if (line && preserveLines) {
             _hasPendingSpace = NO;
         }
-        if(_hasPendingSpace) {
-            IJSVGTextAppendCharacter(&_characters, &_characterCount,
-                                     &_characterCapacity, &_pendingSpace);
+        if (_hasPendingSpace) {
+            IJSVGTextAppendCharacter(&_characters, &_characterCount, &_characterCapacity, &_pendingSpace);
             _hasPendingSpace = NO;
         }
-        IJSVGTextAppendCharacter(&_characters, &_characterCount,
-                                 &_characterCapacity, character);
+        IJSVGTextAppendCharacter(&_characters, &_characterCount, &_characterCapacity, character);
     }
 }
 
 - (void)capitalizeWords
 {
-    if(!_hasCapitalization || _characterCount == 0) {
+    if (!_hasCapitalization || _characterCount == 0) {
         return;
     }
     NSMutableData* storage = [NSMutableData dataWithCapacity:_characterCount * sizeof(unichar)];
-    for(NSUInteger index = 0; index < _characterCount; index++) {
+    for (NSUInteger index = 0; index < _characterCount; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        [storage appendBytes:&character->firstCodeUnit
-                       length:sizeof(unichar)];
-        if(character->secondCodeUnit != 0) {
-            [storage appendBytes:&character->secondCodeUnit
-                           length:sizeof(unichar)];
+        [storage appendBytes:&character->firstCodeUnit length:sizeof(unichar)];
+        if (character->secondCodeUnit != 0) {
+            [storage appendBytes:&character->secondCodeUnit length:sizeof(unichar)];
         }
     }
-    NSString* string = [[NSString alloc] initWithCharacters:storage.bytes
-                                                    length:storage.length / sizeof(unichar)];
+    NSString* string = [[NSString alloc] initWithCharacters:storage.bytes length:storage.length / sizeof(unichar)];
     NSMutableIndexSet* starts = [[NSMutableIndexSet alloc] init];
-    [string enumerateSubstringsInRange:NSMakeRange(0, string.length)
-                               options:NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired
-                            usingBlock:^(NSString* substring, NSRange range, NSRange enclosingRange, BOOL* stop) {
-                                [starts addIndex:range.location];
-                            }];
+    [string enumerateSubstringsInRange:NSMakeRange(0, string.length) options:NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired usingBlock:^(NSString* substring, NSRange range, NSRange enclosingRange, BOOL* stop) { [starts addIndex:range.location]; }];
     IJSVGTextCharacter* characters = NULL;
     NSUInteger count = 0;
     NSUInteger capacity = 0;
     NSUInteger offset = 0;
-    for(NSUInteger index = 0; index < _characterCount; index++) {
+    for (NSUInteger index = 0; index < _characterCount; index++) {
         IJSVGTextCharacter character = _characters[index];
         NSUInteger length = character.secondCodeUnit == 0 ? 1 : 2;
         BOOL capitalize = character.style.values[IJSVGAttributeTextTransform].keyword == IJSVGTextKeywordCapitalize;
-        if(capitalize && [starts containsIndex:offset]) {
-            // Only titlecase the initial scalar; preserve the rest of the word.
+        if (capitalize && [starts containsIndex:offset]) {
+            // Only titlecase the initial scalar, preserve the rest of the word.
             NSString* initial = [string substringWithRange:NSMakeRange(offset, length)].capitalizedString;
-            for(NSUInteger unit = 0; unit < initial.length; unit++) {
+            for (NSUInteger unit = 0; unit < initial.length; unit++) {
                 character.firstCodeUnit = [initial characterAtIndex:unit];
                 character.secondCodeUnit = 0;
-                if(CFStringIsSurrogateHighCharacter(character.firstCodeUnit) && unit + 1 < initial.length &&
-                   CFStringIsSurrogateLowCharacter([initial characterAtIndex:unit + 1])) {
+                if (CFStringIsSurrogateHighCharacter(character.firstCodeUnit) && unit + 1 < initial.length && CFStringIsSurrogateLowCharacter([initial characterAtIndex:unit + 1])) {
                     character.secondCodeUnit = [initial characterAtIndex:++unit];
                 }
                 IJSVGTextAppendCharacter(&characters, &count, &capacity, &character);
@@ -405,31 +347,26 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     _characterCapacity = capacity;
 }
 
-- (void)collect:(IJSVGText*)node
-           path:(IJSVGText*)path
+- (void)collect:(IJSVGText*)node path:(IJSVGText*)path
 {
-    if(!node.shouldRender) {
+    if (!node.shouldRender) {
         return;
     }
-    if(node.isTextPath) {
+    if (node.isTextPath) {
         path = node;
     }
-    for(id item in node.textContent) {
-        if([item isKindOfClass:NSString.class]) {
-            [self appendString:item
-                         owner:node
-                          path:path];
-        } else if([item isKindOfClass:IJSVGText.class]) {
-            [self collect:item
-                     path:path];
+    for (id item in node.textContent) {
+        if ([item isKindOfClass:NSString.class]) {
+            [self appendString:item owner:node path:path];
+        } else if ([item isKindOfClass:IJSVGText.class]) {
+            [self collect:item path:path];
         }
     }
 }
 
 - (NSRange)rangeForNode:(IJSVGText*)node
 {
-    uintptr_t entry = (uintptr_t)CFDictionaryGetValue(_rangeIndices,
-                                                      (__bridge const void*)node);
+    uintptr_t entry = (uintptr_t)CFDictionaryGetValue(_rangeIndices, (__bridge const void*)node);
     const NSRange* ranges = _rangeRecords.bytes;
     return entry != 0 ? ranges[entry - 1] : NSMakeRange(0, 0);
 }
@@ -439,33 +376,24 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSRange range = [self rangeForNode:node];
     static NSArray<NSString*>* keys;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        keys = @[
-            IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeDX,
-            IJSVGAttributeDY, IJSVGAttributeRotate
-        ];
-    });
-    static const IJSVGNodeAttribute attributes[] = { IJSVGNodeAttributeX, IJSVGNodeAttributeY,
-                                                     IJSVGNodeAttributeDX, IJSVGNodeAttributeDY, IJSVGNodeAttributeRotate };
-    for(NSUInteger index = 0; index < keys.count; index++) {
+    dispatch_once(&onceToken, ^{ keys = @[ IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeRotate ]; });
+    static const IJSVGNodeAttribute attributes[] = { IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeDX, IJSVGNodeAttributeDY, IJSVGNodeAttributeRotate };
+    for (NSUInteger index = 0; index < keys.count; index++) {
         IJSVGNodeAttribute attribute = attributes[index];
         BOOL isRotation = attribute == IJSVGNodeAttributeRotate;
         BOOL horizontal = attribute == IJSVGNodeAttributeX || attribute == IJSVGNodeAttributeDX;
         CGFloat referenceLength = horizontal ? self.viewport.width : self.viewport.height;
         NSArray<IJSVGTextAttributeValue*>* values = node.positioning[keys[index]].lengths;
         NSUInteger count = MIN(range.length, values.count);
-        if(isRotation && values.count != 0) {
+        if (isRotation && values.count != 0) {
             count = range.length;
         }
-        for(NSUInteger offset = 0; offset < count; offset++) {
+        for (NSUInteger offset = 0; offset < count; offset++) {
             IJSVGTextCharacter* character = &_characters[range.location + offset];
             NSUInteger valueIndex = MIN(offset, values.count - 1);
             IJSVGTextAttributeValue* value = values[valueIndex];
-            CGFloat amount = isRotation
-                ? value.number
-                : IJSVGTextLength(value, character->style.size,
-                                  character->style.xHeight, referenceLength);
-            switch(attribute) {
+            CGFloat amount = isRotation ? value.number : IJSVGTextLength(value, character->style.size, character->style.xHeight, referenceLength);
+            switch (attribute) {
                 case IJSVGNodeAttributeX:
                     character->x = amount;
                     break;
@@ -486,7 +414,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             }
         }
     }
-    for(IJSVGText* child in node.children) {
+    for (IJSVGText* child in node.children) {
         [self resolvePositions:child];
     }
 }
@@ -494,45 +422,39 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (NSDictionary<NSAttributedStringKey, id>*)attributesForCharacter:(IJSVGTextCharacter*)character
 {
     IJSVGTextComputedStyle* style = character->style;
-    NSMutableDictionary<NSAttributedStringKey, id>* attributes = [NSMutableDictionary dictionaryWithDictionary:@{
-        (__bridge NSString*)kCTFontAttributeName: style.font,
-        IJSVGTextOwnerKey: character->owner
-    }];
+    NSMutableDictionary<NSAttributedStringKey, id>* attributes = [NSMutableDictionary dictionaryWithDictionary:@{ (__bridge NSString*)kCTFontAttributeName : style.font, IJSVGTextOwnerKey : character->owner }];
     IJSVGTextKeyword ligatures = style.values[IJSVGAttributeFontVariantLigatures].keyword;
-    if(ligatures == IJSVGTextKeywordNone || ligatures == IJSVGTextKeywordNoCommonLigatures) {
+    if (ligatures == IJSVGTextKeywordNone || ligatures == IJSVGTextKeywordNoCommonLigatures) {
         attributes[(__bridge NSString*)kCTLigatureAttributeName] = @0;
     }
     IJSVGTextKeyword kerning = style.values[IJSVGAttributeFontKerning].keyword;
-    BOOL automaticKerning = character->pathNode == nil &&
-        style.values[IJSVGAttributeTextRendering].keyword != IJSVGTextKeywordOptimizeSpeed;
-    if(kerning != IJSVGTextKeywordNormal && kerning != IJSVGTextKeywordNone) {
-        for(IJSVGText* node = character->owner; node != nil; node = (IJSVGText*)node.parentNode) {
-            if(node.positioning[IJSVGAttributeTextLength] != nil) {
+    BOOL automaticKerning = character->pathNode == nil && style.values[IJSVGAttributeTextRendering].keyword != IJSVGTextKeywordOptimizeSpeed;
+    if (kerning != IJSVGTextKeywordNormal && kerning != IJSVGTextKeywordNone) {
+        for (IJSVGText* node = character->owner; node != nil; node = (IJSVGText*)node.parentNode) {
+            if (node.positioning[IJSVGAttributeTextLength] != nil) {
                 automaticKerning = NO;
                 break;
             }
-            if(node == self.root) {
+            if (node == self.root) {
                 break;
             }
         }
     }
     IJSVGTextAttributeValue* spacing = style.values[IJSVGAttributeLetterSpacing];
-    if(spacing != nil && spacing.keyword != IJSVGTextKeywordNormal) {
-        CGFloat letterSpacing = IJSVGTextLength(spacing, style.size,
-                                                style.xHeight, style.size);
+    if (spacing != nil && spacing.keyword != IJSVGTextKeywordNormal) {
+        CGFloat letterSpacing = IJSVGTextLength(spacing, style.size, style.xHeight, style.size);
         CGFloat scaledSpacing = letterSpacing * style.fontScale;
         attributes[(__bridge NSString*)kCTKernAttributeName] = @(scaledSpacing);
         attributes[(__bridge NSString*)kCTLigatureAttributeName] = @0;
-    } else if(kerning == IJSVGTextKeywordNone ||
-              (kerning != IJSVGTextKeywordNormal && !automaticKerning)) {
+    } else if (kerning == IJSVGTextKeywordNone || (kerning != IJSVGTextKeywordNormal && !automaticKerning)) {
         // Respect explicit kerning and rendering preferences.
         attributes[(__bridge NSString*)kCTKernAttributeName] = @0;
     }
     NSString* language = style.values[IJSVGAttributeLang].string ?: style.values[IJSVGAttributeXMLLang].string;
-    if(language) {
+    if (language) {
         attributes[(__bridge NSString*)kCTLanguageAttributeName] = language;
     }
-    if(style.vertical) {
+    if (style.vertical) {
         attributes[(__bridge NSString*)kCTVerticalFormsAttributeName] = @YES;
     }
     return attributes;
@@ -541,30 +463,24 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (NSArray<IJSVGNode*>*)bidiScopesForNode:(IJSVGText*)node
 {
     NSMutableArray<IJSVGNode*>* scopes = [[NSMutableArray alloc] init];
-    for(IJSVGNode* current = node; current != nil; current = current.parentNode) {
+    for (IJSVGNode* current = node; current != nil; current = current.parentNode) {
         IJSVGTextKeyword bidi = [self styleForNode:current].values[IJSVGAttributeUnicodeBidi].keyword;
-        if(bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride ||
-           bidi == IJSVGTextKeywordIsolate || bidi == IJSVGTextKeywordIsolateOverride ||
-           bidi == IJSVGTextKeywordPlaintext) {
+        if (bidi == IJSVGTextKeywordEmbed || bidi == IJSVGTextKeywordBidiOverride || bidi == IJSVGTextKeywordIsolate || bidi == IJSVGTextKeywordIsolateOverride || bidi == IJSVGTextKeywordPlaintext) {
             [scopes insertObject:current atIndex:0];
         }
-        if(current == self.root) {
+        if (current == self.root) {
             break;
         }
     }
     return scopes;
 }
 
-- (void)appendBidiScope:(IJSVGNode*)node
-                opening:(BOOL)opening
-                   text:(NSMutableAttributedString*)text
-                    map:(NSMutableData*)map
-             attributes:(NSDictionary<NSAttributedStringKey, id>*)attributes
+- (void)appendBidiScope:(IJSVGNode*)node opening:(BOOL)opening text:(NSMutableAttributedString*)text map:(NSMutableData*)map attributes:(NSDictionary<NSAttributedStringKey, id>*)attributes
 {
     IJSVGTextComputedStyle* style = [self styleForNode:node];
     IJSVGTextKeyword bidi = style.values[IJSVGAttributeUnicodeBidi].keyword;
     NSString* controls = nil;
-    switch(bidi) {
+    switch (bidi) {
         case IJSVGTextKeywordEmbed:
             controls = opening ? (style.rtl ? @"\u202B" : @"\u202A") : @"\u202C";
             break;
@@ -583,20 +499,15 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         default:
             return;
     }
-    [text appendAttributedString:[[NSAttributedString alloc] initWithString:controls
-                                                                attributes:attributes]];
+    [text appendAttributedString:[[NSAttributedString alloc] initWithString:controls attributes:attributes]];
     // Added bidi controls affect shaping without taking an SVG character index.
     NSUInteger missing = NSNotFound;
-    for(NSUInteger index = 0; index < controls.length; index++) {
-        [map appendBytes:&missing
-                  length:sizeof(missing)];
+    for (NSUInteger index = 0; index < controls.length; index++) {
+        [map appendBytes:&missing length:sizeof(missing)];
     }
 }
 
-- (NSMutableAttributedString*)bidiTextForRange:(NSRange)range
-                                    attributed:(NSAttributedString*)attributed
-                                           map:(NSMutableData*)map
-                                       offsets:(NSMutableData*)offsets
+- (NSMutableAttributedString*)bidiTextForRange:(NSRange)range attributed:(NSAttributedString*)attributed map:(NSMutableData*)map offsets:(NSMutableData*)offsets
 {
     NSMutableAttributedString* result = [[NSMutableAttributedString alloc] init];
     [offsets setLength:range.length * sizeof(NSUInteger)];
@@ -604,62 +515,45 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSArray<IJSVGNode*>* active = @[];
     NSDictionary<NSAttributedStringKey, id>* attributes = nil;
     NSUInteger end = NSMaxRange(range);
-    for(NSUInteger index = range.location; index < end;) {
+    for (NSUInteger index = range.location; index < end;) {
         IJSVGTextCharacter* first = &_characters[index];
-        attributes = [attributed attributesAtIndex:first->utf16
-                                    effectiveRange:NULL];
+        attributes = [attributed attributesAtIndex:first->utf16 effectiveRange:NULL];
         NSArray<IJSVGNode*>* next = [self bidiScopesForNode:first->owner];
         NSUInteger common = 0;
-        while(common < active.count && common < next.count && active[common] == next[common]) {
+        while (common < active.count && common < next.count && active[common] == next[common]) {
             common++;
         }
-        for(NSUInteger scope = active.count; scope > common; scope--) {
-            [self appendBidiScope:active[scope - 1]
-                         opening:NO
-                            text:result
-                             map:map
-                      attributes:attributes];
+        for (NSUInteger scope = active.count; scope > common; scope--) {
+            [self appendBidiScope:active[scope - 1] opening:NO text:result map:map attributes:attributes];
         }
-        for(NSUInteger scope = common; scope < next.count; scope++) {
-            [self appendBidiScope:next[scope]
-                         opening:YES
-                            text:result
-                             map:map
-                      attributes:attributes];
+        for (NSUInteger scope = common; scope < next.count; scope++) {
+            [self appendBidiScope:next[scope] opening:YES text:result map:map attributes:attributes];
         }
         active = next;
         NSUInteger start = first->utf16;
         NSUInteger length = 0;
-        while(index < end && _characters[index].owner == first->owner) {
+        while (index < end && _characters[index].owner == first->owner) {
             IJSVGTextCharacter* character = &_characters[index];
             positions[index - range.location] = result.length + length;
             NSUInteger nextOffset = index + 1 == _characterCount ? attributed.length : _characters[index + 1].utf16;
             NSUInteger units = nextOffset - character->utf16;
-            for(NSUInteger unit = 0; unit < units; unit++) {
-                [map appendBytes:&index
-                          length:sizeof(index)];
+            for (NSUInteger unit = 0; unit < units; unit++) {
+                [map appendBytes:&index length:sizeof(index)];
             }
             length += units;
             index++;
         }
         [result appendAttributedString:[attributed attributedSubstringFromRange:NSMakeRange(start, length)]];
     }
-    for(IJSVGNode* scope in active.reverseObjectEnumerator) {
-        [self appendBidiScope:scope
-                      opening:NO
-                         text:result
-                          map:map
-                   attributes:attributes];
+    for (IJSVGNode* scope in active.reverseObjectEnumerator) {
+        [self appendBidiScope:scope opening:NO text:result map:map attributes:attributes];
     }
     return result;
 }
 
-- (void)shapeRange:(NSRange)range
-        attributed:(NSAttributedString*)attributed
-          utf16Map:(NSData*)map
-            origin:(CGPoint)origin
+- (void)shapeRange:(NSRange)range attributed:(NSAttributedString*)attributed utf16Map:(NSData*)map origin:(CGPoint)origin
 {
-    if(!range.length) {
+    if (!range.length) {
         return;
     }
     IJSVGTextCharacter* first = &_characters[range.location];
@@ -668,13 +562,10 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSMutableData* offsets = nil;
     NSMutableAttributedString* substring;
     NSUInteger mapStart = first->utf16;
-    if(_hasBidiScopes) {
+    if (_hasBidiScopes) {
         shapedMap = [[NSMutableData alloc] init];
         offsets = [[NSMutableData alloc] init];
-        substring = [self bidiTextForRange:range
-                                attributed:attributed
-                                       map:shapedMap
-                                   offsets:offsets];
+        substring = [self bidiTextForRange:range attributed:attributed map:shapedMap offsets:offsets];
         mapStart = 0;
     } else {
         // Reuse the original character mapping when no bidi controls are needed.
@@ -685,47 +576,40 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     // Chunks with the same direction can share their paragraph settings.
     NSUInteger directionIndex = first->style.rtl ? 1 : 0;
     id paragraph = _paragraphStyles[directionIndex];
-    if(paragraph == nil) {
+    if (paragraph == nil) {
         CTWritingDirection direction = first->style.rtl ? kCTWritingDirectionRightToLeft : kCTWritingDirectionLeftToRight;
-        CTParagraphStyleSetting setting = {
-          kCTParagraphStyleSpecifierBaseWritingDirection,
-          sizeof(direction), &direction
-        };
+        CTParagraphStyleSetting setting = { kCTParagraphStyleSpecifierBaseWritingDirection, sizeof(direction), &direction };
         paragraph = CFBridgingRelease(CTParagraphStyleCreate(&setting, 1));
         _paragraphStyles[directionIndex] = paragraph;
     }
-    [substring addAttribute:(__bridge NSString*)kCTParagraphStyleAttributeName
-                      value:paragraph
-                      range:NSMakeRange(0, substring.length)];
+    [substring addAttribute:(__bridge NSString*)kCTParagraphStyleAttributeName value:paragraph range:NSMakeRange(0, substring.length)];
     CTLineRef line = CTLineCreateWithAttributedString((__bridge CFAttributedStringRef)substring);
     const NSUInteger* mapping = shapedMap != nil ? shapedMap.bytes : map.bytes;
     const NSUInteger* stringOffsets = offsets.bytes;
     CFArrayRef runs = CTLineGetGlyphRuns(line);
     CFIndex runCount = CFArrayGetCount(runs);
     CGFloat lineAdvance = CTLineGetTypographicBounds(line, NULL, NULL, NULL) / first->style.fontScale;
-    for(NSUInteger i = range.location; i < end; i++) {
+    for (NSUInteger i = range.location; i < end; i++) {
         IJSVGTextCharacter* character = &_characters[i];
         character->middle = YES;
         character->position = origin;
     }
-    for(CFIndex index = 0; index < runCount; index++) {
+    for (CFIndex index = 0; index < runCount; index++) {
         CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, index);
-        IJSVGTextAppendGlyphRun(run, _characters, self.glyphs, self.glyphFonts,
-                                mapStart, substring.length, mapping,
-                                origin);
+        IJSVGTextAppendGlyphRun(run, _characters, self.glyphs, self.glyphFonts, mapStart, substring.length, mapping, origin);
     }
     // Glyph positions cover normal characters directly. Only characters inside a
-    // cluster need a caret lookup; querying every index repeatedly walks the line.
-    for(NSUInteger index = range.location; index < end; index++) {
+    // cluster need a caret lookup, querying every index repeatedly walks the
+    // line.
+    for (NSUInteger index = range.location; index < end; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        if(character->middle == NO) {
+        if (character->middle == NO) {
             continue;
         }
-        NSUInteger stringIndex = stringOffsets != NULL ? stringOffsets[index - range.location] :
-            character->utf16 - first->utf16;
+        NSUInteger stringIndex = stringOffsets != NULL ? stringOffsets[index - range.location] : character->utf16 - first->utf16;
         CGFloat offset = CTLineGetOffsetForStringIndex(line, stringIndex, NULL) / first->style.fontScale;
         CGPoint position = origin;
-        if(first->style.vertical) {
+        if (first->style.vertical) {
             position.y += offset;
         } else {
             position.x += offset;
@@ -741,18 +625,18 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 
 - (void)adjustLength:(IJSVGText*)node
 {
-    for(IJSVGText* child in node.children) {
+    for (IJSVGText* child in node.children) {
         [self adjustLength:child];
     }
     IJSVGTextAttributeValue* specified = node.positioning[IJSVGAttributeTextLength];
     NSRange range = [self rangeForNode:node];
-    if(specified == nil || range.length == 0) {
+    if (specified == nil || range.length == 0) {
         return;
     }
     IJSVGTextComputedStyle* style = [self styleForNode:node];
     CGFloat diagonal = hypot(self.viewport.width, self.viewport.height) / M_SQRT2;
     CGFloat target = IJSVGTextLength(specified, style.size, style.xHeight, diagonal);
-    if(target < 0 || !isfinite(target)) {
+    if (target < 0 || !isfinite(target)) {
         return;
     }
     BOOL vertical = style.vertical;
@@ -760,9 +644,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     CGFloat max = -CGFLOAT_MAX;
     NSUInteger end = NSMaxRange(range);
     BOOL hasClusters = NO;
-    for(NSUInteger index = range.location; index < end; index++) {
+    for (NSUInteger index = range.location; index < end; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        if(character->middle) {
+        if (character->middle) {
             continue;
         }
         CGFloat position = vertical ? character->position.y : character->position.x;
@@ -771,7 +655,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         hasClusters = YES;
     }
     CGFloat length = max - min;
-    if(!hasClusters || length <= 0) {
+    if (!hasClusters || length <= 0) {
         return;
     }
     BOOL scale = node.positioning[IJSVGAttributeLengthAdjust].keyword == IJSVGTextKeywordSpacingAndGlyphs;
@@ -780,36 +664,35 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     __attribute__((objc_precise_lifetime)) NSMutableData* storage = nil;
     NSUInteger* spacingUnits = NULL;
     NSUInteger unitCount = 0;
-    if(!scale) {
+    if (!scale) {
         storage = [[NSMutableData alloc] initWithLength:range.length * sizeof(NSUInteger)];
         spacingUnits = storage.mutableBytes;
-        unitCount = IJSVGTextBuildSpacingUnits(_characters, range, node,
-                                               spacingUnits);
+        unitCount = IJSVGTextBuildSpacingUnits(_characters, range, node, spacingUnits);
     }
-    for(NSUInteger index = range.location; index < end; index++) {
+    for (NSUInteger index = range.location; index < end; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        if(character->middle) {
+        if (character->middle) {
             continue;
         }
         CGFloat position = vertical ? character->position.y : character->position.x;
         CGFloat changed = position;
-        if(scale) {
+        if (scale) {
             changed = min + (position - min) * factor;
             character->scale *= factor;
             character->advance *= factor;
-        } else if(unitCount > 1) {
+        } else if (unitCount > 1) {
             NSUInteger unit = spacingUnits[index - range.location];
             changed += delta * (CGFloat)unit / (unitCount - 1);
         }
-        if(vertical) {
+        if (vertical) {
             character->position.y = changed;
         } else {
             character->position.x = changed;
         }
     }
-    for(NSUInteger index = end; index < _characterCount; index++) {
+    for (NSUInteger index = end; index < _characterCount; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        if(vertical) {
+        if (vertical) {
             character->position.y += delta;
         } else {
             character->position.x += delta;
@@ -820,12 +703,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (void)applyRelativePositions
 {
     CGPoint relative = CGPointZero;
-    for(NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
+    for (NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
         IJSVGTextCharacter* c = &_characters[characterIndex];
         relative.x += c->dx;
         relative.y += c->dy;
-        c->position = CGPointMake(c->position.x + relative.x,
-                                  c->position.y + relative.y);
+        c->position = CGPointMake(c->position.x + relative.x, c->position.y + relative.y);
     }
 }
 
@@ -833,23 +715,22 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 {
     CGPoint shift = CGPointZero;
     IJSVGText* previousPath = nil;
-    for(NSUInteger i = 0; i < _characterCount; i++) {
+    for (NSUInteger i = 0; i < _characterCount; i++) {
         IJSVGTextCharacter* c = &_characters[i];
-        if(c->pathNode && c->pathNode != previousPath) {
-            if(c->style.vertical) {
+        if (c->pathNode && c->pathNode != previousPath) {
+            if (c->style.vertical) {
                 shift.y = -c->position.y;
             } else {
                 shift.x = -c->position.x;
             }
         }
-        if(!isnan(c->x) && !(c->pathNode && c->style.vertical)) {
+        if (!isnan(c->x) && !(c->pathNode && c->style.vertical)) {
             shift.x = c->x - c->position.x + c->dx;
         }
-        if(!isnan(c->y) && !(c->pathNode && !c->style.vertical)) {
+        if (!isnan(c->y) && !(c->pathNode && !c->style.vertical)) {
             shift.y = c->y - c->position.y + c->dy;
         }
-        c->position = CGPointMake(c->position.x + shift.x,
-                                  c->position.y + shift.y);
+        c->position = CGPointMake(c->position.x + shift.x, c->position.y + shift.y);
         previousPath = c->pathNode;
     }
 }
@@ -857,17 +738,17 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (void)applyTextAnchors
 {
     NSUInteger begin = 0;
-    while(begin < _characterCount) {
+    while (begin < _characterCount) {
         NSUInteger end = begin + 1;
-        while(end < _characterCount && !_characters[end].chunk) {
+        while (end < _characterCount && !_characters[end].chunk) {
             end++;
         }
         IJSVGTextCharacter* first = &_characters[begin];
         BOOL vertical = first->style.vertical;
         CGFloat min = CGFLOAT_MAX, max = -CGFLOAT_MAX;
-        for(NSUInteger i = begin; i < end; i++) {
+        for (NSUInteger i = begin; i < end; i++) {
             IJSVGTextCharacter* c = &_characters[i];
-            if(c->middle) {
+            if (c->middle) {
                 continue;
             }
             CGFloat p = vertical ? c->position.y : c->position.x;
@@ -875,26 +756,25 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             max = MAX(max, p + c->advance);
         }
         IJSVGTextKeyword anchor = first->style.values[IJSVGAttributeTextAnchor].keyword;
-        if(anchor == IJSVGTextKeywordUnspecified) {
+        if (anchor == IJSVGTextKeywordUnspecified) {
             anchor = IJSVGTextKeywordStart;
         }
         CGFloat amount = 0;
-        if(min != CGFLOAT_MAX) {
+        if (min != CGFLOAT_MAX) {
             CGFloat origin = vertical ? first->position.y : first->position.x;
-            if(anchor == IJSVGTextKeywordMiddle) {
+            if (anchor == IJSVGTextKeywordMiddle) {
                 amount = origin - (min + max) * .5;
-            } else if(((anchor == IJSVGTextKeywordEnd) && !first->style.rtl) ||
-                      ((anchor == IJSVGTextKeywordStart) && first->style.rtl)) {
+            } else if (((anchor == IJSVGTextKeywordEnd) && !first->style.rtl) || ((anchor == IJSVGTextKeywordStart) && first->style.rtl)) {
                 amount = origin - max;
             } else {
                 amount = origin - min;
             }
         }
-        for(NSUInteger i = begin; i < end; i++) {
+        for (NSUInteger i = begin; i < end; i++) {
             IJSVGTextCharacter* c = &_characters[i];
             CGPoint position = c->position;
             CGFloat baseline = IJSVGTextBaselineOffset(c->style);
-            if(vertical) {
+            if (vertical) {
                 position.y += amount;
                 position.x -= baseline;
             } else {
@@ -927,64 +807,56 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     CGPoint endPoint = CGPointZero;
     CGPoint continuation = CGPointZero;
     IJSVGText* previous = nil;
-    for(NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
+    for (NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
         IJSVGTextCharacter* c = &_characters[characterIndex];
         IJSVGText* node = c->pathNode;
-        if(!node) {
-            if(previous) {
-                continuation = CGPointMake(continuation.x - c->position.x,
-                                           continuation.y - c->position.y);
+        if (!node) {
+            if (previous) {
+                continuation = CGPointMake(continuation.x - c->position.x, continuation.y - c->position.y);
                 previous = nil;
             }
-            c->position = CGPointMake(c->position.x + continuation.x,
-                                      c->position.y + continuation.y);
+            c->position = CGPointMake(c->position.x + continuation.x, c->position.y + continuation.y);
             continue;
         }
-        if(metricsNode != node) {
+        if (metricsNode != node) {
             metricsNode = node;
             positioningStyle = nil;
             IJSVGNode* key = node.textPath ?: node;
             metrics = [metricsCache objectForKey:key];
-            if(metrics == nil) {
+            if (metrics == nil) {
                 CGPathRef path = node.textPath && self.pathResolver ? self.pathResolver(node.textPath) : NULL;
                 CGPathRef previousPath = (__bridge CGPathRef)previousResolvedPath;
                 // Separate references can resolve to the same path geometry.
-                if(path != NULL && previousPath != NULL && CGPathEqualToPath(path,
-                                                                             previousPath)) {
+                if (path != NULL && previousPath != NULL && CGPathEqualToPath(path, previousPath)) {
                     metrics = previousMetrics;
                 } else {
                     metrics = [[IJSVGTextPathMetrics alloc] initWithPath:path];
                     previousMetrics = metrics;
                     previousResolvedPath = path != NULL ? CFBridgingRelease(CGPathCreateCopy(path)) : nil;
                 }
-                if(path != NULL) {
+                if (path != NULL) {
                     CGPathRelease(path);
                 }
-                if(metricsCache == nil) {
+                if (metricsCache == nil) {
                     metricsCache = [NSMapTable strongToStrongObjectsMapTable];
                 }
-                [metricsCache setObject:metrics
-                                 forKey:key];
+                [metricsCache setObject:metrics forKey:key];
             }
-            if(metrics.length > 0) {
+            if (metrics.length > 0) {
                 CGPoint endTangent;
                 BOOL reverse = node.positioning[IJSVGAttributeSide].keyword == IJSVGTextKeywordRight;
-                [metrics pointAt:reverse ? 0 : metrics.length
-                           point:&endPoint
-                         tangent:&endTangent];
+                [metrics pointAt:reverse ? 0 : metrics.length point:&endPoint tangent:&endTangent];
             }
         }
-        if(metrics.length <= 0) {
+        if (metrics.length <= 0) {
             c->hidden = YES;
             continue;
         }
-      
+
         // Character anchoring can vary, but relative offsets belong to textPath.
-        if(positioningStyle != c->style) {
+        if (positioningStyle != c->style) {
             positioningStyle = c->style;
-            positioning = IJSVGTextResolvePathPositioning(node, positioningStyle,
-                                                          [self styleForNode:node],
-                                                          metrics);
+            positioning = IJSVGTextResolvePathPositioning(node, positioningStyle, [self styleForNode:node], metrics);
         }
         IJSVGTextPositionOnPath(c, &positioning, metrics);
         continuation = endPoint;
@@ -995,7 +867,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (IJSVGGroup*)geometryGroupForNode:(IJSVGText*)node
 {
     IJSVGGroup* group = [self.groups objectForKey:node];
-    if(group) {
+    if (group) {
         return group;
     }
     group = [[IJSVGGroup alloc] init];
@@ -1005,7 +877,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     group.type = IJSVGNodeTypeGroup;
     group.parentNode = nil;
     // The renderer applies the root text elements effects exactly once.
-    if(node == self.root) {
+    if (node == self.root) {
         group.transforms = @[];
         group.filters = @[];
         group.mask = nil;
@@ -1018,8 +890,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         IJSVGGroup* parent = [self geometryGroupForNode:(IJSVGText*)node.parentNode];
         [parent addChild:group];
     }
-    [self.groups setObject:group
-                    forKey:node];
+    [self.groups setObject:group forKey:node];
     return group;
 }
 
@@ -1040,21 +911,21 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     CFMutableDictionaryRef outlines = NULL;
     const IJSVGTextGlyph* glyphs = _glyphs.bytes;
     NSUInteger count = _glyphs.length / sizeof(IJSVGTextGlyph);
-    for(NSUInteger index = 0; index < count; index++) {
+    for (NSUInteger index = 0; index < count; index++) {
         const IJSVGTextGlyph* glyph = &glyphs[index];
         IJSVGTextCharacter* c = &_characters[glyph->character];
-        if(c->hidden || c->style.size == 0) {
+        if (c->hidden || c->style.size == 0) {
             continue;
         }
         // Resume parent content after a span in document paint order.
-        if(previousOwner != c->owner) {
+        if (previousOwner != c->owner) {
             IJSVGGroup* group = [self geometryGroupForNode:c->owner];
             path = [[IJSVGPath alloc] init];
             path.type = IJSVGNodeTypePath;
             destination = path.path;
             [group addChild:path];
             decorationDestination = NULL;
-            if(c->style.decorations != IJSVGTextDecorationNone) {
+            if (c->style.decorations != IJSVGTextDecorationNone) {
                 IJSVGPath* decorationPath = [[IJSVGPath alloc] init];
                 decorationPath.type = IJSVGNodeTypePath;
                 decorationDestination = decorationPath.path;
@@ -1062,50 +933,43 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             }
             previousOwner = c->owner;
         }
-        if(previousFont != (__bridge id)glyph->font) {
+        if (previousFont != (__bridge id)glyph->font) {
             previousFont = (__bridge id)glyph->font;
             IJSVGTextFontExtents(glyph->font, &ascent, &descent);
             id cached = [outlineFonts objectForKey:previousFont];
-            if(cached == nil) {
-                CFMutableDictionaryRef cache = CFDictionaryCreateMutable(NULL, 0,
-                                                                         NULL, &kCFTypeDictionaryValueCallBacks);
+            if (cached == nil) {
+                CFMutableDictionaryRef cache = CFDictionaryCreateMutable(NULL, 0, NULL, &kCFTypeDictionaryValueCallBacks);
                 cached = CFBridgingRelease(cache);
-                [outlineFonts setObject:cached
-                                 forKey:previousFont];
+                [outlineFonts setObject:cached forKey:previousFont];
             }
             outlines = (__bridge CFMutableDictionaryRef)cached;
         }
         // Add one so glyph zero still has a nonzero cache key.
         const void* key = (const void*)((uintptr_t)glyph->glyph + 1);
         id outline = (__bridge id)CFDictionaryGetValue(outlines, key);
-        if(!outline) {
-            CGPathRef cgPath = CTFontCreatePathForGlyph(glyph->font,
-                                                        glyph->glyph, NULL);
+        if (!outline) {
+            CGPathRef cgPath = CTFontCreatePathForGlyph(glyph->font, glyph->glyph, NULL);
             // Remember missing outlines too, such as spaces.
             outline = cgPath ? CFBridgingRelease(cgPath) : NSNull.null;
             CFDictionarySetValue(outlines, key, (__bridge const void*)outline);
         }
         CGAffineTransform transform = IJSVGTextGlyphTransform(c, glyph);
         CGSize advance;
-        CTFontGetAdvancesForGlyphs(glyph->font, kCTFontOrientationHorizontal,
-                                   &glyph->glyph, &advance, 1);
+        CTFontGetAdvancesForGlyphs(glyph->font, kCTFontOrientationHorizontal, &glyph->glyph, &advance, 1);
         CGRect cell = CGRectMake(0, -descent, advance.width, ascent + descent);
         _boundingBox = CGRectUnion(_boundingBox, CGRectApplyAffineTransform(cell, transform));
-        if(outline != NSNull.null) {
-            IJSVGTextAppendGlyphPath(destination, (__bridge CGPathRef)outline,
-                                     transform);
+        if (outline != NSNull.null) {
+            IJSVGTextAppendGlyphPath(destination, (__bridge CGPathRef)outline, transform);
         }
         // Separate decoration geometry prevents opposite winding from cutting
         // holes in glyphs. Spaces have decorations even without an outline.
-        if(decorationDestination != NULL &&
-           ![decoratedCharacters containsIndex:glyph->character]) {
+        if (decorationDestination != NULL && ![decoratedCharacters containsIndex:glyph->character]) {
             [decoratedCharacters addIndex:glyph->character];
             // Decorations span the cluster once, without combining glyph offsets.
             IJSVGTextGlyph decorationGlyph = *glyph;
             decorationGlyph.offset = CGPointZero;
             CGAffineTransform decorationTransform = IJSVGTextGlyphTransform(c, &decorationGlyph);
-            IJSVGTextAppendDecorations(decorationDestination, c, glyph, decorationTransform,
-                                       &decorationMetrics);
+            IJSVGTextAppendDecorations(decorationDestination, c, glyph, decorationTransform, &decorationMetrics);
         }
     }
 }
@@ -1121,14 +985,14 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSUInteger runLength = 0;
     NSUInteger maximumRunLength = 0;
     IJSVGText* previousOwner = nil;
-    for(NSUInteger index = 0; index < _characterCount; index++) {
+    for (NSUInteger index = 0; index < _characterCount; index++) {
         IJSVGTextCharacter* character = &_characters[index];
-        if(character->owner != previousOwner) {
+        if (character->owner != previousOwner) {
             runLength = 0;
             previousOwner = character->owner;
         }
         NSUInteger length = character->secondCodeUnit == 0 ? 1 : 2;
-        if(character->style.smallCapsFont != nil && character->firstCodeUnit > 0x7f) {
+        if (character->style.smallCapsFont != nil && character->firstCodeUnit > 0x7f) {
             length = IJSVGTextUppercaseCharacter(character).length;
         }
         unitCount += length;
@@ -1141,93 +1005,77 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     __attribute__((objc_precise_lifetime)) NSMutableData* codeUnitStorage = [NSMutableData dataWithLength:maximumRunLength * sizeof(unichar)];
     unichar* codeUnits = codeUnitStorage.mutableBytes;
     NSUInteger characterIndex = 0;
-    while(characterIndex < _characterCount) {
+    while (characterIndex < _characterCount) {
         NSUInteger runStart = characterIndex;
         IJSVGTextCharacter* first = &_characters[runStart];
         NSUInteger runLength = 0;
         NSUInteger runOffset = attributed.length;
         NSMutableIndexSet* smallCaps = first->style.smallCapsFont != nil ? [[NSMutableIndexSet alloc] init] : nil;
         BOOL previousSmallCap = NO;
-        while(characterIndex < _characterCount &&
-              _characters[characterIndex].owner == first->owner) {
+        while (characterIndex < _characterCount && _characters[characterIndex].owner == first->owner) {
             IJSVGTextCharacter* character = &_characters[characterIndex];
             character->utf16 = runOffset + runLength;
-            if(smallCaps != nil && character->firstCodeUnit <= 0x7f) {
+            if (smallCaps != nil && character->firstCodeUnit <= 0x7f) {
                 unichar unit = character->firstCodeUnit;
                 previousSmallCap = unit >= 'a' && unit <= 'z';
-                if(previousSmallCap) {
+                if (previousSmallCap) {
                     unit += 'A' - 'a';
                     [smallCaps addIndex:character->utf16];
                 }
                 mapping[character->utf16] = characterIndex;
                 codeUnits[runLength++] = unit;
-            } else if(smallCaps != nil) {
+            } else if (smallCaps != nil) {
                 NSString* upper = IJSVGTextUppercaseCharacter(character);
                 NSUInteger originalLength = character->secondCodeUnit == 0 ? 1 : 2;
-                BOOL changed = upper.length != originalLength ||
-                    [upper characterAtIndex:0] != character->firstCodeUnit ||
-                    (originalLength == 2 && [upper characterAtIndex:1] != character->secondCodeUnit);
-                BOOL combining = CFCharacterSetIsCharacterMember(
-                    CFCharacterSetGetPredefined(kCFCharacterSetNonBase), character->firstCodeUnit);
+                BOOL changed = upper.length != originalLength || [upper characterAtIndex:0] != character->firstCodeUnit || (originalLength == 2 && [upper characterAtIndex:1] != character->secondCodeUnit);
+                BOOL combining = CFCharacterSetIsCharacterMember(CFCharacterSetGetPredefined(kCFCharacterSetNonBase), character->firstCodeUnit);
                 previousSmallCap = changed || (combining && previousSmallCap);
-                if(previousSmallCap) {
+                if (previousSmallCap) {
                     [smallCaps addIndexesInRange:NSMakeRange(character->utf16, upper.length)];
                 }
                 [upper getCharacters:codeUnits + runLength range:NSMakeRange(0, upper.length)];
-                for(NSUInteger unit = 0; unit < upper.length; unit++) {
+                for (NSUInteger unit = 0; unit < upper.length; unit++) {
                     mapping[runOffset + runLength++] = characterIndex;
                 }
             } else {
                 mapping[character->utf16] = characterIndex;
                 codeUnits[runLength++] = character->firstCodeUnit;
-                if(character->secondCodeUnit != 0) {
+                if (character->secondCodeUnit != 0) {
                     mapping[character->utf16 + 1] = characterIndex;
                     codeUnits[runLength++] = character->secondCodeUnit;
                 }
             }
             characterIndex++;
         }
-        NSString* runString = [[NSString alloc] initWithCharacters:codeUnits
-                                                            length:runLength];
-        NSAttributedString* run = [[NSAttributedString alloc] initWithString:runString
-                                                                  attributes:[self attributesForCharacter:first]];
+        NSString* runString = [[NSString alloc] initWithCharacters:codeUnits length:runLength];
+        NSAttributedString* run = [[NSAttributedString alloc] initWithString:runString attributes:[self attributesForCharacter:first]];
         [attributed appendAttributedString:run];
-        if(!first->style.nativeSpacing &&
-            first->style.values[IJSVGAttributeFontKerning].keyword != IJSVGTextKeywordNormal &&
-            first->style.values[IJSVGAttributeLetterSpacing] == nil) {
-            for(NSUInteger index = runStart; index < characterIndex; index++) {
+        if (!first->style.nativeSpacing && first->style.values[IJSVGAttributeFontKerning].keyword != IJSVGTextKeywordNormal && first->style.values[IJSVGAttributeLetterSpacing] == nil) {
+            for (NSUInteger index = runStart; index < characterIndex; index++) {
                 IJSVGTextCharacter* character = &_characters[index];
-                if(character->firstCodeUnit == ' ') {
+                if (character->firstCodeUnit == ' ') {
                     NSUInteger start = index == runStart ? character->utf16 : _characters[index - 1].utf16;
-                    [attributed addAttribute:(__bridge NSString*)kCTKernAttributeName
-                                       value:@0
-                                       range:NSMakeRange(start, character->utf16 + 1 - start)];
+                    [attributed addAttribute:(__bridge NSString*)kCTKernAttributeName value:@0 range:NSMakeRange(start, character->utf16 + 1 - start)];
                 }
             }
         }
-        [smallCaps enumerateRangesUsingBlock:^(NSRange range, BOOL* stop) {
-            [attributed addAttribute:(__bridge NSString*)kCTFontAttributeName
-                               value:first->style.smallCapsFont
-                               range:range];
-        }];
-        if(first->style.wordSpacing != 0) {
+        [smallCaps enumerateRangesUsingBlock:^(NSRange range, BOOL* stop) { [attributed addAttribute:(__bridge NSString*)kCTFontAttributeName value:first->style.smallCapsFont range:range]; }];
+        if (first->style.wordSpacing != 0) {
             // Include word spacing in both typesetting and final glyph advances.
             NSString* kernKey = (__bridge NSString*)kCTKernAttributeName;
             CGFloat kern = [[run attribute:kernKey atIndex:0 effectiveRange:NULL] doubleValue];
             kern += first->style.wordSpacing * first->style.fontScale;
-            for(NSUInteger index = runStart; index < characterIndex; index++) {
+            for (NSUInteger index = runStart; index < characterIndex; index++) {
                 IJSVGTextCharacter* character = &_characters[index];
-                if(character->firstCodeUnit == ' ') {
-                    [attributed addAttribute:kernKey
-                                       value:@(kern)
-                                       range:NSMakeRange(character->utf16, 1)];
+                if (character->firstCodeUnit == ' ') {
+                    [attributed addAttribute:kernKey value:@(kern) range:NSMakeRange(character->utf16, 1)];
                 }
             }
         }
 
         const void* key = (__bridge const void*)first->owner;
         uintptr_t entry = (uintptr_t)CFDictionaryGetValue(_rangeIndices, key);
-        if(entry == 0) {
+        if (entry == 0) {
             entry = ++rangeCount;
             ranges[entry - 1].location = runStart;
             CFDictionarySetValue(_rangeIndices, key, (const void*)entry);
@@ -1240,26 +1088,24 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     return attributed;
 }
 
-- (void)shapeAttributedText:(NSAttributedString*)attributed
-                   utf16Map:(NSData*)map
+- (void)shapeAttributedText:(NSAttributedString*)attributed utf16Map:(NSData*)map
 {
     IJSVGTextComputedStyle* rootStyle = [self styleForNode:_root];
     IJSVGTextAttributeValue* inlineValue = rootStyle.values[IJSVGAttributeInlineSize];
     CGFloat referenceLength = rootStyle.vertical ? _viewport.height : _viewport.width;
-    CGFloat inlineSize = IJSVGTextLength(inlineValue, rootStyle.size,
-                                         rootStyle.xHeight, referenceLength);
+    CGFloat inlineSize = IJSVGTextLength(inlineValue, rootStyle.size, rootStyle.xHeight, referenceLength);
     CTTypesetterRef typesetter = NULL;
-    if(inlineSize > 0) {
+    if (inlineSize > 0) {
         typesetter = CTTypesetterCreateWithAttributedString((__bridge CFAttributedStringRef)attributed);
     }
     NSUInteger start = 0;
     CGPoint origin = CGPointZero;
     CGFloat lineHeight = rootStyle.lineHeight;
-    while(start < _characterCount) {
+    while (start < _characterCount) {
         IJSVGTextCharacter* first = &_characters[start];
-        if(first->firstCodeUnit == '\n' || first->firstCodeUnit == '\r') {
+        if (first->firstCodeUnit == '\n' || first->firstCodeUnit == '\r') {
             first->middle = YES;
-            if(rootStyle.vertical) {
+            if (rootStyle.vertical) {
                 IJSVGTextKeyword writingMode = rootStyle.values[IJSVGAttributeWritingMode].keyword;
                 CGFloat lineOffset = writingMode == IJSVGTextKeywordVerticalLR ? lineHeight : -lineHeight;
                 origin = CGPointMake(origin.x + lineOffset, 0);
@@ -1270,31 +1116,26 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             start++;
             continue;
         }
-        NSUInteger chunkEnd = IJSVGTextChunkEnd(_characters, _characterCount,
-                                                start, inlineSize);
-        NSUInteger end = IJSVGTextWrappedEnd(typesetter, first, start, chunkEnd,
-                                             inlineSize, attributed, map);
+        NSUInteger chunkEnd = IJSVGTextChunkEnd(_characters, _characterCount, start, inlineSize);
+        NSUInteger end = IJSVGTextWrappedEnd(typesetter, first, start, chunkEnd, inlineSize, attributed, map);
         BOOL wrapped = end < chunkEnd;
-        [self shapeRange:NSMakeRange(start, end - start)
-              attributed:attributed
-                utf16Map:map
-                  origin:origin];
+        [self shapeRange:NSMakeRange(start, end - start) attributed:attributed utf16Map:map origin:origin];
         CGFloat last = 0;
-        for(NSUInteger i = start; i < end; i++) {
+        for (NSUInteger i = start; i < end; i++) {
             IJSVGTextCharacter* c = &_characters[i];
             CGFloat position = rootStyle.vertical ? c->position.y : c->position.x;
             CGFloat characterEnd = position + c->advance;
             last = MAX(last, characterEnd);
             lineHeight = MAX(lineHeight, c->style.lineHeight);
         }
-        if(rootStyle.vertical) {
+        if (rootStyle.vertical) {
             origin.y = last;
         } else {
             origin.x = last;
         }
         start = end;
-        if(wrapped) {
-            if(rootStyle.vertical) {
+        if (wrapped) {
+            if (rootStyle.vertical) {
                 IJSVGTextKeyword writingMode = rootStyle.values[IJSVGAttributeWritingMode].keyword;
                 CGFloat lineOffset = writingMode == IJSVGTextKeywordVerticalLR ? lineHeight : -lineHeight;
                 CGFloat nextLineX = origin.x + lineOffset;
@@ -1305,7 +1146,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
             lineHeight = rootStyle.lineHeight;
         }
     }
-    if(typesetter != NULL) {
+    if (typesetter != NULL) {
         CFRelease(typesetter);
     }
 }
@@ -1314,11 +1155,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 {
     @synchronized(self) {
         // Rendering does not need boxed points, so create them only on request.
-        if(_characterPositions == nil) {
+        if (_characterPositions == nil) {
             NSUInteger count = _positionData.length / sizeof(CGPoint);
             const CGPoint* points = _positionData.bytes;
             NSMutableArray<NSValue*>* positions = [NSMutableArray arrayWithCapacity:count];
-            for(NSUInteger index = 0; index < count; index++) {
+            for (NSUInteger index = 0; index < count; index++) {
                 [positions addObject:[NSValue valueWithPoint:points[index]]];
             }
             _characterPositions = [positions copy];
@@ -1331,11 +1172,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
 - (NSArray<NSNumber*>*)characterRotations
 {
     @synchronized(self) {
-        if(_characterRotations == nil) {
+        if (_characterRotations == nil) {
             NSUInteger count = _rotationData.length / sizeof(CGFloat);
             const CGFloat* values = _rotationData.bytes;
             NSMutableArray<NSNumber*>* rotations = [NSMutableArray arrayWithCapacity:count];
-            for(NSUInteger index = 0; index < count; index++) {
+            for (NSUInteger index = 0; index < count; index++) {
                 [rotations addObject:@(values[index])];
             }
             _characterRotations = [rotations copy];
@@ -1345,46 +1186,41 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     }
 }
 
-- (void)resolveClusters:(NSAttributedString*)attributed
-               utf16Map:(NSData*)map
+- (void)resolveClusters:(NSAttributedString*)attributed utf16Map:(NSData*)map
 {
-    for(NSUInteger index = 0; index < _characterCount; index++) {
+    for (NSUInteger index = 0; index < _characterCount; index++) {
         _characters[index].cluster = index;
     }
     const NSUInteger* mapping = map.bytes;
-    NSStringEnumerationOptions options = NSStringEnumerationByComposedCharacterSequences |
-        NSStringEnumerationSubstringNotRequired;
+    NSStringEnumerationOptions options = NSStringEnumerationByComposedCharacterSequences | NSStringEnumerationSubstringNotRequired;
     [attributed.string enumerateSubstringsInRange:NSMakeRange(0, attributed.length)
                                           options:options
                                        usingBlock:^(NSString* substring, NSRange range, NSRange enclosingRange, BOOL* stop) {
-        NSUInteger start = mapping[range.location];
-        NSUInteger end = mapping[NSMaxRange(range) - 1] + 1;
-        for(NSUInteger index = start + 1; index < end; index++) {
-            IJSVGTextCharacter* character = &self->_characters[index];
-            IJSVGTextCharacter* first = &self->_characters[start];
-            if(character->owner != first->owner || !isnan(character->x) || !isnan(character->y)) {
-                start = index;
-            } else {
-                character->cluster = start;
-            }
-        }
-    }];
+                                           NSUInteger start = mapping[range.location];
+                                           NSUInteger end = mapping[NSMaxRange(range) - 1] + 1;
+                                           for (NSUInteger index = start + 1; index < end; index++) {
+                                               IJSVGTextCharacter* character = &self->_characters[index];
+                                               IJSVGTextCharacter* first = &self->_characters[start];
+                                               if (character->owner != first->owner || !isnan(character->x) || !isnan(character->y)) {
+                                                   start = index;
+                                               } else {
+                                                   character->cluster = start;
+                                               }
+                                           }
+                                       }];
 }
 
 - (void)prepareText:(IJSVGText*)text
 {
     @autoreleasepool {
-        [self collect:text
-                 path:nil];
+        [self collect:text path:nil];
         _hasPendingSpace = NO;
         [self capitalizeWords];
         NSMutableData* map = [[NSMutableData alloc] init];
         NSAttributedString* attributed = [self attributedTextWithMap:map];
         [self resolvePositions:text];
-        [self resolveClusters:attributed
-                      utf16Map:map];
-        [self shapeAttributedText:attributed
-                         utf16Map:map];
+        [self resolveClusters:attributed utf16Map:map];
+        [self shapeAttributedText:attributed utf16Map:map];
     }
 }
 
@@ -1396,7 +1232,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     NSMutableData* rotations = [NSMutableData dataWithLength:_characterCount * sizeof(CGFloat)];
     CGFloat* angles = rotations.mutableBytes;
     NSUInteger index = 0;
-    for(NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
+    for (NSUInteger characterIndex = 0; characterIndex < _characterCount; characterIndex++) {
         IJSVGTextCharacter* c = &_characters[characterIndex];
         angles[index] = c->rotation * 180 / M_PI;
         points[index++] = c->position;
@@ -1422,35 +1258,19 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
     _paragraphStyles[1] = nil;
 }
 
-- (instancetype)initWithText:(IJSVGText*)text
-                    viewport:(CGSize)viewport
-                pathResolver:(IJSVGTextPathResolver)pathResolver
+- (instancetype)initWithText:(IJSVGText*)text viewport:(CGSize)viewport pathResolver:(IJSVGTextPathResolver)pathResolver
 {
-    return [self initWithText:text
-                     viewport:viewport
-                  renderScale:1
-                 pathResolver:pathResolver];
+    return [self initWithText:text viewport:viewport renderScale:1 pathResolver:pathResolver];
 }
 
-- (instancetype)initWithText:(IJSVGText*)text
-                    viewport:(CGSize)viewport
-                 renderScale:(CGFloat)renderScale
-                pathResolver:(IJSVGTextPathResolver)pathResolver
+- (instancetype)initWithText:(IJSVGText*)text viewport:(CGSize)viewport renderScale:(CGFloat)renderScale pathResolver:(IJSVGTextPathResolver)pathResolver
 {
-    return [self initWithText:text
-                     viewport:viewport
-                  renderScale:renderScale
-             renderingOptions:nil
-                 pathResolver:pathResolver];
+    return [self initWithText:text viewport:viewport renderScale:renderScale renderingOptions:nil pathResolver:pathResolver];
 }
 
-- (instancetype)initWithText:(IJSVGText*)text
-                    viewport:(CGSize)viewport
-                 renderScale:(CGFloat)renderScale
-            renderingOptions:(IJSVGRenderingOptions*)renderingOptions
-                pathResolver:(IJSVGTextPathResolver)pathResolver
+- (instancetype)initWithText:(IJSVGText*)text viewport:(CGSize)viewport renderScale:(CGFloat)renderScale renderingOptions:(IJSVGRenderingOptions*)renderingOptions pathResolver:(IJSVGTextPathResolver)pathResolver
 {
-    if((self = [super init])) {
+    if ((self = [super init])) {
         _root = text;
         _viewport = viewport;
         _pathResolver = [pathResolver copy];
@@ -1460,11 +1280,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node,
         _rangeIndices = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
         _groups = [NSMapTable strongToStrongObjectsMapTable];
         _fontResolver = [[IJSVGTextFontResolver alloc] init];
-        if(renderingOptions != nil) {
+        if (renderingOptions != nil) {
             _fontResolver.defaultFontSize = renderingOptions.defaultFontSize;
         }
         _fontResolver.renderScale = isfinite(renderScale) && renderScale > 0 ? renderScale : 1;
-        if(IJSVGTextRenderingForNode(text) == IJSVGTextKeywordGeometricPrecision) {
+        if (IJSVGTextRenderingForNode(text) == IJSVGTextKeywordGeometricPrecision) {
             _fontResolver.renderScale = 1;
         }
         [self prepareText:text];

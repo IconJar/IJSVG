@@ -6,13 +6,12 @@
 //  Copyright © 2021 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGTraitedColor.h>
 
 @implementation IJSVGTraitedColor
 
-+ (IJSVGTraitedColor*)colorWithColor:(NSColor*)color
-                              traits:(IJSVGColorUsageTraits)traits
++ (IJSVGTraitedColor*)colorWithColor:(NSColor*)color traits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColor* type = [[self alloc] init];
     type.color = color;
@@ -22,7 +21,7 @@
 
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _traits = IJSVGColorUsageTraitNone;
     }
     return self;
@@ -30,13 +29,13 @@
 
 - (BOOL)isEqual:(id)object
 {
-    if([object isKindOfClass:IJSVGTraitedColor.class] == NO) {
+    if ([object isKindOfClass:IJSVGTraitedColor.class] == NO) {
         return NO;
     }
     return [self.color isEqual:((IJSVGTraitedColor*)object).color];
 }
 
-- (void)setColor:(NSColor *)color
+- (void)setColor:(NSColor*)color
 {
     _color = [IJSVGColor computeColorSpace:color];
 }

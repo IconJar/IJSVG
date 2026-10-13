@@ -6,13 +6,13 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGCommand.h>
-#import <IJSVG/IJSVGMarker.h>
-#import <IJSVG/IJSVGColorNode.h>
-#import <IJSVG/IJSVGGradientUnitLength.h>
-#import <IJSVG/IJSVGStringAdditions.h>
-#import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
+#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGCommand.h>
+#import <IJSVG/IJSVGGradientUnitLength.h>
+#import <IJSVG/IJSVGMarker.h>
+#import <IJSVG/IJSVGStringAdditions.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -67,11 +67,8 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (IJSVGCommandType)typeForCommandChar:(char)commandChar;
-+ (CGFloat*)commandParameters:(NSString*)command
-                        count:(NSInteger*)count;
-+ (CGFloat*)commandParameters:(NSString*)command
-                   dataStream:(IJSVGPathDataStream*)dataStream
-                        count:(NSInteger*)count;
++ (CGFloat*)commandParameters:(NSString*)command count:(NSInteger*)count;
++ (CGFloat*)commandParameters:(NSString*)command dataStream:(IJSVGPathDataStream*)dataStream count:(NSInteger*)count;
 + (CGFloat*)parseViewBox:(NSString*)string;
 + (IJSVGVectorEffect)vectorEffectForString:(NSString* _Nullable)string;
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string;
@@ -86,38 +83,27 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGFloat)angleForString:(NSString* _Nullable)string;
 + (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
-+ (NSString* _Nullable)MIMETypeForImageData:(NSData*)data
-                                  sourceURL:(NSURL*)sourceURL;
++ (NSString* _Nullable)MIMETypeForImageData:(NSData*)data sourceURL:(NSURL*)sourceURL;
 
 + (CGFloat)floatValue:(NSString*)string;
-+ (CGFloat)angleBetweenPointA:(NSPoint)point
-                       pointb:(NSPoint)point;
++ (CGFloat)angleBetweenPointA:(NSPoint)point pointb:(NSPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
 + (NSArray<NSString*>*)defURLs:(NSString*)string;
-+ (CGFloat)floatValue:(NSString*)string
-   fallBackForPercent:(CGFloat)viewBox;
++ (CGFloat)floatValue:(NSString*)string fallBackForPercent:(CGFloat)viewBox;
 
-// Parses a complete SVG number list, malformed values, infinities or NaNs return an empty array.
+// Parses a complete SVG number list, malformed values, infinities or NaNs
+// return an empty array.
 + (NSArray<NSNumber*>*)numbersFromString:(NSString*)string;
-+ (CGFloat*)scanFloatsFromString:(NSString*)string
-                            size:(NSInteger*)length;
-+ (CGFloat*)scanFloatsFromCString:(const char*)buffer
-                             size:(NSInteger*)length;
-+ (CGFloat*)scanFloatsFromCString:(const char*)buffer
-                       dataStream:(IJSVGPathDataStream*)dataStream
-                             size:(NSInteger*)length;
-+ (CGFloat*)scanFloatsFromCString:(const char*)buffer
-                       floatCount:(NSUInteger)floatCount
-                        charCount:(NSUInteger)charCount
-                             size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromString:(NSString*)string size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer dataStream:(IJSVGPathDataStream*)dataStream size:(NSInteger*)length;
++ (CGFloat*)scanFloatsFromCString:(const char*)buffer floatCount:(NSUInteger)floatCount charCount:(NSUInteger)charCount size:(NSInteger*)length;
 + (CGPathRef)newFlippedCGPath:(CGPathRef)path CF_RETURNS_RETAINED NS_SWIFT_NAME(flippedPath(_:));
 
 + (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
 
-
-+ (NSImage*)resizeImage:(NSImage*)anImage
-                 toSize:(CGSize)size;
++ (NSImage*)resizeImage:(NSImage*)anImage toSize:(CGSize)size;
 
 @end
 NS_ASSUME_NONNULL_END

@@ -17,10 +17,7 @@ typedef struct {
 // Keep string alive and unchanged while using the returned bytes.
 NS_INLINE IJSVGStringBytes IJSVGStringGetBytes(NSString* string)
 {
-    return (IJSVGStringBytes) {
-        .bytes = string.UTF8String,
-        .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]
-    };
+    return (IJSVGStringBytes) { .bytes = string.UTF8String, .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding] };
 }
 
 typedef struct {
@@ -30,21 +27,17 @@ typedef struct {
 
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void);
 void IJSVGParsingStringMethodRelease(IJSVGParsingStringMethod* stringMethod);
-IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string,
-                                                         NSUInteger* count);
-void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods,
-                                      NSUInteger count);
+IJSVGParsingStringMethod** IJSVGParsingMethodParseString(const char* string, NSUInteger* count);
+void IJSVGParsingStringMethodsRelease(IJSVGParsingStringMethod** methods, NSUInteger count);
 
-// Reports whether every byte belongs to a complete method or separating whitespace.
-IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string,
-                                                                       NSUInteger* count,
-                                                                       BOOL* valid);
+// Reports whether every byte belongs to a complete method or separating
+// whitespace.
+IJSVGParsingStringMethod** IJSVGParsingMethodParseStringWithValidation(const char* string, NSUInteger* count, BOOL* valid);
 
-// Returns a borrowed byte range without surrounding whitespace or matching quotes.
-// The source remains unchanged, quote is zero for an unquoted argument.
+// Returns a borrowed byte range without surrounding whitespace or matching
+// quotes. The source remains unchanged, quote is zero for an unquoted argument.
 // This unwraps one argument and does not decode CSS escapes.
-BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes,
-                                size_t* length, char* quote);
+BOOL IJSVGParsingUnwrapArgument(const char* argument, const char** bytes, size_t* length, char* quote);
 
 @interface IJSVGParsing : NSObject
 

@@ -6,15 +6,14 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGGradient.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGLinearGradient : IJSVGGradient
 
-+ (void)parseGradient:(NSXMLElement*)element
-             gradient:(IJSVGLinearGradient*)aGradient;
++ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGLinearGradient*)aGradient;
 
 @end
 

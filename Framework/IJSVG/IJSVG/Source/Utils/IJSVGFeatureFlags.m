@@ -12,10 +12,10 @@
 
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         // viewBox normalization
         _viewBoxNormalization = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
-      
+
         // Inferring of viewBoxes
         _inferViewBoxes = [IJSVGFeatureFlag featureFlagWithEnabled:YES];
     }

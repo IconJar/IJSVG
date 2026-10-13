@@ -6,8 +6,9 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGCommandParser.h>
+#import <IJSVG/IJSVGMarker.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGMarker
 
@@ -16,24 +17,9 @@
     return IJSVGNodeTypeMarker;
 }
 
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* attributes = [super allowedAttributes];
-    [attributes setBit:IJSVGNodeAttributeViewBox];
-    [attributes setBit:IJSVGNodeAttributePreserveAspectRatio];
-    [attributes setBit:IJSVGNodeAttributeOverflow];
-    [attributes setBit:IJSVGNodeAttributeRefX];
-    [attributes setBit:IJSVGNodeAttributeRefY];
-    [attributes setBit:IJSVGNodeAttributeMarkerWidth];
-    [attributes setBit:IJSVGNodeAttributeMarkerHeight];
-    [attributes setBit:IJSVGNodeAttributeMarkerUnits];
-    [attributes setBit:IJSVGNodeAttributeOrient];
-    return attributes;
-}
-
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _refX = IJSVGZeroUnitLength;
         _refY = IJSVGZeroUnitLength;
         _markerWidth = IJSVGThreeUnitLength;
@@ -84,7 +70,7 @@
 @implementation IJSVGMarkerSubpath
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _segments = [[NSMutableArray alloc] init];
     }
     return self;
@@ -101,13 +87,11 @@ static BOOL IJSVGMarkerVectorIsZero(CGPoint vector)
     return vector.x == 0 && vector.y == 0;
 }
 
-static IJSVGMarkerSegment* IJSVGMarkerSegmentForElement(const CGPathElement* element,
-                                                        CGPoint start,
-                                                        CGPoint subpathStart)
+static IJSVGMarkerSegment* IJSVGMarkerSegmentForElement(const CGPathElement* element, CGPoint start, CGPoint subpathStart)
 {
     IJSVGMarkerSegment* segment = [[IJSVGMarkerSegment alloc] init];
     segment.start = start;
-    switch(element->type) {
+    switch (element->type) {
         case kCGPathElementAddLineToPoint:
             segment.end = element->points[0];
             segment.outgoing = segment.incoming = IJSVGMarkerVector(start, segment.end);
@@ -120,27 +104,27 @@ static IJSVGMarkerSegment* IJSVGMarkerSegmentForElement(const CGPathElement* ele
             segment.end = element->points[1];
             segment.outgoing = IJSVGMarkerVector(start, element->points[0]);
             segment.incoming = IJSVGMarkerVector(element->points[0], segment.end);
-            if(IJSVGMarkerVectorIsZero(segment.outgoing)) {
+            if (IJSVGMarkerVectorIsZero(segment.outgoing)) {
                 segment.outgoing = IJSVGMarkerVector(start, segment.end);
             }
-            if(IJSVGMarkerVectorIsZero(segment.incoming)) {
+            if (IJSVGMarkerVectorIsZero(segment.incoming)) {
                 segment.incoming = IJSVGMarkerVector(start, segment.end);
             }
             break;
         case kCGPathElementAddCurveToPoint:
             segment.end = element->points[2];
             segment.outgoing = IJSVGMarkerVector(start, element->points[0]);
-            if(IJSVGMarkerVectorIsZero(segment.outgoing)) {
+            if (IJSVGMarkerVectorIsZero(segment.outgoing)) {
                 segment.outgoing = IJSVGMarkerVector(start, element->points[1]);
             }
-            if(IJSVGMarkerVectorIsZero(segment.outgoing)) {
+            if (IJSVGMarkerVectorIsZero(segment.outgoing)) {
                 segment.outgoing = IJSVGMarkerVector(start, segment.end);
             }
             segment.incoming = IJSVGMarkerVector(element->points[1], segment.end);
-            if(IJSVGMarkerVectorIsZero(segment.incoming)) {
+            if (IJSVGMarkerVectorIsZero(segment.incoming)) {
                 segment.incoming = IJSVGMarkerVector(element->points[0], segment.end);
             }
-            if(IJSVGMarkerVectorIsZero(segment.incoming)) {
+            if (IJSVGMarkerVectorIsZero(segment.incoming)) {
                 segment.incoming = IJSVGMarkerVector(start, segment.end);
             }
             break;
@@ -151,20 +135,19 @@ static IJSVGMarkerSegment* IJSVGMarkerSegmentForElement(const CGPathElement* ele
 }
 
 // Find a direction through zero length segments without crossing a moveto.
-static CGPoint IJSVGMarkerDirection(IJSVGMarkerSubpath* subpath,
-                                    NSInteger index, BOOL incoming)
+static CGPoint IJSVGMarkerDirection(IJSVGMarkerSubpath* subpath, NSInteger index, BOOL incoming)
 {
     NSInteger count = subpath.segments.count;
-    for(NSInteger step = 0; step < count; step++, index += incoming ? -1 : 1) {
-        if(index < 0 || index >= count) {
-            if(!subpath.closed) {
+    for (NSInteger step = 0; step < count; step++, index += incoming ? -1 : 1) {
+        if (index < 0 || index >= count) {
+            if (!subpath.closed) {
                 break;
             }
             index = (index + count) % count;
         }
         IJSVGMarkerSegment* segment = subpath.segments[index];
         CGPoint vector = incoming ? segment.incoming : segment.outgoing;
-        if(!IJSVGMarkerVectorIsZero(vector)) {
+        if (!IJSVGMarkerVectorIsZero(vector)) {
             return vector;
         }
     }
@@ -174,16 +157,16 @@ static CGPoint IJSVGMarkerDirection(IJSVGMarkerSubpath* subpath,
 static void IJSVGMarkerResolveDirections(IJSVGMarkerSubpath* subpath)
 {
     CGPoint incoming = subpath.closed ? IJSVGMarkerDirection(subpath, -1, YES) : CGPointZero;
-    for(IJSVGMarkerSegment* segment in subpath.segments) {
-        if(IJSVGMarkerVectorIsZero(segment.incoming)) {
+    for (IJSVGMarkerSegment* segment in subpath.segments) {
+        if (IJSVGMarkerVectorIsZero(segment.incoming)) {
             segment.incoming = incoming;
         } else {
             incoming = segment.incoming;
         }
     }
     CGPoint outgoing = subpath.closed ? IJSVGMarkerDirection(subpath, 0, NO) : CGPointZero;
-    for(IJSVGMarkerSegment* segment in subpath.segments.reverseObjectEnumerator) {
-        if(IJSVGMarkerVectorIsZero(segment.outgoing)) {
+    for (IJSVGMarkerSegment* segment in subpath.segments.reverseObjectEnumerator) {
+        if (IJSVGMarkerVectorIsZero(segment.outgoing)) {
             segment.outgoing = outgoing;
         } else {
             outgoing = segment.outgoing;
@@ -193,26 +176,25 @@ static void IJSVGMarkerResolveDirections(IJSVGMarkerSubpath* subpath)
 
 static CGFloat IJSVGMarkerAngle(CGPoint incoming, CGPoint outgoing)
 {
-    if(IJSVGMarkerVectorIsZero(incoming)) {
+    if (IJSVGMarkerVectorIsZero(incoming)) {
         incoming = outgoing;
     }
-    if(IJSVGMarkerVectorIsZero(outgoing)) {
+    if (IJSVGMarkerVectorIsZero(outgoing)) {
         outgoing = incoming;
     }
     CGFloat a = atan2(incoming.y, incoming.x);
     CGFloat b = atan2(outgoing.y, outgoing.x);
     CGFloat difference = b - a;
-    if(difference > M_PI) {
+    if (difference > M_PI) {
         difference -= 2 * M_PI;
     }
-    if(difference < -M_PI) {
+    if (difference < -M_PI) {
         difference += 2 * M_PI;
     }
     return (a + difference * .5) * 180 / M_PI;
 }
 
-NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
-                                                    NSString* sourceData)
+NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* sourceData)
 {
     NSMutableArray<IJSVGMarkerSubpath*>* subpaths = [[NSMutableArray alloc] init];
     __block IJSVGMarkerSubpath* subpath = nil;
@@ -222,30 +204,28 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
         subpath.start = current = point;
         [subpaths addObject:subpath];
     };
-    if(sourceData != nil) {
+    if (sourceData != nil) {
         IJSVGEnumeratePathDataSegments(sourceData, ^(char command, CGPathRef segmentPath) {
-            if(command == 'm') {
+            if (command == 'm') {
                 move(CGPathGetCurrentPoint(segmentPath));
                 return;
             }
-            if(subpath == nil) {
+            if (subpath == nil) {
                 move(CGPointZero);
             }
             __block CGPoint point = current;
             __block IJSVGMarkerSegment* combined = nil;
             __block BOOL arcHasCurve = NO;
             CGPathApplyWithBlock(segmentPath, ^(const CGPathElement* element) {
-                if(element->type == kCGPathElementMoveToPoint) {
+                if (element->type == kCGPathElementMoveToPoint) {
                     point = element->points[0];
                     return;
                 }
-                IJSVGMarkerSegment* part = IJSVGMarkerSegmentForElement(element,
-                                                                        point,
-                                                                        subpath.start);
-                if(part == nil) {
+                IJSVGMarkerSegment* part = IJSVGMarkerSegmentForElement(element, point, subpath.start);
+                if (part == nil) {
                     return;
                 }
-                if(combined == nil) {
+                if (combined == nil) {
                     combined = part;
                 } else {
                     combined.end = part.end;
@@ -254,13 +234,13 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
 
                 // CGPathAddRelativeArc may insert a zero length connecting line.
                 // Its direction is not the arcs start tangent.
-                if(command == 'a' && element->type == kCGPathElementAddCurveToPoint && !arcHasCurve) {
+                if (command == 'a' && element->type == kCGPathElementAddCurveToPoint && !arcHasCurve) {
                     combined.outgoing = part.outgoing;
                     arcHasCurve = YES;
                 }
                 point = part.end;
             });
-            if(combined != nil) {
+            if (combined != nil) {
                 [subpath.segments addObject:combined];
                 current = combined.end;
                 subpath.closed = command == 'z';
@@ -268,17 +248,15 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
         });
     } else {
         CGPathApplyWithBlock(path, ^(const CGPathElement* element) {
-            if(element->type == kCGPathElementMoveToPoint) {
+            if (element->type == kCGPathElementMoveToPoint) {
                 move(element->points[0]);
                 return;
             }
-            if(subpath == nil) {
+            if (subpath == nil) {
                 move(CGPointZero);
             }
-            IJSVGMarkerSegment* segment = IJSVGMarkerSegmentForElement(element,
-                                                                       current,
-                                                                       subpath.start);
-            if(segment != nil) {
+            IJSVGMarkerSegment* segment = IJSVGMarkerSegmentForElement(element, current, subpath.start);
+            if (segment != nil) {
                 [subpath.segments addObject:segment];
                 current = segment.end;
                 subpath.closed = element->type == kCGPathElementCloseSubpath;
@@ -287,30 +265,28 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
     }
 
     NSUInteger positionCount = 0;
-    for(IJSVGMarkerSubpath* part in subpaths) {
+    for (IJSVGMarkerSubpath* part in subpaths) {
         positionCount += part.segments.count + 1;
     }
-    if(positionCount == 1) {
+    if (positionCount == 1) {
         positionCount = 2;
     }
     NSMutableArray<IJSVGMarkerPosition*>* positions = [[NSMutableArray alloc] initWithCapacity:positionCount];
-    for(IJSVGMarkerSubpath* part in subpaths) {
+    for (IJSVGMarkerSubpath* part in subpaths) {
         NSUInteger count = part.segments.count;
         IJSVGMarkerResolveDirections(part);
-        for(NSUInteger index = 0; index <= count; index++) {
+        for (NSUInteger index = 0; index <= count; index++) {
             IJSVGMarkerPosition* position = [[IJSVGMarkerPosition alloc] init];
             position.point = index == 0 ? part.start : part.segments[index - 1].end;
-            CGPoint incoming = index > 0 ? part.segments[index - 1].incoming
-                : (part.closed ? part.segments.lastObject.incoming : CGPointZero);
-            CGPoint outgoing = index < count ? part.segments[index].outgoing
-                : (part.closed ? part.segments.firstObject.outgoing : CGPointZero);
+            CGPoint incoming = index > 0 ? part.segments[index - 1].incoming : (part.closed ? part.segments.lastObject.incoming : CGPointZero);
+            CGPoint outgoing = index < count ? part.segments[index].outgoing : (part.closed ? part.segments.firstObject.outgoing : CGPointZero);
             position.angle = IJSVGMarkerAngle(incoming, outgoing);
             position.type = IJSVGMarkerPositionMid;
             [positions addObject:position];
         }
     }
     positions.firstObject.type = IJSVGMarkerPositionStart;
-    if(positions.count == 1) {
+    if (positions.count == 1) {
         // A single vertex can carry both start and end markers.
         IJSVGMarkerPosition* end = [[IJSVGMarkerPosition alloc] init];
         end.point = positions.firstObject.point;
@@ -320,3 +296,68 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path,
     positions.lastObject.type = IJSVGMarkerPositionEnd;
     return positions;
 }
+
+#pragma mark - Parsing
+
+@implementation IJSVGMarker (Parsing)
+
+- (IJSVGUnitLength*)markerLengthFromElement:(NSXMLElement*)element attribute:(NSString*)attribute defaultValue:(IJSVGUnitLength*)defaultValue
+{
+    NSString* value = [element attributeForName:attribute].stringValue;
+    return value != nil ? [IJSVGUnitLength unitWithString:value] : defaultValue;
+}
+
+- (void)applyMarkerOrientation:(NSString*)orient toMarker:(IJSVGMarker*)marker
+{
+    marker.orientType = [IJSVGUtils markerOrientTypeForString:orient];
+    marker.orientAngle = [IJSVGUtils angleForString:orient];
+}
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGContainerAttributes();
+    [attributes setBit:IJSVGNodeAttributeViewBox];
+    [attributes setBit:IJSVGNodeAttributePreserveAspectRatio];
+    [attributes setBit:IJSVGNodeAttributeRefX];
+    [attributes setBit:IJSVGNodeAttributeRefY];
+    [attributes setBit:IJSVGNodeAttributeMarkerWidth];
+    [attributes setBit:IJSVGNodeAttributeMarkerHeight];
+    [attributes setBit:IJSVGNodeAttributeMarkerUnits];
+    [attributes setBit:IJSVGNodeAttributeOrient];
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    IJSVGParsePathAttributes(self, context);
+    NSString* geometryValue = nil;
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeX, &geometryValue)) {
+        self.x = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeY, &geometryValue)) {
+        self.y = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    IJSVGParseBackgroundAttributes(self, context);
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParsePaintAttributes(self, context);
+    IJSVGParseEffectsAttributes(self, context);
+    IJSVGParseTransformAttributes(self, context);
+    IJSVGParseDisplayAttributes(self, context);
+    IJSVGParseOverflowAttributes(self, context);
+    IJSVGParseMarkersAttributes(self, context);
+    IJSVGParseViewportAttributes(self, context);
+    self.refX = [self markerLengthFromElement:context->element attribute:IJSVGAttributeRefX defaultValue:self.refX];
+    self.refY = [self markerLengthFromElement:context->element attribute:IJSVGAttributeRefY defaultValue:self.refY];
+    self.markerWidth = [self markerLengthFromElement:context->element attribute:IJSVGAttributeMarkerWidth defaultValue:self.markerWidth];
+    self.markerHeight = [self markerLengthFromElement:context->element attribute:IJSVGAttributeMarkerHeight defaultValue:self.markerHeight];
+    NSString* units = [context->element attributeForName:IJSVGAttributeMarkerUnits].stringValue;
+    self.markerUnits = [IJSVGUtils markerUnitsForString:units];
+    NSString* orientation = [context->element attributeForName:IJSVGAttributeOrient].stringValue;
+    [self applyMarkerOrientation:orientation toMarker:self];
+    self.shouldRender = YES; // SVG 1.1: display does not apply to self.
+}
+
+@end

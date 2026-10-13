@@ -1,17 +1,26 @@
-#import <XCTest/XCTest.h>
+//
+//  PackageTests.m
+//  IJSVG
+//
+//  Created by Curtis Hard on 07/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
+#import <CoreImage/CoreImage.h>
 #import <IJSVG/IJSVGUmbrella.h>
 #import <IJSVGTestSupport.h>
 #import <Metal/Metal.h>
-#import <CoreImage/CoreImage.h>
+#import <XCTest/XCTest.h>
 
-@interface IJSVGPackageTests: XCTestCase
+@interface IJSVGPackageTests : XCTestCase
 @end
 
 @implementation IJSVGPackageTests
 
 - (void)testRendersSVG
 {
-    IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='red'/></svg>"];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='16' "
+                                                  @"height='16'><rect width='16' height='16' fill='red'/></svg>"];
     XCTAssertNotNil(svg);
     XCTAssertTrue(CGSizeEqualToSize(svg.size, CGSizeMake(16, 16)));
     NSImage* image = [svg imageWithSize:CGSizeMake(32, 32)];
@@ -19,7 +28,8 @@
     XCTAssertTrue(CGSizeEqualToSize(image.size, CGSizeMake(32, 32)));
     CGImageRef cgImage = [image CGImageForProposedRect:NULL context:nil hints:nil];
     XCTAssertTrue(cgImage != NULL);
-    if(cgImage == NULL) return;
+    if (cgImage == NULL)
+        return;
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     NSColor* color = [[bitmap colorAtX:16 y:16] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
     XCTAssertNotNil(color);
@@ -33,9 +43,10 @@
 {
     NSString* source = IJSVGPackageShaderSource(name);
     XCTAssertGreaterThan(source.length, 0u, @"%@", name);
-    if(source.length == 0) return;
+    if (source.length == 0)
+        return;
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
-    if(device != nil) {
+    if (device != nil) {
         NSError* error = nil;
         id<MTLLibrary> library = [device newLibraryWithSource:source options:nil error:&error];
         XCTAssertNil(error);
@@ -43,17 +54,26 @@
     }
 }
 
-- (void)testLoadsPackagedBlurShader { [self checkPackagedShader:@"IJSVGBlur"]; }
-- (void)testLoadsPackagedInnerShadowShader { [self checkPackagedShader:@"IJSVGInnerShadow"]; }
-- (void)testLoadsPackagedSubtractShader { [self checkPackagedShader:@"IJSVGSubtract"]; }
+- (void)testLoadsPackagedBlurShader
+{
+    [self checkPackagedShader:@"IJSVGBlur"];
+}
+- (void)testLoadsPackagedInnerShadowShader
+{
+    [self checkPackagedShader:@"IJSVGInnerShadow"];
+}
+- (void)testLoadsPackagedSubtractShader
+{
+    [self checkPackagedShader:@"IJSVGSubtract"];
+}
 - (void)testLoadsPackagedSeparableBlurShader
 {
     NSString* source = IJSVGPackageShaderSource(@"IJSVGSeparableBlur");
     XCTAssertGreaterThan(source.length, 0u);
-    if(source.length == 0) {
+    if (source.length == 0) {
         return;
     }
-    if(MTLCreateSystemDefaultDevice() != nil) {
+    if (MTLCreateSystemDefaultDevice() != nil) {
         NSError* error = nil;
         NSArray<CIKernel*>* kernels = [CIKernel kernelsWithMetalString:source error:&error];
         XCTAssertNil(error);
@@ -128,8 +148,10 @@
         view.SVG = nil;
         XCTAssertNil(view.SVG);
     };
-    if(NSThread.isMainThread) check();
-    else dispatch_sync(dispatch_get_main_queue(), check);
+    if (NSThread.isMainThread)
+        check();
+    else
+        dispatch_sync(dispatch_get_main_queue(), check);
 }
 
 @end

@@ -2,14 +2,14 @@
 //  IJSVGTextLayoutUtils.h
 //  IJSVG
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGText.h>
 #import <CoreText/CoreText.h>
+#import <IJSVG/IJSVGText.h>
 
-@interface IJSVGTextComputedStyle: NSObject
+@interface IJSVGTextComputedStyle : NSObject
 
 @property (nonatomic, copy) NSDictionary<NSString*, IJSVGTextAttributeValue*>* values;
 @property (nonatomic, strong) id font;
@@ -61,25 +61,17 @@ typedef struct {
 
 IJSVGTextKeyword IJSVGTextRenderingForNode(IJSVGNode* node);
 
-CGFloat IJSVGTextLength(IJSVGTextAttributeValue* value, CGFloat fontSize,
-                        CGFloat xHeight, CGFloat percentage);
+CGFloat IJSVGTextLength(IJSVGTextAttributeValue* value, CGFloat fontSize, CGFloat xHeight, CGFloat percentage);
 
-void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters,
-                              NSUInteger* count, NSUInteger* capacity,
-                              const IJSVGTextCharacter* character);
+void IJSVGTextAppendCharacter(IJSVGTextCharacter** characters, NSUInteger* count, NSUInteger* capacity, const IJSVGTextCharacter* character);
 
 void IJSVGTextFontExtents(CTFontRef font, CGFloat* ascent, CGFloat* descent);
 
 CGFloat IJSVGTextBaselineOffset(IJSVGTextComputedStyle* style);
 
-CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize,
-                          CGFloat parentXHeight, CGFloat defaultFontSize);
+CGFloat IJSVGTextFontSize(IJSVGTextAttributeValue* size, CGFloat parentSize, CGFloat parentXHeight, CGFloat defaultFontSize);
 CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale);
 
-BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent,
-                           NSDictionary<NSString*, IJSVGTextAttributeValue*>* values,
-                           CGFloat size);
+BOOL IJSVGTextCanReuseFont(IJSVGTextComputedStyle* parent, NSDictionary<NSString*, IJSVGTextAttributeValue*>* values, CGFloat size);
 
-NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters,
-                                      NSRange range, IJSVGText* node,
-                                      NSUInteger* spacingUnits);
+NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters, NSRange range, IJSVGText* node, NSUInteger* spacingUnits);

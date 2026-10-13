@@ -15,8 +15,7 @@
     return self.x.isRelativeUnit || self.y.isRelativeUnit;
 }
 
-+ (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x
-                            y:(IJSVGUnitLength*)y
++ (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x y:(IJSVGUnitLength*)y
 {
     IJSVGUnitPoint* point = [[self alloc] init];
     point->_x = x;
@@ -24,16 +23,14 @@
     return point;
 }
 
-+ (IJSVGUnitPoint *)pointWithCGPoint:(CGPoint)point
++ (IJSVGUnitPoint*)pointWithCGPoint:(CGPoint)point
 {
-    return [self pointWithX:[IJSVGUnitLength unitWithFloat:point.x]
-                          y:[IJSVGUnitLength unitWithFloat:point.y]];
+    return [self pointWithX:[IJSVGUnitLength unitWithFloat:point.x] y:[IJSVGUnitLength unitWithFloat:point.y]];
 }
 
 + (IJSVGUnitPoint*)zeroPoint
 {
-    return [self pointWithX:IJSVGZeroUnitLength
-                          y:IJSVGZeroUnitLength];
+    return [self pointWithX:IJSVGZeroUnitLength y:IJSVGZeroUnitLength];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -52,8 +49,7 @@
 
 - (CGPoint)computeValue:(CGSize)size
 {
-    return CGPointMake([_x computeValue:size.width],
-                       [_y computeValue:size.height]);
+    return CGPointMake([_x computeValue:size.width], [_y computeValue:size.height]);
 }
 
 - (CGPoint)value

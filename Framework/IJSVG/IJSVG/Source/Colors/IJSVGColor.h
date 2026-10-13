@@ -11,16 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
-    IJSVGColorStringOptionNone = 1 << 0,
+typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) { IJSVGColorStringOptionNone = 1 << 0,
     IJSVGColorStringOptionForceHEX = 1 << 1,
     IJSVGColorStringOptionAllowShortHand = 1 << 2,
     IJSVGColorStringOptionAllowRRGGBBAA = 1 << 3,
-    IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand
-};
+    IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand };
 
-typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
-    IJSVGColorAliceblue,
+typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) { IJSVGColorAliceblue,
     IJSVGColorAntiquewhite,
     IJSVGColorAqua,
     IJSVGColorAquamarine,
@@ -166,8 +163,7 @@ typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
     IJSVGColorWhite,
     IJSVGColorWhitesmoke,
     IJSVGColorYellow,
-    IJSVGColorYellowgreen
-};
+    IJSVGColorYellowgreen };
 
 FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 
@@ -176,26 +172,20 @@ FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 + (NSColor* _Nullable)computeColorSpace:(NSColor* _Nullable)color;
 + (NSColorSpace*)defaultColorSpace;
 + (BOOL)isColor:(NSString*)string;
-+ (NSString*)colorStringFromColor:(NSColor*)color
-                          options:(IJSVGColorStringOptions)options;
++ (NSString*)colorStringFromColor:(NSColor*)color options:(IJSVGColorStringOptions)options;
 + (NSString*)colorStringFromColor:(NSColor*)color;
 + (NSColor*)colorFromHEXInteger:(NSInteger)hex;
 + (NSColor* _Nullable)computeColor:(id _Nullable)colour;
 + (BOOL)isNoneOrTransparent:(NSString*)string;
 + (NSColor* _Nullable)colorFromString:(NSString* _Nullable)string;
 + (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string;
-+ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string
-        containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
++ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
 + (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex;
 + (unsigned long)lengthOfHEXInteger:(NSUInteger)hex;
-+ (NSColor*)colorFromRString:(NSString*)rString
-                     gString:(NSString*)gString
-                     bString:(NSString*)bString
-                     aString:(NSString*)aString;
++ (NSColor*)colorFromRString:(NSString*)rString gString:(NSString*)gString bString:(NSString*)bString aString:(NSString*)aString;
 + (NSColor* _Nullable)colorFromPredefinedColorName:(NSString*)name;
 + (NSString* _Nullable)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
-+ (NSColor*)changeAlphaOnColor:(NSColor*)color
-                            to:(CGFloat)alphaValue;
++ (NSColor*)changeAlphaOnColor:(NSColor*)color to:(CGFloat)alphaValue;
 
 @end
 

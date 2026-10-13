@@ -9,7 +9,6 @@
 #import <Foundation/Foundation.h>
 
 @interface IJSVGBitFlags : NSObject {
-
 @private
     int* _storage;
 }

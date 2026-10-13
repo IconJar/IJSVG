@@ -6,16 +6,20 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGNode.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGViewportNode.h>
+
+#import <IJSVG/IJSVGReference.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class IJSVGPath;
 
-@interface IJSVGImage : IJSVGNode {
+@interface IJSVGImage : IJSVGViewportNode <IJSVGReferenceNode> {
     CGImageRef CGImage;
 }
+
+@property (nonatomic, strong, nullable) IJSVGReference* reference;
 
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;

@@ -17,21 +17,18 @@ typedef struct {
     CGFloat xHeight;
 } IJSVGCSSCalculationContext;
 
-BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components,
-                                   NSUInteger index);
+BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components, NSUInteger index);
 
 typedef struct {
     CGFloat value;
     BOOL percentage;
 } IJSVGCSSNumericValue;
 
-BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components,
-                                          NSUInteger index, CGFloat percentage,
-                                          IJSVGCSSNumericValue* result);
+BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components, NSUInteger index, CGFloat percentage, IJSVGCSSNumericValue* result);
 
 // Owns one immutable C arena. Parsing, type checking, simplification and
 // evaluation use C nodes. Objective C provides ownership and the API boundary.
-@interface IJSVGCSSMathExpression: NSObject
+@interface IJSVGCSSMathExpression : NSObject
 
 @property (nonatomic, readonly) NSInteger lengthExponent;
 @property (nonatomic, readonly) BOOL usesPercentage;
@@ -39,11 +36,9 @@ BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components,
 @property (nonatomic, readonly) BOOL usesLength;
 @property (nonatomic, readonly, copy) NSString* stringValue;
 
-+ (nullable instancetype)expressionWithComponents:(const IJSVGCSSComponents*)components
-                                          atIndex:(NSUInteger)index;
++ (nullable instancetype)expressionWithComponents:(const IJSVGCSSComponents*)components atIndex:(NSUInteger)index;
 - (CGFloat)evaluate:(IJSVGCSSCalculationContext)context;
-- (IJSVGCSSMathExpression*)expressionByResolvingFontSize:(CGFloat)fontSize
-                                                 xHeight:(CGFloat)xHeight;
+- (IJSVGCSSMathExpression*)expressionByResolvingFontSize:(CGFloat)fontSize xHeight:(CGFloat)xHeight;
 - (IJSVGCSSMathExpression*)expressionByScalingLengths:(CGFloat)scale;
 
 @end

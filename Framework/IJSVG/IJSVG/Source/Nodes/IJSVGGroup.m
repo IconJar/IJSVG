@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGImage.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGGroup
 
@@ -18,50 +19,41 @@
 
 - (id)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _children = [[NSMutableArray alloc] init];
     }
     return self;
 }
 
-- (BOOL)containsRelativeUnits {
-  if([super containsRelativeUnits] == YES) {
-      return YES;
-  }
-  for(IJSVGNode* node in self.children) {
-      if(node.containsRelativeUnits == YES) {
-          return YES;
-      }
-  }
-  return NO;
+- (BOOL)containsRelativeUnits
+{
+    if ([super containsRelativeUnits] == YES) {
+        return YES;
+    }
+    for (IJSVGNode* node in self.children) {
+        if (node.containsRelativeUnits == YES) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
 {
     IJSVGTraitedColorStorage* storage = [super colorsWithStyle:style];
-    if(self.shouldRender == NO) {
+    if (self.shouldRender == NO) {
         return storage;
     }
-    for(IJSVGNode* node in self.children) {
+    for (IJSVGNode* node in self.children) {
         [storage unionColorStorage:[node colorsWithStyle:style]];
     }
     return storage;
 }
 
-- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
-                              matchingTraits:(IJSVGColorUsageTraits)traits
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style matchingTraits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColorStorage* storage = [self colorsWithStyle:style];
     [storage addTraits:traits];
-    return storage;
-}
-
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
-    [storage addBits:[super allowedAttributes]];
-    [storage addBits:[IJSVGPath allowedAttributes]];
-    [storage addBits:[IJSVGImage allowedAttributes]];
     return storage;
 }
 
@@ -86,60 +78,63 @@
 
 - (void)addChild:(IJSVGNode*)child
 {
-    if(child == nil || child == self) {
+    if (child == nil || child == self) {
         return;
     }
-  
-    if(child.parentNode == self && [_children containsObject:child]) {
+
+    if (child.parentNode == self && [_children containsObject:child]) {
         return;
     }
-  
-    if([child.parentNode isKindOfClass:IJSVGGroup.class] && child.parentNode != self) {
+
+    if ([child.parentNode isKindOfClass:IJSVGGroup.class] && child.parentNode != self) {
         [(IJSVGGroup*)child.parentNode removeChild:child];
     }
-  
+
     child.parentNode = self;
     [_children addObject:child];
 }
 
 - (void)removeChild:(IJSVGNode*)child
 {
-    if(child.parentNode == self) {
+    if (child.parentNode == self) {
         [child detach];
     }
     [_children removeObject:child];
 }
 
-// Snapshots the input because changing parent links can mutate the supplied array.
+// Snapshots the input because changing parent links can mutate the supplied
+// array.
 - (void)addChildren:(NSArray<IJSVGNode*>*)children
 {
-    for(IJSVGNode* node in [children copy]) {
+    for (IJSVGNode* node in [children copy]) {
         [self addChild:node];
     }
 }
 
-// Snapshots the input because changing parent links can mutate the supplied array.
+// Snapshots the input because changing parent links can mutate the supplied
+// array.
 - (void)removeChildren:(NSArray<IJSVGNode*>*)children
 {
-    for(IJSVGNode* node in [children copy]) {
+    for (IJSVGNode* node in [children copy]) {
         [self removeChild:node];
     }
 }
 
 - (BOOL)childrenMatchTraits:(IJSVGNodeTraits)traits
 {
-    for(IJSVGNode* node in _children) {
-        if([node matchesTraits:traits] == NO) {
+    for (IJSVGNode* node in _children) {
+        if ([node matchesTraits:traits] == NO) {
             return NO;
         }
     }
     return YES;
 }
 
-- (NSArray<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type {
+- (NSArray<IJSVGNode*>*)childrenOfType:(IJSVGNodeType)type
+{
     NSMutableArray<IJSVGNode*>* nodes = [[NSMutableArray alloc] init];
-    for(IJSVGNode* node in self.children) {
-        if(node.type == type) {
+    for (IJSVGNode* node in self.children) {
+        if (node.type == type) {
             [nodes addObject:node];
         }
     }
@@ -149,8 +144,8 @@
 - (NSSet<IJSVGNode*>*)childSetOfType:(IJSVGNodeType)type
 {
     NSMutableSet<IJSVGNode*>* nodes = [[NSMutableSet alloc] init];
-    for(IJSVGNode* node in self.children) {
-        if(node.type == type) {
+    for (IJSVGNode* node in self.children) {
+        if (node.type == type) {
             [nodes addObject:node];
         }
     }
@@ -159,25 +154,23 @@
 
 - (BOOL)containsNodesMatchingTraits:(IJSVGNodeTraits)traits
 {
-    return [self.class node:self
-containsNodesMatchingTraits:traits];
+    return [self.class node:self containsNodesMatchingTraits:traits];
 }
 
 - (NSArray<IJSVGNode*>*)nodesMatchingTraits:(IJSVGNodeTraits)traits
 {
-    return [self.class node:self
-        nodesMatchingTraits:traits];
+    return [self.class node:self nodesMatchingTraits:traits];
 }
 
 - (CGRect)bounds
 {
     CGRect rect = CGRectNull;
-    for(IJSVGNode* node in self.children) {
+    for (IJSVGNode* node in self.children) {
         CGRect childBounds = node.bounds;
-        if(CGRectIsNull(childBounds)) {
+        if (CGRectIsNull(childBounds)) {
             continue;
         }
-        if(CGRectIsNull(rect)) {
+        if (CGRectIsNull(rect)) {
             rect = childBounds;
         } else {
             rect = CGRectUnion(rect, childBounds);
@@ -193,8 +186,42 @@ containsNodesMatchingTraits:traits];
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"%@ - %@",
-            [super description], self.children];
+    return [NSString stringWithFormat:@"%@ - %@", [super description], self.children];
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGGroup (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGContainerAttributes();
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    IJSVGParsePathAttributes(self, context);
+    NSString* geometryValue = nil;
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeX, &geometryValue)) {
+        self.x = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeY, &geometryValue)) {
+        self.y = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    IJSVGParseBackgroundAttributes(self, context);
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParsePaintAttributes(self, context);
+    IJSVGParseEffectsAttributes(self, context);
+    IJSVGParseTransformAttributes(self, context);
+    IJSVGParseDisplayAttributes(self, context);
+    IJSVGParseOverflowAttributes(self, context);
+    IJSVGParseMarkersAttributes(self, context);
 }
 
 @end

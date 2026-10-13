@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView2
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"linecap"];
 }

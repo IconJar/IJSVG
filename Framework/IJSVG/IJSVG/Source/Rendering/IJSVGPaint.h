@@ -2,29 +2,25 @@
 //  IJSVGPaint.h
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGRendering.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGPaintFillType) {
-    IJSVGPaintFillTypeUnknown,
+typedef NS_ENUM(NSUInteger, IJSVGPaintFillType) { IJSVGPaintFillTypeUnknown,
     IJSVGPaintFillTypeColor,
     IJSVGPaintFillTypeGradient,
-    IJSVGPaintFillTypePattern
-};
+    IJSVGPaintFillTypePattern };
 
-typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
-    IJSVGPaintDrawingOptionNone = 0,
-    IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1
-};
+typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) { IJSVGPaintDrawingOptionNone = 0,
+    IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1 };
 
 // Resolved drawing data. Paints own CG resources and never allocate CA objects.
 @interface IJSVGPaint : NSObject
 
-@property (nonatomic, strong) IJSVGNode* sourceNode;
+@property (nonatomic, strong) IJSVGGraphicsNode* sourceNode;
 @property (nonatomic, assign) CGRect viewPort;
 @property (nonatomic, assign) CGRect frame;
 @property (nonatomic, readonly) CGRect bounds;
@@ -65,21 +61,15 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 + (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children;
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint;
 + (IJSVGPaint*)rootPaintForPaint:(IJSVGPaint*)paint;
-+ (void)setBackingScaleFactor:(CGFloat)scale
-                renderQuality:(IJSVGRenderQuality)quality
-           recursivelyToPaint:(IJSVGPaint*)paint;
-+ (void)renderPaint:(IJSVGPaint*)paint
-          inContext:(CGContextRef)ctx
-            options:(IJSVGPaintDrawingOptions)options;
-+ (void)clipContextWithMask:(IJSVGPaint*)mask
-                    toPaint:(IJSVGPaint*)paint
-                  inContext:(CGContextRef)ctx
-               drawingBlock:(dispatch_block_t)drawingBlock;
++ (void)setBackingScaleFactor:(CGFloat)scale renderQuality:(IJSVGRenderQuality)quality recursivelyToPaint:(IJSVGPaint*)paint;
++ (void)renderPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx options:(IJSVGPaintDrawingOptions)options;
++ (void)clipContextWithMask:(IJSVGPaint*)mask toPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx drawingBlock:(dispatch_block_t)drawingBlock;
 // Enable raster reuse only after a masks resolved geometry is finalized.
 // Rebuild the resolved graph when its artwork changes.
 - (void)prepareMaskCaching;
-// Copies simple marker artwork with independent parent links and shared immutable resources.
-// Returns nil when the artwork depends on its placement or rendering context.
+// Copies simple marker artwork with independent parent links and shared
+// immutable resources. Returns nil when the artwork depends on its placement or
+// rendering context.
 - (IJSVGPaint*)copyForMarker;
 - (void)addChild:(IJSVGPaint*)paint;
 - (void)renderInContext:(CGContextRef)ctx;

@@ -13,7 +13,7 @@
 
 - (id)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _classes = [[NSMutableSet alloc] init];
         _combinator = IJSVGStyleSheetSelectorCombinatorDescendant;
     }
@@ -32,8 +32,7 @@
 
 - (NSString*)description
 {
-    return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@",
-            self.combinatorString, _tag, _classes, _identifier];
+    return [NSString stringWithFormat:@"Combinator: %@, Tag: %@, Classes: %@, Identifier: %@", self.combinatorString, _tag, _classes, _identifier];
 }
 
 @end

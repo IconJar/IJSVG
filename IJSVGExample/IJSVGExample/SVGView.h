@@ -10,10 +10,8 @@
 #import <IJSVG/IJSVG.h>
 
 @interface SVGView : NSView {
- 
 @private
-    IJSVG * svg;
-    
+    IJSVG* svg;
 }
 
 @end

@@ -6,9 +6,9 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGTraitedColor.h>
-#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,7 +19,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface IJSVGTraitedColorStorage : NSObject {
-
 @private
     NSMutableArray<IJSVGReplacementColor*>* _replacementColors;
     NSMutableSet<IJSVGTraitedColor*>* _colors;
@@ -33,12 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)addTraits:(IJSVGColorUsageTraits)traits;
 - (void)addColor:(IJSVGTraitedColor*)color;
-- (void)replaceColor:(NSColor*)replaceColor
-           withColor:(NSColor*)withColor
-              traits:(IJSVGColorUsageTraits)traits;
+- (void)replaceColor:(NSColor*)replaceColor withColor:(NSColor*)withColor traits:(IJSVGColorUsageTraits)traits;
 - (void)unionColorStorage:(IJSVGTraitedColorStorage* _Nullable)colorList;
-- (NSColor* _Nullable)colorForColor:(NSColor*)color
-           matchingTraits:(IJSVGColorUsageTraits)traits;
+- (NSColor* _Nullable)colorForColor:(NSColor*)color matchingTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesReplacementTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits;
 

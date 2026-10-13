@@ -6,8 +6,8 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGUnitLength.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGUnitLength.h>
 
 @interface IJSVGUnitSize : NSObject <NSCopying>
 
@@ -17,11 +17,9 @@
 @property (nonatomic, readonly) BOOL isZeroSize;
 @property (nonatomic, readonly) BOOL containsRelativeUnits;
 
-
 + (IJSVGUnitSize*)zeroSize;
 + (IJSVGUnitSize*)sizeWithCGSize:(CGSize)size;
-+ (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
-                         height:(IJSVGUnitLength*)height;
++ (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width height:(IJSVGUnitLength*)height;
 
 - (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType;
 - (CGSize)computeValue:(CGSize)size;

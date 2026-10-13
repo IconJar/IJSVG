@@ -6,25 +6,23 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGColorNode.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGGraphicsNode.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class IJSVGGroup;
 
-typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
-    kIJSVGPrimitivePathTypePath,
+typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) { kIJSVGPrimitivePathTypePath,
     kIJSVGPrimitivePathTypeRect,
     kIJSVGPrimitivePathTypePolygon,
     kIJSVGPrimitivePathTypePolyLine,
     kIJSVGPrimitivePathTypeCircle,
     kIJSVGPrimitivePathTypeEllipse,
-    kIJSVGPrimitivePathTypeLine
-};
+    kIJSVGPrimitivePathTypeLine };
 
-@interface IJSVGPath : IJSVGNode {
+@interface IJSVGPath : IJSVGGraphicsNode {
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
@@ -32,15 +30,6 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, copy, nullable) NSNumber* pathLength;
 @property (nonatomic, assign, nullable) CGMutablePathRef path;
 @property (nonatomic, assign) IJSVGUnitType pathUnits;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* x1;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* y1;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* x2;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* y2;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* cx;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* cy;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* rx;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* ry;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 
 // Retained only to distinguish authored arc vertices from their cubic
 // approximation.
@@ -50,15 +39,12 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 @property (nonatomic, readonly) CGRect pathBoundingBox;
 @property (nonatomic, readonly) BOOL hasPointSubpaths;
 
-+ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes
-                             transform:(CGAffineTransform)transform
-                                toPath:(CGMutablePathRef)mutPath;
++ (void)recursivelyAddPathedNodesPaths:(NSArray<IJSVGNode*>*)nodes transform:(CGAffineTransform)transform toPath:(CGMutablePathRef)mutPath;
 
-// The node owns the path; the getter does not transfer ownership.
+// The node owns the path, the getter does not transfer ownership.
 - (CGMutablePathRef _Nullable)path CF_RETURNS_NOT_RETAINED;
 
-- (void)cachePointSubpaths:(BOOL)hasPointSubpaths
-                   forPath:(CGPathRef)path;
+- (void)cachePointSubpaths:(BOOL)hasPointSubpaths forPath:(CGPathRef)path;
 
 - (void)close;
 - (NSPoint)currentPoint;

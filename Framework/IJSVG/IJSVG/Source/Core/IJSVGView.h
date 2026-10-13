@@ -6,8 +6,8 @@
 //  Copyright © 2017 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVG.h>
 #import <Cocoa/Cocoa.h>
+#import <IJSVG/IJSVG.h>
 
 NS_ASSUME_NONNULL_BEGIN
 

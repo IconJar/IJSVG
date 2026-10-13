@@ -2,19 +2,18 @@
 //  IJSVGShapePaint.m
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGShapePaint.h>
 #import <IJSVG/IJSVGGradient.h>
-#import <IJSVGQuartzRenderer.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGQuartzRenderer.h>
+#import <IJSVGShapePaint.h>
 
 static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 {
-    return isfinite(bounds.origin.x) && isfinite(bounds.origin.y) &&
-        isfinite(bounds.size.width) && isfinite(bounds.size.height);
+    return isfinite(bounds.origin.x) && isfinite(bounds.origin.y) && isfinite(bounds.size.width) && isfinite(bounds.size.height);
 }
 
 @interface IJSVGShapePaint () {
@@ -42,7 +41,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
     _lineDashPattern = pattern.copy;
     NSMutableData* lengths = [NSMutableData dataWithLength:pattern.count * sizeof(CGFloat)];
     CGFloat* values = lengths.mutableBytes;
-    for(NSUInteger index = 0; index < pattern.count; index++) {
+    for (NSUInteger index = 0; index < pattern.count; index++) {
         values[index] = pattern[index].doubleValue;
     }
     _dashLengths = lengths;
@@ -51,7 +50,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 - (IJSVGPaint*)copyForMarker
 {
     IJSVGShapePaint* copy = (IJSVGShapePaint*)[super copyForMarker];
-    if(copy == nil) {
+    if (copy == nil) {
         return nil;
     }
 
@@ -71,21 +70,19 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
     copy->_primitiveType = _primitiveType;
     NSArray<IJSVGPaint*>* children = self.children;
 
-    for(NSUInteger index = 0; index < children.count; index++) {
-        if(children[index] == _fillPaint) {
+    for (NSUInteger index = 0; index < children.count; index++) {
+        if (children[index] == _fillPaint) {
             copy.fillPaint = copy.children[index];
         }
-        if(children[index] == _strokePaint) {
+        if (children[index] == _strokePaint) {
             copy.strokePaint = copy.children[index];
         }
-        if(children[index] == _strokeStyle) {
+        if (children[index] == _strokeStyle) {
             copy.strokeStyle = (IJSVGShapePaint*)copy.children[index];
         }
     }
 
-    if((_fillPaint != nil && copy.fillPaint == nil) ||
-       (_strokePaint != nil && copy.strokePaint == nil) ||
-       (_strokeStyle != nil && copy.strokeStyle == nil)) {
+    if ((_fillPaint != nil && copy.fillPaint == nil) || (_strokePaint != nil && copy.strokePaint == nil) || (_strokeStyle != nil && copy.strokeStyle == nil)) {
         return nil;
     }
     return copy;
@@ -95,11 +92,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 // regenerate it only when an input changes. Viewport changes rebuild the paint.
 - (CGPathRef)nonScalingStrokeOutline
 {
-    if(_nonScalingStrokeOutline == NULL ||
-       _outlineLineWidth != _lineWidth || _outlineMiterLimit != _miterLimit ||
-       _outlineDashPhase != _lineDashPhase || _outlineLineCap != _lineCap ||
-       _outlineLineJoin != _lineJoin ||
-       !CGAffineTransformEqualToTransform(_outlineHostTransform, _strokeHostTransform)) {
+    if (_nonScalingStrokeOutline == NULL || _outlineLineWidth != _lineWidth || _outlineMiterLimit != _miterLimit || _outlineDashPhase != _lineDashPhase || _outlineLineCap != _lineCap || _outlineLineJoin != _lineJoin || !CGAffineTransformEqualToTransform(_outlineHostTransform, _strokeHostTransform)) {
         CGPathRelease(_nonScalingStrokeOutline);
         _nonScalingStrokeOutline = [IJSVGQuartzRenderer newPathFromStrokedShapePaint:self];
         _outlineLineWidth = _lineWidth;
@@ -122,7 +115,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (void)setPath:(CGPathRef)path
 {
-    if(path == _path) {
+    if (path == _path) {
         return;
     }
     CGPathRelease(_nonScalingStrokeOutline);
@@ -140,7 +133,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (BOOL)hasPointSubpaths
 {
-    if(!_checkedPointSubpaths) {
+    if (!_checkedPointSubpaths) {
         _hasPointSubpaths = IJSVGPathHasPointSubpaths(_path);
         _checkedPointSubpaths = YES;
     }
@@ -149,7 +142,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (void)setFillColor:(CGColorRef)color
 {
-    if(color == _fillColor) {
+    if (color == _fillColor) {
         return;
     }
     CGColorRelease(_fillColor);
@@ -158,7 +151,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 - (void)setStrokeColor:(CGColorRef)color
 {
-    if(color == _strokeColor) {
+    if (color == _strokeColor) {
         return;
     }
     CGColorRelease(_strokeColor);
@@ -173,11 +166,11 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 - (CGRect)transparencyBounds
 {
     CGRect bounds = [super transparencyBounds];
-    if(self.path != NULL && (self.fillColor != NULL || self.fillGradient != nil || self.strokeColor != NULL)) {
+    if (self.path != NULL && (self.fillColor != NULL || self.fillGradient != nil || self.strokeColor != NULL)) {
         CGRect pathBounds = CGPathGetBoundingBox(self.path);
-        if(self.strokeColor != NULL && self.nonScalingStroke) {
+        if (self.strokeColor != NULL && self.nonScalingStroke) {
             pathBounds = CGRectUnion(pathBounds, CGPathGetBoundingBox([self nonScalingStrokeOutline]));
-        } else if(self.strokeColor != NULL) {
+        } else if (self.strokeColor != NULL) {
             CGFloat padding = self.lineWidth * (self.lineJoin == kCGLineJoinMiter ? MAX(1.f, self.miterLimit) : 1.f);
             pathBounds = CGRectInset(pathBounds, -padding, -padding);
         }
@@ -187,36 +180,35 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 }
 
 // Control point bounds are conservative and avoid constructing stroke outlines.
-// Cull only drawing for this shape. Children and filter source sampling still run.
+// Cull only drawing for this shape. Children and filter source sampling still
+// run.
 - (BOOL)isPathOutsideClipInContext:(CGContextRef)ctx
 {
-    if(_nonScalingStroke && _strokeColor != NULL) {
+    if (_nonScalingStroke && _strokeColor != NULL) {
         return NO;
     }
     CGRect bounds = CGPathGetBoundingBox(_path);
-    if(!IJSVGShapeBoundsAreFinite(bounds)) {
+    if (!IJSVGShapeBoundsAreFinite(bounds)) {
         return NO;
     }
-    if(_strokeColor != NULL && _lineWidth > 0.f) {
+    if (_strokeColor != NULL && _lineWidth > 0.f) {
         CGFloat padding = _lineWidth * MAX(2.f, _miterLimit);
         bounds = CGRectInset(bounds, -padding, -padding);
     }
     CGAffineTransform transform = CGContextGetCTM(ctx);
     CGFloat determinant = transform.a * transform.d - transform.b * transform.c;
-    if(!isfinite(determinant) || determinant == 0.f) {
+    if (!isfinite(determinant) || determinant == 0.f) {
         return NO;
     }
     CGAffineTransform inverse = CGAffineTransformInvert(transform);
-    bounds = CGRectInset(bounds, -2.f * (fabs(inverse.a) + fabs(inverse.c)),
-                                 -2.f * (fabs(inverse.b) + fabs(inverse.d)));
+    bounds = CGRectInset(bounds, -2.f * (fabs(inverse.a) + fabs(inverse.c)), -2.f * (fabs(inverse.b) + fabs(inverse.d)));
     CGRect clip = CGContextGetClipBoundingBox(ctx);
-    return IJSVGShapeBoundsAreFinite(bounds) && IJSVGShapeBoundsAreFinite(clip) &&
-        !CGRectIntersectsRect(bounds, clip);
+    return IJSVGShapeBoundsAreFinite(bounds) && IJSVGShapeBoundsAreFinite(clip) && !CGRectIntersectsRect(bounds, clip);
 }
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    if(_fillGradient != nil && _path != NULL) {
+    if (_fillGradient != nil && _path != NULL) {
         CGContextSaveGState(ctx);
         // Preserve the placement operations used by a separate fill paint
         CGRect bounds = self.bounds;
@@ -224,34 +216,31 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
         CGContextConcatCTM(ctx, CGAffineTransformIdentity);
         CGContextTranslateCTM(ctx, -bounds.size.width * .5f, -bounds.size.height * .5f);
         CGContextAddPath(ctx, _path);
-        if(self.fillRule == IJSVGWindingRuleEvenOdd) {
+        if (self.fillRule == IJSVGWindingRuleEvenOdd) {
             CGContextEOClip(ctx);
         } else {
             CGContextClip(ctx);
         }
-        if(!CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
-            [_fillGradient drawInContextRef:ctx
-                                     bounds:IJSVGPaintGetBoundingBoxBounds(self)
-                                  transform:CGAffineTransformIdentity];
+        if (!CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
+            [_fillGradient drawInContextRef:ctx bounds:IJSVGPaintGetBoundingBoxBounds(self) transform:CGAffineTransformIdentity];
         }
         CGContextRestoreGState(ctx);
         return;
     }
-    if(_path == NULL || (_fillColor == NULL && _strokeColor == NULL) ||
-        [self isPathOutsideClipInContext:ctx]) {
+    if (_path == NULL || (_fillColor == NULL && _strokeColor == NULL) || [self isPathOutsideClipInContext:ctx]) {
         return;
     }
-    if(_fillColor != NULL) {
+    if (_fillColor != NULL) {
         CGContextAddPath(ctx, _path);
         CGContextSetFillColorWithColor(ctx, _fillColor);
-        if(self.fillRule == IJSVGWindingRuleEvenOdd) {
+        if (self.fillRule == IJSVGWindingRuleEvenOdd) {
             CGContextEOFillPath(ctx);
         } else {
             CGContextFillPath(ctx);
         }
     }
-    if(_strokeColor != NULL && _lineWidth > 0.f) {
-        if(_nonScalingStroke || self.hasPointSubpaths) {
+    if (_strokeColor != NULL && _lineWidth > 0.f) {
+        if (_nonScalingStroke || self.hasPointSubpaths) {
             CGContextAddPath(ctx, [self nonScalingStrokeOutline]);
             CGContextSetFillColorWithColor(ctx, _strokeColor);
             CGContextFillPath(ctx);
@@ -263,8 +252,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
         CGContextSetLineCap(ctx, _lineCap);
         CGContextSetLineJoin(ctx, _lineJoin);
         CGContextSetMiterLimit(ctx, _miterLimit);
-        CGContextSetLineDash(ctx, _lineDashPhase, _dashLengths.bytes,
-                             _dashLengths.length / sizeof(CGFloat));
+        CGContextSetLineDash(ctx, _lineDashPhase, _dashLengths.bytes, _dashLengths.length / sizeof(CGFloat));
         CGContextStrokePath(ctx);
     }
 }

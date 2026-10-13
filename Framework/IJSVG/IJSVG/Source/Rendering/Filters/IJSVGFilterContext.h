@@ -2,13 +2,13 @@
 //  IJSVGFilterContext.h
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <CoreImage/CoreImage.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGRendering.h>
-#import <CoreImage/CoreImage.h>
 
 @interface IJSVGFilterContext : NSObject
 
@@ -29,28 +29,17 @@
 - (CGSize)pixelUnits;
 - (NSMutableData*)pixelsForImage:(CIImage*)image;
 - (CIImage*)imageForPixels:(NSData*)pixels;
-- (CIImage*)imageForPixels:(NSData*)pixels
-                    bounds:(CGRect)bounds;
+- (CIImage*)imageForPixels:(NSData*)pixels bounds:(CGRect)bounds;
 
 // Restrict effects that do not read neighbouring pixels to their output region.
-- (CIImage*)mapImage:(CIImage*)image
-               other:(CIImage*)other
-              region:(CGRect)region
-           operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;
-- (CIImage*)mapImage:(CIImage*)image
-               other:(CIImage*)other
-           operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;
+- (CIImage*)mapImage:(CIImage*)image other:(CIImage*)other region:(CGRect)region operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;
+- (CIImage*)mapImage:(CIImage*)image other:(CIImage*)other operation:(void (^)(const float*, const float*, float*, NSInteger, NSInteger))operation;
 - (CIImage*)imageInPrimitiveColorSpace:(CIImage*)image;
 - (CIImage*)imageFromPrimitiveColorSpace:(CIImage*)image;
-- (CIImage*)applyFilter:(NSString*)name
-                toImage:(CIImage*)image
-             parameters:(NSDictionary<NSString*, id>*)parameters;
+- (CIImage*)applyFilter:(NSString*)name toImage:(CIImage*)image parameters:(NSDictionary<NSString*, id>*)parameters;
 - (CIImage*)alphaForImage:(CIImage*)image;
-- (CIImage*)offsetImage:(CIImage*)input
-                     dx:(CGFloat)dx
-                     dy:(CGFloat)dy;
-- (CIImage*)floodWithColor:(NSColor*)color
-                   opacity:(CGFloat)opacity;
+- (CIImage*)offsetImage:(CIImage*)input dx:(CGFloat)dx dy:(CGFloat)dy;
+- (CIImage*)floodWithColor:(NSColor*)color opacity:(CGFloat)opacity;
 
 @end
 
@@ -61,9 +50,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
 
 float IJSVGFilterClamp(double value);
 BOOL IJSVGFilterValidRect(CGRect rect);
-float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height,
-                        CGFloat x, CGFloat y, NSUInteger channel, CGRect region,
-                        IJSVGFilterEdgeMode edgeMode);
+float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger height, CGFloat x, CGFloat y, NSUInteger channel, CGRect region, IJSVGFilterEdgeMode edgeMode);
 
 typedef struct {
     const float* pixels;
@@ -75,7 +62,6 @@ typedef struct {
     IJSVGFilterEdgeMode edgeMode;
 } IJSVGFilterSampler;
 
-IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height,
-    CGRect region, IJSVGFilterEdgeMode edgeMode);
+IJSVGFilterSampler IJSVGFilterSamplerMake(const float* pixels, NSInteger width, NSInteger height, CGRect region, IJSVGFilterEdgeMode edgeMode);
 float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, NSUInteger channel);
 void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, float pixel[4]);

@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView6
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"css"];
 }

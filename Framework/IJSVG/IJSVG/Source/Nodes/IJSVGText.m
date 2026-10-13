@@ -2,13 +2,14 @@
 //  IJSVGText.m
 //  IJSVG
 //
-//  Created on 06/10/2026.
+//  Created by Curtis Hard on 06/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGColorNode.h>
 #import <IJSVG/IJSVGStyle.h>
+#import <IJSVG/IJSVGText.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGTextAttributeValue
 
@@ -21,23 +22,9 @@
     return IJSVGNodeTypeText;
 }
 
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [super allowedAttributes];
-    [storage setBit:IJSVGNodeAttributeX];
-    [storage setBit:IJSVGNodeAttributeY];
-    [storage setBit:IJSVGNodeAttributeDX];
-    [storage setBit:IJSVGNodeAttributeDY];
-    for(IJSVGNodeAttribute attribute = IJSVGNodeAttributeRotate;
-        attribute <= IJSVGNodeAttributePathLength; attribute++) {
-        [storage setBit:(int)attribute];
-    }
-    return storage;
-}
-
 - (instancetype)init
 {
-    if((self = [super init])) {
+    if ((self = [super init])) {
         _textContent = @[];
         _positioning = @{};
     }
@@ -48,11 +35,11 @@
 {
     IJSVGText* copy = [super copyWithZone:zone];
     NSMutableArray<id>* content = [NSMutableArray arrayWithCapacity:self.textContent.count];
-    for(id item in self.textContent) {
-        if([item isKindOfClass:IJSVGText.class]) {
+    for (id item in self.textContent) {
+        if ([item isKindOfClass:IJSVGText.class]) {
             // Point mixed text content at the copied children.
             NSUInteger index = [self.children indexOfObjectIdenticalTo:item];
-            if(index != NSNotFound) {
+            if (index != NSNotFound) {
                 [content addObject:copy.children[index]];
             }
         } else {
@@ -69,8 +56,8 @@
 // Identifies direct text runs without counting child span containers.
 - (BOOL)hasTextContent
 {
-    for(id item in self.textContent) {
-        if([item isKindOfClass:NSString.class] && [item length] != 0) {
+    for (id item in self.textContent) {
+        if ([item isKindOfClass:NSString.class] && [item length] != 0) {
             return YES;
         }
     }
@@ -82,11 +69,10 @@
 {
     [super computeTraits];
     [self removeTraits:IJSVGNodeTraitStroked];
-    if(!self.hasTextContent || self.stroke == nil) {
+    if (!self.hasTextContent || self.stroke == nil) {
         return;
     }
-    if([self.stroke isKindOfClass:IJSVGColorNode.class] &&
-       ((IJSVGColorNode*)self.stroke).isNoneOrTransparent) {
+    if ([self.stroke isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)self.stroke).isNoneOrTransparent) {
         return;
     }
     [self addTraits:IJSVGNodeTraitStroked];
@@ -96,18 +82,16 @@
 - (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style
 {
     IJSVGTraitedColorStorage* storage = [super colorsWithStyle:style];
-    if(!self.shouldRender || !self.hasTextContent) {
+    if (!self.shouldRender || !self.hasTextContent) {
         return storage;
     }
     IJSVGNode* fill = self.fill;
-    if(fill == nil) {
+    if (fill == nil) {
         fill = [[IJSVGColorNode alloc] initWithColor:style.fillColor ?: NSColor.blackColor];
     }
-    [storage unionColorStorage:[fill colorsWithStyle:style
-                                     matchingTraits:IJSVGColorUsageTraitFill]];
-    if([self matchesTraits:IJSVGNodeTraitStroked]) {
-        [storage unionColorStorage:[self.stroke colorsWithStyle:style
-                                                matchingTraits:IJSVGColorUsageTraitStroke]];
+    [storage unionColorStorage:[fill colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill]];
+    if ([self matchesTraits:IJSVGNodeTraitStroked]) {
+        [storage unionColorStorage:[self.stroke colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitStroke]];
     }
     return storage;
 }
@@ -116,6 +100,57 @@
 {
     // Text layout depends on viewport percentages and inherited font metrics.
     return YES;
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGText (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGContainerAttributes();
+    [attributes setBit:IJSVGNodeAttributeX];
+    [attributes setBit:IJSVGNodeAttributeY];
+    [attributes setBit:IJSVGNodeAttributeDX];
+    [attributes setBit:IJSVGNodeAttributeDY];
+    [attributes setBit:IJSVGNodeAttributeRotate];
+    [attributes setBit:IJSVGNodeAttributeTextLength];
+    [attributes setBit:IJSVGNodeAttributeLengthAdjust];
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    IJSVGParsePathAttributes(self, context);
+    NSMutableDictionary<NSString*, IJSVGTextAttributeValue*>* positioning = nil;
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeX, IJSVGAttributeX, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeY, IJSVGAttributeY, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeDX, IJSVGAttributeDX, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeDY, IJSVGAttributeDY, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeRotate, IJSVGAttributeRotate, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeTextLength, IJSVGAttributeTextLength, &positioning);
+    IJSVGReadTextPositionAttribute(context->values, IJSVGNodeAttributeLengthAdjust, IJSVGAttributeLengthAdjust, &positioning);
+    self.positioning = positioning ?: @{};
+    NSString* geometryValue = nil;
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeX, &geometryValue)) {
+        self.x = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeY, &geometryValue)) {
+        self.y = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    IJSVGParseBackgroundAttributes(self, context);
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParsePaintAttributes(self, context);
+    IJSVGParseEffectsAttributes(self, context);
+    IJSVGParseTransformAttributes(self, context);
+    IJSVGParseDisplayAttributes(self, context);
+    IJSVGParseOverflowAttributes(self, context);
+    IJSVGParseMarkersAttributes(self, context);
 }
 
 @end

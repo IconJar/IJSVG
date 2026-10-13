@@ -6,8 +6,10 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGPaintNode.h>
 
-@interface IJSVGStop : IJSVGNode
+@interface IJSVGStop : IJSVGPaintNode
+
+@property (nonatomic, strong, nullable) IJSVGUnitLength* offset;
 
 @end

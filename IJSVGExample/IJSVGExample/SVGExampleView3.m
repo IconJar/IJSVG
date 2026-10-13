@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView3
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"products"];
 }

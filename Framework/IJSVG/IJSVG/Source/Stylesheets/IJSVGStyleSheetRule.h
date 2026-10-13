@@ -6,9 +6,9 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGStyleSheetStyle.h>
-#import <IJSVG/IJSVGStyleSheetSelector.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGStyleSheetSelector.h>
+#import <IJSVG/IJSVGStyleSheetStyle.h>
 
 @class IJSVGNode;
 
@@ -26,7 +26,6 @@
 
 - (void)addMatchingSelector:(IJSVGStyleSheetSelector*)selector;
 - (BOOL)canMatchNode:(id<IJSVGStyleSheetSelectorNode>)node;
-- (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node
-           selector:(IJSVGStyleSheetSelector**)matchedSelector;
+- (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node selector:(IJSVGStyleSheetSelector**)matchedSelector;
 
 @end

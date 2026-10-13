@@ -6,35 +6,33 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGTestHelpers.h>
+#import <IJSVG/IJSVGBitFlags64.h>
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
-#import <IJSVG/IJSVGBitFlags64.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGTestHelpers.h>
 
-static const uint8_t* IJSVGFilterPixel(NSData* data, NSInteger x, NSInteger y,
-                                       NSInteger scale)
+static const uint8_t* IJSVGFilterPixel(NSData* data, NSInteger x, NSInteger y, NSInteger scale)
 {
     NSUInteger index = ((10 * scale - 1 - y) * 30 * scale + x) * 4;
     NSCAssert(index + 4 <= data.length, @"Pixel lies outside rendered image");
     return (const uint8_t*)data.bytes + index;
 }
 
-static BOOL IJSVGFilterPixelEquals(const uint8_t* pixel, int red, int green,
-                                   int blue, int alpha)
+static BOOL IJSVGFilterPixelEquals(const uint8_t* pixel, int red, int green, int blue, int alpha)
 {
     return pixel[0] == red && pixel[1] == green && pixel[2] == blue && pixel[3] == alpha;
 }
 
 static double IJSVGFilterMeanError(NSData* actual, NSData* expected)
 {
-    if(actual.length == 0 || actual.length != expected.length) {
+    if (actual.length == 0 || actual.length != expected.length) {
         return INFINITY;
     }
     const uint8_t* a = actual.bytes;
     const uint8_t* b = expected.bytes;
     double total = 0;
-    for(NSUInteger index = 0; index < actual.length; index++) {
+    for (NSUInteger index = 0; index < actual.length; index++) {
         total += abs(a[index] - b[index]);
     }
     return total / actual.length;
@@ -42,19 +40,19 @@ static double IJSVGFilterMeanError(NSData* actual, NSData* expected)
 
 static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 {
-    if(actual.length == 0 || actual.length != expected.length) {
+    if (actual.length == 0 || actual.length != expected.length) {
         return INFINITY;
     }
     const uint8_t* a = actual.bytes;
     const uint8_t* b = expected.bytes;
     int maximum = 0;
-    for(NSUInteger index = 0; index < actual.length; index++) {
+    for (NSUInteger index = 0; index < actual.length; index++) {
         maximum = MAX(maximum, abs(a[index] - b[index]));
     }
     return maximum;
 }
 
-@interface IJSVGFilterTests: XCTestCase
+@interface IJSVGFilterTests : XCTestCase
 @end
 
 @implementation IJSVGFilterTests
@@ -63,18 +61,16 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 {
     return [NSString stringWithFormat:@"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"30\" "
                                        "height=\"10\" viewBox=\"0 0 30 10\">%@</svg>",
-                                      body];
+        body];
 }
 
 - (IJSVGRootNode*)parse:(NSString*)body
 {
     NSString* string = [NSString stringWithFormat:@"<svg xmlns=\"http://www.w3.org/2000/svg\" "
                                                    "width=\"30\" height=\"10\">%@</svg>",
-                                                  body];
+        body];
     NSError* error = nil;
-    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
-                                                         fileURL:nil
-                                                           error:&error];
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string fileURL:nil error:&error];
     XCTAssertNil(error);
     IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(30, 10)];
     XCTAssertNotNil(root);
@@ -87,109 +83,83 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                   "<feDropShadow %@/></filter></defs>"
                                                                   "<circle cx=\"5\" cy=\"5\" r=\"4\" "
                                                                   "filter=\"url(#shadow)\"/>",
-                                                                 attributes]];
-    IJSVGFilter* filter = root.children.firstObject.filter;
+                                          attributes]];
+    IJSVGFilter* filter = ((IJSVGGraphicsNode*)root.children.firstObject).filter;
     XCTAssertNotNil(filter);
     return filter.primitives;
 }
 
-- (NSString*)filtered:(NSString*)primitives
-           attributes:(NSString*)attributes
-              content:(NSString*)content
+- (NSString*)filtered:(NSString*)primitives attributes:(NSString*)attributes content:(NSString*)content
 {
     return [self document:[NSString stringWithFormat:@"<defs><filter id=\"f\" "
                                                       "filterUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" "
                                                       "width=\"30\" height=\"10\" %@>%@</filter></defs>"
                                                       "<g filter=\"url(#f)\">%@</g>",
-                                                     attributes,
-                                                     primitives,
-                                                     content]];
+                              attributes, primitives, content]];
 }
 
-- (NSString*)filtered:(NSString*)primitives
-              content:(NSString*)content
+- (NSString*)filtered:(NSString*)primitives content:(NSString*)content
 {
-    return [self filtered:primitives
-               attributes:@"color-interpolation-filters=\"sRGB\""
-                  content:content];
+    return [self filtered:primitives attributes:@"color-interpolation-filters=\"sRGB\"" content:content];
 }
 
 - (NSString*)filtered:(NSString*)primitives
 {
-    return [self filtered:primitives
-                  content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"];
+    return [self filtered:primitives content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>"];
 }
 
-- (NSData*)render:(NSString*)string
-            scale:(NSInteger)scale
+- (NSData*)render:(NSString*)string scale:(NSInteger)scale
 {
-    return [self render:string
-                  width:30 * scale
-                 height:10 * scale];
+    return [self render:string width:30 * scale height:10 * scale];
 }
 
-- (NSData*)render:(NSString*)string
-            width:(NSInteger)width
-           height:(NSInteger)height
+- (NSData*)render:(NSString*)string width:(NSInteger)width height:(NSInteger)height
 {
     IJSVG* svg = IJSVGTestSVGObject(string);
     svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8,
-                                                 width * 4, space,
-                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if(context == NULL) {
+    if (context == NULL) {
         return nil;
     }
-    [svg drawInRect:CGRectMake(0, 0, width, height)
-            context:context];
-    NSData* bytes = [NSData dataWithBytes:CGBitmapContextGetData(context)
-                                   length:width * height * 4];
+    [svg drawInRect:CGRectMake(0, 0, width, height) context:context];
+    NSData* bytes = [NSData dataWithBytes:CGBitmapContextGetData(context) length:width * height * 4];
     CGContextRelease(context);
     return bytes;
 }
 
-- (NSString*)export:(NSString*)original
-              scale:(NSInteger)scale
+- (NSString*)export:(NSString*)original scale:(NSInteger)scale
 {
     IJSVG* svg = IJSVGTestSVGObject(original);
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(30 * scale,
-                                                                            10 * scale)
-                                                         options:IJSVGExporterOptionAll];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(30 * scale, 10 * scale) options:IJSVGExporterOptionAll];
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
     return exported;
 }
 
-- (NSString*)transformElement:(NSString*)element
-                        color:(NSString*)color
-                   attributes:(NSString*)attributes
+- (NSString*)transformElement:(NSString*)element color:(NSString*)color attributes:(NSString*)attributes
 {
     NSDictionary<NSString*, NSString*>* formats = @{
-        @"rect": @"<rect x=\"-1\" y=\"-1\" width=\"2\" height=\"2\" fill=\"%@\" %@/>",
-        @"circle": @"<circle r=\"1\" fill=\"%@\" %@/>",
-        @"ellipse": @"<ellipse rx=\"1\" ry=\".7\" fill=\"%@\" %@/>",
-        @"polygon": @"<polygon points=\"-1,-1 1,-1 0,1\" fill=\"%@\" %@/>",
-        @"line": @"<line x1=\"-1\" y1=\"0\" x2=\"1\" y2=\"0\" stroke=\"%@\" stroke-width=\"1\" %@/>",
-        @"polyline": @"<polyline points=\"-1,-1 0,1 1,-1\" fill=\"none\" stroke=\"%@\" "
-                      "stroke-width=\".5\" %@/>",
-        @"use": @"<use href=\"#shape\" fill=\"%@\" %@/>"
+        @"rect" : @"<rect x=\"-1\" y=\"-1\" width=\"2\" height=\"2\" fill=\"%@\" %@/>",
+        @"circle" : @"<circle r=\"1\" fill=\"%@\" %@/>",
+        @"ellipse" : @"<ellipse rx=\"1\" ry=\".7\" fill=\"%@\" %@/>",
+        @"polygon" : @"<polygon points=\"-1,-1 1,-1 0,1\" fill=\"%@\" %@/>",
+        @"line" : @"<line x1=\"-1\" y1=\"0\" x2=\"1\" y2=\"0\" stroke=\"%@\" "
+                  @"stroke-width=\"1\" %@/>",
+        @"polyline" : @"<polyline points=\"-1,-1 0,1 1,-1\" fill=\"none\" stroke=\"%@\" "
+                       "stroke-width=\".5\" %@/>",
+        @"use" : @"<use href=\"#shape\" fill=\"%@\" %@/>"
     };
     NSString* format = formats[element] ?: @"<path d=\"M-1-1 H1 V1 H-1 Z\" fill=\"%@\" %@/>";
-    return [NSString stringWithFormat:format,
-                                      color,
-                                      attributes];
+    return [NSString stringWithFormat:format, color, attributes];
 }
 
-- (void)expectTransformPixels:(NSData*)actual
-                        match:(NSData*)expected
-                        scale:(NSInteger)scale
+- (void)expectTransformPixels:(NSData*)actual match:(NSData*)expected scale:(NSInteger)scale
 {
     XCTAssertEqual(actual.length, expected.length);
-    if(actual.length != expected.length) {
+    if (actual.length != expected.length) {
         return;
     }
     const uint8_t* a = actual.bytes;
@@ -197,10 +167,11 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSInteger width = 30 * scale;
     NSUInteger occupied = 0;
     double difference = 0, actualAlpha = 0, expectedAlpha = 0;
-    double actualCenter[2] = {0}, expectedCenter[2] = {0};
-    // Only occupied pixels count, so an empty canvas cannot hide misplaced geometry.
-    for(NSUInteger alpha = 3; alpha < expected.length; alpha += 4) {
-        if(a[alpha] == 0 && b[alpha] == 0) {
+    double actualCenter[2] = { 0 }, expectedCenter[2] = { 0 };
+    // Only occupied pixels count, so an empty canvas cannot hide misplaced
+    // geometry.
+    for (NSUInteger alpha = 3; alpha < expected.length; alpha += 4) {
+        if (a[alpha] == 0 && b[alpha] == 0) {
             continue;
         }
         occupied++;
@@ -212,55 +183,44 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         actualCenter[1] += y * a[alpha];
         expectedCenter[0] += x * b[alpha];
         expectedCenter[1] += y * b[alpha];
-        for(int channel = 0; channel < 4; channel++) {
+        for (int channel = 0; channel < 4; channel++) {
             difference += abs(a[alpha - channel] - b[alpha - channel]);
         }
         // Solid 5x5 reference neighborhoods must retain their interior color.
-        if(b[alpha] == 255 && x >= 2 && x < width - 2 && y >= 2 && y < 10 * scale - 2) {
+        if (b[alpha] == 255 && x >= 2 && x < width - 2 && y >= 2 && y < 10 * scale - 2) {
             BOOL solid = YES;
-            for(int dy = -2; dy <= 2 && solid; dy++) {
-                for(int dx = -2; dx <= 2 && solid; dx++) {
+            for (int dy = -2; dy <= 2 && solid; dy++) {
+                for (int dx = -2; dx <= 2 && solid; dx++) {
                     NSInteger neighbor = alpha + (dy * width + dx) * 4;
-                    for(int channel = 0; channel < 4; channel++) {
+                    for (int channel = 0; channel < 4; channel++) {
                         solid &= b[neighbor - channel] == b[alpha - channel];
                     }
                 }
             }
-            if(solid) {
-                for(int channel = 0; channel < 4; channel++) {
-                    XCTAssertEqualWithAccuracy(a[alpha - channel],
-                                               b[alpha - channel], 2);
+            if (solid) {
+                for (int channel = 0; channel < 4; channel++) {
+                    XCTAssertEqualWithAccuracy(a[alpha - channel], b[alpha - channel], 2);
                 }
             }
         }
     }
     XCTAssertGreaterThan(occupied, 50);
-    // Rasterization precedes the final transform; allow 3% mean edge error.
+    // Rasterization precedes the final transform, allow 3% mean edge error.
     XCTAssertLessThan(difference / MAX(1, occupied * 4), 255 * 0.03);
     XCTAssertGreaterThan(expectedAlpha, 0);
-    XCTAssertLessThan(fabs(actualAlpha - expectedAlpha) / MAX(1, expectedAlpha),
-                      0.03);
-    for(int axis = 0; axis < 2; axis++) {
-        XCTAssertLessThan(fabs(actualCenter[axis] / MAX(1, actualAlpha)
-            - expectedCenter[axis] / MAX(1, expectedAlpha)), 0.5);
+    XCTAssertLessThan(fabs(actualAlpha - expectedAlpha) / MAX(1, expectedAlpha), 0.03);
+    for (int axis = 0; axis < 2; axis++) {
+        XCTAssertLessThan(fabs(actualCenter[axis] / MAX(1, actualAlpha) - expectedCenter[axis] / MAX(1, expectedAlpha)), 0.5);
     }
 }
 
-- (void)expectTransformExport:(NSString*)original
-                       pixels:(NSData*)pixels
-                        scale:(NSInteger)scale
+- (void)expectTransformExport:(NSString*)original pixels:(NSData*)pixels scale:(NSInteger)scale
 {
-    NSString* exported = [self export:original
-                                scale:scale];
+    NSString* exported = [self export:original scale:scale];
     NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
-    XCTAssertGreaterThan([xml nodesForXPath:@"//filter"
-                                      error:nil].count, 0);
-    XCTAssertEqual([xml nodesForXPath:@"//image"
-                                error:nil].count, 0);
-    [self expectTransformPixels:[self render:exported
-                                       scale:scale]
-                          match:pixels
-                          scale:scale];
+    XCTAssertGreaterThan([xml nodesForXPath:@"//filter" error:nil].count, 0);
+    XCTAssertEqual([xml nodesForXPath:@"//image" error:nil].count, 0);
+    [self expectTransformPixels:[self render:exported scale:scale] match:pixels scale:scale];
 }
 
 - (void)wideComponentTransferCoversEveryRow:(NSInteger)height
@@ -278,17 +238,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                            "     </feComponentTransfer>    </filter></defs>    <rect "
                                            "width=\"100%%\" height=\"100%%\" fill=\"%@\"          %@/>"
                                            "</svg>",
-                                          (long)width,
-                                          (long)height,
-                                          filtered ? @"white" : @"#663399",
-                                          filtered ? @"filter=\"url(#f)\"" : @""];
+            (long)width, (long)height, filtered ? @"white" : @"#663399", filtered ? @"filter=\"url(#f)\"" : @""];
     };
-    NSData* actual = [self render:image(YES)
-                            width:width
-                           height:height];
-    NSData* expected = [self render:image(NO)
-                              width:width
-                             height:height];
+    NSData* actual = [self render:image(YES) width:width height:height];
+    NSData* expected = [self render:image(NO) width:width height:height];
     XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1);
 }
 
@@ -336,8 +289,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "</defs><rect x=\"2\" y=\"2\" width=\"3\" height=\"3\" "
                                                  "fill=\"red\" filter=\"url(#f)\"/>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30, 10), 255, 0, 0, 255));
     const uint8_t* shadow = IJSVGFilterPixel(bytes, 65, 55, 10);
     XCTAssertTrue(shadow[0] == 0 && abs((int)(shadow[1]) - 128) <= 1);
     XCTAssertTrue(abs((int)(shadow[2]) - 128) <= 1 && abs((int)(shadow[3]) - 128) <= 1);
@@ -389,16 +341,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "x=\"2\" y=\"2\" width=\"3\" height=\"2\" fill=\"red\" "
                                                  "filter=\"url(#f)\"/>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30, 10),
-                                         255, 0, 0, 255));
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 55, 50, 10), 0,
-                                         255, 255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30, 10), 255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 55, 50, 10), 0, 255, 255, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 70, 50, 10)[3] == 0);
 }
 
 - (void)testClipAndMaskApplyToFilteredOutput
 {
-    for(NSString* attribute in @[@"clip-path=\"url(#c)\"", @"mask=\"url(#m)\""]) {
+    for (NSString* attribute in @[ @"clip-path=\"url(#c)\"", @"mask=\"url(#m)\"" ]) {
         NSData* bytes = [self render:[self document:[NSString stringWithFormat:@"<defs>    <filter "
                                                                                 "id=\"f\" x=\"-100%%\" "
                                                                                 "y=\"-100%%\" "
@@ -429,11 +379,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                                 "height=\"3\" "
                                                                                 "fill=\"red\" "
                                                                                 "filter=\"url(#f)\" %@/>",
-                                                                               attribute]]
+                                                        attribute]]
                                scale:10];
-        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30,
-                                                              10), 255, 0, 0,
-                                             255));
+        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 30, 30, 10), 255, 0, 0, 255));
         XCTAssertTrue(IJSVGFilterPixel(bytes, 55, 30, 10)[3] > 240);
         XCTAssertTrue(IJSVGFilterPixel(bytes, 70, 30, 10)[3] == 0);
     }
@@ -450,17 +398,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "stroke-width=\"1\" filter=\"url(#f)\"/></g>"];
     IJSVG* svg = IJSVGTestSVGObject(original);
     XCTAssertNotNil(svg);
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(300,
-                                                                                     100)
-                                                         options:IJSVGExporterOptionAll];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
-    NSData* before = [self render:original
-                            scale:10];
-    NSData* after = [self render:exported
-                           scale:10];
+    NSData* before = [self render:original scale:10];
+    NSData* after = [self render:exported scale:10];
     XCTAssertLessThan(IJSVGFilterMeanError(before, after), 1);
 }
 
@@ -474,73 +417,48 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "filter=\"url(#f)\"/>"];
     IJSVG* svg = IJSVGTestSVGObject(original);
     XCTAssertNotNil(svg);
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(300,
-                                                                                     100)
-                                                         options:IJSVGExporterOptionAll];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
     NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
-    XCTAssertTrue([xml nodesForXPath:@"//filter/feDropShadow"
-                               error:nil].count == 1);
-    XCTAssertTrue([xml nodesForXPath:@"//*[@filter]"
-                               error:nil].count == 1);
-    XCTAssertTrue([xml nodesForXPath:@"//image"
-                               error:nil].count == 0);
-    NSData* before = [self render:original
-                            scale:10];
-    NSData* after = [self render:exported
-                           scale:10];
+    XCTAssertTrue([xml nodesForXPath:@"//filter/feDropShadow" error:nil].count == 1);
+    XCTAssertTrue([xml nodesForXPath:@"//*[@filter]" error:nil].count == 1);
+    XCTAssertTrue([xml nodesForXPath:@"//image" error:nil].count == 0);
+    NSData* before = [self render:original scale:10];
+    NSData* after = [self render:exported scale:10];
     XCTAssertLessThan(IJSVGFilterMeanError(before, after), 1);
 }
 
 - (void)complexFixturesRenderAndSurviveExport:(NSString*)name
 {
     NSString* directory = @(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent;
-    NSString* path = [directory stringByAppendingPathComponent:[NSString stringWithFormat:@"IJSVGExample/%@.svg",
-                                                                                          name]];
+    NSString* path = [directory stringByAppendingPathComponent:[NSString stringWithFormat:@"IJSVGExample/%@.svg", name]];
     NSError* error = nil;
-    NSString* original = [NSString stringWithContentsOfFile:path
-                                                   encoding:NSUTF8StringEncoding
-                                                      error:&error];
+    NSString* original = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
     XCTAssertNil(error);
     NSXMLDocument* withoutFilters = IJSVGTestXMLDocument(original);
-    for(NSXMLElement* node in [withoutFilters nodesForXPath:@"//*[@filter]"
-                                                      error:nil]) {
+    for (NSXMLElement* node in [withoutFilters nodesForXPath:@"//*[@filter]" error:nil]) {
         [node removeAttributeForName:@"filter"];
     }
-    for(NSInteger scale = 10; scale <= 20; scale += 10) {
-        NSString* exported = [self export:original
-                                    scale:scale];
+    for (NSInteger scale = 10; scale <= 20; scale += 10) {
+        NSString* exported = [self export:original scale:scale];
         NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
-        XCTAssertGreaterThan([xml nodesForXPath:@"//filter/feDropShadow"
-                                          error:nil].count,
-                             0);
-        XCTAssertEqual([xml nodesForXPath:@"//image"
-                                    error:nil].count, 0);
-        for(NSXMLElement* node in [xml nodesForXPath:@"//*[@filter]"
-                                               error:nil]) {
+        XCTAssertGreaterThan([xml nodesForXPath:@"//filter/feDropShadow" error:nil].count, 0);
+        XCTAssertEqual([xml nodesForXPath:@"//image" error:nil].count, 0);
+        for (NSXMLElement* node in [xml nodesForXPath:@"//*[@filter]" error:nil]) {
             NSString* reference = [node attributeForName:@"filter"].stringValue;
             XCTAssertNotNil(reference);
-            NSString* identifier = [[reference stringByReplacingOccurrencesOfString:@"url(#"
-                                                                         withString:@""]
-                stringByReplacingOccurrencesOfString:@")"
-                                          withString:@""];
-            NSString* xpath = [NSString stringWithFormat:@"//filter[@id='%@']",
-                                                         identifier];
-            XCTAssertEqual([xml nodesForXPath:xpath
-                                        error:nil].count, 1);
+            NSString* identifier = [[reference stringByReplacingOccurrencesOfString:@"url(#" withString:@""] stringByReplacingOccurrencesOfString:@")" withString:@""];
+            NSString* xpath = [NSString stringWithFormat:@"//filter[@id='%@']", identifier];
+            XCTAssertEqual([xml nodesForXPath:xpath error:nil].count, 1);
         }
-        NSData* before = [self render:original
-                                scale:scale];
-        NSData* after = [self render:exported
-                               scale:scale];
-        NSData* plain = [self render:withoutFilters.XMLString
-                               scale:scale];
+        NSData* before = [self render:original scale:scale];
+        NSData* after = [self render:exported scale:scale];
+        NSData* plain = [self render:withoutFilters.XMLString scale:scale];
         const uint8_t* bytes = before.bytes;
         NSUInteger occupied = 0;
-        for(NSUInteger index = 3; index < before.length; index += 4) {
+        for (NSUInteger index = 3; index < before.length; index += 4) {
             occupied += bytes[index] > 0;
         }
         XCTAssertGreaterThan(occupied, 1000);
@@ -575,8 +493,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertNotNil(shadow);
     XCTAssertTrue(shadow.type == IJSVGNodeTypeFilterDropShadow);
     XCTAssertTrue(shadow.shouldRender == NO);
-    NSData* implicit = [self render:[self filtered:@"<feDropShadow/>"]
-                              scale:10];
+    NSData* implicit = [self render:[self filtered:@"<feDropShadow/>"] scale:10];
     NSData* explicit = [self render:[self filtered:@"<feDropShadow dx=\"2\" dy=\"2\" stdDeviation=\"2\" "
                                                     "flood-color=\"black\" flood-opacity=\"1\"/>"]
                               scale:10];
@@ -591,15 +508,16 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertEqualObjects(first.parameters[IJSVGAttributeDY], @"0.4");
     XCTAssertEqualObjects(first.parameters[IJSVGAttributeStdDeviation], @"0.2");
     IJSVGFilterPrimitive* second = [self shadows:@"dx=\"0\" dy=\"0\" stdDeviation=\"0.5\" "
-                                                  "flood-color=\"cyan\""].firstObject;
+                                                  "flood-color=\"cyan\""]
+                                       .firstObject;
     XCTAssertNotNil(second);
     XCTAssertEqualObjects(second.parameters[IJSVGAttributeDX], @"0");
     XCTAssertEqualObjects(second.parameters[IJSVGAttributeDY], @"0");
-    XCTAssertEqualObjects(second.parameters[IJSVGAttributeStdDeviation],
-                          @"0.5");
+    XCTAssertEqualObjects(second.parameters[IJSVGAttributeStdDeviation], @"0.5");
     XCTAssertEqualObjects(second.parameters[IJSVGAttributeFloodColor], @"cyan");
     IJSVGFilterPrimitive* third = [self shadows:@"dx=\"-0.8\" dy=\"-0.8\" stdDeviation=\"0\" "
-                                                 "flood-color=\"pink\" flood-opacity=\"0.5\""].firstObject;
+                                                 "flood-color=\"pink\" flood-opacity=\"0.5\""]
+                                      .firstObject;
     XCTAssertNotNil(third);
     XCTAssertEqualObjects(third.parameters[IJSVGAttributeDX], @"-0.8");
     XCTAssertEqualObjects(third.parameters[IJSVGAttributeDY], @"-0.8");
@@ -617,7 +535,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "result=\"second\" style=\"flood-color: pink; flood-opacity: "
                                        "50%\"/></filter></defs><circle cx=\"5\" cy=\"5\" r=\"4\" "
                                        "filter=\"url(#shadow)\"/>"];
-    IJSVGFilter* filter = root.children.firstObject.filter;
+    IJSVGFilter* filter = ((IJSVGGraphicsNode*)root.children.firstObject).filter;
     XCTAssertNotNil(filter);
     XCTAssertTrue(filter.primitives.count == 2);
     IJSVGFilterPrimitive* first = filter.primitives.firstObject;
@@ -628,11 +546,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertEqualObjects(first.result, @"first");
     XCTAssertEqualObjects(second.input, @"first");
     XCTAssertEqualObjects(second.result, @"second");
-    XCTAssertEqualObjects(first.parameters[IJSVGAttributeStdDeviation],
-                          @"1, 2");
+    XCTAssertEqualObjects(first.parameters[IJSVGAttributeStdDeviation], @"1, 2");
     XCTAssertEqualObjects(first.parameters[IJSVGAttributeFloodOpacity], @".25");
-    XCTAssertEqualObjects(second.parameters[IJSVGAttributeFloodOpacity],
-                          @"50%");
+    XCTAssertEqualObjects(second.parameters[IJSVGAttributeFloodOpacity], @"50%");
     XCTAssertTrue(first.parentNode == filter);
     IJSVGFilter* copied = [filter copy];
     XCTAssertNotNil(copied);
@@ -649,15 +565,11 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSData* invalid = [self render:[self filtered:@"<feDropShadow dx=\"NaN\" dy=\"1px\" "
                                                    "stdDeviation=\"-1\" flood-opacity=\"2\"/>"]
                              scale:10];
-    XCTAssertEqualObjects([self render:[self filtered:@"<feDropShadow/>"]
-                                 scale:10],
-                          invalid);
+    XCTAssertEqualObjects([self render:[self filtered:@"<feDropShadow/>"] scale:10], invalid);
     NSData* clear = [self render:[self filtered:@"<feDropShadow stdDeviation=\"1 2 3\" "
                                                  "flood-opacity=\"-1\"/>"]
                            scale:10];
-    XCTAssertEqualObjects([self render:[self filtered:@"<feOffset/>"]
-                                 scale:10],
-                          clear);
+    XCTAssertEqualObjects([self render:[self filtered:@"<feOffset/>"] scale:10], clear);
 }
 
 - (void)testFlagsBeyond64AndMixedStorage
@@ -675,7 +587,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     [copied addBits:compact];
     XCTAssertTrue([copied bitIsSet:63]);
     [copied setAllBits];
-    for(int bit = 0; bit < 96; bit++) {
+    for (int bit = 0; bit < 96; bit++) {
         XCTAssertTrue([copied bitIsSet:bit], @"Bit %d", bit);
     }
 }
@@ -689,10 +601,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "<feMergeNode in=\"moved\"/><feMergeNode "
                                                  "in=\"SourceGraphic\"/></feMerge>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10),
-                                         255, 0, 0, 255));
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 85, 35, 10), 0,
-                                         255, 255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 85, 35, 10), 0, 255, 255, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 150, 35, 10)[3] == 0);
 }
 
@@ -704,7 +614,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "<feMergeNode in=\"b\"/></feMerge><feOffset in=\"a\"/>"]
                            scale:10];
     const uint8_t* value = IJSVGFilterPixel(bytes, 35, 35, 10);
-    XCTAssertTrue(abs((int)(value[0])-128) <= 1 && abs((int)(value[2])-128) <= 1 && value[3] == 255);
+    XCTAssertTrue(abs((int)(value[0]) - 128) <= 1 && abs((int)(value[2]) - 128) <= 1 && value[3] == 255);
 }
 
 - (void)testInvalidInputNamesUsePreviousResult
@@ -712,23 +622,24 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSData* bytes = [self render:[self filtered:@"<feFlood flood-color=\"cyan\"/><feOffset "
                                                  "in=\"not-yet-defined\"/>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 0,
-                                         255, 255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 0, 255, 255, 255));
 }
 
 - (void)testFilterReferenceArrayPreservesOrder
 {
-    NSString* body = @"<defs>    <filter id=\"a\" x=\"-100%\" width=\"400%\"><feOffset dx=\"4\"/>"
-                      "</filter>    <filter id=\"b\" x=\"-100%\" width=\"400%\"><feColorMatrix "
-                      "type=\"matrix\"        values=\"0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0\"/>"
-                      "</filter></defs><rect x=\"2\" y=\"2\" width=\"3\" height=\"3\" fill=\"red\" "
+    NSString* body = @"<defs>    <filter id=\"a\" x=\"-100%\" "
+                     @"width=\"400%\"><feOffset dx=\"4\"/>"
+                      "</filter>    <filter id=\"b\" x=\"-100%\" "
+                      "width=\"400%\"><feColorMatrix "
+                      "type=\"matrix\"        values=\"0 0 0 0 0 1 0 0 0 0 0 0 0 "
+                      "0 0 0 0 0 1 0\"/>"
+                      "</filter></defs><rect x=\"2\" y=\"2\" width=\"3\" "
+                      "height=\"3\" fill=\"red\" "
                       "filter=\"url('#a') url(#b)\"/>";
     IJSVGRootNode* root = [self parse:body];
-    XCTAssertTrue(root.children.firstObject.filters.count == 2);
-    NSData* bytes = [self render:[self document:body]
-                           scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 75, 35, 10), 0,
-                                         255, 0, 255));
+    XCTAssertTrue(((IJSVGGraphicsNode*)root.children.firstObject).filters.count == 2);
+    NSData* bytes = [self render:[self document:body] scale:10];
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 75, 35, 10), 0, 255, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 35, 35, 10)[3] == 0);
 }
 
@@ -740,23 +651,22 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "type=\"linear\" slope=\".5\"/></feComponentTransfer>"]
                            scale:10];
     const uint8_t* value = IJSVGFilterPixel(bytes, 35, 35, 10);
-    XCTAssertTrue(value[0] == 0 && abs((int)(value[1])-64) <= 1 && value[2] == 0);
-    XCTAssertTrue(abs((int)(value[3])-128) <= 1);
+    XCTAssertTrue(value[0] == 0 && abs((int)(value[1]) - 64) <= 1 && value[2] == 0);
+    XCTAssertTrue(abs((int)(value[3]) - 128) <= 1);
 }
 
 - (void)testFilterColorSpaceChangesArithmetic
 {
     NSString* primitive = @"<feComponentTransfer><feFuncR type=\"linear\" slope=\".5\"/>"
                            "</feComponentTransfer>";
-    NSData* srgb = [self render:[self filtered:primitive]
-                          scale:10];
+    NSData* srgb = [self render:[self filtered:primitive] scale:10];
     NSData* linear = [self render:[self filtered:primitive
                                       attributes:@""
                                          content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" "
                                                   "fill=\"red\"/>"]
                             scale:10];
-    XCTAssertTrue(abs((int)(IJSVGFilterPixel(srgb, 35, 35, 10)[0])-128) <= 1);
-    XCTAssertTrue(abs((int)(IJSVGFilterPixel(linear, 35, 35, 10)[0])-188) <= 1);
+    XCTAssertTrue(abs((int)(IJSVGFilterPixel(srgb, 35, 35, 10)[0]) - 128) <= 1);
+    XCTAssertTrue(abs((int)(IJSVGFilterPixel(linear, 35, 35, 10)[0]) - 188) <= 1);
 }
 
 - (void)testPrimitiveRegionRestrictsLaterBlurAndTileRepeatsIt
@@ -765,10 +675,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "width=\"2\" height=\"2\" result=\"tile\"/><feTile "
                                                  "in=\"tile\"/>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 15, 15, 10), 0,
-                                         255, 255, 255));
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 155, 75, 10),
-                                         0, 255, 255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 15, 15, 10), 0, 255, 255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 155, 75, 10), 0, 255, 255, 255));
     NSData* clipped = [self render:[self filtered:@"<feFlood flood-color=\"cyan\" x=\"2\" y=\"2\" "
                                                    "width=\"2\" height=\"2\"/><feGaussianBlur "
                                                    "stdDeviation=\"1\"/>"]
@@ -779,8 +687,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testGaussianBlurPreservesColorAndZeroAxis
 {
-    NSData* bytes = [self render:[self filtered:@"<feGaussianBlur stdDeviation=\"1 0\"/>"]
-                           scale:10];
+    NSData* bytes = [self render:[self filtered:@"<feGaussianBlur stdDeviation=\"1 0\"/>"] scale:10];
     const uint8_t* fringe = IJSVGFilterPixel(bytes, 15, 35, 10);
     XCTAssertTrue(fringe[0] == fringe[3] && fringe[3] > 0 && fringe[3] < 128);
     XCTAssertTrue(IJSVGFilterPixel(bytes, 35, 15, 10)[3] == 0);
@@ -788,15 +695,11 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testMorphologyErodesAndDilates
 {
-    NSData* dilated = [self render:[self filtered:@"<feMorphology operator=\"dilate\" radius=\"1\"/>"]
-                             scale:10];
-    NSData* eroded = [self render:[self filtered:@"<feMorphology operator=\"erode\" radius=\"1\"/>"]
-                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(dilated, 15, 35, 10),
-                                         255, 0, 0, 255));
+    NSData* dilated = [self render:[self filtered:@"<feMorphology operator=\"dilate\" radius=\"1\"/>"] scale:10];
+    NSData* eroded = [self render:[self filtered:@"<feMorphology operator=\"erode\" radius=\"1\"/>"] scale:10];
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(dilated, 15, 35, 10), 255, 0, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(eroded, 25, 35, 10)[3] == 0);
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(eroded, 35, 35, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(eroded, 35, 35, 10), 255, 0, 0, 255));
 }
 
 - (void)testFilterExportCompressionShortensNumbersAndDefaults
@@ -809,38 +712,25 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "fill=\"red\" filter=\"url(#f)\"/>"];
     IJSVG* svg = IJSVGTestSVGObject(source);
     IJSVGExporterOptions options = IJSVGExporterOptionCompressOutput | IJSVGExporterOptionRemoveComments;
-    NSString* plain = [svg SVGStringWithSize:CGSizeMake(30, 10)
-                                     options:options];
-    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
-                                          options:options | IJSVGExporterOptionCompressFilters];
+    NSString* plain = [svg SVGStringWithSize:CGSizeMake(30, 10) options:options];
+    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10) options:options | IJSVGExporterOptionCompressFilters];
     NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
-    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                             error:nil].firstObject;
+    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
     XCTAssertNotNil(filter);
-    for(NSString* name in @[@"x", @"y", @"width", @"height", @"filterUnits", @"primitiveUnits"]) {
+    for (NSString* name in @[ @"x", @"y", @"width", @"height", @"filterUnits", @"primitiveUnits" ]) {
         XCTAssertNil([filter attributeForName:name]);
     }
-    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
-                                             error:nil].firstObject;
+    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']" error:nil].firstObject;
     XCTAssertNil([offset attributeForName:@"dx"]);
     XCTAssertNil([offset attributeForName:@"dy"]);
-    XCTAssertEqualObjects([offset attributeForName:@"result"].stringValue,
-                          @"offsetResult");
-    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                           error:nil].firstObject;
-    XCTAssertEqualObjects([blur attributeForName:@"in"].stringValue,
-                          @"offsetResult");
-    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue,
-                          @".5");
+    XCTAssertEqualObjects([offset attributeForName:@"result"].stringValue, @"offsetResult");
+    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+    XCTAssertEqualObjects([blur attributeForName:@"in"].stringValue, @"offsetResult");
+    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue, @".5");
     XCTAssertTrue([plain containsString:@"00.5000, 00.5000"]);
-    XCTAssertTrue([compressed containsString:@"0.12345678901234567"] ||
-                  [compressed containsString:@".12345678901234567"]);
+    XCTAssertTrue([compressed containsString:@"0.12345678901234567"] || [compressed containsString:@".12345678901234567"]);
     XCTAssertLessThan(compressed.length, plain.length);
-    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed
-                                                            scale:10],
-                                                     [self render:plain
-                                                            scale:10]),
-                             1.);
+    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed scale:10], [self render:plain scale:10]), 1.);
 }
 
 - (void)testFilterExportCompressionUsesFloatingPointOptionsAndKeepsListSeparators
@@ -849,19 +739,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                     "<feComponentTransfer><feFuncR type=\"table\" "
                                                     "tableValues=\"0.25, -0.5, 1e-3\"/>"
                                                     "</feComponentTransfer>"]);
-    NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
-                                        options:IJSVGExporterOptionCompressFilters
-                           floatingPointOptions:IJSVGFloatingPointOptionsMake(YES,
-                                                                              2)];
+    NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10) options:IJSVGExporterOptionCompressFilters floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
     NSXMLDocument* document = IJSVGTestXMLDocument(exported);
-    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']"
-                                             error:nil].firstObject;
-    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDX].stringValue,
-                          @".12");
-    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDY].stringValue,
-                          @"-.57");
-    NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
-                                               error:nil].firstObject;
+    NSXMLElement* offset = [document nodesForXPath:@"//*[local-name()='feOffset']" error:nil].firstObject;
+    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDX].stringValue, @".12");
+    XCTAssertEqualObjects([offset attributeForName:IJSVGAttributeDY].stringValue, @"-.57");
+    NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']" error:nil].firstObject;
     NSString* values = [function attributeForName:IJSVGAttributeTableValues].stringValue;
     XCTAssertEqualObjects(values, @".25 -.5 0");
     XCTAssertEqual([IJSVGUtils numbersFromString:values].count, 3);
@@ -878,42 +761,24 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "</defs><rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" "
                                        "filter=\"url(#f)\"/>"];
     IJSVG* svg = IJSVGTestSVGObject(source);
-    for(NSNumber* option in @[@(IJSVGExporterOptionNone), @(IJSVGExporterOptionCompressFilters)]) {
-        NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10)
-                                            options:option.integerValue
-                               floatingPointOptions:IJSVGFloatingPointOptionsMake(YES,
-                                                                                  2)];
+    for (NSNumber* option in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionCompressFilters) ]) {
+        NSString* exported = [svg SVGStringWithSize:CGSizeMake(30, 10) options:option.integerValue floatingPointOptions:IJSVGFloatingPointOptionsMake(YES, 2)];
         NSXMLDocument* document = IJSVGTestXMLDocument(exported);
-        NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                                 error:nil].firstObject;
-        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeX].stringValue,
-                              @"-12.35%");
-        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeY].stringValue,
-                              @"-.13");
-        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeWidth].stringValue,
-                              @"123.45%");
-        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeHeight].stringValue,
-                              @"12.34");
-        NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                               error:nil].firstObject;
-        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeX].stringValue,
-                              @"1.23");
-        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeY].stringValue,
-                              @"2.34%");
-        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeWidth].stringValue,
-                              @"12.34");
-        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeHeight].stringValue,
-                              @"98.76%");
-        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeStdDeviation].stringValue,
-                              @".12 .56");
-        NSXMLElement* flood = [document nodesForXPath:@"//*[local-name()='feFlood']"
-                                                error:nil].firstObject;
-        XCTAssertEqualObjects([flood attributeForName:IJSVGAttributeFloodOpacity].stringValue,
-                              @".45");
-        NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']"
-                                                   error:nil].firstObject;
-        XCTAssertEqualObjects([function attributeForName:IJSVGAttributeSlope].stringValue,
-                              @".45");
+        NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeX].stringValue, @"-12.35%");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeY].stringValue, @"-.13");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeWidth].stringValue, @"123.45%");
+        XCTAssertEqualObjects([filter attributeForName:IJSVGAttributeHeight].stringValue, @"12.34");
+        NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeX].stringValue, @"1.23");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeY].stringValue, @"2.34%");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeWidth].stringValue, @"12.34");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeHeight].stringValue, @"98.76%");
+        XCTAssertEqualObjects([blur attributeForName:IJSVGAttributeStdDeviation].stringValue, @".12 .56");
+        NSXMLElement* flood = [document nodesForXPath:@"//*[local-name()='feFlood']" error:nil].firstObject;
+        XCTAssertEqualObjects([flood attributeForName:IJSVGAttributeFloodOpacity].stringValue, @".45");
+        NSXMLElement* function = [document nodesForXPath:@"//*[local-name()='feFuncR']" error:nil].firstObject;
+        XCTAssertEqualObjects([function attributeForName:IJSVGAttributeSlope].stringValue, @".45");
     }
 }
 
@@ -925,54 +790,35 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "<feConvolveMatrix order=\"1\" kernelMatrix=\"2.000\" "
                                        "divisor=\"1\"/>"];
     IJSVG* svg = IJSVGTestSVGObject(source);
-    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10)
-                                          options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
+    NSString* compressed = [svg SVGStringWithSize:CGSizeMake(30, 10) options:IJSVGExporterOptionCompressFilters | IJSVGExporterOptionCompressOutput];
     NSXMLDocument* document = IJSVGTestXMLDocument(compressed);
-    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']"
-                                             error:nil].firstObject;
-    XCTAssertEqualObjects([filter attributeForName:@"filterUnits"].stringValue,
-                          @"userSpaceOnUse");
-    XCTAssertEqualObjects([filter attributeForName:@"color-interpolation-filters"].stringValue,
-                          @"sRGB");
-    NSXMLElement* shadow = [document nodesForXPath:@"//*[local-name()='feDropShadow']"
-                                             error:nil].firstObject;
-    for(NSString* name in @[@"dx", @"dy", @"stdDeviation"]) {
+    NSXMLElement* filter = [document nodesForXPath:@"//*[local-name()='filter']" error:nil].firstObject;
+    XCTAssertEqualObjects([filter attributeForName:@"filterUnits"].stringValue, @"userSpaceOnUse");
+    XCTAssertEqualObjects([filter attributeForName:@"color-interpolation-filters"].stringValue, @"sRGB");
+    NSXMLElement* shadow = [document nodesForXPath:@"//*[local-name()='feDropShadow']" error:nil].firstObject;
+    for (NSString* name in @[ @"dx", @"dy", @"stdDeviation" ]) {
         XCTAssertEqualObjects([shadow attributeForName:name].stringValue, @"0");
     }
-    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']"
-                                           error:nil].firstObject;
-    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue,
-                          @".5 1.5");
+    NSXMLElement* blur = [document nodesForXPath:@"//*[local-name()='feGaussianBlur']" error:nil].firstObject;
+    XCTAssertEqualObjects([blur attributeForName:@"stdDeviation"].stringValue, @".5 1.5");
     XCTAssertNotNil([blur attributeForName:@"x"]);
     XCTAssertNotNil([blur attributeForName:@"width"]);
-    XCTAssertEqualObjects([blur attributeForName:@"color-interpolation-filters"].stringValue,
-                          @"linearRGB");
-    NSXMLElement* convolution = [document nodesForXPath:@"//*[local-name()='feConvolveMatrix']"
-                                                  error:nil].firstObject;
-    XCTAssertEqualObjects([convolution attributeForName:@"divisor"].stringValue,
-                          @"1");
-    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed
-                                                            scale:10],
-                                                     [self render:source
-                                                            scale:10]),
-                             1.);
+    XCTAssertEqualObjects([blur attributeForName:@"color-interpolation-filters"].stringValue, @"linearRGB");
+    NSXMLElement* convolution = [document nodesForXPath:@"//*[local-name()='feConvolveMatrix']" error:nil].firstObject;
+    XCTAssertEqualObjects([convolution attributeForName:@"divisor"].stringValue, @"1");
+    XCTAssertLessThanOrEqual(IJSVGFilterMaximumError([self render:compressed scale:10], [self render:source scale:10]), 1.);
 }
 
 - (void)testConvolutionZeroDivisorUsesKernelSum
 {
     NSString* content = @"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"#804020\"/>";
-    NSData* expected = [self render:[self filtered:@"<feOffset/>"
-                                           content:content]
-                              scale:10];
-    for(NSString* divisor in @[@"", @"divisor=\"0\"", @"divisor=\"2\""]) {
+    NSData* expected = [self render:[self filtered:@"<feOffset/>" content:content] scale:10];
+    for (NSString* divisor in @[ @"", @"divisor=\"0\"", @"divisor=\"2\"" ]) {
         NSString* primitive = [NSString stringWithFormat:@"<feConvolveMatrix order=\"1\" "
                                                           "kernelMatrix=\"2\" %@/>",
-                                                         divisor];
-        NSData* actual = [self render:[self filtered:primitive
-                                             content:content]
-                                scale:10];
-        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1.,
-                                 @"%@", divisor);
+            divisor];
+        NSData* actual = [self render:[self filtered:primitive content:content] scale:10];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1., @"%@", divisor);
     }
 }
 
@@ -981,26 +827,29 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSData* expected = [self render:[self filtered:@"<feFlood flood-color=\"#404040\"/><feComposite "
                                                     "in2=\"SourceGraphic\" operator=\"in\"/>"]
                               scale:10];
-    for(NSString* divisor in @[@"", @"divisor=\"0\"", @"divisor=\"1\""]) {
+    for (NSString* divisor in @[ @"", @"divisor=\"0\"", @"divisor=\"1\"" ]) {
         NSString* primitive = [NSString stringWithFormat:@"<feConvolveMatrix order=\"1\" "
                                                           "kernelMatrix=\"0\" bias=\".25\" "
                                                           "preserveAlpha=\"true\" %@/>",
-                                                         divisor];
-        NSData* actual = [self render:[self filtered:primitive]
-                                scale:10];
-        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1.,
-                                 @"%@", divisor);
+            divisor];
+        NSData* actual = [self render:[self filtered:primitive] scale:10];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1., @"%@", divisor);
     }
 }
 
 - (void)testConvolutionSignedKernelsMatchBiasedPath
 {
-    for(NSString* divisor in @[@"1", @"8"]) {
-        NSString* template = @"<defs><linearGradient id='g'><stop stop-color='#2040e0' stop-opacity='.2'/>"
-                              "<stop offset='.5' stop-color='#e08020'/><stop offset='1' stop-color='#208040' stop-opacity='.4'/>"
-                              "</linearGradient><filter id='f' x='0' y='0' width='100%%' height='100%%'>"
-                              "<feConvolveMatrix kernelMatrix='1 2 0 0 0 0 0 0 -1' divisor='%@' bias='%@'/>"
-                              "</filter></defs><rect x='2' y='2' width='24' height='6' fill='url(#g)' filter='url(#f)'/>";
+    for (NSString* divisor in @[ @"1", @"8" ]) {
+        NSString* template = @"<defs><linearGradient id='g'><stop "
+                             @"stop-color='#2040e0' stop-opacity='.2'/>"
+                              "<stop offset='.5' stop-color='#e08020'/><stop "
+                              "offset='1' stop-color='#208040' stop-opacity='.4'/>"
+                              "</linearGradient><filter id='f' x='0' y='0' "
+                              "width='100%%' height='100%%'>"
+                              "<feConvolveMatrix kernelMatrix='1 2 0 0 0 0 0 0 -1' "
+                              "divisor='%@' bias='%@'/>"
+                              "</filter></defs><rect x='2' y='2' width='24' "
+                              "height='6' fill='url(#g)' filter='url(#f)'/>";
         NSData* actual = [self render:[self document:[NSString stringWithFormat:template, divisor, @"0"]] scale:10];
         NSData* expected = [self render:[self document:[NSString stringWithFormat:template, divisor, @"0.000000000001"]] scale:10];
         XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 2, @"divisor=%@", divisor);
@@ -1009,11 +858,13 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testConvolutionClampsPremultipliedChannels
 {
-    for(NSString* divisor in @[@"1", @"8"]) {
-        NSString* body = [NSString stringWithFormat:
-            @"<defs><filter id='f' color-interpolation-filters='sRGB'>"
-             "<feConvolveMatrix order='1' kernelMatrix='2' divisor='%@'/></filter></defs>"
-             "<rect x='2' y='2' width='8' height='6' fill='#804020' fill-opacity='.5' filter='url(#f)'/>", divisor];
+    for (NSString* divisor in @[ @"1", @"8" ]) {
+        NSString* body = [NSString stringWithFormat:@"<defs><filter id='f' color-interpolation-filters='sRGB'>"
+                                                     "<feConvolveMatrix order='1' kernelMatrix='2' "
+                                                     "divisor='%@'/></filter></defs>"
+                                                     "<rect x='2' y='2' width='8' height='6' fill='#804020' "
+                                                     "fill-opacity='.5' filter='url(#f)'/>",
+            divisor];
         NSData* bytes = [self render:[self document:body] scale:10];
         const uint8_t* pixel = IJSVGFilterPixel(bytes, 50, 50, 10);
         double factor = 2. / divisor.doubleValue;
@@ -1029,13 +880,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSData* identity = [self render:[self filtered:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"2\" "
                                                     "divisor=\"2\"/>"]
                               scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(identity, 35, 35, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(identity, 35, 35, 10), 255, 0, 0, 255));
     NSData* biased = [self render:[self filtered:@"<feConvolveMatrix order=\"1\" kernelMatrix=\"0\" "
                                                   "bias=\".5\" preserveAlpha=\"true\"/>"]
                             scale:10];
     const uint8_t* value = IJSVGFilterPixel(biased, 35, 35, 10);
-    for(int channel = 0; channel < 3; channel++) {
+    for (int channel = 0; channel < 3; channel++) {
         XCTAssertEqualWithAccuracy(value[channel], 128, 1);
     }
     XCTAssertTrue(value[3] == 255);
@@ -1044,15 +894,18 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testDisplacementPreservesSourceInterpolationSpace
 {
-    NSString* content = @"<rect width='15' height='10' fill='red'/><rect x='15' width='15' height='10' fill='blue'/>";
-    for(NSString* sourceSpace in @[@"sRGB", @"linearRGB"]) {
+    NSString* content = @"<rect width='15' height='10' fill='red'/><rect x='15' "
+                        @"width='15' height='10' fill='blue'/>";
+    for (NSString* sourceSpace in @[ @"sRGB", @"linearRGB" ]) {
         NSString* mapSpace = [sourceSpace isEqualToString:@"sRGB"] ? @"linearRGB" : @"sRGB";
-        for(NSString* input in @[@"in='source'", @"in='unchanged'", @"", @"in='missing'"]) {
-            NSString* primitives = [NSString stringWithFormat:
-                @"<feOffset color-interpolation-filters='%@' result='source'/>"
-                 "<feFlood flood-color='white' result='map'/>"
-                 "<feDisplacementMap in='source' in2='map' scale='0' color-interpolation-filters='%@' result='unchanged'/>"
-                 "<feDisplacementMap %@ in2='map' scale='1' color-interpolation-filters='%@'/>",
+        for (NSString* input in @[ @"in='source'", @"in='unchanged'", @"", @"in='missing'" ]) {
+            NSString* primitives = [NSString stringWithFormat:@"<feOffset color-interpolation-filters='%@' result='source'/>"
+                                                               "<feFlood flood-color='white' result='map'/>"
+                                                               "<feDisplacementMap in='source' in2='map' scale='0' "
+                                                               "color-interpolation-filters='%@' "
+                                                               "result='unchanged'/>"
+                                                               "<feDisplacementMap %@ in2='map' scale='1' "
+                                                               "color-interpolation-filters='%@'/>",
                 sourceSpace, mapSpace, input, mapSpace];
             NSData* pixels = [self render:[self filtered:primitives content:content] scale:1];
             const uint8_t* pixel = IJSVGFilterPixel(pixels, 14, 4, 1);
@@ -1062,7 +915,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
             XCTAssertEqual(pixel[3], 255);
         }
     }
-    NSData* source = [self render:[self filtered:@"<feDisplacementMap in2='SourceGraphic' scale='1' color-interpolation-filters='linearRGB'/>" content:content] scale:1];
+    NSData* source = [self render:[self filtered:@"<feDisplacementMap in2='SourceGraphic' scale='1' "
+                                                 @"color-interpolation-filters='linearRGB'/>"
+                                         content:content]
+                            scale:1];
     const uint8_t* pixel = IJSVGFilterPixel(source, 14, 4, 1);
     XCTAssertEqualWithAccuracy(pixel[0], 128, 2);
     XCTAssertEqualWithAccuracy(pixel[2], 128, 2);
@@ -1075,8 +931,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "in=\"SourceGraphic\" in2=\"map\" scale=\"4\" "
                                                  "xChannelSelector=\"R\" yChannelSelector=\"A\"/>"]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 15, 35, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 15, 35, 10), 255, 0, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 55, 35, 10)[3] == 0);
 }
 
@@ -1086,69 +941,54 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                       "<feBlend in=\"SourceGraphic\" in2=\"paint\" "
                                                       "mode=\"multiply\"/>"]
                                 scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(multiplied, 35, 35,
-                                                          10), 0, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(multiplied, 35, 35, 10), 0, 0, 0, 255));
     NSData* arithmetic = [self render:[self filtered:@"<feFlood flood-color=\"blue\" result=\"paint\"/>"
                                                       "<feComposite in=\"SourceGraphic\" in2=\"paint\" "
                                                       "operator=\"arithmetic\" k2=\".5\" k3=\".5\"/>"]
                                 scale:10];
     const uint8_t* value = IJSVGFilterPixel(arithmetic, 35, 35, 10);
-    XCTAssertTrue(abs((int)(value[0])-128) <= 1 && abs((int)(value[2])-128) <= 1 && value[3] == 255);
+    XCTAssertTrue(abs((int)(value[0]) - 128) <= 1 && abs((int)(value[2]) - 128) <= 1 && value[3] == 255);
 }
 
-- (void)turbulenceMatchesOriginalSamples:(BOOL)fractal
-                                  stitch:(BOOL)stitch
+- (void)turbulenceMatchesOriginalSamples:(BOOL)fractal stitch:(BOOL)stitch
 {
     // Captured from WKWebView by drawing the same SVG into a 30 x 10 canvas.
     // Canvas straight RGBA is premultiplied here to match the bitmap context.
-    const int references[4][4][4] = {
-        {{22, 34, 36, 84}, {21, 27, 25, 76}, {6, 9, 21, 42}, {9, 7, 9, 36}},
-        {{43, 30, 54, 85}, {37, 49, 30, 89}, {61, 53, 79, 106}, {84, 64, 71, 145}},
-        {{20, 31, 32, 80}, {19, 27, 23, 81}, {2, 4, 10, 17}, {0, 0, 0, 0}},
-        {{45, 31, 56, 87}, {35, 54, 34, 92}, {60, 58, 91, 118}, {63, 63, 63, 127}}
-    };
-    const int positions[4][2] = {{0, 0}, {3, 3}, {14, 5}, {29, 9}};
+    const int references[4][4][4] = { { { 22, 34, 36, 84 }, { 21, 27, 25, 76 }, { 6, 9, 21, 42 }, { 9, 7, 9, 36 } }, { { 43, 30, 54, 85 }, { 37, 49, 30, 89 }, { 61, 53, 79, 106 }, { 84, 64, 71, 145 } }, { { 20, 31, 32, 80 }, { 19, 27, 23, 81 }, { 2, 4, 10, 17 }, { 0, 0, 0, 0 } }, { { 45, 31, 56, 87 }, { 35, 54, 34, 92 }, { 60, 58, 91, 118 }, { 63, 63, 63, 127 } } };
+    const int positions[4][2] = { { 0, 0 }, { 3, 3 }, { 14, 5 }, { 29, 9 } };
     NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<feTurbulence "
                                                                             "baseFrequency=\".17 .31\" "
                                                                             "seed=\"7\" numOctaves=\"4\" "
                                                                             "   type=\"%@\"    "
                                                                             "stitchTiles=\"%@\"/>",
-                                                                           fractal ? @"fractalNoise" : @"turbulence",
-                                                                           stitch ? @"stitch" : @"noStitch"]]
+                                                    fractal ? @"fractalNoise" : @"turbulence", stitch ? @"stitch" : @"noStitch"]]
                            scale:1];
-    for(int index = 0; index < 4; index++) {
-        const uint8_t* actual = IJSVGFilterPixel(bytes, positions[index][0],
-                                                 positions[index][1], 1);
-        for(int channel = 0; channel < 4; channel++) {
-            XCTAssertEqualWithAccuracy(actual[channel],
-                                       references[fractal + stitch * 2][index][channel],
-                                       2);
+    for (int index = 0; index < 4; index++) {
+        const uint8_t* actual = IJSVGFilterPixel(bytes, positions[index][0], positions[index][1], 1);
+        for (int channel = 0; channel < 4; channel++) {
+            XCTAssertEqualWithAccuracy(actual[channel], references[fractal + stitch * 2][index][channel], 2);
         }
     }
 }
 
 - (void)testTurbulenceMatchesOriginalSamplesCase1FalseFalse
 {
-    [self turbulenceMatchesOriginalSamples:NO
-                                    stitch:NO];
+    [self turbulenceMatchesOriginalSamples:NO stitch:NO];
 }
 
 - (void)testTurbulenceMatchesOriginalSamplesCase2FalseTrue
 {
-    [self turbulenceMatchesOriginalSamples:NO
-                                    stitch:YES];
+    [self turbulenceMatchesOriginalSamples:NO stitch:YES];
 }
 
 - (void)testTurbulenceMatchesOriginalSamplesCase3TrueFalse
 {
-    [self turbulenceMatchesOriginalSamples:YES
-                                    stitch:NO];
+    [self turbulenceMatchesOriginalSamples:YES stitch:NO];
 }
 
 - (void)testTurbulenceMatchesOriginalSamplesCase4TrueTrue
 {
-    [self turbulenceMatchesOriginalSamples:YES
-                                    stitch:YES];
+    [self turbulenceMatchesOriginalSamples:YES stitch:YES];
 }
 
 - (void)zeroDisplacementPreservesSource:(NSString*)scale
@@ -1164,12 +1004,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                              "in2=\"map\" %@    "
                                                                              "xChannelSelector=\"R\" "
                                                                              "yChannelSelector=\"B\"/>",
-                                                                            scale]
+                                                     scale]
                                          content:content]
                             scale:10];
-    NSData* expected = [self render:[self filtered:@"<feOffset/>"
-                                           content:content]
-                              scale:10];
+    NSData* expected = [self render:[self filtered:@"<feOffset/>" content:content] scale:10];
     XCTAssertEqualObjects(actual, expected);
 }
 
@@ -1196,23 +1034,19 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                        scale:10];
     XCTAssertEqualObjects(a, b);
     XCTAssertNotEqualObjects(a, c);
-    XCTAssertTrue(memcmp(IJSVGFilterPixel(a, 35, 35, 10),
-                         IJSVGFilterPixel(a, 155, 75, 10), 4) != 0);
+    XCTAssertTrue(memcmp(IJSVGFilterPixel(a, 35, 35, 10), IJSVGFilterPixel(a, 155, 75, 10), 4) != 0);
 }
 
 - (void)testDiffuseAndSpecularDistantLighting
 {
-    for(NSString* type in @[@"feDiffuseLighting", @"feSpecularLighting"]) {
+    for (NSString* type in @[ @"feDiffuseLighting", @"feSpecularLighting" ]) {
         NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<%@ "
                                                                                 "lighting-color=\"cyan\">"
                                                                                 "<feDistantLight "
                                                                                 "elevation=\"90\"/></%@>",
-                                                                               type,
-                                                                               type]]
+                                                        type, type]]
                                scale:10];
-        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 40, 40,
-                                                              10), 0, 255, 255,
-                                             255));
+        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 40, 40, 10), 0, 255, 255, 255));
     }
 }
 
@@ -1226,22 +1060,15 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "</feMerge>"];
     IJSVG* svg = IJSVGTestSVGObject(original);
     XCTAssertNotNil(svg);
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(300,
-                                                                                     100)
-                                                         options:IJSVGExporterOptionAll];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
     NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
-    XCTAssertTrue([xml nodesForXPath:@"//filter/feMerge/feMergeNode"
-                               error:nil].count == 2);
-    XCTAssertTrue([xml nodesForXPath:@"//filter/feComponentTransfer/feFuncA"
-                               error:nil].count == 1);
-    NSData* before = [self render:original
-                            scale:10];
-    NSData* after = [self render:exported
-                           scale:10];
+    XCTAssertTrue([xml nodesForXPath:@"//filter/feMerge/feMergeNode" error:nil].count == 2);
+    XCTAssertTrue([xml nodesForXPath:@"//filter/feComponentTransfer/feFuncA" error:nil].count == 1);
+    NSData* before = [self render:original scale:10];
+    NSData* after = [self render:exported scale:10];
     XCTAssertEqualObjects(before, after);
 }
 
@@ -1253,32 +1080,22 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "height=\"10\">        <feImage href=\"#image\"/>    </filter>"
                                          "</defs><rect x=\"2\" y=\"2\" width=\"3\" height=\"3\" "
                                          "fill=\"red\" filter=\"url(#f)\"/>"];
-    NSData* before = [self render:original
-                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(before, 95, 35, 10),
-                                         0, 255, 255, 255));
+    NSData* before = [self render:original scale:10];
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(before, 95, 35, 10), 0, 255, 255, 255));
     XCTAssertTrue(IJSVGFilterPixel(before, 35, 35, 10)[3] == 0);
     IJSVG* svg = IJSVGTestSVGObject(original);
     XCTAssertNotNil(svg);
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                            size:CGSizeMake(300,
-                                                                                     100)
-                                                         options:IJSVGExporterOptionAll];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
     XCTAssertNotNil(exporter);
     NSString* exported = [exporter SVGString];
     XCTAssertNotNil(exported);
-    XCTAssertEqualObjects([self render:exported
-                                 scale:10], before);
+    XCTAssertEqualObjects([self render:exported scale:10], before);
 }
 
 - (void)referencedImagePrimitivePreservesCoordinates:(NSString*)region
 {
     NSArray<NSString*>* values = [region componentsSeparatedByString:@" "];
-    NSString* attributes = [NSString stringWithFormat:@"x=\"%@\" y=\"%@\" width=\"%@\" height=\"%@\"",
-                                                      values[0],
-                                                      values[1],
-                                                      values[2],
-                                                      values[3]];
+    NSString* attributes = [NSString stringWithFormat:@"x=\"%@\" y=\"%@\" width=\"%@\" height=\"%@\"", values[0], values[1], values[2], values[3]];
     NSData* actual = [self render:[self document:[NSString stringWithFormat:@"<defs>    <rect "
                                                                              "id=\"image\" width=\"30\" "
                                                                              "height=\"10\" "
@@ -1293,12 +1110,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                              "</filter></defs><rect "
                                                                              "width=\"30\" height=\"10\" "
                                                                              "filter=\"url(#f)\"/>",
-                                                                            attributes]]
+                                                     attributes]]
                             scale:8];
     NSData* expected = [self render:[self document:[NSString stringWithFormat:@"<rect %@ "
                                                                                "fill=\"#4080c0\" "
                                                                                "opacity=\".6\"/>",
-                                                                              attributes]]
+                                                       attributes]]
                               scale:8];
     XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1);
 }
@@ -1330,59 +1147,41 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testEmbeddedRasterImagePreservesAspectRatio
 {
-    NSBitmapImageRep* image = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                                      pixelsWide:2
-                                                                      pixelsHigh:1
-                                                                   bitsPerSample:8
-                                                                 samplesPerPixel:4
-                                                                        hasAlpha:YES
-                                                                        isPlanar:NO
-                                                                  colorSpaceName:NSDeviceRGBColorSpace
-                                                                     bytesPerRow:8
-                                                                    bitsPerPixel:32];
+    NSBitmapImageRep* image = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:2 pixelsHigh:1 bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:8 bitsPerPixel:32];
     XCTAssertNotNil(image);
     uint8_t* pixels = image.bitmapData;
     XCTAssertTrue(pixels != NULL);
-    if(pixels == NULL) {
+    if (pixels == NULL) {
         return;
     }
-    for(int x = 0; x < 2; x++) {
+    for (int x = 0; x < 2; x++) {
         pixels[x * 4] = 255;
         pixels[x * 4 + 1] = 0;
         pixels[x * 4 + 2] = 0;
         pixels[x * 4 + 3] = 255;
     }
-    NSString* png = [[image representationUsingType:NSBitmapImageFileTypePNG
-                                         properties:@{}] base64EncodedStringWithOptions:0];
+    NSString* png = [[image representationUsingType:NSBitmapImageFileTypePNG properties:@{}] base64EncodedStringWithOptions:0];
     XCTAssertNotNil(png);
     NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<feImage "
                                                                             "href=\"data:image/png;"
                                                                             "base64,%@\" x=\"8\" y=\"2\" "
                                                                             "width=\"4\" height=\"4\"/>",
-                                                                           png]]
+                                                    png]]
                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 95, 35, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 95, 35, 10), 255, 0, 0, 255));
     XCTAssertEqual(IJSVGFilterPixel(bytes, 95, 25, 10)[3], 0);
     XCTAssertEqual(IJSVGFilterPixel(bytes, 35, 35, 10)[3], 0);
-    NSArray<NSString*>* aspects = @[@"xMinYMin meet", @"xMaxYMax meet", @"xMidYMid slice", @"none"];
-    for(NSUInteger index = 0; index < aspects.count; index++) {
+    NSArray<NSString*>* aspects = @[ @"xMinYMin meet", @"xMaxYMax meet", @"xMidYMid slice", @"none" ];
+    for (NSUInteger index = 0; index < aspects.count; index++) {
         NSString* original = [self filtered:[NSString stringWithFormat:@"<feImage href=\"data:image/png;"
                                                                         "base64,%@\" x=\"8\" y=\"2\" "
                                                                         "width=\"4\" height=\"4\" "
                                                                         "preserveAspectRatio=\"%@\"/>",
-                                                                       png,
-                                                                       aspects[index]]];
-        NSData* rendered = [self render:original
-                                  scale:10];
-        XCTAssertEqual(IJSVGFilterPixel(rendered, 95, 25, 10)[3] == 255,
-                       index != 1, @"%@", aspects[index]);
-        XCTAssertEqual(IJSVGFilterPixel(rendered, 95, 55, 10)[3] == 255,
-                       index != 0, @"%@", aspects[index]);
-        XCTAssertEqualObjects([self render:[self export:original
-                                                  scale:10]
-                                     scale:10],
-                              rendered);
+                                                png, aspects[index]]];
+        NSData* rendered = [self render:original scale:10];
+        XCTAssertEqual(IJSVGFilterPixel(rendered, 95, 25, 10)[3] == 255, index != 1, @"%@", aspects[index]);
+        XCTAssertEqual(IJSVGFilterPixel(rendered, 95, 55, 10)[3] == 255, index != 0, @"%@", aspects[index]);
+        XCTAssertEqualObjects([self render:[self export:original scale:10] scale:10], rendered);
     }
 }
 
@@ -1393,7 +1192,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "</filter>    <filter id=\"derived\" href=\"#base\" y=\"-25%\"/>"
                                        "</defs><rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" "
                                        "filter=\"url(#derived)\"/>"];
-    IJSVGFilter* filter = root.children.firstObject.filter;
+    IJSVGFilter* filter = ((IJSVGGraphicsNode*)root.children.firstObject).filter;
     XCTAssertNotNil(filter);
     XCTAssertEqualObjects([filter.x stringValue], @"-50%");
     XCTAssertEqualObjects([filter.y stringValue], @"-25%");
@@ -1414,30 +1213,29 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                    "0\" targetY=\"1\" kernelUnitLength=\"1\"    "
                                                    "edgeMode=\"none\"/>"]
                              scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(shifted, 35, 15, 10),
-                                         255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(shifted, 35, 15, 10), 255, 0, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(shifted, 35, 55, 10)[3] == 0);
     NSData* displaced = [self render:[self filtered:@"<feFlood flood-color=\"lime\" result=\"map\"/>"
                                                      "<feDisplacementMap in=\"SourceGraphic\" "
                                                      "in2=\"map\" scale=\"4\"    xChannelSelector=\"A\" "
                                                      "yChannelSelector=\"G\"/>"]
                                scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(displaced, 15, 15,
-                                                          10), 255, 0, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(displaced, 15, 15, 10), 255, 0, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(displaced, 35, 55, 10)[3] == 0);
 }
 
 - (void)testLightingSurfaceHeightIsIndependentOfRenderScale
 {
-    for(NSString* type in @[@"fePointLight", @"feSpotLight"]) {
-        for(NSNumber* height in @[@1, @15]) {
-            NSString* primitive = [NSString stringWithFormat:
-                @"<feDiffuseLighting surfaceScale='%@'><%@ x='15' y='5' z='20' pointsAtX='15' pointsAtY='5' "
-                 "limitingConeAngle='40'/></feDiffuseLighting>", height, type];
+    for (NSString* type in @[ @"fePointLight", @"feSpotLight" ]) {
+        for (NSNumber* height in @[ @1, @15 ]) {
+            NSString* primitive = [NSString stringWithFormat:@"<feDiffuseLighting surfaceScale='%@'><%@ x='15' "
+                                                             @"y='5' z='20' pointsAtX='15' pointsAtY='5' "
+                                                              "limitingConeAngle='40'/></feDiffuseLighting>",
+                height, type];
             NSString* document = [self filtered:primitive content:@"<rect width='30' height='10'/>"];
             NSData* normal = [self render:document scale:1];
             NSData* enlarged = [self render:document scale:3];
-            for(NSInteger x = 3; x < 27; x++) {
+            for (NSInteger x = 3; x < 27; x++) {
                 const uint8_t* a = IJSVGFilterPixel(normal, x, 4, 1);
                 const uint8_t* b = IJSVGFilterPixel(enlarged, x * 3 + 1, 13, 3);
                 XCTAssertEqualWithAccuracy(a[0], b[0], 1, @"%@ height %@ x %ld", type, height, (long)x);
@@ -1449,7 +1247,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)testNarrowSpotlightConeHasPartialCoverage
 {
     NSString* light = @"<feDiffuseLighting surfaceScale='0'><feSpotLight x='15' y='5' z='10' "
-                      "pointsAtX='15' pointsAtY='5' limitingConeAngle='5.5'/></feDiffuseLighting>";
+                       "pointsAtX='15' pointsAtY='5' "
+                       "limitingConeAngle='5.5'/></feDiffuseLighting>";
     NSData* pixels = [self render:[self filtered:light content:@"<rect width='30' height='10'/>"] scale:1];
     const uint8_t* center = IJSVGFilterPixel(pixels, 14, 4, 1);
     XCTAssertGreaterThan(center[0], 0);
@@ -1460,15 +1259,16 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testPointAndSpotLightingUseTheirChildParameters
 {
-    for(NSString* light in @[
-        @"<fePointLight x=\"4\" y=\"4\" z=\"100\"/>",
-        (@"<feSpotLight x=\"4\" y=\"4\" z=\"100\" pointsAtX=\"4\" pointsAtY=\"4\" pointsAtZ=\"0\" "
-          "limitingConeAngle=\"30\"/>")
-    ]) {
+    for (NSString* light in @[
+             @"<fePointLight x=\"4\" y=\"4\" z=\"100\"/>",
+             (@"<feSpotLight x=\"4\" y=\"4\" z=\"100\" pointsAtX=\"4\" "
+              @"pointsAtY=\"4\" pointsAtZ=\"0\" "
+               "limitingConeAngle=\"30\"/>")
+         ]) {
         NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<feDiffuseLighting "
                                                                                 "lighting-color=\"cyan\">"
                                                                                 "%@</feDiffuseLighting>",
-                                                                               light]]
+                                                        light]]
                                scale:10];
         const uint8_t* value = IJSVGFilterPixel(bytes, 40, 40, 10);
         XCTAssertTrue(value[0] == 0 && value[1] > 250 && value[2] > 250 && value[3] == 255);
@@ -1482,10 +1282,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "in=\"StrokePaint\"/></filter></defs><rect x=\"2\" y=\"2\" "
                                          "width=\"4\" height=\"4\" fill=\"red\" stroke=\"blue\" "
                                          "filter=\"url(#f)\"/>"];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel([self render:original
-                                                                 scale:10],
-                                                          150, 50, 10), 0, 0,
-                                         255, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel([self render:original scale:10], 150, 50, 10), 0, 0, 255, 255));
 }
 
 - (void)testFilterReferenceCyclesTerminate
@@ -1496,19 +1293,20 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "href=\"#self\"/></filter></defs><rect x=\"2\" y=\"2\" "
                                          "width=\"4\" height=\"4\" filter=\"url(#a)\"/><rect x=\"8\" "
                                          "y=\"2\" width=\"4\" height=\"4\" filter=\"url(#c)\"/>"];
-    NSData* bytes = [self render:original
-                           scale:10];
+    NSData* bytes = [self render:original scale:10];
     XCTAssertTrue(bytes.length == 300 * 100 * 4);
 }
 
 - (void)testGradientAndPatternPaintInputs
 {
-    for(NSString* definition in @[
-        (@"<linearGradient id=\"p\"><stop stop-color=\"red\"/><stop offset=\"1\" stop-color=\"blue\"/>"
-          "</linearGradient>"),
-        (@"<pattern id=\"p\" patternUnits=\"userSpaceOnUse\" width=\"2\" height=\"2\"><rect width=\"2\" "
-          "height=\"2\" fill=\"cyan\"/></pattern>")
-    ]) {
+    for (NSString* definition in @[
+             (@"<linearGradient id=\"p\"><stop stop-color=\"red\"/><stop "
+              @"offset=\"1\" stop-color=\"blue\"/>"
+               "</linearGradient>"),
+             (@"<pattern id=\"p\" patternUnits=\"userSpaceOnUse\" width=\"2\" "
+              @"height=\"2\"><rect width=\"2\" "
+               "height=\"2\" fill=\"cyan\"/></pattern>")
+         ]) {
         NSString* original = [self document:[NSString stringWithFormat:@"<defs>%@    <filter id=\"f\" "
                                                                         "filterUnits=\"userSpaceOnUse\" "
                                                                         "x=\"0\" y=\"0\" width=\"30\" "
@@ -1518,31 +1316,23 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                         "width=\"4\" height=\"4\" "
                                                                         "fill=\"url(#p)\" "
                                                                         "filter=\"url(#f)\"/>",
-                                                                       definition]];
-        NSData* before = [self render:original
-                                scale:10];
+                                                definition]];
+        NSData* before = [self render:original scale:10];
         const uint8_t* outside = IJSVGFilterPixel(before, 155, 55, 10);
         XCTAssertTrue(outside[3] == 255);
-        if([definition hasPrefix:@"<linearGradient"]) {
+        if ([definition hasPrefix:@"<linearGradient"]) {
             XCTAssertTrue(outside[2] > 250);
-            XCTAssertTrue(IJSVGFilterPixel(before, 25, 35, 10)[0] > IJSVGFilterPixel(before,
-                                                                                     55,
-                                                                                     35,
-                                                                                     10)[0]);
+            XCTAssertTrue(IJSVGFilterPixel(before, 25, 35, 10)[0] > IJSVGFilterPixel(before, 55, 35, 10)[0]);
         } else {
             XCTAssertTrue(IJSVGFilterPixelEquals(outside, 0, 255, 255, 255));
         }
         IJSVG* svg = IJSVGTestSVGObject(original);
         XCTAssertNotNil(svg);
-        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                                size:CGSizeMake(300,
-                                                                                         100)
-                                                             options:IJSVGExporterOptionAll];
+        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
         XCTAssertNotNil(exporter);
         NSString* exported = [exporter SVGString];
         XCTAssertNotNil(exported);
-        NSData* after = [self render:exported
-                               scale:10];
+        NSData* after = [self render:exported scale:10];
         XCTAssertLessThan(IJSVGFilterMeanError(before, after), 1);
     }
 }
@@ -1556,10 +1346,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                          "0 0 0 1 0\"/></filter></defs><rect x=\"2\" y=\"2\" width=\"4\" "
                                          "height=\"4\" fill=\"blue\"/><rect x=\"12\" y=\"2\" width=\"4\" "
                                          "height=\"4\" fill=\"red\" filter=\"url(#f)\"/></g>"];
-    NSData* bytes = [self render:original
-                           scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 0,
-                                         255, 0, 255));
+    NSData* bytes = [self render:original scale:10];
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(bytes, 35, 35, 10), 0, 255, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(bytes, 135, 35, 10)[3] == 0);
 }
 
@@ -1572,15 +1360,15 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "<feFuncA type=\"identity\"/></feComponentTransfer>"]
                            scale:10];
     const uint8_t* value = IJSVGFilterPixel(bytes, 35, 35, 10);
-    XCTAssertTrue(abs((int)(value[0])-191) <= 1);
-    XCTAssertTrue(abs((int)(value[1])-128) <= 1);
-    XCTAssertTrue(abs((int)(value[2])-64) <= 1);
+    XCTAssertTrue(abs((int)(value[0]) - 191) <= 1);
+    XCTAssertTrue(abs((int)(value[1]) - 128) <= 1);
+    XCTAssertTrue(abs((int)(value[2]) - 64) <= 1);
     XCTAssertTrue(value[3] == 255);
 }
 
 - (void)testFilterReferencesUseNamespaceAliasesAndHrefPrecedence
 {
-    for(NSString* reference in @[@"x:href=\"#cyan\"", @"x:href=\"#red\" href=\"#cyan\""]) {
+    for (NSString* reference in @[ @"x:href=\"#cyan\"", @"x:href=\"#red\" href=\"#cyan\"" ]) {
         NSString* original = [self document:[NSString stringWithFormat:@"<defs "
                                                                         "xmlns:x=\"http://www.w3.org/199"
                                                                         "9/xlink\">    <rect id=\"cyan\" "
@@ -1599,125 +1387,70 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                         "x=\"2\" y=\"2\" width=\"3\" "
                                                                         "height=\"3\" "
                                                                         "filter=\"url('#derived')\"/>",
-                                                                       reference]];
-        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:original
-                                                             fileURL:nil
-                                                               error:nil];
+                                                reference]];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:original fileURL:nil error:nil];
         IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(30, 10)];
         XCTAssertNotNil(root);
-        IJSVGFilter* filter = root.children.firstObject.filter;
+        IJSVGFilter* filter = ((IJSVGGraphicsNode*)root.children.firstObject).filter;
         XCTAssertNotNil(filter);
         XCTAssertTrue(filter.primitives.count == 1);
         IJSVGFilterPrimitive* primitive = filter.primitives.firstObject;
         XCTAssertNotNil(primitive);
-        IJSVGNode* imageNode = primitive.imageNode;
+        IJSVGGraphicsNode* imageNode = (IJSVGGraphicsNode*)primitive.imageNode;
         XCTAssertNotNil(imageNode);
         XCTAssertTrue(imageNode.x.value == 8);
         XCTAssertTrue(imageNode.width.value == 3);
         XCTAssertTrue(imageNode.shouldRender);
         XCTAssertTrue(filter.units == IJSVGUnitUserSpaceOnUse);
         XCTAssertTrue(filter.width.value == 30);
-        NSData* rendered = [self render:original
-                                  scale:10];
-        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(rendered, 95, 35,
-                                                              10), 0, 255, 255,
-                                             255));
+        NSData* rendered = [self render:original scale:10];
+        XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(rendered, 95, 35, 10), 0, 255, 255, 255));
         IJSVG* svg = IJSVGTestSVGObject(original);
         XCTAssertNotNil(svg);
-        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg
-                                                                size:CGSizeMake(300,
-                                                                                         100)
-                                                             options:IJSVGExporterOptionAll];
+        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
         XCTAssertNotNil(exporter);
-        XCTAssertEqualObjects([self render:[exporter SVGString]
-                                     scale:10],
-                              rendered);
+        XCTAssertEqualObjects([self render:[exporter SVGString] scale:10], rendered);
     }
 }
 
 - (void)testFilterURLByteParserPreservesIdentifiersAndOrder
 {
-    NSArray<NSArray<id>*>* cases = @[
-        @[@"", @[]],
-        @[@" \t\r\n", @[]],
-        @[@"url(#first)", @[@"first"]],
-        @[@" URL( '#first' )\turl(\"#second\")\nurl(#first) ", @[@"first", @"second", @"first"]],
-        @[@"url(#first)url(#second)", @[@"first", @"second"]],
-        @[@"url(#éclair) url('#影')", @[@"éclair", @"影"]],
-        @[@"url('#shape(1)')", @[@"shape(1)"]]
-    ];
-    for(NSArray<id>* entry in cases) {
-        XCTAssertEqualObjects([IJSVGUtils defURLs:entry[0]], entry[1],
-                              @"Input: %@", entry[0]);
+    NSArray<NSArray<id>*>* cases = @[ @[ @"", @[] ], @[ @" \t\r\n", @[] ], @[ @"url(#first)", @[ @"first" ] ], @[ @" URL( '#first' )\turl(\"#second\")\nurl(#first) ", @[ @"first", @"second", @"first" ] ], @[ @"url(#first)url(#second)", @[ @"first", @"second" ] ], @[ @"url(#éclair) url('#影')", @[ @"éclair", @"影" ] ], @[ @"url('#shape(1)')", @[ @"shape(1)" ] ] ];
+    for (NSArray<id>* entry in cases) {
+        XCTAssertEqualObjects([IJSVGUtils defURLs:entry[0]], entry[1], @"Input: %@", entry[0]);
     }
 }
 
 - (void)testFilterURLByteParserRejectsIncompleteOrInvalidLists
 {
-    for(NSString* input in @[
-        @"u",
-        @"ur",
-        @"url",
-        @"url(",
-        @"url(#",
-        @"url(#first",
-        @"url('#first)",
-        @"url(\"#first')",
-        @"url()",
-        @"url(#)",
-        @"url('')",
-        @"url('#')",
-        @"url(file.svg#first)",
-        @"url(#first) trailing",
-        @"url(#first) url(#",
-        @"url(#first))",
-        @"url(#first),url(#second)",
-        @"url(#first second)",
-        @"url(#first(nested))",
-        @"url(#first) blur(2)",
-        @"url(#first\\second)",
-        @"url(#first)\0url(#second)",
-        @"url('#first\nsecond')",
-        @"url('#first'junk'#second')",
-        @"url('#first' trailing)",
-        @"url(#first) ) url(#second)",
-        @"url(#first) url(#second) unfinished("
-    ]) {
-        XCTAssertTrue(([IJSVGUtils defURLs:input].count == 0), @"Input: %@",
-                      input);
+    for (NSString* input in @[ @"u", @"ur", @"url", @"url(", @"url(#", @"url(#first", @"url('#first)", @"url(\"#first')", @"url()", @"url(#)", @"url('')", @"url('#')", @"url(file.svg#first)", @"url(#first) trailing", @"url(#first) url(#", @"url(#first))", @"url(#first),url(#second)", @"url(#first second)", @"url(#first(nested))", @"url(#first) blur(2)", @"url(#first\\second)", @"url(#first)\0url(#second)", @"url('#first\nsecond')", @"url('#first'junk'#second')", @"url('#first' trailing)", @"url(#first) ) url(#second)", @"url(#first) url(#second) unfinished(" ]) {
+        XCTAssertTrue(([IJSVGUtils defURLs:input].count == 0), @"Input: %@", input);
     }
 }
 
 - (void)testFilterURLListRejectsMalformedReferences
 {
-    for(NSString* reference in @[@"url('#f')", @"url(&quot;#f&quot;)", @"URL(#f) url(#f)"]) {
+    for (NSString* reference in @[ @"url('#f')", @"url(&quot;#f&quot;)", @"URL(#f) url(#f)" ]) {
         IJSVGRootNode* root = [self parse:[NSString stringWithFormat:@"<defs><filter id=\"f\"><feOffset/>"
                                                                       "</filter></defs><rect width=\"4\" "
                                                                       "height=\"4\" filter=\"%@\"/>",
-                                                                     reference]];
-        XCTAssertTrue(root.children.firstObject.filters.count > 0);
+                                              reference]];
+        XCTAssertTrue(((IJSVGGraphicsNode*)root.children.firstObject).filters.count > 0);
     }
-    for(NSString* reference in @[
-        @"url(')",
-        @"url(#f",
-        @"url(#f) trailing",
-        @"url(#missing)",
-        @"url(file.svg#f)"
-    ]) {
+    for (NSString* reference in @[ @"url(')", @"url(#f", @"url(#f) trailing", @"url(#missing)", @"url(file.svg#f)" ]) {
         IJSVGRootNode* root = [self parse:[NSString stringWithFormat:@"<defs><filter id=\"f\"><feOffset/>"
                                                                       "</filter></defs><rect width=\"4\" "
                                                                       "height=\"4\" filter=\"%@\"/>",
-                                                                     reference]];
-        XCTAssertTrue(root.children.firstObject.filters.count == 0);
+                                              reference]];
+        XCTAssertTrue(((IJSVGGraphicsNode*)root.children.firstObject).filters.count == 0);
     }
 }
 
 - (void)testCoreImageCompositeOperatorsPreservePremultipliedAlpha
 {
-    NSArray<NSString*>* operations = @[@"over", @"in", @"out", @"atop", @"xor", @"lighter"];
-    const int expected[6][4] = {{128, 0, 64, 191}, {64, 0, 0, 64}, {64, 0, 0, 64},
-        {64, 0, 64, 128}, {64, 0, 64, 128}, {128, 0, 128, 255}};
-    for(NSUInteger index = 0; index < operations.count; index++) {
+    NSArray<NSString*>* operations = @[ @"over", @"in", @"out", @"atop", @"xor", @"lighter" ];
+    const int expected[6][4] = { { 128, 0, 64, 191 }, { 64, 0, 0, 64 }, { 64, 0, 0, 64 }, { 64, 0, 64, 128 }, { 64, 0, 64, 128 }, { 128, 0, 128, 255 } };
+    for (NSUInteger index = 0; index < operations.count; index++) {
         NSString* operation = operations[index];
         NSData* bytes = [self render:[self filtered:[NSString stringWithFormat:@"<feFlood "
                                                                                 "flood-color=\"red\" "
@@ -1731,21 +1464,18 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                                 "operator=\"%@\" "
                                                                                 "color-interpolation-fil"
                                                                                 "ters=\"sRGB\"/>",
-                                                                               operation]]
+                                                        operation]]
                                scale:10];
         const uint8_t* actual = IJSVGFilterPixel(bytes, 35, 35, 10);
-        for(int channel = 0; channel < 4; channel++) {
-            XCTAssertEqualWithAccuracy(actual[channel],
-                                       expected[index][channel], 2,
-                                       @"%@, channel %d", operation, channel);
+        for (int channel = 0; channel < 4; channel++) {
+            XCTAssertEqualWithAccuracy(actual[channel], expected[index][channel], 2, @"%@, channel %d", operation, channel);
         }
     }
 }
 
-- (void)acceleratedShadowMatchesExplicitBlur:(NSString*)deviation
-                                  colorSpace:(NSString*)colorSpace
+- (void)acceleratedShadowMatchesExplicitBlur:(NSString*)deviation colorSpace:(NSString*)colorSpace
 {
-    for(NSNumber* scaleValue in @[@2, @20]) {
+    for (NSNumber* scaleValue in @[ @2, @20 ]) {
         NSInteger scale = scaleValue.integerValue;
         NSString* content = @"<rect x=\"4\" y=\"2\" width=\"5\" height=\"5\" fill=\"#804020\" "
                              "opacity=\".6\"/><circle cx=\"13\" cy=\"5\" r=\"3\" fill=\"blue\" "
@@ -1759,16 +1489,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                            "color-interpolation-filters="
                                                                            "\"%@\">    %@</filter></defs>"
                                                                            "<g filter=\"url(#f)\">%@</g>",
-                                                                          colorSpace,
-                                                                          primitives,
-                                                                          content]]
+                                                   colorSpace, primitives, content]]
                           scale:scale];
         };
         NSData* shadow = renderEffects([NSString stringWithFormat:@"<feDropShadow dx=\"2\" dy=\"-1\" "
                                                                    "stdDeviation=\"%@\"    "
                                                                    "flood-color=\"#4080c0\" "
                                                                    "flood-opacity=\".7\"/>",
-                                                                  deviation]);
+            deviation]);
         NSData* explicit = renderEffects([NSString stringWithFormat:@"<feGaussianBlur in=\"SourceAlpha\" "
                                                                      "stdDeviation=\"%@\"/><feOffset "
                                                                      "dx=\"2\" dy=\"-1\" "
@@ -1780,176 +1508,146 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                      "<feMergeNode in=\"shadow\"/>"
                                                                      "<feMergeNode in=\"SourceGraphic\"/>"
                                                                      "</feMerge>",
-                                                                    deviation]);
-        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(shadow, explicit), 1,
-                                 @"%@, %@, scale %ld", deviation, colorSpace,
-                                 (long)scale);
+            deviation]);
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(shadow, explicit), 1, @"%@, %@, scale %ld", deviation, colorSpace, (long)scale);
     }
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_1Case0SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_2Case0LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_3Case3SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_4Case3LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_5_1Case7SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_6_1Case7LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_7_3Case1SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3 .1"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3 .1" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_8_3Case1LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3 .1"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3 .1" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_9_3Case0SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3 0"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3 0" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_10_3Case0LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@".3 0"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@".3 0" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_11_0Case3SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0 .3"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0 .3" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_12_0Case3LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0 .3"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0 .3" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_13_1_7Case0SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7 0"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7 0" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_14_1_7Case0LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7 0"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7 0" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_15_0_1Case7SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0 1.7"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0 1.7" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_16_0_1Case7LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"0 1.7"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"0 1.7" colorSpace:@"linearRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_17_1_7Case8SRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7 .8"
-                                    colorSpace:@"sRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7 .8" colorSpace:@"sRGB"];
 }
 
 - (void)testAcceleratedShadowMatchesExplicitBlur_18_1_7Case8LinearRGB
 {
-    [self acceleratedShadowMatchesExplicitBlur:@"1.7 .8"
-                                    colorSpace:@"linearRGB"];
+    [self acceleratedShadowMatchesExplicitBlur:@"1.7 .8" colorSpace:@"linearRGB"];
 }
 
-- (void)lightingColorReadbackPreservesInterpolation:(NSString*)colorSpace
-                                              scale:(NSInteger)scale
+- (void)lightingColorReadbackPreservesInterpolation:(NSString*)colorSpace scale:(NSInteger)scale
 {
     NSData* bytes = [self render:[self filtered:@"<feDiffuseLighting surfaceScale=\"0\" "
                                                  "diffuseConstant=\".5\" lighting-color=\"#804020\">    "
                                                  "<feDistantLight elevation=\"90\"/></feDiffuseLighting>"
                                      attributes:[NSString stringWithFormat:@"color-interpolation-filters"
                                                                             "=\"%@\"",
-                                                                           colorSpace]
+                                                    colorSpace]
                                         content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" "
                                                  "fill=\"red\"/>"]
                            scale:scale];
-    const double values[3] = {128, 64, 32};
+    const double values[3] = { 128, 64, 32 };
     const uint8_t* pixels = bytes.bytes;
-    for(NSUInteger channel = 0; channel < 3; channel++) {
+    for (NSUInteger channel = 0; channel < 3; channel++) {
         double encoded = values[channel] / 255;
-        double linear = encoded <= 0.04045 ? encoded / 12.92 : pow((encoded + 0.055) / 1.055,
-                                                                   2.4);
+        double linear = encoded <= 0.04045 ? encoded / 12.92 : pow((encoded + 0.055) / 1.055, 2.4);
         double shaded = linear * 0.5;
-        double expected = [colorSpace isEqual:@"sRGB"] ? encoded * 0.5
-            : (shaded <= 0.0031308 ? shaded * 12.92 : 1.055 * pow(shaded,
-                                                                  1 / 2.4) - 0.055);
+        double expected = [colorSpace isEqual:@"sRGB"] ? encoded * 0.5 : (shaded <= 0.0031308 ? shaded * 12.92 : 1.055 * pow(shaded, 1 / 2.4) - 0.055);
         double maximumError = 0;
-        for(NSUInteger index = channel; index < bytes.length; index += 4) {
-            maximumError = MAX(maximumError,
-                               fabs(pixels[index] - expected * 255));
+        for (NSUInteger index = channel; index < bytes.length; index += 4) {
+            maximumError = MAX(maximumError, fabs(pixels[index] - expected * 255));
         }
-        XCTAssertLessThanOrEqual(maximumError, 2, @"Channel %lu",
-                                 (unsigned long)channel);
+        XCTAssertLessThanOrEqual(maximumError, 2, @"Channel %lu", (unsigned long)channel);
     }
     XCTAssertEqual(IJSVGFilterPixel(bytes, 35, 35, scale)[3], 255);
 }
 
 - (void)testLightingColorReadbackPreservesInterpolationCase1SRGB10
 {
-    [self lightingColorReadbackPreservesInterpolation:@"sRGB"
-                                                scale:10];
+    [self lightingColorReadbackPreservesInterpolation:@"sRGB" scale:10];
 }
 
 - (void)testLightingColorReadbackPreservesInterpolationCase2SRGB20
 {
-    [self lightingColorReadbackPreservesInterpolation:@"sRGB"
-                                                scale:20];
+    [self lightingColorReadbackPreservesInterpolation:@"sRGB" scale:20];
 }
 
 - (void)testLightingColorReadbackPreservesInterpolationCase3LinearRGB10
 {
-    [self lightingColorReadbackPreservesInterpolation:@"linearRGB"
-                                                scale:10];
+    [self lightingColorReadbackPreservesInterpolation:@"linearRGB" scale:10];
 }
 
 - (void)testLightingColorReadbackPreservesInterpolationCase4LinearRGB20
 {
-    [self lightingColorReadbackPreservesInterpolation:@"linearRGB"
-                                                scale:20];
+    [self lightingColorReadbackPreservesInterpolation:@"linearRGB" scale:20];
 }
 
 - (void)acceleratedArithmeticMatchesPremultipliedEquation:(BOOL)sameInput
@@ -1965,22 +1663,18 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                             "operator=\"arithmetic\" "
                                                                             "k1=\".4\" k2=\"-.3\" "
                                                                             "k3=\".8\" k4=\".07\"/>",
-                                                                           sameInput ? @"a" : @"b"]]
+                                                    sameInput ? @"a" : @"b"]]
                            scale:10];
-    const double a[4] = {128.0 / 255 * 0.5, 64.0 / 255 * 0.5, 32.0 / 255 * 0.5, 0.5};
-    const double second[4] = {32.0 / 255 * 0.75, 128.0 / 255 * 0.75, 192.0 / 255 * 0.75, 0.75};
+    const double a[4] = { 128.0 / 255 * 0.5, 64.0 / 255 * 0.5, 32.0 / 255 * 0.5, 0.5 };
+    const double second[4] = { 32.0 / 255 * 0.75, 128.0 / 255 * 0.75, 192.0 / 255 * 0.75, 0.75 };
     const double* b = sameInput ? a : second;
     double expected[4];
-    for(int channel = 0; channel < 4; channel++) {
-        expected[channel] = MIN(1,
-                                MAX(0,
-                                    0.4 * a[channel] * b[channel] - 0.3 * a[channel] + 0.8 * b[channel] + 0.07));
+    for (int channel = 0; channel < 4; channel++) {
+        expected[channel] = MIN(1, MAX(0, 0.4 * a[channel] * b[channel] - 0.3 * a[channel] + 0.8 * b[channel] + 0.07));
     }
     const uint8_t* actual = IJSVGFilterPixel(bytes, 35, 35, 10);
-    for(int channel = 0; channel < 4; channel++) {
-        XCTAssertEqualWithAccuracy(actual[channel],
-                                   MIN(expected[channel], expected[3]) * 255,
-                                   2);
+    for (int channel = 0; channel < 4; channel++) {
+        XCTAssertEqualWithAccuracy(actual[channel], MIN(expected[channel], expected[3]) * 255, 2);
     }
 }
 
@@ -2005,12 +1699,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                  "</feComponentTransfer>"]
                            scale:10];
     double alpha = pow(0.5, 1.7);
-    const double expected[4] = {0.8 * pow(64.0 / 255, 1.3) + 0.1,
-        pow(128.0 / 255, 0.7), 0.4 * pow(192.0 / 255, -0.5), 1};
+    const double expected[4] = { 0.8 * pow(64.0 / 255, 1.3) + 0.1, pow(128.0 / 255, 0.7), 0.4 * pow(192.0 / 255, -0.5), 1 };
     const uint8_t* actual = IJSVGFilterPixel(bytes, 35, 35, 10);
-    for(int channel = 0; channel < 4; channel++) {
-        XCTAssertEqualWithAccuracy(actual[channel],
-                                   MIN(1, expected[channel]) * alpha * 255, 2);
+    for (int channel = 0; channel < 4; channel++) {
+        XCTAssertEqualWithAccuracy(actual[channel], MIN(1, expected[channel]) * alpha * 255, 2);
     }
     NSData* zero = [self render:[self filtered:@"<feFlood flood-color=\"black\" flood-opacity=\"0\"/>"
                                                 "<feComponentTransfer><feFuncA type=\"gamma\" "
@@ -2021,23 +1713,24 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testAcceleratedConvolutionMatchesScalarReference
 {
-    NSString* content = @"<rect x=\"0\" y=\"0\" width=\"8\" height=\"8\" fill=\"red\" opacity=\".5\"/>"
-                         "<rect x=\"3\" y=\"2\" width=\"8\" height=\"5\" fill=\"blue\" opacity=\".75\"/>";
-    const int sizes[2][2] = {{8, 4}, {11, 11}};
-    for(int size = 0; size < 2; size++) {
+    NSString* content = @"<rect x=\"0\" y=\"0\" width=\"8\" height=\"8\" "
+                        @"fill=\"red\" opacity=\".5\"/>"
+                         "<rect x=\"3\" y=\"2\" width=\"8\" height=\"5\" "
+                         "fill=\"blue\" opacity=\".75\"/>";
+    const int sizes[2][2] = { { 8, 4 }, { 11, 11 } };
+    for (int size = 0; size < 2; size++) {
         int width = sizes[size][0], height = sizes[size][1];
-        double weights[121] = {0};
+        double weights[121] = { 0 };
         weights[0] = -0.25;
         weights[width + 2] = 0.5;
         weights[width * height - 1] = 0.75;
         NSMutableArray<NSString*>* numbers = [NSMutableArray array];
-        for(int index = 0; index < width * height; index++) {
-            [numbers addObject:[NSString stringWithFormat:@"%g",
-                                                          weights[index]]];
+        for (int index = 0; index < width * height; index++) {
+            [numbers addObject:[NSString stringWithFormat:@"%g", weights[index]]];
         }
         NSString* kernel = [numbers componentsJoinedByString:@" "];
-        for(NSString* edge in @[@"none", @"duplicate", @"wrap"]) {
-            for(NSString* preserve in @[@"true", @"false"]) {
+        for (NSString* edge in @[ @"none", @"duplicate", @"wrap" ]) {
+            for (NSString* preserve in @[ @"true", @"false" ]) {
                 NSString* step = @"1";
                 NSString* primitive = [NSString stringWithFormat:@"<feConvolveMatrix order=\"%ld %ld\" "
                                                                   "kernelMatrix=\"%@\"    targetX=\"1\" "
@@ -2045,72 +1738,52 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                   "bias=\".1\"    edgeMode=\"%@\" "
                                                                   "preserveAlpha=\"%@\" "
                                                                   "kernelUnitLength=\"%@\"/>",
-                                                                 (long)width,
-                                                                 (long)height,
-                                                                 kernel,
-                                                                 edge,
-                                                                 preserve,
-                                                                 step];
-                NSData* fast = [self render:[self filtered:primitive
-                                                   content:content]
-                                      scale:1];
-                NSData* source = [self render:[self document:content]
-                                        scale:1];
-                double (^sample)(int, int, int) = ^double(int x, int y,
-                                                          int channel) {
-                    if([edge isEqual:@"duplicate"]) {
+                    (long)width, (long)height, kernel, edge, preserve, step];
+                NSData* fast = [self render:[self filtered:primitive content:content] scale:1];
+                NSData* source = [self render:[self document:content] scale:1];
+                double (^sample)(int, int, int) = ^double(int x, int y, int channel) {
+                    if ([edge isEqual:@"duplicate"]) {
                         x = MIN(29, MAX(0, x));
                         y = MIN(9, MAX(0, y));
-                    } else if([edge isEqual:@"wrap"]) {
+                    } else if ([edge isEqual:@"wrap"]) {
                         x = (x % 30 + 30) % 30;
                         y = (y % 10 + 10) % 10;
                     }
-                    if(x < 0 || x >= 30 || y < 0 || y >= 10) {
+                    if (x < 0 || x >= 30 || y < 0 || y >= 10) {
                         return 0;
                     }
                     return IJSVGFilterPixel(source, x, y, 1)[channel] / 255.0;
                 };
                 BOOL preserveAlpha = [preserve isEqual:@"true"];
                 double maximumError = 0;
-                for(int y = 0; y < 10; y++) {
-                    for(int x = 0; x < 30; x++) {
-                        double sums[4] = {0};
-                        for(int j = 0; j < height; j++) {
-                            for(int i = 0; i < width; i++) {
+                for (int y = 0; y < 10; y++) {
+                    for (int x = 0; x < 30; x++) {
+                        double sums[4] = { 0 };
+                        for (int j = 0; j < height; j++) {
+                            for (int i = 0; i < width; i++) {
                                 double alpha = sample(x + i - 1, y + j - 2, 3);
                                 double weight = weights[(height - j - 1) * width + width - i - 1];
-                                for(int channel = 0; channel < 4; channel++) {
-                                    double value = sample(x + i - 1, y + j - 2,
-                                                          channel);
-                                    if(preserveAlpha && channel < 3) {
+                                for (int channel = 0; channel < 4; channel++) {
+                                    double value = sample(x + i - 1, y + j - 2, channel);
+                                    if (preserveAlpha && channel < 3) {
                                         value = alpha > 0 ? value / alpha : 0;
                                     }
                                     sums[channel] += value * weight;
                                 }
                             }
                         }
-                        double alpha = preserveAlpha ? sample(x, y, 3) : MIN(1,
-                                                                             MAX(0,
-                                                                                 sums[3] / 1.25 + 0.1));
+                        double alpha = preserveAlpha ? sample(x, y, 3) : MIN(1, MAX(0, sums[3] / 1.25 + 0.1));
                         const uint8_t* actual = IJSVGFilterPixel(fast, x, y, 1);
-                        for(int channel = 0; channel < 4; channel++) {
+                        for (int channel = 0; channel < 4; channel++) {
                             double expected = alpha;
-                            if(channel < 3) {
-                                expected = preserveAlpha ? MIN(1,
-                                                               MAX(0,
-                                                                   sums[channel] / 1.25 + 0.1)) * alpha
-                                    : MIN(alpha,
-                                          MAX(0,
-                                              sums[channel] / 1.25 + 0.1 * alpha));
+                            if (channel < 3) {
+                                expected = preserveAlpha ? MIN(1, MAX(0, sums[channel] / 1.25 + 0.1)) * alpha : MIN(alpha, MAX(0, sums[channel] / 1.25 + 0.1 * alpha));
                             }
-                            maximumError = MAX(maximumError,
-                                               fabs(actual[channel] - expected * 255));
+                            maximumError = MAX(maximumError, fabs(actual[channel] - expected * 255));
                         }
                     }
                 }
-                XCTAssertLessThanOrEqual(maximumError, 3,
-                                         @"Kernel %dx%d, %@, preserveAlpha=%@",
-                                         width, height, edge, preserve);
+                XCTAssertLessThanOrEqual(maximumError, 3, @"Kernel %dx%d, %@, preserveAlpha=%@", width, height, edge, preserve);
             }
         }
     }
@@ -2118,45 +1791,36 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)testCoreImageConvolutionMatchesGeneralKernels
 {
-    NSString* content = @"<rect x=\"0\" y=\"0\" width=\"8\" height=\"8\" fill=\"red\" opacity=\".5\"/>"
-                         "<rect x=\"3\" y=\"2\" width=\"8\" height=\"5\" fill=\"blue\" opacity=\".75\"/>";
-    const int sizes[6][2] = {{3, 3}, {5, 5}, {7, 7}, {9, 1}, {1, 9}, {2, 3}};
-    for(int size = 0; size < 6; size++) {
+    NSString* content = @"<rect x=\"0\" y=\"0\" width=\"8\" height=\"8\" "
+                        @"fill=\"red\" opacity=\".5\"/>"
+                         "<rect x=\"3\" y=\"2\" width=\"8\" height=\"5\" "
+                         "fill=\"blue\" opacity=\".75\"/>";
+    const int sizes[6][2] = { { 3, 3 }, { 5, 5 }, { 7, 7 }, { 9, 1 }, { 1, 9 }, { 2, 3 } };
+    for (int size = 0; size < 6; size++) {
         int width = sizes[size][0], height = sizes[size][1];
-        double small[49] = {0}, large[121] = {0};
+        double small[49] = { 0 }, large[121] = { 0 };
         small[0] = -0.25;
         small[width * height / 2] = 0.75;
         small[width * height - 1] = 0.5;
-        for(int y = 0; y < height; y++) {
-            for(int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
                 large[(y + 11 - height) * 11 + x + 11 - width] = small[y * width + x];
             }
         }
-        for(NSString* edge in @[@"none", @"duplicate", @"wrap"]) {
+        for (NSString* edge in @[ @"none", @"duplicate", @"wrap" ]) {
             NSString* (^primitive)(const double*, int, int) = ^NSString*(const double* weights, int w, int h) {
                 NSMutableArray<NSString*>* numbers = [NSMutableArray array];
-                for(int index = 0; index < w * h; index++) {
-                    [numbers addObject:[NSString stringWithFormat:@"%g",
-                                                                  weights[index]]];
+                for (int index = 0; index < w * h; index++) {
+                    [numbers addObject:[NSString stringWithFormat:@"%g", weights[index]]];
                 }
                 return [NSString stringWithFormat:@"<feConvolveMatrix order=\"%d %d\" "
                                                    "kernelMatrix=\"%@\" targetX=\"0\" targetY=\"0\" "
                                                    "divisor=\"1\" edgeMode=\"%@\"/>",
-                                                  w,
-                                                  h,
-                                                  [numbers componentsJoinedByString:@" "],
-                                                  edge];
+                    w, h, [numbers componentsJoinedByString:@" "], edge];
             };
-            NSData* fast = [self render:[self filtered:primitive(small, width,
-                                                                 height)
-                                               content:content]
-                                  scale:1];
-            NSData* general = [self render:[self filtered:primitive(large, 11,
-                                                                    11)
-                                                  content:content]
-                                     scale:1];
-            XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(fast, general), 2,
-                                     @"Kernel %dx%d, %@", width, height, edge);
+            NSData* fast = [self render:[self filtered:primitive(small, width, height) content:content] scale:1];
+            NSData* general = [self render:[self filtered:primitive(large, 11, 11) content:content] scale:1];
+            XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(fast, general), 2, @"Kernel %dx%d, %@", width, height, edge);
         }
     }
 }
@@ -2173,10 +1837,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                            scale:10];
     const uint8_t* value = IJSVGFilterPixel(bytes, 35, 35, 10);
     double gamma = pow(128.0 / 255, 1.5);
-    const double expected[4] = {gamma, gamma * 0.5, gamma + 0.1, 1};
-    for(int channel = 0; channel < 4; channel++) {
-        XCTAssertEqualWithAccuracy(value[channel],
-                                   round(expected[channel] * 0.25 * 255), 2);
+    const double expected[4] = { gamma, gamma * 0.5, gamma + 0.1, 1 };
+    for (int channel = 0; channel < 4; channel++) {
+        XCTAssertEqualWithAccuracy(value[channel], round(expected[channel] * 0.25 * 255), 2);
     }
 }
 
@@ -2190,17 +1853,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                       "flood-opacity=\"5e1%\"/>"]
                                 scale:10];
     XCTAssertEqualObjects(scientific, expected);
-    NSData* defaults = [self render:[self filtered:@"<feDropShadow/>"]
-                              scale:10];
-    for(NSString* invalid in @[@"1e", @"1,,2", @"1,", @"1px", @"1e999"]) {
+    NSData* defaults = [self render:[self filtered:@"<feDropShadow/>"] scale:10];
+    for (NSString* invalid in @[ @"1e", @"1,,2", @"1,", @"1px", @"1e999" ]) {
         NSData* actual = [self render:[self filtered:[NSString stringWithFormat:@"<feDropShadow "
                                                                                  "dx=\"%@\" "
                                                                                  "stdDeviation=\"%@\"/>",
-                                                                                invalid,
-                                                                                invalid]]
+                                                         invalid, invalid]]
                                 scale:10];
-        XCTAssertTrue(([actual isEqual:defaults]),
-                      @"Invalid numeric attribute: %@", invalid);
+        XCTAssertTrue(([actual isEqual:defaults]), @"Invalid numeric attribute: %@", invalid);
     }
 }
 
@@ -2213,203 +1873,180 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                        "color-interpolation-filters: linearRGB\">        <fePointLight "
                                        "x=\"1\" y=\"2\" z=\"3\"/>    </feDiffuseLighting></filter></defs>"
                                        "<rect width=\"10\" height=\"10\" filter=\"url(#f)\"/>"];
-    IJSVGFilterPrimitive* primitive = root.children.firstObject.filter.primitives.firstObject;
+    IJSVGFilterPrimitive* primitive = ((IJSVGGraphicsNode*)root.children.firstObject).filter.primitives.firstObject;
     XCTAssertNotNil(primitive);
-    XCTAssertEqualObjects(primitive.parameters[IJSVGAttributeLightingColor],
-                          @"lime");
-    XCTAssertEqualObjects(primitive.parameters[IJSVGAttributeSurfaceScale],
-                          @"2");
+    XCTAssertEqualObjects(primitive.parameters[IJSVGAttributeLightingColor], @"lime");
+    XCTAssertEqualObjects(primitive.parameters[IJSVGAttributeSurfaceScale], @"2");
     XCTAssertEqual(primitive.filterColorInterpolation, IJSVGColorInterpolationLinearRGB);
     IJSVGFilterPrimitive* light = (IJSVGFilterPrimitive*)primitive.children.firstObject;
     XCTAssertNotNil(light);
     XCTAssertEqualObjects(light.parameters[IJSVGAttributeZ], @"3");
 }
 
-- (void)multipleTransformsAndFilterLists:(NSString*)element
-                               transform:(NSString*)transform
+- (void)multipleTransformsAndFilterLists:(NSString*)element transform:(NSString*)transform
 {
     NSString* definitions = @"<defs>    <path id=\"shape\" d=\"M-1-1 H1 V1 H-1 Z\"/>    <filter "
                              "id=\"offset\" filterUnits=\"userSpaceOnUse\" x=\"-10\" y=\"-10\" "
                              "width=\"40\" height=\"30\">        <feOffset dx=\"2\" dy=\"0\"/>    "
-                             "</filter>    <filter id=\"color\" filterUnits=\"userSpaceOnUse\" x=\"-10\" "
+                             "</filter>    <filter id=\"color\" filterUnits=\"userSpaceOnUse\" "
+                             "x=\"-10\" "
                              "y=\"-10\" width=\"40\" height=\"30\">        <feColorMatrix "
-                             "type=\"matrix\" values=\"0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0\"/>    "
+                             "type=\"matrix\" values=\"0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0\"/>   "
+                             " "
                              "</filter></defs>";
     NSString* attributes = [NSString stringWithFormat:@"transform=\"%@\" filter=\"url(#offset) "
                                                        "url(#color)\"",
-                                                     transform];
-    NSString* redElement = [self transformElement:element
-                                            color:@"red"
-                                       attributes:attributes];
-    NSString* originalContent = [NSString stringWithFormat:@"%@\n%@",
-                                                          definitions,
-                                                          redElement];
+        transform];
+    NSString* redElement = [self transformElement:element color:@"red" attributes:attributes];
+    NSString* originalContent = [NSString stringWithFormat:@"%@\n%@", definitions, redElement];
     NSString* original = [self document:originalContent];
     // Offset uses local element coordinates before the transform list.
-    NSString* greenElement = [self transformElement:element
-                                              color:@"lime"
-                                         attributes:@""];
+    NSString* greenElement = [self transformElement:element color:@"lime" attributes:@""];
     NSString* expectedContent = [NSString stringWithFormat:@"%@<g transform=\"%@\"><g "
                                                             "transform=\"translate(2 0)\">    %@</g></g>",
-                                                          definitions,
-                                                          transform,
-                                                          greenElement];
+        definitions, transform, greenElement];
     NSString* expected = [self document:expectedContent];
-    for(NSInteger scale = 10; scale <= 20; scale += 10) {
-        NSData* pixels = [self render:original
-                                scale:scale];
-        [self expectTransformPixels:pixels
-                              match:[self render:expected
-                                           scale:scale]
-                              scale:scale];
-        [self expectTransformExport:original
-                             pixels:pixels
-                              scale:scale];
+    for (NSInteger scale = 10; scale <= 20; scale += 10) {
+        NSData* pixels = [self render:original scale:scale];
+        [self expectTransformPixels:pixels match:[self render:expected scale:scale] scale:scale];
+        [self expectTransformExport:original pixels:pixels scale:scale];
     }
 }
 
 - (void)testMultipleTransformsAndFilterLists_1_rect_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"rect"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"rect" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_2_rect_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"rect"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"rect" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_3_rect_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"rect"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_4_circle_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"circle"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"circle" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_5_circle_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"circle"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"circle" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_6_circle_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"circle"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_7_ellipse_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"ellipse"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"ellipse" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_8_ellipse_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"ellipse"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"ellipse" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_9_ellipse_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"ellipse"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_10_path_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"path"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"path" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_11_path_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"path"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"path" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_12_path_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"path"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_13_polygon_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"polygon"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"polygon" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_14_polygon_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"polygon"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"polygon" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_15_polygon_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"polygon"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_16_line_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"line"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"line" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_17_line_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"line"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"line" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_18_line_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"line"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_19_polyline_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"polyline"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"polyline" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_20_polyline_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"polyline"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"polyline" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_21_polyline_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"polyline"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_22_use_translate_8_3_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"use"
-                                 transform:@"translate(8 3) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"use" transform:@"translate(8 3) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_23_use_translate_12_3_rotate_90_scale_1Case575
 {
-    [self multipleTransformsAndFilterLists:@"use"
-                                 transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
+    [self multipleTransformsAndFilterLists:@"use" transform:@"translate(12 3) rotate(90) scale(1.5 .75)"];
 }
 
 - (void)testMultipleTransformsAndFilterLists_24_use_matrix_1_2_3_1_8_3_skewX_15_scale_1Case28
 {
     [self multipleTransformsAndFilterLists:@"use"
-                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) scale(1.2 .8)"];
+                                 transform:@"matrix(1 .2 .3 1 8 3) skewX(15) "
+                                           @"scale(1.2 .8)"];
 }
 
 - (void)transformedElementsInsideFilteredGroups:(NSString*)element
@@ -2426,14 +2063,15 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                     "filter=\"url(#parent)\">    <g "
                                                                     "transform=\"translate(2 2) "
                                                                     "rotate(15)\">        %@    </g></g>",
-                                                                   definitions,
-                                                                   [self transformElement:element
-                                                                                    color:@"red"
-                                                                               attributes:@"transform=\"scale(1."
-                                                                                           "5 .8)\" "
-                                                                                           "filter=\"url(#shadow"
-                                                                                           ")\""]]];
-    // The parent offset moves both the source and the shadow of its child together.
+                                            definitions,
+                                            [self transformElement:element
+                                                             color:@"red"
+                                                        attributes:@"transform=\"scale(1."
+                                                                    "5 .8)\" "
+                                                                    "filter=\"url(#shadow"
+                                                                    ")\""]]];
+    // The parent offset moves both the source and the shadow of its child
+    // together.
     NSString* expected = [self document:[NSString stringWithFormat:@"%@<g transform=\"translate(5 1) "
                                                                     "scale(1.2 .8)\">    <g "
                                                                     "transform=\"translate(2 1)\">       "
@@ -2443,22 +2081,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                     "    <g transform=\"translate(3 0)\">"
                                                                     "%@</g>            %@        </g></g>"
                                                                     "    </g></g>",
-                                                                   definitions,
-                                                                   [self transformElement:element
-                                                                                    color:@"cyan"
-                                                                               attributes:@""],
-                                                                   [self transformElement:element
-                                                                                    color:@"red"
-                                                                               attributes:@""]]];
-    NSData* pixels = [self render:original
-                            scale:10];
-    [self expectTransformPixels:pixels
-                          match:[self render:expected
-                                       scale:10]
-                          scale:10];
-    [self expectTransformExport:original
-                         pixels:pixels
-                          scale:10];
+                                            definitions, [self transformElement:element color:@"cyan" attributes:@""], [self transformElement:element color:@"red" attributes:@""]]];
+    NSData* pixels = [self render:original scale:10];
+    [self expectTransformPixels:pixels match:[self render:expected scale:10] scale:10];
+    [self expectTransformExport:original pixels:pixels scale:10];
 }
 
 - (void)testTransformedElementsInsideFilteredGroupsCase1Rect
@@ -2524,18 +2150,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                     "fill=\"red\"        "
                                                                     "transform=\"translate(2 1) scale(2 "
                                                                     "1)\" filter=\"%@\"/></g>",
-                                                                   filters]];
-    NSData* pixels = [self render:original
-                            scale:10];
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(pixels, 100, 30, 10),
-                                         0, 255, 0, 255));
-    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(pixels, 160, 30, 10),
-                                         reverse ? 255 : 0, reverse ? 0 : 255,
-                                         0, 255));
+                                            filters]];
+    NSData* pixels = [self render:original scale:10];
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(pixels, 100, 30, 10), 0, 255, 0, 255));
+    XCTAssertTrue(IJSVGFilterPixelEquals(IJSVGFilterPixel(pixels, 160, 30, 10), reverse ? 255 : 0, reverse ? 0 : 255, 0, 255));
     XCTAssertTrue(IJSVGFilterPixel(pixels, 130, 30, 10)[3] == 0);
-    [self expectTransformExport:original
-                         pixels:pixels
-                          scale:10];
+    [self expectTransformExport:original pixels:pixels scale:10];
 }
 
 - (void)testTransformedFilterOrderChangesShadowColorCase1False
@@ -2556,20 +2176,17 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSString* primitive = [effect isEqual:@"displacement"] ? @"<feFlood flood-color=\"white\" "
                                                               "result=\"map\"/><feDisplacementMap "
                                                               "in=\"SourceGraphic\" in2=\"map\" "
-                                                              "scale=\"2\"/>" : @"<feConvolveMatrix "
-                                                                                 "order=\"1\" "
-                                                                                 "kernelMatrix=\"1\" "
-                                                                                 "kernelUnitLength=\".07"
-                                                                                 "5 .125\" "
-                                                                                 "preserveAlpha=\"true\""
-                                                                                 "/>";
+                                                              "scale=\"2\"/>"
+                                                           : @"<feConvolveMatrix "
+                                                              "order=\"1\" "
+                                                              "kernelMatrix=\"1\" "
+                                                              "kernelUnitLength=\".07"
+                                                              "5 .125\" "
+                                                              "preserveAlpha=\"true\""
+                                                              "/>";
     NSString* reference = [effect isEqual:@"displacement"] ? @"<feOffset dx=\"-1\" dy=\"-1\"/>" : @"<feOffset/>";
-    NSData* actual = [self render:[self filtered:primitive
-                                         content:content]
-                            scale:20];
-    NSData* expected = [self render:[self filtered:reference
-                                           content:content]
-                              scale:20];
+    NSData* actual = [self render:[self filtered:primitive content:content] scale:20];
+    NSData* expected = [self render:[self filtered:reference content:content] scale:20];
     double maximumError = IJSVGFilterMaximumError(actual, expected);
     XCTAssertTrue(maximumError <= 2);
 }
@@ -2587,46 +2204,42 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)largeArithmeticAndTransferMatchEquations:(BOOL)transfer
 {
     NSString* primitive = transfer ? @"<feFlood flood-color=\"#4080c0\" flood-opacity=\".5\"/>"
-                                      "<feComponentTransfer>    <feFuncR type=\"gamma\" exponent=\"1.3\" "
+                                      "<feComponentTransfer>    <feFuncR type=\"gamma\" "
+                                      "exponent=\"1.3\" "
                                       "amplitude=\".8\" offset=\".1\"/>    <feFuncG type=\"gamma\" "
                                       "exponent=\".7\"/>    <feFuncB type=\"gamma\" exponent=\"-.5\" "
                                       "amplitude=\".4\"/>    <feFuncA type=\"gamma\" exponent=\"1.7\"/>"
-                                      "</feComponentTransfer>" : @"<feFlood flood-color=\"#804020\" "
-                                                                  "flood-opacity=\".5\" result=\"a\"/>"
-                                                                  "<feFlood flood-color=\"#2080c0\" "
-                                                                  "flood-opacity=\".75\" result=\"b\"/>"
-                                                                  "<feComposite in=\"a\" in2=\"b\" "
-                                                                  "operator=\"arithmetic\" k1=\".4\" "
-                                                                  "k2=\"-.3\" k3=\".8\" k4=\".07\"/>";
+                                      "</feComponentTransfer>"
+                                   : @"<feFlood flood-color=\"#804020\" "
+                                      "flood-opacity=\".5\" result=\"a\"/>"
+                                      "<feFlood flood-color=\"#2080c0\" "
+                                      "flood-opacity=\".75\" result=\"b\"/>"
+                                      "<feComposite in=\"a\" in2=\"b\" "
+                                      "operator=\"arithmetic\" k1=\".4\" "
+                                      "k2=\"-.3\" k3=\".8\" k4=\".07\"/>";
     double expected[4];
-    if(transfer) {
+    if (transfer) {
         double alpha = pow(0.5, 1.7);
-        double values[4] = {0.8 * pow(64.0 / 255, 1.3) + 0.1, pow(128.0 / 255,
-                                                                  0.7),
-            0.4 * pow(192.0 / 255, -0.5), 1};
-        for(int channel = 0; channel < 4; channel++) {
+        double values[4] = { 0.8 * pow(64.0 / 255, 1.3) + 0.1, pow(128.0 / 255, 0.7), 0.4 * pow(192.0 / 255, -0.5), 1 };
+        for (int channel = 0; channel < 4; channel++) {
             expected[channel] = MIN(1, values[channel]) * alpha * 255;
         }
     } else {
-        double a[4] = {128.0 / 255 * 0.5, 64.0 / 255 * 0.5, 32.0 / 255 * 0.5, 0.5};
-        double b[4] = {32.0 / 255 * 0.75, 128.0 / 255 * 0.75, 192.0 / 255 * 0.75, 0.75};
+        double a[4] = { 128.0 / 255 * 0.5, 64.0 / 255 * 0.5, 32.0 / 255 * 0.5, 0.5 };
+        double b[4] = { 32.0 / 255 * 0.75, 128.0 / 255 * 0.75, 192.0 / 255 * 0.75, 0.75 };
         double values[4];
-        for(int channel = 0; channel < 4; channel++) {
-            values[channel] = MIN(1,
-                                  MAX(0,
-                                      0.4 * a[channel] * b[channel] - 0.3 * a[channel] + 0.8 * b[channel] + 0.07));
+        for (int channel = 0; channel < 4; channel++) {
+            values[channel] = MIN(1, MAX(0, 0.4 * a[channel] * b[channel] - 0.3 * a[channel] + 0.8 * b[channel] + 0.07));
         }
-        for(int channel = 0; channel < 4; channel++) {
+        for (int channel = 0; channel < 4; channel++) {
             expected[channel] = MIN(values[channel], values[3]) * 255;
         }
     }
-    NSData* bytes = [self render:[self filtered:primitive]
-                           scale:20];
+    NSData* bytes = [self render:[self filtered:primitive] scale:20];
     const uint8_t* pixels = bytes.bytes;
     double maximumError = 0;
-    for(NSUInteger index = 0; index < bytes.length; index++) {
-        maximumError = MAX(maximumError,
-                           fabs(pixels[index] - expected[index % 4]));
+    for (NSUInteger index = 0; index < bytes.length; index++) {
+        maximumError = MAX(maximumError, fabs(pixels[index] - expected[index % 4]));
     }
     XCTAssertLessThanOrEqual(maximumError, 2);
 }
@@ -2646,7 +2259,8 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSString* content = @"<rect x=\"2\" y=\"1\" width=\"6\" height=\"3\" fill=\"#804020\" "
                          "opacity=\".5\"/><rect x=\"10\" y=\"6\" width=\"7\" height=\"3\" "
                          "fill=\"#2080c0\" opacity=\".75\"/>";
-    NSString* identity = @"<feConvolveMatrix order=\"1\" kernelMatrix=\"1\" kernelUnitLength=\".075 "
+    NSString* identity = @"<feConvolveMatrix order=\"1\" kernelMatrix=\"1\" "
+                         @"kernelUnitLength=\".075 "
                           ".125\" preserveAlpha=\"true\"/>";
     NSData* actual = [self render:[self filtered:[NSString stringWithFormat:@"<feConvolveMatrix "
                                                                              "order=\"1\" "
@@ -2664,12 +2278,10 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                              "preserveAlpha=\"true\" "
                                                                              "color-interpolation-filter"
                                                                              "s=\"linearRGB\"/>",
-                                                                            identity]
+                                                     identity]
                                          content:content]
                             scale:20];
-    NSData* expected = [self render:[self filtered:@"<feOffset/>"
-                                           content:content]
-                              scale:20];
+    NSData* expected = [self render:[self filtered:@"<feOffset/>" content:content] scale:20];
     XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 2);
 }
 
@@ -2678,59 +2290,55 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSString* content = @"<rect x=\"1\" y=\"0\" width=\"9\" height=\"5\" fill=\"#804020\" "
                          "opacity=\".6\"/><rect x=\"16\" y=\"6\" width=\"8\" height=\"4\" "
                          "fill=\"#2080c0\" opacity=\".8\"/>";
-    NSData* source = [self render:[self document:content]
-                            scale:1];
+    NSData* source = [self render:[self document:content] scale:1];
     BOOL displacement = [mode isEqual:@"displacement"];
     NSString* primitive = displacement ? @"<feFlood flood-color=\"white\" flood-opacity=\".25\" "
                                           "result=\"map\"/><feDisplacementMap in=\"clipped\" in2=\"map\" "
-                                          "scale=\"3\"/>" : [NSString stringWithFormat:@"<feConvolveMatrix "
-                                                                                        "in=\"clipped\" "
-                                                                                        "order=\"1 3\" "
-                                                                                        "kernelMatrix=\"1 0 "
-                                                                                        "0\"    targetY=\"1\" "
-                                                                                        "kernelUnitLength=\"."
-                                                                                        "75 1.25\" "
-                                                                                        "edgeMode=\"%@\"/>",
-                                                                                       mode];
+                                          "scale=\"3\"/>"
+                                       : [NSString stringWithFormat:@"<feConvolveMatrix "
+                                                                     "in=\"clipped\" "
+                                                                     "order=\"1 3\" "
+                                                                     "kernelMatrix=\"1 0 "
+                                                                     "0\"    targetY=\"1\" "
+                                                                     "kernelUnitLength=\"."
+                                                                     "75 1.25\" "
+                                                                     "edgeMode=\"%@\"/>",
+                                             mode];
     NSData* actual = [self render:[self filtered:[NSString stringWithFormat:@"<feOffset "
                                                                              "in=\"SourceGraphic\" "
                                                                              "x=\"2\" y=\"1\" "
                                                                              "width=\"20\" height=\"8\" "
                                                                              "result=\"clipped\"/>%@",
-                                                                            primitive]
+                                                     primitive]
                                          content:content]
                             scale:1];
     double (^sample)(int, int, int) = ^double(int x, int y, int channel) {
-        if([mode isEqual:@"duplicate"]) {
+        if ([mode isEqual:@"duplicate"]) {
             x = MIN(21, MAX(2, x));
             y = MIN(8, MAX(1, y));
-        } else if([mode isEqual:@"wrap"]) {
+        } else if ([mode isEqual:@"wrap"]) {
             x = 2 + ((x - 2) % 20 + 20) % 20;
             y = 1 + ((y - 1) % 8 + 8) % 8;
         }
-        if(x < 2 || x >= 22 || y < 1 || y >= 9) {
+        if (x < 2 || x >= 22 || y < 1 || y >= 9) {
             return 0;
         }
         return IJSVGFilterPixel(source, x, y, 1)[channel];
     };
     double maximumError = 0;
-    for(int y = 0; y < 10; y++) {
-        for(int x = 0; x < 30; x++) {
+    for (int y = 0; y < 10; y++) {
+        for (int x = 0; x < 30; x++) {
             double px = x + (displacement ? -0.75 : 0);
             double py = y + (displacement ? -0.75 : 1.25);
             int ix = floor(px), iy = floor(py);
             double fx = px - ix, fy = py - iy;
             const uint8_t* value = IJSVGFilterPixel(actual, x, y, 1);
-            for(int channel = 0; channel < 4; channel++) {
+            for (int channel = 0; channel < 4; channel++) {
                 double expected = 0;
-                if(displacement || (x >= 2 && x < 22 && y >= 1 && y < 9)) {
-                    expected = sample(ix, iy, channel) * (1 - fx) * (1 - fy)
-                        + sample(ix + 1, iy, channel) * fx * (1 - fy)
-                        + sample(ix, iy + 1, channel) * (1 - fx) * fy
-                        + sample(ix + 1, iy + 1, channel) * fx * fy;
+                if (displacement || (x >= 2 && x < 22 && y >= 1 && y < 9)) {
+                    expected = sample(ix, iy, channel) * (1 - fx) * (1 - fy) + sample(ix + 1, iy, channel) * fx * (1 - fy) + sample(ix, iy + 1, channel) * (1 - fx) * fy + sample(ix + 1, iy + 1, channel) * fx * fy;
                 }
-                maximumError = MAX(maximumError,
-                                   fabs(value[channel] - expected));
+                maximumError = MAX(maximumError, fabs(value[channel] - expected));
             }
         }
     }
@@ -2777,25 +2385,20 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                          "opacity=\".8\"/>";
     NSString* bounds = @"x=\"3.25\" y=\"1.5\" width=\"20.5\" height=\"7\"";
     NSString* (^primitive)(NSString*) = ^NSString*(NSString* attributes) {
-        if([effect isEqual:@"lighting"]) {
+        if ([effect isEqual:@"lighting"]) {
             return [NSString stringWithFormat:@"<feDiffuseLighting surfaceScale=\"2\" "
                                                "lighting-color=\"#804020\" %@>    <fePointLight x=\"10\" "
                                                "y=\"5\" z=\"20\"/></feDiffuseLighting>",
-                                              attributes];
+                attributes];
         }
         return [NSString stringWithFormat:@"<feFlood flood-color=\"white\" flood-opacity=\".25\" "
                                            "result=\"map\"/><feDisplacementMap in=\"SourceGraphic\" "
                                            "in2=\"map\" scale=\"3\" %@/>",
-                                          attributes];
+            attributes];
     };
-    NSString* fullPrimitives = [primitive(@"") stringByAppendingFormat:@"<feOffset %@/>",
-                                                                       bounds];
-    NSData* full = [self render:[self filtered:fullPrimitives
-                                       content:content]
-                          scale:20];
-    NSData* clipped = [self render:[self filtered:primitive(bounds)
-                                          content:content]
-                             scale:20];
+    NSString* fullPrimitives = [primitive(@"") stringByAppendingFormat:@"<feOffset %@/>", bounds];
+    NSData* full = [self render:[self filtered:fullPrimitives content:content] scale:20];
+    NSData* clipped = [self render:[self filtered:primitive(bounds) content:content] scale:20];
     XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(full, clipped), 1);
 }
 
@@ -2811,44 +2414,40 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 - (void)longMergeKeepsPrimitiveColorSpace:(NSString*)colorSpace
 {
-    NSArray<NSString*>* colors = @[@"#804020", @"#2080c0", @"#40c080"];
+    NSArray<NSString*>* colors = @[ @"#804020", @"#2080c0", @"#40c080" ];
     NSMutableString* primitives = [NSMutableString string];
-    for(NSUInteger index = 0; index < colors.count; index++) {
+    for (NSUInteger index = 0; index < colors.count; index++) {
         [primitives appendFormat:@"<feFlood flood-color=\"%@\" flood-opacity=\".25\" "
                                   "result=\"paint%lu\"/>",
-                                 colors[index],
-                                 (unsigned long)index];
+            colors[index], (unsigned long)index];
     }
     [primitives appendString:@"<feMerge>"];
-    for(int index = 0; index < 12; index++) {
-        [primitives appendFormat:@"<feMergeNode in=\"paint%d\"/>",
-                                 index % 3];
+    for (int index = 0; index < 12; index++) {
+        [primitives appendFormat:@"<feMergeNode in=\"paint%d\"/>", index % 3];
     }
     [primitives appendString:@"</feMerge>"];
     NSData* bytes = [self render:[self filtered:primitives
                                      attributes:[NSString stringWithFormat:@"color-interpolation-filters"
                                                                             "=\"%@\"",
-                                                                           colorSpace]
+                                                    colorSpace]
                                         content:@"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" "
                                                  "fill=\"red\"/>"]
                            scale:10];
-    const double values[3][3] = {{128, 64, 32}, {32, 128, 192}, {64, 192, 128}};
-    double result[3] = {0}, alpha = 0;
+    const double values[3][3] = { { 128, 64, 32 }, { 32, 128, 192 }, { 64, 192, 128 } };
+    double result[3] = { 0 }, alpha = 0;
     BOOL srgb = [colorSpace isEqual:@"sRGB"];
-    for(int index = 0; index < 12; index++) {
+    for (int index = 0; index < 12; index++) {
         alpha = 0.25 + alpha * 0.75;
-        for(int channel = 0; channel < 3; channel++) {
+        for (int channel = 0; channel < 3; channel++) {
             double encoded = values[index % 3][channel] / 255;
-            double value = srgb ? encoded : (encoded <= 0.04045 ? encoded / 12.92 : pow((encoded + 0.055) / 1.055,
-                                                                                        2.4));
+            double value = srgb ? encoded : (encoded <= 0.04045 ? encoded / 12.92 : pow((encoded + 0.055) / 1.055, 2.4));
             result[channel] = value * 0.25 + result[channel] * 0.75;
         }
     }
     const uint8_t* actual = IJSVGFilterPixel(bytes, 35, 35, 10);
-    for(int channel = 0; channel < 3; channel++) {
+    for (int channel = 0; channel < 3; channel++) {
         double straight = result[channel] / alpha;
-        double encoded = srgb ? straight : (straight <= 0.0031308 ? straight * 12.92 : 1.055 * pow(straight,
-                                                                                                   1 / 2.4) - 0.055);
+        double encoded = srgb ? straight : (straight <= 0.0031308 ? straight * 12.92 : 1.055 * pow(straight, 1 / 2.4) - 0.055);
         XCTAssertEqualWithAccuracy(actual[channel], encoded * alpha * 255, 2);
     }
     XCTAssertEqualWithAccuracy(actual[3], alpha * 255, 1);
@@ -2869,17 +2468,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 {
     svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef context = CGBitmapContextCreate(NULL, 30, 10, 8, 120, space,
-                                                 (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextRef context = CGBitmapContextCreate(NULL, 30, 10, 8, 120, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if(context == NULL) {
+    if (context == NULL) {
         return nil;
     }
-    [svg drawInRect:CGRectMake(0, 0, 30, 10)
-            context:context];
-    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context)
-                                    length:1200];
+    [svg drawInRect:CGRectMake(0, 0, 30, 10) context:context];
+    NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:1200];
     CGContextRelease(context);
     return pixels;
 }
@@ -2888,8 +2484,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (void)testFiltersCanBeToggledAfterRendering
 {
     NSString* rectangle = @"<rect x=\"2\" y=\"2\" width=\"4\" height=\"4\" fill=\"red\"/>";
-    IJSVG* svg = IJSVGTestSVGObject([self filtered:@"<feOffset dx=\"6\"/>"
-                                           content:rectangle]);
+    IJSVG* svg = IJSVGTestSVGObject([self filtered:@"<feOffset dx=\"6\"/>" content:rectangle]);
     XCTAssertTrue(svg.renderingOptions.filtersEnabled);
     NSData* filtered = [self pixelsForFilterToggleSVG:svg];
     IJSVGRootNode* originalNode = svg.rootNode;
@@ -2901,9 +2496,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     svg.renderingOptions = options;
     NSData* plain = [self pixelsForFilterToggleSVG:svg];
     XCTAssertEqual(svg.rootNode, originalNode);
-    XCTAssertEqualObjects(plain,
-                          [self render:[self document:rectangle]
-                                 scale:1]);
+    XCTAssertEqualObjects(plain, [self render:[self document:rectangle] scale:1]);
     XCTAssertNotEqualObjects(filtered, plain);
     options.filtersEnabled = YES;
     svg.renderingOptions = options;
@@ -2913,9 +2506,12 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 // Bypasses root and nested filters while preserving opacity and clipping.
 - (void)testFiltersCanBeDisabledBeforeRendering
 {
-    NSString* body = @"<defs><filter id=\"f\"><feOffset dx=\"6\"/></filter><clipPath id=\"clip\"><rect "
-                      "x=\"2\" y=\"2\" width=\"2\" height=\"4\"/></clipPath></defs><g filter=\"url(#f)\" "
-                      "opacity=\".5\" clip-path=\"url(#clip)\"><rect filter=\"url(#f)\" x=\"2\" y=\"2\" "
+    NSString* body = @"<defs><filter id=\"f\"><feOffset "
+                     @"dx=\"6\"/></filter><clipPath id=\"clip\"><rect "
+                      "x=\"2\" y=\"2\" width=\"2\" "
+                      "height=\"4\"/></clipPath></defs><g filter=\"url(#f)\" "
+                      "opacity=\".5\" clip-path=\"url(#clip)\"><rect "
+                      "filter=\"url(#f)\" x=\"2\" y=\"2\" "
                       "width=\"4\" height=\"4\" fill=\"red\"/></g>";
     NSString* document = [[self document:body] stringByReplacingOccurrencesOfString:@"viewBox=\"0 0 30 "
                                                                                      "10\""
@@ -2927,15 +2523,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     options.filtersEnabled = NO;
     svg.renderingOptions = options;
     NSData* actual = [self pixelsForFilterToggleSVG:svg];
-    NSString* reference = [document stringByReplacingOccurrencesOfString:@" filter=\"url(#f)\""
-                                                              withString:@""];
-    XCTAssertEqualObjects(actual, [self render:reference
-                                         scale:1]);
+    NSString* reference = [document stringByReplacingOccurrencesOfString:@" filter=\"url(#f)\"" withString:@""];
+    XCTAssertEqualObjects(actual, [self render:reference scale:1]);
     IJSVG* independent = IJSVGTestSVGObject(document);
     XCTAssertTrue(independent.renderingOptions.filtersEnabled);
 }
 
-// Preserves defaults and keeps option snapshots independent across SVG instances.
+// Preserves defaults and keeps option snapshots independent across SVG
+// instances.
 - (void)testRenderingOptionsAreIndependentSnapshots
 {
     IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
@@ -2954,8 +2549,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     options.renderQuality = kIJSVGRenderQualityLow;
     XCTAssertFalse(first.renderingOptions.filtersEnabled);
     XCTAssertFalse(first.renderingOptions.ignoreIntrinsicSize);
-    XCTAssertEqual(first.renderingOptions.renderQuality,
-                   kIJSVGRenderQualityOptimized);
+    XCTAssertEqual(first.renderingOptions.renderQuality, kIJSVGRenderQualityOptimized);
 
     IJSVGRenderingOptions* snapshot = first.renderingOptions;
     snapshot.filtersEnabled = YES;
@@ -2963,17 +2557,14 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     snapshot.renderQuality = kIJSVGRenderQualityLow;
     XCTAssertFalse(first.renderingOptions.filtersEnabled);
     XCTAssertFalse(first.renderingOptions.ignoreIntrinsicSize);
-    XCTAssertEqual(first.renderingOptions.renderQuality,
-                   kIJSVGRenderQualityOptimized);
+    XCTAssertEqual(first.renderingOptions.renderQuality, kIJSVGRenderQualityOptimized);
     first.renderingOptions = snapshot;
     XCTAssertTrue(first.renderingOptions.filtersEnabled);
     XCTAssertTrue(first.renderingOptions.ignoreIntrinsicSize);
-    XCTAssertEqual(first.renderingOptions.renderQuality,
-                   kIJSVGRenderQualityLow);
+    XCTAssertEqual(first.renderingOptions.renderQuality, kIJSVGRenderQualityLow);
     XCTAssertFalse(second.renderingOptions.filtersEnabled);
     XCTAssertFalse(second.renderingOptions.ignoreIntrinsicSize);
-    XCTAssertEqual(second.renderingOptions.renderQuality,
-                   kIJSVGRenderQualityOptimized);
+    XCTAssertEqual(second.renderingOptions.renderQuality, kIJSVGRenderQualityOptimized);
 }
 
 // Changing intrinsic sizing preserves the existing node graph.

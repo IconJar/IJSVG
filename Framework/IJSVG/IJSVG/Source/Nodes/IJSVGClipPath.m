@@ -7,26 +7,23 @@
 //
 
 #import <IJSVG/IJSVGClipPath.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGText.h>
-#import <IJSVGParserUtils.h>
-#import <IJSVGCSSParser.h>
-#import <ctype.h>
-#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGCSSParser.h>
+#import <IJSVGNodeParsing.h>
+#import <IJSVGParserUtils.h>
+#import <ctype.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGClipShape) {
-    IJSVGClipShapeNone,
+typedef NS_ENUM(NSUInteger, IJSVGClipShape) { IJSVGClipShapeNone,
     IJSVGClipShapeBox,
     IJSVGClipShapeCircle,
-    IJSVGClipShapeEllipse
-};
+    IJSVGClipShapeEllipse };
 
-typedef NS_ENUM(NSUInteger, IJSVGClipReferenceBox) {
-    IJSVGClipReferenceBoxStroke,
+typedef NS_ENUM(NSUInteger, IJSVGClipReferenceBox) { IJSVGClipReferenceBoxStroke,
     IJSVGClipReferenceBoxFill,
-    IJSVGClipReferenceBoxView
-};
+    IJSVGClipReferenceBoxView };
 
 @interface IJSVGClipPath ()
 @property (nonatomic, assign) IJSVGClipShape basicShape;
@@ -40,11 +37,11 @@ typedef NS_ENUM(NSUInteger, IJSVGClipReferenceBox) {
 
 static char* IJSVGClipTrim(char* value)
 {
-    while(isspace((unsigned char)*value)) {
+    while (isspace((unsigned char)*value)) {
         value++;
     }
     char* end = value + strlen(value);
-    while(end > value && isspace((unsigned char)end[-1])) {
+    while (end > value && isspace((unsigned char)end[-1])) {
         *--end = '\0';
     }
     return value;
@@ -52,13 +49,11 @@ static char* IJSVGClipTrim(char* value)
 
 static BOOL IJSVGClipParseReferenceBox(const char* value, IJSVGClipReferenceBox* box)
 {
-    if(IJSVGCharBufferCaseInsensitiveCompare(value, "fill-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "content-box") ||
-        IJSVGCharBufferCaseInsensitiveCompare(value, "padding-box")) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "fill-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "content-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "padding-box")) {
         *box = IJSVGClipReferenceBoxFill;
-    } else if(IJSVGCharBufferCaseInsensitiveCompare(value, "stroke-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "border-box") ||
-        IJSVGCharBufferCaseInsensitiveCompare(value, "margin-box")) {
+    } else if (IJSVGCharBufferCaseInsensitiveCompare(value, "stroke-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "border-box") || IJSVGCharBufferCaseInsensitiveCompare(value, "margin-box")) {
         *box = IJSVGClipReferenceBoxStroke;
-    } else if(IJSVGCharBufferCaseInsensitiveCompare(value, "view-box")) {
+    } else if (IJSVGCharBufferCaseInsensitiveCompare(value, "view-box")) {
         *box = IJSVGClipReferenceBoxView;
     } else {
         return NO;
@@ -66,30 +61,28 @@ static BOOL IJSVGClipParseReferenceBox(const char* value, IJSVGClipReferenceBox*
     return YES;
 }
 
-typedef NS_ENUM(uint8_t, IJSVGClipArgument) {
-    IJSVGClipArgumentRadius,
+typedef NS_ENUM(uint8_t, IJSVGClipArgument) { IJSVGClipArgumentRadius,
     IJSVGClipArgumentPosition,
     IJSVGClipArgumentClosestSide,
-    IJSVGClipArgumentFarthestSide
-};
+    IJSVGClipArgumentFarthestSide };
 
 static IJSVGClipArgument IJSVGClipArgumentForName(const char* name)
 {
-    switch(IJSVGCharToLower(name[0])) {
+    switch (IJSVGCharToLower(name[0])) {
         case 'a': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "at")) {
+            if (IJSVGCharBufferCaseInsensitiveCompare(name, "at")) {
                 return IJSVGClipArgumentPosition;
             }
             break;
         }
         case 'c': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "closest-side")) {
+            if (IJSVGCharBufferCaseInsensitiveCompare(name, "closest-side")) {
                 return IJSVGClipArgumentClosestSide;
             }
             break;
         }
         case 'f': {
-            if(IJSVGCharBufferCaseInsensitiveCompare(name, "farthest-side")) {
+            if (IJSVGCharBufferCaseInsensitiveCompare(name, "farthest-side")) {
                 return IJSVGClipArgumentFarthestSide;
             }
             break;
@@ -108,17 +101,16 @@ static CGFloat IJSVGClipSideRadius(CGFloat position, CGFloat dimension, BOOL far
     return farthest ? MAX(start, end) : MIN(start, end);
 }
 
-
 static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 {
-    if([node matchesTraits:IJSVGNodeTraitPathed] || [node isKindOfClass:IJSVGText.class]) {
+    if ([node matchesTraits:IJSVGNodeTraitPathed] || [node isKindOfClass:IJSVGText.class]) {
         return YES;
     }
-    if(node.type != IJSVGNodeTypeUse) {
+    if (node.type != IJSVGNodeTypeUse) {
         return NO;
     }
-    for(IJSVGNode* child in ((IJSVGGroup*)node).children) {
-        if(!IJSVGClipPathSupportsNode(child)) {
+    for (IJSVGNode* child in ((IJSVGGroup*)node).children) {
+        if (!IJSVGClipPathSupportsNode(child)) {
             return NO;
         }
     }
@@ -131,11 +123,11 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 {
     IJSVGStringBytes source = IJSVGStringGetBytes(value);
     const char* bytes = source.bytes;
-    if(bytes == NULL || strlen(bytes) != source.length) {
+    if (bytes == NULL || strlen(bytes) != source.length) {
         return nil;
     }
     char* buffer = strdup(bytes);
-    if(buffer == NULL) {
+    if (buffer == NULL) {
         return nil;
     }
     IJSVGClipPath* clipPath = [self clipPathWithShapeBuffer:buffer];
@@ -152,17 +144,17 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     BOOL valid = IJSVGCSSComponentsCreate(value, strlen(value), &components);
     IJSVGCSSComponent function = { 0 };
     BOOL hasFunction = NO;
-    for(NSUInteger index = 0; valid && index < components.count;) {
+    for (NSUInteger index = 0; valid && index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
-        if(component->kind == IJSVGCSSComponentFunction) {
-            if(hasFunction) {
+        if (component->kind == IJSVGCSSComponentFunction) {
+            if (hasFunction) {
                 valid = NO;
                 break;
             }
             function = *component;
             hasFunction = YES;
-            for(NSUInteger child = index + 1; child < component->next; child++) {
-                if(components.values[child].kind == IJSVGCSSComponentFunction) {
+            for (NSUInteger child = index + 1; child < component->next; child++) {
+                if (components.values[child].kind == IJSVGCSSComponentFunction) {
                     valid = NO;
                 }
             }
@@ -170,11 +162,11 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         index = component->next;
     }
     IJSVGCSSComponentsRelease(&components);
-    if(!valid) {
+    if (!valid) {
         return nil;
     }
-    if(!hasFunction) {
-        if(!IJSVGClipParseReferenceBox(value, &box)) {
+    if (!hasFunction) {
+        if (!IJSVGClipParseReferenceBox(value, &box)) {
             return nil;
         }
         clipPath.basicShape = IJSVGClipShapeBox;
@@ -188,22 +180,22 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     char* name = IJSVGClipTrim(value);
     char* suffix = IJSVGClipTrim(closing + 1);
     char* separator = name;
-    while(*separator != '\0' && !isspace((unsigned char)*separator)) {
+    while (*separator != '\0' && !isspace((unsigned char)*separator)) {
         separator++;
     }
     BOOL hasPrefix = *separator != '\0';
-    if(hasPrefix) {
+    if (hasPrefix) {
         *separator = '\0';
-        if(!IJSVGClipParseReferenceBox(name, &box) || *suffix != '\0') {
+        if (!IJSVGClipParseReferenceBox(name, &box) || *suffix != '\0') {
             return nil;
         }
         name = IJSVGClipTrim(separator + 1);
-    } else if(*suffix != '\0' && !IJSVGClipParseReferenceBox(suffix, &box)) {
+    } else if (*suffix != '\0' && !IJSVGClipParseReferenceBox(suffix, &box)) {
         return nil;
     }
-    if(function.function == IJSVGCSSFunctionCircle) {
+    if (function.function == IJSVGCSSFunctionCircle) {
         clipPath.basicShape = IJSVGClipShapeCircle;
-    } else if(function.function == IJSVGCSSFunctionEllipse) {
+    } else if (function.function == IJSVGCSSFunctionEllipse) {
         clipPath.basicShape = IJSVGClipShapeEllipse;
     } else {
         return nil;
@@ -211,42 +203,41 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     clipPath.referenceBox = box;
     char* cursor = opening + 1;
     NSUInteger radiusCount = 0;
-    while(*cursor != '\0') {
-        while(isspace((unsigned char)*cursor)) {
+    while (*cursor != '\0') {
+        while (isspace((unsigned char)*cursor)) {
             cursor++;
         }
-        if(*cursor == '\0') {
+        if (*cursor == '\0') {
             break;
         }
         char* token = cursor;
-        while(*cursor != '\0' && !isspace((unsigned char)*cursor)) {
+        while (*cursor != '\0' && !isspace((unsigned char)*cursor)) {
             cursor++;
         }
-        if(*cursor != '\0') {
+        if (*cursor != '\0') {
             *cursor++ = '\0';
         }
         IJSVGClipArgument argument = IJSVGClipArgumentForName(token);
-        if(argument == IJSVGClipArgumentPosition) {
+        if (argument == IJSVGClipArgumentPosition) {
             NSArray<IJSVGUnitLength*>* position = IJSVGPositionFromBuffer(cursor, IJSVGPositionSyntaxBasicShape);
-            if(position.count != 2) {
+            if (position.count != 2) {
                 return nil;
             }
             clipPath.shapePosition = position;
             break;
         }
-        if(radiusCount >= (clipPath.basicShape == IJSVGClipShapeCircle ? 1 : 2)) {
+        if (radiusCount >= (clipPath.basicShape == IJSVGClipShapeCircle ? 1 : 2)) {
             return nil;
         }
         BOOL farthest = argument == IJSVGClipArgumentFarthestSide;
         IJSVGUnitLength* radius = nil;
-        if(argument == IJSVGClipArgumentRadius) {
-            radius = IJSVGGeometryLengthFromString([NSString stringWithUTF8String:token],
-                                                   IJSVGNodeAttributeR);
-            if(radius == nil) {
+        if (argument == IJSVGClipArgumentRadius) {
+            radius = IJSVGGeometryLengthFromString([NSString stringWithUTF8String:token], IJSVGNodeAttributeR);
+            if (radius == nil) {
                 return nil;
             }
         }
-        if(radiusCount == 0) {
+        if (radiusCount == 0) {
             clipPath.shapeRadiusX = radius;
             clipPath.farthestX = farthest;
         } else {
@@ -255,11 +246,11 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         }
         radiusCount++;
     }
-    if(clipPath.basicShape == IJSVGClipShapeEllipse && radiusCount == 1) {
+    if (clipPath.basicShape == IJSVGClipShapeEllipse && radiusCount == 1) {
         return nil;
     }
-    if(clipPath.shapePosition == nil) {
-        clipPath.shapePosition = @[IJSVGHalfPercentageUnitLength, IJSVGHalfPercentageUnitLength];
+    if (clipPath.shapePosition == nil) {
+        clipPath.shapePosition = @[ IJSVGHalfPercentageUnitLength, IJSVGHalfPercentageUnitLength ];
     }
     return clipPath;
 }
@@ -282,22 +273,18 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     return node;
 }
 
-- (CGPathRef)newBasicShapePathWithFillBox:(CGRect)fillBox
-                               strokeBox:(CGRect)strokeBox
-                                 viewBox:(CGRect)viewBox
-                          lengthResolver:(CGFloat (^)(IJSVGUnitLength* length, CGFloat percentage))resolver
+- (CGPathRef)newBasicShapePathWithFillBox:(CGRect)fillBox strokeBox:(CGRect)strokeBox viewBox:(CGRect)viewBox lengthResolver:(CGFloat (^)(IJSVGUnitLength* length, CGFloat percentage))resolver
 {
-    CGRect box = _referenceBox == IJSVGClipReferenceBoxFill ? fillBox :
-        (_referenceBox == IJSVGClipReferenceBoxView ? viewBox : strokeBox);
-    if(_basicShape == IJSVGClipShapeBox) {
+    CGRect box = _referenceBox == IJSVGClipReferenceBoxFill ? fillBox : (_referenceBox == IJSVGClipReferenceBoxView ? viewBox : strokeBox);
+    if (_basicShape == IJSVGClipShapeBox) {
         return CGPathCreateWithRect(box, NULL);
     }
     CGFloat x = resolver(_shapePosition[0], box.size.width);
     CGFloat y = resolver(_shapePosition[1], box.size.height);
     CGFloat rx;
     CGFloat ry;
-    if(_basicShape == IJSVGClipShapeCircle) {
-        if(_shapeRadiusX != nil) {
+    if (_basicShape == IJSVGClipShapeCircle) {
+        if (_shapeRadiusX != nil) {
             rx = resolver(_shapeRadiusX, hypot(box.size.width, box.size.height) / M_SQRT2);
         } else {
             CGFloat horizontal = IJSVGClipSideRadius(x, box.size.width, _farthestX);
@@ -306,16 +293,13 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
         }
         ry = rx;
     } else {
-        rx = _shapeRadiusX != nil ? resolver(_shapeRadiusX, box.size.width) :
-            IJSVGClipSideRadius(x, box.size.width, _farthestX);
-        ry = _shapeRadiusY != nil ? resolver(_shapeRadiusY, box.size.height) :
-            IJSVGClipSideRadius(y, box.size.height, _farthestY);
+        rx = _shapeRadiusX != nil ? resolver(_shapeRadiusX, box.size.width) : IJSVGClipSideRadius(x, box.size.width, _farthestX);
+        ry = _shapeRadiusY != nil ? resolver(_shapeRadiusY, box.size.height) : IJSVGClipSideRadius(y, box.size.height, _farthestY);
     }
-    if(!isfinite(rx) || !isfinite(ry) || !isfinite(x) || !isfinite(y) || rx <= 0.f || ry <= 0.f) {
+    if (!isfinite(rx) || !isfinite(ry) || !isfinite(x) || !isfinite(y) || rx <= 0.f || ry <= 0.f) {
         return CGPathCreateMutable();
     }
-    CGRect ellipse = CGRectMake(box.origin.x + x - rx, box.origin.y + y - ry,
-                                rx * 2.f, ry * 2.f);
+    CGRect ellipse = CGRectMake(box.origin.x + x - rx, box.origin.y + y - ry, rx * 2.f, ry * 2.f);
     return CGPathCreateWithEllipseInRect(ellipse, NULL);
 }
 
@@ -324,21 +308,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     return IJSVGNodeTypeClipPath;
 }
 
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
-    [storage addBits:[super allowedAttributes]];
-    [storage setBit:IJSVGNodeAttributeX];
-    [storage setBit:IJSVGNodeAttributeY];
-    [storage setBit:IJSVGNodeAttributeWidth];
-    [storage setBit:IJSVGNodeAttributeHeight];
-    [storage setBit:IJSVGNodeAttributeClipPathUnits];
-    [storage setBit:IJSVGNodeAttributeClipRule];
-    return storage;
-}
-
 - (void)setDefaults
 {
+    [super setDefaults];
     self.units = IJSVGUnitObjectBoundingBox;
     self.contentUnits = IJSVGUnitUserSpaceOnUse;
     self.windingRule = IJSVGWindingRuleNonZero;
@@ -348,9 +320,9 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds
 {
-    IJSVGNode* node = nil;
+    IJSVGGraphicsNode* node = nil;
     IJSVGUnitType units = [self contentUnitsWithReferencingNode:&node];
-    if(units == IJSVGUnitUserSpaceOnUse) {
+    if (units == IJSVGUnitUserSpaceOnUse) {
         *bounds = node.rootNode.bounds;
     } else {
         *bounds = node.parentNode.bounds;
@@ -360,8 +332,8 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 
 - (void)postProcess
 {
-    for(IJSVGNode* child in self.children.copy) {
-        if(!IJSVGClipPathSupportsNode(child)) {
+    for (IJSVGNode* child in self.children.copy) {
+        if (!IJSVGClipPathSupportsNode(child)) {
             [self removeChild:child];
         }
     }
@@ -372,20 +344,72 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     // find the first use of a clipRule that is useful
     __block IJSVGWindingRule rule = IJSVGWindingRuleInherit;
     __weak IJSVGClipPath* weakSelf = self;
-    IJSVGNodeWalkHandler handler = ^(IJSVGNode *node, BOOL *allowChildNodes,
-                                     BOOL *stop) {
-        if(node == weakSelf) {
+    IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
+        if (node == weakSelf || ![node isKindOfClass:IJSVGGraphicsNode.class]) {
             return;
         }
-        IJSVGWindingRule clipRule = node.clipRule;
-        if(clipRule != IJSVGWindingRuleInherit) {
+        IJSVGWindingRule clipRule = ((IJSVGGraphicsNode*)node).clipRule;
+        if (clipRule != IJSVGWindingRuleInherit) {
             rule = clipRule;
             *stop = YES;
         }
     };
-    [IJSVGNode walkNodeTree:self
-                    handler:handler];
+    [IJSVGNode walkNodeTree:self handler:handler];
     return rule;
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGClipPath (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGContainerAttributes();
+    [attributes setBit:IJSVGNodeAttributeX];
+    [attributes setBit:IJSVGNodeAttributeY];
+    [attributes setBit:IJSVGNodeAttributeWidth];
+    [attributes setBit:IJSVGNodeAttributeHeight];
+    [attributes setBit:IJSVGNodeAttributeClipPathUnits];
+    [attributes setBit:IJSVGNodeAttributeClipRule];
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    IJSVGParsePathAttributes(self, context);
+    NSString* geometryValue = nil;
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeX, &geometryValue)) {
+        self.x = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeY, &geometryValue)) {
+        self.y = [IJSVGUnitLength unitWithString:geometryValue];
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeWidth, &geometryValue)) {
+        IJSVGUnitLength* length = IJSVGDimensionFromString(geometryValue, self.type);
+        if (length != nil) {
+            self.width = length;
+        }
+    }
+    if (IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeHeight, &geometryValue)) {
+        IJSVGUnitLength* length = IJSVGDimensionFromString(geometryValue, self.type);
+        if (length != nil) {
+            self.height = length;
+        }
+    }
+    IJSVGParseBackgroundAttributes(self, context);
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParsePaintAttributes(self, context);
+    IJSVGParseEffectsAttributes(self, context);
+    IJSVGParseTransformAttributes(self, context);
+    IJSVGParseDisplayAttributes(self, context);
+    IJSVGParseOverflowAttributes(self, context);
+    IJSVGParseMarkersAttributes(self, context);
+    IJSVGParseClipAttributes(self, context);
 }
 
 @end

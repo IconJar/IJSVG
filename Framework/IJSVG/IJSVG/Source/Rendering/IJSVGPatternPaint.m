@@ -2,15 +2,15 @@
 //  IJSVGPatternPaint.m
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGPatternPaint.h>
-#import <IJSVGFilterPaint.h>
-#import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGTransform.h>
+#import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGFilterPaint.h>
+#import <IJSVGPatternPaint.h>
 
 @interface IJSVGPatternPaint () {
     CGImageRef _cachedImage;
@@ -41,18 +41,11 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGViewBoxAlignment alignment = paint.patternNode.viewBoxAlignment;
     IJSVGViewBoxMeetOrSlice meetOrSlice = paint.patternNode.viewBoxMeetOrSlice;
     CGRect viewBox = paint.viewBox;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
-        [IJSVGPaint renderPaint:paint.pattern
-                      inContext:ctx
-                        options:IJSVGPaintDrawingOptionNone];
-    };
-    IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice,
-                            drawBlock);
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) { [IJSVGPaint renderPaint:paint.pattern inContext:ctx options:IJSVGPaintDrawingOptionNone]; };
+    IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
     CGContextRestoreGState(ctx);
 }
-- (void)computeCellSize:(CGSize*)cellSize
-                viewBox:(CGRect*)viewBox
-                 origin:(CGPoint*)origin
+- (void)computeCellSize:(CGSize*)cellSize viewBox:(CGRect*)viewBox origin:(CGPoint*)origin
 {
     IJSVGPaint* paint = (IJSVGPaint*)self.referencingPaint;
     CGRect rect = IJSVGPaintGetBoundingBoxBounds(paint);
@@ -65,7 +58,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGUnitLength* hLength = _patternNode.height;
 
     // actually do the swap if required
-    if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
+    if (_patternNode.units == IJSVGUnitObjectBoundingBox) {
         wLength = wLength.lengthByMatchingPercentage;
         hLength = hLength.lengthByMatchingPercentage;
         xLength = xLength.lengthByMatchingPercentage;
@@ -73,16 +66,15 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     }
 
     CGSize percentageSize = _patternNode.units == IJSVGUnitUserSpaceOnUse ? self.viewPort.size : rect.size;
-    *origin = CGPointMake([xLength computeValue:percentageSize.width],
-                          [yLength computeValue:percentageSize.height]);
+    *origin = CGPointMake([xLength computeValue:percentageSize.width], [yLength computeValue:percentageSize.height]);
 
     CGFloat width = [wLength computeValue:percentageSize.width];
     CGFloat height = [hLength computeValue:percentageSize.height];
     *cellSize = CGSizeMake(width, height);
 
-    // Who knew that patterns have viewBoxes? Not me, but here is an implementation
-    // of it anyway
-    if(_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
+    // Who knew that patterns have viewBoxes? Not me, but here is an
+    // implementation of it anyway
+    if (_patternNode.viewBox != nil && _patternNode.viewBox.isZeroRect == NO) {
         // A viewBox establishes its own coordinates, regardless of content units.
         *viewBox = [_patternNode.viewBox computeValue:rect.size];
     } else {
@@ -93,9 +85,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 - (void)drawPatternInContext:(CGContextRef)ctx
 {
     // holder for callback
-    static const CGPatternCallbacks callbacks = {
-      0, &IJSVGQuartzPatternDrawingCallBack, &IJSVGQuartzPatternRelease
-    };
+    static const CGPatternCallbacks callbacks = { 0, &IJSVGQuartzPatternDrawingCallBack, &IJSVGQuartzPatternRelease };
 
     // create base pattern space
     CGColorSpaceRef patternSpace = CGColorSpaceCreatePattern(NULL);
@@ -108,15 +98,13 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     CGAffineTransform transform = [IJSVGPaint userSpaceTransformForPaint:paint];
 
     CGPoint origin = CGPointZero;
-    [self computeCellSize:&_cellSize
-                  viewBox:&_viewBox
-                   origin:&origin];
+    [self computeCellSize:&_cellSize viewBox:&_viewBox origin:&origin];
 
     // transform the X and Y shift
-    // Place the tile in user space before moving into the local space of the referencing paint.
-    transform = CGAffineTransformConcat(IJSVGConcatTransforms(self.patternNode.transforms),
-                                        transform);
-    if(_patternNode.units == IJSVGUnitObjectBoundingBox) {
+    // Place the tile in user space before moving into the local space of the
+    // referencing paint.
+    transform = CGAffineTransformConcat(IJSVGConcatTransforms(self.patternNode.transforms), transform);
+    if (_patternNode.units == IJSVGUnitObjectBoundingBox) {
         origin.x += paint.boundingBox.origin.x;
         origin.y += paint.boundingBox.origin.y;
     }
@@ -126,8 +114,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     // parent paint
     transform = CGAffineTransformConcat(transform, [IJSVGPaint userSpaceTransformForPaint:self]);
 
-    if(_cellSize.width <= 0.f || _cellSize.height <= 0.f ||
-        !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
+    if (_cellSize.width <= 0.f || _cellSize.height <= 0.f || !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
         return;
     }
     // Reduce the phase before device space tiling. Large SVG translations
@@ -136,9 +123,8 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     linear.tx = 0.f;
     linear.ty = 0.f;
     CGFloat determinant = linear.a * linear.d - linear.b * linear.c;
-    if(determinant != 0.f) {
-        CGPoint phase = CGPointApplyAffineTransform(CGPointMake(transform.tx, transform.ty),
-                                                    CGAffineTransformInvert(linear));
+    if (determinant != 0.f) {
+        CGPoint phase = CGPointApplyAffineTransform(CGPointMake(transform.tx, transform.ty), CGAffineTransformInvert(linear));
         phase.x = fmod(phase.x, _cellSize.width);
         phase.y = fmod(phase.y, _cellSize.height);
         phase = CGPointApplyAffineTransform(phase, linear);
@@ -149,11 +135,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 
     // create the pattern
     CGRect selfBounds = IJSVGPaintGetBoundingBoxBounds(self);
-    CGPatternRef ref = CGPatternCreate((void*)CFBridgingRetain(self),
-                                       CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height),
-                                       transform, _cellSize.width, _cellSize.height,
-                                       kCGPatternTilingConstantSpacing,
-                                       true, &callbacks);
+    CGPatternRef ref = CGPatternCreate((void*)CFBridgingRetain(self), CGRectMake(0.f, 0.f, _cellSize.width, _cellSize.height), transform, _cellSize.width, _cellSize.height, kCGPatternTilingConstantSpacing, true, &callbacks);
 
     // set the pattern then release it
     CGFloat alpha = 1.f;
@@ -175,29 +157,26 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     // Other contexts keep drawing the pattern directly.
     NSGraphicsContext* graphicsContext = NSGraphicsContext.currentContext;
     BOOL drawingToScreen = graphicsContext.CGContext == ctx && graphicsContext.isDrawingToScreen;
-    if(!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
+    if (!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;
     }
-  
+
     CGRect bounds = IJSVGPaintGetBoundingBoxBounds(self);
-    if(!IJSVGIsValidContextSize(bounds.size)) {
+    if (!IJSVGIsValidContextSize(bounds.size)) {
         return;
     }
     CGFloat scale = MAX(self.backingScaleFactor, 1.f);
-    if(drawingToScreen) {
+    if (drawingToScreen) {
         // Match the bitmap to the current size in screen pixels.
         CGAffineTransform transform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
         scale = MAX(scale, MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d)));
     }
     scale = MIN(scale, 4096.f / MAX(bounds.size.width, bounds.size.height));
     scale = MIN(scale, sqrt(4194304.f / (bounds.size.width * bounds.size.height)));
-    if(_cachedImage == NULL || _cachedScale != scale || !CGRectEqualToRect(_cachedBounds, bounds)) {
-        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(bounds.size.width * scale),
-                                                    ceil(bounds.size.height * scale), 8, 0,
-                                                    IJSVGDeviceRGBColorSpace(),
-                                                    (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
-        if(bitmap == NULL) {
+    if (_cachedImage == NULL || _cachedScale != scale || !CGRectEqualToRect(_cachedBounds, bounds)) {
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(bounds.size.width * scale), ceil(bounds.size.height * scale), 8, 0, IJSVGDeviceRGBColorSpace(), (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+        if (bitmap == NULL) {
             return;
         }
         CGContextScaleCTM(bitmap, scale, scale);
@@ -208,9 +187,8 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
         _cachedBounds = bounds;
         CGContextRelease(bitmap);
     }
-    if(_cachedImage != NULL) {
-        CGRect imageRect = CGRectMake(0.f, 0.f, CGImageGetWidth(_cachedImage) / scale,
-                                      CGImageGetHeight(_cachedImage) / scale);
+    if (_cachedImage != NULL) {
+        CGRect imageRect = CGRectMake(0.f, 0.f, CGImageGetWidth(_cachedImage) / scale, CGImageGetHeight(_cachedImage) / scale);
         CGContextDrawImage(ctx, imageRect, _cachedImage);
     }
 }

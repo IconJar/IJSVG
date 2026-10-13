@@ -1,10 +1,19 @@
-#import <XCTest/XCTest.h>
+//
+//  APIAnnotationTests.m
+//  IJSVG
+//
+//  Created by Curtis Hard on 07/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 #import <IJSVG/IJSVGUmbrella.h>
 #import <IJSVGTestSupport.h>
+#import <XCTest/XCTest.h>
 
-static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/2000/svg' width='16' height='8'><rect width='16' height='8' fill='red'/></svg>";
+static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/2000/svg' width='16' height='8'><rect "
+                                                @"width='16' height='8' fill='red'/></svg>";
 
-@interface IJSVGAPIAnnotationTests: XCTestCase
+@interface IJSVGAPIAnnotationTests : XCTestCase
 @end
 
 @implementation IJSVGAPIAnnotationTests
@@ -32,7 +41,7 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     CGImageRef cgImage = [svg newCGImageRefWithSize:size flipped:NO error:&error];
     XCTAssertNil(error);
     XCTAssertTrue(cgImage != NULL);
-    if(cgImage != NULL) {
+    if (cgImage != NULL) {
         XCTAssertEqual(CGImageGetWidth(cgImage), 32u);
         XCTAssertEqual(CGImageGetHeight(cgImage), 16u);
         NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
@@ -42,18 +51,19 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
         XCTAssertGreaterThan(color.alphaComponent, 0.95);
         CGImageRelease(cgImage);
     }
-    CGRect rect = (CGRect){CGPointZero, size};
+    CGRect rect = (CGRect) { CGPointZero, size };
     NSData* pdf = [svg PDFData:&error];
     XCTAssertNil(error);
     NSData* rectPDF = [svg PDFDataWithRect:rect error:&error];
     XCTAssertNil(error);
-    for(NSData* data in @[[svg PDFData], [svg PDFDataWithRect:rect], pdf, rectPDF]) {
+    for (NSData* data in @[ [svg PDFData], [svg PDFDataWithRect:rect], pdf, rectPDF ]) {
         CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
         XCTAssertTrue(provider != NULL);
-        if(provider == NULL) continue;
+        if (provider == NULL)
+            continue;
         CGPDFDocumentRef document = CGPDFDocumentCreateWithProvider(provider);
         XCTAssertTrue(document != NULL);
-        if(document != NULL) {
+        if (document != NULL) {
             XCTAssertEqual(CGPDFDocumentGetNumberOfPages(document), 1u);
             CGPDFDocumentRelease(document);
         }
@@ -70,12 +80,13 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     CGPathRelease(source);
     CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:[IJSVGCommand commandsForDataCharacters:"M0 0 L8 4"]];
     XCTAssertTrue(path != NULL);
-    if(path == NULL) return;
+    if (path == NULL)
+        return;
     XCTAssertTrue(CGPointEqualToPoint(CGPathGetCurrentPoint(path), CGPointMake(8, 4)));
     XCTAssertEqual(CGColorSpaceGetNumberOfComponents(IJSVGDeviceRGBColorSpace()), 3u);
     XCTAssertEqual(CGColorSpaceGetNumberOfComponents(IJSVGDeviceGrayColorSpace()), 1u);
 
-    // Objective-C callers explicitly retain borrowed Core Graphics objects.
+    // Objective C callers explicitly retain borrowed Core Graphics objects.
     CGPathRef borrowedPath = NULL;
     @autoreleasepool {
         IJSVGPath* node = [[IJSVGPath alloc] init];
@@ -93,19 +104,19 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
         borrowedImage = CGImageRetain([node CGImage]);
     }
     XCTAssertTrue(borrowedImage != NULL);
-    if(borrowedImage != NULL) {
+    if (borrowedImage != NULL) {
         XCTAssertGreaterThan(CGImageGetWidth(borrowedImage), 0u);
         CGImageRelease(borrowedImage);
     }
     CGGradientRef borrowedGradient = NULL;
     @autoreleasepool {
         IJSVGGradient* gradient = [[IJSVGGradient alloc] init];
-        gradient.colors = @[NSColor.redColor, NSColor.blueColor];
+        gradient.colors = @[ NSColor.redColor, NSColor.blueColor ];
         gradient.numberOfStops = 2;
         borrowedGradient = CGGradientRetain(gradient.CGGradient);
     }
     XCTAssertTrue(borrowedGradient != NULL);
-    if(borrowedGradient != NULL) {
+    if (borrowedGradient != NULL) {
         XCTAssertEqual(CFGetTypeID(borrowedGradient), CGGradientGetTypeID());
         CGGradientRelease(borrowedGradient);
     }
@@ -124,7 +135,7 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
 
 - (void)testNodeAndStyleNullabilityMatchesEmptyState
 {
-    IJSVGNode* node = [[IJSVGNode alloc] init];
+    IJSVGPath* node = [[IJSVGPath alloc] init];
     XCTAssertNil(node.parentNode);
     XCTAssertNil(node.rootNode);
     XCTAssertNil(node.fill);

@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGColor.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGColor.h>
 
 typedef struct {
     NSUInteger attribute;
@@ -18,7 +18,6 @@ typedef struct {
 } IJSVGStyleSheetAttribute;
 
 @interface IJSVGStyleSheetStyle : NSObject {
-
 @private
     NSMutableDictionary<NSString*, id>* _dict;
     NSMutableSet<NSString*>* _importantProperties;
@@ -33,29 +32,23 @@ typedef struct {
 }
 
 // Parses a borrowed declaration slice with comments already removed.
-+ (IJSVGStyleSheetStyle*)parseStyleBytes:(const char*)bytes
-                                  length:(NSUInteger)length;
++ (IJSVGStyleSheetStyle*)parseStyleBytes:(const char*)bytes length:(NSUInteger)length;
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
-+ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string
-                           removeComments:(BOOL)removeComments;
++ (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string removeComments:(BOOL)removeComments;
 
-- (void)setPropertyValue:(id)value
-             forProperty:(NSString*)key;
+- (void)setPropertyValue:(id)value forProperty:(NSString*)key;
 - (id)property:(NSString*)key;
 - (NSDictionary<NSString*, id>*)properties;
 - (BOOL)hasGeometryProperties;
 - (BOOL)hasCustomProperties;
-- (void)copyProperty:(NSString*)property
-           fromStyle:(IJSVGStyleSheetStyle*)style;
+- (void)copyProperty:(NSString*)property fromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)styleByResolvingVariables:(NSDictionary<NSString*, id>*)properties;
 
 // Borrowed entries remain valid until the style changes or is released.
 - (const IJSVGStyleSheetAttribute*)attributesWithCount:(NSUInteger*)count;
 - (BOOL)isPropertyImportant:(NSString*)key;
 - (BOOL)hasImportantProperties;
-- (void)setResolvedValue:(id)value
-             forProperty:(NSString*)key
-               important:(BOOL)important;
+- (void)setResolvedValue:(id)value forProperty:(NSString*)key important:(BOOL)important;
 
 - (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;

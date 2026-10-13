@@ -6,46 +6,42 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGTestHelpers.h>
-#import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGClipPath.h>
+#import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGRect.h>
+#import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
+#import <IJSVGTestHelpers.h>
 
-@interface IJSVGNodeAndColorStorageTests: XCTestCase
+@interface IJSVGNodeAndColorStorageTests : XCTestCase
 @end
 
 @implementation IJSVGNodeAndColorStorageTests
 
 - (void)testBasicClipShapeValidationAndCopy
 {
-    NSArray<NSString*>* invalid = @[@"circle(-1)", @"circle(10 20)", @"ellipse(10)", @"circle(at)",
-                         @"circle(at 10 20 30)", @"circle(10) unknown", @"circle(10) fill-box stroke-box",
-                         @"fill-box circle(10) stroke-box", @"circle(10", @"circle(10))", @"circle(calc(10px))"];
-    for(NSString* value in invalid) {
+    NSArray<NSString*>* invalid = @[ @"circle(-1)", @"circle(10 20)", @"ellipse(10)", @"circle(at)", @"circle(at 10 20 30)", @"circle(10) unknown", @"circle(10) fill-box stroke-box", @"fill-box circle(10) stroke-box", @"circle(10", @"circle(10))", @"circle(calc(10px))" ];
+    for (NSString* value in invalid) {
         XCTAssertNil([IJSVGClipPath clipPathWithBasicShape:value], @"%@", value);
     }
     IJSVGClipPath* original = [IJSVGClipPath clipPathWithBasicShape:@"ellipse(25% 40% at 30% 60%) fill-box"];
     IJSVGClipPath* copy = original.copy;
     XCTAssertNotNil(copy);
     XCTAssertTrue(copy.hasBasicShape);
-    CGFloat (^resolver)(IJSVGUnitLength*, CGFloat) = ^CGFloat(IJSVGUnitLength* length, CGFloat percentage) {
-        return [length computeValue:percentage];
-    };
-    CGPathRef path = [copy newBasicShapePathWithFillBox:CGRectMake(10, 20, 200, 100)
-                                            strokeBox:CGRectMake(0, 10, 220, 120)
-                                              viewBox:CGRectMake(0, 0, 400, 200)
-                                       lengthResolver:resolver];
+    CGFloat (^resolver)(IJSVGUnitLength*, CGFloat) = ^CGFloat(IJSVGUnitLength* length, CGFloat percentage) { return [length computeValue:percentage]; };
+    CGPathRef path = [copy newBasicShapePathWithFillBox:CGRectMake(10, 20, 200, 100) strokeBox:CGRectMake(0, 10, 220, 120) viewBox:CGRectMake(0, 0, 400, 200) lengthResolver:resolver];
     XCTAssertTrue(CGRectEqualToRect(CGPathGetBoundingBox(path), CGRectMake(20, 40, 100, 80)));
     CGPathRelease(path);
 }
 
 - (void)testCurrentColorStorageAndCopyResolveInheritedPaint
 {
-    IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(@"<g color='red' fill='currentColor' stroke='currentColor'><rect color='blue' width='8' height='8'/></g>"));
+    IJSVG* svg = IJSVGTestSVGObject(IJSVGTestSVG(@"<g color='red' fill='currentColor' stroke='currentColor'><rect "
+                                                 @"color='blue' width='8' height='8'/></g>"));
     IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
-    IJSVGNode* rect = group.children.firstObject;
+    IJSVGRect* rect = (IJSVGRect*)group.children.firstObject;
     IJSVGTraitedColorStorage* storage = [rect colorsWithStyle:[[IJSVGStyle alloc] init]];
     XCTAssertEqual(storage.count, 1u);
     IJSVGTraitedColor* color = storage.colors.anyObject;
@@ -53,13 +49,14 @@
     XCTAssertTrue([color matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
     IJSVGGroup* copy = group.copy;
     XCTAssertEqualObjects(copy.children.firstObject.currentColor, rect.currentColor);
-    XCTAssertTrue(((IJSVGColorNode*)copy.children.firstObject.fill).usesCurrentColor);
+    XCTAssertTrue(((IJSVGColorNode*)((IJSVGGraphicsNode*)copy.children.firstObject).fill).usesCurrentColor);
 }
 
 - (void)testRootCopyPreservesInferredViewBox
 {
     IJSVG* inferred = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80'/>");
-    IJSVG* explicit = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='100' height='80' viewBox='0 0 100 80'/>");
+    IJSVG* explicit = IJSVGTestSVGObject(@"<svg xmlns='http://www.w3.org/2000/svg' width='100' "
+                                         @"height='80' viewBox='0 0 100 80'/>");
     XCTAssertTrue(inferred.rootNode.viewBoxWasInferred);
     XCTAssertFalse(explicit.rootNode.viewBoxWasInferred);
     IJSVGRootNode* copy = inferred.rootNode.copy;
@@ -76,8 +73,8 @@
     original.intrinsicSize = [IJSVGUnitSize sizeWithCGSize:CGSizeMake(80, 60)];
     original.intrinsicDimensions = IJSVGIntrinsicDimensionBoth;
     original.viewBox = [IJSVGUnitRect rectWithCGRect:CGRectMake(0, 0, 40, 30)];
-    IJSVGNode* ancestor = [[IJSVGNode alloc] init];
-    original.styleAncestors = @[ancestor];
+    IJSVGGraphicsNode* ancestor = [[IJSVGGraphicsNode alloc] init];
+    original.styleAncestors = @[ ancestor ];
     [original addChild:[self imageCopyTestNode]];
     IJSVGRootNode* copy = original.copy;
 
@@ -85,8 +82,7 @@
     XCTAssertEqual(copy.intrinsicDimensions, IJSVGIntrinsicDimensionBoth);
     XCTAssertNotNil(copy.intrinsicSize);
     XCTAssertNotEqual(copy.intrinsicSize, original.intrinsicSize);
-    XCTAssertTrue(CGSizeEqualToSize([copy.intrinsicSize computeValue:CGSizeZero],
-                                   CGSizeMake(80, 60)));
+    XCTAssertTrue(CGSizeEqualToSize([copy.intrinsicSize computeValue:CGSizeZero], CGSizeMake(80, 60)));
     XCTAssertTrue(CGRectEqualToRect(copy.bounds, original.bounds));
     XCTAssertEqualObjects(copy.styleAncestors, original.styleAncestors);
     XCTAssertEqual(copy.children.count, 1u);
@@ -98,14 +94,13 @@
 
 - (void)testColorCopyPreservesSuperclassStateAndNoneFlag
 {
-    IJSVGColorNode* original = [[IJSVGColorNode alloc] initWithColor:
-        [NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
+    IJSVGColorNode* original = [[IJSVGColorNode alloc] initWithColor:[NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
     original.identifier = @"paint";
-    original.opacity = [IJSVGUnitLength unitWithFloat:0.4];
+    original.currentColor = NSColor.greenColor;
     IJSVGColorNode* copy = original.copy;
     XCTAssertEqual(copy.color, original.color);
     XCTAssertEqualObjects(copy.identifier, @"paint");
-    XCTAssertEqual(copy.opacity.value, 0.4);
+    XCTAssertEqualObjects(copy.currentColor, NSColor.greenColor);
     XCTAssertTrue(copy.shouldRender);
     XCTAssertTrue([copy matchesTraits:IJSVGNodeTraitPaintable]);
     XCTAssertFalse(copy.isNoneOrTransparent);
@@ -118,25 +113,22 @@
     XCTAssertTrue(copy.isNoneOrTransparent);
     XCTAssertFalse(copy.shouldRender);
     XCTAssertEqual([copy colorsWithStyle:nil matchingTraits:IJSVGColorUsageTraitFill].count, 0u);
-    // A copied color must still be accepted as a fill by the node's trait check.
+    // A copied color must still be accepted as a fill by the node trait check.
     IJSVGPath* path = [[IJSVGPath alloc] init];
     XCTAssertNoThrow(path.fill = copy);
 }
 
 - (void)testPathCopyPreservesTraitsBeforeAndAfterComputation
 {
-    for(NSNumber* computeFirst in @[@NO, @YES]) {
+    for (NSNumber* computeFirst in @[ @NO, @YES ]) {
         IJSVGPath* original = [[IJSVGPath alloc] init];
-        original.stroke = [[IJSVGColorNode alloc] initWithColor:
-            [NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
+        original.stroke = [[IJSVGColorNode alloc] initWithColor:[NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
         [original addTraits:IJSVGNodeTraitPaintable];
-        if(computeFirst.boolValue) {
+        if (computeFirst.boolValue) {
             XCTAssertTrue([original matchesTraits:IJSVGNodeTraitStroked]);
         }
         IJSVGPath* copy = original.copy;
-        XCTAssertTrue([copy matchesTraits:IJSVGNodeTraitPathed |
-                                         IJSVGNodeTraitPaintable |
-                                         IJSVGNodeTraitStroked]);
+        XCTAssertTrue([copy matchesTraits:IJSVGNodeTraitPathed | IJSVGNodeTraitPaintable | IJSVGNodeTraitStroked]);
         IJSVGGroup* group = [[IJSVGGroup alloc] init];
         [group addChild:copy];
         XCTAssertEqual([group nodesMatchingTraits:IJSVGNodeTraitPathed].count, 1u);
@@ -167,17 +159,14 @@
 
 - (void)testGradientCopyPreservesStopTreeAndCachedData
 {
-    for(Class gradientClass in @[IJSVGLinearGradient.class, IJSVGRadialGradient.class]) {
+    for (Class gradientClass in @[ IJSVGLinearGradient.class, IJSVGRadialGradient.class ]) {
         IJSVGGradient* copy = nil;
         __weak IJSVGGradient* weakOriginal = nil;
         @autoreleasepool {
             IJSVGGradient* original = [[gradientClass alloc] init];
             weakOriginal = original;
-            NSArray<NSColor*>* colors = @[
-                [NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1],
-                [NSColor colorWithDeviceRed:0 green:0 blue:1 alpha:1]
-            ];
-            for(NSUInteger index = 0; index < colors.count; index++) {
+            NSArray<NSColor*>* colors = @[ [NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1], [NSColor colorWithDeviceRed:0 green:0 blue:1 alpha:1] ];
+            for (NSUInteger index = 0; index < colors.count; index++) {
                 IJSVGStop* stop = [[IJSVGStop alloc] init];
                 stop.type = IJSVGNodeTypeStop;
                 stop.offset = [IJSVGUnitLength unitWithFloat:index == 0 ? 0.25 : 0.75];
@@ -199,13 +188,14 @@
             XCTAssertEqual(copy.numberOfStops, 2u);
             XCTAssertTrue(copy.locations != NULL);
             XCTAssertNotEqual(copy.locations, original.locations);
-            if(copy.children.count != 2 || copy.locations == NULL) continue;
-            for(NSUInteger index = 0; index < 2; index++) {
-                IJSVGNode* child = copy.children[index];
+            if (copy.children.count != 2 || copy.locations == NULL)
+                continue;
+            for (NSUInteger index = 0; index < 2; index++) {
+                IJSVGStop* child = (IJSVGStop*)copy.children[index];
                 XCTAssertNotEqual(child, original.children[index]);
                 XCTAssertEqual(child.parentNode, copy);
                 XCTAssertEqual(original.children[index].parentNode, original);
-                XCTAssertEqual(child.offset.value, original.children[index].offset.value);
+                XCTAssertEqual(child.offset.value, ((IJSVGStop*)original.children[index]).offset.value);
                 XCTAssertEqual(copy.locations[index], original.locations[index]);
             }
         }
@@ -215,8 +205,8 @@
         CGFloat* rebuiltLocations = [IJSVGGradient computeColorStops:copy colors:&rebuiltColors];
         XCTAssertEqualObjects(rebuiltColors, copy.colors);
         XCTAssertTrue(rebuiltLocations != NULL);
-        if(rebuiltLocations != NULL) {
-            if(rebuiltColors.count == 2) {
+        if (rebuiltLocations != NULL) {
+            if (rebuiltColors.count == 2) {
                 XCTAssertEqual(rebuiltLocations[0], 0.25);
                 XCTAssertEqual(rebuiltLocations[1], 0.75);
             }
@@ -235,22 +225,13 @@
 
 - (NSBitmapImageRep*)imageCopyTestBitmap
 {
-    NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc]
-        initWithBitmapDataPlanes:NULL
-                      pixelsWide:4
-                      pixelsHigh:2
-                   bitsPerSample:8
-                 samplesPerPixel:4
-                        hasAlpha:YES
-                        isPlanar:NO
-                  colorSpaceName:NSDeviceRGBColorSpace
-                     bytesPerRow:16
-                    bitsPerPixel:32];
+    NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:4 pixelsHigh:2 bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:16 bitsPerPixel:32];
     XCTAssertNotNil(bitmap);
-    if(bitmap == nil) return nil;
+    if (bitmap == nil)
+        return nil;
     // Explicit RGBA bytes avoid NSColor conversion changing the fixture pixels.
-    for(NSUInteger y = 0; y < 2; y++) {
-        for(NSUInteger x = 0; x < 4; x++) {
+    for (NSUInteger y = 0; y < 2; y++) {
+        for (NSUInteger x = 0; x < 4; x++) {
             unsigned char* pixel = bitmap.bitmapData + y * bitmap.bytesPerRow + x * 4;
             pixel[0] = 255;
             pixel[1] = 0;
@@ -275,19 +256,19 @@
 
 - (void)assertImageCopyNodeRenders:(IJSVGNode*)node
 {
-    IJSVG* svg = [[IJSVG alloc] initWithSVGString:
-        @"<svg xmlns='http://www.w3.org/2000/svg' width='4' height='2' viewBox='0 0 4 2'/>"];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='4' "
+                                                  @"height='2' viewBox='0 0 4 2'/>"];
     [svg.rootNode addChild:node];
-    unsigned char pixels[4 * 2 * 4] = {0};
+    unsigned char pixels[4 * 2 * 4] = { 0 };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef context = CGBitmapContextCreate(pixels, 4, 2, 8, 16, space,
-        (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextRef context = CGBitmapContextCreate(pixels, 4, 2, 8, 16, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if(context == NULL) return;
+    if (context == NULL)
+        return;
     [svg drawInRect:CGRectMake(0, 0, 4, 2) context:context];
     CGContextRelease(context);
-    for(NSUInteger index = 0; index < sizeof(pixels); index += 4) {
+    for (NSUInteger index = 0; index < sizeof(pixels); index += 4) {
         XCTAssertEqual(pixels[index], 255);
         XCTAssertEqual(pixels[index + 1], 0);
         XCTAssertEqual(pixels[index + 2], 0);
@@ -302,7 +283,7 @@
     original.x = [IJSVGUnitLength unitWithFloat:3.f];
     original.y = [IJSVGUnitLength unitWithFloat:5.f];
     original.opacity = [IJSVGUnitLength unitWithFloat:0.5f];
-    // The node's cached intrinsic dimensions must survive even if NSImage changes.
+    // The node cached intrinsic dimensions must survive even if NSImage changes.
     original.image.size = NSMakeSize(8, 6);
     IJSVGImage* copy = original.copy;
 
@@ -325,11 +306,9 @@
 
 - (void)testEncodedImageCopyPreservesExportMetadata
 {
-    NSData* png = [[self imageCopyTestBitmap]
-        representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+    NSData* png = [[self imageCopyTestBitmap] representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
     XCTAssertNotNil(png);
-    NSString* dataURL = [@"data:image/png;base64," stringByAppendingString:
-        [png base64EncodedStringWithOptions:0]];
+    NSString* dataURL = [@"data:image/png;base64," stringByAppendingString:[png base64EncodedStringWithOptions:0]];
     IJSVGImage* original = [self imageCopyTestNode];
     [original loadFromString:dataURL];
     IJSVGImage* copy = original.copy;
@@ -341,11 +320,9 @@
     XCTAssertEqualObjects(copy.sourceData, png);
     XCTAssertEqualObjects(copy.sourceMIMEType, @"image/png");
 
-    IJSVG* svg = [[IJSVG alloc] initWithSVGString:
-        @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 2'/>"];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 2'/>"];
     [svg.rootNode addChild:copy];
-    NSString* exported = [svg SVGStringWithSize:CGSizeMake(4, 2)
-                                       options:IJSVGExporterOptionNone];
+    NSString* exported = [svg SVGStringWithSize:CGSizeMake(4, 2) options:IJSVGExporterOptionNone];
     XCTAssertTrue([exported containsString:dataURL]);
     original.image = nil;
     XCTAssertEqualObjects(copy.sourceData, png);
@@ -378,7 +355,7 @@
         weakOriginal = original;
         copy = original.copy;
         XCTAssertEqual(copy.CGImage, original.CGImage);
-        // Also release the original's cached image before destroying the node.
+        // Also release the original cached image before destroying the node.
         original.image = nil;
     }
     XCTAssertNil(weakOriginal);
@@ -405,33 +382,15 @@
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
 {
-    XCTAssertEqual([IJSVGNode typeForString:@"g"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeGroup);
-    XCTAssertEqual([IJSVGNode typeForString:@"PATH"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypePath);
-    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeLinearGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeRadialGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"clipPath"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeClipPath);
-    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeFilterGaussianBlur);
-    XCTAssertEqual([IJSVGNode typeForString:@"unknown"
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"text body"
-                                       kind:NSXMLTextKind],
-                   IJSVGNodeTypeNotFound);
-    XCTAssertEqual([IJSVGNode typeForString:nil
-                                       kind:NSXMLElementKind],
-                   IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:@"g" kind:NSXMLElementKind], IJSVGNodeTypeGroup);
+    XCTAssertEqual([IJSVGNode typeForString:@"PATH" kind:NSXMLElementKind], IJSVGNodeTypePath);
+    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient" kind:NSXMLElementKind], IJSVGNodeTypeLinearGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient" kind:NSXMLElementKind], IJSVGNodeTypeRadialGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:NSXMLElementKind], IJSVGNodeTypeClipPath);
+    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeFilterGaussianBlur);
+    XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);
 }
 
 - (void)testNodeTypeIsPathableOnlyForPathShapes
@@ -449,7 +408,7 @@
 
 - (void)testNodeDefaultsAndTraitMutation
 {
-    IJSVGNode* node = [[IJSVGNode alloc] init];
+    IJSVGGraphicsNode* node = [[IJSVGGraphicsNode alloc] init];
 
     XCTAssertTrue(node.shouldRender);
     XCTAssertEqualWithAccuracy(node.opacity.value, 1.f, 0.0001f);
@@ -502,7 +461,7 @@
     hidden.type = IJSVGNodeTypePath;
     hidden.shouldRender = NO;
     [hidden addTraits:IJSVGNodeTraitPathed];
-    [group addChildren:@[rect, circle, hidden]];
+    [group addChildren:@[ rect, circle, hidden ]];
 
     XCTAssertEqual([group childrenOfType:IJSVGNodeTypeRect].count, 1u);
     XCTAssertTrue([[group childSetOfType:IJSVGNodeTypeCircle] containsObject:circle]);
@@ -522,33 +481,33 @@
     IJSVGNode* after = IJSVGTestNode(@"circle", nil, nil);
     after.name = @"after";
     [branch addChild:skipped];
-    [root addChildren:@[branch, after]];
+    [root addChildren:@[ branch, after ]];
 
     NSMutableArray<NSString*>* visited = [[NSMutableArray alloc] init];
     [IJSVGNode walkNodeTree:root
                     handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
-        [visited addObject:node.name ?: @"unknown"];
-        if(node == branch) {
-            *allowChildNodes = NO;
-        }
-    }];
-    XCTAssertEqualObjects(visited, (@[@"root", @"branch", @"after"]));
+                        [visited addObject:node.name ?: @"unknown"];
+                        if (node == branch) {
+                            *allowChildNodes = NO;
+                        }
+                    }];
+    XCTAssertEqualObjects(visited, (@[ @"root", @"branch", @"after" ]));
 
     [visited removeAllObjects];
     [IJSVGNode walkNodeTree:root
                     handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
-        [visited addObject:node.name ?: @"unknown"];
-        if(node == branch) {
-            *stop = YES;
-        }
-    }];
-    XCTAssertEqualObjects(visited, (@[@"root", @"branch"]));
+                        [visited addObject:node.name ?: @"unknown"];
+                        if (node == branch) {
+                            *stop = YES;
+                        }
+                    }];
+    XCTAssertEqualObjects(visited, (@[ @"root", @"branch" ]));
 }
 
 - (void)testInheritedNodePropertiesResolveFromParent
 {
     IJSVGGroup* parent = [[IJSVGGroup alloc] init];
-    IJSVGNode* child = [[IJSVGNode alloc] init];
+    IJSVGGraphicsNode* child = [[IJSVGGraphicsNode alloc] init];
     parent.opacity = [IJSVGUnitLength unitWithFloat:0.5f];
     parent.fillOpacity = [IJSVGUnitLength unitWithFloat:0.25f];
     parent.strokeWidth = [IJSVGUnitLength unitWithFloat:3.f];
@@ -574,28 +533,22 @@
     IJSVGStyle* style = [[IJSVGStyle alloc] init];
     style.fillColor = NSColor.greenColor;
 
-    IJSVGTraitedColorStorage* fillStorage = [colorNode colorsWithStyle:style
-                                                        matchingTraits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColorStorage* fillStorage = [colorNode colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill];
     IJSVGTraitedColor* fillColor = fillStorage.colors.anyObject;
     XCTAssertEqual(fillStorage.count, 1u);
     XCTAssertTrue([fillColor matchesTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertEqualWithAccuracy([self rgb:fillColor.color].greenComponent, 1.f,
-                               0.002f);
+    XCTAssertEqualWithAccuracy([self rgb:fillColor.color].greenComponent, 1.f, 0.002f);
 
     colorNode.isNoneOrTransparent = YES;
-    IJSVGTraitedColorStorage* emptyStorage = [colorNode colorsWithStyle:style
-                                                         matchingTraits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColorStorage* emptyStorage = [colorNode colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill];
     XCTAssertEqual(emptyStorage.count, 0u);
 }
 
 - (void)testTraitedColorMergesAndMatchesTraitsByColor
 {
-    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:NSColor.redColor
-                                                          traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:NSColor.redColor
-                                                              traits:IJSVGColorUsageTraitStroke];
-    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:NSColor.blueColor
-                                                                   traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitStroke];
+    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:NSColor.blueColor traits:IJSVGColorUsageTraitFill];
 
     XCTAssertEqualObjects(color, sameColor);
     XCTAssertNotEqualObjects(color, differentColor);
@@ -609,10 +562,8 @@
 - (void)testTraitedColorStorageMergesColorsAndReplacesByTrait
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor
-                                                            traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor
-                                                              traits:IJSVGColorUsageTraitStroke];
+    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitStroke];
     [storage addColor:fillRed];
     [storage addColor:strokeRed];
 
@@ -620,19 +571,14 @@
     XCTAssertTrue([storage matchesTraits:IJSVGColorUsageTraitFill]);
     XCTAssertTrue([storage.colors.anyObject matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
 
-    [storage replaceColor:NSColor.redColor
-                withColor:NSColor.greenColor
-                   traits:IJSVGColorUsageTraitFill];
+    [storage replaceColor:NSColor.redColor withColor:NSColor.greenColor traits:IJSVGColorUsageTraitFill];
     XCTAssertEqual(storage.replacedColorCount, 1u);
     XCTAssertTrue([storage matchesReplacementTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertNil([storage colorForColor:NSColor.redColor
-                         matchingTraits:IJSVGColorUsageTraitStroke]);
+    XCTAssertNil([storage colorForColor:NSColor.redColor matchingTraits:IJSVGColorUsageTraitStroke]);
 
-    NSColor* replacement = [storage colorForColor:NSColor.redColor
-                                   matchingTraits:IJSVGColorUsageTraitFill];
+    NSColor* replacement = [storage colorForColor:NSColor.redColor matchingTraits:IJSVGColorUsageTraitFill];
     XCTAssertNotNil(replacement);
-    XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f,
-                               0.002f);
+    XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f, 0.002f);
 }
 
 // Bulk moves and removals must tolerate the live children array of a group.
@@ -640,23 +586,19 @@
 {
     IJSVGGroup* source = [[IJSVGGroup alloc] init];
     IJSVGGroup* destination = [[IJSVGGroup alloc] init];
-    NSArray<IJSVGNode*>* children = @[
-        IJSVGTestNode(@"rect", @"first", nil),
-        IJSVGTestNode(@"circle", @"second", nil),
-        IJSVGTestNode(@"path", @"third", nil)
-    ];
+    NSArray<IJSVGNode*>* children = @[ IJSVGTestNode(@"rect", @"first", nil), IJSVGTestNode(@"circle", @"second", nil), IJSVGTestNode(@"path", @"third", nil) ];
     [source addChildren:children];
     XCTAssertNoThrow([destination addChildren:source.children]);
     XCTAssertEqual(source.children.count, 0u);
     XCTAssertEqualObjects(destination.children, children);
-    for(IJSVGNode* child in children) {
+    for (IJSVGNode* child in children) {
         XCTAssertEqual(child.parentNode, destination);
     }
     XCTAssertNoThrow([destination addChildren:destination.children]);
     XCTAssertEqualObjects(destination.children, children);
     XCTAssertNoThrow([destination removeChildren:destination.children]);
     XCTAssertEqual(destination.children.count, 0u);
-    for(IJSVGNode* child in children) {
+    for (IJSVGNode* child in children) {
         XCTAssertNil(child.parentNode);
     }
 }

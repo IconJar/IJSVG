@@ -23,7 +23,7 @@
 
 + (NSArray<NSString*>*)imageTypes
 {
-    if(@available(macOS 10.10, *)) {
+    if (@available(macOS 10.10, *)) {
         return @[ (NSString*)UTTypeSVG, @"svg" ];
     } else {
         return @[ @"public.svg-image", @"svg" ];
@@ -32,7 +32,7 @@
 
 + (NSArray<NSString*>*)imageUnfilteredTypes
 {
-    if(@available(macOS 10.10, *)) {
+    if (@available(macOS 10.10, *)) {
         return @[ (NSString*)UTTypeSVG, @"svg" ];
     } else {
         return @[ @"public.svg-image", @"svg" ];
@@ -42,7 +42,7 @@
 + (NSArray<NSImageRep*>*)imageRepsWithData:(NSData*)data
 {
     IJSVGImageRep* instance = [self imageRepWithData:data];
-    if(instance == nil) {
+    if (instance == nil) {
         return @[];
     }
     return @[ instance ];
@@ -55,11 +55,11 @@
 
 - (instancetype)initWithData:(NSData*)data
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _svg = [[IJSVG alloc] initWithSVGData:data];
 
-        // no valid SVG, just return nil;
-        if(_svg == nil) {
+        // no valid SVG, just return nil,
+        if (_svg == nil) {
             return nil;
         }
 
@@ -79,8 +79,7 @@
 
 - (BOOL)drawAtPoint:(NSPoint)point
 {
-    [_svg drawAtPoint:point
-                 size:_svg.viewBox.size];
+    [_svg drawAtPoint:point size:_svg.viewBox.size];
     return YES;
 }
 

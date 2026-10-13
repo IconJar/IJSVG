@@ -11,8 +11,6 @@
 @interface IJSVGQuartzRenderer (Outlines)
 
 // Borrowed until measurement invalidation. NULL means unsupported coverage.
-- (CGPathRef)outlinePathForRootNode:(IJSVGRootNode*)rootNode
-             includingFilterExtents:(BOOL)includingFilterExtents
-                    preservingHoles:(BOOL)preservingHoles CF_RETURNS_NOT_RETAINED;
+- (CGPathRef)outlinePathForRootNode:(IJSVGRootNode*)rootNode includingFilterExtents:(BOOL)includingFilterExtents preservingHoles:(BOOL)preservingHoles CF_RETURNS_NOT_RETAINED;
 
 @end

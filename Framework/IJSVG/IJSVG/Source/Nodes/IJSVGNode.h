@@ -6,28 +6,24 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGBitFlags64.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
-#import <IJSVG/IJSVGBitFlags64.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGVisibility) {
-    IJSVGVisibilityInherit,
+typedef NS_ENUM(NSUInteger, IJSVGVisibility) { IJSVGVisibilityInherit,
     IJSVGVisibilityVisible,
-    IJSVGVisibilityHidden
-};
+    IJSVGVisibilityHidden };
 
-typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
-    IJSVGBackgroundEnabledUnspecified,
+typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) { IJSVGBackgroundEnabledUnspecified,
     IJSVGBackgroundEnabledAccumulate,
     IJSVGBackgroundEnabledNew,
-    IJSVGBackgroundEnabledInherit
-};
+    IJSVGBackgroundEnabledInherit };
 
 @class IJSVGTextAttributeValue;
 @class IJSVGNode;
@@ -48,8 +44,7 @@ typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
-typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
-    IJSVGNodeAttributeVersion,
+typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) { IJSVGNodeAttributeVersion,
     IJSVGNodeAttributeXMLNS,
     IJSVGNodeAttributeXMLNSXlink,
     IJSVGNodeAttributeViewBox,
@@ -223,27 +218,21 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeMaskType,
     IJSVGNodeAttributeTransformOrigin,
     IJSVGNodeAttributeTransformBox,
-    IJSVGNodeAttributeCount
-};
+    IJSVGNodeAttributeCount };
 
 enum { kIJSVGNodeAttributeStorageLength = IJSVGNodeAttributeCount };
 
-typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
-    IJSVGIntrinsicDimensionNone = 0,
+typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) { IJSVGIntrinsicDimensionNone = 0,
     IJSVGIntrinsicDimensionWidth = 1 << 1,
     IJSVGIntrinsicDimensionHeight = 1 << 2,
-    IJSVGIntrinsicDimensionBoth = IJSVGIntrinsicDimensionWidth | IJSVGIntrinsicDimensionHeight
-};
+    IJSVGIntrinsicDimensionBoth = IJSVGIntrinsicDimensionWidth | IJSVGIntrinsicDimensionHeight };
 
-typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
-    IJSVGNodeTraitNone = 0,
+typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) { IJSVGNodeTraitNone = 0,
     IJSVGNodeTraitStroked = 1 << 0,
     IJSVGNodeTraitPaintable = 1 << 1,
-    IJSVGNodeTraitPathed = 1 << 2
-};
+    IJSVGNodeTraitPathed = 1 << 2 };
 
-typedef NS_ENUM(NSInteger, IJSVGNodeType) {
-    IJSVGNodeTypeUnknown = 0,
+typedef NS_ENUM(NSInteger, IJSVGNodeType) { IJSVGNodeTypeUnknown = 0,
     IJSVGNodeTypeGroup,
     IJSVGNodeTypePath,
     IJSVGNodeTypeDef,
@@ -301,53 +290,40 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeFilterSpotLight,
     IJSVGNodeTypeTextPath,
     IJSVGNodeTypeAnchor,
-    IJSVGNodeTypeSymbol
-};
+    IJSVGNodeTypeSymbol };
 
-FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string,
-                                                       NSXMLNodeKind kind);
+FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string, NSXMLNodeKind kind);
 
-typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
-    IJSVGWindingRuleNonZero,
+typedef NS_ENUM(NSInteger, IJSVGWindingRule) { IJSVGWindingRuleNonZero,
     IJSVGWindingRuleEvenOdd,
-    IJSVGWindingRuleInherit
-};
+    IJSVGWindingRuleInherit };
 
-typedef NS_ENUM(NSInteger, IJSVGVectorEffect) {
-    IJSVGVectorEffectNone,
+typedef NS_ENUM(NSInteger, IJSVGVectorEffect) { IJSVGVectorEffectNone,
     IJSVGVectorEffectNonScalingStroke,
-    IJSVGVectorEffectInherit
-};
+    IJSVGVectorEffectInherit };
 
-typedef NS_ENUM(NSInteger, IJSVGLineCapStyle) {
-    IJSVGLineCapStyleNone,
+typedef NS_ENUM(NSInteger, IJSVGLineCapStyle) { IJSVGLineCapStyleNone,
     IJSVGLineCapStyleButt,
     IJSVGLineCapStyleRound,
     IJSVGLineCapStyleSquare,
-    IJSVGLineCapStyleInherit
-};
+    IJSVGLineCapStyleInherit };
 
-typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) {
-    IJSVGLineJoinStyleNone,
+typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) { IJSVGLineJoinStyleNone,
     IJSVGLineJoinStyleMiter,
     IJSVGLineJoinStyleRound,
     IJSVGLineJoinStyleBevel,
-    IJSVGLineJoinStyleInherit
-};
+    IJSVGLineJoinStyleInherit };
 
 // Two bits per operation: fill = 0, stroke = 1, markers = 2.
-typedef NS_ENUM(NSInteger, IJSVGPaintOrder) {
-    IJSVGPaintOrderInherit = -1,
+typedef NS_ENUM(NSInteger, IJSVGPaintOrder) { IJSVGPaintOrderInherit = -1,
     IJSVGPaintOrderNormal = 0x24,
     IJSVGPaintOrderFillMarkersStroke = 0x18,
     IJSVGPaintOrderStrokeFillMarkers = 0x21,
     IJSVGPaintOrderStrokeMarkersFill = 0x09,
     IJSVGPaintOrderMarkersFillStroke = 0x12,
-    IJSVGPaintOrderMarkersStrokeFill = 0x06
-};
+    IJSVGPaintOrderMarkersStrokeFill = 0x06 };
 
-typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
-    IJSVGBlendModeNormal = kCGBlendModeNormal,
+typedef NS_ENUM(NSInteger, IJSVGBlendMode) { IJSVGBlendModeNormal = kCGBlendModeNormal,
     IJSVGBlendModeMultiply = kCGBlendModeMultiply,
     IJSVGBlendModeScreen = kCGBlendModeScreen,
     IJSVGBlendModeOverlay = kCGBlendModeOverlay,
@@ -362,27 +338,25 @@ typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
     IJSVGBlendModeHue = kCGBlendModeHue,
     IJSVGBlendModeSaturation = kCGBlendModeSaturation,
     IJSVGBlendModeColor = kCGBlendModeColor,
-    IJSVGBlendModeLuminosity = kCGBlendModeLuminosity
-};
+    IJSVGBlendModeLuminosity = kCGBlendModeLuminosity };
 
-typedef NS_ENUM(NSInteger, IJSVGColorInterpolation) {
-    IJSVGColorInterpolationUnspecified,
+typedef NS_ENUM(NSInteger, IJSVGColorInterpolation) { IJSVGColorInterpolationUnspecified,
     IJSVGColorInterpolationInherit,
     IJSVGColorInterpolationAuto,
     IJSVGColorInterpolationSRGB,
-    IJSVGColorInterpolationLinearRGB
-};
+    IJSVGColorInterpolationLinearRGB };
 
 IJSVGColorInterpolation IJSVGColorInterpolationForString(NSString* _Nullable value);
 NSString* _Nullable IJSVGColorInterpolationString(IJSVGColorInterpolation value);
 
-typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
-    IJSVGOverflowVisibilityHidden,
-    IJSVGOverflowVisibilityVisible
-};
+typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) { IJSVGOverflowVisibilityHidden,
+    IJSVGOverflowVisibilityVisible };
 
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
+
+@class IJSVGGraphicsNode;
+@class IJSVGGroup;
 
 @interface IJSVGNode : NSObject <NSCopying> {
 @private
@@ -393,24 +367,19 @@ void IJSVGAssertPaintableObject(id object);
 
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
-@property (nonatomic, strong, nullable) IJSVGUnitRect* viewBox;
-@property (nonatomic, assign) IJSVGViewBoxAlignment viewBoxAlignment;
-@property (nonatomic, assign) IJSVGViewBoxMeetOrSlice viewBoxMeetOrSlice;
 @property (nonatomic, readonly) BOOL containsRelativeUnits;
 @property (nonatomic, copy, nullable) NSString* title;
 @property (nonatomic, copy, nullable) NSString* desc;
-@property (nonatomic, copy, nullable) NSString* unicode;
-// Specified text properties, retained on all elements for inheritance through groups.
+// Specified text properties, retained on all elements for inheritance through
+// groups.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, IJSVGTextAttributeValue*>* textStyle;
 // Style inheritance can follow the source document independently of rendering.
-@property (nonatomic, weak, nullable) IJSVGNode* styleParent;
-// nil inherits. An empty marker represents an explicit "none" or invalid reference.
-@property (nonatomic, strong, nullable) IJSVGMarker* markerStart;
-@property (nonatomic, strong, nullable) IJSVGMarker* markerMid;
-@property (nonatomic, strong, nullable) IJSVGMarker* markerEnd;
+@property (nonatomic, weak, nullable) IJSVGGraphicsNode* styleParent;
+// nil inherits. An empty marker represents an explicit "none" or invalid
+// reference.
 @property (nonatomic, assign) IJSVGNodeType type;
 // An explicit name overrides the canonical SVG name derived from type.
-// Setting nil restores the default; unknown types have no default name.
+// Setting nil restores the default, unknown types have no default name.
 @property (nonatomic, copy, nullable) NSString* name;
 @property (nonatomic, copy, nullable) NSString* className;
 @property (nonatomic, strong, nullable) NSSet<NSString*>* classNameList;
@@ -418,82 +387,32 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, strong, nullable) NSColor* currentColor;
 @property (nonatomic, assign) IJSVGVisibility visibility;
 @property (nonatomic, readonly) BOOL visibilityHidden;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* x;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* y;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* width;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* height;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* opacity;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* fillOpacity;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeOpacity;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeWidth;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* offset;
-@property (nonatomic, strong, nullable) IJSVGNode* fill;
-@property (nonatomic, strong, nullable) IJSVGNode* stroke;
 @property (nonatomic, copy, nullable) NSString* identifier;
-@property (nonatomic, assign, nullable) IJSVGNode* parentNode;
-@property (nonatomic, strong, nullable) IJSVGClipPath* clipPath;
-@property (nonatomic, strong, nullable) IJSVGMask* mask;
-@property (nonatomic, strong, nullable) IJSVGFilter* filter;
-@property (nonatomic, copy, nullable) NSArray<IJSVGFilter*>* filters;
-@property (nonatomic, assign) IJSVGColorInterpolation filterColorInterpolation;
-@property (nonatomic, readonly) IJSVGColorInterpolation resolvedFilterColorInterpolation;
-@property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
-@property (nonatomic, assign) CGRect backgroundBounds;
-@property (nonatomic, readonly) CGRect backgroundRect;
-@property (nonatomic, assign) IJSVGWindingRule windingRule;
-@property (nonatomic, assign) IJSVGWindingRule clipRule;
-@property (nonatomic, assign) IJSVGLineCapStyle lineCapStyle;
-@property (nonatomic, assign) IJSVGLineJoinStyle lineJoinStyle;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeMiterLimit;
-@property (nonatomic, strong, nullable) NSArray<IJSVGTransform*>* transforms;
-@property (nonatomic, copy, nullable) NSArray<IJSVGUnitLength*>* transformOrigin;
-@property (nonatomic, copy, nullable) NSString* transformBox;
-@property (nonatomic, assign, nullable) CGFloat* strokeDashArray;
-@property (nonatomic, assign) NSInteger strokeDashArrayCount;
-@property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;
-@property (nonatomic, copy, nullable) NSArray<IJSVGUnitLength*>* strokeDashLengths;
-@property (nonatomic, strong, nullable) IJSVGUnitLength* strokeDashOffset;
-@property (nonatomic, strong, nullable) IJSVG* svg;
-@property (nonatomic, assign) IJSVGUnitType contentUnits;
-@property (nonatomic, assign) IJSVGUnitType units;
-@property (nonatomic, assign) IJSVGBlendMode blendMode;
-@property (nonatomic, assign) BOOL isolated;
-@property (nonatomic, assign) IJSVGPaintOrder paintOrder;
-@property (nonatomic, copy, nullable) NSDictionary<NSNumber*, IJSVGUnitLength*>* geometryLengths;
-@property (nonatomic, assign) IJSVGVectorEffect vectorEffect;
-@property (nonatomic, readonly) IJSVGVectorEffect resolvedVectorEffect;
-@property (nonatomic, assign) IJSVGOverflowVisibility overflowVisibility;
+@property (nonatomic, assign, nullable) IJSVGGraphicsNode* parentNode;
 @property (nonatomic, readonly) BOOL detachedFromParentNode;
 @property (nonatomic, readonly, nullable) IJSVGRootNode* rootNode;
 
 + (IJSVGBitFlags*)computedAllowedAttributes;
 + (uint64_t)computedAllowedAttributeMask;
-+ (IJSVGBitFlags*)allowedAttributes;
 
-+ (void)walkNodeTree:(IJSVGNode*)node
-             handler:(IJSVGNodeWalkHandler)handler;
++ (void)walkNodeTree:(IJSVGNode*)node handler:(IJSVGNodeWalkHandler)handler;
 
-+ (NSArray<IJSVGNode*>*)node:(IJSVGNode*)node
-         nodesMatchingTraits:(IJSVGNodeTraits)traits;
++ (NSArray<IJSVGNode*>*)node:(IJSVGNode*)node nodesMatchingTraits:(IJSVGNodeTraits)traits;
 
-+ (BOOL)node:(IJSVGNode*)node
-containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
++ (BOOL)node:(IJSVGNode*)node containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 // Returns not found for absent names and non element nodes.
-+ (IJSVGNodeType)typeForString:(NSString* _Nullable)string
-                          kind:(NSXMLNodeKind)kind;
++ (IJSVGNodeType)typeForString:(NSString* _Nullable)string kind:(NSXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
 
 - (BOOL)containsRelativeUnits;
 
 - (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style;
-- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style
-                              matchingTraits:(IJSVGColorUsageTraits)traits;
+- (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle* _Nullable)style matchingTraits:(IJSVGColorUsageTraits)traits;
 
 // Conservative painted extent in parent coordinates, including filter regions.
 // The viewport resolves relative units and style supplies rendering overrides.
-- (CGRect)extentWithViewPort:(CGRect)viewPort
-                       style:(IJSVGStyle* _Nullable)style NS_SWIFT_NAME(extent(in:style:));
+- (CGRect)extentWithViewPort:(CGRect)viewPort style:(IJSVGStyle* _Nullable)style NS_SWIFT_NAME(extent(in:style:));
 
 // Subclasses with a fixed element identity override this construction default.
 + (IJSVGNodeType)defaultNodeType;
@@ -501,9 +420,6 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (void)setDefaults;
 - (void)postProcess;
 - (void)applyPropertiesFromNode:(IJSVGNode*)node;
-
-- (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds;
-- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGNode* _Nonnull * _Nonnull)referencingNode;
 
 - (instancetype)detach;
 
@@ -517,6 +433,11 @@ containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 - (nullable instancetype)parentNodeMatchingClass:(Class)someClass;
 - (nullable instancetype)rootNodeMatchingClass:(Class)someClass;
 
+@end
+
+// Element schemas are implemented in the parsing section of each node.
+@interface IJSVGNode (AttributeSchema)
++ (IJSVGBitFlags*)allowedAttributes;
 @end
 
 NS_ASSUME_NONNULL_END

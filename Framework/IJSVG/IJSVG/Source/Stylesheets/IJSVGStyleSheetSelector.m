@@ -6,10 +6,10 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGStyleSheetSelector.h>
 #import <IJSVGStyleSheetUtils.h>
-#import <IJSVG/IJSVGNode.h>
-#import <IJSVG/IJSVGGroup.h>
 
 #define SPECIFICITY_TAG 1
 #define SPECIFICITY_CLASS 10
@@ -28,7 +28,7 @@
 - (id<IJSVGStyleSheetSelectorNode>)selectorPreviousSibling
 {
     IJSVGGroup* group = (IJSVGGroup*)self.parentNode;
-    if(![group isKindOfClass:IJSVGGroup.class]) {
+    if (![group isKindOfClass:IJSVGGroup.class]) {
         return nil;
     }
     NSUInteger index = [group.children indexOfObjectIdenticalTo:self];
@@ -37,33 +37,30 @@
 
 @end
 
-static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
-                                         IJSVGStyleSheetSelectorRaw* rawSelector)
+static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, IJSVGStyleSheetSelectorRaw* rawSelector)
 {
-    if(node == nil || rawSelector == nil) {
+    if (node == nil || rawSelector == nil) {
         return NO;
     }
 
     // Return no if the tag is set but does not match the node.
-    if(rawSelector.tag != nil &&
-       [rawSelector.tag isEqualToString:node.name] == NO) {
+    if (rawSelector.tag != nil && [rawSelector.tag isEqualToString:node.name] == NO) {
         return NO;
     }
 
-    if(rawSelector.rootCount != 0 && node.selectorParent != nil) {
+    if (rawSelector.rootCount != 0 && node.selectorParent != nil) {
         return NO;
     }
 
-    if(rawSelector.classes.count != 0) {
-        for(NSString* className in rawSelector.classes) {
-            if([node.classNameList containsObject:className] == NO) {
+    if (rawSelector.classes.count != 0) {
+        for (NSString* className in rawSelector.classes) {
+            if ([node.classNameList containsObject:className] == NO) {
                 return NO;
             }
         }
     }
 
-    if(rawSelector.identifier != nil &&
-       [rawSelector.identifier isEqualToString:node.identifier] == NO) {
+    if (rawSelector.identifier != nil && [rawSelector.identifier isEqualToString:node.identifier] == NO) {
         return NO;
     }
 
@@ -84,46 +81,45 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (BOOL)_matches:(id<IJSVGStyleSheetSelectorNode>)node
 {
-    for(NSUInteger index = 0; index + 1 < _rawSelectors.count; index++) {
+    for (NSUInteger index = 0; index + 1 < _rawSelectors.count; index++) {
         IJSVGStyleSheetSelectorRaw* selector = _rawSelectors[index];
         IJSVGStyleSheetSelectorRaw* next = _rawSelectors[index + 1];
-        switch(selector.combinator) {
+        switch (selector.combinator) {
             case IJSVGStyleSheetSelectorCombinatorNextSibling:
                 node = node.selectorPreviousSibling;
                 break;
             case IJSVGStyleSheetSelectorCombinatorPrecededSibling:
-                if([node isKindOfClass:IJSVGNode.class]) {
-                    // Render nodes store siblings in an array. Find the starting index once,
-                    // then scan backwards for a match.
+                if ([node isKindOfClass:IJSVGNode.class]) {
+                    // Render nodes store siblings in an array. Find the starting index
+                    // once, then scan backwards for a match.
                     IJSVGGroup* parent = (IJSVGGroup*)node.selectorParent;
                     NSArray<IJSVGNode*>* siblings = [parent isKindOfClass:IJSVGGroup.class] ? parent.children : nil;
                     NSUInteger siblingIndex = siblings != nil ? [siblings indexOfObjectIdenticalTo:(IJSVGNode*)node] : NSNotFound;
                     node = nil;
-                    while(siblingIndex != NSNotFound && siblingIndex > 0) {
+                    while (siblingIndex != NSNotFound && siblingIndex > 0) {
                         IJSVGNode* sibling = siblings[--siblingIndex];
-                        if(IJSVGStyleSheetMatchSelector(sibling, next)) {
+                        if (IJSVGStyleSheetMatchSelector(sibling, next)) {
                             node = sibling;
                             break;
                         }
                     }
                 } else {
                     node = node.selectorPreviousSibling;
-                    while(node != nil && !IJSVGStyleSheetMatchSelector(node, next)) {
+                    while (node != nil && !IJSVGStyleSheetMatchSelector(node, next)) {
                         node = node.selectorPreviousSibling;
                     }
                 }
                 break;
             case IJSVGStyleSheetSelectorCombinatorDescendant:
                 node = node.selectorParent;
-                while(node != nil && !IJSVGStyleSheetMatchSelector(node, next)) {
+                while (node != nil && !IJSVGStyleSheetMatchSelector(node, next)) {
                     node = node.selectorParent;
                 }
                 break;
             case IJSVGStyleSheetSelectorCombinatorDirectDescendant:
-                if([node isKindOfClass:IJSVGNode.class]) {
+                if ([node isKindOfClass:IJSVGNode.class]) {
                     IJSVGGroup* parent = (IJSVGGroup*)node.selectorParent;
-                    if(![parent isKindOfClass:IJSVGGroup.class] ||
-                       ![parent.children containsObject:(IJSVGNode*)node]) {
+                    if (![parent isKindOfClass:IJSVGGroup.class] || ![parent.children containsObject:(IJSVGNode*)node]) {
                         return NO;
                     }
                 }
@@ -132,7 +128,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
             default:
                 return NO;
         }
-        if(!IJSVGStyleSheetMatchSelector(node, next)) {
+        if (!IJSVGStyleSheetMatchSelector(node, next)) {
             return NO;
         }
     }
@@ -141,11 +137,11 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (id)initWithSelectorString:(NSString*)string
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         selector = string.copy;
         _rawSelectors = [[NSMutableArray alloc] init];
 
-        if([self _compile] == NO) {
+        if ([self _compile] == NO) {
             return nil;
         }
         [self _calculate];
@@ -155,12 +151,12 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (void)_calculate
 {
-    for(IJSVGStyleSheetSelectorRaw* rawSelector in _rawSelectors) {
-        if(rawSelector.tag != nil) {
+    for (IJSVGStyleSheetSelectorRaw* rawSelector in _rawSelectors) {
+        if (rawSelector.tag != nil) {
             _specificity += SPECIFICITY_TAG;
         }
 
-        if(rawSelector.identifier != nil) {
+        if (rawSelector.identifier != nil) {
             _specificity += SPECIFICITY_IDENTIFIER;
         }
 
@@ -171,12 +167,12 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 - (BOOL)validateSelector:(NSString*)string
 {
     const char* chars = string.UTF8String;
-    if(chars == NULL) {
+    if (chars == NULL) {
         return NO;
     }
 
-    for(NSUInteger i = 0, length = strlen(chars); i < length; i++) {
-        if(chars[i] != ':' && IJSVGStyleSheetCharIsInvalidSelectorChar(chars[i]) == YES) {
+    for (NSUInteger i = 0, length = strlen(chars); i < length; i++) {
+        if (chars[i] != ':' && IJSVGStyleSheetCharIsInvalidSelectorChar(chars[i]) == YES) {
             return NO;
         }
     }
@@ -185,12 +181,12 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (BOOL)_compile
 {
-    if(selector.length == 0 || [self validateSelector:selector] == NO) {
+    if (selector.length == 0 || [self validateSelector:selector] == NO) {
         return NO;
     }
 
     const char* chars = selector.UTF8String;
-    if(chars == NULL) {
+    if (chars == NULL) {
         return NO;
     }
 
@@ -202,19 +198,17 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
     BOOL expectingSelectorAfterCombinator = NO;
     BOOL failed = NO;
 
-    for(NSUInteger i = 0; i < length && failed == NO; i++) {
+    for (NSUInteger i = 0; i < length && failed == NO; i++) {
         char c = chars[i];
 
-        if(IJSVGStyleSheetCharIsWhitespace(c) == YES) {
+        if (IJSVGStyleSheetCharIsWhitespace(c) == YES) {
             NSUInteger next = IJSVGStyleSheetIndexBySkippingWhitespace(chars, i + 1, length);
-            if(next < length &&
-               (IJSVGStyleSheetCharIsCombinator(chars[next]) == YES ||
-                IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, next, length) == YES)) {
+            if (next < length && (IJSVGStyleSheetCharIsCombinator(chars[next]) == YES || IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, next, length) == YES)) {
                 i = next - 1;
                 continue;
             }
 
-            if(IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector) == YES) {
+            if (IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector) == YES) {
                 pendingCombinator = IJSVGStyleSheetSelectorCombinatorDescendant;
                 rawSelector = IJSVGStyleSheetCreateRawSelector(pendingCombinator);
                 hasUniversalSelector = NO;
@@ -223,15 +217,13 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
             continue;
         }
 
-        if(IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES ||
-           IJSVGStyleSheetCharIsCombinator(c) == YES) {
-            if(IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector) == NO) {
+        if (IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES || IJSVGStyleSheetCharIsCombinator(c) == YES) {
+            if (IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector) == NO) {
                 failed = YES;
                 break;
             }
 
-            pendingCombinator = IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES ?
-                IJSVGStyleSheetSelectorCombinatorColumn : IJSVGStyleSheetCombinatorForChar(c);
+            pendingCombinator = IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, i, length) == YES ? IJSVGStyleSheetSelectorCombinatorColumn : IJSVGStyleSheetCombinatorForChar(c);
             rawSelector = IJSVGStyleSheetCreateRawSelector(pendingCombinator);
             hasUniversalSelector = NO;
             expectingSelectorAfterCombinator = YES;
@@ -242,21 +234,21 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
             continue;
         }
 
-        if(c == '|') {
+        if (c == '|') {
             failed = YES;
             break;
         }
 
-        if(c == '*') {
+        if (c == '*') {
             hasUniversalSelector = YES;
             expectingSelectorAfterCombinator = NO;
             continue;
         }
 
-        if(c == ':') {
+        if (c == ':') {
             NSUInteger end = i + 1;
             NSString* name = IJSVGStyleSheetConsumeIdentifier(chars, length, &end);
-            if([name caseInsensitiveCompare:@"root"] != NSOrderedSame || name == nil) {
+            if ([name caseInsensitiveCompare:@"root"] != NSOrderedSame || name == nil) {
                 failed = YES;
                 break;
             }
@@ -266,20 +258,20 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
             continue;
         }
 
-        if(c == '.' || c == '#') {
+        if (c == '.' || c == '#') {
             NSUInteger start = i + 1;
             NSUInteger end = start;
-            while(end < length && IJSVGStyleSheetCharEndsIdentifier(chars[end]) == NO) {
+            while (end < length && IJSVGStyleSheetCharEndsIdentifier(chars[end]) == NO) {
                 end++;
             }
 
             NSString* value = IJSVGStyleSheetStringFromUTF8Bytes(chars, start, end);
-            if(value.length == 0) {
+            if (value.length == 0) {
                 failed = YES;
                 break;
             }
 
-            if(c == '.') {
+            if (c == '.') {
                 [rawSelector addClassName:value];
             } else {
                 rawSelector.identifier = value;
@@ -291,18 +283,17 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
         NSUInteger start = i;
         NSUInteger end = start;
-        while(end < length && IJSVGStyleSheetCharEndsIdentifier(chars[end]) == NO) {
+        while (end < length && IJSVGStyleSheetCharEndsIdentifier(chars[end]) == NO) {
             end++;
         }
 
         NSString* tag = IJSVGStyleSheetStringFromUTF8Bytes(chars, start, end);
-        if(tag.length == 0) {
+        if (tag.length == 0) {
             failed = YES;
             break;
         }
 
-        if(end < length && chars[end] == '|' &&
-           IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, end, length) == NO) {
+        if (end < length && chars[end] == '|' && IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(chars, end, length) == NO) {
             failed = YES;
             break;
         }
@@ -312,15 +303,15 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
         i = end - 1;
     }
 
-    if(expectingSelectorAfterCombinator == YES) {
+    if (expectingSelectorAfterCombinator == YES) {
         failed = YES;
     }
 
-    if(failed == NO) {
+    if (failed == NO) {
         IJSVGStyleSheetSelectorCommitRawSelector(parsedSelectors, rawSelector, hasUniversalSelector);
     }
 
-    if(failed == YES || parsedSelectors.count == 0) {
+    if (failed == YES || parsedSelectors.count == 0) {
         return NO;
     }
 
@@ -330,8 +321,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node,
 
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node
 {
-    return IJSVGStyleSheetMatchSelector(node, _rawSelectors.firstObject) &&
-        (_rawSelectors.count == 1 || [self _matches:node]);
+    return IJSVGStyleSheetMatchSelector(node, _rawSelectors.firstObject) && (_rawSelectors.count == 1 || [self _matches:node]);
 }
 
 @end

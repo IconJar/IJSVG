@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGGradient.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGGradient.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -20,8 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitLength* fr;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 
-+ (void)parseGradient:(NSXMLElement*)element
-             gradient:(IJSVGRadialGradient*)gradient;
++ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGRadialGradient*)gradient;
 
 @end
 

@@ -10,10 +10,4 @@
 
 static NSString* const IJSVGErrorDomain = @"IJSVGErrorDomain";
 
-NS_ENUM(NSInteger){
-    IJSVGErrorReadingFile,
-    IJSVGErrorParsingFile,
-    IJSVGErrorParsingSVG,
-    IJSVGErrorDrawing,
-    IJSVGErrorInvalidViewBox
-};
+NS_ENUM(NSInteger) { IJSVGErrorReadingFile, IJSVGErrorParsingFile, IJSVGErrorParsingSVG, IJSVGErrorDrawing, IJSVGErrorInvalidViewBox };

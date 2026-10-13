@@ -6,9 +6,9 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGUnitSize.h>
-#import <Foundation/Foundation.h>
 
 @interface IJSVGUnitRect : NSObject <NSCopying>
 
@@ -20,12 +20,8 @@
 
 + (IJSVGUnitRect*)zeroRect;
 + (IJSVGUnitRect*)rectWithCGRect:(CGRect)rect;
-+ (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin
-                            size:(IJSVGUnitSize*)size;
-+ (IJSVGUnitRect*)rectWithX:(CGFloat)x
-                          y:(CGFloat)y
-                      width:(CGFloat)width
-                     height:(CGFloat)height;
++ (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin size:(IJSVGUnitSize*)size;
++ (IJSVGUnitRect*)rectWithX:(CGFloat)x y:(CGFloat)y width:(CGFloat)width height:(CGFloat)height;
 
 - (CGRect)computeValue:(CGSize)size;
 

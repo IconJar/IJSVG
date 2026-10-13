@@ -15,31 +15,23 @@
     return 2;
 }
 
-+ (void)runWithParams:(CGFloat*)params
-           paramCount:(NSInteger)count
-              command:(IJSVGCommand*)currentCommand
-      previousCommand:(IJSVGCommand*)command
-                 type:(IJSVGCommandType)type
-                 path:(CGMutablePathRef)path
++ (void)runWithParams:(CGFloat*)params paramCount:(NSInteger)count command:(IJSVGCommand*)currentCommand previousCommand:(IJSVGCommand*)command type:(IJSVGCommandType)type path:(CGMutablePathRef)path
 {
-    if(type == kIJSVGCommandTypeAbsolute) {
+    if (type == kIJSVGCommandTypeAbsolute) {
         CGPathAddLineToPoint(path, NULL, params[0], params[1]);
         return;
     }
     CGPoint currentPoint = CGPathGetCurrentPoint(path);
-    CGPathAddLineToPoint(path, NULL, currentPoint.x + params[0],
-                         currentPoint.y + params[1]);
+    CGPathAddLineToPoint(path, NULL, currentPoint.x + params[0], currentPoint.y + params[1]);
 }
 
-- (void)convertToUnits:(IJSVGUnitType)units
-           boundingBox:(CGRect)boundingBox
+- (void)convertToUnits:(IJSVGUnitType)units boundingBox:(CGRect)boundingBox
 {
-    if(units == IJSVGUnitObjectBoundingBox) {
+    if (units == IJSVGUnitObjectBoundingBox) {
         self.parameters[0] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[0]] computeValue:boundingBox.size.width];
         self.parameters[1] = [[IJSVGUnitLength unitWithPercentageFloat:self.parameters[1]] computeValue:boundingBox.size.height];
     }
-    [super convertToUnits:units
-              boundingBox:boundingBox];
+    [super convertToUnits:units boundingBox:boundingBox];
 }
 
 @end

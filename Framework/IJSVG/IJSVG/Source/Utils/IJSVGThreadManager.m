@@ -9,9 +9,10 @@
 #import <IJSVG/IJSVGThreadManager.h>
 @import Metal;
 
-// Contexts outlive GCD workers. Reserve a slot for the synchronous filter render;
-// After six simultaneous leases, share the least busy context. CIContext supports
-// concurrent use, so nested renders do not need to wait for an available slot.
+// Contexts outlive GCD workers. Reserve a slot for the synchronous filter
+// render, After six simultaneous leases, share the least busy context.
+// CIContext supports concurrent use, so nested renders do not need to wait for
+// an available slot.
 @interface IJSVGCIContextSlot : NSObject {
     dispatch_once_t _contextToken;
     CIContext* _context;
@@ -30,8 +31,8 @@
     dispatch_once(&_contextToken, ^{
         id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         self->_supportsMetalKernels = device != nil && device.supportsDynamicLibraries;
-        if(device != nil) {
-            self->_context = [CIContext contextWithMTLDevice:device options:@{}];
+        if (device != nil) {
+            self->_context = [CIContext contextWithMTLDevice:device options:@ {}];
         }
     });
     return _context;
@@ -57,12 +58,12 @@ static IJSVGCIContextSlot* IJSVGAcquireContextSlot(void)
     });
     [IJSVGContextPoolLock lock];
     IJSVGCIContextSlot* selected = nil;
-    for(IJSVGCIContextSlot* slot in IJSVGContextPool) {
-        if(selected == nil || slot.users < selected.users) {
+    for (IJSVGCIContextSlot* slot in IJSVGContextPool) {
+        if (selected == nil || slot.users < selected.users) {
             selected = slot;
         }
     }
-    if(selected == nil || (selected.users != 0 && IJSVGContextPool.count < 6)) {
+    if (selected == nil || (selected.users != 0 && IJSVGContextPool.count < 6)) {
         selected = [[IJSVGCIContextSlot alloc] init];
         [IJSVGContextPool addObject:selected];
     }
@@ -93,11 +94,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 + (NSMapTable*)mapTable
 {
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        managerMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory
-                                               valueOptions:NSPointerFunctionsStrongMemory
-                                                   capacity:1];
-    });
+    dispatch_once(&onceToken, ^{ managerMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory valueOptions:NSPointerFunctionsStrongMemory capacity:1]; });
     return managerMap;
 }
 
@@ -105,8 +102,8 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 {
     IJSVGThreadManager* manager = nil;
     NSMapTable* map = [self mapTable];
-    @synchronized (map) {
-        if((manager = [map objectForKey:thread]) == nil) {
+    @synchronized(map) {
+        if ((manager = [map objectForKey:thread]) == nil) {
             manager = [[self alloc] initWithThread:thread];
             [map setObject:manager forKey:thread];
         }
@@ -118,9 +115,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 {
     NSMapTable* map = [self mapTable];
     IJSVGThreadManager* found = nil;
-    @synchronized (map) {
-        for(IJSVGThreadManager* manager in map) {
-            if([manager manages:svg] == YES) {
+    @synchronized(map) {
+        for (IJSVGThreadManager* manager in map) {
+            if ([manager manages:svg] == YES) {
                 found = manager;
                 break;
             }
@@ -129,45 +126,40 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     return found;
 }
 
-+ (IJSVGThreadManager *)currentManager
++ (IJSVGThreadManager*)currentManager
 {
     return [self managerForThread:NSThread.currentThread];
 }
 
 - (void)dealloc
 {
-    if(_pathDataStream != NULL) {
+    if (_pathDataStream != NULL) {
         (void)IJSVGPathDataStreamRelease(_pathDataStream), _pathDataStream = NULL;
     }
 }
 
 - (id)initWithThread:(NSThread*)thread
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         // store the thread
         _thread = thread;
-        
+
         // setup the feature flags
         _featureFlags = [[IJSVGFeatureFlags alloc] init];
-        
+
         // hash table for the SVGs for this given thread
-        _allocedSVGs = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory
-                                                   capacity:1];
-        
+        _allocedSVGs = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsWeakMemory capacity:1];
+
         // listen for teardown of the thread
         NSNotificationCenter* center = NSNotificationCenter.defaultCenter;
-        [center addObserver:self
-                   selector:@selector(tearDownFromThreadExit)
-                       name:NSThreadWillExitNotification
-                     object:_thread];
+        [center addObserver:self selector:@selector(tearDownFromThreadExit) name:NSThreadWillExitNotification object:_thread];
     }
     return self;
 }
 
-- (void)setUserInfoObject:(id)object
-                   forKey:(id<NSCopying>)key
+- (void)setUserInfoObject:(id)object forKey:(id<NSCopying>)key
 {
-    if(_userInfo == nil) {
+    if (_userInfo == nil) {
         _userInfo = [[NSMutableDictionary alloc] init];
     }
     _userInfo[key] = object;
@@ -175,7 +167,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (id)userInfoObjectForKey:(id<NSCopying>)key
 {
-    if(_userInfo == nil) {
+    if (_userInfo == nil) {
         return nil;
     }
     return _userInfo[key];
@@ -188,7 +180,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (void)adopt:(IJSVG*)svg
 {
-    if([self manages:svg] == YES) {
+    if ([self manages:svg] == YES) {
         return;
     }
     [_allocedSVGs addObject:svg];
@@ -203,7 +195,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 {
     [_allocedSVGs removeAllObjects];
     NSMapTable* map = [self.class mapTable];
-    @synchronized (map) {
+    @synchronized(map) {
         [map removeObjectForKey:_thread];
     }
 }
@@ -212,11 +204,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 {
     static dispatch_semaphore_t outputSlots;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        outputSlots = dispatch_semaphore_create(2);
-    });
+    dispatch_once(&onceToken, ^{ outputSlots = dispatch_semaphore_create(2); });
     BOOL ownsSlot = IJSVGCIOutputDepth == 0;
-    if(ownsSlot) {
+    if (ownsSlot) {
         dispatch_semaphore_wait(outputSlots, DISPATCH_TIME_FOREVER);
     }
     IJSVGCIOutputDepth++;
@@ -224,7 +214,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
         block();
     } @finally {
         IJSVGCIOutputDepth--;
-        if(ownsSlot) {
+        if (ownsSlot) {
             dispatch_semaphore_signal(outputSlots);
         }
     }
@@ -232,8 +222,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (CIContext*)CIContext
 {
-    // Compatibility accessor. Callers can retain and concurrently use this context.
-    if(IJSVGActiveContextSlot != nil) {
+    // Compatibility accessor. Callers can retain and concurrently use this
+    // context.
+    if (IJSVGActiveContextSlot != nil) {
         return IJSVGActiveContextSlot.context;
     }
     IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
@@ -246,14 +237,14 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 + (void)performBlockWithCIContext:(void (^)(CIContext*, BOOL))block
 {
-    if(IJSVGActiveContextSlot != nil) {
+    if (IJSVGActiveContextSlot != nil) {
         block(IJSVGActiveContextSlot.context, IJSVGActiveContextSlot.supportsMetalKernels);
         return;
     }
     IJSVGCIContextSlot* slot = IJSVGAcquireContextSlot();
     @try {
         CIContext* context = slot.context;
-        if(context != nil) {
+        if (context != nil) {
             IJSVGActiveContextSlot = slot;
             block(context, slot.supportsMetalKernels);
         }
@@ -265,7 +256,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 
 - (IJSVGPathDataStream*)pathDataStream
 {
-    if(_pathDataStream == NULL) {
+    if (_pathDataStream == NULL) {
         _pathDataStream = IJSVGPathDataStreamCreateDefault();
     }
     return _pathDataStream;

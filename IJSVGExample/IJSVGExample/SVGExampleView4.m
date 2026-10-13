@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView4
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"clipped"];
 }

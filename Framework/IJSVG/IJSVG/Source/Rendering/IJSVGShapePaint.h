@@ -2,12 +2,12 @@
 //  IJSVGShapePaint.h
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGPaint.h>
 #import <IJSVG/IJSVGPath.h>
+#import <IJSVGPaint.h>
 
 @class IJSVGGradient;
 
@@ -20,7 +20,8 @@
 @property (nonatomic, assign) CGColorRef strokeColor;
 @property (nonatomic, assign) CGFloat lineWidth;
 @property (nonatomic, assign) BOOL nonScalingStroke;
-// Linear map from local geometry to the outer SVG viewport (excludes backing scale).
+// Linear map from local geometry to the outer SVG viewport (excludes backing
+// scale).
 @property (nonatomic, assign) CGAffineTransform strokeHostTransform;
 @property (nonatomic, assign) CGLineCap lineCap;
 @property (nonatomic, assign) CGLineJoin lineJoin;

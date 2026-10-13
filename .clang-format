@@ -1,0 +1,5 @@
+# WebKit formatting with multiline function and method bodies.
+# Format: xcrun clang-format -i path/to/file.m
+BasedOnStyle: WebKit
+AllowShortFunctionsOnASingleLine: None
+IndentCaseLabels: true

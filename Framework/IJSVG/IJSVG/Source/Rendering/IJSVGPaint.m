@@ -2,24 +2,24 @@
 //  IJSVGPaint.m
 //  IJSVG
 //
-//  Created on 01/10/2026.
+//  Created by Curtis Hard on 01/10/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGPaint.h>
-#import <IJSVGTransformPaint.h>
-#import <IJSVGGroupPaint.h>
-#import <IJSVGShapePaint.h>
-#import <IJSVGRectPaint.h>
-#import <IJSVGStrokePaint.h>
-#import <IJSVG/IJSVGText.h>
-#import <IJSVG/IJSVGMask.h>
-#import <IJSVGRootPaint.h>
-#import <IJSVGPatternPaint.h>
-#import <IJSVGGradientPaint.h>
-#import <IJSVGFilterPaint.h>
 #import <IJSVG/IJSVGColorNode.h>
+#import <IJSVG/IJSVGMask.h>
+#import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGFilterPaint.h>
+#import <IJSVGGradientPaint.h>
+#import <IJSVGGroupPaint.h>
+#import <IJSVGPaint.h>
+#import <IJSVGPatternPaint.h>
+#import <IJSVGRectPaint.h>
+#import <IJSVGRootPaint.h>
+#import <IJSVGShapePaint.h>
+#import <IJSVGStrokePaint.h>
+#import <IJSVGTransformPaint.h>
 
 CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 {
@@ -27,7 +27,7 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 }
 
 // Cache entries own only pixels, never the paint graph. A new graph gets a new
-// key; size, scale, placement and quality changes replace that key's snapshot.
+// key, size, scale, placement and quality changes replace that key snapshot.
 @interface IJSVGMaskCachedImage : NSObject
 @property (nonatomic, assign) CGImageRef image;
 @property (nonatomic, assign) CGSize size;
@@ -71,7 +71,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (instancetype)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _opacity = 1.f;
         _backingScaleFactor = 1.f;
         _affineTransform = CGAffineTransformIdentity;
@@ -86,26 +86,21 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (IJSVGPaint*)copyForMarker
 {
     Class type = self.class;
-    if((type != IJSVGPaint.class && type != IJSVGGroupPaint.class &&
-        type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class &&
-        type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) ||
-       _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil ||
-       [_sourceNode isKindOfClass:IJSVGText.class] ||
-       (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
+    if ((type != IJSVGPaint.class && type != IJSVGGroupPaint.class && type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class && type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) || _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil || [_sourceNode isKindOfClass:IJSVGText.class] || (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
         return nil;
     }
     NSArray<IJSVGPaint*>* children = @[];
-    if(_children.count == 1) {
+    if (_children.count == 1) {
         IJSVGPaint* child = [_children.firstObject copyForMarker];
-        if(child == nil) {
+        if (child == nil) {
             return nil;
         }
-        children = @[child];
-    } else if(_children.count > 1) {
+        children = @[ child ];
+    } else if (_children.count > 1) {
         NSMutableArray<IJSVGPaint*>* copies = [[NSMutableArray alloc] initWithCapacity:_children.count];
-        for(IJSVGPaint* child in _children) {
+        for (IJSVGPaint* child in _children) {
             IJSVGPaint* copy = [child copyForMarker];
-            if(copy == nil) {
+            if (copy == nil) {
                 return nil;
             }
             [copies addObject:copy];
@@ -142,35 +137,33 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (void)dealloc
 {
     CGPathRelease(_clipPath);
-    if(_maskCacheKey != nil) {
+    if (_maskCacheKey != nil) {
         [IJSVGMaskImageCache() removeObjectForKey:_maskCacheKey];
     }
 }
 
 - (void)prepareMaskCaching
 {
-    if(_maskCacheKey != nil) {
+    if (_maskCacheKey != nil) {
         [IJSVGMaskImageCache() removeObjectForKey:_maskCacheKey];
         _maskCacheKey = nil;
     }
-    // Filters can read the destination or another SVG; patterns can contain
-    // those dependencies too. Keep their existing per-draw behavior.
+    // Filters can read the destination or another SVG, patterns can contain
+    // those dependencies too. Keep their existing per draw behavior.
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:self];
     NSMutableSet<IJSVGPaint*>* visited = [[NSMutableSet alloc] init];
-    while(pending.count != 0) {
+    while (pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
-        if([visited containsObject:paint]) {
+        if ([visited containsObject:paint]) {
             continue;
         }
         [visited addObject:paint];
-        if([paint isKindOfClass:IJSVGFilterPaint.class] ||
-           [paint isKindOfClass:IJSVGPatternPaint.class] ||
-            (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+        if ([paint isKindOfClass:IJSVGFilterPaint.class] || [paint isKindOfClass:IJSVGPatternPaint.class] || (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
             return;
         }
         [pending addObjectsFromArray:paint.children];
-        if(paint.maskPaint != nil) {
+        if (paint.maskPaint != nil) {
             [pending addObject:paint.maskPaint];
         }
     }
@@ -179,7 +172,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (void)setClipPath:(CGPathRef)path
 {
-    if(path == _clipPath) {
+    if (path == _clipPath) {
         return;
     }
     CGPathRelease(_clipPath);
@@ -193,22 +186,18 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (CGRect)frame
 {
-    CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMidX(_frame),
-                                                                   CGRectGetMidY(_frame));
+    CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMidX(_frame), CGRectGetMidY(_frame));
     transform = CGAffineTransformConcat(_affineTransform, transform);
-    return CGRectApplyAffineTransform(CGRectMake(-_frame.size.width * .5f, -_frame.size.height * .5f,
-                                                _frame.size.width, _frame.size.height), transform);
+    return CGRectApplyAffineTransform(CGRectMake(-_frame.size.width * .5f, -_frame.size.height * .5f, _frame.size.width, _frame.size.height), transform);
 }
 
-// Uses the stored frame because the public frame already includes the transform.
+// Uses the stored frame because the public frame already includes the
+// transform.
 - (CGAffineTransform)placementTransform
 {
-    CGAffineTransform placement = CGAffineTransformMakeTranslation(CGRectGetMidX(_frame),
-                                                                   CGRectGetMidY(_frame));
+    CGAffineTransform placement = CGAffineTransformMakeTranslation(CGRectGetMidX(_frame), CGRectGetMidY(_frame));
     placement = CGAffineTransformConcat(_affineTransform, placement);
-    return CGAffineTransformConcat(CGAffineTransformMakeTranslation(-_frame.size.width / 2.f,
-                                                                    -_frame.size.height / 2.f),
-                                   placement);
+    return CGAffineTransformConcat(CGAffineTransformMakeTranslation(-_frame.size.width / 2.f, -_frame.size.height / 2.f), placement);
 }
 
 - (void)setFrame:(CGRect)frame
@@ -217,12 +206,12 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     // underlying geometry when that paint already carries a transform.
     // Untransformed paints can accept the frame directly. Their current frame
     // is otherwise calculated and discarded for every assignment.
-    if(CGAffineTransformIsIdentity(_affineTransform)) {
+    if (CGAffineTransformIsIdentity(_affineTransform)) {
         _frame = frame;
         return;
     }
     CGRect currentFrame = self.frame;
-    if(CGSizeEqualToSize(frame.size, currentFrame.size)) {
+    if (CGSizeEqualToSize(frame.size, currentFrame.size)) {
         _frame.origin.x += frame.origin.x - currentFrame.origin.x;
         _frame.origin.y += frame.origin.y - currentFrame.origin.y;
     } else {
@@ -257,13 +246,13 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (void)setChildren:(NSArray<IJSVGPaint*>*)children
 {
-    for(IJSVGPaint* child in _children) {
-        if(child.parentPaint == self) {
+    for (IJSVGPaint* child in _children) {
+        if (child.parentPaint == self) {
             child.parentPaint = nil;
         }
     }
     _children = children.copy;
-    for(IJSVGPaint* child in _children) {
+    for (IJSVGPaint* child in _children) {
         child.parentPaint = self;
     }
 }
@@ -275,13 +264,13 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 + (IJSVGPaintFillType)fillTypeForFill:(id)fill
 {
-    if([fill isKindOfClass:IJSVGColorNode.class]) {
+    if ([fill isKindOfClass:IJSVGColorNode.class]) {
         return IJSVGPaintFillTypeColor;
     }
-    if([fill isKindOfClass:IJSVGGradient.class]) {
+    if ([fill isKindOfClass:IJSVGGradient.class]) {
         return IJSVGPaintFillTypeGradient;
     }
-    if([fill isKindOfClass:IJSVGPattern.class]) {
+    if ([fill isKindOfClass:IJSVGPattern.class]) {
         return IJSVGPaintFillTypePattern;
     }
     return IJSVGPaintFillTypeUnknown;
@@ -290,11 +279,10 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children
 {
     CGRect rect = CGRectNull;
-    for(IJSVGPaint* child in children) {
+    for (IJSVGPaint* child in children) {
         CGRect bounds = child.outerBoundingBox;
-        if([child isKindOfClass:IJSVGTransformPaint.class]) {
-            bounds = CGRectApplyAffineTransform([self calculateFrameForChildren:child.children],
-                                                child.affineTransform);
+        if ([child isKindOfClass:IJSVGTransformPaint.class]) {
+            bounds = CGRectApplyAffineTransform([self calculateFrameForChildren:child.children], child.affineTransform);
         }
         rect = CGRectUnion(rect, bounds);
     }
@@ -304,11 +292,10 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 + (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children
 {
     CGRect rect = CGRectNull;
-    for(IJSVGPaint* child in children) {
+    for (IJSVGPaint* child in children) {
         CGRect bounds = child.boundingBox;
-        if([child isKindOfClass:IJSVGTransformPaint.class]) {
-            bounds = CGRectApplyAffineTransform([self calculateBoundingBoxForChildren:child.children],
-                                                child.affineTransform);
+        if ([child isKindOfClass:IJSVGTransformPaint.class]) {
+            bounds = CGRectApplyAffineTransform([self calculateBoundingBoxForChildren:child.children], child.affineTransform);
         }
         rect = CGRectUnion(rect, bounds);
     }
@@ -317,65 +304,48 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint
 {
-    return CGAffineTransformMakeTranslation(-paint.outerBoundingBox.origin.x,
-                                            -paint.outerBoundingBox.origin.y);
+    return CGAffineTransformMakeTranslation(-paint.outerBoundingBox.origin.x, -paint.outerBoundingBox.origin.y);
 }
 
 + (IJSVGPaint*)rootPaintForPaint:(IJSVGPaint*)paint
 {
     IJSVGPaint* parent = paint.referencingPaint;
-    while(parent.referencingPaint != nil && ![parent isKindOfClass:IJSVGRootPaint.class]) {
+    while (parent.referencingPaint != nil && ![parent isKindOfClass:IJSVGRootPaint.class]) {
         parent = parent.referencingPaint;
     }
     return parent;
 }
 
-+ (void)setBackingScaleFactor:(CGFloat)scale
-                renderQuality:(IJSVGRenderQuality)quality
-           recursivelyToPaint:(IJSVGPaint*)paint
++ (void)setBackingScaleFactor:(CGFloat)scale renderQuality:(IJSVGRenderQuality)quality recursivelyToPaint:(IJSVGPaint*)paint
 {
     paint.backingScaleFactor = scale;
     paint.renderQuality = quality;
-    for(IJSVGPaint* child in paint.children) {
-        [self setBackingScaleFactor:scale
-                      renderQuality:quality
-                 recursivelyToPaint:child];
+    for (IJSVGPaint* child in paint.children) {
+        [self setBackingScaleFactor:scale renderQuality:quality recursivelyToPaint:child];
     }
-    if(paint.maskPaint != nil) {
-        [self setBackingScaleFactor:scale
-                      renderQuality:quality
-                 recursivelyToPaint:paint.maskPaint];
+    if (paint.maskPaint != nil) {
+        [self setBackingScaleFactor:scale renderQuality:quality recursivelyToPaint:paint.maskPaint];
     }
-    if([paint isKindOfClass:IJSVGPatternPaint.class]) {
-        [self setBackingScaleFactor:scale
-                      renderQuality:quality
-                 recursivelyToPaint:((IJSVGPatternPaint*)paint).pattern];
+    if ([paint isKindOfClass:IJSVGPatternPaint.class]) {
+        [self setBackingScaleFactor:scale renderQuality:quality recursivelyToPaint:((IJSVGPatternPaint*)paint).pattern];
     }
 }
 
-+ (void)renderPaint:(IJSVGPaint*)paint
-          inContext:(CGContextRef)ctx
-            options:(IJSVGPaintDrawingOptions)options
++ (void)renderPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx options:(IJSVGPaintDrawingOptions)options
 {
     [paint renderInContext:ctx];
 }
 
-+ (void)clipContextWithMask:(IJSVGPaint*)mask
-                    toPaint:(IJSVGPaint*)paint
-                  inContext:(CGContextRef)ctx
-               drawingBlock:(dispatch_block_t)drawingBlock
++ (void)clipContextWithMask:(IJSVGPaint*)mask toPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx drawingBlock:(dispatch_block_t)drawingBlock
 {
     CGFloat scale = MAX(paint.backingScaleFactor, 1.f);
     CGAffineTransform grid = CGAffineTransformMakeScale(scale, scale);
     // Keep raster coverage separate from the geometry used to position the mask.
-    CGRect sourceBounds = CGRectIsNull(mask.maskingSourceBounds) ?
-        mask.outerBoundingBox : mask.maskingSourceBounds;
+    CGRect sourceBounds = CGRectIsNull(mask.maskingSourceBounds) ? mask.outerBoundingBox : mask.maskingSourceBounds;
     // Clip in raster source coordinates before allocation. ClipToMask below maps
     // source pixels by this translation, the declared mask region remains the
     // final clip. This avoids giant bitmaps for mostly out of region filters.
-    CGRect sourceClip = CGRectOffset(mask.maskingClippingRect,
-        mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x,
-        mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
+    CGRect sourceClip = CGRectOffset(mask.maskingClippingRect, mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x, mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
     sourceBounds = CGRectIntersection(sourceBounds, sourceClip);
     // A mask only contributes inside the destination clip. Map that clip back
     // to mask source coordinates before allocating its bitmap. Keep a sampling
@@ -383,42 +353,31 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     CGRect destinationClip = CGContextGetClipBoundingBox(ctx);
     // Filters and patterns can read a backdrop outside this clip. The mask
     // caching eligibility check already excludes those dependent subtrees.
-    if(mask->_maskCacheKey != nil &&
-        !CGRectIsInfinite(destinationClip) && !CGRectIsNull(destinationClip)) {
+    if (mask->_maskCacheKey != nil && !CGRectIsInfinite(destinationClip) && !CGRectIsNull(destinationClip)) {
         destinationClip = CGRectInset(destinationClip, -2.f / scale, -2.f / scale);
-        destinationClip = CGRectOffset(destinationClip,
-                                       mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x,
-                                       mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
+        destinationClip = CGRectOffset(destinationClip, mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x, mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
         sourceBounds = CGRectIntersection(sourceBounds, destinationClip);
     }
-    if(CGRectIsNull(sourceBounds) || CGRectIsEmpty(sourceBounds)) {
+    if (CGRectIsNull(sourceBounds) || CGRectIsEmpty(sourceBounds)) {
         return;
     }
     CGRect bounds = CGRectIntegral(CGRectApplyAffineTransform(sourceBounds, grid));
     bounds = CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(grid));
     CGRect frame = bounds;
-    if(!IJSVGIsValidContextSize(frame.size)) {
+    if (!IJSVGIsValidContextSize(frame.size)) {
         return;
     }
-    IJSVGMaskCachedImage* cached = mask->_maskCacheKey == nil ? nil :
-        [IJSVGMaskImageCache() objectForKey:mask->_maskCacheKey];
+    IJSVGMaskCachedImage* cached = mask->_maskCacheKey == nil ? nil : [IJSVGMaskImageCache() objectForKey:mask->_maskCacheKey];
     CGImageRef image = NULL;
-    if(cached != nil && cached.scale == scale &&
-        cached.quality == mask.renderQuality &&
-        CGSizeEqualToSize(cached.size, frame.size) &&
-        CGRectEqualToRect(cached.bounds, bounds)) {
+    if (cached != nil && cached.scale == scale && cached.quality == mask.renderQuality && CGSizeEqualToSize(cached.size, frame.size) && CGRectEqualToRect(cached.bounds, bounds)) {
         image = CGImageRetain(cached.image);
     } else {
-        BOOL alphaMask = [mask.sourceNode isKindOfClass:IJSVGMask.class]
-            && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
-        // A color image supplies its alpha to ClipToMask; a gray image supplies
-        // luminance. Preserve RGB here so black alpha-mask content stays opaque.
+        BOOL alphaMask = [mask.sourceNode isKindOfClass:IJSVGMask.class] && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
+        // A color image supplies its alpha to ClipToMask, a gray image supplies
+        // luminance. Preserve RGB here so black alpha mask content stays opaque.
         CGColorSpaceRef colorSpace = alphaMask ? IJSVGDeviceRGBColorSpace() : IJSVGDeviceGrayColorSpace();
-        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale),
-                                                    ceil(frame.size.height * scale), 8, 0,
-                                                    colorSpace,
-                                                    alphaMask ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNone);
-        if(bitmap == NULL) {
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, ceil(frame.size.width * scale), ceil(frame.size.height * scale), 8, 0, colorSpace, alphaMask ? kCGImageAlphaPremultipliedLast : kCGImageAlphaNone);
+        if (bitmap == NULL) {
             return;
         }
         size_t stride = CGBitmapContextGetBytesPerRow(bitmap);
@@ -431,23 +390,21 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         } @finally {
             CGContextRelease(bitmap);
         }
-        if(image == NULL) {
+        if (image == NULL) {
             return;
         }
-        if(mask->_maskCacheKey != nil) {
+        if (mask->_maskCacheKey != nil) {
             // Keep at most one size per mask and avoid retaining large export
             // surfaces. Quartz still renders those at their requested scale.
             [IJSVGMaskImageCache() removeObjectForKey:mask->_maskCacheKey];
-            if(height != 0 && stride <= (4 * 1024 * 1024) / height) {
+            if (height != 0 && stride <= (4 * 1024 * 1024) / height) {
                 cached = [[IJSVGMaskCachedImage alloc] init];
                 cached.image = CGImageRetain(image);
                 cached.size = frame.size;
                 cached.bounds = bounds;
                 cached.scale = scale;
                 cached.quality = mask.renderQuality;
-                [IJSVGMaskImageCache() setObject:cached
-                                          forKey:mask->_maskCacheKey
-                                          cost:stride * height];
+                [IJSVGMaskImageCache() setObject:cached forKey:mask->_maskCacheKey cost:stride * height];
             }
         }
     }
@@ -467,13 +424,12 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (CGRect)transparencyBounds
 {
     CGRect rect = CGRectNull;
-    for(IJSVGPaint* child in self.children) {
+    for (IJSVGPaint* child in self.children) {
         CGRect bounds = child.transparencyBounds;
-        if(CGRectIsInfinite(bounds)) {
+        if (CGRectIsInfinite(bounds)) {
             return CGRectInfinite;
         }
-        CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMidX(child->_frame),
-                                                                       CGRectGetMidY(child->_frame));
+        CGAffineTransform transform = CGAffineTransformMakeTranslation(CGRectGetMidX(child->_frame), CGRectGetMidY(child->_frame));
         transform = CGAffineTransformConcat(child.affineTransform, transform);
         bounds = CGRectOffset(bounds, -child->_frame.size.width * .5f, -child->_frame.size.height * .5f);
         rect = CGRectUnion(rect, CGRectApplyAffineTransform(bounds, transform));
@@ -486,57 +442,44 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     [self renderInContext:ctx applyingPlacement:NO];
 }
 
-- (void)renderInContext:(CGContextRef)ctx
-      applyingPlacement:(BOOL)applyingPlacement
+- (void)renderInContext:(CGContextRef)ctx applyingPlacement:(BOOL)applyingPlacement
 {
-    if(_hidden || _opacity == 0.f || (_clipPath != NULL && CGPathIsEmpty(_clipPath)) ||
-        ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
+    if (_hidden || _opacity == 0.f || (_clipPath != NULL && CGPathIsEmpty(_clipPath)) || ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
         return;
     }
     // Structural groups contribute no drawing state. Their children save and
     // restore their own state, so avoid a Quartz state stack entry per wrapper.
-    // Restrict placement to an actual zero frame to preserve floating-point
+    // Restrict placement to an actual zero frame to preserve floating point
     // rounding for translated or centred geometry.
-    if(self.class == IJSVGGroupPaint.class && _opacity == 1.f && !_isolated &&
-        _blendingMode == kCGBlendModeNormal && _clipPath == NULL && _maskPaint == nil &&
-        _clipPaints.count == 0 && (_sourceNode == nil || CGRectIsNull(_sourceNode.backgroundRect)) &&
-        (!applyingPlacement || (CGRectEqualToRect(_frame, CGRectZero) &&
-                                CGAffineTransformIsIdentity(_affineTransform)))) {
+    if (self.class == IJSVGGroupPaint.class && _opacity == 1.f && !_isolated && _blendingMode == kCGBlendModeNormal && _clipPath == NULL && _maskPaint == nil && _clipPaints.count == 0 && (_sourceNode == nil || CGRectIsNull(_sourceNode.backgroundRect)) && (!applyingPlacement || (CGRectEqualToRect(_frame, CGRectZero) && CGAffineTransformIsIdentity(_affineTransform)))) {
         [self drawContentsInContext:ctx];
         return;
     }
     CGContextSaveGState(ctx);
     @try {
-        if(applyingPlacement) {
+        if (applyingPlacement) {
             CGContextTranslateCTM(ctx, CGRectGetMidX(_frame), CGRectGetMidY(_frame));
             CGContextConcatCTM(ctx, _affineTransform);
             CGContextTranslateCTM(ctx, -_frame.size.width * .5f, -_frame.size.height * .5f);
         }
-        if(_clipPath != NULL) {
+        if (_clipPath != NULL) {
             CGContextAddPath(ctx, _clipPath);
-            if(_clipRule == IJSVGWindingRuleEvenOdd) {
+            if (_clipRule == IJSVGWindingRuleEvenOdd) {
                 CGContextEOClip(ctx);
             } else {
                 CGContextClip(ctx);
             }
         }
         // Stop before allocating masks, filter sources or transparency layers.
-        // Query after placement and clipping; geometry alone cannot cull effects
+        // Query after placement and clipping, geometry alone cannot cull effects
         // such as floods and blurs that paint outside their source paths.
-        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil ||
-            _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal ||
-            [self isKindOfClass:IJSVGFilterPaint.class];
-        if(allocatesEffects && CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
+        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil || _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal || [self isKindOfClass:IJSVGFilterPaint.class];
+        if (allocatesEffects && CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
             return;
         }
         CGContextSetBlendMode(ctx, _blendingMode);
-        if(_maskPaint != nil) {
-            [IJSVGPaint clipContextWithMask:_maskPaint
-                                    toPaint:self
-                                  inContext:ctx
-                               drawingBlock:^{
-                [self performRenderInContext:ctx];
-            }];
+        if (_maskPaint != nil) {
+            [IJSVGPaint clipContextWithMask:_maskPaint toPaint:self inContext:ctx drawingBlock:^{ [self performRenderInContext:ctx]; }];
         } else {
             [self performRenderInContext:ctx];
         }
@@ -547,25 +490,26 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {
-    // Composite the group's completed contents once; children set their own blend modes.
+    // Composite the group completed contents once, children set their own blend
+    // modes.
     BOOL isolated = (_isolated || _opacity != 1.f || _blendingMode != kCGBlendModeNormal) && _children.count != 0;
-    if(_opacity != 1.f) {
+    if (_opacity != 1.f) {
         CGContextSetAlpha(ctx, _opacity);
     }
-    if(isolated) {
+    if (isolated) {
         CGRect bounds = self.transparencyBounds;
-        if(!CGRectIsNull(bounds) && !CGRectIsInfinite(bounds)) {
+        if (!CGRectIsNull(bounds) && !CGRectIsInfinite(bounds)) {
             // Keep antialiasing coverage around the surface at any zoom level.
             CGAffineTransform transform = CGContextGetCTM(ctx);
             CGFloat scale = MIN(hypot(transform.a, transform.b), hypot(transform.c, transform.d));
-            if(scale > 0.f) {
+            if (scale > 0.f) {
                 CGContextClipToRect(ctx, CGRectInset(bounds, -2.f / scale, -2.f / scale));
             }
         }
         CGContextBeginTransparencyLayer(ctx, NULL);
     }
     [self drawContentsInContext:ctx];
-    if(isolated) {
+    if (isolated) {
         CGContextEndTransparencyLayer(ctx);
     }
 }
@@ -573,9 +517,8 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (void)drawContentsInContext:(CGContextRef)ctx
 {
     [self drawInContext:ctx];
-    for(IJSVGPaint* child in _children) {
-        [child renderInContext:ctx
-             applyingPlacement:YES];
+    for (IJSVGPaint* child in _children) {
+        [child renderInContext:ctx applyingPlacement:YES];
     }
 }
 

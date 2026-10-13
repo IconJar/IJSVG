@@ -7,8 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGTraitedColor.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @class IJSVG;
 @class IJSVGExporter;
@@ -52,15 +52,7 @@ typedef NS_OPTIONS(NSInteger, IJSVGExporterOptions) {
     IJSVGExporterOptionCompressFilters = 1 << 23,
     // Omits outside artwork without changing source nodes. Excluded from .all.
     IJSVGExporterOptionRemoveNodesOutsideViewBox = 1 << 24,
-    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups |
-        IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup |
-        IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups |
-        IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput |
-        IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes |
-        IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionRemoveXMLDeclaration |
-        IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths |
-        IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues |
-        IJSVGExporterOptionConvertStrokesToPaths | IJSVGExporterOptionCompressFilters
+    IJSVGExporterOptionAll = IJSVGExporterOptionRemoveUselessDef | IJSVGExporterOptionRemoveUselessGroups | IJSVGExporterOptionCreateUseForPaths | IJSVGExporterOptionMoveAttributesToGroup | IJSVGExporterOptionSortAttributes | IJSVGExporterOptionCollapseGroups | IJSVGExporterOptionCleanupPaths | IJSVGExporterOptionRemoveHiddenElements | IJSVGExporterOptionCompressOutput | IJSVGExporterOptionCollapseGradients | IJSVGExporterOptionRemoveWidthHeightAttributes | IJSVGExporterOptionColorAllowRRGGBBAA | IJSVGExporterOptionRemoveComments | IJSVGExporterOptionRemoveXMLDeclaration | IJSVGExporterOptionConvertArcs | IJSVGExporterOptionConvertShapesToPaths | IJSVGExporterOptionRoundTransforms | IJSVGExporterOptionRemoveDefaultValues | IJSVGExporterOptionConvertStrokesToPaths | IJSVGExporterOptionCompressFilters
 };
 
 BOOL IJSVGExporterHasOption(IJSVGExporterOptions options, NSInteger option);
@@ -68,24 +60,15 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
 const NSArray<NSString*>* IJSVGShortCharacterArray(void);
 const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
-
 @protocol IJSVGExporterDelegate <NSObject>
 
 @optional
-- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
-              identifierForElement:(NSXMLElement* _Nullable)element
-                              type:(IJSVGNodeType)type
-                         defaultID:(NSString* (^)(void))defaultID;
-- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter
-                    stringForColor:(NSColor*)color
-                             flags:(IJSVGColorUsageTraits)flag
-                           options:(IJSVGColorStringOptions)options;
-
+- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter identifierForElement:(NSXMLElement* _Nullable)element type:(IJSVGNodeType)type defaultID:(NSString* (^)(void))defaultID;
+- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter stringForColor:(NSColor*)color flags:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options;
 
 @end
 
 @interface IJSVGExporter : NSObject {
-
 @private
     IJSVGRootNode* _sourceRoot;
     IJSVGStyle* _style;
@@ -98,10 +81,10 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
     NSInteger _shortIdCount;
     BOOL _appliedXLink;
     IJSVGThreadManager* _threadManager;
-    
+
     struct {
-        unsigned int identifierForElement: 1;
-        unsigned int stringForColor: 1;
+        unsigned int identifierForElement : 1;
+        unsigned int stringForColor : 1;
     } _respondsTo;
 }
 
@@ -110,24 +93,14 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 @property (nonatomic, copy, nullable) NSString* title;
 @property (nonatomic, copy, nullable) NSString* desc;
 
-- (instancetype)initWithSVG:(IJSVG*)svg
-                       size:(CGSize)size
-                    options:(IJSVGExporterOptions)options;
-- (instancetype)initWithSVG:(IJSVG*)svg
-                       size:(CGSize)size
-                    options:(IJSVGExporterOptions)options
-floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (instancetype)initWithSVG:(IJSVG*)svg size:(CGSize)size options:(IJSVGExporterOptions)options;
+- (instancetype)initWithSVG:(IJSVG*)svg size:(CGSize)size options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
-- (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode
-                            size:(CGSize)size
-                           style:(IJSVGStyle* _Nullable)style
-                renderingOptions:(IJSVGRenderingOptions* _Nullable)renderingOptions
-                         options:(IJSVGExporterOptions)options
-            floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode size:(CGSize)size style:(IJSVGStyle* _Nullable)style renderingOptions:(IJSVGRenderingOptions* _Nullable)renderingOptions options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 - (NSString*)SVGString;
 - (NSData*)SVGData;
-- (nullable IJSVG*)SVG:(NSError* _Nullable * _Nullable)error;
+- (nullable IJSVG*)SVG:(NSError* _Nullable* _Nullable)error;
 
 @end
 

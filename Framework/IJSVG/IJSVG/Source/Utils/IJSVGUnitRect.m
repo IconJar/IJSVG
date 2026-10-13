@@ -10,8 +10,7 @@
 
 @implementation IJSVGUnitRect
 
-+ (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin
-                            size:(IJSVGUnitSize*)size
++ (IJSVGUnitRect*)rectWithOrigin:(IJSVGUnitPoint*)origin size:(IJSVGUnitSize*)size
 {
     IJSVGUnitRect* rect = [[self alloc] init];
     rect->_origin = origin;
@@ -21,32 +20,22 @@
 
 + (IJSVGUnitRect*)rectWithCGRect:(CGRect)rect
 {
-    return [self rectWithX:rect.origin.x
-                         y:rect.origin.y
-                     width:rect.size.width
-                    height:rect.size.height];
+    return [self rectWithX:rect.origin.x y:rect.origin.y width:rect.size.width height:rect.size.height];
 }
 
 + (IJSVGUnitRect*)zeroRect
 {
-    return [self rectWithOrigin:[IJSVGUnitPoint zeroPoint]
-                           size:[IJSVGUnitSize zeroSize]];
+    return [self rectWithOrigin:[IJSVGUnitPoint zeroPoint] size:[IJSVGUnitSize zeroSize]];
 }
 
-+ (IJSVGUnitRect*)rectWithX:(CGFloat)x
-                          y:(CGFloat)y
-                      width:(CGFloat)width
-                     height:(CGFloat)height
++ (IJSVGUnitRect*)rectWithX:(CGFloat)x y:(CGFloat)y width:(CGFloat)width height:(CGFloat)height
 {
-    IJSVGUnitPoint* origin = [IJSVGUnitPoint pointWithX:[IJSVGUnitLength unitWithFloat:x]
-                                                      y:[IJSVGUnitLength unitWithFloat:y]];
-    IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:[IJSVGUnitLength unitWithFloat:width]
-                                                height:[IJSVGUnitLength unitWithFloat:height]];
-    return [self rectWithOrigin:origin
-                           size:size];
+    IJSVGUnitPoint* origin = [IJSVGUnitPoint pointWithX:[IJSVGUnitLength unitWithFloat:x] y:[IJSVGUnitLength unitWithFloat:y]];
+    IJSVGUnitSize* size = [IJSVGUnitSize sizeWithWidth:[IJSVGUnitLength unitWithFloat:width] height:[IJSVGUnitLength unitWithFloat:height]];
+    return [self rectWithOrigin:origin size:size];
 }
 
-- (id)copyWithZone:(NSZone *)zone
+- (id)copyWithZone:(NSZone*)zone
 {
     IJSVGUnitRect* rect = [[self.class alloc] init];
     rect->_size = _size.copy;
@@ -56,16 +45,12 @@
 
 - (CGRect)computeValue:(CGSize)size
 {
-    return CGRectMake([_origin.x computeValue:size.width],
-                      [_origin.y computeValue:size.height],
-                      [_size.width computeValue:size.width],
-                      [_size.height computeValue:size.height]);
+    return CGRectMake([_origin.x computeValue:size.width], [_origin.y computeValue:size.height], [_size.width computeValue:size.width], [_size.height computeValue:size.height]);
 }
 
 - (BOOL)isZeroRect
 {
-    return _origin.x.value == 0.f && _origin.y.value == 0.f &&
-        _size.width.value == 0.f && _size.height.value == 0.f;
+    return _origin.x.value == 0.f && _origin.y.value == 0.f && _size.width.value == 0.f && _size.height.value == 0.f;
 }
 
 - (BOOL)containsRelativeUnits

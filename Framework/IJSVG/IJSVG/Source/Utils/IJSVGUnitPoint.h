@@ -6,8 +6,8 @@
 //  Copyright © 2020 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGUnitLength.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGUnitLength.h>
 
 @interface IJSVGUnitPoint : NSObject <NSCopying>
 
@@ -18,8 +18,7 @@
 
 + (IJSVGUnitPoint*)zeroPoint;
 + (IJSVGUnitPoint*)pointWithCGPoint:(CGPoint)point;
-+ (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x
-                            y:(IJSVGUnitLength*)y;
++ (IJSVGUnitPoint*)pointWithX:(IJSVGUnitLength*)x y:(IJSVGUnitLength*)y;
 
 - (void)convertUnitsToLengthType:(IJSVGUnitLengthType)lengthType;
 - (CGPoint)computeValue:(CGSize)size;

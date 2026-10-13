@@ -10,7 +10,7 @@
 
 @implementation SVGExampleView1
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"conical"];
 }

@@ -33,28 +33,15 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
 
 typedef void (^IJSVGViewBoxDrawingBlock)(CGFloat scale[]);
 
-+ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment
-                          meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice;
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
-                                meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
++ (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice;
++ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
 + (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
 + (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string;
 
-CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRect,
-                                               IJSVGViewBoxAlignment alignment,
-                                               IJSVGViewBoxMeetOrSlice meetOrSlice);
+CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRect, IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice);
 
-CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox,
-                                          CGRect boundingBox,
-                                          IJSVGViewBoxAlignment alignment,
-                                          IJSVGViewBoxMeetOrSlice meetOrSlice,
-                                          IJSVGViewBoxDrawingBlock block);
+CGAffineTransform IJSVGContextDrawViewBox(CGContextRef ctx, CGRect viewBox, CGRect boundingBox, IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice, IJSVGViewBoxDrawingBlock block);
 
-+ (CGAffineTransform)drawViewBox:(CGRect)viewBox
-                          inRect:(CGRect)drawingRect
-                       alignment:(IJSVGViewBoxAlignment)alignment
-                     meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice
-                       inContext:(CGContextRef)ctx
-                    drawingBlock:(IJSVGViewBoxDrawingBlock)block;
++ (CGAffineTransform)drawViewBox:(CGRect)viewBox inRect:(CGRect)drawingRect alignment:(IJSVGViewBoxAlignment)alignment meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice inContext:(CGContextRef)ctx drawingBlock:(IJSVGViewBoxDrawingBlock)block;
 
 @end

@@ -7,19 +7,21 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGTransform.h>
-#import <IJSVG/IJSVGGroup.h>
+
+#import <IJSVG/IJSVGReference.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
-    IJSVGGradientSpreadMethodPad,
+typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) { IJSVGGradientSpreadMethodPad,
     IJSVGGradientSpreadMethodReflect,
-    IJSVGGradientSpreadMethodRepeat
-};
+    IJSVGGradientSpreadMethodRepeat };
 
-@interface IJSVGGradient : IJSVGGroup
+@interface IJSVGGradient : IJSVGGroup <IJSVGReferenceNode>
+
+@property (nonatomic, strong, nullable) IJSVGReference* reference;
 
 @property (nonatomic, strong, nullable) NSArray<NSColor*>* colors;
 @property (nonatomic, assign, nullable) CGFloat* locations;
@@ -33,21 +35,13 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 
 @property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
 
-+ (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient
-                       colors:(NSArray<NSColor*>* _Nonnull * _Nonnull)someColors;
++ (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray<NSColor*>* _Nonnull* _Nonnull)someColors;
 
 - (void)parseSpreadMethod:(NSXMLElement*)element;
-- (BOOL)drawSpreadInContext:(CGContextRef)ctx
-                 startPoint:(CGPoint)start
-                   endPoint:(CGPoint)end
-                startRadius:(CGFloat)startRadius
-                  endRadius:(CGFloat)endRadius
-                     radial:(BOOL)radial;
+- (BOOL)drawSpreadInContext:(CGContextRef)ctx startPoint:(CGPoint)start endPoint:(CGPoint)end startRadius:(CGFloat)startRadius endRadius:(CGFloat)endRadius radial:(BOOL)radial;
 
 - (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;
-- (void)drawInContextRef:(CGContextRef)ctx
-                  bounds:(NSRect)objectRect
-               transform:(CGAffineTransform)absoluteTransform;
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform;
 
 @end
 

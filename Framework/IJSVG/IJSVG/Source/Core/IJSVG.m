@@ -7,24 +7,24 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <IJSVGTextFontResolver.h>
-#import <IJSVGQuartzRenderer.h>
-#import <IJSVGQuartzRenderer+Outlines.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGQuartzRenderer+Outlines.h>
+#import <IJSVGQuartzRenderer.h>
+#import <IJSVGTextFontResolver.h>
 
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
 @end
 
 @interface IJSVG () {
-  IJSVGQuartzRenderer* _quartzRenderer;
-  IJSVGQuartzRenderer* _artworkRenderer;
-  IJSVGRootNode* _artworkFittingRoot;
-  IJSVGGroup* _artworkFittingGroup;
-  NSSet<IJSVGNode*>* _nodesOutsideViewBox;
-  NSSet<IJSVGNode*>* _artworkFittingHiddenNodes;
+    IJSVGQuartzRenderer* _quartzRenderer;
+    IJSVGQuartzRenderer* _artworkRenderer;
+    IJSVGRootNode* _artworkFittingRoot;
+    IJSVGGroup* _artworkFittingGroup;
+    NSSet<IJSVGNode*>* _nodesOutsideViewBox;
+    NSSet<IJSVGNode*>* _artworkFittingHiddenNodes;
 }
 @end
 
@@ -43,38 +43,31 @@
 
 + (id)SVGNamed:(NSString*)string
 {
-    return [self.class SVGNamed:string
-                          error:nil];
+    return [self.class SVGNamed:string error:nil];
 }
 
-+ (id)SVGNamed:(NSString*)string
-         error:(NSError**)error
++ (id)SVGNamed:(NSString*)string error:(NSError**)error
 {
     NSBundle* bundle = NSBundle.mainBundle;
     NSString* str = nil;
     NSString* ext = [string pathExtension];
-    if(ext == nil || ext.length == 0) {
+    if (ext == nil || ext.length == 0) {
         ext = @"svg";
     }
-    if((str = [bundle pathForResource:[string stringByDeletingPathExtension]
-                               ofType:ext]) != nil) {
-        return [[self alloc] initWithFile:str
-                                    error:error];
+    if ((str = [bundle pathForResource:[string stringByDeletingPathExtension] ofType:ext]) != nil) {
+        return [[self alloc] initWithFile:str error:error];
     }
-    
+
     // check the asset catalogues
-    return [[self alloc] initWithDataAssetNamed:string
-                                          error:error];
+    return [[self alloc] initWithDataAssetNamed:string error:error];
 }
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
 {
-    return [self SVGFromCGPathRef:path
-                          flipped:NO];
+    return [self SVGFromCGPathRef:path flipped:NO];
 }
 
-+ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
-                   flipped:(BOOL)flipped
++ (IJSVG*)SVGFromCGPathRef:(CGPathRef)path flipped:(BOOL)flipped
 {
     CGRect box = CGPathGetPathBoundingBox(path);
     IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
@@ -86,23 +79,16 @@
     return [[self.class alloc] initWithRootNode:rootNode];
 }
 
-- (id)initWithDataAssetNamed:(NSDataAssetName)name
-                       error:(NSError**)error
+- (id)initWithDataAssetNamed:(NSDataAssetName)name error:(NSError**)error
 {
-    return [self initWithDataAssetNamed:name
-                                 bundle:NSBundle.mainBundle
-                                  error:error];
+    return [self initWithDataAssetNamed:name bundle:NSBundle.mainBundle error:error];
 }
 
-- (id)initWithDataAssetNamed:(NSDataAssetName)name
-                      bundle:(NSBundle*)bundle
-                       error:(NSError**)error
+- (id)initWithDataAssetNamed:(NSDataAssetName)name bundle:(NSBundle*)bundle error:(NSError**)error
 {
-    NSDataAsset* dataAsset = [[NSDataAsset alloc] initWithName:name
-                                                        bundle:bundle];
-    if(dataAsset != nil) {
-        return [self initWithSVGData:dataAsset.data
-                               error:error];
+    NSDataAsset* dataAsset = [[NSDataAsset alloc] initWithName:name bundle:bundle];
+    if (dataAsset != nil) {
+        return [self initWithSVGData:dataAsset.data error:error];
     }
     return nil;
 }
@@ -113,12 +99,10 @@
     IJSVGImage* imageNode = [[IJSVGImage alloc] init];
     imageNode.image = image;
     IJSVGUnitSize* size = [IJSVGUnitSize sizeWithCGSize:imageNode.intrinsicSize];
-    IJSVGUnitRect* viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint
-                                                      size:size];
+    IJSVGUnitRect* viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint size:size];
     imageNode.width = size.width.copy;
     imageNode.height = size.height.copy;
-    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:imageNode.width.copy
-                                                   height:imageNode.height.copy];
+    rootNode.intrinsicSize = [IJSVGUnitSize sizeWithWidth:imageNode.width.copy height:imageNode.height.copy];
     rootNode.viewBox = viewBox;
     [rootNode addChild:imageNode];
     return [self initWithRootNode:rootNode];
@@ -126,7 +110,7 @@
 
 - (id)initWithRootNode:(IJSVGRootNode*)rootNode
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _rootNode = rootNode;
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
@@ -136,41 +120,35 @@
 
 - (id)initWithFile:(NSString*)file
 {
-    return [self initWithFile:file
-                        error:nil];
+    return [self initWithFile:file error:nil];
 }
 
-- (id)initWithFile:(NSString*)file
-             error:(NSError**)error
+- (id)initWithFile:(NSString*)file error:(NSError**)error
 {
-    return [self initWithFilePathURL:[NSURL fileURLWithPath:file isDirectory:NO]
-                               error:error];
+    return [self initWithFilePathURL:[NSURL fileURLWithPath:file isDirectory:NO] error:error];
 }
 
 - (id)initWithFilePathURL:(NSURL*)aURL
 {
-    return [self initWithFilePathURL:aURL
-                               error:nil];
+    return [self initWithFilePathURL:aURL error:nil];
 }
 
-- (id)initWithFilePathURL:(NSURL*)aURL
-                    error:(NSError**)error
+- (id)initWithFilePathURL:(NSURL*)aURL error:(NSError**)error
 {
     // create the object
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         NSError* anError = nil;
 
         // create the group
-        IJSVGParser *parser = [IJSVGParser parserForFileURL:aURL
-                                                      error:&anError];
+        IJSVGParser* parser = [IJSVGParser parserForFileURL:aURL error:&anError];
         self.parser = parser;
-      
+
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong...
-        if(_rootNode == nil) {
-            if(error != NULL) {
+        if (_rootNode == nil) {
+            if (error != NULL) {
                 *error = anError;
             }
             self = nil;
@@ -182,33 +160,31 @@
 
 - (id)initWithSVGData:(NSData*)data
 {
-    return [self initWithSVGData:data
-                           error:nil];
+    return [self initWithSVGData:data error:nil];
 }
 
-- (void)setParser:(IJSVGParser*)parser {
+- (void)setParser:(IJSVGParser*)parser
+{
     _rootNode = [parser rootNodeWithSize:CGSizeZero];
     _parser = nil;
 }
 
-- (id)initWithSVGData:(NSData*)data
-                error:(NSError**)error
+- (id)initWithSVGData:(NSData*)data error:(NSError**)error
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         NSError* anError = nil;
 
-        // setup the parser directly from data to avoid creating an intermediate SVG string
-        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGData:data
-                                                           fileURL:nil
-                                                             error:&anError];
+        // setup the parser directly from data to avoid creating an intermediate SVG
+        // string
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGData:data fileURL:nil error:&anError];
         self.parser = parser;
-      
+
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong :(
-        if(_rootNode == nil) {
-            if(error != NULL) {
+        if (_rootNode == nil) {
+            if (error != NULL) {
                 *error = anError;
             }
             self = nil;
@@ -220,30 +196,26 @@
 
 - (id)initWithSVGString:(NSString*)string
 {
-    return [self initWithSVGString:string
-                             error:nil];
+    return [self initWithSVGString:string error:nil];
 }
 
-- (id)initWithSVGString:(NSString*)string
-                  error:(NSError**)error
+- (id)initWithSVGString:(NSString*)string error:(NSError**)error
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         // this is basically the same as init with URL just
         // bypasses the loading of a file
         NSError* anError = nil;
 
         // setup the parser
-        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string
-                                                             fileURL:nil
-                                                               error:&anError];
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:string fileURL:nil error:&anError];
         self.parser = parser;
-      
+
         [self _setupBasicInfoFromGroup];
         [self _setupBasicsFromAnyInitializer];
 
         // something went wrong :(
-        if(_rootNode == nil) {
-            if(error != NULL) {
+        if (_rootNode == nil) {
+            if (error != NULL) {
                 *error = anError;
             }
             self = nil;
@@ -285,12 +257,12 @@
     _renderingOptions = [[IJSVGRenderingOptions alloc] init];
     self.style = [[IJSVGStyle alloc] init];
     self.renderingBackingScaleHelper = ^CGFloat {
-        if(NSScreen.mainScreen != nil) {
+        if (NSScreen.mainScreen != nil) {
             return NSScreen.mainScreen.backingScaleFactor;
         }
         return 1.f;
     };
-    
+
     // tell the thread manager we exist
     [IJSVGThreadManager.currentManager adopt:self];
 }
@@ -331,95 +303,72 @@
     return _rootNode.identifier;
 }
 
-
 // Calculates uniform fitting around the original canvas center.
 - (CGAffineTransform)artworkFittingTransformIncludingFilters:(BOOL)includingFilters
 {
     CGRect viewport = self.viewBox;
-    if(CGRectIsEmpty(viewport) ||
-       !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) ||
-       !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport))) {
+    if (CGRectIsEmpty(viewport) || !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) || !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport))) {
         return CGAffineTransformIdentity;
     }
     CGRect bounds = includingFilters ? self.artworkExtent : self.artworkBounds;
-    if(CGRectIsEmpty(bounds) ||
-       !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) ||
-       !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport)) ||
-       !isfinite(CGRectGetMinX(bounds)) || !isfinite(CGRectGetMinY(bounds)) ||
-       !isfinite(CGRectGetMaxX(bounds)) || !isfinite(CGRectGetMaxY(bounds)) ||
-       CGRectContainsRect(viewport, bounds)) {
+    if (CGRectIsEmpty(bounds) || !isfinite(CGRectGetMinX(viewport)) || !isfinite(CGRectGetMinY(viewport)) || !isfinite(CGRectGetMaxX(viewport)) || !isfinite(CGRectGetMaxY(viewport)) || !isfinite(CGRectGetMinX(bounds)) || !isfinite(CGRectGetMinY(bounds)) || !isfinite(CGRectGetMaxX(bounds)) || !isfinite(CGRectGetMaxY(bounds)) || CGRectContainsRect(viewport, bounds)) {
         return CGAffineTransformIdentity;
     }
-    CGFloat horizontal = MAX(CGRectGetMidX(viewport) - CGRectGetMinX(bounds),
-                             CGRectGetMaxX(bounds) - CGRectGetMidX(viewport));
-    CGFloat vertical = MAX(CGRectGetMidY(viewport) - CGRectGetMinY(bounds),
-                           CGRectGetMaxY(bounds) - CGRectGetMidY(viewport));
+    CGFloat horizontal = MAX(CGRectGetMidX(viewport) - CGRectGetMinX(bounds), CGRectGetMaxX(bounds) - CGRectGetMidX(viewport));
+    CGFloat vertical = MAX(CGRectGetMidY(viewport) - CGRectGetMinY(bounds), CGRectGetMaxY(bounds) - CGRectGetMidY(viewport));
     // Divide before multiplying to avoid overflow for very large coordinates.
-    CGFloat scale = MIN(1.f, MIN((viewport.size.width / 2.f) / horizontal,
-                                (viewport.size.height / 2.f) / vertical));
-    if(!isfinite(scale) || scale <= 0.f || scale >= 1.f - 1e-12) {
+    CGFloat scale = MIN(1.f, MIN((viewport.size.width / 2.f) / horizontal, (viewport.size.height / 2.f) / vertical));
+    if (!isfinite(scale) || scale <= 0.f || scale >= 1.f - 1e-12) {
         return CGAffineTransformIdentity;
     }
-    return CGAffineTransformMake(scale, 0.f, 0.f, scale,
-                                 CGRectGetMidX(viewport) * (1.f - scale),
-                                 CGRectGetMidY(viewport) * (1.f - scale));
+    return CGAffineTransformMake(scale, 0.f, 0.f, scale, CGRectGetMidX(viewport) * (1.f - scale), CGRectGetMidY(viewport) * (1.f - scale));
 }
 
-// Replaces the fitting transform so repeated adjustments never accumulate scale.
+// Replaces the fitting transform so repeated adjustments never accumulate
+// scale.
 - (void)fitArtworkToViewBox:(BOOL)enabled
 {
-    [self fitArtworkToViewBox:enabled
-             includingFilters:NO];
+    [self fitArtworkToViewBox:enabled includingFilters:NO];
 }
 
 // Fits the outer completed artwork so filter regions scale with their contents.
-- (void)fitArtworkToViewBox:(BOOL)enabled
-           includingFilters:(BOOL)includingFilters
+- (void)fitArtworkToViewBox:(BOOL)enabled includingFilters:(BOOL)includingFilters
 {
-    [self fitArtworkToViewBox:enabled
-             includingFilters:includingFilters
-  ignoringNodesOutsideViewBox:NO];
+    [self fitArtworkToViewBox:enabled includingFilters:includingFilters ignoringNodesOutsideViewBox:NO];
 }
 
-- (void)fitArtworkToViewBox:(BOOL)enabled
-ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
+- (void)fitArtworkToViewBox:(BOOL)enabled ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 {
-    [self fitArtworkToViewBox:enabled
-             includingFilters:NO
-  ignoringNodesOutsideViewBox:ignoreOutside];
+    [self fitArtworkToViewBox:enabled includingFilters:NO ignoringNodesOutsideViewBox:ignoreOutside];
 }
 
-- (void)fitArtworkToViewBox:(BOOL)enabled
-           includingFilters:(BOOL)includingFilters
-ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
+- (void)fitArtworkToViewBox:(BOOL)enabled includingFilters:(BOOL)includingFilters ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 {
-    BOOL needsReclassification = _artworkFittingHiddenNodes.count != 0 ||
-        _artworkFittingGroup.transforms.count != 0;
+    BOOL needsReclassification = _artworkFittingHiddenNodes.count != 0 || _artworkFittingGroup.transforms.count != 0;
     // Undo our visibility changes before measuring the original artwork again.
-    for(IJSVGNode* node in _artworkFittingHiddenNodes) {
+    for (IJSVGNode* node in _artworkFittingHiddenNodes) {
         node.shouldRender = YES;
     }
     _artworkFittingHiddenNodes = nil;
     IJSVGRootNode* root = self.rootNode;
-    if(root == nil) {
+    if (root == nil) {
         return;
     }
-    if(_artworkFittingRoot != root ||
-       (_artworkFittingGroup != nil && _artworkFittingGroup.parentNode != root)) {
+    if (_artworkFittingRoot != root || (_artworkFittingGroup != nil && _artworkFittingGroup.parentNode != root)) {
         _artworkFittingRoot = nil;
         _artworkFittingGroup = nil;
     }
     _artworkFittingGroup.transforms = @[];
-    if(needsReclassification) {
+    if (needsReclassification) {
         _nodesOutsideViewBox = nil;
         _artworkRenderer = nil;
     }
-    if(enabled && ignoreOutside) {
-        // The first query classifies the entire tree; reuse it for this operation.
+    if (enabled && ignoreOutside) {
+        // The first query classifies the entire tree, reuse it for this operation.
         [self isNodeOutsideViewBox:root];
         NSMutableSet<IJSVGNode*>* hidden = [NSMutableSet set];
-        for(IJSVGNode* node in _nodesOutsideViewBox) {
-            if(node.shouldRender) {
+        for (IJSVGNode* node in _nodesOutsideViewBox) {
+            if (node.shouldRender) {
                 [hidden addObject:node];
                 node.shouldRender = NO;
             }
@@ -427,14 +376,14 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
         _artworkFittingHiddenNodes = hidden.copy;
         [_artworkRenderer hideNodesInMeasurements:_artworkFittingHiddenNodes];
     }
-    if(enabled) {
-        // The outside-node pass already resolved and updated the measurement tree.
-        if(!ignoreOutside) {
+    if (enabled) {
+        // The outside node pass already resolved and updated the measurement tree.
+        if (!ignoreOutside) {
             _artworkRenderer = nil;
         }
         CGAffineTransform transform = [self artworkFittingTransformIncludingFilters:includingFilters];
-        if(!CGAffineTransformIsIdentity(transform)) {
-            if(_artworkFittingGroup == nil) {
+        if (!CGAffineTransformIsIdentity(transform)) {
+            if (_artworkFittingGroup == nil) {
                 _artworkFittingGroup = [[IJSVGGroup alloc] init];
                 [_artworkFittingGroup addChildren:root.children];
                 [root addChild:_artworkFittingGroup];
@@ -443,22 +392,18 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
             // Preserve full precision without formatting and parsing an SVG string.
             IJSVGTransform* fitting = [[IJSVGTransform alloc] init];
             fitting.command = IJSVGTransformCommandMatrix;
-            CGFloat parameters[] = {
-              transform.a, transform.b, transform.c,
-              transform.d, transform.tx, transform.ty
-            };
-            [fitting setParameters:parameters
-                             count:6];
-            _artworkFittingGroup.transforms = @[fitting];
+            CGFloat parameters[] = { transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty };
+            [fitting setParameters:parameters count:6];
+            _artworkFittingGroup.transforms = @[ fitting ];
         }
     }
     [self setNeedsDisplay];
 }
 
-// Share measurement state without disturbing the context-dependent render tree.
+// Share measurement state without disturbing the context dependent render tree.
 - (IJSVGQuartzRenderer*)artworkRenderer
 {
-    if(_artworkRenderer == nil) {
+    if (_artworkRenderer == nil) {
         _artworkRenderer = [[IJSVGQuartzRenderer alloc] init];
         _artworkRenderer.style = _style;
         _artworkRenderer.renderingOptions = _renderingOptions ?: [[IJSVGRenderingOptions alloc] init];
@@ -470,46 +415,40 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 - (CGRect)artworkExtent
 {
     IJSVGRootNode* root = self.rootNode;
-    if(root == nil) {
+    if (root == nil) {
         return CGRectNull;
     }
-    return [self.artworkRenderer artworkBoundsForRootNode:root
-                                         includingFilters:YES];
+    return [self.artworkRenderer artworkBoundsForRootNode:root includingFilters:YES];
 }
 
 // Measures styled geometry without clipping it to the outer viewport.
 - (CGRect)artworkBounds
 {
     IJSVGRootNode* root = self.rootNode;
-    if(root == nil) {
+    if (root == nil) {
         return CGRectNull;
     }
-    return [self.artworkRenderer artworkBoundsForRootNode:root
-                                         includingFilters:NO];
+    return [self.artworkRenderer artworkBoundsForRootNode:root includingFilters:NO];
 }
 
-- (CGPathRef)outlinePathIncludingFilterExtents:(BOOL)includingFilterExtents
-                               preservingHoles:(BOOL)preservingHoles
+- (CGPathRef)outlinePathIncludingFilterExtents:(BOOL)includingFilterExtents preservingHoles:(BOOL)preservingHoles
 {
-    return [self.artworkRenderer outlinePathForRootNode:self.rootNode
-                                 includingFilterExtents:includingFilterExtents
-                                        preservingHoles:preservingHoles];
+    return [self.artworkRenderer outlinePathForRootNode:self.rootNode includingFilterExtents:includingFilterExtents preservingHoles:preservingHoles];
 }
 
 - (BOOL)isNodeOutsideViewBox:(IJSVGNode* __unsafe_unretained)node
 {
-    // Borrow the argument for cached lookups; retain it only while resolving.
-    if(_nodesOutsideViewBox != nil) {
+    // Borrow the argument for cached lookups, retain it only while resolving.
+    if (_nodesOutsideViewBox != nil) {
         return [_nodesOutsideViewBox containsObject:node];
     }
     IJSVGNode* queryNode = node;
     IJSVGRootNode* root = self.rootNode;
-    if(root == nil || queryNode == nil) {
+    if (root == nil || queryNode == nil) {
         return NO;
     }
-    if(_nodesOutsideViewBox == nil) {
-        _nodesOutsideViewBox = [self.artworkRenderer nodesOutsideViewBox:self.viewBox
-                                                              ofRootNode:root];
+    if (_nodesOutsideViewBox == nil) {
+        _nodesOutsideViewBox = [self.artworkRenderer nodesOutsideViewBox:self.viewBox ofRootNode:root];
     }
     return [_nodesOutsideViewBox containsObject:queryNode];
 }
@@ -528,7 +467,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 {
     NSMutableSet<IJSVG*>* svgs = [[NSMutableSet alloc] init];
     NSArray<IJSVGNode*>* nodes = [self.rootNode childrenOfType:IJSVGNodeTypeSVG];
-    for(IJSVGNode* node in nodes) {
+    for (IJSVGNode* node in nodes) {
         IJSVG* newSVG = nil;
         newSVG = [[self.class alloc] initWithRootNode:(IJSVGRootNode*)node];
         [svgs addObject:newSVG];
@@ -536,85 +475,53 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     return svgs;
 }
 
-- (IJSVGExporter*)exporterWithSize:(CGSize)size
-                           options:(IJSVGExporterOptions)options
-              floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (IJSVGExporter*)exporterWithSize:(CGSize)size options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [[IJSVGExporter alloc] initWithRootNode:_rootNode
-                                              size:size
-                                             style:_style
-                                  renderingOptions:_renderingOptions
-                                           options:options
-                              floatingPointOptions:floatingPointOptions];
+    return [[IJSVGExporter alloc] initWithRootNode:_rootNode size:size style:_style renderingOptions:_renderingOptions options:options floatingPointOptions:floatingPointOptions];
 }
 
 - (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
 {
     IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
-    return [self exporterWithSize:_viewBox.size
-                          options:options
-             floatingPointOptions:fpo].SVGString;
+    return [self exporterWithSize:_viewBox.size options:options floatingPointOptions:fpo].SVGString;
 }
 
-- (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options
-             floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (NSString*)SVGStringWithOptions:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [self exporterWithSize:_viewBox.size
-                          options:options
-             floatingPointOptions:floatingPointOptions].SVGString;
+    return [self exporterWithSize:_viewBox.size options:options floatingPointOptions:floatingPointOptions].SVGString;
 }
 
-- (NSString *)SVGStringWithSize:(CGSize)size
-                        options:(IJSVGExporterOptions)options
+- (NSString*)SVGStringWithSize:(CGSize)size options:(IJSVGExporterOptions)options
 {
     IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
-    return [self exporterWithSize:size
-                          options:options
-             floatingPointOptions:fpo].SVGString;
+    return [self exporterWithSize:size options:options floatingPointOptions:fpo].SVGString;
 }
 
-- (NSString *)SVGStringWithSize:(CGSize)size
-                        options:(IJSVGExporterOptions)options
-           floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (NSString*)SVGStringWithSize:(CGSize)size options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [self exporterWithSize:size
-                          options:options
-             floatingPointOptions:floatingPointOptions].SVGString;
+    return [self exporterWithSize:size options:options floatingPointOptions:floatingPointOptions].SVGString;
 }
 
 - (NSImage*)imageWithSize:(CGSize)aSize
 {
-    return [self imageWithSize:aSize
-                       flipped:NO
-                         error:nil];
+    return [self imageWithSize:aSize flipped:NO error:nil];
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
-                    error:(NSError**)error;
+- (NSImage*)imageWithSize:(CGSize)aSize error:(NSError**)error;
 {
-    return [self imageWithSize:aSize
-                       flipped:NO
-                         error:error];
+    return [self imageWithSize:aSize flipped:NO error:error];
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
-                  flipped:(BOOL)flipped
+- (NSImage*)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped
 {
-    return [self imageWithSize:aSize
-                       flipped:flipped
-                         error:nil];
+    return [self imageWithSize:aSize flipped:flipped error:nil];
 }
 
-- (CGImageRef)newCGImageRefWithSize:(CGSize)size
-                            flipped:(BOOL)flipped
-                              error:(NSError**)error
+- (CGImageRef)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped error:(NSError**)error
 {
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
-    CGRect rect = (CGRect) {
-        .origin = CGPointZero,
-        .size = (CGSize)size
-    };
+    CGRect rect = (CGRect) { .origin = CGPointZero, .size = (CGSize)size };
 
     // make sure we setup the scale based on the backing scale factor
     CGFloat scale = [self backingScaleFactor];
@@ -622,7 +529,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     // create the context and colorspace
     int width = (int)size.width * scale;
     int height = (int)size.height * scale;
-  
+
     // use correct memory alignment for performance.
     size_t bytesPerRow = ((width * 4) + 15) & ~15;
     size_t bufferSize = height * bytesPerRow;
@@ -630,24 +537,20 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     CGColorSpaceRef colorSpace = IJSVGDeviceRGBColorSpace();
     void* data = valloc(bufferSize);
     memset(data, 0, bufferSize);
-    
+
     CGBitmapInfo info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host;
-    CGContextRef ref = CGBitmapContextCreate(data, width, height, 8,
-                                             bytesPerRow, colorSpace,
-                                             info);
+    CGContextRef ref = CGBitmapContextCreate(data, width, height, 8, bytesPerRow, colorSpace, info);
 
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
 
-    if(flipped == YES) {
+    if (flipped == YES) {
         CGContextTranslateCTM(ref, 0.f, size.height);
         CGContextScaleCTM(ref, 1.f, -1.f);
     }
 
     // draw the SVG into the context
-    [self _drawInRect:rect
-              context:ref
-                error:error];
+    [self _drawInRect:rect context:ref error:error];
 
     // create the image from the context
     CGImageRef imageRef = CGBitmapContextCreateImage(ref);
@@ -658,16 +561,11 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     return imageRef;
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
-                  flipped:(BOOL)flipped
-                    error:(NSError**)error
+- (NSImage*)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
 {
-    CGImageRef ref = [self newCGImageRefWithSize:aSize
-                                         flipped:flipped
-                                           error:error];
+    CGImageRef ref = [self newCGImageRefWithSize:aSize flipped:flipped error:error];
 
-    NSImage* image = [[NSImage alloc] initWithCGImage:ref
-                                                 size:aSize];
+    NSImage* image = [[NSImage alloc] initWithCGImage:ref size:aSize];
     CGImageRelease(ref);
     return image;
 }
@@ -681,7 +579,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     CGFloat imageHeight = ogSize.height;
     CGFloat maxWidth = aSize.width;
     CGFloat maxHeight = aSize.height;
-    if(imageWidth > imageHeight) {
+    if (imageWidth > imageHeight) {
         ratio = maxWidth / imageWidth;
     } else {
         ratio = maxHeight / imageHeight;
@@ -691,18 +589,14 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     return ogSize;
 }
 
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize
-                                          flipped:(BOOL)flipped
-                                            error:(NSError**)error
+- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
 {
     CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
     // Make suer we actually have a size, if not, just return nil.
-    if(isnan(ogSize.width) || isnan(ogSize.height)) {
-      return nil;
+    if (isnan(ogSize.width) || isnan(ogSize.height)) {
+        return nil;
     }
-    return [self imageWithSize:ogSize
-                       flipped:flipped
-                         error:error];
+    return [self imageWithSize:ogSize flipped:flipped error:error];
 }
 
 - (NSData*)PDFData
@@ -712,9 +606,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 
 - (NSData*)PDFData:(NSError**)error
 {
-    return [self
-        PDFDataWithRect:(CGRect) { .origin = NSZeroPoint, .size = _viewBox.size }
-                  error:error];
+    return [self PDFDataWithRect:(CGRect) { .origin = NSZeroPoint, .size = _viewBox.size } error:error];
 }
 
 - (NSData*)PDFDataWithRect:(CGRect)rect
@@ -722,16 +614,14 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     return [self PDFDataWithRect:rect error:nil];
 }
 
-- (NSData*)PDFDataWithRect:(CGRect)rect
-                     error:(NSError**)error
+- (NSData*)PDFDataWithRect:(CGRect)rect error:(NSError**)error
 {
     // create the data for the PDF
     NSMutableData* data = [[NSMutableData alloc] init];
 
     // assign the data to the consumer
     CGDataConsumerRef dataConsumer = CGDataConsumerCreateWithCFData((CFMutableDataRef)data);
-    const CGRect box = CGRectMake(rect.origin.x, rect.origin.y, rect.size.width,
-        rect.size.height);
+    const CGRect box = CGRectMake(rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
 
     // create the context
     CGContextRef context = CGPDFContextCreate(dataConsumer, &box, NULL);
@@ -744,9 +634,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 
     // make sure we set the masks to path bits n bobs
     // draw the icon
-    [self _drawInRect:(CGRect)box
-              context:context
-                error:error];
+    [self _drawInRect:(CGRect)box context:context error:error];
 
     CGContextEndPage(context);
 
@@ -760,33 +648,24 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 - (void)prepForDrawingInView:(NSView*)view
 {
     // kill the render
-    if(view == nil) {
+    if (view == nil) {
         self.renderingBackingScaleHelper = nil;
         return;
     }
 
     // set the scale
     __weak NSView* weakView = view;
-    self.renderingBackingScaleHelper = ^CGFloat {
-        return weakView.window.screen.backingScaleFactor;
-    };
+    self.renderingBackingScaleHelper = ^CGFloat { return weakView.window.screen.backingScaleFactor; };
 }
 
-- (BOOL)drawAtPoint:(CGPoint)point
-               size:(CGSize)aSize
+- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize
 {
-    return [self drawAtPoint:point
-                        size:aSize
-                       error:nil];
+    return [self drawAtPoint:point size:aSize error:nil];
 }
 
-- (BOOL)drawAtPoint:(CGPoint)point
-               size:(CGSize)aSize
-              error:(NSError**)error
+- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize error:(NSError**)error
 {
-    return [self drawInRect:NSMakeRect(point.x, point.y,
-                                       aSize.width, aSize.height)
-                      error:error];
+    return [self drawInRect:NSMakeRect(point.x, point.y, aSize.width, aSize.height) error:error];
 }
 
 - (BOOL)drawInRect:(CGRect)rect
@@ -794,30 +673,22 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
     return [self drawInRect:rect error:nil];
 }
 
-- (BOOL)drawInRect:(CGRect)rect
-             error:(NSError**)error
+- (BOOL)drawInRect:(CGRect)rect error:(NSError**)error
 {
     CGContextRef currentCGContext;
     currentCGContext = NSGraphicsContext.currentContext.CGContext;
-    return [self _drawInRect:rect
-                     context:currentCGContext
-                       error:error];
+    return [self _drawInRect:rect context:currentCGContext error:error];
 }
 
-- (void)drawInRect:(CGRect)rect
-           context:(CGContextRef)context
+- (void)drawInRect:(CGRect)rect context:(CGContextRef)context
 {
-    [self _drawInRect:rect
-              context:context
-                error:nil];
+    [self _drawInRect:rect context:context error:nil];
 }
 
 // Draws using the current rendering quality and sizing options.
-- (BOOL)_drawInRect:(CGRect)rect
-            context:(CGContextRef)ctx
-              error:(NSError**)error
+- (BOOL)_drawInRect:(CGRect)rect context:(CGContextRef)ctx error:(NSError**)error
 {
-    if(ctx == NULL) {
+    if (ctx == NULL) {
         return NO;
     }
     CGContextSaveGState(ctx);
@@ -838,19 +709,16 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
             }
         }
         CGContextSetInterpolationQuality(ctx, quality);
-        if(_rootNode.containsRelativeUnits && !CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
+        if (_rootNode.containsRelativeUnits && !CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
             _rootNode.clientSize = rect.size;
             [self _setupBasicInfoFromGroup];
         }
-        if(_quartzRenderer == nil) {
+        if (_quartzRenderer == nil) {
             _quartzRenderer = [[IJSVGQuartzRenderer alloc] init];
             _quartzRenderer.style = _style;
             _quartzRenderer.renderingOptions = _renderingOptions;
         }
-        [_quartzRenderer renderNode:_rootNode
-                          inContext:ctx
-                           viewPort:rect
-                       backingScale:backingScale];
+        [_quartzRenderer renderNode:_rootNode inContext:ctx viewPort:rect backingScale:backingScale];
     } @finally {
         CGContextRestoreGState(ctx);
     }
@@ -882,7 +750,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 - (CGFloat)backingScaleFactor
 {
     __block CGFloat scale = 1.f;
-    if(self.renderingBackingScaleHelper != nil) {
+    if (self.renderingBackingScaleHelper != nil) {
         scale = (self.renderingBackingScaleHelper)();
     }
     scale = MAX(1.f, scale);
@@ -919,7 +787,7 @@ ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 
 - (id)pasteboardPropertyListForType:(NSString*)type
 {
-    if([type isEqualToString:NSPasteboardTypePDF]) {
+    if ([type isEqualToString:NSPasteboardTypePDF]) {
         return [self PDFData];
     }
     return nil;

@@ -15,9 +15,6 @@
 @property (nonatomic, readonly) BOOL hasBasicShape;
 
 + (instancetype)clipPathWithBasicShape:(NSString*)value;
-- (CGPathRef)newBasicShapePathWithFillBox:(CGRect)fillBox
-                                strokeBox:(CGRect)strokeBox
-                                  viewBox:(CGRect)viewBox
-                           lengthResolver:(CGFloat (^)(IJSVGUnitLength* length, CGFloat percentage))resolver;
+- (CGPathRef)newBasicShapePathWithFillBox:(CGRect)fillBox strokeBox:(CGRect)strokeBox viewBox:(CGRect)viewBox lengthResolver:(CGFloat (^)(IJSVGUnitLength* length, CGFloat percentage))resolver;
 
 @end

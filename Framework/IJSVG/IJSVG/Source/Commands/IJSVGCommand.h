@@ -6,16 +6,14 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGPath.h>
-#import <Foundation/Foundation.h>
 
 static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;
 
-typedef NS_ENUM(NSInteger, IJSVGCommandType) {
-    kIJSVGCommandTypeAbsolute,
-    kIJSVGCommandTypeRelative
-};
+typedef NS_ENUM(NSInteger, IJSVGCommandType) { kIJSVGCommandTypeAbsolute,
+    kIJSVGCommandTypeRelative };
 
 @interface IJSVGCommand : NSObject <NSCopying> {
 @private
@@ -32,41 +30,22 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 
 + (Class)commandClassForCommandChar:(char)aChar;
 + (NSInteger)requiredParameterCount;
-+ (NSPoint)readCoordinatePair:(CGFloat*)pairs
-                        index:(NSInteger)index;
++ (NSPoint)readCoordinatePair:(CGFloat*)pairs index:(NSInteger)index;
 + (IJSVGPathDataSequence*)pathDataSequence;
-+ (void)runWithParams:(CGFloat*)params
-           paramCount:(NSInteger)count
-              command:(IJSVGCommand*)currentCommand
-      previousCommand:(IJSVGCommand*)command
-                 type:(IJSVGCommandType)type
-                 path:(CGMutablePathRef)path;
-+ (void)parseParams:(CGFloat*)params
-         paramCount:(NSInteger)paramCount
-          intoArray:(NSMutableArray<IJSVGCommand*>*)commands
-      parentCommand:(IJSVGCommand*)parentCommand;
++ (void)runWithParams:(CGFloat*)params paramCount:(NSInteger)count command:(IJSVGCommand*)currentCommand previousCommand:(IJSVGCommand*)command type:(IJSVGCommandType)type path:(CGMutablePathRef)path;
++ (void)parseParams:(CGFloat*)params paramCount:(NSInteger)paramCount intoArray:(NSMutableArray<IJSVGCommand*>*)commands parentCommand:(IJSVGCommand*)parentCommand;
 
 + (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer;
-+ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer
-                                          dataStream:(IJSVGPathDataStream*)dataStream;
++ (NSArray<IJSVGCommand*>*)commandsForDataCharacters:(const char*)buffer dataStream:(IJSVGPathDataStream*)dataStream;
 + (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands CF_RETURNS_RETAINED NS_SWIFT_NAME(makePath(commands:));
 
-+ (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands
-                                   toUnits:(IJSVGUnitType)unitType
-                                    bounds:(CGRect)bounds;
++ (NSArray<IJSVGCommand*>*)convertCommands:(NSArray<IJSVGCommand*>*)commands toUnits:(IJSVGUnitType)unitType bounds:(CGRect)bounds;
 
-- (id)initWithCommandStringBuffer:(const char*)str
-                       dataStream:(IJSVGPathDataStream*)dataStream;
-- (id)initWithCommandStringBuffer:(const char*)str
-                           length:(NSUInteger)length
-                       dataStream:(IJSVGPathDataStream*)dataStream;
-- (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams
-                               paramCount:(NSInteger)paramCount
-                          previousCommand:(IJSVGCommand*)command;
-- (void)convertToUnits:(IJSVGUnitType)units
-           boundingBox:(CGRect)boundingBox;
-- (IJSVGCommand*)commandByConvertingToUnits:(IJSVGUnitType)unitType
-                                boundingBox:(CGRect)boundingBox;
+- (id)initWithCommandStringBuffer:(const char*)str dataStream:(IJSVGPathDataStream*)dataStream;
+- (id)initWithCommandStringBuffer:(const char*)str length:(NSUInteger)length dataStream:(IJSVGPathDataStream*)dataStream;
+- (IJSVGCommand*)subcommandWithParameters:(CGFloat*)subParams paramCount:(NSInteger)paramCount previousCommand:(IJSVGCommand*)command;
+- (void)convertToUnits:(IJSVGUnitType)units boundingBox:(CGRect)boundingBox;
+- (IJSVGCommand*)commandByConvertingToUnits:(IJSVGUnitType)unitType boundingBox:(CGRect)boundingBox;
 
 - (CGFloat)readFloat;
 - (NSPoint)readPoint;

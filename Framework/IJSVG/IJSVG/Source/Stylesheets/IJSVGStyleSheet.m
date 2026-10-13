@@ -7,9 +7,9 @@
 //
 
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGStyleSheetUtils.h>
-#import <IJSVG/IJSVGStyleSheet.h>
 
 @interface IJSVGStyleSheetWinner : NSObject {
 @public
@@ -22,22 +22,19 @@
 @implementation IJSVGStyleSheetWinner
 @end
 
-static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*,
-                                         IJSVGStyleSheetWinner*>* winners,
-    IJSVGStyleSheetRule* rule, NSUInteger specificity)
+static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*, IJSVGStyleSheetWinner*>* winners, IJSVGStyleSheetRule* rule, NSUInteger specificity)
 {
-    for(NSString* property in rule.style.properties) {
+    for (NSString* property in rule.style.properties) {
         BOOL important = [rule.style isPropertyImportant:property];
         IJSVGStyleSheetWinner* winner = winners[property];
-        if(winner == nil) {
+        if (winner == nil) {
             winner = [[IJSVGStyleSheetWinner alloc] init];
             winners[property] = winner;
-        } else if(important != winner->important) {
-            if(!important) {
+        } else if (important != winner->important) {
+            if (!important) {
                 continue;
             }
-        } else if(specificity < winner->specificity ||
-                  (specificity == winner->specificity && rule.sourceIndex < winner->rule.sourceIndex)) {
+        } else if (specificity < winner->specificity || (specificity == winner->specificity && rule.sourceIndex < winner->rule.sourceIndex)) {
             continue;
         }
         winner->rule = rule;
@@ -46,12 +43,11 @@ static void IJSVGStyleSheetUpdateWinners(NSMutableDictionary<NSString*,
     }
 }
 
-static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableIndexSet*>* index,
-    NSSet<NSString*>* names, NSUInteger ruleIndex)
+static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableIndexSet*>* index, NSSet<NSString*>* names, NSUInteger ruleIndex)
 {
-    for(NSString* name in names) {
+    for (NSString* name in names) {
         NSMutableIndexSet* entries = index[name];
-        if(entries == nil) {
+        if (entries == nil) {
             entries = [[NSMutableIndexSet alloc] init];
             index[name] = entries;
         }
@@ -73,7 +69,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
 - (id)init
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _selectors = [[NSMutableDictionary alloc] init];
         _rules = [[NSMutableArray alloc] init];
         _identifierRules = [[NSMutableDictionary alloc] init];
@@ -92,20 +88,19 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
     for (__strong NSString* selectorName in comp) {
         selectorName = [selectorName stringByTrimmingCharactersInSet:whiteSpaceCharSet];
-        if(selectorName.length == 0) {
+        if (selectorName.length == 0) {
             continue;
         }
 
         IJSVGStyleSheetSelector* selector = nil;
-        if((selector = [_selectors objectForKey:selectorName]) == nil) {
+        if ((selector = [_selectors objectForKey:selectorName]) == nil) {
             selector = [[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName];
-            if(selector != nil) {
-                [_selectors setObject:selector
-                               forKey:selectorName];
+            if (selector != nil) {
+                [_selectors setObject:selector forKey:selectorName];
             }
         }
 
-        if(selector != nil) {
+        if (selector != nil) {
             [array addObject:selector];
         }
     }
@@ -116,12 +111,12 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 {
     NSString* cleanString = IJSVGStyleSheetStringByRemovingCSSComments(string);
     const char* chars = cleanString.UTF8String;
-    if(chars == NULL) {
+    if (chars == NULL) {
         return;
     }
 
     NSUInteger length = strlen(chars);
-    if(length == 0) {
+    if (length == 0) {
         return;
     }
 
@@ -133,31 +128,31 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     NSCharacterSet* whitespaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     NSString* selector = nil;
 
-    for(NSUInteger i = 0; i < length; i++) {
-        if(quote == 0 && !escaped) {
+    for (NSUInteger i = 0; i < length; i++) {
+        if (quote == 0 && !escaped) {
             i += strcspn(chars + i, "{}()'\"\\");
-            if(i == length) {
+            if (i == length) {
                 break;
             }
         }
         char c = chars[i];
 
-        if(IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
+        if (IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
             continue;
         }
 
-        if(c == '(') {
+        if (c == '(') {
             parenDepth += 1;
             continue;
         }
 
-        if(c == ')' && parenDepth != 0) {
+        if (c == ')' && parenDepth != 0) {
             parenDepth -= 1;
             continue;
         }
 
-        if(c == '{' && parenDepth == 0) {
-            if(depth == 0) {
+        if (c == '{' && parenDepth == 0) {
+            if (depth == 0) {
                 selector = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
                 selector = [selector stringByTrimmingCharactersInSet:whitespaceCharSet];
                 marker = i + 1;
@@ -166,18 +161,16 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
             continue;
         }
 
-        if(c == '}' && parenDepth == 0) {
-            if(depth == 0) {
+        if (c == '}' && parenDepth == 0) {
+            if (depth == 0) {
                 marker = i + 1;
                 continue;
             }
-            if(depth == 1) {
+            if (depth == 1) {
                 NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector];
-                if(i != marker && selectors.count != 0) {
-                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars + marker
-                                                                                 length:i - marker];
-                    [self addParsedStyle:style
-                           withSelectors:selectors];
+                if (i != marker && selectors.count != 0) {
+                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars + marker length:i - marker];
+                    [self addParsedStyle:style withSelectors:selectors];
                 }
                 marker = i + 1;
             }
@@ -186,27 +179,24 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     }
 }
 
-- (void)addStyleRule:(NSString*)rule
-       withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
+- (void)addStyleRule:(NSString*)rule withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
 {
-    [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule]
-           withSelectors:selectors];
+    [self addParsedStyle:[IJSVGStyleSheetStyle parseStyleString:rule] withSelectors:selectors];
 }
 
-- (void)addParsedStyle:(IJSVGStyleSheetStyle*)style
-         withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
+- (void)addParsedStyle:(IJSVGStyleSheetStyle*)style withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors
 {
     IJSVGStyleSheetRule* aRule = [[IJSVGStyleSheetRule alloc] init];
     aRule.style = style;
     aRule.selectors = selectors;
     aRule.sourceIndex = _rules.count;
-  
-    for(IJSVGStyleSheetSelector* selector in selectors) {
+
+    for (IJSVGStyleSheetSelector* selector in selectors) {
         [aRule addMatchingSelector:selector];
         _requiresSelectorTree |= selector.requiresSelectorTree;
     }
     [_rules addObject:aRule];
-    if(aRule.matchesUniversalSelector) {
+    if (aRule.matchesUniversalSelector) {
         [_universalRules addIndex:aRule.sourceIndex];
     } else {
         IJSVGStyleSheetIndexRule(_identifierRules, aRule.matchingIdentifiers, aRule.sourceIndex);
@@ -217,62 +207,58 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
 - (IJSVGStyleSheetStyle*)styleForNode:(id<IJSVGStyleSheetSelectorNode>)node
 {
-    if(_rules.count == 1) {
+    if (_rules.count == 1) {
         IJSVGStyleSheetRule* rule = _rules.firstObject;
         IJSVGStyleSheetSelector* selector = nil;
-        return [rule matchesNode:node
-                        selector:&selector] ? rule.style : nil;
+        return [rule matchesNode:node selector:&selector] ? rule.style : nil;
     }
     NSMutableIndexSet* candidates = [_universalRules mutableCopy];
-    if(node.identifier != nil) {
+    if (node.identifier != nil) {
         NSIndexSet* entries = _identifierRules[node.identifier];
-        if(entries != nil) {
+        if (entries != nil) {
             [candidates addIndexes:entries];
         }
     }
-    if(node.name != nil) {
+    if (node.name != nil) {
         NSIndexSet* entries = _tagRules[node.name];
-        if(entries != nil) {
+        if (entries != nil) {
             [candidates addIndexes:entries];
         }
     }
-    for(NSString* className in node.classNameList) {
+    for (NSString* className in node.classNameList) {
         NSIndexSet* entries = _classRules[className];
-        if(entries != nil) {
+        if (entries != nil) {
             [candidates addIndexes:entries];
         }
     }
     IJSVGStyleSheetRule* firstRule = nil;
     NSUInteger firstSpecificity = 0;
     NSMutableDictionary<NSString*, IJSVGStyleSheetWinner*>* winners = nil;
-    for(NSUInteger index = candidates.firstIndex; index != NSNotFound;
-        index = [candidates indexGreaterThanIndex:index]) {
+    for (NSUInteger index = candidates.firstIndex; index != NSNotFound; index = [candidates indexGreaterThanIndex:index]) {
         IJSVGStyleSheetRule* rule = _rules[index];
         IJSVGStyleSheetSelector* selector = nil;
-        if(![rule matchesNode:node
-                     selector:&selector]) {
+        if (![rule matchesNode:node selector:&selector]) {
             continue;
         }
         // Reuse the existing style when only one rule matches.
-        if(firstRule == nil) {
+        if (firstRule == nil) {
             firstRule = rule;
             firstSpecificity = selector.specificity;
             continue;
         }
-        if(winners == nil) {
+        if (winners == nil) {
             winners = [[NSMutableDictionary alloc] init];
             IJSVGStyleSheetUpdateWinners(winners, firstRule, firstSpecificity);
         }
         IJSVGStyleSheetUpdateWinners(winners, rule, selector.specificity);
     }
-    if(winners == nil) {
+    if (winners == nil) {
         return firstRule.style;
     }
     IJSVGStyleSheetStyle* style = [[IJSVGStyleSheetStyle alloc] init];
-    for(NSString* property in winners) {
+    for (NSString* property in winners) {
         IJSVGStyleSheetWinner* winner = winners[property];
-        [style copyProperty:property
-                  fromStyle:winner->rule.style];
+        [style copyProperty:property fromStyle:winner->rule.style];
     }
     return style;
 }

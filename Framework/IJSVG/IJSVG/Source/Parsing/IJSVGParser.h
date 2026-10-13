@@ -6,27 +6,27 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGColor.h>
+#import <IJSVG/IJSVGColorNode.h>
 #import <IJSVG/IJSVGCommand.h>
 #import <IJSVG/IJSVGError.h>
+#import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGGroup.h>
-#import <IJSVG/IJSVGColorNode.h>
-#import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGMask.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
-#import <IJSVG/IJSVGMask.h>
-#import <IJSVG/IJSVGFilter.h>
-#import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <AppKit/AppKit.h>
-#import <Foundation/Foundation.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -291,7 +291,6 @@ FOUNDATION_EXPORT NSString* const IJSVGAttributePathLength;
 @class IJSVGThreadManager;
 
 @interface IJSVGParser : NSObject {
-
 @private
     NSXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
@@ -305,18 +304,12 @@ FOUNDATION_EXPORT NSString* const IJSVGAttributePathLength;
 
 + (BOOL)isDataSVG:(NSData*)data;
 
-- (nullable instancetype)initWithSVGString:(NSString*)string
-                fileURL:(NSURL* _Nullable)fileURL
-                  error:(NSError* _Nullable * _Nullable)error;
-- (nullable instancetype)initWithSVGData:(NSData*)data
-              fileURL:(NSURL* _Nullable)fileURL
-                error:(NSError* _Nullable * _Nullable)error;
+- (nullable instancetype)initWithSVGString:(NSString*)string fileURL:(NSURL* _Nullable)fileURL error:(NSError* _Nullable* _Nullable)error;
+- (nullable instancetype)initWithSVGData:(NSData*)data fileURL:(NSURL* _Nullable)fileURL error:(NSError* _Nullable* _Nullable)error;
 
-- (nullable instancetype)initWithFileURL:(NSURL*)aURL
-                error:(NSError* _Nullable * _Nullable)error;
+- (nullable instancetype)initWithFileURL:(NSURL*)aURL error:(NSError* _Nullable* _Nullable)error;
 + (nullable IJSVGParser*)parserForFileURL:(NSURL*)aURL;
-+ (nullable IJSVGParser*)parserForFileURL:(NSURL*)aURL
-                           error:(NSError* _Nullable * _Nullable)error;
++ (nullable IJSVGParser*)parserForFileURL:(NSURL*)aURL error:(NSError* _Nullable* _Nullable)error;
 
 - (IJSVGRootNode*)rootNodeWithSize:(CGSize)size;
 

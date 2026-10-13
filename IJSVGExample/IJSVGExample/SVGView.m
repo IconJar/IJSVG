@@ -13,16 +13,14 @@
 // Configures SVG display with the standard rendering options.
 - (id)initWithFrame:(NSRect)frameRect
 {
-    if( ( self = [super initWithFrame:frameRect] ) != nil ) {
+    if ((self = [super initWithFrame:frameRect]) != nil) {
         svg = [self svg];
-        svg.renderingBackingScaleHelper = ^CGFloat {
-            return NSScreen.mainScreen.backingScaleFactor;
-        };
+        svg.renderingBackingScaleHelper = ^CGFloat { return NSScreen.mainScreen.backingScaleFactor; };
     }
     return self;
 }
 
-- (IJSVG *)svg
+- (IJSVG*)svg
 {
     return [IJSVG SVGNamed:@"symbols.svg"];
 }
@@ -31,8 +29,8 @@
 {
     CGContextRef ref = [[NSGraphicsContext currentContext] CGContext];
     CGContextSaveGState(ref);
-    CGContextTranslateCTM( ref, 0, self.bounds.size.height);
-    CGContextScaleCTM( ref, 1, -1 );
+    CGContextTranslateCTM(ref, 0, self.bounds.size.height);
+    CGContextScaleCTM(ref, 1, -1);
     [svg drawInRect:self.bounds];
     CGContextRestoreGState(ref);
 }

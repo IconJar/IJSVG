@@ -10,8 +10,15 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGNodeParsing.h>
 
 @implementation IJSVGImage
+
+- (void)applyPropertiesFromNode:(IJSVGImage*)node
+{
+    [super applyPropertiesFromNode:node];
+    self.reference = node.reference;
+}
 
 + (IJSVGNodeType)defaultNodeType
 {
@@ -35,24 +42,10 @@
 
 - (void)dealloc
 {
-    if(CGImage != NULL) {
+    if (CGImage != NULL) {
         CGImageRelease(CGImage);
         CGImage = NULL;
     }
-}
-
-+ (IJSVGBitFlags*)allowedAttributes
-{
-    IJSVGBitFlags* storage = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
-    [storage addBits:[super allowedAttributes]];
-    [storage setBit:IJSVGNodeAttributeX];
-    [storage setBit:IJSVGNodeAttributeY];
-    [storage setBit:IJSVGNodeAttributeWidth];
-    [storage setBit:IJSVGNodeAttributeHeight];
-    [storage setBit:IJSVGNodeAttributePreserveAspectRatio];
-    [storage setBit:IJSVGNodeAttributeFilter];
-    [storage setBit:IJSVGNodeAttributeOverflow];
-    return storage;
 }
 
 - (void)setDefaults
@@ -65,14 +58,11 @@
 
 - (void)loadFromString:(NSString*)encodedString
 {
-    if([encodedString hasPrefix:@"data:"]) {
-        encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+"
-                                                                 withString:@""
-                                                                    options:NSRegularExpressionSearch
-                                                                      range:NSMakeRange(0, encodedString.length)];
+    if ([encodedString hasPrefix:@"data:"]) {
+        encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+" withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, encodedString.length)];
     }
     NSURL* url = [NSURL URLWithString:encodedString];
-    if(url != nil) {
+    if (url != nil) {
         [self loadFromURL:url];
     }
 }
@@ -81,31 +71,28 @@
 {
     // If we are not a data URL, lets check what its trying to reach is actually
     // reachable, if not, just return as cant load it.
-    if (![aURL.scheme isEqualToString:@"data"] &&
-        ![aURL checkResourceIsReachableAndReturnError:nil]) {
+    if (![aURL.scheme isEqualToString:@"data"] && ![aURL checkResourceIsReachableAndReturnError:nil]) {
 #if DEBUG
-      NSLog(@"<%@> references: \"%@\", which cannot be reached.",
-            NSStringFromClass(self.class), aURL);
+        NSLog(@"<%@> references: \"%@\", which cannot be reached.", NSStringFromClass(self.class), aURL);
 #endif
-      return;
+        return;
     }
 
     // Convert to data, if its nil, just return, nothing more can do.
     NSData* data = [NSData dataWithContentsOfURL:aURL];
-    if(data == nil) {
+    if (data == nil) {
         return;
     }
 
     // set the image against the container, only if it was created from the data.
     NSImage* anImage = [[NSImage alloc] initWithData:data];
     if (anImage == nil) {
-      return;
+        return;
     }
     [self setImage:anImage];
 
     _sourceData = [data copy];
-    _sourceMIMEType = [[IJSVGUtils MIMETypeForImageData:data
-                                              sourceURL:aURL] copy];
+    _sourceMIMEType = [[IJSVGUtils MIMETypeForImageData:data sourceURL:aURL] copy];
 }
 
 - (void)setImage:(NSImage*)anImage
@@ -115,24 +102,20 @@
     _image = anImage;
     _intrinsicSize = (CGSize)_image.size;
 
-    if(CGImage != NULL) {
+    if (CGImage != NULL) {
         CGImageRelease(CGImage);
         CGImage = NULL;
     }
 
-    if(_image == nil) {
+    if (_image == nil) {
         _intrinsicSize = CGSizeZero;
         return;
     }
 
-    CGRect rect = CGRectMake(0.f, 0.f,
-                             _intrinsicSize.width,
-                             _intrinsicSize.height);
-    CGImage = [_image CGImageForProposedRect:&rect
-                                     context:nil
-                                       hints:nil];
+    CGRect rect = CGRectMake(0.f, 0.f, _intrinsicSize.width, _intrinsicSize.height);
+    CGImage = [_image CGImageForProposedRect:&rect context:nil hints:nil];
 
-    if(CGImage != NULL) {
+    if (CGImage != NULL) {
         CGImageRetain(CGImage);
     }
 }
@@ -152,9 +135,55 @@
 
 - (CGRect)bounds
 {
-    return CGRectMake(0.f, 0.f,
-                      self.width.value,
-                      self.height.value);
+    return CGRectMake(0.f, 0.f, self.width.value, self.height.value);
+}
+
+@end
+
+#pragma mark - Parsing
+
+@implementation IJSVGImage (Parsing)
+
++ (IJSVGBitFlags*)allowedAttributes
+{
+    IJSVGBitFlags* attributes = IJSVGGraphicsAttributes();
+    [attributes setBit:IJSVGNodeAttributeX];
+    [attributes setBit:IJSVGNodeAttributeY];
+    [attributes setBit:IJSVGNodeAttributeWidth];
+    [attributes setBit:IJSVGNodeAttributeHeight];
+    [attributes setBit:IJSVGNodeAttributeHref];
+    [attributes setBit:IJSVGNodeAttributeXLink];
+    [attributes setBit:IJSVGNodeAttributePreserveAspectRatio];
+    [attributes setBit:IJSVGNodeAttributeOverflow];
+    return attributes;
+}
+
+- (void)consumeAttributes:(IJSVGNodeParsingContext*)context
+{
+    self.reference = context->reference;
+    IJSVGParseColorAttributes(self, context);
+    IJSVGParseTextStyleAttributes(self, context);
+    IJSVGParseGeometryInheritance(self, context);
+    IJSVGUnitLength* geometryLength = nil;
+    if (IJSVGReadGeometryLength(self, context, IJSVGNodeAttributeX, &geometryLength)) {
+        self.x = geometryLength;
+    }
+    if (IJSVGReadGeometryLength(self, context, IJSVGNodeAttributeY, &geometryLength)) {
+        self.y = geometryLength;
+    }
+    if (IJSVGReadGeometryLength(self, context, IJSVGNodeAttributeWidth, &geometryLength)) {
+        self.width = geometryLength;
+    }
+    if (IJSVGReadGeometryLength(self, context, IJSVGNodeAttributeHeight, &geometryLength)) {
+        self.height = geometryLength;
+    }
+    IJSVGParseBackgroundAttributes(self, context);
+    IJSVGParseFilterColorInterpolation(self, context);
+    IJSVGParsePaintAttributes(self, context);
+    IJSVGParseEffectsAttributes(self, context);
+    IJSVGParseTransformAttributes(self, context);
+    IJSVGParseDisplayAttributes(self, context);
+    IJSVGParseViewportAttributes(self, context);
 }
 
 @end

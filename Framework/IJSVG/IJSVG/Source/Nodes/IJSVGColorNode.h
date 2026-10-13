@@ -10,14 +10,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGContextPaint) {
-    IJSVGContextPaintNone,
+typedef NS_ENUM(NSUInteger, IJSVGContextPaint) { IJSVGContextPaintNone,
     IJSVGContextPaintFill,
-    IJSVGContextPaintStroke
-};
+    IJSVGContextPaintStroke };
 
 @interface IJSVGColorNode : IJSVGNode {
-    
 }
 
 @property (nonatomic, strong, nullable) NSColor* color;

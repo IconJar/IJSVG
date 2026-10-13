@@ -1,8 +1,10 @@
 #!/bin/sh
-# Validate the package as a consumer builds it, without cached build products.
+# Check formatting, then validate a fresh consumer build of the package.
 set -eu
 
 repository_root="$(cd "$(dirname "$0")/../.." && pwd)"
+/bin/bash "$repository_root/IJSVGExample/Scripts/check-format.sh"
+
 scratch_directory="$(mktemp -d "${TMPDIR:-/tmp}/ijsvg-release.XXXXXX")"
 trap 'rm -rf "$scratch_directory"' EXIT
 trap 'exit 1' HUP INT TERM

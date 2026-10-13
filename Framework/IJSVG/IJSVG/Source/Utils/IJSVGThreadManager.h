@@ -6,14 +6,14 @@
 //  Copyright © 2022 Curtis Hard. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
 #import <CoreGraphics/CoreGraphics.h>
 #import <CoreImage/CoreImage.h>
-#import <IJSVG/IJSVGParsing.h>
+#import <Foundation/Foundation.h>
+#import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGFeatureFlags.h>
-#import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParsing.h>
 
 @interface IJSVGThreadManager : NSObject {
 @private
@@ -45,8 +45,7 @@
 - (void)remove:(IJSVG*)svg;
 - (BOOL)manages:(IJSVG*)svg;
 
-- (void)setUserInfoObject:(id)object
-                   forKey:(id<NSCopying>)key;
+- (void)setUserInfoObject:(id)object forKey:(id<NSCopying>)key;
 - (id)userInfoObjectForKey:(id<NSCopying>)key;
 
 @end

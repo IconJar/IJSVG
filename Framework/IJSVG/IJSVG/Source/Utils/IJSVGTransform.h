@@ -6,16 +6,15 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVG/IJSVGUtils.h>
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGUtils.h>
 
 @class IJSVGTransform;
 
 typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
 typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform* transform);
 
-typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
-    IJSVGTransformCommandMatrix,
+typedef NS_ENUM(NSInteger, IJSVGTransformCommand) { IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
     IJSVGTransformCommandTranslateX,
     IJSVGTransformCommandTranslateY,
@@ -23,12 +22,9 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
     IJSVGTransformCommandRotate,
     IJSVGTransformCommandSkewX,
     IJSVGTransformCommandSkewY,
-    IJSVGTransformCommandNotImplemented
-};
+    IJSVGTransformCommandNotImplemented };
 
-enum {
-    IJSVGTransformParameterCapacity = 6
-};
+enum { IJSVGTransformParameterCapacity = 6 };
 
 @interface IJSVGTransform : NSObject {
     CGFloat _parameters[IJSVGTransformParameterCapacity];
@@ -46,30 +42,20 @@ void IJSVGConcatTransformsCTM(CGContextRef context, NSArray<IJSVGTransform*>* tr
 NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 
 + (NSArray<NSDictionary<NSString*, id>*>*)affineTransformToSVGTransformComponents:(CGAffineTransform)transform;
-+ (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform
-                                     floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform;
 + (NSArray<IJSVGTransform*>*)transformsFromAffineTransform:(CGAffineTransform)affineTransform;
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string;
-+ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
-                                   allowCSSUnits:(BOOL)allowCSSUnits;
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string allowCSSUnits:(BOOL)allowCSSUnits;
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)affineTransform;
-+ (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform
-                         floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
-- (void)applyBounds:(CGRect)bounds
-   withContentUnits:(IJSVGUnitType)contentUnits;
-- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units
-                                     bounds:(CGRect)bounds;
-- (void)setParameters:(const CGFloat*)parameters
-                count:(NSInteger)count;
++ (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)transform floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
+- (void)applyBounds:(CGRect)bounds withContentUnits:(IJSVGUnitType)contentUnits;
+- (IJSVGTransform*)transformByApplyingUnits:(IJSVGUnitType)units bounds:(CGRect)bounds;
+- (void)setParameters:(const CGFloat*)parameters count:(NSInteger)count;
 - (CGAffineTransform)CGAffineTransform;
 - (CGAffineTransform)stackIdentity:(CGAffineTransform)identity;
-+ (IJSVGTransform*)transformByTranslatingX:(CGFloat)x
-                                         y:(CGFloat)y;
-+ (IJSVGTransform*)transformByScaleX:(CGFloat)x
-                                   y:(CGFloat)y;
-+ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string
-                                           units:(IJSVGUnitType)units
-                                          bounds:(CGRect)bounds;
++ (IJSVGTransform*)transformByTranslatingX:(CGFloat)x y:(CGFloat)y;
++ (IJSVGTransform*)transformByScaleX:(CGFloat)x y:(CGFloat)y;
++ (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string units:(IJSVGUnitType)units bounds:(CGRect)bounds;
 
 @end

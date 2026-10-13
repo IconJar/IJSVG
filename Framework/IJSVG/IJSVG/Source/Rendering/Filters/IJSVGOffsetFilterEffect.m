@@ -2,26 +2,19 @@
 //  IJSVGOffsetFilterEffect.m
 //  IJSVG
 //
-//  Created on 29/09/2026.
+//  Created by Curtis Hard on 29/09/2026.
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGOffsetFilterEffect.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVGOffsetFilterEffect.h>
 
 @implementation IJSVGOffsetFilterEffect
 
-- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive
-                             inputs:(NSArray<CIImage*>*)inputs
-                             region:(CGRect)region
-                            context:(IJSVGFilterContext*)context
+- (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context
 {
     // Move the image using the filter coordinate units.
-    return [context offsetImage:inputs.firstObject ?: CIImage.emptyImage
-                             dx:[primitive numberForParameter:IJSVGAttributeDX
-                                                 defaultValue:0]
-                             dy:[primitive numberForParameter:IJSVGAttributeDY
-                                                 defaultValue:0]];
+    return [context offsetImage:inputs.firstObject ?: CIImage.emptyImage dx:[primitive numberForParameter:IJSVGAttributeDX defaultValue:0] dy:[primitive numberForParameter:IJSVGAttributeDY defaultValue:0]];
 }
 
 @end

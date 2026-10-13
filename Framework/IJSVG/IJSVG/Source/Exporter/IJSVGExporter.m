@@ -9,24 +9,24 @@
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGExporterPathInstruction.h>
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGMath.h>
+#import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGRadialGradient.h>
+#import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVGFilterGraph.h>
+#import <IJSVGFilterPaint.h>
 #import <IJSVGGradientPaint.h>
 #import <IJSVGGroupPaint.h>
 #import <IJSVGImagePaint.h>
-#import <IJSVG/IJSVGLinearGradient.h>
-#import <IJSVG/IJSVGMath.h>
-#import <IJSVGPatternPaint.h>
-#import <IJSVG/IJSVGRadialGradient.h>
-#import <IJSVGShapePaint.h>
-#import <IJSVGStrokePaint.h>
-#import <IJSVGTransformPaint.h>
-#import <IJSVG/IJSVGParser.h>
 #import <IJSVGParserUtils.h>
-#import <IJSVGTextFontResolver.h>
-#import <IJSVG/IJSVGThreadManager.h>
-#import <IJSVGFilterPaint.h>
-#import <IJSVGFilterGraph.h>
+#import <IJSVGPatternPaint.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGRootPaint.h>
+#import <IJSVGShapePaint.h>
+#import <IJSVGStrokePaint.h>
+#import <IJSVGTextFontResolver.h>
+#import <IJSVGTransformPaint.h>
 
 @interface IJSVGExporter () {
     IJSVGRootPaint* _rootPaint;
@@ -57,12 +57,7 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
 {
     static NSArray<NSString*>* _array;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l",
-            @"m", @"n", @"o", @"p", @"q", @"r", @"s", @"t", @"u", @"v", @"w", @"x", @"y", @"z",
-            @"A", @"B", @"C", @"D", @"E", @"F", @"G", @"H", @"I", @"J", @"K", @"L",
-            @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ];
-    });
+    dispatch_once(&onceToken, ^{ _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l", @"m", @"n", @"o", @"p", @"q", @"r", @"s", @"t", @"u", @"v", @"w", @"x", @"y", @"z", @"A", @"B", @"C", @"D", @"E", @"F", @"G", @"H", @"I", @"J", @"K", @"L", @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ]; });
     return _array;
 }
 
@@ -70,29 +65,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
 {
     static NSDictionary<NSString*, NSString*>* _defaults;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _defaults = @{
-            IJSVGAttributeClipPath: IJSVGStringNone,
-            IJSVGAttributeClipRule: @"nonzero",
-            IJSVGAttributeMask: IJSVGStringNone,
-            IJSVGAttributeOpacity: @"1",
-            IJSVGAttributeStopColor: @"#000",
-            IJSVGAttributeStopOpacity: @"1",
-            IJSVGAttributeFillOpacity: @"1",
-            IJSVGAttributeFillRule: @"nonzero",
-            IJSVGAttributeFill: @"#000",
-            IJSVGAttributeStroke: IJSVGStringNone,
-            IJSVGAttributeStrokeWidth: @"1",
-            IJSVGAttributeStrokeLineCap: @"butt",
-            IJSVGAttributeStrokeLineJoin: IJSVGStringMiter,
-            IJSVGAttributeStrokeMiterLimit: @"4",
-            IJSVGAttributeStrokeDashArray: IJSVGStringNone,
-            IJSVGAttributeStrokeDashOffset: @"0",
-            IJSVGAttributeStrokeOpacity: @"1",
-            IJSVGAttributeDisplay: @"inline",
-            IJSVGAttributePreserveAspectRatio: @"xMidYMid"
-        };
-    });
+    dispatch_once(&onceToken, ^{ _defaults = @ { IJSVGAttributeClipPath : IJSVGStringNone, IJSVGAttributeClipRule : @"nonzero", IJSVGAttributeMask : IJSVGStringNone, IJSVGAttributeOpacity : @"1", IJSVGAttributeStopColor : @"#000", IJSVGAttributeStopOpacity : @"1", IJSVGAttributeFillOpacity : @"1", IJSVGAttributeFillRule : @"nonzero", IJSVGAttributeFill : @"#000", IJSVGAttributeStroke : IJSVGStringNone, IJSVGAttributeStrokeWidth : @"1", IJSVGAttributeStrokeLineCap : @"butt", IJSVGAttributeStrokeLineJoin : IJSVGStringMiter, IJSVGAttributeStrokeMiterLimit : @"4", IJSVGAttributeStrokeDashArray : IJSVGStringNone, IJSVGAttributeStrokeDashOffset : @"0", IJSVGAttributeStrokeOpacity : @"1", IJSVGAttributeDisplay : @"inline", IJSVGAttributePreserveAspectRatio : @"xMidYMid" }; });
     return _defaults;
 }
 
@@ -123,9 +96,7 @@ const NSSet* IJSVGInheritableAttributeSet(void)
 {
     static NSSet* _attributes;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _attributes = [[NSSet alloc] initWithArray:IJSVGInheritableAttributes()];
-    });
+    dispatch_once(&onceToken, ^{ _attributes = [[NSSet alloc] initWithArray:IJSVGInheritableAttributes()]; });
     return _attributes;
 }
 
@@ -154,38 +125,20 @@ NSString* IJSVGHash(NSString* key)
     return [@"#" stringByAppendingString:key];
 }
 
-- (id)initWithSVG:(IJSVG*)svg
-             size:(CGSize)size
-          options:(IJSVGExporterOptions)options
+- (id)initWithSVG:(IJSVG*)svg size:(CGSize)size options:(IJSVGExporterOptions)options
 {
     IJSVGFloatingPointOptions fpo = IJSVGFloatingPointOptionsDefault();
-    return [self initWithSVG:svg
-                        size:size
-                     options:options
-        floatingPointOptions:fpo];
+    return [self initWithSVG:svg size:size options:options floatingPointOptions:fpo];
 }
 
-- (id)initWithSVG:(IJSVG*)svg
-             size:(CGSize)size
-          options:(IJSVGExporterOptions)options
-floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (id)initWithSVG:(IJSVG*)svg size:(CGSize)size options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    return [self initWithRootNode:svg.rootNode
-                             size:size
-                            style:svg.style
-                 renderingOptions:svg.renderingOptions
-                          options:options
-             floatingPointOptions:floatingPointOptions];
+    return [self initWithRootNode:svg.rootNode size:size style:svg.style renderingOptions:svg.renderingOptions options:options floatingPointOptions:floatingPointOptions];
 }
 
-- (id)initWithRootNode:(IJSVGRootNode*)rootNode
-                  size:(CGSize)size
-                 style:(IJSVGStyle*)style
-      renderingOptions:(IJSVGRenderingOptions*)renderingOptions
-               options:(IJSVGExporterOptions)options
-  floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
+- (id)initWithRootNode:(IJSVGRootNode*)rootNode size:(CGSize)size style:(IJSVGStyle*)style renderingOptions:(IJSVGRenderingOptions*)renderingOptions options:(IJSVGExporterOptions)options floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
-    if((self = [super init]) != nil) {
+    if ((self = [super init]) != nil) {
         _options = options;
         _size = size;
         _sourceRoot = rootNode;
@@ -208,7 +161,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (NSXMLElement*)defElement
 {
-    if(_defElement != nil) {
+    if (_defElement != nil) {
         return _defElement;
     }
     return _defElement = [[NSXMLElement alloc] initWithName:@"defs"];
@@ -216,75 +169,61 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (NSString*)viewBoxWithRect:(NSRect)rect
 {
-    return [NSString stringWithFormat:@"%@ %@ %@ %@",
-        IJSVGShortFloatStringWithOptions(CGRectGetMinX(rect), _floatingPointOptions),
-        IJSVGShortFloatStringWithOptions(CGRectGetMinY(rect), _floatingPointOptions),
-        IJSVGShortFloatStringWithOptions(CGRectGetWidth(rect), _floatingPointOptions),
-        IJSVGShortFloatStringWithOptions(CGRectGetHeight(rect), _floatingPointOptions)
-    ];
+    return [NSString stringWithFormat:@"%@ %@ %@ %@", IJSVGShortFloatStringWithOptions(CGRectGetMinX(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetMinY(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetWidth(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetHeight(rect), _floatingPointOptions)];
 }
 
 - (BOOL)hasDynamicSize
 {
-    return _sourceRoot.intrinsicSize.width.usesPercentage ||
-        _sourceRoot.intrinsicSize.height.usesPercentage;
+    return _sourceRoot.intrinsicSize.width.usesPercentage || _sourceRoot.intrinsicSize.height.usesPercentage;
 }
 
 - (NSXMLElement*)rootNode
 {
     // generates the root document
     NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
-    
-    [self applyDefaultsForRoot:_rootPaint
-                     toElement:root];
-        
+
+    [self applyDefaultsForRoot:_rootPaint toElement:root];
+
     [root removeAttributeForName:IJSVGAttributeWidth];
     [root removeAttributeForName:IJSVGAttributeHeight];
 
     // sort out viewbox
     CGRect viewBox = [_rootPaint.viewBox computeValue:_rootPaint.frame.size];
-    NSMutableDictionary<NSString*, NSString*>* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{
-        IJSVGAttributeXMLNS: XML_DOC_NS,
-        IJSVGAttributeViewBox: [self viewBoxWithRect:viewBox]
-    }];
+    NSMutableDictionary<NSString*, NSString*>* attributes = [[NSMutableDictionary alloc] initWithDictionary:@{ IJSVGAttributeXMLNS : XML_DOC_NS, IJSVGAttributeViewBox : [self viewBoxWithRect:viewBox] }];
 
     // add on various XML declaritive things
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == NO) {
         attributes[IJSVGAttributeVersion] = [NSString stringWithFormat:@"%g", XML_DOC_VERSION];
     }
-    
+
     // passing in zero size will just use default. If the SVG had a dynamic
     // size to begin with (width and height were % based) it will use the original
     // values from those, else it will do rounding on the values.
     // passing in a CGSize with infinite size will omit the dimension attributes
     CGSize proposedSize = _size;
     IJSVGIntrinsicDimensions dimensions = IJSVGIntrinsicDimensionBoth;
-    if(CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INTRINSIC) == YES ||
-       CGSizeEqualToSize(proposedSize, CGSizeZero) == YES) {
+    if (CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INTRINSIC) == YES || CGSizeEqualToSize(proposedSize, CGSizeZero) == YES) {
         dimensions = _sourceRoot.intrinsicDimensions;
-        if([self hasDynamicSize] == YES) {
+        if ([self hasDynamicSize] == YES) {
             dimensions = IJSVGIntrinsicDimensionNone;
         }
-        proposedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
-            resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
-    } else if(CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INFINITE) == YES) {
+        proposedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions] resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
+    } else if (CGSizeEqualToSize(proposedSize, IJSVG_SIZE_INFINITE) == YES) {
         dimensions = IJSVGIntrinsicDimensionNone;
     }
 
     // only add dimensions if required
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
-        if(dimensions == IJSVGIntrinsicDimensionNone && [self hasDynamicSize] == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveWidthHeightAttributes) == NO) {
+        if (dimensions == IJSVGIntrinsicDimensionNone && [self hasDynamicSize] == YES) {
             IJSVGUnitSize* dynamicSize = _sourceRoot.intrinsicSize;
             attributes[IJSVGAttributeWidth] = dynamicSize.width.stringValue;
             attributes[IJSVGAttributeHeight] = dynamicSize.height.stringValue;
         } else {
-            if((dimensions & IJSVGIntrinsicDimensionWidth) == IJSVGIntrinsicDimensionWidth) {
-                attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(proposedSize.width,
-                                                                                   _floatingPointOptions);
+            if ((dimensions & IJSVGIntrinsicDimensionWidth) == IJSVGIntrinsicDimensionWidth) {
+                attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(proposedSize.width, _floatingPointOptions);
             }
-            if((dimensions & IJSVGIntrinsicDimensionHeight) == IJSVGIntrinsicDimensionHeight) {
-                attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(proposedSize.height,
-                                                                                    _floatingPointOptions);
+            if ((dimensions & IJSVGIntrinsicDimensionHeight) == IJSVGIntrinsicDimensionHeight) {
+                attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(proposedSize.height, _floatingPointOptions);
             }
         }
     }
@@ -295,26 +234,24 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)applyXLinkToRootElement
 {
     // simply flag check
-    if(_appliedXLink == YES) {
+    if (_appliedXLink == YES) {
         return;
     }
 
     // set and add the attribute onto the rootElement
     _appliedXLink = YES;
     NSXMLElement* root = _dom.rootElement;
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeXMLNSXlink: XML_DOC_NSXLINK
-    }, root);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeXMLNSXlink : XML_DOC_NSXLINK }, root);
 }
 
 - (NSString*)generateID
 {
     const NSArray<NSString*>* chars = IJSVGShortCharacterArray();
-    if(_idCount < chars.count) {
+    if (_idCount < chars.count) {
         return chars[_idCount++];
     }
 
-    if((_idCount % chars.count) == 0) {
+    if ((_idCount % chars.count) == 0) {
         _shortIdCount++;
     }
     return [NSString stringWithFormat:@"%@%ld", chars[(_idCount++ % chars.count)], _shortIdCount];
@@ -323,10 +260,8 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)resolveRootPaintForExportSize
 {
     CGSize size = _size;
-    if(CGSizeEqualToSize(size, IJSVG_SIZE_INFINITE) ||
-       CGSizeEqualToSize(size, IJSVG_SIZE_INTRINSIC) || CGSizeEqualToSize(size, CGSizeZero)) {
-        size = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
-            resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
+    if (CGSizeEqualToSize(size, IJSVG_SIZE_INFINITE) || CGSizeEqualToSize(size, IJSVG_SIZE_INTRINSIC) || CGSizeEqualToSize(size, CGSizeZero)) {
+        size = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions] resolveSize:_sourceRoot.intrinsicSize percentage:IJSVG_SIZE_DEFAULT_CLIENT node:_sourceRoot];
     }
     IJSVGRootNode* node = _sourceRoot;
     CGSize previousSize = node.clientSize;
@@ -334,21 +269,20 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     _paintResolver.style = _style;
     _paintResolver.renderingOptions = _renderingOptions;
     @try {
-        if(node.containsRelativeUnits && isfinite(size.width) && isfinite(size.height)) {
+        if (node.containsRelativeUnits && isfinite(size.width) && isfinite(size.height)) {
             node.clientSize = size;
         }
         _rootPaint = [_paintResolver rootPaintForRootNode:node viewportSize:size];
         _outsideViewportPaints = nil;
-        if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveNodesOutsideViewBox)) {
+        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveNodesOutsideViewBox)) {
             CGRect viewBox = [node.viewBox computeValue:node.clientSize];
-            NSSet<IJSVGNode*>* outside = [_paintResolver nodesOutsideViewBox:viewBox
-                                                                 ofRootPaint:_rootPaint];
+            NSSet<IJSVGNode*>* outside = [_paintResolver nodesOutsideViewBox:viewBox ofRootPaint:_rootPaint];
             NSMutableSet<IJSVGPaint*>* paints = [NSMutableSet set];
             NSMutableArray<IJSVGPaint*>* pending = [_rootPaint.children mutableCopy];
-            while(pending.count != 0) {
+            while (pending.count != 0) {
                 IJSVGPaint* paint = pending.lastObject;
                 [pending removeLastObject];
-                if(paint.sourceNode != nil && [outside containsObject:paint.sourceNode]) {
+                if (paint.sourceNode != nil && [outside containsObject:paint.sourceNode]) {
                     [paints addObject:paint];
                 } else {
                     [pending addObjectsFromArray:paint.children];
@@ -370,11 +304,11 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     _appliedXLink = NO;
     _dom = nil;
     _defElement = nil;
-    
+
     // ask the root paint to resolve itself for the new size we want, this
     // will generate a new tree if required with the correct sizing and bounds.
     [self resolveRootPaintForExportSize];
-    
+
     // create the stand alone DOM
     NSXMLElement* rootNode = [self rootNode];
     _dom = [[NSXMLDocument alloc] initWithRootElement:rootNode];
@@ -382,125 +316,119 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     _dom.characterEncoding = XML_DOC_CHARSET;
 
     // sort out stuff, so here we go...
-    for(IJSVGPaint* childPaint in _rootPaint.children) {
-        [self _recursiveParseFromPaint:childPaint
-                           intoElement:rootNode];
+    for (IJSVGPaint* childPaint in _rootPaint.children) {
+        [self _recursiveParseFromPaint:childPaint intoElement:rootNode];
     }
 
     // this needs to be added incase it needs to be cleaned
     NSXMLElement* defNode = [self defElement];
-    if(defNode.childCount != 0) {
-        [_dom.rootElement insertChild:[self defElement]
-                              atIndex:0];
+    if (defNode.childCount != 0) {
+        [_dom.rootElement insertChild:[self defElement] atIndex:0];
     }
 
     // cleanup
     [self _cleanup];
 
     // could had been removed during cleaning process needs to be added back in!
-    if(defNode.childCount != 0 && defNode.parent == nil) {
-        [_dom.rootElement insertChild:[self defElement]
-                              atIndex:0];
+    if (defNode.childCount != 0 && defNode.parent == nil) {
+        [_dom.rootElement insertChild:[self defElement] atIndex:0];
     }
 
     // add generator
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveComments) == NO) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveComments) == NO) {
         NSXMLNode* generatorNode = [[NSXMLNode alloc] initWithKind:NSXMLCommentKind];
         generatorNode.stringValue = XML_DOC_GENERATOR;
-        [_dom.rootElement insertChild:generatorNode
-                              atIndex:0];
+        [_dom.rootElement insertChild:generatorNode atIndex:0];
     }
 }
 
 - (void)_cleanup
 {
     // remove hidden elements
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveHiddenElements) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveHiddenElements) == YES) {
         [self _removeHiddenElements];
     }
 
     // convert any duplicate paths into use
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
         [self _convertUseElements];
     }
 
     // cleanup def
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
         [self _cleanDef];
     }
 
     BOOL collapseGroups = IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGroups);
     BOOL removeUselessGroups = IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessGroups);
     NSArray<NSXMLElement*>* groups = nil;
-    if(collapseGroups == YES || removeUselessGroups == YES) {
+    if (collapseGroups == YES || removeUselessGroups == YES) {
         groups = [_dom nodesForXPath:@"//g" error:nil];
     }
 
     // collapse groups
-    if(collapseGroups == YES) {
+    if (collapseGroups == YES) {
         [self _collapseGroups:groups];
     }
 
     // clean any blank groups
-    if(removeUselessGroups == YES) {
+    if (removeUselessGroups == YES) {
         [self _cleanEmptyGroups:groups];
     }
 
     // compress groups together
-    if(collapseGroups == YES) {
+    if (collapseGroups == YES) {
         [self _compressGroups:groups];
     }
 
     // collapse gradients?
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGradients) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCollapseGradients) == YES) {
         [self _collapseGradients];
     }
 
     // move attributes to group
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionMoveAttributesToGroup) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionMoveAttributesToGroup) == YES) {
         [self _moveAttributesToGroupWithElement:_dom.rootElement];
     }
 
     // any use cleaning
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCreateUseForPaths) == YES) {
         [self _cleanupUseTransforms];
     }
 
     // remove any defaults
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveDefaultValues) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveDefaultValues) == YES) {
         [self _removeDefaultAttributes];
     }
 
     // remove definitions that became unused after the full cleanup pipeline
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveUselessDef) == YES) {
         [self _removeUnreferencedDefinitions];
         [self _removeUnusedXLinkNamespace];
         [self _cleanDef];
     }
 
     // sort attributes last so later cleanup passes cannot undo it
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionSortAttributes) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionSortAttributes) == YES) {
         [self _sortAttributesOnElement:_dom.rootElement];
     }
 }
 
-- (void)addReferencedIdentifiersFromAttribute:(NSXMLNode*)attribute
-                                        toSet:(NSMutableSet<NSString*>*)referencedIdentifiers
+- (void)addReferencedIdentifiersFromAttribute:(NSXMLNode*)attribute toSet:(NSMutableSet<NSString*>*)referencedIdentifiers
 {
-    if(attribute.stringValue.length == 0) {
+    if (attribute.stringValue.length == 0) {
         return;
     }
 
-    if([attribute.name isEqualToString:IJSVGAttributeHref] ||
-       [attribute.name isEqualToString:IJSVGAttributeXLink]) {
-        if([attribute.stringValue hasPrefix:@"#"] && attribute.stringValue.length > 1) {
+    if ([attribute.name isEqualToString:IJSVGAttributeHref] || [attribute.name isEqualToString:IJSVGAttributeXLink]) {
+        if ([attribute.stringValue hasPrefix:@"#"] && attribute.stringValue.length > 1) {
             [referencedIdentifiers addObject:[attribute.stringValue substringFromIndex:1]];
         }
         return;
     }
 
     NSString* identifier = [IJSVGUtils defURL:attribute.stringValue];
-    if(identifier.length != 0) {
+    if (identifier.length != 0) {
         [referencedIdentifiers addObject:identifier];
     }
 }
@@ -508,13 +436,13 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSSet<NSString*>*)referencedIdentifiers
 {
     NSMutableSet<NSString*>* referencedIdentifiers = [[NSMutableSet alloc] init];
-    NSString* xpath = @"//@*[name()='href' or name()='xlink:href' or name()='fill' or name()='stroke' or "
-                      @"name()='clip-path' or name()='mask' or name()='filter' or name()='marker' or name()='style']";
-    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:xpath
-                                                    error:nil];
+    NSString* xpath = @"//@*[name()='href' or name()='xlink:href' or "
+                      @"name()='fill' or name()='stroke' or "
+                      @"name()='clip-path' or name()='mask' or name()='filter' "
+                      @"or name()='marker' or name()='style']";
+    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:xpath error:nil];
     for (NSXMLNode* attribute in attributes) {
-        [self addReferencedIdentifiersFromAttribute:attribute
-                                              toSet:referencedIdentifiers];
+        [self addReferencedIdentifiersFromAttribute:attribute toSet:referencedIdentifiers];
     }
     return referencedIdentifiers;
 }
@@ -524,12 +452,12 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     NSSet<NSString*>* referencedIdentifiers = [self referencedIdentifiers];
     NSArray<NSXMLNode*>* elements = [self.defElement.children copy];
     for (NSXMLNode* child in elements) {
-        if([child isKindOfClass:NSXMLElement.class] == NO) {
+        if ([child isKindOfClass:NSXMLElement.class] == NO) {
             continue;
         }
         NSXMLElement* element = (NSXMLElement*)child;
         NSString* identifier = [element attributeForName:IJSVGAttributeID].stringValue;
-        if(identifier.length == 0 || [referencedIdentifiers containsObject:identifier] == YES) {
+        if (identifier.length == 0 || [referencedIdentifiers containsObject:identifier] == YES) {
             continue;
         }
 
@@ -540,13 +468,12 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (void)_removeUnusedXLinkNamespace
 {
-    if(_appliedXLink == NO) {
+    if (_appliedXLink == NO) {
         return;
     }
 
-    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:@"//@*[name()='xlink:href']"
-                                                    error:nil];
-    if(attributes.count != 0) {
+    NSArray<NSXMLNode*>* attributes = [_dom nodesForXPath:@"//@*[name()='xlink:href']" error:nil];
+    if (attributes.count != 0) {
         return;
     }
 
@@ -556,18 +483,16 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (void)_cleanupUseTransforms
 {
-    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//use"
-                                                     error:nil];
+    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//use" error:nil];
     for (NSXMLElement* element in elements) {
         NSString* att = [element attributeForName:IJSVGAttributeTransform].stringValue;
-        if(att == nil || [element attributeForName:IJSVGAttributeX] != nil ||
-            [element attributeForName:IJSVGAttributeY] != nil) {
+        if (att == nil || [element attributeForName:IJSVGAttributeX] != nil || [element attributeForName:IJSVGAttributeY] != nil) {
             continue;
         }
 
         // at this point we can move the x and y
         NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForString:att];
-        if(transforms.count == 1 && transforms.firstObject.command == IJSVGTransformCommandTranslate) {
+        if (transforms.count == 1 && transforms.firstObject.command == IJSVGTransformCommandTranslate) {
             IJSVGTransform* transform = transforms.firstObject;
             [element removeAttributeForName:IJSVGAttributeTransform];
 
@@ -589,7 +514,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_sortAttributesOnElement:(NSXMLElement*)element
 {
     // only apply to XML elements, not XMLNodes
-    if([element isKindOfClass:[NSXMLElement class]] == NO) {
+    if ([element isKindOfClass:[NSXMLElement class]] == NO) {
         return;
     }
     [self sortAttributesOnElement:element];
@@ -600,7 +525,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (void)_removeHiddenElements
 {
-    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//*[@display='none' or contains(translate(@style, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ \t\n\r\f', 'abcdefghijklmnopqrstuvwxyz'), 'display:none')]"
+    NSArray<NSXMLElement*>* elements = [_dom nodesForXPath:@"//*[@display='none' or contains(translate(@style, "
+                                                           @"'ABCDEFGHIJKLMNOPQRSTUVWXYZ \t\n\r\f', "
+                                                           @"'abcdefghijklmnopqrstuvwxyz'), 'display:none')]"
                                                      error:nil];
 
     for (NSXMLElement* element in elements) {
@@ -615,7 +542,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     hash = (hash * 31U) + node.name.hash;
     hash = (hash * 31U) + node.URI.hash;
 
-    if([node isKindOfClass:NSXMLElement.class]) {
+    if ([node isKindOfClass:NSXMLElement.class]) {
         NSXMLElement* element = (NSXMLElement*)node;
         hash = (hash * 31U) + element.attributes.count;
         for (NSXMLNode* attribute in element.attributes) {
@@ -642,79 +569,66 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     return hash;
 }
 
-- (BOOL)compareGradientNode:(NSXMLNode*)node
-                    toNode:(NSXMLNode*)otherNode
+- (BOOL)compareGradientNode:(NSXMLNode*)node toNode:(NSXMLNode*)otherNode
 {
-    if(node.kind != otherNode.kind ||
-       ((node.name != otherNode.name) &&
-        [node.name isEqualToString:otherNode.name] == NO) ||
-       ((node.URI != otherNode.URI) && [node.URI isEqualToString:otherNode.URI] == NO)) {
+    if (node.kind != otherNode.kind || ((node.name != otherNode.name) && [node.name isEqualToString:otherNode.name] == NO) || ((node.URI != otherNode.URI) && [node.URI isEqualToString:otherNode.URI] == NO)) {
         return NO;
     }
 
     BOOL isElement = [node isKindOfClass:NSXMLElement.class];
-    if(isElement != [otherNode isKindOfClass:NSXMLElement.class]) {
+    if (isElement != [otherNode isKindOfClass:NSXMLElement.class]) {
         return NO;
     }
-    if(isElement == NO) {
-        return (node.stringValue == otherNode.stringValue ||
-                [node.stringValue isEqualToString:otherNode.stringValue]);
+    if (isElement == NO) {
+        return (node.stringValue == otherNode.stringValue || [node.stringValue isEqualToString:otherNode.stringValue]);
     }
 
     NSXMLElement* element = (NSXMLElement*)node;
     NSXMLElement* otherElement = (NSXMLElement*)otherNode;
     NSArray<NSXMLNode*>* attributes = element.attributes;
     NSArray<NSXMLNode*>* otherAttributes = otherElement.attributes;
-    if(attributes.count != otherAttributes.count) {
+    if (attributes.count != otherAttributes.count) {
         return NO;
     }
     for (NSUInteger index = 0; index < attributes.count; index++) {
         NSXMLNode* attribute = attributes[index];
         NSXMLNode* otherAttribute = otherAttributes[index];
-        if([attribute.name isEqualToString:otherAttribute.name] == NO ||
-           ((attribute.URI != otherAttribute.URI) &&
-            [attribute.URI isEqualToString:otherAttribute.URI] == NO) ||
-           [attribute.stringValue isEqualToString:otherAttribute.stringValue] == NO) {
+        if ([attribute.name isEqualToString:otherAttribute.name] == NO || ((attribute.URI != otherAttribute.URI) && [attribute.URI isEqualToString:otherAttribute.URI] == NO) || [attribute.stringValue isEqualToString:otherAttribute.stringValue] == NO) {
             return NO;
         }
     }
 
-    return [self compareElementChildren:element
-                              toElement:otherElement];
+    return [self compareElementChildren:element toElement:otherElement];
 }
 
 - (void)_collapseGradients
 {
     NSMutableArray<NSXMLElement*>* gradients = [[NSMutableArray alloc] init];
     for (NSXMLNode* child in self.defElement.children) {
-        if([child isKindOfClass:NSXMLElement.class] == NO) {
+        if ([child isKindOfClass:NSXMLElement.class] == NO) {
             continue;
         }
         NSXMLElement* element = (NSXMLElement*)child;
-        if([element.name isEqualToString:@"linearGradient"] ||
-           [element.name isEqualToString:@"radialGradient"]) {
+        if ([element.name isEqualToString:@"linearGradient"] || [element.name isEqualToString:@"radialGradient"]) {
             [gradients addObject:element];
         }
     }
-    NSMutableDictionary<NSNumber*, NSMutableArray<NSXMLElement*>*>* gradientsByChildHash =
-        [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
+    NSMutableDictionary<NSNumber*, NSMutableArray<NSXMLElement*>*>* gradientsByChildHash = [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
     // XML nodes hash their mutable contents. Key by identity because assigning
-    // the template reference changes the candidate's attributes and hash.
-    NSMapTable<NSXMLElement*, NSXMLElement*>* stopTemplates = [NSMapTable
-        mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality
-                  valueOptions:NSPointerFunctionsStrongMemory];
+    // the template reference changes the candidate attributes and hash.
+    NSMapTable<NSXMLElement*, NSXMLElement*>* stopTemplates = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality valueOptions:NSPointerFunctionsStrongMemory];
     for (NSXMLElement* gradient in gradients) {
         NSNumber* childHash = @([self gradientChildHashForElement:gradient]);
         NSMutableArray<NSXMLElement*>* candidates = gradientsByChildHash[childHash];
         NSXMLElement* matchingGradient = nil;
         for (NSXMLElement* candidate in candidates) {
-            if([self compareElementChildren:gradient toElement:[stopTemplates objectForKey:candidate] ?: candidate]) {
+            if ([self compareElementChildren:gradient toElement:[stopTemplates objectForKey:candidate] ?: candidate]) {
                 matchingGradient = candidate;
                 break;
             }
         }
-        if(matchingGradient == nil) {
-            if(candidates == nil) {
+        if (matchingGradient == nil) {
+            if (candidates == nil) {
                 candidates = [[NSMutableArray alloc] init];
                 gradientsByChildHash[childHash] = candidates;
             }
@@ -725,40 +639,36 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         // Share stops through a neutral template. Referencing the first gradient
         // directly also inherits its transform, units and other omitted defaults.
         NSXMLElement* template = [stopTemplates objectForKey:matchingGradient];
-        if(template == nil) {
+        if (template == nil) {
             template = [[NSXMLElement alloc] initWithName:@"linearGradient"];
             NSString* identifier = [self identifierForElement:template];
-            IJSVGApplyAttributesToElement(@{IJSVGAttributeID: identifier}, template);
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : identifier }, template);
             NSArray<NSXMLNode*>* stops = matchingGradient.children.copy;
             [matchingGradient setChildren:nil];
-            for(NSXMLNode* stop in stops) {
+            for (NSXMLNode* stop in stops) {
                 [template addChild:stop];
             }
             [self.defElement addChild:template];
             [stopTemplates setObject:template forKey:matchingGradient];
-            IJSVGApplyAttributesToElement(@{IJSVGAttributeXLink: IJSVGHash(identifier)}, matchingGradient);
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeXLink : IJSVGHash(identifier) }, matchingGradient);
         }
         NSString* idString = [template attributeForName:IJSVGAttributeID].stringValue;
-        NSDictionary<NSString*, NSString*>* atts = @{
-            IJSVGAttributeXLink: IJSVGHash(idString)
-        };
+        NSDictionary<NSString*, NSString*>* atts = @{ IJSVGAttributeXLink : IJSVGHash(idString) };
         IJSVGApplyAttributesToElement(atts, gradient);
         [self applyXLinkToRootElement];
         [gradient setChildren:nil];
     }
 }
 
-- (BOOL)compareElementChildren:(NSXMLElement*)element
-                     toElement:(NSXMLElement*)toElement
+- (BOOL)compareElementChildren:(NSXMLElement*)element toElement:(NSXMLElement*)toElement
 {
     NSArray<NSXMLNode*>* childrenA = element.children;
     NSArray<NSXMLNode*>* childrenB = toElement.children;
-    if(childrenA.count != childrenB.count) {
+    if (childrenA.count != childrenB.count) {
         return NO;
     }
     for (NSUInteger index = 0; index < childrenA.count; index++) {
-        if([self compareGradientNode:childrenA[index]
-                              toNode:childrenB[index]] == NO) {
+        if ([self compareGradientNode:childrenA[index] toNode:childrenB[index]] == NO) {
             return NO;
         }
     }
@@ -768,21 +678,20 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_moveAttributesToGroupWithElement:(NSXMLElement*)parentElement
 {
     const NSArray<NSString*>* excludedElements = @[ @"script", @"style", @"defs" ];
-    if([excludedElements containsObject:parentElement.name]) {
+    if ([excludedElements containsObject:parentElement.name]) {
         return;
     }
 
     const NSSet<NSString*>* inheritableAttributes = IJSVGInheritableAttributeSet();
     NSMutableArray<NSXMLElement*>* childGroups = [[NSMutableArray alloc] init];
     for (NSXMLElement* element in parentElement.children) {
-        if([element.name isEqualToString:@"g"]) {
+        if ([element.name isEqualToString:@"g"]) {
             [childGroups addObject:element];
         }
     }
 
-    BOOL (^createGroup)(NSArray<NSXMLElement*>*, NSDictionary<NSString*, NSString*>*) =
-        ^BOOL(NSArray<NSXMLElement*>* elements, NSDictionary<NSString*, NSString*>* attributes) {
-        if(elements.count < 2 || attributes.count == 0) {
+    BOOL (^createGroup)(NSArray<NSXMLElement*>*, NSDictionary<NSString*, NSString*>*) = ^BOOL(NSArray<NSXMLElement*>* elements, NSDictionary<NSString*, NSString*>* attributes) {
+        if (elements.count < 2 || attributes.count == 0) {
             return NO;
         }
 
@@ -790,8 +699,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         NSXMLElement* group = [[NSXMLElement alloc] initWithName:@"g"];
         IJSVGApplyAttributesToElement(attributes, group);
 
-        [(NSXMLElement*)elements.lastObject.parent replaceChildAtIndex:insertIndex
-                                                              withNode:group];
+        [(NSXMLElement*)elements.lastObject.parent replaceChildAtIndex:insertIndex withNode:group];
         for (NSXMLElement* child in elements) {
             @autoreleasepool {
                 for (NSString* attributeName in attributes.allKeys) {
@@ -808,27 +716,24 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     while (YES) {
         NSArray<NSXMLNode*>* children = parentElement.children;
-        NSMutableArray<NSDictionary<NSString*, NSString*>*>* childAttributes =
-            [[NSMutableArray alloc] initWithCapacity:children.count];
+        NSMutableArray<NSDictionary<NSString*, NSString*>*>* childAttributes = [[NSMutableArray alloc] initWithCapacity:children.count];
         for (NSXMLNode* child in children) {
             NSDictionary<NSString*, NSString*>* attributes = @{};
-            if([child isKindOfClass:NSXMLElement.class]) {
-                attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary((NSXMLElement*)child)
-                                     inheritableAttributes:inheritableAttributes];
+            if ([child isKindOfClass:NSXMLElement.class]) {
+                attributes = [self intersectableAttributes:IJSVGElementAttributeDictionary((NSXMLElement*)child) inheritableAttributes:inheritableAttributes];
             }
             [childAttributes addObject:attributes];
         }
 
         // Record the end of each consecutive attribute/value run. A run starting
         // at a child remains valid until its last shared attribute disappears.
-        NSMutableArray<NSDictionary<NSString*, NSNumber*>*>* runEnds =
-            [[NSMutableArray alloc] initWithCapacity:children.count];
+        NSMutableArray<NSDictionary<NSString*, NSNumber*>*>* runEnds = [[NSMutableArray alloc] initWithCapacity:children.count];
         for (NSUInteger index = 0; index < children.count; index++) {
             [runEnds addObject:@{}];
         }
         for (NSInteger index = (NSInteger)children.count - 1; index >= 0; index--) {
             NSXMLNode* child = children[(NSUInteger)index];
-            if([child isKindOfClass:NSXMLElement.class] == NO) {
+            if ([child isKindOfClass:NSXMLElement.class] == NO) {
                 continue;
             }
 
@@ -837,10 +742,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             for (NSString* attributeName in attributes) {
                 NSUInteger end = (NSUInteger)index;
                 NSUInteger nextIndex = (NSUInteger)index + 1;
-                if(nextIndex < children.count &&
-                   [children[nextIndex] isKindOfClass:NSXMLElement.class]) {
+                if (nextIndex < children.count && [children[nextIndex] isKindOfClass:NSXMLElement.class]) {
                     NSDictionary<NSString*, NSString*>* nextAttributes = childAttributes[nextIndex];
-                    if([nextAttributes[attributeName] isEqualToString:attributes[attributeName]]) {
+                    if ([nextAttributes[attributeName] isEqualToString:attributes[attributeName]]) {
                         NSDictionary<NSString*, NSNumber*>* nextEnds = runEnds[nextIndex];
                         end = nextEnds[attributeName].unsignedIntegerValue;
                     }
@@ -854,7 +758,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         NSDictionary<NSString*, NSString*>* bestIntersection = nil;
         for (NSUInteger index = 0; index < children.count; index++) {
             NSXMLNode* child = children[index];
-            if([child isKindOfClass:NSXMLElement.class] == NO) {
+            if ([child isKindOfClass:NSXMLElement.class] == NO) {
                 continue;
             }
 
@@ -863,29 +767,26 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             for (NSNumber* end in ends.allValues) {
                 groupEnd = MAX(groupEnd, end.unsignedIntegerValue);
             }
-            if(groupEnd == index) {
+            if (groupEnd == index) {
                 continue;
             }
 
-            NSMutableDictionary<NSString*, NSString*>* intersection =
-                [[NSMutableDictionary alloc] initWithCapacity:ends.count];
+            NSMutableDictionary<NSString*, NSString*>* intersection = [[NSMutableDictionary alloc] initWithCapacity:ends.count];
             for (NSString* attributeName in ends) {
-                if(ends[attributeName].unsignedIntegerValue == groupEnd) {
+                if (ends[attributeName].unsignedIntegerValue == groupEnd) {
                     intersection[attributeName] = childAttributes[index][attributeName];
                 }
             }
 
             NSRange range = NSMakeRange(index, groupEnd - index + 1);
-            NSArray<NSXMLElement*>* group =
-                (NSArray<NSXMLElement*>*)[children subarrayWithRange:range];
-            if(bestGroup == nil || group.count > bestGroup.count ||
-               (group.count == bestGroup.count && intersection.count > bestIntersection.count)) {
+            NSArray<NSXMLElement*>* group = (NSArray<NSXMLElement*>*)[children subarrayWithRange:range];
+            if (bestGroup == nil || group.count > bestGroup.count || (group.count == bestGroup.count && intersection.count > bestIntersection.count)) {
                 bestGroup = group;
                 bestIntersection = intersection;
             }
         }
 
-        if(createGroup(bestGroup, bestIntersection) == NO) {
+        if (createGroup(bestGroup, bestIntersection) == NO) {
             break;
         }
     }
@@ -893,40 +794,35 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     // perform recursive calls only on groups that existed before this call.
     // Newly created groups are already optimized for the shared intersection.
     for (NSXMLElement* element in childGroups) {
-        if(element.parent != nil) {
+        if (element.parent != nil) {
             [self _moveAttributesToGroupWithElement:element];
         }
     }
 }
 
-- (NSDictionary<NSString*, NSString*>*)intersectableAttributes:(NSDictionary<NSString*, NSString*>*)atts
-                                         inheritableAttributes:(const NSSet*)inheritable
+- (NSDictionary<NSString*, NSString*>*)intersectableAttributes:(NSDictionary<NSString*, NSString*>*)atts inheritableAttributes:(const NSSet*)inheritable
 {
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in atts.allKeys) {
-        if([inheritable containsObject:key]) {
+        if ([inheritable containsObject:key]) {
             dict[key] = atts[key];
         }
     }
     return dict;
 }
 
-- (NSDictionary<NSString*, NSString*>*)intersectionInheritableAttributes:(NSDictionary<NSString*, NSString*>*)newAttributes
-                                                       currentAttributes:(NSDictionary<NSString*, NSString*>*)currentAttributes
-                                                   inheritableAttributes:(const NSSet*)inheritableAtts
+- (NSDictionary<NSString*, NSString*>*)intersectionInheritableAttributes:(NSDictionary<NSString*, NSString*>*)newAttributes currentAttributes:(NSDictionary<NSString*, NSString*>*)currentAttributes inheritableAttributes:(const NSSet*)inheritableAtts
 {
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     for (NSString* key in newAttributes.allKeys) {
         NSString* currentValue = currentAttributes[key];
-        if(currentValue != nil &&
-           [inheritableAtts containsObject:key] &&
-           [newAttributes[key] isEqualToString:currentValue]) {
+        if (currentValue != nil && [inheritableAtts containsObject:key] && [newAttributes[key] isEqualToString:currentValue]) {
             dict[key] = currentValue;
         }
     }
 
     // nothing to return, kill it
-    if(dict.count == 0) {
+    if (dict.count == 0) {
         return nil;
     }
     return dict;
@@ -935,7 +831,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_cleanDef
 {
     NSXMLElement* defNode = [self defElement];
-    if(defNode.childCount == 0) {
+    if (defNode.childCount == 0) {
         NSXMLElement* parent = (NSXMLElement*)defNode.parent;
         [parent removeChildAtIndex:defNode.index];
     }
@@ -947,17 +843,16 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         // cleanup any groups that are completely useless
         for (NSXMLElement* element in groups) {
             NSXMLElement* parent = (NSXMLElement*)element.parent;
-            if(element.childCount == 0) {
+            if (element.childCount == 0) {
                 // empty group
                 [(NSXMLElement*)element.parent removeChildAtIndex:element.index];
-            } else if(element.attributes.count == 0) {
+            } else if (element.attributes.count == 0) {
                 // no useful data on the group
                 NSInteger index = element.index;
                 NSArray<NSXMLNode*>* children = [element.children copy];
                 [element setChildren:nil];
                 for (NSXMLNode* child in children) {
-                    [parent insertChild:child
-                                atIndex:index++];
+                    [parent insertChild:child atIndex:index++];
                 }
                 [parent removeChildAtIndex:element.index];
             }
@@ -965,14 +860,14 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 }
 
-// Only inherited presentation attributes and transforms distribute over children.
-// Effects, IDs and coordinate dependent resources establish a group boundary.
+// Only inherited presentation attributes and transforms distribute over
+// children. Effects, IDs and coordinate dependent resources establish a group
+// boundary.
 - (BOOL)canDistributeGroupAttributes:(NSXMLElement*)group
 {
     const NSSet<NSString*>* inheritable = IJSVGInheritableAttributeSet();
     for (NSXMLNode* attribute in group.attributes) {
-        if(![inheritable containsObject:attribute.name] &&
-           ![attribute.name isEqualToString:IJSVGAttributeTransform]) {
+        if (![inheritable containsObject:attribute.name] && ![attribute.name isEqualToString:IJSVGAttributeTransform]) {
             return NO;
         }
     }
@@ -983,7 +878,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     for (NSXMLElement* group in groups) {
         // Whats the next group?
-        if(group.parent == nil || ![self canDistributeGroupAttributes:group]) {
+        if (group.parent == nil || ![self canDistributeGroupAttributes:group]) {
             continue;
         }
 
@@ -1007,44 +902,39 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (void)_collapseGroups:(NSArray<NSXMLElement*>*)groups
 {
-    for(NSXMLElement* group in groups) {
+    for (NSXMLElement* group in groups) {
         // Keep effects on their own element: moving a filter through a clip or
         // mask changes which pixels become SourceGraphic. Equal opacities and
         // filters on nested elements also represent separate operations.
-        if(group.parent == nil || ![self canDistributeGroupAttributes:group] ||
-           group.attributes.count == 0 || group.children.count != 1) {
+        if (group.parent == nil || ![self canDistributeGroupAttributes:group] || group.attributes.count == 0 || group.children.count != 1) {
             continue;
         }
         NSXMLElement* child = (NSXMLElement*)group.children.firstObject;
-        if(![child isKindOfClass:NSXMLElement.class] ||
-           [child attributeForName:IJSVGAttributeTransform] != nil) {
+        if (![child isKindOfClass:NSXMLElement.class] || [child attributeForName:IJSVGAttributeTransform] != nil) {
             continue;
         }
-        for(NSXMLNode* attribute in group.attributes.copy) {
+        for (NSXMLNode* attribute in group.attributes.copy) {
             [group removeAttributeForName:attribute.name];
-            if([child attributeForName:attribute.name] == nil) {
+            if ([child attributeForName:attribute.name] == nil) {
                 [child addAttribute:attribute];
             }
         }
         [child detach];
-        [(NSXMLElement*)group.parent replaceChildAtIndex:group.index
-                                                withNode:child];
+        [(NSXMLElement*)group.parent replaceChildAtIndex:group.index withNode:child];
     }
 }
 
-- (BOOL)compareElement:(NSXMLElement*)element
-           withElement:(NSXMLElement*)anotherElement
+- (BOOL)compareElement:(NSXMLElement*)element withElement:(NSXMLElement*)anotherElement
 {
     // not a matching element
-    if([element.name isEqualToString:anotherElement.name] == NO ||
-        element.attributes.count != anotherElement.attributes.count) {
+    if ([element.name isEqualToString:anotherElement.name] == NO || element.attributes.count != anotherElement.attributes.count) {
         return NO;
     }
 
     // compare attributes
     for (NSXMLNode* attribute in element.attributes) {
         NSString* compareString = [anotherElement attributeForName:attribute.name].stringValue;
-        if([attribute.stringValue isEqualToString:compareString] == NO) {
+        if ([attribute.stringValue isEqualToString:compareString] == NO) {
             return NO;
         }
     }
@@ -1054,10 +944,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSXMLElement*)defPathElementForPathData:(NSString*)data
 {
     NSXMLElement* element = [[NSXMLElement alloc] initWithName:@"path"];
-    NSDictionary<NSString*, NSString*>* atts = @{
-        IJSVGAttributeD: data,
-        IJSVGAttributeID: [self identifierForElement:element]
-    };
+    NSDictionary<NSString*, NSString*>* atts = @{ IJSVGAttributeD : data, IJSVGAttributeID : [self identifierForElement:element] };
     IJSVGApplyAttributesToElement(atts, element);
     return element;
 }
@@ -1065,23 +952,23 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (void)_convertUseElements
 {
     @autoreleasepool {
-        // vector-effect is not inherited by the referenced path when moved to <use>.
-        // Keep these paths explicit so their stroke behavior survives deduplication.
-        NSArray<NSXMLNode*>* paths = [_dom nodesForXPath:@"//path[not(@vector-effect)]"
-                                                   error:nil];
+        // vector effect is not inherited by the referenced path when moved to
+        // <use>. Keep these paths explicit so their stroke behavior survives
+        // deduplication.
+        NSArray<NSXMLNode*>* paths = [_dom nodesForXPath:@"//path[not(@vector-effect)]" error:nil];
 
         NSMutableDictionary<NSString*, NSXMLElement*>* firstPaths = [[NSMutableDictionary alloc] init];
         NSMutableDictionary<NSString*, NSXMLElement*>* defs = [[NSMutableDictionary alloc] init];
         NSMutableArray<NSString*>* defPathData = [[NSMutableArray alloc] init];
         for (NSXMLElement* element in paths) {
             NSString* data = [element attributeForName:IJSVGAttributeD].stringValue;
-            if(data == nil) {
+            if (data == nil) {
                 continue;
             }
-            if(defs[data] != nil) {
+            if (defs[data] != nil) {
                 continue;
             }
-            if(firstPaths[data] != nil) {
+            if (firstPaths[data] != nil) {
                 defs[data] = [self defPathElementForPathData:data];
                 [defPathData addObject:data];
             } else {
@@ -1093,7 +980,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         for (NSXMLElement* element in paths) {
             NSString* data = [element attributeForName:IJSVGAttributeD].stringValue;
             NSXMLElement* defParentElement = defs[data];
-            if(defParentElement == nil) {
+            if (defParentElement == nil) {
                 continue;
             }
 
@@ -1111,7 +998,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
             // remove the d attribute
             for (NSXMLNode* attribute in element.attributes) {
-                if([attribute.name isEqualToString:IJSVGAttributeD]) {
+                if ([attribute.name isEqualToString:IJSVGAttributeD]) {
                     continue;
                 }
                 [element removeAttributeForName:attribute.name];
@@ -1119,8 +1006,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             }
 
             // swap it out
-            [(NSXMLElement*)element.parent replaceChildAtIndex:element.index
-                                                      withNode:use];
+            [(NSXMLElement*)element.parent replaceChildAtIndex:element.index withNode:use];
         }
 
         // add the defs back in
@@ -1131,24 +1017,21 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 }
 
-- (void)_removeDefaultAttributesOnElement:(NSXMLElement*)element
-                       inheritedAttributes:(NSDictionary<NSString*, NSString*>*)inheritedAttributes
+- (void)_removeDefaultAttributesOnElement:(NSXMLElement*)element inheritedAttributes:(NSDictionary<NSString*, NSString*>*)inheritedAttributes
 {
     const NSDictionary<NSString*, NSString*>* defaults = IJSVGDefaultAttributes();
     const NSSet<NSString*>* inheritables = IJSVGInheritableAttributeSet();
-    if(element.kind == NSXMLElementKind) {
+    if (element.kind == NSXMLElementKind) {
         NSArray<NSXMLNode*>* attributes = element.attributes;
-        if([element attributeForName:IJSVGAttributeID] == nil) {
+        if ([element attributeForName:IJSVGAttributeID] == nil) {
             for (NSXMLNode* node in attributes) {
                 // no value found in defaults
                 NSString* val = nil;
-                if((val = defaults[node.name]) == nil ||
-                   [val isEqualToString:node.stringValue] == NO) {
+                if ((val = defaults[node.name]) == nil || [val isEqualToString:node.stringValue] == NO) {
                     continue;
                 }
 
-                if([inheritables containsObject:node.name] == YES &&
-                   inheritedAttributes[node.name] != nil) {
+                if ([inheritables containsObject:node.name] == YES && inheritedAttributes[node.name] != nil) {
                     continue;
                 }
 
@@ -1159,82 +1042,69 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     NSMutableDictionary<NSString*, NSString*>* childInheritedAttributes = [[NSMutableDictionary alloc] initWithDictionary:inheritedAttributes];
     // Root attributes were intentionally excluded by _computedAttribute:.
-    if(element != _dom.rootElement) {
+    if (element != _dom.rootElement) {
         for (NSXMLNode* attribute in element.attributes) {
-            if([inheritables containsObject:attribute.name]) {
+            if ([inheritables containsObject:attribute.name]) {
                 childInheritedAttributes[attribute.name] = attribute.stringValue;
             }
         }
     }
 
     for (NSXMLElement* childElement in element.children) {
-        [self _removeDefaultAttributesOnElement:childElement
-                            inheritedAttributes:childInheritedAttributes];
+        [self _removeDefaultAttributesOnElement:childElement inheritedAttributes:childInheritedAttributes];
     }
 }
 
 - (void)_removeDefaultAttributes
 {
-    [self _removeDefaultAttributesOnElement:_dom.rootElement
-                        inheritedAttributes:@{}];
+    [self _removeDefaultAttributesOnElement:_dom.rootElement inheritedAttributes:@{}];
 }
 
-- (NSXMLElement*)elementForPaint:(IJSVGPaint*)paint
-                      fromParent:(NSXMLElement*)element
+- (NSXMLElement*)elementForPaint:(IJSVGPaint*)paint fromParent:(NSXMLElement*)element
 {
     // root paint
-    if(paint.class == IJSVGRootPaint.class) {
-        return [self elementForRoot:(IJSVGRootPaint*)paint
-                         fromParent:element];
-    }
-    
-    // shape paint
-    if([paint isKindOfClass:IJSVGShapePaint.class]) {
-        return [self elementForShape:(IJSVGShapePaint*)paint
-                          fromParent:element];
-    }
-    
-    // image paint
-    if([paint isKindOfClass:IJSVGImagePaint.class]) {
-        return [self elementForImage:(IJSVGImagePaint*)paint
-                          fromParent:element];
+    if (paint.class == IJSVGRootPaint.class) {
+        return [self elementForRoot:(IJSVGRootPaint*)paint fromParent:element];
     }
 
-    
+    // shape paint
+    if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+        return [self elementForShape:(IJSVGShapePaint*)paint fromParent:element];
+    }
+
+    // image paint
+    if ([paint isKindOfClass:IJSVGImagePaint.class]) {
+        return [self elementForImage:(IJSVGImagePaint*)paint fromParent:element];
+    }
+
     // group paint, or paint that acts as a group
-    if([paint isKindOfClass:IJSVGGroupPaint.class] ||
-       paint.class == IJSVGTransformPaint.class ||
-       paint.class == IJSVGPaint.class) {
-        return [self elementForGroup:paint
-                          fromParent:element];
+    if ([paint isKindOfClass:IJSVGGroupPaint.class] || paint.class == IJSVGTransformPaint.class || paint.class == IJSVGPaint.class) {
+        return [self elementForGroup:paint fromParent:element];
     }
     return nil;
 }
 
-- (void)_recursiveParseFromPaint:(IJSVGPaint*)paint
-                     intoElement:(NSXMLElement*)element
+- (void)_recursiveParseFromPaint:(IJSVGPaint*)paint intoElement:(NSXMLElement*)element
 {
-    if([_outsideViewportPaints containsObject:paint]) {
+    if ([_outsideViewportPaints containsObject:paint]) {
         return;
     }
-    NSXMLElement* el = [self elementForPaint:paint
-                                  fromParent:element];
-    
-    if(el != nil) {
+    NSXMLElement* el = [self elementForPaint:paint fromParent:element];
+
+    if (el != nil) {
         NSArray<NSXMLElement*>* beforeElements = nil;
         NSArray<NSXMLElement*>* afterElements = nil;
         NSNumber* ignore = nil;
-        if((beforeElements = objc_getAssociatedObject(el, &IJSVGExporterInsertBeforeElementsKey)) != nil) {
-            for(NSXMLElement* beforeElement in beforeElements) {
+        if ((beforeElements = objc_getAssociatedObject(el, &IJSVGExporterInsertBeforeElementsKey)) != nil) {
+            for (NSXMLElement* beforeElement in beforeElements) {
                 [element addChild:beforeElement];
             }
         }
-        if((ignore = objc_getAssociatedObject(el, &IJSVGExporterIgnoreElementKey)) == nil ||
-           ignore.boolValue == NO) {
+        if ((ignore = objc_getAssociatedObject(el, &IJSVGExporterIgnoreElementKey)) == nil || ignore.boolValue == NO) {
             [element addChild:el];
         }
-        if((afterElements = objc_getAssociatedObject(el, &IJSVGExporterInsertAfterElementsKey)) != nil) {
-            for(NSXMLElement* afterElement in afterElements) {
+        if ((afterElements = objc_getAssociatedObject(el, &IJSVGExporterInsertAfterElementsKey)) != nil) {
+            for (NSXMLElement* afterElement in afterElements) {
                 [element addChild:afterElement];
             }
         }
@@ -1244,7 +1114,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSString*)transformAttributeStringForTransforms:(NSArray<IJSVGTransform*>*)transforms
 {
     NSMutableArray<NSString*>* strings = [[NSMutableArray alloc] initWithCapacity:transforms.count];
-    for(IJSVGTransform* transform in transforms) {
+    for (IJSVGTransform* transform in transforms) {
         [strings addObject:[self transformAttributeStringForTransform:transform.CGAffineTransform]];
     }
     return [strings componentsJoinedByString:@" "];
@@ -1252,18 +1122,16 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (NSString*)transformAttributeStringForTransform:(CGAffineTransform)transform
 {
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRoundTransforms) == YES) {
-        return [IJSVGTransform affineTransformToSVGTransformComponentString:transform
-                                                       floatingPointOptions:_floatingPointOptions];
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRoundTransforms) == YES) {
+        return [IJSVGTransform affineTransformToSVGTransformComponentString:transform floatingPointOptions:_floatingPointOptions];
     }
     return [IJSVGTransform affineTransformToSVGTransformComponentString:transform];
 }
 
-- (void)applyTransformToElement:(NSXMLElement*)element
-                      fromPaint:(IJSVGPaint*)paint
+- (void)applyTransformToElement:(NSXMLElement*)element fromPaint:(IJSVGPaint*)paint
 {
     CGAffineTransform transform = paint.affineTransform;
-    if(CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity) == YES) {
+    if (CGAffineTransformEqualToTransform(transform, CGAffineTransformIdentity) == YES) {
         return;
     }
 
@@ -1271,33 +1139,27 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     NSString* transformStr = [self transformAttributeStringForTransform:transform];
 
     // apply it to the node
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeTransform: transformStr
-    }, element);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeTransform : transformStr }, element);
 }
 
-- (NSXMLElement*)elementForGroupName:(NSString*)name
-                               paint:(IJSVGPaint*)paint
-                          fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForGroupName:(NSString*)name paint:(IJSVGPaint*)paint fromParent:(NSXMLElement*)parent
 {
     // create the element
     NSXMLElement* e = [[NSXMLElement alloc] init];
     e.name = name;
 
     // stick defaults
-    [self applyDefaultsToElement:e
-                       fromPaint:paint];
+    [self applyDefaultsToElement:e fromPaint:paint];
 
     // Converting a stroke into geometry changes objectBoundingBox units.
     // Preserve source strokes while serializing a filtered subtree.
     IJSVGExporterOptions options = _options;
-    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
         _options &= ~IJSVGExporterOptionConvertStrokesToPaths;
     }
     @try {
-        for(IJSVGPaint* childPaint in paint.children) {
-            [self _recursiveParseFromPaint:childPaint
-                               intoElement:e];
+        for (IJSVGPaint* childPaint in paint.children) {
+            [self _recursiveParseFromPaint:childPaint intoElement:e];
         }
     } @finally {
         _options = options;
@@ -1306,96 +1168,75 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     return e;
 }
 
-- (NSXMLElement*)elementForGroup:(IJSVGPaint*)paint
-                      fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForGroup:(IJSVGPaint*)paint fromParent:(NSXMLElement*)parent
 {
-    return [self elementForGroupName:@"g"
-                               paint:paint
-                          fromParent:parent];
+    return [self elementForGroupName:@"g" paint:paint fromParent:parent];
 }
 
-- (void)applyDefaultsForRoot:(IJSVGRootPaint*)paint
-                   toElement:(NSXMLElement*)element
+- (void)applyDefaultsForRoot:(IJSVGRootPaint*)paint toElement:(NSXMLElement*)element
 {
     CGSize parentSize = paint.viewPort.size;
     NSMutableDictionary<NSString*, NSString*>* attributes = nil;
     attributes = [[NSMutableDictionary alloc] init];
-    if(paint.viewBox != nil) {
+    if (paint.viewBox != nil) {
         CGRect viewBox = [paint.viewBox computeValue:parentSize];
         attributes[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     }
-    
-    NSString* aspectRatio = [IJSVGViewBox aspectRatioWithAlignment:paint.viewBoxAlignment
-                                                       meetOrSlice:paint.viewBoxMeetOrSlice];
-    if(aspectRatio != nil) {
+
+    NSString* aspectRatio = [IJSVGViewBox aspectRatioWithAlignment:paint.viewBoxAlignment meetOrSlice:paint.viewBoxMeetOrSlice];
+    if (aspectRatio != nil) {
         attributes[IJSVGAttributePreserveAspectRatio] = aspectRatio;
     }
 
-    attributes[IJSVGAttributeOverflow] = paint.sourceNode != nil &&
-        paint.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden
-        ? @"hidden" : @"visible";
+    attributes[IJSVGAttributeOverflow] = paint.sourceNode != nil && paint.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden ? @"hidden" : @"visible";
 
     IJSVGUnitSize* size = paint.intrinsicSize;
-    if(size != nil) {
-        CGSize computedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions]
-            resolveSize:size percentage:parentSize node:paint.sourceNode];
-        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(computedSize.width,
-                                                                           _floatingPointOptions);
-        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(computedSize.height,
-                                                                            _floatingPointOptions);
+    if (size != nil) {
+        CGSize computedSize = [[[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions] resolveSize:size percentage:parentSize node:paint.sourceNode];
+        attributes[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(computedSize.width, _floatingPointOptions);
+        attributes[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(computedSize.height, _floatingPointOptions);
     }
-    
+
     IJSVGApplyAttributesToElement(attributes, element);
 
     // stick defaults
-    [self applyDefaultsToElement:element
-                       fromPaint:paint];
-    
-    if(paint.backgroundColor != nil) {
-        NSString* color = [self colorStringForColor:paint.backgroundColor
-                                              flag:IJSVGColorUsageTraitFill
-                                           options:self.colorOptions];
+    [self applyDefaultsToElement:element fromPaint:paint];
+
+    if (paint.backgroundColor != nil) {
+        NSString* color = [self colorStringForColor:paint.backgroundColor flag:IJSVGColorUsageTraitFill options:self.colorOptions];
         NSString* style = [element attributeForName:IJSVGAttributeStyle].stringValue ?: @"";
         style = [style stringByAppendingFormat:@";%@: %@", IJSVGAttributeBackgroundColor, color];
-        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStyle: style }, element);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStyle : style }, element);
     }
     CGFloat coordValue = 0.f;
     CGRect frame = paint.frame;
-    if((coordValue = frame.origin.x) != 0.f) {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeX: IJSVGShortFloatStringWithOptions(coordValue, _floatingPointOptions)
-        }, element);
+    if ((coordValue = frame.origin.x) != 0.f) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeX : IJSVGShortFloatStringWithOptions(coordValue, _floatingPointOptions) }, element);
     }
-    if((coordValue = frame.origin.y) != 0.f) {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeY: IJSVGShortFloatStringWithOptions(coordValue, _floatingPointOptions)
-        }, element);
+    if ((coordValue = frame.origin.y) != 0.f) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeY : IJSVGShortFloatStringWithOptions(coordValue, _floatingPointOptions) }, element);
     }
 }
 
-- (NSXMLElement*)elementForRoot:(IJSVGRootPaint*)paint
-                     fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForRoot:(IJSVGRootPaint*)paint fromParent:(NSXMLElement*)parent
 {
     // create the element
     NSXMLElement* element = [[NSXMLElement alloc] init];
     element.name = @"svg";
-    
-    [self applyDefaultsForRoot:paint
-                     toElement:element];
+
+    [self applyDefaultsForRoot:paint toElement:element];
 
     // add group children
     for (IJSVGPaint* childPaint in paint.children) {
-        [self _recursiveParseFromPaint:childPaint
-                           intoElement:element];
+        [self _recursiveParseFromPaint:childPaint intoElement:element];
     }
 
     return element;
-    
 }
 
 - (NSString*)base64EncodedStringFromCGImage:(CGImageRef)image
 {
-    if(image == nil) {
+    if (image == nil) {
         return nil;
     }
 
@@ -1404,89 +1245,77 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
 
         // work out the data
-        NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG
-                                         properties:@{}];
+        NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
 
         NSString* base64String = [data base64EncodedStringWithOptions:0];
         return [@"data:image/png;base64," stringByAppendingString:base64String];
     }
 }
 
-- (void)applyPatternFromPaint:(IJSVGPatternPaint*)paint
-                  parentPaint:(IJSVGPaint*)parentPaint
-                       stroke:(BOOL)stroke
-                    toElement:(NSXMLElement*)element
+- (void)applyPatternFromPaint:(IJSVGPatternPaint*)paint parentPaint:(IJSVGPaint*)parentPaint stroke:(BOOL)stroke toElement:(NSXMLElement*)element
 {
     // now we need the pattern
     IJSVGGroupPaint* patternPaint = (IJSVGGroupPaint*)paint.pattern;
-    
+
     // x & y could be apart of a transform paint, if so, remove it
     CGAffineTransform transform = CGAffineTransformIdentity;
-    if(patternPaint.class == IJSVGTransformPaint.class) {
+    if (patternPaint.class == IJSVGTransformPaint.class) {
         transform = patternPaint.affineTransform;
         patternPaint = (IJSVGGroupPaint*)patternPaint.children.firstObject;
     }
-    
+
     // if we cant find a pattern paint, something went really wrong,
     // but lets break just incase
-    if(patternPaint == nil) {
+    if (patternPaint == nil) {
         return;
     }
 
-    NSXMLElement* patternElement = [self elementForGroupName:@"pattern"
-                                                       paint:patternPaint
-                                                  fromParent:element];
-    
+    NSXMLElement* patternElement = [self elementForGroupName:@"pattern" paint:patternPaint fromParent:element];
+
     CGSize cellSize = CGSizeZero;
     CGRect viewBox = CGRectZero;
     CGPoint origin = CGPointZero;
-    
-    [paint computeCellSize:&cellSize
-                   viewBox:&viewBox
-                    origin:&origin];
-        
+
+    [paint computeCellSize:&cellSize viewBox:&viewBox origin:&origin];
+
     // apply any transform that was applied to a transform paint if it existed
     // Pattern transforms are serialized separately below.
-    
-    // we need to convert back to user space, so we need to invert the transform for it
-    if(paint.patternNode.units == IJSVGUnitObjectBoundingBox) {
+
+    // we need to convert back to user space, so we need to invert the transform
+    // for it
+    if (paint.patternNode.units == IJSVGUnitObjectBoundingBox) {
         transform = [IJSVGPaint userSpaceTransformForPaint:paint.referencingPaint];
         origin = CGPointApplyAffineTransform(origin, CGAffineTransformInvert(transform));
     }
-    
+
     // compute the attributes
     NSString* identifier = [self identifierForElement:patternElement];
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributePatternUnits] = IJSVGStringUserSpaceOnUse;
     dict[IJSVGAttributeID] = identifier;
-    
-    if(origin.x != 0.f) {
-        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(origin.x,
-                                                                 _floatingPointOptions);
+
+    if (origin.x != 0.f) {
+        dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(origin.x, _floatingPointOptions);
     }
-    if(origin.y != 0.f) {
-        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(origin.y,
-                                                                 _floatingPointOptions);
+    if (origin.y != 0.f) {
+        dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(origin.y, _floatingPointOptions);
     }
-    if(cellSize.width != 0.f) {
-        dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(cellSize.width,
-                                                                     _floatingPointOptions);
+    if (cellSize.width != 0.f) {
+        dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(cellSize.width, _floatingPointOptions);
     }
-    if(cellSize.height != 0.f) {
-        dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(cellSize.height,
-                                                                      _floatingPointOptions);
+    if (cellSize.height != 0.f) {
+        dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(cellSize.height, _floatingPointOptions);
     }
-    
+
     // add a viewbox on, only if it needs it
-    if(CGPointEqualToPoint(viewBox.origin, CGPointZero) == NO ||
-       CGSizeEqualToSize(viewBox.size, cellSize) == NO) {
+    if (CGPointEqualToPoint(viewBox.origin, CGPointZero) == NO || CGSizeEqualToSize(viewBox.size, cellSize) == NO) {
         dict[IJSVGAttributeViewBox] = [self viewBoxWithRect:viewBox];
     }
-    
+
     // apply any actual pattern transform from the node, only if the
     // actual transform has something
     NSArray<IJSVGTransform*>* transforms = paint.patternNode.transforms;
-    if(transforms.count != 0) {
+    if (transforms.count != 0) {
         dict[IJSVGAttributePatternTransform] = [self transformAttributeStringForTransforms:transforms];
     }
 
@@ -1499,43 +1328,28 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     useElement.name = @"use";
 
     // now add the fill
-    if(stroke == NO) {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeFill: IJSVGHashURL(identifier)
-        }, element);
+    if (stroke == NO) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill : IJSVGHashURL(identifier) }, element);
 
         // fill opacity
-        if(paint.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{
-                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(paint.opacity,
-                _floatingPointOptions)
-            }, element);
+        if (paint.opacity != 1.f) {
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity : IJSVGShortFloatStringWithOptions(paint.opacity, _floatingPointOptions) }, element);
         }
     } else {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeStroke: IJSVGHashURL(identifier)
-        }, element);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStroke : IJSVGHashURL(identifier) }, element);
     }
 }
 
-- (void)applyGradientFromPaint:(IJSVGGradientPaint*)paint
-                   parentPaint:(IJSVGPaint*)parentPaint
-                        stroke:(BOOL)stroke
-                     toElement:(NSXMLElement*)element
+- (void)applyGradientFromPaint:(IJSVGGradientPaint*)paint parentPaint:(IJSVGPaint*)parentPaint stroke:(BOOL)stroke toElement:(NSXMLElement*)element
 {
     IJSVGGradient* gradient = paint.gradient;
     NSXMLElement* gradientElement = [[NSXMLElement alloc] init];
 
     // work out linear gradient
-    if(gradient.class == IJSVGLinearGradient.class) {
+    if (gradient.class == IJSVGLinearGradient.class) {
         IJSVGLinearGradient* lGradient = (IJSVGLinearGradient*)gradient;
         gradientElement.name = @"linearGradient";
-        NSDictionary<NSString*, NSString*>* dict = @{
-            IJSVGAttributeX1: [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeY1: [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeX2: [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeY2: [lGradient.y2 stringValueWithFloatingPointOptions:_floatingPointOptions]
-        };
+        NSDictionary<NSString*, NSString*>* dict = @{ IJSVGAttributeX1 : [lGradient.x1 stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY1 : [lGradient.y1 stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeX2 : [lGradient.x2 stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY2 : [lGradient.y2 stringValueWithFloatingPointOptions:_floatingPointOptions] };
 
         // give it the attibutes
         IJSVGApplyAttributesToElement(dict, gradientElement);
@@ -1543,47 +1357,35 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         // assume radial
         IJSVGRadialGradient* rGradient = (IJSVGRadialGradient*)gradient;
         gradientElement.name = @"radialGradient";
-        NSDictionary<NSString*, NSString*>* dict = @{
-            IJSVGAttributeCX: [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeCY: [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFX: [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFY: [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeR: [rGradient.r stringValueWithFloatingPointOptions:_floatingPointOptions],
-            IJSVGAttributeFR: [rGradient.fr stringValueWithFloatingPointOptions:_floatingPointOptions]
-        };
+        NSDictionary<NSString*, NSString*>* dict = @{ IJSVGAttributeCX : [rGradient.cx stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeCY : [rGradient.cy stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeFX : [rGradient.fx stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeFY : [rGradient.fy stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeR : [rGradient.r stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeFR : [rGradient.fr stringValueWithFloatingPointOptions:_floatingPointOptions] };
 
         // give it the attributes
         IJSVGApplyAttributesToElement(dict, gradientElement);
     }
-    
+
     // apply the identifier
     NSString* gradKey = [self identifierForElement:gradientElement];
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeID: gradKey
-    }, gradientElement);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : gradKey }, gradientElement);
 
     // apply the units
-    if(gradient.spreadMethod != IJSVGGradientSpreadMethodPad) {
-        IJSVGApplyAttributesToElement(@{IJSVGAttributeSpreadMethod:
-            gradient.spreadMethod == IJSVGGradientSpreadMethodReflect ? @"reflect" : @"repeat"}, gradientElement);
+    if (gradient.spreadMethod != IJSVGGradientSpreadMethodPad) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeSpreadMethod : gradient.spreadMethod == IJSVGGradientSpreadMethodReflect ? @"reflect" : @"repeat" }, gradientElement);
     }
-    if(paint.gradient.units == IJSVGUnitUserSpaceOnUse) {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeGradientUnits: IJSVGStringUserSpaceOnUse
-        }, gradientElement);
+    if (paint.gradient.units == IJSVGUnitUserSpaceOnUse) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientUnits : IJSVGStringUserSpaceOnUse }, gradientElement);
     }
 
     // add the stops
-//    IJSVGColorList* sheet = paint.gradient.computedColorList;
+    //    IJSVGColorList* sheet = paint.gradient.computedColorList
     NSInteger index = 0;
     for (NSColor* color in gradient.colors) {
         // grab each color from the gradient
         NSColor* aColor = color;
         CGFloat location = gradient.locations[index++];
 
-//        if(sheet != nil) {
-//            aColor = [sheet proposedColorForColor:aColor];
-//        }
+        //        if(sheet != nil) {
+        //            aColor = [sheet proposedColorForColor:aColor]
+        //        }
 
         // create the stop element
         NSXMLElement* stop = [[NSXMLElement alloc] init];
@@ -1594,11 +1396,9 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
         // add the color
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
-        NSString* stopColor = [self colorStringForColor:aColor
-                                                   flag:IJSVGColorUsageTraitGradientStop
-                                                options:options];
+        NSString* stopColor = [self colorStringForColor:aColor flag:IJSVGColorUsageTraitGradientStop options:options];
         // dont bother adding default
-        if([stopColor isEqualToString:@"#000"] == NO) {
+        if ([stopColor isEqualToString:@"#000"] == NO) {
             atts[IJSVGAttributeStopColor] = stopColor;
         }
 
@@ -1607,7 +1407,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
         // is opacity is equal to 1, no need to add it as spec
         // defaults opacity to 1 anyway :)
-        if(opacity != 1.f) {
+        if (opacity != 1.f) {
             atts[IJSVGAttributeStopOpacity] = IJSVGShortFloatStringWithOptions(opacity, _floatingPointOptions);
         }
 
@@ -1623,76 +1423,60 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     // work out the transform
     NSArray<IJSVGTransform*>* transforms = paint.gradient.transforms;
-    if(transforms.count != 0.f) {
+    if (transforms.count != 0.f) {
         NSString* transformString = [self transformAttributeStringForTransforms:transforms];
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeGradientTransform: transformString
-        }, gradientElement);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientTransform : transformString }, gradientElement);
     }
 
     // Outlining a stroke changes its object bounding box. Keep the gradient
     // mapped to the original resolved stroke coordinate system.
-    if(!stroke && gradient.units == IJSVGUnitObjectBoundingBox &&
-       [parentPaint isKindOfClass:IJSVGShapePaint.class] &&
-       ((IJSVGShapePaint*)parentPaint).strokePaint == paint && paint.clipPath != NULL) {
+    if (!stroke && gradient.units == IJSVGUnitObjectBoundingBox && [parentPaint isKindOfClass:IJSVGShapePaint.class] && ((IJSVGShapePaint*)parentPaint).strokePaint == paint && paint.clipPath != NULL) {
         CGRect outlineBounds = CGPathGetPathBoundingBox(paint.clipPath);
-        if(outlineBounds.size.width > 0.f && outlineBounds.size.height > 0.f) {
+        if (outlineBounds.size.width > 0.f && outlineBounds.size.height > 0.f) {
             CGRect sourceBounds = parentPaint.boundingBox;
-            CGAffineTransform mapping = CGAffineTransformMake(
-                sourceBounds.size.width / outlineBounds.size.width, 0, 0,
-                sourceBounds.size.height / outlineBounds.size.height,
-                -outlineBounds.origin.x / outlineBounds.size.width,
-                -outlineBounds.origin.y / outlineBounds.size.height);
+            CGAffineTransform mapping = CGAffineTransformMake(sourceBounds.size.width / outlineBounds.size.width, 0, 0, sourceBounds.size.height / outlineBounds.size.height, -outlineBounds.origin.x / outlineBounds.size.width, -outlineBounds.origin.y / outlineBounds.size.height);
             NSString* existing = [gradientElement attributeForName:IJSVGAttributeGradientTransform].stringValue;
             NSString* mapped = [self transformAttributeStringForTransform:mapping];
-            if(existing.length != 0) {
+            if (existing.length != 0) {
                 mapped = [mapped stringByAppendingFormat:@" %@", existing];
             }
-            IJSVGApplyAttributesToElement(@{IJSVGAttributeGradientTransform: mapped}, gradientElement);
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeGradientTransform : mapped }, gradientElement);
         }
     }
 
     // add it to the element passed in
-    if(stroke == NO) {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeFill: IJSVGHashURL(gradKey)
-        }, element);
+    if (stroke == NO) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill : IJSVGHashURL(gradKey) }, element);
 
         // fill opacity
-        if(paint.opacity != 1.f) {
-            IJSVGApplyAttributesToElement(@{
-                IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(paint.opacity,
-                    _floatingPointOptions)
-            }, element);
+        if (paint.opacity != 1.f) {
+            IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity : IJSVGShortFloatStringWithOptions(paint.opacity, _floatingPointOptions) }, element);
         }
     } else {
-        IJSVGApplyAttributesToElement(@{
-            IJSVGAttributeStroke: IJSVGHashURL(gradKey)
-        }, element);
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeStroke : IJSVGHashURL(gradKey) }, element);
     }
 }
 
-- (NSXMLElement*)elementForImage:(IJSVGImagePaint*)paint
-                      fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForImage:(IJSVGImagePaint*)paint fromParent:(NSXMLElement*)parent
 {
     IJSVGImage* image = paint.image;
-    if(image == nil || image.image == nil) {
+    if (image == nil || image.image == nil) {
         return nil;
     }
 
     // image element for the SVG
     NSXMLElement* imageElement = [[NSXMLElement alloc] init];
     imageElement.name = @"image";
-    
+
     // we need to transform this into its required aspect ratio
     NSImage* nsImage = image.image;
     CGFloat ratio = 0.f;
-    
+
     // Image nodes retain their source units so they can be resolved for each
     // render size. Export the layers resolved bounds rather than serializing
     // `objectBoundingBox` values such as 1.05 as userspace dimensions.
     CGRect bounds = paint.bounds;
-    if(CGRectIsEmpty(bounds) == YES) {
+    if (CGRectIsEmpty(bounds) == YES) {
         bounds = image.bounds;
     }
 
@@ -1700,32 +1484,27 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     const CGFloat imageHeight = bounds.size.height;
     const CGFloat maxWidth = nsImage.size.width;
     const CGFloat maxHeight = nsImage.size.height;
-    
+
     // work out the ratio
-    if(imageWidth > imageHeight) {
+    if (imageWidth > imageHeight) {
         ratio = maxWidth / imageWidth;
     } else {
         ratio = maxHeight / imageHeight;
     }
-    
+
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
     // Image paints resolve their origin inside drawInContext:, rather than
     // adding it to the enclosing transform. Preserve that position on export.
-    dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(CGRectGetMinX(paint.frame),
-                                                           _floatingPointOptions);
-    dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(CGRectGetMinY(paint.frame),
-                                                           _floatingPointOptions);
-    dict[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:image.viewBoxAlignment
-                                                                         meetOrSlice:image.viewBoxMeetOrSlice];
-    dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(CGRectGetWidth(bounds),
-                                                                 _floatingPointOptions);
-    dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds),
-                                                                  _floatingPointOptions);
+    dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(CGRectGetMinX(paint.frame), _floatingPointOptions);
+    dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(CGRectGetMinY(paint.frame), _floatingPointOptions);
+    dict[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:image.viewBoxAlignment meetOrSlice:image.viewBoxMeetOrSlice];
+    dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(CGRectGetWidth(bounds), _floatingPointOptions);
+    dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(CGRectGetHeight(bounds), _floatingPointOptions);
 
-    IJSVGNode* referencingNode = nil;
+    IJSVGGraphicsNode* referencingNode = nil;
     IJSVGUnitType contentUnits = [image.parentNode contentUnitsWithReferencingNode:&referencingNode];
-    if(contentUnits == IJSVGUnitObjectBoundingBox) {
+    if (contentUnits == IJSVGUnitObjectBoundingBox) {
         // The bounding box scale is already baked into the resolved paint
         // dimensions. Disable the image elements second aspectratio fit,
         // which would otherwise distort the exported raster.
@@ -1734,32 +1513,27 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     // encode the image and be done
     NSString* base64String = nil;
-    if(image.sourceData != nil && image.sourceMIMEType != nil) {
+    if (image.sourceData != nil && image.sourceMIMEType != nil) {
         NSString* encoded = [image.sourceData base64EncodedStringWithOptions:0];
-        base64String = [NSString stringWithFormat:@"data:%@;base64,%@",
-                                                  image.sourceMIMEType,
-                                                  encoded];
-    } else @autoreleasepool {
-        CGImageRef cgImage = NULL;
-        if(ratio != 1.f) {
-            CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth*ratio,
-                                             imageHeight*ratio);
-            NSImage* actualImage = [IJSVGUtils resizeImage:nsImage
-                                                    toSize:newImageRect.size];
-            cgImage = [actualImage CGImageForProposedRect:&newImageRect
-                                                  context:NULL
-                                                    hints:NULL];
-        } else {
-            cgImage = image.CGImage;
+        base64String = [NSString stringWithFormat:@"data:%@;base64,%@", image.sourceMIMEType, encoded];
+    } else
+        @autoreleasepool {
+            CGImageRef cgImage = NULL;
+            if (ratio != 1.f) {
+                CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth * ratio, imageHeight * ratio);
+                NSImage* actualImage = [IJSVGUtils resizeImage:nsImage toSize:newImageRect.size];
+                cgImage = [actualImage CGImageForProposedRect:&newImageRect context:NULL hints:NULL];
+            } else {
+                cgImage = image.CGImage;
+            }
+            base64String = [self base64EncodedStringFromCGImage:cgImage];
         }
-        base64String = [self base64EncodedStringFromCGImage:cgImage];
-    }
-    if(base64String == nil) {
+    if (base64String == nil) {
         return nil;
     }
     dict[IJSVGAttributeXLink] = base64String;
     [self applyXLinkToRootElement];
-    
+
     // add the attributes
     IJSVGApplyAttributesToElement(dict, imageElement);
     return imageElement;
@@ -1768,7 +1542,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (IJSVGColorStringOptions)colorOptions
 {
     IJSVGColorStringOptions options = IJSVGColorStringOptionDefault;
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionColorAllowRRGGBBAA) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionColorAllowRRGGBBAA) == YES) {
         options |= IJSVGColorStringOptionAllowRRGGBBAA;
     }
     return options;
@@ -1777,528 +1551,474 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSString*)elementNameForPrimitiveType:(IJSVGPrimitivePathType)primitiveType
 {
     switch (primitiveType) {
-    case kIJSVGPrimitivePathTypeRect:
-        return @"rect";
-    case kIJSVGPrimitivePathTypePolyLine:
-        return @"polyline";
-    case kIJSVGPrimitivePathTypeEllipse:
-        return @"ellipse";
-    case kIJSVGPrimitivePathTypeCircle:
-        return @"circle";
-    case kIJSVGPrimitivePathTypeLine:
-        return @"line";
-    case kIJSVGPrimitivePathTypePolygon:
-        return @"polygon";
-    case kIJSVGPrimitivePathTypePath:
-    default:
-        return @"path";
+        case kIJSVGPrimitivePathTypeRect:
+            return @"rect";
+        case kIJSVGPrimitivePathTypePolyLine:
+            return @"polyline";
+        case kIJSVGPrimitivePathTypeEllipse:
+            return @"ellipse";
+        case kIJSVGPrimitivePathTypeCircle:
+            return @"circle";
+        case kIJSVGPrimitivePathTypeLine:
+            return @"line";
+        case kIJSVGPrimitivePathTypePolygon:
+            return @"polygon";
+        case kIJSVGPrimitivePathTypePath:
+        default:
+            return @"path";
     }
 }
 
-- (NSXMLElement*)elementForShape:(IJSVGShapePaint*)paint
-                      fromParent:(NSXMLElement*)parent
+- (NSXMLElement*)elementForShape:(IJSVGShapePaint*)paint fromParent:(NSXMLElement*)parent
 {
     NSXMLElement* e = [[NSXMLElement alloc] init];
     e.name = [self elementNameForPrimitiveType:paint.primitiveType];
     CGPathRef path = paint.path;
 
     // copy the path as we want to translate
-    CGAffineTransform trans = CGAffineTransformMakeTranslation(paint.frame.origin.x,
-        paint.frame.origin.y);
-    
-    // if its stroked, we need to move it back to where it should be, which is just
-    // half of the line width, so move it back!
-    if(paint.strokeStyle != nil) {
+    CGAffineTransform trans = CGAffineTransformMakeTranslation(paint.frame.origin.x, paint.frame.origin.y);
+
+    // if its stroked, we need to move it back to where it should be, which is
+    // just half of the line width, so move it back!
+    if (paint.strokeStyle != nil) {
         IJSVGShapePaint* strokePaint = (IJSVGShapePaint*)paint.strokeStyle;
         const CGFloat lineWidth = strokePaint.lineWidth / 2.f;
         CGAffineTransform strokeTransform = CGAffineTransformIdentity;
         strokeTransform = CGAffineTransformMakeTranslation(lineWidth, lineWidth);
         trans = CGAffineTransformConcat(trans, strokeTransform);
     }
-    
+
     CGPathRef transformPath = CGPathCreateCopyByTransformingPath(path, &trans);
 
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     BOOL cleanupPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths);
     BOOL convertArcs = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertArcs);
     BOOL convertShapesToPaths = IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertShapesToPaths);
-    
+
     // path
     switch (paint.primitiveType) {
-    case kIJSVGPrimitivePathTypeRect: {
-        __block BOOL radiusSet = NO;
-        IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-            if(radiusSet == NO && pathElement->type == kCGPathElementAddCurveToPoint) {
-                radiusSet = YES;
-                CGFloat radX = fabs(pathElement->points[2].x - currentPoint.x);
-                CGFloat radY = fabs(pathElement->points[2].y - currentPoint.y);
-
-                dict[IJSVGAttributeRX] = IJSVGShortFloatStringWithOptions(radX, self->_floatingPointOptions);
-                if(radX != radY) {
-                    dict[IJSVGAttributeRY] = IJSVGShortFloatStringWithOptions(radY, self->_floatingPointOptions);
-                }
-            }
-        });
-
-        CGRect boundingBox = CGPathGetBoundingBox(transformPath);
-        if(cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
-            // construct array of instructions to do
-            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = [[NSMutableArray alloc] initWithCapacity:5];
-
-            // M to H to V to H to z
-            // M
-            IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                          dataCount:2];
-            instruction.data[0] = boundingBox.origin.x;
-            instruction.data[1] = boundingBox.origin.y;
-            [instructions addObject:instruction];
-
-            // H
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
-                                                                          dataCount:1];
-            instruction.data[0] = boundingBox.origin.x + boundingBox.size.width;
-            [instructions addObject:instruction];
-
-            // V
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'V'
-                                                                          dataCount:1];
-            instruction.data[0] = boundingBox.origin.y + boundingBox.size.height;
-            [instructions addObject:instruction];
-
-            // H
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H'
-                                                                          dataCount:1];
-            instruction.data[0] = boundingBox.origin.x;
-            [instructions addObject:instruction];
-
-            // Z
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                          dataCount:0];
-            [instructions addObject:instruction];
-            dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
-        } else {
-            if(boundingBox.origin.x != 0.f) {
-                dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(boundingBox.origin.x, _floatingPointOptions);
-            }
-            if(boundingBox.origin.y != 0.f) {
-                dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(boundingBox.origin.y, _floatingPointOptions);
-            }
-            dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(boundingBox.size.width, _floatingPointOptions);
-            dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(boundingBox.size.height, _floatingPointOptions);
-        }
-        break;
-    }
-    case kIJSVGPrimitivePathTypeLine: {
-        if(cleanupPaths == YES && convertShapesToPaths == YES) {
-            // M to L
-            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[NSMutableArray alloc] initWithCapacity:2];
+        case kIJSVGPrimitivePathTypeRect: {
+            __block BOOL radiusSet = NO;
             IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-                switch (pathElement->type) {
-                case kCGPathElementMoveToPoint: {
-                    IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                  dataCount:2];
-                    instruction.data[0] = pathElement->points[0].x;
-                    instruction.data[1] = pathElement->points[0].y;
-                    [instructions addObject:instruction];
-                    break;
-                }
-                case kCGPathElementAddLineToPoint: {
-                    IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                  dataCount:2];
-                    instruction.data[0] = pathElement->points[0].x;
-                    instruction.data[1] = pathElement->points[0].y;
-                    [instructions addObject:instruction];
-                    break;
-                }
-                default:
-                    break;
+                if (radiusSet == NO && pathElement->type == kCGPathElementAddCurveToPoint) {
+                    radiusSet = YES;
+                    CGFloat radX = fabs(pathElement->points[2].x - currentPoint.x);
+                    CGFloat radY = fabs(pathElement->points[2].y - currentPoint.y);
+
+                    dict[IJSVGAttributeRX] = IJSVGShortFloatStringWithOptions(radX, self->_floatingPointOptions);
+                    if (radX != radY) {
+                        dict[IJSVGAttributeRY] = IJSVGShortFloatStringWithOptions(radY, self->_floatingPointOptions);
+                    }
                 }
             });
-            dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
-        } else {
-            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-                switch (pathElement->type) {
-                case kCGPathElementMoveToPoint: {
-                    dict[IJSVGAttributeX1] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
-                    dict[IJSVGAttributeY1] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
-                    break;
-                }
-                case kCGPathElementAddLineToPoint: {
-                    dict[IJSVGAttributeX2] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
-                    dict[IJSVGAttributeY2] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
-                    break;
-                }
-                default:
-                    break;
-                }
-            });
-        }
-        break;
-    }
-    case kIJSVGPrimitivePathTypePolygon:
-    case kIJSVGPrimitivePathTypePolyLine: {
-        if(cleanupPaths == YES && convertShapesToPaths == YES) {
-            // M to L+
-            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[NSMutableArray alloc] init];
-            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-                switch (pathElement->type) {
-                case kCGPathElementMoveToPoint: {
-                    IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                                  dataCount:2];
-                    instruction.data[0] = pathElement->points[0].x;
-                    instruction.data[1] = pathElement->points[0].y;
-                    [instructions addObject:instruction];
-                    break;
-                }
-                case kCGPathElementAddLineToPoint: {
-                    IJSVGExporterPathInstruction* instruction = nil;
-                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L'
-                                                                                  dataCount:2];
-                    instruction.data[0] = pathElement->points[0].x;
-                    instruction.data[1] = pathElement->points[0].y;
-                    [instructions addObject:instruction];
-                    break;
-                }
-                default:
-                    break;
-                }
-            });
-            if(paint.primitiveType == kIJSVGPrimitivePathTypePolygon) {
-                // remove last one if it was M
-                if(instructions.lastObject.instruction == 'M') {
-                    [instructions removeLastObject];
-                }
+
+            CGRect boundingBox = CGPathGetBoundingBox(transformPath);
+            if (cleanupPaths == YES && radiusSet == NO && convertShapesToPaths == YES) {
+                // construct array of instructions to do
+                e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+                NSMutableArray<IJSVGExporterPathInstruction*>* instructions = [[NSMutableArray alloc] initWithCapacity:5];
+
+                // M to H to V to H to z
+                // M
                 IJSVGExporterPathInstruction* instruction = nil;
-                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                              dataCount:0];
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+                instruction.data[0] = boundingBox.origin.x;
+                instruction.data[1] = boundingBox.origin.y;
                 [instructions addObject:instruction];
+
+                // H
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H' dataCount:1];
+                instruction.data[0] = boundingBox.origin.x + boundingBox.size.width;
+                [instructions addObject:instruction];
+
+                // V
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'V' dataCount:1];
+                instruction.data[0] = boundingBox.origin.y + boundingBox.size.height;
+                [instructions addObject:instruction];
+
+                // H
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'H' dataCount:1];
+                instruction.data[0] = boundingBox.origin.x;
+                [instructions addObject:instruction];
+
+                // Z
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z' dataCount:0];
+                [instructions addObject:instruction];
+                dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
+            } else {
+                if (boundingBox.origin.x != 0.f) {
+                    dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(boundingBox.origin.x, _floatingPointOptions);
+                }
+                if (boundingBox.origin.y != 0.f) {
+                    dict[IJSVGAttributeY] = IJSVGShortFloatStringWithOptions(boundingBox.origin.y, _floatingPointOptions);
+                }
+                dict[IJSVGAttributeWidth] = IJSVGShortFloatStringWithOptions(boundingBox.size.width, _floatingPointOptions);
+                dict[IJSVGAttributeHeight] = IJSVGShortFloatStringWithOptions(boundingBox.size.height, _floatingPointOptions);
             }
-            dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
-        } else {
-            NSMutableArray<NSString*>* points = [[NSMutableArray alloc] init];
-            __block CGPathElementType type;
-            IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
-                type = pathElement->type;
-                switch (type) {
-                case kCGPathElementMoveToPoint: {
-                    pathElement->points[0].x = pathElement->points[0].x;
-                    pathElement->points[0].y = pathElement->points[0].y;
-                    [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
-                    break;
-                }
-                case kCGPathElementAddLineToPoint: {
-                    pathElement->points[0].x = pathElement->points[0].x;
-                    pathElement->points[0].y = pathElement->points[0].y;
-                    [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
-                    break;
-                }
-                default:
-                    break;
-                }
-            });
-            // polygon does not need the move to command
-            if(paint.primitiveType == kIJSVGPrimitivePathTypePolygon &&
-                type == kCGPathElementMoveToPoint) {
-                [points removeLastObject];
+            break;
+        }
+        case kIJSVGPrimitivePathTypeLine: {
+            if (cleanupPaths == YES && convertShapesToPaths == YES) {
+                // M to L
+                e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+                NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+                instructions = [[NSMutableArray alloc] initWithCapacity:2];
+                IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                    switch (pathElement->type) {
+                        case kCGPathElementMoveToPoint: {
+                            IJSVGExporterPathInstruction* instruction = nil;
+                            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+                            instruction.data[0] = pathElement->points[0].x;
+                            instruction.data[1] = pathElement->points[0].y;
+                            [instructions addObject:instruction];
+                            break;
+                        }
+                        case kCGPathElementAddLineToPoint: {
+                            IJSVGExporterPathInstruction* instruction = nil;
+                            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L' dataCount:2];
+                            instruction.data[0] = pathElement->points[0].x;
+                            instruction.data[1] = pathElement->points[0].y;
+                            [instructions addObject:instruction];
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                });
+                dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
+            } else {
+                IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                    switch (pathElement->type) {
+                        case kCGPathElementMoveToPoint: {
+                            dict[IJSVGAttributeX1] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
+                            dict[IJSVGAttributeY1] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
+                            break;
+                        }
+                        case kCGPathElementAddLineToPoint: {
+                            dict[IJSVGAttributeX2] = IJSVGShortFloatStringWithOptions(pathElement->points[0].x, self->_floatingPointOptions);
+                            dict[IJSVGAttributeY2] = IJSVGShortFloatStringWithOptions(pathElement->points[0].y, self->_floatingPointOptions);
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                });
             }
-            dict[IJSVGAttributePoints] = [points componentsJoinedByString:@" "];
+            break;
         }
-        break;
-    }
-    case kIJSVGPrimitivePathTypeEllipse: {
-        CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
-        CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
-        CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
-        CGFloat rx = boundingBox.size.width / 2.f;
-        CGFloat ry = boundingBox.size.height / 2.f;
-
-        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
-            // M + A + A +Z
-            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[NSMutableArray alloc] initWithCapacity:4];
-
-            // M
-            IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                          dataCount:2];
-            instruction.data[0] = cx;
-            instruction.data[1] = cy - ry;
-            [instructions addObject:instruction];
-
-            // A
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                          dataCount:7];
-            instruction.data[0] = rx;
-            instruction.data[1] = ry;
-            instruction.data[2] = 0;
-            instruction.data[3] = 1;
-            instruction.data[4] = 0;
-            instruction.data[5] = cx;
-            instruction.data[6] = cy + ry;
-            [instructions addObject:instruction];
-
-            // A
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                          dataCount:7];
-            instruction.data[0] = rx;
-            instruction.data[1] = ry;
-            instruction.data[2] = 0;
-            instruction.data[3] = 1;
-            instruction.data[4] = 0;
-            instruction.data[5] = cx;
-            instruction.data[6] = cy - ry;
-            [instructions addObject:instruction];
-
-            // Z
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                          dataCount:0];
-            [instructions addObject:instruction];
-            dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
-        } else {
-            dict[IJSVGAttributeCX] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
-            dict[IJSVGAttributeCY] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
-            dict[IJSVGAttributeRX] = IJSVGShortFloatStringWithOptions(rx, _floatingPointOptions);
-            dict[IJSVGAttributeRY] = IJSVGShortFloatStringWithOptions(ry, _floatingPointOptions);
+        case kIJSVGPrimitivePathTypePolygon:
+        case kIJSVGPrimitivePathTypePolyLine: {
+            if (cleanupPaths == YES && convertShapesToPaths == YES) {
+                // M to L+
+                e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+                NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+                instructions = [[NSMutableArray alloc] init];
+                IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                    switch (pathElement->type) {
+                        case kCGPathElementMoveToPoint: {
+                            IJSVGExporterPathInstruction* instruction = nil;
+                            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+                            instruction.data[0] = pathElement->points[0].x;
+                            instruction.data[1] = pathElement->points[0].y;
+                            [instructions addObject:instruction];
+                            break;
+                        }
+                        case kCGPathElementAddLineToPoint: {
+                            IJSVGExporterPathInstruction* instruction = nil;
+                            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'L' dataCount:2];
+                            instruction.data[0] = pathElement->points[0].x;
+                            instruction.data[1] = pathElement->points[0].y;
+                            [instructions addObject:instruction];
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                });
+                if (paint.primitiveType == kIJSVGPrimitivePathTypePolygon) {
+                    // remove last one if it was M
+                    if (instructions.lastObject.instruction == 'M') {
+                        [instructions removeLastObject];
+                    }
+                    IJSVGExporterPathInstruction* instruction = nil;
+                    instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z' dataCount:0];
+                    [instructions addObject:instruction];
+                }
+                dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
+            } else {
+                NSMutableArray<NSString*>* points = [[NSMutableArray alloc] init];
+                __block CGPathElementType type;
+                IJSVGEnumerateCGPathElements(transformPath, ^(const CGPathElement* pathElement, CGPoint currentPoint) {
+                    type = pathElement->type;
+                    switch (type) {
+                        case kCGPathElementMoveToPoint: {
+                            pathElement->points[0].x = pathElement->points[0].x;
+                            pathElement->points[0].y = pathElement->points[0].y;
+                            [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                            break;
+                        }
+                        case kCGPathElementAddLineToPoint: {
+                            pathElement->points[0].x = pathElement->points[0].x;
+                            pathElement->points[0].y = pathElement->points[0].y;
+                            [points addObject:IJSVGPointToCommandString(pathElement->points[0])];
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                });
+                // polygon does not need the move to command
+                if (paint.primitiveType == kIJSVGPrimitivePathTypePolygon && type == kCGPathElementMoveToPoint) {
+                    [points removeLastObject];
+                }
+                dict[IJSVGAttributePoints] = [points componentsJoinedByString:@" "];
+            }
+            break;
         }
-        break;
-    }
-    case kIJSVGPrimitivePathTypeCircle: {
-        CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
-        CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
-        CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
-        CGFloat r = boundingBox.size.width / 2.f;
-        if(cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
-            // M + A + A +Z
-            e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
-            NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
-            instructions = [[NSMutableArray alloc] initWithCapacity:4];
+        case kIJSVGPrimitivePathTypeEllipse: {
+            CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
+            CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
+            CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
+            CGFloat rx = boundingBox.size.width / 2.f;
+            CGFloat ry = boundingBox.size.height / 2.f;
 
-            // M
-            IJSVGExporterPathInstruction* instruction = nil;
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M'
-                                                                          dataCount:2];
-            instruction.data[0] = cx;
-            instruction.data[1] = cy - r;
-            [instructions addObject:instruction];
+            if (cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+                // M + A + A +Z
+                e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+                NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+                instructions = [[NSMutableArray alloc] initWithCapacity:4];
 
-            // A
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                          dataCount:7];
-            instruction.data[0] = r;
-            instruction.data[1] = r;
-            instruction.data[2] = 0;
-            instruction.data[3] = 1;
-            instruction.data[4] = 0;
-            instruction.data[5] = cx;
-            instruction.data[6] = cy + r;
-            [instructions addObject:instruction];
+                // M
+                IJSVGExporterPathInstruction* instruction = nil;
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+                instruction.data[0] = cx;
+                instruction.data[1] = cy - ry;
+                [instructions addObject:instruction];
 
-            // A
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A'
-                                                                          dataCount:7];
-            instruction.data[0] = r;
-            instruction.data[1] = r;
-            instruction.data[2] = 0;
-            instruction.data[3] = 1;
-            instruction.data[4] = 0;
-            instruction.data[5] = cx;
-            instruction.data[6] = cy - r;
-            [instructions addObject:instruction];
+                // A
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A' dataCount:7];
+                instruction.data[0] = rx;
+                instruction.data[1] = ry;
+                instruction.data[2] = 0;
+                instruction.data[3] = 1;
+                instruction.data[4] = 0;
+                instruction.data[5] = cx;
+                instruction.data[6] = cy + ry;
+                [instructions addObject:instruction];
 
-            // Z
-            instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z'
-                                                                          dataCount:0];
-            [instructions addObject:instruction];
-            dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
-        } else {
-            dict[IJSVGAttributeCX] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
-            dict[IJSVGAttributeCY] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
-            dict[IJSVGAttributeR] = IJSVGShortFloatStringWithOptions(r, _floatingPointOptions);
+                // A
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A' dataCount:7];
+                instruction.data[0] = rx;
+                instruction.data[1] = ry;
+                instruction.data[2] = 0;
+                instruction.data[3] = 1;
+                instruction.data[4] = 0;
+                instruction.data[5] = cx;
+                instruction.data[6] = cy - ry;
+                [instructions addObject:instruction];
+
+                // Z
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z' dataCount:0];
+                [instructions addObject:instruction];
+                dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
+            } else {
+                dict[IJSVGAttributeCX] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
+                dict[IJSVGAttributeCY] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
+                dict[IJSVGAttributeRX] = IJSVGShortFloatStringWithOptions(rx, _floatingPointOptions);
+                dict[IJSVGAttributeRY] = IJSVGShortFloatStringWithOptions(ry, _floatingPointOptions);
+            }
+            break;
         }
-        break;
-    }
-    case kIJSVGPrimitivePathTypePath:
-    default:
-        dict[IJSVGAttributeD] = [self pathFromCGPath:transformPath];
+        case kIJSVGPrimitivePathTypeCircle: {
+            CGRect boundingBox = CGPathGetPathBoundingBox(transformPath);
+            CGFloat cx = boundingBox.origin.x + boundingBox.size.width / 2.f;
+            CGFloat cy = boundingBox.origin.y + boundingBox.size.height / 2.f;
+            CGFloat r = boundingBox.size.width / 2.f;
+            if (cleanupPaths == YES && convertArcs == YES && convertShapesToPaths == YES) {
+                // M + A + A +Z
+                e.name = [self elementNameForPrimitiveType:kIJSVGPrimitivePathTypePath];
+                NSMutableArray<IJSVGExporterPathInstruction*>* instructions = nil;
+                instructions = [[NSMutableArray alloc] initWithCapacity:4];
+
+                // M
+                IJSVGExporterPathInstruction* instruction = nil;
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+                instruction.data[0] = cx;
+                instruction.data[1] = cy - r;
+                [instructions addObject:instruction];
+
+                // A
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A' dataCount:7];
+                instruction.data[0] = r;
+                instruction.data[1] = r;
+                instruction.data[2] = 0;
+                instruction.data[3] = 1;
+                instruction.data[4] = 0;
+                instruction.data[5] = cx;
+                instruction.data[6] = cy + r;
+                [instructions addObject:instruction];
+
+                // A
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'A' dataCount:7];
+                instruction.data[0] = r;
+                instruction.data[1] = r;
+                instruction.data[2] = 0;
+                instruction.data[3] = 1;
+                instruction.data[4] = 0;
+                instruction.data[5] = cx;
+                instruction.data[6] = cy - r;
+                [instructions addObject:instruction];
+
+                // Z
+                instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z' dataCount:0];
+                [instructions addObject:instruction];
+                dict[IJSVGAttributeD] = [self pathFromInstructions:instructions];
+            } else {
+                dict[IJSVGAttributeCX] = IJSVGShortFloatStringWithOptions(cx, _floatingPointOptions);
+                dict[IJSVGAttributeCY] = IJSVGShortFloatStringWithOptions(cy, _floatingPointOptions);
+                dict[IJSVGAttributeR] = IJSVGShortFloatStringWithOptions(r, _floatingPointOptions);
+            }
+            break;
+        }
+        case kIJSVGPrimitivePathTypePath:
+        default:
+            dict[IJSVGAttributeD] = [self pathFromCGPath:transformPath];
     }
 
     // memory clean
     CGPathRelease(transformPath);
 
     // work out even odd rule
-    if(paint.fillRule == IJSVGWindingRuleEvenOdd) {
+    if (paint.fillRule == IJSVGWindingRuleEvenOdd) {
         dict[IJSVGAttributeFillRule] = IJSVGStringEvenOdd;
     }
 
     // A separated stroke operation must not acquire the default black SVG fill.
-    if(paint.fillPaint == nil && paint.fillGradient == nil) {
+    if (paint.fillPaint == nil && paint.fillGradient == nil) {
         dict[IJSVGAttributeFill] = IJSVGStringNone;
     }
 
     // fill color
     IJSVGShapePaint* fillPaint = (IJSVGShapePaint*)([paint.fillPaint isKindOfClass:IJSVGShapePaint.class] ? paint.fillPaint : nil);
-    if(fillPaint != nil) {
+    if (fillPaint != nil) {
         NSString* colorString = IJSVGStringNone;
-        if(fillPaint.fillColor != NULL) {
+        if (fillPaint.fillColor != NULL) {
             NSColor* fillColor = nil;
             fillColor = [NSColor colorWithCGColor:fillPaint.fillColor];
-            colorString = [self colorStringForColor:fillColor
-                                               flag:IJSVGColorUsageTraitFill
-                                            options:[self colorOptions]];
+            colorString = [self colorStringForColor:fillColor flag:IJSVGColorUsageTraitFill options:[self colorOptions]];
         }
         dict[IJSVGAttributeFill] = colorString;
-        
+
         // any fill opacity?
-        if(fillPaint.opacity != 1.f) {
+        if (fillPaint.opacity != 1.f) {
             dict[IJSVGAttributeFillOpacity] = IJSVGShortFloatStringWithOptions(fillPaint.opacity, _floatingPointOptions);
         }
     }
 
     // is there a gradient fill?
     IJSVGGradientPaint* gradientPaint = (IJSVGGradientPaint*)([paint.fillPaint isKindOfClass:IJSVGGradientPaint.class] ? paint.fillPaint : nil);
-    if(paint.fillGradient != nil) {
+    if (paint.fillGradient != nil) {
         gradientPaint = IJSVGGradientPaint.paint;
         gradientPaint.gradient = paint.fillGradient;
     }
-    if(gradientPaint != nil) {
-        [self applyGradientFromPaint:gradientPaint
-                         parentPaint:(IJSVGPaint*)paint
-                              stroke:NO
-                           toElement:e];
+    if (gradientPaint != nil) {
+        [self applyGradientFromPaint:gradientPaint parentPaint:(IJSVGPaint*)paint stroke:NO toElement:e];
     }
 
     // is there a pattern?
     IJSVGPatternPaint* patternPaint = (IJSVGPatternPaint*)([paint.fillPaint isKindOfClass:IJSVGPatternPaint.class] ? paint.fillPaint : nil);
-    if(patternPaint != nil) {
-        [self applyPatternFromPaint:patternPaint
-                        parentPaint:(IJSVGPaint*)paint
-                             stroke:NO
-                          toElement:e];
+    if (patternPaint != nil) {
+        [self applyPatternFromPaint:patternPaint parentPaint:(IJSVGPaint*)paint stroke:NO toElement:e];
     }
 
     // is there a stroke paint?
-    if(paint.strokeStyle != nil) {
-        
-        // Non-scaling strokes must remain strokes: outlining freezes their width
+    if (paint.strokeStyle != nil) {
+        // Non scaling strokes must remain strokes: outlining freezes their width
         // at the export viewport and loses their behavior when the SVG is resized.
-        if(IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertStrokesToPaths) == YES &&
-           !paint.strokeStyle.nonScalingStroke) {
+        if (IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertStrokesToPaths) == YES && !paint.strokeStyle.nonScalingStroke) {
             IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             CGPathRef path = NULL;
             IJSVGShapePaint* strokePaint = (IJSVGStrokePaint*)paint.strokePaint;
             NSXMLElement* strokedPath = [[NSXMLElement alloc] initWithName:@"path"];
-            
-            switch(usageType) {
+
+            switch (usageType) {
                 case IJSVGPaintFillTypeGradient: {
                     path = strokePaint.clipPath;
-                    if(path != NULL) {
+                    if (path != NULL) {
                         CGPathRetain(path);
-                        [self applyGradientFromPaint:(IJSVGGradientPaint*)strokePaint
-                                         parentPaint:paint
-                                              stroke:NO
-                                           toElement:strokedPath];
+                        [self applyGradientFromPaint:(IJSVGGradientPaint*)strokePaint parentPaint:paint stroke:NO toElement:strokedPath];
                     }
                     break;
                 }
                 case IJSVGPaintFillTypePattern: {
                     path = strokePaint.clipPath;
-                    if(path != NULL) {
+                    if (path != NULL) {
                         CGPathRetain(path);
-                        [self applyPatternFromPaint:(IJSVGPatternPaint*)strokePaint
-                                        parentPaint:paint
-                                             stroke:NO
-                                          toElement:strokedPath];
+                        [self applyPatternFromPaint:(IJSVGPatternPaint*)strokePaint parentPaint:paint stroke:NO toElement:strokedPath];
                     }
                     break;
                 }
                 case IJSVGPaintFillTypeColor: {
                     path = [IJSVGQuartzRenderer newPathFromStrokedShapePaint:strokePaint];
                     NSColor* strokeColor = [NSColor colorWithCGColor:strokePaint.strokeColor];
-                    NSString* strokeColorString = [self colorStringForColor:strokeColor
-                                                                       flag:IJSVGColorUsageTraitStroke
-                                                                    options:[self colorOptions]];
-                    if(strokeColorString != nil) {
-                        IJSVGApplyAttributesToElement(@{
-                            IJSVGAttributeFill: strokeColorString
-                        }, strokedPath);
+                    NSString* strokeColorString = [self colorStringForColor:strokeColor flag:IJSVGColorUsageTraitStroke options:[self colorOptions]];
+                    if (strokeColorString != nil) {
+                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill : strokeColorString }, strokedPath);
                     }
 
                     // the stroke is now drawn as a filled path, so any stroke opacity
                     // needs to be carried over as fill opacity else it would be lost
-                    if(strokePaint.opacity != 1.f) {
-                        IJSVGApplyAttributesToElement(@{
-                            IJSVGAttributeFillOpacity: IJSVGShortFloatStringWithOptions(strokePaint.opacity,
-                                                                                        _floatingPointOptions)
-                        }, strokedPath);
+                    if (strokePaint.opacity != 1.f) {
+                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeFillOpacity : IJSVGShortFloatStringWithOptions(strokePaint.opacity, _floatingPointOptions) }, strokedPath);
                     }
                     break;
                 }
                 default: {
-                    // undefined;
+                    // undefined,
                 }
             }
-            
-            if(path != NULL) {
+
+            if (path != NULL) {
                 CGRect frame = paint.frame;
                 CGPoint point = CGPointMake(CGRectGetMinX(frame), CGRectGetMinY(frame));
                 CGAffineTransform pathTransform = CGAffineTransformMakeTranslation(point.x, point.y);
                 CGPathRef transformedPath = CGPathCreateCopyByTransformingPath(path, &pathTransform);
-                if(transformedPath != NULL) {
-                    IJSVGApplyAttributesToElement(@{
-                        IJSVGAttributeD: [self pathFromCGPath:transformedPath]
-                    }, strokedPath);
+                if (transformedPath != NULL) {
+                    IJSVGApplyAttributesToElement(@{ IJSVGAttributeD : [self pathFromCGPath:transformedPath] }, strokedPath);
 
                     // memory clean
                     CGPathRelease(transformedPath);
 
-                    // we also need to apply any transforms to this path that were on its parent
-                    [self applyTransformToElement:strokedPath
-                                        fromPaint:paint];
+                    // we also need to apply any transforms to this path that were on its
+                    // parent
+                    [self applyTransformToElement:strokedPath fromPaint:paint];
 
                     // the element opacity applies to the whole shape (fill and stroke),
                     // but the stroke now lives in its own sibling path, so it would no
                     // longer inherit it, carry it over else the stroke loses its opacity
-                    if(paint.opacity != 1.f) {
-                        IJSVGApplyAttributesToElement(@{
-                            IJSVGAttributeOpacity: IJSVGShortFloatStringWithOptions(paint.opacity,
-                                                                                    _floatingPointOptions)
-                        }, strokedPath);
+                    if (paint.opacity != 1.f) {
+                        IJSVGApplyAttributesToElement(@{ IJSVGAttributeOpacity : IJSVGShortFloatStringWithOptions(paint.opacity, _floatingPointOptions) }, strokedPath);
                     }
 
                     // Any masks or clips applied to the source paint must also be
                     // applied to the generated stroke path. If the source element has
                     // no fill, it is ignored below and would otherwise take those
                     // visual constraints with it.
-                    if(paint.maskPaint != nil) {
-                        [self applyMaskToElement:strokedPath
-                                       fromPaint:paint];
+                    if (paint.maskPaint != nil) {
+                        [self applyMaskToElement:strokedPath fromPaint:paint];
                     }
-                  
-                    if(paint.clipPath != nil) {
-                        [self applyClipToElement:strokedPath
-                                       fromPaint:paint];
+
+                    if (paint.clipPath != nil) {
+                        [self applyClipToElement:strokedPath fromPaint:paint];
                     }
 
                     // give back the preceding elements
-                    objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey,
-                                             @[strokedPath], OBJC_ASSOCIATION_RETAIN);
-
+                    objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, @[ strokedPath ], OBJC_ASSOCIATION_RETAIN);
 
                     // at this point its possible the original paint has no fill, if so
                     // we can simply kill the element
-                    if([dict[IJSVGAttributeFill] isEqualToString:IJSVGStringNone] == YES) {
-                        objc_setAssociatedObject(e, &IJSVGExporterIgnoreElementKey,
-                                                 @(YES), OBJC_ASSOCIATION_RETAIN);
+                    if ([dict[IJSVGAttributeFill] isEqualToString:IJSVGStringNone] == YES) {
+                        objc_setAssociatedObject(e, &IJSVGExporterIgnoreElementKey, @(YES), OBJC_ASSOCIATION_RETAIN);
                     }
                 }
                 CGPathRelease(path);
@@ -2308,31 +2028,23 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             IJSVGShapePaint* strokePaint = (IJSVGShapePaint*)paint.strokePaint;
             // stroke gradient
-            switch(usageType) {
+            switch (usageType) {
                 case IJSVGPaintFillTypeGradient: {
-                    [self applyGradientFromPaint:(IJSVGGradientPaint*)strokePaint
-                                     parentPaint:(IJSVGPaint*)paint
-                                          stroke:YES
-                                       toElement:e];
+                    [self applyGradientFromPaint:(IJSVGGradientPaint*)strokePaint parentPaint:(IJSVGPaint*)paint stroke:YES toElement:e];
                     break;
                 }
                 case IJSVGPaintFillTypePattern: {
-                    [self applyPatternFromPaint:(IJSVGPatternPaint*)strokePaint
-                                    parentPaint:(IJSVGPaint*)paint
-                                         stroke:YES
-                                      toElement:e];
+                    [self applyPatternFromPaint:(IJSVGPatternPaint*)strokePaint parentPaint:(IJSVGPaint*)paint stroke:YES toElement:e];
                     break;
                 }
                 case IJSVGPaintFillTypeColor: {
                     NSColor* strokeColor = [NSColor colorWithCGColor:strokePaint.strokeColor];
-                    NSString* strokeColorString = [self colorStringForColor:strokeColor
-                                                                       flag:IJSVGColorUsageTraitStroke
-                                                                    options:[self colorOptions]];
+                    NSString* strokeColorString = [self colorStringForColor:strokeColor flag:IJSVGColorUsageTraitStroke options:[self colorOptions]];
 
                     // could be none
-                    if(strokeColorString != nil) {
+                    if (strokeColorString != nil) {
                         dict[IJSVGAttributeStroke] = strokeColorString;
-                        if([strokeColorString isEqualToString:IJSVGStringNone] == YES) {
+                        if ([strokeColorString isEqualToString:IJSVGStringNone] == YES) {
                             // remove the stroke width as its completely useless
                             [dict removeObjectForKey:IJSVGAttributeStrokeWidth];
                         }
@@ -2343,73 +2055,68 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
                     // do nothing
                 }
             }
-            
+
             // is there a stroke opacity? make sure we add that back on if
             // its not opaque
-            if(strokePaint.opacity != 1.f) {
-                dict[IJSVGAttributeStrokeOpacity] = IJSVGShortFloatStringWithOptions(strokePaint.opacity,
-                    _floatingPointOptions);
+            if (strokePaint.opacity != 1.f) {
+                dict[IJSVGAttributeStrokeOpacity] = IJSVGShortFloatStringWithOptions(strokePaint.opacity, _floatingPointOptions);
             }
-            
+
             // swap this over to the actual lowest level stroke paint
             strokePaint = (IJSVGShapePaint*)paint.strokeStyle;
-            if(strokePaint.nonScalingStroke) {
+            if (strokePaint.nonScalingStroke) {
                 dict[IJSVGAttributeVectorEffect] = IJSVGStringNonScalingStroke;
             }
-            
+
             // stroke
-            if(strokePaint.miterLimit != 4.f) {
-                dict[IJSVGAttributeStrokeMiterLimit] = IJSVGShortFloatStringWithOptions(strokePaint.miterLimit,
-                                                                                        _floatingPointOptions);
+            if (strokePaint.miterLimit != 4.f) {
+                dict[IJSVGAttributeStrokeMiterLimit] = IJSVGShortFloatStringWithOptions(strokePaint.miterLimit, _floatingPointOptions);
             }
-            if(strokePaint.lineWidth != 0.f) {
-                dict[IJSVGAttributeStrokeWidth] = IJSVGShortFloatStringWithOptions(strokePaint.lineWidth,
-                    _floatingPointOptions);
+            if (strokePaint.lineWidth != 0.f) {
+                dict[IJSVGAttributeStrokeWidth] = IJSVGShortFloatStringWithOptions(strokePaint.lineWidth, _floatingPointOptions);
             }
 
             // work out line cap
-            if((strokePaint.lineCap == kCGLineCapButt) == NO) {
+            if ((strokePaint.lineCap == kCGLineCapButt) == NO) {
                 NSString* capStyle = nil;
-                if((strokePaint.lineCap == kCGLineCapRound)) {
+                if ((strokePaint.lineCap == kCGLineCapRound)) {
                     capStyle = IJSVGStringRound;
-                } else if((strokePaint.lineCap == kCGLineCapSquare)) {
+                } else if ((strokePaint.lineCap == kCGLineCapSquare)) {
                     capStyle = IJSVGStringSquare;
                 }
-                if(capStyle != nil) {
+                if (capStyle != nil) {
                     dict[IJSVGAttributeStrokeLineCap] = capStyle;
                 }
             }
 
             // work out line join
-            if((strokePaint.lineJoin == kCGLineJoinMiter) == NO) {
+            if ((strokePaint.lineJoin == kCGLineJoinMiter) == NO) {
                 NSString* joinStyle = nil;
-                if((strokePaint.lineJoin == kCGLineJoinBevel)) {
+                if ((strokePaint.lineJoin == kCGLineJoinBevel)) {
                     joinStyle = IJSVGStringBevel;
-                } else if((strokePaint.lineJoin == kCGLineJoinRound)) {
+                } else if ((strokePaint.lineJoin == kCGLineJoinRound)) {
                     joinStyle = IJSVGStringRound;
                 }
-                if(joinStyle != nil) {
+                if (joinStyle != nil) {
                     dict[IJSVGAttributeStrokeLineJoin] = joinStyle;
                 }
             }
 
             // work out dash offset...
-            if(strokePaint.lineDashPhase != 0.f) {
-                dict[IJSVGAttributeStrokeDashOffset] = IJSVGShortFloatStringWithOptions(strokePaint.lineDashPhase,
-                    _floatingPointOptions);
+            if (strokePaint.lineDashPhase != 0.f) {
+                dict[IJSVGAttributeStrokeDashOffset] = IJSVGShortFloatStringWithOptions(strokePaint.lineDashPhase, _floatingPointOptions);
             }
 
             // work out dash array
-            if(strokePaint.lineDashPattern.count != 0) {
+            if (strokePaint.lineDashPattern.count != 0) {
                 dict[IJSVGAttributeStrokeDashArray] = [strokePaint.lineDashPattern componentsJoinedByString:@" "];
             }
-            
         }
     }
 
-    // Export the resolved paint order because text geometry can outlive its style parents.
-    if(paint.fillPaint != nil && paint.strokePaint != nil &&
-       paint.children.firstObject == paint.strokePaint) {
+    // Export the resolved paint order because text geometry can outlive its style
+    // parents.
+    if (paint.fillPaint != nil && paint.strokePaint != nil && paint.children.firstObject == paint.strokePaint) {
         dict[IJSVGAttributePaintOrder] = IJSVGStringFromPaintOrder(IJSVGPaintOrderStrokeFillMarkers);
     }
     // apply the attributes
@@ -2418,44 +2125,43 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     // apple defaults
     [self applyDefaultsToElement:e fromPaint:paint];
     NSArray<NSXMLElement*>* strokes = objc_getAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey);
-    if(strokes.count != 0) {
+    if (strokes.count != 0) {
         // Apply opacity, blending, transforms, masks and clipping once to the
         // combined fill and outlined stroke, preserving overlap compositing.
         NSXMLElement* group = [[NSXMLElement alloc] initWithName:@"g"];
         [self applyDefaultsToElement:group fromPaint:paint];
         NSNumber* ignore = objc_getAssociatedObject(e, &IJSVGExporterIgnoreElementKey);
-        NSArray<NSString*>* common = @[IJSVGAttributeOpacity, IJSVGAttributeStyle,
-            IJSVGAttributeTransform, IJSVGAttributeMask, IJSVGAttributeClipPath];
-        for(NSString* attribute in common) {
+        NSArray<NSString*>* common = @[ IJSVGAttributeOpacity, IJSVGAttributeStyle, IJSVGAttributeTransform, IJSVGAttributeMask, IJSVGAttributeClipPath ];
+        for (NSString* attribute in common) {
             [e removeAttributeForName:attribute];
-            for(NSXMLElement* stroke in strokes) [stroke removeAttributeForName:attribute];
+            for (NSXMLElement* stroke in strokes)
+                [stroke removeAttributeForName:attribute];
         }
         BOOL strokeFirst = paint.strokePaint != nil && paint.children.firstObject == paint.strokePaint;
-        if(strokeFirst) {
-            for(NSXMLElement* stroke in strokes) {
+        if (strokeFirst) {
+            for (NSXMLElement* stroke in strokes) {
                 [group addChild:stroke];
             }
         }
-        if(!ignore.boolValue) [group addChild:e];
-        if(!strokeFirst) {
-            for(NSXMLElement* stroke in strokes) {
+        if (!ignore.boolValue)
+            [group addChild:e];
+        if (!strokeFirst) {
+            for (NSXMLElement* stroke in strokes) {
                 [group addChild:stroke];
             }
         }
-        objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, nil,
-                                 OBJC_ASSOCIATION_RETAIN);
+        objc_setAssociatedObject(e, &IJSVGExporterInsertAfterElementsKey, nil, OBJC_ASSOCIATION_RETAIN);
         return group;
     }
     return e;
 }
 
-- (void)applyDefaultsToElement:(NSXMLElement*)element
-                     fromPaint:(IJSVGPaint*)paint
+- (void)applyDefaultsToElement:(NSXMLElement*)element fromPaint:(IJSVGPaint*)paint
 {
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
 
-    IJSVGNode* node = paint.sourceNode;
-    switch(node.backgroundEnabled) {
+    IJSVGGraphicsNode* node = paint.sourceNode;
+    switch (node.backgroundEnabled) {
         case IJSVGBackgroundEnabledAccumulate:
             dict[IJSVGAttributeEnableBackground] = @"accumulate";
             break;
@@ -2464,12 +2170,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
             break;
         case IJSVGBackgroundEnabledNew: {
             CGRect bounds = node.backgroundBounds;
-            dict[IJSVGAttributeEnableBackground] = CGRectIsInfinite(bounds) ? @"new"
-                : [NSString stringWithFormat:@"new %@ %@ %@ %@",
-                    IJSVGShortFloatStringWithOptions(bounds.origin.x, _floatingPointOptions),
-                    IJSVGShortFloatStringWithOptions(bounds.origin.y, _floatingPointOptions),
-                    IJSVGShortFloatStringWithOptions(bounds.size.width, _floatingPointOptions),
-                    IJSVGShortFloatStringWithOptions(bounds.size.height, _floatingPointOptions)];
+            dict[IJSVGAttributeEnableBackground] = CGRectIsInfinite(bounds) ? @"new" : [NSString stringWithFormat:@"new %@ %@ %@ %@", IJSVGShortFloatStringWithOptions(bounds.origin.x, _floatingPointOptions), IJSVGShortFloatStringWithOptions(bounds.origin.y, _floatingPointOptions), IJSVGShortFloatStringWithOptions(bounds.size.width, _floatingPointOptions), IJSVGShortFloatStringWithOptions(bounds.size.height, _floatingPointOptions)];
             break;
         }
         case IJSVGBackgroundEnabledUnspecified:
@@ -2477,33 +2178,32 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     }
 
     // opacity
-    if(paint.opacity != 1.f) {
-        dict[IJSVGAttributeOpacity] = IJSVGShortFloatStringWithOptions(paint.opacity,
-            _floatingPointOptions);
+    if (paint.opacity != 1.f) {
+        dict[IJSVGAttributeOpacity] = IJSVGShortFloatStringWithOptions(paint.opacity, _floatingPointOptions);
     }
 
     // blendmode, we only every apply a stylesheet blend mode
     NSMutableDictionary<NSString*, NSString*>* style = [[NSMutableDictionary alloc] init];
-    if(paint.isolated) {
+    if (paint.isolated) {
         style[IJSVGAttributeIsolation] = @"isolate";
     }
-    if(paint.blendingMode != kCGBlendModeNormal) {
+    if (paint.blendingMode != kCGBlendModeNormal) {
         NSString* str = [IJSVGUtils mixBlendingModeForBlendMode:(IJSVGBlendMode)paint.blendingMode];
-        if(str != nil) {
+        if (str != nil) {
             style[IJSVGAttributeBlendMode] = str;
         }
     }
 
     // Visibility preserves geometry used by objectBoundingBox effects.
-    if(paint.hidden) {
-        if(paint.hiddenByVisibility) {
+    if (paint.hidden) {
+        if (paint.hiddenByVisibility) {
             style[IJSVGAttributeVisibility] = @"hidden";
         } else {
             style[IJSVGAttributeDisplay] = IJSVGStringNone;
         }
     }
 
-    if(style.count != 0) {
+    if (style.count != 0) {
         NSMutableString* styleString = [[NSMutableString alloc] init];
         for (NSString* styleKey in style.allKeys) {
             NSString* format = [NSString stringWithFormat:@"%@:%@;", styleKey, style[styleKey]];
@@ -2516,79 +2216,70 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     IJSVGApplyAttributesToElement(dict, element);
 
     // apply transforms
-    [self applyTransformToElement:element
-                        fromPaint:paint];
+    [self applyTransformToElement:element fromPaint:paint];
 
-    if([paint isKindOfClass:IJSVGFilterPaint.class]) {
-        [self applyFilterToElement:element
-                         fromPaint:(IJSVGFilterPaint*)paint];
+    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        [self applyFilterToElement:element fromPaint:(IJSVGFilterPaint*)paint];
     }
 
     // add any masks...
-    if(paint.maskPaint != nil) {
-        [self applyMaskToElement:element
-                       fromPaint:paint];
+    if (paint.maskPaint != nil) {
+        [self applyMaskToElement:element fromPaint:paint];
     }
-    
+
     // add any clips
-    if(paint.clipPath != nil) {
-        [self applyClipToElement:element
-                       fromPaint:paint];
+    if (paint.clipPath != nil) {
+        [self applyClipToElement:element fromPaint:paint];
     }
 }
 
-- (void)applyClipToElement:(NSXMLElement*)element
-                 fromPaint:(IJSVGPaint*)paint
+- (void)applyClipToElement:(NSXMLElement*)element fromPaint:(IJSVGPaint*)paint
 {
     // create the element
     NSXMLElement* clip = [[NSXMLElement alloc] init];
     clip.name = @"clipPath";
-    
+
     // create the key
     NSString* clipKey = [self identifierForElement:clip];
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = clipKey;
-    
+
     // convert the path back to userSpaceOnUse, note this is the inverse
     // of the transform
     CGPathRef clipPath = paint.clipPath;
     CGRect layerRect = paint.innerBoundingBox;
     CGAffineTransform transform = CGAffineTransformIdentity;
     transform = [IJSVGPaint userSpaceTransformForPaint:paint];
-    transform =  CGAffineTransformTranslate(transform, CGRectGetMinX(layerRect),
-                                            CGRectGetMinY(layerRect));
+    transform = CGAffineTransformTranslate(transform, CGRectGetMinX(layerRect), CGRectGetMinY(layerRect));
     transform = CGAffineTransformInvert(transform);
     clipPath = CGPathCreateCopyByTransformingPath(clipPath, &transform);
-    
+
     // create the path
     NSMutableDictionary<NSString*, NSString*>* pathAtts = [[NSMutableDictionary alloc] init];
     NSXMLElement* path = [[NSXMLElement alloc] init];
     path.name = @"path";
     pathAtts[IJSVGAttributeD] = [self pathFromCGPath:clipPath];
-    
+
     // add clip rule back on
-    if(paint.clipRule == IJSVGWindingRuleEvenOdd) {
+    if (paint.clipRule == IJSVGWindingRuleEvenOdd) {
         pathAtts[IJSVGAttributeClipRule] = IJSVGStringEvenOdd;
     }
     IJSVGApplyAttributesToElement(pathAtts, path);
-    
+
     [clip addChild:path];
     CGPathRelease(clipPath);
 
-    IJSVGApplyAttributesToElement(dict, clip);    
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeClipPath: IJSVGHashURL(clipKey)
-    }, element);
-    
+    IJSVGApplyAttributesToElement(dict, clip);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeClipPath : IJSVGHashURL(clipKey) }, element);
+
     // add it defs
     [[self defElement] addChild:clip];
 }
 
-- (void)compressFilterAttributes:(NSMutableDictionary<NSString*, NSString*>*)attributes
-                            type:(IJSVGNodeType)type
+- (void)compressFilterAttributes:(NSMutableDictionary<NSString*, NSString*>*)attributes type:(IJSVGNodeType)type
 {
     BOOL compress = IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressFilters);
-    if(!compress && !_floatingPointOptions.round) {
+    if (!compress && !_floatingPointOptions.round) {
         return;
     }
     static NSSet<NSString*>* numericAttributes;
@@ -2596,109 +2287,56 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     static NSDictionary<NSNumber*, NSDictionary<NSString*, NSString*>*>* defaults;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        numericAttributes = [NSSet setWithArray:@[
-            IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeStdDeviation, IJSVGAttributeRadius,
-            IJSVGAttributeBaseFrequency, IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength,
-            IJSVGAttributeKernelMatrix, IJSVGAttributeDivisor, IJSVGAttributeBias,
-            IJSVGAttributeTargetX, IJSVGAttributeTargetY, IJSVGAttributeScale,
-            IJSVGAttributeK1, IJSVGAttributeK2, IJSVGAttributeK3, IJSVGAttributeK4,
-            IJSVGAttributeValues, IJSVGAttributeTableValues, IJSVGAttributeSlope,
-            IJSVGAttributeIntercept, IJSVGAttributeAmplitude, IJSVGAttributeExponent,
-            IJSVGAttributeOffset, IJSVGAttributeSurfaceScale, IJSVGAttributeDiffuseConstant,
-            IJSVGAttributeSpecularConstant, IJSVGAttributeSpecularExponent,
-            IJSVGAttributeAzimuth, IJSVGAttributeElevation, IJSVGAttributeX,
-            IJSVGAttributeY, IJSVGAttributeZ, IJSVGAttributePointsAtX, IJSVGAttributePointsAtY,
-            IJSVGAttributePointsAtZ, IJSVGAttributeLimitingConeAngle, IJSVGAttributeSeed,
-            IJSVGAttributeNumOctaves, IJSVGAttributeFloodOpacity
-        ]];
-        pairAttributes = [NSSet setWithArray:@[
-            IJSVGAttributeStdDeviation, IJSVGAttributeRadius, IJSVGAttributeBaseFrequency,
-            IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength
-        ]];
-        defaults = @{
-            @(IJSVGNodeTypeFilter): @{
-                IJSVGAttributeFilterUnits: IJSVGStringObjectBoundingBox,
-                IJSVGAttributePrimitiveUnits: IJSVGStringUserSpaceOnUse,
-                IJSVGAttributeX: @"-10%",
-                IJSVGAttributeY: @"-10%",
-                IJSVGAttributeWidth: @"120%",
-                IJSVGAttributeHeight: @"120%"
-            },
-            @(IJSVGNodeTypeFilterOffset): @{
-                IJSVGAttributeDX: @"0",
-                IJSVGAttributeDY: @"0"
-            },
-            @(IJSVGNodeTypeFilterGaussianBlur): @{
-                IJSVGAttributeStdDeviation: @"0",
-                IJSVGAttributeEdgeMode: IJSVGStringNone
-            },
-            @(IJSVGNodeTypeFilterDropShadow): @{
-                IJSVGAttributeDX: @"2",
-                IJSVGAttributeDY: @"2",
-                IJSVGAttributeStdDeviation: @"2"
-            },
-            @(IJSVGNodeTypeFilterBlend): @{
-                IJSVGAttributeMode: IJSVGStringNormal
-            },
-            @(IJSVGNodeTypeFilterComposite): @{
-                IJSVGAttributeOperator: IJSVGStringOver,
-                IJSVGAttributeK1: @"0",
-                IJSVGAttributeK2: @"0",
-                IJSVGAttributeK3: @"0",
-                IJSVGAttributeK4: @"0" },
-            @(IJSVGNodeTypeFilterMorphology): @{
-                IJSVGAttributeOperator: @"erode",
-                IJSVGAttributeRadius: @"0"
-            },
-            @(IJSVGNodeTypeFilterDisplacementMap): @{
-                IJSVGAttributeScale: @"0",
-                IJSVGAttributeXChannelSelector: IJSVGStringChannelA,
-                IJSVGAttributeYChannelSelector: IJSVGStringChannelA
-            },
-            @(IJSVGNodeTypeFilterConvolveMatrix): @{
-                IJSVGAttributeOrder: @"3",
-                IJSVGAttributeBias: @"0",
-                IJSVGAttributeEdgeMode: IJSVGStringDuplicate,
-                IJSVGAttributePreserveAlpha: @"false"
-            }
-        };
+        numericAttributes = [NSSet setWithArray:@[ IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeStdDeviation, IJSVGAttributeRadius, IJSVGAttributeBaseFrequency, IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength, IJSVGAttributeKernelMatrix, IJSVGAttributeDivisor, IJSVGAttributeBias, IJSVGAttributeTargetX, IJSVGAttributeTargetY, IJSVGAttributeScale, IJSVGAttributeK1, IJSVGAttributeK2, IJSVGAttributeK3, IJSVGAttributeK4, IJSVGAttributeValues, IJSVGAttributeTableValues, IJSVGAttributeSlope, IJSVGAttributeIntercept, IJSVGAttributeAmplitude, IJSVGAttributeExponent, IJSVGAttributeOffset, IJSVGAttributeSurfaceScale, IJSVGAttributeDiffuseConstant, IJSVGAttributeSpecularConstant, IJSVGAttributeSpecularExponent, IJSVGAttributeAzimuth, IJSVGAttributeElevation, IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeZ, IJSVGAttributePointsAtX, IJSVGAttributePointsAtY, IJSVGAttributePointsAtZ, IJSVGAttributeLimitingConeAngle, IJSVGAttributeSeed, IJSVGAttributeNumOctaves, IJSVGAttributeFloodOpacity ]];
+        pairAttributes = [NSSet setWithArray:@[ IJSVGAttributeStdDeviation, IJSVGAttributeRadius, IJSVGAttributeBaseFrequency, IJSVGAttributeOrder, IJSVGAttributeKernelUnitLength ]];
+        defaults = @{@(IJSVGNodeTypeFilter) : @ { IJSVGAttributeFilterUnits : IJSVGStringObjectBoundingBox, IJSVGAttributePrimitiveUnits : IJSVGStringUserSpaceOnUse, IJSVGAttributeX : @"-10%", IJSVGAttributeY : @"-10%", IJSVGAttributeWidth : @"120%", IJSVGAttributeHeight : @"120%" },
+            @(IJSVGNodeTypeFilterOffset) : @ { IJSVGAttributeDX : @"0", IJSVGAttributeDY : @"0" },
+            @(IJSVGNodeTypeFilterGaussianBlur) : @ { IJSVGAttributeStdDeviation : @"0", IJSVGAttributeEdgeMode : IJSVGStringNone },
+            @(IJSVGNodeTypeFilterDropShadow) : @ { IJSVGAttributeDX : @"2", IJSVGAttributeDY : @"2", IJSVGAttributeStdDeviation : @"2" },
+            @(IJSVGNodeTypeFilterBlend) : @ { IJSVGAttributeMode : IJSVGStringNormal },
+            @(IJSVGNodeTypeFilterComposite) : @ { IJSVGAttributeOperator : IJSVGStringOver, IJSVGAttributeK1 : @"0", IJSVGAttributeK2 : @"0", IJSVGAttributeK3 : @"0", IJSVGAttributeK4 : @"0" },
+            @(IJSVGNodeTypeFilterMorphology) : @ { IJSVGAttributeOperator : @"erode", IJSVGAttributeRadius : @"0" },
+            @(IJSVGNodeTypeFilterDisplacementMap) : @ { IJSVGAttributeScale : @"0", IJSVGAttributeXChannelSelector : IJSVGStringChannelA, IJSVGAttributeYChannelSelector : IJSVGStringChannelA },
+            @(IJSVGNodeTypeFilterConvolveMatrix) : @ { IJSVGAttributeOrder : @"3", IJSVGAttributeBias : @"0", IJSVGAttributeEdgeMode : IJSVGStringDuplicate, IJSVGAttributePreserveAlpha : @"false" }};
     });
-    for(NSString* key in attributes.allKeys) {
-        if(![numericAttributes containsObject:key]) {
+    for (NSString* key in attributes.allKeys) {
+        if (![numericAttributes containsObject:key]) {
             continue;
         }
         NSString* value = attributes[key];
         NSArray<NSNumber*>* numbers = [IJSVGUtils numbersFromString:value];
-        if(numbers.count == 0) {
+        if (numbers.count == 0) {
             continue;
         }
         NSArray<NSString*>* originals = [value ijsvg_componentsSeparatedByChars:", \t\r\n"];
         NSMutableArray<NSString*>* tokens = [[NSMutableArray alloc] initWithCapacity:numbers.count];
-        for(NSUInteger index = 0; index < numbers.count; index++) {
+        for (NSUInteger index = 0; index < numbers.count; index++) {
             CGFloat number = numbers[index].doubleValue;
             NSString* shortened = IJSVGShortFloatStringWithOptions(number, _floatingPointOptions);
-            // Preserve precise coefficients unless the caller explicitly requests rounding.
-            if(!_floatingPointOptions.round && shortened.doubleValue != number) {
+            // Preserve precise coefficients unless the caller explicitly requests
+            // rounding.
+            if (!_floatingPointOptions.round && shortened.doubleValue != number) {
                 shortened = IJSVGShortenFloatString(originals[index]);
             }
             [tokens addObject:shortened];
         }
-        if(compress && [pairAttributes containsObject:key] && tokens.count == 2 &&
-           [tokens[0] isEqualToString:tokens[1]]) {
+        if (compress && [pairAttributes containsObject:key] && tokens.count == 2 && [tokens[0] isEqualToString:tokens[1]]) {
             [tokens removeLastObject];
         }
-        // Filter number lists require separators even before signed or decimal values.
+        // Filter number lists require separators even before signed or decimal
+        // values.
         NSString* shortened = [tokens componentsJoinedByString:@" "];
-        if(_floatingPointOptions.round || shortened.length <= value.length) {
+        if (_floatingPointOptions.round || shortened.length <= value.length) {
             attributes[key] = shortened;
         }
     }
-    if(!compress) {
+    if (!compress) {
         return;
     }
-    // Only fixed attribute defaults are removed. Inherited presentation values stay explicit.
+    // Only fixed attribute defaults are removed. Inherited presentation values
+    // stay explicit.
     [defaults[@(type)] enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSString* value, BOOL* stop) {
-        if([attributes[key] isEqualToString:value]) {
+        if ([attributes[key] isEqualToString:value]) {
             [attributes removeObjectForKey:key];
         }
     }];
@@ -2707,59 +2345,34 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 // A fragment feImage has a different coordinate origin in WebKit. Export a
 // standalone vector image whose viewport matches the primitive region in user
 // coordinates. Its resources belong to this document rather than the outer SVG.
-- (NSString*)imageURLForPaint:(IJSVGPaint*)paint
-                       region:(CGRect)region
-                     viewPort:(CGRect)viewPort
+- (NSString*)imageURLForPaint:(IJSVGPaint*)paint region:(CGRect)region viewPort:(CGRect)viewPort
 {
-    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithRootNode:_sourceRoot
-                                                                 size:region.size
-                                                                style:_style
-                                                     renderingOptions:_renderingOptions
-                                                              options:_options
-                                                 floatingPointOptions:_floatingPointOptions];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithRootNode:_sourceRoot size:region.size style:_style renderingOptions:_renderingOptions options:_options floatingPointOptions:_floatingPointOptions];
     exporter.delegate = self.delegate;
     exporter->_paintResolver = _paintResolver;
     exporter->_appliedXLink = YES;
     NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
-    IJSVGApplyAttributesToElement(@{
-        @"xmlns": XML_DOC_NS,
-        @"xmlns:xlink": XML_DOC_NSXLINK,
-        IJSVGAttributeViewBox: [self viewBoxWithRect:region],
-        IJSVGAttributeWidth: IJSVGShortFloatStringWithOptions(region.size.width, _floatingPointOptions),
-        IJSVGAttributeHeight: IJSVGShortFloatStringWithOptions(region.size.height, _floatingPointOptions),
-        IJSVGAttributePreserveAspectRatio: @"none"
-    }, root);
+    IJSVGApplyAttributesToElement(@{ @"xmlns" : XML_DOC_NS, @"xmlns:xlink" : XML_DOC_NSXLINK, IJSVGAttributeViewBox : [self viewBoxWithRect:region], IJSVGAttributeWidth : IJSVGShortFloatStringWithOptions(region.size.width, _floatingPointOptions), IJSVGAttributeHeight : IJSVGShortFloatStringWithOptions(region.size.height, _floatingPointOptions), IJSVGAttributePreserveAspectRatio : @"none" }, root);
     exporter->_dom = [[NSXMLDocument alloc] initWithRootElement:root];
-    // Percentage resources still use the original viewport; only the outer
+    // Percentage resources still use the original viewport, only the outer
     // image viewport is cropped to the primitive region.
     NSXMLElement* viewport = [[NSXMLElement alloc] initWithName:@"svg"];
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeX: IJSVGShortFloatStringWithOptions(viewPort.origin.x, _floatingPointOptions),
-        IJSVGAttributeY: IJSVGShortFloatStringWithOptions(viewPort.origin.y, _floatingPointOptions),
-        IJSVGAttributeWidth: IJSVGShortFloatStringWithOptions(viewPort.size.width, _floatingPointOptions),
-        IJSVGAttributeHeight: IJSVGShortFloatStringWithOptions(viewPort.size.height, _floatingPointOptions),
-        IJSVGAttributeViewBox: [self viewBoxWithRect:viewPort],
-        IJSVGAttributeOverflow: @"visible"
-    }, viewport);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeX : IJSVGShortFloatStringWithOptions(viewPort.origin.x, _floatingPointOptions), IJSVGAttributeY : IJSVGShortFloatStringWithOptions(viewPort.origin.y, _floatingPointOptions), IJSVGAttributeWidth : IJSVGShortFloatStringWithOptions(viewPort.size.width, _floatingPointOptions), IJSVGAttributeHeight : IJSVGShortFloatStringWithOptions(viewPort.size.height, _floatingPointOptions), IJSVGAttributeViewBox : [self viewBoxWithRect:viewPort], IJSVGAttributeOverflow : @"visible" }, viewport);
     [root addChild:viewport];
-    [exporter _recursiveParseFromPaint:paint
-                           intoElement:viewport];
+    [exporter _recursiveParseFromPaint:paint intoElement:viewport];
     NSXMLElement* definitions = exporter.defElement;
-    if(definitions.childCount != 0) {
-      [viewport insertChild:definitions
-                atIndex:0];
+    if (definitions.childCount != 0) {
+        [viewport insertChild:definitions atIndex:0];
     }
     [exporter _cleanup];
-    if(definitions.childCount != 0 && definitions.parent == nil) {
-        [viewport insertChild:definitions
-                  atIndex:0];
+    if (definitions.childCount != 0 && definitions.parent == nil) {
+        [viewport insertChild:definitions atIndex:0];
     }
     NSData* data = [exporter->_dom XMLDataWithOptions:[exporter XMLSerializationOptions]];
     return [@"data:image/svg+xml;base64," stringByAppendingString:[data base64EncodedStringWithOptions:0]];
 }
 
-- (NSXMLElement*)elementForFilterPrimitive:(IJSVGFilterPrimitive*)primitive
-                                 fromPaint:(IJSVGFilterPaint*)filterPaint
+- (NSXMLElement*)elementForFilterPrimitive:(IJSVGFilterPrimitive*)primitive fromPaint:(IJSVGFilterPaint*)filterPaint
 {
     NSXMLElement* child = [[NSXMLElement alloc] initWithName:primitive.name];
     NSMutableDictionary<NSString*, NSString*>* attributes = primitive.parameters.mutableCopy ?: [[NSMutableDictionary alloc] init];
@@ -2772,34 +2385,26 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
     attributes[IJSVGAttributeIn2] = primitive.input2;
     attributes[IJSVGAttributeColorInterpolationFilters] = IJSVGColorInterpolationString(primitive.filterColorInterpolation);
-    if(primitive.type == IJSVGNodeTypeFilterImage) {
-        attributes[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:primitive.viewBoxAlignment
-                                                                                   meetOrSlice:primitive.viewBoxMeetOrSlice];
+    if (primitive.type == IJSVGNodeTypeFilterImage) {
+        attributes[IJSVGAttributePreserveAspectRatio] = [IJSVGViewBox aspectRatioWithAlignment:primitive.viewBoxAlignment meetOrSlice:primitive.viewBoxMeetOrSlice];
     }
 
-    if(primitive.type == IJSVGNodeTypeFilterImage && primitive.imageNode != nil) {
+    if (primitive.type == IJSVGNodeTypeFilterImage && primitive.imageNode != nil) {
         IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
         graph.viewPort = filterPaint.viewPort;
         graph.boundingBox = filterPaint.boundingBox;
         IJSVGFilter* filter = filterPaint.filter;
-        CGRect filterRegion = [graph regionForNode:filter units:filter.units
-                                     defaultRegion:CGRectZero];
-        CGRect region = [graph regionForNode:primitive units:filter.contentUnits
-                               defaultRegion:filterRegion];
-        IJSVGPaint* imagePaint = [_paintResolver drawablePaintForNode:primitive.imageNode
-                                                           inViewPort:filterPaint.viewPort];
-        attributes[IJSVGAttributeHref] = [self imageURLForPaint:imagePaint
-                                                         region:region
-                                                       viewPort:filterPaint.viewPort];
+        CGRect filterRegion = [graph regionForNode:filter units:filter.units defaultRegion:CGRectZero];
+        CGRect region = [graph regionForNode:primitive units:filter.contentUnits defaultRegion:filterRegion];
+        IJSVGPaint* imagePaint = [_paintResolver drawablePaintForNode:primitive.imageNode inViewPort:filterPaint.viewPort];
+        attributes[IJSVGAttributeHref] = [self imageURLForPaint:imagePaint region:region viewPort:filterPaint.viewPort];
         // Resolve percentage origins with the same viewport as native filtering.
         // The external image must be placed at the user region used by its viewBox.
         CGRect placement = region;
-        if(filter.contentUnits == IJSVGUnitObjectBoundingBox) {
+        if (filter.contentUnits == IJSVGUnitObjectBoundingBox) {
             CGRect bounds = filterPaint.boundingBox;
-            if(bounds.size.width != 0 && bounds.size.height != 0) {
-                placement = CGRectMake((region.origin.x - bounds.origin.x) / bounds.size.width,
-                    (region.origin.y - bounds.origin.y) / bounds.size.height,
-                    region.size.width / bounds.size.width, region.size.height / bounds.size.height);
+            if (bounds.size.width != 0 && bounds.size.height != 0) {
+                placement = CGRectMake((region.origin.x - bounds.origin.x) / bounds.size.width, (region.origin.y - bounds.origin.y) / bounds.size.height, region.size.width / bounds.size.width, region.size.height / bounds.size.height);
             }
         }
         attributes[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(placement.origin.x, _floatingPointOptions);
@@ -2810,22 +2415,17 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
         [attributes removeObjectForKey:IJSVGAttributeXLink];
     }
 
-    [self compressFilterAttributes:attributes
-                              type:primitive.type];
+    [self compressFilterAttributes:attributes type:primitive.type];
     IJSVGApplyAttributesToElement(attributes, child);
-    for(IJSVGFilterPrimitive* nested in primitive.children) {
-        [child addChild:[self elementForFilterPrimitive:nested
-                                              fromPaint:filterPaint]];
+    for (IJSVGFilterPrimitive* nested in primitive.children) {
+        [child addChild:[self elementForFilterPrimitive:nested fromPaint:filterPaint]];
     }
     return child;
 }
 
-- (void)applyFilterPaint:(IJSVGNode*)paintNode
-                    name:(NSString*)name
-               fromPaint:(IJSVGFilterPaint*)paint
-               toElement:(NSXMLElement*)element
+- (void)applyFilterPaint:(IJSVGNode*)paintNode name:(NSString*)name fromPaint:(IJSVGFilterPaint*)paint toElement:(NSXMLElement*)element
 {
-    if(paintNode == nil) {
+    if (paintNode == nil) {
         return;
     }
     IJSVGPath* proxy = [[IJSVGPath alloc] init];
@@ -2837,106 +2437,70 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     CGPathRelease(path);
     proxy.fill = paintNode;
     IJSVGQuartzRenderer* tree = _paintResolver;
-    IJSVGPaint* paintPaint = [tree drawablePaintForNode:proxy
-                                             inViewPort:paint.viewPort];
-    NSXMLElement* paintElement = [self elementForPaint:paintPaint
-                                            fromParent:nil];
+    IJSVGPaint* paintPaint = [tree drawablePaintForNode:proxy inViewPort:paint.viewPort];
+    NSXMLElement* paintElement = [self elementForPaint:paintPaint fromParent:nil];
     NSString* value = [paintElement attributeForName:IJSVGAttributeFill].stringValue;
-    if(value != nil) {
-        [element addAttribute:[NSXMLNode attributeWithName:name
-                                               stringValue:value]];
+    if (value != nil) {
+        [element addAttribute:[NSXMLNode attributeWithName:name stringValue:value]];
     }
 }
 
-- (void)applyFilterToElement:(NSXMLElement*)element
-                   fromPaint:(IJSVGFilterPaint*)paint
+- (void)applyFilterToElement:(NSXMLElement*)element fromPaint:(IJSVGFilterPaint*)paint
 {
     IJSVGFilter* filter = paint.filter;
     NSSet<NSString*>* inputs = filter.inputNames;
-    if([inputs containsObject:IJSVGStringFillPaint]) {
-        [self applyFilterPaint:paint.sourceNode.fill
-                          name:IJSVGAttributeFill
-                     fromPaint:paint
-                     toElement:element];
+    if ([inputs containsObject:IJSVGStringFillPaint]) {
+        [self applyFilterPaint:paint.sourceNode.fill name:IJSVGAttributeFill fromPaint:paint toElement:element];
     }
-    if([inputs containsObject:IJSVGStringStrokePaint]) {
-        [self applyFilterPaint:paint.sourceNode.stroke
-                          name:IJSVGAttributeStroke
-                     fromPaint:paint
-                     toElement:element];
+    if ([inputs containsObject:IJSVGStringStrokePaint]) {
+        [self applyFilterPaint:paint.sourceNode.stroke name:IJSVGAttributeStroke fromPaint:paint toElement:element];
     }
     NSXMLElement* definition = [[NSXMLElement alloc] initWithName:IJSVGAttributeFilter];
     NSString* identifier = [self identifierForElement:definition];
-    NSMutableDictionary<NSString*, NSString*>* attributes = [@{
-        IJSVGAttributeID: identifier,
-        IJSVGAttributeX: [filter.x stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeY: [filter.y stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeWidth: [filter.width stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeHeight: [filter.height stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeFilterUnits: filter.units == IJSVGUnitObjectBoundingBox ?
-            IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
-        IJSVGAttributePrimitiveUnits: filter.contentUnits == IJSVGUnitObjectBoundingBox ?
-            IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse
-    } mutableCopy];
+    NSMutableDictionary<NSString*, NSString*>* attributes = [@{ IJSVGAttributeID : identifier, IJSVGAttributeX : [filter.x stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY : [filter.y stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeWidth : [filter.width stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeHeight : [filter.height stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeFilterUnits : filter.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributePrimitiveUnits : filter.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse } mutableCopy];
     [self compressFilterAttributes:attributes type:IJSVGNodeTypeFilter];
     IJSVGApplyAttributesToElement(attributes, definition);
-  
-    [definition addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeColorInterpolationFilters
-                                              stringValue:IJSVGColorInterpolationString(filter.resolvedFilterColorInterpolation)]];
 
-    for(IJSVGFilterPrimitive* primitive in filter.primitives) {
-        [definition addChild:[self elementForFilterPrimitive:primitive
-                                                   fromPaint:paint]];
+    [definition addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeColorInterpolationFilters stringValue:IJSVGColorInterpolationString(filter.resolvedFilterColorInterpolation)]];
+
+    for (IJSVGFilterPrimitive* primitive in filter.primitives) {
+        [definition addChild:[self elementForFilterPrimitive:primitive fromPaint:paint]];
     }
-  
+
     [[self defElement] addChild:definition];
-    [element addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeFilter
-                                           stringValue:IJSVGHashURL(identifier)]];
+    [element addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeFilter stringValue:IJSVGHashURL(identifier)]];
 }
 
-- (void)applyMaskToElement:(NSXMLElement*)element
-                 fromPaint:(IJSVGPaint*)paint
+- (void)applyMaskToElement:(NSXMLElement*)element fromPaint:(IJSVGPaint*)paint
 {
     // Serialize mask coordinates from the node graph, before raster placement
-    // shifts its resolved children into the local coordinate system of the target.
+    // shifts its resolved children into the local coordinate system of the
+    // target.
     IJSVGMask* node = paint.sourceNode.mask;
-    if(node == nil) {
+    if (node == nil) {
         return;
     }
     IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
     NSXMLElement* mask = [[NSXMLElement alloc] initWithName:@"mask"];
     NSString* identifier = [self identifierForElement:mask];
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeID: identifier,
-        IJSVGAttributeMaskUnits: node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
-        IJSVGAttributeMaskType: node.maskType == IJSVGMaskTypeAlpha ? @"alpha" : @"luminance",
-        IJSVGAttributeMaskContentUnits: node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse,
-        IJSVGAttributeX: [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeY: [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeWidth: [[resolver unitByResolvingFontLength:node.width node:node] stringValueWithFloatingPointOptions:_floatingPointOptions],
-        IJSVGAttributeHeight: [[resolver unitByResolvingFontLength:node.height node:node] stringValueWithFloatingPointOptions:_floatingPointOptions]
-    }, mask);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : identifier, IJSVGAttributeMaskUnits : node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeMaskType : node.maskType == IJSVGMaskTypeAlpha ? @"alpha" : @"luminance", IJSVGAttributeMaskContentUnits : node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeX : [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY : [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeWidth : [[resolver unitByResolvingFontLength:node.width node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeHeight : [[resolver unitByResolvingFontLength:node.height node:node] stringValueWithFloatingPointOptions:_floatingPointOptions] }, mask);
     CGRect bounds = node.contentUnits == IJSVGUnitObjectBoundingBox ? CGRectMake(0, 0, 1, 1) : paint.viewPort;
     IJSVGPaint* content = [_paintResolver drawablePaintForNode:node inViewPort:bounds];
-    if([content isKindOfClass:IJSVGGroupPaint.class] && CGAffineTransformIsIdentity(content.affineTransform)) {
+    if ([content isKindOfClass:IJSVGGroupPaint.class] && CGAffineTransformIsIdentity(content.affineTransform)) {
         [self applyDefaultsToElement:mask fromPaint:content];
-        for(IJSVGPaint* child in content.children) {
-            [self _recursiveParseFromPaint:child
-                               intoElement:mask];
+        for (IJSVGPaint* child in content.children) {
+            [self _recursiveParseFromPaint:child intoElement:mask];
         }
     } else {
-        [self _recursiveParseFromPaint:content
-                           intoElement:mask];
+        [self _recursiveParseFromPaint:content intoElement:mask];
     }
     [[self defElement] addChild:mask];
-    IJSVGApplyAttributesToElement(@{
-        IJSVGAttributeMask: IJSVGHashURL(identifier)
-    }, element);
+    IJSVGApplyAttributesToElement(@{ IJSVGAttributeMask : IJSVGHashURL(identifier) }, element);
 }
 
 - (NSXMLDocument*)_dom
 {
-    if(_dom == nil) {
+    if (_dom == nil) {
         @autoreleasepool {
             [self _generateDOMDocument];
         }
@@ -2948,31 +2512,26 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 {
     const uint8_t* bytes = data.bytes;
     NSUInteger length = data.length;
-    if(length < 5 ||
-       bytes[0] != '<' ||
-       bytes[1] != '?' ||
-       bytes[2] != 'x' ||
-       bytes[3] != 'm' ||
-       bytes[4] != 'l') {
+    if (length < 5 || bytes[0] != '<' || bytes[1] != '?' || bytes[2] != 'x' || bytes[3] != 'm' || bytes[4] != 'l') {
         return data;
     }
 
     NSUInteger startIndex = NSNotFound;
     for (NSUInteger index = 5; index + 1 < length; index++) {
-        if(bytes[index] == '?' && bytes[index + 1] == '>') {
+        if (bytes[index] == '?' && bytes[index + 1] == '>') {
             startIndex = index + 2;
             break;
         }
     }
-    if(startIndex == NSNotFound) {
+    if (startIndex == NSNotFound) {
         return data;
     }
 
-    if(startIndex < length && bytes[startIndex] == '\n') {
+    if (startIndex < length && bytes[startIndex] == '\n') {
         startIndex++;
-    } else if(startIndex < length && bytes[startIndex] == '\r') {
+    } else if (startIndex < length && bytes[startIndex] == '\r') {
         startIndex++;
-        if(startIndex < length && bytes[startIndex] == '\n') {
+        if (startIndex < length && bytes[startIndex] == '\n') {
             startIndex++;
         }
     }
@@ -2981,30 +2540,31 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
     return [[NSData alloc] initWithBytesNoCopy:(void*)(bytes + startIndex)
                                         length:length - startIndex
                                    deallocator:^(void* _, NSUInteger __) {
-        // Retain the serialized data for the lifetime of this zero copy slice.
-        (void)retainedData;
-    }];
+                                       // Retain the serialized data for the
+                                       // lifetime of this zero copy slice.
+                                       (void)retainedData;
+                                   }];
 }
 
 - (NSString*)stringByRemovingXMLDeclarationFromString:(NSString*)string
 {
-    if([string hasPrefix:@"<?xml"] == NO) {
+    if ([string hasPrefix:@"<?xml"] == NO) {
         return string;
     }
 
     NSRange declarationEnd = [string rangeOfString:@"?>"];
-    if(declarationEnd.location == NSNotFound) {
+    if (declarationEnd.location == NSNotFound) {
         return string;
     }
 
     NSUInteger startIndex = NSMaxRange(declarationEnd);
-    if(startIndex < string.length) {
+    if (startIndex < string.length) {
         unichar character = [string characterAtIndex:startIndex];
-        if(character == '\n') {
+        if (character == '\n') {
             startIndex++;
-        } else if(character == '\r') {
+        } else if (character == '\r') {
             startIndex++;
-            if(startIndex < string.length && [string characterAtIndex:startIndex] == '\n') {
+            if (startIndex < string.length && [string characterAtIndex:startIndex] == '\n') {
                 startIndex++;
             }
         }
@@ -3015,7 +2575,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSXMLNodeOptions)XMLSerializationOptions
 {
     NSXMLNodeOptions options = NSXMLNodePrettyPrint;
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressOutput) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCompressOutput) == YES) {
         options = NSXMLNodeOptionsNone;
     }
     options |= NSXMLNodeCompactEmptyElement;
@@ -3025,7 +2585,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSString*)SVGString
 {
     NSString* output = [[self _dom] XMLStringWithOptions:[self XMLSerializationOptions]];
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
         return [self stringByRemovingXMLDeclarationFromString:output];
     }
     return output;
@@ -3034,7 +2594,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSData*)SVGData
 {
     NSData* data = [[self _dom] XMLDataWithOptions:[self XMLSerializationOptions]];
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionRemoveXMLDeclaration) == YES) {
         return [self dataByRemovingXMLDeclarationFromData:data];
     }
     return data;
@@ -3042,8 +2602,7 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 
 - (IJSVG*)SVG:(NSError**)error
 {
-    return [[IJSVG alloc] initWithSVGString:self.SVGString
-                                      error:error];
+    return [[IJSVG alloc] initWithSVGString:self.SVGString error:error];
 }
 
 #pragma mark CGPath stuff
@@ -3051,24 +2610,19 @@ floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions
 - (NSString*)pathFromCGPath:(CGPathRef)path
 {
     // string to store the path in
-    NSArray<IJSVGExporterPathInstruction*>* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path
-                                                                                         floatingPointOptions:_floatingPointOptions];
+    NSArray<IJSVGExporterPathInstruction*>* instructions = [IJSVGExporterPathInstruction instructionsFromPath:path floatingPointOptions:_floatingPointOptions];
     return [self pathFromInstructions:instructions];
 }
 
 - (NSString*)pathFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions
 {
     // work out what to do...
-    if(IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
-        [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:instructions
-                                                                           floatingPointOptions:_floatingPointOptions];
-        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions
-                                                            floatingPointOptions:_floatingPointOptions];
-        instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions
-                                                          floatingPointOptions:_floatingPointOptions];
+    if (IJSVGExporterHasOption(_options, IJSVGExporterOptionCleanupPaths) == YES) {
+        [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:instructions floatingPointOptions:_floatingPointOptions];
+        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:instructions floatingPointOptions:_floatingPointOptions];
+        instructions = [IJSVGExporterPathInstruction convertInstructionsCurves:instructions floatingPointOptions:_floatingPointOptions];
     }
-    return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions
-                                               floatingPointOptions:_floatingPointOptions];
+    return [IJSVGExporterPathInstruction pathStringFromInstructions:instructions floatingPointOptions:_floatingPointOptions];
 }
 
 void IJSVGExporterPathCaller(void* info, const CGPathElement* pathElement)
@@ -3082,33 +2636,33 @@ void IJSVGEnumerateCGPathElements(CGPathRef path, IJSVGPathElementEnumerationBlo
     __block CGPoint currentPoint = CGPointZero;
     IJSVGCGPathHandler callback = ^(const CGPathElement* _Nonnull element) {
         switch (element->type) {
-        case kCGPathElementMoveToPoint: {
-            enumBlock(element, currentPoint);
-            currentPoint = element->points[0];
-            break;
-        }
-        case kCGPathElementAddLineToPoint: {
-            enumBlock(element, currentPoint);
-            currentPoint = element->points[0];
-            break;
-        }
-        case kCGPathElementAddCurveToPoint: {
-            enumBlock(element, currentPoint);
-            currentPoint = element->points[2];
-            break;
-        }
-        case kCGPathElementAddQuadCurveToPoint: {
-            enumBlock(element, currentPoint);
-            currentPoint = element->points[1];
-            break;
-        }
-        case kCGPathElementCloseSubpath: {
-            enumBlock(element, currentPoint);
-            break;
-        }
+            case kCGPathElementMoveToPoint: {
+                enumBlock(element, currentPoint);
+                currentPoint = element->points[0];
+                break;
+            }
+            case kCGPathElementAddLineToPoint: {
+                enumBlock(element, currentPoint);
+                currentPoint = element->points[0];
+                break;
+            }
+            case kCGPathElementAddCurveToPoint: {
+                enumBlock(element, currentPoint);
+                currentPoint = element->points[2];
+                break;
+            }
+            case kCGPathElementAddQuadCurveToPoint: {
+                enumBlock(element, currentPoint);
+                currentPoint = element->points[1];
+                break;
+            }
+            case kCGPathElementCloseSubpath: {
+                enumBlock(element, currentPoint);
+                break;
+            }
         }
     };
-    if(@available(macOS 10.13, *)) {
+    if (@available(macOS 10.13, *)) {
         CGPathApplyWithBlock(path, callback);
     } else {
         CGPathApply(path, (__bridge void*)callback, IJSVGExporterPathCaller);
@@ -3122,14 +2676,7 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     static NSArray<NSNumber*>* prefixIndexes;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSArray<NSString*>* order = @[ IJSVGAttributeID, IJSVGAttributeWidth,
-            IJSVGAttributeHeight, IJSVGAttributeX,
-            IJSVGAttributeX1, IJSVGAttributeX2, IJSVGAttributeY,
-            IJSVGAttributeY1, IJSVGAttributeY2,
-            IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR,
-            IJSVGAttributeFill, IJSVGAttributeStroke, IJSVGAttributeMarker,
-            IJSVGAttributeD, IJSVGAttributePoints, IJSVGAttributeTransform,
-            IJSVGAttributeGradientTransform, IJSVGAttributeXLink ];
+        NSArray<NSString*>* order = @[ IJSVGAttributeID, IJSVGAttributeWidth, IJSVGAttributeHeight, IJSVGAttributeX, IJSVGAttributeX1, IJSVGAttributeX2, IJSVGAttributeY, IJSVGAttributeY1, IJSVGAttributeY2, IJSVGAttributeCX, IJSVGAttributeCY, IJSVGAttributeR, IJSVGAttributeFill, IJSVGAttributeStroke, IJSVGAttributeMarker, IJSVGAttributeD, IJSVGAttributePoints, IJSVGAttributeTransform, IJSVGAttributeGradientTransform, IJSVGAttributeXLink ];
         NSMutableDictionary<NSString*, NSNumber*>* indexes = [[NSMutableDictionary alloc] initWithCapacity:order.count];
         NSMutableArray<NSString*>* prefixes = [[NSMutableArray alloc] initWithCapacity:order.count];
         NSMutableArray<NSNumber*>* prefixedIndexes = [[NSMutableArray alloc] initWithCapacity:order.count];
@@ -3145,12 +2692,12 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     });
 
     NSNumber* exactIndex = exactIndexes[attributeName];
-    if(exactIndex != nil) {
+    if (exactIndex != nil) {
         return exactIndex.doubleValue;
     }
 
     for (NSInteger i = 0; i < orderedPrefixes.count; i++) {
-        if([attributeName hasPrefix:orderedPrefixes[i]]) {
+        if ([attributeName hasPrefix:orderedPrefixes[i]]) {
             return prefixIndexes[i].doubleValue;
         }
     }
@@ -3162,7 +2709,7 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     // grab the attributes
     NSArray<NSXMLNode*>* attributes = element.attributes;
     NSInteger count = attributes.count;
-    if(count < 2) {
+    if (count < 2) {
         return;
     }
 
@@ -3176,8 +2723,8 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
         CGFloat bIndex = IJSVGExporterAttributeSortIndex(attribute2.name, count);
 
         // return the comparison set
-        if(aIndex != bIndex) {
-            if(aIndex > bIndex) {
+        if (aIndex != bIndex) {
+            if (aIndex > bIndex) {
                 return NSOrderedDescending;
             } else {
                 return NSOrderedAscending;
@@ -3202,40 +2749,29 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
 - (NSString*)identifierForElement:(NSXMLElement* _Nullable)element
 {
     NSString* identifier = nil;
-    if(_respondsTo.identifierForElement == 1) {
+    if (_respondsTo.identifierForElement == 1) {
         __weak id weakSelf = self;
-        NSString* (^block)(void) = ^NSString*(void) {
-            return [weakSelf generateID];
-        };
+        NSString* (^block)(void) = ^NSString*(void) { return [weakSelf generateID]; };
         IJSVGNodeType type = IJSVGNodeTypeForString(element.localName, element.kind);
-        identifier = [_delegate svgExporter:self
-                       identifierForElement:element
-                                       type:type
-                                  defaultID:block];
-        if(identifier != nil) {
+        identifier = [_delegate svgExporter:self identifierForElement:element type:type defaultID:block];
+        if (identifier != nil) {
             return identifier;
         }
     }
     return [self generateID];
 }
 
-- (NSString*)colorStringForColor:(NSColor*)color
-                            flag:(IJSVGColorUsageTraits)flag
-                         options:(IJSVGColorStringOptions)options
+- (NSString*)colorStringForColor:(NSColor*)color flag:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options
 {
     NSString* colorString = nil;
-    if(_respondsTo.stringForColor == 1) {
+    if (_respondsTo.stringForColor == 1) {
         color = [IJSVGColor computeColorSpace:color];
-        colorString = [_delegate svgExporter:self
-                              stringForColor:color
-                                       flags:flag
-                                     options:options];
-        if(colorString != nil) {
+        colorString = [_delegate svgExporter:self stringForColor:color flags:flag options:options];
+        if (colorString != nil) {
             return colorString;
         }
     }
-    return [IJSVGColor colorStringFromColor:color
-                                    options:options];
+    return [IJSVGColor colorStringFromColor:color options:options];
 }
 
 @end

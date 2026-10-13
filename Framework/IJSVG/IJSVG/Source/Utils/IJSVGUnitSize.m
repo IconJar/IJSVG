@@ -15,8 +15,7 @@
     return self.width.isRelativeUnit || self.height.isRelativeUnit;
 }
 
-+ (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width
-                         height:(IJSVGUnitLength*)height
++ (IJSVGUnitSize*)sizeWithWidth:(IJSVGUnitLength*)width height:(IJSVGUnitLength*)height
 {
     IJSVGUnitSize* size = [[self alloc] init];
     size->_width = width;
@@ -26,14 +25,12 @@
 
 + (IJSVGUnitSize*)sizeWithCGSize:(CGSize)size
 {
-    return [self sizeWithWidth:[IJSVGUnitLength unitWithFloat:size.width]
-                        height:[IJSVGUnitLength unitWithFloat:size.height]];
+    return [self sizeWithWidth:[IJSVGUnitLength unitWithFloat:size.width] height:[IJSVGUnitLength unitWithFloat:size.height]];
 }
 
 + (IJSVGUnitSize*)zeroSize
 {
-    return [self sizeWithWidth:IJSVGZeroUnitLength
-                        height:IJSVGZeroUnitLength];
+    return [self sizeWithWidth:IJSVGZeroUnitLength height:IJSVGZeroUnitLength];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -57,14 +54,12 @@
 
 - (CGSize)computeValue:(CGSize)size
 {
-    return CGSizeMake([_width computeValue:size.width],
-                      [_height computeValue:size.height]);
+    return CGSizeMake([_width computeValue:size.width], [_height computeValue:size.height]);
 }
 
 - (CGSize)value
 {
     return [self computeValue:CGSizeZero];
 }
-
 
 @end
