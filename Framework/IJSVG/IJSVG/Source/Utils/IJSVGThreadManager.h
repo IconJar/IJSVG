@@ -23,6 +23,7 @@
 
 @property (nonatomic, readonly) IJSVGFeatureFlags* featureFlags;
 @property (nonatomic, readonly) NSThread* thread;
+
 // Filter contexts require a Metal device and may be unavailable.
 @property (nonatomic, readonly) CIContext* CIContext;
 @property (nonatomic, readonly) IJSVGPathDataStream* pathDataStream;

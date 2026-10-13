@@ -86,6 +86,7 @@
 + (CGMutablePathRef)newPathForCommandsArray:(NSArray<IJSVGCommand*>*)commands
 {
     CGMutablePathRef path = CGPathCreateMutable();
+
     // If there are some commands in the array and the first one is NOT a move
     // command then we need to implicitly moe the path to zero point or CG will
     // throw warnings at us.

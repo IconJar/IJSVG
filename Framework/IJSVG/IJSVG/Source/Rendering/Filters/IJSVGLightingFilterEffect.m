@@ -51,6 +51,7 @@ static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSa
     BOOL left = x - dx < CGRectGetMinX(parameters.inputRegion), right = x + dx >= CGRectGetMaxX(parameters.inputRegion);
     BOOL top = y - dy < CGRectGetMinY(parameters.inputRegion), bottom = y + dy >= CGRectGetMaxY(parameters.inputRegion);
     double gx = 0, gy = 0, wx = 0, wy = 0;
+
     // Reuse corner samples when the pixel is away from the edges.
     // At an edge only use samples that are inside the image.
     if (!left && !right && !top && !bottom) {
@@ -136,6 +137,7 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
                 double intensity = 1;
                 if (parameters.lightType == IJSVGNodeTypeFilterSpotLight) {
                     double cosine = parameters.spotDirectionLength > 0 ? -(ux * parameters.spotDirectionX + uy * parameters.spotDirectionY + uz * parameters.spotDirectionZ) / parameters.spotDirectionLength : 0;
+
                     // Fade inside the cone boundary to keep narrow lights smooth.
                     double coverage = IJSVGFilterClamp((cosine - parameters.coneCosine) / IJSVGSpotLightConeTransition);
                     intensity = cosine <= 0 ? 0 : coverage * pow(cosine, parameters.spotExponent);
@@ -240,7 +242,11 @@ static IJSVGLightingVector IJSVGLightingColor(NSColor* color, IJSVGFilterContext
         .objectUnits = objectUnits,
         .boundingBox = boundingBox,
     };
-    return [context mapImage:input other:nil operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) { IJSVGApplyLightingToPixels(src, dst, w, h, parameters); }];
+    return [context mapImage:input
+                       other:nil
+                   operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
+                       IJSVGApplyLightingToPixels(src, dst, w, h, parameters);
+                   }];
 }
 
 @end

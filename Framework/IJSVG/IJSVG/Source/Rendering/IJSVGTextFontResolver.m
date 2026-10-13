@@ -122,6 +122,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
             }
             CGFloat candidate = [candidateTraits[(__bridge NSString*)kCTFontWeightTrait] doubleValue];
             CGFloat distance = fabs(candidate - requested);
+
             // CSS searches towards lighter faces below 400, towards heavier faces
             // above 500, and towards 500 before lighter faces between 400 and 500.
             if (weight < 400) {
@@ -145,6 +146,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
         return (CTFontRef)CFRetain(font);
     }
     CTFontRef variant = CTFontCreateCopyWithSymbolicTraits(font, size, NULL, traits, mask);
+
     // Keep the base font when the requested variant is unavailable.
     return variant ?: (CTFontRef)CFRetain(font);
 }
@@ -195,6 +197,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
         } else {
             resolved = parentWeight < 550 ? MIN(100, parentWeight) : (parentWeight < 750 ? 400 : 700);
         }
+
         // Parsed values may be shared by other nodes. Never mutate them.
         IJSVGTextAttributeValue* computed = [[IJSVGTextAttributeValue alloc] init];
         computed.number = resolved;
@@ -280,6 +283,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
     }
     node = [self geometryFontOwnerForLength:length node:node];
     IJSVGTextComputedStyle* style = [self fontStyleForNode:node];
+
     // SVG geometry rounds x height to a user unit, matching WebKit.
     return [length computeValue:percentage fontSize:style.size xHeight:ceil(style.xHeight)];
 }
@@ -340,6 +344,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
 - (id)descriptorForFamily:(NSString*)family size:(CGFloat)size
 {
     BOOL systemFont = [family isEqualToString:IJSVGTextSystemFontFamily];
+
     // The system font descriptor can change with the requested size.
     id cached = systemFont ? nil : self.descriptors[family];
     if (cached != nil) {
@@ -347,7 +352,9 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
     }
     static NSSet* mandatory;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ mandatory = [NSSet setWithObject:(__bridge NSString*)kCTFontFamilyNameAttribute]; });
+    dispatch_once(&onceToken, ^{
+        mandatory = [NSSet setWithObject:(__bridge NSString*)kCTFontFamilyNameAttribute];
+    });
     CTFontDescriptorRef match = NULL;
     if (systemFont) {
         CTFontRef font = CTFontCreateUIFontForLanguage(kCTFontUIFontSystem, size, NULL);
@@ -408,6 +415,7 @@ static CTFontRef IJSVGTextCreateFontVariant(CTFontRef font, CGFloat size, CTFont
         CFRelease(variant);
         CFRelease(fallback);
     }
+
     // Try the requested families before the system fallbacks.
     if (defaults != nil) {
         [cascade addObjectsFromArray:defaults];

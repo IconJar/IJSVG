@@ -34,11 +34,13 @@
 
 // Updates cached measurements after fitting hides outside nodes.
 - (void)hideNodesInMeasurements:(NSSet<IJSVGNode*>*)nodes;
+
 // Includes filter regions and placement in the parent coordinate system.
 - (CGRect)extentForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort;
 
 // Resolve the node graph without allocating a graphics context.
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode;
+
 // Resolves viewport dependent stroke outlines for vector export.
 - (IJSVGRootPaint*)rootPaintForRootNode:(IJSVGRootNode*)rootNode viewportSize:(CGSize)size;
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort;

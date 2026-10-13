@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGAnchor.h>
 #import <IJSVG/IJSVGCircle.h>
@@ -56,6 +57,7 @@
 #import <IJSVG/IJSVGUse.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVGParserUtils.h>
+#import <IJSVGSwitch.h>
 
 // Resolved values live on the parser stack for the duration of consumption.
 // Nodes retain only the values they use. Deferred reference blocks must capture
@@ -68,7 +70,7 @@ typedef struct {
     __unsafe_unretained IJSVGGraphicsNode* geometryOwner;
     __strong NSMutableDictionary<NSNumber*, IJSVGUnitLength*>* geometryLengths;
     __unsafe_unretained IJSVGParser* parser;
-    __unsafe_unretained NSXMLElement* element;
+    IJSVGXMLNode* element;
     NSString* __unsafe_unretained* values;
     __unsafe_unretained IJSVGStyleSheetStyle* style;
     __unsafe_unretained IJSVGStyleSheetStyle* inlineStyle;
@@ -78,16 +80,16 @@ typedef struct {
 } IJSVGNodeParsingContext;
 
 @interface IJSVGGradient (DataParsing)
-- (void)parseSpreadMethodFromAttributes:(NSArray<NSXMLNode*>*)attributes;
+- (void)parseSpreadMethodFromAttributes:(IJSVGXMLAttributeList)attributes;
 - (void)parseColorStops;
 @end
 
 @interface IJSVGLinearGradient (DataParsing)
-+ (void)parseGeometryFromAttributes:(NSArray<NSXMLNode*>*)attributes gradient:(IJSVGLinearGradient*)gradient;
++ (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGLinearGradient*)gradient;
 @end
 
 @interface IJSVGRadialGradient (DataParsing)
-+ (void)parseGeometryFromAttributes:(NSArray<NSXMLNode*>*)attributes gradient:(IJSVGRadialGradient*)gradient;
++ (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGRadialGradient*)gradient;
 @end
 
 @interface IJSVGNode (Parsing)
@@ -100,18 +102,19 @@ typedef struct {
 
 // Shared services do not decide which attributes an element supports.
 @interface IJSVGParser (NodeParsingServices)
+- (void)parsePolyBytes:(const char*)bytes length:(NSUInteger)length intoPath:(IJSVGPath*)path closePath:(BOOL)close;
 - (void)parsePolyPoints:(NSString*)points intoPath:(IJSVGPath*)path closePath:(BOOL)close;
-- (void)detachElement:(NSXMLElement*)element withIdentifier:(NSString*)identifier;
-- (void)parseStyleElement:(NSXMLElement*)element parentNode:(IJSVGGraphicsNode*)parentNode;
-- (void)parseDefElement:(NSXMLElement*)element parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive;
+- (void)detachElement:(IJSVGXMLNode*)element withIdentifier:(NSString*)identifier;
+- (void)parseStyleElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode;
+- (void)parseDefElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive;
 - (void)applyPathValue:(NSString*)value toNode:(IJSVGNode*)node css:(BOOL)css fallback:(NSString*)fallback;
-- (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier referencingNode:(IJSVGGraphicsNode*)node element:(NSXMLElement*)element;
-- (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value referencingNode:(IJSVGGraphicsNode*)node element:(NSXMLElement*)element;
+- (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
+- (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 - (NSArray<IJSVGTransform*>*)parsedTransformsForValue:(NSString*)value allowCSSUnits:(BOOL)allowCSSUnits;
-- (void)applyPaintReference:(NSString*)identifier node:(IJSVGGraphicsNode*)node element:(NSXMLElement*)element stroke:(BOOL)stroke;
+- (void)applyPaintReference:(NSString*)identifier node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke;
 - (IJSVGColorNode*)colorPaintForValue:(NSString*)value;
 - (NSColor*)parsedStopColorForValue:(NSString*)value;
-- (void)applyMarkerStart:(NSString*)start mid:(NSString*)mid end:(NSString*)end toNode:(IJSVGGraphicsNode*)node element:(NSXMLElement*)element;
+- (void)applyMarkerStart:(NSString*)start mid:(NSString*)mid end:(NSString*)end toNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 @end
 
 static inline BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
@@ -154,17 +157,21 @@ void IJSVGParseFilterColorInterpolation(IJSVGGraphicsNode* node, IJSVGNodeParsin
 void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context);
 
 @interface IJSVGDefinitions (Parsing)
-+ (void)consumeElement:(NSXMLElement*)element parser:(IJSVGParser*)parser parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive;
++ (void)consumeElement:(IJSVGXMLNode*)element parser:(IJSVGParser*)parser parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive;
 @end
 
 @interface IJSVGTitleNode (Parsing)
-+ (void)consumeElement:(NSXMLElement*)element parentNode:(IJSVGGraphicsNode*)parentNode;
++ (void)consumeElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode;
 @end
 
 @interface IJSVGDescriptionNode (Parsing)
-+ (void)consumeElement:(NSXMLElement*)element parentNode:(IJSVGGraphicsNode*)parentNode;
++ (void)consumeElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode;
 @end
 
 @interface IJSVGStyleNode (Parsing)
-+ (BOOL)consumeElement:(NSXMLElement*)element rootElement:(NSXMLElement*)rootElement viewport:(CGSize)viewport styleSheet:(IJSVGStyleSheet*)styleSheet;
++ (BOOL)consumeElement:(IJSVGXMLNode*)element rootElement:(IJSVGXMLNode*)rootElement viewport:(CGSize)viewport styleSheet:(IJSVGStyleSheet*)styleSheet;
+@end
+
+@interface IJSVGSwitch (XMLParsing)
++ (IJSVGXMLNode*)selectedChildInXML:(IJSVGXMLNode*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages;
 @end

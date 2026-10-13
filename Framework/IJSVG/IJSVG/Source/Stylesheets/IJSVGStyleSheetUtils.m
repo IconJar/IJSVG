@@ -22,11 +22,13 @@ BOOL IJSVGStyleSheetCharIsWhitespace(char aChar)
     return aChar == ' ' || aChar == '\t' || aChar == '\n' || aChar == '\r' || aChar == '\f';
 }
 
-typedef NS_ENUM(uint8_t, IJSVGMediaFeature) { IJSVGMediaFeatureType,
+typedef NS_ENUM(uint8_t, IJSVGMediaFeature) {
+    IJSVGMediaFeatureType,
     IJSVGMediaFeatureWidth,
     IJSVGMediaFeatureHeight,
     IJSVGMediaFeaturePortrait,
-    IJSVGMediaFeatureLandscape };
+    IJSVGMediaFeatureLandscape
+};
 
 typedef struct {
     IJSVGMediaFeature feature;
@@ -556,7 +558,8 @@ IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSele
     return rawSelector;
 }
 
-typedef NS_ENUM(NSUInteger, IJSVGStyleSheetFontProperty) { IJSVGStyleSheetFontFamily,
+typedef NS_ENUM(NSUInteger, IJSVGStyleSheetFontProperty) {
+    IJSVGStyleSheetFontFamily,
     IJSVGStyleSheetFontSize,
     IJSVGStyleSheetFontStyle,
     IJSVGStyleSheetFontWeight,
@@ -567,7 +570,8 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetFontProperty) { IJSVGStyleSheetFontFa
     IJSVGStyleSheetFontFeatures,
     IJSVGStyleSheetFontKerning,
     IJSVGStyleSheetFontSizeAdjust,
-    IJSVGStyleSheetFontPropertyCount };
+    IJSVGStyleSheetFontPropertyCount
+};
 
 static BOOL IJSVGStyleSheetTokenEquals(const char* chars, NSRange token, const char* keyword)
 {

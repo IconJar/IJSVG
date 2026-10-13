@@ -15,9 +15,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) { IJSVGGradientSpreadMethodPad,
+typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
+    IJSVGGradientSpreadMethodPad,
     IJSVGGradientSpreadMethodReflect,
-    IJSVGGradientSpreadMethodRepeat };
+    IJSVGGradientSpreadMethodRepeat
+};
 
 @interface IJSVGGradient : IJSVGGroup <IJSVGReferenceNode>
 

@@ -66,15 +66,19 @@ NS_ASSUME_NONNULL_BEGIN
 // Cached measurements, call setNeedsDisplay after node or style edits.
 // Painted bounds in viewBox coordinates, excluding filters.
 - (CGRect)artworkBounds;
+
 // Conservative extent including enabled filters, before viewport clipping.
 - (CGRect)artworkExtent;
+
 // Cached proof that painted geometry is outside the viewBox. Query before
 // fitting. NO includes unknown, does not detect overlap by other nodes.
 - (BOOL)isNodeOutsideViewBox:(IJSVGNode*)node NS_SWIFT_NAME(isNodeOutsideViewBox(_:));
+
 // Fits painted geometry into the viewBox while preserving canvas size and
 // aspect ratio. Call after geometry or style changes. Passing NO removes the
 // previous fitting scale.
 - (void)fitArtworkToViewBox:(BOOL)enabled NS_SWIFT_NAME(fitArtworkToViewBox(enabled:));
+
 // Fits the completed effects as well as geometry when requested.
 - (void)fitArtworkToViewBox:(BOOL)enabled includingFilters:(BOOL)includingFilters NS_SWIFT_NAME(fitArtworkToViewBox(enabled:includingFilters:));
 

@@ -76,13 +76,16 @@
 
 - (NSData*)pixels:(CGImageRef)image size:(NSUInteger)size
 {
-    if (image == NULL)
+    if (image == NULL) {
         return nil;
+    }
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, size, size, 8, size * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
+
     // Missing paper opacity is conspicuous against this dark background.
     CGContextSetRGBFillColor(context, 36.f / 255, 0, 97.f / 255, 1);
     CGContextFillRect(context, CGRectMake(0, 0, size, size));
@@ -94,11 +97,14 @@
 
 - (NSData*)native:(IJSVG*)svg size:(NSUInteger)size
 {
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(size, size) flipped:YES error:nil];
     NSData* data = [self pixels:image size:size];
-    if (image != NULL)
+    if (image != NULL) {
         CGImageRelease(image);
+    }
     return data;
 }
 
@@ -107,8 +113,9 @@
     XCTAssertNotNil(actual, @"%@", label);
     XCTAssertNotNil(expected, @"%@", label);
     XCTAssertEqual(actual.length, expected.length, @"%@", label);
-    if (actual == nil || expected == nil || actual.length != expected.length)
+    if (actual == nil || expected == nil || actual.length != expected.length) {
         return;
+    }
     const UInt8* a = actual.bytes;
     const UInt8* b = expected.bytes;
     NSUInteger total = 0, large = 0;
@@ -124,8 +131,9 @@
 - (void)testDetachedPaperNativeExportReimport
 {
     XCTAssertNotNil(MTLCreateSystemDefaultDevice());
-    if (MTLCreateSystemDefaultDevice() == nil)
+    if (MTLCreateSystemDefaultDevice() == nil) {
         return;
+    }
     for (NSNumber* origin in @[ @(-80), @0, @20 ]) {
         for (NSUInteger corner = 0; corner < 4; corner++) {
             for (NSNumber* percentage in @[ @NO, @YES ]) {
@@ -146,6 +154,7 @@
                         XCTAssertEqualObjects([filter attributeForName:@"height"].stringValue, @"40", @"%@", label);
                         IJSVG* imported = [[IJSVG alloc] initWithSVGString:exported];
                         IJSVG* attached = [[IJSVG alloc] initWithSVGString:reference];
+
                         // First render, automatic snapshot reuse, resizing, and restore.
                         for (NSNumber* size in @[ @128, @128, @384, @128 ]) {
                             NSData* expected = [self native:attached size:size.unsignedIntegerValue];
@@ -154,6 +163,7 @@
                         }
                         XCTAssertEqual(primitive.imageNode, originalNode);
                         XCTAssertEqualObjects(primitive.parameters, parameters);
+
                         // An unused bitmap disables automatic imageNode snapshots.
                         primitive.image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
                         [self compare:[self native:svg size:128] expected:[self native:attached size:128] label:label];

@@ -10,12 +10,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGMarkerUnits) { IJSVGMarkerUnitsStrokeWidth,
-    IJSVGMarkerUnitsUserSpaceOnUse };
+typedef NS_ENUM(NSUInteger, IJSVGMarkerUnits) {
+    IJSVGMarkerUnitsStrokeWidth,
+    IJSVGMarkerUnitsUserSpaceOnUse
+};
 
-typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) { IJSVGMarkerOrientTypeAngle,
+typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) {
+    IJSVGMarkerOrientTypeAngle,
     IJSVGMarkerOrientTypeAuto,
-    IJSVGMarkerOrientTypeAutoStartReverse };
+    IJSVGMarkerOrientTypeAutoStartReverse
+};
 
 @interface IJSVGMarker : IJSVGGroup
 @property (nonatomic, strong) IJSVGUnitLength* refX;
@@ -28,9 +32,11 @@ typedef NS_ENUM(NSUInteger, IJSVGMarkerOrientType) { IJSVGMarkerOrientTypeAngle,
 
 @end
 
-typedef NS_ENUM(NSUInteger, IJSVGMarkerPositionType) { IJSVGMarkerPositionStart,
+typedef NS_ENUM(NSUInteger, IJSVGMarkerPositionType) {
+    IJSVGMarkerPositionStart,
     IJSVGMarkerPositionMid,
-    IJSVGMarkerPositionEnd };
+    IJSVGMarkerPositionEnd
+};
 
 @interface IJSVGMarkerPosition : NSObject
 

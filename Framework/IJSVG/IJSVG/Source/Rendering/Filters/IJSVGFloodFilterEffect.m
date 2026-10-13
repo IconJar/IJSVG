@@ -16,6 +16,7 @@
 {
     NSString* value = primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack;
     value = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+
     // The general parser represents transparent paint as nil.
     // Preserve its alpha before filter callers apply the default colour.
     return [IJSVGColor isNoneOrTransparent:value] ? NSColor.clearColor : [IJSVGColor colorFromString:value];
@@ -29,6 +30,7 @@
         return 1;
     }
     NSString* number = unit.originalType == IJSVGUnitLengthTypePercentage ? [value substringToIndex:value.length - 1] : value;
+
     // Validate the complete value before using the tolerant unit parser.
     return [IJSVGUtils numbersFromString:number].count == 1 ? [unit computeValue:1] : 1;
 }

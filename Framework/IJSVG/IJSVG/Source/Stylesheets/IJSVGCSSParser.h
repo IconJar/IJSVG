@@ -9,16 +9,19 @@
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUnitLength.h>
 
-typedef NS_ENUM(uint8_t, IJSVGCSSWideKeyword) { IJSVGCSSWideKeywordUnknown,
+typedef NS_ENUM(uint8_t, IJSVGCSSWideKeyword) {
+    IJSVGCSSWideKeywordUnknown,
     IJSVGCSSWideKeywordInherit,
     IJSVGCSSWideKeywordInitial,
     IJSVGCSSWideKeywordUnset,
     IJSVGCSSWideKeywordRevert,
-    IJSVGCSSWideKeywordRevertLayer };
+    IJSVGCSSWideKeywordRevertLayer
+};
 
 IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value);
 
-typedef NS_ENUM(uint8_t, IJSVGCSSFunction) { IJSVGCSSFunctionUnknown,
+typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
+    IJSVGCSSFunctionUnknown,
     IJSVGCSSFunctionCalc,
     IJSVGCSSFunctionMin,
     IJSVGCSSFunctionMax,
@@ -45,23 +48,29 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) { IJSVGCSSFunctionUnknown,
     IJSVGCSSFunctionSkewY,
     IJSVGCSSFunctionCircle,
     IJSVGCSSFunctionEllipse,
-    IJSVGCSSFunctionVar };
+    IJSVGCSSFunctionVar
+};
 
-typedef NS_ENUM(uint8_t, IJSVGCSSNumericKeyword) { IJSVGCSSNumericKeywordUnknown,
+typedef NS_ENUM(uint8_t, IJSVGCSSNumericKeyword) {
+    IJSVGCSSNumericKeywordUnknown,
     IJSVGCSSNumericKeywordPi,
     IJSVGCSSNumericKeywordE,
     IJSVGCSSNumericKeywordInfinity,
     IJSVGCSSNumericKeywordNegativeInfinity,
     IJSVGCSSNumericKeywordNaN,
-    IJSVGCSSNumericKeywordNone };
+    IJSVGCSSNumericKeywordNone
+};
 
-typedef NS_ENUM(uint8_t, IJSVGCSSAngleUnit) { IJSVGCSSAngleUnitNone,
+typedef NS_ENUM(uint8_t, IJSVGCSSAngleUnit) {
+    IJSVGCSSAngleUnitNone,
     IJSVGCSSAngleUnitDegrees,
     IJSVGCSSAngleUnitRadians,
     IJSVGCSSAngleUnitGradians,
-    IJSVGCSSAngleUnitTurns };
+    IJSVGCSSAngleUnitTurns
+};
 
-typedef NS_ENUM(char, IJSVGCSSSymbol) { IJSVGCSSSymbolNone = 0,
+typedef NS_ENUM(char, IJSVGCSSSymbol) {
+    IJSVGCSSSymbolNone = 0,
     IJSVGCSSSymbolAdd = '+',
     IJSVGCSSSymbolSubtract = '-',
     IJSVGCSSSymbolMultiply = '*',
@@ -69,19 +78,22 @@ typedef NS_ENUM(char, IJSVGCSSSymbol) { IJSVGCSSSymbolNone = 0,
     IJSVGCSSSymbolComma = ',',
     IJSVGCSSSymbolParenthesis = '(',
     IJSVGCSSSymbolBracket = '[',
-    IJSVGCSSSymbolBrace = '{' };
+    IJSVGCSSSymbolBrace = '{'
+};
 
 // Classify ASCII names at the text boundary without case sensitivity.
 IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name);
 
-typedef NS_ENUM(uint8_t, IJSVGCSSComponentKind) { IJSVGCSSComponentNumber,
+typedef NS_ENUM(uint8_t, IJSVGCSSComponentKind) {
+    IJSVGCSSComponentNumber,
     IJSVGCSSComponentDimension,
     IJSVGCSSComponentPercentage,
     IJSVGCSSComponentIdentifier,
     IJSVGCSSComponentFunction,
     IJSVGCSSComponentBlock,
     IJSVGCSSComponentDelimiter,
-    IJSVGCSSComponentString };
+    IJSVGCSSComponentString
+};
 
 // A flat, immutable component tree. Children immediately follow their parent.
 // The next field is the index after the entire subtree. Names are classified
@@ -103,7 +115,9 @@ typedef struct {
     uint32_t argumentLength;
 } IJSVGCSSComponent;
 
-enum { IJSVGCSSParserInlineCapacity = 32 };
+enum {
+    IJSVGCSSParserInlineCapacity = 32
+};
 
 // Keep common expressions in caller storage and grow only for larger trees.
 // This owns its storage and must not be copied by value.
@@ -114,17 +128,19 @@ typedef struct IJSVGCSSComponents {
     IJSVGCSSComponent inlineValues[IJSVGCSSParserInlineCapacity];
 } IJSVGCSSComponents;
 
-// The source must be NUL terminated and length must include every UTF8 byte
-// before the terminator. Embedded NUL bytes are rejected. The caller releases
+// The source is a borrowed UTF8 span. A NUL terminator is not required.
+// Embedded NUL bytes are rejected. The caller releases
 // the buffer, including on failure. The source must remain alive while
 // accessing component source ranges. Limits: 64 nested blocks, 4096 components,
 // 64 KiB of UTF8.
 BOOL IJSVGCSSComponentsCreate(const char* bytes, NSUInteger length, IJSVGCSSComponents* components);
 void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components);
 
-typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) { IJSVGCSSParserOptionNone = 0,
+typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) {
+    IJSVGCSSParserOptionNone = 0,
     IJSVGCSSParserOptionSVG = 1 << 0,
-    IJSVGCSSParserOptionLeadingURL = 1 << 1 };
+    IJSVGCSSParserOptionLeadingURL = 1 << 1
+};
 
 BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length, IJSVGCSSParserOptions options, IJSVGCSSComponents* components);
 BOOL IJSVGCSSFunctionIsCalculation(IJSVGCSSFunction function);

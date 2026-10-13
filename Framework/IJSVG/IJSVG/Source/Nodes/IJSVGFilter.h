@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<IJSVGFilterPrimitive*>* primitives;
 @property (nonatomic, readonly) NSSet<NSString*>* inputNames;
 @property (nonatomic, readonly) BOOL requiresSupersampling;
+
 // Recognised exporter style inner shadows retain the original antialiased
 // coverage.
 @property (nonatomic, readonly) BOOL preservesInnerShadowCoverage;

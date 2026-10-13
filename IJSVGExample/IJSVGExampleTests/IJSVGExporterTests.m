@@ -195,8 +195,9 @@
     CGContextRef context = CGBitmapContextCreate(NULL, size, size, 8, size * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     CGContextTranslateCTM(context, 0, size);
     CGContextScaleCTM(context, 1, -1);
     [svg drawInRect:CGRectMake(0, 0, size, size) context:context];
@@ -219,8 +220,9 @@
     const uint8_t* actual = after.bytes;
     for (NSUInteger index = 0; index < MIN(before.length, after.length); index++) {
         differences += abs((int)expected[index] - actual[index]) > 1;
-        if (index % 4 == 3 && expected[index] != 0)
+        if (index % 4 == 3 && expected[index] != 0) {
             visiblePixels++;
+        }
     }
     XCTAssertGreaterThan(visiblePixels, 100u, @"The fixture must render visible artwork");
     XCTAssertEqual(differences, 0u, @"Export options %lu changed %lu channels", options, differences);

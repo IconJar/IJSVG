@@ -301,9 +301,9 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* so
 
 @implementation IJSVGMarker (Parsing)
 
-- (IJSVGUnitLength*)markerLengthFromElement:(NSXMLElement*)element attribute:(NSString*)attribute defaultValue:(IJSVGUnitLength*)defaultValue
+- (IJSVGUnitLength*)markerLengthFromElement:(IJSVGXMLNode*)element attribute:(IJSVGNodeAttribute)attribute defaultValue:(IJSVGUnitLength*)defaultValue
 {
-    NSString* value = [element attributeForName:attribute].stringValue;
+    NSString* value = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, attribute));
     return value != nil ? [IJSVGUnitLength unitWithString:value] : defaultValue;
 }
 
@@ -349,13 +349,13 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* so
     IJSVGParseOverflowAttributes(self, context);
     IJSVGParseMarkersAttributes(self, context);
     IJSVGParseViewportAttributes(self, context);
-    self.refX = [self markerLengthFromElement:context->element attribute:IJSVGAttributeRefX defaultValue:self.refX];
-    self.refY = [self markerLengthFromElement:context->element attribute:IJSVGAttributeRefY defaultValue:self.refY];
-    self.markerWidth = [self markerLengthFromElement:context->element attribute:IJSVGAttributeMarkerWidth defaultValue:self.markerWidth];
-    self.markerHeight = [self markerLengthFromElement:context->element attribute:IJSVGAttributeMarkerHeight defaultValue:self.markerHeight];
-    NSString* units = [context->element attributeForName:IJSVGAttributeMarkerUnits].stringValue;
+    self.refX = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeRefX defaultValue:self.refX];
+    self.refY = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeRefY defaultValue:self.refY];
+    self.markerWidth = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeMarkerWidth defaultValue:self.markerWidth];
+    self.markerHeight = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeMarkerHeight defaultValue:self.markerHeight];
+    NSString* units = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeMarkerUnits));
     self.markerUnits = [IJSVGUtils markerUnitsForString:units];
-    NSString* orientation = [context->element attributeForName:IJSVGAttributeOrient].stringValue;
+    NSString* orientation = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeOrient));
     [self applyMarkerOrientation:orientation toMarker:self];
     self.shouldRender = YES; // SVG 1.1: display does not apply to self.
 }

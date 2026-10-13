@@ -78,6 +78,7 @@ static void IJSVGTextPathAddCurve(IJSVGTextPathBuilder* builder, CGPoint a, CGPo
     CGFloat middleEdge = hypot(c.x - b.x, c.y - b.y);
     CGFloat lastEdge = hypot(d.x - c.x, d.y - c.y);
     CGFloat polygon = firstEdge + middleEdge + lastEdge;
+
     // Stop splitting once the curve is close enough to a straight line.
     if (depth == 16 || polygon - chord <= .00001) {
         IJSVGTextPathAddLine(builder, d);
@@ -130,6 +131,7 @@ static void IJSVGTextPathApply(void* context, const CGPathElement* element)
             CGPathApply(path, &builder, IJSVGTextPathApply);
         }
         NSUInteger length = builder.count * sizeof(IJSVGTextPathSegment);
+
         // Give back unused space after the segment table is complete.
         if (builder.count != 0 && builder.count < builder.capacity) {
             void* segments = realloc(builder.segments, length);
@@ -137,6 +139,7 @@ static void IJSVGTextPathApply(void* context, const CGPathElement* element)
                 builder.segments = segments;
             }
         }
+
         // Let NSData own the buffer without copying the segments.
         _segments = [[NSData alloc] initWithBytesNoCopy:builder.segments length:length freeWhenDone:YES];
         _segmentBytes = _segments.bytes;
@@ -155,6 +158,7 @@ static void IJSVGTextPathApply(void* context, const CGPathElement* element)
     }
     distance = MAX(0, MIN(_length, distance));
     const IJSVGTextPathSegment* segments = _segmentBytes;
+
     // Find the segment containing this distance along the path.
     NSUInteger low = 0, high = count;
     while (low + 1 < high) {

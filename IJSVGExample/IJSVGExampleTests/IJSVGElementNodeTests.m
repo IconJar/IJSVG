@@ -30,8 +30,9 @@
                                       "href='#inherited' style='width:11'/>"];
     NSArray<NSNumber*>* widths = @[ @7, @7, @19, @7, @11, @11, @23, @11 ];
     XCTAssertEqual(root.children.count, widths.count);
-    if (root.children.count != widths.count)
+    if (root.children.count != widths.count) {
         return;
+    }
     for (NSUInteger index = 0; index < widths.count; index++) {
         IJSVGUse* use = (IJSVGUse*)root.children[index];
         IJSVGRect* rect = (IJSVGRect*)use.children.firstObject;
@@ -92,8 +93,9 @@
                                       "style='href:#guide'/>"
                                       "<text><textPath href='#guide'>Text</textPath></text>"];
     XCTAssertEqual(root.children.count, 3u);
-    if (root.children.count != 3)
+    if (root.children.count != 3) {
         return;
+    }
     IJSVGUse* empty = (IJSVGUse*)root.children[0];
     XCTAssertEqualObjects(empty.reference.href, @"");
     XCTAssertNil(empty.reference.fragmentIdentifier);
@@ -116,8 +118,9 @@
                                       "5,10'/>"];
     NSArray<NSString*>* names = @[ @"IJSVGPath", @"IJSVGRect", @"IJSVGCircle", @"IJSVGEllipse", @"IJSVGLine", @"IJSVGPolygon", @"IJSVGPolyline" ];
     XCTAssertEqual(node.children.count, names.count);
-    if (node.children.count != names.count)
+    if (node.children.count != names.count) {
         return;
+    }
     for (NSUInteger index = 0; index < names.count; index++) {
         IJSVGNode* child = node.children[index];
         XCTAssertEqualObjects(NSStringFromClass(child.class), names[index]);

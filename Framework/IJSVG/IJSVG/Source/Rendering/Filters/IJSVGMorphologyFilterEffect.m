@@ -22,6 +22,7 @@
     NSInteger rx = MIN(context.extent.size.width, floor(radius.width * units.width));
     NSInteger ry = MIN(context.extent.size.height, floor(radius.height * units.height));
     BOOL dilate = primitive.morphologyOperator == IJSVGFilterMorphologyOperatorDilate;
+
     // SVG grows or shrinks pixels using a rectangular area.
     return [context applyFilter:dilate ? @"CIMorphologyRectangleMaximum" : @"CIMorphologyRectangleMinimum" toImage:[input imageByCroppingToRect:context.extent] parameters:@{ @"inputWidth" : @(2 * rx + 1), @"inputHeight" : @(2 * ry + 1) }];
 }

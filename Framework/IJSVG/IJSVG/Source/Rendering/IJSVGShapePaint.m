@@ -57,6 +57,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
     copy.path = _path;
     copy.fillColor = _fillColor;
     copy.fillGradient = _fillGradient;
+    copy.directFill = _directFill;
     copy.strokeColor = _strokeColor;
     copy->_lineWidth = _lineWidth;
     copy->_nonScalingStroke = _nonScalingStroke;
@@ -210,6 +211,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 {
     if (_fillGradient != nil && _path != NULL) {
         CGContextSaveGState(ctx);
+
         // Preserve the placement operations used by a separate fill paint
         CGRect bounds = self.bounds;
         CGContextTranslateCTM(ctx, CGRectGetMidX(bounds), CGRectGetMidY(bounds));
@@ -227,6 +229,21 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
         CGContextRestoreGState(ctx);
         return;
     }
+    if (_directFill) {
+        CGContextSaveGState(ctx);
+        CGRect bounds = self.bounds;
+        CGContextTranslateCTM(ctx, CGRectGetMidX(bounds), CGRectGetMidY(bounds));
+        CGContextConcatCTM(ctx, CGAffineTransformIdentity);
+        CGContextTranslateCTM(ctx, -bounds.size.width * .5f, -bounds.size.height * .5f);
+        [self drawPathInContext:ctx];
+        CGContextRestoreGState(ctx);
+        return;
+    }
+    [self drawPathInContext:ctx];
+}
+
+- (void)drawPathInContext:(CGContextRef)ctx
+{
     if (_path == NULL || (_fillColor == NULL && _strokeColor == NULL) || [self isPathOutsideClipInContext:ctx]) {
         return;
     }

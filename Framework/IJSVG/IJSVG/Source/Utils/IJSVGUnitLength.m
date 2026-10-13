@@ -358,6 +358,7 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
         if (_calculationObjectUnits) {
             result *= anotherValue;
         }
+
         // CSS censors NaN/signed zero at the top level and clamps to the supported
         // range.
         if (isnan(result) || result == 0.f) {

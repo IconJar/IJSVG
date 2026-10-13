@@ -28,8 +28,9 @@
     XCTAssertTrue(CGSizeEqualToSize(image.size, CGSizeMake(32, 32)));
     CGImageRef cgImage = [image CGImageForProposedRect:NULL context:nil hints:nil];
     XCTAssertTrue(cgImage != NULL);
-    if (cgImage == NULL)
+    if (cgImage == NULL) {
         return;
+    }
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
     NSColor* color = [[bitmap colorAtX:16 y:16] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
     XCTAssertNotNil(color);
@@ -43,8 +44,9 @@
 {
     NSString* source = IJSVGPackageShaderSource(name);
     XCTAssertGreaterThan(source.length, 0u, @"%@", name);
-    if (source.length == 0)
+    if (source.length == 0) {
         return;
+    }
     id<MTLDevice> device = MTLCreateSystemDefaultDevice();
     if (device != nil) {
         NSError* error = nil;
@@ -148,10 +150,11 @@
         view.SVG = nil;
         XCTAssertNil(view.SVG);
     };
-    if (NSThread.isMainThread)
+    if (NSThread.isMainThread) {
         check();
-    else
+    } else {
         dispatch_sync(dispatch_get_main_queue(), check);
+    }
 }
 
 @end

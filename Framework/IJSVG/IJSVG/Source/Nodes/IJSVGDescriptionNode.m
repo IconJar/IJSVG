@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGDescriptionNode.h>
 #import <IJSVGNodeParsing.h>
 
@@ -22,9 +23,9 @@
 
 @implementation IJSVGDescriptionNode (Parsing)
 
-+ (void)consumeElement:(NSXMLElement*)element parentNode:(IJSVGNode*)parentNode
++ (void)consumeElement:(IJSVGXMLNode*)element parentNode:(IJSVGNode*)parentNode
 {
-    parentNode.desc = element.stringValue;
+    parentNode.desc = IJSVGXMLText(element);
 }
 
 + (IJSVGBitFlags*)allowedAttributes

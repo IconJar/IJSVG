@@ -22,8 +22,9 @@
     CGContextRef context = CGBitmapContextCreate(NULL, size, size, 8, size * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     CGContextTranslateCTM(context, 0, size);
     CGContextScaleCTM(context, 1, -1);
     [svg drawInRect:CGRectMake(0, 0, size, size) context:context];
@@ -39,15 +40,17 @@
             NSUInteger size = dimension.unsignedIntegerValue;
             IJSVG* source = [[IJSVG alloc] initWithSVGString:xml];
             XCTAssertNotNil(source);
-            if (source == nil)
+            if (source == nil) {
                 continue;
+            }
             NSData* before = [self pixelsForSVG:source size:size];
             NSString* exported = [source SVGStringWithSize:CGSizeMake(size, size) options:IJSVGExporterOptionNone];
             XCTAssertNotNil(exported);
             IJSVG* reloaded = [[IJSVG alloc] initWithSVGString:exported];
             XCTAssertNotNil(reloaded);
-            if (reloaded == nil)
+            if (reloaded == nil) {
                 continue;
+            }
             XCTAssertEqualObjects([self pixelsForSVG:reloaded size:size], before, @"Export changed pixels at %@px", dimension);
         }
     }
@@ -57,8 +60,9 @@
 {
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:2 pixelsHigh:2 bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:8 bitsPerPixel:32];
     XCTAssertNotNil(bitmap);
-    if (bitmap == nil)
+    if (bitmap == nil) {
         return;
+    }
     for (NSUInteger y = 0; y < 2; y++) {
         for (NSUInteger x = 0; x < 2; x++) {
             [bitmap setColor:x == y ? NSColor.redColor : NSColor.blueColor atX:x y:y];

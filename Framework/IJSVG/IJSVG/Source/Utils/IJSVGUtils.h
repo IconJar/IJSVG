@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Calls the handler only after the complete number list is valid.
 BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat));
 
+// Borrows a bounded UTF8 span. No terminator is needed. Input is consumed
+// completely before callbacks begin, so callbacks may modify its owner.
+BOOL IJSVGEnumerateNumbersFromBytes(const char* _Nullable bytes, NSUInteger length, void (^handler)(CGFloat));
+
 // The C input must be terminated and is consumed before callbacks begin.
 BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat));
 

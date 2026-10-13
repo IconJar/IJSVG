@@ -80,6 +80,7 @@ static void IJSVGReleaseContextSlot(IJSVGCIContextSlot* slot)
 }
 
 static _Thread_local NSUInteger IJSVGCIOutputDepth;
+
 // The outer synchronous lease retains this slot until its finally block.
 // Nested feImage/filter evaluation is serial on this thread and can reuse the
 // same CIContext instead of initializing another context and kernel cache.
@@ -94,7 +95,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 + (NSMapTable*)mapTable
 {
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ managerMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory valueOptions:NSPointerFunctionsStrongMemory capacity:1]; });
+    dispatch_once(&onceToken, ^{
+        managerMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsWeakMemory valueOptions:NSPointerFunctionsStrongMemory capacity:1];
+    });
     return managerMap;
 }
 
@@ -204,7 +207,9 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
 {
     static dispatch_semaphore_t outputSlots;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ outputSlots = dispatch_semaphore_create(2); });
+    dispatch_once(&onceToken, ^{
+        outputSlots = dispatch_semaphore_create(2);
+    });
     BOOL ownsSlot = IJSVGCIOutputDepth == 0;
     if (ownsSlot) {
         dispatch_semaphore_wait(outputSlots, DISPATCH_TIME_FOREVER);

@@ -1,3 +1,11 @@
+#
+#  benchmark_svg.py
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 10/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 """Measure SVG loading, rendering and export using an existing Xcode build."""
 import argparse
 import csv

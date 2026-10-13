@@ -423,6 +423,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 - (CGRect)extentWithViewPort:(CGRect)viewPort style:(IJSVGStyle*)style
 {
     IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+
     // A nil style means no overrides, keep the renderer default stroke settings.
     if (style != nil) {
         renderer.style = style;
@@ -445,7 +446,9 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 {
     static NSMutableDictionary<Class, IJSVGBitFlags*>* computed = nil;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ computed = [[NSMutableDictionary alloc] init]; });
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
 
     @synchronized(computed) {
         IJSVGBitFlags* set = computed[self];
@@ -461,7 +464,9 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 {
     static NSMutableDictionary<Class, NSNumber*>* computed = nil;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ computed = [[NSMutableDictionary alloc] init]; });
+    dispatch_once(&onceToken, ^{
+        computed = [[NSMutableDictionary alloc] init];
+    });
 
     @synchronized(computed) {
         NSNumber* mask = computed[self];

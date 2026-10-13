@@ -33,8 +33,9 @@
 {
     NSArray<NSDictionary<NSString*, id>*>* fixtures = [self fixtures];
     XCTAssertEqual(fixtures.count, 80u);
-    if (fixtures == nil)
+    if (fixtures == nil) {
         return;
+    }
     XCTAssertEqual([NSSet setWithArray:[fixtures valueForKey:@"name"]].count, fixtures.count);
     NSSet* tiers = [NSSet setWithArray:@[ @"simple", @"mixed", @"complex" ]];
     XCTAssertEqualObjects([NSSet setWithArray:[fixtures valueForKey:@"tier"]], tiers);
@@ -67,6 +68,7 @@
 {
     NSArray<NSDictionary<NSString*, id>*>* fixtures = [self fixtures];
     XCTAssertEqual(fixtures.count, 80u);
+
     // Individual renders check batching, layering and transforms. Existing
     // numeric filter tests remain the oracle for primitive mathematics.
     for (NSDictionary<NSString*, id>* fixture in fixtures) {

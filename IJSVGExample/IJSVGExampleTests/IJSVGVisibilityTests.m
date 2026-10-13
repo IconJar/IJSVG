@@ -24,7 +24,9 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:xml error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     return svg;
 }
 
@@ -202,6 +204,7 @@
     NSString* fitted = [svg SVGStringWithOptions:IJSVGExporterOptionRemoveNodesOutsideViewBox];
     IJSVG* fittedSVG = [[IJSVG alloc] initWithSVGString:fitted];
     XCTAssertTrue(CGRectEqualToRect(fittedSVG.artworkBounds, CGRectMake(9, 20, 82, 60)));
+
     // The ignored border must be omitted, rather than merely exported hidden.
     NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:fitted options:0 error:nil];
     XCTAssertEqual([[xml nodesForXPath:@"//*[@display='none']" error:nil] count], 0U);
@@ -368,6 +371,7 @@
 
         XCTAssertEqual(sum, 400000);
     }
+
     // Both cached results must refresh after a geometry edit.
     [svg.rootNode removeChildren:svg.rootNode.children];
     [svg setNeedsDisplay];

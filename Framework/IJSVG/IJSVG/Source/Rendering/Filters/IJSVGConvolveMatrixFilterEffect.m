@@ -85,6 +85,7 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
     if (parameters.step.width == 1 && parameters.step.height == 1 && IJSVGConvolveInterleavedPixels(src, dst, w, h, k, parameters, sampler)) {
         return;
     }
+
     // Use the general calculation for samples between pixels or values too large
     // for floats.
     IJSVGFilterApplyRows(w, h, ^(NSInteger firstRow, NSInteger lastRow) {
@@ -180,6 +181,7 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
         }
         if (filterName != nil) {
             CGFloat ciWeights[49] = { 0 };
+
             // Reorder the weights to match Core Image.
             // Move the result to keep the SVG kernel position.
             for (NSInteger y = 0; y < oy; y++) {
@@ -212,7 +214,11 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
         .step = step,
         .inputRegion = inputRegion,
     };
-    return [context mapImage:input other:nil operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) { IJSVGConvolvePixels(src, dst, w, h, kernel, parameters); }];
+    return [context mapImage:input
+                       other:nil
+                   operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
+                       IJSVGConvolvePixels(src, dst, w, h, kernel, parameters);
+                   }];
 }
 
 @end

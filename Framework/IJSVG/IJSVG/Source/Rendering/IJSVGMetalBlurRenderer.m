@@ -60,11 +60,13 @@ static BOOL IJSVGPrepareMetalBlur(void)
     static dispatch_once_t token;
     dispatch_once(&token, ^{
         IJSVGBlurDevice = MTLCreateSystemDefaultDevice();
+
         // Shared CPU/GPU storage is the path measured here. Other GPUs use CI.
         if (IJSVGBlurDevice == nil || !IJSVGBlurDevice.hasUnifiedMemory) {
             return;
         }
 #if SWIFT_PACKAGE
+
         // Copy shader sources so both Xcode and command line package builds work.
         NSString* source = IJSVGFilterShaderSource(@"IJSVGBlur");
         id<MTLLibrary> library = source != nil ? [IJSVGBlurDevice newLibraryWithSource:source options:nil error:NULL] : nil;
@@ -104,6 +106,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
     }
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger taps = weights.length / sizeof(float);
+
     // Bound allocations and kernel work. This path only accepts packed RGBA8.
     if (width == 0 || height == 0 || width > 2048 || height > 2048 || width * height > 1048576 || weights.length != taps * sizeof(float) || taps == 0 || taps > 75 || taps % 2 == 0 || sourceCrops < 1 || sourceCrops > 2 || CGBitmapContextGetBitsPerComponent(bitmap) != 8 || CGBitmapContextGetBitsPerPixel(bitmap) != 32 || CGBitmapContextGetAlphaInfo(bitmap) != kCGImageAlphaPremultipliedLast || (CGBitmapContextGetBitmapInfo(bitmap) & kCGBitmapByteOrderMask) != kCGBitmapByteOrderDefault || CGBitmapContextGetData(bitmap) == NULL || CGBitmapContextGetBytesPerRow(bitmap) < width * 4 || !isfinite(region.origin.x) || !isfinite(region.origin.y) || !isfinite(CGRectGetMaxX(region)) || !isfinite(CGRectGetMaxY(region)) || CGRectIsEmpty(region) || !IJSVGPrepareMetalBlur()) {
         return nil;
@@ -241,6 +244,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
         if (command.status != MTLCommandBufferStatusCompleted) {
             return NO;
         }
+
         // Copy every completed slice before releasing the exclusive buffer lease.
         offset = 0;
         for (IJSVGMetalBlurJob* job in jobs) {

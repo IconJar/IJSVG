@@ -9,13 +9,17 @@
 #import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGRendering.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGPaintFillType) { IJSVGPaintFillTypeUnknown,
+typedef NS_ENUM(NSUInteger, IJSVGPaintFillType) {
+    IJSVGPaintFillTypeUnknown,
     IJSVGPaintFillTypeColor,
     IJSVGPaintFillTypeGradient,
-    IJSVGPaintFillTypePattern };
+    IJSVGPaintFillTypePattern
+};
 
-typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) { IJSVGPaintDrawingOptionNone = 0,
-    IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1 };
+typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
+    IJSVGPaintDrawingOptionNone = 0,
+    IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1
+};
 
 // Resolved drawing data. Paints own CG resources and never allocate CA objects.
 @interface IJSVGPaint : NSObject
@@ -39,6 +43,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) { IJSVGPaintDrawingOpti
 @property (nonatomic, assign) CGPathRef clipPath;
 @property (nonatomic, assign) IJSVGWindingRule clipRule;
 @property (nonatomic, assign) IJSVGWindingRule fillRule;
+
 // Raster coverage includes filters without changing mask coordinate placement.
 @property (nonatomic, assign) CGRect maskingSourceBounds;
 @property (nonatomic, assign) CGRect maskingBoundingBox;
@@ -57,6 +62,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) { IJSVGPaintDrawingOpti
 + (instancetype)paint;
 + (IJSVGPaintFillType)fillTypeForFill:(id)fill;
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children;
+
 // Object bounding box resources use geometry bounds, excluding strokes.
 + (CGRect)calculateBoundingBoxForChildren:(NSArray<IJSVGPaint*>*)children;
 + (CGAffineTransform)userSpaceTransformForPaint:(IJSVGPaint*)paint;
@@ -64,9 +70,11 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) { IJSVGPaintDrawingOpti
 + (void)setBackingScaleFactor:(CGFloat)scale renderQuality:(IJSVGRenderQuality)quality recursivelyToPaint:(IJSVGPaint*)paint;
 + (void)renderPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx options:(IJSVGPaintDrawingOptions)options;
 + (void)clipContextWithMask:(IJSVGPaint*)mask toPaint:(IJSVGPaint*)paint inContext:(CGContextRef)ctx drawingBlock:(dispatch_block_t)drawingBlock;
+
 // Enable raster reuse only after a masks resolved geometry is finalized.
 // Rebuild the resolved graph when its artwork changes.
 - (void)prepareMaskCaching;
+
 // Copies simple marker artwork with independent parent links and shared
 // immutable resources. Returns nil when the artwork depends on its placement or
 // rendering context.

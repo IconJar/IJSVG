@@ -6,33 +6,51 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGInheritedElement.h>
+#import "IJSVGInheritedElement.h"
+#include <string.h>
 
 @implementation IJSVGInheritedElement
 
-- (instancetype)initWithElement:(NSXMLElement*)element fallback:(IJSVGInheritedElement*)fallback
+- (instancetype)initWithElement:(IJSVGXMLNode*)element fallback:(IJSVGInheritedElement*)fallback
 {
     if ((self = [super init]) != nil) {
         _element = element;
         _hasReference = fallback != nil;
-        _childrenElement = element.childCount != 0 || fallback == nil ? element : fallback.childrenElement;
-        if (fallback == nil) {
-            _attributes = element.attributes.copy;
-        } else {
-            NSMutableArray<NSXMLNode*>* attributes = [element.attributes mutableCopy] ?: [[NSMutableArray alloc] init];
-            NSMutableSet<NSString*>* names = [[NSMutableSet alloc] init];
-            for (NSXMLNode* attribute in attributes) {
-                [names addObject:attribute.name];
+        _childrenElement = IJSVGXMLChildCount(element) != 0 || fallback == nil ? element : fallback.childrenElement;
+        _attributes = IJSVGXMLAttributes(element);
+        if (fallback != nil) {
+            IJSVGXMLAttributeList inherited = fallback.attributes;
+            NSUInteger capacity = _attributes.count + inherited.count;
+            IJSVGXMLAttribute** entries = capacity == 0 ? NULL : calloc(capacity, sizeof(*entries));
+            if (capacity != 0 && entries == NULL) {
+                return nil;
             }
-            for (NSXMLNode* attribute in fallback.attributes) {
-                if (![names containsObject:attribute.name]) {
-                    [attributes addObject:attribute];
+            NSUInteger count = 0;
+            IJSVGXMLAttributeList ownAttributeIterator = _attributes;
+            for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&ownAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&ownAttributeIterator)) {
+                entries[count++] = attribute;
+            }
+            IJSVGXMLAttributeList inheritedAttributeIterator = inherited;
+            for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&inheritedAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&inheritedAttributeIterator)) {
+                BOOL found = NO;
+                for (NSUInteger i = 0; i < count; i++) {
+                    IJSVGXMLAttribute* own = entries[i];
+                    if (strcmp(own->name, attribute->name) == 0 && ((own->prefix == NULL && attribute->prefix == NULL) || (own->prefix != NULL && attribute->prefix != NULL && strcmp(own->prefix, attribute->prefix) == 0))) {
+                        found = YES;
+                        break;
+                    }
+                }
+                if (!found) {
+                    entries[count++] = attribute;
                 }
             }
-            _attributes = attributes.copy;
+            _attributes = (IJSVGXMLAttributeList) { NULL, entries, count };
         }
     }
     return self;
 }
-
+- (void)dealloc
+{
+    free(_attributes.overlay);
+}
 @end

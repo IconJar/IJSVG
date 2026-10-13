@@ -570,7 +570,9 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
     XCTAssertNotNil(svg);
     NSData* expected = [self pixelsForSVG:[self mdnFixture:@"context-paint-expected"]];
     [self assertPixels:[self pixelsForSVG:svg] equalTo:expected tolerance:0.15];
-    svg.renderingBackingScaleHelper = ^CGFloat { return 2.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 2.f;
+    };
     [self assertPixels:[self pixelsForSVG:svg] equalTo:expected tolerance:0.15];
 }
 

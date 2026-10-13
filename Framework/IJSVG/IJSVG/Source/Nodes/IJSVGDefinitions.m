@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGDefinitions.h>
 #import <IJSVGNodeParsing.h>
 
@@ -22,13 +23,13 @@
 
 @implementation IJSVGDefinitions (Parsing)
 
-+ (void)consumeElement:(NSXMLElement*)element parser:(IJSVGParser*)parser parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive
++ (void)consumeElement:(IJSVGXMLNode*)element parser:(IJSVGParser*)parser parentNode:(IJSVGGraphicsNode*)parentNode recursive:(BOOL)recursive
 {
-    if (element.childCount == 0) {
+    if (IJSVGXMLChildCount(element) == 0) {
         return;
     }
-    for (NSXMLElement* childElement in element.children) {
-        IJSVGNodeType type = IJSVGNodeTypeForString(childElement.localName, childElement.kind);
+    for (IJSVGXMLNode* childElement = IJSVGXMLFirstChild(element); childElement != NULL; childElement = IJSVGXMLNext(childElement)) {
+        IJSVGNodeType type = IJSVGNodeTypeForString(IJSVGXMLLocalName(childElement), IJSVGXMLKind(childElement));
 
         // we can exit early, not a node we know of
         if (type == IJSVGNodeTypeNotFound) {
@@ -37,9 +38,10 @@
 
         // we always want style elements to be passed
         NSString* identifier = nil;
-        for (NSXMLNode* attribute in childElement.attributes) {
-            if ([attribute.name isEqualToString:IJSVGAttributeID]) {
-                identifier = attribute.stringValue;
+        IJSVGXMLAttributeList childElementAttributeIterator = IJSVGXMLAttributes(childElement);
+        for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&childElementAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&childElementAttributeIterator)) {
+            if (attribute->identifier == IJSVGNodeAttributeID) {
+                identifier = IJSVGXMLAttributeValue(attribute);
                 break;
             }
         }
@@ -52,7 +54,7 @@
         } else {
             // only run this if recursive or it can be slow or incorrect
             // when parsing the tree with ids that are the same
-            if (recursive == YES && childElement.childCount != 0) {
+            if (recursive == YES && IJSVGXMLChildCount(childElement) != 0) {
                 [parser parseDefElement:childElement parentNode:parentNode recursive:recursive];
             }
         }

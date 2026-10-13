@@ -155,6 +155,7 @@ static _Thread_local NSUInteger IJSVGTestCulledShapes;
             for (NSNumber* flipped in @[ @NO, @YES ]) {
                 IJSVGRootPaint* actual = [self paintForDocument:document reference:NO];
                 IJSVGRootPaint* expected = [self paintForDocument:document reference:YES];
+
                 // Reuse both graphs while the clip shrinks, moves, then expands.
                 for (NSValue* value in @[ [NSValue valueWithRect:CGRectMake(24, 32, 40, 36)], [NSValue valueWithRect:CGRectMake(55, 20, 24, 27)], [NSValue valueWithRect:CGRectMake(0, 0, 128, 128)] ]) {
                     NSData* pixels = [self renderPaint:actual clip:value.rectValue flipped:flipped.boolValue];

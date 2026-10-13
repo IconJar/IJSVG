@@ -14,6 +14,7 @@
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context
 {
     CIImage* output = CIImage.emptyImage;
+
     // Keep the result in the filter color space until all images are merged.
     for (CIImage* image in inputs) {
         output = [[context imageInPrimitiveColorSpace:image] imageByApplyingFilter:@"CISourceOverCompositing" withInputParameters:@{ kCIInputBackgroundImageKey : output }];

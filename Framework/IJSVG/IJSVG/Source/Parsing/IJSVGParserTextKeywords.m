@@ -361,10 +361,12 @@ IJSVGTextKeyword IJSVGTextKeywordForString(NSString* value)
     if (characters == NULL || *characters == 0) {
         return IJSVGTextKeywordUnspecified;
     }
+
     // A null inside the string must not turn an invalid value into a keyword.
     if (strlen(characters) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
         return IJSVGTextKeywordUnspecified;
     }
+
     // Use the same first character check as the node parser.
     switch (IJSVGCharToLower(characters[0])) {
         case 'a':

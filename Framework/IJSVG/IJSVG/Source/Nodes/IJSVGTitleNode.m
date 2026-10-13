@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGTitleNode.h>
 #import <IJSVGNodeParsing.h>
 
@@ -22,9 +23,9 @@
 
 @implementation IJSVGTitleNode (Parsing)
 
-+ (void)consumeElement:(NSXMLElement*)element parentNode:(IJSVGNode*)parentNode
++ (void)consumeElement:(IJSVGXMLNode*)element parentNode:(IJSVGNode*)parentNode
 {
-    parentNode.title = element.stringValue;
+    parentNode.title = IJSVGXMLText(element);
 }
 
 + (IJSVGBitFlags*)allowedAttributes

@@ -6,42 +6,47 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import <IJSVGParsedPathCache.h>
+// Per parser byte keyed cache. Sources and immutable paths are owned here.
+// neither XML buffer lifetime nor mutable graph paths affect cached entries.
+#import "IJSVGParsedPathCache.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define IJSVGPathBucketCount 4096
+static const NSUInteger IJSVGParsedPathCountLimit = 3072;
+static const NSUInteger IJSVGParsedPathCostLimit = 12 * 1024 * 1024;
 
 typedef struct IJSVGParsedPathEntry {
-    CFStringRef source;
-    CGPathRef paths[IJSVGParsedPathKindCount];
-    NSUInteger cost;
     struct IJSVGParsedPathEntry* next;
+    struct IJSVGParsedPathEntry* bucketNext;
+    CGPathRef paths[IJSVGParsedPathKindCount];
+    uint64_t hash;
+    NSUInteger length;
+    NSUInteger cost;
+    char source[];
 } IJSVGParsedPathEntry;
 
 struct IJSVGParsedPathCache {
-    CFMutableDictionaryRef entries;
+    IJSVGParsedPathEntry* buckets[IJSVGPathBucketCount];
     IJSVGParsedPathEntry* oldest;
     IJSVGParsedPathEntry* newest;
     NSUInteger count;
     NSUInteger cost;
 };
 
-static const NSUInteger IJSVGParsedPathCountLimit = 3072;
-static const NSUInteger IJSVGParsedPathCostLimit = 12 * 1024 * 1024;
+static uint64_t IJSVGPathHash(const char* bytes, NSUInteger length)
+{
+    uint64_t hash = UINT64_C(14695981039346656037);
+    for (NSUInteger i = 0; i < length; i++) {
+        hash = (hash ^ (unsigned char)bytes[i]) * UINT64_C(1099511628211);
+    }
+    return hash;
+}
 
 IJSVGParsedPathCache* IJSVGParsedPathCacheCreate(void)
 {
-    IJSVGParsedPathCache* storage = calloc(1, sizeof(IJSVGParsedPathCache));
-    if (storage == NULL) {
-        return NULL;
-    }
-    CFDictionaryKeyCallBacks keys = kCFTypeDictionaryKeyCallBacks;
-    // Entries own their immutable keys and paths.
-    keys.retain = NULL;
-    keys.release = NULL;
-    storage->entries = CFDictionaryCreateMutable(NULL, 0, &keys, NULL);
-    if (storage->entries == NULL) {
-        free(storage);
-        return NULL;
-    }
-    return storage;
+    return calloc(1, sizeof(IJSVGParsedPathCache));
 }
 
 static void IJSVGParsedPathEvictOldest(IJSVGParsedPathCache* storage)
@@ -51,10 +56,13 @@ static void IJSVGParsedPathEvictOldest(IJSVGParsedPathCache* storage)
     if (storage->oldest == NULL) {
         storage->newest = NULL;
     }
-    CFDictionaryRemoveValue(storage->entries, entry->source);
+    IJSVGParsedPathEntry** slot = &storage->buckets[entry->hash & (IJSVGPathBucketCount - 1)];
+    while (*slot != entry) {
+        slot = &(*slot)->bucketNext;
+    }
+    *slot = entry->bucketNext;
     storage->count--;
     storage->cost -= entry->cost;
-    CFRelease(entry->source);
     for (NSUInteger kind = 0; kind < IJSVGParsedPathKindCount; kind++) {
         CGPathRelease(entry->paths[kind]);
     }
@@ -69,72 +77,80 @@ void IJSVGParsedPathCacheDestroy(IJSVGParsedPathCache* storage)
     while (storage->oldest != NULL) {
         IJSVGParsedPathEvictOldest(storage);
     }
-    CFRelease(storage->entries);
     free(storage);
 }
 
-static IJSVGParsedPathEntry* IJSVGParsedPathEntryCreate(IJSVGParsedPathCache* storage, CFStringRef source)
+static IJSVGParsedPathEntry* IJSVGPathFind(IJSVGParsedPathCache* storage, const char* bytes, NSUInteger length, uint64_t hash)
 {
-    IJSVGParsedPathEntry* entry = calloc(1, sizeof(IJSVGParsedPathEntry));
-    if (entry == NULL) {
-        return NULL;
+    for (IJSVGParsedPathEntry* entry = storage->buckets[hash & (IJSVGPathBucketCount - 1)]; entry != NULL; entry = entry->bucketNext) {
+        if (entry->hash == hash && entry->length == length && memcmp(entry->source, bytes, length) == 0) {
+            return entry;
+        }
     }
-    entry->source = CFStringCreateCopy(NULL, source);
-    if (entry->source == NULL) {
-        free(entry);
-        return NULL;
-    }
-    entry->cost = sizeof(IJSVGParsedPathEntry);
-    if (storage->newest != NULL) {
-        storage->newest->next = entry;
-    } else {
-        storage->oldest = entry;
-    }
-    storage->newest = entry;
-    storage->count++;
-    storage->cost += entry->cost;
-    CFDictionarySetValue(storage->entries, entry->source, entry);
-    return entry;
+    return NULL;
 }
 
-CGPathRef IJSVGParsedPathCacheCopy(IJSVGParsedPathCache* storage, NSString* source, IJSVGParsedPathKind kind)
+CGPathRef IJSVGParsedPathCacheCopyBytes(IJSVGParsedPathCache* storage, const char* bytes, NSUInteger length, IJSVGParsedPathKind kind)
 {
-    if (storage == NULL || source == nil || kind >= IJSVGParsedPathKindCount) {
+    if (storage == NULL || bytes == NULL || kind >= IJSVGParsedPathKindCount || length > IJSVGParsedPathCostLimit / 2) {
         return NULL;
     }
-    const IJSVGParsedPathEntry* entry = CFDictionaryGetValue(storage->entries, (__bridge CFStringRef)source);
-    CGPathRef path = entry != NULL ? CGPathRetain(entry->paths[kind]) : NULL;
-    return path;
+    IJSVGParsedPathEntry* entry = IJSVGPathFind(storage, bytes, length, IJSVGPathHash(bytes, length));
+    return entry == NULL ? NULL : CGPathRetain(entry->paths[kind]);
 }
 
-void IJSVGParsedPathCacheStore(IJSVGParsedPathCache* storage, NSString* source, IJSVGParsedPathKind kind, CGPathRef path)
+void IJSVGParsedPathCacheStoreBytes(IJSVGParsedPathCache* storage, const char* bytes, NSUInteger length, IJSVGParsedPathKind kind, CGPathRef path)
 {
-    if (storage == NULL || kind >= IJSVGParsedPathKindCount) {
+    if (storage == NULL || bytes == NULL || path == NULL || kind >= IJSVGParsedPathKindCount || length > IJSVGParsedPathCostLimit / 2) {
         return;
     }
-    CFStringRef key = (__bridge CFStringRef)source;
-    NSUInteger length = CFStringGetLength(key);
-    if (length > IJSVGParsedPathCostLimit / sizeof(unichar)) {
+    uint64_t hash = IJSVGPathHash(bytes, length);
+    IJSVGParsedPathEntry* entry = IJSVGPathFind(storage, bytes, length, hash);
+    if (entry != NULL && entry->paths[kind] != NULL) {
         return;
     }
-    NSUInteger cost = length * sizeof(unichar);
     CGPathRef snapshot = CGPathCreateCopy(path);
     if (snapshot == NULL) {
         return;
     }
-    IJSVGParsedPathEntry* entry = (IJSVGParsedPathEntry*)CFDictionaryGetValue(storage->entries, key);
     if (entry == NULL) {
-        entry = IJSVGParsedPathEntryCreate(storage, key);
+        entry = calloc(1, sizeof(*entry) + length);
+        if (entry == NULL) {
+            CGPathRelease(snapshot);
+            return;
+        }
+        entry->hash = hash;
+        entry->length = length;
+        memcpy(entry->source, bytes, length);
+        entry->cost = sizeof(*entry) + length;
+        NSUInteger bucket = hash & (IJSVGPathBucketCount - 1);
+        entry->bucketNext = storage->buckets[bucket];
+        storage->buckets[bucket] = entry;
+        if (storage->newest != NULL) {
+            storage->newest->next = entry;
+        } else {
+            storage->oldest = entry;
+        }
+        storage->newest = entry;
+        storage->count++;
+        storage->cost += entry->cost;
     }
-    if (entry != NULL && entry->paths[kind] == NULL) {
-        entry->paths[kind] = snapshot;
-        snapshot = NULL;
-        entry->cost += cost;
-        storage->cost += cost;
-    }
-    // Eviction limits entry count and estimated source storage.
+    entry->paths[kind] = snapshot;
+
+    // Retain a conservative per path estimate as well as owned source bytes.
+    entry->cost += length * 2;
+    storage->cost += length * 2;
     while (storage->oldest != NULL && (storage->count > IJSVGParsedPathCountLimit || storage->cost > IJSVGParsedPathCostLimit)) {
         IJSVGParsedPathEvictOldest(storage);
     }
-    CGPathRelease(snapshot);
+}
+
+CGPathRef IJSVGParsedPathCacheCopy(IJSVGParsedPathCache* storage, NSString* source, IJSVGParsedPathKind kind)
+{
+    return IJSVGParsedPathCacheCopyBytes(storage, source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], kind);
+}
+
+void IJSVGParsedPathCacheStore(IJSVGParsedPathCache* storage, NSString* source, IJSVGParsedPathKind kind, CGPathRef path)
+{
+    IJSVGParsedPathCacheStoreBytes(storage, source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], kind, path);
 }

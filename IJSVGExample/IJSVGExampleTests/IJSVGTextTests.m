@@ -301,7 +301,9 @@
     NSString* body = @"<text x='10' y='30'>A😀<tspan dx='5'>BC</tspan></text>";
     IJSVGTextLayout* layout = [self layout:body];
     NSArray<NSValue*>* expected = [self layout:body].characterPositions;
-    dispatch_apply(32, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) { XCTAssertEqualObjects(layout.characterPositions, expected); });
+    dispatch_apply(32, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) {
+        XCTAssertEqualObjects(layout.characterPositions, expected);
+    });
     NSArray<NSValue*>* positions = layout.characterPositions;
     XCTAssertTrue(positions == layout.characterPositions);
     XCTAssertFalse([positions isKindOfClass:NSMutableArray.class]);

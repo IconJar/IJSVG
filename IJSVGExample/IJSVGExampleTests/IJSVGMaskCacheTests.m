@@ -30,15 +30,18 @@
 
 - (NSData*)render:(IJSVG*)svg size:(CGSize)size scale:(CGFloat)scale translated:(BOOL)translated
 {
-    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return scale;
+    };
     size_t width = (size_t)ceil((size.width + 8.f) * scale);
     size_t height = (size_t)ceil((size.height + 8.f) * scale);
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     CGContextScaleCTM(context, scale, scale);
     CGPoint origin = translated ? CGPointMake(2.25f, 1.75f) : CGPointZero;
     [svg drawInRect:(CGRect) { origin, size } context:context];
@@ -135,6 +138,7 @@
     IJSVG* expectedSVG = [[IJSVG alloc] initWithSVGString:[self expandedMaskDocumentWithFilter:NO reflected:reflected clipped:clipped]];
     XCTAssertNotNil(actualSVG);
     XCTAssertNotNil(expectedSVG);
+
     // Revisit each scale to exercise cached mask replacement and reuse.
     for (NSNumber* scale in @[ @1, @2, @1, @1 ]) {
         NSData* actual = [self render:actualSVG size:CGSizeMake(32, 32) scale:scale.doubleValue translated:NO];
@@ -145,8 +149,9 @@
         const unsigned char* pixels = expected.bytes;
         NSUInteger coveredPixels = 0;
         for (NSUInteger offset = 3; offset < expected.length; offset += 4) {
-            if (pixels[offset] != 0)
+            if (pixels[offset] != 0) {
                 coveredPixels++;
+            }
         }
         XCTAssertGreaterThan(coveredPixels, 0u);
     }
@@ -174,8 +179,9 @@
                     const unsigned char* pixels = expected.bytes;
                     NSUInteger covered = 0;
                     for (NSUInteger offset = 3; offset < expected.length; offset += 4) {
-                        if (pixels[offset] != 0)
+                        if (pixels[offset] != 0) {
                             covered++;
+                        }
                     }
                     XCTAssertGreaterThan(covered, 0u);
                 }

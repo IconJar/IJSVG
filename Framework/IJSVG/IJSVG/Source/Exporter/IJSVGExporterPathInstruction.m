@@ -761,6 +761,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSV
     // create the path callback
     IJSVGCGPathHandler callback = ^(const CGPathElement* pathElement) {
         IJSVGExporterPathInstruction* instruction = nil;
+
         // work out what to do
         switch (pathElement->type) {
             case kCGPathElementMoveToPoint: {
@@ -833,6 +834,7 @@ void IJSVGExporterPathInstructionRoundData(CGFloat* data, NSInteger length, IJSV
             case kCGPathElementCloseSubpath: {
                 // Closing returns to the subpath start before any following H/V decision.
                 currentPoint = subpathStart;
+
                 // close command
                 instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'Z' dataCount:0];
                 [instructions addObject:instruction];

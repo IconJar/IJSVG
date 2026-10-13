@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGMask.h>
@@ -188,7 +189,7 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
     IJSVGParser* parser = context->parser;
-    NSXMLElement* element = context->element;
+    IJSVGXMLNode* element = context->element;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOpacity, &value)) {
         node.opacity = [IJSVGUnitLength unitWithString:value];
@@ -273,7 +274,7 @@ void IJSVGParseEffectsAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
     IJSVGParser* parser = context->parser;
-    NSXMLElement* element = context->element;
+    IJSVGXMLNode* element = context->element;
     NSString* value = nil;
     IJSVGNodeParserPostProcessBlock postProcessBlock = context->postProcessBlock;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMask, &value)) {
@@ -475,7 +476,7 @@ void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
     IJSVGParser* parser = context->parser;
-    NSXMLElement* element = context->element;
+    IJSVGXMLNode* element = context->element;
     IJSVGNodeParserPostProcessBlock postProcessBlock = context->postProcessBlock;
     NSString* markerStart = attributeValues[IJSVGNodeAttributeMarkerStart];
     NSString* markerMid = attributeValues[IJSVGNodeAttributeMarkerMid];
@@ -553,6 +554,7 @@ IJSVGBitFlags* IJSVGGraphicsAttributes(void)
 IJSVGBitFlags* IJSVGContainerAttributes(void)
 {
     IJSVGBitFlags* attributes = IJSVGGraphicsAttributes();
+
     // CSS path data and geometry can be explicitly inherited by descendants.
     [attributes setBit:IJSVGNodeAttributeD];
     [attributes setBit:IJSVGNodeAttributeX];

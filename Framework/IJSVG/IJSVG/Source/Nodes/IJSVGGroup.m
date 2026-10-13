@@ -69,6 +69,7 @@
 
     for (__strong IJSVGNode* childNode in _children) {
         childNode = childNode.copy;
+
         // A copied child must not remove itself from the source group.
         childNode.parentNode = nil;
         [node addChild:childNode];

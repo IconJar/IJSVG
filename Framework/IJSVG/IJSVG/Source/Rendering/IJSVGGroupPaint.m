@@ -26,6 +26,7 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
             if (filtered.usesBackground) {
                 return YES;
             }
+
             // Referenced image trees are resolved during filter evaluation,
             // so their background dependencies are not in this paint tree.
             for (IJSVGFilterPrimitive* primitive in filtered.filter.primitives) {
@@ -55,7 +56,11 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
 {
     if (self.sourceNode != nil && !CGRectIsNull(self.sourceNode.backgroundRect)) {
         if (IJSVGGroupNeedsBackgroundPixels(self)) {
-            [IJSVGFilterPaint drawBackgroundForPaint:self context:ctx drawingBlock:^(CGContextRef bitmap) { [self drawContentsInContext:bitmap]; }];
+            [IJSVGFilterPaint drawBackgroundForPaint:self
+                                             context:ctx
+                                        drawingBlock:^(CGContextRef bitmap) {
+                                            [self drawContentsInContext:bitmap];
+                                        }];
         } else {
             // A background scope with no readers only needs group isolation.
             // Let Quartz composite it directly instead of rasterizing and

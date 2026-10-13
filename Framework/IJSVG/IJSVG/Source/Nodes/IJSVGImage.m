@@ -28,6 +28,7 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGImage* node = [super copyWithZone:zone];
+
     // Preserve the cached state without invoking setImage:,
     // which clears export metadata.
     node->_image = _image;

@@ -9,20 +9,26 @@
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVGCSSMathExpression.h>
 
-typedef NS_ENUM(uint8_t, IJSVGCalculationOperation) { IJSVGCalculationLiteral,
+typedef NS_ENUM(uint8_t, IJSVGCalculationOperation) {
+    IJSVGCalculationLiteral,
     IJSVGCalculationAdd,
     IJSVGCalculationSubtract,
     IJSVGCalculationMultiply,
     IJSVGCalculationDivide,
     IJSVGCalculationMin,
     IJSVGCalculationMax,
-    IJSVGCalculationClamp };
+    IJSVGCalculationClamp
+};
 
-typedef NS_OPTIONS(uint8_t, IJSVGCalculationDependencies) { IJSVGCalculationPercentage = 1 << 0,
+typedef NS_OPTIONS(uint8_t, IJSVGCalculationDependencies) {
+    IJSVGCalculationPercentage = 1 << 0,
     IJSVGCalculationFont = 1 << 1,
-    IJSVGCalculationLength = 1 << 2 };
+    IJSVGCalculationLength = 1 << 2
+};
 
-enum { IJSVGCalculationInvalid = UINT32_MAX };
+enum {
+    IJSVGCalculationInvalid = UINT32_MAX
+};
 
 // Postorder storage: children precede their parent. Argument lists link
 // indices, so reallocations and copying never leave dangling pointers.

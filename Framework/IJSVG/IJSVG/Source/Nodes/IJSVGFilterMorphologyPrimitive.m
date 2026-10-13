@@ -42,7 +42,9 @@
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [NSSet setWithArray:@[ IJSVGAttributeRadius, IJSVGAttributeOperator ]]; });
+    dispatch_once(&once, ^{
+        names = [NSSet setWithArray:@[ IJSVGAttributeRadius, IJSVGAttributeOperator ]];
+    });
     return names;
 }
 

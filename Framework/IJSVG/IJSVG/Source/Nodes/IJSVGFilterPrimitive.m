@@ -219,7 +219,9 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [self filterParameterNames]; });
+    dispatch_once(&once, ^{
+        names = [self filterParameterNames];
+    });
     return names;
 }
 
@@ -311,8 +313,9 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     IJSVGAddTextStyleAttributes(attributes);
     for (NSString* name in self.parameterNames) {
         NSUInteger attribute = IJSVGNodeAttributeForName(name);
-        if (attribute != NSNotFound)
+        if (attribute != NSNotFound) {
             [attributes setBit:(int)attribute];
+        }
     }
     return attributes;
 }

@@ -41,7 +41,9 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGViewBoxAlignment alignment = paint.patternNode.viewBoxAlignment;
     IJSVGViewBoxMeetOrSlice meetOrSlice = paint.patternNode.viewBoxMeetOrSlice;
     CGRect viewBox = paint.viewBox;
-    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) { [IJSVGPaint renderPaint:paint.pattern inContext:ctx options:IJSVGPaintDrawingOptionNone]; };
+    IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
+        [IJSVGPaint renderPaint:paint.pattern inContext:ctx options:IJSVGPaintDrawingOptionNone];
+    };
     IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
     CGContextRestoreGState(ctx);
 }
@@ -117,6 +119,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     if (_cellSize.width <= 0.f || _cellSize.height <= 0.f || !isfinite(_cellSize.width) || !isfinite(_cellSize.height)) {
         return;
     }
+
     // Reduce the phase before device space tiling. Large SVG translations
     // otherwise amplify the pixel rounding of the constant spacing of CGPattern.
     CGAffineTransform linear = transform;

@@ -11,13 +11,16 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) { IJSVGColorStringOptionNone = 1 << 0,
+typedef NS_OPTIONS(NSInteger, IJSVGColorStringOptions) {
+    IJSVGColorStringOptionNone = 1 << 0,
     IJSVGColorStringOptionForceHEX = 1 << 1,
     IJSVGColorStringOptionAllowShortHand = 1 << 2,
     IJSVGColorStringOptionAllowRRGGBBAA = 1 << 3,
-    IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand };
+    IJSVGColorStringOptionDefault = IJSVGColorStringOptionAllowShortHand
+};
 
-typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) { IJSVGColorAliceblue,
+typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) {
+    IJSVGColorAliceblue,
     IJSVGColorAntiquewhite,
     IJSVGColorAqua,
     IJSVGColorAquamarine,
@@ -163,7 +166,8 @@ typedef NS_ENUM(NSInteger, IJSVGPredefinedColor) { IJSVGColorAliceblue,
     IJSVGColorWhite,
     IJSVGColorWhitesmoke,
     IJSVGColorYellow,
-    IJSVGColorYellowgreen };
+    IJSVGColorYellowgreen
+};
 
 FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 

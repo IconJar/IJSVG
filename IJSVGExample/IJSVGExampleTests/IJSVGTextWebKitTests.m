@@ -188,6 +188,7 @@
         for (NSUInteger character = 0; character < MIN(layout.characterPositions.count, characters.count); character++) {
             CGPoint point = layout.characterPositions[character].pointValue;
             NSArray<NSNumber*>* metrics = characters[character];
+
             // WebKit reports unscaled DOM positions for spacingAndGlyphs.
             // Its final scaled geometry remains covered by the image comparison.
             BOOL scalesGlyphs = texts[index].positioning[IJSVGAttributeLengthAdjust].keyword == IJSVGTextKeywordSpacingAndGlyphs;

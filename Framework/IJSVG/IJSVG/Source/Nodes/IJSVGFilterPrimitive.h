@@ -10,46 +10,61 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, IJSVGFilterCompositeOperator) { IJSVGFilterCompositeOperatorOver,
+typedef NS_ENUM(NSInteger, IJSVGFilterCompositeOperator) {
+    IJSVGFilterCompositeOperatorOver,
     IJSVGFilterCompositeOperatorIn,
     IJSVGFilterCompositeOperatorOut,
     IJSVGFilterCompositeOperatorAtop,
     IJSVGFilterCompositeOperatorXor,
     IJSVGFilterCompositeOperatorArithmetic,
-    IJSVGFilterCompositeOperatorLighter };
+    IJSVGFilterCompositeOperatorLighter
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterEdgeMode) { IJSVGFilterEdgeModeUnspecified = -1,
+typedef NS_ENUM(NSInteger, IJSVGFilterEdgeMode) {
+    IJSVGFilterEdgeModeUnspecified = -1,
     IJSVGFilterEdgeModeNone,
     IJSVGFilterEdgeModeDuplicate,
-    IJSVGFilterEdgeModeWrap };
+    IJSVGFilterEdgeModeWrap
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterColorMatrixType) { IJSVGFilterColorMatrixTypeMatrix,
+typedef NS_ENUM(NSInteger, IJSVGFilterColorMatrixType) {
+    IJSVGFilterColorMatrixTypeMatrix,
     IJSVGFilterColorMatrixTypeSaturate,
     IJSVGFilterColorMatrixTypeHueRotate,
-    IJSVGFilterColorMatrixTypeLuminanceToAlpha };
+    IJSVGFilterColorMatrixTypeLuminanceToAlpha
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterTransferType) { IJSVGFilterTransferTypeIdentity,
+typedef NS_ENUM(NSInteger, IJSVGFilterTransferType) {
+    IJSVGFilterTransferTypeIdentity,
     IJSVGFilterTransferTypeTable,
     IJSVGFilterTransferTypeDiscrete,
     IJSVGFilterTransferTypeLinear,
-    IJSVGFilterTransferTypeGamma };
+    IJSVGFilterTransferTypeGamma
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterMorphologyOperator) { IJSVGFilterMorphologyOperatorErode,
-    IJSVGFilterMorphologyOperatorDilate };
+typedef NS_ENUM(NSInteger, IJSVGFilterMorphologyOperator) {
+    IJSVGFilterMorphologyOperatorErode,
+    IJSVGFilterMorphologyOperatorDilate
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterTurbulenceType) { IJSVGFilterTurbulenceTypeTurbulence,
-    IJSVGFilterTurbulenceTypeFractalNoise };
+typedef NS_ENUM(NSInteger, IJSVGFilterTurbulenceType) {
+    IJSVGFilterTurbulenceTypeTurbulence,
+    IJSVGFilterTurbulenceTypeFractalNoise
+};
 
-typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) { IJSVGFilterColorChannelRed,
+typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) {
+    IJSVGFilterColorChannelRed,
     IJSVGFilterColorChannelGreen,
     IJSVGFilterColorChannelBlue,
-    IJSVGFilterColorChannelAlpha };
+    IJSVGFilterColorChannelAlpha
+};
 
 @interface IJSVGFilterPrimitive : IJSVGGroup
 
 @property (nonatomic, copy, nullable) NSString* input;
 @property (nonatomic, copy, nullable) NSString* result;
 @property (nonatomic, copy, nullable) NSString* input2;
+
 // Primitive specific SVG attributes, retained for lossless vector export.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, NSString*>* parameters;
 @property (nonatomic, strong, nullable) IJSVGNode* imageNode;

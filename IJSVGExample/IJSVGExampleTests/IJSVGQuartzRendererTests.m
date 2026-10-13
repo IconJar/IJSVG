@@ -654,19 +654,22 @@
 - (NSData*)renderSVG:(IJSVG*)svg size:(NSUInteger)size drawingRect:(CGRect)drawingRect
 {
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return nil;
+    }
 
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     XCTAssertTrue(space != NULL);
-    if (space == NULL)
+    if (space == NULL) {
         return nil;
+    }
 
     CGContextRef context = CGBitmapContextCreate(NULL, size, size, 8, size * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
 
     CGContextTranslateCTM(context, 0.f, size);
     CGContextScaleCTM(context, 1.f, -1.f);
@@ -700,6 +703,7 @@
     for (NSUInteger x = 0; x < 32; x++) {
         [body appendFormat:@"<rect x='%lu' width='.5' height='24' fill='black'/>", (unsigned long)x];
     }
+
     // This isolated shape enables backdrop rendering without changing the
     // stripes.
     [body appendString:@"<rect x='2' y='28' width='4' height='2' fill='red' "
@@ -713,7 +717,9 @@
             IJSVGRenderingOptions* options = svg.renderingOptions;
             options.filtersEnabled = enabled.boolValue;
             svg.renderingOptions = options;
-            svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+            svg.renderingBackingScaleHelper = ^CGFloat {
+                return scale;
+            };
             CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
             CGContextRef bitmap = CGBitmapContextCreate(NULL, size, size, 8, size * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
             CGColorSpaceRelease(space);
@@ -743,8 +749,9 @@
                                      "fill='red'/><rect x='10' y='10' width='20' height='20' "
                                      "fill='blue'/></g>"
                                size:32];
-    if (data == nil)
+    if (data == nil) {
         return;
+    }
     const uint8_t* pixels = data.bytes;
     XCTAssertEqualWithAccuracy(pixels[(5 * 32 + 5) * 4 + 3], 128, 1);
     XCTAssertEqualWithAccuracy(pixels[(15 * 32 + 15) * 4 + 3], 128, 1);
@@ -758,8 +765,9 @@
                                      "</defs><g transform='translate(8 8)'><rect width='20' height='20' "
                                      "fill='red' clip-path='url(#c)'/></g>"
                                size:32];
-    if (data == nil)
+    if (data == nil) {
         return;
+    }
     const uint8_t* pixels = data.bytes;
     XCTAssertEqual(pixels[(10 * 32 + 10) * 4], 255);
     XCTAssertEqual(pixels[(20 * 32 + 20) * 4 + 3], 0);
@@ -770,8 +778,9 @@
 {
     IJSVG* svg = [self svgWithBody:@"<rect width='32' height='32' fill='red'/>"];
     NSData* data = [self renderSVG:svg size:32 drawingRect:CGRectMake(8.f, 8.f, 16.f, 16.f)];
-    if (data == nil)
+    if (data == nil) {
         return;
+    }
     const uint8_t* pixels = data.bytes;
     XCTAssertEqual(pixels[(4 * 32 + 4) * 4 + 3], 0);
     XCTAssertEqual(pixels[(10 * 32 + 10) * 4], 255);
@@ -785,8 +794,9 @@
                                      "fill='red'/><rect x='4' width='4' height='8' fill='blue'/>"
                                      "</pattern></defs><rect width='32' height='32' fill='url(#p)'/>"
                                size:32];
-    if (data == nil)
+    if (data == nil) {
         return;
+    }
     const uint8_t* pixels = data.bytes;
     for (NSUInteger x = 2; x <= 26; x += 8) {
         XCTAssertEqual(pixels[(12 * 32 + x) * 4], 255);
@@ -1107,19 +1117,22 @@
 - (void)assertVectorExportPreservesQuartzPixels:(NSString*)body optimized:(BOOL)optimized
 {
     IJSVG* svg = [self svgWithBody:body];
-    if (svg == nil)
+    if (svg == nil) {
         return;
+    }
     IJSVGExporterOptions options = optimized ? IJSVGExporterOptionAll : IJSVGExporterOptionNone;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:options];
     NSString* exported = [exporter SVGString];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:exported];
     NSData* before = [self renderSVG:svg size:64];
     NSData* after = [self renderSVG:roundTrip size:64];
-    if (before == nil || after == nil)
+    if (before == nil || after == nil) {
         return;
+    }
     XCTAssertEqual(before.length, after.length);
-    if (before.length != after.length)
+    if (before.length != after.length) {
         return;
+    }
 
     const uint8_t* beforePixels = before.bytes;
     const uint8_t* afterPixels = after.bytes;
@@ -1128,6 +1141,7 @@
         NSInteger delta = (NSInteger)beforePixels[index] - (NSInteger)afterPixels[index];
         difference = MAX(difference, delta < 0 ? -delta : delta);
     }
+
     // Outlined patterned strokes can differ by four levels at resampled tile
     // edges.
     NSInteger tolerance = optimized && [body containsString:@"stroke='url(#p)'"] ? 4 : 3;
@@ -1497,8 +1511,9 @@
                                                    "height='32'><rect x='5' y='5' width='22' height='22' "
                                                    "fill='red' stroke='blue' stroke-width='2'/></svg>"];
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return;
+    }
     svg.style.fillColor = NSColor.greenColor;
     svg.style.strokeColor = NSColor.magentaColor;
     svg.style.lineWidth = 4.f;
@@ -1513,12 +1528,14 @@
                                                    "height='100%'><rect x='25%' y='25%' width='50%' "
                                                    "height='50%' fill='red'/></svg>"];
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return;
+    }
     IJSVGRootNode* node = [svg rootNode];
     XCTAssertNotNil(node);
-    if (node == nil)
+    if (node == nil) {
         return;
+    }
     CGSize clientSize = node.clientSize;
     IJSVGExporterOptions options = optimized ? IJSVGExporterOptionAll : IJSVGExporterOptionNone;
     CGSize size = CGSizeMake(64.f, 64.f);
@@ -1547,8 +1564,9 @@
                                                    "stop-color='blue'/></linearGradient></defs><rect "
                                                    "width='32' height='32' fill='url(#g)'/></svg>"];
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return;
+    }
     [svg.style.colors replaceColor:NSColor.redColor withColor:NSColor.greenColor traits:IJSVGColorUsageTraitGradientStop];
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:IJSVGExporterOptionAll];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:[exporter SVGString]];
@@ -1562,8 +1580,9 @@
                                                    "width='4' height='4'/></g><rect id='later' width='8' "
                                                    "height='8'/></svg>"];
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return;
+    }
     NSMutableArray<NSString*>* identifiers = [NSMutableArray array];
     [IJSVGNode walkNodeTree:[svg rootNode]
                     handler:^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {

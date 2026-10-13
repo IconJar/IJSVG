@@ -24,7 +24,9 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:xml error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(svg);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     return svg;
 }
 
@@ -271,8 +273,9 @@
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return CGRectNull;
+    }
     CGContextTranslateCTM(context, 0, height);
     CGContextScaleCTM(context, scale, -(CGFloat)scale);
     [svg drawInRect:(CGRect) { CGPointZero, size } context:context];
@@ -293,6 +296,7 @@
 {
     XCTAssertFalse(CGRectIsNull(pixels), @"The fixture must actually render");
     CGRect pixelExtent = CGRectApplyAffineTransform(extent, CGAffineTransformMakeScale(scale, scale));
+
     // Fractional edges may cover the adjacent pixel, round outward, without
     // adding an arbitrary blur radius tolerance that could conceal missing tails.
     pixelExtent = CGRectIntegral(pixelExtent);
@@ -323,6 +327,7 @@
 {
     [self assertEffectPixelsCovered:@"<feGaussianBlur stdDeviation='7'/>"];
     [self assertEffectPixelsCovered:@"<feGaussianBlur stdDeviation='12 2'/>"];
+
     // A very wide blur is clipped at the filter region, not allowed to expand
     // indefinitely.
     [self assertEffectPixelsCovered:@"<feGaussianBlur stdDeviation='30'/>"];
@@ -410,8 +415,9 @@
     NSData* data = [NSData dataWithContentsOfFile:path options:0 error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(data);
-    if (data == nil)
+    if (data == nil) {
         return;
+    }
     NSArray<NSDictionary<NSString*, id>*>* fixtures = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
     XCTAssertNil(error);
     XCTAssertEqual(fixtures.count, 80u);
@@ -424,9 +430,13 @@
                                        @autoreleasepool {
                                            IJSVG* svg = [[IJSVG alloc] initWithSVGString:document];
                                            XCTAssertNotNil(svg);
-                                           if (svg == nil)
+                                           if (svg == nil) {
                                                continue;
-                                           svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+                                           }
+                                           svg.renderingBackingScaleHelper = ^CGFloat {
+                                               return 1.f;
+                                           };
+
                                            // Render at two resolutions to expose filter
                                            // rasterization differences.
                                            for (NSNumber* scale in @[ @1, @2 ]) {

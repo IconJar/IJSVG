@@ -48,7 +48,9 @@
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [NSSet setWithArray:@[ IJSVGAttributeHref, IJSVGAttributeXLink, IJSVGAttributePreserveAspectRatio ]]; });
+    dispatch_once(&once, ^{
+        names = [NSSet setWithArray:@[ IJSVGAttributeHref, IJSVGAttributeXLink, IJSVGAttributePreserveAspectRatio ]];
+    });
     return names;
 }
 

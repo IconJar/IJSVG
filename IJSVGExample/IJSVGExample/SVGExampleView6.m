@@ -1,5 +1,5 @@
 //
-//  SVGExampleView5.m
+//  SVGExampleView6.m
 //  IJSVGExample
 //
 //  Created by Curtis Hard on 05/09/2014.

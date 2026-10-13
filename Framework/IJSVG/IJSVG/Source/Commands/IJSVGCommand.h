@@ -12,8 +12,10 @@
 
 static const NSInteger IJSVGCustomVariableParameterCount = NSNotFound;
 
-typedef NS_ENUM(NSInteger, IJSVGCommandType) { kIJSVGCommandTypeAbsolute,
-    kIJSVGCommandTypeRelative };
+typedef NS_ENUM(NSInteger, IJSVGCommandType) {
+    kIJSVGCommandTypeAbsolute,
+    kIJSVGCommandTypeRelative
+};
 
 @interface IJSVGCommand : NSObject <NSCopying> {
 @private

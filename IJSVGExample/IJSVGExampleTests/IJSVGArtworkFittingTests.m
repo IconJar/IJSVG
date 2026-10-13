@@ -25,7 +25,9 @@
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:xml error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(svg);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     return svg;
 }
 
@@ -45,8 +47,9 @@
     CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(128, 128) flipped:NO error:&error];
     XCTAssertNil(error);
     XCTAssertTrue(image != NULL);
-    if (image == NULL)
+    if (image == NULL) {
         return CGRectNull;
+    }
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:image];
     CGImageRelease(image);
     CGRect bounds = CGRectNull;
@@ -161,7 +164,10 @@
     IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:[NSURL fileURLWithPath:path] error:&error];
     XCTAssertNil(error, @"Could not load %@", name);
     XCTAssertNotNil(svg);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
+
     // Fitting measures geometry and deliberately excludes filter effects.
     IJSVGRenderingOptions* options = [[IJSVGRenderingOptions alloc] init];
     options.filtersEnabled = NO;
@@ -176,8 +182,9 @@
     CGContextRef context = CGBitmapContextCreate(NULL, 128, 128, 8, 512, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     [svg drawInRect:CGRectMake(0, 0, 128, 128) context:context];
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:128 * 512];
     CGContextRelease(context);
@@ -194,8 +201,9 @@
             [XCTContext runActivityNamed:[NSString stringWithFormat:@"%@ / %@", name, styles[index]]
                                    block:^(id<XCTActivity> activity) {
                                        IJSVG* svg = [self exampleSVGNamed:name];
-                                       if (svg == nil)
+                                       if (svg == nil) {
                                            return;
+                                       }
                                        CGSize size = svg.size;
                                        CGRect viewport = svg.viewBox;
                                        CGFloat dimension = MIN(viewport.size.width, viewport.size.height);
@@ -243,7 +251,9 @@
                                        IJSVG* exported = [[IJSVG alloc] initWithSVGString:exporter.SVGString];
                                        XCTAssertNotNil(exported);
                                        if (exported != nil) {
-                                           exported.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+                                           exported.renderingBackingScaleHelper = ^CGFloat {
+                                               return 1.f;
+                                           };
                                            exported.renderingOptions = svg.renderingOptions;
                                            CGRect exportedCoverage = [self paintedPixelsForSVG:exported];
                                            XCTAssertFalse(CGRectIsEmpty(exportedCoverage));

@@ -9,10 +9,12 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGParsedPathKind) { IJSVGParsedPathData,
+typedef NS_ENUM(NSUInteger, IJSVGParsedPathKind) {
+    IJSVGParsedPathData,
     IJSVGParsedPathPolygon,
     IJSVGParsedPathPolyline,
-    IJSVGParsedPathKindCount };
+    IJSVGParsedPathKindCount
+};
 
 // Each parser owns a cache and accesses it on one thread at a time.
 typedef struct IJSVGParsedPathCache IJSVGParsedPathCache;
@@ -24,3 +26,6 @@ void IJSVGParsedPathCacheDestroy(IJSVGParsedPathCache* _Nullable cache);
 CGPathRef _Nullable IJSVGParsedPathCacheCopy(IJSVGParsedPathCache* _Nullable cache, NSString* _Nullable source, IJSVGParsedPathKind kind) CF_RETURNS_RETAINED;
 
 void IJSVGParsedPathCacheStore(IJSVGParsedPathCache* _Nullable cache, NSString* _Nonnull source, IJSVGParsedPathKind kind, CGPathRef _Nonnull path);
+
+CGPathRef _Nullable IJSVGParsedPathCacheCopyBytes(IJSVGParsedPathCache* _Nullable cache, const char* _Nullable bytes, NSUInteger length, IJSVGParsedPathKind kind) CF_RETURNS_RETAINED;
+void IJSVGParsedPathCacheStoreBytes(IJSVGParsedPathCache* _Nullable cache, const char* _Nullable bytes, NSUInteger length, IJSVGParsedPathKind kind, CGPathRef _Nonnull path);

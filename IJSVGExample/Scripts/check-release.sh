@@ -1,4 +1,12 @@
 #!/bin/sh
+#
+#  check-release.sh
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 12/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 # Check formatting, then validate a fresh consumer build of the package.
 set -eu
 

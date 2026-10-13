@@ -159,7 +159,9 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
         CGContextTranslateCTM(context, 0, size);
         CGContextScaleCTM(context, 1, -1);
     }
-    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return scale;
+    };
     [svg drawInRect:CGRectMake(0, 0, size, size) context:context];
     NSData* pixels = BitmapPixels(context, size);
     CGContextRelease(context);
@@ -170,6 +172,7 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 - (void)assertCachedOutputMatchesFreshRendererForDocument:(NSUInteger)index
 {
     IJSVG* reused = [self svgForDocument:index];
+
     // Exercise cache hits, backing scales, sizes, flipped CTMs and backdrops.
     const NSUInteger sizes[] = { 64, 64, 128, 128, 64, 96, 64, 64 };
     for (NSUInteger step = 0; step < 8; step++) {
@@ -329,7 +332,9 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
         CGContextClip(context);
         CGContextSetAlpha(context, 0.65);
     }
-    svg.renderingBackingScaleHelper = ^CGFloat { return variant == 4 ? 2 : 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return variant == 4 ? 2 : 1;
+    };
     [svg drawInRect:CGRectMake(0, 0, size, size) context:context];
     NSData* pixels = BitmapPixels(context, size);
     CGContextRelease(context);
@@ -403,7 +408,9 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                     CGContextScaleCTM(bitmap, 1, -1);
                 }
                 CGContextScaleCTM(bitmap, scale, scale);
-                svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+                svg.renderingBackingScaleHelper = ^CGFloat {
+                    return scale;
+                };
                 [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
                 [renders addObject:BitmapPixels(bitmap, size)];
                 CGContextRelease(bitmap);
@@ -467,11 +474,14 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                     }
                     CGContextScaleCTM(bitmap, scale, scale);
                     CGContextTranslateCTM(bitmap, 2 + offset.doubleValue, 2 + offset.doubleValue);
-                    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+                    svg.renderingBackingScaleHelper = ^CGFloat {
+                        return scale;
+                    };
                     [svg drawInRect:CGRectMake(0, 0, 32, 32) context:bitmap];
                     [renders addObject:BitmapPixels(bitmap, size)];
                     CGContextRelease(bitmap);
                 }
+
                 // Transparent black addition must not resample the backdrop.
                 // Ignore the outer artwork edge, the filter is wholly inside it.
                 const uint8_t* expected = [renders[0] bytes];
@@ -796,11 +806,23 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     primitive.parameters = @{ @"values" : @"2" };
     XCTAssertEqual([primitive numberForParameter:@"values" defaultValue:0], 2);
     XCTAssertEqualObjects([copy numbersForParameter:@"values"], numbers);
-    NSDictionary<NSString*, NSString*>* first = [primitive preparedValueForKey:@"test" builder:^id { return primitive.parameters; }];
+    NSDictionary<NSString*, NSString*>* first = [primitive preparedValueForKey:@"test"
+                                                                       builder:^id {
+                                                                           return primitive.parameters;
+                                                                       }];
     primitive.parameters = @{ @"type" : @"hueRotate", @"values" : @"45" };
-    NSDictionary<NSString*, NSString*>* second = [primitive preparedValueForKey:@"test" builder:^id { return primitive.parameters; }];
+    NSDictionary<NSString*, NSString*>* second = [primitive preparedValueForKey:@"test"
+                                                                        builder:^id {
+                                                                            return primitive.parameters;
+                                                                        }];
     XCTAssertNotEqualObjects(first, second);
-    dispatch_apply(32, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) { XCTAssertEqualObjects([primitive preparedValueForKey:@"test" builder:^id { return primitive.parameters; }], second); });
+    dispatch_apply(32, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) {
+        XCTAssertEqualObjects([primitive preparedValueForKey:@"test"
+                                                     builder:^id {
+                                                         return primitive.parameters;
+                                                     }],
+            second);
+    });
     primitive.parameters = nil;
     XCTAssertEqualObjects([primitive numbersForParameter:@"values"], @[]);
 }
@@ -817,7 +839,10 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                 XCTAssertTrue(primitive.preserveAlpha);
                 XCTAssertTrue(primitive.stitchTiles);
                 XCTAssertEqual([primitive numberForParameter:@"values" defaultValue:0], 7);
-                [primitive preparedValueForKey:@"reset" builder:^id { return @"before"; }];
+                [primitive preparedValueForKey:@"reset"
+                                       builder:^id {
+                                           return @"before";
+                                       }];
                 primitive.parameters = reset == 0 ? [[NSDictionary alloc] init] : nil;
                 XCTAssertEqual(primitive.compositeOperator, defaults.compositeOperator);
                 XCTAssertEqual(primitive.edgeMode, defaults.edgeMode);
@@ -831,7 +856,11 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
                 XCTAssertFalse(primitive.preserveAlpha);
                 XCTAssertFalse(primitive.stitchTiles);
                 XCTAssertEqual([primitive numberForParameter:@"values" defaultValue:3], 3);
-                XCTAssertEqualObjects([primitive preparedValueForKey:@"reset" builder:^id { return @"after"; }], @"after");
+                XCTAssertEqualObjects([primitive preparedValueForKey:@"reset"
+                                                             builder:^id {
+                                                                 return @"after";
+                                                             }],
+                    @"after");
                 primitive.type = IJSVGNodeTypeFilterConvolveMatrix;
                 defaults.type = primitive.type;
                 XCTAssertEqual(primitive.edgeMode, defaults.edgeMode);

@@ -68,8 +68,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 
 - (void)finish:(NSDictionary<NSString*, id>*)result
 {
-    if (!self.completion)
+    if (!self.completion) {
         return;
+    }
     void (^completion)(NSDictionary<NSString*, id>*) = self.completion;
     self.completion = nil;
     self.webView.navigationDelegate = nil;
@@ -105,16 +106,20 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     }
     NSString* w = [[root attributeForName:@"width"] stringValue];
     NSString* h = [[root attributeForName:@"height"] stringValue];
-    if (w.doubleValue > 0 && ![w containsString:@"%"] && ([w isEqualToString:[@(w.doubleValue) stringValue]] || [w hasSuffix:@"px"]))
+    if (w.doubleValue > 0 && ![w containsString:@"%"] && ([w isEqualToString:[@(w.doubleValue) stringValue]] || [w hasSuffix:@"px"])) {
         width = w.doubleValue;
-    if (h.doubleValue > 0 && ![h containsString:@"%"] && ([h isEqualToString:[@(h.doubleValue) stringValue]] || [h hasSuffix:@"px"]))
+    }
+    if (h.doubleValue > 0 && ![h containsString:@"%"] && ([h isEqualToString:[@(h.doubleValue) stringValue]] || [h hasSuffix:@"px"])) {
         height = h.doubleValue;
+    }
     self.size = CGSizeMake(MAX(1, MIN(800, ceil(width))), MAX(1, MIN(800, ceil(height))));
+
     // Supply the same definite viewport to both engines, including %/auto roots.
     [root removeAttributeForName:@"width"];
     [root removeAttributeForName:@"height"];
     [root addAttribute:[NSXMLNode attributeWithName:@"width" stringValue:[@(self.size.width) stringValue]]];
     [root addAttribute:[NSXMLNode attributeWithName:@"height" stringValue:[@(self.size.height) stringValue]]];
+
     // Use the same initial font size instead of browser preference defaults.
     if ([root attributeForName:IJSVGAttributeFontSize] == nil) {
         [root addAttribute:[NSXMLNode attributeWithName:IJSVGAttributeFontSize stringValue:@"16"]];
@@ -143,7 +148,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     }
     [self.webView loadData:[document.XMLString dataUsingEncoding:NSUTF8StringEncoding] MIMEType:@"image/svg+xml" characterEncodingName:@"UTF-8" baseURL:[NSURL URLWithString:@"about:blank"]];
     __weak IJSVGMDNComparison* weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{ [weakSelf finish:@ { @"error" : @"WebKit comparison timed out" }]; });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [weakSelf finish:@ { @"error" : @"WebKit comparison timed out" }];
+    });
 }
 
 - (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation
@@ -166,8 +173,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
                          inFrame:nil
                   inContentWorld:WKContentWorld.pageWorld
                completionHandler:^(id value, NSError* error) {
-                   if (!self.completion)
+                   if (!self.completion) {
                        return;
+                   }
                    if (error) {
                        [self finish:@ { @"error" : error.description }];
                        return;
@@ -181,8 +189,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
                    config.afterScreenUpdates = YES;
                    [self.webView takeSnapshotWithConfiguration:config
                                              completionHandler:^(NSImage* image, NSError* snapshotError) {
-                                                 if (!self.completion)
+                                                 if (!self.completion) {
                                                      return;
+                                                 }
                                                  if (!image || snapshotError) {
                                                      [self finish:@ { @"error" : snapshotError.description ?: @"No WebKit snapshot" }];
                                                      return;
@@ -220,12 +229,15 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     CGContextRef actual = IJSVGMDNBitmap(width, height, self.background);
     CGContextRef diff = IJSVGMDNBitmap(width, height, self.background);
     if (!expected || !actual || !diff) {
-        if (expected)
+        if (expected) {
             CGContextRelease(expected);
-        if (actual)
+        }
+        if (actual) {
             CGContextRelease(actual);
-        if (diff)
+        }
+        if (diff) {
             CGContextRelease(diff);
+        }
         [self finish:@{ @"error" : @"Could not allocate comparison bitmaps" }];
         return;
     }
@@ -249,7 +261,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         self.metrics = metrics;
     }
     CGFloat scale = width / self.size.width;
-    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return scale;
+    };
     CGContextTranslateCTM(actual, 0, height);
     CGContextScaleCTM(actual, scale, -scale);
     [svg drawInRect:rect context:actual];
@@ -334,25 +348,30 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
         }
     }
     XCTAssertNotNil(fixture, @"Missing MDN fixture %@", identifier);
-    if (!fixture)
+    if (!fixture) {
         return;
+    }
     XCTSkipIf(fixture[@"skip"] != nil, @"%@: %@", fixture[@"url"], fixture[@"skip"]);
     NSDictionary<NSString*, NSDictionary<NSString*, id>*>* policies = IJSVGMDNPolicies();
     XCTAssertNotNil(policies, @"Missing or invalid MDN expectations");
-    if (!policies)
+    if (!policies) {
         return;
+    }
     NSDictionary<NSString*, id>* policy = policies[identifier];
     NSString* xml = fixture[@"svg"];
+
     // Existing text comparisons use .16 for Core Text/WebKit rasterization.
     // Shape only examples retain the existing .025 geometry threshold.
     double tolerance = [xml containsString:@"<text"] ? .16 : .025;
-    if (policy[@"tolerance"])
+    if (policy[@"tolerance"]) {
         tolerance = [policy[@"tolerance"] doubleValue];
+    }
     if (policy) {
         XCTAssertGreaterThan([policy[@"reason"] length], 0u);
         XCTAssertEqualObjects(policy[@"sha256"], fixture[@"sha256"], @"Review this expectation after updating the fixture");
-        if (![policy[@"sha256"] isEqual:fixture[@"sha256"]])
+        if (![policy[@"sha256"] isEqual:fixture[@"sha256"]]) {
             return;
+        }
     }
     if (referenceTransform != nil || self.fixtureTransform != nil) {
         identifier = [identifier stringByAppendingString:@"_reference"];
@@ -375,8 +394,9 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     [self waitForExpectations:@[ done ] timeout:20];
     XCTAssertNotNil(result);
     XCTAssertNil(result[@"error"], @"%@", result[@"error"]);
-    if (!result || result[@"error"])
+    if (!result || result[@"error"]) {
         return;
+    }
     XCTAssertTrue([result[@"parsed"] boolValue], @"IJSVG could not parse %@", identifier);
     if (self.compareTextMetrics) {
         NSArray<NSDictionary<NSString*, id>*>* native = comparison.metrics[@"native"];

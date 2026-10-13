@@ -13,7 +13,8 @@ typedef struct {
     int precision;
 } IJSVGFloatingPointOptions;
 
-typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) { IJSVGUnitLengthTypeNumber,
+typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
+    IJSVGUnitLengthTypeNumber,
     IJSVGUnitLengthTypePercentage,
     IJSVGUnitLengthTypeCM,
     IJSVGUnitLengthTypeMM,
@@ -24,14 +25,17 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) { IJSVGUnitLengthTypeNumber,
     IJSVGUnitLengthTypeEM,
     IJSVGUnitLengthTypeEX,
     IJSVGUnitLengthTypeAuto,
-    IJSVGUnitLengthTypeCalculation };
+    IJSVGUnitLengthTypeCalculation
+};
 
 IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars);
 CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type);
 
-typedef NS_ENUM(NSInteger, IJSVGUnitType) { IJSVGUnitUserSpaceOnUse,
+typedef NS_ENUM(NSInteger, IJSVGUnitType) {
+    IJSVGUnitUserSpaceOnUse,
     IJSVGUnitObjectBoundingBox,
-    IJSVGUnitInherit };
+    IJSVGUnitInherit
+};
 
 typedef struct IJSVGCSSComponents IJSVGCSSComponents;
 
@@ -80,6 +84,7 @@ typedef struct IJSVGCSSComponents IJSVGCSSComponents;
 - (IJSVGUnitLength*)lengthByMatchingPercentage;
 - (CGFloat)valueAsPercentage;
 - (CGFloat)computeValue:(CGFloat)anotherValue;
+
 // Supply font metrics when resolving em and ex values.
 - (CGFloat)computeValue:(CGFloat)anotherValue fontSize:(CGFloat)fontSize xHeight:(CGFloat)xHeight;
 - (NSString*)stringValue;

@@ -11,12 +11,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) { IJSVGColorUsageTraitNone = 0,
+typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
+    IJSVGColorUsageTraitNone = 0,
     IJSVGColorUsageTraitUnknown = 1 << 0,
     IJSVGColorUsageTraitFill = 1 << 1,
     IJSVGColorUsageTraitStroke = 1 << 2,
     IJSVGColorUsageTraitGradientStop = 1 << 3,
-    IJSVGColorUsageTraitAll = IJSVGColorUsageTraitFill | IJSVGColorUsageTraitGradientStop | IJSVGColorUsageTraitStroke };
+    IJSVGColorUsageTraitAll = IJSVGColorUsageTraitFill | IJSVGColorUsageTraitGradientStop | IJSVGColorUsageTraitStroke
+};
 
 @interface IJSVGTraitedColor : NSObject {
 }

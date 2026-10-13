@@ -153,6 +153,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
         operation(0, height);
         return;
     }
+
     // Use smaller groups of rows for short images so more workers can help.
     const NSInteger rowsPerBand = height < 128 ? MAX(1, height / 8) : 32;
     size_t bands = (height + rowsPerBand - 1) / rowsPerBand;
@@ -182,6 +183,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     size_t width = bounds.size.width, height = bounds.size.height;
     NSMutableData* data = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
+
     // Flip the image so the CPU receives rows in the expected order.
     CGFloat flipY = CGRectGetMinY(bounds) + CGRectGetMaxY(bounds);
     image = [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, 0.f, flipY)];
@@ -200,6 +202,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     CGColorSpaceRef space = CGColorSpaceCreateWithName(self.linearRGB ? kCGColorSpaceLinearSRGB : kCGColorSpaceSRGB);
     CIImage* image = [CIImage imageWithBitmapData:pixels bytesPerRow:bounds.size.width * 4 * sizeof(float) size:bounds.size format:kCIFormatRGBAf colorSpace:space];
     CGColorSpaceRelease(space);
+
     // Restore the image position without copying the pixels.
     return [image imageByApplyingTransform:CGAffineTransformMake(1.f, 0.f, 0.f, -1.f, bounds.origin.x, CGRectGetMaxY(bounds))];
 }
@@ -215,6 +218,7 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     if (!IJSVGFilterValidRect(region)) {
         return CIImage.emptyImage;
     }
+
     // Keep whole pixels here. The graph applies the exact fractional crop later.
     CGRect bounds = CGRectIntersection(CGRectIntegral(region), self.extent);
     if (!IJSVGFilterValidRect(bounds)) {

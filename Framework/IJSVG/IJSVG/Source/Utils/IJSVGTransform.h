@@ -14,7 +14,8 @@
 typedef CGFloat (^IJSVGTransformParameterModifier)(NSInteger index, CGFloat value);
 typedef void (^IJSVGTransformApplyBlock)(IJSVGTransform* transform);
 
-typedef NS_ENUM(NSInteger, IJSVGTransformCommand) { IJSVGTransformCommandMatrix,
+typedef NS_ENUM(NSInteger, IJSVGTransformCommand) {
+    IJSVGTransformCommandMatrix,
     IJSVGTransformCommandTranslate,
     IJSVGTransformCommandTranslateX,
     IJSVGTransformCommandTranslateY,
@@ -22,9 +23,12 @@ typedef NS_ENUM(NSInteger, IJSVGTransformCommand) { IJSVGTransformCommandMatrix,
     IJSVGTransformCommandRotate,
     IJSVGTransformCommandSkewX,
     IJSVGTransformCommandSkewY,
-    IJSVGTransformCommandNotImplemented };
+    IJSVGTransformCommandNotImplemented
+};
 
-enum { IJSVGTransformParameterCapacity = 6 };
+enum {
+    IJSVGTransformParameterCapacity = 6
+};
 
 @interface IJSVGTransform : NSObject {
     CGFloat _parameters[IJSVGTransformParameterCapacity];
@@ -45,6 +49,9 @@ NSString* IJSVGTransformAttributeString(CGAffineTransform transform);
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (NSString*)affineTransformToSVGTransformComponentString:(CGAffineTransform)transform;
 + (NSArray<IJSVGTransform*>*)transformsFromAffineTransform:(CGAffineTransform)affineTransform;
+
+// Consumes a borrowed UTF8 span. No NUL terminator is required.
++ (NSArray<IJSVGTransform*>*)transformsForBytes:(const char*)bytes length:(NSUInteger)length allowCSSUnits:(BOOL)allowCSSUnits;
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string;
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string allowCSSUnits:(BOOL)allowCSSUnits;
 + (NSString*)affineTransformToSVGMatrixString:(CGAffineTransform)affineTransform;

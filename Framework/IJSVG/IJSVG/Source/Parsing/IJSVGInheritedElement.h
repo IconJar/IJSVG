@@ -6,12 +6,13 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <Foundation/Foundation.h>
 
 @interface IJSVGInheritedElement : NSObject
-@property (nonatomic, strong, readonly) NSXMLElement* element;
-@property (nonatomic, copy, readonly) NSArray<NSXMLNode*>* attributes;
-@property (nonatomic, strong, readonly) NSXMLElement* childrenElement;
+@property (nonatomic, readonly) IJSVGXMLNode* element;
+@property (nonatomic, readonly) IJSVGXMLAttributeList attributes;
+@property (nonatomic, readonly) IJSVGXMLNode* childrenElement;
 @property (nonatomic, readonly) BOOL hasReference;
-- (instancetype)initWithElement:(NSXMLElement*)element fallback:(IJSVGInheritedElement*)fallback;
+- (instancetype)initWithElement:(IJSVGXMLNode*)element fallback:(IJSVGInheritedElement*)fallback;
 @end

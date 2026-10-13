@@ -110,7 +110,9 @@ CGColorSpaceRef IJSVGDeviceGrayColorSpace(void)
 {
     static CGColorSpaceRef colorSpace = NULL;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ colorSpace = CGColorSpaceCreateDeviceGray(); });
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceGray();
+    });
     return colorSpace;
 }
 
@@ -118,7 +120,9 @@ CGColorSpaceRef IJSVGDeviceRGBColorSpace(void)
 {
     static CGColorSpaceRef colorSpace = NULL;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ colorSpace = CGColorSpaceCreateDeviceRGB(); });
+    dispatch_once(&onceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceRGB();
+    });
     return colorSpace;
 }
 
@@ -512,36 +516,46 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
 
 + (IJSVGWindingRule)windingRuleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringEvenOdd])
+    if ([string isEqualToString:IJSVGStringEvenOdd]) {
         return IJSVGWindingRuleEvenOdd;
-    if ([string isEqualToString:IJSVGStringInherit])
+    }
+    if ([string isEqualToString:IJSVGStringInherit]) {
         return IJSVGWindingRuleInherit;
+    }
     return IJSVGWindingRuleNonZero;
 }
 
 + (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringMiter])
+    if ([string isEqualToString:IJSVGStringMiter]) {
         return IJSVGLineJoinStyleMiter;
-    if ([string isEqualToString:IJSVGStringRound])
+    }
+    if ([string isEqualToString:IJSVGStringRound]) {
         return IJSVGLineJoinStyleRound;
-    if ([string isEqualToString:IJSVGStringBevel])
+    }
+    if ([string isEqualToString:IJSVGStringBevel]) {
         return IJSVGLineJoinStyleBevel;
-    if ([string isEqualToString:IJSVGStringInherit])
+    }
+    if ([string isEqualToString:IJSVGStringInherit]) {
         return IJSVGLineJoinStyleInherit;
+    }
     return IJSVGLineJoinStyleMiter;
 }
 
 + (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string
 {
-    if ([string isEqualToString:IJSVGStringButt])
+    if ([string isEqualToString:IJSVGStringButt]) {
         return IJSVGLineCapStyleButt;
-    if ([string isEqualToString:IJSVGStringSquare])
+    }
+    if ([string isEqualToString:IJSVGStringSquare]) {
         return IJSVGLineCapStyleSquare;
-    if ([string isEqualToString:IJSVGStringRound])
+    }
+    if ([string isEqualToString:IJSVGStringRound]) {
         return IJSVGLineCapStyleRound;
-    if ([string isEqualToString:IJSVGStringInherit])
+    }
+    if ([string isEqualToString:IJSVGStringInherit]) {
         return IJSVGLineCapStyleInherit;
+    }
     return IJSVGLineCapStyleButt;
 }
 
@@ -592,38 +606,54 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
 + (IJSVGBlendMode)blendModeForString:(NSString*)string
 {
     string = string.lowercaseString;
-    if ([string isEqualToString:@"normal"])
+    if ([string isEqualToString:@"normal"]) {
         return IJSVGBlendModeNormal;
-    if ([string isEqualToString:@"multiply"])
+    }
+    if ([string isEqualToString:@"multiply"]) {
         return IJSVGBlendModeMultiply;
-    if ([string isEqualToString:@"screen"])
+    }
+    if ([string isEqualToString:@"screen"]) {
         return IJSVGBlendModeScreen;
-    if ([string isEqualToString:@"overlay"])
+    }
+    if ([string isEqualToString:@"overlay"]) {
         return IJSVGBlendModeOverlay;
-    if ([string isEqualToString:@"darken"])
+    }
+    if ([string isEqualToString:@"darken"]) {
         return IJSVGBlendModeDarken;
-    if ([string isEqualToString:@"lighten"])
+    }
+    if ([string isEqualToString:@"lighten"]) {
         return IJSVGBlendModeLighten;
-    if ([string isEqualToString:@"color-dodge"])
+    }
+    if ([string isEqualToString:@"color-dodge"]) {
         return IJSVGBlendModeColorDodge;
-    if ([string isEqualToString:@"color-burn"])
+    }
+    if ([string isEqualToString:@"color-burn"]) {
         return IJSVGBlendModeColorBurn;
-    if ([string isEqualToString:@"hard-light"])
+    }
+    if ([string isEqualToString:@"hard-light"]) {
         return IJSVGBlendModeHardLight;
-    if ([string isEqualToString:@"soft-light"])
+    }
+    if ([string isEqualToString:@"soft-light"]) {
         return IJSVGBlendModeSoftLight;
-    if ([string isEqualToString:@"difference"])
+    }
+    if ([string isEqualToString:@"difference"]) {
         return IJSVGBlendModeDifference;
-    if ([string isEqualToString:@"exclusion"])
+    }
+    if ([string isEqualToString:@"exclusion"]) {
         return IJSVGBlendModeExclusion;
-    if ([string isEqualToString:@"hue"])
+    }
+    if ([string isEqualToString:@"hue"]) {
         return IJSVGBlendModeHue;
-    if ([string isEqualToString:@"saturation"])
+    }
+    if ([string isEqualToString:@"saturation"]) {
         return IJSVGBlendModeSaturation;
-    if ([string isEqualToString:@"color"])
+    }
+    if ([string isEqualToString:@"color"]) {
         return IJSVGBlendModeColor;
-    if ([string isEqualToString:@"luminosity"])
+    }
+    if ([string isEqualToString:@"luminosity"]) {
         return IJSVGBlendModeLuminosity;
+    }
     return IJSVGBlendModeNormal;
 }
 
@@ -718,38 +748,45 @@ static BOOL IJSVGNumberListAppend(IJSVGNumberList* list, CGFloat value)
     return YES;
 }
 
-static BOOL IJSVGNumberListParse(const char* cursor, IJSVGNumberList* list)
+static const char* IJSVGNumberListSkipWhitespace(const char* cursor, const char* end)
 {
-    cursor += strspn(cursor, " \t\r\n");
+    while (cursor < end && (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n')) {
+        cursor++;
+    }
+    return cursor;
+}
+
+static BOOL IJSVGNumberListParse(const char* cursor, const char* end, IJSVGNumberList* list)
+{
+    cursor = IJSVGNumberListSkipWhitespace(cursor, end);
     for (;;) {
         CGFloat value;
-        if (!IJSVGParseLengthNumber(&cursor, YES, &value) || !IJSVGNumberListAppend(list, value)) {
+        if (!IJSVGParseLengthNumberInRange(&cursor, end, YES, &value) || !IJSVGNumberListAppend(list, value)) {
             return NO;
         }
-        const char* end = cursor;
-        cursor += strspn(cursor, " \t\r\n");
-        if (*cursor == '\0') {
+        const char* numberEnd = cursor;
+        cursor = IJSVGNumberListSkipWhitespace(cursor, end);
+        if (cursor == end) {
             return YES;
         }
         if (*cursor == ',') {
-            cursor++;
-            cursor += strspn(cursor, " \t\r\n");
-        } else if (cursor == end) {
+            cursor = IJSVGNumberListSkipWhitespace(cursor + 1, end);
+        } else if (cursor == numberEnd) {
             return NO;
         }
     }
 }
 
-BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat))
+BOOL IJSVGEnumerateNumbersFromBytes(const char* bytes, NSUInteger length, void (^handler)(CGFloat))
 {
-    if (string == NULL) {
+    if (bytes == NULL || length == 0 || memchr(bytes, 0, length) != NULL) {
         return NO;
     }
     IJSVGNumberList list;
     list.values = list.storage;
     list.count = 0;
     list.capacity = sizeof(list.storage) / sizeof(*list.storage);
-    BOOL valid = IJSVGNumberListParse(string, &list);
+    BOOL valid = IJSVGNumberListParse(bytes, bytes + length, &list);
     if (valid) {
         for (NSUInteger index = 0; index < list.count; index++) {
             handler(list.values[index]);
@@ -761,20 +798,24 @@ BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloa
     return valid;
 }
 
+BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat))
+{
+    return IJSVGEnumerateNumbersFromBytes(string, string == NULL ? 0 : strlen(string), handler);
+}
+
 BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat))
 {
     __attribute__((objc_precise_lifetime)) NSString* owner = string;
     IJSVGStringBytes source = IJSVGStringGetBytes(owner);
-    if (source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
-        return NO;
-    }
-    return IJSVGEnumerateNumbersFromCString(source.bytes, handler);
+    return IJSVGEnumerateNumbersFromBytes(source.bytes, source.length, handler);
 }
 
 + (NSArray<NSNumber*>*)numbersFromString:(NSString*)string
 {
     NSMutableArray<NSNumber*>* numbers = [[NSMutableArray alloc] init];
-    BOOL valid = IJSVGEnumerateNumbers(string, ^(CGFloat value) { [numbers addObject:@(value)]; });
+    BOOL valid = IJSVGEnumerateNumbers(string, ^(CGFloat value) {
+        [numbers addObject:@(value)];
+    });
     return valid ? numbers : @[];
 }
 

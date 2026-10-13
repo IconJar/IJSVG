@@ -60,6 +60,7 @@ static void IJSVGParseTextRotations(NSString* value, IJSVGTextAttributeValue* pa
     NSMutableArray<IJSVGTextAttributeValue*>* rotations = [[NSMutableArray alloc] init];
     IJSVGEnumerateNumbers(value, ^(CGFloat number) {
         IJSVGTextAttributeValue* rotation = [[IJSVGTextAttributeValue alloc] init];
+
         // Store radians so layout does not convert every rotation again.
         rotation.number = IJSVGDegreesToRadians(number);
         [rotations addObject:rotation];
@@ -118,7 +119,9 @@ static void IJSVGParseTextFeatures(NSString* value, IJSVGTextAttributeValue* par
 {
     static NSCharacterSet* quotes;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ quotes = [NSCharacterSet characterSetWithCharactersInString:@"'\""]; });
+    dispatch_once(&onceToken, ^{
+        quotes = [NSCharacterSet characterSetWithCharactersInString:@"'\""];
+    });
     NSArray<NSString*>* entries = [value ijsvg_componentsSeparatedByChars:","];
     NSMutableDictionary<NSString*, NSNumber*>* features = [[NSMutableDictionary alloc] initWithCapacity:entries.count];
     for (NSString* entry in entries) {
@@ -217,6 +220,7 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value, IJSVGNodeAttri
         }
         case IJSVGNodeAttributeFontWeight:
             parsed.number = value.doubleValue;
+
             // Keep numeric weights intact for font matching and relative inheritance.
             if (parsed.keyword == IJSVGTextKeywordUnspecified && (!isfinite(parsed.number) || parsed.number < 1 || parsed.number > 1000)) {
                 parsed.keyword = IJSVGTextKeywordInherit;
@@ -247,7 +251,9 @@ void IJSVGApplyTextAttributes(IJSVGNode* node, NSString* __unsafe_unretained con
 {
     static NSArray<NSString*>* styleNames;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ styleNames = @[ IJSVGAttributeFont, IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontWeight, IJSVGAttributeFontStyle, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant, IJSVGAttributeFontVariantLigatures, IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning, IJSVGAttributeLetterSpacing, IJSVGAttributeWordSpacing, IJSVGAttributeTextAnchor, IJSVGAttributeDirection, IJSVGAttributeUnicodeBidi, IJSVGAttributeWritingMode, IJSVGAttributeTextOrientation, IJSVGAttributeDominantBaseline, IJSVGAttributeAlignmentBaseline, IJSVGAttributeBaselineShift, IJSVGAttributeTextDecoration, IJSVGAttributeTextDecorationLine, IJSVGAttributeWhiteSpace, IJSVGAttributeLineHeight, IJSVGAttributeInlineSize, IJSVGAttributeTextTransform, IJSVGAttributeTextOverflow, IJSVGAttributeXMLSpace, IJSVGAttributeLang, IJSVGAttributeXMLLang, IJSVGAttributeFontSizeAdjust ]; });
+    dispatch_once(&onceToken, ^{
+        styleNames = @[ IJSVGAttributeFont, IJSVGAttributeFontFamily, IJSVGAttributeFontSize, IJSVGAttributeFontWeight, IJSVGAttributeFontStyle, IJSVGAttributeFontStretch, IJSVGAttributeFontVariant, IJSVGAttributeFontVariantLigatures, IJSVGAttributeFontFeatureSettings, IJSVGAttributeFontKerning, IJSVGAttributeLetterSpacing, IJSVGAttributeWordSpacing, IJSVGAttributeTextAnchor, IJSVGAttributeDirection, IJSVGAttributeUnicodeBidi, IJSVGAttributeWritingMode, IJSVGAttributeTextOrientation, IJSVGAttributeDominantBaseline, IJSVGAttributeAlignmentBaseline, IJSVGAttributeBaselineShift, IJSVGAttributeTextDecoration, IJSVGAttributeTextDecorationLine, IJSVGAttributeWhiteSpace, IJSVGAttributeLineHeight, IJSVGAttributeInlineSize, IJSVGAttributeTextTransform, IJSVGAttributeTextOverflow, IJSVGAttributeXMLSpace, IJSVGAttributeLang, IJSVGAttributeXMLLang, IJSVGAttributeFontSizeAdjust ];
+    });
 
     // Expand shorthand only when present and parse longhands directly by
     // attribute.

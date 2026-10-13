@@ -50,8 +50,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if (![source isKindOfClass:IJSVGGraphicsNode.class])
+    if (![source isKindOfClass:IJSVGGraphicsNode.class]) {
         return;
+    }
     IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
     self.markerStart = node->_markerStart.copy;
     self.markerMid = node->_markerMid.copy;

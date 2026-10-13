@@ -35,6 +35,7 @@ static BOOL IJSVGApplyInterleavedBlurToPixels(const float* src, float* dst, NSIn
     if (nx == 1 && ny == 1) {
         return NO;
     }
+
     // A blur in one direction can write straight to the output.
     NSMutableData* temporary = nx > 1 && ny > 1 ? [NSMutableData dataWithLength:w * h * 4 * sizeof(float)] : nil;
     vImage_Buffer input = { (void*)src, h, w, w * 4 * sizeof(float) };
@@ -77,6 +78,7 @@ static void IJSVGApplyGaussianBlurToPixels(const float* src, float* dst, NSInteg
     if (channels == 4 && w * h >= 65536 && kernelX.length + kernelY.length <= 64 * sizeof(float) && IJSVGApplyInterleavedBlurToPixels(src, dst, w, h, kernelX, kernelY)) {
         return;
     }
+
     // Opacity images have one channel and can use the output directly.
     NSMutableData* plane = channels == 1 ? nil : [NSMutableData dataWithLength:w * h * sizeof(float)];
     NSMutableData* result = channels == 1 ? nil : [NSMutableData dataWithLength:plane.length];
@@ -149,6 +151,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
 - (CIImage*)metalBlurImage:(CIImage*)image horizontalKernel:(NSData*)kernelX verticalKernel:(NSData*)kernelY alphaOnly:(BOOL)alphaOnly context:(IJSVGFilterContext*)context
 {
     NSUInteger counts[] = { kernelX.length / sizeof(float), kernelY.length / sizeof(float) };
+
     // Only use this path for a single color blur.
     // Later effects may need samples between pixels.
     if (alphaOnly || context.filter.primitives.count != 1 || !context.supportsMetalKernels || counts[0] > 257 || counts[1] > 257 || !IJSVGFilterValidRect(context.extent)) {
@@ -178,7 +181,11 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
         CIImage* weights = [CIImage imageWithBitmapData:kernels[axis] bytesPerRow:count * sizeof(float) size:CGSizeMake(count, 1) format:kCIFormatAf colorSpace:NULL];
         CGFloat radius = count / 2;
         BOOL horizontal = axis == 0;
-        output = [convolution applyWithExtent:extent roiCallback:^CGRect(int index, CGRect rect) { return index == 1 ? CGRectMake(0, 0, count, 1) : CGRectIntersection(extent, CGRectInset(rect, horizontal ? -radius : 0, horizontal ? 0 : -radius)); } arguments:@[ output, weights, [CIVector vectorWithX:horizontal ? 1 : 0 Y:horizontal ? 0 : 1], @(count), [CIVector vectorWithX:CGRectGetMinX(extent) Y:CGRectGetMinY(extent) Z:CGRectGetMaxX(extent) W:CGRectGetMaxY(extent)], @(axis == 1 || counts[1] == 1) ]];
+        output = [convolution applyWithExtent:extent
+                                  roiCallback:^CGRect(int index, CGRect rect) {
+                                      return index == 1 ? CGRectMake(0, 0, count, 1) : CGRectIntersection(extent, CGRectInset(rect, horizontal ? -radius : 0, horizontal ? 0 : -radius));
+                                  }
+                                    arguments:@[ output, weights, [CIVector vectorWithX:horizontal ? 1 : 0 Y:horizontal ? 0 : 1], @(count), [CIVector vectorWithX:CGRectGetMinX(extent) Y:CGRectGetMinY(extent) Z:CGRectGetMaxX(extent) W:CGRectGetMaxY(extent)], @(axis == 1 || counts[1] == 1) ]];
         if (output == nil) {
             return nil;
         }
@@ -216,6 +223,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     }
     NSData* kernelX = IJSVGFilterKernel(sigmaX);
     NSData* kernelY = IJSVGFilterKernel(sigmaY);
+
     // Use Core Image directly when both blur kernels fit within nine values.
     if (kernelX.length <= 9 * sizeof(float) && kernelY.length <= 9 * sizeof(float)) {
         return IJSVGSmallKernelBlur(image, kernelX, kernelY, context);
@@ -224,6 +232,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     if (metal != nil) {
         return metal;
     }
+
     // Keep the blur radius and one extra pixel for sampling fractional offsets.
     CGRect bounds = CGRectIntersection(context.extent, CGRectIntegral(CGRectInset(region, -(CGFloat)(kernelX.length / sizeof(float) / 2 + 1), -(CGFloat)(kernelY.length / sizeof(float) / 2 + 1))));
 
@@ -236,7 +245,12 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     }
 
     // Blur each direction separately when one blur radius cannot describe both.
-    return [context mapImage:image other:nil region:bounds operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) { IJSVGApplyGaussianBlurToPixels(src, dst, w, h, kernelX, kernelY, 4); }];
+    return [context mapImage:image
+                       other:nil
+                      region:bounds
+                   operation:^(const float* src, const float* unused, float* dst, NSInteger w, NSInteger h) {
+                       IJSVGApplyGaussianBlurToPixels(src, dst, w, h, kernelX, kernelY, 4);
+                   }];
 }
 
 - (CIImage*)outputImageForPrimitive:(IJSVGFilterPrimitive*)primitive inputs:(NSArray<CIImage*>*)inputs region:(CGRect)region context:(IJSVGFilterContext*)context

@@ -34,15 +34,18 @@
 
 - (NSData*)render:(IJSVG*)svg size:(CGSize)size scale:(CGFloat)scale
 {
-    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return scale;
+    };
     size_t width = (size_t)ceil((size.width + 6.f) * scale);
     size_t height = (size_t)ceil((size.height + 6.f) * scale);
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     CGContextScaleCTM(context, scale, scale);
     [svg drawInRect:CGRectMake(1.25f, 2.5f, size.width, size.height) context:context];
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:width * height * 4];

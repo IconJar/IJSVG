@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGTurbulenceFilterEffect.h>
+
 // Build the noise here so the seed and repeating edges follow SVG rules.
 // Each render keeps its own noise data.
 typedef struct {
@@ -31,6 +32,7 @@ static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
         for (int i = 0; i < 256; i++) {
             noise->permutation[i] = i;
             double x, y, length;
+
             // Match SVG/WebKit: rejecting nonzero vectors changes the seeded
             // sequence.
             do {
@@ -73,6 +75,7 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
                 by -= tileHeight;
             }
         }
+
         // Move negative positions into the valid range.
         px[i] = (int)fmod(bx, 256.);
         py[i] = (int)fmod(by, 256.);
@@ -154,6 +157,7 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
     if (CGRectIsEmpty(outputRegion)) {
         return CIImage.emptyImage;
     }
+
     // Keep the original tile position so the edges still match.
     // Only create pixels inside the visible region.
     NSInteger left = floor(CGRectGetMinX(outputRegion));
@@ -190,6 +194,7 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
             }
         }
     });
+
     // Keep the same row orientation and position as the full working buffer.
     CGRect bounds = CGRectMake(left, top, w, h);
     return [context imageForPixels:pixels bounds:bounds];

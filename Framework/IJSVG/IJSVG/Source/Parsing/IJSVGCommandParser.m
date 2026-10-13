@@ -78,6 +78,7 @@ static void* IJSVGPathDataStreamGrow(void* buffer, NSInteger* capacity, NSUInteg
 static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars, NSInteger commandCharLength, IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* commandsFound, NSInteger* numberCount)
 {
     *numberCount = 0;
+
     // if no command length, its completely pointless function,
     // so just return null and set commandsFound to 0, if we dont
     // we get a arithmetic error later on due to zero
@@ -153,6 +154,7 @@ static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars, 
                 }
                 dataStream->charBuffer = buffer;
             }
+
             // set the actual char against it
             if (currentChar == '.') {
                 isDecimal = true;
@@ -364,8 +366,9 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command, BOOL
             CGPathCloseSubpath(builder->path);
             break;
     }
-    if (command == 'm')
+    if (command == 'm') {
         builder->subpathStart = CGPathGetCurrentPoint(builder->path);
+    }
     if (builder->trackPointSubpaths && !builder->subpathHasLength && command != 'm') {
         builder->subpathHasLength = !CGPointEqualToPoint(builder->subpathStart, CGPathGetCurrentPoint(builder->path));
     }
@@ -496,7 +499,9 @@ static CGFloat IJSVGParseExtremeFloat(const char* start, const char* end)
 {
     static locale_t locale;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ locale = newlocale(LC_NUMERIC_MASK, "C", NULL); });
+    dispatch_once(&onceToken, ^{
+        locale = newlocale(LC_NUMERIC_MASK, "C", NULL);
+    });
     if (locale == NULL) {
         return NAN;
     }

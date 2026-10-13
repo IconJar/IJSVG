@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+#
+#  import_mdn_svg.py
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 10/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 """Import MDN SVG examples from a pinned checkout, excluding foreignObject.
 
 Usage: python3 Scripts/import_mdn_svg.py /path/to/mdn/content
@@ -163,7 +171,7 @@ def main():
         page_id = str(page.parent.relative_to(source))
         blocks = list(FENCES.finditer(text))
         headings = list(re.finditer(r"^(#{2,6}) (.+)$", text, re.M))
-        # EmbedLiveSample references a heading and includes that heading's subtree.
+        # EmbedLiveSample references a heading and includes the subtree under that heading.
         groups = []
         for embed in re.finditer(r'''EmbedLiveSample\(\s*["']([^"']+)["']''', text):
             name = embed[1].lower().replace(" ", "_")
@@ -190,7 +198,7 @@ def main():
             companions = [b for b in blocks if group and group[0] <= b.start() < group[1]]
             css = "\n".join(b[2] for b in companions if b[1].split()[0] == "css")
             if page_id == "tutorials/svg_from_scratch/svg_and_css":
-                # The later <use> variant shares the first live sample's CSS.
+                # The later <use> variant shares the CSS from the first live sample.
                 css = "\n".join(b[2] for b in blocks if b[1].split()[0] == "css")
             javascript = any(b[1].split()[0] in {"js", "javascript"} for b in companions)
             if not docs:

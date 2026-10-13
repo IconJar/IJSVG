@@ -27,6 +27,7 @@ extern float IJSVGFilterSample(const float* pixels, NSInteger width, NSInteger h
             }
         }
     }
+
     // Only the central four pixels participate. The other pixels catch
     // accidental sampling outside the primitive input region.
     CGRect region = CGRectMake(1, 1, 2, 2);

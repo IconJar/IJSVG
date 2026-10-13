@@ -148,6 +148,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         [IJSVGMaskImageCache() removeObjectForKey:_maskCacheKey];
         _maskCacheKey = nil;
     }
+
     // Filters can read the destination or another SVG, patterns can contain
     // those dependencies too. Keep their existing per draw behavior.
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:self];
@@ -340,17 +341,21 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 {
     CGFloat scale = MAX(paint.backingScaleFactor, 1.f);
     CGAffineTransform grid = CGAffineTransformMakeScale(scale, scale);
+
     // Keep raster coverage separate from the geometry used to position the mask.
     CGRect sourceBounds = CGRectIsNull(mask.maskingSourceBounds) ? mask.outerBoundingBox : mask.maskingSourceBounds;
+
     // Clip in raster source coordinates before allocation. ClipToMask below maps
     // source pixels by this translation, the declared mask region remains the
     // final clip. This avoids giant bitmaps for mostly out of region filters.
     CGRect sourceClip = CGRectOffset(mask.maskingClippingRect, mask.outerBoundingBox.origin.x - mask.maskingBoundingBox.origin.x, mask.outerBoundingBox.origin.y - mask.maskingBoundingBox.origin.y);
     sourceBounds = CGRectIntersection(sourceBounds, sourceClip);
+
     // A mask only contributes inside the destination clip. Map that clip back
     // to mask source coordinates before allocating its bitmap. Keep a sampling
     // halo and the existing pixel grid so fractional mask edges remain intact.
     CGRect destinationClip = CGContextGetClipBoundingBox(ctx);
+
     // Filters and patterns can read a backdrop outside this clip. The mask
     // caching eligibility check already excludes those dependent subtrees.
     if (mask->_maskCacheKey != nil && !CGRectIsInfinite(destinationClip) && !CGRectIsNull(destinationClip)) {
@@ -373,6 +378,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         image = CGImageRetain(cached.image);
     } else {
         BOOL alphaMask = [mask.sourceNode isKindOfClass:IJSVGMask.class] && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
+
         // A color image supplies its alpha to ClipToMask, a gray image supplies
         // luminance. Preserve RGB here so black alpha mask content stays opaque.
         CGColorSpaceRef colorSpace = alphaMask ? IJSVGDeviceRGBColorSpace() : IJSVGDeviceGrayColorSpace();
@@ -447,6 +453,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     if (_hidden || _opacity == 0.f || (_clipPath != NULL && CGPathIsEmpty(_clipPath)) || ![IJSVGFilterPaint shouldRenderPaintDuringCollection:self]) {
         return;
     }
+
     // Structural groups contribute no drawing state. Their children save and
     // restore their own state, so avoid a Quartz state stack entry per wrapper.
     // Restrict placement to an actual zero frame to preserve floating point
@@ -470,6 +477,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
                 CGContextClip(ctx);
             }
         }
+
         // Stop before allocating masks, filter sources or transparency layers.
         // Query after placement and clipping, geometry alone cannot cull effects
         // such as floods and blurs that paint outside their source paths.
@@ -479,7 +487,12 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         }
         CGContextSetBlendMode(ctx, _blendingMode);
         if (_maskPaint != nil) {
-            [IJSVGPaint clipContextWithMask:_maskPaint toPaint:self inContext:ctx drawingBlock:^{ [self performRenderInContext:ctx]; }];
+            [IJSVGPaint clipContextWithMask:_maskPaint
+                                    toPaint:self
+                                  inContext:ctx
+                               drawingBlock:^{
+                                   [self performRenderInContext:ctx];
+                               }];
         } else {
             [self performRenderInContext:ctx];
         }

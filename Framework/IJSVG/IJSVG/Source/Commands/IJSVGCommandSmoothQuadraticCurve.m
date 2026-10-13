@@ -36,6 +36,7 @@
             commandPoint = CGPointMake(-1 * (lastControlPoint.x) + 2 * (currentPoint.x), -1 * (lastControlPoint.y) + 2 * currentPoint.y);
         }
     }
+
     //    path.lastControlPoint = commandPoint
     if (type == kIJSVGCommandTypeAbsolute) {
         CGPathAddQuadCurveToPoint(path, NULL, commandPoint.x, commandPoint.y, params[0], params[1]);

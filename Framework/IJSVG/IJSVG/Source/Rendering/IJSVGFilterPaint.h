@@ -29,6 +29,7 @@
 // context.
 + (void)renderPaint:(IJSVGPaint*)paint inBitmapContext:(CGContextRef)context;
 + (BOOL)isRegisteredBitmapContext:(CGContextRef)context;
+
 // Start a separate background for a container that requests one.
 + (void)drawBackgroundForPaint:(IJSVGPaint*)paint context:(CGContextRef)context drawingBlock:(void (^)(CGContextRef))drawingBlock;
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint;

@@ -388,6 +388,7 @@
     NSString* imageMap = [NSString stringWithFormat:@"<feImage href='data:image/svg+xml;base64,%@' x='0' "
                                                     @"y='0' width='100%%' height='100%%' result='map'/>",
         encoded];
+
     // WebKit does not linearize the embedded image map in this case.
     // Equivalent flood regions verify the required linear channel values.
     NSString* floodMap = @"<feFlood x='75' y='0' width='250' height='75' flood-color='#ff8040' "

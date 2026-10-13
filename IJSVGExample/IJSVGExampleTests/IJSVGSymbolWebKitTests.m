@@ -150,7 +150,9 @@
     double error = ink ? difference / ink : 0;
     NSLog(@"WebKit symbol comparison %@: mean ink error %.4f (%lu pixels)", name, error, (unsigned long)ink);
     XCTAssertGreaterThan(ink, 10);
-    void (^assertPixels)(void) = ^{ XCTAssertLessThan(error, tolerance, @"%@ differs from WebKit; inspect attached PNGs", name); };
+    void (^assertPixels)(void) = ^{
+        XCTAssertLessThan(error, tolerance, @"%@ differs from WebKit; inspect attached PNGs", name);
+    };
     if (self.expectedDifference != nil) {
         XCTExpectFailureInBlock(self.expectedDifference, assertPixels);
     } else {

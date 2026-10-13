@@ -23,7 +23,9 @@
     if (svg == nil) {
         return nil;
     }
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGContextRef bitmap = [self newBitmapWithSize:size flipped:flipped];
     if (bitmap == NULL) {
         return nil;
@@ -80,6 +82,7 @@
                             bounds, space, @(radius.doubleValue * 64 / size), reference.boolValue ? bounds : @""];
                         [results addObject:[self renderDocument:document size:size flipped:flipped.boolValue]];
                     }
+
                     // Wide box filters approximate the Gaussian profile. Bound both
                     // worst pixel error and total error, including edges of the crop.
                     XCTAssertLessThanOrEqual([self maximumDifference:results[0] other:results[1]], 8);
@@ -199,6 +202,7 @@
                                "opacity='.51'/></g></g>",
             (unsigned long)(index * 11), (unsigned long)(index * 17), (unsigned long)index, (unsigned long)width];
     }
+
     // A canvas sized clip selects the independent renderer without changing
     // pixels.
     return [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'>"
@@ -268,6 +272,7 @@
                 for (NSUInteger y = 0; y < height; y++) {
                     memcpy((float*)first.mutableBytes + ((y + padding) * paddedWidth + padding) * 4, samples + y * width * 4, width * 4 * sizeof(float));
                 }
+
                 // An intentionally simple reference retains the entire halo and
                 // computes each box independently, without running sums.
                 for (NSUInteger stage = 0; stage < 3; stage++) {

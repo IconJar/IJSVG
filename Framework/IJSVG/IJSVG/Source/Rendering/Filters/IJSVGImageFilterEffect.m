@@ -34,6 +34,7 @@
     if (bitmap == NULL) {
         return CIImage.emptyImage;
     }
+
     // Allocate only the visible region while keeping pixels aligned.
     CGContextTranslateCTM(bitmap, -bounds.origin.x, -bounds.origin.y);
     CGContextClipToRect(bitmap, region);
@@ -59,7 +60,9 @@
         if (vector != nil) {
             CGRect viewBox = (CGRect) { CGPointZero, vector.viewBox.size };
             CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);
-            IJSVGContextDrawViewBox(bitmap, viewBox, (CGRect) { CGPointZero, region.size }, primitive.viewBoxAlignment, primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) { [vector.SVG drawInRect:viewBox context:bitmap]; });
+            IJSVGContextDrawViewBox(bitmap, viewBox, (CGRect) { CGPointZero, region.size }, primitive.viewBoxAlignment, primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
+                [vector.SVG drawInRect:viewBox context:bitmap];
+            });
         }
         CGImageRef image = vector == nil ? [primitive.image CGImageForProposedRect:NULL context:nil hints:nil] : NULL;
         if (image != NULL) {

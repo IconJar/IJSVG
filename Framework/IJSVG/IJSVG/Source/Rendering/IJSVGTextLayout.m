@@ -284,6 +284,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         character->style = style;
         character->x = character->y = NAN;
         character->scale = 1;
+
         // Wait for more text before keeping a space at the end.
         if (collapse) {
             _pendingSpace = record;
@@ -316,7 +317,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     }
     NSString* string = [[NSString alloc] initWithCharacters:storage.bytes length:storage.length / sizeof(unichar)];
     NSMutableIndexSet* starts = [[NSMutableIndexSet alloc] init];
-    [string enumerateSubstringsInRange:NSMakeRange(0, string.length) options:NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired usingBlock:^(NSString* substring, NSRange range, NSRange enclosingRange, BOOL* stop) { [starts addIndex:range.location]; }];
+    [string enumerateSubstringsInRange:NSMakeRange(0, string.length)
+                               options:NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired
+                            usingBlock:^(NSString* substring, NSRange range, NSRange enclosingRange, BOOL* stop) {
+                                [starts addIndex:range.location];
+                            }];
     IJSVGTextCharacter* characters = NULL;
     NSUInteger count = 0;
     NSUInteger capacity = 0;
@@ -376,7 +381,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     NSRange range = [self rangeForNode:node];
     static NSArray<NSString*>* keys;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ keys = @[ IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeRotate ]; });
+    dispatch_once(&onceToken, ^{
+        keys = @[ IJSVGAttributeX, IJSVGAttributeY, IJSVGAttributeDX, IJSVGAttributeDY, IJSVGAttributeRotate ];
+    });
     static const IJSVGNodeAttribute attributes[] = { IJSVGNodeAttributeX, IJSVGNodeAttributeY, IJSVGNodeAttributeDX, IJSVGNodeAttributeDY, IJSVGNodeAttributeRotate };
     for (NSUInteger index = 0; index < keys.count; index++) {
         IJSVGNodeAttribute attribute = attributes[index];
@@ -500,6 +507,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
             return;
     }
     [text appendAttributedString:[[NSAttributedString alloc] initWithString:controls attributes:attributes]];
+
     // Added bidi controls affect shaping without taking an SVG character index.
     NSUInteger missing = NSNotFound;
     for (NSUInteger index = 0; index < controls.length; index++) {
@@ -573,6 +581,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         NSRange stringRange = NSMakeRange(first->utf16, utf16End - first->utf16);
         substring = [[attributed attributedSubstringFromRange:stringRange] mutableCopy];
     }
+
     // Chunks with the same direction can share their paragraph settings.
     NSUInteger directionIndex = first->style.rtl ? 1 : 0;
     id paragraph = _paragraphStyles[directionIndex];
@@ -598,6 +607,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         CTRunRef run = (CTRunRef)CFArrayGetValueAtIndex(runs, index);
         IJSVGTextAppendGlyphRun(run, _characters, self.glyphs, self.glyphFonts, mapStart, substring.length, mapping, origin);
     }
+
     // Glyph positions cover normal characters directly. Only characters inside a
     // cluster need a caret lookup, querying every index repeatedly walks the
     // line.
@@ -826,6 +836,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
             if (metrics == nil) {
                 CGPathRef path = node.textPath && self.pathResolver ? self.pathResolver(node.textPath) : NULL;
                 CGPathRef previousPath = (__bridge CGPathRef)previousResolvedPath;
+
                 // Separate references can resolve to the same path geometry.
                 if (path != NULL && previousPath != NULL && CGPathEqualToPath(path, previousPath)) {
                     metrics = previousMetrics;
@@ -876,6 +887,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     group.mask = node.mask;
     group.type = IJSVGNodeTypeGroup;
     group.parentNode = nil;
+
     // The renderer applies the root text elements effects exactly once.
     if (node == self.root) {
         group.transforms = @[];
@@ -917,6 +929,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         if (c->hidden || c->style.size == 0) {
             continue;
         }
+
         // Resume parent content after a span in document paint order.
         if (previousOwner != c->owner) {
             IJSVGGroup* group = [self geometryGroupForNode:c->owner];
@@ -944,11 +957,13 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
             }
             outlines = (__bridge CFMutableDictionaryRef)cached;
         }
+
         // Add one so glyph zero still has a nonzero cache key.
         const void* key = (const void*)((uintptr_t)glyph->glyph + 1);
         id outline = (__bridge id)CFDictionaryGetValue(outlines, key);
         if (!outline) {
             CGPathRef cgPath = CTFontCreatePathForGlyph(glyph->font, glyph->glyph, NULL);
+
             // Remember missing outlines too, such as spaces.
             outline = cgPath ? CFBridgingRelease(cgPath) : NSNull.null;
             CFDictionarySetValue(outlines, key, (__bridge const void*)outline);
@@ -961,10 +976,12 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         if (outline != NSNull.null) {
             IJSVGTextAppendGlyphPath(destination, (__bridge CGPathRef)outline, transform);
         }
+
         // Separate decoration geometry prevents opposite winding from cutting
         // holes in glyphs. Spaces have decorations even without an outline.
         if (decorationDestination != NULL && ![decoratedCharacters containsIndex:glyph->character]) {
             [decoratedCharacters addIndex:glyph->character];
+
             // Decorations span the cluster once, without combining glyph offsets.
             IJSVGTextGlyph decorationGlyph = *glyph;
             decorationGlyph.offset = CGPointZero;
@@ -1000,6 +1017,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         maximumRunLength = MAX(maximumRunLength, runLength);
     }
     [map setLength:unitCount * sizeof(NSUInteger)];
+
     // Map Core Text string offsets back to our character records.
     NSUInteger* mapping = map.mutableBytes;
     __attribute__((objc_precise_lifetime)) NSMutableData* codeUnitStorage = [NSMutableData dataWithLength:maximumRunLength * sizeof(unichar)];
@@ -1059,7 +1077,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
                 }
             }
         }
-        [smallCaps enumerateRangesUsingBlock:^(NSRange range, BOOL* stop) { [attributed addAttribute:(__bridge NSString*)kCTFontAttributeName value:first->style.smallCapsFont range:range]; }];
+        [smallCaps enumerateRangesUsingBlock:^(NSRange range, BOOL* stop) {
+            [attributed addAttribute:(__bridge NSString*)kCTFontAttributeName value:first->style.smallCapsFont range:range];
+        }];
         if (first->style.wordSpacing != 0) {
             // Include word spacing in both typesetting and final glyph advances.
             NSString* kernKey = (__bridge NSString*)kCTKernAttributeName;
@@ -1239,6 +1259,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     }
     _positionData = positions;
     _rotationData = rotations;
+
     // Only immutable geometry and diagnostic metrics survive paint construction.
     _root = nil;
     free(_characters);

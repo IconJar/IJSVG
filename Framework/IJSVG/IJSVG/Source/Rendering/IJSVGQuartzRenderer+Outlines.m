@@ -84,7 +84,9 @@ static NSUInteger IJSVGOutlineWorkerCount(NSUInteger count)
 {
     static NSUInteger limit;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ limit = MAX(1, MIN((NSUInteger)NSProcessInfo.processInfo.activeProcessorCount, 8)); });
+    dispatch_once(&once, ^{
+        limit = MAX(1, MIN((NSUInteger)NSProcessInfo.processInfo.activeProcessorCount, 8));
+    });
     return !IJSVGOutlineWorkerActive && count >= 2 ? MIN(count, limit) : 1;
 }
 
@@ -404,6 +406,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
             }
         }
     }
+
     // Prioritize a background rectangle without sorting or copying the child
     // list.
     for (NSUInteger index = 0; index < children.count; index++) {
@@ -423,6 +426,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if (paint.hidden || paint.opacity <= 0 || [self outlinePaintIsCovered:paint transform:transform paths:paths]) {
         return YES;
     }
+
     // Structural wrappers can share one union with their parent.
     BOOL structural = paint.class == IJSVGGroupPaint.class || paint.class == IJSVGTransformPaint.class;
     if (structural && paint.clipPath == NULL && paint.maskPaint == nil && paint.blendingMode <= kCGBlendModeLuminosity) {
@@ -430,6 +434,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     }
     if (pending != nil && [paint isKindOfClass:IJSVGFilterPaint.class]) {
         NSArray<IJSVGFilterPrimitive*>* primitives = ((IJSVGFilterPaint*)paint).filterMetadata.primitives;
+
         // Containment pays for itself on expanding filters, not cheap inner
         // shadows.
         if (primitives.count == 1 && (primitives[0].type == IJSVGNodeTypeFilterGaussianBlur || primitives[0].type == IJSVGNodeTypeFilterDropShadow)) {
@@ -507,6 +512,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
             }
         }
     };
+
     // Resolve the paint tree before workers expand independent filter sources.
     IJSVGOutlinePerformWork(workers, expand);
     for (IJSVGOutlineFilterPlacement* item in pending) {
@@ -763,6 +769,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
         }
         cached = path == NULL ? NSNull.null : CFBridgingRelease(path);
         cache[key] = cached;
+
         // Keep separate mode entries while sharing identical resolved coverage.
         if ([self outlineFilterModesSharePaint]) {
             cache[@(key.unsignedIntegerValue ^ 2)] = cached;

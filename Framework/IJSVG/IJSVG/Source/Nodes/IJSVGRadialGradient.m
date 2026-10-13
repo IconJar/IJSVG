@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVGNodeParsing.h>
@@ -38,30 +39,39 @@
 
 + (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGRadialGradient*)gradient
 {
-    [self parseGeometryFromAttributes:element.attributes gradient:gradient];
+    IJSVGXMLDocument* document = IJSVGXMLDocumentForElementAttributes(element);
+    [self parseGeometryFromAttributes:IJSVGXMLAttributes(IJSVGXMLRoot(document)) gradient:gradient];
     [gradient parseColorStops];
+    IJSVGXMLDocumentDestroy(document);
 }
 
-+ (void)parseGeometryFromAttributes:(NSArray<NSXMLNode*>*)attributes gradient:(IJSVGRadialGradient*)gradient
++ (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGRadialGradient*)gradient
 {
     NSString* values[6] = { nil };
-    for (NSXMLNode* attribute in attributes) {
-        NSString* name = attribute.name;
-        NSUInteger index = NSNotFound;
-        if ([name isEqualToString:IJSVGAttributeCX])
-            index = 0;
-        else if ([name isEqualToString:IJSVGAttributeCY])
-            index = 1;
-        else if ([name isEqualToString:IJSVGAttributeR])
-            index = 2;
-        else if ([name isEqualToString:IJSVGAttributeFX])
-            index = 3;
-        else if ([name isEqualToString:IJSVGAttributeFY])
-            index = 4;
-        else if ([name isEqualToString:IJSVGAttributeFR])
-            index = 5;
-        if (index != NSNotFound)
-            values[index] = attribute.stringValue;
+    IJSVGXMLAttributeList attributeIterator = attributes;
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributeIterator)) {
+        switch (attribute->identifier) {
+            case IJSVGNodeAttributeCX:
+                values[0] = IJSVGXMLAttributeValue(attribute);
+                break;
+            case IJSVGNodeAttributeCY:
+                values[1] = IJSVGXMLAttributeValue(attribute);
+                break;
+            case IJSVGNodeAttributeR:
+                values[2] = IJSVGXMLAttributeValue(attribute);
+                break;
+            case IJSVGNodeAttributeFX:
+                values[3] = IJSVGXMLAttributeValue(attribute);
+                break;
+            case IJSVGNodeAttributeFY:
+                values[4] = IJSVGXMLAttributeValue(attribute);
+                break;
+            case IJSVGNodeAttributeFR:
+                values[5] = IJSVGXMLAttributeValue(attribute);
+                break;
+            default:
+                break;
+        }
     }
     IJSVGUnitLength* lengths[6] = { nil };
     for (NSUInteger index = 0; index < 6; index++) {
@@ -129,6 +139,7 @@
         CGContextRestoreGState(ctx);
         return;
     }
+
     // draw the gradient
     CGGradientDrawingOptions options = kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation;
     CGContextDrawRadialGradient(ctx, self.CGGradient, gradientEndPoint, focalRadius, gradientStartPoint, radius, options);

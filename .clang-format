@@ -1,5 +1,9 @@
-# WebKit formatting with multiline function and method bodies.
-# Format: xcrun clang-format -i path/to/file.m
+# WebKit formatting with explicit control-flow braces and multiline bodies and enums.
+# Format: bash IJSVGExample/Scripts/format.sh
 BasedOnStyle: WebKit
 AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+AllowShortLambdasOnASingleLine: None
+AllowShortEnumsOnASingleLine: false
 IndentCaseLabels: true
+InsertBraces: true

@@ -54,7 +54,9 @@
     }
     IJSVG* svg = IJSVGTestSVGObject(string);
     XCTAssertNotNil(svg);
-    svg.renderingBackingScaleHelper = ^CGFloat { return backingScale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return backingScale;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     XCTAssertTrue(space != NULL);
     if (space == NULL) {
@@ -160,6 +162,7 @@
     }
     XCTAssertGreaterThan(partialPixels, 0u);
     XCTAssertGreaterThan(shadedPixels, 0u);
+
     // Allow a few 8 bit levels through the CI colour conversions and blends.
     // The old source over path changes edge alpha by over 120 levels at 32px.
     XCTAssertLessThanOrEqual(maximumAlphaError * 255, 4.01);
@@ -259,6 +262,7 @@
         hardAlpha.result = primitives[1].result;
     } else {
         XCTAssertEqualObjects(change, @"incompleteGraph");
+
         // Retaining just the first hard alpha primitive is a valid general
         // filter, not the complete inner shadow pattern.
         [filter removeChildren:primitives];

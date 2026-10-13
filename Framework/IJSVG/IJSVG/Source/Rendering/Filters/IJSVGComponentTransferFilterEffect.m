@@ -20,6 +20,7 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
 {
     const IJSVGComponentTransferFunction* functions = configuration.bytes;
     const double* values = tables.bytes;
+
     // Process small groups of pixels to keep memory use low.
     NSInteger capacity = MIN(w * h, 4096);
     NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 3 * sizeof(double)];
@@ -143,6 +144,7 @@ static BOOL IJSVGTransferPolynomialCoefficients(IJSVGComponentTransferFunction f
         output = [output imageByApplyingFilter:@"CIColorClamp" withInputParameters:@{ @"inputMinComponents" : [CIVector vectorWithX:0 Y:0 Z:0 W:0], @"inputMaxComponents" : [CIVector vectorWithX:1 Y:1 Z:1 W:1] }];
         return [context imageFromPrimitiveColorSpace:output];
     }
+
     // A shared RGB exponent can use one gamma adjustment.
     // Apply the remaining color changes and opacity separately.
     if (functions[0].type == IJSVGFilterTransferTypeGamma && functions[1].type == IJSVGFilterTransferTypeGamma && functions[2].type == IJSVGFilterTransferTypeGamma && functions[0].exponent > 0 && functions[0].exponent == functions[1].exponent && functions[0].exponent == functions[2].exponent && (functions[3].type == IJSVGFilterTransferTypeIdentity || functions[3].type == IJSVGFilterTransferTypeLinear)) {

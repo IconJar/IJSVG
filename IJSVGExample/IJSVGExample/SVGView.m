@@ -15,7 +15,9 @@
 {
     if ((self = [super initWithFrame:frameRect]) != nil) {
         svg = [self svg];
-        svg.renderingBackingScaleHelper = ^CGFloat { return NSScreen.mainScreen.backingScaleFactor; };
+        svg.renderingBackingScaleHelper = ^CGFloat {
+            return NSScreen.mainScreen.backingScaleFactor;
+        };
     }
     return self;
 }

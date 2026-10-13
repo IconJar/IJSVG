@@ -13,6 +13,8 @@
 
 @interface IJSVGShapePaint : IJSVGPaint
 
+// A simple solid fill shares this shape and replays the former child placement.
+@property (nonatomic, assign) BOOL directFill;
 @property (nonatomic, strong) IJSVGGradient* fillGradient;
 @property (nonatomic, assign) CGPathRef path;
 @property (nonatomic, assign) BOOL hasPointSubpaths;
@@ -20,6 +22,7 @@
 @property (nonatomic, assign) CGColorRef strokeColor;
 @property (nonatomic, assign) CGFloat lineWidth;
 @property (nonatomic, assign) BOOL nonScalingStroke;
+
 // Linear map from local geometry to the outer SVG viewport (excludes backing
 // scale).
 @property (nonatomic, assign) CGAffineTransform strokeHostTransform;
@@ -29,6 +32,7 @@
 @property (nonatomic, copy) NSArray<NSNumber*>* lineDashPattern;
 @property (nonatomic, assign) CGFloat lineDashPhase;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
+
 // Resolved fill, stroke paint, and stroke geometry shared with vector export.
 @property (nonatomic, strong) IJSVGPaint* fillPaint;
 @property (nonatomic, strong) IJSVGPaint* strokePaint;

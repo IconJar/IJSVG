@@ -213,11 +213,19 @@
         declarations[[NSString stringWithFormat:@"--size%lu", (unsigned long)index]] = [NSString stringWithFormat:@"calc(var(--base, 10px) + %lupx)", (unsigned long)index];
     }
     declarations[@"--base"] = @"20px";
-    [self benchmark:@"custom property scope resolution" iterations:100 work:^NSUInteger { return IJSVGCSSResolveCustomProperties(declarations, nil).count; }];
+    [self benchmark:@"custom property scope resolution"
+         iterations:100
+               work:^NSUInteger {
+                   return IJSVGCSSResolveCustomProperties(declarations, nil).count;
+               }];
     NSDictionary<NSString*, id>* properties = IJSVGCSSResolveCustomProperties(declarations, nil);
     IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:@"width:var(--size20);height:var(--missing,var(--size30)"
                                                                          @");fill:rgb(var(--red,128),0,0)"];
-    [self benchmark:@"variable style resolution" iterations:1000 work:^NSUInteger { return [style styleByResolvingVariables:properties].properties.count; }];
+    [self benchmark:@"variable style resolution"
+         iterations:1000
+               work:^NSUInteger {
+                   return [style styleByResolvingVariables:properties].properties.count;
+               }];
 }
 
 - (void)testPathStyleBenchmark
@@ -228,7 +236,11 @@
     }
     NSString* style = [NSString stringWithFormat:@"d:path('%@');fill:red", path];
     XCTAssertEqualObjects(IJSVGCSSPathDataFromString([[IJSVGStyleSheetStyle parseStyleString:style] property:@"d"]), path);
-    [self benchmark:@"path declaration validation" iterations:1000 work:^NSUInteger { return [IJSVGStyleSheetStyle parseStyleString:style].properties.count; }];
+    [self benchmark:@"path declaration validation"
+         iterations:1000
+               work:^NSUInteger {
+                   return [IJSVGStyleSheetStyle parseStyleString:style].properties.count;
+               }];
 }
 
 - (void)testComplexStyleBenchmarks
@@ -283,7 +295,11 @@
                    }
                    return checksum;
                }];
-    [self benchmark:@"comment processing" iterations:100 work:^NSUInteger { return IJSVGStyleSheetStringByRemovingCSSComments(stylesheet).length; }];
+    [self benchmark:@"comment processing"
+         iterations:100
+               work:^NSUInteger {
+                   return IJSVGStyleSheetStringByRemovingCSSComments(stylesheet).length;
+               }];
     [self benchmark:@"stylesheet without comments"
          iterations:8
                work:^NSUInteger {
@@ -449,7 +465,11 @@
                                                               @"scale(.5,2) matrix(1 0 0 1 2 3)"]
                        .count;
                }];
-    [self benchmark:@"shared clip functions" iterations:3000 work:^NSUInteger { return [IJSVGClipPath clipPathWithBasicShape:@"ellipse(25% 40% at 30% 60%) fill-box"] != nil; }];
+    [self benchmark:@"shared clip functions"
+         iterations:3000
+               work:^NSUInteger {
+                   return [IJSVGClipPath clipPathWithBasicShape:@"ellipse(25% 40% at 30% 60%) fill-box"] != nil;
+               }];
 }
 
 - (void)testDecimalParsingMatchesGeneralConversion
@@ -709,8 +729,16 @@
 
 - (void)testDeclarationAllocationBenchmark
 {
-    [self benchmark:@"pending font declarations" iterations:3000 work:^NSUInteger { return [IJSVGStyleSheetStyle parseStyleString:@"font:var(--font)"].properties.count; }];
-    [self benchmark:@"keyword declarations" iterations:3000 work:^NSUInteger { return [IJSVGStyleSheetStyle parseStyleString:@"transform-box:FILL-BOX;stroke-dasharray:NONE"].properties.count; }];
+    [self benchmark:@"pending font declarations"
+         iterations:3000
+               work:^NSUInteger {
+                   return [IJSVGStyleSheetStyle parseStyleString:@"font:var(--font)"].properties.count;
+               }];
+    [self benchmark:@"keyword declarations"
+         iterations:3000
+               work:^NSUInteger {
+                   return [IJSVGStyleSheetStyle parseStyleString:@"transform-box:FILL-BOX;stroke-dasharray:NONE"].properties.count;
+               }];
 }
 
 - (void)testEscapedFunctionNameBoundaries
@@ -737,7 +765,11 @@
 
 - (void)testNumberListBenchmark
 {
-    [self benchmark:@"number list utilities" iterations:3000 work:^NSUInteger { return [IJSVGUtils numbersFromString:@"10,20 -30.5 40e-2 .5 6. 7 8 9 10"].count; }];
+    [self benchmark:@"number list utilities"
+         iterations:3000
+               work:^NSUInteger {
+                   return [IJSVGUtils numbersFromString:@"10,20 -30.5 40e-2 .5 6. 7 8 9 10"].count;
+               }];
 }
 
 - (void)testFontFamilyParsingBenchmark
@@ -746,7 +778,9 @@
          iterations:3000
                work:^NSUInteger {
                    __block NSUInteger count = 0;
-                   IJSVGStyleSheetEnumerateFontFamilies(@"Arial, 'Times New Roman', Helvetica, serif", ^(NSString* family, BOOL quoted) { count += family.length != 0; });
+                   IJSVGStyleSheetEnumerateFontFamilies(@"Arial, 'Times New Roman', Helvetica, serif", ^(NSString* family, BOOL quoted) {
+                       count += family.length != 0;
+                   });
                    return count;
                }];
 }
@@ -755,7 +789,11 @@
 {
     IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:@"font:var(--font)"];
     NSDictionary<NSString*, id>* properties = @{ @"--font" : @"italic bold 20px/1.5 Arial" };
-    [self benchmark:@"variable font resolution" iterations:1000 work:^NSUInteger { return [style styleByResolvingVariables:properties].properties.count; }];
+    [self benchmark:@"variable font resolution"
+         iterations:1000
+               work:^NSUInteger {
+                   return [style styleByResolvingVariables:properties].properties.count;
+               }];
 }
 
 - (void)testEscapedFunctionBenchmark

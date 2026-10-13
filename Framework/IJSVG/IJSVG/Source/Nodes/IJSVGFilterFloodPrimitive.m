@@ -41,7 +41,9 @@
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [NSSet setWithArray:@[ IJSVGAttributeFloodColor, IJSVGAttributeFloodOpacity ]]; });
+    dispatch_once(&once, ^{
+        names = [NSSet setWithArray:@[ IJSVGAttributeFloodColor, IJSVGAttributeFloodOpacity ]];
+    });
     return names;
 }
 

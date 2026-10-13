@@ -37,6 +37,7 @@
 - (void)dealloc
 {
     IJSVGThreadManager* threadManager = IJSVGThreadManager.currentManager;
+
     // tell the thread manager we are done with
     [threadManager remove:self];
 }
@@ -316,6 +317,7 @@
     }
     CGFloat horizontal = MAX(CGRectGetMidX(viewport) - CGRectGetMinX(bounds), CGRectGetMaxX(bounds) - CGRectGetMidX(viewport));
     CGFloat vertical = MAX(CGRectGetMidY(viewport) - CGRectGetMinY(bounds), CGRectGetMaxY(bounds) - CGRectGetMidY(viewport));
+
     // Divide before multiplying to avoid overflow for very large coordinates.
     CGFloat scale = MIN(1.f, MIN((viewport.size.width / 2.f) / horizontal, (viewport.size.height / 2.f) / vertical));
     if (!isfinite(scale) || scale <= 0.f || scale >= 1.f - 1e-12) {
@@ -345,6 +347,7 @@
 - (void)fitArtworkToViewBox:(BOOL)enabled includingFilters:(BOOL)includingFilters ignoringNodesOutsideViewBox:(BOOL)ignoreOutside
 {
     BOOL needsReclassification = _artworkFittingHiddenNodes.count != 0 || _artworkFittingGroup.transforms.count != 0;
+
     // Undo our visibility changes before measuring the original artwork again.
     for (IJSVGNode* node in _artworkFittingHiddenNodes) {
         node.shouldRender = YES;
@@ -389,6 +392,7 @@
                 [root addChild:_artworkFittingGroup];
                 _artworkFittingRoot = root;
             }
+
             // Preserve full precision without formatting and parsing an SVG string.
             IJSVGTransform* fitting = [[IJSVGTransform alloc] init];
             fitting.command = IJSVGTransformCommandMatrix;
@@ -592,6 +596,7 @@
 - (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
 {
     CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
+
     // Make suer we actually have a size, if not, just return nil.
     if (isnan(ogSize.width) || isnan(ogSize.height)) {
         return nil;
@@ -655,7 +660,9 @@
 
     // set the scale
     __weak NSView* weakView = view;
-    self.renderingBackingScaleHelper = ^CGFloat { return weakView.window.screen.backingScaleFactor; };
+    self.renderingBackingScaleHelper = ^CGFloat {
+        return weakView.window.screen.backingScaleFactor;
+    };
 }
 
 - (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize

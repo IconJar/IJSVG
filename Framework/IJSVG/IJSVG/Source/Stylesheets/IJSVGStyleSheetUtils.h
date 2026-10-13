@@ -11,9 +11,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(uint8_t, IJSVGMediaType) { IJSVGMediaTypeAll,
+typedef NS_ENUM(uint8_t, IJSVGMediaType) {
+    IJSVGMediaTypeAll,
     IJSVGMediaTypeScreen,
-    IJSVGMediaTypePrint };
+    IJSVGMediaTypePrint
+};
 
 typedef struct {
     CGSize viewport;

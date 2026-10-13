@@ -61,6 +61,7 @@
     IJSVGContextDrawViewBox(ctx, viewBox, IJSVGPaintGetBoundingBoxBounds(self), self.viewBoxAlignment, self.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
         // Multiply the SVG drawing scale by the number of pixels per point.
         CGFloat backingScale = MAX(round((self.backingScaleFactor * MIN(scale[0], scale[1])) * 2.f) / 2.f, .5f);
+
         // The resolved paints are reused between draws. Only walk them when
         // viewport scale, backing scale or quality actually changes.
         if (!self->_hasPropagatedScale || self->_propagatedScale != backingScale || self->_propagatedQuality != self.renderQuality) {

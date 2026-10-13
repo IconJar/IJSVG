@@ -104,7 +104,9 @@ static NSArray<NSArray<NSNumber*>*>* IJSVGRegressionPathElements(CGPathRef path)
         body];
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:xml];
     [self require:svg != nil message:@"Could not parse render fixture"];
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef bitmap = CGBitmapContextCreate(NULL, 400, 200, 8, 1600, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
@@ -180,6 +182,7 @@ static NSDictionary<NSString*, IJSVGTextRegressionCase>* IJSVGTextRegressionCase
                                                                                      @"y='60' text-decoration='%@'>A B</text>",
                                                               decoration]];
                 CGPathRef geometry = [context decoration:result];
+
                 // This regression checks coverage across whitespace. Decoration
                 // placement is checked separately against WebKit, Core Text
                 // underline metrics are not the renderer decoration positions.

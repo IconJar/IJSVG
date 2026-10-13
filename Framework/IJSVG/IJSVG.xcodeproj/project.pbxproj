@@ -188,6 +188,8 @@
 		594688BD307EA243008E2E8A /* IJSVGGradientStopData.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688BC307EA243008E2E8A /* IJSVGGradientStopData.m */; };
 		594688BF307EA244008E2E8A /* IJSVGGradientStops.h in Headers */ = {isa = PBXBuildFile; fileRef = 594688BE307EA244008E2E8A /* IJSVGGradientStops.h */; };
 		594688C1307EA244008E2E8A /* IJSVGGradientStops.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688C0307EA244008E2E8A /* IJSVGGradientStops.m */; };
+		594688C3307ED1FA008E2E8A /* IJSVGXML.h in Headers */ = {isa = PBXBuildFile; fileRef = 594688C2307ED1FA008E2E8A /* IJSVGXML.h */; };
+		594688C5307ED1FA008E2E8A /* IJSVGXML.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688C4307ED1FA008E2E8A /* IJSVGXML.m */; };
 		594A10DA248D7C90001A3181 /* NSImage+IJSVGAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 594A10D8248D7C90001A3181 /* NSImage+IJSVGAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		594A10DB248D7C90001A3181 /* NSImage+IJSVGAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 594A10D9248D7C90001A3181 /* NSImage+IJSVGAdditions.m */; };
 		594CF55F238FF462009B251B /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 594CF55E238FF462009B251B /* AppKit.framework */; };
@@ -540,6 +542,8 @@
 		594688BC307EA243008E2E8A /* IJSVGGradientStopData.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientStopData.m; sourceTree = "<group>"; };
 		594688BE307EA244008E2E8A /* IJSVGGradientStops.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGGradientStops.h; sourceTree = "<group>"; };
 		594688C0307EA244008E2E8A /* IJSVGGradientStops.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGGradientStops.m; sourceTree = "<group>"; };
+		594688C2307ED1FA008E2E8A /* IJSVGXML.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGXML.h; sourceTree = "<group>"; };
+		594688C4307ED1FA008E2E8A /* IJSVGXML.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGXML.m; sourceTree = "<group>"; };
 		594A10D8248D7C90001A3181 /* NSImage+IJSVGAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSImage+IJSVGAdditions.h"; sourceTree = "<group>"; };
 		594A10D9248D7C90001A3181 /* NSImage+IJSVGAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSImage+IJSVGAdditions.m"; sourceTree = "<group>"; };
 		594CF46F238FF38E009B251B /* IJSVG.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = IJSVG.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -821,6 +825,8 @@
 				59B649D730758ADA0004EFC2 /* IJSVGParserTextUtils.m */,
 				593199AB2FF06EA60006D378 /* IJSVGParserUtils.h */,
 				593199AD2FF06EDF0006D378 /* IJSVGParserUtils.m */,
+				594688C2307ED1FA008E2E8A /* IJSVGXML.h */,
+				594688C4307ED1FA008E2E8A /* IJSVGXML.m */,
 			);
 			path = Parsing;
 			sourceTree = "<group>";
@@ -1245,6 +1251,7 @@
 				5946880F307E8074008E2E8A /* IJSVGFilterMergeNodePrimitive.h in Headers */,
 				59EB760323905F7300F5AE63 /* IJSVGNode.h in Headers */,
 				594688A5307E8481008E2E8A /* IJSVGViewportNode.h in Headers */,
+				594688C3307ED1FA008E2E8A /* IJSVGXML.h in Headers */,
 				59CEBB13307B98FE0051BE00 /* IJSVGQuartzRenderer+Outlines.h in Headers */,
 				594385A1306BFEB0006A5F63 /* IJSVGFilter.h in Headers */,
 				594688BF307EA244008E2E8A /* IJSVGGradientStops.h in Headers */,
@@ -1600,6 +1607,7 @@
 				59EB764023905F7300F5AE63 /* IJSVGExporterPathInstruction.m in Sources */,
 				5946888D307E808A008E2E8A /* IJSVGTextSpan.m in Sources */,
 				597CE1D130796A180026E325 /* IJSVGMarker.m in Sources */,
+				594688C5307ED1FA008E2E8A /* IJSVGXML.m in Sources */,
 				59EB75FE23905F7300F5AE63 /* IJSVGStyle.m in Sources */,
 				5943860E306C3E5A006A5F63 /* IJSVGFilterEffect.m in Sources */,
 				59468859307E8084008E2E8A /* IJSVGPolygon.m in Sources */,

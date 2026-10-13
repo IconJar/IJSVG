@@ -54,7 +54,9 @@ static NSData* IJSVGSmallBlurWeights(CGFloat sigma)
         CIImage* stripe = [CIImage imageWithBitmapData:pixels bytesPerRow:side * sizeof(float) size:CGSizeMake(side, side) format:kCIFormatAf colorSpace:NULL];
         CIImage* blurred = [stripe imageByApplyingFilter:@"CIGaussianBlur" withInputParameters:@ { kCIInputRadiusKey : key }];
         NSMutableData* weights = [NSMutableData dataWithLength:side * sizeof(float)];
-        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) { [context render:blurred toBitmap:weights.mutableBytes rowBytes:side * sizeof(float) bounds:CGRectMake(0, radius, side, 1) format:kCIFormatAf colorSpace:NULL]; }];
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+            [context render:blurred toBitmap:weights.mutableBytes rowBytes:side * sizeof(float) bounds:CGRectMake(0, radius, side, 1) format:kCIFormatAf colorSpace:NULL];
+        }];
         float* samples = weights.mutableBytes;
         double total = 0;
         for (NSUInteger i = 0; i < side; i++) {
@@ -131,8 +133,9 @@ static BOOL IJSVGFilterResultIsAlphaOnly(IJSVGFilterPrimitive* primitive, BOOL i
             return input && other;
         case IJSVGNodeTypeFilterColorMatrix: {
             NSData* coefficients = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive][@"matrix"];
-            if (coefficients.length != 20 * sizeof(double))
+            if (coefficients.length != 20 * sizeof(double)) {
                 return NO;
+            }
             const double* matrix = coefficients.bytes;
             for (NSUInteger row = 0; row < 3; row++) {
                 for (NSUInteger column = 0; column < 5; column++) {
@@ -245,6 +248,7 @@ static NSData* IJSVGFilterBlurPixelsForBitmap(CGContextRef bitmap, CGRect region
     for (NSUInteger y = 0; y < height; y++) {
         for (NSUInteger x = 0; x < width; x++) {
             float coverage = IJSVGSmallPixelCoverage(x, y, height, region);
+
             // SourceGraphic is cropped once. The optional transparent blend
             // introduces another primitive crop, including fractional coverage.
             if (sourceCrops == 2) {
@@ -309,6 +313,7 @@ static CGImageRef IJSVGFilterNewWhiteAlphaImage(CGContextRef bitmap, CGRect sour
     uint8_t* destination = CGBitmapContextGetData(output);
     NSUInteger sourceStride = CGBitmapContextGetBytesPerRow(bitmap);
     NSUInteger outputStride = CGBitmapContextGetBytesPerRow(output);
+
     // Crop coverage varies only at the boundary. Compute columns once and
     // rows once, leaving the interior as a byte copy with replicated alpha.
     NSMutableData* columns = [NSMutableData dataWithLength:width * sizeof(float)];
@@ -442,6 +447,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
 - (NSDictionary<NSString*, CIImage*>*)sourcesForImage:(CIImage*)source region:(CGRect)filterRegion context:(IJSVGFilterContext*)renderingContext
 {
     IJSVGFilterInputs inputNames = self.filterInputs;
+
     // Transparent inputs still need bounds when a filter creates visible pixels.
     CIImage* transparent = [[CIImage imageWithColor:CIColor.clearColor] imageByCroppingToRect:filterRegion];
     NSMutableDictionary<NSString*, CIImage*>* sources = [@{ IJSVGStringSourceGraphic : source, IJSVGStringBackgroundImage : transparent, IJSVGStringBackgroundAlpha : transparent } mutableCopy];
@@ -515,6 +521,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
             defaultRegion = CGRectUnion(defaultRegion, image.extent);
         }
     }
+
     // Empty inputs can still generate pixels through arithmetic or alpha
     // transfer.
     if (!IJSVGFilterValidRect(defaultRegion)) {
@@ -553,6 +560,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
         IJSVGFilterPrimitive* primitive = primitives[index];
         @autoreleasepool {
             renderingContext.linearRGB = IJSVGFilterUsesLinearRGB(primitive);
+
             // Recognized inner shadows keep RGB identically zero through the
             // hard alpha, offset, blur and subtract stages. Colour matching those
             // intermediates cannot change their pixels, only their graph cost.
@@ -584,6 +592,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
             CGRect pixelRegion = [self pixelRegionForPrimitive:primitive input:input other:other mergeInputs:mergeInputs filterRegion:filterRegion];
             output = [self evaluatePrimitiveAtIndex:index input:input other:other mergeInputs:mergeInputs region:pixelRegion filterRegion:filterRegion context:renderingContext preserveInnerShadowCoverage:preserveInnerShadowCoverage];
             outputLinearRGB = primitive.type == IJSVGNodeTypeFilterDisplacementMap ? renderingContext.inputLinearRGB : primitive.type != IJSVGNodeTypeFilterImage && renderingContext.linearRGB;
+
             // Keep only named intermediates with future consumers. The previous
             // output remains available independently for implicit chaining.
             for (NSString* name in expiredNames[@(index)]) {
@@ -819,6 +828,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     CGSize units = self.filter.contentUnits == IJSVGUnitObjectBoundingBox ? CGSizeMake(self.boundingBox.size.width * self.imageTransform.a, self.boundingBox.size.height * self.imageTransform.a) : CGSizeMake(self.imageTransform.a, self.imageTransform.a);
     CGSize deviation = [blur pairForParameter:IJSVGAttributeStdDeviation defaultValue:CGSizeZero];
     CGFloat sigma = deviation.width * units.width;
+
     // Core Image can fuse crops for effectively identity blurs. Preserve its
     // fractional edge coverage by leaving those radii on the general path.
     if (!isfinite(sigma) || sigma < .2 || sigma > 12 || !isfinite(deviation.height * units.height) || fabs(sigma - deviation.height * units.height) > .00001 || blur.edgeMode != IJSVGFilterEdgeModeNone) {
@@ -909,6 +919,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     }
     NSUInteger width = CGBitmapContextGetWidth(bitmap), height = CGBitmapContextGetHeight(bitmap);
     NSUInteger count = width * height;
+
     // CPU colour conversion dominates medium linearRGB surfaces. Measurements
     // favour Metal earlier there, except for the shortest convolution kernels.
     NSUInteger taps = weights.length / sizeof(float);

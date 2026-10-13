@@ -6,12 +6,13 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGGradient.h>
 
 @interface IJSVGGradientStops : NSObject
-+ (BOOL)canCacheElement:(NSXMLElement*)element;
++ (BOOL)canCacheElement:(IJSVGXMLNode*)element;
 @property (nonatomic, readonly) CGFloat inheritedOpacity;
 
-- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(NSXMLElement*)element;
+- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element;
 - (void)applyToGradient:(IJSVGGradient*)gradient;
 @end

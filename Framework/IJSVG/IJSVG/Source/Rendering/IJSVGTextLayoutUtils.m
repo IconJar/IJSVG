@@ -146,6 +146,7 @@ CGFloat IJSVGTextFontXHeight(CTFontRef font, CGFloat fontSize, CGFloat scale)
         return 0;
     }
     CGFloat xHeight = CTFontGetXHeight(font) / scale;
+
     // Use the usual fallback only when the font has no usable metric.
     return isfinite(xHeight) && xHeight > 0 ? xHeight : fontSize * .5;
 }
@@ -221,6 +222,7 @@ NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters, NSRange ra
                     resolved = (IJSVGText*)parent;
                 }
             }
+
             // Keep a child with its own textLength together as one spacing unit.
             if (resolved != nil) {
                 if (units == NULL) {

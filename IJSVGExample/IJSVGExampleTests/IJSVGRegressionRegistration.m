@@ -30,6 +30,7 @@
     XCTAssertGreaterThan(names.count, 0u);
     for (NSString* name in names) {
         XCTestExpectation* completed = [self expectationWithDescription:name];
+
         // WebKit and AppKit work must run on the main thread.
         dispatch_async(dispatch_get_main_queue(), ^{
             IJSVGRunReferenceWebKitCase(name, ^(NSArray<NSString*>* failures) {

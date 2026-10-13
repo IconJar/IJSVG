@@ -123,6 +123,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
             checked++;
         }
     }
+
     // Check valid declarations as well as invalid random inputs.
     const char* units[] = { "px", "pt", "pc", "in", "cm", "mm", "em", "ex", "%" };
     for (NSUInteger index = 0; index < 1000; index++) {
@@ -140,6 +141,7 @@ NSArray<NSString*>* IJSVGRunCSSFontParserChecks(void)
             checked++;
         }
     }
+
     // A pair of backslashes before a closing quote must leave the next
     // declaration readable.
     IJSVGStyleSheetStyle* escaped = [IJSVGStyleSheetStyle parseStyleString:@"font:20px \"A\\\\\";font-weight:bold"];

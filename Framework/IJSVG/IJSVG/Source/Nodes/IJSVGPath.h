@@ -14,18 +14,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class IJSVGGroup;
 
-typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) { kIJSVGPrimitivePathTypePath,
+typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
+    kIJSVGPrimitivePathTypePath,
     kIJSVGPrimitivePathTypeRect,
     kIJSVGPrimitivePathTypePolygon,
     kIJSVGPrimitivePathTypePolyLine,
     kIJSVGPrimitivePathTypeCircle,
     kIJSVGPrimitivePathTypeEllipse,
-    kIJSVGPrimitivePathTypeLine };
+    kIJSVGPrimitivePathTypeLine
+};
 
 @interface IJSVGPath : IJSVGGraphicsNode {
 }
 
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;
+
 // Nil uses the measured length. Zero is a valid authored length.
 @property (nonatomic, copy, nullable) NSNumber* pathLength;
 @property (nonatomic, assign, nullable) CGMutablePathRef path;

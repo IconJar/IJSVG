@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGReference.h>
 #import <IJSVGParserUtils.h>
 
@@ -31,22 +32,19 @@
 
 #pragma mark - Parsing
 
-void IJSVGReadReferenceAttribute(NSXMLNode* node, NSString* name, IJSVGReferenceAttributes* attributes)
+void IJSVGReadReferenceAttribute(IJSVGXMLAttribute* node, IJSVGReferenceAttributes* attributes)
 {
-    if (attributes->href != nil) {
+    if (attributes->href != NULL || strcmp(node->name, "href") != 0) {
         return;
     }
-    if ([name isEqualToString:@"href"]) {
+    if (node->prefix == NULL) {
         attributes->href = node;
         return;
     }
-    if (![node.localName isEqualToString:@"href"]) {
-        return;
-    }
-    if (attributes->namespacedHref == nil && [node.URI isEqualToString:@"http://www.w3.org/1999/xlink"]) {
+    if (attributes->namespacedHref == NULL && node->uri != NULL && strcmp(node->uri, "http://www.w3.org/1999/xlink") == 0) {
         attributes->namespacedHref = node;
     }
-    if ([name isEqualToString:@"xlink:href"]) {
+    if (strcmp(node->prefix, "xlink") == 0) {
         attributes->legacyHref = node;
     }
 }
@@ -55,6 +53,8 @@ IJSVGReference* IJSVGEmptyReference(void)
 {
     static IJSVGReference* emptyReference;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ emptyReference = [[IJSVGReference alloc] initWithHref:nil]; });
+    dispatch_once(&once, ^{
+        emptyReference = [[IJSVGReference alloc] initWithHref:nil];
+    });
     return emptyReference;
 }

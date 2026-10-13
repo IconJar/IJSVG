@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVGGradientStopData.h>
 #import <IJSVGGradientStops.h>
 
@@ -15,20 +16,22 @@
     NSData* _locations;
 }
 
-+ (BOOL)canCacheElement:(NSXMLElement*)element
++ (BOOL)canCacheElement:(IJSVGXMLNode*)element
 {
-    for (NSXMLNode* child in element.children) {
-        if (child.kind != NSXMLElementKind || ![child.localName isEqualToString:@"stop"] || child.childCount != 0) {
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        if (IJSVGXMLKind(child) != NSXMLElementKind || ![IJSVGXMLLocalName(child) isEqualToString:@"stop"] || IJSVGXMLChildCount(child) != 0) {
             return NO;
         }
-        if ([((NSXMLElement*)child) attributeForName:@"stop-color"].stringValue.length == 0)
+        if (IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor)).length == 0) {
             return NO;
-        for (NSXMLNode* attribute in ((NSXMLElement*)child).attributes) {
-            NSString* name = attribute.name;
-            if (![name isEqualToString:@"offset"] && ![name isEqualToString:@"stop-color"] && ![name isEqualToString:@"stop-opacity"]) {
+        }
+        IJSVGXMLAttributeList childAttributeIterator = IJSVGXMLAttributes(child);
+        for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&childAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&childAttributeIterator)) {
+            IJSVGNodeAttribute attributeIdentifier = attribute->identifier;
+            if (attributeIdentifier != IJSVGNodeAttributeOffset && attributeIdentifier != IJSVGNodeAttributeStopColor && attributeIdentifier != IJSVGNodeAttributeStopOpacity) {
                 return NO;
             }
-            NSString* value = attribute.stringValue.lowercaseString;
+            NSString* value = IJSVGXMLAttributeValue(attribute).lowercaseString;
             if ([value containsString:@"inherit"] || [value containsString:@"currentcolor"] || [value containsString:@"var("]) {
                 return NO;
             }
@@ -37,15 +40,15 @@
     return YES;
 }
 
-- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(NSXMLElement*)element
+- (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element
 {
     if ((self = [super init]) != nil) {
         NSMutableArray<IJSVGGradientStopData*>* stops = [[NSMutableArray alloc] init];
         _inheritedOpacity = gradient.fillOpacity.value;
-        NSUInteger index = 0;
+        IJSVGXMLNode* source = IJSVGXMLFirstChild(element);
         for (IJSVGStop* stop in gradient.children) {
-            NSXMLElement* source = (NSXMLElement*)element.children[index++];
             [stops addObject:[[IJSVGGradientStopData alloc] initWithStop:stop element:source]];
+            source = IJSVGXMLNext(source);
         }
         _stops = stops.copy;
         _colors = gradient.colors.copy;

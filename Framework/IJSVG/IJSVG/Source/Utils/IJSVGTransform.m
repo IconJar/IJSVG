@@ -186,13 +186,17 @@ static IJSVGTransformCommand IJSVGTransformCommandForFunction(IJSVGCSSFunction f
 
 void IJSVGConcatTransformsCTM(CGContextRef context, NSArray<IJSVGTransform*>* transforms)
 {
-    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) { CGContextConcatCTM(context, transform.CGAffineTransform); });
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) {
+        CGContextConcatCTM(context, transform.CGAffineTransform);
+    });
 }
 
 CGAffineTransform IJSVGConcatTransforms(NSArray<IJSVGTransform*>* transforms)
 {
     __block CGAffineTransform trans = CGAffineTransformIdentity;
-    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) { trans = CGAffineTransformConcat(transform.CGAffineTransform, trans); });
+    IJSVGApplyTransform(transforms, ^(IJSVGTransform* transform) {
+        trans = CGAffineTransformConcat(transform.CGAffineTransform, trans);
+    });
     return trans;
 }
 
@@ -267,12 +271,17 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
 
 + (NSArray<IJSVGTransform*>*)transformsForString:(NSString*)string allowCSSUnits:(BOOL)allowCSSUnits
 {
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    return [self transformsForBytes:source.bytes length:source.length allowCSSUnits:allowCSSUnits];
+}
+
++ (NSArray<IJSVGTransform*>*)transformsForBytes:(const char*)bytes length:(NSUInteger)length allowCSSUnits:(BOOL)allowCSSUnits
+{
     NSMutableArray<IJSVGTransform*>* transforms = nil;
     transforms = [[NSMutableArray alloc] init];
 
-    IJSVGStringBytes source = IJSVGStringGetBytes(string);
     IJSVGCSSComponents components;
-    IJSVGCSSComponentsCreateWithOptions(source.bytes, source.length, IJSVGCSSParserOptionSVG, &components);
+    IJSVGCSSComponentsCreateWithOptions(bytes, length, IJSVGCSSParserOptionSVG, &components);
     for (NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
         if (component->kind != IJSVGCSSComponentFunction || component->next <= index) {
@@ -503,6 +512,7 @@ BOOL IJSVGAffineTransformScalesAndTranslates(CGAffineTransform transform)
     CGFloat data[6] = { transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty };
 
     CGFloat sx = hypot(data[0], data[1]);
+
     // A collapsed first axis cannot be decomposed by dividing through its scale.
     if (sx == 0.f) {
         return @[ @{ @"name" : @"matrix", @"data" : @[ @(data[0]), @(data[1]), @(data[2]), @(data[3]), @(data[4]), @(data[5]) ] } ];

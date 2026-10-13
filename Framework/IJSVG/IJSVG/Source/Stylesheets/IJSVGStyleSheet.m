@@ -240,6 +240,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
         if (![rule matchesNode:node selector:&selector]) {
             continue;
         }
+
         // Reuse the existing style when only one rule matches.
         if (firstRule == nil) {
             firstRule = rule;

@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGColorNode.h>
 #import <IJSVGGradientStopData.h>
 
@@ -17,11 +18,11 @@
     BOOL _isNoneOrTransparent;
 }
 
-- (instancetype)initWithStop:(IJSVGStop*)stop element:(NSXMLElement*)element
+- (instancetype)initWithStop:(IJSVGStop*)stop element:(IJSVGXMLNode*)element
 {
     if ((self = [super init]) != nil) {
         _offset = stop.offset;
-        _opacity = [element attributeForName:@"stop-opacity"].stringValue.length == 0 ? nil : stop.fillOpacity;
+        _opacity = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStopOpacity)).length == 0 ? nil : stop.fillOpacity;
         IJSVGColorNode* fill = (IJSVGColorNode*)stop.fill;
         _hasFill = fill != nil;
         _color = fill.color;
@@ -35,8 +36,9 @@
     IJSVGStop* stop = [[IJSVGStop alloc] init];
     stop.name = @"stop";
     stop.offset = _offset;
-    if (_opacity != nil)
+    if (_opacity != nil) {
         stop.fillOpacity = _opacity;
+    }
     if (_hasFill) {
         IJSVGColorNode* fill = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:_color];
         fill.isNoneOrTransparent = _isNoneOrTransparent;

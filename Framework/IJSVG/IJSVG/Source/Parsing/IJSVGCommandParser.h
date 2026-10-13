@@ -11,8 +11,10 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) { kIJSVGPathDataSequenceTypeFloat,
-    kIJSVGPathDataSequenceTypeFlag };
+typedef NS_ENUM(NSUInteger, IJSVGPathDataSequence) {
+    kIJSVGPathDataSequenceTypeFloat,
+    kIJSVGPathDataSequenceTypeFlag
+};
 
 static NSUInteger const IJSVG_STREAM_FLOAT_BLOCK_SIZE = 50;
 static NSUInteger const IJSVG_STREAM_CHAR_BLOCK_SIZE = 20;
@@ -36,8 +38,10 @@ CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NS
 // Each data stream starts at its own origin, even when the destination has
 // geometry.
 void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream);
+
 // A false result rules out point subpaths in the appended data.
 BOOL IJSVGAppendPathDataCheckingPointSubpaths(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream);
+
 // Invalid point lists leave the destination unchanged.
 BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInteger length, BOOL closePath, IJSVGPathDataStream* dataStream);
 

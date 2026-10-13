@@ -49,7 +49,9 @@
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [NSSet setWithArray:@[ IJSVGAttributeOrder, IJSVGAttributeKernelMatrix, IJSVGAttributeDivisor, IJSVGAttributeBias, IJSVGAttributeTargetX, IJSVGAttributeTargetY, IJSVGAttributeEdgeMode, IJSVGAttributeKernelUnitLength, IJSVGAttributePreserveAlpha ]]; });
+    dispatch_once(&once, ^{
+        names = [NSSet setWithArray:@[ IJSVGAttributeOrder, IJSVGAttributeKernelMatrix, IJSVGAttributeDivisor, IJSVGAttributeBias, IJSVGAttributeTargetX, IJSVGAttributeTargetY, IJSVGAttributeEdgeMode, IJSVGAttributeKernelUnitLength, IJSVGAttributePreserveAlpha ]];
+    });
     return names;
 }
 

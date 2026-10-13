@@ -48,13 +48,16 @@
 - (NSData*)render:(IJSVG*)svg width:(NSUInteger)width
 {
     NSUInteger height = width * 3 / 4;
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     [svg drawInRect:CGRectMake(0, 0, width, height) context:context];
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:width * height * 4];
     CGContextRelease(context);
@@ -66,16 +69,18 @@
     XCTAssertNotNil(actual);
     XCTAssertNotNil(expected);
     XCTAssertEqual(actual.length, expected.length);
-    if (actual == nil || expected == nil || actual.length != expected.length)
+    if (actual == nil || expected == nil || actual.length != expected.length) {
         return;
+    }
     const UInt8* a = actual.bytes;
     const UInt8* b = expected.bytes;
     NSInteger largestError = 0;
     BOOL hasVisiblePixels = NO;
     for (NSUInteger index = 0; index < actual.length; index++) {
         largestError = MAX(largestError, labs((NSInteger)a[index] - b[index]));
-        if (index % 4 == 3 && b[index] != 0)
+        if (index % 4 == 3 && b[index] != 0) {
             hasVisiblePixels = YES;
+        }
     }
     XCTAssertTrue(hasVisiblePixels);
     XCTAssertLessThanOrEqual(largestError, 1);
@@ -85,8 +90,9 @@
 {
     // Without Metal, filters may silently omit their output.
     XCTAssertNotNil(MTLCreateSystemDefaultDevice());
-    if (MTLCreateSystemDefaultDevice() == nil)
+    if (MTLCreateSystemDefaultDevice() == nil) {
         return;
+    }
     NSString* artwork = [self document:[self artworkWithRadialGradient:radial percentage:percentage]];
     IJSVG* attached = [[IJSVG alloc] initWithSVGString:artwork];
     IJSVG* absolute = [[IJSVG alloc] initWithSVGString:[self document:[self artworkWithRadialGradient:radial percentage:NO]]];
@@ -113,10 +119,13 @@
         IJSVGFilterPrimitive* primitive = ((IJSVGGraphicsNode*)filtered.rootNode.children.firstObject).filter.primitives.firstObject;
         XCTAssertNotNil(primitive);
         primitive.imageNode = shape;
+
         // imageNode takes precedence in the evaluator. An unused bitmap fallback
         // disables automatic snapshots without changing process wide behavior.
-        if (!snapshots.boolValue)
+        if (!snapshots.boolValue) {
             primitive.image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+        }
+
         // Exercise first render, cache reuse, resizing, and restoring the original
         // size.
         for (NSNumber* width in @[ @160, @160, @240, @160 ]) {

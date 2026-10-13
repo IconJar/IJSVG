@@ -57,7 +57,9 @@ const NSArray<NSString*>* IJSVGShortCharacterArray(void)
 {
     static NSArray<NSString*>* _array;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l", @"m", @"n", @"o", @"p", @"q", @"r", @"s", @"t", @"u", @"v", @"w", @"x", @"y", @"z", @"A", @"B", @"C", @"D", @"E", @"F", @"G", @"H", @"I", @"J", @"K", @"L", @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ]; });
+    dispatch_once(&onceToken, ^{
+        _array = @[ @"a", @"b", @"c", @"d", @"e", @"f", @"g", @"h", @"i", @"j", @"k", @"l", @"m", @"n", @"o", @"p", @"q", @"r", @"s", @"t", @"u", @"v", @"w", @"x", @"y", @"z", @"A", @"B", @"C", @"D", @"E", @"F", @"G", @"H", @"I", @"J", @"K", @"L", @"M", @"N", @"O", @"P", @"Q", @"R", @"S", @"T", @"U", @"V", @"W", @"X", @"Y", @"Z" ];
+    });
     return _array;
 }
 
@@ -65,7 +67,9 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void)
 {
     static NSDictionary<NSString*, NSString*>* _defaults;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ _defaults = @ { IJSVGAttributeClipPath : IJSVGStringNone, IJSVGAttributeClipRule : @"nonzero", IJSVGAttributeMask : IJSVGStringNone, IJSVGAttributeOpacity : @"1", IJSVGAttributeStopColor : @"#000", IJSVGAttributeStopOpacity : @"1", IJSVGAttributeFillOpacity : @"1", IJSVGAttributeFillRule : @"nonzero", IJSVGAttributeFill : @"#000", IJSVGAttributeStroke : IJSVGStringNone, IJSVGAttributeStrokeWidth : @"1", IJSVGAttributeStrokeLineCap : @"butt", IJSVGAttributeStrokeLineJoin : IJSVGStringMiter, IJSVGAttributeStrokeMiterLimit : @"4", IJSVGAttributeStrokeDashArray : IJSVGStringNone, IJSVGAttributeStrokeDashOffset : @"0", IJSVGAttributeStrokeOpacity : @"1", IJSVGAttributeDisplay : @"inline", IJSVGAttributePreserveAspectRatio : @"xMidYMid" }; });
+    dispatch_once(&onceToken, ^{
+        _defaults = @ { IJSVGAttributeClipPath : IJSVGStringNone, IJSVGAttributeClipRule : @"nonzero", IJSVGAttributeMask : IJSVGStringNone, IJSVGAttributeOpacity : @"1", IJSVGAttributeStopColor : @"#000", IJSVGAttributeStopOpacity : @"1", IJSVGAttributeFillOpacity : @"1", IJSVGAttributeFillRule : @"nonzero", IJSVGAttributeFill : @"#000", IJSVGAttributeStroke : IJSVGStringNone, IJSVGAttributeStrokeWidth : @"1", IJSVGAttributeStrokeLineCap : @"butt", IJSVGAttributeStrokeLineJoin : IJSVGStringMiter, IJSVGAttributeStrokeMiterLimit : @"4", IJSVGAttributeStrokeDashArray : IJSVGStringNone, IJSVGAttributeStrokeDashOffset : @"0", IJSVGAttributeStrokeOpacity : @"1", IJSVGAttributeDisplay : @"inline", IJSVGAttributePreserveAspectRatio : @"xMidYMid" };
+    });
     return _defaults;
 }
 
@@ -96,7 +100,9 @@ const NSSet* IJSVGInheritableAttributeSet(void)
 {
     static NSSet* _attributes;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ _attributes = [[NSSet alloc] initWithArray:IJSVGInheritableAttributes()]; });
+    dispatch_once(&onceToken, ^{
+        _attributes = [[NSSet alloc] initWithArray:IJSVGInheritableAttributes()];
+    });
     return _attributes;
 }
 
@@ -288,6 +294,7 @@ NSString* IJSVGHash(NSString* key)
                     [pending addObjectsFromArray:paint.children];
                 }
             }
+
             // Paint identity restricts omission to scene artwork. The same source
             // node used as a mask/pattern resource must remain available.
             _outsideViewportPaints = paints.copy;
@@ -614,6 +621,7 @@ NSString* IJSVGHash(NSString* key)
         }
     }
     NSMutableDictionary<NSNumber*, NSMutableArray<NSXMLElement*>*>* gradientsByChildHash = [[NSMutableDictionary alloc] initWithCapacity:gradients.count];
+
     // XML nodes hash their mutable contents. Key by identity because assigning
     // the template reference changes the candidate attributes and hash.
     NSMapTable<NSXMLElement*, NSXMLElement*>* stopTemplates = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality valueOptions:NSPointerFunctionsStrongMemory];
@@ -1041,6 +1049,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     NSMutableDictionary<NSString*, NSString*>* childInheritedAttributes = [[NSMutableDictionary alloc] initWithDictionary:inheritedAttributes];
+
     // Root attributes were intentionally excluded by _computedAttribute:.
     if (element != _dom.rootElement) {
         for (NSXMLNode* attribute in element.attributes) {
@@ -1397,6 +1406,7 @@ NSString* IJSVGHash(NSString* key)
         // add the color
         IJSVGColorStringOptions options = IJSVGColorStringOptionForceHEX | IJSVGColorStringOptionAllowShortHand;
         NSString* stopColor = [self colorStringForColor:aColor flag:IJSVGColorUsageTraitGradientStop options:options];
+
         // dont bother adding default
         if ([stopColor isEqualToString:@"#000"] == NO) {
             atts[IJSVGAttributeStopColor] = stopColor;
@@ -1494,6 +1504,7 @@ NSString* IJSVGHash(NSString* key)
 
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
     dict[IJSVGAttributeID] = [self identifierForElement:imageElement];
+
     // Image paints resolve their origin inside drawInContext:, rather than
     // adding it to the enclosing transform. Preserve that position on export.
     dict[IJSVGAttributeX] = IJSVGShortFloatStringWithOptions(CGRectGetMinX(paint.frame), _floatingPointOptions);
@@ -1516,7 +1527,7 @@ NSString* IJSVGHash(NSString* key)
     if (image.sourceData != nil && image.sourceMIMEType != nil) {
         NSString* encoded = [image.sourceData base64EncodedStringWithOptions:0];
         base64String = [NSString stringWithFormat:@"data:%@;base64,%@", image.sourceMIMEType, encoded];
-    } else
+    } else {
         @autoreleasepool {
             CGImageRef cgImage = NULL;
             if (ratio != 1.f) {
@@ -1528,6 +1539,7 @@ NSString* IJSVGHash(NSString* key)
             }
             base64String = [self base64EncodedStringFromCGImage:cgImage];
         }
+    }
     if (base64String == nil) {
         return nil;
     }
@@ -1767,6 +1779,7 @@ NSString* IJSVGHash(NSString* key)
                             break;
                     }
                 });
+
                 // polygon does not need the move to command
                 if (paint.primitiveType == kIJSVGPrimitivePathTypePolygon && type == kCGPathElementMoveToPoint) {
                     [points removeLastObject];
@@ -1894,12 +1907,12 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // A separated stroke operation must not acquire the default black SVG fill.
-    if (paint.fillPaint == nil && paint.fillGradient == nil) {
+    if (paint.fillPaint == nil && paint.fillGradient == nil && !paint.directFill) {
         dict[IJSVGAttributeFill] = IJSVGStringNone;
     }
 
     // fill color
-    IJSVGShapePaint* fillPaint = (IJSVGShapePaint*)([paint.fillPaint isKindOfClass:IJSVGShapePaint.class] ? paint.fillPaint : nil);
+    IJSVGShapePaint* fillPaint = paint.directFill ? paint : (IJSVGShapePaint*)([paint.fillPaint isKindOfClass:IJSVGShapePaint.class] ? paint.fillPaint : nil);
     if (fillPaint != nil) {
         NSString* colorString = IJSVGStringNone;
         if (fillPaint.fillColor != NULL) {
@@ -2027,6 +2040,7 @@ NSString* IJSVGHash(NSString* key)
             // normal stroke applied to parent element
             IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             IJSVGShapePaint* strokePaint = (IJSVGShapePaint*)paint.strokePaint;
+
             // stroke gradient
             switch (usageType) {
                 case IJSVGPaintFillTypeGradient: {
@@ -2119,6 +2133,7 @@ NSString* IJSVGHash(NSString* key)
     if (paint.fillPaint != nil && paint.strokePaint != nil && paint.children.firstObject == paint.strokePaint) {
         dict[IJSVGAttributePaintOrder] = IJSVGStringFromPaintOrder(IJSVGPaintOrderStrokeFillMarkers);
     }
+
     // apply the attributes
     IJSVGApplyAttributesToElement(dict, e);
 
@@ -2134,8 +2149,9 @@ NSString* IJSVGHash(NSString* key)
         NSArray<NSString*>* common = @[ IJSVGAttributeOpacity, IJSVGAttributeStyle, IJSVGAttributeTransform, IJSVGAttributeMask, IJSVGAttributeClipPath ];
         for (NSString* attribute in common) {
             [e removeAttributeForName:attribute];
-            for (NSXMLElement* stroke in strokes)
+            for (NSXMLElement* stroke in strokes) {
                 [stroke removeAttributeForName:attribute];
+            }
         }
         BOOL strokeFirst = paint.strokePaint != nil && paint.children.firstObject == paint.strokePaint;
         if (strokeFirst) {
@@ -2143,8 +2159,9 @@ NSString* IJSVGHash(NSString* key)
                 [group addChild:stroke];
             }
         }
-        if (!ignore.boolValue)
+        if (!ignore.boolValue) {
             [group addChild:e];
+        }
         if (!strokeFirst) {
             for (NSXMLElement* stroke in strokes) {
                 [group addChild:stroke];
@@ -2313,6 +2330,7 @@ NSString* IJSVGHash(NSString* key)
         for (NSUInteger index = 0; index < numbers.count; index++) {
             CGFloat number = numbers[index].doubleValue;
             NSString* shortened = IJSVGShortFloatStringWithOptions(number, _floatingPointOptions);
+
             // Preserve precise coefficients unless the caller explicitly requests
             // rounding.
             if (!_floatingPointOptions.round && shortened.doubleValue != number) {
@@ -2323,6 +2341,7 @@ NSString* IJSVGHash(NSString* key)
         if (compress && [pairAttributes containsObject:key] && tokens.count == 2 && [tokens[0] isEqualToString:tokens[1]]) {
             [tokens removeLastObject];
         }
+
         // Filter number lists require separators even before signed or decimal
         // values.
         NSString* shortened = [tokens componentsJoinedByString:@" "];
@@ -2333,6 +2352,7 @@ NSString* IJSVGHash(NSString* key)
     if (!compress) {
         return;
     }
+
     // Only fixed attribute defaults are removed. Inherited presentation values
     // stay explicit.
     [defaults[@(type)] enumerateKeysAndObjectsUsingBlock:^(NSString* key, NSString* value, BOOL* stop) {
@@ -2354,6 +2374,7 @@ NSString* IJSVGHash(NSString* key)
     NSXMLElement* root = [[NSXMLElement alloc] initWithName:@"svg"];
     IJSVGApplyAttributesToElement(@{ @"xmlns" : XML_DOC_NS, @"xmlns:xlink" : XML_DOC_NSXLINK, IJSVGAttributeViewBox : [self viewBoxWithRect:region], IJSVGAttributeWidth : IJSVGShortFloatStringWithOptions(region.size.width, _floatingPointOptions), IJSVGAttributeHeight : IJSVGShortFloatStringWithOptions(region.size.height, _floatingPointOptions), IJSVGAttributePreserveAspectRatio : @"none" }, root);
     exporter->_dom = [[NSXMLDocument alloc] initWithRootElement:root];
+
     // Percentage resources still use the original viewport, only the outer
     // image viewport is cropped to the primitive region.
     NSXMLElement* viewport = [[NSXMLElement alloc] initWithName:@"svg"];
@@ -2398,6 +2419,7 @@ NSString* IJSVGHash(NSString* key)
         CGRect region = [graph regionForNode:primitive units:filter.contentUnits defaultRegion:filterRegion];
         IJSVGPaint* imagePaint = [_paintResolver drawablePaintForNode:primitive.imageNode inViewPort:filterPaint.viewPort];
         attributes[IJSVGAttributeHref] = [self imageURLForPaint:imagePaint region:region viewPort:filterPaint.viewPort];
+
         // Resolve percentage origins with the same viewport as native filtering.
         // The external image must be placed at the user region used by its viewBox.
         CGRect placement = region;
@@ -2751,7 +2773,9 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     NSString* identifier = nil;
     if (_respondsTo.identifierForElement == 1) {
         __weak id weakSelf = self;
-        NSString* (^block)(void) = ^NSString*(void) { return [weakSelf generateID]; };
+        NSString* (^block)(void) = ^NSString*(void) {
+            return [weakSelf generateID];
+        };
         IJSVGNodeType type = IJSVGNodeTypeForString(element.localName, element.kind);
         identifier = [_delegate svgExporter:self identifierForElement:element type:type defaultID:block];
         if (identifier != nil) {

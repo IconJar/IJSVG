@@ -174,6 +174,7 @@ uint8_t IJSVGFilterSIMDEncodeLinearComponent(float component, float alpha, float
         encoded = table[index] + (table[index + 1] - table[index]) * fraction;
     }
     float value = (encoded * alpha) * (coverage * 255.f);
+
     // The interpolation error on this grid is below .002 of an output byte,
     // including float arithmetic. Use a wider .01 guard around half integers.
     if (fabsf(value - floorf(value) - .5f) < .01f) {
@@ -263,6 +264,7 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
         NSInteger by = (NSInteger)backdropHeight - 1 - (originY + stepY * ((NSInteger)height - (NSInteger)y - 1));
         for (NSUInteger x = 0; x < width; x++) {
             float px = x, py = height - y - 1;
+
             // CI uses distance to the nearest crop edge, even when both edges
             // fall inside one pixel. Intersection area is incorrect in that case.
             float coverage = fmaxf(0, fminf(1, fminf(px + 1 - minX, maxX - px))) * fmaxf(0, fminf(1, fminf(py + 1 - minY, maxY - py)));
@@ -275,6 +277,7 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
             if (bx >= 0 && bx < (NSInteger)backdropWidth && by >= 0 && by < (NSInteger)backdropHeight) {
                 backgroundPixel = background + by * backdropStride + bx * 4;
             }
+
             // Addition of transparent black is an identity. Avoid decoding and
             // re encoding the unchanged pixel in the empty parts of a triangle.
             // Fractional crops still need both coverage applications below.
@@ -287,6 +290,7 @@ CGImageRef IJSVGFilterSIMDNewComposite(CGContextRef source, CGContextRef backdro
             simd_float4 b = backgroundPixel != NULL ? IJSVGCompositeLoad(backgroundPixel, decodeTable) : 0;
             simd_float4 a = IJSVGCompositeLoad(sourcePixel, decodeTable);
             simd_float4 value = IJSVGCompositeApply(a * coverage, b * coverage, operation);
+
             // Lighter preserves extended values through colour matching and the
             // final crop, arithmetic addition clamps before those operations.
             if (operation != IJSVGSIMDCompositeLighter) {
@@ -425,6 +429,7 @@ static NSData* IJSVGLocalInput(NSString* name, NSData* previous, NSData* source,
     if ([name isEqualToString:IJSVGStringSourceAlpha]) {
         return alpha;
     }
+
     // Other reserved inputs must never resolve to a user result of that name.
     if ([@[ IJSVGStringBackgroundImage, IJSVGStringBackgroundAlpha, IJSVGStringFillPaint, IJSVGStringStrokePaint ] containsObject:name]) {
         return nil;
@@ -452,6 +457,7 @@ CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source, IJSVGFilterGraph* 
     if (!colorMatrix && (last.type != IJSVGNodeTypeFilterComposite || IJSVGLocalFilterUsesLinearRGB(last))) {
         return NULL;
     }
+
     // A backdrop filter is already handled by the dedicated composite path.
     // Reject it before any local intermediate allocation.
     if ([last.input isEqualToString:IJSVGStringBackgroundImage] || [last.input2 isEqualToString:IJSVGStringBackgroundImage] || [last.input isEqualToString:IJSVGStringBackgroundAlpha] || [last.input2 isEqualToString:IJSVGStringBackgroundAlpha]) {
@@ -643,22 +649,26 @@ static BOOL IJSVGThreeBoxBlur(const float* source, float* output, NSUInteger wid
     }
     NSInteger lowerPasses = lround((12 * variance - 3 * lower * lower - 12 * lower - 9) / (-4. * lower - 4));
     lowerPasses = MAX(0, MIN(3, lowerPasses));
+
     // Retain the full halo between passes. Cropping each pass to the final
     // output would discard samples that later passes bring back into view.
     NSUInteger padding = 3 * (lower + 1) / 2;
     NSUInteger paddedWidth = width + 2 * padding, paddedHeight = height + 2 * padding;
+
     // A huge blur around a tiny source spends more time on its halo than a
     // direct convolution spends on the source. Keep those cases on convolution.
     if (paddedWidth * paddedHeight > width * height * 16) {
         return NO;
     }
 #if defined(__OPTIMIZE__)
+
     // The fused loop wins with optimized code generation, Accelerate remains
     // faster in unoptimized builds. Both retain the same box widths and halo.
     NSUInteger sides[3];
     for (NSUInteger stage = 0; stage < 3; stage++) {
         sides[stage] = stage < lowerPasses ? lower : lower + 2;
     }
+
     // Larger images benefit when the compiler optimizes for speed.
 #if defined(__OPTIMIZE_SIZE__)
     NSUInteger maximumPixels = 4096;

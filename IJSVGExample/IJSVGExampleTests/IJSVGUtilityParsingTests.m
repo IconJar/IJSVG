@@ -20,13 +20,125 @@
 #import <IJSVG/IJSVGUnitSize.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVGParsedPathCache.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGTestHelpers.h>
+#import <IJSVGXML.h>
+#import <sys/mman.h>
+#import <unistd.h>
 
 @interface IJSVGUtilityParsingTests : XCTestCase
 @end
 
 @implementation IJSVGUtilityParsingTests
+
+- (void)testCXMLStorageOwnsInputAndKeepsNamespacesAndText
+{
+    const char* source = "<svg xmlns:q='http://www.w3.org/1999/xlink'><g id='a' q:href='#b'/><text>one<![CDATA[ two]]> three</text></svg>";
+    size_t length = strlen(source);
+    char* bytes = malloc(length);
+    memcpy(bytes, source, length);
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes, length);
+    memset(bytes, '?', length);
+    free(bytes);
+    XCTAssertNotEqual(document, NULL);
+    if (document == NULL) {
+        return;
+    }
+    XCTAssertFalse(document->usedCompatibilityExpansion);
+    IJSVGXMLNode* root = IJSVGXMLRoot(document);
+    IJSVGXMLNode* group = IJSVGXMLFirstChild(root);
+    XCTAssertEqual(IJSVGXMLParent(group), root);
+    XCTAssertEqual(IJSVGXMLChildCount(root), 2u);
+    IJSVGXMLAttribute* href = IJSVGXMLAttributeNamed(group, @"q:href");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(href), @"#b");
+    XCTAssertEqualObjects(IJSVGXMLAttributeURI(href), @"http://www.w3.org/1999/xlink");
+    NSString* retained = IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(group, @"id"));
+    XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLNext(group)), @"one two three");
+    NSUInteger visited = 0;
+    IJSVGXMLAttributeList groupAttributeIterator = IJSVGXMLAttributes(group);
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&groupAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&groupAttributeIterator)) {
+        XCTAssertNotEqual(attribute, NULL);
+        visited++;
+        if (attribute->identifier == IJSVGNodeAttributeID) {
+            break;
+        }
+    }
+    XCTAssertEqual(visited, 1u);
+    IJSVGXMLDocumentDestroy(document);
+    XCTAssertEqualObjects(retained, @"a");
+}
+
+- (void)testXMLIdentifierLookupPreservesQualifiedNamesAndUnknownAttributes
+{
+    const char* source = "<svg xmlns:other='urn:other' other:media='ignored' media='screen' spreadMethod='repeat' requiredExtensions='urn:extension' systemLanguage='en' other:width='99' width='10' custom='value'/>";
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(source, strlen(source));
+    XCTAssertNotEqual(document, NULL);
+    if (document == NULL) {
+        return;
+    }
+    IJSVGXMLNode* root = IJSVGXMLRoot(document);
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeMedia)), @"screen");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeSpreadMethod)), @"repeat");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeRequiredExtensions)), @"urn:extension");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeSystemLanguage)), @"en");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeWidth)), @"10");
+    XCTAssertEqual(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeHeight), NULL);
+    XCTAssertEqual(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeUnknown), NULL);
+    XCTAssertEqual(IJSVGXMLAttributeForIdentifier(root, IJSVGNodeAttributeCount), NULL);
+    XCTAssertEqual(IJSVGXMLAttributeForIdentifier(NULL, IJSVGNodeAttributeWidth), NULL);
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(root, @"other:media")), @"ignored");
+    XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(root, @"custom")), @"value");
+    IJSVGXMLDocumentDestroy(document);
+}
+
+- (void)testCXMLMalformedInputAndDTDCompatibility
+{
+    for (NSString* source in @[ @"<svg><g></svg>", @"<svg a='1' a='2'/>", @"<svg><q:g/></svg>", @"<svg>&missing;</svg>" ]) {
+        NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+        XCTAssertEqual(document, NULL, @"%@", source);
+        IJSVGXMLDocumentDestroy(document);
+    }
+    NSString* source = @"<!DOCTYPE svg [<!ENTITY greeting 'hello'>]><svg><title>&greeting;</title></svg>";
+    NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+    XCTAssertNotEqual(document, NULL);
+    if (document == NULL) {
+        return;
+    }
+    XCTAssertTrue(document->usedCompatibilityExpansion);
+    XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLFirstChild(IJSVGXMLRoot(document))), @"hello");
+    IJSVGXMLDocumentDestroy(document);
+}
+
+- (void)testBytePathCacheOwnsKeysSnapshotsAndEvicts
+{
+    IJSVGParsedPathCache* cache = IJSVGParsedPathCacheCreate();
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathMoveToPoint(path, NULL, 0, 0);
+    CGPathAddLineToPoint(path, NULL, 10, 10);
+    char key[] = { 'p', 'a', 't', 'h' };
+    IJSVGParsedPathCacheStoreBytes(cache, key, sizeof(key), IJSVGParsedPathData, path);
+    memset(key, '?', sizeof(key));
+    CGPathAddLineToPoint(path, NULL, 20, 20);
+    CGPathRef snapshot = IJSVGParsedPathCacheCopyBytes(cache, "path", 4, IJSVGParsedPathData);
+    XCTAssertNotEqual(snapshot, NULL);
+    XCTAssertTrue(CGPointEqualToPoint(CGPathGetCurrentPoint(snapshot), CGPointMake(10, 10)));
+    CGPathRelease(snapshot);
+    XCTAssertEqual(IJSVGParsedPathCacheCopyBytes(cache, "path", 4, IJSVGParsedPathPolygon), NULL);
+    for (NSUInteger i = 0; i < 4000; i++) {
+        char buffer[32];
+        int count = snprintf(buffer, sizeof(buffer), "key-%lu", (unsigned long)i);
+        IJSVGParsedPathCacheStoreBytes(cache, buffer, count, IJSVGParsedPathPolyline, path);
+    }
+    XCTAssertEqual(IJSVGParsedPathCacheCopyBytes(cache, "path", 4, IJSVGParsedPathData), NULL);
+    snapshot = IJSVGParsedPathCacheCopyBytes(cache, "key-3999", 8, IJSVGParsedPathPolyline);
+    XCTAssertNotEqual(snapshot, NULL);
+    CGPathRelease(snapshot);
+    CGPathRelease(path);
+    IJSVGParsedPathCacheDestroy(cache);
+}
 
 - (void)testBackgroundBoundsUseCompleteNumberLists
 {
@@ -45,7 +157,10 @@
 {
     for (NSString* invalid in @[ @"1,2,bad", @"1,", @",1", @"1,,2", @"1-2", @"1e+", @"1e999", @"1\f2", @"1\0 2", @"NaN", @"Infinity", @" " ]) {
         __block NSUInteger count = 0;
-        XCTAssertFalse(IJSVGEnumerateNumbers(invalid, ^(CGFloat value) { count++; }), @"%@", invalid);
+        XCTAssertFalse(IJSVGEnumerateNumbers(invalid, ^(CGFloat value) {
+            count++;
+        }),
+            @"%@", invalid);
         XCTAssertEqual(count, 0);
     }
     NSMutableString* source = [@"1." mutableCopy];
@@ -810,6 +925,96 @@
     XCTAssertFalse(disabled.enabled);
     XCTAssertTrue(flags.viewBoxNormalization.enabled);
     XCTAssertTrue(flags.inferViewBoxes.enabled);
+}
+
+- (void)testByteUtilitiesRespectNonterminatedSpans
+{
+    const char attribute[] = { 'w', 'i', 'd', 't', 'h', '!' };
+    XCTAssertEqual(IJSVGNodeAttributeForBytes(attribute, 5), IJSVGNodeAttributeWidth);
+    XCTAssertEqual(IJSVGNodeAttributeForBytes(attribute, 6), NSNotFound);
+    XCTAssertEqual(IJSVGNodeAttributeForBytes(NULL, 0), NSNotFound);
+    const char length[] = { '1', '2', '.', '5', '%', '!' };
+    IJSVGUnitLength* parsed = IJSVGLengthFromBytes(length, 5, YES);
+    XCTAssertEqualWithAccuracy(parsed.value, .125, 1e-12);
+    XCTAssertEqual(parsed.type, IJSVGUnitLengthTypePercentage);
+    XCTAssertNil(IJSVGLengthFromBytes(length, 6, YES));
+    const char numbers[] = { '1', ',', '-', '2', '!' };
+    __block CGFloat sum = 0;
+    XCTAssertTrue(IJSVGEnumerateNumbersFromBytes(numbers, 4, ^(CGFloat value) {
+        sum += value;
+    }));
+    XCTAssertEqual(sum, -1);
+    __block NSUInteger count = 0;
+    XCTAssertFalse(IJSVGEnumerateNumbersFromBytes(numbers, 5, ^(CGFloat value) {
+        count++;
+    }));
+    XCTAssertEqual(count, 0);
+    const char exponent[] = { '1', 'e', '+' };
+    const char* cursor = exponent;
+    CGFloat value = 0;
+    XCTAssertTrue(IJSVGParseLengthNumberInRange(&cursor, exponent + 3, YES, &value));
+    XCTAssertEqual(cursor, exponent + 1);
+    XCTAssertEqual(value, 1);
+}
+
+- (void)testByteLengthParsingRejectsEmbeddedNullAndNegativeUnderflow
+{
+    const char embedded[] = { '1', 0, '2' };
+    XCTAssertNil(IJSVGLengthFromBytes(embedded, sizeof(embedded), YES));
+    XCTAssertFalse(IJSVGUnitLengthsAreValidBytes(embedded, sizeof(embedded), YES, YES));
+    const char underflow[] = "-1e-999";
+    XCTAssertNil(IJSVGLengthFromBytes(underflow, sizeof(underflow) - 1, NO));
+    const char expression[] = "calc(10px + 2px)!";
+    XCTAssertNotNil(IJSVGLengthFromBytes(expression, sizeof(expression) - 2, YES));
+    XCTAssertNil(IJSVGLengthFromBytes(expression, sizeof(expression) - 1, YES));
+}
+
+- (void)testByteTransformsConsumeOnlyTheirSpan
+{
+    const char bytes[] = "translate(12, 3) scale(2)!";
+    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForBytes:bytes length:sizeof(bytes) - 2 allowCSSUnits:NO];
+    XCTAssertEqual(transforms.count, 2);
+    XCTAssertEqual(transforms[0].parameters[0], 12);
+    XCTAssertEqual(transforms[0].parameters[1], 3);
+    XCTAssertEqual(transforms[1].parameters[0], 2);
+}
+
+- (void)testByteParsersDoNotReadBeyondAccessibleMemory
+{
+    size_t page = (size_t)getpagesize();
+    char* memory = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    XCTAssertNotEqual(memory, MAP_FAILED);
+    if (memory == MAP_FAILED) {
+        return;
+    }
+    int result = mprotect(memory + page, page, PROT_NONE);
+    XCTAssertEqual(result, 0);
+    if (result != 0) {
+        munmap(memory, page * 2);
+        return;
+    }
+    const char expression[] = "calc(10px + 2px)";
+    size_t count = sizeof(expression) - 1;
+    char* bytes = memory + page - count;
+    memcpy(bytes, expression, count);
+    IJSVGUnitLength* length = IJSVGLengthFromBytes(bytes, count, YES);
+    XCTAssertNotNil(length);
+    const char transform[] = "translate(12,3)";
+    count = sizeof(transform) - 1;
+    bytes = memory + page - count;
+    memcpy(bytes, transform, count);
+    NSArray<IJSVGTransform*>* transforms = [IJSVGTransform transformsForBytes:bytes length:count allowCSSUnits:NO];
+    XCTAssertEqual(transforms.count, 1);
+    bytes = memory + page - 1;
+    *bytes = '7';
+    __block CGFloat number = 0;
+    XCTAssertTrue(IJSVGEnumerateNumbersFromBytes(bytes, 1, ^(CGFloat value) {
+        number = value;
+    }));
+    XCTAssertEqual(number, 7);
+    XCTAssertEqual(IJSVGNodeAttributeForBytes(bytes, 1), NSNotFound);
+    munmap(memory, page * 2);
+    XCTAssertEqualWithAccuracy([length computeValue:100], 12, 1e-12);
 }
 
 @end

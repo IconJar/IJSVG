@@ -8,9 +8,11 @@
 
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(uint8_t, IJSVGCSSVariableSyntax) { IJSVGCSSVariableSyntaxInvalid,
+typedef NS_ENUM(uint8_t, IJSVGCSSVariableSyntax) {
+    IJSVGCSSVariableSyntaxInvalid,
     IJSVGCSSVariableSyntaxLiteral,
-    IJSVGCSSVariableSyntaxReferences };
+    IJSVGCSSVariableSyntaxReferences
+};
 
 BOOL IJSVGCSSValueMayContainVariables(NSString* value);
 NSString* IJSVGCSSResolvedPaintValue(NSString* value, NSUInteger attribute);

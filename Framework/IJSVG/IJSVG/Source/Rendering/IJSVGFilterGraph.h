@@ -12,11 +12,13 @@
 #import <IJSVGMetalBlurRenderer.h>
 #import <IJSVGMetalShadowRenderer.h>
 
-typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) { IJSVGFilterInputSourceAlpha = 1 << 0,
+typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
+    IJSVGFilterInputSourceAlpha = 1 << 0,
     IJSVGFilterInputBackgroundImage = 1 << 1,
     IJSVGFilterInputBackgroundAlpha = 1 << 2,
     IJSVGFilterInputFillPaint = 1 << 3,
-    IJSVGFilterInputStrokePaint = 1 << 4 };
+    IJSVGFilterInputStrokePaint = 1 << 4
+};
 
 @interface IJSVGFilterMetadata : NSObject
 @property (nonatomic, strong, readonly) IJSVGFilter* filter;
@@ -28,6 +30,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) { IJSVGFilterInputSourceAlpha 
 @interface IJSVGFilterGraph : NSObject
 
 @property (nonatomic, strong) IJSVGFilter* filter;
+
 // Supply metadata only for a resolved immutable filter.
 @property (nonatomic, strong) IJSVGFilterMetadata* resolvedMetadata;
 @property (nonatomic, readonly) NSArray<IJSVGFilterPrimitive*>* filterPrimitives;

@@ -44,7 +44,9 @@
 {
     static NSSet<NSString*>* names;
     static dispatch_once_t once;
-    dispatch_once(&once, ^{ names = [NSSet setWithArray:@[ IJSVGAttributeIn2, IJSVGAttributeScale, IJSVGAttributeXChannelSelector, IJSVGAttributeYChannelSelector ]]; });
+    dispatch_once(&once, ^{
+        names = [NSSet setWithArray:@[ IJSVGAttributeIn2, IJSVGAttributeScale, IJSVGAttributeXChannelSelector, IJSVGAttributeYChannelSelector ]];
+    });
     return names;
 }
 

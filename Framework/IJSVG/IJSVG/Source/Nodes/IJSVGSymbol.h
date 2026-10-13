@@ -11,6 +11,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface IJSVGSymbol : IJSVGRootNode
+
 // Optional reference point for an instantiated symbol, in its content
 // coordinates.
 @property (nonatomic, strong, nullable) IJSVGUnitLength* refX;

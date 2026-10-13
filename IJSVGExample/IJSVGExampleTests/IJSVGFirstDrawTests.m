@@ -20,7 +20,9 @@
                                                @"viewBox='0 0 128 128'>%@</svg>",
         contents];
     IJSVG* svg = IJSVGTestSVGObject(xml);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     return svg;
 }
 
@@ -115,6 +117,7 @@
                                                                                "mask='url(#mask)'/></g>",
                                                        maskType, effect, transform]];
                 NSData* full = [self pixelsForSVG:svg clip:CGRectNull];
+
                 // Change the destination clip while reusing the same resolved
                 // tree. Cached mask bounds must track the newly requested area.
                 for (NSValue* value in @[ [NSValue valueWithRect:CGRectMake(30, 32, 41, 37)], [NSValue valueWithRect:CGRectMake(53, 49, 49, 35)] ]) {
@@ -136,6 +139,7 @@
                             }
                         }
                     }
+
                     // Cropping changes Quartz gradient rounding and mask
                     // interpolation. Bound both the worst channel and total error.
                     XCTAssertLessThanOrEqual(maximumDifference, 2, @"%@ filtered=%@ transform=%@ clip=%@", maskType, filtered, transform, value);
@@ -177,6 +181,7 @@
         NSString* format = @"<defs><clipPath id='clip' clipPathUnits='%@' "
                             "clip-rule='evenodd'>%@</clipPath></defs>%@";
         IJSVG* cached = [self svgWithContents:[NSString stringWithFormat:format, units, geometry, clients]];
+
         // An ignored data attribute excludes the conservative template path
         // without changing any geometry, style or reference coordinates.
         NSString* independent = [[NSString stringWithFormat:format, units, geometry, clients] stringByReplacingOccurrencesOfString:@"<clipPath "

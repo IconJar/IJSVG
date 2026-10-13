@@ -51,8 +51,8 @@
     IJSVGParseTransformAttributes(self, context);
     IJSVGParseDisplayAttributes(self, context);
     IJSVGParseMarkersAttributes(self, context);
-    NSString* pointsString = [context->element attributeForName:IJSVGAttributePoints].stringValue;
-    [context->parser parsePolyPoints:pointsString intoPath:self closePath:NO];
+    IJSVGXMLAttribute* points = IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributePoints);
+    [context->parser parsePolyBytes:IJSVGXMLAttributeBytes(points) length:points == NULL ? 0 : points->value.length intoPath:self closePath:NO];
 }
 
 @end

@@ -70,6 +70,7 @@
         if (bitmap != NULL && page != NULL) {
             CGContextDrawPDFPage(bitmap, page);
             const uint8_t* pixels = CGBitmapContextGetData(bitmap);
+
             // The earlier blue square must become red (alpha) or green (image).
             NSUInteger row = flipped.boolValue ? 28 : 95 - 28;
             const uint8_t* pixel = pixels + (row * 96 + 28) * 4;
@@ -117,14 +118,16 @@
                                    NSMutableData* data = [[NSMutableData alloc] init];
                                    CGDataConsumerRef consumer = CGDataConsumerCreateWithCFData((__bridge CFMutableDataRef)data);
                                    XCTAssertTrue(consumer != NULL);
-                                   if (consumer == NULL)
+                                   if (consumer == NULL) {
                                        return;
+                                   }
                                    CGRect mediaBox = CGRectMake(0, 0, 96, 96);
                                    CGContextRef pdfContext = CGPDFContextCreate(consumer, &mediaBox, NULL);
                                    CGDataConsumerRelease(consumer);
                                    XCTAssertTrue(pdfContext != NULL);
-                                   if (pdfContext == NULL)
+                                   if (pdfContext == NULL) {
                                        return;
+                                   }
                                    CGPDFContextBeginPage(pdfContext, NULL);
                                    CGContextTranslateCTM(pdfContext, origin.doubleValue, origin.doubleValue);
                                    CGContextClipToRect(pdfContext, CGRectMake(0, 0, 64, 64));
@@ -135,13 +138,15 @@
 
                                    CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
                                    XCTAssertTrue(provider != NULL);
-                                   if (provider == NULL)
+                                   if (provider == NULL) {
                                        return;
+                                   }
                                    CGPDFDocumentRef pdf = CGPDFDocumentCreateWithProvider(provider);
                                    CGDataProviderRelease(provider);
                                    XCTAssertTrue(pdf != NULL);
-                                   if (pdf == NULL)
+                                   if (pdf == NULL) {
                                        return;
+                                   }
                                    CGPDFPageRef page = CGPDFDocumentGetPage(pdf, 1);
                                    XCTAssertTrue(page != NULL);
                                    CGContextRef bitmap = [self newBitmapWithSize:96 flipped:NO];
@@ -153,8 +158,9 @@
                                        XCTAssertGreaterThan(pixels[center], 240, @"origin=%@", origin);
                                        XCTAssertGreaterThan(pixels[center + 3], 240, @"origin=%@", origin);
                                    }
-                                   if (bitmap != NULL)
+                                   if (bitmap != NULL) {
                                        CGContextRelease(bitmap);
+                                   }
                                    CGPDFDocumentRelease(pdf);
                                }];
     }
@@ -278,8 +284,9 @@
 - (NSData*)translatedPixelsWithOffset:(double)offset flipped:(BOOL)flipped reference:(BOOL)reference
 {
     CGContextRef context = [self newBitmapWithSize:64 flipped:flipped];
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
+    }
     IJSVGShapePaint* container = [IJSVGShapePaint paint];
     container.frame = CGRectMake(0, 0, 64, 64);
     container.fillColor = NULL;
@@ -310,8 +317,9 @@
         [container addChild:child];
     }
     [container renderInContext:context];
-    if (reference)
+    if (reference) {
         CGContextEndTransparencyLayer(context);
+    }
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:64 * 64 * 4];
     CGContextRelease(context);
     return pixels;

@@ -251,11 +251,15 @@
                                      "<rect width='50%' height='100%'/></symbol><use href='#box' width='50%' "
                                      "height='100%'/>");
     IJSVG* svg = IJSVGTestSVGObject(source);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     for (NSNumber* dimension in @[ @8, @16, @4, @8 ]) {
         CGSize size = CGSizeMake(dimension.doubleValue, dimension.doubleValue);
         IJSVG* fresh = IJSVGTestSVGObject(source);
-        fresh.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+        fresh.renderingBackingScaleHelper = ^CGFloat {
+            return 1.f;
+        };
         CGImageRef actual = [svg newCGImageRefWithSize:size flipped:NO error:nil];
         CGImageRef expected = [fresh newCGImageRefWithSize:size flipped:NO error:nil];
         XCTAssertNotEqual(actual, NULL);
@@ -265,10 +269,12 @@
             NSData* expectedPixels = CFBridgingRelease(CGDataProviderCopyData(CGImageGetDataProvider(expected)));
             XCTAssertEqualObjects(actualPixels, expectedPixels);
         }
-        if (actual != NULL)
+        if (actual != NULL) {
             CGImageRelease(actual);
-        if (expected != NULL)
+        }
+        if (expected != NULL) {
             CGImageRelease(expected);
+        }
     }
 }
 
@@ -337,6 +343,7 @@
                             XCTAssertEqualObjects(expectedPixels, IJSVGTestRGBADataForSVG(exported, CGSizeMake(8, 8)), @"%@", source);
                         }
                     }
+
                     // Also exercise the container fast path with fully opaque content.
                     [self assertBody:[source stringByReplacingOccurrencesOfString:@"opacity='.75'" withString:@"opacity='1'"] matchesBody:[expanded stringByReplacingOccurrencesOfString:@"opacity='.75'" withString:@"opacity='1'"]];
                 }

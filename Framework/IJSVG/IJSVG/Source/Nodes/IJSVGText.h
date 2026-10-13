@@ -11,7 +11,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Parsed SVG/CSS text keywords. Numeric values and names retain their own data.
-typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) { IJSVGTextKeywordUnspecified,
+typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) {
+    IJSVGTextKeywordUnspecified,
     IJSVGTextKeywordInherit,
     IJSVGTextKeywordUnset,
     IJSVGTextKeywordInitial,
@@ -93,17 +94,22 @@ typedef NS_ENUM(NSUInteger, IJSVGTextKeyword) { IJSVGTextKeywordUnspecified,
     IJSVGTextKeywordUltraExpanded,
     IJSVGTextKeywordGeometricPrecision,
     IJSVGTextKeywordOptimizeLegibility,
-    IJSVGTextKeywordOptimizeSpeed };
+    IJSVGTextKeywordOptimizeSpeed
+};
 
-typedef NS_ENUM(NSUInteger, IJSVGTextLengthBasis) { IJSVGTextLengthBasisAbsolute,
+typedef NS_ENUM(NSUInteger, IJSVGTextLengthBasis) {
+    IJSVGTextLengthBasisAbsolute,
     IJSVGTextLengthBasisFontSize,
     IJSVGTextLengthBasisXHeight,
-    IJSVGTextLengthBasisPercentage };
+    IJSVGTextLengthBasisPercentage
+};
 
-typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) { IJSVGTextDecorationNone = 0,
+typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
+    IJSVGTextDecorationNone = 0,
     IJSVGTextDecorationUnderline = 1 << 0,
     IJSVGTextDecorationOverline = 1 << 1,
-    IJSVGTextDecorationLineThrough = 1 << 2 };
+    IJSVGTextDecorationLineThrough = 1 << 2
+};
 
 // Parser produced values are shared unchanged when styles inherit.
 @interface IJSVGTextAttributeValue : NSObject

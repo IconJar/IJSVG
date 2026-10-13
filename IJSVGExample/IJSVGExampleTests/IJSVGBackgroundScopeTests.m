@@ -55,6 +55,7 @@
     for (NSNumber* size in @[ @16, @64, @128 ]) {
         for (NSString* contents in fixtures) {
             NSString* actual = [NSString stringWithFormat:@"<g enable-background='new' opacity='.6'>%@</g>", contents];
+
             // The invisible rectangle broadens the reference layer without
             // painting, providing an independent uncropped reference.
             NSString* expected = [NSString stringWithFormat:@"<g enable-background='new' opacity='.6'>"

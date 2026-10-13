@@ -36,14 +36,18 @@
 {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     XCTAssertTrue(colorSpace != NULL);
-    if (colorSpace == NULL)
+    if (colorSpace == NULL) {
         return nil;
+    }
     CGContextRef context = CGBitmapContextCreate(NULL, 64, 64, 8, 256, colorSpace, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease(colorSpace);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return nil;
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    }
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
     [svg drawInRect:CGRectMake(0, 0, 64, 64) context:context];
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:64 * 256];
     CGContextRelease(context);
@@ -104,8 +108,9 @@
                                     self.stops]];
     IJSVGRootNode* root = svg.rootNode;
     XCTAssertEqual(root.children.count, 2u);
-    if (root.children.count != 2)
+    if (root.children.count != 2) {
         return;
+    }
     IJSVGPaintNode* firstShape = (IJSVGPaintNode*)root.children[0];
     IJSVGPaintNode* secondShape = (IJSVGPaintNode*)root.children[1];
     XCTAssertTrue([firstShape.fill isKindOfClass:IJSVGLinearGradient.class]);

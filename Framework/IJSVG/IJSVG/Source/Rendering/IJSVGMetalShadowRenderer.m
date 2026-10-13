@@ -41,6 +41,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
         if (IJSVGShadowDevice == nil || !IJSVGShadowDevice.hasUnifiedMemory) {
             return;
         }
+
         // Core Image pixel coordinates increase from bottom to top, while packed
         // Core Graphics bitmap rows run from top to bottom. Translated crops fuse
         // before blur, but the next primitive uses the integral Core Image extent.
@@ -54,6 +55,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
         options.fastMathEnabled = NO;
         id<MTLLibrary> library = [IJSVGShadowDevice newLibraryWithSource:source options:options error:NULL];
 #else
+
         // Xcode disables fast math for this shader to match the package path.
         NSBundle* bundle = [NSBundle bundleForClass:IJSVGMetalShadowJob.class];
         id<MTLLibrary> library = [IJSVGShadowDevice newDefaultLibraryWithBundle:bundle
@@ -186,6 +188,7 @@ static BOOL IJSVGPrepareMetalShadows(void)
             }
         }
         [command commit];
+
         // The public renderer returns a CPU readable CGImage. Wait only once for
         // all independent shadows, before releasing this exclusive buffer lease.
         [command waitUntilCompleted];

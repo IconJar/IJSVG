@@ -24,7 +24,9 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGAnnotationTestSVG error:&error];
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGSize size = CGSizeMake(32, 16);
     NSImage* image = [svg imageWithSize:size error:&error];
     XCTAssertNotNil(image);
@@ -59,8 +61,9 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     for (NSData* data in @[ [svg PDFData], [svg PDFDataWithRect:rect], pdf, rectPDF ]) {
         CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
         XCTAssertTrue(provider != NULL);
-        if (provider == NULL)
+        if (provider == NULL) {
             continue;
+        }
         CGPDFDocumentRef document = CGPDFDocumentCreateWithProvider(provider);
         XCTAssertTrue(document != NULL);
         if (document != NULL) {
@@ -80,8 +83,9 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     CGPathRelease(source);
     CGMutablePathRef path = [IJSVGCommand newPathForCommandsArray:[IJSVGCommand commandsForDataCharacters:"M0 0 L8 4"]];
     XCTAssertTrue(path != NULL);
-    if (path == NULL)
+    if (path == NULL) {
         return;
+    }
     XCTAssertTrue(CGPointEqualToPoint(CGPathGetCurrentPoint(path), CGPointMake(8, 4)));
     XCTAssertEqual(CGColorSpaceGetNumberOfComponents(IJSVGDeviceRGBColorSpace()), 3u);
     XCTAssertEqual(CGColorSpaceGetNumberOfComponents(IJSVGDeviceGrayColorSpace()), 1u);

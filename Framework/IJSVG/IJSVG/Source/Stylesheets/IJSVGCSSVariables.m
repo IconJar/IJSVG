@@ -14,8 +14,10 @@
 #import <IJSVGCSSVariables.h>
 #import <IJSVGStyleSheetUtils.h>
 
-enum { IJSVGCSSVariableMaximumDepth = 64,
-    IJSVGCSSVariableMaximumBytes = 65536 };
+enum {
+    IJSVGCSSVariableMaximumDepth = 64,
+    IJSVGCSSVariableMaximumBytes = 65536
+};
 
 typedef struct {
     __unsafe_unretained NSDictionary<NSString*, NSString*>* declarations;

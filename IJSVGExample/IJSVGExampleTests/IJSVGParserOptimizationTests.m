@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
+#import <IJSVG/IJSVGLinearGradient.h>
+#import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGRect.h>
 #import <IJSVG/IJSVGUse.h>
 #import <IJSVGParsedPathCache.h>
@@ -475,6 +477,63 @@
     XCTAssertEqual(gradient.y2.originalType, IJSVGUnitLengthTypeIN);
 }
 
+- (void)testGradientAttributeIdentifiersPreserveQualifiedNames
+{
+    NSString* linearSource = @"<linearGradient xmlns:other='urn:other' other:x1='99' other:y1='99' x1='25%' x2='75%' y1='10%' y2='90%' other:spreadMethod='reflect' spreadMethod='repeat'/>";
+    NSString* radialSource = @"<radialGradient xmlns:other='urn:other' other:cx='99' other:cy='99' other:r='99' other:fx='99' other:fy='99' other:fr='99' cx='25%' cy='35%' r='45%' fx='15%' fy='20%' fr='5%' other:spreadMethod='repeat' spreadMethod='reflect'/>";
+    for (NSNumber* publicAPI in @[ @NO, @YES ]) {
+        IJSVGLinearGradient* linear = nil;
+        IJSVGRadialGradient* radial = nil;
+        if (publicAPI.boolValue) {
+            linear = [[IJSVGLinearGradient alloc] init];
+            radial = [[IJSVGRadialGradient alloc] init];
+            linear.units = radial.units = IJSVGUnitObjectBoundingBox;
+            NSXMLElement* linearElement = [[NSXMLElement alloc] initWithXMLString:linearSource error:nil];
+            NSXMLElement* radialElement = [[NSXMLElement alloc] initWithXMLString:radialSource error:nil];
+            [IJSVGLinearGradient parseGradient:linearElement gradient:linear];
+            [IJSVGRadialGradient parseGradient:radialElement gradient:radial];
+        } else {
+            NSString* body = [NSString stringWithFormat:@"<defs>%@%@</defs><rect width='10' height='10' fill='url(#linear)'/><rect width='10' height='10' fill='url(#radial)'/>", [linearSource stringByReplacingOccurrencesOfString:@"<linearGradient " withString:@"<linearGradient id='linear' "], [radialSource stringByReplacingOccurrencesOfString:@"<radialGradient " withString:@"<radialGradient id='radial' "]];
+            IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGTestSVG(body)];
+            XCTAssertNotNil(svg);
+            linear = (IJSVGLinearGradient*)((IJSVGGraphicsNode*)svg.rootNode.children.firstObject).fill;
+            radial = (IJSVGRadialGradient*)((IJSVGGraphicsNode*)svg.rootNode.children.lastObject).fill;
+        }
+        XCTAssertNotNil(linear);
+        XCTAssertNotNil(radial);
+        XCTAssertEqualWithAccuracy(linear.x1.value, .25, .0001);
+        XCTAssertEqualWithAccuracy(linear.x2.value, .75, .0001);
+        XCTAssertEqualWithAccuracy(linear.y1.value, .10, .0001);
+        XCTAssertEqualWithAccuracy(linear.y2.value, .90, .0001);
+        XCTAssertEqual(linear.spreadMethod, IJSVGGradientSpreadMethodRepeat);
+        XCTAssertEqualWithAccuracy(radial.cx.value, .25, .0001);
+        XCTAssertEqualWithAccuracy(radial.cy.value, .35, .0001);
+        XCTAssertEqualWithAccuracy(radial.r.value, .45, .0001);
+        XCTAssertEqualWithAccuracy(radial.fx.value, .15, .0001);
+        XCTAssertEqualWithAccuracy(radial.fy.value, .20, .0001);
+        XCTAssertEqualWithAccuracy(radial.fr.value, .05, .0001);
+        XCTAssertEqual(radial.spreadMethod, IJSVGGradientSpreadMethodReflect);
+    }
+}
+
+- (void)testGradientSpreadMethodKeepsExactKeywords
+{
+    NSArray<NSString*>* values = @[ @"reflect", @"repeat", @"pad", @"Repeat", @"repeatExtra", @" repeat", @"reflect " ];
+    for (NSUInteger index = 0; index < values.count; index++) {
+        NSString* source = [NSString stringWithFormat:@"<linearGradient xmlns:other='urn:other' other:spreadMethod='repeat' spreadMethod='%@'/>", values[index]];
+        NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:source error:nil];
+        IJSVGLinearGradient* gradient = [[IJSVGLinearGradient alloc] init];
+        [IJSVGLinearGradient parseGradient:element gradient:gradient];
+        IJSVGGradientSpreadMethod expected = index == 0 ? IJSVGGradientSpreadMethodReflect : index == 1 ? IJSVGGradientSpreadMethodRepeat
+                                                                                                        : IJSVGGradientSpreadMethodPad;
+        XCTAssertEqual(gradient.spreadMethod, expected, @"%@", values[index]);
+    }
+    NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:@"<linearGradient xmlns:other='urn:other' other:spreadMethod='repeat'/>" error:nil];
+    IJSVGLinearGradient* gradient = [[IJSVGLinearGradient alloc] init];
+    [IJSVGLinearGradient parseGradient:element gradient:gradient];
+    XCTAssertEqual(gradient.spreadMethod, IJSVGGradientSpreadMethodPad);
+}
+
 - (void)testSingleRuleMatchingKeepsSelectorContextAndAdditionalRules
 {
     IJSVGGroup* group = IJSVGTestGroup(@"container", @[]);
@@ -783,6 +842,7 @@
     IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:svg fileURL:nil error:&error];
     XCTAssertNotNil(parser);
     XCTAssertNil(error);
+
     // Parse twice to check that each parse starts with an empty cache.
     for (NSUInteger iteration = 0; iteration < 2; iteration++) {
         IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
@@ -861,8 +921,9 @@
     for (IJSVGUse* instance in svg.rootNode.children) {
         IJSVGGroup* group = (IJSVGGroup*)instance.children.firstObject;
         XCTAssertEqual(group.children.count, count);
-        if (group.children.count != count)
+        if (group.children.count != count) {
             continue;
+        }
         for (NSUInteger index = 0; index < count; index++) {
             IJSVGUse* use = (IJSVGUse*)group.children[index];
             XCTAssertEqual(use.children.count, widths[index] == 0 ? 0u : 1u);

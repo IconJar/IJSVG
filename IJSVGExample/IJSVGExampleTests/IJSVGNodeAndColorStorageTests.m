@@ -30,7 +30,9 @@
     IJSVGClipPath* copy = original.copy;
     XCTAssertNotNil(copy);
     XCTAssertTrue(copy.hasBasicShape);
-    CGFloat (^resolver)(IJSVGUnitLength*, CGFloat) = ^CGFloat(IJSVGUnitLength* length, CGFloat percentage) { return [length computeValue:percentage]; };
+    CGFloat (^resolver)(IJSVGUnitLength*, CGFloat) = ^CGFloat(IJSVGUnitLength* length, CGFloat percentage) {
+        return [length computeValue:percentage];
+    };
     CGPathRef path = [copy newBasicShapePathWithFillBox:CGRectMake(10, 20, 200, 100) strokeBox:CGRectMake(0, 10, 220, 120) viewBox:CGRectMake(0, 0, 400, 200) lengthResolver:resolver];
     XCTAssertTrue(CGRectEqualToRect(CGPathGetBoundingBox(path), CGRectMake(20, 40, 100, 80)));
     CGPathRelease(path);
@@ -113,6 +115,7 @@
     XCTAssertTrue(copy.isNoneOrTransparent);
     XCTAssertFalse(copy.shouldRender);
     XCTAssertEqual([copy colorsWithStyle:nil matchingTraits:IJSVGColorUsageTraitFill].count, 0u);
+
     // A copied color must still be accepted as a fill by the node trait check.
     IJSVGPath* path = [[IJSVGPath alloc] init];
     XCTAssertNoThrow(path.fill = copy);
@@ -188,8 +191,9 @@
             XCTAssertEqual(copy.numberOfStops, 2u);
             XCTAssertTrue(copy.locations != NULL);
             XCTAssertNotEqual(copy.locations, original.locations);
-            if (copy.children.count != 2 || copy.locations == NULL)
+            if (copy.children.count != 2 || copy.locations == NULL) {
                 continue;
+            }
             for (NSUInteger index = 0; index < 2; index++) {
                 IJSVGStop* child = (IJSVGStop*)copy.children[index];
                 XCTAssertNotEqual(child, original.children[index]);
@@ -227,8 +231,10 @@
 {
     NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:4 pixelsHigh:2 bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:16 bitsPerPixel:32];
     XCTAssertNotNil(bitmap);
-    if (bitmap == nil)
+    if (bitmap == nil) {
         return nil;
+    }
+
     // Explicit RGBA bytes avoid NSColor conversion changing the fixture pixels.
     for (NSUInteger y = 0; y < 2; y++) {
         for (NSUInteger x = 0; x < 4; x++) {
@@ -264,8 +270,9 @@
     CGContextRef context = CGBitmapContextCreate(pixels, 4, 2, 8, 16, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
-    if (context == NULL)
+    if (context == NULL) {
         return;
+    }
     [svg drawInRect:CGRectMake(0, 0, 4, 2) context:context];
     CGContextRelease(context);
     for (NSUInteger index = 0; index < sizeof(pixels); index += 4) {
@@ -283,6 +290,7 @@
     original.x = [IJSVGUnitLength unitWithFloat:3.f];
     original.y = [IJSVGUnitLength unitWithFloat:5.f];
     original.opacity = [IJSVGUnitLength unitWithFloat:0.5f];
+
     // The node cached intrinsic dimensions must survive even if NSImage changes.
     original.image.size = NSMakeSize(8, 6);
     IJSVGImage* copy = original.copy;
@@ -355,6 +363,7 @@
         weakOriginal = original;
         copy = original.copy;
         XCTAssertEqual(copy.CGImage, original.CGImage);
+
         // Also release the original cached image before destroying the node.
         original.image = nil;
     }

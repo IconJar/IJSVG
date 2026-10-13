@@ -66,8 +66,9 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
                                        XCTAssertNotNil(svg);
                                        CGContextRef bitmap = [self newBitmapWithSize:8 flipped:NO];
                                        if (svg == nil || bitmap == NULL) {
-                                           if (bitmap != NULL)
+                                           if (bitmap != NULL) {
                                                CGContextRelease(bitmap);
+                                           }
                                            return;
                                        }
                                        [svg drawInRect:CGRectMake(0, 0, 8, 8) context:bitmap];
@@ -108,8 +109,13 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
     // Retain contexts and compare identity, so addresses cannot be reused.
     NSHashTable* contexts = [NSHashTable hashTableWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality];
     __block NSUInteger callbacks = 0;
-    [self runWorkers:1 freshThreads:YES block:^(NSUInteger index) { [self leaseDepth:12 contexts:contexts callbacks:&callbacks]; }];
+    [self runWorkers:1
+        freshThreads:YES
+               block:^(NSUInteger index) {
+                   [self leaseDepth:12 contexts:contexts callbacks:&callbacks];
+               }];
     XCTAssertEqual(callbacks, 13u);
+
     // All nested work on one thread belongs to one synchronous render task.
     // It must not initialize extra contexts during the first draw.
     XCTAssertEqual(contexts.count, 1u);
@@ -135,7 +141,9 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
     }];
     XCTAssertTrue(completed);
     @try {
-        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) { @throw [NSException exceptionWithName:@"IJSVGTestException" reason:nil userInfo:nil]; }];
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
+            @throw [NSException exceptionWithName:@"IJSVGTestException" reason:nil userInfo:nil];
+        }];
     } @catch (NSException* exception) {
         XCTAssertEqualObjects(exception.name, @"IJSVGTestException");
     }
@@ -201,8 +209,9 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
                                    for (NSUInteger index = 0; index < 12; index++) {
                                        NSData* pixels = [self atlasPixelsForIndex:index nested:nested.boolValue];
                                        XCTAssertNotNil(pixels);
-                                       if (pixels == nil)
+                                       if (pixels == nil) {
                                            return;
+                                       }
                                        [references addObject:pixels];
                                    }
                                    for (NSUInteger batch = 0; batch < 3; batch++) {
@@ -222,6 +231,7 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
     NSObject* lock = [[NSObject alloc] init];
     NSHashTable* contexts = [NSHashTable hashTableWithOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality];
     __block NSUInteger renders = 0;
+
     // Each batch uses fresh dedicated threads, with more callers than pool slots.
     for (NSUInteger batch = 0; batch < 3; batch++) {
         [self runWorkers:12
@@ -229,8 +239,9 @@ static void IJSVGTestNestedOutput(NSUInteger depth)
                    block:^(NSUInteger index) {
                        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* context, BOOL supportsMetalKernels) {
                            XCTAssertNotNil(context);
-                           if (context == nil)
+                           if (context == nil) {
                                return;
+                           }
                            @synchronized(lock) {
                                [contexts addObject:context];
                            }

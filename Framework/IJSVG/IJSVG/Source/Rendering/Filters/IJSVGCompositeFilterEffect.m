@@ -25,6 +25,7 @@ static void IJSVGCompositePixels(const float* a, const float* b, float* dst, NSI
         }
         return;
     }
+
     // Process small groups of pixels to limit memory use.
     vDSP_Length total = (vDSP_Length)w * h * 4;
     vDSP_Length capacity = MIN(total, 4096);
@@ -89,6 +90,7 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
     double k2 = [primitive numberForParameter:IJSVGAttributeK2 defaultValue:0];
     double k3 = [primitive numberForParameter:IJSVGAttributeK3 defaultValue:0];
     double k4 = [primitive numberForParameter:IJSVGAttributeK4 defaultValue:0];
+
     // Use Metal for small coefficients.
     // Large or invalid coefficients need the more precise CPU calculation.
     BOOL boundedCoefficients = fabs(k1) <= 16 && fabs(k2) <= 16 && fabs(k3) <= 16 && fabs(k4) <= 16;
@@ -100,8 +102,10 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
                 return [context imageFromPrimitiveColorSpace:result];
             }
         }
+
         // Use the CPU path if Metal cannot create the kernel.
     }
+
     // Simple positive sums can use opacity changes and image addition.
     // Other formulas use the general calculation.
     if (k1 == 0 && k4 == 0 && k2 >= 0 && k3 >= 0 && k2 + k3 <= 1) {
@@ -129,11 +133,13 @@ static CIImage* IJSVGCompositeArithmetic(IJSVGFilterPrimitive* primitive, CIImag
     IJSVGFilterCompositeOperator op = primitive.compositeOperator;
     static NSDictionary<NSNumber*, NSString*>* filters;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ filters = @{@(IJSVGFilterCompositeOperatorOver) : @"CISourceOverCompositing",
-                                     @(IJSVGFilterCompositeOperatorIn) : @"CISourceInCompositing",
-                                     @(IJSVGFilterCompositeOperatorOut) : @"CISourceOutCompositing",
-                                     @(IJSVGFilterCompositeOperatorAtop) : @"CISourceAtopCompositing",
-                                     @(IJSVGFilterCompositeOperatorLighter) : @"CIAdditionCompositing"}; });
+    dispatch_once(&onceToken, ^{
+        filters = @{@(IJSVGFilterCompositeOperatorOver) : @"CISourceOverCompositing",
+            @(IJSVGFilterCompositeOperatorIn) : @"CISourceInCompositing",
+            @(IJSVGFilterCompositeOperatorOut) : @"CISourceOutCompositing",
+            @(IJSVGFilterCompositeOperatorAtop) : @"CISourceAtopCompositing",
+            @(IJSVGFilterCompositeOperatorLighter) : @"CIAdditionCompositing"};
+    });
     if (op == IJSVGFilterCompositeOperatorXor) {
         return IJSVGCompositeXor(input, other, context);
     }

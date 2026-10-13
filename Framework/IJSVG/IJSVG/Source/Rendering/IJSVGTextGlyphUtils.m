@@ -41,6 +41,7 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters, NSMut
     if (count == 0) {
         return;
     }
+
     // Use the run buffers directly when Core Text exposes them.
     const CGGlyph* glyphs = CTRunGetGlyphsPtr(run);
     __attribute__((objc_precise_lifetime)) NSMutableData* glyphsData = nil;
@@ -72,6 +73,7 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters, NSMut
     }
     CFDictionaryRef attributes = CTRunGetAttributes(run);
     id font = (__bridge id)CFDictionaryGetValue(attributes, kCTFontAttributeName);
+
     // Keep fallback fonts alive after the Core Text line is released.
     [fonts addObject:font];
     NSUInteger start = output.length / sizeof(IJSVGTextGlyph);
@@ -86,6 +88,7 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters, NSMut
         if (index == NSNotFound) {
             continue;
         }
+
         // Core Text can report separate string indices for combining marks.
         // Keep combining marks attached to the same cluster origin.
         index = characters[index].cluster;
@@ -96,6 +99,7 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters, NSMut
         glyph->character = index;
         CGFloat fontScale = character->style.fontScale;
         CGFloat positionX = origin.x + positions[i].x / fontScale;
+
         // SVG and Core Text use opposite directions for the vertical axis.
         CGFloat positionY = origin.y - positions[i].y / fontScale;
         CGPoint point = CGPointMake(positionX, positionY);
@@ -105,6 +109,7 @@ void IJSVGTextAppendGlyphRun(CTRunRef run, IJSVGTextCharacter* characters, NSMut
         }
         glyph->offset = CGPointMake(point.x - character->position.x, point.y - character->position.y);
         CGSize advance = advances[i];
+
         // Moving a mark across the text direction does not change the advance.
         CGFloat distance = character->style.vertical ? (advance.height == 0 ? advance.width : fabs(advance.height)) : advance.width;
         character->advance += distance / fontScale;
@@ -129,10 +134,12 @@ CGAffineTransform IJSVGTextGlyphTransform(IJSVGTextCharacter* c, const IJSVGText
         IJSVGTextKeyword orientation = style.orientation;
         unichar scalar = c->firstCodeUnit;
         upright = orientation == IJSVGTextKeywordUpright || (orientation != IJSVGTextKeywordSideways && scalar >= u'⺀');
+
         // Core Text supplies rotated glyphs for sideways vertical runs.
     }
     CGAffineTransform transform = CGAffineTransformMakeTranslation(position.x, position.y);
     transform = CGAffineTransformRotate(transform, angle);
+
     // Offsets are already in SVG coordinates. Scale them along the text direction
     // and rotate them with the cluster before converting the glyph outline.
     CGFloat offsetX = style.vertical ? offset.x : offset.x * c->scale;
@@ -156,6 +163,7 @@ void IJSVGTextAppendDecorations(CGMutablePathRef destination, IJSVGTextCharacter
     IJSVGTextDecoration decorations = c->style.decorations;
     if (decorations != IJSVGTextDecorationNone && c->advance > 0) {
         CTFontRef font = glyph->font;
+
         // A fallback font needs its own decoration measurements.
         if (metrics->font != font) {
             metrics->font = font;

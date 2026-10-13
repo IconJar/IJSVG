@@ -86,6 +86,7 @@ static BOOL IJSVGOutlineAppendSimplifiedContour(CGMutablePathRef output, NSData*
             stack[pending++] = (IJSVGOutlinePointRange) { furthest, range.last };
         }
     }
+
     // Keep tiny contours intact so simplification cannot erase their blur
     // coverage.
     CGPathMoveToPoint(output, NULL, points[0].x, points[0].y);
@@ -137,6 +138,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
     if (CGPathIsEmpty(path) || (deviation.width == 0 && deviation.height == 0)) {
         return CGPathCreateCopy(path);
     }
+
     // A round dilation enclosing the rectangular kernel support at three sigma.
     // A small positive axis keeps a blur in one dimension conservative.
     CGFloat x = MAX(deviation.width * 3, 1e-6);
@@ -147,6 +149,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
     CGAffineTransform normalize = CGAffineTransformMakeScale(1 / x, 1 / y);
     CGPathRef scaled = CGPathCreateCopyByTransformingPath(path, &normalize);
     CGPathRef closed = scaled == NULL ? NULL : CGPathCreateCopyByNormalizing(scaled, false);
+
     // Flatten only the approximate filter envelope with error limited to 0.15
     // sigma. Add the simplification and both flattening error bounds to preserve
     // coverage.
@@ -228,6 +231,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
 - (CGPathRef)newColorMatrixOutline:(CGPathRef)path primitive:(IJSVGFilterPrimitive*)primitive region:(CGRect)region
 {
     NSArray<NSNumber*>* values = [primitive numbersForParameter:IJSVGAttributeValues];
+
     // Alpha depending on colour remains inside the input coverage.
     // A positive constant alpha can generate coverage throughout the region.
     BOOL matrix = primitive.colorMatrixType == IJSVGFilterColorMatrixTypeMatrix && values.count == 20;
@@ -267,6 +271,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
         case IJSVGFilterCompositeOperatorIn:
             return CGPathCreateCopyByIntersectingPath(input, other, false);
         case IJSVGFilterCompositeOperatorOut:
+
             // Subtracting approximate coverage could remove real pixels.
             return CGPathCreateCopy(input);
         case IJSVGFilterCompositeOperatorAtop:
@@ -379,11 +384,13 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
         if (name.length == 0) {
             return output;
         }
+
         // Match the transparent backdrop supplied by the renderer outside a
         // background scope.
         if ([name isEqualToString:IJSVGStringBackgroundImage] || [name isEqualToString:IJSVGStringBackgroundAlpha]) {
             return background;
         }
+
         // These inputs require paint server sampling.
         if ([name isEqualToString:IJSVGStringFillPaint] || [name isEqualToString:IJSVGStringStrokePaint]) {
             return nil;
@@ -398,6 +405,7 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
         if (next == NULL) {
             return NULL;
         }
+
         // Use the filter region as a conservative default for primitive subregions.
         // Explicit regions use the same unit resolver as rendered filters.
         CGRect primitiveRegion = [self regionForNode:primitive units:self.filter.contentUnits defaultRegion:region];

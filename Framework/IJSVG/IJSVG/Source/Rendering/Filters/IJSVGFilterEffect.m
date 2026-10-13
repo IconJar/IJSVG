@@ -38,7 +38,9 @@
     // context.
     static NSDictionary<NSNumber*, IJSVGFilterEffect*>* effects;
     static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ effects = [self registeredEffects]; });
+    dispatch_once(&onceToken, ^{
+        effects = [self registeredEffects];
+    });
     return (id)effects[@(type)];
 }
 

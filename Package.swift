@@ -1,4 +1,12 @@
 // swift-tools-version: 6.0
+//
+//  Package.swift
+//  IJSVG
+//
+//  Created by Curtis Hard on 03/10/2026.
+//  Copyright © 2026 Curtis Hard. All rights reserved.
+//
+
 import PackageDescription
 
 let package = Package(
@@ -28,6 +36,7 @@ let package = Package(
             ],
             linkerSettings: [
                 .linkedFramework("AppKit"),
+                .linkedLibrary("xml2"),
                 .linkedFramework("Quartz"),
                 .linkedFramework("CoreImage"),
                 .linkedFramework("Metal"),

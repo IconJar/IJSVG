@@ -8,8 +8,10 @@
 
 #import <IJSVG/IJSVGGroup.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGMaskType) { IJSVGMaskTypeLuminance,
-    IJSVGMaskTypeAlpha };
+typedef NS_ENUM(NSUInteger, IJSVGMaskType) {
+    IJSVGMaskTypeLuminance,
+    IJSVGMaskTypeAlpha
+};
 
 @interface IJSVGMask : IJSVGGroup
 

@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGStyleNode.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGStyleSheetUtils.h>
@@ -23,12 +24,12 @@
 
 @implementation IJSVGStyleNode (Parsing)
 
-+ (BOOL)consumeElement:(NSXMLElement*)element rootElement:(NSXMLElement*)rootElement viewport:(CGSize)viewport styleSheet:(IJSVGStyleSheet*)styleSheet
++ (BOOL)consumeElement:(IJSVGXMLNode*)element rootElement:(IJSVGXMLNode*)rootElement viewport:(CGSize)viewport styleSheet:(IJSVGStyleSheet*)styleSheet
 {
-    NSString* media = [element attributeForName:IJSVGAttributeMedia].stringValue;
+    NSString* media = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeMedia));
     if (media.length != 0) {
-        NSString* width = [rootElement attributeForName:IJSVGAttributeWidth].stringValue;
-        NSString* height = [rootElement attributeForName:IJSVGAttributeHeight].stringValue;
+        NSString* width = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeWidth));
+        NSString* height = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeHeight));
         if (width != nil) {
             viewport.width = [[IJSVGUnitLength unitWithString:width] computeValue:viewport.width];
         }
@@ -43,7 +44,7 @@
             return NO;
         }
     }
-    [styleSheet parseStyleBlock:element.stringValue];
+    [styleSheet parseStyleBlock:IJSVGXMLText(element)];
     return YES;
 }
 

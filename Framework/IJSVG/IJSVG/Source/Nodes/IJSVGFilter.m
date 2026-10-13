@@ -102,6 +102,7 @@
         if (hardAlpha.type != IJSVGNodeTypeFilterColorMatrix || ![hardAlpha.input isEqualToString:IJSVGStringSourceAlpha] || hardAlpha.result.length == 0 || [sources containsObject:hardAlpha.result] || [hardAlpha.result isEqualToString:previousShape] || offset.type != IJSVGNodeTypeFilterOffset || blur.type != IJSVGNodeTypeFilterGaussianBlur || subtract.type != IJSVGNodeTypeFilterComposite || color.type != IJSVGNodeTypeFilterColorMatrix || blend.type != IJSVGNodeTypeFilterBlend) {
             return NO;
         }
+
         // Only implicit chaining is recognised here. Unfamiliar named branches
         // continue through the existing supersampling fallback.
         for (IJSVGFilterPrimitive* stage in @[ offset, blur, subtract, color ]) {

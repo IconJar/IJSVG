@@ -6,12 +6,14 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
+#include <string.h>
 
 typedef struct {
     CGFloat offset;
@@ -54,6 +56,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     CGFloat firstCycle = floor(function->minimum);
     CGFloat lastCycle = floor(function->maximum);
     CGFloat cycles = lastCycle - firstCycle + 1.f;
+
     // Keep storage bounded for subpixel periods. The function shading below
     // handles those without allocating one set of stops for every repetition.
     if (cycles * (function->count + 2) > 65536.f) {
@@ -107,26 +110,26 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 - (void)parseSpreadMethod:(NSXMLElement*)element
 {
-    [self parseSpreadMethodFromAttributes:element.attributes];
+    IJSVGXMLDocument* document = IJSVGXMLDocumentForElementAttributes(element);
+    [self parseSpreadMethodFromAttributes:IJSVGXMLAttributes(IJSVGXMLRoot(document))];
+    IJSVGXMLDocumentDestroy(document);
 }
 
-- (void)parseSpreadMethodFromAttributes:(NSArray<NSXMLNode*>*)attributes
+- (void)parseSpreadMethodFromAttributes:(IJSVGXMLAttributeList)attributes
 {
-    NSString* string = nil;
-    for (NSXMLNode* attribute in attributes) {
-        if ([attribute.name isEqualToString:IJSVGAttributeSpreadMethod]) {
-            string = attribute.stringValue;
-            break;
-        }
-    }
-    const char* value = string.UTF8String;
     self.spreadMethod = IJSVGGradientSpreadMethodPad;
-    if (value != NULL) {
-        if (IJSVGCharBufferCompare(value, "reflect")) {
+    IJSVGXMLAttributeList attributeIterator = attributes;
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributeIterator)) {
+        if (attribute->identifier != IJSVGNodeAttributeSpreadMethod) {
+            continue;
+        }
+        const char* value = IJSVGXMLAttributeBytes(attribute);
+        if (attribute->value.length == 7 && memcmp(value, "reflect", 7) == 0) {
             self.spreadMethod = IJSVGGradientSpreadMethodReflect;
-        } else if (IJSVGCharBufferCompare(value, "repeat")) {
+        } else if (attribute->value.length == 6 && memcmp(value, "repeat", 6) == 0) {
             self.spreadMethod = IJSVGGradientSpreadMethodRepeat;
         }
+        break;
     }
 }
 

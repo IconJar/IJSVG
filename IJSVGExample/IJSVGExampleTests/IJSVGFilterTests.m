@@ -116,7 +116,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 - (NSData*)render:(NSString*)string width:(NSInteger)width height:(NSInteger)height
 {
     IJSVG* svg = IJSVGTestSVGObject(string);
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);
@@ -168,6 +170,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSUInteger occupied = 0;
     double difference = 0, actualAlpha = 0, expectedAlpha = 0;
     double actualCenter[2] = { 0 }, expectedCenter[2] = { 0 };
+
     // Only occupied pixels count, so an empty canvas cannot hide misplaced
     // geometry.
     for (NSUInteger alpha = 3; alpha < expected.length; alpha += 4) {
@@ -186,6 +189,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         for (int channel = 0; channel < 4; channel++) {
             difference += abs(a[alpha - channel] - b[alpha - channel]);
         }
+
         // Solid 5x5 reference neighborhoods must retain their interior color.
         if (b[alpha] == 255 && x >= 2 && x < width - 2 && y >= 2 && y < 10 * scale - 2) {
             BOOL solid = YES;
@@ -205,6 +209,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
         }
     }
     XCTAssertGreaterThan(occupied, 50);
+
     // Rasterization precedes the final transform, allow 3% mean edge error.
     XCTAssertLessThan(difference / MAX(1, occupied * 4), 255 * 0.03);
     XCTAssertGreaterThan(expectedAlpha, 0);
@@ -1900,6 +1905,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     NSString* redElement = [self transformElement:element color:@"red" attributes:attributes];
     NSString* originalContent = [NSString stringWithFormat:@"%@\n%@", definitions, redElement];
     NSString* original = [self document:originalContent];
+
     // Offset uses local element coordinates before the transform list.
     NSString* greenElement = [self transformElement:element color:@"lime" attributes:@""];
     NSString* expectedContent = [NSString stringWithFormat:@"%@<g transform=\"%@\"><g "
@@ -2070,6 +2076,7 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
                                                                     "5 .8)\" "
                                                                     "filter=\"url(#shadow"
                                                                     ")\""]]];
+
     // The parent offset moves both the source and the shadow of its child
     // together.
     NSString* expected = [self document:[NSString stringWithFormat:@"%@<g transform=\"translate(5 1) "
@@ -2466,7 +2473,9 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 // Renders the same SVG instance so tests exercise cached layer invalidation.
 - (NSData*)pixelsForFilterToggleSVG:(IJSVG*)svg
 {
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef context = CGBitmapContextCreate(NULL, 30, 10, 8, 120, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(space);

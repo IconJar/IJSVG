@@ -16,14 +16,18 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, IJSVGVisibility) { IJSVGVisibilityInherit,
+typedef NS_ENUM(NSUInteger, IJSVGVisibility) {
+    IJSVGVisibilityInherit,
     IJSVGVisibilityVisible,
-    IJSVGVisibilityHidden };
+    IJSVGVisibilityHidden
+};
 
-typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) { IJSVGBackgroundEnabledUnspecified,
+typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) {
+    IJSVGBackgroundEnabledUnspecified,
     IJSVGBackgroundEnabledAccumulate,
     IJSVGBackgroundEnabledNew,
-    IJSVGBackgroundEnabledInherit };
+    IJSVGBackgroundEnabledInherit
+};
 
 @class IJSVGTextAttributeValue;
 @class IJSVGNode;
@@ -44,7 +48,8 @@ typedef NS_ENUM(NSUInteger, IJSVGBackgroundEnabled) { IJSVGBackgroundEnabledUnsp
 
 typedef void (^IJSVGNodeWalkHandler)(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop);
 
-typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) { IJSVGNodeAttributeVersion,
+typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
+    IJSVGNodeAttributeVersion,
     IJSVGNodeAttributeXMLNS,
     IJSVGNodeAttributeXMLNSXlink,
     IJSVGNodeAttributeViewBox,
@@ -218,21 +223,34 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) { IJSVGNodeAttributeVersion,
     IJSVGNodeAttributeMaskType,
     IJSVGNodeAttributeTransformOrigin,
     IJSVGNodeAttributeTransformBox,
-    IJSVGNodeAttributeCount };
+    IJSVGNodeAttributeSpreadMethod,
+    IJSVGNodeAttributeRequiredExtensions,
+    IJSVGNodeAttributeSystemLanguage,
+    IJSVGNodeAttributeMedia,
+    IJSVGNodeAttributeCount,
+    IJSVGNodeAttributeUnknown = NSNotFound
+};
 
-enum { kIJSVGNodeAttributeStorageLength = IJSVGNodeAttributeCount };
+enum {
+    kIJSVGNodeAttributeStorageLength = IJSVGNodeAttributeCount
+};
 
-typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) { IJSVGIntrinsicDimensionNone = 0,
+typedef NS_OPTIONS(NSInteger, IJSVGIntrinsicDimensions) {
+    IJSVGIntrinsicDimensionNone = 0,
     IJSVGIntrinsicDimensionWidth = 1 << 1,
     IJSVGIntrinsicDimensionHeight = 1 << 2,
-    IJSVGIntrinsicDimensionBoth = IJSVGIntrinsicDimensionWidth | IJSVGIntrinsicDimensionHeight };
+    IJSVGIntrinsicDimensionBoth = IJSVGIntrinsicDimensionWidth | IJSVGIntrinsicDimensionHeight
+};
 
-typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) { IJSVGNodeTraitNone = 0,
+typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
+    IJSVGNodeTraitNone = 0,
     IJSVGNodeTraitStroked = 1 << 0,
     IJSVGNodeTraitPaintable = 1 << 1,
-    IJSVGNodeTraitPathed = 1 << 2 };
+    IJSVGNodeTraitPathed = 1 << 2
+};
 
-typedef NS_ENUM(NSInteger, IJSVGNodeType) { IJSVGNodeTypeUnknown = 0,
+typedef NS_ENUM(NSInteger, IJSVGNodeType) {
+    IJSVGNodeTypeUnknown = 0,
     IJSVGNodeTypeGroup,
     IJSVGNodeTypePath,
     IJSVGNodeTypeDef,
@@ -290,40 +308,52 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) { IJSVGNodeTypeUnknown = 0,
     IJSVGNodeTypeFilterSpotLight,
     IJSVGNodeTypeTextPath,
     IJSVGNodeTypeAnchor,
-    IJSVGNodeTypeSymbol };
+    IJSVGNodeTypeSymbol
+};
 
 FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string, NSXMLNodeKind kind);
 
-typedef NS_ENUM(NSInteger, IJSVGWindingRule) { IJSVGWindingRuleNonZero,
+typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
+    IJSVGWindingRuleNonZero,
     IJSVGWindingRuleEvenOdd,
-    IJSVGWindingRuleInherit };
+    IJSVGWindingRuleInherit
+};
 
-typedef NS_ENUM(NSInteger, IJSVGVectorEffect) { IJSVGVectorEffectNone,
+typedef NS_ENUM(NSInteger, IJSVGVectorEffect) {
+    IJSVGVectorEffectNone,
     IJSVGVectorEffectNonScalingStroke,
-    IJSVGVectorEffectInherit };
+    IJSVGVectorEffectInherit
+};
 
-typedef NS_ENUM(NSInteger, IJSVGLineCapStyle) { IJSVGLineCapStyleNone,
+typedef NS_ENUM(NSInteger, IJSVGLineCapStyle) {
+    IJSVGLineCapStyleNone,
     IJSVGLineCapStyleButt,
     IJSVGLineCapStyleRound,
     IJSVGLineCapStyleSquare,
-    IJSVGLineCapStyleInherit };
+    IJSVGLineCapStyleInherit
+};
 
-typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) { IJSVGLineJoinStyleNone,
+typedef NS_ENUM(NSInteger, IJSVGLineJoinStyle) {
+    IJSVGLineJoinStyleNone,
     IJSVGLineJoinStyleMiter,
     IJSVGLineJoinStyleRound,
     IJSVGLineJoinStyleBevel,
-    IJSVGLineJoinStyleInherit };
+    IJSVGLineJoinStyleInherit
+};
 
 // Two bits per operation: fill = 0, stroke = 1, markers = 2.
-typedef NS_ENUM(NSInteger, IJSVGPaintOrder) { IJSVGPaintOrderInherit = -1,
+typedef NS_ENUM(NSInteger, IJSVGPaintOrder) {
+    IJSVGPaintOrderInherit = -1,
     IJSVGPaintOrderNormal = 0x24,
     IJSVGPaintOrderFillMarkersStroke = 0x18,
     IJSVGPaintOrderStrokeFillMarkers = 0x21,
     IJSVGPaintOrderStrokeMarkersFill = 0x09,
     IJSVGPaintOrderMarkersFillStroke = 0x12,
-    IJSVGPaintOrderMarkersStrokeFill = 0x06 };
+    IJSVGPaintOrderMarkersStrokeFill = 0x06
+};
 
-typedef NS_ENUM(NSInteger, IJSVGBlendMode) { IJSVGBlendModeNormal = kCGBlendModeNormal,
+typedef NS_ENUM(NSInteger, IJSVGBlendMode) {
+    IJSVGBlendModeNormal = kCGBlendModeNormal,
     IJSVGBlendModeMultiply = kCGBlendModeMultiply,
     IJSVGBlendModeScreen = kCGBlendModeScreen,
     IJSVGBlendModeOverlay = kCGBlendModeOverlay,
@@ -338,19 +368,24 @@ typedef NS_ENUM(NSInteger, IJSVGBlendMode) { IJSVGBlendModeNormal = kCGBlendMode
     IJSVGBlendModeHue = kCGBlendModeHue,
     IJSVGBlendModeSaturation = kCGBlendModeSaturation,
     IJSVGBlendModeColor = kCGBlendModeColor,
-    IJSVGBlendModeLuminosity = kCGBlendModeLuminosity };
+    IJSVGBlendModeLuminosity = kCGBlendModeLuminosity
+};
 
-typedef NS_ENUM(NSInteger, IJSVGColorInterpolation) { IJSVGColorInterpolationUnspecified,
+typedef NS_ENUM(NSInteger, IJSVGColorInterpolation) {
+    IJSVGColorInterpolationUnspecified,
     IJSVGColorInterpolationInherit,
     IJSVGColorInterpolationAuto,
     IJSVGColorInterpolationSRGB,
-    IJSVGColorInterpolationLinearRGB };
+    IJSVGColorInterpolationLinearRGB
+};
 
 IJSVGColorInterpolation IJSVGColorInterpolationForString(NSString* _Nullable value);
 NSString* _Nullable IJSVGColorInterpolationString(IJSVGColorInterpolation value);
 
-typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) { IJSVGOverflowVisibilityHidden,
-    IJSVGOverflowVisibilityVisible };
+typedef NS_ENUM(NSInteger, IJSVGOverflowVisibility) {
+    IJSVGOverflowVisibilityHidden,
+    IJSVGOverflowVisibilityVisible
+};
 
 static CGFloat IJSVGInheritedFloatValue = -99.9999991;
 static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
@@ -370,14 +405,18 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, readonly) BOOL containsRelativeUnits;
 @property (nonatomic, copy, nullable) NSString* title;
 @property (nonatomic, copy, nullable) NSString* desc;
+
 // Specified text properties, retained on all elements for inheritance through
 // groups.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, IJSVGTextAttributeValue*>* textStyle;
+
 // Style inheritance can follow the source document independently of rendering.
 @property (nonatomic, weak, nullable) IJSVGGraphicsNode* styleParent;
+
 // nil inherits. An empty marker represents an explicit "none" or invalid
 // reference.
 @property (nonatomic, assign) IJSVGNodeType type;
+
 // An explicit name overrides the canonical SVG name derived from type.
 // Setting nil restores the default, unknown types have no default name.
 @property (nonatomic, copy, nullable) NSString* name;

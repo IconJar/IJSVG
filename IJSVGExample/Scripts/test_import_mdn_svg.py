@@ -1,3 +1,11 @@
+#
+#  test_import_mdn_svg.py
+#  IJSVGExample
+#
+#  Created by Curtis Hard on 10/10/2026.
+#  Copyright © 2026 Curtis Hard. All rights reserved.
+#
+
 """Importer regression checks: python3 -m unittest discover -s Scripts -p 'test_*.py'."""
 import tempfile
 import unittest

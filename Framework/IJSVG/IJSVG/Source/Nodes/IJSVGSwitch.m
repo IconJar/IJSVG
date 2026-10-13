@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGXML.h"
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
@@ -60,12 +61,44 @@ static BOOL IJSVGSwitchLanguageMatches(const char* languages, const char* prefer
             continue;
         }
         NSXMLElement* candidate = (NSXMLElement*)child;
+
         // No extension languages are implemented. An explicitly empty
         // requiredExtensions also fails conditional processing.
         if ([candidate attributeForName:IJSVGAttributeRequiredExtensions] != nil) {
             continue;
         }
         NSString* languages = [candidate attributeForName:IJSVGAttributeSystemLanguage].stringValue;
+        if (languages == nil) {
+            return candidate;
+        }
+        const char* bytes = languages.UTF8String;
+        if (bytes == NULL || strlen(bytes) != [languages lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
+            continue;
+        }
+        for (NSString* preferred in preferredLanguages) {
+            const char* preference = preferred.UTF8String;
+            if (preference != NULL && strlen(preference) == [preferred lengthOfBytesUsingEncoding:NSUTF8StringEncoding] && IJSVGSwitchLanguageMatches(bytes, preference)) {
+                return candidate;
+            }
+        }
+    }
+    return nil;
+}
+
++ (IJSVGXMLNode*)selectedChildInXML:(IJSVGXMLNode*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages
+{
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGNodeTypeForString(IJSVGXMLLocalName(child), IJSVGXMLKind(child)) == IJSVGNodeTypeStyle) {
+            continue;
+        }
+        IJSVGXMLNode* candidate = (IJSVGXMLNode*)child;
+
+        // No extension languages are implemented. An explicitly empty
+        // requiredExtensions also fails conditional processing.
+        if (IJSVGXMLAttributeForIdentifier(candidate, IJSVGNodeAttributeRequiredExtensions) != nil) {
+            continue;
+        }
+        NSString* languages = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(candidate, IJSVGNodeAttributeSystemLanguage));
         if (languages == nil) {
             return candidate;
         }

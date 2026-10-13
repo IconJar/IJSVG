@@ -10,8 +10,9 @@
 
 static NSUInteger IJSVGTestFilterPaintCount(IJSVGPaint* layer)
 {
-    if (layer == nil)
+    if (layer == nil) {
         return 0;
+    }
     NSUInteger count = [layer isKindOfClass:NSClassFromString(@"IJSVGFilterPaint")] ? 1 : 0;
     count += IJSVGTestFilterPaintCount(layer.maskPaint);
     for (IJSVGPaint* child in layer.children) {
@@ -72,11 +73,13 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     if (clipped) {
         CGContextClipToRect(bitmap, CGRectMake(7, 5, 46, 51));
     }
-    if (generalTransparency)
+    if (generalTransparency) {
         CGContextBeginTransparencyLayer(bitmap, NULL);
+    }
     [svg drawInRect:CGRectMake(0, 0, 64, 64) context:bitmap];
-    if (generalTransparency)
+    if (generalTransparency) {
         CGContextEndTransparencyLayer(bitmap);
+    }
     NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(bitmap) length:64 * 64 * 4];
     CGContextRelease(bitmap);
     return pixels;
@@ -169,12 +172,16 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
 - (NSData*)filterOptionPixelsForSVG:(IJSVG*)svg flipped:(BOOL)flipped exportImage:(BOOL)exportImage
 {
     XCTAssertNotNil(svg);
-    if (svg == nil)
+    if (svg == nil) {
         return nil;
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    }
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGContextRef bitmap = [self newBitmapWithSize:64 flipped:exportImage ? NO : flipped];
-    if (bitmap == NULL)
+    if (bitmap == NULL) {
         return nil;
+    }
     if (exportImage) {
         NSError* error = nil;
         CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(64, 64) flipped:flipped error:&error];
@@ -202,8 +209,9 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     NSXMLDocument* xml = [[NSXMLDocument alloc] initWithXMLString:document options:0 error:&error];
     XCTAssertNil(error);
     XCTAssertNotNil(xml);
-    if (xml == nil)
+    if (xml == nil) {
         return;
+    }
     NSArray<NSXMLElement*>* elements = [xml nodesForXPath:@"//*[@filter]" error:&error];
     XCTAssertNil(error);
     XCTAssertGreaterThan(elements.count, 0u);
@@ -214,8 +222,9 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     NSData* plain = [self filterOptionPixelsForSVG:reference flipped:flipped exportImage:exportImage];
     XCTAssertNotNil(plain);
     XCTAssertTrue([self containsPaintedPixels:plain]);
-    if (plain == nil)
+    if (plain == nil) {
         return;
+    }
 
     IJSVG* svg = IJSVGTestSVGObject(document);
     XCTAssertNotNil(svg);
@@ -223,8 +232,9 @@ static IJSVGRootPaint* IJSVGTestResolvePaint(IJSVG* svg)
     NSData* enabled = [self filterOptionPixelsForSVG:svg flipped:flipped exportImage:exportImage];
     XCTAssertNotNil(enabled);
     XCTAssertGreaterThan(IJSVGTestFilterPaintCount(IJSVGTestResolvePaint(svg)), 0u);
-    if (enabled == nil)
+    if (enabled == nil) {
         return;
+    }
 
     // Reuse an already rendered instance across two off/on cycles, exercising
     // cached paint invalidation and any accelerated filter outputs.

@@ -47,6 +47,7 @@
                               "height='23' rx='2.1' fill='#b06030' opacity='.41'/></g>",
             (unsigned long)index, (unsigned long)(9 + index * 5), (unsigned long)(10 + index * 3), (unsigned long)(index * 2), (unsigned long)(index * 3)];
     }
+
     // A clip matching the canvas size selects the general evaluator without
     // changing pixels.
     return [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'>"
@@ -66,7 +67,10 @@
 {
     for (NSNumber* radius in @[ @0.1, @0.2, @0.5, @1.0, @2.0, @2.5, @2.625, @3.0, @4.0 ]) {
         for (NSNumber* shadows in @[ @1, @2, @4 ]) {
-            [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@ shadows=%@", radius, shadows] block:^(id<XCTActivity> activity) { [self compareRadius:radius.doubleValue shadows:shadows.unsignedIntegerValue colorSpace:@"sRGB" flipped:NO offset:nil]; }];
+            [XCTContext runActivityNamed:[NSString stringWithFormat:@"radius=%@ shadows=%@", radius, shadows]
+                                   block:^(id<XCTActivity> activity) {
+                                       [self compareRadius:radius.doubleValue shadows:shadows.unsignedIntegerValue colorSpace:@"sRGB" flipped:NO offset:nil];
+                                   }];
         }
     }
 }
@@ -75,7 +79,10 @@
 {
     for (NSNumber* flipped in @[ @NO, @YES ]) {
         for (NSString* colorSpace in @[ @"sRGB", @"linearRGB" ]) {
-            [XCTContext runActivityNamed:[NSString stringWithFormat:@"%@ flipped=%@", colorSpace, flipped] block:^(id<XCTActivity> activity) { [self compareRadius:0.5 shadows:2 colorSpace:colorSpace flipped:flipped.boolValue offset:nil]; }];
+            [XCTContext runActivityNamed:[NSString stringWithFormat:@"%@ flipped=%@", colorSpace, flipped]
+                                   block:^(id<XCTActivity> activity) {
+                                       [self compareRadius:0.5 shadows:2 colorSpace:colorSpace flipped:flipped.boolValue offset:nil];
+                                   }];
         }
     }
 }
@@ -83,7 +90,10 @@
 - (void)testFractionalOffsetsNearPixelBoundaries
 {
     for (NSNumber* offset in @[ @0.000001, @-0.000001, @0.999999, @-0.999999 ]) {
-        [XCTContext runActivityNamed:[NSString stringWithFormat:@"offset=%@", offset] block:^(id<XCTActivity> activity) { [self compareRadius:1 shadows:2 colorSpace:@"sRGB" flipped:NO offset:offset]; }];
+        [XCTContext runActivityNamed:[NSString stringWithFormat:@"offset=%@", offset]
+                               block:^(id<XCTActivity> activity) {
+                                   [self compareRadius:1 shadows:2 colorSpace:@"sRGB" flipped:NO offset:offset];
+                               }];
     }
 }
 
@@ -152,7 +162,11 @@
     NSString* actual = [self dropShadowDocumentWithRadius:1.125 offset:-0.75 colorSpace:@"sRGB" forceGeneral:NO];
     NSString* reference = [self dropShadowDocumentWithRadius:1.125 offset:-0.75 colorSpace:@"sRGB" forceGeneral:YES];
     NSData* expected = [self renderDocument:reference flipped:NO];
-    [self runWorkers:12 freshThreads:YES block:^(NSUInteger index) { XCTAssertLessThanOrEqual([self maximumDifference:[self renderDocument:actual flipped:NO] other:expected], 2); }];
+    [self runWorkers:12
+        freshThreads:YES
+               block:^(NSUInteger index) {
+                   XCTAssertLessThanOrEqual([self maximumDifference:[self renderDocument:actual flipped:NO] other:expected], 2);
+               }];
 }
 
 - (void)testDropShadowSelectionAndFallbacks

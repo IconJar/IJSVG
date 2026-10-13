@@ -141,7 +141,9 @@ static void IJSVGSaveReferenceImage(CGImageRef image, NSString* name)
                                                          @"white}svg{display:block}</style>%@",
                                   self.xml]
                       baseURL:nil];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 20 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{ [self finish:@[ @"WebKit comparison timed out" ]]; });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 20 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [self finish:@[ @"WebKit comparison timed out" ]];
+    });
 }
 
 - (NSArray<NSString*>*)compareImage:(NSImage*)snapshot
@@ -164,7 +166,9 @@ static void IJSVGSaveReferenceImage(CGImageRef image, NSString* name)
     CGContextDrawImage(expected, CGRectMake(0, 0, width, height), reference);
     CGFloat scale = width / 400.;
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:self.xml];
-    svg.renderingBackingScaleHelper = ^CGFloat { return scale; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return scale;
+    };
     CGContextTranslateCTM(actual, 0, height);
     CGContextScaleCTM(actual, scale, -scale);
     [svg drawInRect:rect context:actual];

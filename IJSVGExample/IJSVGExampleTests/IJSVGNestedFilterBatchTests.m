@@ -52,7 +52,9 @@
     if (svg == nil) {
         return nil;
     }
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1;
+    };
     CGContextRef context = [self newBitmapWithSize:size flipped:flipped];
     if (context == NULL) {
         return nil;

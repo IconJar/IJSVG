@@ -48,6 +48,7 @@
                                           matrix[16] = .7154;
                                           matrix[17] = .0721;
                                       }
+
                                       // Changing only opacity does not need color conversion.
                                       // Still limit each color value after every filter.
                                       BOOL opacityOnly = isfinite(matrix[18]) && matrix[18] >= 0 && matrix[18] <= 1;

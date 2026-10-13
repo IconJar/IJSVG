@@ -16,14 +16,18 @@
 #import <IJSVGParserUtils.h>
 #import <ctype.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGClipShape) { IJSVGClipShapeNone,
+typedef NS_ENUM(NSUInteger, IJSVGClipShape) {
+    IJSVGClipShapeNone,
     IJSVGClipShapeBox,
     IJSVGClipShapeCircle,
-    IJSVGClipShapeEllipse };
+    IJSVGClipShapeEllipse
+};
 
-typedef NS_ENUM(NSUInteger, IJSVGClipReferenceBox) { IJSVGClipReferenceBoxStroke,
+typedef NS_ENUM(NSUInteger, IJSVGClipReferenceBox) {
+    IJSVGClipReferenceBoxStroke,
     IJSVGClipReferenceBoxFill,
-    IJSVGClipReferenceBoxView };
+    IJSVGClipReferenceBoxView
+};
 
 @interface IJSVGClipPath ()
 @property (nonatomic, assign) IJSVGClipShape basicShape;
@@ -61,10 +65,12 @@ static BOOL IJSVGClipParseReferenceBox(const char* value, IJSVGClipReferenceBox*
     return YES;
 }
 
-typedef NS_ENUM(uint8_t, IJSVGClipArgument) { IJSVGClipArgumentRadius,
+typedef NS_ENUM(uint8_t, IJSVGClipArgument) {
+    IJSVGClipArgumentRadius,
     IJSVGClipArgumentPosition,
     IJSVGClipArgumentClosestSide,
-    IJSVGClipArgumentFarthestSide };
+    IJSVGClipArgumentFarthestSide
+};
 
 static IJSVGClipArgument IJSVGClipArgumentForName(const char* name)
 {

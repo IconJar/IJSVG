@@ -104,6 +104,7 @@ static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent,
     }
     CIRenderDestination* destination = [[CIRenderDestination alloc] initWithMTLTexture:texture commandBuffer:commands];
     destination.colorSpace = colorSpace;
+
     // CGImage providers use top to bottom rows. Materialize the filter at its
     // pixel grid, linear sampling here changes fractional filter region coverage.
     destination.flipped = YES;
@@ -135,6 +136,7 @@ static CGImageRef IJSVGFilterNewSharedMetalImage(CIImage* output, CGRect extent,
 // Nested filters already inherit the drawing transform of the supersampled
 // bitmap.
 static _Thread_local NSUInteger IJSVGFilterRenderDepth = 0;
+
 // A cached ancestor already retains the completed pixels of its nested filters.
 static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
 
@@ -190,6 +192,7 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
     while (pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
+
         // Nested source batches replay ancestor clips in Quartz. Keep the
         // top level eligibility rules and reject masks in either scope.
         if (paint.maskPaint != nil || (paint.clipPaints.count != 0 && (IJSVGFilterRenderDepth == 0 || [paint isKindOfClass:IJSVGFilterPaint.class]))) {
@@ -257,9 +260,14 @@ static CGImageRef IJSVGFilterNewImageForAtlas(CIImage* atlas, CGSize size)
 {
     __block CGImageRef rendered = NULL;
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+
     // Wait before leasing a context. Source drawing and graph construction
     // remain concurrent, and the slot is returned before cropping or replay.
-    [IJSVGThreadManager performCIOutputBlock:^{ [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) { rendered = [ciContext createCGImage:atlas fromRect:CGRectMake(0, 0, size.width, size.height) format:kCIFormatRGBA8 colorSpace:colorSpace]; }]; }];
+    [IJSVGThreadManager performCIOutputBlock:^{
+        [IJSVGThreadManager performBlockWithCIContext:^(CIContext* ciContext, BOOL supportsMetalKernels) {
+            rendered = [ciContext createCGImage:atlas fromRect:CGRectMake(0, 0, size.width, size.height) format:kCIFormatRGBA8 colorSpace:colorSpace];
+        }];
+    }];
     CGColorSpaceRelease(colorSpace);
     return rendered;
 }
@@ -444,6 +452,7 @@ static BOOL IJSVGFilterReservePixelSize(CGSize pixelSize, IJSVGQuartzFilterBatch
             batch.invalid = YES;
             return NO;
         }
+
         // Flush complete jobs at one megapixel. Finished RGBA8 images remain
         // available for ordered replay, while source and GPU scratch storage is
         // reused.
@@ -498,10 +507,12 @@ static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
 /// Restricts snapshots to detached vector data without inherited effects.
 static BOOL IJSVGFilterImageNodeIsIndependent(IJSVGNode* node)
 {
-    if (node == nil || node.parentNode != nil || node.styleParent != nil)
+    if (node == nil || node.parentNode != nil || node.styleParent != nil) {
         return NO;
-    if (![node isKindOfClass:IJSVGGraphicsNode.class])
+    }
+    if (![node isKindOfClass:IJSVGGraphicsNode.class]) {
         return YES;
+    }
     IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
     return graphics.mask == nil && graphics.clipPath == nil && graphics.filters.count == 0 && CGRectIsNull(graphics.backgroundRect);
 }
@@ -546,8 +557,10 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
     if (![source isMemberOfClass:IJSVGLinearGradient.class] && ![source isMemberOfClass:IJSVGRadialGradient.class]) {
         return nil;
     }
-    if (((IJSVGGradient*)source).viewBox != nil)
+    if (((IJSVGGradient*)source).viewBox != nil) {
         return nil;
+    }
+
     // Only resolved gradient values are used for drawing this private snapshot.
     IJSVGGradient* copy = [[source.class alloc] init];
     [copy applyPropertiesFromNode:(IJSVGGradient*)source];
@@ -618,6 +631,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     CGContextRef previousContext = IJSVGFilterDestinationContext;
     CGAffineTransform previousTransform = IJSVGFilterDestinationTransform;
+
     // Keep only the mapping that is missing from the drawing context.
     CGAffineTransform transform = CGContextGetCTM(context);
     IJSVGFilterDestinationContext = context;
@@ -668,6 +682,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if (image != NULL) {
         CGContextSaveGState(context);
         CGContextConcatCTM(context, CGAffineTransformInvert(transform));
+
         // Apply container opacity after its children finish reading the background.
         CGContextSetAlpha(context, paint.opacity);
         CGContextDrawImage(context, bounds, image);
@@ -716,6 +731,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if ((inputs & (IJSVGFilterInputBackgroundImage | IJSVGFilterInputBackgroundAlpha)) == 0) {
         return NO;
     }
+
     // A new canvas on the filtered container has no earlier contents.
     if (!CGRectIsNull(self.sourceNode.backgroundRect)) {
         return NO;
@@ -760,6 +776,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return _canCacheOutput;
     }
     _checkedOutputCaching = YES;
+
     // Backdrop inputs depend on the destination, including those inside masks,
     // patterns and nested filters. feImage can reference another SVG subtree.
     NSMutableArray<IJSVGPaint*>* pending = [NSMutableArray arrayWithObject:self];
@@ -804,11 +821,13 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         IJSVGFilterCachedImage* cached = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
         if (![cached.signature isEqual:_outputSignature]) {
             NSUInteger width = CGImageGetWidth(image), height = CGImageGetHeight(image);
+
             // An atlas crop can retain a much larger backing image. Materialize
             // independent RGBA8 pixels so cache cost reflects retained storage.
             if (width != 0 && height != 0 && width <= 4194304 / height) {
                 IJSVGQuartzFilterBatchEntry* entry = [IJSVGCurrentFilterBatch.entries objectForKey:self];
                 CGImageRef copy = NULL;
+
                 // Direct batch jobs already own independent, immutable pixels.
                 // Retaining them avoids another allocation and Quartz image draw
                 // during the first render. Atlas crops still need detaching.
@@ -838,6 +857,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 + (BOOL)shouldRenderPaintDuringCollection:(IJSVGPaint*)paint
 {
     IJSVGQuartzFilterBatch* batch = IJSVGCurrentFilterBatch;
+
     // Filter source bitmaps still need their complete subtree.
     return !batch.collecting || IJSVGFilterRenderDepth > batch.renderDepth || [batch.collectionPaints containsObject:paint];
 }
@@ -879,6 +899,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         batch.preflighting = NO;
         batch.preflightPaints = nil;
         batch.totalPixels = 0;
+
         // Visit only filter branches and their ancestors during collection.
         // Unfiltered artwork is painted once, during the final replay.
         drawingBlock(scratch);
@@ -1037,6 +1058,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         graph.resolvedMetadata = self.filterMetadata;
     }
     graph.renderingOptions = self.renderingOptions;
+
     // Repeated shadow readbacks can accumulate rounding differences in nested
     // filters.
     graph.hasNestedFilters = IJSVGFilterRenderDepth > 1;
@@ -1065,6 +1087,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     batch.largestSourcePixels = MAX(batch.largestSourcePixels, pixels);
+
     // Account for RGBA8 replay images with up to 2x atlas packing padding,
     // the current source bitmap, pending RGBA8 sources, and a full
     // one megapixel Metal lease (44 bytes/pixel), plus parameter headroom.
@@ -1097,6 +1120,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if (!isfinite(determinant) || determinant == 0.f) {
         return extent;
     }
+
     // Allow two destination pixels for Quartz image interpolation, then
     // snap outwards on the original filter grid. Source and blur halos stay
     // intact.
@@ -1140,6 +1164,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 if (primitive.type != IJSVGNodeTypeFilterDropShadow) {
                     break;
                 }
+
                 // A drop shadow also samples the original, untranslated source.
                 __attribute__((fallthrough));
             }
@@ -1181,6 +1206,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     CGSize pixelSize = extent.size;
+
     // Keep filter coordinates aligned with the source bitmap. The calling context
     // drawing transform handles flipped views and image exports.
     CGAffineTransform imageTransform = graph.imageTransform;
@@ -1192,8 +1218,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         graph.extent = extent;
         graph.imageTransform = imageTransform;
         __weak IJSVGFilterGraph* weakGraph = graph;
-        graph.paintProvider = ^CIImage*(BOOL stroke) { return [self paintImageForStroke:stroke graph:weakGraph]; };
-        graph.backgroundProvider = ^CIImage* { return self.usesBackground ? IJSVGFilterBackgroundImageFromContext(ctx, imageTransform) : CIImage.emptyImage; };
+        graph.paintProvider = ^CIImage*(BOOL stroke) {
+            return [self paintImageForStroke:stroke graph:weakGraph];
+        };
+        graph.backgroundProvider = ^CIImage* {
+            return self.usesBackground ? IJSVGFilterBackgroundImageFromContext(ctx, imageTransform) : CIImage.emptyImage;
+        };
 
         CIImage* output = [graph imageByFilteringSource:source];
         if (batch.collecting) {
@@ -1217,6 +1247,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             outputExtent = CGRectIntersection(extent, IJSVGFilterAlignedRect(requestedExtent, origin));
         }
         CGImageRef image = NULL;
+
         // Only renderer owned bitmap storage can supply pixels for the Metal
         // shortcut.
         if (IJSVGFilterSIMDUsesBackdropAddition(self.filter) && supportsMetalKernels && IJSVGFilterRenderDepth == 1 && ctx == IJSVGFilterBitmapContext) {
@@ -1374,13 +1405,19 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
     IJSVGPaint* sourcePaint = self.sourcePaint;
     CGContextTranslateCTM(bitmap, sourcePaint.frame.origin.x, sourcePaint.frame.origin.y);
+
     // Batch independent child effects before applying this enclosing filter.
     // Preserve the actual depth for nested sampling and rounding rules.
     NSSet<IJSVGFilterPaint*>* childFilters = IJSVGCurrentFilterBatch == nil ? [IJSVGFilterPaint batchableFiltersForPaint:sourcePaint] : nil;
-    BOOL batched = childFilters.count != 0 && [IJSVGFilterPaint renderBatchedPaints:childFilters inContext:bitmap drawingBlock:^(CGContextRef sourceContext) { [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:sourceContext]; }];
+    BOOL batched = childFilters.count != 0 && [IJSVGFilterPaint renderBatchedPaints:childFilters
+                                                                          inContext:bitmap
+                                                                       drawingBlock:^(CGContextRef sourceContext) {
+                                                                           [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:sourceContext];
+                                                                       }];
     if (!batched) {
         [IJSVGFilterPaint renderPaint:sourcePaint inBitmapContext:bitmap];
     }
+
     // Try the targeted CPU/SIMD filters before the general Core Image path.
     CGContextRef backdrop = NULL;
     if (self.usesBackground && IJSVGFilterRenderDepth == 1 && !IJSVGCurrentFilterBatch.collecting && ctx == IJSVGFilterBitmapContext && (ctx != IJSVGFilterBackgroundContext || CGRectIsInfinite(IJSVGFilterBackgroundClip))) {
@@ -1398,6 +1435,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGColorSpaceRelease(colorSpace);
         return;
     }
+
     // Direct blur/shadow rendering: batch Metal work when possible, otherwise
     // use the measured CPU/Metal blur policy for the graph.
     if ([self collectMetalBitmap:bitmap graph:graph workRect:workRect]) {
@@ -1411,6 +1449,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         CGColorSpaceRelease(colorSpace);
         return;
     }
+
     // Core Image handles graphs unsupported by the direct paths above.
     CGImageRef sourceImage = CGBitmapContextCreateImage(bitmap);
     CGContextRelease(bitmap);
@@ -1495,6 +1534,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale), round(workRect.size.height * scale));
     graph.extent = (CGRect) { CGPointZero, pixelSize };
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale, -workRect.origin.x * scale, -workRect.origin.y * scale);
+
     // Collection retains the complete sampling rectangle. Reuse it before
     // destination clipping shrinks the transient work rectangle: the cached
     // pixels already contain the required halo and Quartz applies the clip.
@@ -1506,6 +1546,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     CGRect required = [self requiredSourceExtentForGraph:graph context:ctx];
+
     // Keep the allocation on the original sampling grid, including rotations.
     if (!CGRectIsEmpty(required) && !CGRectIsNull(required) && !CGRectEqualToRect(required, graph.extent)) {
         required = CGRectIntersection(graph.extent, IJSVGFilterAlignedRect(required, CGPointZero));
@@ -1537,6 +1578,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         }
     }
     BOOL previousCachingAncestor = IJSVGFilterHasCachingAncestor;
+
     // Only suppress inner snapshots when this output fits the cache per image
     // limit. Background dependent ancestors fail canCacheOutput and leave their
     // independent descendants eligible for caching.

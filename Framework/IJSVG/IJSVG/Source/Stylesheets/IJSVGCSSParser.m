@@ -184,9 +184,11 @@ static IJSVGCSSNumericKeyword IJSVGCSSNumericKeywordForName(const char* name)
     return IJSVGCSSNumericKeywordUnknown;
 }
 
-enum { IJSVGCSSParserMaximumDepth = 64,
+enum {
+    IJSVGCSSParserMaximumDepth = 64,
     IJSVGCSSParserMaximumCount = 4096,
-    IJSVGCSSParserMaximumBytes = 65536 };
+    IJSVGCSSParserMaximumBytes = 65536
+};
 
 typedef struct {
     const char* bytes;
@@ -389,7 +391,7 @@ static BOOL IJSVGCSSParserConsumeComponent(IJSVGCSSParserCursor* cursor, IJSVGCS
     const char* numberEnd = bytes + cursor->index;
     CGFloat number;
     BOOL startsNumber = (c >= '0' && c <= '9') || c == '.' || c == '+' || c == '-';
-    if (startsNumber && IJSVGParseLengthNumber(&numberEnd, YES, &number)) {
+    if (startsNumber && IJSVGParseLengthNumberInRange(&numberEnd, bytes + cursor->length, YES, &number)) {
         if (numberEnd[-1] == '.' && !(cursor->options & IJSVGCSSParserOptionSVG)) {
             return NO;
         }
@@ -423,6 +425,7 @@ static BOOL IJSVGCSSParseComponents(IJSVGCSSParserCursor* cursor, char closing, 
                 return NO;
             }
             cursor->index += 2;
+
             // Comments separate tokens but are not CSS whitespace.
             continue;
         }
@@ -475,7 +478,7 @@ BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length, I
     components->values = NULL;
     components->count = 0;
     components->bytes = NULL;
-    if (bytes == NULL || length > IJSVGCSSParserMaximumBytes || strlen(bytes) != length) {
+    if (bytes == NULL || length > IJSVGCSSParserMaximumBytes || memchr(bytes, 0, length) != NULL) {
         return NO;
     }
     components->bytes = bytes;

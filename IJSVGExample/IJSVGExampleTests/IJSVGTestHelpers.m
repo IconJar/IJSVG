@@ -66,7 +66,9 @@ NSData* IJSVGTestRGBADataForSVG(NSString* svgString, CGSize size)
     XCTAssertNotNil(svg);
     XCTAssertNil(error);
 
-    svg.renderingBackingScaleHelper = ^CGFloat { return 1.f; };
+    svg.renderingBackingScaleHelper = ^CGFloat {
+        return 1.f;
+    };
 
     CGImageRef image = [svg newCGImageRefWithSize:size flipped:NO error:&error];
     XCTAssertNotNil((__bridge id)image);

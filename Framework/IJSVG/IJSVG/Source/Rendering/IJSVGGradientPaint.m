@@ -11,9 +11,11 @@
 #import <IJSVGGradientPaint.h>
 #import <IJSVGRootPaint.h>
 
-typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) { IJSVGResolvedGradientKindCustom,
+typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
+    IJSVGResolvedGradientKindCustom,
     IJSVGResolvedGradientKindLinear,
-    IJSVGResolvedGradientKindRadial };
+    IJSVGResolvedGradientKindRadial
+};
 
 @interface IJSVGGradientPaint () {
     BOOL _hasResolvedPlacement;
@@ -71,6 +73,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) { IJSVGResolvedGradientKi
         CGAffineTransform transform = CGAffineTransformIdentity;
         if (userSpace) {
             _resolvedBounds = viewport;
+
             // Undo paint local placement, not the viewport origin: absolute
             // gradient coordinates remain in the referencing nodes user space.
             transform = [IJSVGPaint userSpaceTransformForPaint:paint];
@@ -108,6 +111,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) { IJSVGResolvedGradientKi
         CGContextSaveGState(ctx);
     }
     CGContextConcatCTM(ctx, userSpace ? _resolvedTransform : CGAffineTransformMakeScale(_resolvedBounds.size.width, _resolvedBounds.size.height));
+
     // Replay each matrix in its original order. Combining them changes
     // floating point rounding and can move antialiased edge pixels.
     const CGAffineTransform* matrices = _resolvedGradientTransforms.bytes;

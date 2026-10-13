@@ -292,10 +292,10 @@ FOUNDATION_EXPORT NSString* const IJSVGAttributePathLength;
 
 @interface IJSVGParser : NSObject {
 @private
-    NSXMLDocument* _document;
+    struct IJSVGXMLDocument* _document;
     IJSVGPathDataStream* _commandDataStream;
     IJSVGStyleSheet* _styleSheet;
-    NSMutableDictionary<NSString*, NSXMLElement*>* _detachedReferences;
+    CFMutableDictionaryRef _detachedReferences;
     IJSVGThreadManager* _threadManager;
     CGSize _rootSize;
     IJSVGRootNode* _rootNode;

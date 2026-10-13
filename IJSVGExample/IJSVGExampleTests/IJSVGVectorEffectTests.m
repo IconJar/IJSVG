@@ -93,6 +93,7 @@
 {
     IJSVG* svg = [self documentWithBody:@"<path d='M 10 50 H 90' stroke='black' stroke-width='4' "
                                          "vector-effect='non-scaling-stroke'/>"];
+
     // Reuse one renderer to exercise cache invalidation on viewport changes.
     for (NSNumber* sizeValue in @[ @100, @200, @50, @100 ]) {
         NSUInteger size = sizeValue.unsignedIntegerValue;
@@ -172,8 +173,9 @@
     NSString* path = [@(__FILE__).stringByDeletingLastPathComponent.stringByDeletingLastPathComponent stringByAppendingPathComponent:@"IJSVGExample/non-scaling-stroke.svg"];
     NSString* xml = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
     XCTAssertNotNil(xml);
-    if (xml == nil)
+    if (xml == nil) {
         return;
+    }
     IJSVG* source = [[IJSVG alloc] initWithSVGString:xml];
     for (NSNumber* optionValue in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionCreateUseForPaths), @(IJSVGExporterOptionAll), @(IJSVGExporterOptionAll & ~IJSVGExporterOptionConvertStrokesToPaths) ]) {
         NSString* exported = [source SVGStringWithSize:CGSizeMake(500, 240) options:optionValue.integerValue];
@@ -194,6 +196,7 @@
             for (NSUInteger index = 0; index < MIN(before.length, after.length); index++) {
                 difference += ABS((int)expected[index] - (int)actual[index]);
             }
+
             // Permit only minor outline serialization / antialiasing differences.
             XCTAssertLessThan((double)difference / before.length, 0.01, @"options=%@ size=%@", optionValue, sizeValue);
         }
@@ -223,6 +226,7 @@
             XCTAssertTrue([exported containsString:@"non-scaling-stroke"]);
             IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:exported];
             XCTAssertNotNil(roundTrip);
+
             // Non scaling strokes must survive every export option and viewport size.
             NSArray<NSNumber*>* sizes = @[ @100, @200 ];
             for (NSNumber* sizeValue in sizes) {
@@ -230,14 +234,16 @@
                 NSData* expected = [self pixelsForSVG:svg size:size backingScale:1];
                 NSData* actual = [self pixelsForSVG:roundTrip size:size backingScale:1];
                 XCTAssertEqual(actual.length, expected.length);
-                if (actual.length != expected.length)
+                if (actual.length != expected.length) {
                     continue;
+                }
                 const uint8_t* a = actual.bytes;
                 const uint8_t* e = expected.bytes;
                 NSUInteger difference = 0;
                 for (NSUInteger index = 0; index < actual.length; index++) {
                     difference += ABS((int)a[index] - (int)e[index]);
                 }
+
                 // Allow small path serialization / antialiasing rounding differences.
                 XCTAssertLessThan((double)difference / actual.length, 0.25, @"stroke=%@ convert=%@ size=%@", stroke, convert, sizeValue);
             }
