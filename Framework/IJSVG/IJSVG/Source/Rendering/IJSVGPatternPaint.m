@@ -47,6 +47,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
     IJSVGContextDrawViewBox(ctx, viewBox, rect, alignment, meetOrSlice, drawBlock);
     CGContextRestoreGState(ctx);
 }
+
 - (void)computeCellSize:(CGSize*)cellSize viewBox:(CGRect*)viewBox origin:(CGPoint*)origin
 {
     IJSVGPaint* paint = (IJSVGPaint*)self.referencingPaint;
@@ -84,6 +85,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
         *viewBox = CGRectMake(0.f, 0.f, cellSize->width, cellSize->height);
     }
 }
+
 - (void)drawPatternInContext:(CGContextRef)ctx
 {
     // holder for callback

@@ -21,6 +21,74 @@
 #import <IJSVGParserUtils.h>
 #import <string.h>
 
+uint64_t IJSVGTextStyleBit(NSUInteger attribute)
+{
+    if (attribute >= IJSVGNodeAttributeFont && attribute <= IJSVGNodeAttributeFontSizeAdjust) {
+        return UINT64_C(1) << (attribute - IJSVGNodeAttributeFont);
+    }
+    return attribute == IJSVGNodeAttributeTextRendering ? UINT64_C(1) << 63 : 0;
+}
+
+IJSVGUnitLength* IJSVGScalarLengthFromBytes(const char* bytes, NSUInteger length, BOOL allowNegative, IJSVGUnitType units)
+{
+    const char* end = bytes + length;
+    const char* position = bytes;
+    CGFloat value = 0;
+    if (!IJSVGParseLengthNumberInRange(&position, end, allowNegative, &value)) {
+        return nil;
+    }
+    IJSVGUnitLengthType originalType = IJSVGUnitLengthTypeNumber;
+    if (position < end && *position == '%') {
+        originalType = IJSVGUnitLengthTypePercentage;
+        value /= 100.f;
+        position++;
+    }
+    if (position != end) {
+        return nil;
+    }
+    IJSVGUnitLengthType type = units == IJSVGUnitObjectBoundingBox ? IJSVGUnitLengthTypePercentage : originalType;
+    return [IJSVGUnitLength unitWithFloat:value type:type originalType:originalType inherit:NO];
+}
+
+IJSVGUnitLength* IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttribute* attribute, IJSVGUnitType units)
+{
+    if (attribute == NULL) {
+        return nil;
+    }
+    IJSVGUnitLength* length = IJSVGScalarLengthFromBytes(IJSVGXMLAttributeBytes(attribute), attribute->value.length, YES, units);
+    return length ?: [IJSVGUnitLength unitWithString:IJSVGXMLAttributeValue(attribute) fromUnitType:units];
+}
+
+BOOL IJSVGXMLAttributeEquals(IJSVGXMLAttribute* attribute, const char* value)
+{
+    return attribute != NULL && attribute->value.length == strlen(value) && memcmp(IJSVGXMLAttributeBytes(attribute), value, attribute->value.length) == 0;
+}
+
+BOOL IJSVGParseHexColorBytes(const char* bytes, NSUInteger length, uint32_t* rgba)
+{
+    if ((length != 4 && length != 5 && length != 7 && length != 9) || bytes[0] != '#') {
+        return NO;
+    }
+    BOOL shorthand = length <= 5;
+    uint32_t result = 0;
+    for (NSUInteger index = 1; index < length; index++) {
+        unsigned char character = bytes[index];
+        unsigned int digit;
+        if (character >= '0' && character <= '9') {
+            digit = character - '0';
+        } else if (character >= 'a' && character <= 'f') {
+            digit = character - 'a' + 10;
+        } else if (character >= 'A' && character <= 'F') {
+            digit = character - 'A' + 10;
+        } else {
+            return NO;
+        }
+        result = shorthand ? (result << 8) | (digit * 17) : (result << 4) | digit;
+    }
+    *rgba = length == 4 || length == 7 ? (result << 8) | 255 : result;
+    return YES;
+}
+
 static BOOL IJSVGLengthListIsWhitespace(char character)
 {
     return character == ' ' || character == '\t' || character == '\r' || character == '\n';
@@ -564,7 +632,7 @@ BOOL IJSVGAttributeHasValue(NSString* __unsafe_unretained const attributeValues[
     return YES;
 }
 
-BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* activeAttributes, NSUInteger* attribute, NSString* __autoreleasing* value, IJSVGReferenceAttributes* reference)
+BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* activeAttributes, NSUInteger* attribute, NSString* __unsafe_unretained* value, IJSVGReferenceAttributes* reference)
 {
     NSUInteger index = node->identifier;
     if (reference != NULL && (index == IJSVGNodeAttributeHref || index == IJSVGNodeAttributeXLink || index == NSNotFound)) {
@@ -573,7 +641,7 @@ BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* activeAttribu
     if (index == NSNotFound || (activeAttributes != nil && ![activeAttributes bitIsSet:(int)index])) {
         return NO;
     }
-    NSString* string = IJSVGXMLAttributeValue(node);
+    NSString* __unsafe_unretained string = IJSVGXMLAttributeValue(node);
     if (string.length == 0) {
         return NO;
     }

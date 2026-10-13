@@ -15,10 +15,7 @@ typedef struct {
 
 // Borrows UTF8 storage from string without copying it.
 // Keep string alive and unchanged while using the returned bytes.
-NS_INLINE IJSVGStringBytes IJSVGStringGetBytes(NSString* string)
-{
-    return (IJSVGStringBytes) { .bytes = string.UTF8String, .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding] };
-}
+IJSVGStringBytes IJSVGStringGetBytes(NSString* string);
 
 typedef struct {
     char* name;

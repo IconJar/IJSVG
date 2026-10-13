@@ -226,4 +226,5 @@ static BOOL IJSVGPrepareMetalShadows(void)
         [IJSVGShadowPoolLock unlock];
     }
 }
+
 @end

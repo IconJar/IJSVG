@@ -13,6 +13,7 @@
     CGFloat _propagatedScale;
     IJSVGRenderQuality _propagatedQuality;
 }
+
 @end
 
 @implementation IJSVGRootPaint
@@ -75,4 +76,5 @@
         [super performRenderInContext:ctx];
     });
 }
+
 @end

@@ -33,6 +33,7 @@
     IJSVGQuartzRenderer* _paintResolver;
     NSSet<IJSVGPaint*>* _outsideViewportPaints;
 }
+
 @end
 
 @implementation IJSVGExporter

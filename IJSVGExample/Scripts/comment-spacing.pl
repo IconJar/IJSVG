@@ -30,7 +30,20 @@ for my $path (@ARGV) {
         | (?<![\w])(?:u8|u|U|L)?'(?:\\.|[^'\\])*'
         | /\*.*?\*/
         | (?<comment>//(?:\\\r?\n|[^\r\n])*)
-    }gsx) {
+        | (?<method>^[+-][\t ]*\([^\r\n)]*\))
+    }gmsx) {
+        if (defined $+{method}) {
+            my $start = $-[0];
+            next unless $path =~ /\.mm?\z/i;
+            if ($start > 0) {
+                my $previous_start = rindex($source, "\n", $start - 2) + 1;
+                my $previous_line = substr($source, $previous_start, $start - $previous_start);
+                if ($previous_line =~ /}[\t ]*\r?\n\z/) {
+                    push @insertions, $start;
+                }
+            }
+            next;
+        }
         next unless defined $+{comment};
         my $start = $-[0];
         my $end = $+[0];
@@ -56,7 +69,7 @@ for my $path (@ARGV) {
         for my $offset (@insertions) {
             my $prefix = substr($source, 0, $offset);
             my $line = 1 + ($prefix =~ tr/\n/\n/);
-            print STDERR "$path:$line: add a blank line before this comment block\n";
+            print STDERR "$path:$line: add a blank line before this comment block or method\n";
         }
         $failed = 1;
         next;

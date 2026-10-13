@@ -59,9 +59,21 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGSwitch.h>
 
+// Deferred values remain on the caller stack until the children are parsed.
+// Retain resolved strings because the temporary cascade may finish sooner.
+typedef struct {
+    __strong NSString* mask;
+    __strong NSString* clipPath;
+    __strong NSString* filter;
+    __strong NSString* markerStart;
+    __strong NSString* markerMid;
+    __strong NSString* markerEnd;
+} IJSVGNodeDeferredAttributes;
+
+void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes, IJSVGNode* node, IJSVGParser* parser, IJSVGXMLNode* element);
+
 // Resolved values live on the parser stack for the duration of consumption.
-// Nodes retain only the values they use. Deferred reference blocks must capture
-// the parser, node and strings, never this temporary context.
+// Nodes retain only the values they use.
 typedef struct {
     uint64_t textAttributes;
     __unsafe_unretained IJSVGReference* reference;
@@ -76,7 +88,7 @@ typedef struct {
     __unsafe_unretained IJSVGStyleSheetStyle* inlineStyle;
     __unsafe_unretained NSString* attributePathData;
     __unsafe_unretained NSDictionary<NSString*, NSString*>* filterParameters;
-    __strong IJSVGNodeParserPostProcessBlock postProcessBlock;
+    IJSVGNodeDeferredAttributes* deferredAttributes;
 } IJSVGNodeParsingContext;
 
 @interface IJSVGGradient (DataParsing)
@@ -97,6 +109,7 @@ typedef struct {
 @end
 
 @interface IJSVGStop (Parsing)
+- (void)consumeXMLAttributes:(IJSVGXMLAttributeList)attributes parser:(IJSVGParser*)parser;
 - (void)consumeOffset:(NSString*)offset color:(NSString*)color opacity:(NSString*)opacity parser:(IJSVGParser*)parser;
 @end
 
@@ -114,18 +127,11 @@ typedef struct {
 - (void)applyPaintReference:(NSString*)identifier node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke;
 - (IJSVGColorNode*)colorPaintForValue:(NSString*)value;
 - (NSColor*)parsedStopColorForValue:(NSString*)value;
+- (NSColor*)parsedStopColorForAttribute:(IJSVGXMLAttribute*)attribute;
 - (void)applyMarkerStart:(NSString*)start mid:(NSString*)mid end:(NSString*)end toNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 @end
 
-static inline BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
-{
-    NSString* __unsafe_unretained candidate = values[attribute];
-    if (candidate == nil || candidate.length == 0) {
-        return NO;
-    }
-    *value = candidate;
-    return YES;
-}
+BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value);
 
 IJSVGBitFlags* IJSVGCommonAttributes(void);
 IJSVGBitFlags* IJSVGGraphicsAttributes(void);

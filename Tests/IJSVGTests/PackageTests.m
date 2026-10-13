@@ -60,14 +60,17 @@
 {
     [self checkPackagedShader:@"IJSVGBlur"];
 }
+
 - (void)testLoadsPackagedInnerShadowShader
 {
     [self checkPackagedShader:@"IJSVGInnerShadow"];
 }
+
 - (void)testLoadsPackagedSubtractShader
 {
     [self checkPackagedShader:@"IJSVGSubtract"];
 }
+
 - (void)testLoadsPackagedSeparableBlurShader
 {
     NSString* source = IJSVGPackageShaderSource(@"IJSVGSeparableBlur");

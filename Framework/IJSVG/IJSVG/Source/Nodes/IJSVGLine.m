@@ -70,10 +70,10 @@
     IJSVGParseDisplayAttributes(self, context);
     IJSVGParseMarkersAttributes(self, context);
 
-    self.x1 = [IJSVGUnitLength unitWithString:IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeX1))];
-    self.y1 = [IJSVGUnitLength unitWithString:IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeY1))];
-    self.x2 = [IJSVGUnitLength unitWithString:IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeX2))];
-    self.y2 = [IJSVGUnitLength unitWithString:IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeY2))];
+    self.x1 = IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeX1), IJSVGUnitUserSpaceOnUse);
+    self.y1 = IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeY1), IJSVGUnitUserSpaceOnUse);
+    self.x2 = IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeX2), IJSVGUnitUserSpaceOnUse);
+    self.y2 = IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeY2), IJSVGUnitUserSpaceOnUse);
 }
 
 @end

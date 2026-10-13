@@ -47,27 +47,27 @@
 
 + (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGRadialGradient*)gradient
 {
-    NSString* values[6] = { nil };
+    IJSVGXMLAttribute* values[6] = { NULL };
     IJSVGXMLAttributeList attributeIterator = attributes;
     for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributeIterator)) {
         switch (attribute->identifier) {
             case IJSVGNodeAttributeCX:
-                values[0] = IJSVGXMLAttributeValue(attribute);
+                values[0] = attribute;
                 break;
             case IJSVGNodeAttributeCY:
-                values[1] = IJSVGXMLAttributeValue(attribute);
+                values[1] = attribute;
                 break;
             case IJSVGNodeAttributeR:
-                values[2] = IJSVGXMLAttributeValue(attribute);
+                values[2] = attribute;
                 break;
             case IJSVGNodeAttributeFX:
-                values[3] = IJSVGXMLAttributeValue(attribute);
+                values[3] = attribute;
                 break;
             case IJSVGNodeAttributeFY:
-                values[4] = IJSVGXMLAttributeValue(attribute);
+                values[4] = attribute;
                 break;
             case IJSVGNodeAttributeFR:
-                values[5] = IJSVGXMLAttributeValue(attribute);
+                values[5] = attribute;
                 break;
             default:
                 break;
@@ -75,9 +75,7 @@
     }
     IJSVGUnitLength* lengths[6] = { nil };
     for (NSUInteger index = 0; index < 6; index++) {
-        if (values[index] != nil) {
-            lengths[index] = [IJSVGUnitLength unitWithString:values[index] fromUnitType:gradient.units];
-        }
+        lengths[index] = IJSVGUnitLengthFromXMLAttribute(values[index], gradient.units);
     }
     gradient.cx = lengths[0] ?: IJSVGHalfPercentageUnitLength;
     gradient.cy = lengths[1] ?: IJSVGHalfPercentageUnitLength;

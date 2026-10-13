@@ -222,11 +222,13 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 @end
 
 @implementation IJSVGQuartzClipPath
+
 - (void)dealloc
 {
     CGPathRelease(_source);
     CGPathRelease(_path);
 }
+
 @end
 
 @interface IJSVGQuartzRenderer () {
@@ -264,6 +266,7 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
     CGRect _geometryBounds;
     CGRect _effectsBounds;
 }
+
 @end
 
 @implementation IJSVGQuartzRenderer

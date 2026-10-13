@@ -23,8 +23,11 @@
 @interface IJSVGQuartzRenderer (OutlineGeometry)
 
 - (IJSVGRootPaint*)measurementPaintForRootNode:(IJSVGRootNode*)rootNode includingFilters:(BOOL)includingFilters;
+
 - (NSMutableDictionary<NSNumber*, id>*)outlinePathCache;
+
 - (BOOL)outlineFilterModesSharePaint;
+
 - (CGRect)artworkBoundsForPaint:(IJSVGPaint*)paint;
 
 @end
@@ -39,10 +42,12 @@
 @end
 
 @implementation IJSVGOutlineFilterPlacement
+
 - (void)dealloc
 {
     CGPathRelease(_result);
 }
+
 @end
 
 @implementation IJSVGQuartzRenderer (Outlines)

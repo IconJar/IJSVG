@@ -300,6 +300,7 @@
     const IJSVGNodeType types[] = { IJSVGNodeTypeAnchor, IJSVGNodeTypeGroup, IJSVGNodeTypePath, IJSVGNodeTypePolygon, IJSVGNodeTypePolyline, IJSVGNodeTypePattern, IJSVGNodeTypeSymbol, IJSVGNodeTypeStyle, IJSVGNodeTypeSwitch, IJSVGNodeTypeStop, IJSVGNodeTypeSVG, IJSVGNodeTypeDef, IJSVGNodeTypeDesc, IJSVGNodeTypeRect, IJSVGNodeTypeRadialGradient, IJSVGNodeTypeLine, IJSVGNodeTypeLinearGradient, IJSVGNodeTypeCircle, IJSVGNodeTypeClipPath, IJSVGNodeTypeEllipse, IJSVGNodeTypeUse, IJSVGNodeTypeMarker, IJSVGNodeTypeMask, IJSVGNodeTypeImage, IJSVGNodeTypeText, IJSVGNodeTypeTextPath, IJSVGNodeTypeTextSpan, IJSVGNodeTypeTitle, IJSVGNodeTypeFilterBlend, IJSVGNodeTypeFilterColorMatrix, IJSVGNodeTypeFilterComponentTransfer, IJSVGNodeTypeFilterComposite, IJSVGNodeTypeFilterConvolveMatrix, IJSVGNodeTypeFilterDiffuseLighting, IJSVGNodeTypeFilterDisplacementMap, IJSVGNodeTypeFilterFlood, IJSVGNodeTypeFilterGaussianBlur, IJSVGNodeTypeFilterImage, IJSVGNodeTypeFilterMerge, IJSVGNodeTypeFilterMorphology, IJSVGNodeTypeFilterOffset, IJSVGNodeTypeFilterSpecularLighting, IJSVGNodeTypeFilterTile, IJSVGNodeTypeFilterTurbulence, IJSVGNodeTypeFilterMergeNode, IJSVGNodeTypeFilterFuncR, IJSVGNodeTypeFilterFuncG, IJSVGNodeTypeFilterFuncB, IJSVGNodeTypeFilterFuncA, IJSVGNodeTypeFilterDistantLight, IJSVGNodeTypeFilterPointLight, IJSVGNodeTypeFilterSpotLight, IJSVGNodeTypeFilterDropShadow, IJSVGNodeTypeFilter, IJSVGNodeTypeForeignObject };
     for (NSUInteger index = 0; index < names.count; index++) {
         NSString* name = names[index];
+        XCTAssertEqual(IJSVGNodeTypeForBytes(name.UTF8String, [name lengthOfBytesUsingEncoding:NSUTF8StringEncoding]), types[index]);
         XCTAssertEqual(IJSVGNodeTypeForString(name, NSXMLElementKind), types[index]);
         XCTAssertEqual(IJSVGNodeTypeForString(name.uppercaseString, NSXMLElementKind), types[index]);
         XCTAssertEqual(IJSVGNodeTypeForString([name stringByAppendingString:@"x"], NSXMLElementKind), IJSVGNodeTypeUnknown);
@@ -317,6 +318,95 @@
     XCTAssertEqual([IJSVGNode typeForString:@"" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
     XCTAssertEqual([IJSVGNode typeForString:@"réct" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
     XCTAssertEqual([IJSVGNode typeForString:@"feComponentTransferExtra" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
+}
+
+- (void)testXMLCachesElementTypesWithoutChangingNamesOrNodeKinds
+{
+    NSString* source = @"<svg><PATH/><svg:linearGradient xmlns:svg='http://www.w3.org/2000/svg'/>"
+                        "<réct/><unknown/><!-- comment --><![CDATA[text]]></svg>";
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    XCTAssertNotEqual(document, NULL);
+    if (document == NULL) {
+        return;
+    }
+    IJSVGXMLNode* root = IJSVGXMLRoot(document);
+    XCTAssertEqual(IJSVGXMLType(root), IJSVGNodeTypeSVG);
+    const IJSVGNodeType expected[] = { IJSVGNodeTypePath, IJSVGNodeTypeLinearGradient, IJSVGNodeTypeUnknown, IJSVGNodeTypeUnknown, IJSVGNodeTypeNotFound, IJSVGNodeTypeNotFound };
+    NSUInteger count = 0;
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(root); child != NULL; child = IJSVGXMLNext(child)) {
+        XCTAssertLessThan(count, sizeof(expected) / sizeof(*expected));
+        if (count < sizeof(expected) / sizeof(*expected)) {
+            XCTAssertEqual(IJSVGXMLType(child), expected[count]);
+        }
+        XCTAssertEqual(IJSVGXMLType(child), IJSVGNodeTypeForString(IJSVGXMLLocalName(child), IJSVGXMLKind(child)));
+        count++;
+    }
+    XCTAssertEqual(count, sizeof(expected) / sizeof(*expected));
+    XCTAssertEqualObjects(IJSVGXMLLocalName(IJSVGXMLFirstChild(root)), @"PATH");
+    XCTAssertEqual(IJSVGXMLType(NULL), IJSVGNodeTypeNotFound);
+    IJSVGXMLDocumentDestroy(document);
+
+    // The attribute adapter uses a synthetic group regardless of the source name.
+    NSXMLElement* element = [[NSXMLElement alloc] initWithName:@"feGaussianBlur"];
+    document = IJSVGXMLDocumentForElementAttributes(element);
+    XCTAssertEqual(IJSVGXMLType(IJSVGXMLRoot(document)), IJSVGNodeTypeGroup);
+    IJSVGXMLDocumentDestroy(document);
+}
+
+- (void)testXMLNamesAndValuesSurviveParserAndSourceLifetime
+{
+    NSString* value = [@"a" stringByPaddingToLength:20000 withString:@"b" startingAtIndex:0];
+    NSArray<NSNumber*>* encodings = @[ @(NSUTF8StringEncoding), @(NSUTF16StringEncoding), @(NSISOLatin1StringEncoding) ];
+    NSArray<NSString*>* labels = @[ @"UTF-8", @"UTF-16", @"ISO-8859-1" ];
+    for (NSUInteger index = 0; index < encodings.count; index++) {
+        IJSVGXMLDocument* document = NULL;
+        @autoreleasepool {
+            NSString* source = [NSString stringWithFormat:@"<?xml version='1.0' encoding='%@'?>"
+                                                           "<svg xmlns:alias='urn:test'><?custom data?>"
+                                                           "<alias:path alias:note='café' data='%@'/><alias:path/>"
+                                                           "<text> café &amp; text </text></svg>",
+                labels[index], value];
+            NSData* data = [source dataUsingEncoding:encodings[index].unsignedIntegerValue];
+            document = IJSVGXMLDocumentCreate(data.bytes, data.length);
+        }
+        XCTAssertNotEqual(document, NULL);
+        if (document == NULL) {
+            continue;
+        }
+        for (NSUInteger iteration = 0; iteration < 100; iteration++) {
+            const char* otherSource = "<svg xmlns:p='urn:other'><p:rect p:value='other'/></svg>";
+            IJSVGXMLDocument* other = IJSVGXMLDocumentCreate(otherSource, strlen(otherSource));
+            IJSVGXMLDocumentDestroy(other);
+        }
+        IJSVGXMLNode* root = IJSVGXMLRoot(document);
+        IJSVGXMLNode* instruction = IJSVGXMLFirstChild(root);
+        IJSVGXMLNode* path = IJSVGXMLNext(instruction);
+        XCTAssertEqualObjects(IJSVGXMLLocalName(root), @"svg");
+        XCTAssertEqualObjects(IJSVGXMLLocalName(instruction), @"custom");
+        XCTAssertEqualObjects(IJSVGXMLText(instruction), @"data");
+        XCTAssertEqualObjects(IJSVGXMLLocalName(path), @"path");
+        XCTAssertEqual(path->name, IJSVGXMLNext(path)->name);
+        IJSVGXMLAttribute* note = IJSVGXMLAttributeNamed(path, @"alias:note");
+        XCTAssertEqualObjects(IJSVGXMLAttributeURI(note), @"urn:test");
+        XCTAssertEqualObjects(IJSVGXMLAttributeValue(note), @"café");
+        XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(path, @"data")), value);
+        XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLNext(IJSVGXMLNext(path))), @" café & text ");
+        IJSVGXMLDocumentDestroy(document);
+    }
+}
+
+- (void)testXMLRejectsMalformedInputWithoutAffectingTheNextDocument
+{
+    for (NSString* source in @[ @"", @"<svg", @"<svg><g></svg>", @"<svg bad='&missing;'/>", @"<svg/><svg/>" ]) {
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(source.UTF8String, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        XCTAssertEqual(document, NULL);
+        IJSVGXMLDocumentDestroy(document);
+        const char* valid = "<svg><path id='valid'/></svg>";
+        document = IJSVGXMLDocumentCreate(valid, strlen(valid));
+        XCTAssertNotEqual(document, NULL);
+        XCTAssertEqual(IJSVGXMLType(IJSVGXMLFirstChild(IJSVGXMLRoot(document))), IJSVGNodeTypePath);
+        IJSVGXMLDocumentDestroy(document);
+    }
 }
 
 - (void)testCachedTransformsKeepSyntaxModesAndMutableParametersIndependent
@@ -385,6 +475,71 @@
             XCTAssertEqualWithAccuracy(other.color.alphaComponent, expected[index], .0001);
         }
     }
+}
+
+- (void)testDeferredEffectsKeepResolvedValuesAndIndependentNestedNodes
+{
+    NSString* effects = @"style='--m:url(#mask);--c:url(#clip);--f:url(#filter);--a:url(#arrow);"
+                         "mask:var(--m);clip-path:var(--c);filter:var(--f);marker:var(--a)'";
+    NSString* body = [NSString stringWithFormat:@"<g %@><path d='M0 0L10 10L20 0' %@/>"
+                                                 "<path d='M0 0L20 20' mask='' clip-path='' filter='' /></g>"
+                                                 "<defs><mask id='mask'><rect width='100' height='100' fill='white'/></mask>"
+                                                 "<clipPath id='clip'><rect width='50' height='50'/></clipPath>"
+                                                 "<filter id='filter'><feOffset dx='1' dy='2'/></filter>"
+                                                 "<marker id='arrow' markerWidth='3' markerHeight='3'><path d='M0 0L3 1L0 3Z'/></marker></defs>",
+        effects, effects];
+    for (NSUInteger iteration = 0; iteration < 2; iteration++) {
+        IJSVGRootNode* root = nil;
+        @autoreleasepool {
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+            root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        }
+        IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+        XCTAssertEqual(group.children.count, 2);
+        if (group.children.count != 2) {
+            continue;
+        }
+        IJSVGGraphicsNode* path = (IJSVGGraphicsNode*)group.children.firstObject;
+        for (IJSVGGraphicsNode* node in @[ group, path ]) {
+            XCTAssertEqualObjects(node.mask.identifier, @"mask");
+            XCTAssertEqualObjects(node.clipPath.identifier, @"clip");
+            XCTAssertEqual(node.filters.count, 1);
+            XCTAssertEqualObjects(node.filters.firstObject.identifier, @"filter");
+            XCTAssertNotNil(node.markerStart);
+            XCTAssertNotNil(node.markerMid);
+            XCTAssertNotNil(node.markerEnd);
+        }
+        XCTAssertNotEqual(group.mask, path.mask);
+        XCTAssertNotEqual(group.clipPath, path.clipPath);
+        IJSVGGraphicsNode* plain = (IJSVGGraphicsNode*)group.children.lastObject;
+        XCTAssertNil(plain.mask);
+        XCTAssertNil(plain.clipPath);
+        XCTAssertEqual(plain.filters.count, 0);
+    }
+}
+
+- (void)testPaintReferencesKeepImmediateAndDeferredAssignments
+{
+    NSString* source = IJSVGTestSVG(@"<g fill='url(#paint)' stroke='url(#paint)'>"
+                                     "<defs><linearGradient id='paint'><stop stop-color='red'/>"
+                                     "<stop offset='1' stop-color='blue'/></linearGradient></defs>"
+                                     "<rect width='10' height='10' fill='url(#paint)' stroke='url(#paint)'/></g>");
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+    IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+    IJSVGGraphicsNode* rectangle = (IJSVGGraphicsNode*)group.children.firstObject;
+    XCTAssertEqual(rectangle.fill.type, IJSVGNodeTypeLinearGradient);
+    XCTAssertEqual(rectangle.stroke.type, IJSVGNodeTypeLinearGradient);
+    XCTAssertNotEqual(rectangle.fill, rectangle.stroke);
+    XCTAssertEqual(((IJSVGGradient*)rectangle.fill).children.count, 2);
+    XCTAssertEqual(((IJSVGGradient*)rectangle.stroke).children.count, 2);
+    IJSVGGraphicsNode* ancestor = rectangle.fill.styleParent.styleParent;
+    XCTAssertNotNil(ancestor);
+    XCTAssertEqual(ancestor.fill.type, IJSVGNodeTypeLinearGradient);
+    XCTAssertEqual(((IJSVGGradient*)ancestor.fill).children.count, 2);
+    XCTAssertEqual(ancestor.stroke, ancestor.fill);
+    XCTAssertNil(group.fill);
+    XCTAssertNil(group.stroke);
 }
 
 - (void)testRepeatedFilterAttributesRefreshWhenStylesChange
@@ -475,6 +630,83 @@
     XCTAssertEqual(gradient.y1.type, IJSVGUnitLengthTypeEM);
     XCTAssertEqual(gradient.y2.value, 192);
     XCTAssertEqual(gradient.y2.originalType, IJSVGUnitLengthTypeIN);
+}
+
+- (void)testNumericAttributesPreserveCascadeAndFallbacks
+{
+    NSArray<NSString*>* values = @[ @"0", @"-0", @".25", @"-2", @"25%", @"1e-3", @"-1e-999", @"2px", @"2em", @"inherit", @"initial", @"calc(2 + 3)", @"var(--size)", @"invalid" ];
+    NSArray<NSString*>* attributes = @[ @"x", @"y", @"width", @"height", @"rx", @"ry", @"opacity", @"fill-opacity", @"stroke-opacity", @"stroke-width", @"stroke-dashoffset", @"stroke-miterlimit" ];
+    NSArray<NSString*>* properties = @[ @"x", @"y", @"width", @"height", @"rx", @"ry", @"opacity", @"fillOpacity", @"strokeOpacity", @"strokeWidth", @"strokeDashOffset", @"strokeMiterLimit" ];
+    for (NSString* value in values) {
+        NSMutableString* xml = [[NSMutableString alloc] init];
+        NSMutableString* css = [[NSMutableString alloc] init];
+        for (NSString* attribute in attributes) {
+            [xml appendFormat:@" %@='%@'", attribute, value];
+            [css appendFormat:@"%@:%@;", attribute, value];
+        }
+        NSString* body = [NSString stringWithFormat:@"<g style='--size:7'><rect %@/><rect %@ style='%@'/></g>", xml, xml, css];
+        IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGTestSVG(body)];
+        IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+        XCTAssertEqual(group.children.count, 2);
+        for (NSString* property in properties) {
+            IJSVGUnitLength* actual = [group.children.firstObject valueForKey:property];
+            IJSVGUnitLength* expected = [group.children.lastObject valueForKey:property];
+            XCTAssertEqual(actual == nil, expected == nil, @"%@ %@", value, property);
+            XCTAssertEqual(actual.value, expected.value, @"%@ %@", value, property);
+            XCTAssertEqual(actual.type, expected.type, @"%@ %@", value, property);
+        }
+    }
+    IJSVG* override = [[IJSVG alloc] initWithSVGString:IJSVGTestSVG(@"<style>rect { opacity: .7; width: 8 }</style><rect opacity='.2' width='2' height='3' style='opacity:.9'/>")];
+    IJSVGRect* rect = (IJSVGRect*) override.rootNode.children.firstObject;
+    XCTAssertEqualWithAccuracy(rect.opacity.value, .9, .0001);
+    XCTAssertEqual(rect.width.value, 8);
+}
+
+- (void)testHexByteReaderMatchesColorParser
+{
+    for (NSString* value in @[ @"#000", @"#fff", @"#AbC", @"#0000", @"#1234", @"#abcdef", @"#01234567", @"#000000ff", @"#11223300", @"#FFFFFFFF" ]) {
+        uint32_t rgba = 0;
+        XCTAssertTrue(IJSVGParseHexColorBytes(value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &rgba));
+        CGFloat channels[] = { ((rgba >> 24) & 255) / 255.f, ((rgba >> 16) & 255) / 255.f, ((rgba >> 8) & 255) / 255.f, (rgba & 255) / 255.f };
+        NSColor* expected = [IJSVGColor computeColorSpace:[NSColor colorWithDeviceRed:channels[0] green:channels[1] blue:channels[2] alpha:channels[3]]];
+        XCTAssertEqualObjects(expected, [IJSVGColor colorFromString:value], @"%@", value);
+    }
+    for (NSString* value in @[ @"", @"#", @"#12", @"#12345", @"#1234567", @"#ggg", @"red", @" #fff", @"#fff " ]) {
+        uint32_t rgba = 0;
+        XCTAssertFalse(IJSVGParseHexColorBytes(value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &rgba));
+    }
+}
+
+- (void)testGradientCoordinatesMatchExistingUnitParser
+{
+    NSArray<NSString*>* values = @[ @"0", @"-0", @"1", @".25", @"-.25", @"+2.5", @"123.456789", @"1e-8", @"-2E+3", @"0%", @"-0%", @"25%", @"125%", @"1e2%", @"2px", @"2em", @"2ex", @"2cm", @"2mm", @"2in", @"2pt", @"2pc", @" 25% ", @"", @"inherit", @"calc(1 + 2)", @"var(--x)", @"invalid", @"1e999", @"1e-999", @"12junk" ];
+    for (NSNumber* unitValue in @[ @(IJSVGUnitObjectBoundingBox), @(IJSVGUnitUserSpaceOnUse) ]) {
+        IJSVGUnitType units = unitValue.unsignedIntegerValue;
+        for (NSString* value in values) {
+            NSXMLElement* element = [NSXMLElement elementWithName:@"gradient"];
+            for (NSString* name in @[ @"x1", @"x2", @"y1", @"y2", @"cx", @"cy", @"r", @"fx", @"fy", @"fr" ]) {
+                [element addAttribute:[NSXMLNode attributeWithName:name stringValue:value]];
+            }
+            IJSVGLinearGradient* linear = [[IJSVGLinearGradient alloc] init];
+            IJSVGRadialGradient* radial = [[IJSVGRadialGradient alloc] init];
+            linear.units = radial.units = units;
+            [IJSVGLinearGradient parseGradient:element gradient:linear];
+            [IJSVGRadialGradient parseGradient:element gradient:radial];
+            IJSVGUnitLength* parsed = [IJSVGUnitLength unitWithString:value fromUnitType:units];
+            IJSVGUnitLength* zero = units == IJSVGUnitObjectBoundingBox ? IJSVGZeroBoundingBoxUnitLength : IJSVGZeroUnitLength;
+            NSArray* expected = @[ parsed ?: zero, parsed ?: IJSVGOnePercentageUnitLength, parsed ?: zero, parsed ?: zero, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGZeroPercentageUnitLength ];
+            NSArray* actual = @[ linear.x1, linear.x2, linear.y1, linear.y2, radial.cx, radial.cy, radial.r, radial.fx, radial.fy, radial.fr ];
+            for (NSUInteger index = 0; index < actual.count; index++) {
+                IJSVGUnitLength* result = actual[index];
+                IJSVGUnitLength* reference = expected[index];
+                XCTAssertEqual(result.value, reference.value, @"%@ coordinate %lu units %@", value, index, unitValue);
+                XCTAssertEqual(signbit(result.value), signbit(reference.value));
+                XCTAssertEqual(result.type, reference.type);
+                XCTAssertEqual(result.originalType, reference.originalType);
+                XCTAssertEqual(result.inherit, reference.inherit);
+            }
+        }
+    }
 }
 
 - (void)testGradientAttributeIdentifiersPreserveQualifiedNames

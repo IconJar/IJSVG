@@ -550,6 +550,7 @@
         const char* name;
         IJSVGCSSFunction function;
     } cases[] = { { "calc", IJSVGCSSFunctionCalc }, { "min", IJSVGCSSFunctionMin }, { "max", IJSVGCSSFunctionMax }, { "clamp", IJSVGCSSFunctionClamp }, { "url", IJSVGCSSFunctionURL }, { "path", IJSVGCSSFunctionPath }, { "inset", IJSVGCSSFunctionInset }, { "rect", IJSVGCSSFunctionRect }, { "xywh", IJSVGCSSFunctionXYWH }, { "polygon", IJSVGCSSFunctionPolygon }, { "shape", IJSVGCSSFunctionShape }, { "rgb", IJSVGCSSFunctionRGB }, { "rgba", IJSVGCSSFunctionRGBA }, { "hsl", IJSVGCSSFunctionHSL }, { "hsla", IJSVGCSSFunctionHSLA }, { "oklch", IJSVGCSSFunctionOKLCH }, { "matrix", IJSVGCSSFunctionMatrix }, { "translate", IJSVGCSSFunctionTranslate }, { "translatex", IJSVGCSSFunctionTranslateX }, { "translatey", IJSVGCSSFunctionTranslateY }, { "scale", IJSVGCSSFunctionScale }, { "rotate", IJSVGCSSFunctionRotate }, { "skewx", IJSVGCSSFunctionSkewX }, { "skewy", IJSVGCSSFunctionSkewY }, { "circle", IJSVGCSSFunctionCircle }, { "ellipse", IJSVGCSSFunctionEllipse }, { "var", IJSVGCSSFunctionVar } };
+
     for (NSUInteger index = 0; index < sizeof(cases) / sizeof(*cases); index++) {
         NSString* name = [NSString stringWithUTF8String:cases[index].name];
         IJSVGCSSFunction expected = cases[index].function;
@@ -819,6 +820,21 @@
                    }
                    return count;
                }];
+}
+
+- (void)testSimpleFragmentURLsPreserveFullSyntaxValidation
+{
+    for (NSString* identifier in @[ @"a", @"paint0_linear_18_18515", @"mask-2.0", @"123" ]) {
+        NSString* source = [NSString stringWithFormat:@"url(#%@)", identifier];
+        XCTAssertEqualObjects([IJSVGUtils defURL:source], identifier);
+        XCTAssertEqualObjects([IJSVGUtils defURL:[source stringByAppendingString:@" red"]], identifier);
+        XCTAssertNil([IJSVGUtils defURL:[source stringByAppendingString:@" rgb("]]);
+        XCTAssertNil([IJSVGUtils defURL:[source stringByAppendingString:@"\0"]]);
+    }
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"url('#é')"], @"é");
+    XCTAssertEqualObjects([IJSVGUtils defURL:@"URL(#paint)"], @"paint");
+    XCTAssertNil([IJSVGUtils defURL:@"#fff"]);
+    XCTAssertNil([IJSVGUtils defURL:@"#fff url(#paint)"]);
 }
 
 - (void)testSharedURLParsing

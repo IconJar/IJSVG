@@ -26,6 +26,7 @@
     NSSet<IJSVGNode*>* _nodesOutsideViewBox;
     NSSet<IJSVGNode*>* _artworkFittingHiddenNodes;
 }
+
 @end
 
 @implementation IJSVG

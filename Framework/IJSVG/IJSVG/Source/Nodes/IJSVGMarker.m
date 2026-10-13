@@ -43,6 +43,7 @@
     marker.orientAngle = _orientAngle;
     return marker;
 }
+
 @end
 
 @implementation IJSVGMarkerPosition
@@ -68,6 +69,7 @@
 
 @end
 @implementation IJSVGMarkerSubpath
+
 - (instancetype)init
 {
     if ((self = [super init]) != nil) {
@@ -75,6 +77,7 @@
     }
     return self;
 }
+
 @end
 
 static CGPoint IJSVGMarkerVector(CGPoint from, CGPoint to)
@@ -303,8 +306,8 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* so
 
 - (IJSVGUnitLength*)markerLengthFromElement:(IJSVGXMLNode*)element attribute:(IJSVGNodeAttribute)attribute defaultValue:(IJSVGUnitLength*)defaultValue
 {
-    NSString* value = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, attribute));
-    return value != nil ? [IJSVGUnitLength unitWithString:value] : defaultValue;
+    IJSVGXMLAttribute* value = IJSVGXMLAttributeForIdentifier(element, attribute);
+    return value != NULL ? IJSVGUnitLengthFromXMLAttribute(value, IJSVGUnitUserSpaceOnUse) : defaultValue;
 }
 
 - (void)applyMarkerOrientation:(NSString*)orient toMarker:(IJSVGMarker*)marker
@@ -353,10 +356,24 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* so
     self.refY = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeRefY defaultValue:self.refY];
     self.markerWidth = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeMarkerWidth defaultValue:self.markerWidth];
     self.markerHeight = [self markerLengthFromElement:context->element attribute:IJSVGNodeAttributeMarkerHeight defaultValue:self.markerHeight];
-    NSString* units = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeMarkerUnits));
-    self.markerUnits = [IJSVGUtils markerUnitsForString:units];
-    NSString* orientation = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeOrient));
-    [self applyMarkerOrientation:orientation toMarker:self];
+    IJSVGXMLAttribute* units = IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeMarkerUnits);
+    self.markerUnits = IJSVGXMLAttributeEquals(units, "userSpaceOnUse") ? IJSVGMarkerUnitsUserSpaceOnUse : IJSVGMarkerUnitsStrokeWidth;
+    IJSVGXMLAttribute* orientation = IJSVGXMLAttributeForIdentifier(context->element, IJSVGNodeAttributeOrient);
+    if (IJSVGXMLAttributeEquals(orientation, "auto")) {
+        self.orientType = IJSVGMarkerOrientTypeAuto;
+        self.orientAngle = 0;
+    } else if (IJSVGXMLAttributeEquals(orientation, "auto-start-reverse")) {
+        self.orientType = IJSVGMarkerOrientTypeAutoStartReverse;
+        self.orientAngle = 0;
+    } else {
+        IJSVGUnitLength* angle = orientation == NULL ? nil : IJSVGScalarLengthFromBytes(IJSVGXMLAttributeBytes(orientation), orientation->value.length, YES, IJSVGUnitUserSpaceOnUse);
+        if (angle != nil && angle.originalType == IJSVGUnitLengthTypeNumber) {
+            self.orientType = IJSVGMarkerOrientTypeAngle;
+            self.orientAngle = angle.value;
+        } else {
+            [self applyMarkerOrientation:IJSVGXMLAttributeValue(orientation) toMarker:self];
+        }
+    }
     self.shouldRender = YES; // SVG 1.1: display does not apply to self.
 }
 

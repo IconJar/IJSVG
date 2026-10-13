@@ -12,9 +12,9 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
 
-static IJSVGUnitLength* IJSVGLinearGradientCoordinate(NSString* value, IJSVGUnitType units, BOOL endPoint)
+static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribute, IJSVGUnitType units, BOOL endPoint)
 {
-    IJSVGUnitLength* length = value != nil ? [IJSVGUnitLength unitWithString:value fromUnitType:units] : nil;
+    IJSVGUnitLength* length = IJSVGUnitLengthFromXMLAttribute(attribute, units);
     if (length == nil) {
         if (endPoint) {
             return IJSVGOnePercentageUnitLength;
@@ -43,21 +43,21 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(NSString* value, IJSVGUnit
 
 + (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGLinearGradient*)aGradient
 {
-    NSString* values[4] = { nil };
+    IJSVGXMLAttribute* values[4] = { NULL };
     IJSVGXMLAttributeList attributeIterator = attributes;
     for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributeIterator)) {
         switch (attribute->identifier) {
             case IJSVGNodeAttributeX1:
-                values[0] = IJSVGXMLAttributeValue(attribute);
+                values[0] = attribute;
                 break;
             case IJSVGNodeAttributeX2:
-                values[1] = IJSVGXMLAttributeValue(attribute);
+                values[1] = attribute;
                 break;
             case IJSVGNodeAttributeY1:
-                values[2] = IJSVGXMLAttributeValue(attribute);
+                values[2] = attribute;
                 break;
             case IJSVGNodeAttributeY2:
-                values[3] = IJSVGXMLAttributeValue(attribute);
+                values[3] = attribute;
                 break;
             default:
                 break;

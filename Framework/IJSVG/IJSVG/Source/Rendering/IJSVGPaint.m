@@ -37,10 +37,12 @@ CGRect IJSVGPaintGetBoundingBoxBounds(IJSVGPaint* paint)
 @end
 
 @implementation IJSVGMaskCachedImage
+
 - (void)dealloc
 {
     CGImageRelease(_image);
 }
+
 @end
 
 static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
@@ -58,6 +60,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 @interface IJSVGPaint () {
     NSObject* _maskCacheKey;
 }
+
 @end
 
 @implementation IJSVGPaint

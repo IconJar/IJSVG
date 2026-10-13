@@ -671,6 +671,7 @@ static NSUInteger IJSVGStyleSheetFontKeywordProperty(char* chars, NSRange token)
         const char* keyword;
         IJSVGStyleSheetFontProperty property;
     } keywords[] = { { "xx-small", IJSVGStyleSheetFontSize }, { "x-small", IJSVGStyleSheetFontSize }, { "small", IJSVGStyleSheetFontSize }, { "medium", IJSVGStyleSheetFontSize }, { "large", IJSVGStyleSheetFontSize }, { "x-large", IJSVGStyleSheetFontSize }, { "xx-large", IJSVGStyleSheetFontSize }, { "smaller", IJSVGStyleSheetFontSize }, { "larger", IJSVGStyleSheetFontSize }, { "italic", IJSVGStyleSheetFontStyle }, { "oblique", IJSVGStyleSheetFontStyle }, { "bold", IJSVGStyleSheetFontWeight }, { "bolder", IJSVGStyleSheetFontWeight }, { "lighter", IJSVGStyleSheetFontWeight }, { "small-caps", IJSVGStyleSheetFontVariant }, { "ultra-condensed", IJSVGStyleSheetFontStretch }, { "extra-condensed", IJSVGStyleSheetFontStretch }, { "condensed", IJSVGStyleSheetFontStretch }, { "semi-condensed", IJSVGStyleSheetFontStretch }, { "semi-expanded", IJSVGStyleSheetFontStretch }, { "expanded", IJSVGStyleSheetFontStretch }, { "extra-expanded", IJSVGStyleSheetFontStretch }, { "ultra-expanded", IJSVGStyleSheetFontStretch } };
+
     for (NSUInteger index = 0; index < sizeof(keywords) / sizeof(keywords[0]); index++) {
         if (IJSVGStyleSheetTokenEquals(chars, token, keywords[index].keyword)) {
             return keywords[index].property;

@@ -393,6 +393,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     }
     return self;
 }
+
 @end
 
 @implementation IJSVGFilterGraph

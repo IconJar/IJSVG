@@ -75,6 +75,9 @@ static const char* IJSVGXMLDocumentInternName(IJSVGXMLDocument* document, const 
     if (name == NULL) {
         return NULL;
     }
+    if (xmlDictOwns(document->names, name) == 1) {
+        return (const char*)name;
+    }
     const char* result = (const char*)xmlDictLookup(document->names, name, -1);
     if (result == NULL) {
         document->failed = true;
@@ -311,11 +314,6 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
         return NULL;
     }
     document->root = document->current = IJSVGXMLNodeNotFound;
-    document->names = xmlDictCreate();
-    if (document->names == NULL) {
-        IJSVGXMLDocumentDestroy(document);
-        return NULL;
-    }
     xmlSAXHandler handler = { 0 };
     handler.initialized = XML_SAX2_MAGIC;
     handler.startElementNs = IJSVGXMLParserStartElement;
@@ -332,6 +330,14 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
         IJSVGXMLDocumentDestroy(document);
         return NULL;
     }
+
+    // Keep the parser name pool alive with the document to avoid duplicate names.
+    if (parser->dict == NULL || xmlDictReference(parser->dict) != 0) {
+        xmlFreeParserCtxt(parser);
+        IJSVGXMLDocumentDestroy(document);
+        return NULL;
+    }
+    document->names = parser->dict;
     xmlCtxtUseOptions(parser, XML_PARSE_NONET | XML_PARSE_NOENT | XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
     int status = xmlParseChunk(parser, bytes, (int)length, 1);
     bool valid = status == 0 && parser->wellFormed && parser->nsWellFormed && !document->failed && !document->unsupported && document->root != IJSVGXMLNodeNotFound;
@@ -359,6 +365,7 @@ static IJSVGXMLDocument* IJSVGXMLDocumentFinalize(IJSVGXMLDocument* document)
     for (uint32_t i = 0; i < document->nodeCount; i++) {
         IJSVGXMLNode* node = document->nodes + i;
         node->document = document;
+        node->type = node->kind == IJSVGXMLNodeKindElement ? IJSVGNodeTypeForBytes(node->name, strlen(node->name)) : IJSVGNodeTypeNotFound;
         for (uint32_t child = node->firstChild; child != IJSVGXMLNodeNotFound; child = document->nodes[child].nextSibling) {
             node->childCount++;
         }
@@ -460,6 +467,21 @@ IJSVGXMLDocument* IJSVGXMLDocumentForElementAttributes(NSXMLElement* element)
 
 #pragma mark - Node access
 
+IJSVGXMLNode* IJSVGXMLNodeAtIndex(IJSVGXMLDocument* document, uint32_t index)
+{
+    return document == NULL || index == IJSVGXMLNodeNotFound ? NULL : document->nodes + index;
+}
+
+IJSVGXMLNode* IJSVGXMLFirstChild(IJSVGXMLNode* node)
+{
+    return node == NULL ? NULL : IJSVGXMLNodeAtIndex(node->document, node->firstChild);
+}
+
+IJSVGXMLNode* IJSVGXMLNext(IJSVGXMLNode* node)
+{
+    return node == NULL ? NULL : IJSVGXMLNodeAtIndex(node->document, node->nextSibling);
+}
+
 IJSVGXMLNode* IJSVGXMLRoot(IJSVGXMLDocument* document)
 {
     return document == NULL ? NULL : IJSVGXMLNodeAtIndex(document, document->root);
@@ -468,6 +490,11 @@ IJSVGXMLNode* IJSVGXMLRoot(IJSVGXMLDocument* document)
 IJSVGXMLNode* IJSVGXMLParent(IJSVGXMLNode* node)
 {
     return node == NULL ? NULL : IJSVGXMLNodeAtIndex(node->document, node->parent);
+}
+
+IJSVGNodeType IJSVGXMLType(IJSVGXMLNode* node)
+{
+    return node == NULL ? IJSVGNodeTypeNotFound : node->type;
 }
 
 NSUInteger IJSVGXMLChildCount(IJSVGXMLNode* node)
@@ -531,6 +558,37 @@ NSString* IJSVGXMLText(IJSVGXMLNode* node)
 }
 
 #pragma mark - Attribute access
+
+IJSVGXMLAttribute* IJSVGXMLAttributeAt(IJSVGXMLAttributeList list, NSUInteger index)
+{
+    return index >= list.count ? NULL : list.overlay != NULL ? list.overlay[index]
+                                                             : list.first + index;
+}
+
+IJSVGXMLAttribute* IJSVGXMLFirstAttribute(IJSVGXMLAttributeList* list)
+{
+    list->cursor = 0;
+    return IJSVGXMLAttributeAt(*list, list->cursor);
+}
+
+IJSVGXMLAttribute* IJSVGXMLNextAttribute(IJSVGXMLAttributeList* list)
+{
+    return IJSVGXMLAttributeAt(*list, ++list->cursor);
+}
+
+IJSVGXMLAttribute* IJSVGXMLAttributeForIdentifier(IJSVGXMLNode* node, IJSVGNodeAttribute identifier)
+{
+    if (identifier < 0 || identifier >= IJSVGNodeAttributeCount) {
+        return NULL;
+    }
+    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(node);
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributes); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributes)) {
+        if (attribute->identifier == identifier) {
+            return attribute;
+        }
+    }
+    return NULL;
+}
 
 IJSVGXMLAttributeList IJSVGXMLAttributes(IJSVGXMLNode* node)
 {

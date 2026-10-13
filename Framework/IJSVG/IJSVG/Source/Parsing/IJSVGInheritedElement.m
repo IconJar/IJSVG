@@ -49,8 +49,10 @@
     }
     return self;
 }
+
 - (void)dealloc
 {
     free(_attributes.overlay);
 }
+
 @end

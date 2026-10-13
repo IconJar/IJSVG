@@ -46,6 +46,7 @@ typedef struct {
 typedef struct IJSVGXMLNode {
     IJSVGXMLDocument* document;
     uint32_t childCount;
+    IJSVGNodeType type : 8;
     const char* name;
     const char* prefix;
     const char* uri;
@@ -93,21 +94,16 @@ IJSVGXMLDocument* IJSVGXMLDocumentForElementAttributes(NSXMLElement* element);
 void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document);
 
 // Node traversal and content.
-static inline IJSVGXMLNode* IJSVGXMLNodeAtIndex(IJSVGXMLDocument* document, uint32_t index)
-{
-    return document == NULL || index == IJSVGXMLNodeNotFound ? NULL : document->nodes + index;
-}
+IJSVGXMLNode* IJSVGXMLNodeAtIndex(IJSVGXMLDocument* document, uint32_t index);
 
 IJSVGXMLNode* IJSVGXMLRoot(IJSVGXMLDocument* document);
 IJSVGXMLNode* IJSVGXMLParent(IJSVGXMLNode* node);
-static inline IJSVGXMLNode* IJSVGXMLFirstChild(IJSVGXMLNode* node)
-{
-    return node == NULL ? NULL : IJSVGXMLNodeAtIndex(node->document, node->firstChild);
-}
-static inline IJSVGXMLNode* IJSVGXMLNext(IJSVGXMLNode* node)
-{
-    return node == NULL ? NULL : IJSVGXMLNodeAtIndex(node->document, node->nextSibling);
-}
+
+IJSVGXMLNode* IJSVGXMLFirstChild(IJSVGXMLNode* node);
+
+IJSVGXMLNode* IJSVGXMLNext(IJSVGXMLNode* node);
+
+IJSVGNodeType IJSVGXMLType(IJSVGXMLNode* node);
 NSUInteger IJSVGXMLChildCount(IJSVGXMLNode* node);
 NSXMLNodeKind IJSVGXMLKind(IJSVGXMLNode* node);
 NSString* IJSVGXMLLocalName(IJSVGXMLNode* node);
@@ -115,37 +111,15 @@ NSString* IJSVGXMLText(IJSVGXMLNode* node);
 
 // Attribute lookup and values. Strings are created lazily when requested.
 IJSVGXMLAttributeList IJSVGXMLAttributes(IJSVGXMLNode* node);
-static inline IJSVGXMLAttribute* IJSVGXMLAttributeAt(IJSVGXMLAttributeList list, NSUInteger index)
-{
-    return index >= list.count ? NULL : list.overlay != NULL ? list.overlay[index]
-                                                             : list.first + index;
-}
+
+IJSVGXMLAttribute* IJSVGXMLAttributeAt(IJSVGXMLAttributeList list, NSUInteger index);
 
 // Each loop keeps its own list cursor. Attribute storage remains borrowed.
-static inline IJSVGXMLAttribute* IJSVGXMLFirstAttribute(IJSVGXMLAttributeList* list)
-{
-    list->cursor = 0;
-    return IJSVGXMLAttributeAt(*list, list->cursor);
-}
+IJSVGXMLAttribute* IJSVGXMLFirstAttribute(IJSVGXMLAttributeList* list);
 
-static inline IJSVGXMLAttribute* IJSVGXMLNextAttribute(IJSVGXMLAttributeList* list)
-{
-    return IJSVGXMLAttributeAt(*list, ++list->cursor);
-}
+IJSVGXMLAttribute* IJSVGXMLNextAttribute(IJSVGXMLAttributeList* list);
 
-static inline IJSVGXMLAttribute* IJSVGXMLAttributeForIdentifier(IJSVGXMLNode* node, IJSVGNodeAttribute identifier)
-{
-    if (identifier < 0 || identifier >= IJSVGNodeAttributeCount) {
-        return NULL;
-    }
-    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(node);
-    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributes); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributes)) {
-        if (attribute->identifier == identifier) {
-            return attribute;
-        }
-    }
-    return NULL;
-}
+IJSVGXMLAttribute* IJSVGXMLAttributeForIdentifier(IJSVGXMLNode* node, IJSVGNodeAttribute identifier);
 
 IJSVGXMLAttribute* IJSVGXMLAttributeNamed(IJSVGXMLNode* node, NSString* name);
 NSString* IJSVGXMLAttributeLocalName(IJSVGXMLAttribute* attribute);

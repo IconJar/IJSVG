@@ -19,10 +19,12 @@
     }
     return self;
 }
+
 - (BOOL)treatImplicitOriginAsTransform
 {
     return NO;
 }
+
 - (void)drawInContext:(CGContextRef)ctx
 {
     CGImageRef image = _image.CGImage;

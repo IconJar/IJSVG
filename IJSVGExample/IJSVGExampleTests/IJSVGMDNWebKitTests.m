@@ -61,6 +61,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
 @property (nonatomic) BOOL compareTextMetrics;
 @property (nonatomic, strong) NSDictionary<NSString*, id>* metrics;
 @property (nonatomic, copy) void (^completion)(NSDictionary<NSString*, id>*);
+
 - (void)run:(NSString*)xml completion:(void (^)(NSDictionary<NSString*, id>*))completion;
 @end
 
@@ -300,6 +301,7 @@ static CGContextRef IJSVGMDNBitmap(size_t width, size_t height, CGFloat backgrou
     }
     [self finish:result];
 }
+
 @end
 
 @interface IJSVGMDNWebKitTests : XCTestCase

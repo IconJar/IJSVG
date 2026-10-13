@@ -14,6 +14,16 @@
 #import <IJSVGNodeParsing.h>
 #import <IJSVGSwitch.h>
 
+BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
+{
+    NSString* __unsafe_unretained candidate = values[attribute];
+    if (candidate == nil || candidate.length == 0) {
+        return NO;
+    }
+    *value = candidate;
+    return YES;
+}
+
 void IJSVGParseColorAttributes(IJSVGNode* node, IJSVGNodeParsingContext* context)
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
@@ -272,46 +282,35 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
 
 void IJSVGParseEffectsAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context)
 {
-    NSString* __unsafe_unretained* attributeValues = context->values;
-    IJSVGParser* parser = context->parser;
-    IJSVGXMLNode* element = context->element;
-    NSString* value = nil;
-    IJSVGNodeParserPostProcessBlock postProcessBlock = context->postProcessBlock;
-    if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMask, &value)) {
-        NSString* maskValue = value;
-        postProcessBlock = ^{
-            NSString* identifier = [IJSVGUtils defURL:maskValue];
-            if (identifier != nil) {
-                node.mask = (id)[parser computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element];
-            }
-        };
+    IJSVGNodeDeferredAttributes* attributes = context->deferredAttributes;
+    IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeMask, &attributes->mask);
+    IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeClipPath, &attributes->clipPath);
+    IJSVGParserAttributeHasValue(context->values, IJSVGNodeAttributeFilter, &attributes->filter);
+}
+
+void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes, IJSVGNode* node, IJSVGParser* parser, IJSVGXMLNode* element)
+{
+    IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
+    if (attributes->mask != nil) {
+        NSString* identifier = [IJSVGUtils defURL:attributes->mask];
+        if (identifier != nil) {
+            graphics.mask = (id)[parser computeDetachedNodeWithIdentifier:identifier referencingNode:graphics element:element];
+        }
     }
-    if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPath, &value)) {
-        NSString* clipPathValue = value;
-        IJSVGNodeParserPostProcessBlock previousPostProcessBlock = postProcessBlock;
-        postProcessBlock = ^{
-            if (previousPostProcessBlock != nil) {
-                previousPostProcessBlock();
-            }
-            NSString* identifier = [IJSVGUtils defURL:clipPathValue];
-            if (identifier != nil) {
-                node.clipPath = (id)[parser computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element];
-            } else {
-                node.clipPath = [IJSVGClipPath clipPathWithBasicShape:clipPathValue];
-            }
-        };
+    if (attributes->clipPath != nil) {
+        NSString* identifier = [IJSVGUtils defURL:attributes->clipPath];
+        if (identifier != nil) {
+            graphics.clipPath = (id)[parser computeDetachedNodeWithIdentifier:identifier referencingNode:graphics element:element];
+        } else {
+            graphics.clipPath = [IJSVGClipPath clipPathWithBasicShape:attributes->clipPath];
+        }
     }
-    if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFilter, &value)) {
-        NSString* filterValue = value;
-        IJSVGNodeParserPostProcessBlock previousPostProcessBlock = postProcessBlock;
-        postProcessBlock = ^{
-            if (previousPostProcessBlock != nil) {
-                previousPostProcessBlock();
-            }
-            node.filters = [parser filtersForValue:filterValue referencingNode:node element:element];
-        };
+    if (attributes->filter != nil) {
+        graphics.filters = [parser filtersForValue:attributes->filter referencingNode:graphics element:element];
     }
-    context->postProcessBlock = postProcessBlock;
+    if (attributes->markerStart != nil || attributes->markerMid != nil || attributes->markerEnd != nil) {
+        [parser applyMarkerStart:attributes->markerStart mid:attributes->markerMid end:attributes->markerEnd toNode:graphics element:element];
+    }
 }
 
 void IJSVGParseTransformAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context)
@@ -474,23 +473,10 @@ void IJSVGParseSymbolAttributes(IJSVGSymbol* node, IJSVGNodeParsingContext* cont
 
 void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context)
 {
-    NSString* __unsafe_unretained* attributeValues = context->values;
-    IJSVGParser* parser = context->parser;
-    IJSVGXMLNode* element = context->element;
-    IJSVGNodeParserPostProcessBlock postProcessBlock = context->postProcessBlock;
-    NSString* markerStart = attributeValues[IJSVGNodeAttributeMarkerStart];
-    NSString* markerMid = attributeValues[IJSVGNodeAttributeMarkerMid];
-    NSString* markerEnd = attributeValues[IJSVGNodeAttributeMarkerEnd];
-    if (markerStart != nil || markerMid != nil || markerEnd != nil) {
-        IJSVGNodeParserPostProcessBlock previous = postProcessBlock;
-        postProcessBlock = ^{
-            if (previous != nil) {
-                previous();
-            }
-            [parser applyMarkerStart:markerStart mid:markerMid end:markerEnd toNode:node element:element];
-        };
-    }
-    context->postProcessBlock = postProcessBlock;
+    IJSVGNodeDeferredAttributes* attributes = context->deferredAttributes;
+    attributes->markerStart = context->values[IJSVGNodeAttributeMarkerStart];
+    attributes->markerMid = context->values[IJSVGNodeAttributeMarkerMid];
+    attributes->markerEnd = context->values[IJSVGNodeAttributeMarkerEnd];
 }
 
 IJSVGBitFlags* IJSVGCommonAttributes(void)

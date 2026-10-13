@@ -33,6 +33,26 @@ IJSVGNodeType IJSVGNodeTypeForString(NSString* string, NSXMLNodeKind kind)
         if (character > 127) {
             return IJSVGNodeTypeUnknown;
         }
+        name[index] = (char)character;
+    }
+
+    return IJSVGNodeTypeForBytes(name, length);
+}
+
+IJSVGNodeType IJSVGNodeTypeForBytes(const char* bytes, NSUInteger length)
+{
+    if (bytes == NULL) {
+        return IJSVGNodeTypeNotFound;
+    }
+    if (length == 0 || length > 19) {
+        return IJSVGNodeTypeUnknown;
+    }
+    char name[19];
+    for (NSUInteger index = 0; index < length; index++) {
+        unsigned char character = bytes[index];
+        if (character > 127) {
+            return IJSVGNodeTypeUnknown;
+        }
         name[index] = character >= 'A' && character <= 'Z' ? character + ('a' - 'A') : character;
     }
 

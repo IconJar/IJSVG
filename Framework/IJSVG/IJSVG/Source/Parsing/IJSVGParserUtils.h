@@ -14,11 +14,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+IJSVGUnitLength* _Nullable IJSVGScalarLengthFromBytes(const char* bytes, NSUInteger length, BOOL allowNegative, IJSVGUnitType units);
+IJSVGUnitLength* _Nullable IJSVGUnitLengthFromXMLAttribute(IJSVGXMLAttribute* _Nullable attribute, IJSVGUnitType units);
+BOOL IJSVGXMLAttributeEquals(IJSVGXMLAttribute* _Nullable attribute, const char* value);
+BOOL IJSVGParseHexColorBytes(const char* bytes, NSUInteger length, uint32_t* rgba);
+
 // Borrowed UTF8 spans. No terminator is required and no input is retained.
 BOOL IJSVGParseLengthNumberInRange(const char* _Nonnull* _Nonnull position, const char* end, BOOL allowNegative, CGFloat* value);
 IJSVGUnitLength* _Nullable IJSVGLengthFromBytes(const char* _Nullable bytes, NSUInteger length, BOOL allowNegative);
 NSArray<IJSVGUnitLength*>* _Nullable IJSVGUnitLengthsFromBytes(const char* _Nullable bytes, NSUInteger length);
 BOOL IJSVGUnitLengthsAreValidBytes(const char* _Nullable bytes, NSUInteger length, BOOL allowNegative, BOOL single);
+IJSVGNodeType IJSVGNodeTypeForBytes(const char* _Nullable bytes, NSUInteger length);
 IJSVGNodeAttribute IJSVGNodeAttributeForBytes(const char* _Nullable bytes, NSUInteger length);
 
 BOOL IJSVGParseLengthNumber(const char* _Nonnull* _Nonnull position, BOOL allowNegative, CGFloat* value);
@@ -30,13 +36,8 @@ BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute);
 
 // Font longhands occupy consecutive attribute slots, text rendering uses
 // bit 63.
-static inline uint64_t IJSVGTextStyleBit(NSUInteger attribute)
-{
-    if (attribute >= IJSVGNodeAttributeFont && attribute <= IJSVGNodeAttributeFontSizeAdjust) {
-        return UINT64_C(1) << (attribute - IJSVGNodeAttributeFont);
-    }
-    return attribute == IJSVGNodeAttributeTextRendering ? UINT64_C(1) << 63 : 0;
-}
+uint64_t IJSVGTextStyleBit(NSUInteger attribute);
+
 BOOL IJSVGGeometryLengthIsValid(NSString* value, IJSVGNodeAttribute attribute);
 IJSVGUnitLength* _Nullable IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribute attribute);
 IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute);
@@ -58,10 +59,10 @@ typedef struct {
 void IJSVGReadReferenceAttribute(IJSVGXMLAttribute* node, IJSVGReferenceAttributes* attributes);
 IJSVGReference* IJSVGEmptyReference(void);
 
-// Read a known attribute with a nonempty value.
+// Read a known attribute with a nonempty value owned by the XML document.
 // Pass nil for activeAttributes to read all known attributes when building the
 // cache.
-BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* _Nullable activeAttributes, NSUInteger* attribute, NSString* _Nullable __autoreleasing* _Nonnull value, IJSVGReferenceAttributes* _Nullable reference);
+BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* _Nullable activeAttributes, NSUInteger* attribute, NSString* _Nullable __unsafe_unretained* _Nonnull value, IJSVGReferenceAttributes* _Nullable reference);
 NSSet<NSString*>* IJSVGClassNameList(NSString* _Nullable value);
 
 NSString* _Nullable IJSVGAttributeValue(NSString* _Nullable __unsafe_unretained const attributeValues[_Nonnull kIJSVGNodeAttributeStorageLength], IJSVGNodeAttribute attribute);

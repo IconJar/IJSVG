@@ -13,6 +13,7 @@
 
 @interface IJSVGFilterPaint (VisibleRegionTesting)
 - (CGRect)requestedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx;
+
 - (void)renderGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect pixelSize:(CGSize)pixelSize scale:(CGFloat)scale;
 @end
 
@@ -28,43 +29,51 @@ static _Thread_local NSUInteger IJSVGTestCulledShapes;
 @end
 
 @implementation IJSVGObservedFilterPaint
+
 - (void)renderGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect pixelSize:(CGSize)pixelSize scale:(CGFloat)scale
 {
     IJSVGTestAllocatedPixels += pixelSize.width * pixelSize.height;
     [super renderGraph:graph context:ctx region:region workRect:workRect pixelSize:pixelSize scale:scale];
 }
+
 @end
 
 @interface IJSVGFullExtentFilterPaint : IJSVGObservedFilterPaint
 @end
 
 @implementation IJSVGFullExtentFilterPaint
+
 - (CGRect)requestedOutputExtentForGraph:(IJSVGFilterGraph*)graph context:(CGContextRef)ctx
 {
     return graph.extent;
 }
+
 @end
 
 @interface IJSVGObservedShapePaint : IJSVGShapePaint
 @end
 
 @implementation IJSVGObservedShapePaint
+
 - (BOOL)isPathOutsideClipInContext:(CGContextRef)ctx
 {
     BOOL outside = [super isPathOutsideClipInContext:ctx];
     IJSVGTestCulledShapes += outside;
     return outside;
 }
+
 @end
 
 @interface IJSVGUnculledShapePaint : IJSVGShapePaint
 @end
 
 @implementation IJSVGUnculledShapePaint
+
 - (BOOL)isPathOutsideClipInContext:(CGContextRef)ctx
 {
     return NO;
 }
+
 @end
 
 @interface IJSVGVisibleRegionTests : XCTestCase
@@ -87,9 +96,11 @@ static _Thread_local NSUInteger IJSVGTestCulledShapes;
         Class replacement = Nil;
         if (paint.class == IJSVGFilterPaint.class) {
             replacement = reference ? IJSVGFullExtentFilterPaint.class : IJSVGObservedFilterPaint.class;
+
         } else if (paint.class == IJSVGShapePaint.class) {
             replacement = reference ? IJSVGUnculledShapePaint.class : IJSVGObservedShapePaint.class;
         }
+
         if (replacement != Nil) {
             XCTAssertEqual(class_getInstanceSize(paint.class), class_getInstanceSize(replacement));
             object_setClass(paint, replacement);

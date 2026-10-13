@@ -28,6 +28,7 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
     CGLineJoin _outlineLineJoin;
     CGAffineTransform _outlineHostTransform;
 }
+
 @end
 
 @implementation IJSVGShapePaint
@@ -273,4 +274,5 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
         CGContextStrokePath(ctx);
     }
 }
+
 @end

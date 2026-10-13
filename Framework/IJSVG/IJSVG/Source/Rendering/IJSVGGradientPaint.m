@@ -30,6 +30,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     CGFloat _endRadius;
     IJSVGResolvedGradientKind _gradientKind;
 }
+
 @end
 
 @implementation IJSVGGradientPaint

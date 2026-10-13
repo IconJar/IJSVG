@@ -88,7 +88,7 @@ static BOOL IJSVGSwitchLanguageMatches(const char* languages, const char* prefer
 + (IJSVGXMLNode*)selectedChildInXML:(IJSVGXMLNode*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages
 {
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGNodeTypeForString(IJSVGXMLLocalName(child), IJSVGXMLKind(child)) == IJSVGNodeTypeStyle) {
+        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGXMLType(child) == IJSVGNodeTypeStyle) {
             continue;
         }
         IJSVGXMLNode* candidate = (IJSVGXMLNode*)child;

@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGGradientGeometry.h>
+#import <IJSVGParserUtils.h>
 
 @implementation IJSVGGradientGeometry {
     IJSVGUnitLength* _coordinates[6];

@@ -412,6 +412,24 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
 + (NSString* _Nullable)defURL:(NSString*)string
 {
     IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    if (source.length != 0 && source.bytes[0] == '#') {
+        return nil;
+    }
+
+    // Simple fragment URLs need no CSS component allocation.
+    if (source.length > 6 && memcmp(source.bytes, "url(#", 5) == 0 && source.bytes[source.length - 1] == ')') {
+        BOOL simple = YES;
+        for (NSUInteger index = 5; index < source.length - 1; index++) {
+            unsigned char character = source.bytes[index];
+            if (!((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') || (character >= '0' && character <= '9') || character == '_' || character == '-' || character == '.')) {
+                simple = NO;
+                break;
+            }
+        }
+        if (simple) {
+            return [[NSString alloc] initWithBytes:source.bytes + 5 length:source.length - 6 encoding:NSUTF8StringEncoding];
+        }
+    }
     IJSVGCSSComponents components;
     BOOL valid = IJSVGCSSComponentsCreateWithOptions(source.bytes, source.length, IJSVGCSSParserOptionLeadingURL, &components);
     NSString* identifier = valid && components.count != 0 ? IJSVGURLIdentifier(&components, components.values, NO) : nil;

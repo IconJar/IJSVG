@@ -29,7 +29,7 @@
         return;
     }
     for (IJSVGXMLNode* childElement = IJSVGXMLFirstChild(element); childElement != NULL; childElement = IJSVGXMLNext(childElement)) {
-        IJSVGNodeType type = IJSVGNodeTypeForString(IJSVGXMLLocalName(childElement), IJSVGXMLKind(childElement));
+        IJSVGNodeType type = IJSVGXMLType(childElement);
 
         // we can exit early, not a node we know of
         if (type == IJSVGNodeTypeNotFound) {

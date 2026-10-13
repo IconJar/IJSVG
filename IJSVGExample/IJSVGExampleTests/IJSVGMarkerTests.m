@@ -376,22 +376,27 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
 {
     [self assertMDNExample:@"arrowheads" svg11:NO];
 }
+
 - (void)testMDNPolymarkers
 {
     [self assertMDNExample:@"polymarkers" svg11:NO];
 }
+
 - (void)testMDNContextPaint
 {
     [self assertMDNExample:@"context-paint" svg11:NO];
 }
+
 - (void)testMDNArrowheadsSVG11
 {
     [self assertMDNExample:@"arrowheads" svg11:YES];
 }
+
 - (void)testMDNPolymarkersSVG11
 {
     [self assertMDNExample:@"polymarkers" svg11:YES];
 }
+
 - (void)testMDNContextPaintSVG11
 {
     [self assertMDNExample:@"context-paint" svg11:YES];

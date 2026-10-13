@@ -21,6 +21,7 @@ NSString* IJSVGPackageShaderSource(NSString* name)
 @end
 
 @implementation IJSVGPDFErrorFixture
+
 - (NSData*)PDFData:(NSError**)error
 {
     return [self PDFDataWithRect:CGRectZero error:error];
@@ -34,6 +35,7 @@ NSString* IJSVGPackageShaderSource(NSString* name)
     }
     return [NSData data];
 }
+
 @end
 
 IJSVG* IJSVGWithPDFError(void)

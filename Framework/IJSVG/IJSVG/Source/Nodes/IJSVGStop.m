@@ -45,6 +45,49 @@
     [self consumeOffset:context->values[IJSVGNodeAttributeOffset] color:context->values[IJSVGNodeAttributeStopColor] opacity:context->values[IJSVGNodeAttributeStopOpacity] parser:context->parser];
 }
 
+- (void)consumeXMLAttributes:(IJSVGXMLAttributeList)attributes parser:(IJSVGParser*)parser
+{
+    IJSVGXMLAttribute* colorAttribute = NULL;
+    IJSVGXMLAttributeList iterator = attributes;
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&iterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&iterator)) {
+        if (attribute->value.length == 0) {
+            continue;
+        }
+        switch (attribute->identifier) {
+            case IJSVGNodeAttributeOffset:
+                self.offset = IJSVGUnitLengthFromXMLAttribute(attribute, IJSVGUnitUserSpaceOnUse);
+                break;
+            case IJSVGNodeAttributeStopOpacity:
+                self.fillOpacity = IJSVGUnitLengthFromXMLAttribute(attribute, IJSVGUnitUserSpaceOnUse);
+                break;
+            case IJSVGNodeAttributeStopColor:
+                colorAttribute = attribute;
+                break;
+            default:
+                break;
+        }
+    }
+    if (colorAttribute == NULL) {
+        return;
+    }
+    const char* bytes = IJSVGXMLAttributeBytes(colorAttribute);
+    if (bytes[0] != '#') {
+        [self consumeOffset:nil color:IJSVGXMLAttributeValue(colorAttribute) opacity:nil parser:parser];
+        return;
+    }
+    NSColor* color = [parser parsedStopColorForAttribute:colorAttribute];
+    if (color == nil) {
+        [self consumeOffset:nil color:IJSVGXMLAttributeValue(colorAttribute) opacity:nil parser:parser];
+        return;
+    }
+    IJSVGColorNode* fill = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+    CGFloat opacity = self.fillOpacity.value;
+    if (opacity != 1.f) {
+        fill.color = [IJSVGColor changeAlphaOnColor:color to:opacity];
+    }
+    self.fill = fill;
+}
+
 - (void)consumeOffset:(NSString*)offset color:(NSString*)stopColor opacity:(NSString*)opacityValue parser:(IJSVGParser*)parser
 {
     IJSVGStop* node = self;

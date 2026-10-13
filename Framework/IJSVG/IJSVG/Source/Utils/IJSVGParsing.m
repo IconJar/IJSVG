@@ -11,6 +11,11 @@
 #import <IJSVGCSSParser.h>
 #import <IJSVGStyleSheetUtils.h>
 
+IJSVGStringBytes IJSVGStringGetBytes(NSString* string)
+{
+    return (IJSVGStringBytes) { .bytes = string.UTF8String, .length = [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding] };
+}
+
 IJSVGParsingStringMethod* IJSVGParsingStringMethodCreate(void)
 {
     IJSVGParsingStringMethod* method = (IJSVGParsingStringMethod*)malloc(sizeof(IJSVGParsingStringMethod));

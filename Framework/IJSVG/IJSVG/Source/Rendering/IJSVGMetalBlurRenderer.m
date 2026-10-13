@@ -32,12 +32,14 @@ typedef struct {
 @end
 
 @implementation IJSVGMetalBlurJob
+
 - (void)dealloc
 {
     if (_renderedImage != NULL) {
         CGImageRelease(_renderedImage);
     }
 }
+
 @end
 
 @interface IJSVGMetalBlurBuffers : NSObject

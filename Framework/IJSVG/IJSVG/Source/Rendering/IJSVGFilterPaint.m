@@ -159,6 +159,7 @@ static _Thread_local BOOL IJSVGFilterHasCachingAncestor = NO;
         CGImageRelease(_renderedImage);
     }
 }
+
 @end
 
 @interface IJSVGQuartzFilterBatch : NSObject
@@ -486,10 +487,12 @@ static void IJSVGFilterDrawFilteredImage(CGImageRef image, CGContextRef ctx, CGR
 @end
 
 @implementation IJSVGFilterCachedImage
+
 - (void)dealloc
 {
     CGImageRelease(_image);
 }
+
 @end
 
 static NSCache<NSObject*, IJSVGFilterCachedImage*>* IJSVGFilterOutputCache(void)
@@ -621,6 +624,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     IJSVGFilter* _imageSnapshotFilter;
     IJSVGFilterMetadata* _filterMetadata;
 }
+
 @end
 
 @implementation IJSVGFilterPaint
