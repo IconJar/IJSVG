@@ -124,6 +124,43 @@
     XCTAssertFalse([[[IJSVGRect alloc] init] respondsToSelector:@selector(reference)]);
 }
 
+- (void)testReferenceCacheCanBeClearedAndRebuiltWithoutChangingEarlierNodes
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' xmlns:l='http://www.w3.org/1999/xlink' width='32' height='32'><defs><rect id='box' width='7' height='8'/></defs><use href='#box'/><use l:href='#box'/><use href='' l:href='#box'/></svg>";
+    IJSVGRootNode* first = nil;
+    IJSVGRootNode* second = nil;
+    @autoreleasepool {
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+        first = [parser rootNodeWithSize:CGSizeMake(32, 32)];
+        second = [parser rootNodeWithSize:CGSizeMake(64, 64)];
+    }
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(second);
+    if (first == nil || second == nil) {
+        return;
+    }
+    XCTAssertNotEqual(first, second);
+    for (IJSVGRootNode* root in @[ first, second ]) {
+        XCTAssertEqual(root.children.count, 3u);
+        if (root.children.count != 3) {
+            continue;
+        }
+        for (NSUInteger index = 0; index < 2; index++) {
+            IJSVGUse* use = (IJSVGUse*)root.children[index];
+            XCTAssertEqualObjects(use.reference.fragmentIdentifier, @"box");
+            XCTAssertEqual(((IJSVGRect*)use.children.firstObject).width.value, 7);
+        }
+        IJSVGUse* empty = (IJSVGUse*)root.children[2];
+        XCTAssertEqualObjects(empty.reference.href, @"");
+        XCTAssertNil(empty.reference.fragmentIdentifier);
+        XCTAssertEqual(empty.children.count, 0u);
+    }
+    IJSVGRect* original = (IJSVGRect*)((IJSVGUse*)first.children.firstObject).children.firstObject;
+    original.width = [IJSVGUnitLength unitWithFloat:19];
+    IJSVGRect* independent = (IJSVGRect*)((IJSVGUse*)second.children.firstObject).children.firstObject;
+    XCTAssertEqual(independent.width.value, 7);
+}
+
 - (void)testReferencesConsumeXMLValuesBeforeTheStyleCascade
 {
     IJSVGRootNode* root = [self root:@"<defs><rect id='box' width='7' height='8'/>"

@@ -440,6 +440,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 @interface IJSVGParser () {
     CFTypeRef* _rawAttributeCache;
+    CFTypeRef* _referenceCache;
     IJSVGDefinitionStyleParent* _definitionStyleParent;
 }
 @property (nonatomic) IJSVGParsedPathCache* parsedPathCache;
@@ -489,10 +490,36 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     _rawAttributeCache = NULL;
 }
 
+- (void)clearReferenceCache
+{
+    if (_referenceCache != NULL) {
+        for (uint32_t index = 0; index < _document->nodeCount; index++) {
+            if (_referenceCache[index] != NULL) {
+                CFRelease(_referenceCache[index]);
+            }
+        }
+        free(_referenceCache);
+        _referenceCache = NULL;
+    }
+    self.references = nil;
+}
+
+- (CFTypeRef*)referenceSlotForElement:(IJSVGXMLNode*)element
+{
+    if (element == NULL || element->document != _document) {
+        return NULL;
+    }
+    if (_referenceCache == NULL) {
+        _referenceCache = calloc(_document->nodeCount, sizeof(*_referenceCache));
+    }
+    return _referenceCache == NULL ? NULL : &_referenceCache[element - _document->nodes];
+}
+
 - (void)dealloc
 {
     IJSVGParsedPathCacheDestroy(_parsedPathCache);
     [self clearRawAttributeCache];
+    [self clearReferenceCache];
     IJSVGXMLDocumentDestroy(_document);
     if (_detachedReferences != NULL) {
         CFRelease(_detachedReferences);
@@ -606,7 +633,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     [self clearRawAttributeCache];
     self.lastParsedStyleElement = nil;
     self.plainGradientStopSources = nil;
-    self.references = nil;
+    [self clearReferenceCache];
     self.referenceValues = nil;
     self.inheritedElements = nil;
     self.attributeInput = nil;
@@ -638,7 +665,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     [self clearRawAttributeCache];
     self.lastParsedStyleElement = nil;
     self.plainGradientStopSources = nil;
-    self.references = nil;
+    [self clearReferenceCache];
     self.referenceValues = nil;
     self.inheritedElements = nil;
     self.attributeInput = nil;
@@ -951,7 +978,11 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     BOOL plainPath = node.class == IJSVGPath.class && !hasStyleSheetRules && ignoringAttributes == nil;
     BOOL plainUse = node.class == IJSVGUse.class && !hasStyleSheetRules && ignoringAttributes == nil;
     BOOL supportsReference = [activeAttributes bitIsSet:IJSVGNodeAttributeHref];
-    IJSVGReference* reference = supportsReference ? [_references objectForKey:IJSVGXMLKey(element)] : nil;
+    CFTypeRef* referenceSlot = supportsReference ? [self referenceSlotForElement:element] : NULL;
+    IJSVGReference* reference = nil;
+    if (supportsReference) {
+        reference = referenceSlot != NULL ? (__bridge IJSVGReference*)*referenceSlot : [_references objectForKey:IJSVGXMLKey(element)];
+    }
     IJSVGReferenceAttributes referenceAttributes = { nil, nil, nil };
     IJSVGReferenceAttributes* referenceInput = supportsReference && reference == nil ? &referenceAttributes : NULL;
     if (raw != nil && referenceInput != NULL) {
@@ -994,10 +1025,14 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
     if (referenceInput != NULL) {
         reference = [self referenceFromAttributes:referenceInput];
-        if (_references == nil) {
-            _references = IJSVGParserElementMapTable();
+        if (referenceSlot != NULL) {
+            *referenceSlot = CFBridgingRetain(reference);
+        } else {
+            if (_references == nil) {
+                _references = IJSVGParserElementMapTable();
+            }
+            [_references setObject:reference forKey:IJSVGXMLKey(element)];
         }
-        [_references setObject:reference forKey:IJSVGXMLKey(element)];
     }
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeID, &value)) {
@@ -2470,7 +2505,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     if (element == nil) {
         return nil;
     }
-    IJSVGReference* reference = [_references objectForKey:IJSVGXMLKey(element)];
+    CFTypeRef* referenceSlot = [self referenceSlotForElement:element];
+    IJSVGReference* reference = referenceSlot != NULL ? (__bridge IJSVGReference*)*referenceSlot : [_references objectForKey:IJSVGXMLKey(element)];
     if (reference == nil) {
         IJSVGReferenceAttributes attributes = { nil, nil, nil };
         IJSVGXMLAttributeList elementAttributes = IJSVGXMLAttributes(element);
@@ -2485,10 +2521,14 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             }
         }
         reference = [self referenceFromAttributes:&attributes];
-        if (_references == nil) {
-            _references = IJSVGParserElementMapTable();
+        if (referenceSlot != NULL) {
+            *referenceSlot = CFBridgingRetain(reference);
+        } else {
+            if (_references == nil) {
+                _references = IJSVGParserElementMapTable();
+            }
+            [_references setObject:reference forKey:IJSVGXMLKey(element)];
         }
-        [_references setObject:reference forKey:IJSVGXMLKey(element)];
     }
     return reference;
 }

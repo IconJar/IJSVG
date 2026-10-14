@@ -1,0 +1,12 @@
+{
+  "baselineCommit": "af1ba65",
+  "fixture": "Pcolormesh 2",
+  "method": "Sample a Release executable repeatedly parsing the in-memory fixture. Ten seconds sampled at one millisecond intervals. Inclusive stack counts are not additive and are not exact elapsed timings.",
+  "parseStackSamples": 5106,
+  "referenceForElementInclusiveSamples": 461,
+  "referenceConstructionInclusiveSamples": 160,
+  "identifierLookupObservedSamples": 4,
+  "inheritedElementAssemblyObservedSamples": 0,
+  "decision": "Replace the reference cache pointer map with a document indexed array. Leave identifier lookup, inheritance and node construction unchanged.",
+  "rawSamplePath": "/tmp/ijsvg-reference-profile.txt"
+}
