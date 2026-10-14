@@ -573,6 +573,23 @@
     [self assertBody:[NSString stringWithFormat:image, @"height='0'"] rendersLike:@""];
 }
 
+- (void)testInheritedNumericDashArraysMatchParsedLengths
+{
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' stroke-dashoffset='2'><path d='M2 16H30' fill='none' stroke='red' stroke-width='2' pathLength='14' %@/></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @""]];
+    CGFloat* values = malloc(2 * sizeof(CGFloat));
+    values[0] = 2;
+    values[1] = 1;
+    svg.rootNode.strokeDashArray = values;
+    svg.rootNode.strokeDashArrayCount = 2;
+    IJSVG* reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"stroke-dasharray='2 1'"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    svg.rootNode.strokeDashArrayCount = 0;
+    [svg setNeedsDisplay];
+    reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @""]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+}
+
 - (void)testPathLengthDashCalibration
 {
     for (NSString* shape in @[ @"path d='M2 16H30'", @"line x1='2' y1='16' x2='30' y2='16'", @"polyline points='2,16 30,16'", @"polygon points='2,2 9,2 9,9 2,9'", @"rect x='2' y='2' width='7' height='7'" ]) {

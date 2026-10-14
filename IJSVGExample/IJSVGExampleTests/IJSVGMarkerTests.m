@@ -11,6 +11,8 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGPolygon.h>
+#import <IJSVG/IJSVGUse.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGQuartzRenderer.h>
 #import <XCTest/XCTest.h>
@@ -30,34 +32,50 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
 
 @end
 
+@interface IJSVGWindingOverrideGroup : IJSVGGroup
+@end
+
+@implementation IJSVGWindingOverrideGroup
+
+- (IJSVGWindingRule)windingRule
+{
+    return IJSVGWindingRuleEvenOdd;
+}
+
+@end
+
 @interface IJSVGMarkerTests : XCTestCase
 @end
 
 @implementation IJSVGMarkerTests
 
-- (void)testCombinedMarkersPreserveInheritanceAndCustomAccessors
+- (void)testCombinedMarkersAndFillRulePreserveInheritanceAndCustomAccessors
 {
-    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGMarkerOverrideGroup alloc] init] ]) {
-        IJSVGGroup* root = [[IJSVGGroup alloc] init];
-        IJSVGGroup* child = [[IJSVGGroup alloc] init];
-        [root addChild:parent];
-        [parent addChild:child];
-        root.markerEnd = [[IJSVGMarker alloc] init];
-        parent.markerMid = [[IJSVGMarker alloc] init];
-        child.markerStart = [[IJSVGMarker alloc] init];
-        if ([parent isKindOfClass:IJSVGMarkerOverrideGroup.class]) {
-            ((IJSVGMarkerOverrideGroup*)parent).suppliedMarker = [[IJSVGMarker alloc] init];
-        }
-        for (NSUInteger iteration = 0; iteration < 2; iteration++) {
-            IJSVGMarker* start = nil;
-            IJSVGMarker* mid = nil;
-            IJSVGMarker* end = nil;
-            [child getMarkerStart:&start mid:&mid end:&end];
-            XCTAssertEqual(start, child.markerStart);
-            XCTAssertEqual(mid, child.markerMid);
-            XCTAssertEqual(end, child.markerEnd);
+    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGMarkerOverrideGroup alloc] init], [[IJSVGWindingOverrideGroup alloc] init] ]) {
+        for (IJSVGGraphicsNode* child in @[ [[IJSVGPath alloc] init], [[IJSVGPolygon alloc] init], [[IJSVGUse alloc] init], [[IJSVGGroup alloc] init] ]) {
+            IJSVGGroup* root = [[IJSVGGroup alloc] init];
+            [root addChild:parent];
+            [parent addChild:child];
+            root.windingRule = IJSVGWindingRuleNonZero;
             root.markerEnd = [[IJSVGMarker alloc] init];
-            child.markerStart = nil;
+            parent.markerMid = [[IJSVGMarker alloc] init];
+            child.markerStart = [[IJSVGMarker alloc] init];
+            if ([parent isKindOfClass:IJSVGMarkerOverrideGroup.class]) {
+                ((IJSVGMarkerOverrideGroup*)parent).suppliedMarker = [[IJSVGMarker alloc] init];
+            }
+            for (NSUInteger iteration = 0; iteration < 2; iteration++) {
+                IJSVGMarker* start = nil;
+                IJSVGMarker* mid = nil;
+                IJSVGMarker* end = nil;
+                IJSVGWindingRule rule = [child windingRuleWithMarkerStart:&start mid:&mid end:&end];
+                XCTAssertEqual(rule, child.windingRule);
+                XCTAssertEqual(start, child.markerStart);
+                XCTAssertEqual(mid, child.markerMid);
+                XCTAssertEqual(end, child.markerEnd);
+                root.markerEnd = [[IJSVGMarker alloc] init];
+                child.markerStart = nil;
+                child.windingRule = IJSVGWindingRuleNonZero;
+            }
         }
     }
 }

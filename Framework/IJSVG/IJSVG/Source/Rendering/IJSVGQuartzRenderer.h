@@ -48,5 +48,5 @@
 @end
 
 @interface IJSVGGraphicsNode (Rendering)
-- (void)getMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end;
+- (IJSVGWindingRule)windingRuleWithMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end;
 @end

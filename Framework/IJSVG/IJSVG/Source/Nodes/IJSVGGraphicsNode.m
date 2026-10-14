@@ -6,15 +6,19 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGMarker.h>
+#import <IJSVG/IJSVGMask.h>
 #import <IJSVG/IJSVGNode.h>
+#import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGPolygon.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGThreadManager.h>
+#import <IJSVG/IJSVGUse.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGQuartzRenderer.h>
-#import <objc/runtime.h>
 
 static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColor* color, IJSVGColorUsageTraits traits)
 {
@@ -324,11 +328,16 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
 
 - (NSArray<NSNumber*>*)lineDashPattern
 {
-    NSMutableArray<NSNumber*>* arr = [[NSMutableArray alloc] initWithCapacity:self.strokeDashArrayCount];
-    for (NSInteger i = 0; i < self.strokeDashArrayCount; i++) {
-        [arr addObject:@((CGFloat)self.strokeDashArray[i])];
+    NSInteger count = self.strokeDashArrayCount;
+    if (count <= 0) {
+        return @[];
     }
-    return arr;
+    const CGFloat* values = self.strokeDashArray;
+    NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:count];
+    for (NSInteger index = 0; index < count; index++) {
+        [pattern addObject:@(values[index])];
+    }
+    return pattern;
 }
 
 - (IJSVGNode*)stroke
@@ -438,44 +447,39 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
 
 @implementation IJSVGGraphicsNode (Rendering)
 
-- (void)getMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end
+- (IJSVGWindingRule)windingRuleWithMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end
 {
-    static IMP startImplementation;
-    static IMP midImplementation;
-    static IMP endImplementation;
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        startImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerStart));
-        midImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerMid));
-        endImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerEnd));
-    });
+    IJSVGWindingRule resolvedRule = IJSVGWindingRuleInherit;
     IJSVGMarker* resolvedStart = nil;
     IJSVGMarker* resolvedMid = nil;
     IJSVGMarker* resolvedEnd = nil;
-    Class checkedClass = Nil;
-    BOOL usesDefaultAccessors = NO;
     for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
-        Class nodeClass = object_getClass(node);
-        if (nodeClass != checkedClass) {
-            checkedClass = nodeClass;
-            usesDefaultAccessors = class_getMethodImplementation(nodeClass, @selector(markerStart)) == startImplementation && class_getMethodImplementation(nodeClass, @selector(markerMid)) == midImplementation && class_getMethodImplementation(nodeClass, @selector(markerEnd)) == endImplementation;
-        }
-        if (!usesDefaultAccessors) {
+        // Concrete framework nodes share these stored properties. Subclasses
+        // use their getters so custom inherited values remain observable.
+        Class type = node.class;
+        if (type != IJSVGPath.class && type != IJSVGGroup.class && type != IJSVGUse.class && type != IJSVGPolygon.class && type != IJSVGRootNode.class && type != IJSVGClipPath.class && type != IJSVGMask.class) {
+            if (resolvedRule == IJSVGWindingRuleInherit) {
+                resolvedRule = node.windingRule;
+            }
             resolvedStart = resolvedStart ?: node.markerStart;
             resolvedMid = resolvedMid ?: node.markerMid;
             resolvedEnd = resolvedEnd ?: node.markerEnd;
             break;
         }
+        if (resolvedRule == IJSVGWindingRuleInherit) {
+            resolvedRule = node->_windingRule;
+        }
         resolvedStart = resolvedStart ?: node->_markerStart;
         resolvedMid = resolvedMid ?: node->_markerMid;
         resolvedEnd = resolvedEnd ?: node->_markerEnd;
-        if (resolvedStart != nil && resolvedMid != nil && resolvedEnd != nil) {
+        if (resolvedRule != IJSVGWindingRuleInherit && resolvedStart != nil && resolvedMid != nil && resolvedEnd != nil) {
             break;
         }
     }
     *start = resolvedStart;
     *mid = resolvedMid;
     *end = resolvedEnd;
+    return resolvedRule;
 }
 
 @end
