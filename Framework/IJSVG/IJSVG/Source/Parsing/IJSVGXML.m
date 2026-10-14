@@ -146,6 +146,10 @@ static uint32_t IJSVGXMLDocumentAppendNode(IJSVGXMLDocument* document, IJSVGXMLN
 static void IJSVGXMLParserStartElement(void* context, const xmlChar* local, const xmlChar* prefix, const xmlChar* uri, int namespaceCount, const xmlChar** namespaces, int count, int defaulted, const xmlChar** attributes)
 {
     IJSVGXMLDocument* document = context;
+
+    // SAX appends attributes supplied by DTD defaults after explicit attributes.
+    // SVG properties come only from the document and its stylesheets.
+    count -= defaulted;
     uint32_t index = IJSVGXMLDocumentAppendNode(document, IJSVGXMLNodeKindElement);
     if (index == IJSVGXMLNodeNotFound) {
         return;
@@ -272,14 +276,16 @@ static xmlEntityPtr IJSVGXMLParserGetEntity(void* context, const xmlChar* name)
 {
     xmlEntityPtr result = xmlGetPredefinedEntity(name);
     if (result == NULL) {
-        ((IJSVGXMLDocument*)context)->unsupported = true;
+        ((IJSVGXMLDocument*)context)->failed = true;
     }
     return result;
 }
 
-static void IJSVGXMLParserInternalSubset(void* context, const xmlChar* name, const xmlChar* externalID, const xmlChar* systemID)
+static xmlEntityPtr IJSVGXMLParserGetParameterEntity(void* context, const xmlChar* name)
 {
-    ((IJSVGXMLDocument*)context)->unsupported = true;
+    // Entities defined by a DTD are not supported. Never resolve an external entity.
+    ((IJSVGXMLDocument*)context)->failed = true;
+    return NULL;
 }
 
 #pragma mark - Document lifecycle
@@ -304,7 +310,7 @@ void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document)
     free(document);
 }
 
-static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t length, bool* unsupported)
+static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t length)
 {
     if (length > INT_MAX) {
         return NULL;
@@ -324,7 +330,9 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
     handler.comment = IJSVGXMLParserComment;
     handler.processingInstruction = IJSVGXMLParserProcessingInstruction;
     handler.getEntity = IJSVGXMLParserGetEntity;
-    handler.internalSubset = IJSVGXMLParserInternalSubset;
+
+    // Only standard XML entities are supported. No DTD handlers or external subset loader.
+    handler.getParameterEntity = IJSVGXMLParserGetParameterEntity;
     xmlParserCtxtPtr parser = xmlCreatePushParserCtxt(&handler, document, NULL, 0, NULL);
     if (parser == NULL) {
         IJSVGXMLDocumentDestroy(document);
@@ -340,11 +348,8 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
     document->names = parser->dict;
     xmlCtxtUseOptions(parser, XML_PARSE_NONET | XML_PARSE_NOENT | XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
     int status = xmlParseChunk(parser, bytes, (int)length, 1);
-    bool valid = status == 0 && parser->wellFormed && parser->nsWellFormed && !document->failed && !document->unsupported && document->root != IJSVGXMLNodeNotFound;
+    bool valid = status == 0 && parser->wellFormed && parser->nsWellFormed && !document->failed && document->root != IJSVGXMLNodeNotFound;
     xmlFreeParserCtxt(parser);
-    if (unsupported != NULL) {
-        *unsupported = document->unsupported;
-    }
     if (!valid) {
         IJSVGXMLDocumentDestroy(document);
         return NULL;
@@ -394,26 +399,7 @@ IJSVGXMLDocument* IJSVGXMLDocumentCreate(const void* bytes, size_t length)
     if (bytes == NULL || length == 0) {
         return NULL;
     }
-    bool unsupported = false;
-    IJSVGXMLDocument* document = IJSVGXMLDocumentParseBytes(bytes, length, &unsupported);
-
-    // Preserve existing DTD/entity behaviour at this uncommon input boundary.
-    // The expanded result still uses the same C loader. No XML object adapter.
-    if (document == NULL && unsupported) {
-        @try {
-            NSError* error = nil;
-            NSData* data = [NSData dataWithBytes:bytes length:length];
-            NSXMLDocument* source = [[NSXMLDocument alloc] initWithData:data options:0 error:&error];
-            if (source != nil && error == nil) {
-                NSData* expanded = [source.rootElement.XMLString dataUsingEncoding:NSUTF8StringEncoding];
-                document = IJSVGXMLDocumentParseBytes(expanded.bytes, expanded.length, NULL);
-                if (document != NULL) {
-                    document->usedCompatibilityExpansion = true;
-                }
-            }
-        } @catch (NSException* exception) {
-        }
-    }
+    IJSVGXMLDocument* document = IJSVGXMLDocumentParseBytes(bytes, length);
     if (document == NULL) {
         return NULL;
     }

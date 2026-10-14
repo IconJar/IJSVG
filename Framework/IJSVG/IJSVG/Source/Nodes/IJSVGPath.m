@@ -16,7 +16,9 @@
     CGPathRef _markerSourcePath;
     CGPathRef _pointSubpathSource;
     BOOL _hasPointSubpaths;
+    BOOL _pathInitialized;
 }
+@synthesize path = _path;
 
 + (IJSVGNodeType)defaultNodeType
 {
@@ -54,7 +56,6 @@
     if ((self = [super init]) != nil) {
         _primitiveType = kIJSVGPrimitivePathTypePath;
         _pathUnits = IJSVGUnitInherit;
-        _path = CGPathCreateMutable();
     }
     return self;
 }
@@ -73,7 +74,9 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGPath* node = [super copyWithZone:zone];
-    node.path = _path;
+    if (_pathInitialized) {
+        node.path = _path;
+    }
     node.markerPathData = self.markerPathData;
     node.pathUnits = _pathUnits;
     node.primitiveType = _primitiveType;
@@ -84,14 +87,32 @@
 
 - (NSString*)markerPathData
 {
-    return _markerSourcePath != NULL && CGPathEqualToPath(_path, _markerSourcePath) ? _markerPathData : nil;
+    return _markerSourcePath != NULL && CGPathEqualToPath(self.path, _markerSourcePath) ? _markerPathData : nil;
 }
 
 - (void)setMarkerPathData:(NSString*)data
 {
     _markerPathData = data.copy;
     CGPathRelease(_markerSourcePath);
-    _markerSourcePath = data == nil ? NULL : CGPathCreateCopy(_path);
+    _markerSourcePath = data == nil ? NULL : CGPathCreateCopy(self.path);
+}
+
+// A cache hit can assign geometry without first allocating an empty path.
+// Explicitly assigning NULL still stays NULL until another assignment.
+- (CGMutablePathRef)path
+{
+    if (!_pathInitialized) {
+        _path = CGPathCreateMutable();
+        _pathInitialized = YES;
+    }
+    return _path;
+}
+
+- (void)resetPathForParsing
+{
+    CGPathRelease(_path);
+    _path = NULL;
+    _pathInitialized = NO;
 }
 
 - (void)setPath:(CGMutablePathRef)path
@@ -103,6 +124,7 @@
         CGPathRelease(_path);
     }
     _path = copy;
+    _pathInitialized = YES;
 }
 
 - (void)cachePointSubpaths:(BOOL)hasPointSubpaths forPath:(CGPathRef)path
@@ -115,7 +137,7 @@
 
 - (BOOL)hasPointSubpaths
 {
-    if (_pointSubpathSource == NULL || !CGPathEqualToPath(_path, _pointSubpathSource)) {
+    if (_pointSubpathSource == NULL || !CGPathEqualToPath(self.path, _pointSubpathSource)) {
         CGPathRelease(_pointSubpathSource);
         _pointSubpathSource = CGPathCreateCopy(_path);
         _hasPointSubpaths = IJSVGPathHasPointSubpaths(_pointSubpathSource);
@@ -125,22 +147,22 @@
 
 - (CGRect)pathBoundingBox
 {
-    return CGPathGetBoundingBox(_path);
+    return CGPathGetBoundingBox(self.path);
 }
 
 - (CGRect)controlPointBoundingBox
 {
-    return CGPathGetPathBoundingBox(_path);
+    return CGPathGetPathBoundingBox(self.path);
 }
 
 - (NSPoint)currentPoint
 {
-    return CGPathGetCurrentPoint(_path);
+    return CGPathGetCurrentPoint(self.path);
 }
 
 - (void)close
 {
-    CGPathCloseSubpath(_path);
+    CGPathCloseSubpath(self.path);
 }
 
 #pragma mark Traits

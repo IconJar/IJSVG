@@ -45,7 +45,6 @@
     if (document == NULL) {
         return;
     }
-    XCTAssertFalse(document->usedCompatibilityExpansion);
     IJSVGXMLNode* root = IJSVGXMLRoot(document);
     IJSVGXMLNode* group = IJSVGXMLFirstChild(root);
     XCTAssertEqual(IJSVGXMLParent(group), root);
@@ -92,9 +91,9 @@
     IJSVGXMLDocumentDestroy(document);
 }
 
-- (void)testCXMLMalformedInputAndDTDCompatibility
+- (void)testCXMLRejectsMalformedInputAndCustomEntityReferences
 {
-    for (NSString* source in @[ @"<svg><g></svg>", @"<svg a='1' a='2'/>", @"<svg><q:g/></svg>", @"<svg>&missing;</svg>" ]) {
+    for (NSString* source in @[ @"<svg><g></svg>", @"<svg a='1' a='2'/>", @"<svg><q:g/></svg>", @"<svg>&missing;</svg>", @"<!DOCTYPE svg [<!ENTITY unused 'ignored'>]><svg/>", @"<!DOCTYPE svg [<!ENTITY external SYSTEM 'file:///nonexistent/entity'>]><svg>&external;</svg>", @"<!DOCTYPE svg [<!ENTITY % p '<!ELEMENT svg ANY>'>%p;]><svg/>" ]) {
         NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
         IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
         XCTAssertEqual(document, NULL, @"%@", source);
@@ -103,13 +102,32 @@
     NSString* source = @"<!DOCTYPE svg [<!ENTITY greeting 'hello'>]><svg><title>&greeting;</title></svg>";
     NSData* bytes = [source dataUsingEncoding:NSUTF8StringEncoding];
     IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
-    XCTAssertNotEqual(document, NULL);
-    if (document == NULL) {
-        return;
-    }
-    XCTAssertTrue(document->usedCompatibilityExpansion);
-    XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLFirstChild(IJSVGXMLRoot(document))), @"hello");
+    XCTAssertEqual(document, NULL);
     IJSVGXMLDocumentDestroy(document);
+}
+
+- (void)testCXMLIgnoresDoctypeAndPreservesStandardEscapes
+{
+    NSArray<NSString*>* declarations = @[ @"<!DOCTYPE svg>",
+        @"<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>",
+        @"<!DOCTYPE svg SYSTEM 'file:///nonexistent/ijsvg-test.dtd'>",
+        @"<!DOCTYPE svg [<!ATTLIST svg fill CDATA 'red'>]>" ];
+    for (NSString* declaration in declarations) {
+        NSString* source = [declaration stringByAppendingString:@"<svg id='a&amp;b'><title>&lt;&gt;&amp;&quot;&apos;&#65;&#x42;</title></svg>"];
+        for (NSNumber* encoding in @[ @(NSUTF8StringEncoding), @(NSUTF16StringEncoding) ]) {
+            NSData* bytes = [source dataUsingEncoding:encoding.unsignedIntegerValue];
+            IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(bytes.bytes, bytes.length);
+            XCTAssertNotEqual(document, NULL, @"%@", declaration);
+            if (document == NULL) {
+                continue;
+            }
+            IJSVGXMLNode* root = IJSVGXMLRoot(document);
+            XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(root, @"id")), @"a&b");
+            XCTAssertEqual(IJSVGXMLAttributeNamed(root, @"fill"), NULL);
+            XCTAssertEqualObjects(IJSVGXMLText(IJSVGXMLFirstChild(root)), @"<>&\"'AB");
+            IJSVGXMLDocumentDestroy(document);
+        }
+    }
 }
 
 - (void)testBytePathCacheOwnsKeysSnapshotsAndEvicts

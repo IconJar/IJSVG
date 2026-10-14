@@ -123,7 +123,7 @@
 
 - (BOOL)childrenMatchTraits:(IJSVGNodeTraits)traits
 {
-    for (IJSVGNode* node in _children) {
+    for (IJSVGNode* node in self.children) {
         if ([node matchesTraits:traits] == NO) {
             return NO;
         }

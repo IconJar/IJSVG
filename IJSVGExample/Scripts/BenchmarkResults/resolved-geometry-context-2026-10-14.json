@@ -1,0 +1,391 @@
+{
+  "recordedAt": "2026-10-14T18:34:03.676615+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "size": 512,
+  "backingScale": 1,
+  "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+  "fixtures": {
+    "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+    "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec",
+    "/private/tmp/ijsvg-inherited-strokes.svg": "2eb2a71b40f5d99aec5c677d3772eee09403f10a8ea2fd8d01a1e244a7686406",
+    "/private/tmp/ijsvg-font-strokes.svg": "90e78595d053eb6a3ab6443c9383fbc042e37fe99ba52443bc790a67acde9d19"
+  },
+  "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+  "frameworks": {
+    "baseline": "61e2c6cf08c1de285c191dcef68590af6dc26005e222c3946cb80a3dc1374014",
+    "candidate": "86e78536c74b3b74ff33e79a6de79ea89ec255ffc2681e9ab8d774112836f3e7"
+  },
+  "runs": [
+    {
+      "variant": "baseline",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.133417",
+          "first_draw_ms": "115.419083",
+          "total_ms": "203.452458",
+          "warm_draw_ms": "21.492833",
+          "initial_parse_ms": "95.877333",
+          "initial_draw_ms": "161.539875",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "77.901708",
+          "first_draw_ms": "68.250583",
+          "total_ms": "145.332667",
+          "warm_draw_ms": "24.519333",
+          "initial_parse_ms": "78.528958",
+          "initial_draw_ms": "69.758500",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.147333",
+          "first_draw_ms": "25.907500",
+          "total_ms": "30.055458",
+          "warm_draw_ms": "5.222292",
+          "initial_parse_ms": "4.027167",
+          "initial_draw_ms": "26.170417",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.034000",
+          "first_draw_ms": "64.955333",
+          "total_ms": "68.962250",
+          "warm_draw_ms": "5.198000",
+          "initial_parse_ms": "4.086292",
+          "initial_draw_ms": "68.814458",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.094542",
+          "first_draw_ms": "112.274417",
+          "total_ms": "198.821458",
+          "warm_draw_ms": "21.463542",
+          "initial_parse_ms": "95.986208",
+          "initial_draw_ms": "162.323458",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.948167",
+          "first_draw_ms": "66.446875",
+          "total_ms": "145.100708",
+          "warm_draw_ms": "24.343125",
+          "initial_parse_ms": "79.853167",
+          "initial_draw_ms": "66.506708",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.050833",
+          "first_draw_ms": "25.736125",
+          "total_ms": "29.658667",
+          "warm_draw_ms": "5.360875",
+          "initial_parse_ms": "4.231750",
+          "initial_draw_ms": "26.829375",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "3.911875",
+          "first_draw_ms": "65.088667",
+          "total_ms": "68.941583",
+          "warm_draw_ms": "5.211375",
+          "initial_parse_ms": "4.208417",
+          "initial_draw_ms": "69.169292",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.182917",
+          "first_draw_ms": "114.000583",
+          "total_ms": "199.514750",
+          "warm_draw_ms": "21.483750",
+          "initial_parse_ms": "91.207958",
+          "initial_draw_ms": "163.394792",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.968292",
+          "first_draw_ms": "66.199042",
+          "total_ms": "145.213125",
+          "warm_draw_ms": "24.304833",
+          "initial_parse_ms": "79.518875",
+          "initial_draw_ms": "67.306000",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "3.972833",
+          "first_draw_ms": "25.848833",
+          "total_ms": "29.752583",
+          "warm_draw_ms": "5.463250",
+          "initial_parse_ms": "3.881750",
+          "initial_draw_ms": "26.814333",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.010625",
+          "first_draw_ms": "64.720875",
+          "total_ms": "68.805333",
+          "warm_draw_ms": "5.326000",
+          "initial_parse_ms": "3.789667",
+          "initial_draw_ms": "68.567417",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "88.184250",
+          "first_draw_ms": "115.772958",
+          "total_ms": "203.879833",
+          "warm_draw_ms": "21.587667",
+          "initial_parse_ms": "97.226333",
+          "initial_draw_ms": "165.252750",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "79.559708",
+          "first_draw_ms": "68.650667",
+          "total_ms": "148.223375",
+          "warm_draw_ms": "24.585375",
+          "initial_parse_ms": "79.839125",
+          "initial_draw_ms": "68.071958",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "3.896792",
+          "first_draw_ms": "25.940083",
+          "total_ms": "30.000958",
+          "warm_draw_ms": "5.435792",
+          "initial_parse_ms": "4.258458",
+          "initial_draw_ms": "25.624917",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "3.990208",
+          "first_draw_ms": "65.144292",
+          "total_ms": "69.191417",
+          "warm_draw_ms": "5.185500",
+          "initial_parse_ms": "4.346250",
+          "initial_draw_ms": "69.066375",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "86.433208",
+          "first_draw_ms": "116.349917",
+          "total_ms": "202.800042",
+          "warm_draw_ms": "21.563875",
+          "initial_parse_ms": "91.215792",
+          "initial_draw_ms": "163.069083",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.150458",
+          "first_draw_ms": "67.335208",
+          "total_ms": "145.467708",
+          "warm_draw_ms": "24.914917",
+          "initial_parse_ms": "77.916833",
+          "initial_draw_ms": "66.966042",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.066792",
+          "first_draw_ms": "25.764000",
+          "total_ms": "29.765167",
+          "warm_draw_ms": "5.164417",
+          "initial_parse_ms": "4.002500",
+          "initial_draw_ms": "27.159042",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "3.998917",
+          "first_draw_ms": "64.411875",
+          "total_ms": "68.160875",
+          "warm_draw_ms": "5.228333",
+          "initial_parse_ms": "3.770292",
+          "initial_draw_ms": "68.341625",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.135000",
+          "first_draw_ms": "112.446333",
+          "total_ms": "200.340583",
+          "warm_draw_ms": "21.519417",
+          "initial_parse_ms": "94.211125",
+          "initial_draw_ms": "159.609458",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.171417",
+          "first_draw_ms": "66.010250",
+          "total_ms": "144.236875",
+          "warm_draw_ms": "24.290792",
+          "initial_parse_ms": "80.706833",
+          "initial_draw_ms": "65.880250",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.073042",
+          "first_draw_ms": "25.580792",
+          "total_ms": "29.434167",
+          "warm_draw_ms": "5.527208",
+          "initial_parse_ms": "4.380000",
+          "initial_draw_ms": "24.831833",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.036833",
+          "first_draw_ms": "64.432750",
+          "total_ms": "68.423500",
+          "warm_draw_ms": "5.370958",
+          "initial_parse_ms": "3.767042",
+          "initial_draw_ms": "69.282833",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "Pcolormesh 2": {
+      "baseline": {
+        "parse_ms": 87.133417,
+        "first_draw_ms": 115.772958,
+        "total_ms": 203.452458,
+        "warm_draw_ms": 21.563875
+      },
+      "candidate": {
+        "parse_ms": 87.135,
+        "first_draw_ms": 112.446333,
+        "total_ms": 199.51475,
+        "warm_draw_ms": 21.48375
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "pcolormesh": {
+      "baseline": {
+        "parse_ms": 78.150458,
+        "first_draw_ms": 68.250583,
+        "total_ms": 145.467708,
+        "warm_draw_ms": 24.585375
+      },
+      "candidate": {
+        "parse_ms": 78.948167,
+        "first_draw_ms": 66.199042,
+        "total_ms": 145.100708,
+        "warm_draw_ms": 24.304833
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-inherited-strokes": {
+      "baseline": {
+        "parse_ms": 4.066792,
+        "first_draw_ms": 25.9075,
+        "total_ms": 30.000958,
+        "warm_draw_ms": 5.222292
+      },
+      "candidate": {
+        "parse_ms": 4.050833,
+        "first_draw_ms": 25.736125,
+        "total_ms": 29.658667,
+        "warm_draw_ms": 5.46325
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-font-strokes": {
+      "baseline": {
+        "parse_ms": 3.998917,
+        "first_draw_ms": 64.955333,
+        "total_ms": 68.96225,
+        "warm_draw_ms": 5.198
+      },
+      "candidate": {
+        "parse_ms": 4.010625,
+        "first_draw_ms": 64.720875,
+        "total_ms": 68.805333,
+        "warm_draw_ms": 5.326
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    }
+  },
+  "change": "Store active viewport and unit bounds directly as CGRects. Existing synchronous scoped calls save and restore previous values through local variables and @finally, replacing two NSMutableArray stacks and NSValue boxing.",
+  "validation": {
+    "objectiveCTestsPassed": 249,
+    "nestedExceptionRestorationTest": true
+  }
+}

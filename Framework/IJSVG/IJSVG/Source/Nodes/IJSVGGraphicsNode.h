@@ -10,6 +10,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, IJSVGTransformBox) {
+    IJSVGTransformBoxUnspecified = 0,
+    IJSVGTransformBoxViewBox,
+    IJSVGTransformBoxFillBox,
+    IJSVGTransformBoxStrokeBox,
+    IJSVGTransformBoxContentBox,
+    IJSVGTransformBoxBorderBox
+};
+
 @interface IJSVGGraphicsNode : IJSVGPaintNode
 
 @property (nonatomic, strong, nullable) IJSVGMarker* markerStart;
@@ -39,7 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitLength* strokeMiterLimit;
 @property (nonatomic, strong, nullable) NSArray<IJSVGTransform*>* transforms;
 @property (nonatomic, copy, nullable) NSArray<IJSVGUnitLength*>* transformOrigin;
-@property (nonatomic, copy, nullable) NSString* transformBox;
+@property (nonatomic, assign) IJSVGTransformBox transformBox;
 @property (nonatomic, assign, nullable) CGFloat* strokeDashArray;
 @property (nonatomic, assign) NSInteger strokeDashArrayCount;
 @property (nonatomic, readonly) NSArray<NSNumber*>* lineDashPattern;

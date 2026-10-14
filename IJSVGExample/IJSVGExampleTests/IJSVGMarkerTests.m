@@ -44,19 +44,38 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
 
 @end
 
+@interface IJSVGNilColorOverrideGroup : IJSVGGroup
+@end
+
+@implementation IJSVGNilColorOverrideGroup
+
+- (NSColor*)currentColor
+{
+    return nil;
+}
+
+- (IJSVGPaintOrder)paintOrder
+{
+    return IJSVGPaintOrderInherit;
+}
+
+@end
+
 @interface IJSVGMarkerTests : XCTestCase
 @end
 
 @implementation IJSVGMarkerTests
 
-- (void)testCombinedMarkersAndFillRulePreserveInheritanceAndCustomAccessors
+- (void)testResolvedPaintStylePreservesInheritanceAndCustomAccessors
 {
-    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGMarkerOverrideGroup alloc] init], [[IJSVGWindingOverrideGroup alloc] init] ]) {
-        for (IJSVGGraphicsNode* child in @[ [[IJSVGPath alloc] init], [[IJSVGPolygon alloc] init], [[IJSVGUse alloc] init], [[IJSVGGroup alloc] init] ]) {
+    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGMarkerOverrideGroup alloc] init], [[IJSVGWindingOverrideGroup alloc] init], [[IJSVGNilColorOverrideGroup alloc] init] ]) {
+        for (IJSVGGraphicsNode* child in @[ [[IJSVGPath alloc] init], [[IJSVGPolygon alloc] init], [[IJSVGUse alloc] init], [[IJSVGGroup alloc] init], [[IJSVGNilColorOverrideGroup alloc] init] ]) {
             IJSVGGroup* root = [[IJSVGGroup alloc] init];
             [root addChild:parent];
             [parent addChild:child];
             root.windingRule = IJSVGWindingRuleNonZero;
+            root.currentColor = NSColor.blueColor;
+            root.visibility = IJSVGVisibilityHidden;
             root.markerEnd = [[IJSVGMarker alloc] init];
             parent.markerMid = [[IJSVGMarker alloc] init];
             child.markerStart = [[IJSVGMarker alloc] init];
@@ -64,18 +83,27 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
                 ((IJSVGMarkerOverrideGroup*)parent).suppliedMarker = [[IJSVGMarker alloc] init];
             }
             for (NSUInteger iteration = 0; iteration < 2; iteration++) {
-                IJSVGMarker* start = nil;
-                IJSVGMarker* mid = nil;
-                IJSVGMarker* end = nil;
-                IJSVGWindingRule rule = [child windingRuleWithMarkerStart:&start mid:&mid end:&end];
-                XCTAssertEqual(rule, child.windingRule);
-                XCTAssertEqual(start, child.markerStart);
-                XCTAssertEqual(mid, child.markerMid);
-                XCTAssertEqual(end, child.markerEnd);
+                IJSVGResolvedPaintStyle style = [child resolvedPaintStyle];
+                XCTAssertEqual(style.windingRule, child.windingRule);
+                XCTAssertEqual(style.markerStart, child.markerStart);
+                XCTAssertEqual(style.markerMid, child.markerMid);
+                XCTAssertEqual(style.markerEnd, child.markerEnd);
+                XCTAssertEqual(style.fill, child.fill);
+                XCTAssertEqual(style.fillOpacity, child.fillOpacity);
+                XCTAssertEqualObjects(style.currentColor, child.currentColor);
+                XCTAssertEqual(style.visibility == IJSVGVisibilityHidden, child.visibilityHidden);
+                XCTAssertEqual(style.paintOrder, child.paintOrder);
+                XCTAssertEqual(style.opacity, child.opacity.value);
                 root.markerEnd = [[IJSVGMarker alloc] init];
                 child.markerStart = nil;
                 child.windingRule = IJSVGWindingRuleNonZero;
+                child.visibility = IJSVGVisibilityVisible;
+                child.currentColor = NSColor.redColor;
             }
+
+            // parentNode does not retain its value. Detach before this root is released.
+            [parent removeChild:child];
+            [root removeChild:parent];
         }
     }
 }

@@ -19,4 +19,10 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 
 - (instancetype)initWithGradient:(IJSVGGradient*)gradient element:(IJSVGXMLNode*)element;
 - (void)applyToGradient:(IJSVGGradient*)gradient;
+- (void)appendStopsToGradient:(IJSVGGradient*)gradient;
+@end
+
+// Internal parser handoff. Public child access materializes independent stops.
+@interface IJSVGGradient (DeferredStops)
+- (void)deferStops:(IJSVGGradientStops*)stops;
 @end

@@ -8,12 +8,111 @@
 
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVGUmbrella.h>
+#import <IJSVGGradientStops.h>
+#import <IJSVGNodeParsing.h>
 #import <XCTest/XCTest.h>
+#import <objc/runtime.h>
 
 @interface IJSVGPlainGradientTests : XCTestCase
 @end
 
 @implementation IJSVGPlainGradientTests
+
+- (void)testGradientCacheEligibilityReadsBytesWithoutMaterializingStrings
+{
+    for (NSString* color in @[ @"#ff0000", @"red", @"CURRENTCOLOR", @"xINHERITy", @"vAr(--paint)", @"réD", @"" ]) {
+        NSString* source = [NSString stringWithFormat:@"<linearGradient><stop offset='.25' stop-color='%@' stop-opacity='.5'/></linearGradient>", color];
+        NSData* data = [source dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(data.bytes, data.length);
+        XCTAssertNotEqual(document, NULL);
+        if (document == NULL) {
+            continue;
+        }
+        BOOL expected = [color isEqualToString:@"#ff0000"] || [color isEqualToString:@"red"];
+        XCTAssertEqual([IJSVGGradientStops canCacheElement:IJSVGXMLRoot(document)], expected, @"%@", color);
+        IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(IJSVGXMLFirstChild(IJSVGXMLRoot(document)));
+        for (NSUInteger index = 0; index < attributes.count; index++) {
+            XCTAssertEqual(attributes.first[index].cachedValue, NULL);
+        }
+        IJSVGXMLDocumentDestroy(document);
+    }
+}
+
+- (void)testGradientCacheKeepsNoncanonicalStopNamesUncached
+{
+    for (NSString* name in @[ @"STOP", @"sTop" ]) {
+        NSString* source = [NSString stringWithFormat:@"<linearGradient><%@ offset='0' stop-color='red'/></linearGradient>", name];
+        NSData* data = [source dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(data.bytes, data.length);
+        XCTAssertNotEqual(document, NULL);
+        if (document != NULL) {
+            XCTAssertFalse([IJSVGGradientStops canCacheElement:IJSVGXMLRoot(document)]);
+            IJSVGXMLDocumentDestroy(document);
+        }
+    }
+}
+
+- (IJSVG*)repeatedGradientDocument
+{
+    NSMutableString* body = [NSMutableString stringWithFormat:@"<defs><linearGradient id='paint'>%@</linearGradient></defs>", self.stops];
+    for (NSUInteger index = 0; index < 4; index++) {
+        [body appendFormat:@"<rect x='%lu' width='16' height='64' fill='url(#paint)'/>", index * 16];
+    }
+    return [self document:body];
+}
+
+- (void)testCachedStopsStayDeferredDuringDrawingAndCopying
+{
+    IJSVG* svg = [self repeatedGradientDocument];
+    IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[2]).fill;
+    Ivar childrenStorage = class_getInstanceVariable(IJSVGGroup.class, "_children");
+    XCTAssertEqual([object_getIvar(gradient, childrenStorage) count], 0u);
+    NSData* expected = [self pixels:svg];
+    XCTAssertNotNil(expected);
+    XCTAssertEqual([object_getIvar(gradient, childrenStorage) count], 0u);
+    IJSVGGradient* copy = gradient.copy;
+    XCTAssertEqual([object_getIvar(copy, childrenStorage) count], 0u);
+    XCTAssertEqual(copy.children.count, 2u);
+    XCTAssertEqual([object_getIvar(gradient, childrenStorage) count], 0u);
+    IJSVGStop* copyFirst = (IJSVGStop*)copy.children.firstObject;
+    IJSVGStop* copyLast = (IJSVGStop*)copy.children.lastObject;
+    copyFirst.offset = [IJSVGUnitLength unitWithFloat:.4];
+    copyLast.fillOpacity = [IJSVGUnitLength unitWithFloat:.2];
+    XCTAssertEqual(((IJSVGStop*)gradient.children.firstObject).offset.value, 0);
+    XCTAssertEqual(((IJSVGStop*)gradient.children.lastObject).fillOpacity.value, .5);
+    XCTAssertEqual(copyFirst.parentNode, copy);
+    XCTAssertEqual(gradient.children.firstObject.parentNode, gradient);
+    XCTAssertEqualObjects([self pixels:svg], expected);
+}
+
+- (void)testDeferredStopsSupportTraversalMutationAndExport
+{
+    IJSVG* svg = [self repeatedGradientDocument];
+    NSData* expected = [self pixels:svg];
+    NSString* xml = [svg SVGStringWithSize:CGSizeMake(64, 64) options:IJSVGExporterOptionRemoveComments];
+    IJSVG* restored = [[IJSVG alloc] initWithSVGString:xml];
+    XCTAssertEqualObjects([self pixels:restored], expected);
+
+    IJSVG* editable = [self repeatedGradientDocument];
+    IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)editable.rootNode.children[2]).fill;
+    XCTAssertFalse([gradient childrenMatchTraits:IJSVGNodeTraitPathed]);
+    XCTAssertEqual([gradient childrenOfType:IJSVGNodeTypeStop].count, 2u);
+    IJSVGGradient* untouched = (IJSVGGradient*)((IJSVGPaintNode*)editable.rootNode.children[3]).fill;
+    IJSVGStop* added = [[IJSVGStop alloc] init];
+    added.offset = [IJSVGUnitLength unitWithFloat:.7];
+    [untouched addChild:added];
+    XCTAssertEqual(untouched.children.count, 3u);
+    XCTAssertEqual(untouched.children.lastObject, added);
+    [untouched removeChild:untouched.children.firstObject];
+    XCTAssertEqual(untouched.children.count, 2u);
+    XCTAssertEqual(gradient.children.count, 2u);
+    [untouched parseColorStops];
+    [editable setNeedsDisplay];
+    NSData* editedPixels = [self pixels:editable];
+    NSString* editedXML = [editable SVGStringWithSize:CGSizeMake(64, 64) options:IJSVGExporterOptionRemoveComments];
+    IJSVG* editedReload = [[IJSVG alloc] initWithSVGString:editedXML];
+    XCTAssertEqualObjects([self pixels:editedReload], editedPixels);
+}
 
 - (NSString*)stops
 {

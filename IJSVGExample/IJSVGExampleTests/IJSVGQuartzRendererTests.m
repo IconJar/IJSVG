@@ -11,13 +11,155 @@
 #import <CoreText/CoreText.h>
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGRect.h>
+#import <IJSVGQuartzRenderer.h>
+#import <IJSVGShapePaint.h>
 #import <IJSVGSwitch.h>
 #import <XCTest/XCTest.h>
+
+@interface IJSVGQuartzRenderer (ContextTests)
+- (CGRect)viewPort;
+- (CGRect)unitBounds;
+- (void)withViewPort:(CGRect)viewPort handler:(dispatch_block_t)handler;
+- (void)withUnitBounds:(CGRect)bounds handler:(dispatch_block_t)handler;
+- (void)withViewPort:(CGRect)viewPort unitBounds:(CGRect)bounds handler:(dispatch_block_t)handler;
+@end
 
 @interface IJSVGQuartzRendererTests : XCTestCase
 @end
 
 @implementation IJSVGQuartzRendererTests
+
+- (void)testDashBufferCopiesMutableInputsAndKeepsBoxedViewInSync
+{
+    CGFloat values[] = { 2.25, 1.5 };
+    NSMutableData* input = [NSMutableData dataWithBytes:values length:sizeof(values)];
+    IJSVGShapePaint* paint = IJSVGShapePaint.paint;
+    paint.lineDashData = input;
+    ((CGFloat*)input.mutableBytes)[0] = 99;
+    XCTAssertEqual(((const CGFloat*)paint.lineDashData.bytes)[0], 2.25);
+    IJSVGShapePaint* copy = (IJSVGShapePaint*)[paint copyForMarker];
+    XCTAssertNotNil(copy);
+    XCTAssertEqualObjects(copy.lineDashPattern, (@[ @2.25, @1.5 ]));
+    XCTAssertEqualObjects(paint.lineDashPattern, copy.lineDashPattern);
+
+    paint.lineDashPattern = @[ @3, @4, @5 ];
+    XCTAssertEqual(paint.lineDashData.length, 3 * sizeof(CGFloat));
+    XCTAssertEqual(((const CGFloat*)paint.lineDashData.bytes)[2], 5);
+    XCTAssertEqualObjects(copy.lineDashPattern, (@[ @2.25, @1.5 ]));
+    paint.lineDashData = [NSData dataWithBytes:values length:sizeof(values)];
+    XCTAssertEqualObjects(paint.lineDashPattern, (@[ @2.25, @1.5 ]));
+    paint.lineDashPattern = @[];
+    XCTAssertEqual(paint.lineDashData.length, 0u);
+    XCTAssertEqualObjects(paint.lineDashPattern, @[]);
+    paint.lineDashData = nil;
+    XCTAssertNil(paint.lineDashPattern);
+}
+
+- (void)testNestedResolutionBoundsRestoreAfterExceptions
+{
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    CGRect viewport = CGRectMake(1, 2, 100, 200);
+    CGRect bounds = CGRectMake(3, 4, 50, 60);
+    CGRect nested = CGRectMake(5, 6, 10, 20);
+    [renderer withViewPort:viewport
+                unitBounds:bounds
+                   handler:^{
+                       XCTAssertTrue(CGRectEqualToRect(renderer.viewPort, viewport));
+                       XCTAssertTrue(CGRectEqualToRect(renderer.unitBounds, bounds));
+                       @try {
+                           [renderer withUnitBounds:nested
+                                            handler:^{
+                                                [renderer withViewPort:nested
+                                                               handler:^{
+                                                                   XCTAssertTrue(CGRectEqualToRect(renderer.unitBounds, nested));
+                                                                   XCTAssertTrue(CGRectEqualToRect(renderer.viewPort, nested));
+                                                                   @throw [NSException exceptionWithName:@"ResolutionTest" reason:nil userInfo:nil];
+                                                               }];
+                                            }];
+                           XCTFail(@"Expected the nested scope to throw");
+                       } @catch (NSException* exception) {
+                           XCTAssertEqualObjects(exception.name, @"ResolutionTest");
+                       }
+                       XCTAssertTrue(CGRectEqualToRect(renderer.viewPort, viewport));
+                       XCTAssertTrue(CGRectEqualToRect(renderer.unitBounds, bounds));
+                   }];
+    XCTAssertTrue(CGRectEqualToRect(renderer.viewPort, CGRectZero));
+    XCTAssertTrue(CGRectIsNull(renderer.unitBounds));
+}
+
+- (void)testInheritedPaintUpdatesAfterEditingAndReparenting
+{
+    NSString* document = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
+                          "<g fill='red' fill-opacity='.25'><g><path d='M2 2h24v24H2z'/></g></g>"
+                          "<g fill='blue' fill-opacity='.75'/></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:document];
+    IJSVGGroup* first = (IJSVGGroup*)svg.rootNode.children[0];
+    IJSVGGroup* second = (IJSVGGroup*)svg.rootNode.children[1];
+    IJSVGGroup* nested = (IJSVGGroup*)first.children.firstObject;
+    [self renderSVG:svg size:64];
+    first.fill = second.fill;
+    first.fillOpacity = [IJSVGUnitLength unitWithFloat:0.5];
+    [svg setNeedsDisplay];
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>"
+                        "<path d='M2 2h24v24H2z' fill='blue' fill-opacity='%@'/></svg>";
+    IJSVG* reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @".5"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    [first removeChild:nested];
+    [second addChild:nested];
+    [svg setNeedsDisplay];
+    reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @".75"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    nested.fillOpacity = nil;
+    [svg setNeedsDisplay];
+    reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"0"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+}
+
+- (void)testUseInstancesResolveTheirOwnInheritedPaint
+{
+    NSString* body = @"<defs><path id='tile' d='M1 1h12v12H1z M4 4v6h6V4z'/></defs>"
+                      "<g fill='red' fill-opacity='.25' fill-rule='evenodd'><use href='#tile'/></g>"
+                      "<g fill='blue' fill-opacity='.75' fill-rule='nonzero'><use href='#tile' x='16'/></g>";
+    [self assertBody:body
+         rendersLike:@"<path d='M1 1h12v12H1z M4 4v6h6V4z' fill='red' fill-opacity='.25' fill-rule='evenodd'/>"
+                      "<path transform='translate(16)' d='M1 1h12v12H1z M4 4v6h6V4z' fill='blue' fill-opacity='.75' fill-rule='nonzero'/>"];
+    [self assertVectorExportPreservesQuartzPixels:body optimized:NO];
+    [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+}
+
+- (void)testPlainGroupsPreserveInheritanceSelectorsAndPaintOrder
+{
+    NSString* body = @"<style>g.layer > rect { fill:red }</style><g class='layer'>"
+                      "<rect x='2' y='3' width='18' height='20'/>"
+                      "<g fill='blue'><rect x='12' y='12' width='16' height='16'/>"
+                      "<rect x='24' y='2' width='6' height='6'/></g></g>";
+    [self assertBody:body
+         rendersLike:@"<rect x='2' y='3' width='18' height='20' fill='red'/>"
+                      "<rect x='12' y='12' width='16' height='16' fill='blue'/>"
+                      "<rect x='24' y='2' width='6' height='6' fill='blue'/>"];
+    [self assertVectorExportPreservesQuartzPixels:body optimized:NO];
+    [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+}
+
+- (void)testOmittedGroupCanGainAndRemoveOpacityAfterRendering
+{
+    NSString* shapes = @"<rect x='2' y='3' width='18' height='20' fill='red'/>"
+                        "<rect x='12' y='12' width='16' height='16' fill='blue'/>";
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><g %@>%@</g></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"id='editable'", shapes]];
+    IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+    [self renderSVG:svg size:64];
+    XCTAssertEqual(group.children.count, 2u);
+    XCTAssertEqual(group.children.firstObject.parentNode, group);
+    group.opacity = [IJSVGUnitLength unitWithFloat:0.5];
+    [svg setNeedsDisplay];
+    IJSVG* reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"opacity='.5'", shapes]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+    group.opacity = [IJSVGUnitLength unitWithFloat:1];
+    [svg setNeedsDisplay];
+    reference = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"", shapes]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:reference size:64]);
+}
 
 - (void)testSVGBackgroundFillsViewportBeforeViewBox
 {
@@ -253,6 +395,17 @@
     [self assertBody:[definitions stringByAppendingString:@"<path d='M4 16H28' color='red' "
                                                           @"stroke='currentColor' marker-end='url(#m)'/>"]
          rendersLike:[definitions stringByAppendingString:@"<path d='M4 16H28' stroke='red' marker-end='url(#m)'/>"]];
+}
+
+- (void)testTransformBoxAliasesPreserveRenderingAndExport
+{
+    for (NSArray<NSString*>* pair in @[ @[ @"content-box", @"fill-box" ], @[ @"border-box", @"stroke-box" ] ]) {
+        NSString* format = @"<rect x='4' y='4' width='16' height='12' fill='blue' stroke='red' stroke-width='2' transform='rotate(30)' style='transform-origin:0 0;transform-box:%@'/>";
+        NSString* body = [NSString stringWithFormat:format, pair[0]];
+        [self assertBody:body rendersLike:[NSString stringWithFormat:format, pair[1]]];
+        [self assertVectorExportPreservesQuartzPixels:body optimized:NO];
+        [self assertVectorExportPreservesQuartzPixels:body optimized:YES];
+    }
 }
 
 - (void)testTransformOriginAndReferenceBoxes
@@ -1061,6 +1214,29 @@
                                           @"in2='SourceAlpha' "
                                           @"operator='in'/></filter></defs><rect width='32' height='32' "
                                           @"fill='url(#g)' filter='url(#f)'/>"];
+}
+
+- (void)testSharedFontRelativeGradientFollowsEditsAndOptions
+{
+    NSString* body = @"<defs><linearGradient id='g' gradientUnits='userSpaceOnUse' x2='1em'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><g fill='url(#g)'><path d='M0 0h32v12H0z'/><path d='M0 16h32v12H0z'/></g>";
+    [self assertFontRelativeLengthsInBody:body];
+    IJSVG* svg = [self svgWithBody:body];
+    IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.lastObject;
+    IJSVGGradient* gradient = (IJSVGGradient*)group.fill;
+    XCTAssertTrue([gradient isKindOfClass:IJSVGGradient.class]);
+    for (NSNumber* base in @[ @16, @24, @12 ]) {
+        IJSVGRenderingOptions* options = svg.renderingOptions;
+        options.defaultFontSize = base.doubleValue;
+        svg.renderingOptions = options;
+        NSString* reference = [self bodyByResolvingFontUnits:body fontSize:base.doubleValue];
+        XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderBody:reference size:64]);
+        XCTAssertTrue(gradient.x2.usesFontMetrics);
+    }
+    gradient.x2 = [IJSVGUnitLength unitWithString:@"2em"];
+    [svg setNeedsDisplay];
+    NSString* edited = [body stringByReplacingOccurrencesOfString:@"x2='1em'" withString:@"x2='24'"];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderBody:edited size:64]);
+    XCTAssertTrue(gradient.x2.usesFontMetrics);
 }
 
 - (void)testFontRelativePaintServersFollowOptionChanges

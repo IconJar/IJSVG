@@ -1,0 +1,391 @@
+{
+  "recordedAt": "2026-10-14T18:31:34.565227+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "size": 512,
+  "backingScale": 1,
+  "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+  "fixtures": {
+    "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+    "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec",
+    "/private/tmp/ijsvg-inherited-strokes.svg": "2eb2a71b40f5d99aec5c677d3772eee09403f10a8ea2fd8d01a1e244a7686406",
+    "/private/tmp/ijsvg-font-strokes.svg": "90e78595d053eb6a3ab6443c9383fbc042e37fe99ba52443bc790a67acde9d19"
+  },
+  "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+  "frameworks": {
+    "baseline": "d8913266b923f4a1ccbc9dad21fa1e801d4f0f6d54a1d988a756b0e266fc2a4b",
+    "candidate": "61e2c6cf08c1de285c191dcef68590af6dc26005e222c3946cb80a3dc1374014"
+  },
+  "runs": [
+    {
+      "variant": "baseline",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "89.778000",
+          "first_draw_ms": "120.794250",
+          "total_ms": "210.486083",
+          "warm_draw_ms": "21.447875",
+          "initial_parse_ms": "100.236583",
+          "initial_draw_ms": "182.425542",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "80.528042",
+          "first_draw_ms": "70.212125",
+          "total_ms": "150.504792",
+          "warm_draw_ms": "24.753125",
+          "initial_parse_ms": "79.621083",
+          "initial_draw_ms": "72.224417",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.079167",
+          "first_draw_ms": "30.070083",
+          "total_ms": "34.018500",
+          "warm_draw_ms": "5.343667",
+          "initial_parse_ms": "4.291083",
+          "initial_draw_ms": "29.935292",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.140792",
+          "first_draw_ms": "69.625417",
+          "total_ms": "73.775292",
+          "warm_draw_ms": "5.307375",
+          "initial_parse_ms": "4.039625",
+          "initial_draw_ms": "72.347875",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "90.574667",
+          "first_draw_ms": "118.066792",
+          "total_ms": "209.280500",
+          "warm_draw_ms": "22.014208",
+          "initial_parse_ms": "96.664333",
+          "initial_draw_ms": "163.501042",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "81.131958",
+          "first_draw_ms": "68.874000",
+          "total_ms": "149.822500",
+          "warm_draw_ms": "24.773500",
+          "initial_parse_ms": "82.375917",
+          "initial_draw_ms": "69.222167",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.178417",
+          "first_draw_ms": "26.642750",
+          "total_ms": "30.748083",
+          "warm_draw_ms": "5.311958",
+          "initial_parse_ms": "4.105417",
+          "initial_draw_ms": "27.539042",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.152458",
+          "first_draw_ms": "66.987417",
+          "total_ms": "71.139875",
+          "warm_draw_ms": "5.375458",
+          "initial_parse_ms": "3.897250",
+          "initial_draw_ms": "68.851708",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "90.416583",
+          "first_draw_ms": "118.367292",
+          "total_ms": "209.947625",
+          "warm_draw_ms": "21.803667",
+          "initial_parse_ms": "97.661833",
+          "initial_draw_ms": "165.475167",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "80.912750",
+          "first_draw_ms": "69.381875",
+          "total_ms": "151.161917",
+          "warm_draw_ms": "25.603708",
+          "initial_parse_ms": "83.401917",
+          "initial_draw_ms": "69.698292",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.103542",
+          "first_draw_ms": "26.572292",
+          "total_ms": "30.737542",
+          "warm_draw_ms": "5.597250",
+          "initial_parse_ms": "4.274083",
+          "initial_draw_ms": "26.345875",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.215542",
+          "first_draw_ms": "65.528167",
+          "total_ms": "69.751750",
+          "warm_draw_ms": "5.464667",
+          "initial_parse_ms": "4.144167",
+          "initial_draw_ms": "67.827042",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "90.622667",
+          "first_draw_ms": "122.612083",
+          "total_ms": "212.242750",
+          "warm_draw_ms": "21.568958",
+          "initial_parse_ms": "96.690875",
+          "initial_draw_ms": "166.104250",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "82.002833",
+          "first_draw_ms": "71.014542",
+          "total_ms": "152.829042",
+          "warm_draw_ms": "25.298167",
+          "initial_parse_ms": "82.767250",
+          "initial_draw_ms": "71.068042",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.114750",
+          "first_draw_ms": "29.960250",
+          "total_ms": "33.997750",
+          "warm_draw_ms": "5.246875",
+          "initial_parse_ms": "4.175708",
+          "initial_draw_ms": "29.620458",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.134208",
+          "first_draw_ms": "71.640167",
+          "total_ms": "75.464250",
+          "warm_draw_ms": "5.164375",
+          "initial_parse_ms": "4.201500",
+          "initial_draw_ms": "73.690833",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "89.475375",
+          "first_draw_ms": "122.501375",
+          "total_ms": "211.833917",
+          "warm_draw_ms": "21.654667",
+          "initial_parse_ms": "95.309833",
+          "initial_draw_ms": "165.743250",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "79.794458",
+          "first_draw_ms": "70.353042",
+          "total_ms": "150.522583",
+          "warm_draw_ms": "25.063667",
+          "initial_parse_ms": "81.267458",
+          "initial_draw_ms": "70.803708",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.155833",
+          "first_draw_ms": "29.476167",
+          "total_ms": "33.611417",
+          "warm_draw_ms": "5.304708",
+          "initial_parse_ms": "4.246083",
+          "initial_draw_ms": "30.061042",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.198458",
+          "first_draw_ms": "70.544250",
+          "total_ms": "74.741917",
+          "warm_draw_ms": "5.445917",
+          "initial_parse_ms": "4.166375",
+          "initial_draw_ms": "72.524792",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "90.507583",
+          "first_draw_ms": "115.888917",
+          "total_ms": "205.988000",
+          "warm_draw_ms": "21.765375",
+          "initial_parse_ms": "93.667625",
+          "initial_draw_ms": "161.582250",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "80.713542",
+          "first_draw_ms": "69.169833",
+          "total_ms": "149.889208",
+          "warm_draw_ms": "24.844375",
+          "initial_parse_ms": "82.852500",
+          "initial_draw_ms": "68.193167",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.148208",
+          "first_draw_ms": "26.796583",
+          "total_ms": "30.900250",
+          "warm_draw_ms": "5.586833",
+          "initial_parse_ms": "4.311125",
+          "initial_draw_ms": "26.599542",
+          "pixel_hash": "e138b93df39eb8a5"
+        },
+        {
+          "case": "ijsvg-font-strokes",
+          "size": "512",
+          "parse_ms": "4.102042",
+          "first_draw_ms": "65.079917",
+          "total_ms": "69.171667",
+          "warm_draw_ms": "5.324250",
+          "initial_parse_ms": "4.162125",
+          "initial_draw_ms": "70.329083",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "Pcolormesh 2": {
+      "baseline": {
+        "parse_ms": 89.778,
+        "first_draw_ms": 122.501375,
+        "total_ms": 211.833917,
+        "warm_draw_ms": 21.568958
+      },
+      "candidate": {
+        "parse_ms": 90.507583,
+        "first_draw_ms": 118.066792,
+        "total_ms": 209.2805,
+        "warm_draw_ms": 21.803667
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "pcolormesh": {
+      "baseline": {
+        "parse_ms": 80.528042,
+        "first_draw_ms": 70.353042,
+        "total_ms": 150.522583,
+        "warm_draw_ms": 25.063667
+      },
+      "candidate": {
+        "parse_ms": 80.91275,
+        "first_draw_ms": 69.169833,
+        "total_ms": 149.889208,
+        "warm_draw_ms": 24.844375
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-inherited-strokes": {
+      "baseline": {
+        "parse_ms": 4.11475,
+        "first_draw_ms": 29.96025,
+        "total_ms": 33.99775,
+        "warm_draw_ms": 5.304708
+      },
+      "candidate": {
+        "parse_ms": 4.148208,
+        "first_draw_ms": 26.64275,
+        "total_ms": 30.748083,
+        "warm_draw_ms": 5.586833
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-font-strokes": {
+      "baseline": {
+        "parse_ms": 4.140792,
+        "first_draw_ms": 70.54425,
+        "total_ms": 74.741917,
+        "warm_draw_ms": 5.307375
+      },
+      "candidate": {
+        "parse_ms": 4.152458,
+        "first_draw_ms": 65.528167,
+        "total_ms": 69.75175,
+        "warm_draw_ms": 5.375458
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    }
+  },
+  "change": "Resolve currentColor, visibility and paint order during the existing paint-style walk, snapshot path opacity once, and resolve vector effect with stroke style. Pass the resolved state through paint construction and effect application.",
+  "validation": {
+    "objectiveCTestsPassed": 282,
+    "additionalUpdatedMetadataTestsPassed": 42
+  }
+}

@@ -35,22 +35,43 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 @synthesize lineDashPattern = _lineDashPattern;
 
-- (void)setLineDashPattern:(NSArray<NSNumber*>*)pattern
+- (NSData*)lineDashData
+{
+    return _dashLengths;
+}
+
+- (void)setLineDashData:(NSData*)data
 {
     CGPathRelease(_nonScalingStrokeOutline);
     _nonScalingStrokeOutline = NULL;
-    _lineDashPattern = pattern.copy;
-    NSUInteger count = pattern.count;
-    if (count == 0) {
-        _dashLengths = nil;
-        return;
+    _dashLengths = data.copy;
+    _lineDashPattern = data.length == 0 && data != nil ? @[] : nil;
+}
+
+- (NSArray<NSNumber*>*)lineDashPattern
+{
+    if (_lineDashPattern == nil && _dashLengths.length != 0) {
+        NSUInteger count = _dashLengths.length / sizeof(CGFloat);
+        const CGFloat* values = _dashLengths.bytes;
+        NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:count];
+        for (NSUInteger index = 0; index < count; index++) {
+            [pattern addObject:@(values[index])];
+        }
+        _lineDashPattern = pattern.copy;
     }
-    NSMutableData* lengths = [NSMutableData dataWithLength:count * sizeof(CGFloat)];
+    return _lineDashPattern;
+}
+
+- (void)setLineDashPattern:(NSArray<NSNumber*>*)pattern
+{
+    NSUInteger count = pattern.count;
+    NSMutableData* lengths = count != 0 ? [NSMutableData dataWithLength:count * sizeof(CGFloat)] : nil;
     CGFloat* values = lengths.mutableBytes;
     for (NSUInteger index = 0; index < count; index++) {
         values[index] = pattern[index].doubleValue;
     }
-    _dashLengths = lengths;
+    self.lineDashData = lengths;
+    _lineDashPattern = pattern.copy;
 }
 
 - (IJSVGPaint*)copyForMarker

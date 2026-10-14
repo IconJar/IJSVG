@@ -7,13 +7,96 @@
 //
 
 #import <IJSVG/IJSVGGradientUnitLength.h>
+#import <IJSVGQuartzRenderer.h>
 #import <IJSVGTestHelpers.h>
 #import <math.h>
+
+@interface IJSVGStrokeOverrideGroup : IJSVGGroup
+@end
+
+@implementation IJSVGStrokeOverrideGroup
+
+- (IJSVGLineCapStyle)lineCapStyle
+{
+    return IJSVGLineCapStyleRound;
+}
+
+@end
 
 @interface IJSVGInheritedLengthTests : XCTestCase
 @end
 
 @implementation IJSVGInheritedLengthTests
+
+- (void)testResolvedStrokeStyleMatchesInheritedGetters
+{
+    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGStrokeOverrideGroup alloc] init] ]) {
+        IJSVGPath* child = [[IJSVGPath alloc] init];
+        [parent addChild:child];
+        parent.stroke = [IJSVGColorNode colorNodeWithColor:NSColor.redColor];
+        parent.strokeWidth = [IJSVGUnitLength unitWithString:@".5em"];
+        parent.strokeOpacity = [IJSVGUnitLength unitWithFloat:0.25];
+        parent.strokeDashOffset = [IJSVGUnitLength unitWithString:@".25em"];
+        parent.strokeDashLengths = @[ [IJSVGUnitLength unitWithString:@"1em"], [IJSVGUnitLength unitWithFloat:2] ];
+        parent.strokeDashArrayCount = 2;
+        parent.strokeMiterLimit = [IJSVGUnitLength unitWithFloat:3];
+        parent.lineJoinStyle = IJSVGLineJoinStyleBevel;
+        for (NSUInteger iteration = 0; iteration < 3; iteration++) {
+            IJSVGResolvedStrokeStyle style = [child resolvedStrokeStyle];
+            XCTAssertEqual(style.stroke, child.stroke);
+            XCTAssertEqual(style.vectorEffect, child.resolvedVectorEffect);
+            XCTAssertEqual(style.width, child.strokeWidth);
+            XCTAssertEqual(style.opacity, child.strokeOpacity);
+            XCTAssertEqual(style.miterLimit, child.strokeMiterLimit);
+            XCTAssertEqual(style.lineCap, child.lineCapStyle);
+            XCTAssertEqual(style.lineJoin, child.lineJoinStyle);
+            XCTAssertEqual(style.dashOffset, child.strokeDashOffset);
+            XCTAssertEqualObjects(style.dashLengths, child.strokeDashLengths);
+            XCTAssertEqual(style.dashCount, child.strokeDashArrayCount);
+            XCTAssertEqual(style.dashArray, child.strokeDashArray);
+            if (iteration == 0) {
+                child.strokeWidth = nil;
+                child.strokeOpacity = nil;
+                child.strokeDashOffset = nil;
+                child.strokeDashArrayCount = 0;
+            } else {
+                [parent removeChild:child];
+            }
+        }
+    }
+}
+
+- (void)testResolvedStrokeOwnersPreserveSharedLengthIdentity
+{
+    IJSVGGroup* root = [[IJSVGGroup alloc] init];
+    IJSVGGroup* parent = [[IJSVGGroup alloc] init];
+    IJSVGGroup* intermediate = [[IJSVGGroup alloc] init];
+    IJSVGPath* child = [[IJSVGPath alloc] init];
+    [root addChild:parent];
+    [parent addChild:intermediate];
+    [intermediate addChild:child];
+    parent.strokeWidth = [IJSVGUnitLength unitWithString:@".5em"];
+    parent.strokeDashOffset = [IJSVGUnitLength unitWithString:@".25em"];
+    parent.strokeDashLengths = @[ [IJSVGUnitLength unitWithString:@"1em"] ];
+    parent.strokeDashArrayCount = 1;
+    for (NSUInteger iteration = 0; iteration < 3; iteration++) {
+        IJSVGResolvedStrokeStyle style = [child resolvedStrokeStyle];
+        XCTAssertEqual(style.widthOwner, parent);
+        XCTAssertEqual(style.dashOffsetOwner, parent);
+        XCTAssertEqual(style.dashLengthsOwner, parent);
+        child.strokeWidth = parent.strokeWidth;
+        child.strokeDashOffset = parent.strokeDashOffset;
+        child.strokeDashLengths = parent.strokeDashLengths;
+        child.strokeDashArrayCount = 1;
+    }
+    child.strokeWidth = [IJSVGUnitLength unitWithString:@"2em"];
+    child.strokeDashOffset = [IJSVGUnitLength unitWithString:@"3em"];
+    child.strokeDashLengths = @[ [IJSVGUnitLength unitWithString:@"4em"] ];
+    IJSVGResolvedStrokeStyle style = [child resolvedStrokeStyle];
+    XCTAssertEqual(style.widthOwner, child);
+    XCTAssertEqual(style.dashOffsetOwner, child);
+    XCTAssertEqual(style.dashLengthsOwner, child);
+}
 
 - (void)testInheritedLengthsFollowParentReplacements
 {

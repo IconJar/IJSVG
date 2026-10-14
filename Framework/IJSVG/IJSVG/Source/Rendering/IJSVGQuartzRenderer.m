@@ -131,12 +131,12 @@ static CGLineJoin IJSVGQuartzLineJoin(IJSVGLineJoinStyle style)
     }
 }
 
-static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node, IJSVGStyle* style, CGFloat lineWidth)
+static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, const IJSVGResolvedStrokeStyle* stroke, IJSVGStyle* style, CGFloat lineWidth)
 {
     // Read the stroke cap and join settings.
-    IJSVGLineCapStyle lineCapStyle = node.lineCapStyle;
-    IJSVGLineJoinStyle lineJoinStyle = node.lineJoinStyle;
-    CGFloat miterLimit = node.strokeMiterLimit.value;
+    IJSVGLineCapStyle lineCapStyle = stroke->lineCap;
+    IJSVGLineJoinStyle lineJoinStyle = stroke->lineJoin;
+    CGFloat miterLimit = stroke->miterLimit.value;
 
     // Use the settings supplied by the style.
     if (style.lineCapStyle != IJSVGLineCapStyleNone && style.lineCapStyle != IJSVGLineCapStyleInherit) {
@@ -158,7 +158,7 @@ static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
     paint.lineJoin = IJSVGQuartzLineJoin(lineJoinStyle);
     paint.miterLimit = miterLimit;
 
-    paint.opacity = node.strokeOpacity.value;
+    paint.opacity = stroke->opacity.value;
 }
 
 static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
@@ -224,8 +224,11 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 @interface IJSVGQuartzRenderer () {
     NSMutableArray<IJSVGQuartzClipPath*>* _sharedClipPaths;
     IJSVGTextFontResolver* _lengthFontResolver;
-    NSMutableArray<NSValue*>* _viewPortStack;
-    NSMutableArray<NSValue*>* _unitBoundsStack;
+    BOOL _resolvingGradientFonts;
+    IJSVGGradient* _fontGradientSource;
+    IJSVGGradient* _fontGradientResult;
+    CGRect _currentViewPort;
+    CGRect _currentUnitBounds;
     IJSVGRootPaint* _rootPaint;
     IJSVGRootNode* _rootNode;
     CGSize _clientSize;
@@ -276,8 +279,7 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
         _renderingOptions = [[IJSVGRenderingOptions alloc] init];
         _style = [[IJSVGStyle alloc] init];
         _textTransform = CGAffineTransformIdentity;
-        _viewPortStack = [[NSMutableArray alloc] init];
-        _unitBoundsStack = [[NSMutableArray alloc] init];
+        _currentUnitBounds = CGRectNull;
     }
     return self;
 }
@@ -288,68 +290,52 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     return _renderingOptions.copy;
 }
 
-- (void)pushViewPort:(CGRect)viewPort
-{
-    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(viewPort)];
-    [_viewPortStack addObject:value];
-}
-
 - (CGRect)viewPort
 {
-    NSValue* value = _viewPortStack.lastObject;
-    return (CGRect)NSRectToCGRect(value.rectValue);
-}
-
-- (void)popViewPort
-{
-    [_viewPortStack removeLastObject];
-}
-
-- (void)withViewPort:(CGRect)viewPort handler:(dispatch_block_t)handler
-{
-    [self pushViewPort:viewPort];
-
-    // Restore the previous bounds even if drawing raises an exception.
-    @try {
-        handler();
-    } @finally {
-        [self popViewPort];
-    }
-}
-
-- (void)pushUnitBounds:(CGRect)bounds
-{
-    NSValue* value = [NSValue valueWithRect:NSRectFromCGRect(bounds)];
-    [_unitBoundsStack addObject:value];
+    return _currentViewPort;
 }
 
 - (CGRect)unitBounds
 {
-    NSValue* value = _unitBoundsStack.lastObject;
-    return value == nil ? CGRectNull : (CGRect)NSRectToCGRect(value.rectValue);
+    return _currentUnitBounds;
 }
 
-- (void)popUnitBounds
+- (void)withViewPort:(CGRect)viewPort handler:(dispatch_block_t)handler
 {
-    [_unitBoundsStack removeLastObject];
+    CGRect previous = _currentViewPort;
+    _currentViewPort = viewPort;
+    @try {
+        handler();
+    } @finally {
+        _currentViewPort = previous;
+    }
 }
 
 - (void)withUnitBounds:(CGRect)bounds handler:(dispatch_block_t)handler
 {
-    [self pushUnitBounds:bounds];
+    CGRect previous = _currentUnitBounds;
+    _currentUnitBounds = bounds;
     @try {
         handler();
     } @finally {
-        [self popUnitBounds];
+        _currentUnitBounds = previous;
     }
 }
 
 - (void)withViewPort:(CGRect)viewPort unitBounds:(CGRect)bounds handler:(dispatch_block_t)handler
 {
-    [self withViewPort:viewPort
-               handler:^{
-                   [self withUnitBounds:bounds handler:handler];
-               }];
+    CGRect previousViewPort = _currentViewPort;
+    CGRect previousUnitBounds = _currentUnitBounds;
+    _currentViewPort = viewPort;
+    _currentUnitBounds = bounds;
+
+    // The call stack holds each nested scope, including exception unwinding.
+    @try {
+        handler();
+    } @finally {
+        _currentViewPort = previousViewPort;
+        _currentUnitBounds = previousUnitBounds;
+    }
 }
 
 // Measures children with the same placement used during drawing.
@@ -719,6 +705,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     __block IJSVGRootPaint* paint = nil;
     NSMutableArray<IJSVGQuartzClipPath*>* previousClips = _sharedClipPaths;
     _sharedClipPaths = [[NSMutableArray alloc] init];
+    BOOL previousGradientScope = _resolvingGradientFonts;
+    IJSVGGradient* previousGradientSource = _fontGradientSource;
+    IJSVGGradient* previousGradientResult = _fontGradientResult;
+    _resolvingGradientFonts = YES;
+    _fontGradientSource = nil;
+    _fontGradientResult = nil;
     @try {
         [self withViewPort:clientBounds
                 unitBounds:clientBounds
@@ -727,6 +719,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
                    }];
     } @finally {
         _sharedClipPaths = previousClips;
+        _resolvingGradientFonts = previousGradientScope;
+        _fontGradientSource = previousGradientSource;
+        _fontGradientResult = previousGradientResult;
     }
     return paint;
 }
@@ -767,6 +762,14 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return paint;
 }
 
+// Source nodes remain intact: descendants still inherit their styles and
+// resolve resource coordinates through the original tree. Only the redundant
+// rendering container is omitted. Measurement trees preserve every node.
+- (BOOL)canOmitContainerPaint:(IJSVGGraphicsNode*)node
+{
+    return !_resolvingMeasurements && node.shouldRender && node.transforms.count == 0 && !node.x.isCalculated && !node.y.isCalculated && node.x.value == 0.f && node.y.value == 0.f && node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && node.clipPath == nil && node.mask == nil && node.filters.count == 0 && CGRectIsNull(node.backgroundRect);
+}
+
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)source
 {
     if (![source isKindOfClass:IJSVGGraphicsNode.class]) {
@@ -781,7 +784,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     // Measurement trees retain every source node for visibility queries.
     BOOL plainGroup = [node isMemberOfClass:IJSVGGroup.class] && [node.name isEqualToString:@"g"];
     BOOL pathUse = [node isMemberOfClass:IJSVGUse.class] && !node.x.isCalculated && !node.y.isCalculated && [((IJSVGUse*)node).children.firstObject isKindOfClass:IJSVGPath.class];
-    if (!_resolvingMeasurements && (plainGroup || pathUse) && ((IJSVGGroup*)node).children.count == 1 && node.shouldRender && node.transforms.count == 0 && node.x.value == 0.f && node.y.value == 0.f && node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && node.clipPath == nil && node.mask == nil && node.filters.count == 0 && CGRectIsNull(node.backgroundRect)) {
+    if ((plainGroup || pathUse) && ((IJSVGGroup*)node).children.count == 1 && [self canOmitContainerPaint:node]) {
         return [self drawablePaintForNode:((IJSVGGroup*)node).children.firstObject];
     }
     if (node.transforms.count == 0) {
@@ -808,10 +811,14 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 - (IJSVGPaint*)drawablePaintForNodeWithTextTransform:(IJSVGGraphicsNode*)node
 {
     IJSVGPaint* paint = nil;
+    IJSVGResolvedPaintStyle style = { 0 };
+    BOOL hasResolvedStyle = NO;
     if ([node isKindOfClass:IJSVGText.class]) {
         paint = [self drawablePaintForTextNode:(IJSVGText*)node];
     } else if ([node isKindOfClass:IJSVGPath.class]) {
-        paint = [self drawablePaintForPathNode:(IJSVGPath*)node];
+        style = [node resolvedPaintStyle];
+        hasResolvedStyle = YES;
+        paint = [self drawablePaintForPathNode:(IJSVGPath*)node style:&style];
     } else if (node.type == IJSVGNodeTypeSymbol) {
         paint = [self drawablePaintForSymbolNode:(IJSVGSymbol*)node];
     } else if ([node isKindOfClass:IJSVGRootNode.class]) {
@@ -823,7 +830,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
     if (paint != nil) {
         if (![self hasSymbolContentEffects:node]) {
-            paint = [self applyEffectsToPaint:paint fromNode:node];
+            paint = [self applyEffectsToPaint:paint fromNode:node style:hasResolvedStyle ? &style : NULL];
         }
         return [self applyTransforms:node.transforms toPaint:paint fromNode:node];
     }
@@ -837,6 +844,11 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGPaint*)applyEffectsToPaint:(IJSVGPaint*)paint fromNode:(IJSVGGraphicsNode*)node
 {
+    return [self applyEffectsToPaint:paint fromNode:node style:NULL];
+}
+
+- (IJSVGPaint*)applyEffectsToPaint:(IJSVGPaint*)paint fromNode:(IJSVGGraphicsNode*)node style:(const IJSVGResolvedPaintStyle*)style
+{
     if (_renderingOptions.filtersEnabled && node.filters.count != 0) {
         _measurementHasFilters = YES;
     }
@@ -848,7 +860,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
             paint = [self applyFilter:filter toPaint:paint fromNode:node];
         }
     }
-    [self applyDefaultsToPaint:paint fromNode:node];
+    [self applyDefaultsToPaint:paint fromNode:node style:style];
     return paint;
 }
 
@@ -1070,12 +1082,15 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
     BOOL paintsPoints = YES;
     CGPathRef dashedPath = NULL;
-    if (shapePaint.lineDashPattern != nil && shapePaint.lineDashPattern.count != 0.f) {
-        NSUInteger count = shapePaint.lineDashPattern.count;
+    NSData* dashData = shapePaint.lineDashData;
+    NSUInteger count = dashData.length / sizeof(CGFloat);
+    if (count != 0) {
+        const CGFloat* values = dashData.bytes;
         CGFloat* lengths = (CGFloat*)malloc(sizeof(CGFloat) * count);
-        NSUInteger i = 0;
-        for (NSNumber* number in shapePaint.lineDashPattern) {
-            lengths[i++] = (CGFloat)number.floatValue;
+
+        // Preserve the existing outline precision without boxing the values.
+        for (NSUInteger index = 0; index < count; index++) {
+            lengths[index] = (CGFloat)(float)values[index];
         }
         if (hasPoints) {
             NSUInteger dashCount = count % 2 == 0 ? count : count * 2;
@@ -1144,7 +1159,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return [_style.colors colorForColor:color matchingTraits:traits];
 }
 
-- (IJSVGPaint*)drawableFillPaintForPathNode:(IJSVGPath*)node fill:(IJSVGNode*)fill paint:(IJSVGShapePaint*)paint resolvedPath:(CGPathRef)paintPath resolvedPathBounds:(CGRect)resolvedPathBounds
+- (IJSVGPaint*)drawableFillPaintForPathNode:(IJSVGPath*)node fill:(IJSVGNode*)fill currentColor:(NSColor*)currentColor paint:(IJSVGShapePaint*)paint resolvedPath:(CGPathRef)paintPath resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     // Choose the fill type.
     IJSVGPaint* fillPaint = nil;
@@ -1155,7 +1170,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         default:
         case IJSVGPaintFillTypeColor: {
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
-            NSColor* color = colorNode.usesCurrentColor ? node.currentColor : (colorNode.color ?: NSColor.blackColor);
+            NSColor* color = colorNode.usesCurrentColor ? currentColor : (colorNode.color ?: NSColor.blackColor);
 
             // Use the fill color supplied by the style.
             if (_style.fillColor != nil) {
@@ -1205,18 +1220,18 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return fillPaint;
 }
 
-- (void)applyStrokePaint:(IJSVGStrokePaint*)strokePaint toPaint:(IJSVGShapePaint*)paint fromNode:(IJSVGPath*)node
+- (void)applyStrokePaint:(IJSVGStrokePaint*)strokePaint toPaint:(IJSVGShapePaint*)paint stroke:(IJSVGNode*)stroke
 {
     paint.strokeStyle = strokePaint;
 
     // Choose how to fill the stroke.
-    IJSVGPaintFillType type = [IJSVGPaint fillTypeForFill:node.stroke];
+    IJSVGPaintFillType type = [IJSVGPaint fillTypeForFill:stroke];
 
     switch (type) {
         // Fill the stroke with a pattern.
         case IJSVGPaintFillTypePattern: {
             IJSVGPatternPaint* patternPaint = nil;
-            patternPaint = [self drawableBasicPatternPaintForPaint:strokePaint pattern:(IJSVGPattern*)node.stroke];
+            patternPaint = [self drawableBasicPatternPaintForPaint:strokePaint pattern:(IJSVGPattern*)stroke];
             patternPaint.referencingPaint = paint;
 
             // Keep the drawing inside the stroke shape.
@@ -1231,7 +1246,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         // Fill the stroke with a gradient.
         case IJSVGPaintFillTypeGradient: {
             IJSVGGradientPaint* gradientPaint = nil;
-            gradientPaint = [self drawableBasicGradientPaintForPaint:strokePaint gradient:(IJSVGGradient*)node.stroke];
+            gradientPaint = [self drawableBasicGradientPaintForPaint:strokePaint gradient:(IJSVGGradient*)stroke];
             gradientPaint.referencingPaint = paint;
 
             // Keep the drawing inside the stroke shape.
@@ -1252,7 +1267,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 }
 
-- (IJSVGPaint*)drawablePaintForPathNode:(IJSVGPath*)node
+- (IJSVGPaint*)drawablePaintForPathNode:(IJSVGPath*)node style:(const IJSVGResolvedPaintStyle*)style
 {
     CGPathRef resolvedPath = [self newResolvedPathForPathNode:node];
     BOOL resolvedPathIsEmpty = CGPathIsEmpty(resolvedPath);
@@ -1262,22 +1277,26 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         resolvedPathBounds = CGRectZero;
     }
     CGPathRef paintPath = resolvedPathBoundsAreFinite == YES ? [self newPaintPathForResolvedPath:resolvedPath bounds:resolvedPathBounds] : CGPathCreateMutable();
-    IJSVGNode* fill = node.fill;
+    IJSVGNode* fill = style->fill;
     IJSVGGradient* gradient = [fill isMemberOfClass:IJSVGLinearGradient.class] ? (IJSVGGradient*)fill : nil;
     IJSVGPrimitivePathType primitiveType = node.primitiveType;
     BOOL needsMarkers = primitiveType == kIJSVGPrimitivePathTypePath || primitiveType == kIJSVGPrimitivePathTypeLine || primitiveType == kIJSVGPrimitivePathTypePolygon || primitiveType == kIJSVGPrimitivePathTypePolyLine || (gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox);
-    IJSVGMarker* markerStart = nil;
-    IJSVGMarker* markerMid = nil;
-    IJSVGMarker* markerEnd = nil;
-    IJSVGWindingRule fillRule = needsMarkers ? [node windingRuleWithMarkerStart:&markerStart mid:&markerMid end:&markerEnd] : node.windingRule;
+    IJSVGMarker* markerStart = needsMarkers ? style->markerStart : nil;
+    IJSVGMarker* markerMid = needsMarkers ? style->markerMid : nil;
+    IJSVGMarker* markerEnd = needsMarkers ? style->markerEnd : nil;
+    IJSVGWindingRule fillRule = style->windingRule;
     IJSVGShapePaint* paint = (IJSVGShapePaint*)[self drawableBasicPaintForPathNode:node resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds fillRule:fillRule];
 
     // Create the stroke.
     IJSVGStrokePaint* strokePaint = nil;
+    IJSVGNode* stroke = nil;
     CGFloat strokeWidthDifference = 0.f;
     if ([node matchesTraits:IJSVGNodeTraitStroked]) {
+        IJSVGResolvedStrokeStyle strokeStyle = [node resolvedStrokeStyle];
+        stroke = strokeStyle.stroke;
+
         // Expand the paint so its frame includes the stroke.
-        strokePaint = (IJSVGStrokePaint*)[self drawableStrokedPaintForPathNode:node resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds];
+        strokePaint = (IJSVGStrokePaint*)[self drawableStrokedPaintForPathNode:node style:&strokeStyle currentColor:style->currentColor resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds];
         strokeWidthDifference = strokePaint.lineWidth * .5f;
 
         // Update the bounds to include the stroke.
@@ -1285,17 +1304,17 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         paint.outerBoundingBox = paint.frame;
     }
 
-    CGFloat fillOpacity = node.fillOpacity.value;
-    BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox && strokePaint == nil && fillOpacity == 1.f && node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class && _style.colors.replacedColorCount == 0;
+    CGFloat fillOpacity = style->fillOpacity.value;
+    BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox && strokePaint == nil && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class && _style.colors.replacedColorCount == 0;
 
     // With no separate stroke, opacity or marker operations, a solid fill
     // can use the existing shape instead of allocating a second paint and path.
-    paint.directFill = gradient == nil && strokePaint == nil && [IJSVGPaint fillTypeForFill:fill] == IJSVGPaintFillTypeColor && fillOpacity == 1.f && node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class;
+    paint.directFill = gradient == nil && strokePaint == nil && [IJSVGPaint fillTypeForFill:fill] == IJSVGPaintFillTypeColor && fillOpacity == 1.f && style->opacity == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class;
     IJSVGPaint* fillPaint = nil;
     if (directGradient) {
         paint.fillGradient = [self gradientByResolvingFontLengths:gradient];
     } else {
-        fillPaint = [self drawableFillPaintForPathNode:node fill:fill paint:paint resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds];
+        fillPaint = [self drawableFillPaintForPathNode:node fill:fill currentColor:style->currentColor paint:paint resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds];
     }
 
     if (fillPaint != nil) {
@@ -1310,11 +1329,11 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     // Attach the stroke.
     if (strokePaint != nil) {
-        [self applyStrokePaint:strokePaint toPaint:paint fromNode:node];
+        [self applyStrokePaint:strokePaint toPaint:paint stroke:stroke];
     }
 
     if (paint.fillPaint != nil && paint.strokePaint != nil) {
-        IJSVGPaintOrder order = node.paintOrder;
+        IJSVGPaintOrder order = style->paintOrder;
         for (NSUInteger index = 0; index < 3; index++) {
             NSUInteger operation = (order >> (index * 2)) & 3;
             if (operation == 0) {
@@ -1326,7 +1345,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
             }
         }
     }
-    IJSVGPaint* result = [self paintByAddingMarkersToPaint:paint forNode:node resolvedPath:resolvedPath bounds:resolvedPathBounds markerStart:markerStart markerMid:markerMid markerEnd:markerEnd];
+    IJSVGPaint* result = [self paintByAddingMarkersToPaint:paint forNode:node resolvedPath:resolvedPath bounds:resolvedPathBounds markerStart:markerStart markerMid:markerMid markerEnd:markerEnd paintOrder:style->paintOrder];
     CGPathRelease(paintPath);
     CGPathRelease(resolvedPath);
     return result;
@@ -1334,11 +1353,13 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (IJSVGGradient*)gradientByResolvingFontLengths:(IJSVGGradient*)gradient
 {
+    if (_resolvingGradientFonts && gradient == _fontGradientSource) {
+        return _fontGradientResult;
+    }
     IJSVGRadialGradient* radial = [gradient isKindOfClass:IJSVGRadialGradient.class] ? (IJSVGRadialGradient*)gradient : nil;
-    IJSVGUnitLength* lengths[] = { gradient.x1, gradient.y1, gradient.x2, gradient.y2, radial.cx, radial.cy, radial.fx, radial.fy, radial.r, radial.fr };
-    BOOL relative = NO;
-    for (NSUInteger index = 0; index < 10; index++) {
-        relative |= lengths[index].usesFontMetrics;
+    BOOL relative = gradient.x1.usesFontMetrics || gradient.y1.usesFontMetrics || gradient.x2.usesFontMetrics || gradient.y2.usesFontMetrics;
+    if (!relative && radial != nil) {
+        relative = radial.cx.usesFontMetrics || radial.cy.usesFontMetrics || radial.fx.usesFontMetrics || radial.fy.usesFontMetrics || radial.r.usesFontMetrics || radial.fr.usesFontMetrics;
     }
     if (!relative) {
         return gradient;
@@ -1356,6 +1377,13 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         result.fy = [self.lengthFontResolver unitByResolvingFontLength:radial.fy node:radial];
         result.r = [self.lengthFontResolver unitByResolvingFontLength:radial.r node:radial];
         result.fr = [self.lengthFontResolver unitByResolvingFontLength:radial.fr node:radial];
+    }
+
+    // Siblings often share an inherited paint server. Keep only the most recent
+    // result relative to the font, using only the rendering options of this build.
+    if (_resolvingGradientFonts) {
+        _fontGradientSource = gradient;
+        _fontGradientResult = copy;
     }
     return copy;
 }
@@ -1500,7 +1528,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 #pragma mark Markers
 
-- (IJSVGPaint*)paintByAddingMarkersToPaint:(IJSVGPaint*)paint forNode:(IJSVGPath*)node resolvedPath:(CGPathRef)resolvedPath bounds:(CGRect)resolvedPathBounds markerStart:(IJSVGMarker*)markerStart markerMid:(IJSVGMarker*)markerMid markerEnd:(IJSVGMarker*)markerEnd
+- (IJSVGPaint*)paintByAddingMarkersToPaint:(IJSVGPaint*)paint forNode:(IJSVGPath*)node resolvedPath:(CGPathRef)resolvedPath bounds:(CGRect)resolvedPathBounds markerStart:(IJSVGMarker*)markerStart markerMid:(IJSVGMarker*)markerMid markerEnd:(IJSVGMarker*)markerEnd paintOrder:(IJSVGPaintOrder)paintOrder
 {
     switch (node.primitiveType) {
         case kIJSVGPrimitivePathTypePath:
@@ -1538,12 +1566,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         return paint;
     }
 
-    if (node.paintOrder != IJSVGPaintOrderNormal) {
+    if (paintOrder != IJSVGPaintOrderNormal) {
         NSArray<IJSVGPaint*>* markers = [children subarrayWithRange:NSMakeRange(1, children.count - 1)];
         [children removeAllObjects];
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         for (NSUInteger index = 0; index < 3; index++) {
-            NSUInteger operation = (node.paintOrder >> (index * 2)) & 3;
+            NSUInteger operation = (paintOrder >> (index * 2)) & 3;
             if (operation == 2) {
                 [children addObjectsFromArray:markers];
                 continue;
@@ -1709,18 +1737,17 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return instance;
 }
 
-- (CGFloat)zeroPathLengthScaleForPattern:(NSArray<NSNumber*>*)pattern lengths:(NSArray<IJSVGUnitLength*>*)lengths phase:(CGFloat)phase offset:(IJSVGUnitLength*)offset pathLength:(CGFloat)pathLength
+- (CGFloat)zeroPathLengthScaleForValues:(const CGFloat*)values count:(NSUInteger)count lengths:(NSArray<IJSVGUnitLength*>*)lengths phase:(CGFloat)phase offset:(IJSVGUnitLength*)offset pathLength:(CGFloat)pathLength
 {
     // Replace the infinite calibration with a finite equivalent over this path.
     // Keep every nonzero distance to a dash boundary beyond the visible length.
     // This also keeps Core Graphics and SVG export free of infinite values.
     CGFloat period = 0.f;
     CGFloat finiteLength = pathLength + fabs(phase) + 1.f;
-    NSUInteger count = pattern.count;
     NSUInteger repeatedCount = count % 2 == 0 ? count : count * 2;
     for (NSUInteger index = 0; index < repeatedCount; index++) {
         NSUInteger item = index % count;
-        CGFloat value = pattern[item].doubleValue;
+        CGFloat value = values[item];
         if (item < lengths.count && lengths[item].type == IJSVGUnitLengthTypePercentage) {
             finiteLength += value;
         } else {
@@ -1739,7 +1766,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     for (NSUInteger index = 0; index < repeatedCount; index++) {
         NSUInteger item = index % count;
         if (item >= lengths.count || lengths[item].type != IJSVGUnitLengthTypePercentage) {
-            CGFloat value = pattern[item].doubleValue;
+            CGFloat value = values[item];
             if (value > 0.f) {
                 minimum = MIN(minimum, value);
             }
@@ -1756,17 +1783,17 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return 2.f * finiteLength / minimum;
 }
 
-- (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds
+- (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node style:(const IJSVGResolvedStrokeStyle*)style currentColor:(NSColor*)currentColor resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     IJSVGStrokePaint* paint = IJSVGStrokePaint.paint;
     [self applyPath:resolvedPath bounds:resolvedPathBounds toShapePaint:paint];
 
     // Choose the stroke color.
     NSColor* strokeColor = NSColor.blackColor;
-    IJSVGNode* stroke = node.stroke;
+    IJSVGNode* stroke = style->stroke;
     if ([stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)stroke;
-        strokeColor = colorNode.usesCurrentColor ? node.currentColor : colorNode.color;
+        strokeColor = colorNode.usesCurrentColor ? currentColor : colorNode.color;
     }
 
     // Apply any color replacement.
@@ -1784,11 +1811,14 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     CGRect unitBounds = [self unitResolutionBoundsForNode:node];
     CGFloat diagonal = hypot(unitBounds.size.width, unitBounds.size.height) / M_SQRT2;
-    CGFloat lineWidth = [self resolveStrokeWidthForNode:node percentage:diagonal];
-    IJSVGQuartzConfigureStroke(paint, node, _style, lineWidth);
-    IJSVGGraphicsNode* offsetOwner = node;
-    IJSVGUnitLength* offset = node.strokeDashOffset;
-    if (offset.usesFontMetrics) {
+    CGFloat lineWidth = _style.lineWidth;
+    if (lineWidth == IJSVGInheritedFloatValue) {
+        lineWidth = style->widthOwner != nil ? [self resolveCSSLength:style->width percentage:diagonal node:style->widthOwner] : [self resolveStrokeWidth:style->width forNode:node percentage:diagonal];
+    }
+    IJSVGQuartzConfigureStroke(paint, style, _style, lineWidth);
+    IJSVGGraphicsNode* offsetOwner = style->dashOffsetOwner ?: node;
+    IJSVGUnitLength* offset = style->dashOffset;
+    if (style->dashOffsetOwner == nil && offset.usesFontMetrics) {
         IJSVGGraphicsNode* parent = offsetOwner.styleParent;
         while (parent != nil && parent.strokeDashOffset == offset) {
             offsetOwner = parent;
@@ -1796,55 +1826,70 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         }
     }
     paint.lineDashPhase = [self resolveCSSLength:offset percentage:diagonal node:offsetOwner];
-    NSArray<IJSVGUnitLength*>* lengths = node.strokeDashLengths;
-    IJSVGGraphicsNode* owner = node;
-    NSInteger dashCount = node.strokeDashArrayCount;
-    if (lengths != nil && dashCount != 0) {
+    NSArray<IJSVGUnitLength*>* lengths = style->dashLengths;
+    IJSVGGraphicsNode* owner = style->dashLengthsOwner ?: node;
+    NSInteger dashCount = style->dashCount;
+    BOOL hasLengths = lengths != nil && dashCount != 0;
+    BOOL usesCustomPattern = !hasLengths && dashCount != IJSVGInheritedIntegerValue && style->usesCustomDashPattern;
+    NSArray<NSNumber*>* customPattern = usesCustomPattern ? node.lineDashPattern : nil;
+    NSUInteger count = MAX(0, dashCount);
+    if (hasLengths) {
+        count = lengths.count;
+    } else if (usesCustomPattern) {
+        count = customPattern.count;
+    }
+    CGFloat* values = count != 0 ? malloc(count * sizeof(CGFloat)) : NULL;
+    if (count != 0 && values == NULL) {
+        [NSException raise:NSMallocException format:@"Unable to allocate stroke dash values"];
+    }
+
+    // The immutable data owns this buffer. Resolve and scale it before publication.
+    NSData* pattern = count != 0 ? [[NSData alloc] initWithBytesNoCopy:values length:count * sizeof(CGFloat) freeWhenDone:YES] : nil;
+    if (hasLengths) {
         BOOL usesFontMetrics = NO;
         for (IJSVGUnitLength* length in lengths) {
             usesFontMetrics |= length.usesFontMetrics;
         }
-        if (usesFontMetrics) {
+        if (style->dashLengthsOwner == nil && usesFontMetrics) {
             IJSVGGraphicsNode* parent = owner.styleParent;
             while (parent != nil && parent.strokeDashLengths == lengths) {
                 owner = parent;
                 parent = parent.styleParent;
             }
         }
-        NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:lengths.count];
-        for (IJSVGUnitLength* length in lengths) {
-            [pattern addObject:@([self resolveCSSLength:length percentage:diagonal node:owner])];
+        for (NSUInteger index = 0; index < count; index++) {
+            values[index] = [self resolveCSSLength:lengths[index] percentage:diagonal node:owner];
         }
-        paint.lineDashPattern = pattern;
-    } else if (dashCount != IJSVGInheritedIntegerValue) {
-        paint.lineDashPattern = node.lineDashPattern;
+    } else {
+        for (NSUInteger index = 0; index < count; index++) {
+            values[index] = customPattern != nil ? customPattern[index].doubleValue : style->dashArray[index];
+        }
     }
-    if (node.pathLength != nil && paint.lineDashPattern.count != 0) {
+    if (node.pathLength != nil && count != 0) {
         IJSVGTextPathMetrics* metrics = [[IJSVGTextPathMetrics alloc] initWithPath:resolvedPath];
         CGFloat authorLength = node.pathLength.doubleValue;
         CGFloat scale = authorLength > 0.f ? metrics.length / authorLength : INFINITY;
         if (!isfinite(scale)) {
-            scale = [self zeroPathLengthScaleForPattern:paint.lineDashPattern lengths:lengths phase:paint.lineDashPhase offset:offset pathLength:metrics.length];
+            scale = [self zeroPathLengthScaleForValues:values count:count lengths:lengths phase:paint.lineDashPhase offset:offset pathLength:metrics.length];
         }
-        NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:paint.lineDashPattern.count];
-        for (NSUInteger index = 0; index < paint.lineDashPattern.count; index++) {
-            CGFloat value = paint.lineDashPattern[index].doubleValue;
+        for (NSUInteger index = 0; index < count; index++) {
+            CGFloat value = values[index];
             if (index < lengths.count && lengths[index].isCalculated) {
                 IJSVGUnitLength* scaled = [lengths[index] lengthByScalingAbsoluteUnits:scale];
                 value = [self resolveCSSLength:scaled percentage:diagonal node:owner];
             } else if (index >= lengths.count || lengths[index].type != IJSVGUnitLengthTypePercentage) {
                 value = value == 0.f ? 0.f : value * scale;
             }
-            [pattern addObject:@(value)];
+            values[index] = value;
         }
-        paint.lineDashPattern = pattern;
         if (offset.isCalculated) {
             paint.lineDashPhase = [self resolveCSSLength:[offset lengthByScalingAbsoluteUnits:scale] percentage:diagonal node:offsetOwner];
         } else if (offset.type != IJSVGUnitLengthTypePercentage && paint.lineDashPhase != 0.f) {
             paint.lineDashPhase *= scale;
         }
     }
-    paint.nonScalingStroke = node.resolvedVectorEffect == IJSVGVectorEffectNonScalingStroke;
+    paint.lineDashData = pattern;
+    paint.nonScalingStroke = style->vectorEffect == IJSVGVectorEffectNonScalingStroke;
     if (paint.nonScalingStroke) {
         _containsNonScalingStrokes = YES;
         CGAffineTransform hostTransform = _textTransform;
@@ -1889,10 +1934,14 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 - (CGFloat)resolveStrokeWidthForNode:(IJSVGGraphicsNode*)node percentage:(CGFloat)percentage
 {
+    return [self resolveStrokeWidth:node.strokeWidth forNode:node percentage:percentage];
+}
+
+- (CGFloat)resolveStrokeWidth:(IJSVGUnitLength*)length forNode:(IJSVGGraphicsNode*)node percentage:(CGFloat)percentage
+{
     if (_style.lineWidth != IJSVGInheritedFloatValue) {
         return _style.lineWidth;
     }
-    IJSVGUnitLength* length = node.strokeWidth;
     if (length.usesFontMetrics) {
         // Inherited stroke widths retain the font metrics of the declaring element.
         while (node.styleParent != nil && node.styleParent.strokeWidth == length) {
@@ -2066,16 +2115,24 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return paint;
 }
 
-- (NSArray<IJSVGPaint*>*)drawablePaintsForNodes:(NSArray<IJSVGNode*>*)nodes
+- (void)appendDrawablePaintsForNodes:(NSArray<IJSVGNode*>*)nodes toArray:(NSMutableArray<IJSVGPaint*>*)paints
 {
-    NSMutableArray<IJSVGPaint*>* paints = nil;
-    paints = [NSMutableArray.alloc initWithCapacity:nodes.count];
     for (IJSVGNode* node in nodes) {
+        if ([node isMemberOfClass:IJSVGGroup.class] && [node.name isEqualToString:@"g"] && [self canOmitContainerPaint:(IJSVGGroup*)node]) {
+            [self appendDrawablePaintsForNodes:((IJSVGGroup*)node).children toArray:paints];
+            continue;
+        }
         IJSVGPaint* paint = [self drawablePaintForNode:node];
         if (paint != nil) {
             [paints addObject:paint];
         }
     }
+}
+
+- (NSArray<IJSVGPaint*>*)drawablePaintsForNodes:(NSArray<IJSVGNode*>*)nodes
+{
+    NSMutableArray<IJSVGPaint*>* paints = [[NSMutableArray alloc] initWithCapacity:nodes.count];
+    [self appendDrawablePaintsForNodes:nodes toArray:paints];
     return paints;
 }
 
@@ -2471,7 +2528,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
 #pragma mark Defaults
 
-- (void)applyDefaultsToPaint:(IJSVGPaint*)paint fromNode:(IJSVGGraphicsNode*)node
+- (void)applyDefaultsToPaint:(IJSVGPaint*)paint fromNode:(IJSVGGraphicsNode*)node style:(const IJSVGResolvedPaintStyle*)style
 {
     paint.sourceNode = node;
     paint.viewPort = self.viewPort;
@@ -2498,7 +2555,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     // Set the opacity.
-    CGFloat opacity = node.opacity.value;
+    CGFloat opacity = style != NULL ? style->opacity : node.opacity.value;
     if (opacity != 1.f) {
         paint.opacity = opacity;
     }
@@ -2511,7 +2568,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     // Hide the paint when needed.
     // Visibility is inherited but descendants may override it. Keep containers
     // and geometry so hidden content still contributes to layout and bounds.
-    BOOL hiddenGraphic = ([node isKindOfClass:IJSVGPath.class] || [node isKindOfClass:IJSVGImage.class]) && node.visibilityHidden;
+    BOOL hiddenGraphic = ([node isKindOfClass:IJSVGPath.class] || [node isKindOfClass:IJSVGImage.class]) && (style != NULL ? style->visibility == IJSVGVisibilityHidden : node.visibilityHidden);
     paint.hiddenByVisibility = node.shouldRender && hiddenGraphic;
     if (node.shouldRender == NO || hiddenGraphic) {
         paint.hidden = YES;
@@ -2557,12 +2614,20 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         IJSVGTransform* resolvedTransform = [transform transformByApplyingUnits:contentUnits bounds:unitBounds];
         identity = CGAffineTransformConcat(identity, resolvedTransform.CGAffineTransform);
     }
-    if (node.transformOrigin.count == 2 || node.transformBox != nil) {
+    if (node.transformOrigin.count == 2 || node.transformBox != IJSVGTransformBoxUnspecified) {
         CGRect reference = (CGRect) { .origin = CGPointZero, .size = unitBounds.size };
-        if ([node.transformBox isEqualToString:@"fill-box"] || [node.transformBox isEqualToString:@"content-box"]) {
-            reference = paint.boundingBox;
-        } else if ([node.transformBox isEqualToString:@"stroke-box"] || [node.transformBox isEqualToString:@"border-box"]) {
-            reference = paint.outerBoundingBox;
+        switch (node.transformBox) {
+            case IJSVGTransformBoxFillBox:
+            case IJSVGTransformBoxContentBox:
+                reference = paint.boundingBox;
+                break;
+            case IJSVGTransformBoxStrokeBox:
+            case IJSVGTransformBoxBorderBox:
+                reference = paint.outerBoundingBox;
+                break;
+            case IJSVGTransformBoxUnspecified:
+            case IJSVGTransformBoxViewBox:
+                break;
         }
         if (IJSVGRectIsFinite(reference)) {
             CGPoint origin = reference.origin;

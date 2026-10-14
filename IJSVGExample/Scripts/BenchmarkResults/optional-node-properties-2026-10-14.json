@@ -1,0 +1,1387 @@
+{
+  "change": {
+    "baseline": "master 16fa854 plus name derivation, deferred gradient stops and lazy path allocation",
+    "candidate": "Baseline plus lazy marker, effect and transform-origin property storage on graphics nodes",
+    "behavior": "Default reads and copies allocate no optional storage; clearing all properties releases the feature storage. Existing public accessors, inheritance and copy semantics are retained.",
+    "testRepair": "Detach reused nodes before releasing their temporary root in the combined marker inheritance test."
+  },
+  "validation": {
+    "objectiveCTestsPassed": 398,
+    "releasePackageTestsPassed": 15,
+    "xcodeBuild": "passed",
+    "releaseFrameworkBuild": "passed",
+    "formatCheck": "passed",
+    "pixels": "Exact first-draw and warm-draw equality in all benchmark repetitions"
+  },
+  "interpretation": "Primarily a memory improvement. The first timing batch had two unusually slow candidate runs on pcolormesh; a complete repeat did not reproduce the large slowdown. Both batches are retained, with no exclusions. Confirmation medians show Pcolormesh 2 about 1.1% faster and pcolormesh about 1.2% slower; no substantial speed improvement claimed. Process memory includes allocator and rendering caches.",
+  "sourceSHA256": {
+    "Framework/IJSVG/IJSVG/Source/Nodes/IJSVGGraphicsNode.m": "3a11b20616bb64714757b8ffdb14c6fc1ebef0ae591bb63e1ed3c20ee7146901",
+    "IJSVGExample/IJSVGExampleTests/IJSVGNodeAndColorStorageTests.m": "c317ab0f450ec3e2981f8ad129043d1d02b3162fbc602e6566ad5e412c45874e",
+    "IJSVGExample/IJSVGExampleTests/IJSVGMarkerTests.m": "660f666209158dd66c116dc0535f24c9318aeaa7157676cdeb79e76c6af36c1b"
+  },
+  "initialBenchmark": {
+    "recordedAt": "2026-10-14T17:33:10.750185+00:00",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "size": 512,
+    "backingScale": 1,
+    "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+    "fixtures": {
+      "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+      "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec"
+    },
+    "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+    "frameworks": {
+      "baseline": "d2ddba3b07069fd8265f810d34a3216c8678a36244477170fbdc35f51de973c4",
+      "candidate": "2d960e83bc5effc42e30a7eea5192d0cbd97a2b9d7373f516c58bad1f589019d"
+    },
+    "runs": [
+      {
+        "variant": "baseline",
+        "repetition": 0,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "89.270500",
+            "first_draw_ms": "122.630167",
+            "total_ms": "211.695833",
+            "warm_draw_ms": "21.872042",
+            "initial_parse_ms": "103.942250",
+            "initial_draw_ms": "179.133458",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "152.829208",
+            "first_draw_ms": "69.754708",
+            "total_ms": "222.813000",
+            "warm_draw_ms": "24.545750",
+            "initial_parse_ms": "153.649875",
+            "initial_draw_ms": "68.103542",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 0,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "89.894583",
+            "first_draw_ms": "120.986542",
+            "total_ms": "211.573792",
+            "warm_draw_ms": "21.511542",
+            "initial_parse_ms": "98.732333",
+            "initial_draw_ms": "168.792250",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "195.874625",
+            "first_draw_ms": "87.392792",
+            "total_ms": "289.358042",
+            "warm_draw_ms": "32.394000",
+            "initial_parse_ms": "166.442833",
+            "initial_draw_ms": "75.039083",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 1,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "91.665708",
+            "first_draw_ms": "122.904167",
+            "total_ms": "216.548542",
+            "warm_draw_ms": "22.761250",
+            "initial_parse_ms": "95.526542",
+            "initial_draw_ms": "221.309167",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "164.621500",
+            "first_draw_ms": "73.221292",
+            "total_ms": "259.153542",
+            "warm_draw_ms": "26.150042",
+            "initial_parse_ms": "199.399750",
+            "initial_draw_ms": "75.740750",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "repetition": 1,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "88.764500",
+            "first_draw_ms": "122.758458",
+            "total_ms": "211.448167",
+            "warm_draw_ms": "22.087792",
+            "initial_parse_ms": "95.589000",
+            "initial_draw_ms": "168.259125",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "151.385708",
+            "first_draw_ms": "69.191458",
+            "total_ms": "219.933042",
+            "warm_draw_ms": "25.072000",
+            "initial_parse_ms": "155.601333",
+            "initial_draw_ms": "68.319125",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "repetition": 2,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "90.781458",
+            "first_draw_ms": "122.248667",
+            "total_ms": "212.785583",
+            "warm_draw_ms": "21.736833",
+            "initial_parse_ms": "95.907250",
+            "initial_draw_ms": "177.719208",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "151.715917",
+            "first_draw_ms": "69.823458",
+            "total_ms": "221.231292",
+            "warm_draw_ms": "24.697667",
+            "initial_parse_ms": "156.544625",
+            "initial_draw_ms": "70.214292",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 2,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "88.077167",
+            "first_draw_ms": "119.219542",
+            "total_ms": "208.739375",
+            "warm_draw_ms": "20.907333",
+            "initial_parse_ms": "90.480125",
+            "initial_draw_ms": "168.727667",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "151.777000",
+            "first_draw_ms": "69.497417",
+            "total_ms": "222.424458",
+            "warm_draw_ms": "24.208333",
+            "initial_parse_ms": "160.485667",
+            "initial_draw_ms": "70.780458",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      }
+    ],
+    "memoryHarnessSHA256": "2605084a629fdddba4c65a82879c1a562156d258e846abaa5e9a50f1f99a1f71",
+    "memoryMethod": "Separate fresh processes after all timing runs. One small SVG warms common runtime state. Source and bitmap allocated before baseline. Physical footprint sampled after parse and first render with temporary autoreleases drained and the SVG retained. Peak RSS covers the whole process; deltas include allocator and rendering caches.",
+    "memoryRuns": [
+      {
+        "case": "Pcolormesh 2",
+        "variant": "baseline",
+        "repetition": 0,
+        "before_bytes": 7537216,
+        "parsed_bytes": 70746760,
+        "rendered_bytes": 115704624,
+        "peak_rss_bytes": 129810432
+      },
+      {
+        "case": "Pcolormesh 2",
+        "variant": "candidate",
+        "repetition": 0,
+        "before_bytes": 7455296,
+        "parsed_bytes": 66077272,
+        "rendered_bytes": 111117080,
+        "peak_rss_bytes": 124928000
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "baseline",
+        "repetition": 0,
+        "before_bytes": 6931008,
+        "parsed_bytes": 57066096,
+        "rendered_bytes": 73400944,
+        "peak_rss_bytes": 83329024
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "candidate",
+        "repetition": 0,
+        "before_bytes": 6931008,
+        "parsed_bytes": 57148016,
+        "rendered_bytes": 73581168,
+        "peak_rss_bytes": 83509248
+      },
+      {
+        "case": "Pcolormesh 2",
+        "variant": "candidate",
+        "repetition": 1,
+        "before_bytes": 7504448,
+        "parsed_bytes": 67732056,
+        "rendered_bytes": 112722736,
+        "peak_rss_bytes": 126550016
+      },
+      {
+        "case": "Pcolormesh 2",
+        "variant": "baseline",
+        "repetition": 1,
+        "before_bytes": 7520808,
+        "parsed_bytes": 73499272,
+        "rendered_bytes": 118211352,
+        "peak_rss_bytes": 132022272
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "candidate",
+        "repetition": 1,
+        "before_bytes": 6931008,
+        "parsed_bytes": 59081328,
+        "rendered_bytes": 75530888,
+        "peak_rss_bytes": 85442560
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "baseline",
+        "repetition": 1,
+        "before_bytes": 6881856,
+        "parsed_bytes": 58524272,
+        "rendered_bytes": 74941040,
+        "peak_rss_bytes": 84869120
+      },
+      {
+        "case": "Pcolormesh 2",
+        "variant": "baseline",
+        "repetition": 2,
+        "before_bytes": 7504448,
+        "parsed_bytes": 71402120,
+        "rendered_bytes": 116491032,
+        "peak_rss_bytes": 130203648
+      },
+      {
+        "case": "Pcolormesh 2",
+        "variant": "candidate",
+        "repetition": 2,
+        "before_bytes": 7488064,
+        "parsed_bytes": 67895920,
+        "rendered_bytes": 112706328,
+        "peak_rss_bytes": 126468096
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "baseline",
+        "repetition": 2,
+        "before_bytes": 6931008,
+        "parsed_bytes": 59720304,
+        "rendered_bytes": 76186224,
+        "peak_rss_bytes": 86114304
+      },
+      {
+        "case": "pcolormesh",
+        "variant": "candidate",
+        "repetition": 2,
+        "before_bytes": 6931008,
+        "parsed_bytes": 57082480,
+        "rendered_bytes": 73532040,
+        "peak_rss_bytes": 83443712
+      }
+    ],
+    "summary": {
+      "Pcolormesh 2": {
+        "baseline": {
+          "parse_ms": 89.2705,
+          "first_draw_ms": 122.630167,
+          "total_ms": 211.695833,
+          "warm_draw_ms": 21.872042,
+          "parse_footprint_delta_bytes": 63897672,
+          "render_footprint_delta_bytes": 108986584,
+          "peak_rss_bytes": 130203648
+        },
+        "candidate": {
+          "parse_ms": 89.894583,
+          "first_draw_ms": 120.986542,
+          "total_ms": 211.573792,
+          "warm_draw_ms": 21.511542,
+          "parse_footprint_delta_bytes": 60227608,
+          "render_footprint_delta_bytes": 105218264,
+          "peak_rss_bytes": 126468096
+        },
+        "pixelsIdentical": true,
+        "firstDrawPixelsIdentical": true
+      },
+      "pcolormesh": {
+        "baseline": {
+          "parse_ms": 151.715917,
+          "first_draw_ms": 69.754708,
+          "total_ms": 221.231292,
+          "warm_draw_ms": 24.697667,
+          "parse_footprint_delta_bytes": 51642416,
+          "render_footprint_delta_bytes": 68059184,
+          "peak_rss_bytes": 84869120
+        },
+        "candidate": {
+          "parse_ms": 164.6215,
+          "first_draw_ms": 73.221292,
+          "total_ms": 259.153542,
+          "warm_draw_ms": 26.150042,
+          "parse_footprint_delta_bytes": 50217008,
+          "render_footprint_delta_bytes": 66650160,
+          "peak_rss_bytes": 83509248
+        },
+        "pixelsIdentical": true,
+        "firstDrawPixelsIdentical": true
+      }
+    }
+  },
+  "confirmationBenchmark": {
+    "recordedAt": "2026-10-14T17:34:53.884845+00:00",
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "size": 512,
+    "backingScale": 1,
+    "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+    "fixtures": {
+      "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+      "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec"
+    },
+    "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+    "frameworks": {
+      "baseline": "d2ddba3b07069fd8265f810d34a3216c8678a36244477170fbdc35f51de973c4",
+      "candidate": "2d960e83bc5effc42e30a7eea5192d0cbd97a2b9d7373f516c58bad1f589019d"
+    },
+    "runs": [
+      {
+        "variant": "baseline",
+        "repetition": 0,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "90.644250",
+            "first_draw_ms": "126.435958",
+            "total_ms": "217.121042",
+            "warm_draw_ms": "22.274875",
+            "initial_parse_ms": "100.503167",
+            "initial_draw_ms": "180.982167",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "154.116792",
+            "first_draw_ms": "71.926708",
+            "total_ms": "226.160292",
+            "warm_draw_ms": "25.662417",
+            "initial_parse_ms": "161.116583",
+            "initial_draw_ms": "73.840000",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 0,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "90.860417",
+            "first_draw_ms": "124.563625",
+            "total_ms": "214.920375",
+            "warm_draw_ms": "21.554625",
+            "initial_parse_ms": "104.764583",
+            "initial_draw_ms": "169.839000",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "153.236625",
+            "first_draw_ms": "71.465583",
+            "total_ms": "224.774042",
+            "warm_draw_ms": "25.696458",
+            "initial_parse_ms": "164.705083",
+            "initial_draw_ms": "76.747167",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 1,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "89.928250",
+            "first_draw_ms": "124.189708",
+            "total_ms": "214.773208",
+            "warm_draw_ms": "21.706083",
+            "initial_parse_ms": "100.526000",
+            "initial_draw_ms": "190.871917",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "154.085250",
+            "first_draw_ms": "69.838167",
+            "total_ms": "224.286792",
+            "warm_draw_ms": "24.597000",
+            "initial_parse_ms": "165.207417",
+            "initial_draw_ms": "71.913875",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "repetition": 1,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "88.915708",
+            "first_draw_ms": "127.588458",
+            "total_ms": "221.357667",
+            "warm_draw_ms": "22.637750",
+            "initial_parse_ms": "95.194125",
+            "initial_draw_ms": "172.208375",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "152.556417",
+            "first_draw_ms": "69.205292",
+            "total_ms": "221.527500",
+            "warm_draw_ms": "24.944708",
+            "initial_parse_ms": "165.062833",
+            "initial_draw_ms": "73.942167",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "baseline",
+        "repetition": 2,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "88.472917",
+            "first_draw_ms": "124.058042",
+            "total_ms": "212.652250",
+            "warm_draw_ms": "21.956625",
+            "initial_parse_ms": "94.672958",
+            "initial_draw_ms": "170.091917",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "149.809167",
+            "first_draw_ms": "69.269042",
+            "total_ms": "218.697875",
+            "warm_draw_ms": "24.312417",
+            "initial_parse_ms": "153.666625",
+            "initial_draw_ms": "67.904542",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      },
+      {
+        "variant": "candidate",
+        "repetition": 2,
+        "rows": [
+          {
+            "case": "Pcolormesh 2",
+            "size": "512",
+            "parse_ms": "86.996208",
+            "first_draw_ms": "120.246625",
+            "total_ms": "207.417125",
+            "warm_draw_ms": "21.533958",
+            "initial_parse_ms": "94.206083",
+            "initial_draw_ms": "165.804417",
+            "pixel_hash": "501c7d949a59eaca"
+          },
+          {
+            "case": "pcolormesh",
+            "size": "512",
+            "parse_ms": "152.935000",
+            "first_draw_ms": "70.063417",
+            "total_ms": "222.920375",
+            "warm_draw_ms": "24.971417",
+            "initial_parse_ms": "162.239542",
+            "initial_draw_ms": "72.358917",
+            "pixel_hash": "78e9f5046c4341c3"
+          }
+        ]
+      }
+    ],
+    "summary": {
+      "Pcolormesh 2": {
+        "baseline": {
+          "parse_ms": 88.915708,
+          "first_draw_ms": 126.435958,
+          "total_ms": 217.121042,
+          "warm_draw_ms": 22.274875
+        },
+        "candidate": {
+          "parse_ms": 89.92825,
+          "first_draw_ms": 124.189708,
+          "total_ms": 214.773208,
+          "warm_draw_ms": 21.554625
+        },
+        "pixelsIdentical": true,
+        "firstDrawPixelsIdentical": true
+      },
+      "pcolormesh": {
+        "baseline": {
+          "parse_ms": 152.556417,
+          "first_draw_ms": 69.269042,
+          "total_ms": 221.5275,
+          "warm_draw_ms": 24.944708
+        },
+        "candidate": {
+          "parse_ms": 153.236625,
+          "first_draw_ms": 70.063417,
+          "total_ms": 224.286792,
+          "warm_draw_ms": 24.971417
+        },
+        "pixelsIdentical": true,
+        "firstDrawPixelsIdentical": true
+      }
+    }
+  },
+  "nodeAudit": {
+    "baseline": {
+      "classes": {
+        "IJSVGClipPath": {
+          "count": 1525,
+          "instanceBytes": 576,
+          "mallocBytes": 976000
+        },
+        "IJSVGColorNode": {
+          "count": 8070,
+          "instanceBytes": 176,
+          "mallocBytes": 1549440
+        },
+        "IJSVGFilter": {
+          "count": 4,
+          "instanceBytes": 536,
+          "mallocBytes": 2560
+        },
+        "IJSVGFilterColorMatrixPrimitive": {
+          "count": 1,
+          "instanceBytes": 672,
+          "mallocBytes": 768
+        },
+        "IJSVGFilterDropShadowPrimitive": {
+          "count": 4,
+          "instanceBytes": 672,
+          "mallocBytes": 3072
+        },
+        "IJSVGFilterGaussianBlurPrimitive": {
+          "count": 1,
+          "instanceBytes": 672,
+          "mallocBytes": 768
+        },
+        "IJSVGGradientStops": {
+          "count": 136,
+          "instanceBytes": 48,
+          "mallocBytes": 6528
+        },
+        "IJSVGGroup": {
+          "count": 2235,
+          "instanceBytes": 528,
+          "mallocBytes": 1430400
+        },
+        "IJSVGLinearGradient": {
+          "count": 9109,
+          "instanceBytes": 624,
+          "mallocBytes": 5829760
+        },
+        "IJSVGMask": {
+          "count": 1,
+          "instanceBytes": 536,
+          "mallocBytes": 640
+        },
+        "IJSVGPath": {
+          "count": 16105,
+          "instanceBytes": 576,
+          "mallocBytes": 10307200
+        },
+        "IJSVGReference": {
+          "count": 1685,
+          "instanceBytes": 24,
+          "mallocBytes": 53920
+        },
+        "IJSVGRootNode": {
+          "count": 1,
+          "instanceBytes": 592,
+          "mallocBytes": 640
+        },
+        "IJSVGStop": {
+          "count": 593,
+          "instanceBytes": 184,
+          "mallocBytes": 113856
+        },
+        "IJSVGTransform": {
+          "count": 601,
+          "instanceBytes": 80,
+          "mallocBytes": 48080
+        },
+        "IJSVGUnitLength": {
+          "count": 40843,
+          "instanceBytes": 48,
+          "mallocBytes": 1960464
+        },
+        "IJSVGUnitPoint": {
+          "count": 1,
+          "instanceBytes": 24,
+          "mallocBytes": 32
+        },
+        "IJSVGUnitRect": {
+          "count": 1,
+          "instanceBytes": 24,
+          "mallocBytes": 32
+        },
+        "IJSVGUnitSize": {
+          "count": 2,
+          "instanceBytes": 24,
+          "mallocBytes": 64
+        },
+        "IJSVGUse": {
+          "count": 15585,
+          "instanceBytes": 536,
+          "mallocBytes": 9974400
+        }
+      },
+      "emptyArrays": 8844,
+      "method": "Reachable IJSVG objects after parse; raw object ivars, no lazy property getters. Parent links skipped. Class instance size and malloc_size exclude external buffers, CG resources and container storage.",
+      "objectPropertyStorage": {
+        "IJSVGClipPath._shapePosition": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGClipPath._shapeRadiusX": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGClipPath._shapeRadiusY": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGColorNode._color": {
+          "nonNil": 8055,
+          "owners": 8070
+        },
+        "IJSVGFilter._reference": {
+          "nonNil": 4,
+          "owners": 4
+        },
+        "IJSVGFilterPrimitive._image": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._imageNode": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._input": {
+          "nonNil": 6,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._input2": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._parameters": {
+          "nonNil": 6,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._parsedNumbers": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._preparedValues": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._result": {
+          "nonNil": 3,
+          "owners": 6
+        },
+        "IJSVGGradient._colors": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._deferredStopData": {
+          "nonNil": 8836,
+          "owners": 9109
+        },
+        "IJSVGGradient._reference": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._stops": {
+          "nonNil": 0,
+          "owners": 9109
+        },
+        "IJSVGGradient._x1": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._x2": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._y1": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._y2": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradientStops._colors": {
+          "nonNil": 136,
+          "owners": 136
+        },
+        "IJSVGGradientStops._locations": {
+          "nonNil": 136,
+          "owners": 136
+        },
+        "IJSVGGraphicsNode._clipPath": {
+          "nonNil": 1525,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._filters": {
+          "nonNil": 4,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._geometryLengths": {
+          "nonNil": 1193,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._height": {
+          "nonNil": 12,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._markerEnd": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._markerMid": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._markerStart": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._mask": {
+          "nonNil": 1,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._opacity": {
+          "nonNil": 1,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._stroke": {
+          "nonNil": 1117,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeDashLengths": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeDashOffset": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeMiterLimit": {
+          "nonNil": 1,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeOpacity": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeWidth": {
+          "nonNil": 1105,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._transformBox": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._transformOrigin": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._transforms": {
+          "nonNil": 600,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._width": {
+          "nonNil": 12,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._x": {
+          "nonNil": 1203,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._y": {
+          "nonNil": 1203,
+          "owners": 44571
+        },
+        "IJSVGGroup._children": {
+          "nonNil": 28466,
+          "owners": 28466
+        },
+        "IJSVGNode._className": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._classNameList": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._currentColor": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._desc": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._identifier": {
+          "nonNil": 26224,
+          "owners": 53234
+        },
+        "IJSVGNode._name": {
+          "nonNil": 2,
+          "owners": 53234
+        },
+        "IJSVGNode._textStyle": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._title": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGPaintNode._fill": {
+          "nonNil": 16062,
+          "owners": 45164
+        },
+        "IJSVGPaintNode._fillOpacity": {
+          "nonNil": 9381,
+          "owners": 45164
+        },
+        "IJSVGPath._markerPathData": {
+          "nonNil": 16105,
+          "owners": 16105
+        },
+        "IJSVGPath._pathLength": {
+          "nonNil": 0,
+          "owners": 16105
+        },
+        "IJSVGReference._fragmentIdentifier": {
+          "nonNil": 1684,
+          "owners": 1685
+        },
+        "IJSVGReference._href": {
+          "nonNil": 1684,
+          "owners": 1685
+        },
+        "IJSVGRootNode._backgroundColor": {
+          "nonNil": 0,
+          "owners": 1
+        },
+        "IJSVGRootNode._intrinsicSize": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGRootNode._styleAncestors": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGRootNode._svg": {
+          "nonNil": 0,
+          "owners": 1
+        },
+        "IJSVGStop._offset": {
+          "nonNil": 593,
+          "owners": 593
+        },
+        "IJSVGUnitLength._calculation": {
+          "nonNil": 0,
+          "owners": 40843
+        },
+        "IJSVGUnitPoint._x": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitPoint._y": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitRect._origin": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitRect._size": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitSize._height": {
+          "nonNil": 2,
+          "owners": 2
+        },
+        "IJSVGUnitSize._width": {
+          "nonNil": 2,
+          "owners": 2
+        },
+        "IJSVGUse._reference": {
+          "nonNil": 15585,
+          "owners": 15585
+        },
+        "IJSVGViewportNode._viewBox": {
+          "nonNil": 1,
+          "owners": 28466
+        }
+      },
+      "singleElementArrays": 19331
+    },
+    "candidate": {
+      "classes": {
+        "IJSVGClipPath": {
+          "count": 1525,
+          "instanceBytes": 496,
+          "mallocBytes": 780800
+        },
+        "IJSVGColorNode": {
+          "count": 8070,
+          "instanceBytes": 176,
+          "mallocBytes": 1549440
+        },
+        "IJSVGEffectProperties": {
+          "count": 9,
+          "instanceBytes": 72,
+          "mallocBytes": 720
+        },
+        "IJSVGFilter": {
+          "count": 4,
+          "instanceBytes": 456,
+          "mallocBytes": 2048
+        },
+        "IJSVGFilterColorMatrixPrimitive": {
+          "count": 1,
+          "instanceBytes": 592,
+          "mallocBytes": 640
+        },
+        "IJSVGFilterDropShadowPrimitive": {
+          "count": 4,
+          "instanceBytes": 592,
+          "mallocBytes": 2560
+        },
+        "IJSVGFilterGaussianBlurPrimitive": {
+          "count": 1,
+          "instanceBytes": 592,
+          "mallocBytes": 640
+        },
+        "IJSVGGradientStops": {
+          "count": 136,
+          "instanceBytes": 48,
+          "mallocBytes": 6528
+        },
+        "IJSVGGroup": {
+          "count": 2235,
+          "instanceBytes": 448,
+          "mallocBytes": 1001280
+        },
+        "IJSVGLinearGradient": {
+          "count": 9109,
+          "instanceBytes": 544,
+          "mallocBytes": 5829760
+        },
+        "IJSVGMask": {
+          "count": 1,
+          "instanceBytes": 456,
+          "mallocBytes": 512
+        },
+        "IJSVGPath": {
+          "count": 16105,
+          "instanceBytes": 496,
+          "mallocBytes": 8245760
+        },
+        "IJSVGReference": {
+          "count": 1685,
+          "instanceBytes": 24,
+          "mallocBytes": 53920
+        },
+        "IJSVGRootNode": {
+          "count": 1,
+          "instanceBytes": 512,
+          "mallocBytes": 512
+        },
+        "IJSVGStop": {
+          "count": 593,
+          "instanceBytes": 184,
+          "mallocBytes": 113856
+        },
+        "IJSVGTransform": {
+          "count": 601,
+          "instanceBytes": 80,
+          "mallocBytes": 48080
+        },
+        "IJSVGUnitLength": {
+          "count": 40843,
+          "instanceBytes": 48,
+          "mallocBytes": 1960464
+        },
+        "IJSVGUnitPoint": {
+          "count": 1,
+          "instanceBytes": 24,
+          "mallocBytes": 32
+        },
+        "IJSVGUnitRect": {
+          "count": 1,
+          "instanceBytes": 24,
+          "mallocBytes": 32
+        },
+        "IJSVGUnitSize": {
+          "count": 2,
+          "instanceBytes": 24,
+          "mallocBytes": 64
+        },
+        "IJSVGUse": {
+          "count": 15585,
+          "instanceBytes": 456,
+          "mallocBytes": 7979520
+        }
+      },
+      "emptyArrays": 8844,
+      "method": "Reachable IJSVG objects after parse; raw object ivars, no lazy property getters. Parent links skipped. Class instance size and malloc_size exclude external buffers, CG resources and container storage.",
+      "objectPropertyStorage": {
+        "IJSVGClipPath._shapePosition": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGClipPath._shapeRadiusX": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGClipPath._shapeRadiusY": {
+          "nonNil": 0,
+          "owners": 1525
+        },
+        "IJSVGColorNode._color": {
+          "nonNil": 8055,
+          "owners": 8070
+        },
+        "IJSVGEffectProperties._filters": {
+          "nonNil": 4,
+          "owners": 9
+        },
+        "IJSVGEffectProperties._mask": {
+          "nonNil": 1,
+          "owners": 9
+        },
+        "IJSVGFilter._reference": {
+          "nonNil": 4,
+          "owners": 4
+        },
+        "IJSVGFilterPrimitive._image": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._imageNode": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._input": {
+          "nonNil": 6,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._input2": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._parameters": {
+          "nonNil": 6,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._parsedNumbers": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._preparedValues": {
+          "nonNil": 0,
+          "owners": 6
+        },
+        "IJSVGFilterPrimitive._result": {
+          "nonNil": 3,
+          "owners": 6
+        },
+        "IJSVGGradient._colors": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._deferredStopData": {
+          "nonNil": 8836,
+          "owners": 9109
+        },
+        "IJSVGGradient._reference": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._stops": {
+          "nonNil": 0,
+          "owners": 9109
+        },
+        "IJSVGGradient._x1": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._x2": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._y1": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradient._y2": {
+          "nonNil": 9109,
+          "owners": 9109
+        },
+        "IJSVGGradientStops._colors": {
+          "nonNil": 136,
+          "owners": 136
+        },
+        "IJSVGGradientStops._locations": {
+          "nonNil": 136,
+          "owners": 136
+        },
+        "IJSVGGraphicsNode._clipPath": {
+          "nonNil": 1525,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._effectProperties": {
+          "nonNil": 9,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._geometryLengths": {
+          "nonNil": 1193,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._height": {
+          "nonNil": 12,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._markerProperties": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._opacity": {
+          "nonNil": 1,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._stroke": {
+          "nonNil": 1117,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeDashLengths": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeDashOffset": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeMiterLimit": {
+          "nonNil": 1,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeOpacity": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._strokeWidth": {
+          "nonNil": 1105,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._transformOriginProperties": {
+          "nonNil": 0,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._transforms": {
+          "nonNil": 600,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._width": {
+          "nonNil": 12,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._x": {
+          "nonNil": 1203,
+          "owners": 44571
+        },
+        "IJSVGGraphicsNode._y": {
+          "nonNil": 1203,
+          "owners": 44571
+        },
+        "IJSVGGroup._children": {
+          "nonNil": 28466,
+          "owners": 28466
+        },
+        "IJSVGNode._className": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._classNameList": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._currentColor": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._desc": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._identifier": {
+          "nonNil": 26224,
+          "owners": 53234
+        },
+        "IJSVGNode._name": {
+          "nonNil": 2,
+          "owners": 53234
+        },
+        "IJSVGNode._textStyle": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGNode._title": {
+          "nonNil": 0,
+          "owners": 53234
+        },
+        "IJSVGPaintNode._fill": {
+          "nonNil": 16062,
+          "owners": 45164
+        },
+        "IJSVGPaintNode._fillOpacity": {
+          "nonNil": 9381,
+          "owners": 45164
+        },
+        "IJSVGPath._markerPathData": {
+          "nonNil": 16105,
+          "owners": 16105
+        },
+        "IJSVGPath._pathLength": {
+          "nonNil": 0,
+          "owners": 16105
+        },
+        "IJSVGReference._fragmentIdentifier": {
+          "nonNil": 1684,
+          "owners": 1685
+        },
+        "IJSVGReference._href": {
+          "nonNil": 1684,
+          "owners": 1685
+        },
+        "IJSVGRootNode._backgroundColor": {
+          "nonNil": 0,
+          "owners": 1
+        },
+        "IJSVGRootNode._intrinsicSize": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGRootNode._styleAncestors": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGRootNode._svg": {
+          "nonNil": 0,
+          "owners": 1
+        },
+        "IJSVGStop._offset": {
+          "nonNil": 593,
+          "owners": 593
+        },
+        "IJSVGUnitLength._calculation": {
+          "nonNil": 0,
+          "owners": 40843
+        },
+        "IJSVGUnitPoint._x": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitPoint._y": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitRect._origin": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitRect._size": {
+          "nonNil": 1,
+          "owners": 1
+        },
+        "IJSVGUnitSize._height": {
+          "nonNil": 2,
+          "owners": 2
+        },
+        "IJSVGUnitSize._width": {
+          "nonNil": 2,
+          "owners": 2
+        },
+        "IJSVGUse._reference": {
+          "nonNil": 15585,
+          "owners": 15585
+        },
+        "IJSVGViewportNode._viewBox": {
+          "nonNil": 1,
+          "owners": 28466
+        }
+      },
+      "singleElementArrays": 19331
+    }
+  }
+}

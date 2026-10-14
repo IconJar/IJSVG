@@ -29,6 +29,9 @@
 @property (nonatomic, assign) CGLineCap lineCap;
 @property (nonatomic, assign) CGLineJoin lineJoin;
 @property (nonatomic, assign) CGFloat miterLimit;
+
+// Numeric storage is used by rendering. The boxed view is created on request.
+@property (nonatomic, copy) NSData* lineDashData;
 @property (nonatomic, copy) NSArray<NSNumber*>* lineDashPattern;
 @property (nonatomic, assign) CGFloat lineDashPhase;
 @property (nonatomic, assign) IJSVGPrimitivePathType primitiveType;

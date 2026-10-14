@@ -47,6 +47,46 @@
 + (CGPathRef)newPathFromStrokedShapePaint:(IJSVGShapePaint*)paint CF_RETURNS_RETAINED;
 @end
 
+// Resolved values owned by the stack for a single path paint. No state is cached on nodes.
+typedef struct {
+    IJSVGNode* fill;
+    IJSVGUnitLength* fillOpacity;
+    IJSVGWindingRule windingRule;
+    IJSVGMarker* markerStart;
+    IJSVGMarker* markerMid;
+    IJSVGMarker* markerEnd;
+    NSColor* currentColor;
+    IJSVGVisibility visibility;
+    IJSVGPaintOrder paintOrder;
+    CGFloat opacity;
+    BOOL hasFillOpacity;
+    BOOL complete;
+} IJSVGResolvedPaintStyle;
+
+@interface IJSVGNode (Rendering)
+- (void)addSpecifiedPaintPropertiesToStyle:(IJSVGResolvedPaintStyle*)style atRoot:(BOOL)atRoot;
+@end
+
+// Created only for stroked paths, and discarded after constructing their paints.
+typedef struct {
+    IJSVGNode* stroke;
+    IJSVGUnitLength* width;
+    IJSVGUnitLength* opacity;
+    IJSVGUnitLength* miterLimit;
+    IJSVGLineCapStyle lineCap;
+    IJSVGLineJoinStyle lineJoin;
+    IJSVGUnitLength* dashOffset;
+    NSArray<IJSVGUnitLength*>* dashLengths;
+    const CGFloat* dashArray;
+    NSInteger dashCount;
+    IJSVGVectorEffect vectorEffect;
+    BOOL usesCustomDashPattern;
+    IJSVGGraphicsNode* widthOwner;
+    IJSVGGraphicsNode* dashOffsetOwner;
+    IJSVGGraphicsNode* dashLengthsOwner;
+} IJSVGResolvedStrokeStyle;
+
 @interface IJSVGGraphicsNode (Rendering)
-- (IJSVGWindingRule)windingRuleWithMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end;
+- (IJSVGResolvedStrokeStyle)resolvedStrokeStyle;
+- (IJSVGResolvedPaintStyle)resolvedPaintStyle;
 @end

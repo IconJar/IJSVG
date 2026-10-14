@@ -30,12 +30,238 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
     [storage addColor:traited];
 }
 
+// Optional feature storage is absent until a value other than the default is assigned.
+// Reading or copying an ordinary node does not allocate these objects.
+@interface IJSVGMarkerProperties : NSObject
+@property (nonatomic, strong) IJSVGMarker* markerStart;
+@property (nonatomic, strong) IJSVGMarker* markerMid;
+@property (nonatomic, strong) IJSVGMarker* markerEnd;
+@end
+
+@implementation IJSVGMarkerProperties
+
+- (BOOL)isEmpty
+{
+    return _markerStart == nil && _markerMid == nil && _markerEnd == nil;
+}
+
+@end
+
+@interface IJSVGEffectProperties : NSObject
+@property (nonatomic, strong) IJSVGMask* mask;
+@property (nonatomic, copy) NSArray<IJSVGFilter*>* filters;
+@property (nonatomic, assign) IJSVGColorInterpolation filterColorInterpolation;
+@property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;
+@property (nonatomic, assign) CGRect backgroundBounds;
+@end
+
+@implementation IJSVGEffectProperties
+
+- (BOOL)isEmpty
+{
+    return _mask == nil && _filters == nil && _filterColorInterpolation == IJSVGColorInterpolationUnspecified && _backgroundEnabled == IJSVGBackgroundEnabledUnspecified && CGRectEqualToRect(_backgroundBounds, CGRectZero);
+}
+
+@end
+
+@interface IJSVGTransformOriginProperties : NSObject
+@property (nonatomic, copy) NSArray<IJSVGUnitLength*>* transformOrigin;
+@property (nonatomic, assign) IJSVGTransformBox transformBox;
+@end
+
+@implementation IJSVGTransformOriginProperties
+
+- (BOOL)isEmpty
+{
+    return _transformOrigin == nil && _transformBox == IJSVGTransformBoxUnspecified;
+}
+
+@end
+
 @implementation IJSVGGraphicsNode {
+    IJSVGMarkerProperties* _markerProperties;
+    IJSVGEffectProperties* _effectProperties;
+    IJSVGTransformOriginProperties* _transformOriginProperties;
     unsigned char _initializedDefaultLengths;
 }
 @synthesize opacity = _opacity, strokeOpacity = _strokeOpacity, strokeWidth = _strokeWidth;
 @synthesize strokeDashOffset = _strokeDashOffset, paintOrder = _paintOrder;
-@synthesize stroke = _stroke, markerStart = _markerStart, markerMid = _markerMid, markerEnd = _markerEnd;
+@synthesize stroke = _stroke;
+
+- (void)setMarkerStart:(IJSVGMarker*)value
+{
+    if (_markerProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _markerProperties = [[IJSVGMarkerProperties alloc] init];
+    }
+    _markerProperties.markerStart = value;
+    if ([_markerProperties isEmpty]) {
+        _markerProperties = nil;
+    }
+}
+
+- (void)setMarkerMid:(IJSVGMarker*)value
+{
+    if (_markerProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _markerProperties = [[IJSVGMarkerProperties alloc] init];
+    }
+    _markerProperties.markerMid = value;
+    if ([_markerProperties isEmpty]) {
+        _markerProperties = nil;
+    }
+}
+
+- (void)setMarkerEnd:(IJSVGMarker*)value
+{
+    if (_markerProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _markerProperties = [[IJSVGMarkerProperties alloc] init];
+    }
+    _markerProperties.markerEnd = value;
+    if ([_markerProperties isEmpty]) {
+        _markerProperties = nil;
+    }
+}
+
+- (IJSVGMask*)mask
+{
+    return _effectProperties != nil ? _effectProperties.mask : nil;
+}
+
+- (void)setMask:(IJSVGMask*)value
+{
+    if (_effectProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _effectProperties = [[IJSVGEffectProperties alloc] init];
+    }
+    _effectProperties.mask = value;
+    if ([_effectProperties isEmpty]) {
+        _effectProperties = nil;
+    }
+}
+
+- (NSArray<IJSVGFilter*>*)filters
+{
+    return _effectProperties != nil ? _effectProperties.filters : nil;
+}
+
+- (void)setFilters:(NSArray<IJSVGFilter*>*)value
+{
+    if (_effectProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _effectProperties = [[IJSVGEffectProperties alloc] init];
+    }
+    _effectProperties.filters = value;
+    if ([_effectProperties isEmpty]) {
+        _effectProperties = nil;
+    }
+}
+
+- (IJSVGColorInterpolation)filterColorInterpolation
+{
+    return _effectProperties != nil ? _effectProperties.filterColorInterpolation : IJSVGColorInterpolationUnspecified;
+}
+
+- (void)setFilterColorInterpolation:(IJSVGColorInterpolation)value
+{
+    if (_effectProperties == nil) {
+        if (value == IJSVGColorInterpolationUnspecified) {
+            return;
+        }
+        _effectProperties = [[IJSVGEffectProperties alloc] init];
+    }
+    _effectProperties.filterColorInterpolation = value;
+    if ([_effectProperties isEmpty]) {
+        _effectProperties = nil;
+    }
+}
+
+- (IJSVGBackgroundEnabled)backgroundEnabled
+{
+    return _effectProperties != nil ? _effectProperties.backgroundEnabled : IJSVGBackgroundEnabledUnspecified;
+}
+
+- (void)setBackgroundEnabled:(IJSVGBackgroundEnabled)value
+{
+    if (_effectProperties == nil) {
+        if (value == IJSVGBackgroundEnabledUnspecified) {
+            return;
+        }
+        _effectProperties = [[IJSVGEffectProperties alloc] init];
+    }
+    _effectProperties.backgroundEnabled = value;
+    if ([_effectProperties isEmpty]) {
+        _effectProperties = nil;
+    }
+}
+
+- (CGRect)backgroundBounds
+{
+    return _effectProperties != nil ? _effectProperties.backgroundBounds : CGRectZero;
+}
+
+- (void)setBackgroundBounds:(CGRect)value
+{
+    if (_effectProperties == nil) {
+        if (CGRectEqualToRect(value, CGRectZero)) {
+            return;
+        }
+        _effectProperties = [[IJSVGEffectProperties alloc] init];
+    }
+    _effectProperties.backgroundBounds = value;
+    if ([_effectProperties isEmpty]) {
+        _effectProperties = nil;
+    }
+}
+
+- (NSArray<IJSVGUnitLength*>*)transformOrigin
+{
+    return _transformOriginProperties != nil ? _transformOriginProperties.transformOrigin : nil;
+}
+
+- (void)setTransformOrigin:(NSArray<IJSVGUnitLength*>*)value
+{
+    if (_transformOriginProperties == nil) {
+        if (value == nil) {
+            return;
+        }
+        _transformOriginProperties = [[IJSVGTransformOriginProperties alloc] init];
+    }
+    _transformOriginProperties.transformOrigin = value;
+    if ([_transformOriginProperties isEmpty]) {
+        _transformOriginProperties = nil;
+    }
+}
+
+- (IJSVGTransformBox)transformBox
+{
+    return _transformOriginProperties != nil ? _transformOriginProperties.transformBox : IJSVGTransformBoxUnspecified;
+}
+
+- (void)setTransformBox:(IJSVGTransformBox)value
+{
+    if (_transformOriginProperties == nil) {
+        if (value == IJSVGTransformBoxUnspecified) {
+            return;
+        }
+        _transformOriginProperties = [[IJSVGTransformOriginProperties alloc] init];
+    }
+    _transformOriginProperties.transformBox = value;
+    if ([_transformOriginProperties isEmpty]) {
+        _transformOriginProperties = nil;
+    }
+}
 
 - (void)setDefaults
 {
@@ -59,9 +285,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
         return;
     }
     IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
-    self.markerStart = node->_markerStart.copy;
-    self.markerMid = node->_markerMid.copy;
-    self.markerEnd = node->_markerEnd.copy;
+    self.markerStart = node->_markerProperties.markerStart.copy;
+    self.markerMid = node->_markerProperties.markerMid.copy;
+    self.markerEnd = node->_markerProperties.markerEnd.copy;
 
     self.x = node.x;
     self.y = node.y;
@@ -207,17 +433,17 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
 
 - (IJSVGMarker*)markerStart
 {
-    return _markerStart ?: self.styleParent.markerStart;
+    return _markerProperties.markerStart ?: self.styleParent.markerStart;
 }
 
 - (IJSVGMarker*)markerMid
 {
-    return _markerMid ?: self.styleParent.markerMid;
+    return _markerProperties.markerMid ?: self.styleParent.markerMid;
 }
 
 - (IJSVGMarker*)markerEnd
 {
-    return _markerEnd ?: self.styleParent.markerEnd;
+    return _markerProperties.markerEnd ?: self.styleParent.markerEnd;
 }
 
 - (IJSVGWindingRule)windingRule
@@ -447,39 +673,189 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
 
 @implementation IJSVGGraphicsNode (Rendering)
 
-- (IJSVGWindingRule)windingRuleWithMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end
+- (IJSVGResolvedStrokeStyle)resolvedStrokeStyle
 {
-    IJSVGWindingRule resolvedRule = IJSVGWindingRuleInherit;
-    IJSVGMarker* resolvedStart = nil;
-    IJSVGMarker* resolvedMid = nil;
-    IJSVGMarker* resolvedEnd = nil;
-    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
-        // Concrete framework nodes share these stored properties. Subclasses
-        // use their getters so custom inherited values remain observable.
+    IJSVGResolvedStrokeStyle style = { .lineCap = IJSVGLineCapStyleInherit, .lineJoin = IJSVGLineJoinStyleInherit, .dashCount = IJSVGInheritedIntegerValue, .vectorEffect = IJSVGVectorEffectInherit };
+    BOOL hasWidth = NO;
+    BOOL hasOpacity = NO;
+    BOOL hasDashOffset = NO;
+    BOOL hasDashLengths = NO;
+
+    // Preserve the existing owner choice when ancestors share a length object.
+    BOOL trackingWidthOwner = NO;
+    BOOL trackingOffsetOwner = NO;
+    BOOL trackingLengthsOwner = NO;
+    for (IJSVGGraphicsNode* node = self; node != nil;) {
+        IJSVGGraphicsNode* parent = node.styleParent;
         Class type = node.class;
+
+        // Custom subclasses can supply computed values through their getters.
         if (type != IJSVGPath.class && type != IJSVGGroup.class && type != IJSVGUse.class && type != IJSVGPolygon.class && type != IJSVGRootNode.class && type != IJSVGClipPath.class && type != IJSVGMask.class) {
-            if (resolvedRule == IJSVGWindingRuleInherit) {
-                resolvedRule = node.windingRule;
+            style.usesCustomDashPattern = node == self;
+            if (style.vectorEffect == IJSVGVectorEffectInherit) {
+                style.vectorEffect = node.resolvedVectorEffect;
             }
-            resolvedStart = resolvedStart ?: node.markerStart;
-            resolvedMid = resolvedMid ?: node.markerMid;
-            resolvedEnd = resolvedEnd ?: node.markerEnd;
+
+            // Custom getters may compute inheritance differently. Use the existing
+            // owner lookup for these chains when resolving lengths relative to the font.
+            style.widthOwner = nil;
+            style.dashOffsetOwner = nil;
+            style.dashLengthsOwner = nil;
+            style.stroke = style.stroke ?: node.stroke;
+            style.width = hasWidth ? style.width : node.strokeWidth;
+            style.opacity = hasOpacity ? style.opacity : node.strokeOpacity;
+            style.miterLimit = style.miterLimit ?: node.strokeMiterLimit;
+            style.lineCap = style.lineCap == IJSVGLineCapStyleInherit ? node.lineCapStyle : style.lineCap;
+            style.lineJoin = style.lineJoin == IJSVGLineJoinStyleInherit ? node.lineJoinStyle : style.lineJoin;
+            style.dashOffset = hasDashOffset ? style.dashOffset : node.strokeDashOffset;
+            style.dashLengths = hasDashLengths ? style.dashLengths : node.strokeDashLengths;
+            style.dashArray = style.dashArray ?: node.strokeDashArray;
+            style.dashCount = style.dashCount == IJSVGInheritedIntegerValue ? node.strokeDashArrayCount : style.dashCount;
             break;
         }
-        if (resolvedRule == IJSVGWindingRuleInherit) {
-            resolvedRule = node->_windingRule;
+        if (style.vectorEffect == IJSVGVectorEffectInherit) {
+            style.vectorEffect = node->_vectorEffect;
         }
-        resolvedStart = resolvedStart ?: node->_markerStart;
-        resolvedMid = resolvedMid ?: node->_markerMid;
-        resolvedEnd = resolvedEnd ?: node->_markerEnd;
-        if (resolvedRule != IJSVGWindingRuleInherit && resolvedStart != nil && resolvedMid != nil && resolvedEnd != nil) {
+        style.stroke = style.stroke ?: node->_stroke;
+        style.miterLimit = style.miterLimit ?: node->_strokeMiterLimit;
+        if (style.lineCap == IJSVGLineCapStyleInherit) {
+            style.lineCap = node->_lineCapStyle;
+        }
+        if (style.lineJoin == IJSVGLineJoinStyleInherit) {
+            style.lineJoin = node->_lineJoinStyle;
+        }
+        BOOL defaultWidth = (node->_initializedDefaultLengths & 8) == 0;
+        if (parent == nil || (!defaultWidth && !node->_strokeWidth.inherit)) {
+            IJSVGUnitLength* width = defaultWidth ? IJSVGInheritedOneUnitLength : node->_strokeWidth;
+            if (!hasWidth) {
+                style.width = width;
+                style.widthOwner = node;
+                hasWidth = YES;
+                trackingWidthOwner = width.usesFontMetrics && parent != nil;
+            } else if (trackingWidthOwner) {
+                if (width == style.width) {
+                    style.widthOwner = node;
+                } else {
+                    trackingWidthOwner = NO;
+                }
+            }
+        }
+        BOOL defaultOpacity = (node->_initializedDefaultLengths & 4) == 0;
+        if (!hasOpacity && (parent == nil || (!defaultOpacity && !node->_strokeOpacity.inherit))) {
+            style.opacity = defaultOpacity ? IJSVGInheritedOneUnitLength : node->_strokeOpacity;
+            hasOpacity = YES;
+        }
+        BOOL defaultOffset = (node->_initializedDefaultLengths & 16) == 0;
+        if (parent == nil || (!defaultOffset && node->_strokeDashOffset != nil && !node->_strokeDashOffset.inherit)) {
+            IJSVGUnitLength* offset = defaultOffset ? IJSVGInheritedZeroUnitLength : node->_strokeDashOffset;
+            if (!hasDashOffset) {
+                style.dashOffset = offset;
+                style.dashOffsetOwner = node;
+                hasDashOffset = YES;
+                trackingOffsetOwner = offset.usesFontMetrics && parent != nil;
+            } else if (trackingOffsetOwner) {
+                if (offset == style.dashOffset) {
+                    style.dashOffsetOwner = node;
+                } else {
+                    trackingOffsetOwner = NO;
+                }
+            }
+        }
+        if (node->_strokeDashLengths != nil || node->_strokeDashArrayCount != IJSVGInheritedIntegerValue || parent == nil) {
+            if (!hasDashLengths) {
+                style.dashLengths = node->_strokeDashLengths;
+                style.dashLengthsOwner = node;
+                hasDashLengths = YES;
+                trackingLengthsOwner = style.dashLengths != nil && parent != nil;
+            } else if (trackingLengthsOwner) {
+                if (node->_strokeDashLengths == style.dashLengths) {
+                    style.dashLengthsOwner = node;
+                } else {
+                    trackingLengthsOwner = NO;
+                }
+            }
+        }
+        style.dashArray = style.dashArray ?: node->_strokeDashArray;
+        if (style.dashCount == IJSVGInheritedIntegerValue) {
+            style.dashCount = node->_strokeDashArrayCount;
+        }
+        if (style.stroke != nil && style.miterLimit != nil && style.lineCap != IJSVGLineCapStyleInherit && style.lineJoin != IJSVGLineJoinStyleInherit && hasWidth && hasOpacity && hasDashOffset && hasDashLengths && style.dashArray != NULL && style.dashCount != IJSVGInheritedIntegerValue && !trackingWidthOwner && !trackingOffsetOwner && !trackingLengthsOwner && style.vectorEffect != IJSVGVectorEffectInherit) {
             break;
         }
+        node = parent;
     }
-    *start = resolvedStart;
-    *mid = resolvedMid;
-    *end = resolvedEnd;
-    return resolvedRule;
+    if (style.vectorEffect == IJSVGVectorEffectInherit) {
+        style.vectorEffect = IJSVGVectorEffectNone;
+    }
+    return style;
+}
+
+- (IJSVGResolvedPaintStyle)resolvedPaintStyle
+{
+    IJSVGResolvedPaintStyle style = { .windingRule = IJSVGWindingRuleInherit, .paintOrder = IJSVGPaintOrderInherit };
+    IJSVGGraphicsNode* node = self;
+    for (; node != nil;) {
+        IJSVGGraphicsNode* parent = node.styleParent;
+        [node addSpecifiedPaintPropertiesToStyle:&style atRoot:parent == nil];
+        if (style.complete) {
+            break;
+        }
+        node = parent;
+    }
+
+    // A custom getter on this node can deliberately return nil. An inheriting
+    // ordinary getter on the child still falls back to black for a nil ancestor.
+    if (style.currentColor == nil && node != self) {
+        style.currentColor = NSColor.blackColor;
+    }
+    if (style.visibility == IJSVGVisibilityInherit) {
+        style.visibility = IJSVGVisibilityVisible;
+    }
+    if (!style.complete && style.paintOrder == IJSVGPaintOrderInherit) {
+        style.paintOrder = IJSVGPaintOrderNormal;
+    }
+    style.opacity = self.opacity.value;
+    return style;
+}
+
+- (void)addSpecifiedPaintPropertiesToStyle:(IJSVGResolvedPaintStyle*)style atRoot:(BOOL)atRoot
+{
+    Class type = self.class;
+
+    // Preserve custom inherited getters instead of reading their backing storage.
+    if (type != IJSVGPath.class && type != IJSVGGroup.class && type != IJSVGUse.class && type != IJSVGPolygon.class && type != IJSVGRootNode.class && type != IJSVGClipPath.class && type != IJSVGMask.class) {
+        style->currentColor = style->currentColor ?: self.currentColor;
+        if (style->visibility == IJSVGVisibilityInherit) {
+            style->visibility = self.visibilityHidden ? IJSVGVisibilityHidden : IJSVGVisibilityVisible;
+        }
+        if (style->paintOrder == IJSVGPaintOrderInherit) {
+            style->paintOrder = self.paintOrder;
+        }
+        style->fill = style->fill ?: self.fill;
+        if (!style->hasFillOpacity) {
+            style->fillOpacity = self.fillOpacity;
+            style->hasFillOpacity = YES;
+        }
+        if (style->windingRule == IJSVGWindingRuleInherit) {
+            style->windingRule = self.windingRule;
+        }
+        style->markerStart = style->markerStart ?: self.markerStart;
+        style->markerMid = style->markerMid ?: self.markerMid;
+        style->markerEnd = style->markerEnd ?: self.markerEnd;
+        style->complete = YES;
+        return;
+    }
+    [super addSpecifiedPaintPropertiesToStyle:style atRoot:atRoot];
+    if (style->paintOrder == IJSVGPaintOrderInherit) {
+        style->paintOrder = _paintOrder;
+    }
+    if (style->windingRule == IJSVGWindingRuleInherit) {
+        style->windingRule = _windingRule;
+    }
+    style->markerStart = style->markerStart ?: _markerProperties.markerStart;
+    style->markerMid = style->markerMid ?: _markerProperties.markerMid;
+    style->markerEnd = style->markerEnd ?: _markerProperties.markerEnd;
+    style->complete = style->fill != nil && style->hasFillOpacity && style->windingRule != IJSVGWindingRuleInherit && style->markerStart != nil && style->markerMid != nil && style->markerEnd != nil && style->currentColor != nil && style->visibility != IJSVGVisibilityInherit && style->paintOrder != IJSVGPaintOrderInherit;
 }
 
 @end

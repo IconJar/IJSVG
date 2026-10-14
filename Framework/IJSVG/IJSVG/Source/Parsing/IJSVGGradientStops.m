@@ -11,6 +11,34 @@
 #import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
 
+static BOOL IJSVGGradientBytesMatch(const unsigned char* bytes, const char* keyword, NSUInteger length)
+{
+    for (NSUInteger index = 0; index < length; index++) {
+        if ((bytes[index] | 0x20) != keyword[index]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+static BOOL IJSVGGradientAttributeDependsOnStyle(IJSVGXMLAttribute* attribute)
+{
+    const unsigned char* bytes = (const unsigned char*)IJSVGXMLAttributeBytes(attribute);
+    NSUInteger length = attribute->value.length;
+    for (NSUInteger index = 0; index < length; index++) {
+
+        // Values outside ASCII conservatively keep the uncached parsing path.
+        if (bytes[index] >= 0x80) {
+            return YES;
+        }
+        NSUInteger remaining = length - index;
+        if ((remaining >= 7 && IJSVGGradientBytesMatch(bytes + index, "inherit", 7)) || (remaining >= 12 && IJSVGGradientBytesMatch(bytes + index, "currentcolor", 12)) || (remaining >= 4 && IJSVGGradientBytesMatch(bytes + index, "var(", 4))) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* element, IJSVGParser* parser)
 {
     // Validate every child before changing the gradient.
@@ -28,7 +56,6 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     }
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
         IJSVGStop* stop = [[IJSVGStop alloc] init];
-        stop.name = @"stop";
         [gradient addChild:stop];
         [stop consumeXMLAttributes:IJSVGXMLAttributes(child) parser:parser];
     }
@@ -45,10 +72,11 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 + (BOOL)canCacheElement:(IJSVGXMLNode*)element
 {
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind || ![IJSVGXMLLocalName(child) isEqualToString:@"stop"] || IJSVGXMLChildCount(child) != 0) {
+        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGXMLType(child) != IJSVGNodeTypeStop || strcmp(child->name, "stop") != 0 || IJSVGXMLChildCount(child) != 0) {
             return NO;
         }
-        if (IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor)).length == 0) {
+        IJSVGXMLAttribute* color = IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor);
+        if (color == NULL || color->value.length == 0) {
             return NO;
         }
         IJSVGXMLAttributeList childAttributeIterator = IJSVGXMLAttributes(child);
@@ -57,8 +85,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
             if (attributeIdentifier != IJSVGNodeAttributeOffset && attributeIdentifier != IJSVGNodeAttributeStopColor && attributeIdentifier != IJSVGNodeAttributeStopOpacity) {
                 return NO;
             }
-            NSString* value = IJSVGXMLAttributeValue(attribute).lowercaseString;
-            if ([value containsString:@"inherit"] || [value containsString:@"currentcolor"] || [value containsString:@"var("]) {
+            if (IJSVGGradientAttributeDependsOnStyle(attribute)) {
                 return NO;
             }
         }
@@ -98,9 +125,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 
 - (void)applyToGradient:(IJSVGGradient*)gradient
 {
-    for (NSUInteger index = 0; index < _stopCount; index++) {
-        [gradient addChild:IJSVGGradientStopDataCreateStop(_stops + index)];
-    }
+    [gradient deferStops:self];
     gradient.colors = _colors;
     gradient.numberOfStops = _colors.count;
     CGFloat* locations = _locations.length == 0 ? NULL : malloc(_locations.length);
@@ -108,6 +133,13 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         memcpy(locations, _locations.bytes, _locations.length);
     }
     gradient.locations = locations;
+}
+
+- (void)appendStopsToGradient:(IJSVGGradient*)gradient
+{
+    for (NSUInteger index = 0; index < _stopCount; index++) {
+        [gradient addChild:IJSVGGradientStopDataCreateStop(_stops + index)];
+    }
 }
 
 @end

@@ -313,6 +313,25 @@ void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes,
     }
 }
 
+static IJSVGTransformBox IJSVGTransformBoxFromString(NSString* value)
+{
+    if ([value isEqualToString:@"fill-box"]) {
+        return IJSVGTransformBoxFillBox;
+    }
+    if ([value isEqualToString:@"stroke-box"]) {
+        return IJSVGTransformBoxStrokeBox;
+    }
+    if ([value isEqualToString:@"content-box"]) {
+        return IJSVGTransformBoxContentBox;
+    }
+    if ([value isEqualToString:@"border-box"]) {
+        return IJSVGTransformBoxBorderBox;
+    }
+
+    // The view box is also the initial value. This property does not inherit.
+    return IJSVGTransformBoxViewBox;
+}
+
 void IJSVGParseTransformAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext* context)
 {
     NSString* __unsafe_unretained* attributeValues = context->values;
@@ -328,7 +347,8 @@ void IJSVGParseTransformAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingCont
         }
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformBox, &value)) {
-        node.transformBox = [value isEqualToString:@"inherit"] ? node.styleParent.transformBox : value;
+        NSString* keyword = value.lowercaseString;
+        node.transformBox = [keyword isEqualToString:@"inherit"] ? node.styleParent.transformBox : IJSVGTransformBoxFromString(keyword);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
         BOOL css = [nodeStyle property:IJSVGAttributeTransform] != nil || [styleSheet property:IJSVGAttributeTransform] != nil;

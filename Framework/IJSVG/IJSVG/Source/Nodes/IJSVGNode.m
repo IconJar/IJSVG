@@ -783,3 +783,15 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 }
 
 @end
+
+@implementation IJSVGNode (Rendering)
+
+- (void)addSpecifiedPaintPropertiesToStyle:(IJSVGResolvedPaintStyle*)style atRoot:(BOOL)atRoot
+{
+    style->currentColor = style->currentColor ?: _currentColor;
+    if (style->visibility == IJSVGVisibilityInherit) {
+        style->visibility = _visibility;
+    }
+}
+
+@end

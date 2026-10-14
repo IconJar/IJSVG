@@ -1,0 +1,364 @@
+{
+  "recordedAt": "2026-10-14T17:42:53.789680+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "size": 512,
+  "backingScale": 1,
+  "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+  "fixtures": {
+    "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+    "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec"
+  },
+  "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+  "frameworks": {
+    "baseline": "2d960e83bc5effc42e30a7eea5192d0cbd97a2b9d7373f516c58bad1f589019d",
+    "candidate": "aa86dba7ace689658c179bc2e2271774641db1b1fe3f82b9629d47b0a406eee0"
+  },
+  "runs": [
+    {
+      "variant": "baseline",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "85.555750",
+          "first_draw_ms": "117.832500",
+          "total_ms": "204.117875",
+          "warm_draw_ms": "21.463792",
+          "initial_parse_ms": "98.373042",
+          "initial_draw_ms": "170.947250",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "151.028250",
+          "first_draw_ms": "69.451625",
+          "total_ms": "221.536833",
+          "warm_draw_ms": "25.020708",
+          "initial_parse_ms": "162.071958",
+          "initial_draw_ms": "71.350833",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.084292",
+          "first_draw_ms": "119.450417",
+          "total_ms": "206.475000",
+          "warm_draw_ms": "21.281417",
+          "initial_parse_ms": "96.041792",
+          "initial_draw_ms": "169.743125",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "77.929667",
+          "first_draw_ms": "69.144292",
+          "total_ms": "146.926375",
+          "warm_draw_ms": "24.560417",
+          "initial_parse_ms": "78.337625",
+          "initial_draw_ms": "67.438583",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "88.006333",
+          "first_draw_ms": "123.138167",
+          "total_ms": "211.744208",
+          "warm_draw_ms": "21.919417",
+          "initial_parse_ms": "95.151458",
+          "initial_draw_ms": "186.270708",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.432333",
+          "first_draw_ms": "70.191958",
+          "total_ms": "149.245917",
+          "warm_draw_ms": "25.762417",
+          "initial_parse_ms": "78.669542",
+          "initial_draw_ms": "71.716375",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "87.816542",
+          "first_draw_ms": "119.275875",
+          "total_ms": "208.944458",
+          "warm_draw_ms": "21.441917",
+          "initial_parse_ms": "95.715208",
+          "initial_draw_ms": "181.074458",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "151.927500",
+          "first_draw_ms": "69.869250",
+          "total_ms": "221.843542",
+          "warm_draw_ms": "25.233125",
+          "initial_parse_ms": "164.131458",
+          "initial_draw_ms": "71.928833",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "88.384667",
+          "first_draw_ms": "120.249208",
+          "total_ms": "208.481083",
+          "warm_draw_ms": "21.489750",
+          "initial_parse_ms": "90.092542",
+          "initial_draw_ms": "163.919083",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "152.818917",
+          "first_draw_ms": "70.786042",
+          "total_ms": "223.805042",
+          "warm_draw_ms": "25.683833",
+          "initial_parse_ms": "162.847208",
+          "initial_draw_ms": "72.171375",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "89.541417",
+          "first_draw_ms": "122.998792",
+          "total_ms": "212.291292",
+          "warm_draw_ms": "21.481458",
+          "initial_parse_ms": "99.059833",
+          "initial_draw_ms": "173.197875",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "79.746167",
+          "first_draw_ms": "70.745708",
+          "total_ms": "150.735792",
+          "warm_draw_ms": "25.862917",
+          "initial_parse_ms": "79.353292",
+          "initial_draw_ms": "73.989042",
+          "pixel_hash": "78e9f5046c4341c3"
+        }
+      ]
+    }
+  ],
+  "memoryHarnessSHA256": "2605084a629fdddba4c65a82879c1a562156d258e846abaa5e9a50f1f99a1f71",
+  "memoryMethod": "Separate fresh processes after all timing runs. One small SVG warms common runtime state. Source and bitmap allocated before baseline. Physical footprint sampled after parse and first render with temporary autoreleases drained and the SVG retained. Peak RSS covers the whole process; deltas include allocator and rendering caches.",
+  "memoryRuns": [
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 7504472,
+      "parsed_bytes": 66142856,
+      "rendered_bytes": 111297328,
+      "peak_rss_bytes": 125075456
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 7488064,
+      "parsed_bytes": 67125848,
+      "rendered_bytes": 112001816,
+      "peak_rss_bytes": 125796352
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 6931008,
+      "parsed_bytes": 57508440,
+      "rendered_bytes": 74007176,
+      "peak_rss_bytes": 83918848
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 6914624,
+      "parsed_bytes": 44696152,
+      "rendered_bytes": 61637232,
+      "peak_rss_bytes": 71548928
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 7504448,
+      "parsed_bytes": 67846768,
+      "rendered_bytes": 112788272,
+      "peak_rss_bytes": 126566400
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 7471680,
+      "parsed_bytes": 67469936,
+      "rendered_bytes": 112329496,
+      "peak_rss_bytes": 126107648
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 6947416,
+      "parsed_bytes": 44614256,
+      "rendered_bytes": 61489800,
+      "peak_rss_bytes": 71385088
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 6914624,
+      "parsed_bytes": 54608472,
+      "rendered_bytes": 71074416,
+      "peak_rss_bytes": 81002496
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 7504424,
+      "parsed_bytes": 67846768,
+      "rendered_bytes": 113017624,
+      "peak_rss_bytes": 126828544
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 7488064,
+      "parsed_bytes": 67846744,
+      "rendered_bytes": 112771864,
+      "peak_rss_bytes": 126550016
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 6914624,
+      "parsed_bytes": 57279064,
+      "rendered_bytes": 73548424,
+      "peak_rss_bytes": 83460096
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 6931008,
+      "parsed_bytes": 44827224,
+      "rendered_bytes": 61850224,
+      "peak_rss_bytes": 71761920
+    }
+  ],
+  "summary": {
+    "Pcolormesh 2": {
+      "baseline": {
+        "parse_ms": 87.816542,
+        "first_draw_ms": 119.275875,
+        "total_ms": 208.481083,
+        "warm_draw_ms": 21.463792,
+        "parse_footprint_delta_bytes": 59998256,
+        "render_footprint_delta_bytes": 104857816,
+        "peak_rss_bytes": 126107648
+      },
+      "candidate": {
+        "parse_ms": 88.006333,
+        "first_draw_ms": 122.998792,
+        "total_ms": 211.744208,
+        "warm_draw_ms": 21.481458,
+        "parse_footprint_delta_bytes": 60342320,
+        "render_footprint_delta_bytes": 105283800,
+        "peak_rss_bytes": 126550016
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "pcolormesh": {
+      "baseline": {
+        "parse_ms": 151.9275,
+        "first_draw_ms": 69.86925,
+        "total_ms": 221.843542,
+        "warm_draw_ms": 25.233125,
+        "parse_footprint_delta_bytes": 50364440,
+        "render_footprint_delta_bytes": 66633800,
+        "peak_rss_bytes": 83460096
+      },
+      "candidate": {
+        "parse_ms": 78.432333,
+        "first_draw_ms": 70.191958,
+        "total_ms": 149.245917,
+        "warm_draw_ms": 25.762417,
+        "parse_footprint_delta_bytes": 37781528,
+        "render_footprint_delta_bytes": 54722608,
+        "peak_rss_bytes": 71548928
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    }
+  },
+  "change": {
+    "baseline": "master 16fa854 plus name derivation, deferred stops, lazy paths and optional node properties",
+    "candidate": "Baseline with Foundation DTD compatibility expansion removed. Ordinary DOCTYPEs remain on the C SAX path; DTD-defaulted attributes are omitted; custom entity inputs are rejected. Predefined XML entities and numeric character references remain supported.",
+    "authorization": "User explicitly dropped support for custom DTD features.",
+    "interpretation": "pcolormesh parse plus first draw decreased from 221.84 to 149.25 ms (32.7%). Pcolormesh 2 has no DOCTYPE and its parse time is effectively unchanged; total varied from 208.48 to 211.74 ms. Results are warmed fresh-document medians, not guaranteed cold startup."
+  },
+  "validation": {
+    "objectiveCTestsPassed": 190,
+    "packageTestsPassed": 15,
+    "xcodeBuild": "passed",
+    "releaseBuild": "passed",
+    "formatCheck": "passed",
+    "pixelEquality": "Exact first-draw and warm-draw equality on both fixtures across all repetitions",
+    "timingIsolation": "No concurrent builds, tests or audits"
+  },
+  "changedSourceSHA256": {
+    "Framework/IJSVG/IJSVG/Source/Parsing/IJSVGXML.h": "b6b7bc7ce11f480a67174345ef68349172dfc7e7fc5c4d9bffc137ac2b7d6780",
+    "Framework/IJSVG/IJSVG/Source/Parsing/IJSVGXML.m": "dc6ee96a6c68280effd101ad4849f478f7289bce7de4b56e96f569e713ea93a9",
+    "IJSVGExample/IJSVGExampleTests/IJSVGUtilityParsingTests.m": "8a8582803e89f7f3691b2875643ec0622632872817173ab0d99be2b340cbf14a"
+  }
+}

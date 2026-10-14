@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGStyle.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
 #include <string.h>
 
@@ -104,7 +105,51 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     return gradient;
 }
 
-@implementation IJSVGGradient
+@implementation IJSVGGradient {
+    IJSVGGradientStops* _deferredStopData;
+}
+
+// Render colors and locations are already available. Keep editable stop nodes
+// out of the rendering path until a caller inspects or changes the children.
+- (void)deferStops:(IJSVGGradientStops*)stops
+{
+    if (_deferredStopData != nil || [super children].count != 0) {
+        [self materializeStops];
+        [stops appendStopsToGradient:self];
+        return;
+    }
+    _deferredStopData = stops;
+}
+
+- (void)materializeStops
+{
+    IJSVGGradientStops* stops = _deferredStopData;
+    if (stops == nil) {
+        return;
+    }
+
+    // Clear first: appending the new children enters addChild: again.
+    _deferredStopData = nil;
+    [stops appendStopsToGradient:self];
+}
+
+- (NSArray<IJSVGNode*>*)children
+{
+    [self materializeStops];
+    return [super children];
+}
+
+- (void)addChild:(IJSVGNode*)child
+{
+    [self materializeStops];
+    [super addChild:child];
+}
+
+- (void)removeChild:(IJSVGNode*)child
+{
+    [self materializeStops];
+    [super removeChild:child];
+}
 
 #pragma mark - Parsing
 
@@ -261,6 +306,10 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 - (void)applyPropertiesFromNode:(IJSVGGradient*)node
 {
     [super applyPropertiesFromNode:node];
+
+    // Group copying handles existing children. A deferred gradient has none
+    // yet, so its copy can retain the immutable snapshot without expanding it.
+    _deferredStopData = node->_deferredStopData;
     self.reference = node.reference;
     self.numberOfStops = node.numberOfStops;
     self.spreadMethod = node.spreadMethod;

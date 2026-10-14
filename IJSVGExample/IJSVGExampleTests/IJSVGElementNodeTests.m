@@ -15,6 +15,46 @@
 
 @implementation IJSVGElementNodeTests
 
+- (void)testParsedCanonicalNamesRemainDerivedAfterCopying
+{
+    IJSVGRootNode* root = [self root:@"<g><path d='M0 0L1 1'/><rect width='2' height='3'/></g>"];
+    IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+    NSArray<IJSVGNode*>* nodes = @[ root, group, group.children[0], group.children[1] ];
+    NSArray<NSString*>* names = @[ @"svg", @"g", @"path", @"rect" ];
+    Ivar nameStorage = class_getInstanceVariable(IJSVGNode.class, "_name");
+    XCTAssertNotEqual(nameStorage, NULL);
+    for (NSUInteger index = 0; index < nodes.count; index++) {
+        IJSVGNode* node = nodes[index];
+        XCTAssertEqualObjects(node.name, names[index]);
+        XCTAssertNil(object_getIvar(node, nameStorage));
+        IJSVGNode* copy = node.copy;
+        XCTAssertEqualObjects(copy.name, names[index]);
+        XCTAssertNil(object_getIvar(copy, nameStorage));
+        copy.type = IJSVGNodeTypeCircle;
+        XCTAssertEqualObjects(copy.name, @"circle");
+        XCTAssertEqualObjects(node.name, names[index]);
+    }
+}
+
+- (void)testSourceNameOverridesAndExplicitNamesRemainIndependentOfType
+{
+    IJSVGRootNode* root = [self root:@"<custom><PATH d='M0 0L1 1'/></custom>"];
+    IJSVGGroup* custom = (IJSVGGroup*)root.children.firstObject;
+    IJSVGNode* path = custom.children.firstObject;
+    XCTAssertEqualObjects(custom.name, @"custom");
+    XCTAssertEqualObjects(path.name, @"PATH");
+    IJSVGNode* copy = path.copy;
+    copy.type = IJSVGNodeTypeCircle;
+    XCTAssertEqualObjects(copy.name, @"PATH");
+    copy.name = nil;
+    XCTAssertEqualObjects(copy.name, @"circle");
+    NSMutableString* override = [NSMutableString stringWithString:@"custom-name"];
+    copy.name = override;
+    [override appendString:@"-changed"];
+    XCTAssertEqualObjects(copy.name, @"custom-name");
+    XCTAssertEqualObjects(path.name, @"PATH");
+}
+
 - (void)testRepeatedUseResolvesGeometryForEachInstance
 {
     IJSVGRootNode* root = [self root:@"<defs><rect id='variable' width='var(--size)' "

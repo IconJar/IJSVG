@@ -64,3 +64,22 @@
 }
 
 @end
+
+@implementation IJSVGPaintNode (Rendering)
+
+- (void)addSpecifiedPaintPropertiesToStyle:(IJSVGResolvedPaintStyle*)style atRoot:(BOOL)atRoot
+{
+    [super addSpecifiedPaintPropertiesToStyle:style atRoot:atRoot];
+    style->fill = style->fill ?: _fill;
+    if (!style->hasFillOpacity) {
+        BOOL needsDefault = (_initializedDefaultLengths & 2) == 0;
+        if (atRoot || (!needsDefault && !_fillOpacity.inherit)) {
+            style->fillOpacity = needsDefault ? IJSVGInheritedOneUnitLength : _fillOpacity;
+
+            // An explicitly assigned nil is resolved too. It must not inherit.
+            style->hasFillOpacity = YES;
+        }
+    }
+}
+
+@end

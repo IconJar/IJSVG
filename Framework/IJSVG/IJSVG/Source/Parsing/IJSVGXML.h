@@ -76,8 +76,6 @@ struct IJSVGXMLDocument {
     uint32_t current;
     struct _xmlDict* names;
     bool failed;
-    bool unsupported;
-    bool usedCompatibilityExpansion;
 };
 
 // Lists borrow contiguous attributes or an inherited pointer overlay.
@@ -89,6 +87,7 @@ typedef struct {
 } IJSVGXMLAttributeList;
 
 // Document lifecycle. Attribute lists and byte ranges borrow document storage.
+// DOCTYPE declarations do not load a DTD. Custom entity references are rejected.
 IJSVGXMLDocument* IJSVGXMLDocumentCreate(const void* bytes, size_t length);
 IJSVGXMLDocument* IJSVGXMLDocumentForElementAttributes(NSXMLElement* element);
 void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document);

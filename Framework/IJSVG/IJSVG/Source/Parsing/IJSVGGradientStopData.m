@@ -39,7 +39,6 @@ void IJSVGGradientStopDataRelease(IJSVGGradientStopData* data)
 IJSVGStop* IJSVGGradientStopDataCreateStop(const IJSVGGradientStopData* data)
 {
     IJSVGStop* stop = [[IJSVGStop alloc] init];
-    stop.name = @"stop";
     stop.offset = (__bridge IJSVGUnitLength*)data->offset;
     if (data->opacity != NULL) {
         stop.fillOpacity = (__bridge IJSVGUnitLength*)data->opacity;

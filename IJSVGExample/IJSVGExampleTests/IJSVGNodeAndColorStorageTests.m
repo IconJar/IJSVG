@@ -7,18 +7,172 @@
 //
 
 #import <IJSVG/IJSVGClipPath.h>
+#import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGImage.h>
+#import <IJSVG/IJSVGMarker.h>
+#import <IJSVG/IJSVGMask.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGRect.h>
 #import <IJSVG/IJSVGStop.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVGTestHelpers.h>
+#import <objc/runtime.h>
 
 @interface IJSVGNodeAndColorStorageTests : XCTestCase
 @end
 
 @implementation IJSVGNodeAndColorStorageTests
+
+- (void)testTransformBoxKeywordsResolveToEnums
+{
+    NSDictionary<NSString*, NSNumber*>* cases = @{ @"view-box" : @(IJSVGTransformBoxViewBox), @"fill-box" : @(IJSVGTransformBoxFillBox), @"stroke-box" : @(IJSVGTransformBoxStrokeBox), @"content-box" : @(IJSVGTransformBoxContentBox), @"border-box" : @(IJSVGTransformBoxBorderBox), @"FILL-BOX" : @(IJSVGTransformBoxFillBox), @"initial" : @(IJSVGTransformBoxViewBox), @"unset" : @(IJSVGTransformBoxViewBox), @"inherit" : @(IJSVGTransformBoxStrokeBox) };
+    for (NSString* keyword in cases) {
+        NSString* source = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg'><g transform-box='stroke-box'><path style='transform-box:%@' d='M0 0h10v10z'/><path d='M0 0h10v10z'/></g></svg>", keyword];
+        IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+        IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+        IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)group.children.firstObject;
+        XCTAssertNotNil(node);
+        XCTAssertEqual(node.transformBox, cases[keyword].unsignedIntegerValue, @"%@", keyword);
+        IJSVGGraphicsNode* copy = node.copy;
+        XCTAssertEqual(copy.transformBox, node.transformBox);
+        XCTAssertEqual(((IJSVGGraphicsNode*)group.children.lastObject).transformBox, IJSVGTransformBoxUnspecified);
+    }
+}
+
+- (void)testUnusedGraphicsFeaturesDoNotAllocateStorage
+{
+    IJSVGPath* node = [[IJSVGPath alloc] init];
+    XCTAssertNil(node.markerStart);
+    XCTAssertNil(node.markerMid);
+    XCTAssertNil(node.markerEnd);
+    XCTAssertNil(node.mask);
+    XCTAssertNil(node.filters);
+    XCTAssertNil(node.transformOrigin);
+    XCTAssertEqual(node.transformBox, IJSVGTransformBoxUnspecified);
+    XCTAssertEqual(node.filterColorInterpolation, IJSVGColorInterpolationUnspecified);
+    XCTAssertEqual(node.backgroundEnabled, IJSVGBackgroundEnabledUnspecified);
+    XCTAssertTrue(CGRectEqualToRect(node.backgroundBounds, CGRectZero));
+    node.markerStart = nil;
+    node.mask = nil;
+    node.filters = nil;
+    node.transformOrigin = nil;
+    node.transformBox = IJSVGTransformBoxUnspecified;
+    node.filterColorInterpolation = IJSVGColorInterpolationUnspecified;
+    node.backgroundEnabled = IJSVGBackgroundEnabledUnspecified;
+    node.backgroundBounds = CGRectZero;
+    IJSVGPath* copy = node.copy;
+    for (NSString* name in @[ @"_markerProperties", @"_effectProperties", @"_transformOriginProperties" ]) {
+        Ivar storage = class_getInstanceVariable(IJSVGGraphicsNode.class, name.UTF8String);
+        XCTAssertNotEqual(storage, NULL);
+        XCTAssertNil(object_getIvar(node, storage));
+        XCTAssertNil(object_getIvar(copy, storage));
+    }
+}
+
+- (void)testOptionalEffectsAndTransformStorageCopyAndRelease
+{
+    IJSVGGroup* node = [[IJSVGGroup alloc] init];
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    NSMutableArray* filters = [NSMutableArray arrayWithObject:filter];
+    node.filters = filters;
+    [filters removeAllObjects];
+    XCTAssertEqual(node.filter, filter);
+    node.mask = [[IJSVGMask alloc] init];
+    node.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+    node.backgroundEnabled = IJSVGBackgroundEnabledNew;
+    node.backgroundBounds = CGRectNull;
+    node.transformBox = IJSVGTransformBoxFillBox;
+    NSMutableArray* origin = [NSMutableArray arrayWithObject:[IJSVGUnitLength unitWithFloat:5]];
+    node.transformOrigin = origin;
+    [origin removeAllObjects];
+    IJSVGGroup* copy = node.copy;
+    XCTAssertEqual(copy.filter, filter);
+    XCTAssertEqual(copy.mask, node.mask);
+    XCTAssertEqual(copy.resolvedFilterColorInterpolation, IJSVGColorInterpolationSRGB);
+    XCTAssertTrue(CGRectIsNull(copy.backgroundRect));
+    XCTAssertEqual(copy.transformBox, IJSVGTransformBoxFillBox);
+    XCTAssertEqual(copy.transformOrigin.count, 1u);
+    node.filters = nil;
+    node.mask = nil;
+    node.filterColorInterpolation = IJSVGColorInterpolationUnspecified;
+    node.backgroundEnabled = IJSVGBackgroundEnabledUnspecified;
+    node.backgroundBounds = CGRectZero;
+    node.transformOrigin = nil;
+    node.transformBox = IJSVGTransformBoxUnspecified;
+    XCTAssertNil(object_getIvar(node, class_getInstanceVariable(IJSVGGraphicsNode.class, "_effectProperties")));
+    XCTAssertNil(object_getIvar(node, class_getInstanceVariable(IJSVGGraphicsNode.class, "_transformOriginProperties")));
+    XCTAssertEqual(copy.filter, filter);
+    XCTAssertEqual(copy.transformBox, IJSVGTransformBoxFillBox);
+    copy.filter = nil;
+    XCTAssertEqualObjects(copy.filters, @[]);
+    XCTAssertNil(copy.filter);
+}
+
+- (void)testOptionalMarkersPreserveInheritanceAndIndependentCopies
+{
+    IJSVGGroup* parent = [[IJSVGGroup alloc] init];
+    IJSVGPath* child = [[IJSVGPath alloc] init];
+    [parent addChild:child];
+    parent.markerStart = [[IJSVGMarker alloc] init];
+    parent.markerMid = [[IJSVGMarker alloc] init];
+    parent.markerEnd = [[IJSVGMarker alloc] init];
+    Ivar storage = class_getInstanceVariable(IJSVGGraphicsNode.class, "_markerProperties");
+    XCTAssertEqual(child.markerStart, parent.markerStart);
+    XCTAssertEqual(child.markerMid, parent.markerMid);
+    XCTAssertEqual(child.markerEnd, parent.markerEnd);
+    XCTAssertNil(object_getIvar(child, storage));
+    IJSVGPath* inheritedCopy = child.copy;
+    XCTAssertNil(object_getIvar(inheritedCopy, storage));
+    child.markerStart = [[IJSVGMarker alloc] init];
+    IJSVGPath* explicitCopy = child.copy;
+    XCTAssertNotEqual(explicitCopy.markerStart, child.markerStart);
+    child.markerStart = nil;
+    XCTAssertNil(object_getIvar(child, storage));
+    XCTAssertEqual(child.markerStart, parent.markerStart);
+    XCTAssertNotEqual(explicitCopy.markerStart, parent.markerStart);
+    inheritedCopy.parentNode = nil;
+    explicitCopy.parentNode = nil;
+}
+
+- (void)testEmptyPathsRemainMutableAndIndependentWhenCopied
+{
+    IJSVGPath* path = [[IJSVGPath alloc] init];
+    IJSVGPath* copy = path.copy;
+    XCTAssertTrue(CGRectIsNull(path.pathBoundingBox));
+    XCTAssertTrue(CGPointEqualToPoint(path.currentPoint, CGPointZero));
+    XCTAssertFalse(path.hasPointSubpaths);
+    [path close];
+    XCTAssertTrue(CGPathIsEmpty(path.path));
+    CGMutablePathRef editable = copy.path;
+    XCTAssertNotEqual(editable, NULL);
+    XCTAssertEqual(copy.path, editable);
+    CGPathAddRect(editable, NULL, CGRectMake(1, 2, 3, 4));
+    XCTAssertTrue(CGPathIsEmpty(path.path));
+    XCTAssertTrue(CGRectEqualToRect(copy.pathBoundingBox, CGRectMake(1, 2, 3, 4)));
+    IJSVGPath* drawnCopy = copy.copy;
+    CGPathAddRect(drawnCopy.path, NULL, CGRectMake(10, 10, 5, 5));
+    XCTAssertTrue(CGRectEqualToRect(copy.pathBoundingBox, CGRectMake(1, 2, 3, 4)));
+}
+
+- (void)testExplicitNullPathAndMarkerSnapshotsKeepTheirSemantics
+{
+    IJSVGPath* path = [[IJSVGPath alloc] init];
+    path.path = NULL;
+    XCTAssertEqual(path.path, NULL);
+    IJSVGPath* copy = path.copy;
+    XCTAssertEqual(copy.path, NULL);
+    CGMutablePathRef geometry = CGPathCreateMutable();
+    CGPathMoveToPoint(geometry, NULL, 0, 0);
+    CGPathAddLineToPoint(geometry, NULL, 2, 3);
+    path.path = geometry;
+    CGPathRelease(geometry);
+    path.markerPathData = @"M0 0L2 3";
+    XCTAssertEqualObjects(path.markerPathData, @"M0 0L2 3");
+    CGPathAddLineToPoint(path.path, NULL, 4, 5);
+    XCTAssertNil(path.markerPathData);
+    XCTAssertEqual(copy.path, NULL);
+}
 
 - (void)testBasicClipShapeValidationAndCopy
 {

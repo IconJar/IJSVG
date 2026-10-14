@@ -27,6 +27,16 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVGSwitch.h>
 
+// Newly created nodes derive canonical names from their type. Only unknown
+// elements and noncanonical source spelling need an explicit name override.
+static void IJSVGPreserveElementName(IJSVGNode* node, IJSVGXMLNode* element)
+{
+    const char* canonical = node.name.UTF8String;
+    if (canonical == NULL || strcmp(canonical, element->name) != 0) {
+        node.name = IJSVGXMLLocalName(element);
+    }
+}
+
 NSString* const IJSVGStringObjectBoundingBox = @"objectBoundingBox";
 NSString* const IJSVGStringUserSpaceOnUse = @"userSpaceOnUse";
 NSString* const IJSVGStringNone = @"none";
@@ -765,6 +775,50 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 }
 
 // The following method is highly tuned for performance rather than readability.
+// The common use form has only identity, a reference and an optional fill.
+// Validate all attributes before applying anything. CSS and richer uses keep
+// the general cascade, including variables and handling of qualified attributes.
+- (BOOL)applyPlainUseAttributes:(IJSVGXMLNode*)element toNode:(IJSVGUse*)node
+{
+    IJSVGXMLAttribute* identifier = NULL;
+    IJSVGXMLAttribute* fill = NULL;
+    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(element);
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&attributes); attribute != NULL; attribute = IJSVGXMLNextAttribute(&attributes)) {
+        switch (attribute->identifier) {
+            case IJSVGNodeAttributeID:
+                identifier = attribute;
+                break;
+            case IJSVGNodeAttributeFill:
+                fill = attribute;
+                break;
+            case IJSVGNodeAttributeHref:
+            case IJSVGNodeAttributeXLink:
+                break;
+            default:
+                return NO;
+        }
+    }
+    NSString* fillValue = IJSVGXMLAttributeValue(fill);
+    if (IJSVGCSSValueMayContainVariables(fillValue)) {
+        return NO;
+    }
+    NSString* nodeID = IJSVGXMLAttributeValue(identifier);
+    if (nodeID.length != 0) {
+        node.identifier = nodeID;
+        [self detachElement:element withIdentifier:nodeID];
+    }
+    node.reference = [self referenceForElement:element];
+    if (fillValue.length != 0) {
+        NSString* paintIdentifier = [IJSVGUtils defURL:fillValue];
+        if (paintIdentifier != nil) {
+            [self applyPaintReference:paintIdentifier node:node element:element stroke:NO];
+        } else {
+            node.fill = [self colorPaintForValue:fillValue];
+        }
+    }
+    return YES;
+}
+
 - (void)computeAttributesFromElement:(IJSVGXMLNode*)element onNode:(IJSVGNode*)node ignoredAttributes:(IJSVGBitFlags*)ignoringAttributes deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGInheritedElement* input = _attributeInput;
@@ -774,6 +828,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGGraphicsNode* definitionParent = input.hasReference ? nil : IJSVGDefinitionParentForElement(_definitionStyleParent, element);
     if (definitionParent != nil) {
         node.styleParent = definitionParent;
+    }
+    if (node.class == IJSVGUse.class && _styleSheet.ruleCount == 0 && ignoringAttributes == nil && input == nil && [self applyPlainUseAttributes:element toNode:(IJSVGUse*)node]) {
+        return;
     }
     if (node.class == IJSVGPath.class && _styleSheet.ruleCount == 0 && ignoringAttributes == nil && input == nil) {
         IJSVGXMLAttribute* data = NULL;
@@ -1063,7 +1120,6 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGTextAttributeValue* path = node.positioning[IJSVGAttributePath];
     if (path != nil) {
         IJSVGPath* geometry = [[IJSVGPath alloc] init];
-        geometry.name = IJSVGAttributePath;
         [self applyPathData:path.string toNode:geometry];
         node.textPath = geometry;
     }
@@ -1072,8 +1128,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGText*)parseTextElement:(IJSVGXMLNode*)element type:(IJSVGNodeType)type parentNode:(IJSVGGraphicsNode*)parentNode
 {
     IJSVGText* node = [[IJSVGNodeClassForType(type) alloc] init];
-    node.name = IJSVGXMLLocalName(element);
     node.type = type;
+    IJSVGPreserveElementName(node, element);
     node.isTextPath = type == IJSVGNodeTypeTextPath;
     if ([parentNode isKindOfClass:IJSVGGroup.class]) {
         [(IJSVGGroup*)parentNode addChild:node];
@@ -1212,7 +1268,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         return nil;
     }
     IJSVGMarker* marker = [[IJSVGMarker alloc] init];
-    marker.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(marker, element);
     marker.styleParent = [self styleAncestorForElement:IJSVGXMLParent(element)];
     [self computeAttributesFromElement:element onNode:marker ignoredAttributes:nil deferredAttributes:deferredAttributes];
     [self computeElement:element parentNode:marker];
@@ -1444,7 +1500,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         return ancestor;
     }
     ancestor = [[IJSVGGroup alloc] init];
-    ancestor.name = IJSVGXMLLocalName(source);
+    IJSVGPreserveElementName(ancestor, source);
     [self.styleAncestors setObject:ancestor forKey:IJSVGXMLKey(source)];
     ancestor.styleParent = [self styleAncestorForElement:IJSVGXMLParent(source)];
 
@@ -1750,7 +1806,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGLinearGradient* node = [[IJSVGLinearGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     [node addTraits:IJSVGNodeTraitPaintable];
     node.reference = [self referenceForElement:element];
     NSString* identifier = node.reference.fragmentIdentifier;
@@ -1782,7 +1838,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGRadialGradient* node = [[IJSVGRadialGradient alloc] init];
     node.units = IJSVGUnitObjectBoundingBox;
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     [node addTraits:IJSVGNodeTraitPaintable];
     node.reference = [self referenceForElement:element];
     IJSVGInheritedElement* input = node.reference.fragmentIdentifier == nil ? nil : [self inheritedElementForElement:element visiting:nil];
@@ -1803,7 +1859,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseStopElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGStop* node = [[IJSVGStop alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
 
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -1892,11 +1948,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         }
     } else {
         IJSVGPath* path = (IJSVGPath*)node;
-        if (!CGPathIsEmpty(path.path)) {
-            CGMutablePathRef empty = CGPathCreateMutable();
-            path.path = empty;
-            CGPathRelease(empty);
-        }
+        [path resetPathForParsing];
         [self applyPathData:pathData toNode:path];
         path.markerPathData = pathData;
     }
@@ -1933,7 +1985,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parsePathElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1946,7 +1998,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseLineElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGLine alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
 
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -1961,7 +2013,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parsePolyLineElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGPolyline alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1975,7 +2027,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parsePolygonElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGPolygon alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -1989,7 +2041,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseEllipseElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGEllipse alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
 
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -2004,7 +2056,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseCircleElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGCircle alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
 
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -2020,7 +2072,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGGroup* node = [[IJSVGNodeClassForType(nodeType) alloc] init];
     node.type = nodeType;
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -2034,7 +2086,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (void)parseSVGElement:(IJSVGXMLNode*)element ontoNode:(IJSVGRootNode*)node parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes recursive:(BOOL)recursive
 {
-    node.name = IJSVGXMLLocalName(element);
+    node.name = nil;
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -2078,7 +2131,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseRectElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPath* node = [[IJSVGRect alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
 
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
@@ -2093,7 +2146,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseImageElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGImage* node = [[IJSVGImage alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
@@ -2109,7 +2162,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGRootNode* node = [[IJSVGSymbol alloc] init];
     node.type = IJSVGNodeTypeSymbol;
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     node.parentNode = parentNode;
     node.overflowVisibility = IJSVGOverflowVisibilityHidden;
 
@@ -2134,7 +2187,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseUseElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGUse* node = [[IJSVGUse alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     IJSVGGroup* parentGroup = [parentNode isKindOfClass:IJSVGGroup.class] ? (IJSVGGroup*)parentNode : nil;
     [parentGroup addChild:node];
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:deferredAttributes];
@@ -2184,7 +2237,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parsePatternElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGPattern* node = [[IJSVGPattern alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     node.parentNode = parentNode;
     node.units = IJSVGUnitObjectBoundingBox;
     node.contentUnits = IJSVGUnitUserSpaceOnUse;
@@ -2207,7 +2260,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseClipPathElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGClipPath* node = [[IJSVGClipPath alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     node.parentNode = parentNode;
 
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:deferredAttributes];
@@ -2281,7 +2334,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGNodeType type = IJSVGXMLType(element);
     IJSVGFilterPrimitive* node = [[IJSVGNodeClassForType(type) alloc] init];
     node.type = type;
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     [parentNode addChild:node];
 
     IJSVGNodeDeferredAttributes deferredAttributes = { 0 };
@@ -2318,7 +2371,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseFilterElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGFilter* node = [[IJSVGFilter alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     node.parentNode = parentNode;
 
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:deferredAttributes];
@@ -2367,7 +2420,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseMaskElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)parentNode deferredAttributes:(IJSVGNodeDeferredAttributes*)deferredAttributes
 {
     IJSVGMask* node = [[IJSVGMask alloc] init];
-    node.name = IJSVGXMLLocalName(element);
+    IJSVGPreserveElementName(node, element);
     node.parentNode = parentNode;
 
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:deferredAttributes];

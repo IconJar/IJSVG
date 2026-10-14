@@ -91,6 +91,10 @@ typedef struct {
     IJSVGNodeDeferredAttributes* deferredAttributes;
 } IJSVGNodeParsingContext;
 
+@interface IJSVGPath (DataParsing)
+- (void)resetPathForParsing;
+@end
+
 @interface IJSVGGradient (DataParsing)
 - (void)parseSpreadMethodFromAttributes:(IJSVGXMLAttributeList)attributes;
 - (void)parseColorStops;
