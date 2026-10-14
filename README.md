@@ -24,6 +24,10 @@ This release includes breaking API changes.
   Convert an AppKit color with `.CGColor` in Objective C or `.cgColor` in Swift.
 - XML parsing no longer loads DTDs or expands custom entities. Standard XML
   escapes and numeric character references remain supported.
+- The default color space is now sRGB instead of device RGB. This applies to
+  colors, gradients and raster output, including the NSImage convenience methods.
+  Exported pixels can differ from earlier releases because the destination now
+  has a defined color profile. `IJSVGColor.defaultColorSpace` returns shared sRGB.
 
 Color setters retain the supplied color. Gradient color arrays contain bridged
 `CGColor` objects instead of `NSColor` objects. Code using Core Graphics creation
@@ -35,6 +39,13 @@ them. The Interface Builder tint input continues to accept `NSColor`.
 Rendering and SVG export have received fixes across gradients, patterns, masks,
 clipping, text, markers and filters. The node tree remains editable and can still
 be exported to SVG.
+
+Raster rendering also accepts an explicit RGB destination color space through
+`renderCGImage(size:flipped:colorSpace:)` in Swift or
+`newCGImageRefWithSize:flipped:colorSpace:error:` in Objective C. Pass sRGB for
+bitmap exports or Display P3 when that destination is needed. The overload
+preserves backing scale and flipping and reports unsupported color spaces or
+bitmap creation failures through the existing error API.
 
 SVG and CSS support is still incomplete, and some artwork may render differently
 from a browser. Please report rendering or export issues with a small example SVG.

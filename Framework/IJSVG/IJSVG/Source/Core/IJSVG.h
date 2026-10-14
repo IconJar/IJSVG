@@ -125,7 +125,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSImage* _Nullable)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped;
 - (NSImage* _Nullable)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(renderImage(size:flipped:));
 - (NSImage* _Nullable)imageByMaintainingAspectRatioWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(renderImage(fitting:flipped:));
+
+// Renders using sRGB by default, including through the NSImage convenience methods.
 - (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error CF_RETURNS_RETAINED NS_SWIFT_NAME(renderCGImage(size:flipped:));
+
+// Renders into an RGB bitmap with 8 bits per component in the supplied destination color space.
+// The color space is borrowed. The returned image is owned by the caller.
+// Unsupported spaces or bitmap creation failures return NULL and IJSVGErrorDrawing.
+- (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped colorSpace:(CGColorSpaceRef)colorSpace error:(NSError* _Nullable* _Nullable)error CF_RETURNS_RETAINED NS_SWIFT_NAME(renderCGImage(size:flipped:colorSpace:));
 
 - (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)size;
 - (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize error:(NSError* _Nullable* _Nullable)error;

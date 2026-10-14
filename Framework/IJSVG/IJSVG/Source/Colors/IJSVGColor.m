@@ -112,16 +112,6 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
     static CGColorSpaceRef space;
     static dispatch_once_t once;
     dispatch_once(&once, ^{
-        space = CGColorSpaceCreateDeviceRGB();
-    });
-    return space;
-}
-
-+ (CGColorSpaceRef)sRGBColorSpace
-{
-    static CGColorSpaceRef space;
-    static dispatch_once_t once;
-    dispatch_once(&once, ^{
         space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     });
     return space;
@@ -130,7 +120,7 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
 + (CGColorRef)colorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha
 {
     CGFloat components[] = { red, green, blue, alpha };
-    CGColorRef color = CGColorCreate(self.sRGBColorSpace, components);
+    CGColorRef color = CGColorCreate(self.defaultColorSpace, components);
     return color == NULL ? NULL : (CGColorRef)CFAutorelease(color);
 }
 
@@ -170,10 +160,10 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
         return NULL;
     }
     CGColorSpaceRef space = CGColorGetColorSpace(color);
-    if (space != NULL && CFEqual(space, self.sRGBColorSpace)) {
+    if (space != NULL && CFEqual(space, self.defaultColorSpace)) {
         return color;
     }
-    CGColorRef converted = CGColorCreateCopyByMatchingToColorSpace(self.sRGBColorSpace, kCGRenderingIntentDefault, color, NULL);
+    CGColorRef converted = CGColorCreateCopyByMatchingToColorSpace(self.defaultColorSpace, kCGRenderingIntentDefault, color, NULL);
     return converted == NULL ? NULL : (CGColorRef)CFAutorelease(converted);
 }
 
@@ -414,7 +404,7 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
         ((rgba >> 8) & 0xff) / 255.f,
         (rgba & 0xff) / 255.f
     };
-    return CGColorCreate(IJSVGColor.sRGBColorSpace, components);
+    return CGColorCreate(IJSVGColor.defaultColorSpace, components);
 }
 
 + (CGColorRef)colorFromString:(NSString*)string

@@ -78,6 +78,7 @@
 		5945BC18306E824600758340 /* IJSVGMetalBlurTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */; };
 		594688AB307E8E03008E2E8A /* IJSVGElementNodeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688AA307E8E03008E2E8A /* IJSVGElementNodeTests.m */; };
 		594688AD307E8E04008E2E8A /* IJSVGPlainGradientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 594688AC307E8E04008E2E8A /* IJSVGPlainGradientTests.m */; };
+		59468B4830803518008E2E8A /* IJSVGRasterColorSpaceTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59468B4730803518008E2E8A /* IJSVGRasterColorSpaceTests.m */; };
 		5956657D19B62F4600D805FF /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657C19B62F4600D805FF /* main.m */; };
 		5956658019B62F4600D805FF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 5956657F19B62F4600D805FF /* AppDelegate.m */; };
 		5956658219B62F4600D805FF /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5956658119B62F4600D805FF /* Images.xcassets */; };
@@ -257,6 +258,7 @@
 		5945BC17306E824600758340 /* IJSVGMetalBlurTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGMetalBlurTests.m; sourceTree = "<group>"; };
 		594688AA307E8E03008E2E8A /* IJSVGElementNodeTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGElementNodeTests.m; sourceTree = "<group>"; };
 		594688AC307E8E04008E2E8A /* IJSVGPlainGradientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGPlainGradientTests.m; sourceTree = "<group>"; };
+		59468B4730803518008E2E8A /* IJSVGRasterColorSpaceTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRasterColorSpaceTests.m; sourceTree = "<group>"; };
 		5956657719B62F4600D805FF /* IJSVGExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IJSVGExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5956657B19B62F4600D805FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5956657C19B62F4600D805FF /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -537,6 +539,7 @@
 				59CECBFE307D63F40051BE00 /* IJSVGCSSVariableTests.m */,
 				594688AA307E8E03008E2E8A /* IJSVGElementNodeTests.m */,
 				594688AC307E8E04008E2E8A /* IJSVGPlainGradientTests.m */,
+				59468B4730803518008E2E8A /* IJSVGRasterColorSpaceTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -799,6 +802,7 @@
 				59CEBDCE307C0F490051BE00 /* IJSVGInheritedLengthTests.m in Sources */,
 				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				59B649D4307584280004EFC2 /* IJSVGTextWebKitTests.m in Sources */,
+				59468B4830803518008E2E8A /* IJSVGRasterColorSpaceTests.m in Sources */,
 				59835AA630769CF0007A1232 /* IJSVGRegressionRegistration.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,
 				590C7B7F307A6BD700AD5C88 /* IJSVGPaintOrderTests.m in Sources */,

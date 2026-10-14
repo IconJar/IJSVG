@@ -174,8 +174,10 @@ FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 @interface IJSVGColor : NSObject
 
 + (CGColorRef _Nullable)computeColorSpace:(CGColorRef _Nullable)color;
+
+// Shared sRGB color space, owned by IJSVG.
 + (CGColorSpaceRef)defaultColorSpace;
-+ (CGColorSpaceRef)sRGBColorSpace;
+
 + (CGColorRef)blackColor;
 + (CGColorRef)whiteColor;
 + (CGColorRef)clearColor;

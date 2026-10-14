@@ -14,6 +14,17 @@
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGTextFontResolver.h>
 
+// Report bitmap failures synchronously without capturing the autoreleasing error parameter.
+static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description)
+{
+    if (error != NULL) {
+        *error = [NSError errorWithDomain:IJSVGErrorDomain
+                                     code:IJSVGErrorDrawing
+                                 userInfo:@ { NSLocalizedDescriptionKey : description }];
+    }
+    return NULL;
+}
+
 @interface IJSVG (private)
 @property (nonatomic, strong) IJSVGParser* parser;
 @end
@@ -524,6 +535,15 @@
 
 - (CGImageRef)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped error:(NSError**)error
 {
+    return [self newCGImageRefWithSize:size flipped:flipped colorSpace:IJSVGColor.defaultColorSpace error:error];
+}
+
+- (CGImageRef)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped colorSpace:(CGColorSpaceRef)colorSpace error:(NSError**)error
+{
+    if (colorSpace == NULL || CGColorSpaceGetModel(colorSpace) != kCGColorSpaceModelRGB) {
+        return IJSVGRasterImageFailure(error, @"Raster rendering requires an RGB color space.");
+    }
+
     // setup the drawing rect, this is used for both the intial drawing
     // and the backing scale helper block
     CGRect rect = (CGRect) { .origin = CGPointZero, .size = (CGSize)size };
@@ -531,20 +551,34 @@
     // make sure we setup the scale based on the backing scale factor
     CGFloat scale = [self backingScaleFactor];
 
-    // create the context and colorspace
-    int width = (int)size.width * scale;
-    int height = (int)size.height * scale;
+    // Preserve the existing truncation before applying the backing scale.
+    if (!isfinite(size.width) || !isfinite(size.height) || !isfinite(scale)
+        || size.width < 1 || size.height < 1 || size.width > INT_MAX || size.height > INT_MAX
+        || scale <= 0 || (int)size.width * scale > INT_MAX || (int)size.height * scale > INT_MAX) {
+        return IJSVGRasterImageFailure(error, @"Invalid raster image dimensions or backing scale.");
+    }
+    size_t width = (int)((int)size.width * scale);
+    size_t height = (int)((int)size.height * scale);
 
     // use correct memory alignment for performance.
     size_t bytesPerRow = ((width * 4) + 15) & ~15;
+    if (height > SIZE_MAX / bytesPerRow) {
+        return IJSVGRasterImageFailure(error, @"Raster image allocation is too large.");
+    }
     size_t bufferSize = height * bytesPerRow;
 
-    CGColorSpaceRef colorSpace = IJSVGDeviceRGBColorSpace();
     void* data = valloc(bufferSize);
+    if (data == NULL) {
+        return IJSVGRasterImageFailure(error, @"Unable to allocate the raster image buffer.");
+    }
     memset(data, 0, bufferSize);
 
     CGBitmapInfo info = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Host;
     CGContextRef ref = CGBitmapContextCreate(data, width, height, 8, bytesPerRow, colorSpace, info);
+    if (ref == NULL) {
+        free(data);
+        return IJSVGRasterImageFailure(error, @"Unable to create a bitmap context in the supplied color space.");
+    }
 
     // scale the context
     CGContextScaleCTM(ref, scale, scale);
@@ -560,15 +594,21 @@
     // create the image from the context
     CGImageRef imageRef = CGBitmapContextCreateImage(ref);
 
-    // release all things! (colorSpace is shared and owned by IJSVG)
+    // The caller owns colorSpace. The image retains what it needs.
     CGContextRelease(ref);
     free(data);
+    if (imageRef == NULL) {
+        return IJSVGRasterImageFailure(error, @"Unable to create the raster image.");
+    }
     return imageRef;
 }
 
 - (NSImage*)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
 {
     CGImageRef ref = [self newCGImageRefWithSize:aSize flipped:flipped error:error];
+    if (ref == NULL) {
+        return nil;
+    }
 
     NSImage* image = [[NSImage alloc] initWithCGImage:ref size:aSize];
     CGImageRelease(ref);

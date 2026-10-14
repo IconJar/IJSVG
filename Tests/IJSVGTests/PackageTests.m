@@ -31,13 +31,21 @@
     if (cgImage == NULL) {
         return;
     }
-    NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
-    NSColor* color = [[bitmap colorAtX:16 y:16] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
-    XCTAssertNotNil(color);
-    XCTAssertGreaterThan(color.redComponent, 0.95);
-    XCTAssertLessThan(color.greenComponent, 0.05);
-    XCTAssertLessThan(color.blueComponent, 0.05);
-    XCTAssertGreaterThan(color.alphaComponent, 0.95);
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    XCTAssertTrue(CFEqual(CGImageGetColorSpace(cgImage), space));
+    CGContextRef context = CGBitmapContextCreate(NULL, 32, 32, 8, 32 * 4, space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGColorSpaceRelease(space);
+    XCTAssertTrue(context != NULL);
+    if (context == NULL) {
+        return;
+    }
+    CGContextDrawImage(context, CGRectMake(0, 0, 32, 32), cgImage);
+    const UInt8* pixel = (const UInt8*)CGBitmapContextGetData(context) + 16 * CGBitmapContextGetBytesPerRow(context) + 16 * 4;
+    XCTAssertGreaterThan(pixel[0], 242);
+    XCTAssertLessThan(pixel[1], 13);
+    XCTAssertLessThan(pixel[2], 13);
+    XCTAssertGreaterThan(pixel[3], 242);
+    CGContextRelease(context);
 }
 
 - (void)checkPackagedShader:(NSString*)name
