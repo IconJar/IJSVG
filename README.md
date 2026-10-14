@@ -1,55 +1,44 @@
-IJSVG 4.1
+IJSVG 5.0
 ===
 
 IJSVG is a Cocoa library for drawing SVGs in macOS 14.6 and later. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
 
 You can also copy an IJSVG object to the pasteboard. It provides PDF data so apps such as Sketch and Photoshop can paste the artwork as vectors.
 
-### What is new in IJSVG 4.1.9?
+### What is new in IJSVG 5?
 
-- SVG markers with custom artwork at the start, middle and end of paths.
-- Automatic marker orientation, including `auto-start-reverse`, and `context-fill` / `context-stroke` colours.
-- Faster rendering and export for SVGs with repeated markers.
+IJSVG 5 improves parsing, first draw performance and memory use, with a clearer
+node structure and Core Graphics colors throughout the graphics pipeline.
+This release includes breaking API changes.
 
-### What is new in IJSVG 4.1.0?
+### Breaking changes
 
-- Text support, including `text`, `tspan` and `textPath`.
-- Font selection and fallback, text spacing, alignment, rotation and decorations.
-- Text wrapping, vertical text and text that follows a path.
-- Support for CSS font shorthand, `textLength` and `lengthAdjust`.
-- Faster parsing of paths, CSS rules and repeated elements, with less memory used for CSS matching.
-- More Objective C tests for text, parsing and drawing.
+- Supported SVG element types have dedicated node classes, such as `IJSVGRect`,
+  `IJSVGCircle`, `IJSVGPath` and `IJSVGGroup`. Shared behavior lives in their base
+  classes, and properties live on the classes that use them. Code that inspects,
+  constructs or subclasses nodes should use the appropriate node class rather
+  than assuming every property is available on `IJSVGNode`.
+- Colors are exposed as `CGColorRef` in Objective C and `CGColor` in Swift,
+  replacing `NSColor` in color properties, helpers and callbacks. This includes
+  fills, strokes, current color, backgrounds, gradient stops and color replacement.
+  Convert an AppKit color with `.CGColor` in Objective C or `.cgColor` in Swift.
+- XML parsing no longer loads DTDs or expands custom entities. Standard XML
+  escapes and numeric character references remain supported.
 
-In our Release benchmarks, the latest parser changes cut parsing time by about
-98% for complex CSS selectors, 38% for overlapping CSS rules and 13% for repeated
-attributes. The data used for CSS matching took about 81% less memory.
-Results depend on the SVG. These tests compare with commit `0afcd11`, not 4.0.2,
-and cover CPU parsing with shader compilation excluded from both builds.
+Color setters retain the supplied color. Gradient color arrays contain bridged
+`CGColor` objects instead of `NSColor` objects. Code using Core Graphics creation
+functions in Objective C must still release its own references after assigning
+them. The Interface Builder tint input continues to accept `NSColor`.
 
-### Introduced in IJSVG 4.0
+### Rendering and export
 
-- A Core Graphics paint graph for drawing shapes, groups, gradients, patterns, images, clipping and masks.
-- SVG filter graphs, including blur, drop shadows, blending, compositing, color adjustments, displacement, turbulence and lighting effects.
-- Metal acceleration for eligible blur, shadow and arithmetic compositing operations, including batching compatible blur and shadow jobs.
-- SIMD CPU paths for blur, selected color matrices and compositing, with automatic fallback to the general filter evaluator when a fast path cannot be used.
-- Filter regions, named inputs and results, and `color-interpolation-filters` support for sRGB and linear RGB processing.
-- SVG export preserves filter definitions and their primitive chains.
-- Its almost a complete full rewrite.
-- Is now fully ARC 🎉.
-- Parsing and rendering is much faster.
-- Support for aspect ratios and nested SVG's.
-- Fixes a lot of pattern and gradient rendering.
-- Fixes various clipPath issues.
-- Improved masking and clipping in the Quartz renderer.
-- Various improvements with exporting such as modifying the viewBox instead of using a new group for scaling.
-- Exporting now supports converting strokes to paths.
-- Much simpler to use API's for creating SVG's from scratch.
-- Much better threading support.
-- Much improved color replacement support (can now specify only replacing a color that is a fill and not touch ths stroke).
-- Improved API's for querying the node graph.
-- Support for the wild card CSS selector.
-- Removed most `NS` graphics API calls and uses `CG` where possible.
-- Various memory and performance increases throughout.
+Rendering and SVG export have received fixes across gradients, patterns, masks,
+clipping, text, markers and filters. The node tree remains editable and can still
+be exported to SVG.
+
+SVG and CSS support is still incomplete, and some artwork may render differently
+from a browser. Please report rendering or export issues with a small example SVG.
+Performance improvements depend on the document and the effects it uses.
 
 Quick Start
 ====
@@ -63,7 +52,8 @@ Requires Xcode 16 / Swift 6 or later and macOS 14.6 or later.
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Select version **4.1.9** or later to include SVG text, marker support and the latest rendering improvements.
+Select version **5.0.0** or later for the current API. Review the breaking changes
+above when upgrading from an earlier major version.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
 The package uses the existing Objective-C implementation and bundles its Metal
@@ -127,7 +117,7 @@ Parser base URLs can be `nil`. Missing node relationships, paint overrides, imag
 source data, filter inputs, and unsuccessful color lookups are optional in Swift.
 Collections that are always initialized remain nonoptional.
 
-### Artwork bounds and fitting (4.0.2)
+### Artwork bounds and fitting
 
 After changing stroke styles or path geometry, fit overflowing artwork into the
 original viewBox without changing the output dimensions or aspect ratio:
