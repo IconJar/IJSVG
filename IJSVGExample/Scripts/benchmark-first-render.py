@@ -113,7 +113,8 @@ def main():
     summary = {}
     for name in names:
         summary[name] = {}
-        reference = (output / 'baseline/0' / (name + '.rgba')).read_bytes()
+        references = {suffix: (output / 'baseline/0' / (name + suffix)).read_bytes()
+                      for suffix in ['.first.rgba', '.rgba']}
         for label in ['baseline', 'candidate']:
             rows = [row for run in metadata['runs'] if run['variant'] == label
                     for row in run['rows'] if row['case'] == name]
@@ -125,10 +126,12 @@ def main():
                 summary[name][label]['render_footprint_delta_bytes'] = statistics.median(row['rendered_bytes'] - row['before_bytes'] for row in samples)
                 summary[name][label]['peak_rss_bytes'] = statistics.median(row['peak_rss_bytes'] for row in samples)
             for repetition in range(args.repetitions):
-                pixels = (output / label / str(repetition) / (name + '.rgba')).read_bytes()
-                if pixels != reference:
-                    raise RuntimeError(f'Pixel mismatch: {name}, {label}, run {repetition}')
+                for suffix, reference in references.items():
+                    pixels = (output / label / str(repetition) / (name + suffix)).read_bytes()
+                    if pixels != reference:
+                        raise RuntimeError(f'Pixel mismatch: {name}{suffix}, {label}, run {repetition}')
         summary[name]['pixelsIdentical'] = True
+        summary[name]['firstDrawPixelsIdentical'] = True
     metadata['summary'] = summary
     (output / 'results.json').write_text(json.dumps(metadata, indent=2) + '\n')
     print(json.dumps(summary, indent=2))

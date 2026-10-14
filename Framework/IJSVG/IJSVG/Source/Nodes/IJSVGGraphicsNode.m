@@ -14,6 +14,7 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGQuartzRenderer.h>
+#import <objc/runtime.h>
 
 static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColor* color, IJSVGColorUsageTraits traits)
 {
@@ -431,6 +432,50 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
     }
     *referencingNode = self;
     return _contentUnits;
+}
+
+@end
+
+@implementation IJSVGGraphicsNode (Rendering)
+
+- (void)getMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end
+{
+    static IMP startImplementation;
+    static IMP midImplementation;
+    static IMP endImplementation;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        startImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerStart));
+        midImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerMid));
+        endImplementation = class_getMethodImplementation(IJSVGGraphicsNode.class, @selector(markerEnd));
+    });
+    IJSVGMarker* resolvedStart = nil;
+    IJSVGMarker* resolvedMid = nil;
+    IJSVGMarker* resolvedEnd = nil;
+    Class checkedClass = Nil;
+    BOOL usesDefaultAccessors = NO;
+    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
+        Class nodeClass = object_getClass(node);
+        if (nodeClass != checkedClass) {
+            checkedClass = nodeClass;
+            usesDefaultAccessors = class_getMethodImplementation(nodeClass, @selector(markerStart)) == startImplementation && class_getMethodImplementation(nodeClass, @selector(markerMid)) == midImplementation && class_getMethodImplementation(nodeClass, @selector(markerEnd)) == endImplementation;
+        }
+        if (!usesDefaultAccessors) {
+            resolvedStart = resolvedStart ?: node.markerStart;
+            resolvedMid = resolvedMid ?: node.markerMid;
+            resolvedEnd = resolvedEnd ?: node.markerEnd;
+            break;
+        }
+        resolvedStart = resolvedStart ?: node->_markerStart;
+        resolvedMid = resolvedMid ?: node->_markerMid;
+        resolvedEnd = resolvedEnd ?: node->_markerEnd;
+        if (resolvedStart != nil && resolvedMid != nil && resolvedEnd != nil) {
+            break;
+        }
+    }
+    *start = resolvedStart;
+    *mid = resolvedMid;
+    *end = resolvedEnd;
 }
 
 @end

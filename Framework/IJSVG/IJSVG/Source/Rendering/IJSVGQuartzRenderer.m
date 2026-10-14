@@ -158,11 +158,7 @@ static void IJSVGQuartzConfigureStroke(IJSVGStrokePaint* paint, IJSVGPath* node,
     paint.lineJoin = IJSVGQuartzLineJoin(lineJoinStyle);
     paint.miterLimit = miterLimit;
 
-    CGFloat strokeOpacity = 1.f;
-    if (node.strokeOpacity.value != 1.f) {
-        strokeOpacity = node.strokeOpacity.value;
-    }
-    paint.opacity = strokeOpacity;
+    paint.opacity = node.strokeOpacity.value;
 
     // Set the dash pattern.
     paint.lineDashPhase = node.strokeDashOffset.value;
@@ -1291,9 +1287,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     IJSVGGradient* gradient = [node.fill isMemberOfClass:IJSVGLinearGradient.class] ? (IJSVGGradient*)node.fill : nil;
     IJSVGPrimitivePathType primitiveType = node.primitiveType;
     BOOL needsMarkers = primitiveType == kIJSVGPrimitivePathTypePath || primitiveType == kIJSVGPrimitivePathTypeLine || primitiveType == kIJSVGPrimitivePathTypePolygon || primitiveType == kIJSVGPrimitivePathTypePolyLine || (gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox);
-    IJSVGMarker* markerStart = needsMarkers ? node.markerStart : nil;
-    IJSVGMarker* markerMid = needsMarkers ? node.markerMid : nil;
-    IJSVGMarker* markerEnd = needsMarkers ? node.markerEnd : nil;
+    IJSVGMarker* markerStart = nil;
+    IJSVGMarker* markerMid = nil;
+    IJSVGMarker* markerEnd = nil;
+    if (needsMarkers) {
+        [node getMarkerStart:&markerStart mid:&markerMid end:&markerEnd];
+    }
     BOOL directGradient = gradient != nil && gradient.units == IJSVGUnitObjectBoundingBox && strokePaint == nil && fillOpacity == 1.f && node.opacity.value == 1.f && !node.isolated && node.blendMode == IJSVGBlendModeNormal && markerStart == nil && markerMid == nil && markerEnd == nil && paint.class == IJSVGShapePaint.class && _style.colors.replacedColorCount == 0;
 
     // With no separate stroke, opacity or marker operations, a solid fill
@@ -1771,8 +1770,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     // Choose the stroke color.
     NSColor* strokeColor = NSColor.blackColor;
-    if ([node.stroke isKindOfClass:IJSVGColorNode.class]) {
-        IJSVGColorNode* colorNode = (IJSVGColorNode*)node.stroke;
+    IJSVGNode* stroke = node.stroke;
+    if ([stroke isKindOfClass:IJSVGColorNode.class]) {
+        IJSVGColorNode* colorNode = (IJSVGColorNode*)stroke;
         strokeColor = colorNode.usesCurrentColor ? node.currentColor : colorNode.color;
     }
 
@@ -1795,16 +1795,28 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     IJSVGQuartzConfigureStroke(paint, node, _style, lineWidth);
     IJSVGGraphicsNode* offsetOwner = node;
     IJSVGUnitLength* offset = node.strokeDashOffset;
-    while (offsetOwner.styleParent != nil && offsetOwner.styleParent.strokeDashOffset == offset) {
-        offsetOwner = offsetOwner.styleParent;
+    if (offset.usesFontMetrics) {
+        IJSVGGraphicsNode* parent = offsetOwner.styleParent;
+        while (parent != nil && parent.strokeDashOffset == offset) {
+            offsetOwner = parent;
+            parent = parent.styleParent;
+        }
     }
     paint.lineDashPhase = [self resolveCSSLength:offset percentage:diagonal node:offsetOwner];
     NSArray<IJSVGUnitLength*>* lengths = node.strokeDashLengths;
     IJSVGGraphicsNode* owner = node;
-    while (owner.styleParent != nil && owner.styleParent.strokeDashLengths == lengths) {
-        owner = owner.styleParent;
-    }
     if (lengths != nil && node.strokeDashArrayCount != 0) {
+        BOOL usesFontMetrics = NO;
+        for (IJSVGUnitLength* length in lengths) {
+            usesFontMetrics |= length.usesFontMetrics;
+        }
+        if (usesFontMetrics) {
+            IJSVGGraphicsNode* parent = owner.styleParent;
+            while (parent != nil && parent.strokeDashLengths == lengths) {
+                owner = parent;
+                parent = parent.styleParent;
+            }
+        }
         NSMutableArray<NSNumber*>* pattern = [[NSMutableArray alloc] initWithCapacity:lengths.count];
         for (IJSVGUnitLength* length in lengths) {
             [pattern addObject:@([self resolveCSSLength:length percentage:diagonal node:owner])];
@@ -2503,7 +2515,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     // Hide the paint when needed.
     // Visibility is inherited but descendants may override it. Keep containers
     // and geometry so hidden content still contributes to layout and bounds.
-    BOOL hiddenGraphic = node.visibilityHidden && ([node isKindOfClass:IJSVGPath.class] || [node isKindOfClass:IJSVGImage.class]);
+    BOOL hiddenGraphic = ([node isKindOfClass:IJSVGPath.class] || [node isKindOfClass:IJSVGImage.class]) && node.visibilityHidden;
     paint.hiddenByVisibility = node.shouldRender && hiddenGraphic;
     if (node.shouldRender == NO || hiddenGraphic) {
         paint.hidden = YES;

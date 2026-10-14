@@ -40,9 +40,14 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
     CGPathRelease(_nonScalingStrokeOutline);
     _nonScalingStrokeOutline = NULL;
     _lineDashPattern = pattern.copy;
-    NSMutableData* lengths = [NSMutableData dataWithLength:pattern.count * sizeof(CGFloat)];
+    NSUInteger count = pattern.count;
+    if (count == 0) {
+        _dashLengths = nil;
+        return;
+    }
+    NSMutableData* lengths = [NSMutableData dataWithLength:count * sizeof(CGFloat)];
     CGFloat* values = lengths.mutableBytes;
-    for (NSUInteger index = 0; index < pattern.count; index++) {
+    for (NSUInteger index = 0; index < count; index++) {
         values[index] = pattern[index].doubleValue;
     }
     _dashLengths = lengths;

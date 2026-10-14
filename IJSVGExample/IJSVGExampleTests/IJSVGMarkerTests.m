@@ -8,17 +8,59 @@
 
 #import <AppKit/AppKit.h>
 #import <IJSVG/IJSVG.h>
+#import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGQuartzRenderer.h>
 #import <XCTest/XCTest.h>
 
 static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill='red'/>";
+
+@interface IJSVGMarkerOverrideGroup : IJSVGGroup
+@property (nonatomic, strong) IJSVGMarker* suppliedMarker;
+@end
+
+@implementation IJSVGMarkerOverrideGroup
+
+- (IJSVGMarker*)markerMid
+{
+    return self.suppliedMarker;
+}
+
+@end
 
 @interface IJSVGMarkerTests : XCTestCase
 @end
 
 @implementation IJSVGMarkerTests
+
+- (void)testCombinedMarkersPreserveInheritanceAndCustomAccessors
+{
+    for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGMarkerOverrideGroup alloc] init] ]) {
+        IJSVGGroup* root = [[IJSVGGroup alloc] init];
+        IJSVGGroup* child = [[IJSVGGroup alloc] init];
+        [root addChild:parent];
+        [parent addChild:child];
+        root.markerEnd = [[IJSVGMarker alloc] init];
+        parent.markerMid = [[IJSVGMarker alloc] init];
+        child.markerStart = [[IJSVGMarker alloc] init];
+        if ([parent isKindOfClass:IJSVGMarkerOverrideGroup.class]) {
+            ((IJSVGMarkerOverrideGroup*)parent).suppliedMarker = [[IJSVGMarker alloc] init];
+        }
+        for (NSUInteger iteration = 0; iteration < 2; iteration++) {
+            IJSVGMarker* start = nil;
+            IJSVGMarker* mid = nil;
+            IJSVGMarker* end = nil;
+            [child getMarkerStart:&start mid:&mid end:&end];
+            XCTAssertEqual(start, child.markerStart);
+            XCTAssertEqual(mid, child.markerMid);
+            XCTAssertEqual(end, child.markerEnd);
+            root.markerEnd = [[IJSVGMarker alloc] init];
+            child.markerStart = nil;
+        }
+    }
+}
 
 - (IJSVG*)svgWithBody:(NSString*)body
 {

@@ -803,8 +803,12 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 }
             }
         }
-        [pending addObjectsFromArray:paint.children];
-        [pending addObjectsFromArray:paint.clipPaints ?: @[]];
+        for (IJSVGPaint* child in paint.children) {
+            [pending addObject:child];
+        }
+        for (IJSVGPaint* clip in paint.clipPaints) {
+            [pending addObject:clip];
+        }
         if (paint.maskPaint != nil) {
             [pending addObject:paint.maskPaint];
         }
@@ -819,7 +823,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return _canCacheOutput = YES;
 }
 
-- (void)drawFilteredImage:(CGImageRef)image context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect
+- (void)drawFilteredImage:(CGImageRef)image context:(CGContextRef)ctx region:(CGRect)region workRect:(CGRect)workRect independentPixels:(BOOL)independentPixels
 {
     if (_outputSignature != nil) {
         IJSVGFilterCachedImage* cached = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
@@ -832,10 +836,10 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
                 IJSVGQuartzFilterBatchEntry* entry = [IJSVGCurrentFilterBatch.entries objectForKey:self];
                 CGImageRef copy = NULL;
 
-                // Direct batch jobs already own independent, immutable pixels.
+                // Shared Metal output and direct batch jobs own independent pixels.
                 // Retaining them avoids another allocation and Quartz image draw
                 // during the first render. Atlas crops still need detaching.
-                if (entry.renderedImage == image && !entry.hasAtlasBacking) {
+                if (independentPixels || (entry.renderedImage == image && !entry.hasAtlasBacking)) {
                     copy = CGImageRetain(image);
                 } else {
                     CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, width * 4, CGImageGetColorSpace(image), kCGImageAlphaPremultipliedLast);
@@ -1252,18 +1256,18 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         }
         CGImageRef image = NULL;
 
-        // Only renderer owned bitmap storage can supply pixels for the Metal
-        // shortcut.
-        if (IJSVGFilterSIMDUsesBackdropAddition(self.filter) && supportsMetalKernels && IJSVGFilterRenderDepth == 1 && ctx == IJSVGFilterBitmapContext) {
+        // Shared output storage lets Quartz read completed Metal pixels directly.
+        if (supportsMetalKernels) {
             image = IJSVGFilterNewSharedMetalImage(output, outputExtent, colorSpace);
         }
+        BOOL independentPixels = image != NULL;
         if (image == NULL) {
             image = [context createCGImage:output fromRect:outputExtent format:kCIFormatRGBA8 colorSpace:colorSpace];
         }
 
         if (image != NULL) {
             if (CGRectEqualToRect(outputExtent, extent)) {
-                [self drawFilteredImage:image context:ctx region:region workRect:workRect];
+                [self drawFilteredImage:image context:ctx region:region workRect:workRect independentPixels:independentPixels];
             } else {
                 CGRect outputRect = CGRectApplyAffineTransform(outputExtent, CGAffineTransformInvert(imageTransform));
                 IJSVGFilterDrawFilteredImage(image, ctx, region, outputRect);
@@ -1383,7 +1387,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             [batch.orderedEntries addObject:entry];
         }
     } else {
-        [self drawFilteredImage:image context:ctx region:region workRect:workRect];
+        [self drawFilteredImage:image context:ctx region:region workRect:workRect independentPixels:NO];
         CGImageRelease(image);
     }
     return YES;
@@ -1546,7 +1550,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // different sampling grid (the dimensions must still match exactly).
     IJSVGQuartzFilterBatchEntry* cached = [batch.entries objectForKey:self];
     if (!batch.collecting && cached.renderedImage != NULL && CGSizeEqualToSize(cached.pixelSize, pixelSize) && fabs(cached.workRect.origin.x - workRect.origin.x) * scale < 1e-7 && fabs(cached.workRect.origin.y - workRect.origin.y) * scale < 1e-7 && fabs(cached.workRect.size.width - workRect.size.width) * scale < 1e-7 && fabs(cached.workRect.size.height - workRect.size.height) * scale < 1e-7) {
-        [self drawFilteredImage:cached.renderedImage context:ctx region:region workRect:workRect];
+        [self drawFilteredImage:cached.renderedImage context:ctx region:region workRect:workRect independentPixels:NO];
         return;
     }
     CGRect required = [self requiredSourceExtentForGraph:graph context:ctx];

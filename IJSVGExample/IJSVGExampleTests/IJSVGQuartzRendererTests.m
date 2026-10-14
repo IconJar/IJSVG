@@ -616,6 +616,17 @@
          rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='10% 5%'/>"];
 }
 
+- (void)testInheritedDashUnitsUseDeclaringFonts
+{
+    [self assertBody:@"<g font-size='2' stroke='red' stroke-dasharray='calc(1em + 1px) .5em'>"
+                      "<g font-size='4' stroke-dashoffset='calc(.5em + 1px)'>"
+                      "<path font-size='8' d='M2 16H30' pathLength='14'/></g></g>"
+         rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='6 2' stroke-dashoffset='6'/>"];
+    [self assertBody:@"<g font-size='2' stroke='red' stroke-dasharray='12.5% 2px' stroke-dashoffset='1px'>"
+                      "<g font-size='4'><path font-size='8' d='M2 16H30'/></g></g>"
+         rendersLike:@"<path d='M2 16H30' stroke='red' stroke-dasharray='12.5% 2px' stroke-dashoffset='1px'/>"];
+}
+
 - (void)testPathLengthWithInheritedUnitsAndUse
 {
     [self assertBody:@"<defs><path id='p' d='M2 16H30' pathLength='14'/></defs>"

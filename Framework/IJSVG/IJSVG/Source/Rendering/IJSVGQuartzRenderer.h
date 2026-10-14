@@ -46,3 +46,7 @@
 - (IJSVGPaint*)drawablePaintForNode:(IJSVGNode*)node inViewPort:(CGRect)viewPort;
 + (CGPathRef)newPathFromStrokedShapePaint:(IJSVGShapePaint*)paint CF_RETURNS_RETAINED;
 @end
+
+@interface IJSVGGraphicsNode (Rendering)
+- (void)getMarkerStart:(IJSVGMarker* __autoreleasing*)start mid:(IJSVGMarker* __autoreleasing*)mid end:(IJSVGMarker* __autoreleasing*)end;
+@end

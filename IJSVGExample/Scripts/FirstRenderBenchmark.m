@@ -100,6 +100,7 @@ int main(int argc, const char** argv)
                 continue;
             }
             double parses[15], draws[15], totals[15], redraws[15], initialParse = 0, initialDraw = 0;
+            NSData* firstPixels = nil;
             for (NSUInteger round = 0; round < 18; round++) {
                 @autoreleasepool {
                     CGContextClearRect(context, rect);
@@ -116,6 +117,9 @@ int main(int argc, const char** argv)
                     start = CACurrentMediaTime();
                     [svg drawInRect:rect context:context];
                     double drawn = (CACurrentMediaTime() - start) * 1000;
+                    if (round == 17) {
+                        firstPixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:size * size * 4];
+                    }
                     CGContextClearRect(context, rect);
                     start = CACurrentMediaTime();
                     [svg drawInRect:rect context:context];
@@ -134,6 +138,9 @@ int main(int argc, const char** argv)
             }
             NSData* pixels = [NSData dataWithBytes:CGBitmapContextGetData(context) length:size * size * 4];
             NSString* stem = [@(argv[3]) stringByAppendingPathComponent:fixture[@"id"]];
+            if (![firstPixels writeToFile:[stem stringByAppendingString:@".first.rgba"] atomically:YES]) {
+                return 5;
+            }
             if (![pixels writeToFile:[stem stringByAppendingString:@".rgba"] atomically:YES]) {
                 return 5;
             }

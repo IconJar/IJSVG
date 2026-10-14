@@ -147,14 +147,15 @@
 
 - (void)computeTraits
 {
-    if (self.stroke != nil) {
+    IJSVGNode* stroke = self.stroke;
+    if (stroke != nil) {
         // by default we can just add this on
         [self addTraits:IJSVGNodeTraitStroked];
 
         // if we detect the stroke was a color, we need to check its alpha
         // component to then remove the trait if its 0.f
-        if ([self.stroke isKindOfClass:IJSVGColorNode.class] == YES) {
-            IJSVGColorNode* strokeColor = (IJSVGColorNode*)self.stroke;
+        if ([stroke isKindOfClass:IJSVGColorNode.class] == YES) {
+            IJSVGColorNode* strokeColor = (IJSVGColorNode*)stroke;
             if (strokeColor.color.alphaComponent == 0.f || strokeColor.isNoneOrTransparent == YES) {
                 [self removeTraits:IJSVGNodeTraitStroked];
             }
