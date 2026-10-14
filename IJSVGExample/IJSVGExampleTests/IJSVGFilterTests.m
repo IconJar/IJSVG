@@ -57,6 +57,20 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 @implementation IJSVGFilterTests
 
+- (void)testOffsetPreservesSubregionForFollowingBlur
+{
+    for (NSNumber* offset in @[ @-4, @4 ]) {
+        NSString* prefix = [NSString stringWithFormat:@"<feOffset dx='%@'/>", offset];
+        NSString* content = @"<rect x='1' y='1' width='28' height='8' fill='blue'/>";
+        NSString* implicit = [prefix stringByAppendingString:@"<feGaussianBlur stdDeviation='2'/>"];
+        NSString* explicit = [prefix stringByAppendingString:@"<feGaussianBlur stdDeviation='2' x='0' y='0' width='30' height='10'/>"];
+        NSData* actual = [self render:[self filtered:implicit attributes:@"" content:content] scale:4];
+        NSData* expected = [self render:[self filtered:explicit attributes:@"" content:content] scale:4];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(actual, expected), 1,
+            @"Offset %@ must not shrink the region inherited by the blur", offset);
+    }
+}
+
 - (NSString*)document:(NSString*)body
 {
     return [NSString stringWithFormat:@"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"30\" "

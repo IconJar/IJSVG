@@ -32,6 +32,23 @@
     [self.navigation fulfill];
 }
 
+- (void)testATMInnerShadowsMatchWebKit
+{
+    NSString* path = [@(__FILE__).stringByDeletingLastPathComponent stringByAppendingPathComponent:@"Fixtures/atm-sign-color.svg"];
+    NSError* error = nil;
+    NSString* svg = [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:&error];
+    XCTAssertNil(error);
+    XCTAssertNotNil(svg);
+    if (svg == nil) {
+        return;
+    }
+    NSString* body = [NSString stringWithFormat:@"<g transform='translate(100 0) scale(6.25)'>%@</g>", svg];
+
+    // Allow small rasterizer and blur differences; the clipped blue strip
+    // exceeds this tolerance.
+    [self compareBody:body name:@"atm-inner-shadows" tolerance:0.011];
+}
+
 - (CGContextRef)newBitmap
 {
     return [self newBitmapWithScale:1];

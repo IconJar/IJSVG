@@ -43,9 +43,8 @@ static BOOL IJSVGPrepareMetalShadows(void)
         }
 
         // Core Image pixel coordinates increase from bottom to top, while packed
-        // Core Graphics bitmap rows run from top to bottom. Translated crops fuse
-        // before blur, but the next primitive uses the integral Core Image extent.
-        // Keep those two regions distinct to preserve fractional edge coverage.
+        // Core Graphics bitmap rows run from top to bottom. The offset clips its
+        // translated pixels, while the blur retains the full primitive subregion.
 #if SWIFT_PACKAGE
         NSString* source = IJSVGFilterShaderSource(@"IJSVGInnerShadow");
         if (source == nil) {

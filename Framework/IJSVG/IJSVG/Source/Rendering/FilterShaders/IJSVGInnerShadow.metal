@@ -115,10 +115,9 @@ kernel void shadowVertical(device const uchar4* src [[buffer(0)]],
         }
     }
 
-    float2 offset = job.offsets[stage].xy;
-    float4 blurRegion = float4(max(job.region.xy, floor(job.region.xy + offset)),
-                              min(job.region.zw, ceil(job.region.zw + offset)));
-    blurred *= coverage(p, blurRegion);
+    // Offset changes the pixels, not the subregion inherited by the blur.
+    // Keep the transparent margins available for the blurred shadow.
+    blurred *= coverage(p, job.region);
     float crop = coverage(p, job.region);
 
     // p lies exactly at the centre of this source pixel, so interpolation is unnecessary.

@@ -17,7 +17,8 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
     IJSVGColorUsageTraitFill = 1 << 1,
     IJSVGColorUsageTraitStroke = 1 << 2,
     IJSVGColorUsageTraitGradientStop = 1 << 3,
-    IJSVGColorUsageTraitAll = IJSVGColorUsageTraitFill | IJSVGColorUsageTraitGradientStop | IJSVGColorUsageTraitStroke
+    IJSVGColorUsageTraitFilter = 1 << 4,
+    IJSVGColorUsageTraitAll = IJSVGColorUsageTraitFill | IJSVGColorUsageTraitGradientStop | IJSVGColorUsageTraitStroke | IJSVGColorUsageTraitFilter
 };
 
 @interface IJSVGTraitedColor : NSObject {
