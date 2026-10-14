@@ -31,6 +31,19 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
     return context;
 }
 
+@interface IJSVGCountingFilterSource : IJSVGPaint
+@property (nonatomic, assign) NSUInteger drawCount;
+@end
+
+@implementation IJSVGCountingFilterSource
+- (void)drawInContext:(CGContextRef)context
+{
+    self.drawCount++;
+    CGContextSetRGBFillColor(context, 1, 0, 0, 1);
+    CGContextFillRect(context, CGRectMake(8, 8, 16, 16));
+}
+@end
+
 @interface IJSVGFilterOutputCacheTests : XCTestCase
 @end
 
@@ -194,6 +207,51 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
         }
         XCTAssertLessThanOrEqual(maximumError, 1, @"case %lu, step %lu", (unsigned long)index, (unsigned long)step);
     }
+}
+
+- (void)testBatchReplayCachesOutputForLaterDraws
+{
+    IJSVG* svg = [self svgForDocument:0];
+    IJSVGFilter* filter = ((IJSVGGraphicsNode*)svg.rootNode.children.firstObject).filter;
+    XCTAssertNotNil(filter);
+    NSMutableArray<IJSVGCountingFilterSource*>* sources = [NSMutableArray array];
+    NSMutableArray<IJSVGFilterPaint*>* paints = [NSMutableArray array];
+    for (NSUInteger index = 0; index < 3; index++) {
+        IJSVGCountingFilterSource* source = [[IJSVGCountingFilterSource alloc] init];
+        source.frame = CGRectMake(0, 0, 32, 32);
+        source.boundingBox = source.outerBoundingBox = source.frame;
+        IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] initWithSourcePaint:source filter:filter viewPort:source.frame];
+        paint.cachesRenderedOutput = YES;
+        [sources addObject:source];
+        [paints addObject:paint];
+    }
+    CGContextRef bitmap = NewBitmap(64, kCGColorSpaceSRGB);
+    XCTAssertTrue(bitmap != NULL);
+    if (bitmap == NULL) {
+        return;
+    }
+    NSData* firstPixels = nil;
+    for (NSUInteger draw = 0; draw < 3; draw++) {
+        CGContextClearRect(bitmap, CGRectMake(0, 0, 64, 64));
+        BOOL batched = [IJSVGFilterPaint renderBatchedPaints:[NSSet setWithArray:paints]
+                                                   inContext:bitmap
+                                                drawingBlock:^(CGContextRef context) {
+                                                    for (IJSVGFilterPaint* paint in paints) {
+                                                        [IJSVGFilterPaint renderPaint:paint inBitmapContext:context];
+                                                    }
+                                                }];
+        XCTAssertTrue(batched);
+        for (IJSVGCountingFilterSource* source in sources) {
+            XCTAssertEqual(source.drawCount, 1U, @"Draw %lu must reuse the completed filter output", (unsigned long)draw);
+        }
+        NSData* pixels = BitmapPixels(bitmap, 64);
+        if (draw == 0) {
+            firstPixels = pixels;
+        } else {
+            XCTAssertEqualObjects(pixels, firstPixels);
+        }
+    }
+    CGContextRelease(bitmap);
 }
 
 - (void)testBlurCacheMatchesFreshRenderer

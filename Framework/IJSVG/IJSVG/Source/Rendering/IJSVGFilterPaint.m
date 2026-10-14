@@ -1474,7 +1474,6 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         batch.invalid = YES;
         return;
     }
-    _outputSignature = nil;
     IJSVGFilterGraph* graph = self.filterGraph;
     CGRect region = [graph regionForNode:_filter units:_filter.units defaultRegion:CGRectZero];
 
@@ -1558,6 +1557,10 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     if (!IJSVGFilterReservePixelSize(pixelSize, batch, cached)) {
         return;
     }
+
+    // Batch replay needs the collection signature to retain completed pixels.
+    // Reset it only when preparing output for a new render.
+    _outputSignature = nil;
     if (!IJSVGFilterHasCachingAncestor && self.canCacheOutput) {
         _outputSignature = @[ [NSValue valueWithRect:workRect], [NSValue valueWithSize:pixelSize], [NSValue valueWithRect:region], [NSValue valueWithRect:self.boundingBox], [NSValue valueWithRect:self.viewPort], [NSValue valueWithRect:self.sourcePaint.frame], @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1) ];
         IJSVGFilterCachedImage* output = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
