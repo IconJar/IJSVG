@@ -115,7 +115,7 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     CGGradientRef borrowedGradient = NULL;
     @autoreleasepool {
         IJSVGGradient* gradient = [[IJSVGGradient alloc] init];
-        gradient.colors = @[ NSColor.redColor, NSColor.blueColor ];
+        gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
         gradient.numberOfStops = 2;
         borrowedGradient = CGGradientRetain(gradient.CGGradient);
     }
@@ -153,9 +153,9 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     XCTAssertNil(image.image);
     XCTAssertNil(image.sourceData);
     IJSVGStyle* style = [[IJSVGStyle alloc] init];
-    XCTAssertNil(style.fillColor);
-    XCTAssertNil(style.strokeColor);
-    style.fillColor = NSColor.redColor;
+    XCTAssertEqual(style.fillColor, NULL);
+    XCTAssertEqual(style.strokeColor, NULL);
+    style.fillColor = NSColor.redColor.CGColor;
     style.fillColor = nil;
     XCTAssertEqual(style.colors.count, 0u);
     XCTAssertEqual([[IJSVGFilter alloc] init].primitives.count, 0u);
@@ -164,10 +164,10 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
 
 - (void)testColorLookupsReturnNil
 {
-    XCTAssertNil([IJSVGColor colorFromString:@"not-a-color"]);
-    XCTAssertNil([IJSVGColor colorFromString:@"none"]);
+    XCTAssertEqual([IJSVGColor colorFromString:@"not-a-color"], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"none"], NULL);
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    XCTAssertNil([storage colorForColor:NSColor.redColor matchingTraits:IJSVGColorUsageTraitFill]);
+    XCTAssertEqual([storage colorForColor:NSColor.redColor.CGColor matchingTraits:IJSVGColorUsageTraitFill], NULL);
     XCTAssertEqual(storage.colors.count, 0u);
 }
 

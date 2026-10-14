@@ -39,7 +39,7 @@
 - (CIImage*)applyFilter:(NSString*)name toImage:(CIImage*)image parameters:(NSDictionary<NSString*, id>*)parameters;
 - (CIImage*)alphaForImage:(CIImage*)image;
 - (CIImage*)offsetImage:(CIImage*)input dx:(CGFloat)dx dy:(CGFloat)dy;
-- (CIImage*)floodWithColor:(NSColor*)color opacity:(CGFloat)opacity;
+- (CIImage*)floodWithColor:(CGColorRef)color opacity:(CGFloat)opacity;
 
 @end
 

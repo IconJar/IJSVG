@@ -15,10 +15,10 @@
 // free.
 + (CGFloat*)HSBFromCSSHSLHue:(CGFloat)hue saturation:(CGFloat)saturation lightness:(CGFloat)lightness;
 
-// Creates an NSColor from the parameter list of an oklch() color function,
+// Creates an CGColor from the parameter list of an oklch() color function,
 // e.g. the "62.8% 0.25 29.23" portion. Returns nil if the parameters are
 // invalid.
-+ (NSColor*)colorFromOKLCHParameters:(NSString*)parameters;
-+ (NSColor*)colorFromOKLCHLightness:(CGFloat)lightness chroma:(CGFloat)chroma hue:(CGFloat)hue alpha:(CGFloat)alpha;
++ (CGColorRef)colorFromOKLCHParameters:(NSString*)parameters;
++ (CGColorRef)colorFromOKLCHLightness:(CGFloat)lightness chroma:(CGFloat)chroma hue:(CGFloat)hue alpha:(CGFloat)alpha;
 
 @end

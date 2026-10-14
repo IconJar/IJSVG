@@ -1388,9 +1388,11 @@ NSString* IJSVGHash(NSString* key)
     // add the stops
     //    IJSVGColorList* sheet = paint.gradient.computedColorList
     NSInteger index = 0;
-    for (NSColor* color in gradient.colors) {
+    for (id colorObject in gradient.colors) {
+        CGColorRef color = (__bridge CGColorRef)colorObject;
+
         // grab each color from the gradient
-        NSColor* aColor = color;
+        CGColorRef aColor = color;
         CGFloat location = gradient.locations[index++];
 
         //        if(sheet != nil) {
@@ -1414,7 +1416,7 @@ NSString* IJSVGHash(NSString* key)
         }
 
         // we need to work out the color at this point, annoyingly...
-        CGFloat opacity = aColor.alphaComponent;
+        CGFloat opacity = CGColorGetAlpha(aColor);
 
         // is opacity is equal to 1, no need to add it as spec
         // defaults opacity to 1 anyway :)
@@ -1917,8 +1919,8 @@ NSString* IJSVGHash(NSString* key)
     if (fillPaint != nil) {
         NSString* colorString = IJSVGStringNone;
         if (fillPaint.fillColor != NULL) {
-            NSColor* fillColor = nil;
-            fillColor = [NSColor colorWithCGColor:fillPaint.fillColor];
+            CGColorRef fillColor = nil;
+            fillColor = fillPaint.fillColor;
             colorString = [self colorStringForColor:fillColor flag:IJSVGColorUsageTraitFill options:[self colorOptions]];
         }
         dict[IJSVGAttributeFill] = colorString;
@@ -1974,7 +1976,7 @@ NSString* IJSVGHash(NSString* key)
                 }
                 case IJSVGPaintFillTypeColor: {
                     path = [IJSVGQuartzRenderer newPathFromStrokedShapePaint:strokePaint];
-                    NSColor* strokeColor = [NSColor colorWithCGColor:strokePaint.strokeColor];
+                    CGColorRef strokeColor = strokePaint.strokeColor;
                     NSString* strokeColorString = [self colorStringForColor:strokeColor flag:IJSVGColorUsageTraitStroke options:[self colorOptions]];
                     if (strokeColorString != nil) {
                         IJSVGApplyAttributesToElement(@{ IJSVGAttributeFill : strokeColorString }, strokedPath);
@@ -2053,7 +2055,7 @@ NSString* IJSVGHash(NSString* key)
                     break;
                 }
                 case IJSVGPaintFillTypeColor: {
-                    NSColor* strokeColor = [NSColor colorWithCGColor:strokePaint.strokeColor];
+                    CGColorRef strokeColor = strokePaint.strokeColor;
                     NSString* strokeColorString = [self colorStringForColor:strokeColor flag:IJSVGColorUsageTraitStroke options:[self colorOptions]];
 
                     // could be none
@@ -2786,7 +2788,7 @@ static CGFloat IJSVGExporterAttributeSortIndex(NSString* attributeName, NSIntege
     return [self generateID];
 }
 
-- (NSString*)colorStringForColor:(NSColor*)color flag:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options
+- (NSString*)colorStringForColor:(CGColorRef)color flag:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options
 {
     NSString* colorString = nil;
     if (_respondsTo.stringForColor == 1) {

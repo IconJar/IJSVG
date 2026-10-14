@@ -294,7 +294,7 @@ NSString* const IJSVGAttributePath = @"path";
 NSString* const IJSVGAttributePathLength = @"pathLength";
 
 @interface IJSVGColor (ParserColorCreation)
-+ (NSColor*)colorFromHEXInteger:(NSInteger)hex containsAlphaComponent:(BOOL)containsAlphaComponent;
++ (CGColorRef)colorFromHEXInteger:(NSInteger)hex containsAlphaComponent:(BOOL)containsAlphaComponent;
 @end
 
 static NSString* IJSVGParserElementIdentifier(IJSVGXMLNode* element)
@@ -447,7 +447,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 @property (nonatomic) NSUInteger inlineStyleCost;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<NSString*>*>* parsedFilterReferences;
 @property (nonatomic, strong) NSMutableDictionary<Class, IJSVGBitFlags*>* allowedAttributesByClass;
-@property (nonatomic, strong) NSMutableDictionary<id, NSColor*>* parsedColors;
+@property (nonatomic, strong) NSMutableDictionary<id, id>* parsedColors;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* parsedSVGTransforms;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSArray<IJSVGTransform*>*>* parsedCSSTransforms;
 @property (nonatomic, strong) NSHashTable<id>* plainGradientStopSources;
@@ -1242,39 +1242,39 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     return transforms;
 }
 
-- (NSColor*)parsedStopColorForAttribute:(IJSVGXMLAttribute*)attribute
+- (CGColorRef)parsedStopColorForAttribute:(IJSVGXMLAttribute*)attribute
 {
     uint32_t rgba = 0;
     if (!IJSVGParseHexColorBytes(IJSVGXMLAttributeBytes(attribute), attribute->value.length, &rgba)) {
         return [self parsedStopColorForValue:IJSVGXMLAttributeValue(attribute)];
     }
     NSNumber* key = @(rgba);
-    NSColor* color = _parsedColors[key];
+    CGColorRef color = (__bridge CGColorRef)_parsedColors[key];
     if (color == nil) {
         color = [IJSVGColor colorFromHEXInteger:rgba containsAlphaComponent:YES];
         if (color != nil && _parsedColors.count < 256) {
             if (_parsedColors == nil) {
                 _parsedColors = [[NSMutableDictionary alloc] init];
             }
-            _parsedColors[key] = color;
+            _parsedColors[key] = (__bridge id)color;
         }
     }
     return color;
 }
 
-- (NSColor*)parsedStopColorForValue:(NSString*)value
+- (CGColorRef)parsedStopColorForValue:(NSString*)value
 {
     if (value.length == 0 || [value characterAtIndex:0] != '#') {
         return [IJSVGColor colorFromString:value];
     }
-    NSColor* color = _parsedColors[value];
+    CGColorRef color = (__bridge CGColorRef)_parsedColors[value];
     if (color == nil) {
         color = [IJSVGColor colorFromString:value];
         if (color != nil && _parsedColors.count < 256) {
             if (_parsedColors == nil) {
                 _parsedColors = [[NSMutableDictionary alloc] init];
             }
-            _parsedColors[value] = color;
+            _parsedColors[value] = (__bridge id)color;
         }
     }
     return color;
@@ -1282,16 +1282,26 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (IJSVGColorNode*)colorPaintForValue:(NSString*)value
 {
-    NSColor* color = [IJSVGColor colorFromString:value];
-    IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
+    CGColorRef color = CGColorRetain((__bridge CGColorRef)_parsedColors[value]);
+    if (color == NULL) {
+        color = [IJSVGColor newCGColorFromString:value];
+        if (color != NULL && value.length <= 1024 && _parsedColors.count < 256) {
+            if (_parsedColors == nil) {
+                _parsedColors = [[NSMutableDictionary alloc] init];
+            }
+            _parsedColors[value] = (__bridge id)color;
+        }
+    }
+    IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:color];
     colorNode.usesCurrentColor = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame;
     colorNode.contextPaint = [IJSVGUtils contextPaintForString:value];
     if (colorNode.contextPaint != IJSVGContextPaintNone) {
         // A context paint outside an instantiated marker paints nothing.
         colorNode.isNoneOrTransparent = YES;
-    } else if (color == nil) {
+    } else if (color == NULL) {
         colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];
     }
+    CGColorRelease(color);
     return colorNode;
 }
 

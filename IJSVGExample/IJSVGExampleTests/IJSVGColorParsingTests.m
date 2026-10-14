@@ -14,18 +14,18 @@
 
 @implementation IJSVGColorParsingTests
 
-- (NSColor*)deviceRGBColor:(NSColor*)color
+- (CGColorRef)deviceRGBColor:(CGColorRef)color
 {
-    return [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+    return [IJSVGColor computeColorSpace:color];
 }
 
-- (void)assertColor:(NSColor*)color red:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha
+- (void)assertColor:(CGColorRef)color red:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha
 {
-    NSColor* converted = [self deviceRGBColor:color];
-    XCTAssertEqualWithAccuracy(converted.redComponent, red, 0.002f);
-    XCTAssertEqualWithAccuracy(converted.greenComponent, green, 0.002f);
-    XCTAssertEqualWithAccuracy(converted.blueComponent, blue, 0.002f);
-    XCTAssertEqualWithAccuracy(converted.alphaComponent, alpha, 0.002f);
+    CGColorRef converted = [self deviceRGBColor:color];
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(converted)[0], red, 0.002f);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(converted)[1], green, 0.002f);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(converted)[2], blue, 0.002f);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(converted), alpha, 0.002f);
 }
 
 - (void)testAlphaHEXColorsPreserveLeadingZeros
@@ -34,7 +34,7 @@
     const CGFloat components[][4] = { { 0, 1, 0, 160.f / 255 }, { 0, 0, 1, 160.f / 255 }, { 0, 0, 0, 128.f / 255 }, { 0, 0, 0, 0 }, { 0, 1, 0, 170.f / 255 }, { 0, 0, 1, 170.f / 255 }, { 0, 0, 0, 136.f / 255 }, { 0, 0, 0, 0 } };
     for (NSUInteger index = 0; index < values.count; index++) {
         BOOL alpha = NO;
-        NSColor* color = [IJSVGColor colorFromHEXString:values[index] containsAlphaComponent:&alpha];
+        CGColorRef color = [IJSVGColor colorFromHEXString:values[index] containsAlphaComponent:&alpha];
         XCTAssertTrue(alpha, @"%@", values[index]);
         [self assertColor:color red:components[index][0] green:components[index][1] blue:components[index][2] alpha:components[index][3]];
     }
@@ -42,14 +42,14 @@
 
 - (void)testColorFromStringParsesSixDigitHEX
 {
-    NSColor* color = [IJSVGColor colorFromString:@"#336699"];
+    CGColorRef color = [IJSVGColor colorFromString:@"#336699"];
 
     [self assertColor:color red:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:1.f];
 }
 
 - (void)testColorFromStringParsesThreeDigitHEX
 {
-    NSColor* color = [IJSVGColor colorFromString:@"#3A7"];
+    CGColorRef color = [IJSVGColor colorFromString:@"#3A7"];
 
     [self assertColor:color red:0x33 / 255.f green:0xAA / 255.f blue:0x77 / 255.f alpha:1.f];
 }
@@ -57,7 +57,7 @@
 - (void)testColorFromStringParsesEightDigitHEXWithAlpha
 {
     BOOL containsAlpha = NO;
-    NSColor* color = [IJSVGColor colorFromHEXString:@"#33669980" containsAlphaComponent:&containsAlpha];
+    CGColorRef color = [IJSVGColor colorFromHEXString:@"#33669980" containsAlphaComponent:&containsAlpha];
 
     XCTAssertTrue(containsAlpha);
     [self assertColor:color red:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:0x80 / 255.f];
@@ -66,7 +66,7 @@
 - (void)testColorFromStringParsesFourDigitHEXWithAlpha
 {
     BOOL containsAlpha = NO;
-    NSColor* color = [IJSVGColor colorFromHEXString:@"#3A78" containsAlphaComponent:&containsAlpha];
+    CGColorRef color = [IJSVGColor colorFromHEXString:@"#3A78" containsAlphaComponent:&containsAlpha];
 
     XCTAssertTrue(containsAlpha);
     [self assertColor:color red:0x33 / 255.f green:0xAA / 255.f blue:0x77 / 255.f alpha:0x88 / 255.f];
@@ -74,7 +74,7 @@
 
 - (void)testColorFromStringParsesNamedColorsCaseInsensitively
 {
-    NSColor* color = [IJSVGColor colorFromString:@"  CornFlowerBlue  "];
+    CGColorRef color = [IJSVGColor colorFromString:@"  CornFlowerBlue  "];
 
     [self assertColor:color red:0x64 / 255.f green:0x95 / 255.f blue:0xED / 255.f alpha:1.f];
 }
@@ -87,42 +87,42 @@
     [self assertColor:[IJSVGColor colorFromString:@"rgb(300 -5 50%)"] red:1.f green:0.f blue:0.5f alpha:1.f];
     [self assertColor:[IJSVGColor colorFromString:@"rgb(none 0 0 / none)"] red:0.f green:0.f blue:0.f alpha:0.f];
     for (NSString* source in @[ @"rgb(1 2)", @"rgb(1 2 3 4)", @"rgb(1 2 3 /)", @"rgb(1 2 3 / .5 junk)", @"rgb(1-2 3)", @"rgb(nan 0 0)" ]) {
-        XCTAssertNil([IJSVGColor colorFromString:source], @"%@", source);
+        XCTAssertEqual([IJSVGColor colorFromString:source], NULL, @"%@", source);
     }
 }
 
 - (void)testColorFromStringParsesRGBIntegerComponents
 {
-    NSColor* color = [IJSVGColor colorFromString:@"rgb(51, 102, 153)"];
+    CGColorRef color = [IJSVGColor colorFromString:@"rgb(51, 102, 153)"];
 
     [self assertColor:color red:51.f / 255.f green:102.f / 255.f blue:153.f / 255.f alpha:1.f];
 }
 
 - (void)testColorFromStringParsesRGBPercentageComponents
 {
-    NSColor* color = [IJSVGColor colorFromString:@"rgb(20%, 40%, 60%)"];
+    CGColorRef color = [IJSVGColor colorFromString:@"rgb(20%, 40%, 60%)"];
 
     [self assertColor:color red:0.2f green:0.4f blue:0.6f alpha:1.f];
 }
 
 - (void)testColorFromStringParsesRGBAAlphaAsNumber
 {
-    NSColor* color = [IJSVGColor colorFromString:@"rgba(51, 102, 153, .5)"];
+    CGColorRef color = [IJSVGColor colorFromString:@"rgba(51, 102, 153, .5)"];
 
     [self assertColor:color red:51.f / 255.f green:102.f / 255.f blue:153.f / 255.f alpha:0.5f];
 }
 
 - (void)testColorFromStringFallsBackToBlackForIncompleteRGB
 {
-    NSColor* color = [IJSVGColor colorFromString:@"rgb(51, 102)"];
+    CGColorRef color = [IJSVGColor colorFromString:@"rgb(51, 102)"];
 
     [self assertColor:color red:0.f green:0.f blue:0.f alpha:1.f];
 }
 
 - (void)testColorFromStringParsesHSLAndHSLA
 {
-    NSColor* green = [IJSVGColor colorFromString:@"hsl(120, 100%, 50%)"];
-    NSColor* translucentBlue = [IJSVGColor colorFromString:@"hsla(240, 100%, 50%, .25)"];
+    CGColorRef green = [IJSVGColor colorFromString:@"hsl(120, 100%, 50%)"];
+    CGColorRef translucentBlue = [IJSVGColor colorFromString:@"hsla(240, 100%, 50%, .25)"];
 
     [self assertColor:green red:0.f green:1.f blue:0.f alpha:1.f];
     [self assertColor:translucentBlue red:0.f green:0.f blue:1.f alpha:0.25f];
@@ -130,25 +130,25 @@
 
 - (void)testColorFromStringParsesOKLCHWithAlpha
 {
-    NSColor* color = [IJSVGColor colorFromString:@"oklch(62.8% 0.25 29.23 / 50%)"];
+    CGColorRef color = [IJSVGColor colorFromString:@"oklch(62.8% 0.25 29.23 / 50%)"];
 
-    XCTAssertNotNil(color);
-    XCTAssertEqualWithAccuracy([self deviceRGBColor:color].alphaComponent, 0.5f, 0.002f);
+    XCTAssertNotEqual(color, NULL);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha([self deviceRGBColor:color]), 0.5f, 0.002f);
 }
 
 - (void)testColorFromStringRejectsInvalidOKLCHInput
 {
-    XCTAssertNil([IJSVGColor colorFromString:@"oklch(62.8% 0.25)"]);
-    XCTAssertNil([IJSVGColor colorFromString:@"oklch(nope 0.25 29.23)"]);
+    XCTAssertEqual([IJSVGColor colorFromString:@"oklch(62.8% 0.25)"], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"oklch(nope 0.25 29.23)"], NULL);
 }
 
 - (void)testNoneTransparentEmptyAndUnknownColorsReturnNil
 {
-    XCTAssertNil([IJSVGColor colorFromString:nil]);
-    XCTAssertNil([IJSVGColor colorFromString:@""]);
-    XCTAssertNil([IJSVGColor colorFromString:@"none"]);
-    XCTAssertNil([IJSVGColor colorFromString:@"transparent"]);
-    XCTAssertNil([IJSVGColor colorFromString:@"not-a-real-color"]);
+    XCTAssertEqual([IJSVGColor colorFromString:nil], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@""], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"none"], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"transparent"], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"not-a-real-color"], NULL);
     XCTAssertTrue([IJSVGColor isNoneOrTransparent:@"none"]);
     XCTAssertTrue([IJSVGColor isNoneOrTransparent:@"transparent"]);
     XCTAssertFalse([IJSVGColor isNoneOrTransparent:@"red"]);
@@ -156,21 +156,21 @@
 
 - (void)testColorStringFromColorUsesShorthandWhenAllowed
 {
-    NSColor* color = [NSColor colorWithDeviceRed:0x33 / 255.f green:0xAA / 255.f blue:0x77 / 255.f alpha:1.f];
+    CGColorRef color = [IJSVGColor colorWithRed:0x33 / 255.f green:0xAA / 255.f blue:0x77 / 255.f alpha:1.f];
 
     XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color], @"#3A7");
 }
 
 - (void)testColorStringFromColorSerializesAlphaAsRGBAByDefault
 {
-    NSColor* color = [NSColor colorWithDeviceRed:51.f / 255.f green:102.f / 255.f blue:153.f / 255.f alpha:0.5f];
+    CGColorRef color = [IJSVGColor colorWithRed:51.f / 255.f green:102.f / 255.f blue:153.f / 255.f alpha:0.5f];
 
     XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color], @"rgba(51,102,153,.5)");
 }
 
 - (void)testColorStringFromColorCanForceRRGGBBAAOutput
 {
-    NSColor* color = [NSColor colorWithDeviceRed:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:0x80 / 255.f];
+    CGColorRef color = [IJSVGColor colorWithRed:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:0x80 / 255.f];
     IJSVGColorStringOptions options = IJSVGColorStringOptionAllowRRGGBBAA;
 
     XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color options:options], @"#33669980");
@@ -178,8 +178,8 @@
 
 - (void)testChangeAlphaKeepsRGBComponents
 {
-    NSColor* color = [IJSVGColor colorFromString:@"#336699"];
-    NSColor* changed = [IJSVGColor changeAlphaOnColor:color to:0.25f];
+    CGColorRef color = [IJSVGColor colorFromString:@"#336699"];
+    CGColorRef changed = [IJSVGColor changeAlphaOnColor:color to:0.25f];
 
     [self assertColor:changed red:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:0.25f];
 }
@@ -203,7 +203,7 @@
     XCTAssertTrue([noneFill isKindOfClass:IJSVGColorNode.class]);
     [self assertColor:fill.color red:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:1.f];
     [self assertColor:stroke.color red:1.f green:0.f blue:0.f alpha:0.5f];
-    XCTAssertNil(noneFill.color);
+    XCTAssertEqual(noneFill.color, NULL);
     XCTAssertTrue(noneFill.isNoneOrTransparent);
 }
 

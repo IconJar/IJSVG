@@ -65,7 +65,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 @implementation IJSVGGradientStops {
     IJSVGGradientStopData* _stops;
     NSUInteger _stopCount;
-    NSArray<NSColor*>* _colors;
+    NSArray* _colors;
     NSData* _locations;
 }
 

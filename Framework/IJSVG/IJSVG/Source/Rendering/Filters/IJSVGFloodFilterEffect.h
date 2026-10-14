@@ -10,7 +10,7 @@
 
 @interface IJSVGFloodFilterEffect : IJSVGFilterEffect
 
-+ (NSColor*)colorForPrimitive:(IJSVGFilterPrimitive*)primitive;
++ (CGColorRef)colorForPrimitive:(IJSVGFilterPrimitive*)primitive;
 + (CGFloat)opacityForPrimitive:(IJSVGFilterPrimitive*)primitive;
 
 @end

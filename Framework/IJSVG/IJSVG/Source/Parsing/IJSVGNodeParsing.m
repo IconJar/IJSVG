@@ -31,11 +31,11 @@ void IJSVGParseColorAttributes(IJSVGNode* node, IJSVGNodeParsingContext* context
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeColor, &value)) {
         NSString* keyword = value.lowercaseString;
         if ([keyword isEqualToString:@"initial"]) {
-            node.currentColor = NSColor.blackColor;
+            node.currentColor = IJSVGColor.blackColor;
         } else if ([keyword isEqualToString:@"currentcolor"] || [keyword isEqualToString:@"inherit"] || [keyword isEqualToString:@"unset"]) {
             node.currentColor = nil;
         } else if ([keyword isEqualToString:@"transparent"]) {
-            node.currentColor = NSColor.clearColor;
+            node.currentColor = IJSVGColor.clearColor;
         } else {
             node.currentColor = [IJSVGColor colorFromString:value];
         }

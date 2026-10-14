@@ -217,8 +217,8 @@
             IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
             IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(300, 150)];
             IJSVGColorNode* fill = (IJSVGColorNode*)((IJSVGGraphicsNode*)root.children.lastObject).fill;
-            NSColor* color = [fill.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-            XCTAssertEqualWithAccuracy(color.blueComponent, width.doubleValue >= 600 ? 1 : 0, .001);
+            CGColorRef color = [IJSVGColor computeColorSpace:fill.color];
+            XCTAssertEqualWithAccuracy(CGColorGetComponents(color)[2], width.doubleValue >= 600 ? 1 : 0, .001);
         }
     }
     for (NSString* query in @[ @"print", @"(unknown:600px)", @"not (width:banana)", @"(width:600garbage)" ]) {
@@ -230,7 +230,7 @@
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
         IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(800, 200)];
         IJSVGColorNode* fill = (IJSVGColorNode*)((IJSVGGraphicsNode*)root.children.lastObject).fill;
-        XCTAssertEqualWithAccuracy([fill.color colorUsingColorSpace:NSColorSpace.sRGBColorSpace].redComponent, 1, .001);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents([IJSVGColor computeColorSpace:fill.color])[0], 1, .001);
     }
 }
 
@@ -257,11 +257,11 @@
     IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
     IJSVGPath* rect = (IJSVGPath*)rootNode.children.firstObject;
     IJSVGColorNode* fill = (IJSVGColorNode*)rect.fill;
-    NSColor* rgbColor = [fill.color colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    CGColorRef rgbColor = [IJSVGColor computeColorSpace:fill.color];
 
-    XCTAssertEqualWithAccuracy(rgbColor.redComponent, 1.f, 0.03);
-    XCTAssertEqualWithAccuracy(rgbColor.greenComponent, 0.f, 0.03);
-    XCTAssertEqualWithAccuracy(rgbColor.blueComponent, 0.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(rgbColor)[0], 1.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(rgbColor)[1], 0.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(rgbColor)[2], 0.f, 0.03);
     XCTAssertEqualWithAccuracy(rect.strokeWidth.value, 3.f, 0.001);
 }
 
@@ -398,8 +398,8 @@
     IJSVGRootNode* rootNode = [parser rootNodeWithSize:CGSizeMake(8.f, 8.f)];
     IJSVGPath* target = (IJSVGPath*)rootNode.children.firstObject;
     IJSVGLinearGradient* gradient = (IJSVGLinearGradient*)target.fill;
-    NSColor* firstColor = [gradient.colors.firstObject colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
-    NSColor* lastColor = [gradient.colors.lastObject colorUsingColorSpace:NSColorSpace.genericRGBColorSpace];
+    CGColorRef firstColor = [IJSVGColor computeColorSpace:(__bridge CGColorRef)gradient.colors.firstObject];
+    CGColorRef lastColor = [IJSVGColor computeColorSpace:(__bridge CGColorRef)gradient.colors.lastObject];
 
     XCTAssertTrue([gradient isKindOfClass:IJSVGLinearGradient.class]);
     XCTAssertEqualObjects(gradient.identifier, @"fade");
@@ -411,11 +411,11 @@
     XCTAssertEqualWithAccuracy(gradient.y1.value, 0.f, 0.001);
     XCTAssertEqualWithAccuracy(gradient.x2.value, 8.f, 0.001);
     XCTAssertEqualWithAccuracy(gradient.y2.value, 0.f, 0.001);
-    XCTAssertEqualWithAccuracy(firstColor.redComponent, 1.f, 0.03);
-    XCTAssertEqualWithAccuracy(firstColor.blueComponent, 0.f, 0.03);
-    XCTAssertEqualWithAccuracy(lastColor.redComponent, 0.f, 0.03);
-    XCTAssertEqualWithAccuracy(lastColor.blueComponent, 1.f, 0.03);
-    XCTAssertEqualWithAccuracy(lastColor.alphaComponent, 0.5f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(firstColor)[0], 1.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(firstColor)[2], 0.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(lastColor)[0], 0.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(lastColor)[2], 1.f, 0.03);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(lastColor), 0.5f, 0.03);
 }
 
 - (void)testParserReturnsErrorForMalformedXML

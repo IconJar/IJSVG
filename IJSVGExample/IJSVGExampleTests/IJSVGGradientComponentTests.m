@@ -42,7 +42,11 @@
     for (NSArray<NSColor*>* colors in cases) {
         for (NSNumber* explicitLocations in @[ @NO, @YES ]) {
             IJSVGGradient* gradient = [[IJSVGGradient alloc] init];
-            gradient.colors = colors;
+            NSMutableArray* nativeColors = [NSMutableArray arrayWithCapacity:colors.count];
+            for (NSColor* color in colors) {
+                [nativeColors addObject:(__bridge id)color.CGColor];
+            }
+            gradient.colors = nativeColors;
             gradient.numberOfStops = colors.count;
             if (explicitLocations.boolValue) {
                 CGFloat* locations = calloc(colors.count, sizeof(CGFloat));
@@ -55,7 +59,7 @@
             for (NSColor* color in colors) {
                 [cgColors addObject:(__bridge id)color.CGColor];
             }
-            CGGradientRef reference = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace, (__bridge CFArrayRef)cgColors, gradient.locations);
+            CGGradientRef reference = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace, (__bridge CFArrayRef)cgColors, gradient.locations);
             CGGradientRef actual = gradient.CGGradient;
             if (colors.count == 1 && gradient.locations == NULL) {
                 XCTAssertTrue(reference == NULL);

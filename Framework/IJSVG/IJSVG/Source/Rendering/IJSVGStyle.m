@@ -10,6 +10,26 @@
 
 @implementation IJSVGStyle
 
+- (void)setFillColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_fillColor);
+    _fillColor = retained;
+}
+
+- (void)setStrokeColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_strokeColor);
+    _strokeColor = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_fillColor);
+    CGColorRelease(_strokeColor);
+}
+
 - (id)init
 {
     if ((self = [super init]) != nil) {

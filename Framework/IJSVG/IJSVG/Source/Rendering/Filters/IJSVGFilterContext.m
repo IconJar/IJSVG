@@ -272,11 +272,11 @@ void IJSVGFilterApplyRows(NSInteger width, NSInteger height, void (^operation)(N
     return [input imageByApplyingTransform:CGAffineTransformMakeTranslation(dx * units.width, dy * units.height)];
 }
 
-- (CIImage*)floodWithColor:(NSColor*)color opacity:(CGFloat)opacity
+- (CIImage*)floodWithColor:(CGColorRef)color opacity:(CGFloat)opacity
 {
-    color = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace] ?: NSColor.blackColor;
+    color = [IJSVGColor computeColorSpace:color] ?: IJSVGColor.blackColor;
     CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CIColor* ciColor = [CIColor colorWithRed:color.redComponent green:color.greenComponent blue:color.blueComponent alpha:color.alphaComponent * IJSVGFilterClamp(opacity) colorSpace:space];
+    CIColor* ciColor = [CIColor colorWithRed:CGColorGetComponents(color)[0] green:CGColorGetComponents(color)[1] blue:CGColorGetComponents(color)[2] alpha:CGColorGetAlpha(color) * IJSVGFilterClamp(opacity) colorSpace:space];
     CGColorSpaceRelease(space);
     return [CIImage imageWithColor:ciColor];
 }

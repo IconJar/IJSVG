@@ -211,7 +211,7 @@
         IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children.firstObject).fill;
         XCTAssertEqual(gradient.children.count, 3u);
         XCTAssertEqual(gradient.numberOfStops, 3u);
-        XCTAssertEqualObjects(gradient.colors.lastObject, [IJSVGColor colorFromString:@"green"]);
+        XCTAssertTrue(CGColorEqualToColor((__bridge CGColorRef)gradient.colors.lastObject, [IJSVGColor colorFromString:@"green"]));
         for (IJSVGNode* stop in gradient.children) {
             XCTAssertEqual(stop.parentNode, gradient);
             XCTAssertEqual(stop.type, IJSVGNodeTypeStop);
@@ -242,13 +242,13 @@
     XCTAssertEqualWithAccuracy(secondStop.offset.value, .25, .0001);
     XCTAssertEqual(secondStop.offset.originalType, IJSVGUnitLengthTypePercentage);
     XCTAssertEqualWithAccuracy(secondStop.fillOpacity.value, .5, .0001);
-    XCTAssertEqualWithAccuracy(((IJSVGColorNode*)secondStop.fill).color.alphaComponent, .5, .0001);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(((IJSVGColorNode*)secondStop.fill).color), .5, .0001);
     firstStop.offset = [firstStop.offset lengthWithValue:.75];
     firstStop.fillOpacity = [firstStop.fillOpacity lengthWithValue:.8];
-    ((IJSVGColorNode*)firstStop.fill).color = NSColor.greenColor;
+    ((IJSVGColorNode*)firstStop.fill).color = NSColor.greenColor.CGColor;
     XCTAssertEqualWithAccuracy(secondStop.offset.value, .25, .0001);
     XCTAssertEqualWithAccuracy(secondStop.fillOpacity.value, .5, .0001);
-    XCTAssertEqualWithAccuracy(((IJSVGColorNode*)secondStop.fill).color.alphaComponent, .5, .0001);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(((IJSVGColorNode*)secondStop.fill).color), .5, .0001);
     XCTAssertNotEqual(firstStop, secondStop);
     XCTAssertNotEqual(firstStop.fill, secondStop.fill);
     XCTAssertEqual(secondStop.parentNode, second);
@@ -346,10 +346,10 @@
     IJSVGStop* secondStop = (IJSVGStop*)second.children.firstObject;
     XCTAssertNotEqual(firstStop, secondStop);
     XCTAssertNotEqual(firstStop.fill, secondStop.fill);
-    NSColor* original = ((IJSVGColorNode*)secondStop.fill).color;
-    ((IJSVGColorNode*)firstStop.fill).color = NSColor.greenColor;
+    CGColorRef original = ((IJSVGColorNode*)secondStop.fill).color;
+    ((IJSVGColorNode*)firstStop.fill).color = NSColor.greenColor.CGColor;
     first.locations[0] = .3;
-    XCTAssertEqualObjects(((IJSVGColorNode*)secondStop.fill).color, original);
+    XCTAssertTrue(CGColorEqualToColor(((IJSVGColorNode*)secondStop.fill).color, original));
     XCTAssertEqual(second.locations[0], 0);
     first.fillOpacity = [IJSVGUnitLength unitWithFloat:.4];
     XCTAssertEqualWithAccuracy(firstStop.fillOpacity.value, .4, .0001);

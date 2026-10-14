@@ -20,7 +20,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGQuartzRenderer.h>
 
-static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColor* color, IJSVGColorUsageTraits traits)
+static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColorRef color, IJSVGColorUsageTraits traits)
 {
     if (color == nil) {
         return;
@@ -389,7 +389,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
         fill = [IJSVGColorNode colorNodeWithColor:self.currentColor];
     }
     if (fill == nil) {
-        IJSVGNodeAddColorToStorage(storage, style.fillColor ?: NSColor.blackColor, IJSVGColorUsageTraitFill);
+        IJSVGNodeAddColorToStorage(storage, style.fillColor ?: IJSVGColor.blackColor, IJSVGColorUsageTraitFill);
     } else {
         IJSVGTraitedColorStorage* fillStorage = nil;
         fillStorage = [fill colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill];
@@ -806,7 +806,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, NSColo
     // A custom getter on this node can deliberately return nil. An inheriting
     // ordinary getter on the child still falls back to black for a nil ancestor.
     if (style.currentColor == nil && node != self) {
-        style.currentColor = NSColor.blackColor;
+        style.currentColor = IJSVGColor.blackColor;
     }
     if (style.visibility == IJSVGVisibilityInherit) {
         style.visibility = IJSVGVisibilityVisible;

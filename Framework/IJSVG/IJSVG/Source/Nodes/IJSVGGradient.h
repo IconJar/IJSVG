@@ -25,7 +25,8 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 
 @property (nonatomic, strong, nullable) IJSVGReference* reference;
 
-@property (nonatomic, strong, nullable) NSArray<NSColor*>* colors;
+// The array retains bridged CGColor objects
+@property (nonatomic, strong, nullable) NSArray* colors;
 @property (nonatomic, assign, nullable) CGFloat* locations;
 @property (nonatomic, assign) NSUInteger numberOfStops;
 @property (nonatomic, assign) IJSVGGradientSpreadMethod spreadMethod;
@@ -37,7 +38,7 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 
 @property (nonatomic, readonly) NSArray<IJSVGNode*>* stops;
 
-+ (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray<NSColor*>* _Nonnull* _Nonnull)someColors;
++ (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray* _Nonnull* _Nonnull)someColors;
 
 - (void)parseSpreadMethod:(NSXMLElement*)element;
 - (BOOL)drawSpreadInContext:(CGContextRef)ctx startPoint:(CGPoint)start endPoint:(CGPoint)end startRadius:(CGFloat)startRadius endRadius:(CGFloat)endRadius radial:(BOOL)radial;

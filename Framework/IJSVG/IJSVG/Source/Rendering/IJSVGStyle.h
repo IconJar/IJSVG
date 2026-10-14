@@ -21,8 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGFloat lineWidth;
 @property (nonatomic, assign) CGFloat miterLimit;
 @property (nonatomic, strong, null_resettable) IJSVGTraitedColorStorage* colors;
-@property (nonatomic, strong, nullable) NSColor* fillColor;
-@property (nonatomic, strong, nullable) NSColor* strokeColor;
+@property (nonatomic, assign, nullable) CGColorRef fillColor;
+@property (nonatomic, assign, nullable) CGColorRef strokeColor;
 
 @end
 

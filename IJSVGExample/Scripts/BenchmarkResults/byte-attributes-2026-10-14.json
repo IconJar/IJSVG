@@ -1,0 +1,1002 @@
+{
+  "recordedAt": "2026-10-14T20:55:22.718376+00:00",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "size": 512,
+  "backingScale": 1,
+  "method": "Release frameworks supplied by caller. Metal required. Alternating process order. Each process discards three warmups and takes medians of 15 fresh documents. XML is in memory; bitmap allocation and clearing are outside timers. Total is parse plus first draw. Redraw uses each instance after its first draw. Initial per-process timings are recorded separately, not guaranteed cold startup. Summary reports medians of process medians.",
+  "fixtures": {
+    "/private/tmp/ijsvg-under200/Pcolormesh 2.svg": "a10f1b90579d909d48a3600f5d997a76dc4b0e92f6a638d65de2738507f79610",
+    "/Users/curtishard/Sites/git/github/IJSVG/IJSVGExample/IJSVGExample/pcolormesh.svg": "e127a7ea4f2b2761f684ab342c983c70c6d7431a3debb90e67ef3ca11169baec",
+    "/private/tmp/ijsvg-repeated-references.svg": "ed848be7de70bcc5397ac06df5caaf481e2d17be752c7679ef403fcf38df4807",
+    "/private/tmp/ijsvg-repeated-gradient-stops.svg": "65f80a30632b25f5ea1f764c6aebf00aa0bbe050629b4d2947240e8aaf07cd3e",
+    "/private/tmp/ijsvg-inherited-strokes.svg": "2eb2a71b40f5d99aec5c677d3772eee09403f10a8ea2fd8d01a1e244a7686406"
+  },
+  "harnessSHA256": "2502f610135adc2c52f2801c1e273ee991e0100df1f9f630c4c7c911f9d9fe67",
+  "frameworks": {
+    "baseline": "ba0ccc1f5bcce535dc037bd8257caab05c020d2769a0a45e798e03f8d0663966",
+    "candidate": "ab2e18b6d96c86b71d85abe3be5538f017478f88642c0e9e131f73c55e902af5"
+  },
+  "runs": [
+    {
+      "variant": "baseline",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "84.071833",
+          "first_draw_ms": "108.956792",
+          "total_ms": "193.243208",
+          "warm_draw_ms": "22.370083",
+          "initial_parse_ms": "147.576833",
+          "initial_draw_ms": "189.795375",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "78.701208",
+          "first_draw_ms": "64.231083",
+          "total_ms": "143.120875",
+          "warm_draw_ms": "24.420250",
+          "initial_parse_ms": "82.318708",
+          "initial_draw_ms": "66.481792",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "19.988792",
+          "first_draw_ms": "24.448792",
+          "total_ms": "44.490625",
+          "warm_draw_ms": "5.046042",
+          "initial_parse_ms": "19.310917",
+          "initial_draw_ms": "24.065292",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.518250",
+          "first_draw_ms": "8.649875",
+          "total_ms": "24.223458",
+          "warm_draw_ms": "1.901083",
+          "initial_parse_ms": "15.424958",
+          "initial_draw_ms": "9.242708",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.435917",
+          "first_draw_ms": "25.635458",
+          "total_ms": "30.081875",
+          "warm_draw_ms": "5.510333",
+          "initial_parse_ms": "4.469375",
+          "initial_draw_ms": "23.860750",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 0,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "82.910875",
+          "first_draw_ms": "106.273625",
+          "total_ms": "189.553292",
+          "warm_draw_ms": "21.596917",
+          "initial_parse_ms": "90.518667",
+          "initial_draw_ms": "158.438583",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "81.957583",
+          "first_draw_ms": "64.279667",
+          "total_ms": "146.320083",
+          "warm_draw_ms": "24.642167",
+          "initial_parse_ms": "83.816542",
+          "initial_draw_ms": "65.178750",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "21.314458",
+          "first_draw_ms": "24.946500",
+          "total_ms": "46.431458",
+          "warm_draw_ms": "5.052292",
+          "initial_parse_ms": "21.530625",
+          "initial_draw_ms": "24.689542",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "16.145708",
+          "first_draw_ms": "9.061667",
+          "total_ms": "25.220542",
+          "warm_draw_ms": "2.067417",
+          "initial_parse_ms": "16.236833",
+          "initial_draw_ms": "8.638250",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.196667",
+          "first_draw_ms": "23.086458",
+          "total_ms": "27.192292",
+          "warm_draw_ms": "4.826542",
+          "initial_parse_ms": "4.370250",
+          "initial_draw_ms": "23.959750",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "85.506042",
+          "first_draw_ms": "109.183292",
+          "total_ms": "193.348375",
+          "warm_draw_ms": "22.221458",
+          "initial_parse_ms": "89.769583",
+          "initial_draw_ms": "152.985458",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "82.016125",
+          "first_draw_ms": "64.969958",
+          "total_ms": "147.079625",
+          "warm_draw_ms": "25.146500",
+          "initial_parse_ms": "84.740750",
+          "initial_draw_ms": "65.517208",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "21.017708",
+          "first_draw_ms": "25.350250",
+          "total_ms": "46.565667",
+          "warm_draw_ms": "4.928667",
+          "initial_parse_ms": "20.572917",
+          "initial_draw_ms": "24.749417",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.797708",
+          "first_draw_ms": "8.877833",
+          "total_ms": "24.403208",
+          "warm_draw_ms": "2.017083",
+          "initial_parse_ms": "15.713125",
+          "initial_draw_ms": "8.864083",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.116667",
+          "first_draw_ms": "22.925917",
+          "total_ms": "26.894917",
+          "warm_draw_ms": "4.867917",
+          "initial_parse_ms": "3.916167",
+          "initial_draw_ms": "23.585458",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 1,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "82.503750",
+          "first_draw_ms": "105.720917",
+          "total_ms": "188.313250",
+          "warm_draw_ms": "21.392125",
+          "initial_parse_ms": "88.419708",
+          "initial_draw_ms": "150.576500",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "80.289250",
+          "first_draw_ms": "65.169333",
+          "total_ms": "146.049875",
+          "warm_draw_ms": "24.821333",
+          "initial_parse_ms": "81.821583",
+          "initial_draw_ms": "65.435500",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "19.856917",
+          "first_draw_ms": "25.369625",
+          "total_ms": "45.052458",
+          "warm_draw_ms": "5.041833",
+          "initial_parse_ms": "19.588375",
+          "initial_draw_ms": "25.748667",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.602667",
+          "first_draw_ms": "9.195708",
+          "total_ms": "24.625250",
+          "warm_draw_ms": "1.918042",
+          "initial_parse_ms": "15.867750",
+          "initial_draw_ms": "8.706000",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.134375",
+          "first_draw_ms": "23.211125",
+          "total_ms": "27.339917",
+          "warm_draw_ms": "4.706792",
+          "initial_parse_ms": "4.399375",
+          "initial_draw_ms": "23.072167",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "78.721917",
+          "first_draw_ms": "105.339750",
+          "total_ms": "184.321583",
+          "warm_draw_ms": "21.228583",
+          "initial_parse_ms": "89.179875",
+          "initial_draw_ms": "157.032500",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "79.467750",
+          "first_draw_ms": "65.448042",
+          "total_ms": "144.822125",
+          "warm_draw_ms": "24.580208",
+          "initial_parse_ms": "79.356625",
+          "initial_draw_ms": "65.025875",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "19.908542",
+          "first_draw_ms": "24.915875",
+          "total_ms": "45.122083",
+          "warm_draw_ms": "4.916375",
+          "initial_parse_ms": "19.543167",
+          "initial_draw_ms": "25.762000",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.347125",
+          "first_draw_ms": "8.746542",
+          "total_ms": "24.025375",
+          "warm_draw_ms": "1.865792",
+          "initial_parse_ms": "15.217417",
+          "initial_draw_ms": "9.799208",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.120958",
+          "first_draw_ms": "23.093917",
+          "total_ms": "27.256292",
+          "warm_draw_ms": "4.732333",
+          "initial_parse_ms": "4.267500",
+          "initial_draw_ms": "22.999875",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 2,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "82.340458",
+          "first_draw_ms": "106.121750",
+          "total_ms": "188.064083",
+          "warm_draw_ms": "21.436042",
+          "initial_parse_ms": "89.721500",
+          "initial_draw_ms": "156.757083",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "80.268833",
+          "first_draw_ms": "63.886875",
+          "total_ms": "144.707667",
+          "warm_draw_ms": "24.768333",
+          "initial_parse_ms": "81.270792",
+          "initial_draw_ms": "64.196708",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "21.147708",
+          "first_draw_ms": "25.135708",
+          "total_ms": "46.209583",
+          "warm_draw_ms": "4.795917",
+          "initial_parse_ms": "20.334208",
+          "initial_draw_ms": "24.784417",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "14.959625",
+          "first_draw_ms": "8.366875",
+          "total_ms": "23.259625",
+          "warm_draw_ms": "1.887958",
+          "initial_parse_ms": "16.018250",
+          "initial_draw_ms": "8.911208",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "3.961250",
+          "first_draw_ms": "21.778625",
+          "total_ms": "25.927375",
+          "warm_draw_ms": "4.529125",
+          "initial_parse_ms": "4.043917",
+          "initial_draw_ms": "23.081875",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "candidate",
+      "repetition": 3,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "82.621042",
+          "first_draw_ms": "104.856000",
+          "total_ms": "188.939417",
+          "warm_draw_ms": "21.312000",
+          "initial_parse_ms": "88.193958",
+          "initial_draw_ms": "154.001125",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "81.364583",
+          "first_draw_ms": "63.998167",
+          "total_ms": "145.560375",
+          "warm_draw_ms": "24.639625",
+          "initial_parse_ms": "83.750500",
+          "initial_draw_ms": "64.250750",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "20.555375",
+          "first_draw_ms": "24.418875",
+          "total_ms": "45.066625",
+          "warm_draw_ms": "4.691833",
+          "initial_parse_ms": "20.205333",
+          "initial_draw_ms": "24.527875",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.088958",
+          "first_draw_ms": "8.319083",
+          "total_ms": "23.408042",
+          "warm_draw_ms": "1.876792",
+          "initial_parse_ms": "15.238583",
+          "initial_draw_ms": "9.511833",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "3.960042",
+          "first_draw_ms": "22.851792",
+          "total_ms": "26.666083",
+          "warm_draw_ms": "4.575833",
+          "initial_parse_ms": "3.992042",
+          "initial_draw_ms": "22.347000",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    },
+    {
+      "variant": "baseline",
+      "repetition": 3,
+      "rows": [
+        {
+          "case": "Pcolormesh 2",
+          "size": "512",
+          "parse_ms": "83.345167",
+          "first_draw_ms": "108.503292",
+          "total_ms": "192.465250",
+          "warm_draw_ms": "22.238042",
+          "initial_parse_ms": "89.147708",
+          "initial_draw_ms": "154.267042",
+          "pixel_hash": "501c7d949a59eaca"
+        },
+        {
+          "case": "pcolormesh",
+          "size": "512",
+          "parse_ms": "79.651208",
+          "first_draw_ms": "64.362583",
+          "total_ms": "143.704333",
+          "warm_draw_ms": "25.029625",
+          "initial_parse_ms": "79.165792",
+          "initial_draw_ms": "65.614500",
+          "pixel_hash": "78e9f5046c4341c3"
+        },
+        {
+          "case": "ijsvg-repeated-references",
+          "size": "512",
+          "parse_ms": "19.719000",
+          "first_draw_ms": "24.332875",
+          "total_ms": "44.480250",
+          "warm_draw_ms": "4.963375",
+          "initial_parse_ms": "20.009833",
+          "initial_draw_ms": "26.027458",
+          "pixel_hash": "5c5c3657d80b0625"
+        },
+        {
+          "case": "ijsvg-repeated-gradient-stops",
+          "size": "512",
+          "parse_ms": "15.594750",
+          "first_draw_ms": "8.735458",
+          "total_ms": "24.260500",
+          "warm_draw_ms": "1.982750",
+          "initial_parse_ms": "15.020958",
+          "initial_draw_ms": "8.487625",
+          "pixel_hash": "4fb262586ad3b8a5"
+        },
+        {
+          "case": "ijsvg-inherited-strokes",
+          "size": "512",
+          "parse_ms": "4.126125",
+          "first_draw_ms": "23.184917",
+          "total_ms": "27.388042",
+          "warm_draw_ms": "4.816167",
+          "initial_parse_ms": "4.002208",
+          "initial_draw_ms": "22.708167",
+          "pixel_hash": "e138b93df39eb8a5"
+        }
+      ]
+    }
+  ],
+  "memoryHarnessSHA256": "2605084a629fdddba4c65a82879c1a562156d258e846abaa5e9a50f1f99a1f71",
+  "memoryMethod": "Separate fresh processes after all timing runs. One small SVG warms common runtime state. Source and bitmap allocated before baseline. Physical footprint sampled after parse and first render with temporary autoreleases drained and the SVG retained. Peak RSS covers the whole process; deltas include allocator and rendering caches.",
+  "memoryRuns": [
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 7389712,
+      "parsed_bytes": 66175600,
+      "rendered_bytes": 107709232,
+      "peak_rss_bytes": 121372672
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 7389736,
+      "parsed_bytes": 66175576,
+      "rendered_bytes": 107528984,
+      "peak_rss_bytes": 121208832
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 6799912,
+      "parsed_bytes": 45924928,
+      "rendered_bytes": 61915736,
+      "peak_rss_bytes": 71647232
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 6799936,
+      "parsed_bytes": 43713112,
+      "rendered_bytes": 59769432,
+      "peak_rss_bytes": 69550080
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 5521960,
+      "parsed_bytes": 20660824,
+      "rendered_bytes": 32080472,
+      "peak_rss_bytes": 41598976
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 5521984,
+      "parsed_bytes": 20021848,
+      "rendered_bytes": 31441496,
+      "peak_rss_bytes": 41025536
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 5587496,
+      "parsed_bytes": 17089064,
+      "rendered_bytes": 21594664,
+      "peak_rss_bytes": 31227904
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 5603880,
+      "parsed_bytes": 16876072,
+      "rendered_bytes": 21316136,
+      "peak_rss_bytes": 30982144
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "baseline",
+      "repetition": 0,
+      "before_bytes": 5390888,
+      "parsed_bytes": 10355264,
+      "rendered_bytes": 20202072,
+      "peak_rss_bytes": 29802496
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "candidate",
+      "repetition": 0,
+      "before_bytes": 5358144,
+      "parsed_bytes": 10256960,
+      "rendered_bytes": 20087384,
+      "peak_rss_bytes": 29753344
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 7389736,
+      "parsed_bytes": 65962584,
+      "rendered_bytes": 107381552,
+      "peak_rss_bytes": 121110528
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 7373328,
+      "parsed_bytes": 66060888,
+      "rendered_bytes": 107610904,
+      "peak_rss_bytes": 121323520
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 6783552,
+      "parsed_bytes": 43680344,
+      "rendered_bytes": 60113520,
+      "peak_rss_bytes": 69877760
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 6799912,
+      "parsed_bytes": 44728896,
+      "rendered_bytes": 60949080,
+      "peak_rss_bytes": 70680576
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 5505576,
+      "parsed_bytes": 19989056,
+      "rendered_bytes": 31343168,
+      "peak_rss_bytes": 40943616
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 5538320,
+      "parsed_bytes": 19792448,
+      "rendered_bytes": 31081024,
+      "peak_rss_bytes": 40615936
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 5603904,
+      "parsed_bytes": 16925248,
+      "rendered_bytes": 21447232,
+      "peak_rss_bytes": 31096832
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 5603856,
+      "parsed_bytes": 17121832,
+      "rendered_bytes": 21594688,
+      "peak_rss_bytes": 31211520
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "candidate",
+      "repetition": 1,
+      "before_bytes": 5325352,
+      "parsed_bytes": 10273320,
+      "rendered_bytes": 20021824,
+      "peak_rss_bytes": 29704192
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "baseline",
+      "repetition": 1,
+      "before_bytes": 5308968,
+      "parsed_bytes": 10191400,
+      "rendered_bytes": 20005440,
+      "peak_rss_bytes": 29622272
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 7389736,
+      "parsed_bytes": 66208344,
+      "rendered_bytes": 107807488,
+      "peak_rss_bytes": 121503744
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 7356968,
+      "parsed_bytes": 64848448,
+      "rendered_bytes": 106808112,
+      "peak_rss_bytes": 120520704
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 6799912,
+      "parsed_bytes": 44679744,
+      "rendered_bytes": 60670552,
+      "peak_rss_bytes": 70402048
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 6799888,
+      "parsed_bytes": 44106304,
+      "rendered_bytes": 60244568,
+      "peak_rss_bytes": 70025216
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 5538344,
+      "parsed_bytes": 20644416,
+      "rendered_bytes": 32014912,
+      "peak_rss_bytes": 41549824
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 5554704,
+      "parsed_bytes": 20038208,
+      "rendered_bytes": 31490624,
+      "peak_rss_bytes": 41091072
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 5603904,
+      "parsed_bytes": 17072704,
+      "rendered_bytes": 21545536,
+      "peak_rss_bytes": 31162368
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 5603880,
+      "parsed_bytes": 16957992,
+      "rendered_bytes": 21479976,
+      "peak_rss_bytes": 31145984
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "baseline",
+      "repetition": 2,
+      "before_bytes": 5358120,
+      "parsed_bytes": 10420800,
+      "rendered_bytes": 20185664,
+      "peak_rss_bytes": 29802496
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "candidate",
+      "repetition": 2,
+      "before_bytes": 5341736,
+      "parsed_bytes": 10355240,
+      "rendered_bytes": 20087360,
+      "peak_rss_bytes": 29769728
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "candidate",
+      "repetition": 3,
+      "before_bytes": 7373328,
+      "parsed_bytes": 65765976,
+      "rendered_bytes": 107528960,
+      "peak_rss_bytes": 121257984
+    },
+    {
+      "case": "Pcolormesh 2",
+      "variant": "baseline",
+      "repetition": 3,
+      "before_bytes": 7389760,
+      "parsed_bytes": 66142832,
+      "rendered_bytes": 107643696,
+      "peak_rss_bytes": 121307136
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "candidate",
+      "repetition": 3,
+      "before_bytes": 6816272,
+      "parsed_bytes": 44139072,
+      "rendered_bytes": 60506712,
+      "peak_rss_bytes": 70287360
+    },
+    {
+      "case": "pcolormesh",
+      "variant": "baseline",
+      "repetition": 3,
+      "before_bytes": 6783528,
+      "parsed_bytes": 44679744,
+      "rendered_bytes": 60637784,
+      "peak_rss_bytes": 70369280
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "candidate",
+      "repetition": 3,
+      "before_bytes": 5538320,
+      "parsed_bytes": 20021824,
+      "rendered_bytes": 31375936,
+      "peak_rss_bytes": 40976384
+    },
+    {
+      "case": "ijsvg-repeated-references",
+      "variant": "baseline",
+      "repetition": 3,
+      "before_bytes": 5521936,
+      "parsed_bytes": 20644416,
+      "rendered_bytes": 31982144,
+      "peak_rss_bytes": 41517056
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "candidate",
+      "repetition": 3,
+      "before_bytes": 5521960,
+      "parsed_bytes": 16859688,
+      "rendered_bytes": 21332520,
+      "peak_rss_bytes": 30998528
+    },
+    {
+      "case": "ijsvg-repeated-gradient-stops",
+      "variant": "baseline",
+      "repetition": 3,
+      "before_bytes": 5571088,
+      "parsed_bytes": 17105448,
+      "rendered_bytes": 21578280,
+      "peak_rss_bytes": 31211520
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "candidate",
+      "repetition": 3,
+      "before_bytes": 5374480,
+      "parsed_bytes": 10355264,
+      "rendered_bytes": 20152896,
+      "peak_rss_bytes": 29835264
+    },
+    {
+      "case": "ijsvg-inherited-strokes",
+      "variant": "baseline",
+      "repetition": 3,
+      "before_bytes": 5374480,
+      "parsed_bytes": 10306112,
+      "rendered_bytes": 20070976,
+      "peak_rss_bytes": 29687808
+    }
+  ],
+  "summary": {
+    "Pcolormesh 2": {
+      "baseline": {
+        "parse_ms": 82.9244585,
+        "first_draw_ms": 107.1121045,
+        "total_ms": 190.38925,
+        "warm_draw_ms": 21.8150835,
+        "parse_footprint_delta_bytes": 58769480.0,
+        "render_footprint_delta_bytes": 100286728.0,
+        "peak_rss_bytes": 121348096.0
+      },
+      "candidate": {
+        "parse_ms": 82.76595850000001,
+        "first_draw_ms": 106.1976875,
+        "total_ms": 189.2463545,
+        "warm_draw_ms": 21.516479500000003,
+        "parse_footprint_delta_bytes": 58482748.0,
+        "render_footprint_delta_bytes": 100065532.0,
+        "peak_rss_bytes": 121159680.0
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "pcolormesh": {
+      "baseline": {
+        "parse_ms": 79.559479,
+        "first_draw_ms": 64.765958,
+        "total_ms": 144.263229,
+        "warm_draw_ms": 24.700770499999997,
+        "parse_footprint_delta_bytes": 37912600.0,
+        "render_footprint_delta_bytes": 54009904.0,
+        "peak_rss_bytes": 70541312.0
+      },
+      "candidate": {
+        "parse_ms": 81.66108299999999,
+        "first_draw_ms": 64.138917,
+        "total_ms": 145.940229,
+        "warm_draw_ms": 24.70525,
+        "parse_footprint_delta_bytes": 37109796.0,
+        "render_footprint_delta_bytes": 53387324.0,
+        "peak_rss_bytes": 69951488.0
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-repeated-references": {
+      "baseline": {
+        "parse_ms": 19.8827295,
+        "first_draw_ms": 24.6823335,
+        "total_ms": 44.7715415,
+        "warm_draw_ms": 5.002604,
+        "parse_footprint_delta_bytes": 15114276.0,
+        "render_footprint_delta_bytes": 26468388.0,
+        "peak_rss_bytes": 41533440.0
+      },
+      "candidate": {
+        "parse_ms": 21.082708,
+        "first_draw_ms": 25.041104,
+        "total_ms": 46.3205205,
+        "warm_draw_ms": 4.862292,
+        "parse_footprint_delta_bytes": 14483504.0,
+        "render_footprint_delta_bytes": 25878564.0,
+        "peak_rss_bytes": 41000960.0
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-repeated-gradient-stops": {
+      "baseline": {
+        "parse_ms": 15.5565,
+        "first_draw_ms": 8.741,
+        "total_ms": 24.241979,
+        "warm_draw_ms": 1.9095625,
+        "parse_footprint_delta_bytes": 11509772.0,
+        "render_footprint_delta_bytes": 15999000.0,
+        "peak_rss_bytes": 31211520.0
+      },
+      "candidate": {
+        "parse_ms": 15.443332999999999,
+        "first_draw_ms": 8.622354000000001,
+        "total_ms": 23.905625,
+        "warm_draw_ms": 1.9525204999999999,
+        "parse_footprint_delta_bytes": 11329536.0,
+        "render_footprint_delta_bytes": 15826944.0,
+        "peak_rss_bytes": 31047680.0
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    },
+    "ijsvg-inherited-strokes": {
+      "baseline": {
+        "parse_ms": 4.13025,
+        "first_draw_ms": 23.198020999999997,
+        "total_ms": 27.3639795,
+        "warm_draw_ms": 4.77425,
+        "parse_footprint_delta_bytes": 4948004.0,
+        "render_footprint_delta_bytes": 14753840.0,
+        "peak_rss_bytes": 29745152.0
+      },
+      "candidate": {
+        "parse_ms": 4.0389585,
+        "first_draw_ms": 22.8888545,
+        "total_ms": 26.7805,
+        "warm_draw_ms": 4.7011875,
+        "parse_footprint_delta_bytes": 4964376.0,
+        "render_footprint_delta_bytes": 14737432.0,
+        "peak_rss_bytes": 29761536.0
+      },
+      "pixelsIdentical": true,
+      "firstDrawPixelsIdentical": true
+    }
+  },
+  "baselineDescription": "CGColor migration with bounded solid color cache before lazy attribute inputs",
+  "change": "Resolved inputs borrow XML attributes or existing CSS strings. XML values remain unmaterialized until an explicit string consumer requests them. HasValue outputs bytes and length. Display, visibility, stroke width, dash offset, scalar opacity, miter limit, and path length consume bytes directly.",
+  "limitations": "CSS declaration storage and several node consumers still use strings. This is not a fully byte based CSS parser. Timing results are mixed and do not establish a general performance improvement.",
+  "validation": {
+    "fullXcodeSuite": {
+      "passed": 1380,
+      "failed": 0,
+      "expectedFailures": 1,
+      "skipped": 152,
+      "notRun": 60
+    },
+    "refinementTestsPassed": 122,
+    "packageTestsPassed": 15,
+    "warnings": 0,
+    "pixels": "Exact first draw and redraw matches on all five fixtures across all paired runs"
+  },
+  "decision": "Rejected and reverted at user request. Parsing gains were not established and repeated references regressed. Preserve the earlier CGColor migration, solid color cache, and warning fixes."
+}

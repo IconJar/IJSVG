@@ -580,8 +580,9 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
         return YES;
     }
     BOOL visibleFill = shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0;
-    for (NSColor* color in shape.fillGradient.colors) {
-        visibleFill |= color.alphaComponent > 0;
+    for (id colorObject in shape.fillGradient.colors) {
+        CGColorRef color = (__bridge CGColorRef)colorObject;
+        visibleFill |= CGColorGetAlpha(color) > 0;
     }
     if (visibleFill) {
         CGPathRef fill = shape.fillRule == IJSVGWindingRuleEvenOdd ? CGPathCreateCopyByNormalizing(shape.path, true) : CGPathCreateCopy(shape.path);
@@ -603,8 +604,9 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 - (BOOL)appendGradientOutline:(IJSVGGradientPaint*)paint paths:(NSMutableArray<id>*)paths
 {
     BOOL visible = NO;
-    for (NSColor* color in paint.gradient.colors) {
-        visible |= color.alphaComponent > 0;
+    for (id colorObject in paint.gradient.colors) {
+        CGColorRef color = (__bridge CGColorRef)colorObject;
+        visible |= CGColorGetAlpha(color) > 0;
     }
     if (!visible) {
         return YES;
@@ -639,7 +641,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     }
     if ([paint isKindOfClass:IJSVGRootPaint.class]) {
         IJSVGRootPaint* root = (IJSVGRootPaint*)paint;
-        if (root.backgroundColor.alphaComponent > 0) {
+        if (CGColorGetAlpha(root.backgroundColor) > 0) {
             CGRect bounds = IJSVGPaintGetBoundingBoxBounds(root);
             CGAffineTransform inverse = CGAffineTransformInvert([self outlineViewportTransform:root]);
             CGPathRef background = CGPathCreateWithRect(CGRectApplyAffineTransform(bounds, inverse), NULL);

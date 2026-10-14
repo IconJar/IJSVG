@@ -195,9 +195,9 @@ static CGPathRef IJSVGOutlineBlur(CGPathRef path, CGSize deviation)
 - (BOOL)outlineFloodIsVisible:(IJSVGFilterPrimitive*)primitive
 {
     CGFloat opacity = [IJSVGFloodFilterEffect opacityForPrimitive:primitive];
-    NSColor* color = [IJSVGFloodFilterEffect colorForPrimitive:primitive];
-    color = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace] ?: NSColor.blackColor;
-    return color.alphaComponent * IJSVGFilterClamp(opacity) > 0;
+    CGColorRef color = [IJSVGFloodFilterEffect colorForPrimitive:primitive];
+    color = [IJSVGColor computeColorSpace:color] ?: IJSVGColor.blackColor;
+    return CGColorGetAlpha(color) * IJSVGFilterClamp(opacity) > 0;
 }
 
 - (CGPathRef)newBlurOutline:(CGPathRef)path primitive:(IJSVGFilterPrimitive*)primitive

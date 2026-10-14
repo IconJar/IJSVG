@@ -11,16 +11,28 @@
 
 @implementation IJSVGColorNode
 
-+ (IJSVGNode*)colorNodeWithColor:(NSColor*)color
+- (void)setColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_color);
+    _color = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_color);
+}
+
++ (IJSVGNode*)colorNodeWithColor:(CGColorRef)color
 {
     return [[self alloc] initWithColor:color];
 }
 
-- (id)initWithColor:(NSColor*)color
+- (id)initWithColor:(CGColorRef)color
 {
     if ((self = [super init]) != nil) {
         [self addTraits:IJSVGNodeTraitPaintable];
-        _color = color;
+        _color = CGColorRetain(color);
     }
     return self;
 }
@@ -44,13 +56,13 @@
         return storage;
     }
 
-    NSColor* color = self.color ?: NSColor.blackColor;
+    CGColorRef color = self.color ?: IJSVGColor.blackColor;
     if ((traits & IJSVGColorUsageTraitFill) == IJSVGColorUsageTraitFill && style.fillColor != nil) {
         color = style.fillColor;
     } else if ((traits & IJSVGColorUsageTraitStroke) == IJSVGColorUsageTraitStroke && style.strokeColor != nil) {
         color = style.strokeColor;
     } else {
-        NSColor* replacement = [style.colors colorForColor:color matchingTraits:traits];
+        CGColorRef replacement = [style.colors colorForColor:color matchingTraits:traits];
         color = replacement ?: color;
     }
 

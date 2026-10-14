@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, nullable) IJSVG* svg;
 @property (nonatomic, assign) CGSize clientSize;
-@property (nonatomic, strong, nullable) NSColor* backgroundColor;
+@property (nonatomic, assign, nullable) CGColorRef backgroundColor;
 @property (nonatomic, assign) BOOL viewBoxWasInferred;
 @property (nonatomic, assign) IJSVGIntrinsicDimensions intrinsicDimensions;
 @property (nonatomic, strong, nullable) IJSVGUnitSize* intrinsicSize;

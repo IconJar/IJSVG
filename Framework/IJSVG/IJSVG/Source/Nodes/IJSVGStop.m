@@ -75,7 +75,7 @@
         [self consumeOffset:nil color:IJSVGXMLAttributeValue(colorAttribute) opacity:nil parser:parser];
         return;
     }
-    NSColor* color = [parser parsedStopColorForAttribute:colorAttribute];
+    CGColorRef color = [parser parsedStopColorForAttribute:colorAttribute];
     if (color == nil) {
         [self consumeOffset:nil color:IJSVGXMLAttributeValue(colorAttribute) opacity:nil parser:parser];
         return;
@@ -103,7 +103,7 @@
 
     if (stopColor.length != 0) {
         value = stopColor;
-        NSColor* color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame ? node.currentColor : [parser parsedStopColorForValue:value];
+        CGColorRef color = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame ? node.currentColor : [parser parsedStopColorForValue:value];
         IJSVGColorNode* colorNode = (IJSVGColorNode*)[IJSVGColorNode colorNodeWithColor:color];
         if (color == nil) {
             colorNode.isNoneOrTransparent = [IJSVGColor isNoneOrTransparent:value];

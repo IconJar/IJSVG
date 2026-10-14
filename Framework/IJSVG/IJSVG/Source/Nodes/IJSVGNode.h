@@ -423,7 +423,7 @@ void IJSVGAssertPaintableObject(id object);
 @property (nonatomic, copy, nullable) NSString* className;
 @property (nonatomic, strong, nullable) NSSet<NSString*>* classNameList;
 @property (nonatomic, assign) BOOL shouldRender;
-@property (nonatomic, strong, nullable) NSColor* currentColor;
+@property (nonatomic, assign, nullable) CGColorRef currentColor;
 @property (nonatomic, assign) IJSVGVisibility visibility;
 @property (nonatomic, readonly) BOOL visibilityHidden;
 @property (nonatomic, copy, nullable) NSString* identifier;

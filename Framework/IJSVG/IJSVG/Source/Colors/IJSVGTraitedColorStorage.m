@@ -10,9 +10,16 @@
 
 @implementation IJSVGReplacementColor
 
-- (void)setReplacementColor:(NSColor*)replacementColor
+- (void)dealloc
 {
-    _replacementColor = [IJSVGColor computeColorSpace:replacementColor];
+    CGColorRelease(_replacementColor);
+}
+
+- (void)setReplacementColor:(CGColorRef)replacementColor
+{
+    CGColorRef retained = CGColorRetain([IJSVGColor computeColorSpace:replacementColor]);
+    CGColorRelease(_replacementColor);
+    _replacementColor = retained;
 }
 
 @end
@@ -53,7 +60,7 @@
     }
 }
 
-- (void)replaceColor:(NSColor*)replaceColor withColor:(NSColor*)withColor traits:(IJSVGColorUsageTraits)traits
+- (void)replaceColor:(CGColorRef)replaceColor withColor:(CGColorRef)withColor traits:(IJSVGColorUsageTraits)traits
 {
     replaceColor = [IJSVGColor computeColorSpace:replaceColor];
     withColor = [IJSVGColor computeColorSpace:withColor];
@@ -68,27 +75,27 @@
     [repColor addTraits:traits];
 }
 
-- (IJSVGReplacementColor*)replacementColorForColor:(NSColor*)replacementColor withColor:(NSColor*)withColor
+- (IJSVGReplacementColor*)replacementColorForColor:(CGColorRef)replacementColor withColor:(CGColorRef)withColor
 {
     for (IJSVGReplacementColor* color in _replacementColors) {
-        if ([color.color isEqual:color] == YES && [color.replacementColor isEqual:withColor] == YES) {
+        if (CGColorEqualToColor(color.color, replacementColor) == YES && CGColorEqualToColor(color.replacementColor, withColor) == YES) {
             return color;
         }
     }
     return nil;
 }
 
-- (IJSVGReplacementColor*)replacementColorForColor:(NSColor*)color matchingTraits:(IJSVGColorUsageTraits)traits
+- (IJSVGReplacementColor*)replacementColorForColor:(CGColorRef)color matchingTraits:(IJSVGColorUsageTraits)traits
 {
     for (IJSVGReplacementColor* replacementColor in _replacementColors) {
-        if ([replacementColor.color isEqual:color] && [replacementColor matchesTraits:traits] == YES) {
+        if (CGColorEqualToColor(replacementColor.color, color) && [replacementColor matchesTraits:traits] == YES) {
             return replacementColor;
         }
     }
     return nil;
 }
 
-- (NSColor*)colorForColor:(NSColor*)color matchingTraits:(IJSVGColorUsageTraits)traits
+- (CGColorRef)colorForColor:(CGColorRef)color matchingTraits:(IJSVGColorUsageTraits)traits
 {
     if ([self matchesReplacementTraits:traits] == NO) {
         return nil;

@@ -552,8 +552,6 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
     }
     if ([source isMemberOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* copy = source.copy;
-        NSColor* color = ((IJSVGColorNode*)source).color;
-        copy.color = color == nil ? nil : [NSColor colorWithCGColor:color.CGColor];
         IJSVGFilterDetachImageValues(copy, source);
         return copy;
     }
@@ -578,15 +576,7 @@ static IJSVGNode* IJSVGFilterSnapshotImagePaint(IJSVGNode* source)
         radialCopy.r = radialSource.r.copy;
     }
     IJSVGFilterDetachImageValues(copy, source);
-    NSMutableArray<NSColor*>* colors = [[NSMutableArray alloc] init];
-    for (NSColor* color in ((IJSVGGradient*)source).colors) {
-        NSColor* resolved = [NSColor colorWithCGColor:color.CGColor];
-        if (resolved == nil) {
-            return nil;
-        }
-        [colors addObject:resolved];
-    }
-    copy.colors = colors.copy;
+    copy.colors = ((IJSVGGradient*)source).colors.copy;
     return copy;
 }
 

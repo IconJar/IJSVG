@@ -12,6 +12,18 @@
 
 @implementation IJSVGRootNode
 
+- (void)setBackgroundColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_backgroundColor);
+    _backgroundColor = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_backgroundColor);
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeSVG;

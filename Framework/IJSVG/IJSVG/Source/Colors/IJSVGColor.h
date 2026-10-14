@@ -173,23 +173,29 @@ FOUNDATION_EXPORT NSString* const IJSVGColorCurrentColorName;
 
 @interface IJSVGColor : NSObject
 
-+ (NSColor* _Nullable)computeColorSpace:(NSColor* _Nullable)color;
-+ (NSColorSpace*)defaultColorSpace;
++ (CGColorRef _Nullable)computeColorSpace:(CGColorRef _Nullable)color;
++ (CGColorSpaceRef)defaultColorSpace;
++ (CGColorSpaceRef)sRGBColorSpace;
++ (CGColorRef)blackColor;
++ (CGColorRef)whiteColor;
++ (CGColorRef)clearColor;
++ (CGColorRef)colorWithRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha;
++ (CGColorRef)colorWithHue:(CGFloat)hue saturation:(CGFloat)saturation brightness:(CGFloat)brightness alpha:(CGFloat)alpha;
 + (BOOL)isColor:(NSString*)string;
-+ (NSString*)colorStringFromColor:(NSColor*)color options:(IJSVGColorStringOptions)options;
-+ (NSString*)colorStringFromColor:(NSColor*)color;
-+ (NSColor*)colorFromHEXInteger:(NSInteger)hex;
-+ (NSColor* _Nullable)computeColor:(id _Nullable)colour;
++ (NSString*)colorStringFromColor:(CGColorRef)color options:(IJSVGColorStringOptions)options;
++ (NSString*)colorStringFromColor:(CGColorRef)color;
++ (CGColorRef)colorFromHEXInteger:(NSInteger)hex;
 + (BOOL)isNoneOrTransparent:(NSString*)string;
-+ (NSColor* _Nullable)colorFromString:(NSString* _Nullable)string;
-+ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string;
-+ (NSColor* _Nullable)colorFromHEXString:(NSString* _Nullable)string containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
++ (CGColorRef _Nullable)newCGColorFromString:(NSString* _Nullable)string CF_RETURNS_RETAINED;
++ (CGColorRef _Nullable)colorFromString:(NSString* _Nullable)string;
++ (CGColorRef _Nullable)colorFromHEXString:(NSString* _Nullable)string;
++ (CGColorRef _Nullable)colorFromHEXString:(NSString* _Nullable)string containsAlphaComponent:(BOOL* _Nullable)containsAlphaComponent;
 + (BOOL)HEXContainsAlphaComponent:(NSUInteger)hex;
 + (unsigned long)lengthOfHEXInteger:(NSUInteger)hex;
-+ (NSColor*)colorFromRString:(NSString*)rString gString:(NSString*)gString bString:(NSString*)bString aString:(NSString*)aString;
-+ (NSColor* _Nullable)colorFromPredefinedColorName:(NSString*)name;
++ (CGColorRef)colorFromRString:(NSString*)rString gString:(NSString*)gString bString:(NSString*)bString aString:(NSString*)aString;
++ (CGColorRef _Nullable)colorFromPredefinedColorName:(NSString*)name;
 + (NSString* _Nullable)colorNameFromPredefinedColor:(IJSVGPredefinedColor)color;
-+ (NSColor*)changeAlphaOnColor:(NSColor*)color to:(CGFloat)alphaValue;
++ (CGColorRef)changeAlphaOnColor:(CGColorRef)color to:(CGFloat)alphaValue;
 
 @end
 

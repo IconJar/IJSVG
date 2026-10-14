@@ -11,7 +11,6 @@
 #if SWIFT_PACKAGE
 #import <IJSVGFilterContext.h>
 #endif
-#import <AppKit/NSColorSpace.h>
 #import <simd/simd.h>
 
 typedef struct {
@@ -27,14 +26,22 @@ typedef struct {
 @property (nonatomic, strong) NSData* source;
 @property (nonatomic, strong) NSData* weights;
 @property (nonatomic, assign) IJSVGMetalBlurParameters parameters;
-@property (nonatomic, strong) NSColorSpace* colorSpace;
+@property (nonatomic, assign) CGColorSpaceRef colorSpace;
 @property (nonatomic, assign) CGImageRef renderedImage;
 @end
 
 @implementation IJSVGMetalBlurJob
 
+- (void)setColorSpace:(CGColorSpaceRef)space
+{
+    CGColorSpaceRef retained = CGColorSpaceRetain(space);
+    CGColorSpaceRelease(_colorSpace);
+    _colorSpace = retained;
+}
+
 - (void)dealloc
 {
+    CGColorSpaceRelease(_colorSpace);
     if (_renderedImage != NULL) {
         CGImageRelease(_renderedImage);
     }
@@ -121,7 +128,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
     IJSVGMetalBlurJob* job = [[IJSVGMetalBlurJob alloc] init];
     job.source = source;
     job.weights = [weights copy];
-    job.colorSpace = [[NSColorSpace alloc] initWithCGColorSpace:CGBitmapContextGetColorSpace(bitmap)];
+    job.colorSpace = CGBitmapContextGetColorSpace(bitmap);
     job.parameters = (IJSVGMetalBlurParameters) { .geometry = { (uint32_t)width, (uint32_t)height, (uint32_t)taps, (uint32_t)sourceCrops }, .region = { CGRectGetMinX(region), CGRectGetMinY(region), CGRectGetMaxX(region), CGRectGetMaxY(region) }, .config = { linearRGB, 0, 0, 0 } };
     IJSVGMetalBlurParameters parameters = job.parameters;
     memcpy(parameters.weights, weights.bytes, weights.length);
@@ -256,7 +263,7 @@ static BOOL IJSVGPrepareMetalBlur(void)
             if (provider == NULL) {
                 return NO;
             }
-            CGImageRef result = CGImageCreate(width, height, 8, 32, width * 4, job.colorSpace.CGColorSpace, kCGImageAlphaPremultipliedLast, provider, NULL, false, kCGRenderingIntentDefault);
+            CGImageRef result = CGImageCreate(width, height, 8, 32, width * 4, job.colorSpace, kCGImageAlphaPremultipliedLast, provider, NULL, false, kCGRenderingIntentDefault);
             CGDataProviderRelease(provider);
             if (result == NULL) {
                 return NO;

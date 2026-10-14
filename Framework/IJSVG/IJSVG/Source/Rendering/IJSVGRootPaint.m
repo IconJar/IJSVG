@@ -18,6 +18,18 @@
 
 @implementation IJSVGRootPaint
 
+- (void)setBackgroundColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_backgroundColor);
+    _backgroundColor = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_backgroundColor);
+}
+
 - (void)setChildren:(NSArray<IJSVGPaint*>*)children
 {
     [super setChildren:children];
@@ -36,7 +48,7 @@
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    if (self.backgroundColor == nil || self.backgroundColor.alphaComponent == 0) {
+    if (self.backgroundColor == nil || CGColorGetAlpha(self.backgroundColor) == 0) {
         return;
     }
     CGRect bounds = IJSVGPaintGetBoundingBoxBounds(self);
@@ -45,7 +57,7 @@
         CGAffineTransform transform = IJSVGViewBoxComputeTransform(viewBox, bounds, self.viewBoxAlignment, self.viewBoxMeetOrSlice);
         bounds = CGRectApplyAffineTransform(bounds, CGAffineTransformInvert(transform));
     }
-    CGContextSetFillColorWithColor(ctx, self.backgroundColor.CGColor);
+    CGContextSetFillColorWithColor(ctx, self.backgroundColor);
     CGContextFillRect(ctx, bounds);
 }
 

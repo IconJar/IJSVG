@@ -55,7 +55,7 @@ typedef struct {
     IJSVGMarker* markerStart;
     IJSVGMarker* markerMid;
     IJSVGMarker* markerEnd;
-    NSColor* currentColor;
+    CGColorRef currentColor;
     IJSVGVisibility visibility;
     IJSVGPaintOrder paintOrder;
     CGFloat opacity;

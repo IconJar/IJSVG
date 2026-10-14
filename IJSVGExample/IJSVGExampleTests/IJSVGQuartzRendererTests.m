@@ -29,6 +29,39 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testNativeSolidColorsFollowEditsAndStyleOverrides
+{
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect x='4' y='4' width='24' height='24' fill='%@' stroke='%@' stroke-width='2'/></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"#336699", @"#994422"]];
+    IJSVGRect* rect = (IJSVGRect*)svg.rootNode.children.firstObject;
+    NSData* original = [self renderSVG:svg size:64];
+    ((IJSVGColorNode*)rect.fill).color = [IJSVGColor colorFromString:@"#ee4411"];
+    ((IJSVGColorNode*)rect.stroke).color = [IJSVGColor colorFromString:@"#2244cc"];
+    [svg setNeedsDisplay];
+    IJSVG* expected = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"#ee4411", @"#2244cc"]];
+    NSData* edited = [self renderSVG:svg size:64];
+    XCTAssertNotEqualObjects(original, edited);
+    XCTAssertEqualObjects(edited, [self renderSVG:expected size:64]);
+    svg.style.fillColor = [IJSVGColor colorFromString:@"#44bb66"];
+    svg.style.strokeColor = [IJSVGColor colorFromString:@"#dd66aa"];
+    [svg setNeedsDisplay];
+    expected = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"#44bb66", @"#dd66aa"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:expected size:64]);
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32, 32) options:IJSVGExporterOptionNone];
+    IJSVG* exported = [[IJSVG alloc] initWithSVGString:exporter.SVGString];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:exported size:64]);
+}
+
+- (void)testNativeSolidColorsRespectColorReplacement
+{
+    NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect x='4' y='4' width='24' height='24' fill='%@' stroke='%@' stroke-width='2'/></svg>";
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"#336699", @"#994422"]];
+    [svg.style.colors replaceColor:[IJSVGColor colorFromString:@"#336699"] withColor:[IJSVGColor colorFromString:@"#ee4411"] traits:IJSVGColorUsageTraitFill];
+    [svg.style.colors replaceColor:[IJSVGColor colorFromString:@"#994422"] withColor:[IJSVGColor colorFromString:@"#2244cc"] traits:IJSVGColorUsageTraitStroke];
+    IJSVG* expected = [[IJSVG alloc] initWithSVGString:[NSString stringWithFormat:format, @"#ee4411", @"#2244cc"]];
+    XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:expected size:64]);
+}
+
 - (void)testDashBufferCopiesMutableInputsAndKeepsBoxedViewInSync
 {
     CGFloat values[] = { 2.25, 1.5 };
@@ -1718,8 +1751,8 @@
     if (svg == nil) {
         return;
     }
-    svg.style.fillColor = NSColor.greenColor;
-    svg.style.strokeColor = NSColor.magentaColor;
+    svg.style.fillColor = NSColor.greenColor.CGColor;
+    svg.style.strokeColor = NSColor.magentaColor.CGColor;
     svg.style.lineWidth = 4.f;
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:IJSVGExporterOptionNone];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:[exporter SVGString]];
@@ -1771,7 +1804,7 @@
     if (svg == nil) {
         return;
     }
-    [svg.style.colors replaceColor:NSColor.redColor withColor:NSColor.greenColor traits:IJSVGColorUsageTraitGradientStop];
+    [svg.style.colors replaceColor:NSColor.redColor.CGColor withColor:NSColor.greenColor.CGColor traits:IJSVGColorUsageTraitGradientStop];
     IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(32.f, 32.f) options:IJSVGExporterOptionAll];
     IJSVG* roundTrip = [[IJSVG alloc] initWithSVGString:[exporter SVGString]];
     XCTAssertEqualObjects([self renderSVG:svg size:64], [self renderSVG:roundTrip size:64]);

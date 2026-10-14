@@ -223,9 +223,9 @@
         XCTAssertEqual(rectangle.opacity.value, 0.5);
         IJSVGColorNode* fill = (IJSVGColorNode*)rectangle.fill;
         XCTAssertEqual(fill.usesCurrentColor, index != 2);
-        NSColor* color = fill.usesCurrentColor ? rectangle.currentColor : fill.color;
+        CGColorRef color = fill.usesCurrentColor ? rectangle.currentColor : fill.color;
         NSString* expectedName = index == 2 ? @"green" : (index == 0 ? @"red" : @"blue");
-        XCTAssertEqualObjects(color, [IJSVGColor colorFromString:expectedName]);
+        XCTAssertTrue(CGColorEqualToColor(color, [IJSVGColor colorFromString:expectedName]));
         rectangle.width = [rectangle.width lengthWithValue:999];
         rectangle.opacity = [rectangle.opacity lengthWithValue:0];
     }
@@ -248,9 +248,9 @@
         XCTAssertEqual(CGPathGetPathBoundingBox(first.path).size.width, width);
         XCTAssertEqual(CGPathGetPathBoundingBox(second.path).size.width, width);
         XCTAssertNotEqual(first.path, second.path);
-        NSColor* color = ((IJSVGColorNode*)first.fill).color;
-        NSColor* expected = [IJSVGColor colorFromString:index == 0 ? @"red" : @"blue"];
-        XCTAssertEqualObjects(color, expected);
+        CGColorRef color = ((IJSVGColorNode*)first.fill).color;
+        CGColorRef expected = [IJSVGColor colorFromString:index == 0 ? @"red" : @"blue"];
+        XCTAssertTrue(CGColorEqualToColor(color, expected));
         CGPathAddRect(first.path, NULL, CGRectMake(0, 0, 999, 999));
         XCTAssertEqual(CGPathGetPathBoundingBox(second.path).size.width, width);
     }
@@ -446,6 +446,31 @@
     }
 }
 
+- (void)testRepeatedSolidColorsSurviveParserReleaseAndIndependentEdits
+{
+    for (NSString* value in @[ @"#123456", @"rebeccapurple", @"rgb(18,52,86)" ]) {
+        IJSVGRootNode* root;
+        @autoreleasepool {
+            NSString* source = IJSVGTestSVG([NSString stringWithFormat:@"<rect width='10' height='10' fill='%@' stroke='%@'/><rect width='10' height='10' fill='%@'/>", value, value, value]);
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:nil];
+            root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+        }
+        IJSVGGraphicsNode* first = (IJSVGGraphicsNode*)root.children.firstObject;
+        IJSVGGraphicsNode* second = (IJSVGGraphicsNode*)root.children.lastObject;
+        IJSVGColorNode* fill = (IJSVGColorNode*)first.fill;
+        IJSVGColorNode* stroke = (IJSVGColorNode*)first.stroke;
+        IJSVGColorNode* other = (IJSVGColorNode*)second.fill;
+        XCTAssertNotEqual(fill, stroke);
+        XCTAssertNotEqual(fill, other);
+        XCTAssertEqual(fill.color, stroke.color);
+        XCTAssertEqual(fill.color, other.color);
+        XCTAssertTrue(CGColorEqualToColor(fill.color, [IJSVGColor colorFromString:value]));
+        fill.color = IJSVGColor.whiteColor;
+        XCTAssertTrue(CGColorEqualToColor(stroke.color, [IJSVGColor colorFromString:value]));
+        XCTAssertTrue(CGColorEqualToColor(other.color, [IJSVGColor colorFromString:value]));
+    }
+}
+
 - (void)testRepeatedHexColorsKeepStopOpacityAndPaintNodesIndependent
 {
     NSString* source = IJSVGTestSVG(@"<defs><linearGradient id='g'>"
@@ -469,10 +494,10 @@
             IJSVGColorNode* paint = (IJSVGColorNode*)((IJSVGGraphicsNode*)first.children[index]).fill;
             IJSVGColorNode* other = (IJSVGColorNode*)((IJSVGGraphicsNode*)second.children[index]).fill;
             XCTAssertNotEqual(paint, other);
-            XCTAssertEqualWithAccuracy(paint.color.alphaComponent, expected[index], .0001);
-            XCTAssertEqualWithAccuracy(other.color.alphaComponent, expected[index], .0001);
-            paint.color = NSColor.clearColor;
-            XCTAssertEqualWithAccuracy(other.color.alphaComponent, expected[index], .0001);
+            XCTAssertEqualWithAccuracy(CGColorGetAlpha(paint.color), expected[index], .0001);
+            XCTAssertEqualWithAccuracy(CGColorGetAlpha(other.color), expected[index], .0001);
+            paint.color = [IJSVGColor colorFromString:@"transparent"];
+            XCTAssertEqualWithAccuracy(CGColorGetAlpha(other.color), expected[index], .0001);
         }
     }
 }
@@ -668,8 +693,8 @@
         uint32_t rgba = 0;
         XCTAssertTrue(IJSVGParseHexColorBytes(value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding], &rgba));
         CGFloat channels[] = { ((rgba >> 24) & 255) / 255.f, ((rgba >> 16) & 255) / 255.f, ((rgba >> 8) & 255) / 255.f, (rgba & 255) / 255.f };
-        NSColor* expected = [IJSVGColor computeColorSpace:[NSColor colorWithDeviceRed:channels[0] green:channels[1] blue:channels[2] alpha:channels[3]]];
-        XCTAssertEqualObjects(expected, [IJSVGColor colorFromString:value], @"%@", value);
+        CGColorRef expected = [IJSVGColor computeColorSpace:[IJSVGColor colorWithRed:channels[0] green:channels[1] blue:channels[2] alpha:channels[3]]];
+        XCTAssertTrue(CGColorEqualToColor(expected, [IJSVGColor colorFromString:value]), @"%@", value);
     }
     for (NSString* value in @[ @"", @"#", @"#12", @"#12345", @"#1234567", @"#ggg", @"red", @" #fff", @"#fff " ]) {
         uint32_t rgba = 0;

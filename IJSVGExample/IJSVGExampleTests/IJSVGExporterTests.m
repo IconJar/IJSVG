@@ -19,15 +19,15 @@
                                      "style='background-color:#bbffff80'><rect width='2' height='2'/></svg>");
     NSString* xml = [svg SVGStringWithSize:CGSizeMake(8, 8) options:IJSVGExporterOptionRemoveComments];
     IJSVG* restored = IJSVGTestSVGObject(xml);
-    NSColor* expected = [svg.rootNode.backgroundColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-    NSColor* actual = [restored.rootNode.backgroundColor colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
-    XCTAssertNotNil(actual);
-    XCTAssertEqualWithAccuracy(actual.redComponent, expected.redComponent, .005);
-    XCTAssertEqualWithAccuracy(actual.greenComponent, expected.greenComponent, .005);
-    XCTAssertEqualWithAccuracy(actual.blueComponent, expected.blueComponent, .005);
-    XCTAssertEqualWithAccuracy(actual.alphaComponent, expected.alphaComponent, .005);
+    CGColorRef expected = [IJSVGColor computeColorSpace:svg.rootNode.backgroundColor];
+    CGColorRef actual = [IJSVGColor computeColorSpace:restored.rootNode.backgroundColor];
+    XCTAssertNotEqual(actual, NULL);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[0], CGColorGetComponents(expected)[0], .005);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[1], CGColorGetComponents(expected)[1], .005);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[2], CGColorGetComponents(expected)[2], .005);
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(actual), CGColorGetAlpha(expected), .005);
     IJSVGRootNode* copy = svg.rootNode.copy;
-    XCTAssertEqualObjects(copy.backgroundColor, svg.rootNode.backgroundColor);
+    XCTAssertTrue(CGColorEqualToColor(copy.backgroundColor, svg.rootNode.backgroundColor));
 }
 
 - (void)testExporterIncludesRootDimensionsAndViewBoxForRequestedSize

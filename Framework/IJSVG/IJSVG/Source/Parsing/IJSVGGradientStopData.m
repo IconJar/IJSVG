@@ -17,7 +17,7 @@ IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode*
     return (IJSVGGradientStopData) {
         .offset = CFBridgingRetain(stop.offset),
         .opacity = opacity == NULL || opacity->value.length == 0 ? NULL : CFBridgingRetain(stop.fillOpacity),
-        .color = CFBridgingRetain(fill.color),
+        .color = CGColorRetain(fill.color),
         .hasFill = fill != nil,
         .isNoneOrTransparent = fill.isNoneOrTransparent
     };
@@ -44,7 +44,7 @@ IJSVGStop* IJSVGGradientStopDataCreateStop(const IJSVGGradientStopData* data)
         stop.fillOpacity = (__bridge IJSVGUnitLength*)data->opacity;
     }
     if (data->hasFill) {
-        IJSVGColorNode* fill = [[IJSVGColorNode alloc] initWithColor:(__bridge NSColor*)data->color];
+        IJSVGColorNode* fill = [[IJSVGColorNode alloc] initWithColor:(CGColorRef)data->color];
         fill.isNoneOrTransparent = data->isNoneOrTransparent;
         stop.fill = fill;
     }

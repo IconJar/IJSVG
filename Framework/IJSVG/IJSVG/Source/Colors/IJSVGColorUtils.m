@@ -25,12 +25,12 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
 
 @implementation IJSVGColor (Utils)
 
-+ (NSColor*)colorFromOKLCHParameters:(NSString*)parameters
++ (CGColorRef)colorFromOKLCHParameters:(NSString*)parameters
 {
     return [self colorFromString:[NSString stringWithFormat:@"oklch(%@)", parameters]];
 }
 
-+ (NSColor*)colorFromOKLCHLightness:(CGFloat)lightness chroma:(CGFloat)chroma hue:(CGFloat)hue alpha:(CGFloat)alpha
++ (CGColorRef)colorFromOKLCHLightness:(CGFloat)lightness chroma:(CGFloat)chroma hue:(CGFloat)hue alpha:(CGFloat)alpha
 {
     if (lightness > 1.f) {
         lightness /= 100.f;
@@ -59,7 +59,7 @@ static CGFloat IJSVGColorLinearSRGBToSRGB(CGFloat value)
     green = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(green), 0.f, 1.f);
     blue = IJSVGColorClamp(IJSVGColorLinearSRGBToSRGB(blue), 0.f, 1.f);
 
-    return [NSColor colorWithDeviceRed:red green:green blue:blue alpha:alpha];
+    return [self colorWithRed:red green:green blue:blue alpha:alpha];
 }
 
 + (CGFloat*)HSBFromCSSHSLHue:(CGFloat)hue saturation:(CGFloat)saturation lightness:(CGFloat)lightness

@@ -87,7 +87,7 @@
     }
     IJSVGNode* fill = self.fill;
     if (fill == nil) {
-        fill = [[IJSVGColorNode alloc] initWithColor:style.fillColor ?: NSColor.blackColor];
+        fill = [[IJSVGColorNode alloc] initWithColor:style.fillColor ?: IJSVGColor.blackColor];
     }
     [storage unionColorStorage:[fill colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill]];
     if ([self matchesTraits:IJSVGNodeTraitStroked]) {

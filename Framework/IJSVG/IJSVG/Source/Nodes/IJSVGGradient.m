@@ -99,7 +99,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     input = 1.f;
     IJSVGEvaluateSpread(function, &input, components + count * 4);
     locations[count++] = 1.f;
-    CGGradientRef gradient = CGGradientCreateWithColorComponents(IJSVGColor.defaultColorSpace.CGColorSpace, components, locations, count);
+    CGGradientRef gradient = CGGradientCreateWithColorComponents(IJSVGColor.defaultColorSpace, components, locations, count);
     free(components);
     free(locations);
     return gradient;
@@ -225,7 +225,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         }
     } else if (lengthSquared == 0.f) {
         // SVG defines coincident linear endpoints as the final stop color.
-        CGContextSetFillColorWithColor(ctx, self.colors.lastObject.CGColor);
+        CGContextSetFillColorWithColor(ctx, (__bridge CGColorRef)self.colors.lastObject);
         CGContextFillRect(ctx, clip);
         return YES;
     }
@@ -248,8 +248,10 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     for (NSUInteger index = 0; index < count; index++) {
         CGFloat offset = self.locations != NULL ? self.locations[index] : (count > 1 ? (CGFloat)index / (count - 1) : 0.f);
         data->stops[index].offset = previous = MAX(previous, MIN(1.f, offset));
-        NSColor* color = [self.colors[index] colorUsingColorSpace:IJSVGColor.defaultColorSpace];
-        [color getRed:&data->stops[index].components[0] green:&data->stops[index].components[1] blue:&data->stops[index].components[2] alpha:&data->stops[index].components[3]];
+        CGColorRef color = [IJSVGColor computeColorSpace:(__bridge CGColorRef)self.colors[index]];
+        if (color != NULL) {
+            memcpy(data->stops[index].components, CGColorGetComponents(color), 4 * sizeof(CGFloat));
+        }
     }
     CGPoint first = CGPointMake(start.x + minimum * delta.x, start.y + minimum * delta.y);
     CGPoint last = CGPointMake(start.x + maximum * delta.x, start.y + maximum * delta.y);
@@ -272,7 +274,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         free(data);
         return NO;
     }
-    CGColorSpaceRef space = IJSVGColor.defaultColorSpace.CGColorSpace;
+    CGColorSpaceRef space = IJSVGColor.defaultColorSpace;
     CGShadingRef shading = radial ? CGShadingCreateRadial(space, first, MAX(0.f, startRadius + minimum * radiusDelta), last, MAX(0.f, startRadius + maximum * radiusDelta), function, NO, NO) : CGShadingCreateAxial(space, first, last, function, NO, NO);
     if (shading != NULL) {
         CGContextDrawShading(ctx, shading);
@@ -335,8 +337,9 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 - (IJSVGTraitedColorStorage*)colorsWithStyle:(IJSVGStyle*)style matchingTraits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    for (NSColor* color in self.colors) {
-        NSColor* replacement = [style.colors colorForColor:color matchingTraits:IJSVGColorUsageTraitGradientStop];
+    for (id colorObject in self.colors) {
+        CGColorRef color = (__bridge CGColorRef)colorObject;
+        CGColorRef replacement = [style.colors colorForColor:color matchingTraits:IJSVGColorUsageTraitGradientStop];
         IJSVGTraitedColor* traited = nil;
         traited = [IJSVGTraitedColor colorWithColor:replacement ?: color traits:IJSVGColorUsageTraitGradientStop];
         [storage addColor:traited];
@@ -344,7 +347,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     return storage;
 }
 
-- (void)setColors:(NSArray<NSColor*>*)colors
+- (void)setColors:(NSArray*)colors
 {
     _colors = colors;
     [self _invalidateCGGradient];
@@ -359,10 +362,10 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     [self _invalidateCGGradient];
 }
 
-+ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray<NSColor*>**)someColors
++ (CGFloat*)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray**)someColors
 {
     NSUInteger childCount = gradient.children.count;
-    NSMutableArray<NSColor*>* colors = [[NSMutableArray alloc] initWithCapacity:childCount];
+    NSMutableArray* colors = [[NSMutableArray alloc] initWithCapacity:childCount];
     CGFloat* stopsParams = NULL;
     if (childCount != 0) {
         stopsParams = (CGFloat*)malloc(childCount * sizeof(CGFloat));
@@ -373,7 +376,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         if (stopNode.type != IJSVGNodeTypeStop) {
             continue;
         }
-        NSColor* color = ((IJSVGColorNode*)(stopNode.fill)).color;
+        CGColorRef color = ((IJSVGColorNode*)(stopNode.fill)).color;
         CGFloat offset = stopNode.offset.value;
         stopsParams[i++] = offset;
         if (color == nil) {
@@ -383,12 +386,12 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
                 color = [IJSVGColor changeAlphaOnColor:color to:opacity];
             }
         }
-        [colors addObject:color];
+        [colors addObject:(__bridge id)color];
     }
     if (i == 0 && stopsParams != NULL) {
         (void)free(stopsParams), stopsParams = NULL;
     }
-    *someColors = (NSArray<NSColor*>*)colors;
+    *someColors = (NSArray*)colors;
     return stopsParams;
 }
 
@@ -396,7 +399,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 - (void)parseColorStops
 {
-    NSArray<NSColor*>* colors = nil;
+    NSArray* colors = nil;
     CGFloat* locations = [IJSVGGradient computeColorStops:self colors:&colors];
     self.colors = colors;
     self.locations = locations;
@@ -416,22 +419,23 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     if (count == 0) {
         return NULL;
     }
-    NSColorSpace* colorSpace = IJSVGColor.defaultColorSpace;
+    CGColorSpaceRef colorSpace = IJSVGColor.defaultColorSpace;
     CGFloat stackComponents[32];
     CGFloat* components = count <= 8 ? stackComponents : calloc(count, 4 * sizeof(CGFloat));
     if (components != NULL) {
         BOOL converted = YES;
         NSUInteger index = 0;
-        for (NSColor* color in _colors) {
-            NSColor* rgb = [color colorUsingColorSpace:colorSpace];
+        for (id colorObject in _colors) {
+            CGColorRef color = (__bridge CGColorRef)colorObject;
+            CGColorRef rgb = [IJSVGColor computeColorSpace:color];
             if (rgb == nil) {
                 converted = NO;
                 break;
             }
-            [rgb getComponents:components + index * 4];
+            memcpy(components + index * 4, CGColorGetComponents(rgb), 4 * sizeof(CGFloat));
             index++;
         }
-        CGGradientRef gradient = converted ? CGGradientCreateWithColorComponents(colorSpace.CGColorSpace, components, _locations, count) : NULL;
+        CGGradientRef gradient = converted ? CGGradientCreateWithColorComponents(colorSpace, components, _locations, count) : NULL;
         if (components != stackComponents) {
             free(components);
         }
@@ -443,10 +447,11 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     // Preserve the existing path for colors that cannot expose RGB components.
     NSInteger num = self.numberOfStops;
     CFMutableArrayRef colors = CFArrayCreateMutable(kCFAllocatorDefault, (CFIndex)num, &kCFTypeArrayCallBacks);
-    for (NSColor* color in _colors) {
-        CFArrayAppendValue(colors, color.CGColor);
+    for (id colorObject in _colors) {
+        CGColorRef color = (__bridge CGColorRef)colorObject;
+        CFArrayAppendValue(colors, color);
     }
-    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace.CGColorSpace, colors, _locations);
+    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace, colors, _locations);
     CFRelease(colors);
     return _CGGradient = result;
 }

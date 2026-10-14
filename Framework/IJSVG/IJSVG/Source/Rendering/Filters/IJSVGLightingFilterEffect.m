@@ -161,7 +161,7 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
     });
 }
 
-static IJSVGLightingVector IJSVGLightingColor(NSColor* color, IJSVGFilterContext* context)
+static IJSVGLightingVector IJSVGLightingColor(CGColorRef color, IJSVGFilterContext* context)
 {
     // The light has one color so only one pixel needs color conversion.
     CIImage* flood = [context floodWithColor:color opacity:1];
@@ -207,7 +207,7 @@ static IJSVGLightingVector IJSVGLightingColor(NSColor* color, IJSVGFilterContext
     double sn = hypot(hypot(sx, sy), sz);
     double spotExponent = [light numberForParameter:IJSVGAttributeSpecularExponent defaultValue:1];
     double cone = cos([light numberForParameter:IJSVGAttributeLimitingConeAngle defaultValue:90] * M_PI / 180.);
-    NSColor* color = [IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeLightingColor] ?: IJSVGStringWhite];
+    CGColorRef color = [IJSVGColor colorFromString:primitive.parameters[IJSVGAttributeLightingColor] ?: IJSVGStringWhite];
     IJSVGLightingVector colorValues = IJSVGLightingColor(color, context);
     double red = colorValues.x, green = colorValues.y, blue = colorValues.z;
     CGRect inputRegion = CGRectIntersection(input.extent, context.extent);

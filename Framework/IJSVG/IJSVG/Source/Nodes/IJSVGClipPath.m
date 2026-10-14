@@ -321,7 +321,7 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     self.contentUnits = IJSVGUnitUserSpaceOnUse;
     self.windingRule = IJSVGWindingRuleNonZero;
     self.overflowVisibility = IJSVGOverflowVisibilityHidden;
-    self.fill = [IJSVGColorNode colorNodeWithColor:NSColor.whiteColor];
+    self.fill = [IJSVGColorNode colorNodeWithColor:IJSVGColor.whiteColor];
 }
 
 - (IJSVGUnitType)contentUnitsWithReferencingNodeBounds:(CGRect*)bounds

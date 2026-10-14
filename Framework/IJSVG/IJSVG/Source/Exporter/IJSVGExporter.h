@@ -66,7 +66,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 
 @optional
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter identifierForElement:(NSXMLElement* _Nullable)element type:(IJSVGNodeType)type defaultID:(NSString* (^)(void))defaultID;
-- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter stringForColor:(NSColor*)color flags:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options;
+- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter stringForColor:(CGColorRef)color flags:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options;
 
 @end
 

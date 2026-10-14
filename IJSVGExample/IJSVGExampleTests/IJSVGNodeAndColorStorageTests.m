@@ -19,10 +19,99 @@
 #import <IJSVGTestHelpers.h>
 #import <objc/runtime.h>
 
+@interface IJSVGNativeColorGetterTestNode : IJSVGColorNode
+@property (nonatomic, assign) CGColorRef resolvedColor;
+@end
+
+@implementation IJSVGNativeColorGetterTestNode
+- (CGColorRef)color
+{
+    return self.resolvedColor;
+}
+@end
+
 @interface IJSVGNodeAndColorStorageTests : XCTestCase
 @end
 
 @implementation IJSVGNodeAndColorStorageTests
+
+- (void)testNativeColorAccessPreservesCustomColorGetters
+{
+    IJSVGNativeColorGetterTestNode* node = [[IJSVGNativeColorGetterTestNode alloc] initWithColor:nil];
+    node.resolvedColor = [IJSVGColor colorFromString:@"red"];
+    XCTAssertTrue(CGColorEqualToColor(node.color, [IJSVGColor colorFromString:@"red"]));
+    node.resolvedColor = [IJSVGColor colorFromString:@"blue"];
+    XCTAssertTrue(CGColorEqualToColor(node.color, [IJSVGColor colorFromString:@"blue"]));
+    node.resolvedColor = nil;
+    XCTAssertEqual(node.color, NULL);
+}
+
+- (void)testNativeSolidColorsRetainCopiesAndAllowIndependentEdits
+{
+    CGColorRef color = [IJSVGColor newCGColorFromString:@"#3698"];
+    XCTAssertNotEqual(color, NULL);
+    if (color == NULL) {
+        return;
+    }
+    IJSVGColorNode* node = [[IJSVGColorNode alloc] initWithColor:color];
+    CGColorRelease(color);
+    IJSVGColorNode* copy = node.copy;
+    XCTAssertTrue(CGColorEqualToColor(node.color, copy.color));
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(node.color), 136.f / 255.f, 0.00001);
+    node.color = [IJSVGColor colorFromString:@"red"];
+    XCTAssertTrue(CGColorEqualToColor(node.color, [IJSVGColor colorFromString:@"red"]));
+    XCTAssertFalse(CGColorEqualToColor(node.color, copy.color));
+    node.color = copy.color;
+    XCTAssertTrue(CGColorEqualToColor(node.color, copy.color));
+    node.color = NULL;
+    XCTAssertEqual(node.color, NULL);
+    XCTAssertEqual(node.color, NULL);
+    copy.color = nil;
+    XCTAssertEqual(copy.color, NULL);
+    XCTAssertEqual(copy.color, NULL);
+}
+
+- (void)testNativeColorsSurvivePoolDrainInInheritedStyleAndBackground
+{
+    IJSVGRootNode* root = [[IJSVGRootNode alloc] init];
+    IJSVGRect* rect = [[IJSVGRect alloc] init];
+    IJSVGStyle* style = [[IJSVGStyle alloc] init];
+    [root addChild:rect];
+    @autoreleasepool {
+        CGColorRef color = [IJSVGColor colorWithRed:.2 green:.4 blue:.6 alpha:.8];
+        root.currentColor = color;
+        root.backgroundColor = color;
+        style.fillColor = color;
+        style.strokeColor = color;
+    }
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(rect.currentColor), .8, .00001);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(root.backgroundColor)[1], .4, .00001);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(style.fillColor)[2], .6, .00001);
+    XCTAssertTrue(CGColorEqualToColor(style.fillColor, style.strokeColor));
+    IJSVGRootNode* copy = root.copy;
+    root.currentColor = NULL;
+    root.backgroundColor = NULL;
+    XCTAssertEqualWithAccuracy(CGColorGetAlpha(copy.currentColor), .8, .00001);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents(copy.backgroundColor)[1], .4, .00001);
+}
+
+- (void)testNativeSolidColorParsingMatchesExistingColorSemantics
+{
+    NSArray<NSString*>* values = @[ @"#000", @"#fff", @"#1234", @"#123456", @"#12345678", @" red ", @"AliceBlue", @"transparent", @"none", @"currentColor", @"bad color", @"rgb(12 34 56 / 40%)", @"hsl(120 50% 40%)", @"oklch(70% .1 30)", @"rgb(calc(10 + 2) 34 56)", @"#xyz" ];
+    for (NSString* source in values) {
+        CGColorRef native = [IJSVGColor newCGColorFromString:source];
+        CGColorRef reference = [IJSVGColor colorFromString:source];
+        XCTAssertEqual(native == NULL, reference == NULL, @"%@", source);
+        if (native != NULL && reference != NULL) {
+            XCTAssertEqual(CGColorGetNumberOfComponents(native), CGColorGetNumberOfComponents(reference), @"%@", source);
+            for (NSUInteger index = 0; index < MIN(CGColorGetNumberOfComponents(native), CGColorGetNumberOfComponents(reference)); index++) {
+                XCTAssertEqual(CGColorGetComponents(native)[index], CGColorGetComponents(reference)[index], @"%@", source);
+            }
+        }
+        CGColorRelease(native);
+    }
+    XCTAssertEqual([IJSVGColor newCGColorFromString:nil], NULL);
+}
 
 - (void)testTransformBoxKeywordsResolveToEnums
 {
@@ -201,10 +290,10 @@
     IJSVGTraitedColorStorage* storage = [rect colorsWithStyle:[[IJSVGStyle alloc] init]];
     XCTAssertEqual(storage.count, 1u);
     IJSVGTraitedColor* color = storage.colors.anyObject;
-    XCTAssertEqualWithAccuracy([self rgb:color.color].blueComponent, 1.f, 0.002f);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents([self rgb:color.color])[2], 1.f, 0.002f);
     XCTAssertTrue([color matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
     IJSVGGroup* copy = group.copy;
-    XCTAssertEqualObjects(copy.children.firstObject.currentColor, rect.currentColor);
+    XCTAssertTrue(CGColorEqualToColor(copy.children.firstObject.currentColor, rect.currentColor));
     XCTAssertTrue(((IJSVGColorNode*)((IJSVGGraphicsNode*)copy.children.firstObject).fill).usesCurrentColor);
 }
 
@@ -250,13 +339,13 @@
 
 - (void)testColorCopyPreservesSuperclassStateAndNoneFlag
 {
-    IJSVGColorNode* original = [[IJSVGColorNode alloc] initWithColor:[NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
+    IJSVGColorNode* original = [[IJSVGColorNode alloc] initWithColor:[IJSVGColor colorWithRed:1 green:0 blue:0 alpha:1]];
     original.identifier = @"paint";
-    original.currentColor = NSColor.greenColor;
+    original.currentColor = NSColor.greenColor.CGColor;
     IJSVGColorNode* copy = original.copy;
     XCTAssertEqual(copy.color, original.color);
     XCTAssertEqualObjects(copy.identifier, @"paint");
-    XCTAssertEqualObjects(copy.currentColor, NSColor.greenColor);
+    XCTAssertTrue(CGColorEqualToColor(copy.currentColor, NSColor.greenColor.CGColor));
     XCTAssertTrue(copy.shouldRender);
     XCTAssertTrue([copy matchesTraits:IJSVGNodeTraitPaintable]);
     XCTAssertFalse(copy.isNoneOrTransparent);
@@ -265,7 +354,7 @@
     original.isNoneOrTransparent = YES;
     original.shouldRender = NO;
     copy = original.copy;
-    XCTAssertNil(copy.color);
+    XCTAssertEqual(copy.color, NULL);
     XCTAssertTrue(copy.isNoneOrTransparent);
     XCTAssertFalse(copy.shouldRender);
     XCTAssertEqual([copy colorsWithStyle:nil matchingTraits:IJSVGColorUsageTraitFill].count, 0u);
@@ -279,7 +368,7 @@
 {
     for (NSNumber* computeFirst in @[ @NO, @YES ]) {
         IJSVGPath* original = [[IJSVGPath alloc] init];
-        original.stroke = [[IJSVGColorNode alloc] initWithColor:[NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1]];
+        original.stroke = [[IJSVGColorNode alloc] initWithColor:[IJSVGColor colorWithRed:1 green:0 blue:0 alpha:1]];
         [original addTraits:IJSVGNodeTraitPaintable];
         if (computeFirst.boolValue) {
             XCTAssertTrue([original matchesTraits:IJSVGNodeTraitStroked]);
@@ -322,12 +411,12 @@
         @autoreleasepool {
             IJSVGGradient* original = [[gradientClass alloc] init];
             weakOriginal = original;
-            NSArray<NSColor*>* colors = @[ [NSColor colorWithDeviceRed:1 green:0 blue:0 alpha:1], [NSColor colorWithDeviceRed:0 green:0 blue:1 alpha:1] ];
+            NSArray* colors = @[ (__bridge id)[IJSVGColor colorWithRed:1 green:0 blue:0 alpha:1], (__bridge id)[IJSVGColor colorWithRed:0 green:0 blue:1 alpha:1] ];
             for (NSUInteger index = 0; index < colors.count; index++) {
                 IJSVGStop* stop = [[IJSVGStop alloc] init];
                 stop.type = IJSVGNodeTypeStop;
                 stop.offset = [IJSVGUnitLength unitWithFloat:index == 0 ? 0.25 : 0.75];
-                stop.fill = [[IJSVGColorNode alloc] initWithColor:colors[index]];
+                stop.fill = [[IJSVGColorNode alloc] initWithColor:(__bridge CGColorRef)colors[index]];
                 [original addChild:stop];
             }
             original.colors = colors;
@@ -359,7 +448,7 @@
         }
         XCTAssertNil(weakOriginal);
         XCTAssertTrue(copy.CGGradient != NULL);
-        NSArray<NSColor*>* rebuiltColors = nil;
+        NSArray* rebuiltColors = nil;
         CGFloat* rebuiltLocations = [IJSVGGradient computeColorStops:copy colors:&rebuiltColors];
         XCTAssertEqualObjects(rebuiltColors, copy.colors);
         XCTAssertTrue(rebuiltLocations != NULL);
@@ -538,9 +627,9 @@
     XCTAssertNil(copy.sourceMIMEType);
 }
 
-- (NSColor*)rgb:(NSColor*)color
+- (CGColorRef)rgb:(CGColorRef)color
 {
-    return [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+    return [IJSVGColor computeColorSpace:color];
 }
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
@@ -692,15 +781,15 @@
 
 - (void)testColorNodeReturnsColorsForRequestedTraitsAndStyleOverrides
 {
-    IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:NSColor.redColor];
+    IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:[IJSVGColor colorFromString:@"red"]];
     IJSVGStyle* style = [[IJSVGStyle alloc] init];
-    style.fillColor = NSColor.greenColor;
+    style.fillColor = NSColor.greenColor.CGColor;
 
     IJSVGTraitedColorStorage* fillStorage = [colorNode colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill];
     IJSVGTraitedColor* fillColor = fillStorage.colors.anyObject;
     XCTAssertEqual(fillStorage.count, 1u);
     XCTAssertTrue([fillColor matchesTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertEqualWithAccuracy([self rgb:fillColor.color].greenComponent, 1.f, 0.002f);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents([self rgb:fillColor.color])[1], 1.f, 0.002f);
 
     colorNode.isNoneOrTransparent = YES;
     IJSVGTraitedColorStorage* emptyStorage = [colorNode colorsWithStyle:style matchingTraits:IJSVGColorUsageTraitFill];
@@ -709,9 +798,9 @@
 
 - (void)testTraitedColorMergesAndMatchesTraitsByColor
 {
-    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitStroke];
-    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:NSColor.blueColor traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* color = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitStroke];
+    IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"blue"] traits:IJSVGColorUsageTraitFill];
 
     XCTAssertEqualObjects(color, sameColor);
     XCTAssertNotEqualObjects(color, differentColor);
@@ -725,8 +814,8 @@
 - (void)testTraitedColorStorageMergesColorsAndReplacesByTrait
 {
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitFill];
-    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:NSColor.redColor traits:IJSVGColorUsageTraitStroke];
+    IJSVGTraitedColor* fillRed = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitFill];
+    IJSVGTraitedColor* strokeRed = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitStroke];
     [storage addColor:fillRed];
     [storage addColor:strokeRed];
 
@@ -734,14 +823,14 @@
     XCTAssertTrue([storage matchesTraits:IJSVGColorUsageTraitFill]);
     XCTAssertTrue([storage.colors.anyObject matchesTraits:IJSVGColorUsageTraitFill | IJSVGColorUsageTraitStroke]);
 
-    [storage replaceColor:NSColor.redColor withColor:NSColor.greenColor traits:IJSVGColorUsageTraitFill];
+    [storage replaceColor:[IJSVGColor colorFromString:@"red"] withColor:NSColor.greenColor.CGColor traits:IJSVGColorUsageTraitFill];
     XCTAssertEqual(storage.replacedColorCount, 1u);
     XCTAssertTrue([storage matchesReplacementTraits:IJSVGColorUsageTraitFill]);
-    XCTAssertNil([storage colorForColor:NSColor.redColor matchingTraits:IJSVGColorUsageTraitStroke]);
+    XCTAssertEqual([storage colorForColor:[IJSVGColor colorFromString:@"red"] matchingTraits:IJSVGColorUsageTraitStroke], NULL);
 
-    NSColor* replacement = [storage colorForColor:NSColor.redColor matchingTraits:IJSVGColorUsageTraitFill];
-    XCTAssertNotNil(replacement);
-    XCTAssertEqualWithAccuracy([self rgb:replacement].greenComponent, 1.f, 0.002f);
+    CGColorRef replacement = [storage colorForColor:[IJSVGColor colorFromString:@"red"] matchingTraits:IJSVGColorUsageTraitFill];
+    XCTAssertNotEqual(replacement, NULL);
+    XCTAssertEqualWithAccuracy(CGColorGetComponents([self rgb:replacement])[1], 1.f, 0.002f);
 }
 
 // Bulk moves and removals must tolerate the live children array of a group.

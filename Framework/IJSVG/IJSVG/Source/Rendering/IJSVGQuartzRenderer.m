@@ -1154,12 +1154,12 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return newPath;
 }
 
-- (NSColor*)colorForColor:(NSColor*)color matchingTraits:(IJSVGColorUsageTraits)traits
+- (CGColorRef)colorForColor:(CGColorRef)color matchingTraits:(IJSVGColorUsageTraits)traits
 {
     return [_style.colors colorForColor:color matchingTraits:traits];
 }
 
-- (IJSVGPaint*)drawableFillPaintForPathNode:(IJSVGPath*)node fill:(IJSVGNode*)fill currentColor:(NSColor*)currentColor paint:(IJSVGShapePaint*)paint resolvedPath:(CGPathRef)paintPath resolvedPathBounds:(CGRect)resolvedPathBounds
+- (IJSVGPaint*)drawableFillPaintForPathNode:(IJSVGPath*)node fill:(IJSVGNode*)fill currentColor:(CGColorRef)currentColor paint:(IJSVGShapePaint*)paint resolvedPath:(CGPathRef)paintPath resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     // Choose the fill type.
     IJSVGPaint* fillPaint = nil;
@@ -1170,7 +1170,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         default:
         case IJSVGPaintFillTypeColor: {
             IJSVGColorNode* colorNode = (IJSVGColorNode*)fill;
-            NSColor* color = colorNode.usesCurrentColor ? currentColor : (colorNode.color ?: NSColor.blackColor);
+            CGColorRef color = colorNode.usesCurrentColor ? currentColor : (colorNode.color ?: IJSVGColor.blackColor);
 
             // Use the fill color supplied by the style.
             if (_style.fillColor != nil) {
@@ -1181,18 +1181,18 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
                 color = nil;
             } else {
                 // Apply any color replacement from the style.
-                NSColor* repColor = [self colorForColor:color matchingTraits:IJSVGColorUsageTraitFill];
+                CGColorRef repColor = [self colorForColor:color matchingTraits:IJSVGColorUsageTraitFill];
                 color = repColor ?: color;
             }
 
             if (paint.directFill) {
-                paint.fillColor = color.CGColor;
+                paint.fillColor = color;
                 return nil;
             }
 
             // Use a separate shape for the fill so the stroke can sit around it.
             IJSVGShapePaint* shape = (IJSVGShapePaint*)[self drawableBasicPaintForPathNode:node resolvedPath:paintPath resolvedPathBounds:resolvedPathBounds fillRule:paint.fillRule];
-            shape.fillColor = color.CGColor;
+            shape.fillColor = color;
             CGRect shapeRect = shape.frame;
 
             // Start the fill at zero. The stroke spacing is added later.
@@ -1486,7 +1486,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
     IJSVGNode* resolved = type == IJSVGContextPaintFill ? context.fill : context.stroke;
     if (resolved == nil) {
-        NSColor* defaultColor = type == IJSVGContextPaintFill ? NSColor.blackColor : nil;
+        CGColorRef defaultColor = type == IJSVGContextPaintFill ? IJSVGColor.blackColor : nil;
         IJSVGColorNode* color = [[IJSVGColorNode alloc] initWithColor:defaultColor];
         color.isNoneOrTransparent = type == IJSVGContextPaintStroke;
         return color;
@@ -1783,13 +1783,13 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return 2.f * finiteLength / minimum;
 }
 
-- (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node style:(const IJSVGResolvedStrokeStyle*)style currentColor:(NSColor*)currentColor resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds
+- (IJSVGPaint*)drawableStrokedPaintForPathNode:(IJSVGPath*)node style:(const IJSVGResolvedStrokeStyle*)style currentColor:(CGColorRef)currentColor resolvedPath:(CGPathRef)resolvedPath resolvedPathBounds:(CGRect)resolvedPathBounds
 {
     IJSVGStrokePaint* paint = IJSVGStrokePaint.paint;
     [self applyPath:resolvedPath bounds:resolvedPathBounds toShapePaint:paint];
 
     // Choose the stroke color.
-    NSColor* strokeColor = NSColor.blackColor;
+    CGColorRef strokeColor = IJSVGColor.blackColor;
     IJSVGNode* stroke = style->stroke;
     if ([stroke isKindOfClass:IJSVGColorNode.class]) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)stroke;
@@ -1797,7 +1797,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     // Apply any color replacement.
-    NSColor* repColor = [self colorForColor:strokeColor matchingTraits:IJSVGColorUsageTraitStroke];
+    CGColorRef repColor = [self colorForColor:strokeColor matchingTraits:IJSVGColorUsageTraitStroke];
     strokeColor = repColor ?: strokeColor;
 
     // Use the stroke color supplied by the style.
@@ -1807,7 +1807,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 
     // Store the color.
     paint.fillColor = nil;
-    paint.strokeColor = strokeColor.CGColor;
+    paint.strokeColor = strokeColor;
 
     CGRect unitBounds = [self unitResolutionBoundsForNode:node];
     CGFloat diagonal = hypot(unitBounds.size.width, unitBounds.size.height) / M_SQRT2;
@@ -2148,12 +2148,13 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     IJSVGColorUsageTraits traits = IJSVGColorUsageTraitGradientStop;
     if (_style.colors.replacedColorCount != 0 && [_style.colors matchesReplacementTraits:traits] == YES) {
         gradient = gradient.copy;
-        NSMutableArray<NSColor*>* colors = nil;
+        NSMutableArray* colors = nil;
         colors = [NSMutableArray.alloc initWithCapacity:gradient.numberOfStops];
-        for (NSColor* color in gradient.colors) {
-            NSColor* repColor = [self colorForColor:color matchingTraits:traits];
-            NSColor* compColor = repColor ?: color;
-            [colors addObject:compColor];
+        for (id colorObject in gradient.colors) {
+            CGColorRef color = (__bridge CGColorRef)colorObject;
+            CGColorRef repColor = [self colorForColor:color matchingTraits:traits];
+            CGColorRef compColor = repColor ?: color;
+            [colors addObject:(__bridge id)compColor];
         }
         gradient.colors = colors;
     }
@@ -2447,9 +2448,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 {
     CGContextSaveGState(context);
     if ([paint isKindOfClass:IJSVGColorNode.class]) {
-        NSColor* color = ((IJSVGColorNode*)paint).color;
+        CGColorRef color = ((IJSVGColorNode*)paint).color;
         if (color != nil) {
-            CGContextSetFillColorWithColor(context, color.CGColor);
+            CGContextSetFillColorWithColor(context, color);
             CGContextFillRect(context, region);
         }
     } else if ([paint isKindOfClass:IJSVGGradient.class]) {

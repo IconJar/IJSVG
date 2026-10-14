@@ -12,14 +12,14 @@
 
 @implementation IJSVGFloodFilterEffect
 
-+ (NSColor*)colorForPrimitive:(IJSVGFilterPrimitive*)primitive
++ (CGColorRef)colorForPrimitive:(IJSVGFilterPrimitive*)primitive
 {
     NSString* value = primitive.parameters[IJSVGAttributeFloodColor] ?: IJSVGStringBlack;
     value = [value stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
 
     // The general parser represents transparent paint as nil.
     // Preserve its alpha before filter callers apply the default colour.
-    return [IJSVGColor isNoneOrTransparent:value] ? NSColor.clearColor : [IJSVGColor colorFromString:value];
+    return [IJSVGColor isNoneOrTransparent:value] ? IJSVGColor.clearColor : [IJSVGColor colorFromString:value];
 }
 
 + (CGFloat)opacityForPrimitive:(IJSVGFilterPrimitive*)primitive
@@ -39,7 +39,7 @@
 {
     // Opacity can be a number or a percentage. Use full opacity if it is invalid.
     CGFloat opacity = [self.class opacityForPrimitive:primitive];
-    NSColor* color = [self.class colorForPrimitive:primitive];
+    CGColorRef color = [self.class colorForPrimitive:primitive];
     return [context floodWithColor:color opacity:opacity];
 }
 

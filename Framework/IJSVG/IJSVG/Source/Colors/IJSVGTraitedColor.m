@@ -11,7 +11,7 @@
 
 @implementation IJSVGTraitedColor
 
-+ (IJSVGTraitedColor*)colorWithColor:(NSColor*)color traits:(IJSVGColorUsageTraits)traits
++ (IJSVGTraitedColor*)colorWithColor:(CGColorRef)color traits:(IJSVGColorUsageTraits)traits
 {
     IJSVGTraitedColor* type = [[self alloc] init];
     type.color = color;
@@ -32,17 +32,24 @@
     if ([object isKindOfClass:IJSVGTraitedColor.class] == NO) {
         return NO;
     }
-    return [self.color isEqual:((IJSVGTraitedColor*)object).color];
+    return CGColorEqualToColor(self.color, ((IJSVGTraitedColor*)object).color);
 }
 
-- (void)setColor:(NSColor*)color
+- (void)setColor:(CGColorRef)color
 {
-    _color = [IJSVGColor computeColorSpace:color];
+    CGColorRef retained = CGColorRetain([IJSVGColor computeColorSpace:color]);
+    CGColorRelease(_color);
+    _color = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_color);
 }
 
 - (NSUInteger)hash
 {
-    return self.color.hash;
+    return self.color == NULL ? 0 : CFHash(self.color);
 }
 
 - (void)addTraits:(IJSVGColorUsageTraits)traits

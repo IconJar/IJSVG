@@ -420,13 +420,13 @@
     NSArray<NSString*>* colors = @[ @"rgb(calc(20 + 31) min(120, 102) clamp(100, 153, 200) / calc(25% + 25%))", @"hsl(calc(60 + 60) calc(50% + 50%) max(25%, 50%) / calc(1 / 2))", @"oklch(calc(50% + 12.8%) calc(.1 + .15) calc(30 - .77) / calc(.25 * 2))" ];
     NSArray<NSString*>* literals = @[ @"rgb(51 102 153 / 50%)", @"hsl(120 100% 50% / .5)", @"oklch(62.8% .25 29.23 / .5)" ];
     for (NSUInteger index = 0; index < colors.count; index++) {
-        NSColor* actual = [IJSVGColor colorFromString:colors[index]];
-        NSColor* expected = [IJSVGColor colorFromString:literals[index]];
-        XCTAssertNotNil(actual);
-        XCTAssertEqualWithAccuracy(actual.redComponent, expected.redComponent, .00001);
-        XCTAssertEqualWithAccuracy(actual.greenComponent, expected.greenComponent, .00001);
-        XCTAssertEqualWithAccuracy(actual.blueComponent, expected.blueComponent, .00001);
-        XCTAssertEqualWithAccuracy(actual.alphaComponent, expected.alphaComponent, .00001);
+        CGColorRef actual = [IJSVGColor colorFromString:colors[index]];
+        CGColorRef expected = [IJSVGColor colorFromString:literals[index]];
+        XCTAssertNotEqual(actual, NULL);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[0], CGColorGetComponents(expected)[0], .00001);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[1], CGColorGetComponents(expected)[1], .00001);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(actual)[2], CGColorGetComponents(expected)[2], .00001);
+        XCTAssertEqualWithAccuracy(CGColorGetAlpha(actual), CGColorGetAlpha(expected), .00001);
     }
     [self benchmark:@"calculated colour functions"
          iterations:3000
@@ -683,8 +683,8 @@
     XCTAssertNil([IJSVGUnitLength unitWithCalculationString:@"calc(1px)\0junk" allowNegative:YES]);
     XCTAssertNil([IJSVGUnitLength unitWithString:@"12px\0junk"]);
     XCTAssertFalse(IJSVGUnitLengthsAreValid(@"12px\0junk", YES, YES));
-    XCTAssertNil([IJSVGColor colorFromString:@"rgba(1,2,3,1)\0junk"]);
-    XCTAssertNil([IJSVGColor colorFromString:@"red\0junk"]);
+    XCTAssertEqual([IJSVGColor colorFromString:@"rgba(1,2,3,1)\0junk"], NULL);
+    XCTAssertEqual([IJSVGColor colorFromString:@"red\0junk"], NULL);
     XCTAssertFalse([IJSVGColor isNoneOrTransparent:@"none\0junk"]);
     XCTAssertEqual([IJSVGTransform transformsForString:@"translate(1 2)\0scale(2)"].count, 0);
     XCTAssertNil([IJSVGClipPath clipPathWithBasicShape:@"circle(20%)\0junk"]);
@@ -864,21 +864,21 @@
 - (void)testSharedColorFunctionsAndNestedCalculations
 {
     for (NSString* source in @[ @"RGBA(calc(255 / 2), min(10, 20), 0, calc(1 / 2))", @"r\\67 ba(calc(50%) 10 0 / 50%)", @"rgb(calc(50% / 100% * 255) 10 0 / .5)" ]) {
-        NSColor* color = [[IJSVGColor colorFromString:source] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
-        XCTAssertNotNil(color, @"%@", source);
-        XCTAssertEqualWithAccuracy(color.redComponent, .5, .0001);
-        XCTAssertEqualWithAccuracy(color.greenComponent, 10.f / 255.f, .0001);
-        XCTAssertEqualWithAccuracy(color.alphaComponent, .5, .0001);
+        CGColorRef color = [IJSVGColor computeColorSpace:[IJSVGColor colorFromString:source]];
+        XCTAssertNotEqual(color, NULL, @"%@", source);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(color)[0], .5, .0001);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(color)[1], 10.f / 255.f, .0001);
+        XCTAssertEqualWithAccuracy(CGColorGetAlpha(color), .5, .0001);
     }
     for (NSString* source in @[ @"HSL(120, 100%, 50%)", @"hsl(120deg 100% 50%)", @"hsl(.333333333333turn 100% 50%)" ]) {
-        NSColor* color = [[IJSVGColor colorFromString:source] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
-        XCTAssertNotNil(color);
-        XCTAssertEqualWithAccuracy(color.greenComponent, 1, .0001);
-        XCTAssertEqualWithAccuracy(color.redComponent, 0, .0001);
+        CGColorRef color = [IJSVGColor computeColorSpace:[IJSVGColor colorFromString:source]];
+        XCTAssertNotEqual(color, NULL);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(color)[1], 1, .0001);
+        XCTAssertEqualWithAccuracy(CGColorGetComponents(color)[0], 0, .0001);
     }
-    XCTAssertNotNil([IJSVGColor colorFromString:@"OKLCH(62.8% .25 29.23 / .5)"]);
+    XCTAssertNotEqual([IJSVGColor colorFromString:@"OKLCH(62.8% .25 29.23 / .5)"], NULL);
     for (NSString* source in @[ @"rgbwrong(1,2,3)", @"rgb(1 2 3) trailing", @"hsl(1)", @"hsl(1 2)", @"rgba(calc(2px) 0 0 / 1)", @"rgb(1,2,3))", @"oklch(1 .2 30) rgb(1 2 3)" ]) {
-        XCTAssertNil([IJSVGColor colorFromString:source], @"%@", source);
+        XCTAssertEqual([IJSVGColor colorFromString:source], NULL, @"%@", source);
     }
 }
 

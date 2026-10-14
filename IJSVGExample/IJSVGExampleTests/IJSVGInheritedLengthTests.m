@@ -33,7 +33,7 @@
     for (IJSVGGroup* parent in @[ [[IJSVGGroup alloc] init], [[IJSVGStrokeOverrideGroup alloc] init] ]) {
         IJSVGPath* child = [[IJSVGPath alloc] init];
         [parent addChild:child];
-        parent.stroke = [IJSVGColorNode colorNodeWithColor:NSColor.redColor];
+        parent.stroke = [IJSVGColorNode colorNodeWithColor:NSColor.redColor.CGColor];
         parent.strokeWidth = [IJSVGUnitLength unitWithString:@".5em"];
         parent.strokeOpacity = [IJSVGUnitLength unitWithFloat:0.25];
         parent.strokeDashOffset = [IJSVGUnitLength unitWithString:@".25em"];

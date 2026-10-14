@@ -426,6 +426,19 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 }
 
 @implementation IJSVGNode
+@synthesize currentColor = _currentColor;
+
+- (void)setCurrentColor:(CGColorRef)value
+{
+    CGColorRef retained = CGColorRetain(value);
+    CGColorRelease(_currentColor);
+    _currentColor = retained;
+}
+
+- (void)dealloc
+{
+    CGColorRelease(_currentColor);
+}
 
 @synthesize name = _name;
 
@@ -636,10 +649,10 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     return [[IJSVGTraitedColorStorage alloc] init];
 }
 
-- (NSColor*)currentColor
+- (CGColorRef)currentColor
 {
     return _currentColor ?: self.styleParent.currentColor ?
-                                                          : NSColor.blackColor;
+                                                          : IJSVGColor.blackColor;
 }
 
 - (BOOL)visibilityHidden
