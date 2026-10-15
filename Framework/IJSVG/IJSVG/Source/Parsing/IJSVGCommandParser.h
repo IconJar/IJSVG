@@ -28,24 +28,24 @@ typedef struct {
 
 @interface IJSVGCommandParser : NSObject
 
-IJSVGPathDataStream* IJSVGPathDataStreamCreateDefault(void);
-IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount);
-void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer);
+IJSVGPathDataStream* _Nullable IJSVGPathDataStreamCreateDefault(void);
+IJSVGPathDataStream* _Nullable IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger charCount);
+void IJSVGPathDataStreamRelease(IJSVGPathDataStream* _Nullable buffer);
 
 IJSVGPathDataSequence* IJSVGPathDataSequenceCreateWithType(IJSVGPathDataSequence type, NSInteger length);
-CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength, IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* _Nullable commandsFound);
+CGFloat* _Nullable IJSVGParsePathDataStreamSequence(const char* commandChars, NSInteger commandCharLength, IJSVGPathDataStream* _Nullable dataStream, IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* _Nullable commandsFound);
 
 // Each data stream starts at its own origin, even when the destination has
 // geometry.
-void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream);
+void IJSVGAppendPathData(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* _Nullable dataStream);
 
 // A false result rules out point subpaths in the appended data.
-BOOL IJSVGAppendPathDataCheckingPointSubpaths(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream);
+BOOL IJSVGAppendPathDataCheckingPointSubpaths(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* _Nullable dataStream);
 
 // Invalid point lists leave the destination unchanged.
-BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInteger length, BOOL closePath, IJSVGPathDataStream* dataStream);
+BOOL IJSVGAppendPolyPoints(CGMutablePathRef path, const char* characters, NSUInteger length, BOOL closePath, IJSVGPathDataStream* _Nullable dataStream);
 
-CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream) CF_RETURNS_RETAINED;
+CGMutablePathRef IJSVGCreatePathFromData(const char* characters, NSUInteger length, IJSVGPathDataStream* _Nullable dataStream) CF_RETURNS_RETAINED;
 
 // Visits authored commands, keeping an arcs cubic approximation in one segment.
 void IJSVGEnumeratePathDataSegments(NSString* data, void (^handler)(char command, CGPathRef segment));

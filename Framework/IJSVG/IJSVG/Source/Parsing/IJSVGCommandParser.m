@@ -39,16 +39,29 @@ IJSVGPathDataStream* IJSVGPathDataStreamCreate(NSUInteger floatCount, NSUInteger
 {
     floatCount = floatCount ?: IJSVG_STREAM_FLOAT_BLOCK_SIZE;
     charCount = charCount ?: IJSVG_STREAM_CHAR_BLOCK_SIZE;
-    IJSVGPathDataStream* buffer = (IJSVGPathDataStream*)malloc(sizeof(IJSVGPathDataStream));
-    buffer->floatBuffer = (CGFloat*)malloc(sizeof(CGFloat) * floatCount);
-    buffer->floatCount = floatCount;
-    buffer->charBuffer = (char*)calloc(sizeof(char), charCount);
-    buffer->charCount = charCount;
+    if (floatCount > MIN((NSUInteger)NSIntegerMax, SIZE_MAX / sizeof(CGFloat)) || charCount > NSIntegerMax) {
+        return NULL;
+    }
+    IJSVGPathDataStream* buffer = calloc(1, sizeof(*buffer));
+    if (buffer == NULL) {
+        return NULL;
+    }
+    buffer->floatBuffer = malloc(sizeof(CGFloat) * floatCount);
+    buffer->charBuffer = calloc(charCount, sizeof(char));
+    if (buffer->floatBuffer == NULL || buffer->charBuffer == NULL) {
+        IJSVGPathDataStreamRelease(buffer);
+        return NULL;
+    }
+    buffer->floatCount = (NSInteger)floatCount;
+    buffer->charCount = (NSInteger)charCount;
     return buffer;
 }
 
 void IJSVGPathDataStreamRelease(IJSVGPathDataStream* buffer)
 {
+    if (buffer == NULL) {
+        return;
+    }
     free(buffer->charBuffer);
     free(buffer->floatBuffer);
     free(buffer);
@@ -78,6 +91,12 @@ static void* IJSVGPathDataStreamGrow(void* buffer, NSInteger* capacity, NSUInteg
 static const CGFloat* IJSVGReadPathDataStreamSequence(const char* commandChars, NSInteger commandCharLength, IJSVGPathDataStream* dataStream, IJSVGPathDataSequence* _Nullable sequence, NSInteger commandLength, NSInteger* commandsFound, NSInteger* numberCount)
 {
     *numberCount = 0;
+    if (dataStream == NULL) {
+        if (commandsFound != NULL) {
+            *commandsFound = 0;
+        }
+        return NULL;
+    }
 
     // if no command length, its completely pointless function,
     // so just return null and set commandsFound to 0, if we dont

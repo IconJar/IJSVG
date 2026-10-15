@@ -86,7 +86,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 }
 @synthesize opacity = _opacity, strokeOpacity = _strokeOpacity, strokeWidth = _strokeWidth;
 @synthesize strokeDashOffset = _strokeDashOffset, paintOrder = _paintOrder;
-@synthesize stroke = _stroke;
+@synthesize stroke = _stroke, strokeDashArray = _strokeDashArray;
 
 - (void)setMarkerStart:(IJSVGMarker*)value
 {
@@ -569,6 +569,15 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 - (IJSVGNode*)stroke
 {
     return _stroke ?: self.styleParent.stroke;
+}
+
+- (void)setStrokeDashArray:(CGFloat*)values
+{
+    if (_strokeDashArray == values) {
+        return;
+    }
+    free(_strokeDashArray);
+    _strokeDashArray = values;
 }
 
 - (CGFloat*)strokeDashArray

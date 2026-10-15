@@ -355,6 +355,9 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 - (void)setLocations:(CGFloat*)locations
 {
+    if (_locations == locations) {
+        return;
+    }
     if (_locations != NULL) {
         (void)free(_locations), _locations = NULL;
     }
