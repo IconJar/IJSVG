@@ -20,6 +20,8 @@
 #import <IJSVG/IJSVGUnitSize.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVGByteCache.h>
+#import <IJSVGByteHash.h>
 #import <IJSVGParsedPathCache.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGTestHelpers.h>
@@ -31,6 +33,211 @@
 @end
 
 @implementation IJSVGUtilityParsingTests
+
+- (void)testByteHashMatchesXXH64ReferenceVectors
+{
+    // Expected values were generated with upstream xxHash 0.8.3, seed zero.
+    // Cover empty input, every tail width, and both sides of stripe boundaries.
+    const size_t lengths[] = { 0, 1, 7, 8, 15, 16, 31, 32, 33, 63, 64, 65, 255, 256, 4096 };
+    const uint64_t expected[] = {
+        UINT64_C(0xef46db3751d8e999), UINT64_C(0xe934a84adb052768),
+        UINT64_C(0x14cc643f630c72d2), UINT64_C(0x884a173614b81b8d),
+        UINT64_C(0xa948f5f0f6abac2d), UINT64_C(0x44b6ef2fb84169f7),
+        UINT64_C(0xc346d2b59b4d8ee1), UINT64_C(0xcbf59c5116ff32b4),
+        UINT64_C(0x0c535d1acafb8ead), UINT64_C(0xe26aa9e2a95f8e4f),
+        UINT64_C(0xf7c67301db6713f0), UINT64_C(0xc31eb63b2ae4465b),
+        UINT64_C(0x0f7d97507caad693), UINT64_C(0x1facbe8406cd904b),
+        UINT64_C(0x0f6e64be186af6a4)
+    };
+    unsigned char bytes[4096 + 16];
+    for (NSUInteger offset = 0; offset < 16; offset++) {
+        for (NSUInteger index = 0; index < 4096; index++) {
+            bytes[offset + index] = (unsigned char)index;
+        }
+        for (NSUInteger index = 0; index < sizeof(lengths) / sizeof(lengths[0]); index++) {
+            XCTAssertEqual(IJSVGHashBytes(bytes + offset, lengths[index]), expected[index], @"offset %lu, length %zu", (unsigned long)offset, lengths[index]);
+        }
+    }
+    XCTAssertEqual(IJSVGHashBytes(NULL, 0), expected[0]);
+}
+
+- (void)testByteCacheAccountsForValueCostOnReplacement
+{
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(100, 1024);
+    IJSVGByteCacheSetValueWithCost(cache, "a", 1, CFSTR("a"), 200);
+    IJSVGByteCacheSetValueWithCost(cache, "b", 1, CFSTR("b"), 200);
+    IJSVGByteCacheSetValueWithCost(cache, "c", 1, CFSTR("c"), 200);
+
+    // Growing the oldest entry evicts other entries without losing the replacement.
+    IJSVGByteCacheSetValueWithCost(cache, "a", 1, CFSTR("large"), 800);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 1u);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, "a", 1), CFSTR("large"));
+    IJSVGByteCacheSetValueWithCost(cache, "a", 1, CFSTR("overflow"), SIZE_MAX);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, "a", 1), CFSTR("large"));
+    IJSVGByteCacheSetValueWithCost(cache, "a", 1, CFSTR("small"), 0);
+    IJSVGByteCacheSetValueWithCost(cache, "b", 1, CFSTR("b"), 800);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 2u);
+    IJSVGByteCacheSetValueWithCost(cache, "c", 1, CFSTR("c"), 800);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 1u);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, "c", 1), CFSTR("c"));
+    IJSVGByteCacheDestroy(cache);
+}
+
+- (void)testSharedPathCachePreservesAllKindsForOneSource
+{
+    IJSVGParsedPathCache* cache = IJSVGParsedPathCacheCreate();
+    CGMutablePathRef path = CGPathCreateMutable();
+    for (NSUInteger kind = 0; kind < IJSVGParsedPathKindCount; kind++) {
+        CGPathMoveToPoint(path, NULL, kind, kind + 1);
+        IJSVGParsedPathCacheStoreBytes(cache, "same", 4, kind, path);
+    }
+    for (NSUInteger kind = 0; kind < IJSVGParsedPathKindCount; kind++) {
+        CGPathRef saved = IJSVGParsedPathCacheCopyBytes(cache, "same", 4, kind);
+        XCTAssertNotEqual(saved, NULL);
+        XCTAssertTrue(CGPointEqualToPoint(CGPathGetCurrentPoint(saved), CGPointMake(kind, kind + 1)));
+        CGPathRelease(saved);
+    }
+    XCTAssertEqual(IJSVGParsedPathCacheCopyBytes(cache, "same", 4, (IJSVGParsedPathKind)-1), NULL);
+    CGPathRelease(path);
+    IJSVGParsedPathCacheDestroy(cache);
+}
+
+- (void)testByteCacheCopiesBinaryKeysAndDistinguishesLengths
+{
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(8, 4096);
+    XCTAssertNotEqual(cache, NULL);
+    unsigned char buffer[] = { 99, 1, 0, 2, 3 };
+    const unsigned char original[] = { 1, 0, 2, 3 };
+    IJSVGByteCacheSetValue(cache, buffer + 1, 4, CFSTR("full"));
+    IJSVGByteCacheSetValue(cache, buffer + 1, 2, CFSTR("prefix"));
+    IJSVGByteCacheSetValue(cache, NULL, 0, CFSTR("empty"));
+    buffer[1] = 7;
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, original, 4), CFSTR("full"));
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, original, 2), CFSTR("prefix"));
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, NULL, 0), CFSTR("empty"));
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, buffer + 1, 4), NULL);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 3u);
+    IJSVGByteCacheDestroy(cache);
+}
+
+- (void)testByteCacheRetainsReplacesEvictsAndReleasesValues
+{
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(1, 4096);
+    __weak NSObject* first;
+    __weak NSObject* second;
+    @autoreleasepool {
+        NSObject* value = [[NSObject alloc] init];
+        first = value;
+        IJSVGByteCacheSetValue(cache, "a", 1, (__bridge CFTypeRef)value);
+    }
+    XCTAssertNotNil(first);
+    @autoreleasepool {
+        NSObject* value = [[NSObject alloc] init];
+        second = value;
+        IJSVGByteCacheSetValue(cache, "a", 1, (__bridge CFTypeRef)value);
+    }
+    XCTAssertNil(first);
+    XCTAssertNotNil(second);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 1u);
+
+    // A borrowed value must survive insertion that evicts its original key.
+    IJSVGByteCacheSetValue(cache, "b", 1, IJSVGByteCacheGetValue(cache, "a", 1));
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, "a", 1), NULL);
+    XCTAssertNotNil(second);
+    IJSVGByteCacheDestroy(cache);
+    XCTAssertNil(second);
+}
+
+- (void)testByteCacheEnforcesLimitsAndRejectsInvalidLengths
+{
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(100, 256);
+    unsigned char key[128] = { 0 };
+    IJSVGByteCacheSetValue(cache, key, sizeof(key), CFSTR("old"));
+    key[0] = 1;
+    IJSVGByteCacheSetValue(cache, key, sizeof(key), CFSTR("new"));
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 1u);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, key, sizeof(key)), CFSTR("new"));
+    key[0] = 0;
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, key, sizeof(key)), NULL);
+    IJSVGByteCacheSetValue(cache, key, SIZE_MAX, CFSTR("oversized"));
+    IJSVGByteCacheSetValue(cache, NULL, 1, CFSTR("invalid"));
+    IJSVGByteCacheSetValue(cache, "null", 4, NULL);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, key, SIZE_MAX), NULL);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, NULL, 1), NULL);
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 1u);
+    IJSVGByteCacheDestroy(cache);
+    for (NSUInteger index = 0; index < 2; index++) {
+        cache = IJSVGByteCacheCreate(index == 0 ? 0 : 10, index == 0 ? 4096 : 0);
+        IJSVGByteCacheSetValue(cache, "key", 3, CFSTR("ignored"));
+        XCTAssertEqual(IJSVGByteCacheGetCount(cache), 0u);
+        IJSVGByteCacheDestroy(cache);
+    }
+    XCTAssertEqual(IJSVGByteCacheGetCount(NULL), 0u);
+    XCTAssertEqual(IJSVGByteCacheGetValue(NULL, NULL, 0), NULL);
+    IJSVGByteCacheSetValue(NULL, NULL, 0, CFSTR("ignored"));
+    IJSVGByteCacheDestroy(NULL);
+}
+
+- (void)testByteCacheBucketCollisionsAndFIFOEviction
+{
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(8, 4096);
+    uint64_t keys[12];
+    NSUInteger count = 0;
+    for (uint64_t candidate = 0; count < 12; candidate++) {
+        // Deliberately exercise the same bucket in the 1024 bucket table.
+        if ((IJSVGHashBytes(&candidate, sizeof(candidate)) & 1023) == 0) {
+            keys[count++] = candidate;
+        }
+    }
+    for (NSUInteger index = 0; index < 8; index++) {
+        IJSVGByteCacheSetValue(cache, keys + index, sizeof(uint64_t), (__bridge CFTypeRef) @(index));
+    }
+    IJSVGByteCacheSetValue(cache, keys, sizeof(uint64_t), CFSTR("replacement"));
+    XCTAssertEqual(IJSVGByteCacheGetCount(cache), 8u);
+    XCTAssertEqual(IJSVGByteCacheGetValue(cache, keys, sizeof(uint64_t)), CFSTR("replacement"));
+    for (NSUInteger index = 8; index < 12; index++) {
+        IJSVGByteCacheSetValue(cache, keys + index, sizeof(uint64_t), (__bridge CFTypeRef) @(index));
+    }
+    for (NSUInteger index = 0; index < 12; index++) {
+        id value = (__bridge id)IJSVGByteCacheGetValue(cache, keys + index, sizeof(uint64_t));
+        if (index < 4) {
+            XCTAssertNil(value);
+        } else {
+            XCTAssertEqualObjects(value, @(index));
+        }
+    }
+    IJSVGByteCacheDestroy(cache);
+}
+
+- (void)testByteHashAndCacheRespectGuardPageBoundaries
+{
+    size_t page = (size_t)getpagesize();
+    unsigned char* memory = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    XCTAssertNotEqual(memory, MAP_FAILED);
+    if (memory == MAP_FAILED) {
+        return;
+    }
+    int result = mprotect(memory + page, page, PROT_NONE);
+    XCTAssertEqual(result, 0);
+    if (result != 0) {
+        munmap(memory, page * 2);
+        return;
+    }
+    unsigned char bytes[257];
+    for (NSUInteger index = 0; index < sizeof(bytes); index++) {
+        bytes[index] = (unsigned char)index;
+    }
+    IJSVGByteCache* cache = IJSVGByteCacheCreate(300, 128 * 1024);
+    for (NSUInteger length = 0; length <= sizeof(bytes); length++) {
+        unsigned char* slice = memory + page - length;
+        memcpy(slice, bytes, length);
+        XCTAssertEqual(IJSVGHashBytes(slice, length), IJSVGHashBytes(bytes, length));
+        IJSVGByteCacheSetValue(cache, slice, length, (__bridge CFTypeRef) @(length));
+        XCTAssertEqualObjects((__bridge id)IJSVGByteCacheGetValue(cache, bytes, length), @(length));
+    }
+    IJSVGByteCacheDestroy(cache);
+    munmap(memory, page * 2);
+}
 
 - (void)testPathCommandScanRespectsSliceEndAndEmbeddedNUL
 {

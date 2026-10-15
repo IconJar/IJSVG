@@ -29,6 +29,87 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (NSArray<IJSVGShapePaint*>*)gradientStrokeShapes:(IJSVGRootPaint*)root
+{
+    NSMutableArray* pending = [NSMutableArray arrayWithObject:root];
+    NSMutableArray* shapes = [NSMutableArray array];
+    while (pending.count != 0) {
+        IJSVGPaint* paint = pending.lastObject;
+        [pending removeLastObject];
+        if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+            IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
+            if (shape.strokeStyle != nil && shape.strokePaint.clipPath != NULL) {
+                [shapes addObject:shape];
+            }
+        }
+        [pending addObjectsFromArray:paint.children];
+    }
+    return shapes;
+}
+
+- (void)testSharedStrokeOutlinesRespectGeometrySettingsAndRebuilds
+{
+    for (NSString* attributes in @[ @"", @"stroke-dasharray='3 2' stroke-dashoffset='1'", @"stroke-linecap='round' stroke-linejoin='bevel'", @"vector-effect='non-scaling-stroke' transform='scale(1.5 .7)'", @"d='M2 3 L20 15 L6 24 Z'" ]) {
+        NSString* source = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><g fill='none' stroke='url(#g)' stroke-width='3'><path d='M2 3 L20 15 L6 24' %@/><path d='M2 3 L20 15 L6 24' %@/></g></svg>", attributes, attributes];
+
+        // Avoid duplicate XML attributes for the closed path case.
+        source = [source stringByReplacingOccurrencesOfString:@"d='M2 3 L20 15 L6 24' d=" withString:@"d="];
+        IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
+        IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+        NSArray<IJSVGShapePaint*>* shapes = [self gradientStrokeShapes:[renderer rootPaintForRootNode:svg.rootNode]];
+        XCTAssertEqual(shapes.count, 2u);
+        XCTAssertEqual(shapes[0].strokePaint.clipPath, shapes[1].strokePaint.clipPath);
+        for (IJSVGShapePaint* shape in shapes) {
+            CGPathRef expected = [IJSVGQuartzRenderer newPathFromStrokedShapePaint:shape.strokeStyle];
+            XCTAssertTrue(CGPathEqualToPath(expected, shape.strokePaint.clipPath), @"%@", attributes);
+            CGPathRelease(expected);
+        }
+        CGPathRef old = CGPathRetain(shapes[0].strokePaint.clipPath);
+        IJSVGGroup* group = (IJSVGGroup*)svg.rootNode.children.firstObject;
+        ((IJSVGGraphicsNode*)group.children.firstObject).strokeWidth = [IJSVGUnitLength unitWithString:@"7"];
+        shapes = [self gradientStrokeShapes:[renderer rootPaintForRootNode:svg.rootNode]];
+        NSUInteger changed = 0;
+        for (IJSVGShapePaint* shape in shapes) {
+            changed += !CGPathEqualToPath(old, shape.strokePaint.clipPath);
+        }
+        XCTAssertEqual(changed, 1u);
+        CGPathRelease(old);
+    }
+}
+
+- (void)testStrokeCacheSeparatesSettingsWithinOneBuild
+{
+    NSMutableString* body = [NSMutableString stringWithString:@"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><g fill='none' stroke='url(#g)'>"];
+    for (NSString* attributes in @[ @"", @"stroke-width='5'", @"stroke-dasharray='3 2'", @"stroke-dasharray='3 2' stroke-dashoffset='1'", @"stroke-linecap='round'", @"stroke-linejoin='bevel'", @"stroke-miterlimit='1'", @"vector-effect='non-scaling-stroke' transform='scale(1.5 .7)'", @"vector-effect='non-scaling-stroke' transform='scale(.7 1.5)'" ]) {
+        [body appendFormat:@"<path d='M2 3 L20 15 L6 24' %@/>", attributes];
+    }
+    [body appendString:@"<path d='M2 4 L20 15 L6 24'/></g></svg>"];
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:body];
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    NSArray<IJSVGShapePaint*>* shapes = [self gradientStrokeShapes:[renderer rootPaintForRootNode:svg.rootNode]];
+    XCTAssertEqual(shapes.count, 10u);
+    for (IJSVGShapePaint* shape in shapes) {
+        CGPathRef expected = [IJSVGQuartzRenderer newPathFromStrokedShapePaint:shape.strokeStyle];
+        XCTAssertTrue(CGPathEqualToPath(expected, shape.strokePaint.clipPath));
+        CGPathRelease(expected);
+    }
+}
+
+- (void)testPaintOnlyUsesPreserveCascadeAndIndependentInstances
+{
+    NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><style>use {stroke-linejoin:round;fill:var(--paint)}</style><defs><path id='p' d='M4 4 H24 V24 H4 Z'/></defs><g style='--paint:red'><use href='#p' fill-opacity='.5'/></g><g transform='translate(30 0)' style='--paint:blue'><use href='#p' fill-opacity='.75'/></g></svg>";
+    IJSVG* fast = [[IJSVG alloc] initWithSVGString:source];
+
+    // An explicit identity transform exercises the general use consumer.
+    IJSVG* general = [[IJSVG alloc] initWithSVGString:[source stringByReplacingOccurrencesOfString:@"<use " withString:@"<use transform='translate(0)' "]];
+    XCTAssertEqualObjects([self renderSVG:fast size:64], [self renderSVG:general size:64]);
+    IJSVGGroup* first = (IJSVGGroup*)fast.rootNode.children[0];
+    IJSVGGroup* second = (IJSVGGroup*)fast.rootNode.children[1];
+    IJSVGGroup* firstUse = (IJSVGGroup*)first.children[0];
+    IJSVGGroup* secondUse = (IJSVGGroup*)second.children[0];
+    XCTAssertNotEqual(firstUse.children[0], secondUse.children[0]);
+}
+
 - (void)testNativeSolidColorsFollowEditsAndStyleOverrides
 {
     NSString* format = @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect x='4' y='4' width='24' height='24' fill='%@' stroke='%@' stroke-width='2'/></svg>";

@@ -49,6 +49,79 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 
 @implementation IJSVGFilterOutputCacheTests
 
+- (void)testBackdropScopeCacheTracksReplacementAndUncachedEdits
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    primitive.input = @"BackgroundImage";
+    [filter addChild:primitive];
+    IJSVGGroup* parent = [[IJSVGGroup alloc] init];
+    parent.backgroundEnabled = IJSVGBackgroundEnabledNew;
+    parent.backgroundBounds = CGRectInfinite;
+    IJSVGGroup* source = [[IJSVGGroup alloc] init];
+    [parent addChild:source];
+    IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] initWithSourcePaint:IJSVGGroupPaint.paint filter:filter viewPort:CGRectMake(0, 0, 8, 8)];
+    paint.sourceNode = source;
+    paint.cachesRenderedOutput = YES;
+    XCTAssertTrue(paint.usesBackground);
+    paint.sourceNode = [[IJSVGGroup alloc] init];
+    XCTAssertFalse(paint.usesBackground);
+    paint.sourceNode = source;
+    XCTAssertTrue(paint.usesBackground);
+    paint.filter = [[IJSVGFilter alloc] init];
+    XCTAssertFalse(paint.usesBackground);
+    paint.filter = filter;
+    paint.cachesRenderedOutput = NO;
+    XCTAssertTrue(paint.usesBackground);
+    parent.backgroundEnabled = IJSVGBackgroundEnabledUnspecified;
+    XCTAssertFalse(paint.usesBackground);
+}
+
+- (void)testLiteralFilterNumbersKeepGeneralParsingAndReplacement
+{
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    for (NSString* value in @[ @"0", @"1", @"9", @"-2", @" .5 ", @"1e2", @"2 3", @"bad" ]) {
+        primitive.parameters = @{ @"k2" : value };
+        NSArray<NSNumber*>* parsed = [primitive numbersForParameter:@"k2"];
+        CGFloat expected = parsed.count == 1 ? parsed[0].doubleValue : 17;
+        XCTAssertEqual([primitive numberForParameter:@"k2" defaultValue:17], expected);
+    }
+    primitive.parameters = @{};
+    XCTAssertEqual([primitive numberForParameter:@"k2" defaultValue:17], 17);
+}
+
+- (void)testBatchEligibilityKeepsItsCountBoundaries
+{
+    for (NSNumber* count in @[ @2, @3, @128, @129 ]) {
+        IJSVGGroupPaint* root = IJSVGGroupPaint.paint;
+        for (NSUInteger index = 0; index < count.unsignedIntegerValue; index++) {
+            IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] initWithSourcePaint:IJSVGGroupPaint.paint filter:[[IJSVGFilter alloc] init] viewPort:CGRectMake(0, 0, 8, 8)];
+            [root addChild:paint];
+        }
+        NSSet* eligible = [IJSVGFilterPaint batchableFiltersForPaint:root];
+        if (count.unsignedIntegerValue >= 3 && count.unsignedIntegerValue <= 128) {
+            XCTAssertEqual(eligible.count, count.unsignedIntegerValue);
+        } else {
+            XCTAssertNil(eligible);
+        }
+    }
+}
+
+- (void)testUncachedFilterMetadataTracksParameterChanges
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+    primitive.type = IJSVGNodeTypeFilterComposite;
+    primitive.input = @"SourceGraphic";
+    primitive.input2 = @"BackgroundImage";
+    primitive.parameters = @{ @"operator" : @"arithmetic", @"k2" : @"1", @"k3" : @"1" };
+    [filter addChild:primitive];
+    IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] initWithSourcePaint:IJSVGGroupPaint.paint filter:filter viewPort:CGRectMake(0, 0, 8, 8)];
+    XCTAssertTrue(paint.filterMetadata.usesBackdropAddition);
+    primitive.parameters = @{ @"operator" : @"arithmetic", @"k2" : @"0", @"k3" : @"1" };
+    XCTAssertFalse(paint.filterMetadata.usesBackdropAddition);
+}
+
 - (void)testFilterMetadataReadsNestedInputsAndRejectsNamedResults
 {
     IJSVGFilter* filter = [[IJSVGFilter alloc] init];

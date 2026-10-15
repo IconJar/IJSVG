@@ -25,6 +25,7 @@
 - (IJSVGRootPaint*)measurementPaintForRootNode:(IJSVGRootNode*)rootNode includingFilters:(BOOL)includingFilters;
 
 - (NSMutableDictionary<NSNumber*, id>*)outlinePathCache;
+- (CGPathRef)newCachedPathFromStrokedShapePaint:(IJSVGShapePaint*)shape CF_RETURNS_RETAINED;
 
 - (BOOL)outlineFilterModesSharePaint;
 
@@ -592,7 +593,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
         [paths addObject:CFBridgingRelease(fill)];
     }
     if (shape.strokeColor != NULL && CGColorGetAlpha(shape.strokeColor) > 0 && shape.lineWidth > 0) {
-        CGPathRef stroke = [self.class newPathFromStrokedShapePaint:shape];
+        CGPathRef stroke = [self newCachedPathFromStrokedShapePaint:shape];
         if (stroke == NULL) {
             return NO;
         }

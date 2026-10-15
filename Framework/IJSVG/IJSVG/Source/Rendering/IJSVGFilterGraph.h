@@ -24,6 +24,7 @@ typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
 @property (nonatomic, strong, readonly) IJSVGFilter* filter;
 @property (nonatomic, copy, readonly) NSArray<IJSVGFilterPrimitive*>* primitives;
 @property (nonatomic, readonly) IJSVGFilterInputs inputs;
+@property (nonatomic, readonly) BOOL usesBackdropAddition;
 - (instancetype)initWithFilter:(IJSVGFilter*)filter;
 @end
 

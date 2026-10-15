@@ -6,6 +6,7 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGByteCache.h"
 #import "IJSVGXML.h"
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
@@ -445,6 +446,11 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     NSUInteger _gradientStopStyleRuleCount;
     BOOL _gradientStopStylesKnown;
     BOOL _hasGradientStopStyles;
+    IJSVGByteCache* _sharedGradientStops;
+    IJSVGByteCache* _plainFilterTemplates;
+    BOOL _plainFilterStylesKnown;
+    BOOL _hasPlainFilterStyles;
+    NSUInteger _plainFilterStyleRuleCount;
 }
 @property (nonatomic) IJSVGParsedPathCache* parsedPathCache;
 @property (nonatomic) NSUInteger inlineStyleCost;
@@ -520,6 +526,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (void)dealloc
 {
+    IJSVGByteCacheDestroy(_sharedGradientStops);
+    IJSVGByteCacheDestroy(_plainFilterTemplates);
     IJSVGParsedPathCacheDestroy(_parsedPathCache);
     [self clearRawAttributeCache];
     [self clearReferenceCache];
@@ -645,6 +653,11 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     self.linearGradientGeometry = nil;
     self.radialGradientGeometry = nil;
     self.gradientStops = nil;
+    IJSVGByteCacheDestroy(_sharedGradientStops);
+    _sharedGradientStops = NULL;
+    IJSVGByteCacheDestroy(_plainFilterTemplates);
+    _plainFilterTemplates = NULL;
+    _plainFilterStylesKnown = NO;
     self.gradientStopStates = nil;
     self.styleAncestors = IJSVGParserElementMapTable();
     self.inheritedPathData = nil;
@@ -677,6 +690,11 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     self.linearGradientGeometry = nil;
     self.radialGradientGeometry = nil;
     self.gradientStops = nil;
+    IJSVGByteCacheDestroy(_sharedGradientStops);
+    _sharedGradientStops = NULL;
+    IJSVGByteCacheDestroy(_plainFilterTemplates);
+    _plainFilterTemplates = NULL;
+    _plainFilterStylesKnown = NO;
     self.gradientStopStates = nil;
     self.selectorScopes = nil;
     if (_detachedReferences != NULL) {
@@ -1585,6 +1603,86 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
 }
 
+// Cache only context independent composite definitions. Geometry, styles,
+// references and child IDs stay on the normal cascade path.
+- (IJSVGFilter*)plainFilterFromTemplate:(IJSVGFilter*)source
+{
+    // Eligibility permits only the ID and literal composite parameters. Avoid
+    // the general node copy, which resolves unrelated inherited paint styles.
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    filter.identifier = source.identifier;
+    filter.name = source.name;
+    filter.styleParent = source.styleParent;
+    IJSVGFilterPrimitive* original = source.primitives.firstObject;
+    IJSVGFilterPrimitive* primitive = [[original.class alloc] init];
+    primitive.name = original.name;
+    primitive.input = original.input;
+    primitive.input2 = original.input2;
+    primitive.parameters = original.parameters;
+    [filter addChild:primitive];
+    return filter;
+}
+
+- (BOOL)canCachePlainFilterElement:(IJSVGXMLNode*)element
+{
+    if (IJSVGXMLType(element) != IJSVGNodeTypeFilter || element->childCount != 1) {
+        return NO;
+    }
+    NSUInteger rules = _styleSheet.ruleCount;
+    if (!_plainFilterStylesKnown || rules != _plainFilterStyleRuleCount) {
+        IJSVGByteCacheDestroy(_plainFilterTemplates);
+        _plainFilterTemplates = NULL;
+        _hasPlainFilterStyles = [_styleSheet mayAffectAttributes:[self allowedAttributesForNodeClass:IJSVGFilter.class]]
+            || [_styleSheet mayAffectAttributes:[self allowedAttributesForNodeClass:IJSVGNodeClassForType(IJSVGNodeTypeFilterComposite)]];
+        _plainFilterStyleRuleCount = rules;
+        _plainFilterStylesKnown = YES;
+    }
+    if (_hasPlainFilterStyles) {
+        return NO;
+    }
+    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(element);
+    for (NSUInteger index = 0; index < attributes.count; index++) {
+        if (attributes.first[index].identifier != IJSVGNodeAttributeID) {
+            return NO;
+        }
+    }
+    IJSVGXMLNode* child = IJSVGXMLFirstChild(element);
+    if (IJSVGXMLType(child) != IJSVGNodeTypeFilterComposite || child->childCount != 0) {
+        return NO;
+    }
+    attributes = IJSVGXMLAttributes(child);
+    for (NSUInteger index = 0; index < attributes.count; index++) {
+        IJSVGXMLAttribute* attribute = attributes.first + index;
+        NSString* value = IJSVGXMLAttributeValue(attribute);
+        switch (attribute->identifier) {
+            case IJSVGNodeAttributeIn:
+            case IJSVGNodeAttributeIn2:
+                if (![value isEqualToString:@"SourceGraphic"] && ![value isEqualToString:@"SourceAlpha"] && ![value isEqualToString:@"BackgroundImage"] && ![value isEqualToString:@"BackgroundAlpha"]) {
+                    return NO;
+                }
+                break;
+            case IJSVGNodeAttributeOperator:
+                if (![value isEqualToString:@"arithmetic"]) {
+                    return NO;
+                }
+                break;
+            case IJSVGNodeAttributeK1:
+            case IJSVGNodeAttributeK2:
+            case IJSVGNodeAttributeK3:
+            case IJSVGNodeAttributeK4:
+
+                // Literal constants also exclude CSS keywords and variables.
+                if (![value isEqualToString:@"0"] && ![value isEqualToString:@"1"]) {
+                    return NO;
+                }
+                break;
+            default:
+                return NO;
+        }
+    }
+    return YES;
+}
+
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element
 {
     IJSVGXMLNode* source = [self detachedElementWithIdentifier:identifier];
@@ -1594,6 +1692,11 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     if ([self isElement:element decedentOf:source]) {
         [self recursionDetectedOn:element decendentOf:source identifier:identifier];
         return nil;
+    }
+    BOOL cacheable = [self canCachePlainFilterElement:source];
+    IJSVGFilter* prototype = cacheable ? (__bridge IJSVGFilter*)IJSVGByteCacheGetValue(_plainFilterTemplates, &source, sizeof(source)) : nil;
+    if (prototype != nil) {
+        return [self plainFilterFromTemplate:prototype];
     }
     [self.activeReferences addObject:identifier];
     NSMapTable* previousScope = self.selectorScope;
@@ -1605,6 +1708,13 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         _definitionStyleParent = &context;
         IJSVGNode* detached = [self parseElement:source parentNode:node].detach;
         detached.styleParent = parent;
+        if (cacheable && IJSVGByteCacheGetCount(_plainFilterTemplates) < 128) {
+            if (_plainFilterTemplates == NULL) {
+                _plainFilterTemplates = IJSVGByteCacheCreate(128, 16 * 1024);
+            }
+            IJSVGFilter* snapshot = [self plainFilterFromTemplate:(IJSVGFilter*)detached];
+            IJSVGByteCacheSetValue(_plainFilterTemplates, &source, sizeof(source), (__bridge CFTypeRef)snapshot);
+        }
         for (void (^apply)(IJSVGNode*) in self.pendingStylePaints[identifier]) {
             apply(detached);
         }
@@ -1729,16 +1839,32 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     // not require a cascade for plain stops. Keep dependent values and all
     // rules that can affect a stop on the general path.
     BOOL plainStops = ![self hasGradientStopStyles];
+    unsigned char stopKey[IJSVGGradientStopKeyCapacity];
+    NSUInteger stopKeyLength = 0;
+    BOOL canShareStops = plainStops && IJSVGGradientStopCacheKey(element, gradient.fillOpacity.value, stopKey, &stopKeyLength);
+    IJSVGGradientStops* sharedStops = canShareStops ? (__bridge IJSVGGradientStops*)IJSVGByteCacheGetValue(_sharedGradientStops, stopKey, stopKeyLength) : nil;
+    if (sharedStops != nil) {
+        [sharedStops applyToGradient:gradient];
+        return;
+    }
     BOOL cacheable = plainStops && (_styleSheet.ruleCount == 0 || [IJSVGGradientStops canCacheElement:element]);
     IJSVGGradientStops* data = cacheable ? [_gradientStops objectForKey:IJSVGXMLKey(element)] : nil;
     if (data != nil && data.inheritedOpacity == gradient.fillOpacity.value) {
         [data applyToGradient:gradient];
         return;
     }
-    if (!plainStops || !IJSVGPopulatePlainGradientStops(gradient, element, self)) {
+    BOOL populatedPlain = plainStops && IJSVGPopulatePlainGradientStops(gradient, element, self);
+    if (!populatedPlain) {
         [self computeElement:element parentNode:gradient];
     }
     [gradient parseColorStops];
+    if (populatedPlain && canShareStops && IJSVGByteCacheGetCount(_sharedGradientStops) < 512 && ![self hasGradientStopStyles] && [IJSVGGradientStops canSharePlainElement:element parser:self]) {
+        IJSVGGradientStops* snapshot = [[IJSVGGradientStops alloc] initWithGradient:gradient element:element];
+        if (_sharedGradientStops == NULL) {
+            _sharedGradientStops = IJSVGByteCacheCreate(512, 2 * 1024 * 1024);
+        }
+        IJSVGByteCacheSetValue(_sharedGradientStops, stopKey, stopKeyLength, (__bridge CFTypeRef)snapshot);
+    }
     if (!cacheable || [self hasGradientStopStyles]) {
         return;
     }

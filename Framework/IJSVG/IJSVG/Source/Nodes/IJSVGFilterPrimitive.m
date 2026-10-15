@@ -280,8 +280,22 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 
 - (CGFloat)numberForParameter:(NSString*)name defaultValue:(CGFloat)value
 {
-    NSArray<NSNumber*>* numbers = [self numbersForParameter:name];
-    return numbers.count == 1 ? numbers[0].doubleValue : value;
+    // Avoid allocating a parsed number array for the common literal constants.
+    // Use the same lock as parameter replacement and the general numeric cache.
+    @synchronized(self) {
+        NSString* source = _parameters[name];
+        if (source.length == 0) {
+            return value;
+        }
+        if (source.length == 1) {
+            unichar digit = [source characterAtIndex:0];
+            if (digit >= '0' && digit <= '9') {
+                return digit - '0';
+            }
+        }
+        NSArray<NSNumber*>* numbers = [self numbersForParameter:name];
+        return numbers.count == 1 ? numbers[0].doubleValue : value;
+    }
 }
 
 - (CGSize)pairForParameter:(NSString*)name defaultValue:(CGSize)value

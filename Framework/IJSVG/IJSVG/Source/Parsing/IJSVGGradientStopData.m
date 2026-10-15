@@ -9,14 +9,25 @@
 #import "IJSVGXML.h"
 #import <IJSVG/IJSVGColorNode.h>
 #import <IJSVGGradientStopData.h>
+#import <IJSVGStyleSheetStyle.h>
 
 IJSVGGradientStopData IJSVGGradientStopDataCreate(IJSVGStop* stop, IJSVGXMLNode* element)
 {
     IJSVGXMLAttribute* opacity = IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStopOpacity);
+    BOOL explicitOpacity = opacity != NULL && opacity->value.length != 0;
+    NSString* inlineValue = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStyle));
+    if (inlineValue.length != 0) {
+        IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleString:inlineValue];
+        NSUInteger count = 0;
+        const IJSVGStyleSheetAttribute* entries = [style attributesWithCount:&count];
+        for (NSUInteger index = 0; index < count; index++) {
+            explicitOpacity |= entries[index].attribute == IJSVGNodeAttributeStopOpacity && entries[index].value.length != 0;
+        }
+    }
     IJSVGColorNode* fill = (IJSVGColorNode*)stop.fill;
     return (IJSVGGradientStopData) {
         .offset = CFBridgingRetain(stop.offset),
-        .opacity = opacity == NULL || opacity->value.length == 0 ? NULL : CFBridgingRetain(stop.fillOpacity),
+        .opacity = explicitOpacity ? CFBridgingRetain(stop.fillOpacity) : NULL,
         .color = CGColorRetain(fill.color),
         .hasFill = fill != nil,
         .isNoneOrTransparent = fill.isNoneOrTransparent

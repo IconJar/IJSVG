@@ -107,6 +107,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 @implementation IJSVGGradient {
     IJSVGGradientStops* _deferredStopData;
+    IJSVGGradientStops* _sharedGradientStops;
 }
 
 // Render colors and locations are already available. Keep editable stop nodes
@@ -119,6 +120,12 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         return;
     }
     _deferredStopData = stops;
+}
+
+- (void)shareGradientWithStops:(IJSVGGradientStops*)stops
+{
+    [self _invalidateCGGradient];
+    _sharedGradientStops = stops;
 }
 
 - (void)materializeStops
@@ -291,6 +298,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 - (void)_invalidateCGGradient
 {
+    _sharedGradientStops = nil;
     if (_CGGradient != NULL) {
         CGGradientRelease(_CGGradient);
         _CGGradient = NULL;
@@ -323,6 +331,8 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     } else {
         self.locations = NULL;
     }
+    _sharedGradientStops = node->_sharedGradientStops;
+    _CGGradient = CGGradientRetain(node->_CGGradient);
     self.x1 = node.x1.copy;
     self.x2 = node.x2.copy;
     self.y1 = node.y1.copy;
@@ -418,6 +428,14 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         return _CGGradient;
     }
 
+    if (_sharedGradientStops != nil) {
+        return _CGGradient = CGGradientRetain([_sharedGradientStops CGGradientForGradient:self]);
+    }
+    return _CGGradient = [self newCGGradient];
+}
+
+- (CGGradientRef)newCGGradient
+{
     NSUInteger count = _colors.count;
     if (count == 0) {
         return NULL;
@@ -443,7 +461,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
             free(components);
         }
         if (gradient != NULL) {
-            return _CGGradient = gradient;
+            return gradient;
         }
     }
 
@@ -456,7 +474,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     }
     CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace, colors, _locations);
     CFRelease(colors);
-    return _CGGradient = result;
+    return result;
 }
 
 - (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform

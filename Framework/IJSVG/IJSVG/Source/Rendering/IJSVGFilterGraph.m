@@ -383,6 +383,7 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     if ((self = [super init]) != nil) {
         _filter = filter;
         _primitives = filter.primitives;
+        _usesBackdropAddition = IJSVGFilterSIMDUsesBackdropAddition(filter);
         for (IJSVGFilterPrimitive* primitive in _primitives) {
             _inputs |= IJSVGFilterInputsForName(primitive.input);
             _inputs |= IJSVGFilterInputsForName(primitive.input2);

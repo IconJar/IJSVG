@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "IJSVGByteCache.h"
 #import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGEllipse.h>
 #import <IJSVG/IJSVGGroup.h>
@@ -221,8 +222,55 @@ static void IJSVGQuartzExpandStrokeBounds(IJSVGStrokePaint* paint)
 
 @end
 
+// Full geometry bytes avoid pointer lifetime assumptions and hash collisions.
+// Bound key construction so unusually large paths keep the direct stroker.
+typedef struct {
+    unsigned char bytes[8192];
+    size_t length;
+    BOOL valid;
+} IJSVGStrokeCacheKey;
+
+static void IJSVGAppendStrokeKey(IJSVGStrokeCacheKey* key, const void* bytes, size_t length)
+{
+    if (!key->valid || length > sizeof(key->bytes) - key->length) {
+        key->valid = NO;
+        return;
+    }
+    if (length != 0) {
+        memcpy(key->bytes + key->length, bytes, length);
+    }
+    key->length += length;
+}
+
+static void IJSVGAppendStrokePathElement(void* info, const CGPathElement* element)
+{
+    IJSVGStrokeCacheKey* key = info;
+    uint64_t type = element->type;
+    IJSVGAppendStrokeKey(key, &type, sizeof(type));
+    static const size_t counts[] = { 1, 1, 2, 3, 0 };
+    if (type >= sizeof(counts) / sizeof(counts[0])) {
+        key->valid = NO;
+        return;
+    }
+    IJSVGAppendStrokeKey(key, element->points, counts[type] * sizeof(CGPoint));
+}
+
+static void IJSVGCountStrokeOutlineCost(void* info, const CGPathElement* element)
+{
+    size_t* cost = info;
+    static const size_t counts[] = { 1, 1, 2, 3, 0 };
+
+    // A conservative per element estimate also accounts for internal storage.
+    // Saturate once the cache budget is exceeded, avoiding arithmetic overflow.
+    if (*cost <= 4 * 1024 * 1024 && (NSUInteger)element->type < 5) {
+        *cost += 32 + counts[element->type] * sizeof(CGPoint);
+    }
+}
+
 @interface IJSVGQuartzRenderer () {
     NSMutableArray<IJSVGQuartzClipPath*>* _sharedClipPaths;
+    IJSVGByteCache* _strokeOutlineCache;
+    BOOL _buildingStrokeOutlines;
     IJSVGTextFontResolver* _lengthFontResolver;
     BOOL _resolvingGradientFonts;
     IJSVGGradient* _fontGradientSource;
@@ -703,6 +751,10 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 {
     CGRect clientBounds = (CGRect) { .origin = CGPointZero, .size = rootNode.clientSize };
     __block IJSVGRootPaint* paint = nil;
+    IJSVGByteCache* previousOutlines = _strokeOutlineCache;
+    BOOL previousOutlineScope = _buildingStrokeOutlines;
+    _strokeOutlineCache = NULL;
+    _buildingStrokeOutlines = YES;
     NSMutableArray<IJSVGQuartzClipPath*>* previousClips = _sharedClipPaths;
     _sharedClipPaths = [[NSMutableArray alloc] init];
     BOOL previousGradientScope = _resolvingGradientFonts;
@@ -718,6 +770,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
                        paint = (IJSVGRootPaint*)[self drawablePaintForNode:rootNode];
                    }];
     } @finally {
+        IJSVGByteCacheDestroy(_strokeOutlineCache);
+        _strokeOutlineCache = previousOutlines;
+        _buildingStrokeOutlines = previousOutlineScope;
         _sharedClipPaths = previousClips;
         _resolvingGradientFonts = previousGradientScope;
         _fontGradientSource = previousGradientSource;
@@ -1054,6 +1109,48 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     paint.boundingBox = pathBounds;
 }
 
+- (CGPathRef)newCachedPathFromStrokedShapePaint:(IJSVGShapePaint*)shape
+{
+    if (!_buildingStrokeOutlines || shape.path == NULL || shape.lineWidth <= 0) {
+        return [self.class newPathFromStrokedShapePaint:shape];
+    }
+    IJSVGStrokeCacheKey key = { .valid = YES };
+    CGAffineTransform transform = shape.nonScalingStroke ? shape.strokeHostTransform : CGAffineTransformIdentity;
+    CGFloat values[] = { shape.lineWidth, shape.miterLimit, shape.lineDashPhase,
+        transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty };
+    uint64_t flags[] = { shape.lineCap, shape.lineJoin, shape.nonScalingStroke, shape.hasPointSubpaths, shape.lineDashData.length };
+    IJSVGAppendStrokeKey(&key, values, sizeof(values));
+    IJSVGAppendStrokeKey(&key, flags, sizeof(flags));
+    NSData* dash = shape.lineDashData;
+    IJSVGAppendStrokeKey(&key, dash.bytes, dash.length);
+    CGPathApply(shape.path, &key, IJSVGAppendStrokePathElement);
+    if (!key.valid) {
+        return [self.class newPathFromStrokedShapePaint:shape];
+    }
+    CGPathRef cached = (CGPathRef)IJSVGByteCacheGetValue(_strokeOutlineCache, key.bytes, key.length);
+    if (cached != NULL) {
+        return CGPathRetain(cached);
+    }
+    CGPathRef outline = [self.class newPathFromStrokedShapePaint:shape];
+    if (outline != NULL) {
+        if (_strokeOutlineCache == NULL) {
+            _strokeOutlineCache = IJSVGByteCacheCreate(256, 4 * 1024 * 1024);
+        }
+        size_t cost = 128;
+        CGPathApply(outline, &cost, IJSVGCountStrokeOutlineCost);
+        if (cost > 4 * 1024 * 1024 - key.length - 256) {
+            return outline;
+        }
+        CGPathRef snapshot = CGPathCreateCopy(outline);
+        if (snapshot != NULL) {
+            IJSVGByteCacheSetValueWithCost(_strokeOutlineCache, key.bytes, key.length, snapshot, cost);
+            CGPathRelease(outline);
+            return snapshot;
+        }
+    }
+    return outline;
+}
+
 + (CGPathRef)newPathFromStrokedShapePaint:(IJSVGShapePaint*)shapePaint
 {
     if (shapePaint.path == NULL || shapePaint.lineWidth <= 0.f) {
@@ -1235,7 +1332,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
             patternPaint.referencingPaint = paint;
 
             // Keep the drawing inside the stroke shape.
-            CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
+            CGPathRef path = [self newCachedPathFromStrokedShapePaint:strokePaint];
             patternPaint.clipPath = path;
             CGPathRelease(path);
             paint.strokePaint = patternPaint;
@@ -1250,7 +1347,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
             gradientPaint.referencingPaint = paint;
 
             // Keep the drawing inside the stroke shape.
-            CGPathRef path = [self.class newPathFromStrokedShapePaint:strokePaint];
+            CGPathRef path = [self newCachedPathFromStrokedShapePaint:strokePaint];
             gradientPaint.clipPath = path;
             CGPathRelease(path);
             paint.strokePaint = gradientPaint;
@@ -2854,7 +2951,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         IJSVGShapePaint* stroke = shape.strokeStyle;
         stroke.strokeHostTransform = CGAffineTransformConcat(transforms[index], next);
         if (shape.strokePaint != stroke) {
-            CGPathRef outline = [self.class newPathFromStrokedShapePaint:stroke];
+            CGPathRef outline = [self newCachedPathFromStrokedShapePaint:stroke];
             shape.strokePaint.clipPath = outline;
             CGPathRelease(outline);
         }

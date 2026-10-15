@@ -1204,6 +1204,47 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     }
 }
 
+- (void)testPlainCompositeReferencesKeepIndependentNodesAndParameters
+{
+    IJSVGRootNode* root = [self parse:@"<style>* {stroke-linecap:square}</style><defs><filter id='f'><feComposite in='SourceGraphic' in2='BackgroundImage' operator='arithmetic' k2='1' k3='1'/></filter></defs><rect width='10' height='10' filter='url(#f)'/><rect x='10' width='10' height='10' filter='url(#f)'/><rect x='20' width='10' height='10' filter='url(#f)'/>"];
+    IJSVGFilter* first = ((IJSVGGraphicsNode*)root.children[0]).filter;
+    IJSVGFilter* second = ((IJSVGGraphicsNode*)root.children[1]).filter;
+    IJSVGFilter* third = ((IJSVGGraphicsNode*)root.children[2]).filter;
+    XCTAssertNotEqual(first, second);
+    XCTAssertNotEqual(second, third);
+    XCTAssertNotEqual(first.primitives.firstObject, second.primitives.firstObject);
+    XCTAssertEqual(second.primitives.firstObject.parentNode, second);
+    second.primitives.firstObject.parameters = @{ @"operator" : @"arithmetic", @"k2" : @"0" };
+    XCTAssertEqual([first.primitives.firstObject numberForParameter:@"k2" defaultValue:-1], 1);
+    XCTAssertEqual([third.primitives.firstObject numberForParameter:@"k2" defaultValue:-1], 1);
+    [first removeChild:first.primitives.firstObject];
+    XCTAssertEqual(first.primitives.count, 0u);
+    XCTAssertEqual(second.primitives.count, 1u);
+    XCTAssertEqual(third.primitives.count, 1u);
+}
+
+- (void)testPlainCompositeTemplatesKeepDefinitionInheritance
+{
+    IJSVGRootNode* root = [self parse:@"<defs color='lime' color-interpolation-filters='sRGB'><filter id='f'><feComposite in='SourceGraphic' in2='BackgroundImage' operator='arithmetic' k2='1' k3='1'/></filter></defs><g color='red' color-interpolation-filters='linearRGB'><rect width='10' height='10' filter='url(#f)'/><rect x='10' width='10' height='10' filter='url(#f)'/></g>"];
+    IJSVGGroup* group = (IJSVGGroup*)root.children.firstObject;
+    IJSVGFilter* first = ((IJSVGGraphicsNode*)group.children[0]).filter;
+    IJSVGFilter* second = ((IJSVGGraphicsNode*)group.children[1]).filter;
+    XCTAssertEqual(first.resolvedFilterColorInterpolation, IJSVGColorInterpolationSRGB);
+    XCTAssertEqual(second.resolvedFilterColorInterpolation, first.resolvedFilterColorInterpolation);
+    XCTAssertEqual(second.primitives.firstObject.resolvedFilterColorInterpolation, first.primitives.firstObject.resolvedFilterColorInterpolation);
+    XCTAssertTrue(CGColorEqualToColor(second.currentColor, first.currentColor));
+}
+
+- (void)testPlainCompositeReferencesRespectLaterStyleRules
+{
+    IJSVGRootNode* root = [self parse:@"<defs><filter id='f'><feComposite in='SourceGraphic' in2='BackgroundImage' operator='arithmetic' k2='1' k3='1'/></filter></defs><rect width='10' height='10' filter='url(#f)'/><rect x='10' width='10' height='10' filter='url(#f)'/><style>feComposite {color-interpolation-filters:sRGB}</style><rect x='20' width='10' height='10' filter='url(#f)'/>"];
+    IJSVGFilter* first = ((IJSVGGraphicsNode*)root.children[0]).filter;
+    IJSVGFilter* last = ((IJSVGGraphicsNode*)root.children.lastObject).filter;
+    XCTAssertNotNil(first);
+    XCTAssertNotNil(last);
+    XCTAssertEqual(last.primitives.firstObject.resolvedFilterColorInterpolation, IJSVGColorInterpolationSRGB);
+}
+
 - (void)testFilterTemplatesAndPrimitiveCopiesAreIndependent
 {
     IJSVGRootNode* root = [self parse:@"<defs>    <filter id=\"base\" x=\"-50%\" width=\"200%\">        "

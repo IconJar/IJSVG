@@ -210,7 +210,9 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
                 }
             }
             [eligiblePaints addObject:filtered];
-            filters++;
+            if (++filters > 128) {
+                return NO;
+            }
         }
         [pending addObjectsFromArray:paint.children ?: @[]];
     }
@@ -613,6 +615,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     BOOL _canCacheOutput;
     IJSVGFilter* _imageSnapshotFilter;
     IJSVGFilterMetadata* _filterMetadata;
+    BOOL _checkedBackground;
+    BOOL _cachedUsesBackground;
 }
 
 @end
@@ -721,6 +725,31 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 - (BOOL)usesBackground
 {
+    if (!self.cachesRenderedOutput) {
+        return [self resolveUsesBackground];
+    }
+    if (!_checkedBackground) {
+        _cachedUsesBackground = [self resolveUsesBackground];
+        _checkedBackground = YES;
+    }
+    return _cachedUsesBackground;
+}
+
+- (void)setSourceNode:(IJSVGGraphicsNode*)sourceNode
+{
+    [super setSourceNode:sourceNode];
+    _checkedBackground = NO;
+}
+
+- (void)setFilter:(IJSVGFilter*)filter
+{
+    _filter = filter;
+    _filterMetadata = nil;
+    _checkedBackground = NO;
+}
+
+- (BOOL)resolveUsesBackground
+{
     IJSVGFilterInputs inputs = self.filterMetadata.inputs;
     if ((inputs & (IJSVGFilterInputBackgroundImage | IJSVGFilterInputBackgroundAlpha)) == 0) {
         return NO;
@@ -746,6 +775,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     _cachesRenderedOutput = cachesRenderedOutput;
+    _checkedBackground = NO;
     _filterMetadata = nil;
     if (_outputCacheKey != nil) {
         [IJSVGFilterOutputCache() removeObjectForKey:_outputCacheKey];
@@ -1482,7 +1512,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     }
 
     IJSVGFilterPrimitive* primitive = self.filterMetadata.primitives.firstObject;
-    if (!self.usesBackground && IJSVGFilterSIMDUsesBackdropAddition(self.filter) && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
+    if (!self.usesBackground && self.filterMetadata.usesBackdropAddition && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
         // Adding transparent black leaves the source unchanged.
         CGContextSaveGState(ctx);
         CGContextClipToRect(ctx, region);

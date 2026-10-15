@@ -19,10 +19,11 @@
 
 BOOL IJSVGFilterSIMDUsesBackdropAddition(IJSVGFilter* filter)
 {
-    if (filter.primitives.count != 1) {
+    NSArray<IJSVGFilterPrimitive*>* primitives = filter.primitives;
+    if (primitives.count != 1) {
         return NO;
     }
-    IJSVGFilterPrimitive* primitive = filter.primitives.firstObject;
+    IJSVGFilterPrimitive* primitive = primitives.firstObject;
     return primitive.type == IJSVGNodeTypeFilterComposite && [primitive.input isEqualToString:IJSVGStringSourceGraphic] && [primitive.input2 isEqualToString:IJSVGStringBackgroundImage] && primitive.compositeOperator == IJSVGFilterCompositeOperatorArithmetic && [primitive numberForParameter:IJSVGAttributeK1 defaultValue:0] == 0 && [primitive numberForParameter:IJSVGAttributeK2 defaultValue:0] == 1 && [primitive numberForParameter:IJSVGAttributeK3 defaultValue:0] == 1 && [primitive numberForParameter:IJSVGAttributeK4 defaultValue:0] == 0;
 }
 

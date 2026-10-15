@@ -40,7 +40,7 @@ static BOOL IJSVGGradientAttributeDependsOnStyle(IJSVGXMLAttribute* attribute)
     return NO;
 }
 
-BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* element, IJSVGParser* parser)
+static BOOL IJSVGHasPlainGradientStops(IJSVGXMLNode* element, IJSVGParser* parser)
 {
     // Validate every child before changing the gradient.
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
@@ -71,6 +71,14 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
                 return NO;
             }
         }
+    }
+    return YES;
+}
+
+BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* element, IJSVGParser* parser)
+{
+    if (!IJSVGHasPlainGradientStops(element, parser)) {
+        return NO;
     }
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
         IJSVGStop* stop = [[IJSVGStop alloc] init];
@@ -111,6 +119,36 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     NSUInteger _stopCount;
     NSArray* _colors;
     NSData* _locations;
+    CGGradientRef _sharedGradient;
+}
+
+// Bounded content keys allow different gradient definitions to share immutable
+// stops. Preserve raw declarations so later child materialization stays exact.
+// Validate on insertion. A lookup hit has exactly the same declaration bytes
+// as an already validated snapshot, so it needs no repeat CSS parsing.
++ (BOOL)canSharePlainElement:(IJSVGXMLNode*)element parser:(IJSVGParser*)parser
+{
+    if (!IJSVGHasPlainGradientStops(element, parser)) {
+        return NO;
+    }
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        NSString* color = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor));
+        NSString* inlineValue = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStyle));
+        if (inlineValue.length != 0) {
+            IJSVGStyleSheetStyle* style = [parser parsedInlineStyleForValue:inlineValue];
+            NSUInteger count = 0;
+            const IJSVGStyleSheetAttribute* entries = [style attributesWithCount:&count];
+            for (NSUInteger index = 0; index < count; index++) {
+                if (entries[index].attribute == IJSVGNodeAttributeStopColor) {
+                    color = entries[index].value;
+                }
+            }
+        }
+        if (color.length == 0) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 + (BOOL)canCacheElement:(IJSVGXMLNode*)element
@@ -155,6 +193,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         }
         _colors = gradient.colors.copy;
         _locations = [NSData dataWithBytes:gradient.locations length:gradient.numberOfStops * sizeof(CGFloat)];
+        [gradient shareGradientWithStops:self];
     }
     return self;
 }
@@ -165,6 +204,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         IJSVGGradientStopDataRelease(_stops + index);
     }
     free(_stops);
+    CGGradientRelease(_sharedGradient);
 }
 
 - (void)applyToGradient:(IJSVGGradient*)gradient
@@ -177,6 +217,21 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
         memcpy(locations, _locations.bytes, _locations.length);
     }
     gradient.locations = locations;
+    if (locations != NULL || _locations.length == 0) {
+        [gradient shareGradientWithStops:self];
+    }
+}
+
+// Copies may be rendered on different threads. Only first construction needs
+// synchronization. Each node retains its own reference after the first lookup.
+- (CGGradientRef)CGGradientForGradient:(IJSVGGradient*)gradient
+{
+    @synchronized(self) {
+        if (_sharedGradient == NULL) {
+            _sharedGradient = [gradient newCGGradient];
+        }
+        return _sharedGradient;
+    }
 }
 
 - (void)appendStopsToGradient:(IJSVGGradient*)gradient
@@ -187,3 +242,52 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 }
 
 @end
+
+static BOOL IJSVGAppendStopKey(unsigned char* key, NSUInteger* length, const void* bytes, NSUInteger count)
+{
+    if (count > IJSVGGradientStopKeyCapacity - *length) {
+        return NO;
+    }
+    if (count != 0) {
+        memcpy(key + *length, bytes, count);
+    }
+    *length += count;
+    return YES;
+}
+
+BOOL IJSVGGradientStopCacheKey(IJSVGXMLNode* element, CGFloat opacity, unsigned char* key, NSUInteger* length)
+{
+    *length = 0;
+    if (!isfinite(opacity) || element->childCount == 0 || element->childCount > 16) {
+        return NO;
+    }
+    opacity = opacity == 0 ? 0 : opacity;
+    IJSVGAppendStopKey(key, length, &opacity, sizeof(opacity));
+    NSUInteger bytes = 0;
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        if (IJSVGXMLType(child) != IJSVGNodeTypeStop || strcmp(child->name, "stop") != 0 || child->childCount != 0) {
+            return NO;
+        }
+        IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(child);
+        for (NSUInteger index = 0; index < attributes.count; index++) {
+            IJSVGXMLAttribute* attribute = attributes.first + index;
+            IJSVGNodeAttribute type = attribute->identifier;
+            if (type != IJSVGNodeAttributeOffset && type != IJSVGNodeAttributeStopColor && type != IJSVGNodeAttributeStopOpacity && type != IJSVGNodeAttributeStyle) {
+                return NO;
+            }
+            if (attribute->value.length > 4096 - bytes) {
+                return NO;
+            }
+            bytes += attribute->value.length;
+            uint64_t header[] = { type, attribute->value.length };
+            if (!IJSVGAppendStopKey(key, length, header, sizeof(header)) || !IJSVGAppendStopKey(key, length, IJSVGXMLAttributeBytes(attribute), attribute->value.length)) {
+                return NO;
+            }
+        }
+        uint64_t end = UINT64_MAX;
+        if (!IJSVGAppendStopKey(key, length, &end, sizeof(end))) {
+            return NO;
+        }
+    }
+    return YES;
+}

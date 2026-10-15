@@ -18,6 +18,85 @@
 
 @implementation IJSVGPlainGradientTests
 
+- (void)testSharedCGGradientsAreLazyAndDetachWhenEdited
+{
+    NSString* stops = @"<stop stop-color='red'/><stop offset='1' stop-color='blue'/>";
+    IJSVG* svg = [self document:[NSString stringWithFormat:@"<defs><linearGradient id='a'>%@</linearGradient><linearGradient id='b'>%@</linearGradient></defs><rect width='32' height='64' fill='url(#a)'/><rect x='32' width='32' height='64' fill='url(#b)'/>", stops, stops]];
+    IJSVGGradient* first = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[0]).fill;
+    IJSVGGradient* second = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[1]).fill;
+    Ivar rendered = class_getInstanceVariable(IJSVGGradient.class, "_CGGradient");
+    XCTAssertEqual(*(CGGradientRef*)((char*)(__bridge void*)first + ivar_getOffset(rendered)), NULL);
+    XCTAssertEqual(*(CGGradientRef*)((char*)(__bridge void*)second + ivar_getOffset(rendered)), NULL);
+    CGGradientRef shared = first.CGGradient;
+    XCTAssertNotEqual(shared, NULL);
+    XCTAssertEqual(shared, second.CGGradient);
+    IJSVGGradient* copy = first.copy;
+    XCTAssertEqual(copy.CGGradient, shared);
+    IJSVGStop* stop = (IJSVGStop*)second.children[0];
+    stop.fill = [IJSVGColorNode colorNodeWithColor:NSColor.greenColor.CGColor];
+    [second parseColorStops];
+    XCTAssertNotEqual(second.CGGradient, shared);
+    XCTAssertEqual(first.CGGradient, shared);
+    XCTAssertEqual(copy.CGGradient, shared);
+    copy.colors = @[ (__bridge id)NSColor.yellowColor.CGColor, (__bridge id)NSColor.blackColor.CGColor ];
+    XCTAssertNotEqual(copy.CGGradient, shared);
+    XCTAssertEqual(first.CGGradient, shared);
+    [svg setNeedsDisplay];
+    NSString* xml = [svg SVGStringWithSize:CGSizeMake(64, 64) options:IJSVGExporterOptionRemoveComments];
+    XCTAssertEqualObjects([self pixels:svg], [self pixels:[[IJSVG alloc] initWithSVGString:xml]]);
+}
+
+- (void)testSharedCGGradientCopiesCanConstructConcurrently
+{
+    IJSVG* svg = [self document:@"<defs><linearGradient id='a'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs><rect width='64' height='64' fill='url(#a)'/>"];
+    IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[0]).fill;
+    NSMutableArray<IJSVGGradient*>* copies = [[NSMutableArray alloc] init];
+    for (NSUInteger index = 0; index < 32; index++) {
+        [copies addObject:gradient.copy];
+    }
+    dispatch_apply(copies.count, dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(size_t index) {
+        (void)copies[index].CGGradient;
+    });
+    CGGradientRef shared = gradient.CGGradient;
+    for (IJSVGGradient* copy in copies) {
+        XCTAssertEqual(copy.CGGradient, shared);
+    }
+}
+
+- (void)testSharedInlineStopSequencesKeepIndependentEditableChildren
+{
+    NSString* stops = @"<stop offset='0' style='stop-color:#c1ff36;stop-opacity:1'/><stop offset='1' style='stop-color:#c1ff36;stop-opacity:0'/>";
+    NSString* body = [NSString stringWithFormat:@"<style>* {stroke-linecap:square}</style><defs><linearGradient id='a'>%@</linearGradient><linearGradient id='b'>%@</linearGradient></defs><rect width='32' height='64' fill='url(#a)'/><rect x='32' width='32' height='64' fill='url(#b)'/>", stops, stops];
+    IJSVG* svg = [self document:body];
+    IJSVG* reference = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='general' "]];
+    XCTAssertEqualObjects([self pixels:svg], [self pixels:reference]);
+    IJSVGGradient* first = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[0]).fill;
+    IJSVGGradient* second = (IJSVGGradient*)((IJSVGPaintNode*)svg.rootNode.children[1]).fill;
+    Ivar storage = class_getInstanceVariable(IJSVGGroup.class, "_children");
+    XCTAssertEqual([object_getIvar(second, storage) count], 0u);
+    XCTAssertNotEqual(first.children[0], second.children[0]);
+    XCTAssertEqual(((IJSVGStop*)second.children[0]).fillOpacity.value, 1);
+    XCTAssertEqual(((IJSVGStop*)second.children[1]).fillOpacity.value, 0);
+    IJSVGStop* edited = (IJSVGStop*)second.children[0];
+    edited.fill = [IJSVGColorNode colorNodeWithColor:NSColor.redColor.CGColor];
+    [second parseColorStops];
+    [svg setNeedsDisplay];
+    XCTAssertFalse(CGColorEqualToColor(((IJSVGColorNode*)((IJSVGStop*)first.children[0]).fill).color, ((IJSVGColorNode*)edited.fill).color));
+    NSData* pixels = [self pixels:svg];
+    NSString* xml = [svg SVGStringWithSize:CGSizeMake(64, 64) options:IJSVGExporterOptionRemoveComments];
+    XCTAssertEqualObjects([self pixels:[[IJSVG alloc] initWithSVGString:xml]], pixels);
+}
+
+- (void)testSharedStopSequencesKeepInheritedOpacityAndContextSeparate
+{
+    for (NSString* stops in @[ @"<stop style='stop-color:red'/><stop offset='1' style='stop-color:blue'/>", @"<stop style='stop-color:currentColor'/><stop offset='1' stop-color='blue'/>", @"<stop style='stop-color:var(--paint)'/><stop offset='1' stop-color='blue'/>" ]) {
+        NSString* body = [NSString stringWithFormat:@"<defs><linearGradient id='a' stop-opacity='.25' fill-opacity='.25' color='red' style='--paint:red'>%@</linearGradient><linearGradient id='b' stop-opacity='.75' fill-opacity='.75' color='lime' style='--paint:lime'>%@</linearGradient></defs><rect width='32' height='64' fill='url(#a)'/><rect x='32' width='32' height='64' fill='url(#b)'/>", stops, stops];
+        IJSVG* actual = [self document:body];
+        IJSVG* reference = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='general' "]];
+        XCTAssertEqualObjects([self pixels:actual], [self pixels:reference], @"%@", stops);
+    }
+}
+
 - (void)testPlainInlineStopDeclarationsMatchGeneralCascade
 {
     for (NSString* style in @[ @"", @"<style>* {stroke-linecap:square;stroke-linejoin:round}</style>" ]) {
