@@ -99,29 +99,16 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
 - (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithSelectorString:(NSString*)string
 {
-    NSMutableArray<IJSVGStyleSheetSelector*>* array = [[NSMutableArray alloc] init];
-    NSArray<NSString*>* comp = [string componentsSeparatedByString:@","];
-    NSCharacterSet* whiteSpaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-
-    for (__strong NSString* selectorName in comp) {
-        selectorName = [selectorName stringByTrimmingCharactersInSet:whiteSpaceCharSet];
-        if (selectorName.length == 0) {
-            continue;
-        }
-
-        IJSVGStyleSheetSelector* selector = nil;
-        if ((selector = [_selectors objectForKey:selectorName]) == nil) {
-            selector = [[IJSVGStyleSheetSelector alloc] initWithSelectorString:selectorName];
-            if (selector != nil) {
-                [_selectors setObject:selector forKey:selectorName];
-            }
-        }
-
-        if (selector != nil) {
-            [array addObject:selector];
-        }
+    if (string == nil) {
+        return nil;
     }
-    return array;
+    NSArray<IJSVGStyleSheetSelector*>* selectors = _selectors[string];
+    if (selectors == nil) {
+        // Ordinary rule lists are strict; only :is() and :where() forgive invalid entries.
+        selectors = [IJSVGStyleSheetSelector selectorsWithString:string forgiving:NO] ?: @[];
+        _selectors[string] = selectors;
+    }
+    return selectors;
 }
 
 - (void)parseStyleBlock:(NSString*)string

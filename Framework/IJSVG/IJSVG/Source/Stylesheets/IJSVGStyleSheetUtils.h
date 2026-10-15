@@ -11,6 +11,33 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSUInteger, IJSVGSelectorPseudoKind) {
+    IJSVGSelectorPseudoRoot,
+    IJSVGSelectorPseudoScope,
+    IJSVGSelectorPseudoEmpty,
+    IJSVGSelectorPseudoNth,
+    IJSVGSelectorPseudoIs,
+    IJSVGSelectorPseudoWhere,
+    IJSVGSelectorPseudoNot,
+    IJSVGSelectorPseudoHas
+};
+
+typedef NS_OPTIONS(uint8_t, IJSVGSelectorPseudoFlags) {
+    IJSVGSelectorPseudoFunctional = 1 << 0,
+    IJSVGSelectorPseudoOfType = 1 << 1,
+    IJSVGSelectorPseudoFromEnd = 1 << 2,
+    IJSVGSelectorPseudoOnly = 1 << 3,
+    IJSVGSelectorPseudoForgiving = 1 << 4
+};
+typedef struct {
+    IJSVGSelectorPseudoKind kind;
+    IJSVGSelectorPseudoFlags flags;
+    BOOL valid;
+} IJSVGSelectorPseudoDescriptor;
+
+// ASCII case-insensitive lookup; the span need not be NUL-terminated.
+IJSVGSelectorPseudoDescriptor IJSVGSelectorPseudoForBytes(const char* _Nullable bytes, NSUInteger length);
+
 typedef NS_ENUM(uint8_t, IJSVGMediaType) {
     IJSVGMediaTypeAll,
     IJSVGMediaTypeScreen,

@@ -17,6 +17,97 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <math.h>
 
+IJSVGSelectorPseudoDescriptor IJSVGSelectorPseudoForBytes(const char* bytes, NSUInteger length)
+{
+    if (bytes == NULL || length == 0 || length > 16) {
+        return (IJSVGSelectorPseudoDescriptor) { 0 };
+    }
+    char name[16];
+    for (NSUInteger index = 0; index < length; index++) {
+        unsigned char character = bytes[index];
+        name[index] = character >= 'A' && character <= 'Z' ? character + ('a' - 'A') : character;
+    }
+    bytes = name;
+    switch (length) {
+        case 2:
+            if (memcmp(bytes, "is", 2) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoIs, IJSVGSelectorPseudoFunctional | IJSVGSelectorPseudoForgiving, YES };
+            }
+            break;
+        case 3:
+            if (memcmp(bytes, "not", 3) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNot, IJSVGSelectorPseudoFunctional, YES };
+            }
+            if (memcmp(bytes, "has", 3) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoHas, IJSVGSelectorPseudoFunctional, YES };
+            }
+            break;
+        case 4:
+            if (memcmp(bytes, "root", 4) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoRoot, 0, YES };
+            }
+            break;
+        case 5:
+            if (memcmp(bytes, "scope", 5) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoScope, 0, YES };
+            }
+            if (memcmp(bytes, "empty", 5) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoEmpty, 0, YES };
+            }
+            if (memcmp(bytes, "where", 5) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoWhere, IJSVGSelectorPseudoFunctional | IJSVGSelectorPseudoForgiving, YES };
+            }
+            break;
+        case 9:
+            if (memcmp(bytes, "nth-child", 9) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoFunctional, YES };
+            }
+            break;
+        case 10:
+            if (memcmp(bytes, "last-child", 10) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoFromEnd, YES };
+            }
+            if (memcmp(bytes, "only-child", 10) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoOnly, YES };
+            }
+            break;
+        case 11:
+            if (memcmp(bytes, "first-child", 11) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, 0, YES };
+            }
+            if (memcmp(bytes, "nth-of-type", 11) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoFunctional | IJSVGSelectorPseudoOfType, YES };
+            }
+            break;
+        case 12:
+            if (memcmp(bytes, "last-of-type", 12) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoOfType | IJSVGSelectorPseudoFromEnd, YES };
+            }
+            if (memcmp(bytes, "only-of-type", 12) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoOfType | IJSVGSelectorPseudoOnly, YES };
+            }
+            break;
+        case 13:
+            if (memcmp(bytes, "first-of-type", 13) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoOfType, YES };
+            }
+            break;
+        case 14:
+            if (memcmp(bytes, "nth-last-child", 14) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoFunctional | IJSVGSelectorPseudoFromEnd, YES };
+            }
+            break;
+        case 16:
+            if (memcmp(bytes, "nth-last-of-type", 16) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoNth, IJSVGSelectorPseudoFunctional | IJSVGSelectorPseudoOfType | IJSVGSelectorPseudoFromEnd, YES };
+            }
+            break;
+        default:
+            break;
+    }
+    return (IJSVGSelectorPseudoDescriptor) { 0 };
+}
+
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar)
 {
     return aChar == ' ' || aChar == '\t' || aChar == '\n' || aChar == '\r' || aChar == '\f';
@@ -534,7 +625,7 @@ NSString* IJSVGStyleSheetStringByRemovingCSSComments(NSString* string)
 
 BOOL IJSVGStyleSheetSelectorRawHasSimpleSelector(IJSVGStyleSheetSelectorRaw* rawSelector)
 {
-    return rawSelector.rootCount != 0 || rawSelector.tag != nil || rawSelector.identifier != nil || rawSelector.classes.count != 0;
+    return rawSelector.pseudoClasses.count != 0 || rawSelector.rootCount != 0 || rawSelector.tag != nil || rawSelector.identifier != nil || rawSelector.classes.count != 0;
 }
 
 BOOL IJSVGStyleSheetSelectorRawHasAnySelector(IJSVGStyleSheetSelectorRaw* rawSelector, BOOL hasUniversalSelector)

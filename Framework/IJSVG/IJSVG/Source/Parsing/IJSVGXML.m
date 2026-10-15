@@ -212,8 +212,17 @@ static void IJSVGXMLParserEndElement(void* context, const xmlChar* local, const 
     document->current = node->parent;
 }
 
+static void IJSVGXMLMarkSelectorText(void* context, int length)
+{
+    IJSVGXMLDocument* document = context;
+    if (!document->failed && document->current != IJSVGXMLNodeNotFound && length > 0) {
+        document->nodes[document->current].hasSelectorText = true;
+    }
+}
+
 static void IJSVGXMLParserCharacters(void* context, const xmlChar* bytes, int length)
 {
+    IJSVGXMLMarkSelectorText(context, length);
     IJSVGXMLDocument* document = context;
     if (document->failed) {
         return;
@@ -241,6 +250,7 @@ static void IJSVGXMLParserCharacters(void* context, const xmlChar* bytes, int le
 
 static void IJSVGXMLParserCDATA(void* context, const xmlChar* bytes, int length)
 {
+    IJSVGXMLMarkSelectorText(context, length);
     IJSVGXMLDocument* document = context;
     uint32_t index = IJSVGXMLDocumentAppendNode(document, IJSVGXMLNodeKindCDATA);
     if (index != IJSVGXMLNodeNotFound) {
@@ -250,7 +260,8 @@ static void IJSVGXMLParserCDATA(void* context, const xmlChar* bytes, int length)
 
 static void IJSVGXMLParserIgnoreWhitespace(void* context, const xmlChar* bytes, int length)
 {
-    // Whitespace only nodes are omitted, matching Foundation options:0.
+    // Keep layout's whitespace policy, but remember text for CSS :empty.
+    IJSVGXMLMarkSelectorText(context, length);
 }
 
 static void IJSVGXMLParserComment(void* context, const xmlChar* bytes)

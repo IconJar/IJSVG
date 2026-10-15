@@ -1545,23 +1545,55 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     return _detachedReferences == NULL || identifier == nil ? NULL : (IJSVGXMLNode*)CFDictionaryGetValue(_detachedReferences, (__bridge CFStringRef)identifier);
 }
 
+- (void)configureSelectorChildrenForElement:(IJSVGXMLNode*)element parent:(IJSVGStyleSheetSelectorRecord*)parent nodes:(NSMapTable<id, IJSVGStyleSheetSelectorRecord*>*)nodes
+{
+    parent.selectorHasContent = element->hasSelectorText;
+    if (IJSVGXMLFirstChild(element) == NULL) {
+        return;
+    }
+    NSMutableDictionary<NSArray<NSString*>*, NSNumber*>* typeCounts = [NSMutableDictionary dictionary];
+    NSMutableArray<IJSVGStyleSheetSelectorRecord*>* children = [NSMutableArray array];
+    IJSVGStyleSheetSelectorRecord* previous = nil;
+    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
+        if (child->kind == IJSVGXMLNodeKindText || child->kind == IJSVGXMLNodeKindCDATA) {
+            // Selectors 3/browser :empty semantics: even whitespace text counts.
+            parent.selectorHasContent |= child->text.length != 0;
+        }
+        if (IJSVGXMLKind(child) != NSXMLElementKind) {
+            continue;
+        }
+        parent.selectorHasContent = YES;
+        IJSVGStyleSheetSelectorRecord* record = [self buildSelectorTreeForElement:child nodes:nodes];
+        record.selectorParent = parent;
+        record.selectorPreviousSibling = previous;
+        previous.selectorNextSibling = record;
+        if (previous == nil) {
+            parent.selectorFirstChild = record;
+        }
+        previous = record;
+        [children addObject:record];
+        NSArray* key = @[ record.namespaceURI ?: @"", record.name ?: @"" ];
+        NSUInteger count = [typeCounts[key] unsignedIntegerValue] + 1;
+        typeCounts[key] = @(count);
+        record.childIndex = children.count;
+        record.typeIndex = count;
+    }
+    for (IJSVGStyleSheetSelectorRecord* record in children) {
+        record.childCount = children.count;
+        record.typeCount = [typeCounts[@[ record.namespaceURI ?: @"", record.name ?: @"" ]] unsignedIntegerValue];
+    }
+}
+
 - (IJSVGStyleSheetSelectorRecord*)buildSelectorTreeForElement:(IJSVGXMLNode*)element nodes:(NSMapTable<id, IJSVGStyleSheetSelectorRecord*>*)nodes
 {
     IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
     node.name = IJSVGXMLLocalName(element);
+    node.namespaceURI = element->uri != NULL ? [NSString stringWithUTF8String:element->uri] : nil;
     node.identifier = IJSVGParserElementIdentifier(element);
     NSString* className = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeClass));
     node.classNameList = IJSVGClassNameList(className);
     [nodes setObject:node forKey:IJSVGXMLKey(element)];
-    IJSVGStyleSheetSelectorRecord* previous = nil;
-    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) == NSXMLElementKind) {
-            IJSVGStyleSheetSelectorRecord* record = [self buildSelectorTreeForElement:(IJSVGXMLNode*)child nodes:nodes];
-            record.selectorParent = node;
-            record.selectorPreviousSibling = previous;
-            previous = record;
-        }
-    }
+    [self configureSelectorChildrenForElement:element parent:node nodes:nodes];
     return node;
 }
 
@@ -1821,16 +1853,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         }
     }
     [scope setObject:root forKey:IJSVGXMLKey(input.element)];
-    IJSVGStyleSheetSelectorRecord* previous = nil;
-    for (IJSVGXMLNode* child = IJSVGXMLFirstChild(input.childrenElement); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind) {
-            continue;
-        }
-        IJSVGStyleSheetSelectorRecord* record = [self buildSelectorTreeForElement:(IJSVGXMLNode*)child nodes:scope];
-        record.selectorParent = root;
-        record.selectorPreviousSibling = previous;
-        previous = record;
-    }
+    root.namespaceURI = input.element->uri != NULL ? [NSString stringWithUTF8String:input.element->uri] : nil;
+    [self configureSelectorChildrenForElement:input.childrenElement parent:root nodes:scope];
     if (_inheritedSelectorScopes == nil) {
         _inheritedSelectorScopes = IJSVGParserElementMapTable();
     }

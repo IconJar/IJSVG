@@ -18,6 +18,11 @@
 - (NSSet<NSString*>*)classNameList;
 - (id<IJSVGStyleSheetSelectorNode>)selectorParent;
 - (id<IJSVGStyleSheetSelectorNode>)selectorPreviousSibling;
+@optional
+- (id<IJSVGStyleSheetSelectorNode>)selectorNextSibling;
+- (id<IJSVGStyleSheetSelectorNode>)selectorFirstChild;
+- (BOOL)selectorIsEmpty;
+- (NSUInteger)selectorIndexOfType:(BOOL)ofType fromEnd:(BOOL)fromEnd;
 @end
 
 @interface IJSVGNode (IJSVGStyleSheetSelectorNode) <IJSVGStyleSheetSelectorNode>
@@ -31,6 +36,14 @@
 @property (nonatomic, copy) NSSet<NSString*>* classNameList;
 @property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorParent;
 @property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorPreviousSibling;
+@property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorNextSibling;
+@property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorFirstChild;
+@property (nonatomic, copy) NSString* namespaceURI;
+@property (nonatomic) BOOL selectorHasContent;
+@property (nonatomic) NSUInteger childIndex;
+@property (nonatomic) NSUInteger childCount;
+@property (nonatomic) NSUInteger typeIndex;
+@property (nonatomic) NSUInteger typeCount;
 @end
 
 @interface IJSVGStyleSheetSelector : NSObject {
@@ -40,10 +53,12 @@
     NSMutableArray<IJSVGStyleSheetSelectorRaw*>* _rawSelectors;
 }
 
+// Packed, lexicographically ordered CSS specificity; compare rather than interpret numerically.
 @property (nonatomic, assign) NSUInteger specificity;
 @property (nonatomic, readonly) BOOL requiresSelectorTree;
 @property (nonatomic, readonly) IJSVGStyleSheetSelectorRaw* matchingSelector;
 
++ (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving;
 - (id)initWithSelectorString:(NSString*)string;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node;
 

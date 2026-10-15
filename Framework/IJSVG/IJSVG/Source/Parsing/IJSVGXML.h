@@ -47,6 +47,9 @@ typedef struct IJSVGXMLNode {
     IJSVGXMLDocument* document;
     uint32_t childCount;
     IJSVGNodeType type : 8;
+
+    // Preserve CSS :empty information even when layout whitespace is discarded.
+    bool hasSelectorText : 1;
     const char* name;
     const char* prefix;
     const char* uri;

@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class IJSVGNode;
+@class IJSVGStyleSheetPseudoClass;
 
 typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
     IJSVGStyleSheetSelectorCombinatorWildcard, // *
@@ -23,6 +24,9 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 }
 
 @property (nonatomic, assign) NSUInteger rootCount;
+@property (nonatomic, copy) NSArray<IJSVGStyleSheetPseudoClass*>* pseudoClasses;
+@property (nonatomic, copy) NSArray<NSString*>* identifiers;
+@property (nonatomic) NSUInteger classCount;
 @property (nonatomic, copy) NSString* tag;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, readonly) NSString* combinatorString;
