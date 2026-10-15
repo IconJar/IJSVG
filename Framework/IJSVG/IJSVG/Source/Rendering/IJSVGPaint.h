@@ -25,6 +25,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @interface IJSVGPaint : NSObject
 
 @property (nonatomic, strong) IJSVGGraphicsNode* sourceNode;
+
+// Keeps an instance copy alive when redundant container paints are omitted.
+@property (nonatomic, strong) IJSVGGraphicsNode* contextPaintOwner;
 @property (nonatomic, assign) CGRect viewPort;
 @property (nonatomic, assign) CGRect frame;
 @property (nonatomic, readonly) CGRect bounds;
@@ -55,6 +58,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) BOOL hiddenByVisibility;
 @property (nonatomic, assign) CGBlendMode blendingMode;
 @property (nonatomic, assign) BOOL isolated;
+@property (nonatomic, assign) IJSVGShapeRendering shapeRendering;
+@property (nonatomic, assign) IJSVGImageRendering imageRendering;
 @property (nonatomic, assign) CGFloat backingScaleFactor;
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;

@@ -19,6 +19,29 @@ typedef NS_ENUM(NSUInteger, IJSVGTransformBox) {
     IJSVGTransformBoxBorderBox
 };
 
+typedef NS_ENUM(uint8_t, IJSVGShapeRendering) {
+    IJSVGShapeRenderingUnspecified,
+    IJSVGShapeRenderingAuto,
+    IJSVGShapeRenderingOptimizeSpeed,
+    IJSVGShapeRenderingCrispEdges,
+    IJSVGShapeRenderingGeometricPrecision
+};
+
+FOUNDATION_EXPORT IJSVGShapeRendering IJSVGShapeRenderingForString(NSString* _Nullable value);
+FOUNDATION_EXPORT NSString* _Nullable IJSVGShapeRenderingString(IJSVGShapeRendering value);
+
+typedef NS_ENUM(uint8_t, IJSVGImageRendering) {
+    IJSVGImageRenderingUnspecified,
+    IJSVGImageRenderingAuto,
+    IJSVGImageRenderingOptimizeSpeed,
+    IJSVGImageRenderingOptimizeQuality
+};
+
+FOUNDATION_EXPORT IJSVGImageRendering IJSVGImageRenderingForString(NSString* _Nullable value);
+FOUNDATION_EXPORT NSString* _Nullable IJSVGImageRenderingString(IJSVGImageRendering value);
+
+FOUNDATION_EXPORT IJSVGColorInterpolation IJSVGPaintColorInterpolationForString(NSString* _Nullable value);
+
 @interface IJSVGGraphicsNode : IJSVGPaintNode
 
 @property (nonatomic, strong, nullable) IJSVGMarker* markerStart;
@@ -36,6 +59,12 @@ typedef NS_ENUM(NSUInteger, IJSVGTransformBox) {
 @property (nonatomic, strong, nullable) IJSVGMask* mask;
 @property (nonatomic, strong, nullable) IJSVGFilter* filter;
 @property (nonatomic, copy, nullable) NSArray<IJSVGFilter*>* filters;
+@property (nonatomic, assign) IJSVGColorInterpolation colorInterpolation;
+@property (nonatomic, readonly) IJSVGColorInterpolation resolvedColorInterpolation;
+@property (nonatomic, assign) IJSVGShapeRendering shapeRendering;
+@property (nonatomic, readonly) IJSVGShapeRendering resolvedShapeRendering;
+@property (nonatomic, assign) IJSVGImageRendering imageRendering;
+@property (nonatomic, readonly) IJSVGImageRendering resolvedImageRendering;
 @property (nonatomic, assign) IJSVGColorInterpolation filterColorInterpolation;
 @property (nonatomic, readonly) IJSVGColorInterpolation resolvedFilterColorInterpolation;
 @property (nonatomic, assign) IJSVGBackgroundEnabled backgroundEnabled;

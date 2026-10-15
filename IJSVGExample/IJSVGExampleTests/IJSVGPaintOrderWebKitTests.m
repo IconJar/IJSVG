@@ -412,6 +412,68 @@
     }
 }
 
+- (void)testUseContextPaintMatchesExplicitWebKitColors
+{
+    // As with markers, use explicit browser paints so missing context
+    // paint support in WebKit cannot turn an incorrect black result into a passing test.
+    NSString* body = @"<defs><g id='s'><rect width='70' height='60' fill='context-fill'/>"
+                      "<rect x='90' width='70' height='60' fill='context-stroke'/></g></defs>"
+                      "<use href='#s' x='20' y='20' fill='red' stroke='blue' stroke-width='0'/>"
+                      "<use href='#s' x='20' y='100' fill='lime' stroke='none'/>";
+    NSString* reference = @"<rect x='20' y='20' width='70' height='60' fill='red'/>"
+                           "<rect x='110' y='20' width='70' height='60' fill='blue'/>"
+                           "<rect x='20' y='100' width='70' height='60' fill='lime'/>";
+    [self compareBody:body referenceBody:reference name:@"use-context-colors" tolerance:.025];
+}
+
+- (void)testNestedUseContextPaintMatchesExplicitWebKitColors
+{
+    NSString* body = @"<defs><rect id='r' width='100' height='100' fill='context-fill'/>"
+                      "<g id='s'><use href='#r' fill='context-stroke' stroke='none'/></g></defs>"
+                      "<use href='#s' x='20' y='40' fill='red' stroke='blue'/>"
+                      "<use href='#s' x='180' y='40' fill='red' stroke='lime' opacity='.5'/>";
+    NSString* reference = @"<rect x='20' y='40' width='100' height='100' fill='blue'/>"
+                           "<rect x='180' y='40' width='100' height='100' fill='lime' opacity='.5'/>";
+    [self compareBody:body referenceBody:reference name:@"nested-use-context-colors" tolerance:.025];
+}
+
+- (void)testUseContextPaintServersMatchExplicitWebKitGeometry
+{
+    for (NSString* server in @[
+             @"<linearGradient id='p'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient>",
+             @"<pattern id='p' width='.5' height='1' patternContentUnits='objectBoundingBox'><rect width='.25' height='1' fill='red'/><rect x='.25' width='.25' height='1' fill='blue'/></pattern>"
+         ]) {
+        NSString* body = [NSString stringWithFormat:@"<defs>%@<symbol id='s' viewBox='0 0 20 20'><g fill='context-fill'><rect width='10' height='20'/><rect x='10' width='10' height='20'/></g></symbol></defs><use href='#s' x='20' y='20' width='120' height='120' fill='url(#p)'/><use href='#s' x='200' y='60' width='80' height='80' fill='url(#p)'/>", server];
+        NSString* reference = [NSString stringWithFormat:@"<defs>%@</defs><rect x='20' y='20' width='120' height='120' fill='url(#p)'/><rect x='200' y='60' width='80' height='80' fill='url(#p)'/>", server];
+        [self compareBody:body referenceBody:reference name:[server hasPrefix:@"<pattern"] ? @"use-context-pattern" : @"use-context-gradient" tolerance:.025];
+    }
+}
+
+- (void)testImageRenderingMatchesWebKit
+{
+    NSString* image = @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=";
+    for (NSString* hint in @[ @"auto", @"optimizeQuality" ]) {
+        // Both inherited presentation attributes and CSS overrides must reach
+        // the raster sampler. A two pixel source exposes smoothing differences.
+        NSString* body = [NSString stringWithFormat:@"<g image-rendering='%@'><image x='20' y='20' width='160' height='160' preserveAspectRatio='none' href='%@'/><image x='200' y='20' width='160' height='160' preserveAspectRatio='none' style='image-rendering:%@' href='%@'/></g>", hint, image, hint, image];
+        [self compareBody:body name:[@"image-rendering-" stringByAppendingString:hint] tolerance:.025];
+    }
+}
+
+- (void)testImageRenderingSpeedMatchesWebKitPixelBlocks
+{
+    NSString* image = @"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8AAQv8BD/kD/YURmXYAAAAASUVORK5CYII=";
+    NSString* body = [NSString stringWithFormat:@"<g image-rendering='optimizeSpeed'><image x='20' y='20' width='160' height='160' preserveAspectRatio='none' href='%@'/></g><g image-rendering='optimizeQuality'><image x='200' y='20' width='160' height='160' preserveAspectRatio='none' style='image-rendering:optimizeSpeed' href='%@'/></g>", image, image];
+
+    // optimizeSpeed is a hint: WebKit still smooths this enlarged source.
+    // Explicit blocks independently verify our chosen nearest neighbor sampling.
+    NSString* reference = @"<rect x='20' y='20' width='80' height='160' fill='red'/>"
+                           "<rect x='100' y='20' width='80' height='160' fill='blue'/>"
+                           "<rect x='200' y='20' width='80' height='160' fill='red'/>"
+                           "<rect x='280' y='20' width='80' height='160' fill='blue'/>";
+    [self compareBody:body referenceBody:reference name:@"image-rendering-speed-blocks" tolerance:.025];
+}
+
 - (void)testMarkerContextPaintMatchesExplicitColors
 {
     NSString* marker = @"<marker id='%@' markerWidth='6' markerHeight='6' refX='3' refY='3' "

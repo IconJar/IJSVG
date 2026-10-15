@@ -107,6 +107,16 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
     [self.class _generateTree];
 }
 
++ (CGColorSpaceRef)linearRGBColorSpace
+{
+    static CGColorSpaceRef space;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        space = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
+    });
+    return space;
+}
+
 + (CGColorSpaceRef)defaultColorSpace
 {
     static CGColorSpaceRef space;

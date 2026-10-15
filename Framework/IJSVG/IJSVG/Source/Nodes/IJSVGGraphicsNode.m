@@ -20,6 +20,133 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGQuartzRenderer.h>
 
+// Bounded ASCII keyword parsing: no lowercase strings or heap buffers.
+static BOOL IJSVGRenderingKeyword(NSString* value, char token[32])
+{
+    const char* bytes = value.UTF8String;
+    if (bytes == NULL) {
+        return NO;
+    }
+    NSUInteger length = [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    while (length && (*bytes == ' ' || *bytes == '\t' || *bytes == '\r' || *bytes == '\n' || *bytes == '\f')) {
+        bytes++;
+        length--;
+    }
+    while (length && (bytes[length - 1] == ' ' || bytes[length - 1] == '\t' || bytes[length - 1] == '\r' || bytes[length - 1] == '\n' || bytes[length - 1] == '\f')) {
+        length--;
+    }
+    if (length == 0 || length >= 32) {
+        return NO;
+    }
+    for (NSUInteger index = 0; index < length; index++) {
+        unsigned char c = bytes[index];
+        if (c == 0 || c > 127) {
+            return NO;
+        }
+        token[index] = c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
+    }
+    token[length] = 0;
+    return YES;
+}
+
+IJSVGColorInterpolation IJSVGPaintColorInterpolationForString(NSString* value)
+{
+    char token[32];
+    if (!IJSVGRenderingKeyword(value, token)) {
+        return IJSVGColorInterpolationUnspecified;
+    }
+    if (strcmp(token, "srgb") == 0 || strcmp(token, "initial") == 0) {
+        return IJSVGColorInterpolationSRGB;
+    }
+    if (strcmp(token, "linearrgb") == 0) {
+        return IJSVGColorInterpolationLinearRGB;
+    }
+    if (strcmp(token, "auto") == 0) {
+        return IJSVGColorInterpolationAuto;
+    }
+    if (strcmp(token, "inherit") == 0 || strcmp(token, "unset") == 0) {
+        return IJSVGColorInterpolationInherit;
+    }
+    return IJSVGColorInterpolationUnspecified;
+}
+
+IJSVGShapeRendering IJSVGShapeRenderingForString(NSString* value)
+{
+    char token[32];
+    if (!IJSVGRenderingKeyword(value, token)) {
+        return IJSVGShapeRenderingUnspecified;
+    }
+    if (strcmp(token, "initial") == 0) {
+        return IJSVGShapeRenderingAuto;
+    }
+    if (strcmp(token, "auto") == 0) {
+        return IJSVGShapeRenderingAuto;
+    }
+    if (strcmp(token, "optimizespeed") == 0) {
+        return IJSVGShapeRenderingOptimizeSpeed;
+    }
+    if (strcmp(token, "crispedges") == 0) {
+        return IJSVGShapeRenderingCrispEdges;
+    }
+    if (strcmp(token, "geometricprecision") == 0) {
+        return IJSVGShapeRenderingGeometricPrecision;
+    }
+    return IJSVGShapeRenderingUnspecified;
+}
+
+NSString* IJSVGShapeRenderingString(IJSVGShapeRendering value)
+{
+    switch (value) {
+        case IJSVGShapeRenderingAuto:
+            return @"auto";
+        case IJSVGShapeRenderingOptimizeSpeed:
+            return @"optimizeSpeed";
+        case IJSVGShapeRenderingCrispEdges:
+            return @"crispEdges";
+        case IJSVGShapeRenderingGeometricPrecision:
+            return @"geometricPrecision";
+        case IJSVGShapeRenderingUnspecified:
+            return nil;
+    }
+    return nil;
+}
+
+IJSVGImageRendering IJSVGImageRenderingForString(NSString* value)
+{
+    char token[32];
+    if (!IJSVGRenderingKeyword(value, token)) {
+        return IJSVGImageRenderingUnspecified;
+    }
+    if (strcmp(token, "initial") == 0) {
+        return IJSVGImageRenderingAuto;
+    }
+    if (strcmp(token, "auto") == 0) {
+        return IJSVGImageRenderingAuto;
+    }
+    if (strcmp(token, "optimizespeed") == 0) {
+        return IJSVGImageRenderingOptimizeSpeed;
+    }
+    if (strcmp(token, "optimizequality") == 0) {
+        return IJSVGImageRenderingOptimizeQuality;
+    }
+    return IJSVGImageRenderingUnspecified;
+}
+
+NSString* IJSVGImageRenderingString(IJSVGImageRendering value)
+{
+    switch (value) {
+        case IJSVGImageRenderingAuto:
+            return @"auto";
+        case IJSVGImageRenderingOptimizeSpeed:
+            return @"optimizeSpeed";
+        case IJSVGImageRenderingOptimizeQuality:
+            return @"optimizeQuality";
+        case IJSVGImageRenderingUnspecified:
+            return nil;
+    }
+    return nil;
+}
+
 static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColorRef color, IJSVGColorUsageTraits traits)
 {
     if (color == nil) {
@@ -83,6 +210,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     IJSVGEffectProperties* _effectProperties;
     IJSVGTransformOriginProperties* _transformOriginProperties;
     unsigned char _initializedDefaultLengths;
+    uint8_t _paintColorInterpolation;
 }
 @synthesize opacity = _opacity, strokeOpacity = _strokeOpacity, strokeWidth = _strokeWidth;
 @synthesize strokeDashOffset = _strokeDashOffset, paintOrder = _paintOrder;
@@ -300,6 +428,9 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     self.mask = node.mask;
     self.filters = node.filters;
     self.filterColorInterpolation = node.filterColorInterpolation;
+    self.colorInterpolation = node.colorInterpolation;
+    self.shapeRendering = node.shapeRendering;
+    self.imageRendering = node.imageRendering;
     self.backgroundEnabled = node.backgroundEnabled;
     self.backgroundBounds = node.backgroundBounds;
 
@@ -412,6 +543,49 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 {
     NSAssert([stroke matchesTraits:IJSVGNodeTraitPaintable] || stroke == nil, @"Stroke must be a paintable node.");
     _stroke = stroke;
+}
+
+- (IJSVGColorInterpolation)colorInterpolation
+{
+    return (IJSVGColorInterpolation)_paintColorInterpolation;
+}
+
+- (void)setColorInterpolation:(IJSVGColorInterpolation)value
+{
+    _paintColorInterpolation = (uint8_t)value;
+}
+
+- (IJSVGColorInterpolation)resolvedColorInterpolation
+{
+    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
+        IJSVGColorInterpolation value = node.colorInterpolation;
+        if (value != IJSVGColorInterpolationUnspecified && value != IJSVGColorInterpolationInherit) {
+            return value;
+        }
+    }
+    return IJSVGColorInterpolationSRGB;
+}
+
+- (IJSVGShapeRendering)resolvedShapeRendering
+{
+    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
+        IJSVGShapeRendering value = node.shapeRendering;
+        if (value != IJSVGShapeRenderingUnspecified) {
+            return value;
+        }
+    }
+    return IJSVGShapeRenderingAuto;
+}
+
+- (IJSVGImageRendering)resolvedImageRendering
+{
+    for (IJSVGGraphicsNode* node = self; node != nil; node = node.styleParent) {
+        IJSVGImageRendering value = node.imageRendering;
+        if (value != IJSVGImageRenderingUnspecified) {
+            return value;
+        }
+    }
+    return IJSVGImageRenderingAuto;
 }
 
 - (IJSVGColorInterpolation)resolvedFilterColorInterpolation

@@ -73,6 +73,16 @@
         alignment = IJSVGViewBoxAlignmentNone;
     }
     CGContextSaveGState(ctx);
+    switch (self.imageRendering) {
+        case IJSVGImageRenderingOptimizeSpeed:
+            CGContextSetInterpolationQuality(ctx, kCGInterpolationNone);
+            break;
+        case IJSVGImageRenderingOptimizeQuality:
+            CGContextSetInterpolationQuality(ctx, kCGInterpolationHigh);
+            break;
+        default:
+            break;
+    }
     CGContextConcatCTM(ctx, scale);
     if (alignment != IJSVGViewBoxAlignmentNone && _image.viewBoxMeetOrSlice == IJSVGViewBoxMeetOrSliceSlice && _image.overflowVisibility != IJSVGOverflowVisibilityVisible) {
         CGContextClipToRect(ctx, imageBounds);

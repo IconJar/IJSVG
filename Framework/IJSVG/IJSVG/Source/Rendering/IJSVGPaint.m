@@ -131,7 +131,10 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     copy->_blendingMode = _blendingMode;
     copy->_isolated = _isolated;
     copy->_backingScaleFactor = _backingScaleFactor;
+    copy->_contextPaintOwner = _contextPaintOwner;
     copy->_renderQuality = _renderQuality;
+    copy->_shapeRendering = _shapeRendering;
+    copy->_imageRendering = _imageRendering;
     copy.clipPath = _clipPath;
     copy.children = children;
     return copy;
@@ -471,6 +474,9 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
             CGContextTranslateCTM(ctx, CGRectGetMidX(_frame), CGRectGetMidY(_frame));
             CGContextConcatCTM(ctx, _affineTransform);
             CGContextTranslateCTM(ctx, -_frame.size.width * .5f, -_frame.size.height * .5f);
+        }
+        if (_shapeRendering != IJSVGShapeRenderingUnspecified) {
+            CGContextSetShouldAntialias(ctx, _shapeRendering != IJSVGShapeRenderingCrispEdges && _shapeRendering != IJSVGShapeRenderingOptimizeSpeed);
         }
         if (_clipPath != NULL) {
             CGContextAddPath(ctx, _clipPath);

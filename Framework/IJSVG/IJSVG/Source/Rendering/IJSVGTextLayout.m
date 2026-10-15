@@ -883,6 +883,9 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     }
     group = [[IJSVGGroup alloc] init];
     [group applyPropertiesFromNode:node];
+
+    // Glyph outlines follow text rendering, not inherited shape hints.
+    group.shapeRendering = IJSVGShapeRenderingAuto;
     group.x = group.y = nil;
     group.mask = node.mask;
     group.type = IJSVGNodeTypeGroup;

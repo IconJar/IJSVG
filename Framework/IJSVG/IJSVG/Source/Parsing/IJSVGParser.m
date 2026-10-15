@@ -247,6 +247,9 @@ NSString* const IJSVGAttributePointsAtY = @"pointsAtY";
 NSString* const IJSVGAttributePointsAtZ = @"pointsAtZ";
 NSString* const IJSVGAttributeLimitingConeAngle = @"limitingConeAngle";
 NSString* const IJSVGAttributeColorInterpolationFilters = @"color-interpolation-filters";
+NSString* const IJSVGAttributeImageRendering = @"image-rendering";
+NSString* const IJSVGAttributeShapeRendering = @"shape-rendering";
+NSString* const IJSVGAttributeColorInterpolation = @"color-interpolation";
 NSString* const IJSVGAttributeEnableBackground = @"enable-background";
 NSString* const IJSVGAttributeBackgroundColor = @"background-color";
 NSString* const IJSVGAttributeMedia = @"media";
@@ -1147,7 +1150,31 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         filterParameters = reuseFilterAttributes && !variableParameters ? raw->filterParameters : IJSVGFilterParametersFromAttributes(attributeValues, node.class);
     }
     IJSVGNodeParsingContext context = { .deferredAttributes = deferredAttributes, .textAttributes = textAttributes, .reference = reference, .cachedGeometryLengths = raw != nil ? raw->geometryLengths : nil, .cachedGeometryValues = raw != nil ? raw->geometryValues : nil, .parser = self, .element = element, .values = attributeValues, .style = styleSheet, .inlineStyle = nodeStyle, .attributePathData = attributePathData, .filterParameters = filterParameters };
+
+    // Gradient href templates supply geometry and stops, not the directly
+    // color interpolation presentation property of the referenced gradient.
+    __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* ownInterpolationStyle = nil;
+    __attribute__((objc_precise_lifetime)) NSString* ownInterpolationValue = nil;
+    if (input.hasReference && [node isKindOfClass:IJSVGGradient.class]) {
+        IJSVGBitFlags* interpolationAttribute = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
+        [interpolationAttribute setBit:IJSVGNodeAttributeColorInterpolation];
+        NSString* ownStyle = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStyle));
+        ownInterpolationStyle = ownStyle == nil ? nil : [[self parsedInlineStyleForValue:ownStyle] styleByResolvingVariables:customProperties];
+        attributeValues[IJSVGNodeAttributeColorInterpolation] = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeColorInterpolation));
+        IJSVGStoreCascadedStyleAttributes(styleSheet, ownInterpolationStyle, interpolationAttribute, attributeValues);
+        ownInterpolationValue = attributeValues[IJSVGNodeAttributeColorInterpolation];
+        if (IJSVGCSSValueMayContainVariables(ownInterpolationValue)) {
+            ownInterpolationValue = IJSVGCSSResolveVariables(ownInterpolationValue, customProperties);
+            attributeValues[IJSVGNodeAttributeColorInterpolation] = ownInterpolationValue;
+        }
+    }
     [node consumeAttributes:&context];
+    if ((attributeValues[IJSVGNodeAttributeColorInterpolation] != nil || attributeValues[IJSVGNodeAttributeShapeRendering] != nil || attributeValues[IJSVGNodeAttributeImageRendering] != nil) && [node isKindOfClass:IJSVGGraphicsNode.class]) {
+        IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
+        graphics.colorInterpolation = IJSVGPaintColorInterpolationForString(attributeValues[IJSVGNodeAttributeColorInterpolation]);
+        graphics.shapeRendering = IJSVGShapeRenderingForString(attributeValues[IJSVGNodeAttributeShapeRendering]);
+        graphics.imageRendering = IJSVGImageRenderingForString(attributeValues[IJSVGNodeAttributeImageRendering]);
+    }
     if (context.geometryLengths != nil) {
         context.geometryOwner.geometryLengths = context.geometryLengths;
     }

@@ -506,6 +506,9 @@ IJSVGBitFlags* IJSVGCommonAttributes(void)
     [attributes setBit:IJSVGNodeAttributeClass];
     [attributes setBit:IJSVGNodeAttributeStyle];
     [attributes setBit:IJSVGNodeAttributeColor];
+    [attributes setBit:IJSVGNodeAttributeColorInterpolation];
+    [attributes setBit:IJSVGNodeAttributeShapeRendering];
+    [attributes setBit:IJSVGNodeAttributeImageRendering];
     return attributes;
 }
 

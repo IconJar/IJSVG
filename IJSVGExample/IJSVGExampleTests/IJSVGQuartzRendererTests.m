@@ -29,6 +29,116 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testContextPatternAndInheritedTokens
+{
+    NSString* pattern = @"<pattern id='p' width='.5' height='1' patternContentUnits='objectBoundingBox'><rect width='.25' height='1' fill='red'/><rect x='.25' width='.25' height='1' fill='blue'/></pattern>";
+    [self assertBody:[NSString stringWithFormat:@"<defs>%@<g id='s' fill='context-fill'><rect width='16' height='32'/><rect x='16' width='16' height='32'/></g></defs><use href='#s' fill='url(#p)'/>", pattern]
+         rendersLike:[NSString stringWithFormat:@"<defs>%@</defs><rect width='32' height='32' fill='url(#p)'/>", pattern]];
+    [self assertBody:@"<defs><path id='s' d='M4 8H28' fill='none' stroke='context-fill' stroke-width='4'/></defs><use href='#s' fill='red' opacity='.5'/>"
+         rendersLike:@"<path d='M4 8H28' fill='none' stroke='red' stroke-width='4' opacity='.5'/>"];
+    [self assertBody:@"<defs><rect id='s' width='16' height='16' fill='context-stroke'/></defs><use href='#s'/><rect y='16' width='16' height='16' fill='context-fill'/>"
+         rendersLike:@""];
+}
+
+- (void)testGradientInterpolationReferencesResetsAndSpread
+{
+    NSString* stops = @"<stop stop-color='black'/><stop offset='1' stop-color='white'/>";
+    for (NSString* declaration in @[ @"", @"color-interpolation='initial'", @"style='color-interpolation:var(--space);--space:sRGB'" ]) {
+        [self assertBody:[NSString stringWithFormat:@"<defs><linearGradient id='base' color-interpolation='linearRGB'>%@</linearGradient><linearGradient id='g' href='#base' %@/></defs><rect width='32' height='32' fill='url(#g)'/>", stops, declaration]
+             rendersLike:[NSString stringWithFormat:@"<defs><linearGradient id='g'>%@</linearGradient></defs><rect width='32' height='32' fill='url(#g)'/>", stops]];
+    }
+    for (NSString* kind in @[ @"linearGradient", @"radialGradient" ]) {
+        for (NSString* spread in @[ @"pad", @"repeat", @"reflect" ]) {
+            NSString* body = [NSString stringWithFormat:@"<defs><%@ id='g' color-interpolation='linearRGB' spreadMethod='%@' x2='.25' r='.25'>%@</%@></defs><rect width='32' height='32' fill='url(#g)'/>", kind, spread, stops, kind];
+            IJSVG* svg = [self svgWithBody:body];
+            NSData* expected = [self renderSVG:svg size:64];
+            NSString* xml = [svg SVGStringWithSize:CGSizeMake(32, 32) options:IJSVGExporterOptionAll];
+            XCTAssertEqualObjects(expected, [self renderSVG:[[IJSVG alloc] initWithSVGString:xml] size:64], @"%@ %@", kind, spread);
+        }
+    }
+}
+
+- (void)testUseContextPaintsAndNestedInstances
+{
+    [self assertBody:@"<defs><g id='s'><rect width='12' height='12' fill='context-fill'/><rect x='16' width='12' height='12' fill='context-stroke'/></g></defs><use href='#s' fill='red' stroke='blue' stroke-width='0'/><use href='#s' y='16' fill='lime' stroke='none'/>"
+         rendersLike:@"<rect width='12' height='12' fill='red'/><rect x='16' width='12' height='12' fill='blue'/><rect y='16' width='12' height='12' fill='lime'/>"];
+    [self assertBody:@"<defs><rect id='r' width='16' height='16' fill='context-fill'/><g id='g'><use href='#r' fill='context-stroke' stroke='none'/></g></defs><use href='#g' fill='red' stroke='blue'/>"
+         rendersLike:@"<rect width='16' height='16' fill='blue'/>"];
+    [self assertBody:@"<defs><rect id='r' width='16' height='16' fill='context-fill' color='lime'/></defs><use href='#r' fill='currentColor' color='red'/>"
+         rendersLike:@"<rect width='16' height='16' fill='red'/>"];
+}
+
+- (void)testUseContextGradientCoordinatesAndSymbolViewBox
+{
+    NSString* gradient = @"<linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient>";
+    [self assertBody:[NSString stringWithFormat:@"<defs>%@<g id='s'><rect width='16' height='32' fill='context-fill'/><rect width='16' height='32' transform='translate(16)' fill='context-fill'/></g></defs><use href='#s' fill='url(#g)'/>", gradient]
+         rendersLike:[NSString stringWithFormat:@"<defs>%@</defs><rect width='32' height='32' fill='url(#g)'/>", gradient]];
+    [self assertBody:[NSString stringWithFormat:@"<defs>%@<symbol id='s' viewBox='0 0 16 16'><rect width='8' height='16' fill='context-fill'/><rect x='8' width='8' height='16' fill='context-fill'/></symbol></defs><use href='#s' width='32' height='32' fill='url(#g)'/>", gradient]
+         rendersLike:[NSString stringWithFormat:@"<defs>%@</defs><rect width='32' height='32' fill='url(#g)'/>", gradient]];
+}
+
+- (void)testContextGradientUsesResolvedCSSOriginsAndNestedUses
+{
+    NSString* gradient = @"<linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient>";
+    NSString* expected = [NSString stringWithFormat:@"<defs>%@</defs><rect width='32' height='32' fill='url(#g)'/>", gradient];
+    [self assertBody:[NSString stringWithFormat:@"<defs>%@<rect id='r' width='32' height='32' fill='context-fill' style='transform:scale(-1,1);transform-origin:16px 16px'/></defs><use href='#r' fill='url(#g)'/>", gradient] rendersLike:expected];
+    [self assertBody:[NSString stringWithFormat:@"<defs>%@<rect id='r' width='16' height='32' fill='context-fill'/><g id='s'><use href='#r' fill='context-fill'/><use href='#r' x='16' fill='context-fill'/></g></defs><use href='#s' fill='url(#g)'/>", gradient] rendersLike:expected];
+}
+
+- (void)testGradientColorInterpolationAndSharedStops
+{
+    NSString* stops = @"<stop stop-color='black'/><stop offset='1' stop-color='white'/>";
+    IJSVG* svg = [self svgWithBody:[NSString stringWithFormat:@"<defs><linearGradient id='s'>%@</linearGradient><linearGradient id='l' color-interpolation='linearRGB'>%@</linearGradient></defs><rect width='32' height='16' fill='url(#s)'/><rect y='16' width='32' height='16' fill='url(#l)'/>", stops, stops]];
+    NSData* data = [self renderSVG:svg size:32];
+    const uint8_t* pixels = data.bytes;
+    XCTAssertEqualWithAccuracy(pixels[(8 * 32 + 16) * 4], 131, 4);
+    XCTAssertEqualWithAccuracy(pixels[(24 * 32 + 16) * 4], 190, 4);
+    for (NSNumber* options in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionAll) ]) {
+        NSString* xml = [svg SVGStringWithSize:CGSizeMake(32, 32) options:options.unsignedIntegerValue];
+        XCTAssertEqualObjects(data, [self renderSVG:[[IJSVG alloc] initWithSVGString:xml] size:32]);
+    }
+    [self assertBody:[NSString stringWithFormat:@"<defs><g color-interpolation='linearRGB'><linearGradient id='g'>%@</linearGradient></g></defs><rect width='32' height='32' fill='url(#g)'/>", stops]
+         rendersLike:[NSString stringWithFormat:@"<defs><linearGradient id='g' color-interpolation='linearRGB'>%@</linearGradient></defs><rect width='32' height='32' fill='url(#g)'/>", stops]];
+}
+
+- (void)testRenderingHintsInheritanceCascadeAndEdges
+{
+    XCTAssertEqual(IJSVGShapeRenderingForString(@"  CRISPEDGES "), IJSVGShapeRenderingCrispEdges);
+    XCTAssertEqual(IJSVGShapeRenderingForString(@"crispEdges-extra"), IJSVGShapeRenderingUnspecified);
+    XCTAssertEqual(IJSVGImageRenderingForString(@"optimizeQuality"), IJSVGImageRenderingOptimizeQuality);
+    XCTAssertEqual(IJSVGPaintColorInterpolationForString(@"initial"), IJSVGColorInterpolationSRGB);
+    NSString* rect = @"<rect x='2.25' y='2.25' width='20.5' height='20.5'/>";
+    NSData* smooth = [self renderBody:rect size:32];
+    NSString* crisp = [NSString stringWithFormat:@"<g shape-rendering='crispEdges'>%@</g>", rect];
+    NSData* sharp = [self renderBody:crisp size:32];
+    XCTAssertNotEqualObjects(smooth, sharp);
+    const uint8_t* bytes = sharp.bytes;
+    for (NSUInteger index = 3; index < sharp.length; index += 4) {
+        XCTAssertTrue(bytes[index] == 0 || bytes[index] == 255);
+    }
+    [self assertBody:[NSString stringWithFormat:@"<style>rect { shape-rendering: var(--edge) !important; }</style><g style='--edge:crispEdges'>%@</g>", rect] rendersLike:crisp];
+    [self assertBody:[NSString stringWithFormat:@"<g shape-rendering='crispEdges'><g shape-rendering='initial'>%@</g></g>", rect] rendersLike:rect];
+}
+
+- (void)testImageRenderingSamplingAndExport
+{
+    uint8_t bytes[] = { 255, 0, 0, 255, 0, 0, 255, 255 };
+    CGContextRef bitmap = CGBitmapContextCreate(bytes, 2, 1, 8, 8, IJSVGColor.defaultColorSpace, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
+    CGImageRef image = CGBitmapContextCreateImage(bitmap);
+    NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
+    NSString* encoded = [[rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}] base64EncodedStringWithOptions:0];
+    CGImageRelease(image);
+    CGContextRelease(bitmap);
+    NSString* picture = [NSString stringWithFormat:@"<image width='32' height='32' preserveAspectRatio='none' href='data:image/png;base64,%@'/>", encoded];
+    NSString* fast = [NSString stringWithFormat:@"<g image-rendering='optimizeSpeed'>%@</g>", picture];
+    NSString* quality = [NSString stringWithFormat:@"<g image-rendering='optimizeQuality'>%@</g>", picture];
+    XCTAssertNotEqualObjects([self renderBody:fast size:32], [self renderBody:quality size:32]);
+    [self assertBody:fast rendersLike:fast];
+    IJSVG* svg = [self svgWithBody:fast];
+    NSString* xml = [svg SVGStringWithSize:CGSizeMake(32, 32) options:IJSVGExporterOptionAll];
+    XCTAssertEqualObjects([self renderSVG:svg size:32], [self renderSVG:[[IJSVG alloc] initWithSVGString:xml] size:32]);
+}
+
 - (NSArray<IJSVGShapePaint*>*)gradientStrokeShapes:(IJSVGRootPaint*)root
 {
     NSMutableArray* pending = [NSMutableArray arrayWithObject:root];

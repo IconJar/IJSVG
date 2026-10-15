@@ -227,6 +227,9 @@ typedef NS_ENUM(NSInteger, IJSVGNodeAttribute) {
     IJSVGNodeAttributeRequiredExtensions,
     IJSVGNodeAttributeSystemLanguage,
     IJSVGNodeAttributeMedia,
+    IJSVGNodeAttributeColorInterpolation,
+    IJSVGNodeAttributeShapeRendering,
+    IJSVGNodeAttributeImageRendering,
     IJSVGNodeAttributeCount,
     IJSVGNodeAttributeUnknown = NSNotFound
 };

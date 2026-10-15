@@ -52,7 +52,15 @@ static void IJSVGEvaluateSpread(void* info, const CGFloat* input, CGFloat* outpu
     }
 }
 
-static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
+static void IJSVGLinearizeGradientComponents(CGFloat* components)
+{
+    for (NSUInteger channel = 0; channel < 3; channel++) {
+        CGFloat value = components[channel];
+        components[channel] = value <= .04045 ? value / 12.92 : pow((value + .055) / 1.055, 2.4);
+    }
+}
+
+static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CGColorSpaceRef colorSpace)
 {
     CGFloat firstCycle = floor(function->minimum);
     CGFloat lastCycle = floor(function->maximum);
@@ -99,7 +107,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     input = 1.f;
     IJSVGEvaluateSpread(function, &input, components + count * 4);
     locations[count++] = 1.f;
-    CGGradientRef gradient = CGGradientCreateWithColorComponents(IJSVGColor.defaultColorSpace, components, locations, count);
+    CGGradientRef gradient = CGGradientCreateWithColorComponents(colorSpace, components, locations, count);
     free(components);
     free(locations);
     return gradient;
@@ -108,6 +116,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 @implementation IJSVGGradient {
     IJSVGGradientStops* _deferredStopData;
     IJSVGGradientStops* _sharedGradientStops;
+    BOOL _gradientIsLinear;
 }
 
 // Render colors and locations are already available. Keep editable stop nodes
@@ -251,6 +260,8 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     data->maximum = maximum;
     data->reflect = self.spreadMethod == IJSVGGradientSpreadMethodReflect;
     data->count = count;
+    BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+    CGColorSpaceRef colorSpace = linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace;
     CGFloat previous = 0.f;
     for (NSUInteger index = 0; index < count; index++) {
         CGFloat offset = self.locations != NULL ? self.locations[index] : (count > 1 ? (CGFloat)index / (count - 1) : 0.f);
@@ -258,11 +269,14 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         CGColorRef color = [IJSVGColor computeColorSpace:(__bridge CGColorRef)self.colors[index]];
         if (color != NULL) {
             memcpy(data->stops[index].components, CGColorGetComponents(color), 4 * sizeof(CGFloat));
+            if (linear) {
+                IJSVGLinearizeGradientComponents(data->stops[index].components);
+            }
         }
     }
     CGPoint first = CGPointMake(start.x + minimum * delta.x, start.y + minimum * delta.y);
     CGPoint last = CGPointMake(start.x + maximum * delta.x, start.y + maximum * delta.y);
-    CGGradientRef expanded = IJSVGCreateSpreadGradient(data);
+    CGGradientRef expanded = IJSVGCreateSpreadGradient(data, colorSpace);
     if (expanded != NULL) {
         if (radial) {
             CGContextDrawRadialGradient(ctx, expanded, first, MAX(0.f, startRadius + minimum * radiusDelta), last, MAX(0.f, startRadius + maximum * radiusDelta), 0);
@@ -281,7 +295,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         free(data);
         return NO;
     }
-    CGColorSpaceRef space = IJSVGColor.defaultColorSpace;
+    CGColorSpaceRef space = colorSpace;
     CGShadingRef shading = radial ? CGShadingCreateRadial(space, first, MAX(0.f, startRadius + minimum * radiusDelta), last, MAX(0.f, startRadius + maximum * radiusDelta), function, NO, NO) : CGShadingCreateAxial(space, first, last, function, NO, NO);
     if (shading != NULL) {
         CGContextDrawShading(ctx, shading);
@@ -333,6 +347,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     }
     _sharedGradientStops = node->_sharedGradientStops;
     _CGGradient = CGGradientRetain(node->_CGGradient);
+    _gradientIsLinear = node->_gradientIsLinear;
     self.x1 = node.x1.copy;
     self.x2 = node.x2.copy;
     self.y1 = node.y1.copy;
@@ -423,7 +438,14 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
 
 - (CGGradientRef)CGGradient
 {
-    // store it in the cache
+    BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+
+    // Parent interpolation can change without changing the stop data.
+    if (_CGGradient != NULL && _gradientIsLinear != linear) {
+        CGGradientRelease(_CGGradient);
+        _CGGradient = NULL;
+    }
+    _gradientIsLinear = linear;
     if (_CGGradient != nil) {
         return _CGGradient;
     }
@@ -440,7 +462,8 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
     if (count == 0) {
         return NULL;
     }
-    CGColorSpaceRef colorSpace = IJSVGColor.defaultColorSpace;
+    BOOL linear = self.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB;
+    CGColorSpaceRef colorSpace = linear ? IJSVGColor.linearRGBColorSpace : IJSVGColor.defaultColorSpace;
     CGFloat stackComponents[32];
     CGFloat* components = count <= 8 ? stackComponents : calloc(count, 4 * sizeof(CGFloat));
     if (components != NULL) {
@@ -454,6 +477,9 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
                 break;
             }
             memcpy(components + index * 4, CGColorGetComponents(rgb), 4 * sizeof(CGFloat));
+            if (linear) {
+                IJSVGLinearizeGradientComponents(components + index * 4);
+            }
             index++;
         }
         CGGradientRef gradient = converted ? CGGradientCreateWithColorComponents(colorSpace, components, _locations, count) : NULL;
@@ -472,7 +498,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function)
         CGColorRef color = (__bridge CGColorRef)colorObject;
         CFArrayAppendValue(colors, color);
     }
-    CGGradientRef result = CGGradientCreateWithColors(IJSVGColor.defaultColorSpace, colors, _locations);
+    CGGradientRef result = CGGradientCreateWithColors(colorSpace, colors, _locations);
     CFRelease(colors);
     return result;
 }

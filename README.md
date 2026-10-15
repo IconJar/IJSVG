@@ -208,16 +208,38 @@ the style or position of part of the text.
 
 # What it supports
 
-* Elements: svg, defs, use, g, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, marker, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs).
+* Elements: svg, defs, use, symbol, g, switch, path, clipPath, mask, image, circle, ellipse, rect, polyline, polygon, line, marker, text, tspan and textPath (including group hierarchy, inheritance and nested SVGs). Conditional processing includes `systemLanguage` and `requiredExtensions`.
 * Commands: A, M, L, H, V, C, S, T, Q and Z and full support for multiple parameters of each type.
-* Transformations: matrix, rotate, translate, scale and skew transformations.
-* Stroking: stroking, stroke color, stroke opacity, dashed, dashed offset and phase, stroke line cap style.
-* Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns.
+* Transformations: matrix, rotate, translate, scale and skew transformations, plus CSS `transform-origin` and `transform-box`.
+* Stroking: stroke color and opacity, dash arrays and offsets, line caps, miter/round/bevel joins, miter limits, `pathLength` calibration and `vector-effect="non-scaling-stroke"`.
+* Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns. Gradients support `color-interpolation="sRGB"` and `"linearRGB"`, including repeat/reflect spread modes; `auto` uses sRGB.
 * Markers: `marker`, `marker-start`, `marker-mid` and `marker-end` on paths, lines, polylines and polygons. Supports custom child artwork, `markerUnits`, reference points, marker dimensions, `viewBox`, clipping, fixed angles, `auto` and `auto-start-reverse` orientation, and `context-fill` / `context-stroke` paints.
-* Color: supports all predefined colors from the SVG spec, HEX values along with RGB(A) and HSL.
+* Color: named SVG colors, HEX, RGB(A), HSL(A), OKLCH and `currentColor`.
 * CSS: Embedded style sheets and inline styles, with type, class, ID and universal selectors, descendant and child combinators, and adjacent and general sibling combinators. Declaration resolution accounts for specificity, source order and `!important`.
+* CSS values and geometry: custom properties with `var()`, `calc()`, `min()`, `max()` and `clamp()` in supported length values, and CSS geometry properties. The `media` attribute on `<style>` supports media-query matching against the document viewport.
+* Context paints: `context-fill` and `context-stroke` in markers and `<use>` instances, including solid colors, gradients, patterns and nested uses. Context paint servers retain the referencing element's coordinate space.
+* Rendering hints: `shape-rendering` (`auto`, `optimizeSpeed`, `crispEdges`, `geometricPrecision`) and `image-rendering` (`auto`, `optimizeSpeed`, `optimizeQuality`), including inherited and CSS values. Shape speed/crispness hints disable antialiasing; image speed uses nearest-neighbor sampling and quality uses high-quality interpolation.
+* Painting and compositing: `paint-order`, group opacity, `mix-blend-mode`, `isolation`, clipping, alpha/luminance masks, `display` and `visibility`.
+* Text: system font selection and fallback, font shorthand and OpenType settings, character positioning and rotation, `textLength` / `lengthAdjust`, text on paths, baseline alignment, spacing, bidirectional and vertical text, decorations, whitespace handling and wrapping with `inline-size`.
 * Filters: `feBlend`, `feColorMatrix`, `feComponentTransfer`, `feComposite`, `feConvolveMatrix`, `feDisplacementMap`, `feMorphology`, `feTile`, `feFlood`, `feOffset`, `feImage`, `feMerge`, `feGaussianBlur`, `feDropShadow`, `feTurbulence`, `feDiffuseLighting` and `feSpecularLighting`.
 * Filter inputs: `SourceGraphic`, `SourceAlpha`, `BackgroundImage`, `BackgroundAlpha`, `FillPaint`, `StrokePaint` and named intermediate results.
+
+### Known limitations
+
+The list above describes implemented features, not complete SVG or CSS conformance.
+IJSVG is a static artwork renderer; it does not provide a browser DOM, scripting,
+interactive document behavior or SVG/CSS animation playback.
+
+* CSS attribute selectors and pseudo-classes are not supported. Stylesheet at-rules such as `@media`, `@supports`, `@import` and `@font-face` are not implemented; `<style media="...">` is supported separately.
+* Fragment references such as `href="#symbol"` are supported, but external SVG document references such as `href="icons.svg#symbol"` are not resolved. Ordinary `<image>` loading does not currently resolve relative paths against the source document URL.
+* `color-interpolation` controls gradient stop interpolation. Per-element linear RGB compositing/blending is not implemented; general compositing still uses the drawing context's color space. Filter interpolation remains controlled separately by `color-interpolation-filters`.
+* SVG filter primitives are supported, but CSS filter functions such as `filter: blur(4px)` and `filter: brightness(0.5)` are not implemented.
+* `<foreignObject>` content is skipped. HTML layout and embedded web fonts are not supported; text uses locally available fonts.
+
+Useful areas for further compatibility work include CSS selectors and at-rules,
+resource URL resolution, and per-element compositing color spaces. Rendering
+and export edge cases still need testing even for
+features listed as supported.
 
 ## Filter rendering and acceleration
 

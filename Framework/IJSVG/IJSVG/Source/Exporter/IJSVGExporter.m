@@ -1373,6 +1373,10 @@ NSString* IJSVGHash(NSString* key)
         IJSVGApplyAttributesToElement(dict, gradientElement);
     }
 
+    if (gradient.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB) {
+        IJSVGApplyAttributesToElement(@{ IJSVGAttributeColorInterpolation : @"linearRGB" }, gradientElement);
+    }
+
     // apply the identifier
     NSString* gradKey = [self identifierForElement:gradientElement];
     IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : gradKey }, gradientElement);
@@ -1548,6 +1552,11 @@ NSString* IJSVGHash(NSString* key)
     }
     dict[IJSVGAttributeXLink] = base64String;
     [self applyXLinkToRootElement];
+
+    // Image sampling survives group collapsing and standalone export.
+    if (paint.imageRendering != IJSVGImageRenderingAuto && paint.imageRendering != IJSVGImageRenderingUnspecified) {
+        dict[IJSVGAttributeImageRendering] = IJSVGImageRenderingString(paint.imageRendering);
+    }
 
     // add the attributes
     IJSVGApplyAttributesToElement(dict, imageElement);
@@ -2089,9 +2098,7 @@ NSString* IJSVGHash(NSString* key)
             if (strokePaint.miterLimit != 4.f) {
                 dict[IJSVGAttributeStrokeMiterLimit] = IJSVGShortFloatStringWithOptions(strokePaint.miterLimit, _floatingPointOptions);
             }
-            if (strokePaint.lineWidth != 0.f) {
-                dict[IJSVGAttributeStrokeWidth] = IJSVGShortFloatStringWithOptions(strokePaint.lineWidth, _floatingPointOptions);
-            }
+            dict[IJSVGAttributeStrokeWidth] = IJSVGShortFloatStringWithOptions(strokePaint.lineWidth, _floatingPointOptions);
 
             // work out line cap
             if ((strokePaint.lineCap == kCGLineCapButt) == NO) {
@@ -2181,6 +2188,12 @@ NSString* IJSVGHash(NSString* key)
     NSMutableDictionary<NSString*, NSString*>* dict = [[NSMutableDictionary alloc] init];
 
     IJSVGGraphicsNode* node = paint.sourceNode;
+    if (paint.shapeRendering != IJSVGShapeRenderingUnspecified && paint.shapeRendering != IJSVGShapeRenderingAuto) {
+        dict[IJSVGAttributeShapeRendering] = IJSVGShapeRenderingString(paint.shapeRendering);
+    }
+    if (paint.imageRendering != IJSVGImageRenderingUnspecified && paint.imageRendering != IJSVGImageRenderingAuto) {
+        dict[IJSVGAttributeImageRendering] = IJSVGImageRenderingString(paint.imageRendering);
+    }
     switch (node.backgroundEnabled) {
         case IJSVGBackgroundEnabledAccumulate:
             dict[IJSVGAttributeEnableBackground] = @"accumulate";

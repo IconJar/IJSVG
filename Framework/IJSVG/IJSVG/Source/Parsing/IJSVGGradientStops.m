@@ -120,6 +120,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     NSArray* _colors;
     NSData* _locations;
     CGGradientRef _sharedGradient;
+    CGGradientRef _sharedLinearGradient;
 }
 
 // Bounded content keys allow different gradient definitions to share immutable
@@ -205,6 +206,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
     }
     free(_stops);
     CGGradientRelease(_sharedGradient);
+    CGGradientRelease(_sharedLinearGradient);
 }
 
 - (void)applyToGradient:(IJSVGGradient*)gradient
@@ -227,10 +229,11 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 - (CGGradientRef)CGGradientForGradient:(IJSVGGradient*)gradient
 {
     @synchronized(self) {
-        if (_sharedGradient == NULL) {
-            _sharedGradient = [gradient newCGGradient];
+        CGGradientRef* slot = gradient.resolvedColorInterpolation == IJSVGColorInterpolationLinearRGB ? &_sharedLinearGradient : &_sharedGradient;
+        if (*slot == NULL) {
+            *slot = [gradient newCGGradient];
         }
-        return _sharedGradient;
+        return *slot;
     }
 }
 

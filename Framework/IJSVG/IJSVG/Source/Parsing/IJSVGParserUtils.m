@@ -395,6 +395,9 @@ BOOL IJSVGAttributeSupportsVariables(NSUInteger attribute)
         case IJSVGNodeAttributeFloodColor:
         case IJSVGNodeAttributeFloodOpacity:
         case IJSVGNodeAttributeLightingColor:
+        case IJSVGNodeAttributeColorInterpolation:
+        case IJSVGNodeAttributeShapeRendering:
+        case IJSVGNodeAttributeImageRendering:
         case IJSVGNodeAttributeColorInterpolationFilters:
         case IJSVGNodeAttributeEnableBackground:
         case IJSVGNodeAttributeFontSizeAdjust:
@@ -1372,6 +1375,12 @@ IJSVGNodeAttribute IJSVGNodeAttributeForBytes(const char* attributeName, NSUInte
             break;
         }
         case 15: {
+            if (IJSVGAttributeNameEquals(attributeName, length, "image-rendering")) {
+                return IJSVGNodeAttributeImageRendering;
+            }
+            if (IJSVGAttributeNameEquals(attributeName, length, "shape-rendering")) {
+                return IJSVGNodeAttributeShapeRendering;
+            }
             if (IJSVGAttributeNameEquals(attributeName, length, "stroke-linejoin")) {
                 return IJSVGNodeAttributeStrokeLineJoin;
             }
@@ -1457,6 +1466,9 @@ IJSVGNodeAttribute IJSVGNodeAttributeForBytes(const char* attributeName, NSUInte
             break;
         }
         case 19: {
+            if (IJSVGAttributeNameEquals(attributeName, length, "color-interpolation")) {
+                return IJSVGNodeAttributeColorInterpolation;
+            }
             char c = attributeName[0];
             if (c == 'p') {
                 if (IJSVGAttributeNameEquals(attributeName, length, "patternContentUnits")) {

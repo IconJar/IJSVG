@@ -302,6 +302,8 @@ static void IJSVGCountStrokeOutlineCost(void* info, const CGPathElement* element
     BOOL _measurementHasFilters;
     NSMutableSet* _activeMarkers;
     NSMapTable<IJSVGPattern*, NSArray<NSValue*>*>* _contextPatternBounds;
+    IJSVGUse* _resolvedContextUse;
+    BOOL _measuringContextUse;
     BOOL _hasGeometryBounds;
     BOOL _hasEffectsBounds;
     CGRect _geometryBounds;
@@ -831,6 +833,9 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         return nil;
     }
     IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
+    if (node.type == IJSVGNodeTypeUse && node != _resolvedContextUse && !_measuringContextUse && [self useChildrenNeedContextPaint:(IJSVGUse*)node]) {
+        return [self drawablePaintForContextUse:(IJSVGUse*)node];
+    }
 
     // A plain single child group or unpositioned path use contributes neither
     // geometry nor drawing state.
@@ -1509,7 +1514,118 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     node.height = [self.lengthFontResolver unitByResolvingFontLength:node.height node:node css:css];
 }
 
-#pragma mark Marker Context Paint
+#pragma mark Context Paint
+
+- (BOOL)nodeNeedsContextPaint:(IJSVGNode*)source
+{
+    if (![source isKindOfClass:IJSVGGraphicsNode.class]) {
+        return NO;
+    }
+    IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
+    IJSVGNode* paints[] = { node.fill, node.stroke };
+    for (NSUInteger index = 0; index < 2; index++) {
+        if ([paints[index] isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)paints[index]).contextPaint != IJSVGContextPaintNone) {
+            return YES;
+        }
+    }
+    if ([node isKindOfClass:IJSVGGroup.class]) {
+        for (IJSVGNode* child in ((IJSVGGroup*)node).children) {
+            if ([self nodeNeedsContextPaint:child]) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
+- (BOOL)useChildrenNeedContextPaint:(IJSVGUse*)node
+{
+    for (IJSVGNode* child in node.children) {
+        if ([self nodeNeedsContextPaint:child]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (IJSVGPaint*)drawablePaintForContextUse:(IJSVGUse*)source
+{
+    // Only instances with context paints are copied. Their resolved paints must not
+    // leak into the editable source tree or another differently styled use.
+    IJSVGUse* node = source.copy;
+    CGRect viewport = [self unitResolutionBoundsForNode:source];
+    CGRect bounds = CGRectZero;
+    NSMapTable<IJSVGNode*, NSValue*>* transforms = nil;
+    BOOL hasServer = [node.fill isKindOfClass:IJSVGGradient.class] || [node.fill isKindOfClass:IJSVGPattern.class] || [node.stroke isKindOfClass:IJSVGGradient.class] || [node.stroke isKindOfClass:IJSVGPattern.class];
+    if (hasServer) {
+        BOOL previous = _measuringContextUse;
+        _measuringContextUse = YES;
+        @try {
+            // The geometry pass includes symbol viewBoxes and child transforms,
+            // even when the unresolved context paint is transparent.
+            IJSVGPaint* geometry = [self drawablePaintForGroupNode:node];
+            bounds = geometry.boundingBox;
+            transforms = [NSMapTable strongToStrongObjectsMapTable];
+            [self collectContextTransformsFromPaint:geometry transform:CGAffineTransformIdentity into:transforms];
+        } @finally {
+            _measuringContextUse = previous;
+        }
+    }
+    for (IJSVGNode* child in node.children) {
+        [self resolveUseContextInNode:child referencingNode:node bounds:bounds viewport:viewport transforms:transforms];
+    }
+    IJSVGUse* previous = _resolvedContextUse;
+    _resolvedContextUse = node;
+    @try {
+        IJSVGPaint* paint = [self drawablePaintForNode:node];
+        paint.contextPaintOwner = node;
+        return paint;
+    } @finally {
+        _resolvedContextUse = previous;
+    }
+}
+
+// Reuse resolved placement instead of reimplementing CSS transform origins,
+// units, symbol reference points and nested viewBox geometry for context paints.
+- (void)collectContextTransformsFromPaint:(IJSVGPaint*)paint transform:(CGAffineTransform)transform into:(NSMapTable<IJSVGNode*, NSValue*>*)transforms
+{
+    if (paint.sourceNode != nil && [transforms objectForKey:paint.sourceNode] == nil) {
+        [transforms setObject:[NSValue valueWithBytes:&transform objCType:@encode(CGAffineTransform)] forKey:paint.sourceNode];
+    }
+    CGAffineTransform childrenTransform = CGAffineTransformConcat(paint.placementTransform, transform);
+    if ([paint isKindOfClass:IJSVGRootPaint.class]) {
+        IJSVGRootPaint* root = (IJSVGRootPaint*)paint;
+        if (root.viewBox != nil) {
+            CGRect viewBox = [root.viewBox computeValue:root.frame.size];
+            CGAffineTransform mapping = IJSVGViewBoxComputeTransform(viewBox, IJSVGPaintGetBoundingBoxBounds(root), root.viewBoxAlignment, root.viewBoxMeetOrSlice);
+            childrenTransform = CGAffineTransformConcat(mapping, childrenTransform);
+        }
+    }
+    for (IJSVGPaint* child in paint.children) {
+        [self collectContextTransformsFromPaint:child transform:childrenTransform into:transforms];
+    }
+}
+
+- (void)resolveUseContextInNode:(IJSVGNode*)source referencingNode:(IJSVGUse*)context bounds:(CGRect)bounds viewport:(CGRect)viewport transforms:(NSMapTable<IJSVGNode*, NSValue*>*)transforms
+{
+    if (![source isKindOfClass:IJSVGGraphicsNode.class]) {
+        return;
+    }
+    IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
+
+    // Resolve descendants before their parent, so inherited context tokens are
+    // still visible. A nested use establishes its own context during its build.
+    if (node.type != IJSVGNodeTypeUse && [node isKindOfClass:IJSVGGroup.class]) {
+        for (IJSVGNode* child in ((IJSVGGroup*)node).children) {
+            [self resolveUseContextInNode:child referencingNode:context bounds:bounds viewport:viewport transforms:transforms];
+        }
+    }
+    CGAffineTransform transform = CGAffineTransformIdentity;
+    [[transforms objectForKey:node] getValue:&transform size:sizeof(transform)];
+    node.fill = [self resolvedContextPaint:node.fill referencingNode:context bounds:bounds viewport:viewport transform:transform];
+    node.stroke = [self resolvedContextPaint:node.stroke referencingNode:context bounds:bounds viewport:viewport transform:transform];
+    [node computeTraits];
+}
 
 - (IJSVGGradient*)contextGradient:(IJSVGGradient*)source bounds:(CGRect)bounds viewport:(CGRect)viewport transform:(CGAffineTransform)transform
 {
@@ -2629,6 +2745,8 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
 - (void)applyDefaultsToPaint:(IJSVGPaint*)paint fromNode:(IJSVGGraphicsNode*)node style:(const IJSVGResolvedPaintStyle*)style
 {
     paint.sourceNode = node;
+    paint.shapeRendering = [node isKindOfClass:IJSVGPath.class] ? node.resolvedShapeRendering : IJSVGShapeRenderingUnspecified;
+    paint.imageRendering = node.type == IJSVGNodeTypeImage ? node.resolvedImageRendering : IJSVGImageRenderingUnspecified;
     paint.viewPort = self.viewPort;
     paint.isolated = node.isolated;
 
