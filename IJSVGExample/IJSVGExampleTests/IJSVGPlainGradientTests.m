@@ -18,6 +18,84 @@
 
 @implementation IJSVGPlainGradientTests
 
+- (void)testPlainInlineStopDeclarationsMatchGeneralCascade
+{
+    for (NSString* style in @[ @"", @"<style>* {stroke-linecap:square;stroke-linejoin:round}</style>" ]) {
+        for (NSString* stops in @[
+                 @"<stop offset='0' style='stop-color:#800000;stop-opacity:1'/><stop offset='1' style='stop-color:#800000;stop-opacity:0'/>",
+                 @"<stop stop-color='red' style='stop-opacity:.25;offset:.1'/><stop offset='1' stop-opacity='.5' style='stop-color:blue!important;stop-color:lime'/>",
+                 @"<stop stop-color='red' style='stop-color:var(--paint)'/><stop offset='1' stop-color='blue'/>",
+                 @"<stop stop-color='currentColor'/><stop offset='1' style='stop-color:currentColor;stop-opacity:.5'/>",
+                 @"<stop stop-color='red' style='stop-opacity:inherit'/><stop offset='1' stop-color='blue'/>",
+                 @"<stop stop-color='red' style='stop-color:initial;stop-opacity:unset'/><stop offset='1' stop-color='blue'/>",
+                 @"<stop stop-color='red' style='stop-color:revert'/><stop offset='1' stop-color='blue'/>",
+                 @"<stop stop-color='red' style='stop-color:in/**/herit'/><stop offset='1' stop-color='blue'/>"
+             ]) {
+            NSString* body = [NSString stringWithFormat:
+                    @"%@<defs><linearGradient id='paint' color='lime' style='--paint:orange'>%@</linearGradient></defs>"
+                     "<rect width='64' height='64' fill='url(#paint)'/>",
+                style, stops];
+            IJSVG* fast = [self document:body];
+            IJSVG* general = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='force-general' "]];
+            XCTAssertEqualObjects([self pixels:fast], [self pixels:general], @"%@", stops);
+        }
+    }
+}
+
+- (void)testUnrelatedStyleRulesPreservePlainAndDeferredStops
+{
+    NSMutableString* body = [NSMutableString stringWithFormat:
+            @"<style>* { stroke-linejoin:round; stroke-linecap:butt }</style>"
+             "<defs><linearGradient id='paint'>%@</linearGradient></defs>",
+        self.stops];
+    for (NSUInteger index = 0; index < 5; index++) {
+        [body appendFormat:@"<rect x='%lu' width='12' height='64' fill='url(#paint)'/>", index * 12];
+    }
+    IJSVG* actual = [self document:body];
+    IJSVG* general = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='force-general' "]];
+    XCTAssertEqualObjects([self pixels:actual], [self pixels:general]);
+    IJSVGGradient* gradient = (IJSVGGradient*)((IJSVGPaintNode*)actual.rootNode.children.lastObject).fill;
+    Ivar storage = class_getInstanceVariable(IJSVGGroup.class, "_children");
+    XCTAssertEqual([object_getIvar(gradient, storage) count], 0u);
+    XCTAssertEqual(gradient.children.count, 2u);
+    XCTAssertEqual(((IJSVGStop*)gradient.children.lastObject).fillOpacity.value, .5);
+}
+
+- (void)testStopStylesAndVariablesKeepTheGeneralCascade
+{
+    for (NSString* style in @[
+             @"stop { stop-color:lime!important }",
+             @"linearGradient stop { stop-opacity:.25 }",
+             @"stop { offset:.5 }",
+             @"* { --paint:lime } stop { stop-color:var(--paint) }",
+             @"stop { color:lime; stop-color:currentColor }"
+         ]) {
+        NSMutableString* body = [NSMutableString stringWithFormat:
+                @"<style>%@</style><defs><linearGradient id='paint'>%@</linearGradient></defs>", style, self.stops];
+        for (NSUInteger index = 0; index < 5; index++) {
+            [body appendFormat:@"<rect x='%lu' width='12' height='64' fill='url(#paint)'/>", index * 12];
+        }
+        IJSVG* actual = [self document:body];
+        IJSVG* general = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='force-general' "]];
+        XCTAssertEqualObjects([self pixels:actual], [self pixels:general], @"%@", style);
+    }
+}
+
+- (void)testUnrelatedRulesKeepContextualStopValuesUncached
+{
+    for (NSString* color in @[ @"currentColor", @"var(--paint)" ]) {
+        NSString* body = [NSString stringWithFormat:
+                @"<style>* { stroke-linejoin:round }</style>"
+                 "<defs><linearGradient id='paint' color='lime' style='--paint:blue'>"
+                 "<stop stop-color='%@'/><stop offset='1' stop-color='red'/></linearGradient></defs>"
+                 "<rect width='64' height='64' fill='url(#paint)'/>",
+            color];
+        IJSVG* actual = [self document:body];
+        IJSVG* general = [self document:[body stringByReplacingOccurrencesOfString:@"<stop " withString:@"<stop class='force-general' "]];
+        XCTAssertEqualObjects([self pixels:actual], [self pixels:general]);
+    }
+}
+
 - (void)testGradientCacheEligibilityReadsBytesWithoutMaterializingStrings
 {
     for (NSString* color in @[ @"#ff0000", @"red", @"CURRENTCOLOR", @"xINHERITy", @"vAr(--paint)", @"réD", @"" ]) {

@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGCommandEllipticalArc.h>
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <simd/simd.h>
 #import <xlocale.h>
 
 @implementation IJSVGCommandParser
@@ -394,6 +395,31 @@ static void IJSVGPathAppendCommand(IJSVGPathBuilder* builder, char command, BOOL
     builder->previousCommand = command;
 }
 
+// Scan only complete blocks: XML attribute slices need not be NUL terminated.
+static NSUInteger IJSVGPathParametersEnd(const char* characters, NSUInteger index, NSUInteger length)
+{
+    while (length - index >= 16) {
+        simd_uchar16 bytes;
+        memcpy(&bytes, characters + index, sizeof(bytes));
+        simd_uchar16 lower = bytes | 0x20;
+        simd_char16 boundary = (bytes == 0) | (lower == 'm') | (lower == 'z')
+            | (lower == 'c') | (lower == 'l') | (lower == 's') | (lower == 'q')
+            | (lower == 'h') | (lower == 'v') | (lower == 't') | (lower == 'a');
+        if (simd_any(boundary)) {
+            NSUInteger lane = 0;
+            while (boundary[lane] == 0) {
+                lane++;
+            }
+            return index + lane;
+        }
+        index += sizeof(bytes);
+    }
+    while (index < length && characters[index] != '\0' && !IJSVGIsLegalCommandCharacter(characters[index])) {
+        index++;
+    }
+    return index;
+}
+
 static void IJSVGAppendPathDataWithHandler(CGMutablePathRef path, const char* characters, NSUInteger length, IJSVGPathDataStream* dataStream, void (^handler)(char command, CGPathRef segment), BOOL* mayHavePointSubpaths)
 {
     IJSVGPathBuilder builder = { .path = path, .segmentHandler = handler, .trackPointSubpaths = mayHavePointSubpaths != NULL };
@@ -413,9 +439,7 @@ static void IJSVGAppendPathDataWithHandler(CGMutablePathRef path, const char* ch
             continue;
         }
         NSUInteger start = index;
-        while (index < length && characters[index] != '\0' && !IJSVGIsLegalCommandCharacter(characters[index])) {
-            index++;
-        }
+        index = IJSVGPathParametersEnd(characters, index, length);
         BOOL relative = original >= 'a' && original <= 'z';
         if (parameterCount == 0) {
             IJSVGPathAppendCommand(&builder, command, relative, NULL);

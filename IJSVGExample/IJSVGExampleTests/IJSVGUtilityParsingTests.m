@@ -32,6 +32,73 @@
 
 @implementation IJSVGUtilityParsingTests
 
+- (void)testPathCommandScanRespectsSliceEndAndEmbeddedNUL
+{
+    size_t page = (size_t)getpagesize();
+    char* memory = mmap(NULL, page * 2, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
+    XCTAssertNotEqual(memory, MAP_FAILED);
+    if (memory == MAP_FAILED) {
+        return;
+    }
+    int result = mprotect(memory + page, page, PROT_NONE);
+    XCTAssertEqual(result, 0);
+    if (result != 0) {
+        munmap(memory, page * 2);
+        return;
+    }
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    CGMutablePathRef expected = CGPathCreateMutable();
+    CGPathMoveToPoint(expected, NULL, 10, 20);
+    CGPathAddLineToPoint(expected, NULL, 30, 40);
+    for (NSUInteger padding = 0; padding < 64; padding++) {
+        NSString* source = [NSString stringWithFormat:@"M1e1 2E1 %@L30 40",
+            [@"" stringByPaddingToLength:padding
+                              withString:@" "
+                         startingAtIndex:0]];
+        NSData* data = [source dataUsingEncoding:NSUTF8StringEncoding];
+        char* slice = memory + page - data.length;
+        memcpy(slice, data.bytes, data.length);
+        CGMutablePathRef path = IJSVGCreatePathFromData(slice, data.length, stream);
+        XCTAssertTrue(CGPathEqualToPath(path, expected), @"padding %lu", (unsigned long)padding);
+        CGPathRelease(path);
+
+        // A terminator inside a complete vector block must stop the scan too.
+        NSMutableData* terminated = [data mutableCopy];
+        const char suffix[] = "\0 L99 99                                 ";
+        [terminated appendBytes:suffix length:sizeof(suffix) - 1];
+        slice = memory + page - terminated.length;
+        memcpy(slice, terminated.bytes, terminated.length);
+        path = IJSVGCreatePathFromData(slice, terminated.length, stream);
+        XCTAssertTrue(CGPathEqualToPath(path, expected), @"NUL padding %lu", (unsigned long)padding);
+        CGPathRelease(path);
+    }
+    CGPathRelease(expected);
+    IJSVGPathDataStreamRelease(stream);
+    munmap(memory, page * 2);
+}
+
+- (void)testPathCommandScanRecognizesEveryCommandAtBlockBoundaries
+{
+    NSArray<NSString*>* commands = @[
+        @"M10 20", @"l3 4", @"H50", @"v6", @"C10 20 30 40 50 60",
+        @"s3 4 5 6", @"Q10 20 30 40", @"t3 4", @"A10 20 0 0 1 50 60",
+        @"z", @"m1 2", @"L3 4", @"h5", @"V6", @"c1 2 3 4 5 6",
+        @"S10 20 30 40", @"q1 2 3 4", @"T10 20", @"a10 20 0 1 0 5 6", @"Z"
+    ];
+    NSString* compact = [commands componentsJoinedByString:@" "];
+    IJSVGPathDataStream* stream = IJSVGPathDataStreamCreateDefault();
+    CGMutablePathRef expected = IJSVGCreatePathFromData(compact.UTF8String, strlen(compact.UTF8String), stream);
+    for (NSUInteger padding = 1; padding <= 32; padding++) {
+        NSString* separator = [@"" stringByPaddingToLength:padding withString:@" " startingAtIndex:0];
+        NSString* source = [commands componentsJoinedByString:separator];
+        CGMutablePathRef path = IJSVGCreatePathFromData(source.UTF8String, strlen(source.UTF8String), stream);
+        XCTAssertTrue(CGPathEqualToPath(path, expected), @"padding %lu", (unsigned long)padding);
+        CGPathRelease(path);
+    }
+    CGPathRelease(expected);
+    IJSVGPathDataStreamRelease(stream);
+}
+
 - (void)testCXMLStorageOwnsInputAndKeepsNamespacesAndText
 {
     const char* source = "<svg xmlns:q='http://www.w3.org/1999/xlink'><g id='a' q:href='#b'/><text>one<![CDATA[ two]]> three</text></svg>";

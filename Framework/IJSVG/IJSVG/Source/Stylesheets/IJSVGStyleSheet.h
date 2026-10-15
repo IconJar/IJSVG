@@ -11,6 +11,7 @@
 #import <IJSVG/IJSVGStyleSheetSelector.h>
 
 @class IJSVGNode;
+@class IJSVGBitFlags;
 
 @interface IJSVGStyleSheet : NSObject {
 @private
@@ -21,6 +22,8 @@
 @property (nonatomic, readonly) NSUInteger ruleCount;
 @property (nonatomic, readonly) BOOL requiresSelectorTree;
 
+// Conservative: custom properties can affect any attribute through var().
+- (BOOL)mayAffectAttributes:(IJSVGBitFlags*)attributes;
 - (void)parseStyleBlock:(NSString*)string;
 - (IJSVGStyleSheetStyle*)styleForNode:(id<IJSVGStyleSheetSelectorNode>)node;
 

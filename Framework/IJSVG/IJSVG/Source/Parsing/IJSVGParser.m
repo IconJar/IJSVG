@@ -442,6 +442,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     CFTypeRef* _rawAttributeCache;
     CFTypeRef* _referenceCache;
     IJSVGDefinitionStyleParent* _definitionStyleParent;
+    NSUInteger _gradientStopStyleRuleCount;
+    BOOL _gradientStopStylesKnown;
+    BOOL _hasGradientStopStyles;
 }
 @property (nonatomic) IJSVGParsedPathCache* parsedPathCache;
 @property (nonatomic) NSUInteger inlineStyleCost;
@@ -628,6 +631,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     self.parsedColors = nil;
     self.parsedFilterReferences = nil;
     self.allowedAttributesByClass = nil;
+    _gradientStopStylesKnown = NO;
     self.parsedSVGTransforms = nil;
     self.parsedCSSTransforms = nil;
     [self clearRawAttributeCache];
@@ -1708,19 +1712,34 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
 }
 
+- (BOOL)hasGradientStopStyles
+{
+    NSUInteger count = _styleSheet.ruleCount;
+    if (!_gradientStopStylesKnown || count != _gradientStopStyleRuleCount) {
+        _hasGradientStopStyles = count != 0 && [_styleSheet mayAffectAttributes:[self allowedAttributesForNodeClass:IJSVGStop.class]];
+        _gradientStopStyleRuleCount = count;
+        _gradientStopStylesKnown = YES;
+    }
+    return _hasGradientStopStyles;
+}
+
 - (void)populateGradient:(IJSVGGradient*)gradient fromElement:(IJSVGXMLNode*)element
 {
-    BOOL cacheable = _styleSheet.ruleCount == 0;
+    // Unrelated rules (for example Matplotlib's universal stroke rules) do
+    // not require a cascade for plain stops. Keep dependent values and all
+    // rules that can affect a stop on the general path.
+    BOOL plainStops = ![self hasGradientStopStyles];
+    BOOL cacheable = plainStops && (_styleSheet.ruleCount == 0 || [IJSVGGradientStops canCacheElement:element]);
     IJSVGGradientStops* data = cacheable ? [_gradientStops objectForKey:IJSVGXMLKey(element)] : nil;
     if (data != nil && data.inheritedOpacity == gradient.fillOpacity.value) {
         [data applyToGradient:gradient];
         return;
     }
-    if (!cacheable || !IJSVGPopulatePlainGradientStops(gradient, element, self)) {
+    if (!plainStops || !IJSVGPopulatePlainGradientStops(gradient, element, self)) {
         [self computeElement:element parentNode:gradient];
     }
     [gradient parseColorStops];
-    if (!cacheable || _styleSheet.ruleCount != 0) {
+    if (!cacheable || [self hasGradientStopStyles]) {
         return;
     }
     NSNumber* state = [_gradientStopStates objectForKey:IJSVGXMLKey(element)];

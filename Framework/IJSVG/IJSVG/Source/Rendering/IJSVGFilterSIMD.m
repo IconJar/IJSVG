@@ -348,6 +348,22 @@ static CGImageRef IJSVGLocalFilterImage(CGContextRef source, NSData* pixels)
     return image;
 }
 
+typedef struct {
+    NSUInteger minX, maxX, minY, maxY;
+} IJSVGLocalPixelBounds;
+
+static IJSVGLocalPixelBounds IJSVGLocalBounds(CGRect crop, NSUInteger width, NSUInteger height)
+{
+    // The caller accepts integral crops only. Clamp before converting to an
+    // integer, including crops entirely outside the bitmap.
+    return (IJSVGLocalPixelBounds) {
+        (NSUInteger)fmin(width, fmax(0, CGRectGetMinX(crop))),
+        (NSUInteger)fmin(width, fmax(0, CGRectGetMaxX(crop))),
+        height - (NSUInteger)fmin(height, fmax(0, CGRectGetMaxY(crop))),
+        height - (NSUInteger)fmin(height, fmax(0, CGRectGetMinY(crop)))
+    };
+}
+
 static CGImageRef IJSVGLocalColorMatrix(CGContextRef source, IJSVGFilterPrimitive* primitive, CGRect crop)
 {
     if (primitive.input.length != 0 && ![primitive.input isEqualToString:IJSVGStringSourceGraphic]) {
@@ -359,7 +375,8 @@ static CGImageRef IJSVGLocalColorMatrix(CGContextRef source, IJSVGFilterPrimitiv
         return NULL;
     }
     const double* svgMatrix = coefficients.bytes;
-    float matrix[16], bias[4];
+    simd_float4 columns[4] = { 0 };
+    simd_float4 bias = 0;
     for (NSUInteger row = 0; row < 4; row++) {
         for (NSUInteger column = 0; column < 5; column++) {
             double value = svgMatrix[row * 5 + column];
@@ -369,8 +386,7 @@ static CGImageRef IJSVGLocalColorMatrix(CGContextRef source, IJSVGFilterPrimitiv
             if (column == 4) {
                 bias[row] = value;
             } else {
-                // vImage multiplies row vectors, SVG stores output rows.
-                matrix[column * 4 + row] = value;
+                columns[column][row] = value;
             }
         }
     }
@@ -379,39 +395,23 @@ static CGImageRef IJSVGLocalColorMatrix(CGContextRef source, IJSVGFilterPrimitiv
     NSUInteger stride = CGBitmapContextGetBytesPerRow(source);
     BOOL linear = ![prepared[@"opacityOnly"] boolValue] && IJSVGLocalFilterUsesLinearRGB(primitive);
     const float* decode = linear ? IJSVGCompositeDecodeTable() : NULL;
-    NSMutableData* input = [NSMutableData dataWithLength:width * height * 4 * sizeof(float)];
-    NSMutableData* output = [NSMutableData dataWithLength:input.length];
-    simd_float4* values = input.mutableBytes;
-    const uint8_t* pixels = CGBitmapContextGetData(source);
-    for (NSUInteger y = 0; y < height; y++) {
-        for (NSUInteger x = 0; x < width; x++) {
-            if (CGRectContainsPoint(crop, CGPointMake(x + .5, height - y - .5))) {
-                simd_float4 value = IJSVGCompositeLoad(pixels + y * stride + x * 4, decode);
-                if (value.a > 0) {
-                    value.rgb /= value.a;
-                }
-                values[y * width + x] = value;
-            }
-        }
-    }
-    vImage_Buffer src = { input.mutableBytes, height, width, width * 4 * sizeof(float) };
-    vImage_Buffer dst = { output.mutableBytes, height, width, width * 4 * sizeof(float) };
-    if (vImageMatrixMultiply_ARGBFFFF(&src, &dst, matrix, NULL, bias, kvImageDoNotTile) != kvImageNoError) {
-        return NULL;
-    }
     NSMutableData* bytes = [NSMutableData dataWithLength:width * height * 4];
     uint8_t* destination = bytes.mutableBytes;
-    const simd_float4* result = output.bytes;
-    for (NSUInteger y = 0; y < height; y++) {
-        for (NSUInteger x = 0; x < width; x++) {
-            if (!CGRectContainsPoint(crop, CGPointMake(x + .5, height - y - .5))) {
-                continue;
+    const uint8_t* pixels = CGBitmapContextGetData(source);
+    IJSVGLocalPixelBounds bounds = IJSVGLocalBounds(crop, width, height);
+    for (NSUInteger y = bounds.minY; y < bounds.maxY; y++) {
+        for (NSUInteger x = bounds.minX; x < bounds.maxX; x++) {
+            simd_float4 value = IJSVGCompositeLoad(pixels + y * stride + x * 4, decode);
+            if (value.a > 0) {
+                value.rgb /= value.a;
             }
-            NSUInteger index = y * width + x;
-            simd_float4 value = simd_clamp(result[index], 0.f, 1.f);
+            value = columns[0] * value.r + columns[1] * value.g
+                + columns[2] * value.b + columns[3] * value.a + bias;
+            value = simd_clamp(value, 0.f, 1.f);
             value.rgb *= value.a;
+            NSUInteger index = (y * width + x) * 4;
             for (NSUInteger channel = 0; channel < 4; channel++) {
-                destination[index * 4 + channel] = linear && channel < 3 ? IJSVGFilterSIMDEncodeLinearComponent(value[channel], value.a, 1) : (uint8_t)lrintf(value[channel] * 255.f);
+                destination[index + channel] = linear && channel < 3 ? IJSVGFilterSIMDEncodeLinearComponent(value[channel], value.a, 1) : (uint8_t)lrintf(value[channel] * 255.f);
             }
         }
     }
@@ -500,13 +500,21 @@ CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source, IJSVGFilterGraph* 
     uint8_t* alphaBytes = alpha.mutableBytes;
     const uint8_t* original = CGBitmapContextGetData(source);
     NSUInteger stride = CGBitmapContextGetBytesPerRow(source);
-    for (NSUInteger y = 0; y < height; y++) {
-        for (NSUInteger x = 0; x < width; x++) {
-            if (CGRectContainsPoint(crop, CGPointMake(x + .5, height - y - .5))) {
-                NSUInteger index = (y * width + x) * 4;
-                memcpy(graphicBytes + index, original + y * stride + x * 4, 4);
-                alphaBytes[index + 3] = graphicBytes[index + 3];
-            }
+    IJSVGLocalPixelBounds bounds = IJSVGLocalBounds(crop, width, height);
+    const simd_uchar16 alphaMask = { 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255 };
+    for (NSUInteger y = bounds.minY; y < bounds.maxY; y++) {
+        NSUInteger start = (y * width + bounds.minX) * 4;
+        NSUInteger count = (bounds.maxX - bounds.minX) * 4;
+        memcpy(graphicBytes + start, original + y * stride + bounds.minX * 4, count);
+        NSUInteger byte = 0;
+        for (; count - byte >= sizeof(alphaMask); byte += sizeof(alphaMask)) {
+            simd_uchar16 pixels;
+            memcpy(&pixels, graphicBytes + start + byte, sizeof(pixels));
+            pixels &= alphaMask;
+            memcpy(alphaBytes + start + byte, &pixels, sizeof(pixels));
+        }
+        for (; byte < count; byte += 4) {
+            alphaBytes[start + byte + 3] = graphicBytes[start + byte + 3];
         }
     }
     NSData* previous = graphic;
@@ -518,12 +526,15 @@ CGImageRef IJSVGFilterSIMDNewLocalFilter(CGContextRef source, IJSVGFilterGraph* 
         NSMutableData* shifted = [NSMutableData dataWithLength:graphic.length];
         uint8_t* shiftedBytes = shifted.mutableBytes;
         const uint8_t* inputBytes = input.bytes;
-        for (NSInteger y = 0; y < (NSInteger)height; y++) {
-            for (NSInteger x = 0; x < (NSInteger)width; x++) {
-                NSInteger sx = x - dx, sy = y + dy;
-                if (sx >= 0 && sx < (NSInteger)width && sy >= 0 && sy < (NSInteger)height && CGRectContainsPoint(crop, CGPointMake(x + .5, height - y - .5))) {
-                    memcpy(shiftedBytes + (y * width + x) * 4, inputBytes + (sy * width + sx) * 4, 4);
-                }
+        NSInteger minX = MAX((NSInteger)bounds.minX, dx);
+        NSInteger maxX = MIN((NSInteger)bounds.maxX, (NSInteger)width + dx);
+        NSInteger minY = MAX((NSInteger)bounds.minY, -dy);
+        NSInteger maxY = MIN((NSInteger)bounds.maxY, (NSInteger)height - dy);
+        if (minX < maxX) {
+            for (NSInteger y = minY; y < maxY; y++) {
+                memcpy(shiftedBytes + (y * width + minX) * 4,
+                    inputBytes + ((y + dy) * width + minX - dx) * 4,
+                    (maxX - minX) * 4);
             }
         }
         previous = shifted;

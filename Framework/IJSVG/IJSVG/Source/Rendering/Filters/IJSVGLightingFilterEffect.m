@@ -9,6 +9,7 @@
 #import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGLightingFilterEffect.h>
+#import <simd/simd.h>
 
 static const double IJSVGSpotLightConeTransition = .016;
 
@@ -98,6 +99,39 @@ static inline IJSVGLightingVector IJSVGLightingSurfaceNormal(const IJSVGFilterSa
     return (IJSVGLightingVector) { nx, ny, nz };
 }
 
+static inline simd_double2 IJSVGLightingAlphaPair(const float* pixels)
+{
+    return (simd_double2) { pixels[3], pixels[7] };
+}
+
+// Unit-spaced interior samples are exact pixel reads. Calculate two Sobel
+// normals together; borders and fractional spacing keep the general sampler.
+static void IJSVGLightingInteriorNormals(const float* src, NSInteger w, NSInteger x, NSInteger y,
+    IJSVGLightingParameters parameters, IJSVGLightingVector normals[2])
+{
+    const float* top = src + ((y - 1) * w + x) * 4;
+    const float* middle = top + w * 4;
+    const float* bottom = middle + w * 4;
+    simd_double2 topLeft = IJSVGLightingAlphaPair(top - 4);
+    simd_double2 topRight = IJSVGLightingAlphaPair(top + 4);
+    simd_double2 bottomLeft = IJSVGLightingAlphaPair(bottom - 4);
+    simd_double2 bottomRight = IJSVGLightingAlphaPair(bottom + 4);
+    simd_double2 gx = (topRight - topLeft)
+        + 2 * (IJSVGLightingAlphaPair(middle + 4) - IJSVGLightingAlphaPair(middle - 4))
+        + (bottomRight - bottomLeft);
+    simd_double2 gy = (bottomLeft - topLeft)
+        + 2 * (IJSVGLightingAlphaPair(bottom) - IJSVGLightingAlphaPair(top))
+        + (bottomRight - topRight);
+    simd_double2 nx = -parameters.surfaceScale * gx / (4 * parameters.step.width);
+    simd_double2 ny = -parameters.surfaceScale * gy / (4 * parameters.step.height);
+
+    // Preserve hypot's overflow handling and the scalar path's rounding.
+    for (NSUInteger lane = 0; lane < 2; lane++) {
+        double norm = hypot(hypot(nx[lane], ny[lane]), 1);
+        normals[lane] = (IJSVGLightingVector) { nx[lane] / norm, ny[lane] / norm, 1 / norm };
+    }
+}
+
 static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w, NSInteger h, IJSVGLightingParameters parameters)
 {
     IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(src, w, h, parameters.inputRegion, IJSVGFilterEdgeModeDuplicate);
@@ -113,8 +147,23 @@ static void IJSVGApplyLightingToPixels(const float* src, float* dst, NSInteger w
 
     IJSVGFilterApplyRows(maxX - minX, maxY - minY, ^(NSInteger firstRow, NSInteger lastRow) {
         for (NSInteger y = minY + firstRow; y < minY + lastRow; y++) {
+            IJSVGLightingVector normals[2];
+            BOOL pendingNormal = NO;
+            BOOL interiorRow = dx == 1 && dy == 1 && y > sampler.top && y < sampler.bottom
+                && y - 1 >= CGRectGetMinY(parameters.inputRegion) && y + 1 < CGRectGetMaxY(parameters.inputRegion);
             for (NSInteger x = minX; x < maxX; x++) {
-                IJSVGLightingVector normal = IJSVGLightingSurfaceNormal(&sampler, x, y, dx, dy, parameters);
+                IJSVGLightingVector normal;
+                if (pendingNormal) {
+                    normal = normals[1];
+                    pendingNormal = NO;
+                } else if (interiorRow && x + 1 < maxX && x > sampler.left && x + 2 <= sampler.right
+                    && x - 1 >= CGRectGetMinX(parameters.inputRegion) && x + 2 < CGRectGetMaxX(parameters.inputRegion)) {
+                    IJSVGLightingInteriorNormals(src, w, x, y, parameters, normals);
+                    normal = normals[0];
+                    pendingNormal = YES;
+                } else {
+                    normal = IJSVGLightingSurfaceNormal(&sampler, x, y, dx, dy, parameters);
+                }
                 double nx = normal.x, ny = normal.y, nz = normal.z;
                 double ux = distantX, uy = distantY, uz = distantZ;
                 if (parameters.lightType != IJSVGNodeTypeFilterDistantLight) {

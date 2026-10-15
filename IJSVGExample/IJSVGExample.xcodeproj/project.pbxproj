@@ -120,6 +120,7 @@
 		59B649D4307584280004EFC2 /* IJSVGTextWebKitTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59B649D3307584280004EFC2 /* IJSVGTextWebKitTests.m */; };
 		59B93C6D19B7D1840063E823 /* paperplane.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59B93C6C19B7D1840063E823 /* paperplane.svg */; };
 		59B93C6F19B7D32C0063E823 /* products.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59B93C6E19B7D32C0063E823 /* products.svg */; };
+		59C8A6233080D54D003819E4 /* IJSVGFilterVectorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59C8A6223080D54D003819E4 /* IJSVGFilterVectorTests.m */; };
 		59CEB9DC307B10700051BE00 /* IJSVGNestedFilterBatchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEB9DB307B10700051BE00 /* IJSVGNestedFilterBatchTests.m */; };
 		59CEBB11307B92240051BE00 /* IJSVGOutlineTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBB10307B92240051BE00 /* IJSVGOutlineTests.m */; };
 		59CEBDCE307C0F490051BE00 /* IJSVGInheritedLengthTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */; };
@@ -312,6 +313,7 @@
 		59B649D3307584280004EFC2 /* IJSVGTextWebKitTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGTextWebKitTests.m; sourceTree = "<group>"; };
 		59B93C6C19B7D1840063E823 /* paperplane.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = paperplane.svg; sourceTree = "<group>"; };
 		59B93C6E19B7D32C0063E823 /* products.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = products.svg; sourceTree = "<group>"; };
+		59C8A6223080D54D003819E4 /* IJSVGFilterVectorTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFilterVectorTests.m; sourceTree = "<group>"; };
 		59CEB9DB307B10700051BE00 /* IJSVGNestedFilterBatchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGNestedFilterBatchTests.m; sourceTree = "<group>"; };
 		59CEBB10307B92240051BE00 /* IJSVGOutlineTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGOutlineTests.m; sourceTree = "<group>"; };
 		59CEBDCD307C0F490051BE00 /* IJSVGInheritedLengthTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGInheritedLengthTests.m; sourceTree = "<group>"; };
@@ -543,6 +545,7 @@
 				594688AC307E8E04008E2E8A /* IJSVGPlainGradientTests.m */,
 				59468B4730803518008E2E8A /* IJSVGRasterColorSpaceTests.m */,
 				595151B23080CD5800B07555 /* IJSVGMemorySafetyTests.m */,
+				59C8A6223080D54D003819E4 /* IJSVGFilterVectorTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -823,6 +826,7 @@
 				591F8EDA2FF033E90012F5EB /* IJSVGCommandAndAdditionsTests.m in Sources */,
 				5915E9ED3077D26500FEEC4B /* IJSVGExtentTests.m in Sources */,
 				5929C375306DC16E003D5C0C /* IJSVGFilterBatchTests.m in Sources */,
+				59C8A6233080D54D003819E4 /* IJSVGFilterVectorTests.m in Sources */,
 				5929C371306DC0D7003D5C0C /* IJSVGFilterConcurrencyTests.m in Sources */,
 				590C8248307B042D00AD5C88 /* IJSVGVisibleRegionTests.m in Sources */,
 				59438AC9306C7ABC006A5F63 /* IJSVGInnerShadowTests.m in Sources */,
@@ -998,6 +1002,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/IJSVGExampleTests",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering/Filters",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Parsing",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Nodes",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Stylesheets",
@@ -1029,6 +1034,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/IJSVGExampleTests",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering",
+					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Rendering/Filters",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Parsing",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Nodes",
 					"$(SRCROOT)/../Framework/IJSVG/IJSVG/Source/Stylesheets",

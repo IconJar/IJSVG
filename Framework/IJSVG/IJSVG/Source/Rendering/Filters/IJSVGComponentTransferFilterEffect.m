@@ -9,6 +9,7 @@
 #import <Accelerate/Accelerate.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGComponentTransferFilterEffect.h>
+#import <simd/simd.h>
 
 typedef struct {
     IJSVGFilterTransferType type;
@@ -20,33 +21,37 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
 {
     const IJSVGComponentTransferFunction* functions = configuration.bytes;
     const double* values = tables.bytes;
+    NSInteger capacity = MIN(w * h, 1024);
+    if (capacity == 0) {
+        return;
+    }
 
-    // Process small groups of pixels to keep memory use low.
-    NSInteger capacity = MIN(w * h, 4096);
-    NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 3 * sizeof(double)];
-    double* channel = scratch.mutableBytes;
-    double* transformed = channel + capacity;
+    // Keep one small block's four channels together. Decode the source once,
+    // then clamp and premultiply during the single interleaved write-back.
+    NSMutableData* scratch = [NSMutableData dataWithLength:capacity * 6 * sizeof(double)];
+    double* channels = scratch.mutableBytes;
+    double* transformed = channels + capacity * 4;
     double* powers = transformed + capacity;
-    for (NSUInteger c = 0; c < 4; c++) {
-        IJSVGComponentTransferFunction f = functions[c];
-        if (f.type == IJSVGFilterTransferTypeGamma) {
-            vDSP_vfillD(&f.exponent, powers, 1, capacity);
-        }
-        for (NSInteger start = 0; start < w * h; start += capacity) {
-            int count = (int)MIN(capacity, w * h - start);
-            NSInteger offset = start * 4;
-            for (NSInteger x = 0; x < count; x++) {
-                NSInteger i = offset + x * 4;
-                float alpha = src[i + 3];
-                channel[x] = IJSVGFilterClamp(c == 3 ? alpha : (alpha > 0 ? src[i + c] / alpha : 0));
+    for (NSInteger start = 0; start < w * h; start += capacity) {
+        int count = (int)MIN(capacity, w * h - start);
+        for (NSInteger x = 0; x < count; x++) {
+            simd_float4 pixel;
+            memcpy(&pixel, src + (start + x) * 4, sizeof(pixel));
+            pixel.rgb = pixel.a > 0 ? pixel.rgb / pixel.a : (simd_float3) { 0, 0, 0 };
+            for (NSUInteger c = 0; c < 4; c++) {
+                channels[c * capacity + x] = IJSVGFilterClamp(pixel[c]);
             }
+        }
+        for (NSUInteger c = 0; c < 4; c++) {
+            IJSVGComponentTransferFunction f = functions[c];
+            double* channel = channels + c * capacity;
             if (f.type == IJSVGFilterTransferTypeGamma) {
+                vDSP_vfillD(&f.exponent, powers, 1, count);
                 vvpow(transformed, powers, channel, &count);
                 vDSP_vsmsaD(transformed, 1, &f.amplitude, &f.bias, channel, 1, count);
             } else if (f.type == IJSVGFilterTransferTypeLinear) {
                 vDSP_vsmsaD(channel, 1, &f.slope, &f.intercept, channel, 1, count);
             } else if ((f.type == IJSVGFilterTransferTypeTable || f.type == IJSVGFilterTransferTypeDiscrete) && f.count > 0) {
-                // Look up each value using the SVG table rules.
                 for (NSInteger x = 0; x < count; x++) {
                     double v = channel[x];
                     if (f.type == IJSVGFilterTransferTypeTable) {
@@ -58,13 +63,15 @@ static void IJSVGApplyTransferToPixels(const float* src, float* dst, NSInteger w
                     }
                 }
             }
-            for (NSInteger x = 0; x < count; x++) {
-                dst[offset + x * 4 + c] = IJSVGFilterClamp(channel[x]);
-            }
         }
-    }
-    for (NSUInteger c = 0; c < 3; c++) {
-        vDSP_vmul(dst + c, 4, dst + 3, 4, dst + c, 4, (vDSP_Length)w * h);
+        for (NSInteger x = 0; x < count; x++) {
+            simd_float4 pixel;
+            for (NSUInteger c = 0; c < 4; c++) {
+                pixel[c] = IJSVGFilterClamp(channels[c * capacity + x]);
+            }
+            pixel.rgb *= pixel.a;
+            memcpy(dst + (start + x) * 4, &pixel, sizeof(pixel));
+        }
     }
 }
 

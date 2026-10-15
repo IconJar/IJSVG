@@ -62,6 +62,23 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     NSMutableIndexSet* _universalRules;
 }
 
+- (BOOL)mayAffectAttributes:(IJSVGBitFlags*)attributes
+{
+    for (IJSVGStyleSheetRule* rule in _rules) {
+        if (rule.style.hasCustomProperties) {
+            return YES;
+        }
+        NSUInteger count = 0;
+        const IJSVGStyleSheetAttribute* entries = [rule.style attributesWithCount:&count];
+        for (NSUInteger index = 0; index < count; index++) {
+            if ([attributes bitIsSet:(int)entries[index].attribute]) {
+                return YES;
+            }
+        }
+    }
+    return NO;
+}
+
 - (NSUInteger)ruleCount
 {
     return _rules.count;

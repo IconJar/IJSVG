@@ -119,6 +119,7 @@ typedef struct {
 
 // Shared services do not decide which attributes an element supports.
 @interface IJSVGParser (NodeParsingServices)
+- (IJSVGStyleSheetStyle*)parsedInlineStyleForValue:(NSString*)value;
 - (void)parsePolyBytes:(const char*)bytes length:(NSUInteger)length intoPath:(IJSVGPath*)path closePath:(BOOL)close;
 - (void)parsePolyPoints:(NSString*)points intoPath:(IJSVGPath*)path closePath:(BOOL)close;
 - (void)detachElement:(IJSVGXMLNode*)element withIdentifier:(NSString*)identifier;

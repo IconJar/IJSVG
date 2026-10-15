@@ -789,6 +789,72 @@ static CGContextRef NewBitmap(NSUInteger size, CFStringRef colorSpaceName)
 
 @implementation IJSVGLocalFilterTests
 
+- (void)testLocalOffsetsAndAlphaRespectCropStrideAndVectorTails
+{
+    for (NSNumber* widthValue in @[ @1, @2, @3, @5, @7, @17 ]) {
+        NSInteger width = widthValue.integerValue, height = 9;
+        size_t stride = width * 4 + 12;
+        CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, width, height, 8, stride, space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+        CGColorSpaceRelease(space);
+        XCTAssertNotEqual(bitmap, NULL);
+        if (bitmap == NULL) {
+            continue;
+        }
+        uint8_t* source = CGBitmapContextGetData(bitmap);
+        for (NSInteger y = 0; y < height; y++) {
+            for (NSInteger x = 0; x < width; x++) {
+                uint8_t* pixel = source + y * stride + x * 4;
+                pixel[3] = (x * 37 + y * 19) % 256;
+                pixel[0] = pixel[3] / 2;
+                pixel[1] = pixel[3] / 3;
+                pixel[2] = pixel[3] / 4;
+            }
+        }
+        for (NSValue* rect in @[ [NSValue valueWithRect:NSMakeRect(0, 0, width, height)],
+                 [NSValue valueWithRect:NSMakeRect(-2, 1, width + 1, 6)],
+                 [NSValue valueWithRect:NSMakeRect(width + 5, 0, 2, 2)],
+                 [NSValue valueWithRect:NSMakeRect(-1e12, -1e12, 2e12, 2e12)] ]) {
+            CGRect crop = rect.rectValue;
+            for (NSNumber* shift in @[ @0, @1, @-2, @32, @-32 ]) {
+                NSInteger dx = shift.integerValue, dy = -dx;
+                for (NSString* input in @[ @"SourceGraphic", @"SourceAlpha" ]) {
+                    NSString* recipe = [NSString stringWithFormat:
+                            @"<feOffset in='%@' dx='%ld' dy='%ld' result='shift'/>"
+                             "<feComposite in='shift' in2='SourceAlpha' operator='in'/>",
+                        input, (long)dx, (long)dy];
+                    IJSVGFilterGraph* graph = [self graphForRecipe:recipe space:@"sRGB"];
+                    CGImageRef image = IJSVGFilterSIMDNewLocalFilter(bitmap, graph, crop);
+                    XCTAssertNotEqual(image, NULL);
+                    if (image == NULL) {
+                        continue;
+                    }
+                    NSData* data = CFBridgingRelease(CGDataProviderCopyData(CGImageGetDataProvider(image)));
+                    const uint8_t* actual = data.bytes;
+                    size_t actualStride = CGImageGetBytesPerRow(image);
+                    for (NSInteger y = 0; y < height; y++) {
+                        for (NSInteger x = 0; x < width; x++) {
+                            NSInteger sx = x - dx, sy = y + dy;
+                            BOOL inside = CGRectContainsPoint(crop, CGPointMake(x + .5, height - y - .5))
+                                && sx >= 0 && sx < width && sy >= 0 && sy < height
+                                && CGRectContainsPoint(crop, CGPointMake(sx + .5, height - sy - .5));
+                            for (NSUInteger c = 0; c < 4; c++) {
+                                double expected = 0;
+                                if (inside && (c == 3 || [input isEqualToString:@"SourceGraphic"])) {
+                                    expected = source[sy * stride + sx * 4 + c] * source[y * stride + x * 4 + 3] / 255.;
+                                }
+                                XCTAssertEqualWithAccuracy(actual[y * actualStride + x * 4 + c], expected, 1.01);
+                            }
+                        }
+                    }
+                    CGImageRelease(image);
+                }
+            }
+        }
+        CGContextRelease(bitmap);
+    }
+}
+
 - (IJSVGFilterGraph*)graphForRecipe:(NSString*)recipe space:(NSString*)space
 {
     NSString* xml = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='32' "
