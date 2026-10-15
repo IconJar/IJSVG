@@ -260,7 +260,7 @@ static void IJSVGXMLParserCDATA(void* context, const xmlChar* bytes, int length)
 
 static void IJSVGXMLParserIgnoreWhitespace(void* context, const xmlChar* bytes, int length)
 {
-    // Keep layout's whitespace policy, but remember text for CSS :empty.
+    // Keep the layout whitespace policy and remember text for CSS :empty.
     IJSVGXMLMarkSelectorText(context, length);
 }
 
@@ -358,7 +358,18 @@ static IJSVGXMLDocument* IJSVGXMLDocumentParseBytes(const void* bytes, size_t le
     }
     document->names = parser->dict;
     xmlCtxtUseOptions(parser, XML_PARSE_NONET | XML_PARSE_NOENT | XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
-    int status = xmlParseChunk(parser, bytes, (int)length, 1);
+
+    // Bound parser lookahead for large documents without relaxing XML limits.
+    int status = 0;
+    size_t offset = 0;
+    while (offset < length && status == 0 && !document->failed) {
+        int chunk = (int)MIN(length - offset, (size_t)65536);
+        status = xmlParseChunk(parser, (const char*)bytes + offset, chunk, 0);
+        offset += chunk;
+    }
+    if (status == 0 && !document->failed) {
+        status = xmlParseChunk(parser, NULL, 0, 1);
+    }
     bool valid = status == 0 && parser->wellFormed && parser->nsWellFormed && !document->failed && document->root != IJSVGXMLNodeNotFound;
     xmlFreeParserCtxt(parser);
     if (!valid) {

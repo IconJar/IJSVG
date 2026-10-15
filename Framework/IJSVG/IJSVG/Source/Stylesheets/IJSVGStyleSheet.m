@@ -55,6 +55,72 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     }
 }
 
+static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictionary<NSString*, NSString*>* namespaces)
+{
+    const char* bytes = statement.UTF8String;
+    NSUInteger length = strlen(bytes);
+    NSUInteger cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, 0, length);
+    if (cursor == length || bytes[cursor++] != '@') {
+        return;
+    }
+    char keyword[16] = { 0 };
+    if (!IJSVGStyleSheetConsumeASCIIIdentifier(bytes, length, &cursor, keyword, sizeof(keyword)) || strcasecmp(keyword, "namespace") != 0) {
+        return;
+    }
+    cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+    NSString* prefix = @"";
+    NSUInteger valueStart = cursor;
+    NSString* identifier = IJSVGStyleSheetConsumeIdentifier(bytes, length, &cursor);
+    if (identifier != nil && !(strcasecmp(identifier.UTF8String, "url") == 0 && cursor < length && bytes[cursor] == '(')) {
+        prefix = identifier;
+        cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+        valueStart = cursor;
+    } else {
+        cursor = valueStart;
+    }
+    BOOL url = cursor + 4 <= length && strncasecmp(bytes + cursor, "url(", 4) == 0;
+    if (url) {
+        cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor + 4, length);
+    }
+    NSString* uri = nil;
+    if (cursor < length && (bytes[cursor] == '\'' || bytes[cursor] == '"')) {
+        NSUInteger start = cursor;
+        if (!IJSVGStyleSheetSkipQuotedString(bytes, length, &cursor)) {
+            return;
+        }
+        uri = IJSVGStyleSheetDecodeString(bytes, start, cursor);
+    } else if (url) {
+        NSUInteger start = cursor;
+        while (cursor < length && bytes[cursor] != ')' && !IJSVGStyleSheetCharIsWhitespace(bytes[cursor])) {
+            if (bytes[cursor] == '\'' || bytes[cursor] == '"' || bytes[cursor] == '(' || (unsigned char)bytes[cursor] < 0x20) {
+                return;
+            }
+            if (bytes[cursor] == '\\') {
+                if (!IJSVGStyleSheetSkipEscape(bytes, length, &cursor, NO)) {
+                    return;
+                }
+            } else {
+                cursor++;
+            }
+        }
+
+        // Decode URL escapes using the same CSS string decoder.
+        NSString* value = IJSVGStyleSheetStringFromUTF8Bytes(bytes, start, cursor);
+        NSString* quoted = [NSString stringWithFormat:@"\"%@\"", value];
+        uri = IJSVGStyleSheetDecodeString(quoted.UTF8String, 0, [quoted lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+    }
+    cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+    if (url) {
+        if (cursor == length || bytes[cursor++] != ')') {
+            return;
+        }
+        cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length);
+    }
+    if (uri != nil && cursor == length) {
+        namespaces[prefix] = uri;
+    }
+}
+
 @implementation IJSVGStyleSheet {
     NSMutableDictionary<NSString*, NSMutableIndexSet*>* _identifierRules;
     NSMutableDictionary<NSString*, NSMutableIndexSet*>* _classRules;
@@ -97,15 +163,15 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
     return self;
 }
 
-- (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithSelectorString:(NSString*)string
+- (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithSelectorString:(NSString*)string namespaces:(NSDictionary*)namespaces
 {
     if (string == nil) {
         return nil;
     }
     NSArray<IJSVGStyleSheetSelector*>* selectors = _selectors[string];
     if (selectors == nil) {
-        // Ordinary rule lists are strict; only :is() and :where() forgive invalid entries.
-        selectors = [IJSVGStyleSheetSelector selectorsWithString:string forgiving:NO] ?: @[];
+        // Ordinary rule lists are strict. Only :is() and :where() forgive invalid entries.
+        selectors = [IJSVGStyleSheetSelector selectorsWithString:string namespaces:namespaces] ?: @[];
         _selectors[string] = selectors;
     }
     return selectors;
@@ -124,6 +190,10 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
         return;
     }
 
+    // Namespace bindings are local to this style element, including cache entries.
+    [_selectors removeAllObjects];
+    NSMutableDictionary* namespaces = [[NSMutableDictionary alloc] init];
+    BOOL allowsNamespaces = YES;
     NSUInteger depth = 0;
     NSUInteger marker = 0;
     NSUInteger parenDepth = 0;
@@ -134,7 +204,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
     for (NSUInteger i = 0; i < length; i++) {
         if (quote == 0 && !escaped) {
-            i += strcspn(chars + i, "{}()'\"\\");
+            i += strcspn(chars + i, ";{}()'\"\\");
             if (i == length) {
                 break;
             }
@@ -142,6 +212,14 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
         char c = chars[i];
 
         if (IJSVGStyleSheetConsumeQuotedCharacter(c, &quote, &escaped)) {
+            continue;
+        }
+
+        if (c == ';' && depth == 0 && parenDepth == 0) {
+            if (allowsNamespaces) {
+                IJSVGStyleSheetParseNamespace(IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i), namespaces);
+            }
+            marker = i + 1;
             continue;
         }
 
@@ -157,6 +235,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
 
         if (c == '{' && parenDepth == 0) {
             if (depth == 0) {
+                allowsNamespaces = NO;
                 selector = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
                 selector = [selector stringByTrimmingCharactersInSet:whitespaceCharSet];
                 marker = i + 1;
@@ -171,7 +250,7 @@ static void IJSVGStyleSheetIndexRule(NSMutableDictionary<NSString*, NSMutableInd
                 continue;
             }
             if (depth == 1) {
-                NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector];
+                NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector namespaces:namespaces];
                 if (i != marker && selectors.count != 0) {
                     IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars + marker length:i - marker];
                     [self addParsedStyle:style withSelectors:selectors];

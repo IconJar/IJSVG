@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGByteCache.h"
+#import "IJSVGByteHash.h"
 #import "IJSVGXML.h"
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
@@ -27,6 +28,15 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVGSwitch.h>
+
+// Hash all identifier bytes to reduce table probes for patterned SVG IDs.
+// Keep CF string equality and ownership and reuse the existing byte hash.
+static CFHashCode IJSVGParserIdentifierHash(const void* value)
+{
+    NSString* string = (__bridge NSString*)value;
+    const char* bytes = string.UTF8String;
+    return bytes != NULL ? (CFHashCode)IJSVGHashBytes(bytes, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) : CFHash(value);
+}
 
 // Newly created nodes derive canonical names from their type. Only unknown
 // elements and noncanonical source spelling need an explicit name override.
@@ -632,7 +642,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     if (_detachedReferences != NULL) {
         CFRelease(_detachedReferences);
     }
-    _detachedReferences = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, NULL);
+    CFDictionaryKeyCallBacks identifierCallbacks = kCFTypeDictionaryKeyCallBacks;
+    identifierCallbacks.hash = IJSVGParserIdentifierHash;
+    _detachedReferences = CFDictionaryCreateMutable(NULL, 0, &identifierCallbacks, NULL);
     self.activeReferences = [[NSMutableSet alloc] init];
     self.pendingStylePaints = [[NSMutableDictionary alloc] init];
     self.selectorNodes = nil;
@@ -1588,6 +1600,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGStyleSheetSelectorRecord* node = [[IJSVGStyleSheetSelectorRecord alloc] init];
     node.name = IJSVGXMLLocalName(element);
+    node.selectorElement = element;
     node.namespaceURI = element->uri != NULL ? [NSString stringWithUTF8String:element->uri] : nil;
     node.identifier = IJSVGParserElementIdentifier(element);
     NSString* className = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeClass));
@@ -1844,6 +1857,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     scope = IJSVGParserElementMapTable();
     IJSVGStyleSheetSelectorRecord* root = [[IJSVGStyleSheetSelectorRecord alloc] init];
     root.name = IJSVGXMLLocalName(input.element);
+    root.selectorElement = input.element;
+    root.selectorAttributeOverlay = input.attributes.overlay;
+    root.selectorAttributeCount = input.attributes.count;
     IJSVGXMLAttributeList inputAttributeIterator = input.attributes;
     for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&inputAttributeIterator); attribute != NULL; attribute = IJSVGXMLNextAttribute(&inputAttributeIterator)) {
         if (attribute->identifier == IJSVGNodeAttributeID) {

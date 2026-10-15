@@ -11,6 +11,10 @@
 
 #import <IJSVG/IJSVGNode.h>
 
+@class IJSVGStyleSheetAttributeSelector;
+struct IJSVGXMLNode;
+struct IJSVGXMLAttribute;
+
 // Match selectors against either render nodes or lightweight XML records.
 @protocol IJSVGStyleSheetSelectorNode <NSObject>
 - (NSString*)name;
@@ -19,6 +23,9 @@
 - (id<IJSVGStyleSheetSelectorNode>)selectorParent;
 - (id<IJSVGStyleSheetSelectorNode>)selectorPreviousSibling;
 @optional
+- (NSString*)namespaceURI;
+- (BOOL)selectorMatchesAttribute:(IJSVGStyleSheetAttributeSelector*)attribute;
+- (const char*)selectorLanguage;
 - (id<IJSVGStyleSheetSelectorNode>)selectorNextSibling;
 - (id<IJSVGStyleSheetSelectorNode>)selectorFirstChild;
 - (BOOL)selectorIsEmpty;
@@ -39,6 +46,11 @@
 @property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorNextSibling;
 @property (nonatomic, weak) id<IJSVGStyleSheetSelectorNode> selectorFirstChild;
 @property (nonatomic, copy) NSString* namespaceURI;
+
+// Borrowed XML storage remains valid while the parser owns the selector tree.
+@property (nonatomic) struct IJSVGXMLNode* selectorElement;
+@property (nonatomic) struct IJSVGXMLAttribute** selectorAttributeOverlay;
+@property (nonatomic) NSUInteger selectorAttributeCount;
 @property (nonatomic) BOOL selectorHasContent;
 @property (nonatomic) NSUInteger childIndex;
 @property (nonatomic) NSUInteger childCount;
@@ -53,12 +65,13 @@
     NSMutableArray<IJSVGStyleSheetSelectorRaw*>* _rawSelectors;
 }
 
-// Packed, lexicographically ordered CSS specificity; compare rather than interpret numerically.
+// Packed CSS specificity preserves lexicographic order for comparisons.
 @property (nonatomic, assign) NSUInteger specificity;
 @property (nonatomic, readonly) BOOL requiresSelectorTree;
 @property (nonatomic, readonly) IJSVGStyleSheetSelectorRaw* matchingSelector;
 
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving;
++ (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces;
 - (id)initWithSelectorString:(NSString*)string;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node;
 

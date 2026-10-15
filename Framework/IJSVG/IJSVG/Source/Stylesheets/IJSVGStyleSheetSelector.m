@@ -9,7 +9,9 @@
 #import <IJSVG/IJSVGGroup.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGStyleSheetSelector.h>
+#import <IJSVGParserUtils.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGXML.h>
 
 // Saturate each component independently: ten classes must never equal one ID.
 #define SPECIFICITY_BITS 21
@@ -37,7 +39,323 @@ static id<IJSVGStyleSheetSelectorNode> IJSVGSelectorFirstChild(id<IJSVGStyleShee
     return [node respondsToSelector:@selector(selectorFirstChild)] ? node.selectorFirstChild : nil;
 }
 
+typedef NS_ENUM(uint8_t, IJSVGSelectorAttributeOperator) {
+    IJSVGSelectorAttributeExists,
+    IJSVGSelectorAttributeEquals,
+    IJSVGSelectorAttributeIncludes,
+    IJSVGSelectorAttributeDash,
+    IJSVGSelectorAttributePrefix,
+    IJSVGSelectorAttributeSuffix,
+    IJSVGSelectorAttributeSubstring
+};
+
+@interface IJSVGStyleSheetAttributeSelector : NSObject {
+@public
+    NSString* name;
+    NSString* namespaceURI;
+    NSString* value;
+    IJSVGSelectorAttributeOperator operation;
+    BOOL insensitive;
+    IJSVGNodeAttribute identifier;
+    const char* nameBytes;
+    const char* namespaceBytes;
+    const char* valueBytes;
+    NSUInteger valueLength;
+}
+@end
+
+@implementation IJSVGStyleSheetAttributeSelector
+@end
+
+static unsigned char IJSVGSelectorFoldASCII(unsigned char c)
+{
+    return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
+}
+
+static BOOL IJSVGSelectorBytesEqual(const char* lhs, const char* rhs, NSUInteger count, BOOL insensitive)
+{
+    if (!insensitive) {
+        return memcmp(lhs, rhs, count) == 0;
+    }
+    for (NSUInteger index = 0; index < count; index++) {
+        if (IJSVGSelectorFoldASCII(lhs[index]) != IJSVGSelectorFoldASCII(rhs[index])) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
+static BOOL IJSVGSelectorAttributeMatches(IJSVGStyleSheetAttributeSelector* __unsafe_unretained selector, IJSVGXMLAttribute* attribute)
+{
+    BOOL sameName = selector->identifier != IJSVGNodeAttributeUnknown && attribute->identifier != IJSVGNodeAttributeUnknown
+        ? selector->identifier == attribute->identifier
+        : strcmp(selector->nameBytes, attribute->name) == 0;
+    if (!sameName || (selector->namespaceBytes != NULL && strcmp(selector->namespaceBytes, attribute->uri ?: "") != 0)) {
+        return NO;
+    }
+    if (selector->operation == IJSVGSelectorAttributeExists) {
+        return YES;
+    }
+    const char* actual = IJSVGXMLAttributeBytes(attribute);
+    const char* expected = selector->valueBytes;
+    NSUInteger length = attribute->value.length;
+    NSUInteger count = selector->valueLength;
+    BOOL insensitive = selector->insensitive;
+    switch (selector->operation) {
+        case IJSVGSelectorAttributeEquals:
+            return length == count && IJSVGSelectorBytesEqual(actual, expected, count, insensitive);
+        case IJSVGSelectorAttributeDash:
+            return length >= count && (length == count || actual[count] == '-') && IJSVGSelectorBytesEqual(actual, expected, count, insensitive);
+        case IJSVGSelectorAttributePrefix:
+            return count != 0 && length >= count && IJSVGSelectorBytesEqual(actual, expected, count, insensitive);
+        case IJSVGSelectorAttributeSuffix:
+            return count != 0 && length >= count && IJSVGSelectorBytesEqual(actual + length - count, expected, count, insensitive);
+        case IJSVGSelectorAttributeSubstring:
+            if (count != 0 && length >= count) {
+                for (NSUInteger index = 0; index <= length - count; index++) {
+                    if (IJSVGSelectorBytesEqual(actual + index, expected, count, insensitive)) {
+                        return YES;
+                    }
+                }
+            }
+            return NO;
+        case IJSVGSelectorAttributeIncludes:
+            if (count == 0) {
+                return NO;
+            }
+            for (NSUInteger index = 0; index < count; index++) {
+                if (IJSVGStyleSheetCharIsWhitespace(expected[index])) {
+                    return NO;
+                }
+            }
+            for (NSUInteger index = 0; index < length;) {
+                index = IJSVGStyleSheetIndexBySkippingWhitespace(actual, index, length);
+                NSUInteger start = index;
+                while (index < length && !IJSVGStyleSheetCharIsWhitespace(actual[index])) {
+                    index++;
+                }
+                if (index - start == count && IJSVGSelectorBytesEqual(actual + start, expected, count, insensitive)) {
+                    return YES;
+                }
+            }
+            return NO;
+        case IJSVGSelectorAttributeExists:
+            return YES;
+    }
+}
+
+static NSString* IJSVGSelectorConsumeValue(const char* bytes, NSUInteger length, NSUInteger* cursor)
+{
+    if (*cursor >= length) {
+        return nil;
+    }
+    if (bytes[*cursor] == '\'' || bytes[*cursor] == '"') {
+        NSUInteger start = *cursor;
+        return IJSVGStyleSheetSkipQuotedString(bytes, length, cursor) ? IJSVGStyleSheetDecodeString(bytes, start, *cursor) : nil;
+    }
+    return IJSVGStyleSheetConsumeIdentifier(bytes, length, cursor);
+}
+
+// A nil namespace means any namespace. An empty string means no namespace.
+static BOOL IJSVGSelectorConsumeQualifiedName(const char* bytes, NSUInteger length, NSUInteger* cursor, NSDictionary* namespaces, BOOL attribute, NSString* __strong* name, NSString* __strong* uri)
+{
+    NSString* first = nil;
+    BOOL wildcard = *cursor < length && bytes[*cursor] == '*';
+    if (wildcard) {
+        (*cursor)++;
+        first = @"*";
+    } else if (*cursor < length && bytes[*cursor] != '|') {
+        first = IJSVGStyleSheetConsumeIdentifier(bytes, length, cursor);
+        if (first == nil) {
+            return NO;
+        }
+    }
+    if (*cursor < length && bytes[*cursor] == '|'
+        && (*cursor + 1 == length || (bytes[*cursor + 1] != '|' && bytes[*cursor + 1] != '='))) {
+        (*cursor)++;
+        *uri = first == nil ? @"" : (wildcard ? nil : namespaces[first]);
+        if (first != nil && !wildcard && *uri == nil) {
+            return NO;
+        }
+        if (!attribute && *cursor < length && bytes[*cursor] == '*') {
+            (*cursor)++;
+            *name = nil;
+            return YES;
+        }
+        *name = IJSVGStyleSheetConsumeIdentifier(bytes, length, cursor);
+        return *name != nil;
+    }
+    if (first == nil || (attribute && wildcard)) {
+        return NO;
+    }
+    *name = wildcard ? nil : first;
+    *uri = attribute ? @"" : namespaces[@""];
+    return YES;
+}
+
+static IJSVGStyleSheetAttributeSelector* IJSVGSelectorConsumeAttribute(const char* bytes, NSUInteger length, NSUInteger* cursor, NSDictionary* namespaces)
+{
+    *cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, *cursor + 1, length);
+    IJSVGStyleSheetAttributeSelector* result = [[IJSVGStyleSheetAttributeSelector alloc] init];
+    if (!IJSVGSelectorConsumeQualifiedName(bytes, length, cursor, namespaces, YES, &result->name, &result->namespaceURI)) {
+        return nil;
+    }
+    result->nameBytes = result->name.UTF8String;
+    result->namespaceBytes = result->namespaceURI.UTF8String;
+    result->identifier = IJSVGNodeAttributeForBytes(result->nameBytes, strlen(result->nameBytes));
+    *cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, *cursor, length);
+    if (*cursor == length) {
+        return nil;
+    }
+    char c = bytes[(*cursor)++];
+    if (c == ']') {
+        return result;
+    }
+    switch (c) {
+        case '=':
+            result->operation = IJSVGSelectorAttributeEquals;
+            break;
+        case '~':
+            result->operation = IJSVGSelectorAttributeIncludes;
+            break;
+        case '|':
+            result->operation = IJSVGSelectorAttributeDash;
+            break;
+        case '^':
+            result->operation = IJSVGSelectorAttributePrefix;
+            break;
+        case '$':
+            result->operation = IJSVGSelectorAttributeSuffix;
+            break;
+        case '*':
+            result->operation = IJSVGSelectorAttributeSubstring;
+            break;
+        default:
+            return nil;
+    }
+    if (c != '=' && (*cursor == length || bytes[(*cursor)++] != '=')) {
+        return nil;
+    }
+    *cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, *cursor, length);
+    result->value = IJSVGSelectorConsumeValue(bytes, length, cursor);
+    if (result->value == nil) {
+        return nil;
+    }
+    result->valueBytes = result->value.UTF8String;
+    result->valueLength = [result->value lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    *cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, *cursor, length);
+    if (*cursor < length && bytes[*cursor] != ']') {
+        char flag[8] = { 0 };
+        if (!IJSVGStyleSheetConsumeASCIIIdentifier(bytes, length, cursor, flag, sizeof(flag)) || strlen(flag) != 1) {
+            return nil;
+        }
+        c = IJSVGSelectorFoldASCII(flag[0]);
+        if (c != 'i' && c != 's') {
+            return nil;
+        }
+        result->insensitive = c == 'i';
+        *cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, *cursor, length);
+    }
+    return *cursor < length && bytes[(*cursor)++] == ']' ? result : nil;
+}
+
+// RFC 4647 extended filtering, including singleton boundaries and wildcards.
+static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range)
+{
+    if (*range == '\0') {
+        return *language == '\0';
+    }
+    if (*language == '\0') {
+        return NO;
+    }
+    NSUInteger r = strcspn(range, "-"), l = strcspn(language, "-");
+    if (!(r == 1 && *range == '*') && (r != l || !IJSVGSelectorBytesEqual(language, range, r, YES))) {
+        return NO;
+    }
+    range += r;
+    language += l;
+    while (*range != '\0') {
+        range++;
+        r = strcspn(range, "-");
+        if (r == 1 && *range == '*') {
+            range += r;
+            continue;
+        }
+        BOOL found = NO;
+        while (*language != '\0') {
+            language++;
+            l = strcspn(language, "-");
+            if (r == l && IJSVGSelectorBytesEqual(language, range, r, YES)) {
+                found = YES;
+                language += l;
+                break;
+            }
+            if (l == 1) {
+                return NO;
+            }
+            language += l;
+        }
+        if (!found) {
+            return NO;
+        }
+        range += r;
+    }
+    return YES;
+}
+
+@interface IJSVGSelectorFilteredPositions : NSObject {
+@public
+    NSMapTable* positions;
+    NSUInteger count;
+}
+@end
+
+@implementation IJSVGSelectorFilteredPositions
+@end
+
+@interface IJSVGStyleSheetSelectorRecord ()
+@property (nonatomic, strong) NSMapTable* filteredPositions;
+@end
+
 @implementation IJSVGStyleSheetSelectorRecord
+
+- (IJSVGXMLAttributeList)selectorAttributes
+{
+    if (_selectorAttributeOverlay != NULL) {
+        return (IJSVGXMLAttributeList) { .overlay = _selectorAttributeOverlay, .count = _selectorAttributeCount };
+    }
+    return _selectorElement != NULL ? IJSVGXMLAttributes(_selectorElement) : (IJSVGXMLAttributeList) { 0 };
+}
+
+- (BOOL)selectorMatchesAttribute:(IJSVGStyleSheetAttributeSelector*)selector
+{
+    IJSVGXMLAttributeList list = [self selectorAttributes];
+    for (NSUInteger index = 0; index < list.count; index++) {
+        IJSVGXMLAttribute* attribute = list.overlay != NULL ? list.overlay[index] : list.first + index;
+        if (IJSVGSelectorAttributeMatches(selector, attribute)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (const char*)selectorLanguage
+{
+    IJSVGXMLAttributeList list = [self selectorAttributes];
+    const char* language = NULL;
+    for (IJSVGXMLAttribute* attribute = IJSVGXMLFirstAttribute(&list); attribute != NULL; attribute = IJSVGXMLNextAttribute(&list)) {
+        if (strcmp(attribute->name, "lang") != 0) {
+            continue;
+        }
+        if (attribute->uri != NULL && strcmp(attribute->uri, "http://www.w3.org/XML/1998/namespace") == 0) {
+            return IJSVGXMLAttributeBytes(attribute);
+        }
+        if (attribute->uri == NULL || attribute->uri[0] == '\0') {
+            language = IJSVGXMLAttributeBytes(attribute);
+        }
+    }
+    return language;
+}
 
 - (BOOL)selectorIsEmpty
 {
@@ -46,7 +364,7 @@ static id<IJSVGStyleSheetSelectorNode> IJSVGSelectorFirstChild(id<IJSVGStyleShee
 
 - (NSUInteger)selectorIndexOfType:(BOOL)ofType fromEnd:(BOOL)fromEnd
 {
-    // XML records are immutable after construction; each sibling position is
+    // XML records are immutable after construction. Each sibling position is
     // computed once instead of walking a wide sibling list for every rule.
     NSUInteger index = ofType ? _typeIndex : _childIndex;
     NSUInteger count = ofType ? _typeCount : _childCount;
@@ -123,6 +441,7 @@ static id<IJSVGStyleSheetSelectorNode> IJSVGSelectorFirstChild(id<IJSVGStyleShee
     BOOL fromEnd;
     BOOL only;
     NSArray<IJSVGStyleSheetSelector*>* selectors;
+    NSArray<NSString*>* languages;
 }
 @end
 
@@ -134,13 +453,14 @@ static id<IJSVGStyleSheetSelectorNode> IJSVGSelectorFirstChild(id<IJSVGStyleShee
 @property (nonatomic) BOOL needsSelectorTree;
 @property (nonatomic) BOOL usesScope;
 @property (nonatomic) BOOL relative;
-- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative;
+@property (nonatomic, copy) NSDictionary<NSString*, NSString*>* namespaces;
+- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces;
 - (BOOL)compileAtDepth:(NSUInteger)depth insideHas:(BOOL)insideHas;
 - (BOOL)matchesNode:(id<IJSVGStyleSheetSelectorNode>)node scope:(id<IJSVGStyleSheetSelectorNode>)scope;
 - (BOOL)matchesRelativeTo:(id<IJSVGStyleSheetSelectorNode>)anchor scope:(id<IJSVGStyleSheetSelectorNode>)scope;
 @end
 
-// Split only at top-level commas; a comma in :is(), an escape, or a quoted
+// Split only at outer commas. A comma in :is(), an escape, or a quoted
 // unsupported selector must not turn into an unrelated stylesheet rule.
 static NSArray<NSString*>* IJSVGSelectorListParts(NSString* string)
 {
@@ -176,7 +496,7 @@ static NSArray<NSString*>* IJSVGSelectorListParts(NSString* string)
     return parts;
 }
 
-static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* string, BOOL forgiving, NSUInteger depth, BOOL insideHas, BOOL relative)
+static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* string, BOOL forgiving, NSUInteger depth, BOOL insideHas, BOOL relative, NSDictionary* namespaces)
 {
     NSArray* parts = IJSVGSelectorListParts(string);
     if (parts == nil || depth > 64) {
@@ -184,7 +504,7 @@ static NSArray<IJSVGStyleSheetSelector*>* IJSVGSelectorParseList(NSString* strin
     }
     NSMutableArray* result = [NSMutableArray array];
     for (NSString* part in parts) {
-        IJSVGStyleSheetSelector* item = [[IJSVGStyleSheetSelector alloc] initWithString:part depth:depth insideHas:insideHas relative:relative];
+        IJSVGStyleSheetSelector* item = [[IJSVGStyleSheetSelector alloc] initWithString:part depth:depth insideHas:insideHas relative:relative namespaces:namespaces];
         if (item == nil && !forgiving) {
             return nil;
         }
@@ -214,7 +534,7 @@ static BOOL IJSVGSelectorConsumeInteger(const char* bytes, NSUInteger length, NS
     return YES;
 }
 
-static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass* pseudo, NSUInteger depth, BOOL insideHas)
+static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass* pseudo, NSUInteger depth, BOOL insideHas, NSDictionary* namespaces)
 {
     const char* bytes = argument.UTF8String;
     NSUInteger length = strlen(bytes);
@@ -267,7 +587,7 @@ static BOOL IJSVGSelectorParseNth(NSString* argument, IJSVGStyleSheetPseudoClass
         return NO;
     }
     NSString* filter = IJSVGStyleSheetStringFromUTF8Bytes(bytes, cursor + 2, length);
-    pseudo->selectors = IJSVGSelectorParseList(filter, NO, depth + 1, insideHas, NO);
+    pseudo->selectors = IJSVGSelectorParseList(filter, NO, depth + 1, insideHas, NO, namespaces);
     return pseudo->selectors.count != 0;
 }
 
@@ -302,6 +622,20 @@ static BOOL IJSVGSelectorMatchPseudo(IJSVGStyleSheetPseudoClass* pseudo, id<IJSV
                 }
             }
             return NO;
+        case IJSVGSelectorPseudoLang: {
+            const char* language = NULL;
+            for (id<IJSVGStyleSheetSelectorNode> ancestor = node; ancestor != nil; ancestor = ancestor.selectorParent) {
+                if ([ancestor respondsToSelector:@selector(selectorLanguage)] && (language = [ancestor selectorLanguage]) != NULL) {
+                    break;
+                }
+            }
+            for (NSString* range in pseudo->languages) {
+                if (IJSVGSelectorLanguageMatches(language ?: "", range.UTF8String)) {
+                    return YES;
+                }
+            }
+            return NO;
+        }
         case IJSVGSelectorPseudoNth:
             break;
     }
@@ -311,13 +645,38 @@ static BOOL IJSVGSelectorMatchPseudo(IJSVGStyleSheetPseudoClass* pseudo, id<IJSV
         if (!IJSVGSelectorMatchesAny(pseudo->selectors, node, scope)) {
             return NO;
         }
-        position = 1;
-        id<IJSVGStyleSheetSelectorNode> sibling = pseudo->fromEnd ? IJSVGSelectorNext(node) : node.selectorPreviousSibling;
-        while (sibling != nil) {
-            if (IJSVGSelectorMatchesAny(pseudo->selectors, sibling, scope)) {
-                position++;
+
+        // Immutable XML siblings share one filter pass for each nth selector.
+        // Render nodes retain the uncached path because callers can mutate them.
+        IJSVGStyleSheetSelectorRecord* parent = (id)node.selectorParent;
+        if ([node isKindOfClass:IJSVGStyleSheetSelectorRecord.class] && [parent isKindOfClass:IJSVGStyleSheetSelectorRecord.class]) {
+            if (parent.filteredPositions == nil) {
+                parent.filteredPositions = [NSMapTable strongToStrongObjectsMapTable];
             }
-            sibling = pseudo->fromEnd ? IJSVGSelectorNext(sibling) : sibling.selectorPreviousSibling;
+            IJSVGSelectorFilteredPositions* filtered = [parent.filteredPositions objectForKey:pseudo];
+            if (filtered == nil) {
+                filtered = [[IJSVGSelectorFilteredPositions alloc] init];
+                filtered->positions = [NSMapTable weakToStrongObjectsMapTable];
+                for (id<IJSVGStyleSheetSelectorNode> sibling = parent.selectorFirstChild; sibling != nil; sibling = IJSVGSelectorNext(sibling)) {
+                    if (IJSVGSelectorMatchesAny(pseudo->selectors, sibling, scope)) {
+                        [filtered->positions setObject:@(++filtered->count) forKey:sibling];
+                    }
+                }
+                [parent.filteredPositions setObject:filtered forKey:pseudo];
+            }
+            position = [[filtered->positions objectForKey:node] unsignedIntegerValue];
+            if (position != 0 && pseudo->fromEnd) {
+                position = filtered->count - position + 1;
+            }
+        } else {
+            position = 1;
+            id<IJSVGStyleSheetSelectorNode> sibling = pseudo->fromEnd ? IJSVGSelectorNext(node) : node.selectorPreviousSibling;
+            while (sibling != nil) {
+                if (IJSVGSelectorMatchesAny(pseudo->selectors, sibling, scope)) {
+                    position++;
+                }
+                sibling = pseudo->fromEnd ? IJSVGSelectorNext(sibling) : sibling.selectorPreviousSibling;
+            }
         }
     } else if ([node respondsToSelector:@selector(selectorIndexOfType:fromEnd:)]) {
         position = [node selectorIndexOfType:pseudo->ofType fromEnd:pseudo->fromEnd];
@@ -339,6 +698,9 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     if (node == nil || raw == nil) {
         return NO;
     }
+    if (raw.namespaceURI != nil && (![node respondsToSelector:@selector(namespaceURI)] || ![raw.namespaceURI isEqualToString:node.namespaceURI ?: @""])) {
+        return NO;
+    }
     if (raw.tag != nil && ![raw.tag isEqualToString:node.name]) {
         return NO;
     }
@@ -352,6 +714,11 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     }
     for (NSString* className in raw.classes) {
         if (![node.classNameList containsObject:className]) {
+            return NO;
+        }
+    }
+    for (IJSVGStyleSheetAttributeSelector* attribute in raw.attributes) {
+        if (![node respondsToSelector:@selector(selectorMatchesAttribute:)] || ![node selectorMatchesAttribute:attribute]) {
             return NO;
         }
     }
@@ -370,21 +737,27 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
 
 + (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string forgiving:(BOOL)forgiving
 {
-    return IJSVGSelectorParseList(string, forgiving, 0, NO, NO);
+    return IJSVGSelectorParseList(string, forgiving, 0, NO, NO, nil);
+}
+
++ (NSArray<IJSVGStyleSheetSelector*>*)selectorsWithString:(NSString*)string namespaces:(NSDictionary<NSString*, NSString*>*)namespaces
+{
+    return IJSVGSelectorParseList(string, NO, 0, NO, NO, namespaces);
 }
 
 - (id)initWithSelectorString:(NSString*)string
 {
-    return [self initWithString:string depth:0 insideHas:NO relative:NO];
+    return [self initWithString:string depth:0 insideHas:NO relative:NO namespaces:nil];
 }
 
-- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative
+- (instancetype)initWithString:(NSString*)string depth:(NSUInteger)depth insideHas:(BOOL)insideHas relative:(BOOL)relative namespaces:(NSDictionary*)namespaces
 {
     if ((self = [super init]) != nil) {
         if (depth > 64) {
             return nil;
         }
         selector = [string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+        _namespaces = [namespaces copy];
         _relative = relative;
         _relativeCombinator = IJSVGStyleSheetSelectorCombinatorDescendant;
         if (relative) {
@@ -403,8 +776,9 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         }
         _needsSelectorTree = _rawSelectors.count > 1;
         for (IJSVGStyleSheetSelectorRaw* raw in _rawSelectors) {
+            _needsSelectorTree |= raw.attributes.count != 0 || raw.namespaceURI != nil;
             for (IJSVGStyleSheetPseudoClass* pseudo in raw.pseudoClasses) {
-                _needsSelectorTree |= pseudo->kind <= IJSVGSelectorPseudoNth || pseudo->kind == IJSVGSelectorPseudoHas;
+                _needsSelectorTree |= pseudo->kind <= IJSVGSelectorPseudoNth || pseudo->kind == IJSVGSelectorPseudoHas || pseudo->kind == IJSVGSelectorPseudoLang;
                 _usesScope |= pseudo->kind == IJSVGSelectorPseudoScope;
                 for (IJSVGStyleSheetSelector* nested in pseudo->selectors) {
                     _needsSelectorTree |= nested.requiresSelectorTree;
@@ -432,7 +806,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     for (IJSVGStyleSheetSelectorRaw* raw in _rawSelectors) {
         NSUInteger own = (raw.tag != nil ? SPECIFICITY_TAG : 0)
             + MIN(raw.identifiers.count, SPECIFICITY_MASK) * SPECIFICITY_IDENTIFIER
-            + MIN(raw.classCount, SPECIFICITY_MASK) * SPECIFICITY_CLASS;
+            + MIN(raw.classCount + raw.attributes.count, SPECIFICITY_MASK) * SPECIFICITY_CLASS;
         _specificity = IJSVGSelectorAddSpecificity(_specificity, own);
         for (IJSVGStyleSheetPseudoClass* pseudo in raw.pseudoClasses) {
             if (pseudo->kind == IJSVGSelectorPseudoWhere) {
@@ -442,7 +816,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             for (IJSVGStyleSheetSelector* item in pseudo->selectors) {
                 nested = MAX(nested, item.specificity);
             }
-            if (pseudo->kind <= IJSVGSelectorPseudoNth) {
+            if (pseudo->kind <= IJSVGSelectorPseudoNth || pseudo->kind == IJSVGSelectorPseudoLang) {
                 nested = IJSVGSelectorAddSpecificity(nested, SPECIFICITY_CLASS);
             }
             _specificity = IJSVGSelectorAddSpecificity(_specificity, nested);
@@ -466,9 +840,27 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
     pseudo->fromEnd = (flags & IJSVGSelectorPseudoFromEnd) != 0;
     pseudo->only = (flags & IJSVGSelectorPseudoOnly) != 0;
     switch (pseudo->kind) {
+        case IJSVGSelectorPseudoLang: {
+            NSMutableArray* ranges = [[NSMutableArray alloc] init];
+            for (NSString* part in IJSVGSelectorListParts(argument)) {
+                const char* bytes = part.UTF8String;
+                NSUInteger length = strlen(bytes);
+                NSUInteger cursor = IJSVGStyleSheetIndexBySkippingWhitespace(bytes, 0, length);
+                NSString* range = IJSVGSelectorConsumeValue(bytes, length, &cursor);
+                if (range == nil || IJSVGStyleSheetIndexBySkippingWhitespace(bytes, cursor, length) != length) {
+                    return nil;
+                }
+                [ranges addObject:range];
+            }
+            if (ranges.count == 0) {
+                return nil;
+            }
+            pseudo->languages = ranges;
+            break;
+        }
         case IJSVGSelectorPseudoNth:
             if (argument != nil) {
-                return IJSVGSelectorParseNth(argument, pseudo, depth, insideHas) ? pseudo : nil;
+                return IJSVGSelectorParseNth(argument, pseudo, depth, insideHas, _namespaces) ? pseudo : nil;
             }
             pseudo->b = 1;
             break;
@@ -480,7 +872,14 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
             if (has && insideHas) {
                 return nil;
             }
-            pseudo->selectors = IJSVGSelectorParseList(argument, (flags & IJSVGSelectorPseudoForgiving) != 0, depth + 1, insideHas || has, has);
+            pseudo->selectors = IJSVGSelectorParseList(argument, (flags & IJSVGSelectorPseudoForgiving) != 0, depth + 1, insideHas || has, has, _namespaces);
+            if (!has) {
+                for (IJSVGStyleSheetSelector* nested in pseudo->selectors) {
+                    if (!nested.matchingSelector.explicitType) {
+                        nested.matchingSelector.namespaceURI = nil;
+                    }
+                }
+            }
             if (pseudo->selectors == nil) {
                 return nil;
             }
@@ -508,14 +907,29 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         NSMutableArray* pseudos = [NSMutableArray array];
         NSMutableArray* identifiers = [NSMutableArray array];
         BOOL hasSelector = NO;
-        if (bytes[cursor] == '*') {
+        NSMutableArray* attributes = [[NSMutableArray alloc] init];
+        raw.namespaceURI = _namespaces[@""];
+        if (bytes[cursor] != '.' && bytes[cursor] != '#' && bytes[cursor] != ':' && bytes[cursor] != '[') {
+            NSString* tag = nil;
+            NSString* uri = nil;
+            if (!IJSVGSelectorConsumeQualifiedName(bytes, length, &cursor, _namespaces, NO, &tag, &uri)) {
+                return NO;
+            }
+            raw.tag = tag;
+            raw.namespaceURI = uri;
+            raw.explicitType = YES;
             hasSelector = YES;
-            cursor++;
-        } else if (bytes[cursor] != '.' && bytes[cursor] != '#' && bytes[cursor] != ':') {
-            raw.tag = IJSVGStyleSheetConsumeIdentifier(bytes, length, &cursor);
-            hasSelector = raw.tag != nil;
         }
-        while (cursor < length && (bytes[cursor] == '.' || bytes[cursor] == '#' || bytes[cursor] == ':')) {
+        while (cursor < length && (bytes[cursor] == '.' || bytes[cursor] == '#' || bytes[cursor] == ':' || bytes[cursor] == '[')) {
+            if (bytes[cursor] == '[') {
+                IJSVGStyleSheetAttributeSelector* attribute = IJSVGSelectorConsumeAttribute(bytes, length, &cursor, _namespaces);
+                if (attribute == nil) {
+                    return NO;
+                }
+                [attributes addObject:attribute];
+                hasSelector = YES;
+                continue;
+            }
             char prefix = bytes[cursor++];
             NSString* name = nil;
             char pseudoName[32] = { 0 };
@@ -568,6 +982,7 @@ static BOOL IJSVGStyleSheetMatchSelector(id<IJSVGStyleSheetSelectorNode> node, I
         if (!hasSelector) {
             return NO;
         }
+        raw.attributes = attributes.count != 0 ? attributes : nil;
         raw.pseudoClasses = pseudos.count != 0 ? pseudos : nil;
         raw.identifiers = identifiers.count != 0 ? identifiers : nil;
         [parsed addObject:raw];

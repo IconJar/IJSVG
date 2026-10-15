@@ -157,19 +157,25 @@ IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSele
     XCTAssertNil([style property:@"fill"]);
 }
 
-- (void)testStyleSheetRejectsMalformedPipeSelectors
+- (void)testStyleSheetAcceptsEmptyNamespacesAndRejectsMalformedPipes
 {
     IJSVGStyleSheet* triplePipeStyleSheet = IJSVGTestStyleSheet(@"g ||| rect { fill: #ff0000; }");
     XCTAssertEqual(triplePipeStyleSheet.ruleCount, 0);
 
     IJSVGStyleSheet* leadingPipeStyleSheet = IJSVGTestStyleSheet(@"|rect { fill: #ff0000; }");
-    XCTAssertEqual(leadingPipeStyleSheet.ruleCount, 0);
+    XCTAssertEqual(leadingPipeStyleSheet.ruleCount, 1);
+    IJSVGStyleSheetSelectorRecord* record = [[IJSVGStyleSheetSelectorRecord alloc] init];
+    record.name = @"rect";
+    XCTAssertNotNil([leadingPipeStyleSheet styleForNode:record]);
+    record.namespaceURI = @"http://www.w3.org/2000/svg";
+    XCTAssertNil([leadingPipeStyleSheet styleForNode:record]);
 }
 
-- (void)testStyleSheetRejectsUnsupportedSelectorSyntax
+- (void)testStyleSheetAcceptsAttributesAndRejectsUnsupportedPseudoClasses
 {
     IJSVGStyleSheet* attributeStyleSheet = IJSVGTestStyleSheet(@"rect[fill] { fill: #ff0000; }");
-    XCTAssertEqual(attributeStyleSheet.ruleCount, 0);
+    XCTAssertEqual(attributeStyleSheet.ruleCount, 1);
+    XCTAssertTrue(attributeStyleSheet.requiresSelectorTree);
 
     IJSVGStyleSheet* pseudoStyleSheet = IJSVGTestStyleSheet(@"rect:hover { fill: #ff0000; }");
     XCTAssertEqual(pseudoStyleSheet.ruleCount, 0);

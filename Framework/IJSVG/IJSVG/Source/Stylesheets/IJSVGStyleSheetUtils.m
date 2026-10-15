@@ -43,6 +43,9 @@ IJSVGSelectorPseudoDescriptor IJSVGSelectorPseudoForBytes(const char* bytes, NSU
             }
             break;
         case 4:
+            if (memcmp(bytes, "lang", 4) == 0) {
+                return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoLang, IJSVGSelectorPseudoFunctional, YES };
+            }
             if (memcmp(bytes, "root", 4) == 0) {
                 return (IJSVGSelectorPseudoDescriptor) { IJSVGSelectorPseudoRoot, 0, YES };
             }

@@ -33,7 +33,7 @@ typedef enum {
     IJSVGXMLNodeKindProcessingInstruction
 } IJSVGXMLNodeKind;
 
-typedef struct {
+typedef struct IJSVGXMLAttribute {
     IJSVGXMLDocument* document;
     CFStringRef cachedValue;
     const char* name;

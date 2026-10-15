@@ -19,7 +19,8 @@ typedef NS_ENUM(NSUInteger, IJSVGSelectorPseudoKind) {
     IJSVGSelectorPseudoIs,
     IJSVGSelectorPseudoWhere,
     IJSVGSelectorPseudoNot,
-    IJSVGSelectorPseudoHas
+    IJSVGSelectorPseudoHas,
+    IJSVGSelectorPseudoLang
 };
 
 typedef NS_OPTIONS(uint8_t, IJSVGSelectorPseudoFlags) {
@@ -35,7 +36,7 @@ typedef struct {
     BOOL valid;
 } IJSVGSelectorPseudoDescriptor;
 
-// ASCII case-insensitive lookup; the span need not be NUL-terminated.
+// ASCII lookup ignores case. The span does not need a terminating NUL.
 IJSVGSelectorPseudoDescriptor IJSVGSelectorPseudoForBytes(const char* _Nullable bytes, NSUInteger length);
 
 typedef NS_ENUM(uint8_t, IJSVGMediaType) {

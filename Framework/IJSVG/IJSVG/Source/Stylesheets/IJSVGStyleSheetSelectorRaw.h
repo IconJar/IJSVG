@@ -10,6 +10,7 @@
 
 @class IJSVGNode;
 @class IJSVGStyleSheetPseudoClass;
+@class IJSVGStyleSheetAttributeSelector;
 
 typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
     IJSVGStyleSheetSelectorCombinatorWildcard, // *
@@ -28,6 +29,9 @@ typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorCombinator) {
 @property (nonatomic, copy) NSArray<NSString*>* identifiers;
 @property (nonatomic) NSUInteger classCount;
 @property (nonatomic, copy) NSString* tag;
+@property (nonatomic, copy) NSString* namespaceURI;
+@property (nonatomic) BOOL explicitType;
+@property (nonatomic, copy) NSArray<IJSVGStyleSheetAttributeSelector*>* attributes;
 @property (nonatomic, copy) NSString* identifier;
 @property (nonatomic, readonly) NSString* combinatorString;
 @property (nonatomic, strong) NSMutableSet<NSString*>* classes;

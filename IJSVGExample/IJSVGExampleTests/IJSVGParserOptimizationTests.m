@@ -174,6 +174,35 @@
     XCTAssertEqual(((IJSVGGraphicsNode*)third.children.firstObject).strokeWidth.value, 2);
 }
 
+- (void)testIdentifierLookupKeepsSequentialUnicodeAndLongKeysDistinct
+{
+    NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] init];
+    for (NSUInteger index = 0; index < 1000; index++) {
+        [identifiers addObject:[NSString stringWithFormat:@"n%lu", index]];
+    }
+    [identifiers addObjectsFromArray:@[ @"形状", @"é", @"e\u0301", @"😀", @"ID", @"id" ]];
+    NSString* prefix = [@"identifier" stringByPaddingToLength:1024 withString:@"x" startingAtIndex:0];
+    [identifiers addObject:[prefix stringByAppendingString:@"a"]];
+    [identifiers addObject:[prefix stringByAppendingString:@"b"]];
+    NSMutableString* body = [[NSMutableString alloc] initWithString:@"<defs>"];
+    for (NSUInteger index = 0; index < identifiers.count; index++) {
+        [body appendFormat:@"<rect id='%@' width='%lu' height='1'/>", identifiers[index], index + 1];
+    }
+    [body appendString:@"</defs>"];
+    for (NSString* identifier in identifiers.reverseObjectEnumerator) {
+        [body appendFormat:@"<use href='#%@'/>", identifier];
+    }
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:IJSVGTestSVG(body) fileURL:nil error:nil];
+    XCTAssertNotNil(parser);
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(2000, 100)];
+    XCTAssertEqual(root.children.count, identifiers.count);
+    for (NSUInteger index = 0; index < MIN(root.children.count, identifiers.count); index++) {
+        IJSVGGroup* use = (IJSVGGroup*)root.children[index];
+        XCTAssertEqual(use.children.count, 1);
+        XCTAssertEqual(((IJSVGGraphicsNode*)use.children.firstObject).width.value, identifiers.count - index, @"%@", identifiers[identifiers.count - index - 1]);
+    }
+}
+
 - (void)testReferenceLookupPreservesNamespacesAndHrefPrecedence
 {
     NSString* source = IJSVGTestSVG(@"<defs><rect id='first' width='3' height='4'/>"

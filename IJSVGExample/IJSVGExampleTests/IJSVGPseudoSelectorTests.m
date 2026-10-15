@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import "../Scripts/selector-stress-document.h"
 #import <IJSVGTestHelpers.h>
 #import <WebKit/WebKit.h>
 
@@ -46,7 +47,7 @@
 - (NSSet<NSString*>*)matches:(NSString*)selector body:(NSString*)body
 {
     // Reset inherited values so this observes exact matches, not descendants
-    // that inherit a matching ancestor's stroke width.
+    // that inherit stroke width from a matching ancestor.
     NSString* css = [NSString stringWithFormat:@"* { stroke-width: 0 } %@ { stroke-width: 17 }", selector];
     NSDictionary* nodes = [self nodesFromBody:body css:css];
     NSMutableSet* result = [[NSMutableSet alloc] init];
@@ -297,6 +298,187 @@
         @"g:has(> :is(rect, circle))", @"g:has(+ :not(rect))"
     ]
                        body:body];
+}
+
+- (void)testAttributeOperatorMatrix
+{
+    NSString* body = @"<g><rect id='a' data-v='Alpha beta' fill='red'/>"
+                      "<rect id='b' data-v='alpha-beta'/>"
+                      "<rect id='c' data-v=''/>"
+                      "<rect id='d' data-v='ALPHA&#9;beta&#10;gamma'/>"
+                      "<rect id='e' data-v='Älpha'/>"
+                      "<rect id='f'/><rect id='g' data-v='a,b){}'/></g>";
+    NSMutableArray* selectors = [[NSMutableArray alloc] init];
+    for (NSString* operation in @[ @"=", @"~=", @"|=", @"^=", @"$=", @"*=" ]) {
+        for (NSString* value in @[ @"", @"Alpha", @"alpha", @"beta", @"alpha-beta", @"Alpha beta", @"a,b){}", @"älpha" ]) {
+            for (NSString* flag in @[ @"", @" i", @" I" ]) {
+                NSString* attribute = [NSString stringWithFormat:@"[data-v%@'%@'%@]", operation, value, flag];
+                [selectors addObject:attribute];
+                [selectors addObject:[NSString stringWithFormat:@"rect:is(%@, #missing)", attribute]];
+                [selectors addObject:[NSString stringWithFormat:@"rect:not(%@)", attribute]];
+                [selectors addObject:[NSString stringWithFormat:@"rect:nth-child(2n of %@)", attribute]];
+                [selectors addObject:[NSString stringWithFormat:@"g:has(> %@)", attribute]];
+            }
+        }
+    }
+    [selectors addObjectsFromArray:@[ @"[fill]", @"[missing]", @"[data-v]", @"[data-v='Al\\70 ha beta']", @"[d\\61 ta-v]", @"[id=a]", @"[id='a'i]", @"[id='A' i]", @"[ID]", @"[|id]", @"[*|id]" ]];
+    [self compareWithWebKit:selectors body:body];
+    XCTAssertEqualObjects([self matches:@"[data-v^='Alpha' s]" body:body], [NSSet setWithObject:@"a"]);
+    XCTAssertEqualObjects([self matches:@"[data-v^='alpha' S]" body:body], [NSSet setWithObject:@"b"]);
+}
+
+- (void)testAttributeNamespacesAndMalformedSyntax
+{
+    NSString* body = @"<g xmlns:x='urn:test'><rect id='a' x:data='yes'/><rect id='b' data='yes'/><rect id='c' data='no' x:data='yes'/></g>";
+    [self compareWithWebKit:@[ @"[*|data]", @"[data]", @"[|data]", @"[*|data=yes]", @"[data=yes]", @"[data=no]", @":is([*|data=yes], #missing)" ] body:body];
+    for (NSString* selector in @[ @"[]", @"[*]", @"[data=]", @"[data!=yes]", @"[data~=]", @"[data=1]", @"[data='yes' q]", @"[data i]", @"[data|]", @"[missing|data]", @"[data='yes' ii]", @"[data='yes' i s]", @"[data='yes'" ]) {
+        XCTAssertNil([[IJSVGStyleSheetSelector alloc] initWithSelectorString:selector], @"%@", selector);
+    }
+    XCTAssertEqualObjects([self matches:@":is([data!=yes], #b)" body:body], [NSSet setWithObject:@"b"]);
+    NSDictionary* nodes = [self nodesFromBody:body css:@"[data] { stroke-width: 17 } rect { stroke-width: 3 }"];
+    XCTAssertEqual(((IJSVGGraphicsNode*)nodes[@"b"]).strokeWidth.value, 17);
+}
+
+- (void)testLanguageInheritanceAndRanges
+{
+    NSString* body = @"<g xml:lang='en-GB'><rect id='a'/><rect id='b' xml:lang='fr-CA'/>"
+                      "<g lang='de-Latn-DE'><rect id='c'/></g>"
+                      "<rect id='d' lang='fr' xml:lang='en-US'/>"
+                      "<g xml:lang=''><rect id='e'/></g>"
+                      "<rect id='f' xml:lang='de-x-DE'/></g><rect id='g'/>";
+    [self compareWithWebKit:@[
+        @"rect:lang(en)", @"rect:lang(EN)", @"rect:lang(en-GB)", @"rect:lang(fr)",
+        @"rect:lang(de)", @"rect:lang('de-DE')",
+        @"rect:lang('*')", @"rect:lang(en, fr)", @"rect:lang('*-GB')",
+        @"rect:not(:lang(en))", @"g:has(> :lang(fr))", @"rect:nth-child(1 of :lang(en))"
+    ]
+                       body:body];
+
+    // WebKit differs here from Selectors 4 and RFC 4647 section 3.3.2:
+    // Empty ranges match untagged language. Wildcards cannot skip a singleton.
+    XCTAssertEqualObjects([self matches:@"rect:lang('')" body:body], ([NSSet setWithArray:@[ @"e", @"g" ]]));
+    XCTAssertEqualObjects([self matches:@"rect:lang('de-*-DE')" body:body], [NSSet setWithObject:@"c"]);
+    for (NSString* selector in @[ @":lang()", @":lang(*)", @":lang(en,)", @":lang(en fr)", @":lang(123)" ]) {
+        XCTAssertNil([[IJSVGStyleSheetSelector alloc] initWithSelectorString:selector], @"%@", selector);
+    }
+}
+
+- (void)testCSSNamespaceDeclarations
+{
+    NSString* body = @"<g xmlns:x='urn:test'><rect id='a' data='yes' x:data='no'/><rect id='b' x:data='yes'/><rect xmlns='' id='c' data='yes'/></g>";
+    NSDictionary<NSString*, NSArray*>* cases = @{
+        @"@namespace s 'http://www.w3.org/2000/svg'; s|rect" : @[ @"a", @"b" ],
+        @"@namespace s url(http://www.w3.org/2000/svg); s|rect" : @[ @"a", @"b" ],
+        @"@namespace s url('http://www.w3.org/2000/svg'); s|rect" : @[ @"a", @"b" ],
+        @"@namespace s 'urn:wrong'; @namespace s 'http://www.w3.org/2000/svg'; s|rect" : @[ @"a", @"b" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; rect" : @[ @"a", @"b" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; [data]" : @[ @"a" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; *|rect[data]" : @[ @"a", @"c" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; *|rect:is([data])" : @[ @"a", @"c" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; *|rect:is(*[data])" : @[ @"a" ],
+        @"@namespace 'http://www.w3.org/2000/svg'; *|rect:not([data])" : @[ @"b" ],
+        @"@namespace s 'urn:test'; [s|data=yes]" : @[ @"b" ],
+        @"@namespace s 'urn:test'; :is([s|data=yes], #a)" : @[ @"a", @"b" ],
+        @"@namespace s 'urn:test'; g:has(> [s|data=yes]) > rect" : @[ @"a", @"b", @"c" ],
+        @"|rect" : @[ @"c" ],
+        @"*|rect" : @[ @"a", @"b", @"c" ],
+        @"missing|rect" : @[],
+        @"x|rect" : @[]
+    };
+    for (NSString* prefix in cases) {
+        NSString* css = [prefix stringByAppendingString:@" { stroke-width: 17 }"];
+        NSDictionary* nodes = [self nodesFromBody:body css:css];
+        NSMutableSet* actual = [[NSMutableSet alloc] init];
+        for (NSString* identifier in nodes) {
+            if (((IJSVGGraphicsNode*)nodes[identifier]).strokeWidth.value == 17) {
+                [actual addObject:identifier];
+            }
+        }
+        XCTAssertEqualObjects(actual, [NSSet setWithArray:cases[prefix]], @"%@", prefix);
+    }
+
+    // Bindings and selector caches must not leak between separate style elements.
+    NSDictionary* nodes = [self nodesFromBody:@"<style>s|rect { stroke-width: 99 }</style><rect id='a'/>"
+                                          css:@"@namespace s 'http://www.w3.org/2000/svg'; s|rect { stroke-width: 17 }"];
+    XCTAssertEqual(((IJSVGGraphicsNode*)nodes[@"a"]).strokeWidth.value, 17);
+    nodes = [self nodesFromBody:@"<rect id='a'/>" css:@"rect { stroke-width: 17 } @namespace s 'http://www.w3.org/2000/svg'; s|rect { stroke-width: 99 }"];
+    XCTAssertEqual(((IJSVGGraphicsNode*)nodes[@"a"]).strokeWidth.value, 17);
+}
+
+- (void)testAttributeValuesAcrossXMLChunkBoundaries
+{
+    for (NSString* value in @[ @"é", @"&#233;" ]) {
+        for (NSUInteger offset = 65533; offset <= 65537; offset++) {
+            NSString* prefix = @"<svg xmlns='http://www.w3.org/2000/svg'><style>rect[data-label='é'] { stroke-width: 17 }</style><!--";
+            NSString* opening = @"--><rect data-label='";
+            NSUInteger padding = offset - [prefix lengthOfBytesUsingEncoding:NSUTF8StringEncoding] - opening.length;
+            NSMutableString* source = [prefix mutableCopy];
+            [source appendString:[@"" stringByPaddingToLength:padding withString:@" " startingAtIndex:0]];
+            [source appendFormat:@"%@%@'/></svg>", opening, value];
+            NSError* error = nil;
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:&error];
+            XCTAssertNotNil(parser, @"%@ at %lu", value, offset);
+            XCTAssertNil(error);
+            IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(100, 100)];
+            XCTAssertEqual(((IJSVGGraphicsNode*)root.children.firstObject).strokeWidth.value, 17);
+        }
+    }
+}
+
+- (void)testLargeAttributeDocumentAgainstWebKit
+{
+    const NSUInteger count = 100000;
+    NSString* source = IJSVGSelectorStressDocument(100, 1000);
+    NSError* error = nil;
+    IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:source fileURL:nil error:&error];
+    XCTAssertNotNil(parser);
+    XCTAssertNil(error);
+    IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(1000, 1000)];
+    NSMutableArray* pending = [[NSMutableArray alloc] initWithArray:root.children];
+    NSMutableDictionary* widths = [[NSMutableDictionary alloc] initWithCapacity:count];
+    while (pending.count != 0) {
+        IJSVGGraphicsNode* node = pending.lastObject;
+        [pending removeLastObject];
+        if ([node isKindOfClass:IJSVGGroup.class]) {
+            [pending addObjectsFromArray:((IJSVGGroup*)node).children];
+        } else if (node.identifier != nil) {
+            widths[node.identifier] = @(node.strokeWidth.value);
+        }
+    }
+    XCTAssertEqual(widths.count, count);
+    WKWebView* webView = [[WKWebView alloc] init];
+    XCTestExpectation* ready = [self expectationWithDescription:@"Large SVG computed styles"];
+    __block NSArray<NSNumber*>* expected = nil;
+    [webView callAsyncJavaScript:@"const svg = new DOMParser().parseFromString(source, 'image/svg+xml').documentElement;"
+                                  "document.open(); document.write('<!doctype html><html><body></body></html>'); document.close();"
+                                  "document.body.appendChild(document.importNode(svg, true));"
+                                  "return Array.from(document.querySelectorAll('[id^=\"n\"]'), node => parseFloat(getComputedStyle(node).strokeWidth));"
+                       arguments:@{ @"source" : source }
+                         inFrame:nil
+                  inContentWorld:WKContentWorld.pageWorld
+               completionHandler:^(id result, NSError* failure) {
+                   XCTAssertNil(failure);
+                   expected = result;
+                   [ready fulfill];
+               }];
+    [self waitForExpectations:@[ ready ] timeout:120];
+    XCTAssertEqual(expected.count, count);
+    NSUInteger mismatches = 0;
+    double checksum = 0;
+    NSMutableArray* examples = [[NSMutableArray alloc] init];
+    for (NSUInteger index = 0; index < MIN(count, expected.count); index++) {
+        NSString* identifier = [NSString stringWithFormat:@"n%lu", index];
+        NSNumber* actual = widths[identifier];
+        checksum += actual.doubleValue;
+        if (![actual isEqualToNumber:expected[index]]) {
+            mismatches++;
+            if (examples.count < 10) {
+                [examples addObject:[NSString stringWithFormat:@"%@: engine=%@ browser=%@", identifier, actual, expected[index]]];
+            }
+        }
+    }
+    XCTAssertEqual(mismatches, 0, @"%@", examples);
+    NSLog(@"Verified %lu shapes in %lu-byte SVG against WebKit; checksum=%.0f", count, [source lengthOfBytesUsingEncoding:NSUTF8StringEncoding], checksum);
 }
 
 - (void)testMalformedSelectorMatrix

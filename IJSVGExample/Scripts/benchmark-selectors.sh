@@ -1,5 +1,5 @@
 #!/bin/sh
-# Run a Release package build and benchmark a generated, selector-heavy SVG.
+# Run a Release package build and benchmark an SVG with many selectors.
 set -eu
 repository_root="$(cd "$(dirname "$0")/../.." && pwd)"
 scratch_directory="${IJSVG_BENCHMARK_BUILD_PATH:-$(mktemp -d "${TMPDIR:-/tmp}/ijsvg-selectors.XXXXXX")}"
