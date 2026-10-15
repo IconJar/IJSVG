@@ -1,5 +1,6 @@
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVGComponentTransferFilterEffect.h>
+#import <IJSVGConvolveMatrixFilterEffect.h>
 #import <IJSVGFilterContext.h>
 #import <IJSVGLightingFilterEffect.h>
 #import <Metal/Metal.h>
@@ -52,6 +53,60 @@
     }
     context.source = source;
     return context;
+}
+
+- (void)testFractionalConvolutionMatchesScalarChannels
+{
+    IJSVGConvolveMatrixFilterEffect* effect = [[IJSVGConvolveMatrixFilterEffect alloc] init];
+    const double weights[] = { 1, 2, -1, 0, 3, 0, -1, 0, 1 };
+    for (NSNumber* width in @[ @1, @7, @17 ]) {
+        IJSVGVectorTestContext* context = [self contextWithWidth:width.integerValue height:9];
+        CIImage* input = [[CIImage imageWithColor:CIColor.whiteColor] imageByCroppingToRect:context.extent];
+        for (NSString* edge in @[ @"none", @"duplicate", @"wrap" ]) {
+            for (NSNumber* preserve in @[ @NO, @YES ]) {
+                IJSVGFilterPrimitive* primitive = [[IJSVGFilterPrimitive alloc] init];
+                primitive.type = IJSVGNodeTypeFilterConvolveMatrix;
+                primitive.parameters = @{ @"kernelMatrix" : @"1 2 -1 0 3 0 -1 0 1", @"divisor" : @"5", @"bias" : @".03", @"kernelUnitLength" : @"1.25 .75", @"edgeMode" : edge, @"preserveAlpha" : preserve.boolValue ? @"true" : @"false" };
+                [effect outputImageForPrimitive:primitive inputs:@[ input ] region:context.extent context:context];
+                XCTAssertEqual(context.output.length, context.source.length);
+                if (context.output == nil) {
+                    continue;
+                }
+                const float* source = context.source.bytes;
+                const float* actual = context.output.bytes;
+                IJSVGFilterSampler sampler = IJSVGFilterSamplerMake(source, context.width, context.height, input.extent, primitive.edgeMode);
+                double maximumError = 0;
+                for (NSInteger y = 0; y < context.height; y++) {
+                    for (NSInteger x = 0; x < context.width; x++) {
+                        double sums[4] = { 0 };
+                        for (NSInteger j = 0; j < 3; j++) {
+                            for (NSInteger i = 0; i < 3; i++) {
+                                double px = x + (i - 1) * 1.25, py = y + (j - 1) * .75;
+                                double alpha = IJSVGFilterSamplerValue(&sampler, px, py, 3);
+                                for (NSUInteger c = 0; c < 4; c++) {
+                                    double value = IJSVGFilterSamplerValue(&sampler, px, py, c);
+                                    if (preserve.boolValue) {
+                                        value = alpha > 0 ? value / alpha : 0;
+                                    }
+                                    sums[c] += value * weights[(2 - j) * 3 + 2 - i];
+                                }
+                            }
+                        }
+                        NSInteger index = (y * context.width + x) * 4;
+                        double alpha = preserve.boolValue ? source[index + 3] : IJSVGFilterClamp(sums[3] / 5 + .03);
+                        for (NSUInteger c = 0; c < 4; c++) {
+                            double expected = alpha;
+                            if (c < 3) {
+                                expected = preserve.boolValue ? IJSVGFilterClamp(sums[c] / 5 + .03) * alpha : MIN(alpha, IJSVGFilterClamp(sums[c] / 5 + .03 * alpha));
+                            }
+                            maximumError = MAX(maximumError, fabs(actual[index + c] - expected));
+                        }
+                    }
+                }
+                XCTAssertLessThanOrEqual(maximumError, 1e-7, @"width %@ edge %@ preserve %@", width, edge, preserve);
+            }
+        }
+    }
 }
 
 - (void)testComponentTransferMatchesEquationsAcrossBlockAndRowBoundaries

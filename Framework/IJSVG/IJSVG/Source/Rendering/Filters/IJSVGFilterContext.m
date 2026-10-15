@@ -7,6 +7,7 @@
 //
 
 #import <IJSVGFilterContext.h>
+#import <simd/simd.h>
 
 // Read shader text from the framework or Swift package resource bundle.
 NSString* IJSVGFilterShaderSource(NSString* name)
@@ -118,6 +119,27 @@ float IJSVGFilterSamplerValue(const IJSVGFilterSampler* sampler, CGFloat x, CGFl
 // Reuse the same sample positions for all four channels.
 void IJSVGFilterSamplerPixel(const IJSVGFilterSampler* sampler, CGFloat x, CGFloat y, float pixel[4])
 {
+    // Interior samples need no edge remapping or per-tap bounds checks.
+    // Retain double arithmetic and tap order to match the general sampler.
+    if (x >= sampler->left && x < sampler->right && y >= sampler->top && y < sampler->bottom) {
+        NSInteger ix = floor(x), iy = floor(y);
+        double fx = x - ix, fy = y - iy;
+        const float* top = sampler->pixels + (iy * sampler->width + ix) * 4;
+        const float* bottom = top + sampler->width * 4;
+        simd_float4 a, b, c, d;
+        memcpy(&a, top, sizeof(a));
+        memcpy(&b, top + 4, sizeof(b));
+        memcpy(&c, bottom, sizeof(c));
+        memcpy(&d, bottom + 4, sizeof(d));
+        simd_double4 value = __builtin_convertvector(a, simd_double4) * (1. - fx) * (1. - fy);
+        value += __builtin_convertvector(b, simd_double4) * fx * (1. - fy);
+        value += __builtin_convertvector(c, simd_double4) * (1. - fx) * fy;
+        value += __builtin_convertvector(d, simd_double4) * fx * fy;
+        simd_float4 result = __builtin_convertvector(value, simd_float4);
+        memcpy(pixel, &result, sizeof(result));
+        return;
+    }
+
     double values[4] = { 0 };
     NSInteger xs[2], ys[2];
     double weightsX[2], weightsY[2];

@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGTurbulenceFilterEffect.h>
+#import <simd/simd.h>
 
 // Build the noise here so the seed and repeating edges follow SVG rules.
 // Each render keeps its own noise data.
@@ -57,7 +58,7 @@ static void IJSVGFilterInitNoise(IJSVGFilterNoise* noise, double seedValue)
 }
 
 // Reuse the same noise positions for all four color channels.
-static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, double y, double tileWidth, double tileHeight, double wrapX, double wrapY, BOOL stitch, double values[4])
+static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, double y, double tileWidth, double tileHeight, double wrapX, double wrapY, BOOL stitch, simd_double4* values)
 {
     x += 4096.;
     y += 4096.;
@@ -82,33 +83,30 @@ static void IJSVGFilterNoiseValues(const IJSVGFilterNoise* noise, double x, doub
         px[i] += px[i] < 0 ? 256 : 0;
         py[i] += py[i] < 0 ? 256 : 0;
     }
-    double dots[2][2][4];
+    simd_double4 dots[2][2];
     for (int j = 0; j < 2; j++) {
         for (int i = 0; i < 2; i++) {
             int index = noise->permutation[noise->permutation[px[i]] + py[j]];
-            for (int c = 0; c < 4; c++) {
-                dots[j][i][c] = (fx - i) * noise->gradient[index][0][c] + (fy - j) * noise->gradient[index][1][c];
-            }
+            simd_double4 gx, gy;
+            memcpy(&gx, noise->gradient[index][0], sizeof(gx));
+            memcpy(&gy, noise->gradient[index][1], sizeof(gy));
+            dots[j][i] = (fx - i) * gx + (fy - j) * gy;
         }
     }
-    for (int c = 0; c < 4; c++) {
-        double top = dots[0][0][c] + smoothX * (dots[0][1][c] - dots[0][0][c]);
-        double bottom = dots[1][0][c] + smoothX * (dots[1][1][c] - dots[1][0][c]);
-        values[c] = top + smoothY * (bottom - top);
-    }
+    simd_double4 top = dots[0][0] + smoothX * (dots[0][1] - dots[0][0]);
+    simd_double4 bottom = dots[1][0] + smoothX * (dots[1][1] - dots[1][0]);
+    *values = top + smoothY * (bottom - top);
 }
 
 // Add layers of noise with smaller details and less strength each time.
-static inline void IJSVGTurbulenceValues(const IJSVGFilterNoise* noise, double px, double py, CGSize frequency, double tileWidth, double tileHeight, double wrapX, double wrapY, NSInteger octaves, BOOL fractal, BOOL stitch, double values[4])
+static inline void IJSVGTurbulenceValues(const IJSVGFilterNoise* noise, double px, double py, CGSize frequency, double tileWidth, double tileHeight, double wrapX, double wrapY, NSInteger octaves, BOOL fractal, BOOL stitch, simd_double4* values)
 {
     double nx = px * frequency.width, ny = py * frequency.height, amplitude = 1.;
     double tw = tileWidth, th = tileHeight, wx = wrapX, wy = wrapY;
     for (NSInteger octave = 0; octave < octaves; octave++) {
-        double samples[4];
-        IJSVGFilterNoiseValues(noise, nx, ny, tw, th, wx, wy, stitch, samples);
-        for (int c = 0; c < 4; c++) {
-            values[c] += amplitude * (fractal ? samples[c] : fabs(samples[c]));
-        }
+        simd_double4 samples;
+        IJSVGFilterNoiseValues(noise, nx, ny, tw, th, wx, wy, stitch, &samples);
+        *values += amplitude * (fractal ? samples : simd_abs(samples));
         nx *= 2;
         ny *= 2;
         amplitude *= .5;
@@ -180,8 +178,8 @@ static CGSize IJSVGTurbulenceStitchedFrequency(CGSize frequency, CGSize tileSize
             NSInteger index = (y - top) * w * 4;
             for (NSInteger x = left; x < right; x++, index += 4) {
                 double px = tile.origin.x + (x + 1. - region.origin.x) / units.width;
-                double values[4] = { 0 };
-                IJSVGTurbulenceValues(noise, px, py, frequency, tileWidth, tileHeight, wrapX, wrapY, octaves, fractal, stitch, values);
+                simd_double4 values = 0;
+                IJSVGTurbulenceValues(noise, px, py, frequency, tileWidth, tileHeight, wrapX, wrapY, octaves, fractal, stitch, &values);
                 for (int c = 0; c < 4; c++) {
                     // WebKit truncates straight RGBA to eight bits before
                     // premultiplication.
