@@ -8,9 +8,43 @@
 
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
+
+static BOOL IJSVGImageURLIsWhitespace(unsigned char character)
+{
+    return character == ' ' || (character >= '\t' && character <= '\r');
+}
+
+static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    BOOL whitespace = NO;
+    for (NSUInteger index = 0; index < source.length; index++) {
+        unsigned char character = source.bytes[index];
+        if (character >= 128) {
+            return [string stringByReplacingOccurrencesOfString:@"\\s+" withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, string.length)];
+        }
+        whitespace |= IJSVGImageURLIsWhitespace(character);
+    }
+    if (!whitespace) {
+        return string;
+    }
+    char* buffer = malloc(source.length);
+    if (buffer == NULL) {
+        return nil;
+    }
+    NSUInteger length = 0;
+    for (NSUInteger index = 0; index < source.length; index++) {
+        unsigned char character = source.bytes[index];
+        if (!IJSVGImageURLIsWhitespace(character)) {
+            buffer[length++] = character;
+        }
+    }
+    return [[NSString alloc] initWithBytesNoCopy:buffer length:length encoding:NSUTF8StringEncoding freeWhenDone:YES];
+}
 
 @implementation IJSVGImage
 
@@ -60,9 +94,9 @@
 - (void)loadFromString:(NSString*)encodedString
 {
     if ([encodedString hasPrefix:@"data:"]) {
-        encodedString = [encodedString stringByReplacingOccurrencesOfString:@"\\s+" withString:@"" options:NSRegularExpressionSearch range:NSMakeRange(0, encodedString.length)];
+        encodedString = IJSVGImageURLWithoutWhitespace(encodedString);
     }
-    NSURL* url = [NSURL URLWithString:encodedString];
+    NSURL* url = encodedString != nil ? [NSURL URLWithString:encodedString] : nil;
     if (url != nil) {
         [self loadFromURL:url];
     }

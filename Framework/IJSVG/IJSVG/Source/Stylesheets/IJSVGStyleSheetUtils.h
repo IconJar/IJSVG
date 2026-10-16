@@ -74,14 +74,14 @@ BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
 BOOL IJSVGStyleSheetCharEndsIdentifier(char aChar);
 BOOL IJSVGStyleSheetCharIsInvalidSelectorChar(char aChar);
 
-BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* chars, NSUInteger index, NSUInteger length);
+BOOL IJSVGStyleSheetSelectorIsColumnCombinatorAtIndex(const char* _Nullable chars, NSUInteger index, NSUInteger length);
 
 NSUInteger IJSVGStyleSheetIndexBySkippingWhitespace(const char* chars, NSUInteger index, NSUInteger length);
 
 IJSVGStyleSheetSelectorCombinator IJSVGStyleSheetCombinatorForChar(char aChar);
 NSString* IJSVGStyleSheetCombinatorStringForCombinator(IJSVGStyleSheetSelectorCombinator combinator);
 
-NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* chars, NSUInteger start, NSUInteger end);
+NSString* _Nullable IJSVGStyleSheetStringFromUTF8Bytes(const char* _Nullable chars, NSUInteger start, NSUInteger end);
 
 NSString* _Nullable IJSVGStyleSheetDecodeString(const char* chars, NSUInteger start, NSUInteger end);
 

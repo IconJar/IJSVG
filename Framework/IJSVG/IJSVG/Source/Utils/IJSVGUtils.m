@@ -469,7 +469,7 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGMarkerUnitsStrokeWidth;
 }
 
-+ (IJSVGMarkerOrientType)markerOrientTypeForString:(NSString*)string
+IJSVGMarkerOrientType IJSVGMarkerOrientTypeFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringAuto]) {
         return IJSVGMarkerOrientTypeAuto;
@@ -480,7 +480,7 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGMarkerOrientTypeAngle;
 }
 
-+ (IJSVGContextPaint)contextPaintForString:(NSString*)string
+IJSVGContextPaint IJSVGContextPaintFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringContextFill]) {
         return IJSVGContextPaintFill;
@@ -491,48 +491,78 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGContextPaintNone;
 }
 
-+ (CGFloat)angleForString:(NSString*)string
+static NSString* IJSVGNormalizeUnicodeKeyword(NSString* string, BOOL trim)
 {
-    if (string.length == 0) {
+    const unsigned char* bytes = (const unsigned char*)string.UTF8String;
+    if (bytes != NULL) {
+        for (; *bytes != 0; bytes++) {
+            if (*bytes >= 128) {
+                NSString* normalized = string.lowercaseString;
+                return trim ? [normalized stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] : normalized;
+            }
+        }
+    }
+    return string;
+}
+
+CGFloat IJSVGAngleFromString(NSString* string)
+{
+    __attribute__((objc_precise_lifetime)) NSString* owner = string;
+    const unsigned char* characters = (const unsigned char*)owner.UTF8String;
+    if (characters == NULL) {
         return 0;
     }
-    NSCharacterSet* whitespace = NSCharacterSet.whitespaceAndNewlineCharacterSet;
-    NSString* number = [string stringByTrimmingCharactersInSet:whitespace];
-    NSString* suffix = nil;
+    for (; *characters != 0; characters++) {
+        if (*characters >= 128) {
+            owner = [owner stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            break;
+        }
+    }
+    IJSVGStringBytes source = IJSVGStringGetBytes(owner);
+    if (source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
+        return 0;
+    }
+    char* number = IJSVGTimmedCharBufferCreate(source.bytes);
+    NSUInteger length = strlen(number);
     CGFloat multiplier = 1;
-    if ([number hasSuffix:IJSVGStringGradians]) {
-        suffix = IJSVGStringGradians;
+    if (IJSVGCharBufferHasSuffix(number, "grad")) {
+        length -= 4;
         multiplier = .9;
-    } else if ([number hasSuffix:IJSVGStringRadians]) {
-        suffix = IJSVGStringRadians;
+    } else if (IJSVGCharBufferHasSuffix(number, "rad")) {
+        length -= 3;
         multiplier = 180 / M_PI;
-    } else if ([number hasSuffix:IJSVGStringDegrees]) {
-        suffix = IJSVGStringDegrees;
+    } else if (IJSVGCharBufferHasSuffix(number, "deg")) {
+        length -= 3;
     }
-    if (suffix != nil) {
-        number = [number substringToIndex:number.length - suffix.length];
-    }
-    NSArray<NSNumber*>* values = [self numbersFromString:number];
-    if (values.count != 1) {
-        return 0;
-    }
-    CGFloat angle = values.firstObject.doubleValue * multiplier;
-    return isfinite(angle) ? angle : 0;
+    __block NSUInteger count = 0;
+    __block CGFloat angle = 0;
+    BOOL valid = IJSVGEnumerateNumbersFromBytes(number, length, ^(CGFloat value) {
+        angle = value * multiplier;
+        count++;
+    });
+    free(number);
+    return valid && count == 1 && isfinite(angle) ? angle : 0;
 }
 
-+ (IJSVGVectorEffect)vectorEffectForString:(NSString*)string
+IJSVGVectorEffect IJSVGVectorEffectFromString(NSString* string)
 {
-    string = [string stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].lowercaseString;
-    if ([string isEqualToString:IJSVGStringNonScalingStroke]) {
-        return IJSVGVectorEffectNonScalingStroke;
+    __attribute__((objc_precise_lifetime)) NSString* owner = IJSVGNormalizeUnicodeKeyword(string, YES);
+    IJSVGStringBytes source = IJSVGStringGetBytes(owner);
+    if (source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
+        return IJSVGVectorEffectNone;
     }
-    if ([string isEqualToString:IJSVGStringInherit]) {
-        return IJSVGVectorEffectInherit;
+    char* keyword = IJSVGTimmedCharBufferCreate(source.bytes);
+    IJSVGVectorEffect effect = IJSVGVectorEffectNone;
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "non-scaling-stroke")) {
+        effect = IJSVGVectorEffectNonScalingStroke;
+    } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "inherit")) {
+        effect = IJSVGVectorEffectInherit;
     }
-    return IJSVGVectorEffectNone;
+    free(keyword);
+    return effect;
 }
 
-+ (IJSVGWindingRule)windingRuleForString:(NSString*)string
+IJSVGWindingRule IJSVGWindingRuleFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringEvenOdd]) {
         return IJSVGWindingRuleEvenOdd;
@@ -543,7 +573,7 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGWindingRuleNonZero;
 }
 
-+ (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string
+IJSVGLineJoinStyle IJSVGLineJoinStyleFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringMiter]) {
         return IJSVGLineJoinStyleMiter;
@@ -560,7 +590,7 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGLineJoinStyleMiter;
 }
 
-+ (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string
+IJSVGLineCapStyle IJSVGLineCapStyleFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringButt]) {
         return IJSVGLineCapStyleButt;
@@ -613,7 +643,7 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     }
 }
 
-+ (IJSVGUnitType)unitTypeForString:(NSString*)string
+IJSVGUnitType IJSVGUnitTypeFromString(NSString* string)
 {
     if ([string isEqualToString:IJSVGStringUserSpaceOnUse]) {
         return IJSVGUnitUserSpaceOnUse;
@@ -621,55 +651,60 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return IJSVGUnitObjectBoundingBox;
 }
 
-+ (IJSVGBlendMode)blendModeForString:(NSString*)string
+IJSVGBlendMode IJSVGBlendModeFromString(NSString* string)
 {
-    string = string.lowercaseString;
-    if ([string isEqualToString:@"normal"]) {
+    __attribute__((objc_precise_lifetime)) NSString* owner = IJSVGNormalizeUnicodeKeyword(string, NO);
+    IJSVGStringBytes source = IJSVGStringGetBytes(owner);
+    if (source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
         return IJSVGBlendModeNormal;
     }
-    if ([string isEqualToString:@"multiply"]) {
+    const char* keyword = source.bytes;
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "normal")) {
+        return IJSVGBlendModeNormal;
+    }
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "multiply")) {
         return IJSVGBlendModeMultiply;
     }
-    if ([string isEqualToString:@"screen"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "screen")) {
         return IJSVGBlendModeScreen;
     }
-    if ([string isEqualToString:@"overlay"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "overlay")) {
         return IJSVGBlendModeOverlay;
     }
-    if ([string isEqualToString:@"darken"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "darken")) {
         return IJSVGBlendModeDarken;
     }
-    if ([string isEqualToString:@"lighten"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "lighten")) {
         return IJSVGBlendModeLighten;
     }
-    if ([string isEqualToString:@"color-dodge"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "color-dodge")) {
         return IJSVGBlendModeColorDodge;
     }
-    if ([string isEqualToString:@"color-burn"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "color-burn")) {
         return IJSVGBlendModeColorBurn;
     }
-    if ([string isEqualToString:@"hard-light"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "hard-light")) {
         return IJSVGBlendModeHardLight;
     }
-    if ([string isEqualToString:@"soft-light"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "soft-light")) {
         return IJSVGBlendModeSoftLight;
     }
-    if ([string isEqualToString:@"difference"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "difference")) {
         return IJSVGBlendModeDifference;
     }
-    if ([string isEqualToString:@"exclusion"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "exclusion")) {
         return IJSVGBlendModeExclusion;
     }
-    if ([string isEqualToString:@"hue"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "hue")) {
         return IJSVGBlendModeHue;
     }
-    if ([string isEqualToString:@"saturation"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "saturation")) {
         return IJSVGBlendModeSaturation;
     }
-    if ([string isEqualToString:@"color"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "color")) {
         return IJSVGBlendModeColor;
     }
-    if ([string isEqualToString:@"luminosity"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "luminosity")) {
         return IJSVGBlendModeLuminosity;
     }
     return IJSVGBlendModeNormal;

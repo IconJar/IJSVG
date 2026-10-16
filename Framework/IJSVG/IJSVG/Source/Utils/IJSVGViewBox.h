@@ -34,9 +34,9 @@ typedef NS_ENUM(NSInteger, IJSVGViewBoxMeetOrSlice) {
 typedef void (^IJSVGViewBoxDrawingBlock)(CGFloat scale[]);
 
 + (NSString*)aspectRatioWithAlignment:(IJSVGViewBoxAlignment)alignment meetOrSlice:(IJSVGViewBoxMeetOrSlice)meetOrSlice;
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice;
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string;
-+ (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string;
+IJSVGViewBoxAlignment IJSVGViewBoxParseAspectRatio(NSString* string, IJSVGViewBoxMeetOrSlice* meetOrSlice);
+IJSVGViewBoxAlignment IJSVGViewBoxAlignmentFromBytes(const char* name);
+IJSVGViewBoxMeetOrSlice IJSVGViewBoxMeetOrSliceFromBytes(const char* name);
 
 CGAffineTransform IJSVGViewBoxComputeTransform(CGRect viewBox, CGRect drawingRect, IJSVGViewBoxAlignment alignment, IJSVGViewBoxMeetOrSlice meetOrSlice);
 

@@ -824,9 +824,11 @@
 {
     for (NSString* value in @[ @"center", @"left top", @"top left", @"bottom", @"-2px 30%", @"20% -1em", @"center center 2px", @"TOP RiGhT", @"1EM 2PX", @"\tleft\f top\n" ]) {
         XCTAssertEqual(IJSVGTransformOriginFromString(value).count, 2, @"%@", value);
+        XCTAssertTrue(IJSVGTransformOriginIsValid(value), @"%@", value);
     }
     for (NSString* value in @[ @"", @"left right", @"top bottom", @"top 2px", @"2px left", @"2px junk", @"0 0 20%", @"0 0 0 0", @"0,0", @"left\0right" ]) {
         XCTAssertNil(IJSVGTransformOriginFromString(value), @"%@", value);
+        XCTAssertFalse(IJSVGTransformOriginIsValid(value), @"%@", value);
     }
 }
 
@@ -913,17 +915,54 @@
     XCTAssertEqualObjects([number stringValueWithFloatingPointOptions:rounded], @"3.14");
 }
 
+- (void)testParserKeywordBoundariesAndClassOwnership
+{
+    XCTAssertEqual(IJSVGVectorEffectFromString(@" \tNON-SCALING-STROKE\n"), IJSVGVectorEffectNonScalingStroke);
+    XCTAssertEqual(IJSVGVectorEffectFromString(@"\u00a0inherit\u2003"), IJSVGVectorEffectInherit);
+    XCTAssertEqual(IJSVGVectorEffectFromString(@"non-scaling-stroke extra"), IJSVGVectorEffectNone);
+    XCTAssertEqual(IJSVGVectorEffectFromString(@"inherit\0extra"), IJSVGVectorEffectNone);
+    XCTAssertEqual(IJSVGBlendModeFromString(@"COLOR-DODGE"), IJSVGBlendModeColorDodge);
+    XCTAssertEqual(IJSVGBlendModeFromString(@"dar\u212aen"), IJSVGBlendModeDarken);
+    XCTAssertEqual(IJSVGBlendModeFromString(@" multiply "), IJSVGBlendModeNormal);
+    XCTAssertEqual(IJSVGBlendModeFromString(@"multiply\0extra"), IJSVGBlendModeNormal);
+    NSMutableString* source = [@" one\ttwo one\ncafé " mutableCopy];
+    NSSet* classes = IJSVGClassNameList(source);
+    [source setString:@"changed"];
+    XCTAssertEqualObjects(classes, ([NSSet setWithArray:@[ @"one", @"two", @"café" ]]));
+    XCTAssertEqual(IJSVGClassNameList(@" \t\r\n").count, 0u);
+    XCTAssertEqualObjects(IJSVGClassNameList(nil), [NSSet set]);
+    XCTAssertEqualObjects(IJSVGClassNameList(@""), [NSSet set]);
+    XCTAssertEqualObjects(IJSVGClassNameList(@"a\u00a0b"), [NSSet setWithObject:@"a\u00a0b"]);
+}
+
+- (void)testAngleParsingBoundaries
+{
+    XCTAssertEqualWithAccuracy(IJSVGAngleFromString(@"\u00a0100grad\u2003"), 90, .0001);
+    XCTAssertEqualWithAccuracy(IJSVGAngleFromString(@" 1.5707963267948966rad "), 90, .0001);
+    XCTAssertEqualWithAccuracy(IJSVGAngleFromString(@"-2.5e1deg"), -25, .0001);
+    for (NSString* value in @[ @"", @"90DEG", @"1,2deg", @"1e999rad", @"90deg extra", @"90\0deg" ]) {
+        XCTAssertEqual(IJSVGAngleFromString(value), 0, @"%@", value);
+    }
+}
+
 - (void)testViewBoxAspectRatioParsingAndFormatting
 {
     IJSVGViewBoxMeetOrSlice meetOrSlice = IJSVGViewBoxMeetOrSliceUnknown;
-    IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:@"xMaxYMid slice" meetOrSlice:&meetOrSlice];
+    IJSVGViewBoxAlignment alignment = IJSVGViewBoxParseAspectRatio(@"xMaxYMid slice", &meetOrSlice);
 
     XCTAssertEqual(alignment, IJSVGViewBoxAlignmentXMaxYMid);
     XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceSlice);
     XCTAssertEqualObjects([IJSVGViewBox aspectRatioWithAlignment:alignment meetOrSlice:meetOrSlice], @"xMaxYMid slice");
-    XCTAssertEqual([IJSVGViewBox alignmentForString:@"none"], IJSVGViewBoxAlignmentNone);
-    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"meet"], IJSVGViewBoxMeetOrSliceMeet);
-    XCTAssertEqual([IJSVGViewBox meetOrSliceForString:@"unknown"], IJSVGViewBoxMeetOrSliceUnknown);
+    XCTAssertEqual(IJSVGViewBoxAlignmentFromBytes("none"), IJSVGViewBoxAlignmentNone);
+    XCTAssertEqual(IJSVGViewBoxMeetOrSliceFromBytes("meet"), IJSVGViewBoxMeetOrSliceMeet);
+    XCTAssertEqual(IJSVGViewBoxMeetOrSliceFromBytes("unknown"), IJSVGViewBoxMeetOrSliceUnknown);
+    XCTAssertEqual(IJSVGViewBoxParseAspectRatio(@" \tXMAXYMID\nSLICE ", &meetOrSlice), IJSVGViewBoxAlignmentXMaxYMid);
+    XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceSlice);
+    XCTAssertEqual(IJSVGViewBoxParseAspectRatio(@"none", &meetOrSlice), IJSVGViewBoxAlignmentNone);
+    XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceMeet);
+    XCTAssertEqual(IJSVGViewBoxParseAspectRatio(@" \t ", &meetOrSlice), IJSVGViewBoxAlignmentUnknown);
+    XCTAssertEqual(IJSVGViewBoxParseAspectRatio(@"xMidYMid invalid", &meetOrSlice), IJSVGViewBoxAlignmentXMidYMid);
+    XCTAssertEqual(meetOrSlice, IJSVGViewBoxMeetOrSliceUnknown);
 }
 
 - (void)testViewBoxComputeTransformForMeetSliceAndNone

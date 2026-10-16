@@ -72,6 +72,55 @@
     [self assertColor:color red:0x33 / 255.f green:0xAA / 255.f blue:0x77 / 255.f alpha:0x88 / 255.f];
 }
 
+- (void)testNamedColorLookupBoundaries
+{
+    NSDictionary<NSString*, NSNumber*>* colors = @{ @"aliceblue": @0xf0f8ff, @"black": @0x000000, @"yellowgreen": @0x9acd32, @" \tCornFlowerBlue\n": @0x6495ed, @"DARKGREEN": @0x006400 };
+    for (NSString* name in colors) {
+        uint32_t rgb = colors[name].unsignedIntValue;
+        CGColorRef retained = [IJSVGColor newCGColorFromString:name];
+        CGColorRef borrowed = [IJSVGColor colorFromPredefinedColorName:name];
+        XCTAssertNotEqual(retained, NULL, @"%@", name);
+        XCTAssertNotEqual(borrowed, NULL, @"%@", name);
+        if (retained != NULL && borrowed != NULL) {
+            [self assertColor:retained red:((rgb >> 16) & 255) / 255.f green:((rgb >> 8) & 255) / 255.f blue:(rgb & 255) / 255.f alpha:1];
+            XCTAssertTrue(CGColorEqualToColor(retained, borrowed));
+        }
+        if (retained != NULL) {
+            CGColorRelease(retained);
+        }
+    }
+    NSString* longName = [@"x" stringByPaddingToLength:4096 withString:@"x" startingAtIndex:0];
+    NSString* padding = [@" " stringByPaddingToLength:4096 withString:@" " startingAtIndex:0];
+    CGColorRef padded = [IJSVGColor newCGColorFromString:[NSString stringWithFormat:@"%@RED%@", padding, padding]];
+    XCTAssertNotEqual(padded, NULL);
+    if (padded != NULL) {
+        [self assertColor:padded red:1 green:0 blue:0 alpha:1];
+        CGColorRelease(padded);
+    }
+    for (NSString* invalid in @[ @"", @"aliceblueextra", @"yellowgree", @"unknown", @"red\0extra", @"\u00a0CornFlowerBlue\u2003", @"dar\u212agreen", longName ]) {
+        XCTAssertEqual([IJSVGColor colorFromPredefinedColorName:invalid], NULL);
+        XCTAssertEqual([IJSVGColor colorFromString:invalid], NULL);
+        CGColorRef retained = [IJSVGColor newCGColorFromString:invalid];
+        XCTAssertEqual(retained, NULL);
+        if (retained != NULL) {
+            CGColorRelease(retained);
+        }
+    }
+}
+
+- (void)testHEXByteParsingPreservesLegacyForms
+{
+    for (NSString* token in @[ @"#abc", @"#abcd", @"#123456", @"#12345678", @"abcdef", @"abc", @"#", @"##12", @"12345" ]) {
+        CGColorRef expected = [IJSVGColor colorFromHEXString:token];
+        CGColorRef actual = [IJSVGColor colorFromString:[NSString stringWithFormat:@" \t%@\n", token]];
+        XCTAssertNotEqual(expected, NULL, @"%@", token);
+        XCTAssertNotEqual(actual, NULL, @"%@", token);
+        if (expected != NULL && actual != NULL) {
+            XCTAssertTrue(CGColorEqualToColor(expected, actual), @"%@", token);
+        }
+    }
+}
+
 - (void)testColorFromStringParsesNamedColorsCaseInsensitively
 {
     CGColorRef color = [IJSVGColor colorFromString:@"  CornFlowerBlue  "];

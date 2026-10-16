@@ -28,6 +28,14 @@ typedef NS_ENUM(NSInteger, IJSVGUnitLengthType) {
     IJSVGUnitLengthTypeCalculation
 };
 
+typedef struct {
+    CGFloat value;
+    IJSVGUnitLengthType originalType;
+} IJSVGParsedUnitLength;
+
+// Reads one terminated token using the legacy unit parsing rules.
+BOOL IJSVGParseUnitBytes(const char* bytes, IJSVGParsedUnitLength* parsed);
+
 IJSVGUnitLengthType IJSVGUnitLengthTypeForCString(const char* chars);
 CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type);
 

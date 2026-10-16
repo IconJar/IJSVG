@@ -85,6 +85,7 @@ typedef NS_ENUM(uint8_t, IJSVGPositionSyntax) {
 // Splits a mutable NUL terminated buffer in place without retaining its bytes.
 NSArray<IJSVGUnitLength*>* _Nullable IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax);
 NSArray<IJSVGUnitLength*>* _Nullable IJSVGTransformOriginFromString(NSString* value);
+BOOL IJSVGTransformOriginIsValid(NSString* value);
 void IJSVGApplyTransformAttribute(IJSVGGraphicsNode* node, NSString* value, BOOL allowCSSUnits);
 void IJSVGApplyParsedTransforms(IJSVGGraphicsNode* node, NSArray<IJSVGTransform*>* transforms);
 void IJSVGApplyBackgroundAttribute(IJSVGGraphicsNode* node, NSString* value);

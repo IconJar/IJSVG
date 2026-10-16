@@ -26,6 +26,16 @@ BOOL IJSVGEnumerateNumbersFromBytes(const char* _Nullable bytes, NSUInteger leng
 // The C input must be terminated and is consumed before callbacks begin.
 BOOL IJSVGEnumerateNumbersFromCString(const char* string, void (^handler)(CGFloat));
 
+CGFloat IJSVGAngleFromString(NSString* _Nullable string);
+IJSVGVectorEffect IJSVGVectorEffectFromString(NSString* _Nullable string);
+IJSVGBlendMode IJSVGBlendModeFromString(NSString* _Nullable string);
+IJSVGWindingRule IJSVGWindingRuleFromString(NSString* _Nullable string);
+IJSVGLineJoinStyle IJSVGLineJoinStyleFromString(NSString* _Nullable string);
+IJSVGLineCapStyle IJSVGLineCapStyleFromString(NSString* _Nullable string);
+IJSVGUnitType IJSVGUnitTypeFromString(NSString* _Nullable string);
+IJSVGMarkerOrientType IJSVGMarkerOrientTypeFromString(NSString* _Nullable string);
+IJSVGContextPaint IJSVGContextPaintFromString(NSString* _Nullable string);
+
 @interface IJSVGUtils : NSObject
 
 CG_EXTERN const CGSize IJSVG_SIZE_INFINITE;
@@ -74,18 +84,9 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (CGFloat*)commandParameters:(NSString*)command count:(NSInteger*)count;
 + (CGFloat*)commandParameters:(NSString*)command dataStream:(IJSVGPathDataStream*)dataStream count:(NSInteger*)count;
 + (CGFloat*)parseViewBox:(NSString*)string;
-+ (IJSVGVectorEffect)vectorEffectForString:(NSString* _Nullable)string;
-+ (IJSVGWindingRule)windingRuleForString:(NSString*)string;
-+ (IJSVGLineJoinStyle)lineJoinStyleForString:(NSString*)string;
-+ (IJSVGLineCapStyle)lineCapStyleForString:(NSString*)string;
 + (IJSVGLineJoinStyle)lineJoinStyleForCGLineJoin:(CGLineJoin)lineJoin;
 + (IJSVGLineCapStyle)lineCapStyleForCGLineCap:(CGLineCap)lineCap;
-+ (IJSVGUnitType)unitTypeForString:(NSString*)string;
 + (IJSVGMarkerUnits)markerUnitsForString:(NSString* _Nullable)string;
-+ (IJSVGMarkerOrientType)markerOrientTypeForString:(NSString* _Nullable)string;
-+ (IJSVGContextPaint)contextPaintForString:(NSString* _Nullable)string;
-+ (CGFloat)angleForString:(NSString* _Nullable)string;
-+ (IJSVGBlendMode)blendModeForString:(NSString*)string;
 + (NSString* _Nullable)mixBlendingModeForBlendMode:(IJSVGBlendMode)blendMode;
 + (NSString* _Nullable)MIMETypeForImageData:(NSData*)data sourceURL:(NSURL*)sourceURL;
 

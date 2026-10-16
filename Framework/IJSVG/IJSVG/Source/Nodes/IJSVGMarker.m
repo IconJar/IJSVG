@@ -312,8 +312,8 @@ NSArray<IJSVGMarkerPosition*>* IJSVGMarkerPositions(CGPathRef path, NSString* so
 
 - (void)applyMarkerOrientation:(NSString*)orient toMarker:(IJSVGMarker*)marker
 {
-    marker.orientType = [IJSVGUtils markerOrientTypeForString:orient];
-    marker.orientAngle = [IJSVGUtils angleForString:orient];
+    marker.orientType = IJSVGMarkerOrientTypeFromString(orient);
+    marker.orientAngle = IJSVGAngleFromString(orient);
 }
 
 + (IJSVGBitFlags*)allowedAttributes

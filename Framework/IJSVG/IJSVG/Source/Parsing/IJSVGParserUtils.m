@@ -697,7 +697,27 @@ BOOL IJSVGReadXMLAttribute(IJSVGXMLAttribute* node, IJSVGBitFlags* activeAttribu
 
 NSSet<NSString*>* IJSVGClassNameList(NSString* value)
 {
-    return [NSSet setWithArray:[value ijsvg_componentsSplitByWhiteSpace] ?: @[]];
+    const char* bytes = value.UTF8String;
+    if (bytes == NULL) {
+        return [NSSet set];
+    }
+    bytes += strspn(bytes, "\t\n\r ");
+    if (*bytes == 0) {
+        return [NSSet set];
+    }
+    char* buffer = strdup(bytes);
+    NSMutableSet<NSString*>* names = [[NSMutableSet alloc] init];
+    if (buffer != NULL) {
+        char* state = NULL;
+        for (char* token = strtok_r(buffer, "\t\n\r ", &state); token != NULL; token = strtok_r(NULL, "\t\n\r ", &state)) {
+            NSString* name = [NSString stringWithUTF8String:token];
+            if (name != nil) {
+                [names addObject:name];
+            }
+        }
+        free(buffer);
+    }
+    return [names copy];
 }
 
 static uint64_t IJSVGStorePrioritizedStyleAttributes(IJSVGStyleSheetStyle* style, IJSVGStyleSheetStyle* fallback, IJSVGBitFlags* activeAttributes, NSString* __unsafe_unretained attributeValues[kIJSVGNodeAttributeStorageLength])
@@ -788,17 +808,17 @@ static NSUInteger IJSVGPositionTokenize(char* buffer, const char* tokens[3], NSU
     return count;
 }
 
-NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax)
+static BOOL IJSVGParsePositionBuffer(char* buffer, IJSVGPositionSyntax syntax, NSArray<IJSVGUnitLength*>** parsed)
 {
     const char* tokens[3] = { NULL };
     NSUInteger count = IJSVGPositionTokenize(buffer, tokens, syntax == IJSVGPositionSyntaxBasicShape ? 2 : 3);
     if (count == 0) {
-        return nil;
+        return NO;
     }
     if (count == 3) {
         // The renderer validates depth without applying a depth translation.
         if (strchr(tokens[2], '%') != NULL || !IJSVGParseUnitLengthsFromBytes(tokens[2], strlen(tokens[2]), YES, YES, nil, NULL)) {
-            return nil;
+            return NO;
         }
         count--;
     }
@@ -815,7 +835,7 @@ NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSy
         keywords[1] = IJSVGOriginKeywordFromCString(tokens[1]);
         if (keywords[0] == IJSVGOriginKeywordTop || keywords[0] == IJSVGOriginKeywordBottom || keywords[1] == IJSVGOriginKeywordLeft || keywords[1] == IJSVGOriginKeywordRight) {
             if (keywords[0] == IJSVGOriginKeywordNone || keywords[1] == IJSVGOriginKeywordNone) {
-                return nil;
+                return NO;
             }
             const char* token = tokens[0];
             tokens[0] = tokens[1];
@@ -834,30 +854,52 @@ NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSy
             result[index] = keyword == leading ? IJSVGZeroPercentageUnitLength : (keyword == trailing ? IJSVGOnePercentageUnitLength : IJSVGHalfPercentageUnitLength);
         } else {
             IJSVGUnitLength* length = nil;
-            if (keyword != IJSVGOriginKeywordNone || !IJSVGParseUnitLengthsFromBytes(tokens[index], strlen(tokens[index]), YES, YES, nil, &length)) {
-                return nil;
+            if (keyword != IJSVGOriginKeywordNone || !IJSVGParseUnitLengthsFromBytes(tokens[index], strlen(tokens[index]), YES, YES, nil, parsed != NULL ? &length : NULL)) {
+                return NO;
             }
             result[index] = length;
         }
     }
-    return @[ result[0], result[1] ];
+    if (parsed != NULL) {
+        *parsed = @[ result[0], result[1] ];
+    }
+    return YES;
 }
 
-NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
+NSArray<IJSVGUnitLength*>* IJSVGPositionFromBuffer(char* buffer, IJSVGPositionSyntax syntax)
+{
+    NSArray<IJSVGUnitLength*>* result = nil;
+    IJSVGParsePositionBuffer(buffer, syntax, &result);
+    return result;
+}
+
+static BOOL IJSVGParseTransformOrigin(NSString* value, NSArray<IJSVGUnitLength*>** result)
 {
     const char* bytes = value.UTF8String;
     if (bytes == NULL || strlen(bytes) != [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-        return nil;
+        return NO;
     }
 
     // Tokenize one owned buffer, keeping all intermediate tokens in C.
     char* buffer = strdup(bytes);
     if (buffer == NULL) {
-        return nil;
+        return NO;
     }
-    NSArray<IJSVGUnitLength*>* origin = IJSVGPositionFromBuffer(buffer, IJSVGPositionSyntaxTransformOrigin);
+    BOOL valid = IJSVGParsePositionBuffer(buffer, IJSVGPositionSyntaxTransformOrigin, result);
     free(buffer);
-    return origin;
+    return valid;
+}
+
+NSArray<IJSVGUnitLength*>* IJSVGTransformOriginFromString(NSString* value)
+{
+    NSArray<IJSVGUnitLength*>* result = nil;
+    IJSVGParseTransformOrigin(value, &result);
+    return result;
+}
+
+BOOL IJSVGTransformOriginIsValid(NSString* value)
+{
+    return IJSVGParseTransformOrigin(value, NULL);
 }
 
 void IJSVGApplyTransformAttribute(IJSVGGraphicsNode* node, NSString* value, BOOL allowCSSUnits)

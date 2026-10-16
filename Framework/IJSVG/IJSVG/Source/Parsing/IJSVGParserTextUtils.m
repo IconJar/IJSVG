@@ -7,6 +7,7 @@
 //
 
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGParserTextUtils.h>
 #import <IJSVGParserUtils.h>
@@ -20,12 +21,16 @@ static NSString* const IJSVGTextCursiveFontFamily = @"Apple Chancery";
 static NSString* const IJSVGTextFantasyFontFamily = @"Papyrus";
 static NSString* const IJSVGTextSystemFontFamily = @".AppleSystemUIFont";
 
-static void IJSVGParseTextLength(NSString* value, IJSVGTextAttributeValue* parsed)
+static void IJSVGParseTextLengthBytes(const char* bytes, IJSVGTextAttributeValue* parsed)
 {
-    IJSVGUnitLength* length = [IJSVGUnitLength unitWithString:value];
-    parsed.number = length.value;
+    IJSVGParsedUnitLength length = { 0 };
+    if (bytes != NULL && strchr(bytes, '(') == NULL) {
+        IJSVGParseUnitBytes(bytes, &length);
+    }
+    BOOL fontRelative = length.originalType == IJSVGUnitLengthTypeEM || length.originalType == IJSVGUnitLengthTypeEX;
+    parsed.number = fontRelative ? length.value : IJSVGConvertUnitValue(length.value, length.originalType);
     parsed.unitless = length.originalType == IJSVGUnitLengthTypeNumber;
-    switch (length.type) {
+    switch (length.originalType) {
         case IJSVGUnitLengthTypeEM:
             parsed.lengthBasis = IJSVGTextLengthBasisFontSize;
             break;
@@ -44,6 +49,16 @@ static void IJSVGParseTextLength(NSString* value, IJSVGTextAttributeValue* parse
     }
 }
 
+static void IJSVGParseTextLength(NSString* value, IJSVGTextAttributeValue* parsed)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    const char* bytes = source.bytes;
+    if (bytes != NULL && memchr(bytes, 0, source.length) != NULL) {
+        bytes = NULL;
+    }
+    IJSVGParseTextLengthBytes(bytes, parsed);
+}
+
 static void IJSVGParseTextPositions(NSString* value, IJSVGTextAttributeValue* parsed)
 {
     const char* bytes = value.UTF8String;
@@ -54,7 +69,11 @@ static void IJSVGParseTextPositions(NSString* value, IJSVGTextAttributeValue* pa
         for (char* token = strtok_r(buffer, " ,\t\r\n", &state); token != NULL; token = strtok_r(NULL, " ,\t\r\n", &state)) {
             NSString* string = [NSString stringWithUTF8String:token];
             if (string != nil) {
-                [lengths addObject:IJSVGParseTextAttribute(string, IJSVGNodeAttributeTextLength)];
+                IJSVGTextAttributeValue* length = [[IJSVGTextAttributeValue alloc] init];
+                length.string = string;
+                length.keyword = IJSVGTextKeywordForString(string);
+                IJSVGParseTextLengthBytes(token, length);
+                [lengths addObject:length];
             }
         }
         free(buffer);
@@ -168,33 +187,29 @@ static void IJSVGParseTextFeatures(NSString* value, IJSVGTextAttributeValue* par
     parsed.features = features;
 }
 
-static void IJSVGParseTextLigatures(NSString* value, IJSVGTextAttributeValue* parsed)
+static void IJSVGParseTextKeywordList(NSString* value, IJSVGTextAttributeValue* parsed, BOOL ligatures)
 {
-    for (NSString* token in [value ijsvg_componentsSplitByWhiteSpace]) {
-        if (IJSVGTextKeywordForString(token) == IJSVGTextKeywordNoCommonLigatures) {
-            parsed.keyword = IJSVGTextKeywordNoCommonLigatures;
-            return;
+    const char* bytes = value.UTF8String;
+    char* buffer = bytes != NULL ? strdup(bytes) : NULL;
+    if (buffer == NULL) {
+        return;
+    }
+    char* state = NULL;
+    for (char* token = strtok_r(buffer, "\t\n\r ", &state); token != NULL; token = strtok_r(NULL, "\t\n\r ", &state)) {
+        if (ligatures) {
+            if (IJSVGCharBufferCaseInsensitiveCompare(token, "no-common-ligatures")) {
+                parsed.keyword = IJSVGTextKeywordNoCommonLigatures;
+                break;
+            }
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(token, "underline")) {
+            parsed.decorations |= IJSVGTextDecorationUnderline;
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(token, "overline")) {
+            parsed.decorations |= IJSVGTextDecorationOverline;
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(token, "line-through")) {
+            parsed.decorations |= IJSVGTextDecorationLineThrough;
         }
     }
-}
-
-static void IJSVGParseTextDecorations(NSString* value, IJSVGTextAttributeValue* parsed)
-{
-    for (NSString* token in [value ijsvg_componentsSplitByWhiteSpace]) {
-        switch (IJSVGTextKeywordForString(token)) {
-            case IJSVGTextKeywordUnderline:
-                parsed.decorations |= IJSVGTextDecorationUnderline;
-                break;
-            case IJSVGTextKeywordOverline:
-                parsed.decorations |= IJSVGTextDecorationOverline;
-                break;
-            case IJSVGTextKeywordLineThrough:
-                parsed.decorations |= IJSVGTextDecorationLineThrough;
-                break;
-            default:
-                break;
-        }
-    }
+    free(buffer);
 }
 
 IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value, IJSVGNodeAttribute attribute)
@@ -250,7 +265,7 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value, IJSVGNodeAttri
             }
             break;
         case IJSVGNodeAttributeFontVariantLigatures:
-            IJSVGParseTextLigatures(value, parsed);
+            IJSVGParseTextKeywordList(value, parsed, YES);
             break;
         case IJSVGNodeAttributeFontFamily:
             IJSVGParseTextFamilies(value, parsed);
@@ -262,7 +277,7 @@ IJSVGTextAttributeValue* IJSVGParseTextAttribute(NSString* value, IJSVGNodeAttri
 
         case IJSVGNodeAttributeTextDecoration:
         case IJSVGNodeAttributeTextDecorationLine:
-            IJSVGParseTextDecorations(value, parsed);
+            IJSVGParseTextKeywordList(value, parsed, NO);
             break;
         default:
             break;

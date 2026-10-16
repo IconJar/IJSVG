@@ -98,14 +98,220 @@ static NSInteger IJSVGParseColorComponents(const IJSVGCSSComponents* components,
     return -1;
 }
 
-@implementation IJSVGColor
+typedef struct {
+    const char* name;
+    uint32_t rgb;
+} IJSVGNamedColor;
 
-static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
+static const IJSVGNamedColor IJSVGNamedColors[] = {
+    { "aliceblue", 0xf0f8ff },
+    { "antiquewhite", 0xfaebd7 },
+    { "aqua", 0x00ffff },
+    { "aquamarine", 0x7fffd4 },
+    { "azure", 0xf0ffff },
+    { "beige", 0xf5f5dc },
+    { "bisque", 0xffe4c4 },
+    { "black", 0x000000 },
+    { "blanchedalmond", 0xffebcd },
+    { "blue", 0x0000ff },
+    { "blueviolet", 0x8a2be2 },
+    { "brown", 0xa52a2a },
+    { "burlywood", 0xdeb887 },
+    { "cadetblue", 0x5f9ea0 },
+    { "chartreuse", 0x7fff00 },
+    { "chocolate", 0xd2691e },
+    { "coral", 0xff7f50 },
+    { "cornflowerblue", 0x6495ed },
+    { "cornsilk", 0xfff8dc },
+    { "crimson", 0xdc143c },
+    { "currentcolor", 0x000000 },
+    { "cyan", 0x00ffff },
+    { "darkblue", 0x00008b },
+    { "darkcyan", 0x008b8b },
+    { "darkgoldenrod", 0xb8860b },
+    { "darkgray", 0xa9a9a9 },
+    { "darkgreen", 0x006400 },
+    { "darkgrey", 0xa9a9a9 },
+    { "darkkhaki", 0xbdb76b },
+    { "darkmagenta", 0x8b008b },
+    { "darkolivegreen", 0x556b2f },
+    { "darkorange", 0xff8c00 },
+    { "darkorchid", 0x9932cc },
+    { "darkred", 0x8b0000 },
+    { "darksalmon", 0xe9967a },
+    { "darkseagreen", 0x8fbc8f },
+    { "darkslateblue", 0x483d8b },
+    { "darkslategray", 0x2f4f4f },
+    { "darkturquoise", 0x00ced1 },
+    { "darkviolet", 0x9400d3 },
+    { "deeppink", 0xff1493 },
+    { "deepskyblue", 0x00bfff },
+    { "dimgray", 0x696969 },
+    { "dimgrey", 0x696969 },
+    { "dodgerblue", 0x1e90ff },
+    { "firebrick", 0xb22222 },
+    { "floralwhite", 0xfffaf0 },
+    { "forestgreen", 0x228b22 },
+    { "fuchsia", 0xff00ff },
+    { "gainsboro", 0xdcdcdc },
+    { "ghostwhite", 0xf8f8ff },
+    { "gold", 0xffd700 },
+    { "goldenrod", 0xdaa520 },
+    { "gray", 0x808080 },
+    { "green", 0x008000 },
+    { "greenyellow", 0xadff2f },
+    { "grey", 0x808080 },
+    { "honeydew", 0xf0fff0 },
+    { "hotpink", 0xff69b4 },
+    { "indianred", 0xcd5c5c },
+    { "indigo", 0x4b0082 },
+    { "ivory", 0xfffff0 },
+    { "khaki", 0xf0e68c },
+    { "lavender", 0xe6e6fa },
+    { "lavenderblush", 0xfff0f5 },
+    { "lawngreen", 0x7cfc00 },
+    { "lemonchiffon", 0xfffacd },
+    { "lightblue", 0xadd8e6 },
+    { "lightcoral", 0xf08080 },
+    { "lightcyan", 0xe0ffff },
+    { "lightgoldenrodyellow", 0xfafad2 },
+    { "lightgray", 0xd3d3d3 },
+    { "lightgreen", 0x90ee90 },
+    { "lightgrey", 0xd3d3d3 },
+    { "lightpink", 0xffb6c1 },
+    { "lightsalmon", 0xffa07a },
+    { "lightseagreen", 0x20b2aa },
+    { "lightskyblue", 0x87cefa },
+    { "lightslategray", 0x778899 },
+    { "lightsteelblue", 0xb0c4de },
+    { "lightyellow", 0xffffe0 },
+    { "lime", 0x00ff00 },
+    { "limegreen", 0x32cd32 },
+    { "linen", 0xfaf0e6 },
+    { "magenta", 0xff00ff },
+    { "maroon", 0x800000 },
+    { "mediumaquamarine", 0x66cdaa },
+    { "mediumblue", 0x0000cd },
+    { "mediumorchid", 0xba55d3 },
+    { "mediumpurple", 0x9370db },
+    { "mediumseagreen", 0x3cb371 },
+    { "mediumslateblue", 0x7b68ee },
+    { "mediumspringgreen", 0x00fa9a },
+    { "mediumturquoise", 0x48d1cc },
+    { "mediumvioletred", 0xc71585 },
+    { "midnightblue", 0x191970 },
+    { "mintcream", 0xf5fffa },
+    { "mistyrose", 0xffe4e1 },
+    { "moccasin", 0xffe4b5 },
+    { "navajowhite", 0xffdead },
+    { "navy", 0x000080 },
+    { "oldlace", 0xfdf5e6 },
+    { "olive", 0x808000 },
+    { "olivedrab", 0x6b8e23 },
+    { "orange", 0xffa500 },
+    { "orangered", 0xff4500 },
+    { "orchid", 0xda70d6 },
+    { "palegoldenrod", 0xeee8aa },
+    { "palegreen", 0x98fb98 },
+    { "paleturquoise", 0xafeeee },
+    { "palevioletred", 0xdb7093 },
+    { "papayawhip", 0xffefd5 },
+    { "peachpuff", 0xffdab9 },
+    { "peru", 0xcd853f },
+    { "pink", 0xffc0cb },
+    { "plum", 0xdda0dd },
+    { "powderblue", 0xb0e0e6 },
+    { "purple", 0x800080 },
+    { "red", 0xff0000 },
+    { "rosybrown", 0xbc8f8f },
+    { "royalblue", 0x4169e1 },
+    { "saddlebrown", 0x8b4513 },
+    { "salmon", 0xfa8072 },
+    { "sandybrown", 0xf4a460 },
+    { "seagreen", 0x2e8b57 },
+    { "seashell", 0xfff5ee },
+    { "sienna", 0xa0522d },
+    { "silver", 0xc0c0c0 },
+    { "skyblue", 0x87ceeb },
+    { "slateblue", 0x6a5acd },
+    { "slategrey", 0x708090 },
+    { "snow", 0xfffafa },
+    { "springgreen", 0x00ff7f },
+    { "steelblue", 0x4682b4 },
+    { "tan", 0xd2b48c },
+    { "teal", 0x008080 },
+    { "thistle", 0xd8bfd8 },
+    { "tomato", 0xff6347 },
+    { "turquoise", 0x40e0d0 },
+    { "violet", 0xee82ee },
+    { "wheat", 0xf5deb3 },
+    { "white", 0xffffff },
+    { "whitesmoke", 0xf5f5f5 },
+    { "yellow", 0xffff00 },
+    { "yellowgreen", 0x9acd32 },
+};
 
-+ (void)load
+static BOOL IJSVGNamedColorFromBytes(const char* bytes, NSUInteger length, uint32_t* rgb)
 {
-    [self.class _generateTree];
+    if (bytes == NULL || memchr(bytes, 0, length) != NULL) {
+        return NO;
+    }
+    while (length != 0 && isspace((unsigned char)bytes[length - 1])) {
+        length--;
+    }
+    while (length != 0 && isspace((unsigned char)*bytes)) {
+        bytes++;
+        length--;
+    }
+    char name[32];
+    if (length == 0 || length >= sizeof(name)) {
+        return NO;
+    }
+    memcpy(name, bytes, length);
+    name[length] = 0;
+    IJSVGCharBufferToLower(name);
+    NSUInteger lower = 0;
+    NSUInteger upper = sizeof(IJSVGNamedColors) / sizeof(*IJSVGNamedColors);
+    while (lower < upper) {
+        NSUInteger middle = lower + (upper - lower) / 2;
+        int order = strcmp(name, IJSVGNamedColors[middle].name);
+        if (order == 0) {
+            *rgb = IJSVGNamedColors[middle].rgb;
+            return YES;
+        }
+        if (order < 0) {
+            upper = middle;
+        } else {
+            lower = middle + 1;
+        }
+    }
+    return NO;
 }
+
+static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* hasAlpha)
+{
+    size_t length = bytes != NULL ? strlen(bytes) : 0;
+    if (length == 0 || !IJSVGCharBufferIsHEX((char*)bytes)) {
+        return NO;
+    }
+    if (bytes[0] == '#') {
+        length--;
+        bytes++;
+    }
+    if (length == 3 || length == 4) {
+        char expanded[9] = { 0 };
+        for (NSUInteger index = 0; index < length; index++) {
+            expanded[index * 2] = expanded[index * 2 + 1] = bytes[index];
+        }
+        *hex = strtoul(expanded, NULL, 16);
+    } else {
+        *hex = strtoul(bytes, NULL, 16);
+    }
+    *hasAlpha = length == 4 || length == 8;
+    return YES;
+}
+
+@implementation IJSVGColor
 
 + (CGColorSpaceRef)linearRGBColorSpace
 {
@@ -220,158 +426,6 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
     return [self colorWithRed:red green:green blue:blue alpha:alpha];
 }
 
-+ (void)_generateTree
-{
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _colorTree = @{@"aliceblue" : @(0xf0f8ff),
-            @"antiquewhite" : @(0xfaebd7),
-            @"aqua" : @(0x00ffff),
-            @"aquamarine" : @(0x7fffd4),
-            @"azure" : @(0xf0ffff),
-            @"beige" : @(0xf5f5dc),
-            @"bisque" : @(0xffe4c4),
-            @"black" : @(0x000000),
-            @"blanchedalmond" : @(0xffebcd),
-            @"blue" : @(0x0000ff),
-            @"blueviolet" : @(0x8a2be2),
-            @"brown" : @(0xa52a2a),
-            @"burlywood" : @(0xdeb887),
-            @"cadetblue" : @(0x5f9ea0),
-            @"chartreuse" : @(0x7fff00),
-            @"chocolate" : @(0xd2691e),
-            @"coral" : @(0xff7f50),
-            @"cornflowerblue" : @(0x6495ed),
-            @"cornsilk" : @(0xfff8dc),
-            @"crimson" : @(0xdc143c),
-            @"currentcolor" : @(0x000000),
-            @"cyan" : @(0x00ffff),
-            @"darkblue" : @(0x00008b),
-            @"darkcyan" : @(0x008b8b),
-            @"darkgoldenrod" : @(0xb8860b),
-            @"darkgray" : @(0xa9a9a9),
-            @"darkgreen" : @(0x006400),
-            @"darkgrey" : @(0xa9a9a9),
-            @"darkkhaki" : @(0xbdb76b),
-            @"darkmagenta" : @(0x8b008b),
-            @"darkolivegreen" : @(0x556b2f),
-            @"darkorange" : @(0xff8c00),
-            @"darkorchid" : @(0x9932cc),
-            @"darkred" : @(0x8b0000),
-            @"darksalmon" : @(0xe9967a),
-            @"darkseagreen" : @(0x8fbc8f),
-            @"darkslateblue" : @(0x483d8b),
-            @"darkslategray" : @(0x2f4f4f),
-            @"darkturquoise" : @(0x00ced1),
-            @"darkviolet" : @(0x9400d3),
-            @"deeppink" : @(0xff1493),
-            @"deepskyblue" : @(0x00bfff),
-            @"dimgray" : @(0x696969),
-            @"dimgrey" : @(0x696969),
-            @"dodgerblue" : @(0x1e90ff),
-            @"firebrick" : @(0xb22222),
-            @"floralwhite" : @(0xfffaf0),
-            @"forestgreen" : @(0x228b22),
-            @"fuchsia" : @(0xff00ff),
-            @"gainsboro" : @(0xdcdcdc),
-            @"ghostwhite" : @(0xf8f8ff),
-            @"gold" : @(0xffd700),
-            @"goldenrod" : @(0xdaa520),
-            @"gray" : @(0x808080),
-            @"green" : @(0x008000),
-            @"greenyellow" : @(0xadff2f),
-            @"grey" : @(0x808080),
-            @"honeydew" : @(0xf0fff0),
-            @"hotpink" : @(0xff69b4),
-            @"indianred" : @(0xcd5c5c),
-            @"indigo" : @(0x4b0082),
-            @"ivory" : @(0xfffff0),
-            @"khaki" : @(0xf0e68c),
-            @"lavender" : @(0xe6e6fa),
-            @"lavenderblush" : @(0xfff0f5),
-            @"lawngreen" : @(0x7cfc00),
-            @"lemonchiffon" : @(0xfffacd),
-            @"lightblue" : @(0xadd8e6),
-            @"lightcoral" : @(0xf08080),
-            @"lightcyan" : @(0xe0ffff),
-            @"lightgoldenrodyellow" : @(0xfafad2),
-            @"lightgray" : @(0xd3d3d3),
-            @"lightgreen" : @(0x90ee90),
-            @"lightgrey" : @(0xd3d3d3),
-            @"lightpink" : @(0xffb6c1),
-            @"lightsalmon" : @(0xffa07a),
-            @"lightseagreen" : @(0x20b2aa),
-            @"lightskyblue" : @(0x87cefa),
-            @"lightslategray" : @(0x778899),
-            @"lightsteelblue" : @(0xb0c4de),
-            @"lightyellow" : @(0xffffe0),
-            @"lime" : @(0x00ff00),
-            @"limegreen" : @(0x32cd32),
-            @"linen" : @(0xfaf0e6),
-            @"magenta" : @(0xff00ff),
-            @"maroon" : @(0x800000),
-            @"mediumaquamarine" : @(0x66cdaa),
-            @"mediumblue" : @(0x0000cd),
-            @"mediumorchid" : @(0xba55d3),
-            @"mediumpurple" : @(0x9370db),
-            @"mediumseagreen" : @(0x3cb371),
-            @"mediumslateblue" : @(0x7b68ee),
-            @"mediumspringgreen" : @(0x00fa9a),
-            @"mediumturquoise" : @(0x48d1cc),
-            @"mediumvioletred" : @(0xc71585),
-            @"midnightblue" : @(0x191970),
-            @"mintcream" : @(0xf5fffa),
-            @"mistyrose" : @(0xffe4e1),
-            @"moccasin" : @(0xffe4b5),
-            @"navajowhite" : @(0xffdead),
-            @"navy" : @(0x000080),
-            @"oldlace" : @(0xfdf5e6),
-            @"olive" : @(0x808000),
-            @"olivedrab" : @(0x6b8e23),
-            @"orange" : @(0xffa500),
-            @"orangered" : @(0xff4500),
-            @"orchid" : @(0xda70d6),
-            @"palegoldenrod" : @(0xeee8aa),
-            @"palegreen" : @(0x98fb98),
-            @"paleturquoise" : @(0xafeeee),
-            @"palevioletred" : @(0xdb7093),
-            @"papayawhip" : @(0xffefd5),
-            @"peachpuff" : @(0xffdab9),
-            @"peru" : @(0xcd853f),
-            @"pink" : @(0xffc0cb),
-            @"plum" : @(0xdda0dd),
-            @"powderblue" : @(0xb0e0e6),
-            @"purple" : @(0x800080),
-            @"red" : @(0xff0000),
-            @"rosybrown" : @(0xbc8f8f),
-            @"royalblue" : @(0x4169e1),
-            @"saddlebrown" : @(0x8b4513),
-            @"salmon" : @(0xfa8072),
-            @"sandybrown" : @(0xf4a460),
-            @"seagreen" : @(0x2e8b57),
-            @"seashell" : @(0xfff5ee),
-            @"sienna" : @(0xa0522d),
-            @"silver" : @(0xc0c0c0),
-            @"skyblue" : @(0x87ceeb),
-            @"slateblue" : @(0x6a5acd),
-            @"slategrey" : @(0x708090),
-            @"snow" : @(0xfffafa),
-            @"springgreen" : @(0x00ff7f),
-            @"steelblue" : @(0x4682b4),
-            @"tan" : @(0xd2b48c),
-            @"teal" : @(0x008080),
-            @"thistle" : @(0xd8bfd8),
-            @"tomato" : @(0xff6347),
-            @"turquoise" : @(0x40e0d0),
-            @"violet" : @(0xee82ee),
-            @"wheat" : @(0xf5deb3),
-            @"white" : @(0xffffff),
-            @"whitesmoke" : @(0xf5f5f5),
-            @"yellow" : @(0xffff00),
-            @"yellowgreen" : @(0x9acd32)};
-    });
-}
-
 + (CGColorRef)colorFromRString:(NSString*)rString gString:(NSString*)gString bString:(NSString*)bString aString:(NSString*)aString
 {
     return [self colorFromRUnit:[IJSVGUnitLength unitWithString:rString] gUnit:[IJSVGUnitLength unitWithString:gString] bUnit:[IJSVGUnitLength unitWithString:bString] aUnit:[IJSVGUnitLength unitWithString:aString]];
@@ -401,12 +455,11 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
     IJSVGStringBytes source = IJSVGStringGetBytes(string);
     uint32_t rgba = 0;
     if (!IJSVGParseHexColorBytes(source.bytes, source.length, &rgba)) {
-        NSString* name = [string.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-        NSNumber* hex = name == nil ? nil : _colorTree[name];
-        if (hex == nil) {
+        uint32_t rgb = 0;
+        if (!IJSVGNamedColorFromBytes(source.bytes, source.length, &rgb)) {
             return CGColorRetain([self colorFromString:string]);
         }
-        rgba = (hex.unsignedIntValue << 8) | 0xff;
+        rgba = (rgb << 8) | 0xff;
     }
     CGFloat components[] = {
         ((rgba >> 24) & 0xff) / 255.f,
@@ -430,11 +483,26 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
         return nil;
     }
 
+    const char* start = oString;
+    NSUInteger length = source.length;
+    while (length != 0 && isspace((unsigned char)*start)) {
+        start++;
+        length--;
+    }
+    while (length != 0 && isspace((unsigned char)start[length - 1])) {
+        length--;
+    }
+    uint32_t rgba = 0;
+    if (IJSVGParseHexColorBytes(start, length, &rgba)) {
+        return [self.class colorFromHEXInteger:rgba containsAlphaComponent:YES];
+    }
+
     char* str = IJSVGTimmedCharBufferCreate(oString);
-    if (IJSVGCharBufferIsHEX(str) == YES) {
-        string = [NSString stringWithUTF8String:str];
-        (void)free(str), str = NULL;
-        return [self.class colorFromHEXString:string];
+    NSUInteger hex = 0;
+    BOOL hasAlpha = NO;
+    if (IJSVGParseLegacyHEXBytes(str, &hex, &hasAlpha)) {
+        free(str);
+        return [self.class colorFromHEXInteger:hex containsAlphaComponent:hasAlpha];
     }
 
     if (strchr(str, '(') != NULL) {
@@ -497,12 +565,12 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
 
 + (CGColorRef)colorFromPredefinedColorName:(NSString*)name
 {
-    NSNumber* hex = nil;
-    name = [name.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    if ((hex = _colorTree[name]) == nil) {
+    IJSVGStringBytes source = IJSVGStringGetBytes(name);
+    uint32_t rgb = 0;
+    if (!IJSVGNamedColorFromBytes(source.bytes, source.length, &rgb)) {
         return nil;
     }
-    return [self.class colorFromHEXInteger:hex.integerValue];
+    return [self.class colorFromHEXInteger:rgb containsAlphaComponent:NO];
 }
 
 + (NSString*)colorStringFromColor:(CGColorRef)color
@@ -930,39 +998,12 @@ static NSDictionary<NSString*, NSNumber*>* _colorTree = nil;
 
 + (CGColorRef)colorFromHEXString:(NSString*)string containsAlphaComponent:(BOOL*)containsAlphaComponent
 {
-    // absolutely no string
-    if (string == nil) {
+    NSUInteger hex = 0;
+    BOOL hasAlpha = NO;
+    if (!IJSVGParseLegacyHEXBytes(string.UTF8String, &hex, &hasAlpha)) {
         return nil;
     }
-
-    char* str = (char*)string.UTF8String;
-    size_t length = strlen(str);
-    if (length == 0 || IJSVGCharBufferIsHEX(str) == NO) {
-        return nil;
-    }
-
-    // remove the hash from the front of the string
-    if (str[0] == '#') {
-        length--;
-        str++;
-    }
-
-    unsigned long hex;
-
-    // we need to work out if its shorthand
-    // if it is, the length needs to be length*2
-    if (length == 3 || length == 4) {
-        char chars[9] = { 0 };
-        for (int i = 0; i < length; i++) {
-            chars[i * 2] = chars[i * 2 + 1] = str[i];
-        }
-        hex = strtoul(chars, NULL, 16);
-    } else {
-        hex = strtoul(str, NULL, 16);
-    }
-
-    BOOL hasAlpha = length == 4 || length == 8;
-    if (containsAlphaComponent != nil) {
+    if (containsAlphaComponent != NULL) {
         *containsAlphaComponent = hasAlpha;
     }
     return [self colorFromHEXInteger:hex containsAlphaComponent:hasAlpha];

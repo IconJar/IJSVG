@@ -225,10 +225,10 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
         node.strokeMiterLimit = [IJSVGUnitLength unitWithString:value];
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineCap, &value)) {
-        node.lineCapStyle = [IJSVGUtils lineCapStyleForString:value];
+        node.lineCapStyle = IJSVGLineCapStyleFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeLineJoin, &value)) {
-        node.lineJoinStyle = [IJSVGUtils lineJoinStyleForString:value];
+        node.lineJoinStyle = IJSVGLineJoinStyleFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStroke, &value)) {
         NSString* fillIdentifier = [IJSVGUtils defURL:value];
@@ -269,7 +269,7 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeVectorEffect, &value)) {
-        node.vectorEffect = [IJSVGUtils vectorEffectForString:value];
+        node.vectorEffect = IJSVGVectorEffectFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePaintOrder, &value)) {
         node.paintOrder = IJSVGPaintOrderFromString(value);
@@ -278,13 +278,13 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
         node.isolated = IJSVGIsolationFromString(value, node.parentNode.isolated);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeBlendMode, &value)) {
-        node.blendMode = [IJSVGUtils blendModeForString:value];
+        node.blendMode = IJSVGBlendModeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFillRule, &value)) {
-        node.windingRule = [IJSVGUtils windingRuleForString:value];
+        node.windingRule = IJSVGWindingRuleFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipRule, &value)) {
-        node.clipRule = [IJSVGUtils windingRuleForString:value];
+        node.clipRule = IJSVGWindingRuleFromString(value);
     }
 }
 
@@ -386,7 +386,7 @@ void IJSVGParseViewportAttributes(IJSVGViewportNode* node, IJSVGNodeParsingConte
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePreserveAspectRatio, &value)) {
         IJSVGViewBoxMeetOrSlice meetOrSlice;
-        IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value meetOrSlice:&meetOrSlice];
+        IJSVGViewBoxAlignment alignment = IJSVGViewBoxParseAspectRatio(value, &meetOrSlice);
         node.viewBoxAlignment = alignment;
         node.viewBoxMeetOrSlice = meetOrSlice;
     }
@@ -398,7 +398,7 @@ void IJSVGParseAspectRatioAttributes(IJSVGViewportNode* node, IJSVGNodeParsingCo
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePreserveAspectRatio, &value)) {
         IJSVGViewBoxMeetOrSlice meetOrSlice;
-        IJSVGViewBoxAlignment alignment = [IJSVGViewBox alignmentForString:value meetOrSlice:&meetOrSlice];
+        IJSVGViewBoxAlignment alignment = IJSVGViewBoxParseAspectRatio(value, &meetOrSlice);
         node.viewBoxAlignment = alignment;
         node.viewBoxMeetOrSlice = meetOrSlice;
     }
@@ -425,7 +425,7 @@ void IJSVGParseGradientAttributes(IJSVGGradient* node, IJSVGNodeParsingContext* 
     IJSVGParser* parser = context->parser;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientUnits, &value)) {
-        node.units = [IJSVGUtils unitTypeForString:value];
+        node.units = IJSVGUnitTypeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeGradientTransform, &value)) {
         IJSVGApplyParsedTransforms(node, [parser parsedTransformsForValue:value allowCSSUnits:NO]);
@@ -440,10 +440,10 @@ void IJSVGParseMaskAttributes(IJSVGMask* node, IJSVGNodeParsingContext* context)
         node.maskType = [value caseInsensitiveCompare:@"alpha"] == NSOrderedSame ? IJSVGMaskTypeAlpha : IJSVGMaskTypeLuminance;
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskUnits, &value)) {
-        node.units = [IJSVGUtils unitTypeForString:value];
+        node.units = IJSVGUnitTypeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeMaskContentUnits, &value)) {
-        node.contentUnits = [IJSVGUtils unitTypeForString:value];
+        node.contentUnits = IJSVGUnitTypeFromString(value);
     }
 }
 
@@ -453,10 +453,10 @@ void IJSVGParsePatternAttributes(IJSVGPattern* node, IJSVGNodeParsingContext* co
     IJSVGParser* parser = context->parser;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternUnits, &value)) {
-        node.units = [IJSVGUtils unitTypeForString:value];
+        node.units = IJSVGUnitTypeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternContentUnits, &value)) {
-        node.contentUnits = [IJSVGUtils unitTypeForString:value];
+        node.contentUnits = IJSVGUnitTypeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePatternTransform, &value)) {
         IJSVGApplyParsedTransforms(node, [parser parsedTransformsForValue:value allowCSSUnits:NO]);
@@ -468,7 +468,7 @@ void IJSVGParseClipAttributes(IJSVGClipPath* node, IJSVGNodeParsingContext* cont
     NSString* __unsafe_unretained* attributeValues = context->values;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeClipPathUnits, &value)) {
-        node.contentUnits = [IJSVGUtils unitTypeForString:value];
+        node.contentUnits = IJSVGUnitTypeFromString(value);
     }
 }
 
@@ -477,10 +477,10 @@ void IJSVGParseFilterAttributes(IJSVGFilter* node, IJSVGNodeParsingContext* cont
     NSString* __unsafe_unretained* attributeValues = context->values;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFilterUnits, &value)) {
-        node.units = [IJSVGUtils unitTypeForString:value];
+        node.units = IJSVGUnitTypeFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributePrimitiveUnits, &value)) {
-        node.contentUnits = [IJSVGUtils unitTypeForString:value];
+        node.contentUnits = IJSVGUnitTypeFromString(value);
     }
 }
 

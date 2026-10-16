@@ -66,24 +66,8 @@
     return [str stringByAppendingString:@" slice"];
 }
 
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string meetOrSlice:(IJSVGViewBoxMeetOrSlice*)meetOrSlice
+IJSVGViewBoxMeetOrSlice IJSVGViewBoxMeetOrSliceFromBytes(const char* name)
 {
-    NSArray<NSString*>* parts = [string ijsvg_componentsSplitByWhiteSpace];
-    if (parts.count == 1) {
-        *meetOrSlice = IJSVGViewBoxMeetOrSliceMeet;
-        return [self alignmentForString:parts[0]];
-    }
-    *meetOrSlice = [self meetOrSliceForString:parts[1]];
-    return [self alignmentForString:parts[0]];
-}
-
-+ (IJSVGViewBoxMeetOrSlice)meetOrSliceForString:(NSString*)string
-{
-    if (string == nil) {
-        return IJSVGViewBoxMeetOrSliceUnknown;
-    }
-
-    const char* name = string.UTF8String;
     if (name == NULL) {
         return IJSVGViewBoxMeetOrSliceUnknown;
     }
@@ -96,13 +80,8 @@
     return IJSVGViewBoxMeetOrSliceUnknown;
 }
 
-+ (IJSVGViewBoxAlignment)alignmentForString:(NSString*)string
+IJSVGViewBoxAlignment IJSVGViewBoxAlignmentFromBytes(const char* name)
 {
-    if (string == nil) {
-        return IJSVGViewBoxAlignmentUnknown;
-    }
-
-    const char* name = string.UTF8String;
     if (name == NULL) {
         return IJSVGViewBoxAlignmentUnknown;
     }
@@ -137,6 +116,19 @@
         return IJSVGViewBoxAlignmentXMaxYMax;
     }
     return IJSVGViewBoxAlignmentUnknown;
+}
+
+IJSVGViewBoxAlignment IJSVGViewBoxParseAspectRatio(NSString* string, IJSVGViewBoxMeetOrSlice* meetOrSlice)
+{
+    const char* bytes = string.UTF8String;
+    char* buffer = bytes != NULL ? strdup(bytes) : NULL;
+    char* state = NULL;
+    char* alignment = buffer != NULL ? strtok_r(buffer, "\t\n\r ", &state) : NULL;
+    char* mode = alignment != NULL ? strtok_r(NULL, "\t\n\r ", &state) : NULL;
+    *meetOrSlice = mode != NULL ? IJSVGViewBoxMeetOrSliceFromBytes(mode) : IJSVGViewBoxMeetOrSliceMeet;
+    IJSVGViewBoxAlignment result = IJSVGViewBoxAlignmentFromBytes(alignment);
+    free(buffer);
+    return result;
 }
 
 static void IJSVGViewBoxAlignmentFactors(IJSVGViewBoxAlignment alignment, CGFloat* fx, CGFloat* fy)

@@ -205,24 +205,24 @@ static NSString* const IJSVGMarkerTestTriangle = @"<path d='M0 -2L6 0L0 2Z' fill
     XCTAssertEqual([IJSVGUtils markerUnitsForString:@"invalid"], IJSVGMarkerUnitsStrokeWidth);
     XCTAssertEqual([IJSVGUtils markerUnitsForString:IJSVGStringStrokeWidth], IJSVGMarkerUnitsStrokeWidth);
     XCTAssertEqual([IJSVGUtils markerUnitsForString:IJSVGStringUserSpaceOnUse], IJSVGMarkerUnitsUserSpaceOnUse);
-    XCTAssertEqual([IJSVGUtils markerOrientTypeForString:nil], IJSVGMarkerOrientTypeAngle);
-    XCTAssertEqual([IJSVGUtils markerOrientTypeForString:@"invalid"], IJSVGMarkerOrientTypeAngle);
-    XCTAssertEqual([IJSVGUtils markerOrientTypeForString:@"90deg"], IJSVGMarkerOrientTypeAngle);
-    XCTAssertEqual([IJSVGUtils markerOrientTypeForString:IJSVGStringAuto], IJSVGMarkerOrientTypeAuto);
-    IJSVGMarkerOrientType reverse = [IJSVGUtils markerOrientTypeForString:IJSVGStringAutoStartReverse];
+    XCTAssertEqual(IJSVGMarkerOrientTypeFromString(nil), IJSVGMarkerOrientTypeAngle);
+    XCTAssertEqual(IJSVGMarkerOrientTypeFromString(@"invalid"), IJSVGMarkerOrientTypeAngle);
+    XCTAssertEqual(IJSVGMarkerOrientTypeFromString(@"90deg"), IJSVGMarkerOrientTypeAngle);
+    XCTAssertEqual(IJSVGMarkerOrientTypeFromString(IJSVGStringAuto), IJSVGMarkerOrientTypeAuto);
+    IJSVGMarkerOrientType reverse = IJSVGMarkerOrientTypeFromString(IJSVGStringAutoStartReverse);
     XCTAssertEqual(reverse, IJSVGMarkerOrientTypeAutoStartReverse);
-    XCTAssertEqual([IJSVGUtils contextPaintForString:nil], IJSVGContextPaintNone);
-    XCTAssertEqual([IJSVGUtils contextPaintForString:@"red"], IJSVGContextPaintNone);
-    XCTAssertEqual([IJSVGUtils contextPaintForString:IJSVGStringContextFill], IJSVGContextPaintFill);
-    XCTAssertEqual([IJSVGUtils contextPaintForString:IJSVGStringContextStroke], IJSVGContextPaintStroke);
+    XCTAssertEqual(IJSVGContextPaintFromString(nil), IJSVGContextPaintNone);
+    XCTAssertEqual(IJSVGContextPaintFromString(@"red"), IJSVGContextPaintNone);
+    XCTAssertEqual(IJSVGContextPaintFromString(IJSVGStringContextFill), IJSVGContextPaintFill);
+    XCTAssertEqual(IJSVGContextPaintFromString(IJSVGStringContextStroke), IJSVGContextPaintStroke);
 }
 
 - (void)testMarkerAngleHelper
 {
     NSDictionary<NSString*, NSNumber*>* cases = @{ @"45" : @45, @"-45deg" : @-45, @"100grad" : @90, @"1.5707963267948966rad" : @90, @"-3.141592653589793rad" : @-180, @" 2e2grad " : @180, @"invalid" : @0, @"12invalid" : @0, @"1 2" : @0, @"nan" : @0, @"1e999rad" : @0, @"auto" : @0, @"auto-start-reverse" : @0, @"" : @0 };
-    XCTAssertEqual([IJSVGUtils angleForString:nil], 0);
+    XCTAssertEqual(IJSVGAngleFromString(nil), 0);
     for (NSString* value in cases) {
-        XCTAssertEqualWithAccuracy([IJSVGUtils angleForString:value], cases[value].doubleValue, .0001, @"%@", value);
+        XCTAssertEqualWithAccuracy(IJSVGAngleFromString(value), cases[value].doubleValue, .0001, @"%@", value);
     }
 }
 

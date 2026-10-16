@@ -215,8 +215,11 @@ the style or position of part of the text.
 * Filling: fill color, fill mode (winding rules), fill opacity, linear gradients, radial gradients and patterns. Gradients support `color-interpolation="sRGB"` and `"linearRGB"`, including repeat/reflect spread modes; `auto` uses sRGB.
 * Markers: `marker`, `marker-start`, `marker-mid` and `marker-end` on paths, lines, polylines and polygons. Supports custom child artwork, `markerUnits`, reference points, marker dimensions, `viewBox`, clipping, fixed angles, `auto` and `auto-start-reverse` orientation, and `context-fill` / `context-stroke` paints.
 * Color: named SVG colors, HEX, RGB(A), HSL(A), OKLCH and `currentColor`.
-* CSS: Embedded style sheets and inline styles, with type, class, ID and universal selectors, descendant and child combinators, and adjacent and general sibling combinators. Declaration resolution accounts for specificity, source order and `!important`.
-* CSS values and geometry: custom properties with `var()`, `calc()`, `min()`, `max()` and `clamp()` in supported length values, and CSS geometry properties. The `media` attribute on `<style>` supports media-query matching against the document viewport.
+* CSS cascade: embedded style sheets and inline styles, with specificity, source order and `!important`.
+* CSS selectors: type, class, ID and universal selectors, descendant and child combinators, and adjacent and general sibling combinators. Attribute selectors support presence, equality, word, language prefix, prefix, suffix and substring matching, with `i` and `s` case flags. Namespace selectors and top level `@namespace` declarations are supported.
+* CSS pseudo-classes: `:root`, `:scope`, `:empty`, `:lang()`, `:first-child`, `:last-child`, `:only-child`, their `of-type` variants, and `:nth-child()`, `:nth-last-child()`, `:nth-of-type()` and `:nth-last-of-type()`. Child index selectors support `of <selector-list>`. Logical selectors include `:is()`, `:where()`, `:not()` and `:has()` with relative selectors.
+* CSS values and geometry: custom properties with `var()`, `calc()`, `min()`, `max()` and `clamp()` in supported length values, CSS geometry properties, and path data through `d: path("...")` or `d: none`.
+* CSS media queries: `<style media="...">` and `@media` blocks, including nested blocks. Queries support `all`, `screen` and `print` types, comma separated alternatives, `and`, leading `not` and `only`, viewport width and height, and portrait or landscape orientation. Width and height accept exact values, `min-` and `max-` prefixes, and feature first comparisons such as `(width >= 600px)`.
 * Context paints: `context-fill` and `context-stroke` in markers and `<use>` instances, including solid colors, gradients, patterns and nested uses. Context paint servers retain the referencing element's coordinate space.
 * Rendering hints: `shape-rendering` (`auto`, `optimizeSpeed`, `crispEdges`, `geometricPrecision`) and `image-rendering` (`auto`, `optimizeSpeed`, `optimizeQuality`), including inherited and CSS values. Shape speed/crispness hints disable antialiasing; image speed uses nearest-neighbor sampling and quality uses high-quality interpolation.
 * Painting and compositing: `paint-order`, group opacity, `mix-blend-mode`, `isolation`, clipping, alpha/luminance masks, `display` and `visibility`.
@@ -230,13 +233,14 @@ The list above describes implemented features, not complete SVG or CSS conforman
 IJSVG is a static artwork renderer; it does not provide a browser DOM, scripting,
 interactive document behavior or SVG/CSS animation playback.
 
-* CSS attribute selectors and pseudo-classes are not supported. Stylesheet at-rules such as `@media`, `@supports`, `@import` and `@font-face` are not implemented; `<style media="...">` is supported separately.
+* CSS support is limited to the selectors and at-rules listed above. Interactive pseudo-classes such as `:hover` and `:focus`, pseudo-elements, nested `:has()`, and the column combinator are not supported. `@supports`, `@import`, `@font-face`, `@layer` and CSS nesting are not implemented.
+* Media queries are evaluated during parsing against the document viewport using the `screen` media type, including when the artwork is later exported to PDF. Drawing at a different size does not reevaluate the stylesheet. Supported media lengths include `px`, `in`, `pt`, `pc`, `cm`, `mm`, `em` and `rem`, with a fixed 16px basis for `em` and `rem`. Other media features such as resolution, aspect ratio and user preferences, general `or` expressions, and reversed or chained range comparisons are not implemented.
 * Fragment references such as `href="#symbol"` are supported, but external SVG document references such as `href="icons.svg#symbol"` are not resolved. Ordinary `<image>` loading does not currently resolve relative paths against the source document URL.
 * `color-interpolation` controls gradient stop interpolation. Per-element linear RGB compositing/blending is not implemented; general compositing still uses the drawing context's color space. Filter interpolation remains controlled separately by `color-interpolation-filters`.
 * SVG filter primitives are supported, but CSS filter functions such as `filter: blur(4px)` and `filter: brightness(0.5)` are not implemented.
 * `<foreignObject>` content is skipped. HTML layout and embedded web fonts are not supported; text uses locally available fonts.
 
-Useful areas for further compatibility work include CSS selectors and at-rules,
+Useful areas for further compatibility work include the remaining CSS selectors and at-rules,
 resource URL resolution, and per-element compositing color spaces. Rendering
 and export edge cases still need testing even for
 features listed as supported.

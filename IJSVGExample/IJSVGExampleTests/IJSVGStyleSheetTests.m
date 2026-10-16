@@ -8,6 +8,7 @@
 
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
 #import <IJSVGTestHelpers.h>
+#import <IJSVGStyleSheetUtils.h>
 
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);
@@ -28,6 +29,19 @@ IJSVGStyleSheetSelectorRaw* IJSVGStyleSheetCreateRawSelector(IJSVGStyleSheetSele
 @end
 
 @implementation IJSVGStyleSheetTests
+
+- (void)testDeclarationPropertyNormalization
+{
+    for (NSString* property in @[ @"fill", @"FILL", @"Stroke-Width", @"--Custom", @"UNKNOWN", @"\u212aey", @"fill\0extra" ]) {
+        NSDictionary* expanded = nil;
+        NSString* value = [property caseInsensitiveCompare:@"stroke-width"] == NSOrderedSame ? @"2px" : @"red";
+        NSString* result = IJSVGStyleSheetResolveDeclaration(property, value, &expanded);
+        XCTAssertEqualObjects(result, [property hasPrefix:@"--"] ? property : property.lowercaseString);
+    }
+    NSDictionary* expanded = nil;
+    XCTAssertNil(IJSVGStyleSheetResolveDeclaration(@"TRANSFORM-ORIGIN", @"left right", &expanded));
+    XCTAssertEqualObjects(IJSVGStyleSheetResolveDeclaration(@"TRANSFORM-ORIGIN", @"top right", &expanded), @"transform-origin");
+}
 
 - (void)testGeometryDeclarationParsingPerformance
 {

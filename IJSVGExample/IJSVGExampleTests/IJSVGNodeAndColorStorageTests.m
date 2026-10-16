@@ -562,6 +562,13 @@
     NSString* dataURL = [@"data:image/png;base64," stringByAppendingString:[png base64EncodedStringWithOptions:0]];
     IJSVGImage* original = [self imageCopyTestNode];
     [original loadFromString:dataURL];
+    for (NSString* whitespace in @[ @" \t\r\n\f\v", @"\u00a0\u2003" ]) {
+        NSString* spacedURL = [dataURL stringByReplacingOccurrencesOfString:@"," withString:[@"," stringByAppendingString:whitespace]];
+        IJSVGImage* spaced = [self imageCopyTestNode];
+        [spaced loadFromString:spacedURL];
+        XCTAssertEqualObjects(spaced.sourceData, png);
+        XCTAssertEqualObjects(spaced.sourceMIMEType, @"image/png");
+    }
     IJSVGImage* copy = original.copy;
 
     XCTAssertNotNil(original.image);

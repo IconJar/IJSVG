@@ -39,12 +39,7 @@ static BOOL IJSVGParseScalarUnit(const char* bytes, CGFloat* value, IJSVGUnitLen
     return NO;
 }
 
-typedef struct {
-    CGFloat value;
-    IJSVGUnitLengthType originalType;
-} IJSVGParsedUnitLength;
-
-static BOOL IJSVGParseUnitBytes(const char* bytes, IJSVGParsedUnitLength* parsed)
+BOOL IJSVGParseUnitBytes(const char* bytes, IJSVGParsedUnitLength* parsed)
 {
     if (bytes == NULL) {
         return NO;

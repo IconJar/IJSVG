@@ -1329,7 +1329,7 @@ static BOOL IJSVGStyleSheetDeclarationValueIsValid(NSUInteger attribute, NSStrin
             return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGCSSPathDataIsValid(value);
 
         case IJSVGNodeAttributeTransformOrigin:
-            return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGTransformOriginFromString(value) != nil;
+            return IJSVGStyleSheetValueIsCSSWideKeyword(value) || IJSVGTransformOriginIsValid(value);
 
         case IJSVGNodeAttributeTransformBox:
             return IJSVGStyleSheetTransformBoxIsValid(value);
@@ -1358,7 +1358,29 @@ NSString* IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString
     *expanded = nil;
     *variables = NO;
     BOOL custom = [property hasPrefix:@"--"];
-    NSString* name = custom ? property : property.lowercaseString;
+    NSString* name = property;
+    NSUInteger attribute = IJSVGNodeAttributeUnknown;
+    if (!custom) {
+        IJSVGStringBytes source = IJSVGStringGetBytes(property);
+        char bytes[64];
+        BOOL ascii = source.bytes != NULL && source.length < sizeof(bytes);
+        BOOL changed = NO;
+        for (NSUInteger index = 0; ascii && index < source.length; index++) {
+            unsigned char character = source.bytes[index];
+            ascii = character < 128;
+            bytes[index] = IJSVGCharToLower(character);
+            changed |= bytes[index] != character;
+        }
+        if (ascii) {
+            attribute = IJSVGNodeAttributeForBytes(bytes, source.length);
+            if (changed) {
+                name = [[NSString alloc] initWithBytes:bytes length:source.length encoding:NSUTF8StringEncoding];
+            }
+        } else {
+            name = property.lowercaseString;
+            attribute = IJSVGNodeAttributeForName(name);
+        }
+    }
     IJSVGCSSVariableSyntax syntax = IJSVGStyleSheetDeclarationVariableSyntax(value, custom);
     if (syntax == IJSVGCSSVariableSyntaxInvalid || (custom && name.length == 2)) {
         return nil;
@@ -1367,7 +1389,6 @@ NSString* IJSVGStyleSheetResolveVariableDeclaration(NSString* property, NSString
         return name;
     }
 
-    NSUInteger attribute = IJSVGNodeAttributeForName(name);
     *variables = syntax == IJSVGCSSVariableSyntaxReferences;
     if (!*variables && !IJSVGStyleSheetDeclarationValueIsValid(attribute, value)) {
         return nil;

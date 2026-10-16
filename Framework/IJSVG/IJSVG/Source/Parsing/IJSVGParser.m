@@ -1355,7 +1355,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
     IJSVGColorNode* colorNode = [[IJSVGColorNode alloc] initWithColor:color];
     colorNode.usesCurrentColor = [value caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame;
-    colorNode.contextPaint = [IJSVGUtils contextPaintForString:value];
+    colorNode.contextPaint = IJSVGContextPaintFromString(value);
     if (colorNode.contextPaint != IJSVGContextPaintNone) {
         // A context paint outside an instantiated marker paints nothing.
         colorNode.isNoneOrTransparent = YES;
@@ -1604,7 +1604,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     node.namespaceURI = element->uri != NULL ? [NSString stringWithUTF8String:element->uri] : nil;
     node.identifier = IJSVGParserElementIdentifier(element);
     NSString* className = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeClass));
-    node.classNameList = IJSVGClassNameList(className);
+    if (className.length != 0) {
+        node.classNameList = IJSVGClassNameList(className);
+    }
     [nodes setObject:node forKey:IJSVGXMLKey(element)];
     [self configureSelectorChildrenForElement:element parent:node nodes:nodes];
     return node;

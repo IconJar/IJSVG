@@ -346,6 +346,12 @@
 
 - (void)testOpenTypeSettingsAndKeywordLists
 {
+    IJSVGTextAttributeValue* decorations = IJSVGParseTextAttribute(@" UNDERLINE\toverline\nline-through underline unknown ", IJSVGNodeAttributeTextDecoration);
+    XCTAssertEqual(decorations.decorations, IJSVGTextDecorationUnderline | IJSVGTextDecorationOverline | IJSVGTextDecorationLineThrough);
+    XCTAssertEqual(IJSVGParseTextAttribute(@"underlined overlines", IJSVGNodeAttributeTextDecoration).decorations, 0u);
+    XCTAssertEqual(IJSVGParseTextAttribute(@"underline\u00a0overline", IJSVGNodeAttributeTextDecoration).decorations, 0u);
+    XCTAssertEqual(IJSVGParseTextAttribute(@"contextual\tNO-COMMON-LIGATURES", IJSVGNodeAttributeFontVariantLigatures).keyword, IJSVGTextKeywordNoCommonLigatures);
+    XCTAssertNotEqual(IJSVGParseTextAttribute(@"no-common-ligatures-extra", IJSVGNodeAttributeFontVariantLigatures).keyword, IJSVGTextKeywordNoCommonLigatures);
     NSArray<NSArray*>* featureCases = @[
         @[ @" 'kern' ON,, 'liga' off, 'salt' +2 ", @{ @"kern": @1, @"liga": @0, @"salt": @2 } ],
         @[ @"'kern', 'kern' 3, 'liga' invalid", @{ @"kern": @3, @"liga": @0 } ],
@@ -448,6 +454,13 @@
 
 - (void)testTextLengthsUseSharedUnitConversions
 {
+    for (NSString* token in @[ @"12", @"-2em", @"3EX", @"25%", @"1in", @"2cm", @"3mm", @"4pt", @"5pc", @"6px", @"inherit", @"invalid", @"1e999", @"calc(2)", @"café", @"2junk", @"1\0em" ]) {
+        IJSVGUnitLength* expected = [IJSVGUnitLength unitWithString:token];
+        IJSVGTextAttributeValue* actual = IJSVGParseTextAttribute(token, IJSVGNodeAttributeTextLength);
+        CGFloat number = isfinite(expected.value) ? expected.value : 0;
+        XCTAssertEqualWithAccuracy(actual.number, number, .000001, @"%@", token);
+        XCTAssertEqual(actual.unitless, expected.originalType == IJSVGUnitLengthTypeNumber, @"%@", token);
+    }
     NSMutableString* source = [@" , 1px,,\t-2em\n25%  café  " mutableCopy];
     IJSVGTextAttributeValue* parsed = IJSVGParseTextAttribute(source, IJSVGNodeAttributeX);
     [source setString:@"changed"];
