@@ -6,12 +6,14 @@
 //  Copyright © 2016 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
+#import <ImageIO/ImageIO.h>
 
 static BOOL IJSVGImageURLIsWhitespace(unsigned char character)
 {
@@ -63,9 +65,9 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
 {
     IJSVGImage* node = [super copyWithZone:zone];
 
-    // Preserve the cached state without invoking setImage:,
+    // Preserve the cached state without invoking setCGImage:,
     // which clears export metadata.
-    node->_image = _image;
+    node->_embeddedSVG = _embeddedSVG;
     node->_intrinsicSize = _intrinsicSize;
     node->_sourceData = [_sourceData copy];
     node->_sourceMIMEType = [_sourceMIMEType copy];
@@ -119,40 +121,54 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
         return;
     }
 
-    // set the image against the container, only if it was created from the data.
-    NSImage* anImage = [[NSImage alloc] initWithData:data];
-    if (anImage == nil) {
-        return;
+    NSString* mimeType = [IJSVGUtils MIMETypeForImageData:data sourceURL:aURL];
+    CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+    CGImageRef pixels = NULL;
+    if (source != NULL) {
+        NSDictionary* properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, NULL));
+        NSInteger orientation = [properties[(__bridge NSString*)kCGImagePropertyOrientation] integerValue];
+        if (orientation > 1) {
+            // Bake EXIF orientation into pixels without reducing the source resolution.
+            NSNumber* width = properties[(__bridge NSString*)kCGImagePropertyPixelWidth];
+            NSNumber* height = properties[(__bridge NSString*)kCGImagePropertyPixelHeight];
+            NSDictionary* options = @{
+                (__bridge NSString*)kCGImageSourceCreateThumbnailFromImageAlways : @YES,
+                (__bridge NSString*)kCGImageSourceCreateThumbnailWithTransform : @YES,
+                (__bridge NSString*)kCGImageSourceThumbnailMaxPixelSize : @(MAX(width.unsignedIntegerValue, height.unsignedIntegerValue))
+            };
+            pixels = CGImageSourceCreateThumbnailAtIndex(source, 0, (__bridge CFDictionaryRef)options);
+        } else {
+            pixels = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+        }
+        CFRelease(source);
     }
-    [self setImage:anImage];
-
+    if (pixels != NULL) {
+        self.CGImage = pixels;
+        CGImageRelease(pixels);
+    } else {
+        IJSVG* svg = [[IJSVG alloc] initWithSVGData:data];
+        if (svg == nil) {
+            return;
+        }
+        self.CGImage = NULL;
+        _embeddedSVG = svg;
+        _intrinsicSize = svg.size;
+        mimeType = @"image/svg+xml";
+    }
     _sourceData = [data copy];
-    _sourceMIMEType = [[IJSVGUtils MIMETypeForImageData:data sourceURL:aURL] copy];
+    _sourceMIMEType = [mimeType copy];
 }
 
-- (void)setImage:(NSImage*)anImage
+- (void)setCGImage:(CGImageRef)image
 {
+    // Retain first so assigning the current image is safe.
+    CGImageRef retained = image != NULL ? CGImageRetain(image) : NULL;
+    CGImageRelease(CGImage);
+    CGImage = retained;
     _sourceData = nil;
     _sourceMIMEType = nil;
-    _image = anImage;
-    _intrinsicSize = (CGSize)_image.size;
-
-    if (CGImage != NULL) {
-        CGImageRelease(CGImage);
-        CGImage = NULL;
-    }
-
-    if (_image == nil) {
-        _intrinsicSize = CGSizeZero;
-        return;
-    }
-
-    CGRect rect = CGRectMake(0.f, 0.f, _intrinsicSize.width, _intrinsicSize.height);
-    CGImage = [_image CGImageForProposedRect:&rect context:nil hints:nil];
-
-    if (CGImage != NULL) {
-        CGImageRetain(CGImage);
-    }
+    _embeddedSVG = nil;
+    _intrinsicSize = image != NULL ? CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image)) : CGSizeZero;
 }
 
 - (CGImageRef)CGImage

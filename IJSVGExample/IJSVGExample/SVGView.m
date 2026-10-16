@@ -33,7 +33,7 @@
     CGContextSaveGState(ref);
     CGContextTranslateCTM(ref, 0, self.bounds.size.height);
     CGContextScaleCTM(ref, 1, -1);
-    [svg drawInRect:self.bounds];
+    [svg drawInRect:self.bounds context:ref];
     CGContextRestoreGState(ref);
 }
 

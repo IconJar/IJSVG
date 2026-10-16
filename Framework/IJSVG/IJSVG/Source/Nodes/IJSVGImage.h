@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class IJSVGPath;
+@class IJSVG;
 
 @interface IJSVGImage : IJSVGViewportNode <IJSVGReferenceNode> {
     CGImageRef CGImage;
@@ -21,9 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong, nullable) IJSVGReference* reference;
 
+// Embedded SVG content stays vector based until rendered.
+@property (nonatomic, strong, readonly, nullable) IJSVG* embeddedSVG;
 @property (nonatomic, readonly) CGSize intrinsicSize;
 @property (nonatomic, readonly) CGRect intrinsicBounds;
-@property (nonatomic, strong, nullable) NSImage* image;
+
+// Retains the assigned image. Intrinsic size is measured in pixels.
+@property (nonatomic, assign, nullable) CGImageRef CGImage;
 @property (nonatomic, copy, readonly, nullable) NSData* sourceData;
 @property (nonatomic, copy, readonly, nullable) NSString* sourceMIMEType;
 

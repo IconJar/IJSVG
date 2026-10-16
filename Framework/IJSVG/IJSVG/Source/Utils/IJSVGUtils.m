@@ -994,7 +994,7 @@ BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat))
     return [string floatValue];
 }
 
-+ (CGFloat)angleBetweenPointA:(NSPoint)point1 pointb:(NSPoint)point2
++ (CGFloat)angleBetweenPointA:(CGPoint)point1 pointb:(CGPoint)point2
 {
     return (point1.x * point2.y < point1.y * point2.x ? -1 : 1) * acosf(IJSVGRatio(point1, point2));
 }
@@ -1046,13 +1046,23 @@ CGAffineTransform IJSVGPathFlippingTransform(CGPathRef path)
     }
 }
 
-+ (NSImage*)resizeImage:(NSImage*)anImage toSize:(CGSize)size
-{
-    NSImage* image = [[NSImage alloc] initWithSize:size];
-    [image lockFocus];
-    [anImage drawInRect:NSMakeRect(0.f, 0.f, size.width, size.height) fromRect:NSMakeRect(0.f, 0.f, anImage.size.width, anImage.size.height) operation:NSCompositingOperationCopy fraction:1.f];
-    [image unlockFocus];
-    return image;
-}
-
 @end
+
+CGImageRef IJSVGCreateResizedCGImage(CGImageRef image, CGSize size)
+{
+    if (image == NULL || !isfinite(size.width) || !isfinite(size.height)
+        || size.width < 1 || size.height < 1 || size.width > INT_MAX || size.height > INT_MAX) {
+        return NULL;
+    }
+    CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef context = CGBitmapContextCreate(NULL, (size_t)size.width, (size_t)size.height, 8, 0, space, kCGImageAlphaPremultipliedLast);
+    CGColorSpaceRelease(space);
+    if (context == NULL) {
+        return NULL;
+    }
+    CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
+    CGContextDrawImage(context, (CGRect) { CGPointZero, size }, image);
+    CGImageRef result = CGBitmapContextCreateImage(context);
+    CGContextRelease(context);
+    return result;
+}

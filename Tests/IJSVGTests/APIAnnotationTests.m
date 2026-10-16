@@ -28,29 +28,23 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
         return 1;
     };
     CGSize size = CGSizeMake(32, 16);
-    NSImage* image = [svg imageWithSize:size error:&error];
-    XCTAssertNotNil(image);
-    XCTAssertNil(error);
-    NSImage* flipped = [svg imageWithSize:size flipped:YES error:&error];
-    XCTAssertNotNil(flipped);
-    XCTAssertNil(error);
-    NSImage* fitted = [svg imageByMaintainingAspectRatioWithSize:size flipped:NO error:&error];
-    XCTAssertNotNil(fitted);
-    XCTAssertNil(error);
-    XCTAssertTrue(CGSizeEqualToSize(image.size, size));
-    XCTAssertTrue(CGSizeEqualToSize(flipped.size, size));
-    XCTAssertTrue(CGSizeEqualToSize(fitted.size, size));
     CGImageRef cgImage = [svg newCGImageRefWithSize:size flipped:NO error:&error];
     XCTAssertNil(error);
     XCTAssertTrue(cgImage != NULL);
     if (cgImage != NULL) {
         XCTAssertEqual(CGImageGetWidth(cgImage), 32u);
         XCTAssertEqual(CGImageGetHeight(cgImage), 16u);
-        NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
-        NSColor* color = [[bitmap colorAtX:8 y:8] colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
-        XCTAssertNotNil(color);
-        XCTAssertGreaterThan(color.redComponent, 0.95);
-        XCTAssertGreaterThan(color.alphaComponent, 0.95);
+        CGColorSpaceRef space = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        CGContextRef bitmap = CGBitmapContextCreate(NULL, 32, 16, 8, 128, space, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+        CGColorSpaceRelease(space);
+        XCTAssertTrue(bitmap != NULL);
+        if (bitmap != NULL) {
+            CGContextDrawImage(bitmap, CGRectMake(0, 0, 32, 16), cgImage);
+            const UInt8* pixel = (const UInt8*)CGBitmapContextGetData(bitmap) + 8 * 128 + 8 * 4;
+            XCTAssertGreaterThan(pixel[0], 242);
+            XCTAssertGreaterThan(pixel[3], 242);
+            CGContextRelease(bitmap);
+        }
         CGImageRelease(cgImage);
     }
     CGRect rect = (CGRect) { CGPointZero, size };
@@ -104,7 +98,9 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     @autoreleasepool {
         IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGAnnotationTestSVG];
         IJSVGImage* node = [[IJSVGImage alloc] init];
-        node.image = [svg imageWithSize:CGSizeMake(16, 8)];
+        CGImageRef pixels = [svg newCGImageRefWithSize:CGSizeMake(16, 8) flipped:NO error:nil];
+        node.CGImage = pixels;
+        CGImageRelease(pixels);
         borrowedImage = CGImageRetain([node CGImage]);
     }
     XCTAssertTrue(borrowedImage != NULL);
@@ -115,7 +111,7 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     CGGradientRef borrowedGradient = NULL;
     @autoreleasepool {
         IJSVGGradient* gradient = [[IJSVGGradient alloc] init];
-        gradient.colors = @[ (__bridge id)NSColor.redColor.CGColor, (__bridge id)NSColor.blueColor.CGColor ];
+        gradient.colors = @[ (__bridge id)[IJSVGColor colorFromString:@"red"], (__bridge id)[IJSVGColor colorFromString:@"blue"] ];
         gradient.numberOfStops = 2;
         borrowedGradient = CGGradientRetain(gradient.CGGradient);
     }
@@ -150,12 +146,12 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     node.mask = nil;
     node.filter = nil;
     IJSVGImage* image = [[IJSVGImage alloc] init];
-    XCTAssertNil(image.image);
+    XCTAssertEqual(image.CGImage, NULL);
     XCTAssertNil(image.sourceData);
     IJSVGStyle* style = [[IJSVGStyle alloc] init];
     XCTAssertEqual(style.fillColor, NULL);
     XCTAssertEqual(style.strokeColor, NULL);
-    style.fillColor = NSColor.redColor.CGColor;
+    style.fillColor = [IJSVGColor colorFromString:@"red"];
     style.fillColor = nil;
     XCTAssertEqual(style.colors.count, 0u);
     XCTAssertEqual([[IJSVGFilter alloc] init].primitives.count, 0u);
@@ -167,7 +163,7 @@ static NSString* const IJSVGAnnotationTestSVG = @"<svg xmlns='http://www.w3.org/
     XCTAssertEqual([IJSVGColor colorFromString:@"not-a-color"], NULL);
     XCTAssertEqual([IJSVGColor colorFromString:@"none"], NULL);
     IJSVGTraitedColorStorage* storage = [[IJSVGTraitedColorStorage alloc] init];
-    XCTAssertEqual([storage colorForColor:NSColor.redColor.CGColor matchingTraits:IJSVGColorUsageTraitFill], NULL);
+    XCTAssertEqual([storage colorForColor:[IJSVGColor colorFromString:@"red"] matchingTraits:IJSVGColorUsageTraitFill], NULL);
     XCTAssertEqual(storage.colors.count, 0u);
 }
 

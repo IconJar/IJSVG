@@ -1,1 +1,0 @@
-../../Source/Additions/NSImage+IJSVGAdditions.h

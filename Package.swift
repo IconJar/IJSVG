@@ -11,7 +11,12 @@ import PackageDescription
 
 let package = Package(
     name: "IJSVG",
-    platforms: [.macOS("14.6")],
+    platforms: [
+        .macOS("14.6"),
+        .iOS(.v16),
+        .tvOS(.v16),
+        .visionOS(.v1)
+    ],
     products: [
         .library(name: "IJSVG", targets: ["IJSVG"])
     ],
@@ -36,9 +41,11 @@ let package = Package(
                 .headerSearchPath("Source/Stylesheets")
             ],
             linkerSettings: [
-                .linkedFramework("AppKit"),
                 .linkedLibrary("xml2"),
-                .linkedFramework("Quartz"),
+                .linkedFramework("CoreGraphics"),
+                .linkedFramework("CoreText"),
+                .linkedFramework("ImageIO"),
+                .linkedFramework("QuartzCore"),
                 .linkedFramework("CoreImage"),
                 .linkedFramework("Metal"),
                 .linkedFramework("Accelerate"),
@@ -51,6 +58,7 @@ let package = Package(
             path: "Tests/IJSVGTestSupport",
             publicHeadersPath: "include"
         ),
+        .testTarget(name: "IJSVGPlatformTests", dependencies: ["IJSVG"]),
         .testTarget(
             name: "IJSVGTests",
             dependencies: ["IJSVG", "IJSVGTestSupport"]

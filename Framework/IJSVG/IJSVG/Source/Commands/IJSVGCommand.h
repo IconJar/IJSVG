@@ -32,7 +32,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 
 + (Class)commandClassForCommandChar:(char)aChar;
 + (NSInteger)requiredParameterCount;
-+ (NSPoint)readCoordinatePair:(CGFloat*)pairs index:(NSInteger)index;
++ (CGPoint)readCoordinatePair:(CGFloat*)pairs index:(NSInteger)index;
 + (IJSVGPathDataSequence*)pathDataSequence;
 + (void)runWithParams:(CGFloat*)params paramCount:(NSInteger)count command:(IJSVGCommand*)currentCommand previousCommand:(IJSVGCommand*)command type:(IJSVGCommandType)type path:(CGMutablePathRef)path;
 + (void)parseParams:(CGFloat*)params paramCount:(NSInteger)paramCount intoArray:(NSMutableArray<IJSVGCommand*>*)commands parentCommand:(IJSVGCommand*)parentCommand;
@@ -50,7 +50,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
 - (IJSVGCommand*)commandByConvertingToUnits:(IJSVGUnitType)unitType boundingBox:(CGRect)boundingBox;
 
 - (CGFloat)readFloat;
-- (NSPoint)readPoint;
+- (CGPoint)readPoint;
 - (BOOL)readBOOL;
 - (void)resetRead;
 

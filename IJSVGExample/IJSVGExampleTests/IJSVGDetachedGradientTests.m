@@ -123,7 +123,10 @@
         // imageNode takes precedence in the evaluator. An unused bitmap fallback
         // disables automatic snapshots without changing process wide behavior.
         if (!snapshots.boolValue) {
-            primitive.image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+            IJSVG* fallback = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>"];
+            CGImageRef pixels = [fallback newCGImageRefWithSize:CGSizeMake(1, 1) flipped:NO error:nil];
+            primitive.image = pixels;
+            CGImageRelease(pixels);
         }
 
         // Exercise first render, cache reuse, resizing, and restoring the original

@@ -6,6 +6,7 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <CoreImage/CIFilterBuiltins.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVGTileFilterEffect.h>
 
@@ -16,7 +17,13 @@
     CIImage* input = inputs.firstObject ?: CIImage.emptyImage;
 
     // Repeat the input image only when it has valid bounds.
-    return IJSVGFilterValidRect(input.extent) ? [input imageByApplyingFilter:@"CIAffineTile" withInputParameters:@{ kCIInputTransformKey : NSAffineTransform.transform }] : CIImage.emptyImage;
+    if (!IJSVGFilterValidRect(input.extent)) {
+        return CIImage.emptyImage;
+    }
+    CIFilter<CIAffineTile>* filter = CIFilter.affineTileFilter;
+    filter.inputImage = input;
+    filter.transform = CGAffineTransformIdentity;
+    return filter.outputImage ?: CIImage.emptyImage;
 }
 
 @end

@@ -194,7 +194,7 @@ static void IJSVGConvolvePixels(const float* src, float* dst, NSInteger w, NSInt
                 source = [source imageByClampingToExtent];
             }
             if (edgeMode == IJSVGFilterEdgeModeWrap) {
-                source = [source imageByApplyingFilter:@"CIAffineTile" withInputParameters:@{ kCIInputTransformKey : [NSAffineTransform transform] }];
+                source = [source imageByApplyingFilter:@"CIAffineTile" withInputParameters:@{ kCIInputTransformKey : [NSValue value:&(CGAffineTransform) { 1, 0, 0, 1, 0, 0 } withObjCType:@encode(CGAffineTransform)] }];
             }
             CIImage* output = [source imageByApplyingFilter:filterName withInputParameters:@{ @"inputWeights" : [CIVector vectorWithValues:ciWeights count:cw * ch], @"inputBias" : @0 }];
             output = [output imageByApplyingTransform:CGAffineTransformMakeTranslation(tx - cw / 2, ty - ch / 2)];

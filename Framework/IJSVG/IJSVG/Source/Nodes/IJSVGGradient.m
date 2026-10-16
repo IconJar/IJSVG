@@ -496,7 +496,7 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
     return result;
 }
 
-- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(CGRect)objectRect transform:(CGAffineTransform)absoluteTransform
 {
 }
 

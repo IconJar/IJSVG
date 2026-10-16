@@ -7,7 +7,6 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVGViewBox.h>
 #import <IJSVGImageFilterEffect.h>
 #import <IJSVGPaint.h>
@@ -21,7 +20,7 @@
         return context.imageProvider(primitive, region);
     }
 
-    if (primitive.imageNode == nil && primitive.image == nil) {
+    if (primitive.imageNode == nil && primitive.image == NULL && primitive.embeddedSVG == nil) {
         return CIImage.emptyImage;
     }
     CGRect bounds = CGRectIntersection(context.extent, CGRectIntegral(region));
@@ -47,24 +46,16 @@
         CGContextConcatCTM(bitmap, context.imageTransform);
         CGContextTranslateCTM(bitmap, layer.frame.origin.x, layer.frame.origin.y);
         [layer renderInContext:bitmap];
-    } else if (primitive.image != nil) {
-        // Embedded SVGs must be drawn at the filters current resolution.
-        // Asking NSImage for a CGImage first rasterizes at its intrinsic size.
-        IJSVGImageRep* vector = nil;
-        for (NSImageRep* representation in primitive.image.representations) {
-            if ([representation isKindOfClass:IJSVGImageRep.class]) {
-                vector = (IJSVGImageRep*)representation;
-                break;
-            }
-        }
-        if (vector != nil) {
-            CGRect viewBox = (CGRect) { CGPointZero, vector.viewBox.size };
+    } else if (primitive.image != NULL || primitive.embeddedSVG != nil) {
+        IJSVG* vectorSVG = primitive.embeddedSVG;
+        CGImageRef image = vectorSVG == nil ? primitive.image : NULL;
+        if (vectorSVG != nil) {
+            CGRect viewBox = (CGRect) { CGPointZero, vectorSVG.viewBox.size };
             CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);
             IJSVGContextDrawViewBox(bitmap, viewBox, (CGRect) { CGPointZero, region.size }, primitive.viewBoxAlignment, primitive.viewBoxMeetOrSlice, ^(CGFloat scale[]) {
-                [vector.SVG drawInRect:viewBox context:bitmap];
+                [vectorSVG drawInRect:viewBox context:bitmap];
             });
         }
-        CGImageRef image = vector == nil ? [primitive.image CGImageForProposedRect:NULL context:nil hints:nil] : NULL;
         if (image != NULL) {
             CGRect viewBox = CGRectMake(0, 0, CGImageGetWidth(image), CGImageGetHeight(image));
             CGContextTranslateCTM(bitmap, region.origin.x, region.origin.y);

@@ -80,7 +80,7 @@
 
 #pragma mark - Drawing
 
-- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(CGRect)objectRect transform:(CGAffineTransform)absoluteTransform
 {
     CGContextSaveGState(ctx);
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;

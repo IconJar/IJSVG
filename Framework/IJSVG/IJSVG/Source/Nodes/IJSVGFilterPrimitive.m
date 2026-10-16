@@ -85,6 +85,17 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     NSMutableDictionary<NSString*, NSArray<NSNumber*>*>* _parsedNumbers;
 }
 
+- (void)setImage:(CGImageRef)image
+{
+    CGImageRef retained = image != NULL ? CGImageRetain(image) : NULL;
+    CGImageRelease(_image);
+    _image = retained;
+}
+
+- (void)dealloc
+{
+    CGImageRelease(_image);
+}
 @synthesize parameters = _parameters;
 @synthesize edgeMode = _edgeMode;
 
@@ -212,6 +223,7 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
         self.parameters = primitive.parameters;
         self.imageNode = primitive.imageNode.copy;
         self.image = primitive.image;
+        self.embeddedSVG = primitive.embeddedSVG;
     }
 }
 

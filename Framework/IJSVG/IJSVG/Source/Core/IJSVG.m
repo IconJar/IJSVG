@@ -71,8 +71,7 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
         return [[self alloc] initWithFile:str error:error];
     }
 
-    // check the asset catalogues
-    return [[self alloc] initWithDataAssetNamed:string error:error];
+    return nil;
 }
 
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path
@@ -92,25 +91,11 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     return [[self.class alloc] initWithRootNode:rootNode];
 }
 
-- (id)initWithDataAssetNamed:(NSDataAssetName)name error:(NSError**)error
-{
-    return [self initWithDataAssetNamed:name bundle:NSBundle.mainBundle error:error];
-}
-
-- (id)initWithDataAssetNamed:(NSDataAssetName)name bundle:(NSBundle*)bundle error:(NSError**)error
-{
-    NSDataAsset* dataAsset = [[NSDataAsset alloc] initWithName:name bundle:bundle];
-    if (dataAsset != nil) {
-        return [self initWithSVGData:dataAsset.data error:error];
-    }
-    return nil;
-}
-
-- (id)initWithImage:(NSImage*)image
+- (id)initWithCGImage:(CGImageRef)image
 {
     IJSVGRootNode* rootNode = [[IJSVGRootNode alloc] init];
     IJSVGImage* imageNode = [[IJSVGImage alloc] init];
-    imageNode.image = image;
+    imageNode.CGImage = image;
     IJSVGUnitSize* size = [IJSVGUnitSize sizeWithCGSize:imageNode.intrinsicSize];
     IJSVGUnitRect* viewBox = [IJSVGUnitRect rectWithOrigin:IJSVGUnitPoint.zeroPoint size:size];
     imageNode.width = size.width.copy;
@@ -270,9 +255,6 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     _renderingOptions = [[IJSVGRenderingOptions alloc] init];
     self.style = [[IJSVGStyle alloc] init];
     self.renderingBackingScaleHelper = ^CGFloat {
-        if (NSScreen.mainScreen != nil) {
-            return NSScreen.mainScreen.backingScaleFactor;
-        }
         return 1.f;
     };
 
@@ -518,21 +500,6 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     return [self exporterWithSize:size options:options floatingPointOptions:floatingPointOptions].SVGString;
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize
-{
-    return [self imageWithSize:aSize flipped:NO error:nil];
-}
-
-- (NSImage*)imageWithSize:(CGSize)aSize error:(NSError**)error;
-{
-    return [self imageWithSize:aSize flipped:NO error:error];
-}
-
-- (NSImage*)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped
-{
-    return [self imageWithSize:aSize flipped:flipped error:nil];
-}
-
 - (CGImageRef)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped error:(NSError**)error
 {
     return [self newCGImageRefWithSize:size flipped:flipped colorSpace:IJSVGColor.defaultColorSpace error:error];
@@ -603,18 +570,6 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     return imageRef;
 }
 
-- (NSImage*)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
-{
-    CGImageRef ref = [self newCGImageRefWithSize:aSize flipped:flipped error:error];
-    if (ref == NULL) {
-        return nil;
-    }
-
-    NSImage* image = [[NSImage alloc] initWithCGImage:ref size:aSize];
-    CGImageRelease(ref);
-    return image;
-}
-
 - (CGSize)sizeByMaintainingAspectRatioWithSize:(CGSize)aSize
 {
     IJSVGTextFontResolver* resolver = [[IJSVGTextFontResolver alloc] initWithRenderingOptions:_renderingOptions];
@@ -634,17 +589,6 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     return ogSize;
 }
 
-- (NSImage*)imageByMaintainingAspectRatioWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError**)error
-{
-    CGSize ogSize = [self sizeByMaintainingAspectRatioWithSize:aSize];
-
-    // Make suer we actually have a size, if not, just return nil.
-    if (isnan(ogSize.width) || isnan(ogSize.height)) {
-        return nil;
-    }
-    return [self imageWithSize:ogSize flipped:flipped error:error];
-}
-
 - (NSData*)PDFData
 {
     return [self PDFData:nil];
@@ -652,7 +596,7 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
 
 - (NSData*)PDFData:(NSError**)error
 {
-    return [self PDFDataWithRect:(CGRect) { .origin = NSZeroPoint, .size = _viewBox.size } error:error];
+    return [self PDFDataWithRect:(CGRect) { .origin = CGPointZero, .size = _viewBox.size } error:error];
 }
 
 - (NSData*)PDFDataWithRect:(CGRect)rect
@@ -691,46 +635,14 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
     return data;
 }
 
-- (void)prepForDrawingInView:(NSView*)view
-{
-    // kill the render
-    if (view == nil) {
-        self.renderingBackingScaleHelper = nil;
-        return;
-    }
-
-    // set the scale
-    __weak NSView* weakView = view;
-    self.renderingBackingScaleHelper = ^CGFloat {
-        return weakView.window.screen.backingScaleFactor;
-    };
-}
-
-- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize
-{
-    return [self drawAtPoint:point size:aSize error:nil];
-}
-
-- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize error:(NSError**)error
-{
-    return [self drawInRect:NSMakeRect(point.x, point.y, aSize.width, aSize.height) error:error];
-}
-
-- (BOOL)drawInRect:(CGRect)rect
-{
-    return [self drawInRect:rect error:nil];
-}
-
-- (BOOL)drawInRect:(CGRect)rect error:(NSError**)error
-{
-    CGContextRef currentCGContext;
-    currentCGContext = NSGraphicsContext.currentContext.CGContext;
-    return [self _drawInRect:rect context:currentCGContext error:error];
-}
-
 - (void)drawInRect:(CGRect)rect context:(CGContextRef)context
 {
     [self _drawInRect:rect context:context error:nil];
+}
+
+- (BOOL)drawInRect:(CGRect)rect context:(CGContextRef)context error:(NSError**)error
+{
+    return [self _drawInRect:rect context:context error:error];
 }
 
 // Draws using the current rendering quality and sizing options.
@@ -824,21 +736,6 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
 - (IJSVGTraitedColorStorage*)colors
 {
     return [_rootNode colorsWithStyle:_style];
-}
-
-#pragma mark NSPasteboard
-
-- (NSArray<NSPasteboardType>*)writableTypesForPasteboard:(NSPasteboard*)pasteboard
-{
-    return @[ NSPasteboardTypePDF ];
-}
-
-- (id)pasteboardPropertyListForType:(NSString*)type
-{
-    if ([type isEqualToString:NSPasteboardTypePDF]) {
-        return [self PDFData];
-    }
-    return nil;
 }
 
 #pragma mark matching

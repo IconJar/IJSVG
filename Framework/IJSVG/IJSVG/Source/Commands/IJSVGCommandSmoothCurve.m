@@ -27,14 +27,14 @@
                 if (command.type == kIJSVGCommandTypeAbsolute) {
                     firstControl = CGPointMake(-1 * command.parameters[2] + 2 * currentPoint.x, -1 * command.parameters[3] + 2 * currentPoint.y);
                 } else {
-                    NSPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[4], currentPoint.y - command.parameters[5]);
+                    CGPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[4], currentPoint.y - command.parameters[5]);
                     firstControl = CGPointMake(-1 * (command.parameters[2] + oldPoint.x) + 2 * currentPoint.x, -1 * (command.parameters[3] + oldPoint.y) + 2 * currentPoint.y);
                 }
             } else {
                 if (command.type == kIJSVGCommandTypeAbsolute) {
                     firstControl = CGPointMake(-1 * command.parameters[0] + 2 * currentPoint.x, -1 * command.parameters[1] + 2 * currentPoint.y);
                 } else {
-                    NSPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[2], currentPoint.y - command.parameters[3]);
+                    CGPoint oldPoint = CGPointMake(currentPoint.x - command.parameters[2], currentPoint.y - command.parameters[3]);
                     firstControl = CGPointMake(-1 * (command.parameters[0] + oldPoint.x) + 2 * currentPoint.x, -1 * (command.parameters[1] + oldPoint.y) + 2 * currentPoint.y);
                 }
             }

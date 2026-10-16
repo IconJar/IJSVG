@@ -23,10 +23,7 @@
                                                   @"height='16'><rect width='16' height='16' fill='red'/></svg>"];
     XCTAssertNotNil(svg);
     XCTAssertTrue(CGSizeEqualToSize(svg.size, CGSizeMake(16, 16)));
-    NSImage* image = [svg imageWithSize:CGSizeMake(32, 32)];
-    XCTAssertNotNil(image);
-    XCTAssertTrue(CGSizeEqualToSize(image.size, CGSizeMake(32, 32)));
-    CGImageRef cgImage = [image CGImageForProposedRect:NULL context:nil hints:nil];
+    CGImageRef cgImage = [svg newCGImageRefWithSize:CGSizeMake(32, 32) flipped:NO error:nil];
     XCTAssertTrue(cgImage != NULL);
     if (cgImage == NULL) {
         return;
@@ -37,6 +34,7 @@
     CGColorSpaceRelease(space);
     XCTAssertTrue(context != NULL);
     if (context == NULL) {
+        CGImageRelease(cgImage);
         return;
     }
     CGContextDrawImage(context, CGRectMake(0, 0, 32, 32), cgImage);
@@ -46,6 +44,7 @@
     XCTAssertLessThan(pixel[2], 13);
     XCTAssertGreaterThan(pixel[3], 242);
     CGContextRelease(context);
+    CGImageRelease(cgImage);
 }
 
 - (void)checkPackagedShader:(NSString*)name
@@ -76,12 +75,17 @@
 
 - (void)testLoadsPackagedSubtractShader
 {
-    [self checkPackagedShader:@"IJSVGSubtract"];
+    [self checkPackagedCoreImageShader:@"IJSVGSubtract"];
 }
 
 - (void)testLoadsPackagedSeparableBlurShader
 {
-    NSString* source = IJSVGPackageShaderSource(@"IJSVGSeparableBlur");
+    [self checkPackagedCoreImageShader:@"IJSVGSeparableBlur"];
+}
+
+- (void)checkPackagedCoreImageShader:(NSString*)name
+{
+    NSString* source = IJSVGPackageShaderSource(name);
     XCTAssertGreaterThan(source.length, 0u);
     if (source.length == 0) {
         return;
@@ -152,20 +156,6 @@
     IJSVGExporter* exporter = [svg exporterWithSize:CGSizeMake(16, 16) options:0 floatingPointOptions:IJSVGFloatingPointOptionsDefault()];
     exporter.delegate = nil;
     XCTAssertNil(exporter.delegate);
-}
-
-- (void)testViewAcceptsAnEmptySVG
-{
-    void (^check)(void) = ^{
-        IJSVGView* view = [[IJSVGView alloc] initWithSVG:nil];
-        view.SVG = nil;
-        XCTAssertNil(view.SVG);
-    };
-    if (NSThread.isMainThread) {
-        check();
-    } else {
-        dispatch_sync(dispatch_get_main_queue(), check);
-    }
 }
 
 @end

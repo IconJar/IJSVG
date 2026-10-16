@@ -155,7 +155,7 @@
     return CGPathGetPathBoundingBox(self.path);
 }
 
-- (NSPoint)currentPoint
+- (CGPoint)currentPoint
 {
     return CGPathGetCurrentPoint(self.path);
 }

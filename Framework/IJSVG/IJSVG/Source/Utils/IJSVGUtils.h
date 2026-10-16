@@ -16,6 +16,25 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static inline NSValue* IJSVGValueWithRect(CGRect rect)
+{
+    return [NSValue value:&rect withObjCType:@encode(CGRect)];
+}
+
+static inline NSValue* IJSVGValueWithSize(CGSize size)
+{
+    return [NSValue value:&size withObjCType:@encode(CGSize)];
+}
+
+static inline CGRect IJSVGRectFromValue(NSValue* value)
+{
+    CGRect rect = CGRectZero;
+    [value getValue:&rect size:sizeof(rect)];
+    return rect;
+}
+
+CGImageRef _Nullable IJSVGCreateResizedCGImage(CGImageRef image, CGSize size) CF_RETURNS_RETAINED;
+
 // Calls the handler only after the complete number list is valid.
 BOOL IJSVGEnumerateNumbers(NSString* string, void (^handler)(CGFloat));
 
@@ -92,7 +111,7 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 + (NSString* _Nullable)MIMETypeForImageData:(NSData*)data sourceURL:(NSURL*)sourceURL;
 
 + (CGFloat)floatValue:(NSString*)string;
-+ (CGFloat)angleBetweenPointA:(NSPoint)point pointb:(NSPoint)point;
++ (CGFloat)angleBetweenPointA:(CGPoint)point pointb:(CGPoint)point;
 + (NSString* _Nullable)defURL:(NSString*)string;
 + (NSArray<NSString*>*)defURLs:(NSString*)string;
 + (CGFloat)floatValue:(NSString*)string fallBackForPercent:(CGFloat)viewBox;
@@ -108,8 +127,6 @@ BOOL IJSVGIsLegalCommandCharacter(unichar aChar);
 
 + (CGLineJoin)CGLineJoinForJoinStyle:(IJSVGLineJoinStyle)joinStyle;
 + (CGLineCap)CGLineCapForCapStyle:(IJSVGLineCapStyle)capStyle;
-
-+ (NSImage*)resizeImage:(NSImage*)anImage toSize:(CGSize)size;
 
 @end
 NS_ASSUME_NONNULL_END

@@ -66,7 +66,7 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribu
 
 #pragma mark - Drawing
 
-- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(CGRect)objectRect transform:(CGAffineTransform)absoluteTransform
 {
     BOOL inUserSpace = self.units == IJSVGUnitUserSpaceOnUse;
 

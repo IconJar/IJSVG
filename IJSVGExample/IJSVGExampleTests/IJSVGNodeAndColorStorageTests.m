@@ -493,11 +493,10 @@
 
 - (IJSVGImage*)imageCopyTestNode
 {
-    NSImage* image = [[NSImage alloc] initWithSize:NSMakeSize(4, 2)];
-    [image addRepresentation:[self imageCopyTestBitmap]];
+    CGImageRef image = [self imageCopyTestBitmap].CGImage;
     IJSVGImage* node = [[IJSVGImage alloc] init];
     node.type = IJSVGNodeTypeImage;
-    node.image = image;
+    node.CGImage = image;
     node.width = [IJSVGUnitLength unitWithFloat:4.f];
     node.height = [IJSVGUnitLength unitWithFloat:2.f];
     return node;
@@ -534,12 +533,10 @@
     original.y = [IJSVGUnitLength unitWithFloat:5.f];
     original.opacity = [IJSVGUnitLength unitWithFloat:0.5f];
 
-    // The node cached intrinsic dimensions must survive even if NSImage changes.
-    original.image.size = NSMakeSize(8, 6);
     IJSVGImage* copy = original.copy;
 
     XCTAssertNotEqual(copy, original);
-    XCTAssertEqual(copy.image, original.image);
+    XCTAssertEqual(copy.CGImage, original.CGImage);
     XCTAssertTrue(copy.CGImage != NULL);
     XCTAssertEqual(copy.CGImage, original.CGImage);
     XCTAssertTrue(CGSizeEqualToSize(copy.intrinsicSize, CGSizeMake(4, 2)));
@@ -571,8 +568,8 @@
     }
     IJSVGImage* copy = original.copy;
 
-    XCTAssertNotNil(original.image);
-    XCTAssertEqual(copy.image, original.image);
+    XCTAssertTrue(original.CGImage != NULL);
+    XCTAssertEqual(copy.CGImage, original.CGImage);
     XCTAssertEqual(copy.CGImage, original.CGImage);
     XCTAssertTrue(CGSizeEqualToSize(copy.intrinsicSize, original.intrinsicSize));
     XCTAssertEqualObjects(copy.sourceData, png);
@@ -582,7 +579,7 @@
     [svg.rootNode addChild:copy];
     NSString* exported = [svg SVGStringWithSize:CGSizeMake(4, 2) options:IJSVGExporterOptionNone];
     XCTAssertTrue([exported containsString:dataURL]);
-    original.image = nil;
+    original.CGImage = NULL;
     XCTAssertEqualObjects(copy.sourceData, png);
     XCTAssertEqualObjects(copy.sourceMIMEType, @"image/png");
 }
@@ -599,7 +596,7 @@
     XCTAssertNotEqual(copiedImage, imageNode);
     XCTAssertEqual(imageNode.parentNode, original);
     XCTAssertEqual(copiedImage.parentNode, copy);
-    XCTAssertEqual(copiedImage.image, imageNode.image);
+    XCTAssertEqual(copiedImage.CGImage, imageNode.CGImage);
     XCTAssertEqual(copiedImage.CGImage, imageNode.CGImage);
     [self assertImageCopyNodeRenders:copy];
 }
@@ -615,10 +612,10 @@
         XCTAssertEqual(copy.CGImage, original.CGImage);
 
         // Also release the original cached image before destroying the node.
-        original.image = nil;
+        original.CGImage = NULL;
     }
     XCTAssertNil(weakOriginal);
-    XCTAssertNotNil(copy.image);
+    XCTAssertTrue(copy.CGImage != NULL);
     XCTAssertTrue(copy.CGImage != NULL);
     [self assertImageCopyNodeRenders:copy];
 }
@@ -627,7 +624,7 @@
 {
     IJSVGImage* original = [[IJSVGImage alloc] init];
     IJSVGImage* copy = original.copy;
-    XCTAssertNil(copy.image);
+    XCTAssertEqual(copy.CGImage, NULL);
     XCTAssertTrue(copy.CGImage == NULL);
     XCTAssertTrue(CGSizeEqualToSize(copy.intrinsicSize, CGSizeZero));
     XCTAssertNil(copy.sourceData);

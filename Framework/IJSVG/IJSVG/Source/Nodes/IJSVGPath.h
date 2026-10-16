@@ -50,7 +50,7 @@ typedef NS_ENUM(NSInteger, IJSVGPrimitivePathType) {
 - (void)cachePointSubpaths:(BOOL)hasPointSubpaths forPath:(CGPathRef)path;
 
 - (void)close;
-- (NSPoint)currentPoint;
+- (CGPoint)currentPoint;
 
 @end
 

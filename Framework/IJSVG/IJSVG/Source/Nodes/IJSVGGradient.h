@@ -43,7 +43,7 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 - (BOOL)drawSpreadInContext:(CGContextRef)ctx startPoint:(CGPoint)start endPoint:(CGPoint)end startRadius:(CGFloat)startRadius endRadius:(CGFloat)endRadius radial:(BOOL)radial;
 
 - (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;
-- (void)drawInContextRef:(CGContextRef)ctx bounds:(NSRect)objectRect transform:(CGAffineTransform)absoluteTransform;
+- (void)drawInContextRef:(CGContextRef)ctx bounds:(CGRect)objectRect transform:(CGAffineTransform)absoluteTransform;
 
 @end
 

@@ -1183,7 +1183,7 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
             const CGPoint* points = _positionData.bytes;
             NSMutableArray<NSValue*>* positions = [NSMutableArray arrayWithCapacity:count];
             for (NSUInteger index = 0; index < count; index++) {
-                [positions addObject:[NSValue valueWithPoint:points[index]]];
+                [positions addObject:[NSValue value:&points[index] withObjCType:@encode(CGPoint)]];
             }
             _characterPositions = [positions copy];
             _positionData = nil;

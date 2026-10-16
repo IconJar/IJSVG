@@ -1684,7 +1684,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     if (_contextPatternBounds == nil) {
         _contextPatternBounds = [NSMapTable weakToStrongObjectsMapTable];
     }
-    [_contextPatternBounds setObject:@[ [NSValue valueWithRect:bounds], [NSValue valueWithRect:viewport] ] forKey:pattern];
+    [_contextPatternBounds setObject:@[ IJSVGValueWithRect(bounds), IJSVGValueWithRect(viewport) ] forKey:pattern];
     return pattern;
 }
 
@@ -2407,8 +2407,8 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     NSArray<NSValue*>* contextBounds = [_contextPatternBounds objectForKey:pattern];
     CGRect viewport = self.viewPort;
     if (contextBounds != nil) {
-        viewport = contextBounds[1].rectValue;
-        unitBounds = pattern.contentUnits == IJSVGUnitObjectBoundingBox ? contextBounds[0].rectValue : viewport;
+        viewport = IJSVGRectFromValue(contextBounds[1]);
+        unitBounds = pattern.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGRectFromValue(contextBounds[0]) : viewport;
     }
     patternPaint.viewPort = viewport;
 

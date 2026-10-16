@@ -158,11 +158,9 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
 
 - (void)drawInContext:(CGContextRef)ctx
 {
-    // Keep window drawing independent of deferred nested pattern callbacks.
-    // Other contexts keep drawing the pattern directly.
-    NSGraphicsContext* graphicsContext = NSGraphicsContext.currentContext;
-    BOOL drawingToScreen = graphicsContext.CGContext == ctx && graphicsContext.isDrawingToScreen;
-    if (!drawingToScreen && ![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
+    // Intermediate filter bitmaps require materialized pattern cells.
+    // Other destinations retain Core Graphics patterns, including vector PDF output.
+    if (![IJSVGFilterPaint isRegisteredBitmapContext:ctx]) {
         [self drawPatternInContext:ctx];
         return;
     }
@@ -172,7 +170,7 @@ static void IJSVGQuartzPatternDrawingCallBack(void* info, CGContextRef ctx)
         return;
     }
     CGFloat scale = MAX(self.backingScaleFactor, 1.f);
-    if (drawingToScreen) {
+    {
         // Match the bitmap to the current size in screen pixels.
         CGAffineTransform transform = CGContextGetUserSpaceToDeviceSpaceTransform(ctx);
         scale = MAX(scale, MAX(hypot(transform.a, transform.b), hypot(transform.c, transform.d)));

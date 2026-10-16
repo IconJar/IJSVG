@@ -1,1 +1,0 @@
-../../Source/Core/IJSVGView.h

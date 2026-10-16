@@ -165,7 +165,10 @@
                         XCTAssertEqualObjects(primitive.parameters, parameters);
 
                         // An unused bitmap disables automatic imageNode snapshots.
-                        primitive.image = [[NSImage alloc] initWithSize:NSMakeSize(1, 1)];
+                        IJSVG* fallback = [[IJSVG alloc] initWithSVGString:@"<svg xmlns='http://www.w3.org/2000/svg' width='1' height='1'/>"];
+                        CGImageRef pixels = [fallback newCGImageRefWithSize:CGSizeMake(1, 1) flipped:NO error:nil];
+                        primitive.image = pixels;
+                        CGImageRelease(pixels);
                         [self compare:[self native:svg size:128] expected:[self native:attached size:128] label:label];
                     }
                 }

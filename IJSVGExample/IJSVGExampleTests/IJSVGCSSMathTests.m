@@ -37,9 +37,7 @@
         (unsigned long)width, (unsigned long)height, body];
     IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
     XCTAssertNotNil(svg);
-    NSImage* image = [svg imageWithSize:CGSizeMake(width, height)];
-    XCTAssertNotNil(image);
-    CGImageRef cgImage = [image CGImageForProposedRect:NULL context:nil hints:nil];
+    CGImageRef cgImage = [svg newCGImageRefWithSize:CGSizeMake(width, height) flipped:NO error:nil];
     XCTAssertNotEqual(cgImage, NULL);
     if (cgImage == NULL) {
         return nil;
@@ -50,10 +48,12 @@
     CGColorSpaceRelease(colorSpace);
     XCTAssertNotEqual(context, NULL);
     if (context == NULL) {
+        CGImageRelease(cgImage);
         return nil;
     }
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgImage);
     CGContextRelease(context);
+    CGImageRelease(cgImage);
     return pixels;
 }
 
@@ -324,8 +324,10 @@
          iterations:2
                work:^NSUInteger {
                    IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
-                   NSImage* image = [svg imageWithSize:CGSizeMake(400, 300)];
-                   return [image CGImageForProposedRect:NULL context:nil hints:nil] != NULL;
+                   CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(400, 300) flipped:NO error:nil];
+                   BOOL success = image != NULL;
+                   CGImageRelease(image);
+                   return success;
                }];
 }
 

@@ -6,7 +6,7 @@
 //  Copyright © 2019 Curtis Hard. All rights reserved.
 //
 
-#import <AppKit/AppKit.h>
+#import <CoreGraphics/CoreGraphics.h>
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGTraitedColorStorage.h>

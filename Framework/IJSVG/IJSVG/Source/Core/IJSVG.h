@@ -20,7 +20,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface IJSVG : NSObject <NSPasteboardWriting> {
+@interface IJSVG : NSObject {
 @private
     IJSVGRootNode* _rootNode;
     CGRect _viewBox;
@@ -59,7 +59,6 @@ NS_ASSUME_NONNULL_BEGIN
 // Bitmask of which dimensions were implicitly set on the SVG
 @property (nonatomic, readonly) IJSVGIntrinsicDimensions intrinsicDimensions;
 
-- (void)prepForDrawingInView:(NSView* _Nullable)view;
 - (IJSVGRootNode* _Nullable)rootNode;
 - (CGRect)viewBox;
 
@@ -101,7 +100,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path;
 + (IJSVG*)SVGFromCGPathRef:(CGPathRef)path flipped:(BOOL)flipped;
 
-- (instancetype)initWithImage:(NSImage*)image;
+- (instancetype)initWithCGImage:(CGImageRef)image NS_SWIFT_NAME(init(cgImage:));
 - (instancetype)initWithRootNode:(IJSVGRootNode*)rootNode;
 
 // Returns nil when parsing fails. Use init(parsing:) in Swift to receive
@@ -117,16 +116,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable instancetype)initWithFilePathURL:(NSURL*)aURL;
 - (nullable instancetype)initWithFilePathURL:(NSURL*)aURL error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(init(contentsOf:));
 
-- (nullable instancetype)initWithDataAssetNamed:(NSDataAssetName)name error:(NSError* _Nullable* _Nullable)error;
-- (nullable instancetype)initWithDataAssetNamed:(NSDataAssetName)name bundle:(NSBundle*)bundle error:(NSError* _Nullable* _Nullable)error;
-
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize;
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(renderImage(size:));
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped;
-- (NSImage* _Nullable)imageWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(renderImage(size:flipped:));
-- (NSImage* _Nullable)imageByMaintainingAspectRatioWithSize:(CGSize)aSize flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(renderImage(fitting:flipped:));
-
-// Renders using sRGB by default, including through the NSImage convenience methods.
+// Renders using sRGB by default. Output scale defaults to 1 on every platform.
 - (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped error:(NSError* _Nullable* _Nullable)error CF_RETURNS_RETAINED NS_SWIFT_NAME(renderCGImage(size:flipped:));
 
 // Renders into an RGB bitmap with 8 bits per component in the supplied destination color space.
@@ -134,11 +124,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Unsupported spaces or bitmap creation failures return NULL and IJSVGErrorDrawing.
 - (CGImageRef _Nullable)newCGImageRefWithSize:(CGSize)size flipped:(BOOL)flipped colorSpace:(CGColorSpaceRef)colorSpace error:(NSError* _Nullable* _Nullable)error CF_RETURNS_RETAINED NS_SWIFT_NAME(renderCGImage(size:flipped:colorSpace:));
 
-- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)size;
-- (BOOL)drawAtPoint:(CGPoint)point size:(CGSize)aSize error:(NSError* _Nullable* _Nullable)error;
-- (BOOL)drawInRect:(CGRect)rect;
-- (BOOL)drawInRect:(CGRect)rect error:(NSError* _Nullable* _Nullable)error;
 - (void)drawInRect:(CGRect)rect context:(CGContextRef)context;
+- (BOOL)drawInRect:(CGRect)rect context:(CGContextRef)context error:(NSError* _Nullable* _Nullable)error;
 
 // PDF output is nonnull even when drawing reports an error. Swift checks the
 // error itself.

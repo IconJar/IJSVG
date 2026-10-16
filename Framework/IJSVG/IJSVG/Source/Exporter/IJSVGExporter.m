@@ -29,6 +29,7 @@
 #import <IJSVGStrokePaint.h>
 #import <IJSVGTextFontResolver.h>
 #import <IJSVGTransformPaint.h>
+#import <ImageIO/ImageIO.h>
 
 // NSArray and NSDictionary hashes primarily reflect their sizes. Include
 // nested values to avoid quadratic lookups when many different filters share
@@ -235,7 +236,7 @@ NSString* IJSVGHash(NSString* key)
     return _defElement = [[IJSVGExportElement alloc] initWithName:@"defs"];
 }
 
-- (NSString*)viewBoxWithRect:(NSRect)rect
+- (NSString*)viewBoxWithRect:(CGRect)rect
 {
     return [NSString stringWithFormat:@"%@ %@ %@ %@", IJSVGShortFloatStringWithOptions(CGRectGetMinX(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetMinY(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetWidth(rect), _floatingPointOptions), IJSVGShortFloatStringWithOptions(CGRectGetHeight(rect), _floatingPointOptions)];
 }
@@ -1017,11 +1018,17 @@ NSString* IJSVGHash(NSString* key)
     }
 
     @autoreleasepool {
-        // convert the CGImage into an NSImage
-        NSBitmapImageRep* rep = [[NSBitmapImageRep alloc] initWithCGImage:image];
-
-        // work out the data
-        NSData* data = [rep representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+        NSMutableData* data = [NSMutableData data];
+        CGImageDestinationRef destination = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)data, CFSTR("public.png"), 1, NULL);
+        if (destination == NULL) {
+            return nil;
+        }
+        CGImageDestinationAddImage(destination, image, NULL);
+        BOOL success = CGImageDestinationFinalize(destination);
+        CFRelease(destination);
+        if (!success) {
+            return nil;
+        }
 
         NSString* base64String = [data base64EncodedStringWithOptions:0];
         return [@"data:image/png;base64," stringByAppendingString:base64String];
@@ -1249,7 +1256,7 @@ NSString* IJSVGHash(NSString* key)
 - (IJSVGExportElement*)elementForImage:(IJSVGImagePaint*)paint fromParent:(IJSVGExportElement*)parent
 {
     IJSVGImage* image = paint.image;
-    if (image == nil || image.image == nil) {
+    if (image == nil || (image.CGImage == NULL && image.embeddedSVG == nil)) {
         return nil;
     }
 
@@ -1258,7 +1265,6 @@ NSString* IJSVGHash(NSString* key)
     imageElement.name = @"image";
 
     // we need to transform this into its required aspect ratio
-    NSImage* nsImage = image.image;
     CGFloat ratio = 0.f;
 
     // Image nodes retain their source units so they can be resolved for each
@@ -1271,8 +1277,8 @@ NSString* IJSVGHash(NSString* key)
 
     const CGFloat imageWidth = bounds.size.width;
     const CGFloat imageHeight = bounds.size.height;
-    const CGFloat maxWidth = nsImage.size.width;
-    const CGFloat maxHeight = nsImage.size.height;
+    const CGFloat maxWidth = image.intrinsicSize.width;
+    const CGFloat maxHeight = image.intrinsicSize.height;
 
     // work out the ratio
     if (imageWidth > imageHeight) {
@@ -1308,15 +1314,16 @@ NSString* IJSVGHash(NSString* key)
         base64String = [NSString stringWithFormat:@"data:%@;base64,%@", image.sourceMIMEType, encoded];
     } else {
         @autoreleasepool {
-            CGImageRef cgImage = NULL;
-            if (ratio != 1.f) {
-                CGRect newImageRect = CGRectMake(0.f, 0.f, imageWidth * ratio, imageHeight * ratio);
-                NSImage* actualImage = [IJSVGUtils resizeImage:nsImage toSize:newImageRect.size];
-                cgImage = [actualImage CGImageForProposedRect:&newImageRect context:NULL hints:NULL];
-            } else {
-                cgImage = image.CGImage;
+            CGImageRef cgImage = image.CGImage;
+            CGImageRef resized = NULL;
+            if (ratio != 1.f && cgImage != NULL) {
+                resized = IJSVGCreateResizedCGImage(cgImage, CGSizeMake(imageWidth * ratio, imageHeight * ratio));
+                cgImage = resized;
             }
             base64String = [self base64EncodedStringFromCGImage:cgImage];
+            if (resized != NULL) {
+                CGImageRelease(resized);
+            }
         }
     }
     if (base64String == nil) {

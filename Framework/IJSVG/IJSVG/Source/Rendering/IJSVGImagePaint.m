@@ -7,7 +7,6 @@
 //
 
 #import <IJSVG/IJSVG.h>
-#import <IJSVG/IJSVGImageRep.h>
 #import <IJSVGImagePaint.h>
 
 @implementation IJSVGImagePaint
@@ -47,18 +46,12 @@
 
     CGAffineTransform scale = CGAffineTransformMakeScale(CGRectGetWidth(currentBounds) / CGRectGetWidth(imageBounds), CGRectGetHeight(currentBounds) / CGRectGetHeight(imageBounds));
 
-    IJSVGImageRep* vector = nil;
-    for (NSImageRep* representation in _image.image.representations) {
-        if ([representation isKindOfClass:IJSVGImageRep.class]) {
-            vector = (IJSVGImageRep*)representation;
-            break;
-        }
-    }
+    IJSVG* vectorSVG = _image.embeddedSVG;
     IJSVGViewBoxDrawingBlock drawBlock = ^(CGFloat scale[]) {
-        if (vector != nil) {
+        if (vectorSVG != nil) {
             // SVG already uses downward y coordinates. Draw it at the destination
-            // resolution without passing through AppKits raster orientation.
-            [vector.SVG drawInRect:imageDrawRect context:ctx];
+            // resolution without an intermediate raster image.
+            [vectorSVG drawInRect:imageDrawRect context:ctx];
             return;
         }
 
@@ -69,7 +62,7 @@
     };
 
     IJSVGViewBoxAlignment alignment = _image.viewBoxAlignment;
-    if (vector.SVG.rootNode.viewBoxWasInferred) {
+    if (vectorSVG.rootNode.viewBoxWasInferred) {
         alignment = IJSVGViewBoxAlignmentNone;
     }
     CGContextSaveGState(ctx);

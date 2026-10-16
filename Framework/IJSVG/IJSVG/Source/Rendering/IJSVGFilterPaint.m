@@ -593,7 +593,7 @@ static BOOL IJSVGFilterImageIsBuiltinPath(IJSVGNode* node)
 static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     IJSVGPath* source = (IJSVGPath*)primitive.imageNode;
-    if (primitive.image != nil || primitive.parameters[@"href"].length != 0 || primitive.parameters[@"xlink:href"].length != 0 || !IJSVGFilterImageIsBuiltinPath(source) || !IJSVGFilterImageNodeIsIndependent(source)) {
+    if (primitive.image != NULL || primitive.parameters[@"href"].length != 0 || primitive.parameters[@"xlink:href"].length != 0 || !IJSVGFilterImageIsBuiltinPath(source) || !IJSVGFilterImageNodeIsIndependent(source)) {
         return nil;
     }
     IJSVGNode* fill = IJSVGFilterSnapshotImagePaint(source.fill);
@@ -1592,7 +1592,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     // Reset it only when preparing output for a new render.
     _outputSignature = nil;
     if (!IJSVGFilterHasCachingAncestor && self.canCacheOutput) {
-        _outputSignature = @[ [NSValue valueWithRect:workRect], [NSValue valueWithSize:pixelSize], [NSValue valueWithRect:region], [NSValue valueWithRect:self.boundingBox], [NSValue valueWithRect:self.viewPort], [NSValue valueWithRect:self.sourcePaint.frame], @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1) ];
+        _outputSignature = @[ IJSVGValueWithRect(workRect), IJSVGValueWithSize(pixelSize), IJSVGValueWithRect(region), IJSVGValueWithRect(self.boundingBox), IJSVGValueWithRect(self.viewPort), IJSVGValueWithRect(self.sourcePaint.frame), @(self.backingScaleFactor), @(self.renderQuality), @(IJSVGFilterRenderDepth == 1) ];
         IJSVGFilterCachedImage* output = [IJSVGFilterOutputCache() objectForKey:_outputCacheKey];
         if ([output.signature isEqual:_outputSignature]) {
             if (batch.collecting) {

@@ -213,7 +213,7 @@ static CIImage* IJSVGAlphaBlur(CIImage* image, NSData* kernelX, NSData* kernelY,
     if (edgeMode == IJSVGFilterEdgeModeDuplicate) {
         image = [image imageByClampingToExtent];
     } else if (edgeMode == IJSVGFilterEdgeModeWrap) {
-        image = [image imageByApplyingFilter:@"CIAffineTile" withInputParameters:@{ kCIInputTransformKey : [NSAffineTransform transform] }];
+        image = [image imageByApplyingFilter:@"CIAffineTile" withInputParameters:@{ kCIInputTransformKey : [NSValue value:&(CGAffineTransform) { 1, 0, 0, 1, 0, 0 } withObjCType:@encode(CGAffineTransform)] }];
     }
     if (sigmaX == 0 && sigmaY == 0) {
         return image;

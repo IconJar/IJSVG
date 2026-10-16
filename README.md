@@ -1,17 +1,31 @@
-IJSVG 5.0
+IJSVG 6.0
 ===
 
-IJSVG is a Cocoa library for drawing SVGs in macOS 14.6 and later. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
+IJSVG is an Objective C library for drawing SVGs on macOS 14.6, iOS 16, tvOS 16, and visionOS 1 or later, without AppKit or UIKit dependencies. It uses Core Graphics for drawing and Core Image for SVG filters, with Metal and SIMD used to speed up supported effects.
 
-You can also copy an IJSVG object to the pasteboard. It provides PDF data so apps such as Sketch and Photoshop can paste the artwork as vectors.
+### What is new in IJSVG 6?
 
-### What is new in IJSVG 5?
-
-IJSVG 5 improves parsing, first draw performance and memory use, with a clearer
-node structure and Core Graphics colors throughout the graphics pipeline.
-This release includes breaking API changes.
+IJSVG 6 adds iOS, iPadOS, tvOS, and visionOS support using a shared Core Graphics
+API. Native UI wrappers have been removed so the framework has no AppKit or
+UIKit dependency. This release includes breaking API changes.
 
 ### Breaking changes
+
+Native UI integration has been removed: `IJSVGView`, `IJSVGImageRep`, the
+`NSImage` category, `NSPasteboardWriting`, and loading from asset catalogs. Load
+asset data in your app and pass it to `init(data:)` instead.
+
+Raster APIs use `CGImage` throughout. Use `init(cgImage:)` and
+`renderCGImage(size:flipped:)` instead of the convenience APIs for native images.
+`IJSVGImage.CGImage` and filter primitive `image` retain their assigned pixels;
+Objective C callers still release their own Create/Copy references.
+
+Drawing requires an explicit `CGContext`. Offscreen scale defaults to 1 on
+every platform; use `renderingBackingScaleHelper` to request a different scale.
+
+### Migration from versions before IJSVG 5
+
+The following changes were introduced in IJSVG 5 and still apply.
 
 - Supported SVG element types have dedicated node classes, such as `IJSVGRect`,
   `IJSVGCircle`, `IJSVGPath` and `IJSVGGroup`. Shared behavior lives in their base
@@ -25,14 +39,14 @@ This release includes breaking API changes.
 - XML parsing no longer loads DTDs or expands custom entities. Standard XML
   escapes and numeric character references remain supported.
 - The default color space is now sRGB instead of device RGB. This applies to
-  colors, gradients and raster output, including the NSImage convenience methods.
+  colors, gradients and raster output.
   Exported pixels can differ from earlier releases because the destination now
   has a defined color profile. `IJSVGColor.defaultColorSpace` returns shared sRGB.
 
 Color setters retain the supplied color. Gradient color arrays contain bridged
 `CGColor` objects instead of `NSColor` objects. Code using Core Graphics creation
 functions in Objective C must still release its own references after assigning
-them. The Interface Builder tint input continues to accept `NSColor`.
+them. UI tint inputs and image wrappers belong in the consuming app.
 
 ### Rendering and export
 
@@ -54,16 +68,28 @@ Performance improvements depend on the document and the effects it uses.
 Quick Start
 ====
 
-The framework and example application target macOS 14.6 or later. Filter rendering requires a Metal-capable device. Individual accelerated paths also check the device capabilities they need.
+### Supported platforms
+
+| Platform | Framework and Swift package | Example minimum | Example scheme |
+| --- | --- | --- | --- |
+| macOS | 14.6 | 14.6 | `IJSVGExample` |
+| iOS and iPadOS | 16.0 | 17.0 | `IJSVGiOSExample` |
+| tvOS | 16.0 | 17.0 | `IJSVGtvOSExample` |
+| visionOS | 1.0 | 1.0 | `IJSVGvisionOSExample` |
+
+The framework uses the same graphics APIs on every supported platform.
+Filter rendering requires a device that supports Metal. Individual accelerated
+paths also check the capabilities they need. watchOS is not supported.
 
 ### Swift Package Manager
 
-Requires Xcode 16 / Swift 6 or later and macOS 14.6 or later.
+Requires Xcode 16 / Swift 6 or later. The deployment minimums above apply to
+both the Swift package and the Xcode framework.
 
 In Xcode, choose **File > Add Package Dependencies**, enter this repository's URL,
 and add the **IJSVG** library product to your app target. For local development,
 choose **Add Local** and select the repository root containing `Package.swift`.
-Select version **5.0.0** or later for the current API. Review the breaking changes
+Select version **6.0.0** or later for the current API. Review the breaking changes
 above when upgrading from an earlier major version.
 
 Import the library with `import IJSVG` in Swift or `@import IJSVG;` in Objective-C.
@@ -72,12 +98,44 @@ shader sources automatically. Package builds compile shaders on first use;
 the existing Xcode framework continues to use its precompiled blur library.
 
 Run `swift build` and `swift test` from the repository root to build and check
-the Objective-C XCTest coverage for API behavior, rendering, and shader resource loading. Shader compilation
-checks run when a Metal device is available.
+the XCTest and Swift Testing coverage for API behavior, rendering, and shader
+resource loading. Shader compilation checks run when a Metal device is available.
 
-The existing framework project and example application remain available.
+The existing framework project and example applications remain available.
+Select the `IJSVGiOSExample` scheme for iPhone or iPad, or `IJSVGtvOSExample`
+with an Apple TV destination. Use `IJSVGvisionOSExample` with an Apple Vision Pro
+destination. These schemes share one app target and display the bundled
+`car.svg`. Select the matching simulator or device and run the scheme.
+
 For manual integration, include the library sources and Metal shader resources,
 and import IJSVG.h into the files where you use SVGs.
+
+### Shared graphics API
+
+The framework uses Foundation, Core Graphics, Core Text, ImageIO, Core Image,
+Metal, and Accelerate. It does not depend on AppKit or UIKit. The framework
+project supports macOS, iOS, tvOS, and visionOS, including device and Simulator
+destinations.
+
+```swift
+let svg = try IJSVG(parsing: svgText)
+svg.renderingBackingScaleHelper = { 2 }
+let pixels = try svg.renderCGImage(size: CGSize(width: 32, height: 32), flipped: true)
+// pixels is a 64 × 64 CGImage. Wrap it for display in your app if needed.
+let fromPixels = IJSVG(cgImage: pixels)
+```
+
+Use `flipped: true` when displaying the resulting `CGImage` in SwiftUI, as the
+examples do. When drawing into your own context, choose the orientation that
+matches its coordinate system.
+
+Use `drawInRect:context:` to draw into a supplied Core Graphics context. Your app
+owns that context's coordinate system and display scale. ImageIO decodes raster
+inputs and applies EXIF orientation. Embedded SVGs retain their vector document
+and are rendered at the destination resolution. `IJSVGImage.intrinsicSize` is
+measured in pixels for raster inputs; it no longer depends on the DPI of native images.
+
+Support for iOS, tvOS, and visionOS requires IJSVG 6.0.0 or later.
 
 ### Swift loading and optional values
 
@@ -91,7 +149,7 @@ let fromPath = try IJSVG(filePath: filePath)
 ```
 
 The convenience initializer `IJSVG(svgString:)` returns an optional when error
-information is not needed. Metadata such as `title` and `desc`, view SVG content,
+information is not needed. Metadata such as `title` and `desc`
 and exporter delegates are optional and can be cleared with `nil`.
 
 These annotations keep Objective C selectors unchanged. Swift callers of the
@@ -101,10 +159,7 @@ properties now require normal optional handling instead of implicit unwrapping.
 ### Swift rendering and Core Graphics ownership
 
 ```swift
-let image = try svg.renderImage(size: CGSize(width: 64, height: 64))
-let flipped = try svg.renderImage(size: CGSize(width: 64, height: 64), flipped: true)
-let fitted = try svg.renderImage(fitting: CGSize(width: 64, height: 64), flipped: false)
-let cgImage = try svg.renderCGImage(size: CGSize(width: 64, height: 64), flipped: false)
+let cgImage = try svg.renderCGImage(size: CGSize(width: 64, height: 64), flipped: true)
 let pdf = svg.pdfData()
 let checkedPDF = try svg.renderPDF()
 ```
@@ -114,9 +169,9 @@ The `renderPDF` methods throw when the underlying method reports an error,
 even if it also returns data. These annotations do not add rendering validation
 or change when the Objective C implementation reports errors.
 
-The Objective C selectors are unchanged. Swift calls to the image methods with
-an error parameter now use `renderImage`, and `newCGImageRef` uses `renderCGImage`.
-The existing `image(with:)` convenience methods remain available.
+The Objective C `newCGImageRefWithSize:flipped:error:` method imports as
+`renderCGImage(size:flipped:)` in Swift. Convenience methods for native images are no
+longer provided.
 
 Core Graphics results use Swift memory management, including rendered images,
 `IJSVGUtils.flippedPath(_:)`, `IJSVGCommand.makePath(commands:)`, and shared color
@@ -154,18 +209,17 @@ clipping. Filter effects are excluded.
     // or with and without extension to find it within the bundle
     IJSVG* svg = [IJSVG SVGNamed:@"my_svg"]; 
 
-#### Step 2 - grab the NSImage from it
-    NSImage* svgImage = [svg imageWithSize:CGSizeMake(100.f,100.f)];
+#### Step 2: render a CGImage
+    CGImageRef svgImage = [svg newCGImageRefWithSize:CGSizeMake(100.f, 100.f) flipped:NO error:nil];
+    // Use or wrap the image, then release your reference.
+    CGImageRelease(svgImage);
   
 # Other ways of drawing
 
-IJSVG does allow you to directly draw the SVG into any focused drawing context for example within the drawRect of an NSView...
+Draw directly into a Core Graphics context supplied by your app:
 
-    - (void)drawRect
-    {
-      [svg drawInRect:self.bounds];
-    }
-    
+    [svg drawInRect:bounds context:context];
+
 #### Helpers
 
 Use `renderingBackingScaleHelper` to supply the backing scale factor for custom drawing. Return the scale of the destination window or bitmap so rasterized effects, such as filters, use the intended resolution:
@@ -198,11 +252,13 @@ NSString* source = @"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 80
     "<text x='20' y='50' font-family='Helvetica' font-size='32' fill='#333'>"
     "Hello <tspan fill='#087ea4'>SVG</tspan></text></svg>";
 IJSVG* svg = [[IJSVG alloc] initWithSVGString:source];
-NSImage* image = [svg imageWithSize:CGSizeMake(240, 80)];
+CGImageRef image = [svg newCGImageRefWithSize:CGSizeMake(240, 80) flipped:NO error:nil];
+// Use the rendered image.
+CGImageRelease(image);
 ```
 
 IJSVG uses fonts installed on the system and falls back to another font if one
-is missing, so text can look different on another Mac. Use `textPath` with an
+is missing, so text can look different on another device. Use `textPath` with an
 `href` pointing to a path ID to place text along a curve. Use `tspan` to change
 the style or position of part of the text.
 

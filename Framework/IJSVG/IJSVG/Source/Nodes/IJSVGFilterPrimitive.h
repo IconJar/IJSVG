@@ -8,6 +8,8 @@
 
 #import <IJSVG/IJSVGGroup.h>
 
+@class IJSVG;
+
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, IJSVGFilterCompositeOperator) {
@@ -68,7 +70,10 @@ typedef NS_ENUM(NSInteger, IJSVGFilterColorChannel) {
 // Primitive specific SVG attributes, retained for lossless vector export.
 @property (nonatomic, copy, nullable) NSDictionary<NSString*, NSString*>* parameters;
 @property (nonatomic, strong, nullable) IJSVGNode* imageNode;
-@property (nonatomic, strong, nullable) NSImage* image;
+
+// Retains the assigned raster input.
+@property (nonatomic, assign, nullable) CGImageRef image;
+@property (nonatomic, strong, nullable) IJSVG* embeddedSVG;
 
 @property (nonatomic, readonly) IJSVGFilterCompositeOperator compositeOperator;
 @property (nonatomic, readonly) IJSVGFilterEdgeMode edgeMode;

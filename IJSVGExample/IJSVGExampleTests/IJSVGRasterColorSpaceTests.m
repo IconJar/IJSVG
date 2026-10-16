@@ -222,7 +222,7 @@
         }
     }
     NSError* error = nil;
-    XCTAssertNil([svg imageWithSize:CGSizeZero flipped:NO error:&error]);
+    XCTAssertEqual([svg newCGImageRefWithSize:CGSizeZero flipped:NO error:&error], NULL);
     XCTAssertEqualObjects(error.domain, IJSVGErrorDomain);
     XCTAssertEqual(error.code, IJSVGErrorDrawing);
     CGColorSpaceRelease(space);

@@ -57,7 +57,6 @@
 #import <IJSVG/IJSVGFont.h>
 #import <IJSVG/IJSVGGlyph.h>
 #import <IJSVG/IJSVGGraphicsNode.h>
-#import <IJSVG/IJSVGImageRep.h>
 #import <IJSVG/IJSVGLine.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGMath.h>
@@ -78,8 +77,6 @@
 #import <IJSVG/IJSVGTitleNode.h>
 #import <IJSVG/IJSVGUnknownNode.h>
 #import <IJSVG/IJSVGUse.h>
-#import <IJSVG/IJSVGView.h>
 #import <IJSVG/IJSVGViewportNode.h>
-#import <IJSVG/NSImage+IJSVGAdditions.h>
 
 #endif // IJSVGUmbrella_h

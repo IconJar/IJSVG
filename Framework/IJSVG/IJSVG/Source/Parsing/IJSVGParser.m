@@ -1806,7 +1806,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     // For now, we only want to log these for debug builds whilst we fix any
     // SVGs that are problematic.
 #if DEBUG
-    NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"", self.className, _fileURL ?: @"Unknown", identifier);
+    NSLog(@"<%@> Recursion detected in file: \"%@\", with identifer: \"%@\"", NSStringFromClass(self.class), _fileURL ?: @"Unknown", identifier);
 #endif
 }
 
@@ -2621,7 +2621,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             } else {
                 [image loadFromURL:[NSURL URLWithString:href relativeToURL:_fileURL]];
             }
-            node.image = image.image;
+            node.image = image.CGImage;
+            node.embeddedSVG = image.embeddedSVG;
         }
     }
     return node;
