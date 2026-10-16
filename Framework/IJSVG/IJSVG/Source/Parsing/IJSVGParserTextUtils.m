@@ -46,11 +46,18 @@ static void IJSVGParseTextLength(NSString* value, IJSVGTextAttributeValue* parse
 
 static void IJSVGParseTextPositions(NSString* value, IJSVGTextAttributeValue* parsed)
 {
-    NSArray<NSString*>* tokens = [value ijsvg_componentsSeparatedByChars:" ,\t\r\n"];
-    NSMutableArray<IJSVGTextAttributeValue*>* lengths = [[NSMutableArray alloc] initWithCapacity:tokens.count];
-    for (NSString* token in tokens) {
-        IJSVGTextAttributeValue* length = IJSVGParseTextAttribute(token, IJSVGNodeAttributeTextLength);
-        [lengths addObject:length];
+    const char* bytes = value.UTF8String;
+    char* buffer = bytes != NULL ? strdup(bytes) : NULL;
+    NSMutableArray<IJSVGTextAttributeValue*>* lengths = [[NSMutableArray alloc] init];
+    if (buffer != NULL) {
+        char* state = NULL;
+        for (char* token = strtok_r(buffer, " ,\t\r\n", &state); token != NULL; token = strtok_r(NULL, " ,\t\r\n", &state)) {
+            NSString* string = [NSString stringWithUTF8String:token];
+            if (string != nil) {
+                [lengths addObject:IJSVGParseTextAttribute(string, IJSVGNodeAttributeTextLength)];
+            }
+        }
+        free(buffer);
     }
     parsed.lengths = lengths;
 }
@@ -117,30 +124,46 @@ static void IJSVGParseTextFamilies(NSString* value, IJSVGTextAttributeValue* par
 
 static void IJSVGParseTextFeatures(NSString* value, IJSVGTextAttributeValue* parsed)
 {
-    static NSCharacterSet* quotes;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        quotes = [NSCharacterSet characterSetWithCharactersInString:@"'\""];
-    });
-    NSArray<NSString*>* entries = [value ijsvg_componentsSeparatedByChars:","];
-    NSMutableDictionary<NSString*, NSNumber*>* features = [[NSMutableDictionary alloc] initWithCapacity:entries.count];
-    for (NSString* entry in entries) {
-        NSArray<NSString*>* tokens = [entry ijsvg_componentsSplitByWhiteSpace];
-        NSString* tag = [tokens.firstObject stringByTrimmingCharactersInSet:quotes];
-        if (tag.length == 4) {
-            NSString* setting = tokens.count > 1 ? tokens[1] : @"1";
-            switch (IJSVGTextKeywordForString(setting)) {
-                case IJSVGTextKeywordOn:
-                    features[tag] = @1;
-                    break;
-                case IJSVGTextKeywordOff:
-                    features[tag] = @0;
-                    break;
-                default:
-                    features[tag] = @(setting.integerValue);
-                    break;
+    const char* bytes = value.UTF8String;
+    char* buffer = bytes != NULL ? strdup(bytes) : NULL;
+    NSMutableDictionary<NSString*, NSNumber*>* features = [[NSMutableDictionary alloc] init];
+    if (buffer != NULL) {
+        char* entries = NULL;
+        for (char* entry = strtok_r(buffer, ",", &entries); entry != NULL; entry = strtok_r(NULL, ",", &entries)) {
+            char* tokens = NULL;
+            char* tagBytes = strtok_r(entry, " \t\r\n", &tokens);
+            if (tagBytes == NULL) {
+                continue;
             }
+            char* setting = strtok_r(NULL, " \t\r\n", &tokens);
+            tagBytes += strspn(tagBytes, "'\"");
+            size_t length = strlen(tagBytes);
+            while (length != 0 && (tagBytes[length - 1] == '\'' || tagBytes[length - 1] == '"')) {
+                tagBytes[--length] = 0;
+            }
+            NSString* tag = [NSString stringWithUTF8String:tagBytes];
+            if (tag.length != 4) {
+                continue;
+            }
+            NSInteger number = 1;
+            if (setting != NULL) {
+                if (IJSVGCharBufferCaseInsensitiveCompare(setting, "on")) {
+                    number = 1;
+                } else if (IJSVGCharBufferCaseInsensitiveCompare(setting, "off")) {
+                    number = 0;
+                } else {
+                    number = (NSInteger)strtoll(setting, NULL, 10);
+                    for (const unsigned char* character = (const unsigned char*)setting; *character != 0; character++) {
+                        if (*character >= 128) {
+                            number = [NSString stringWithUTF8String:setting].integerValue;
+                            break;
+                        }
+                    }
+                }
+            }
+            features[tag] = @(number);
         }
+        free(buffer);
     }
     parsed.features = features;
 }

@@ -12,6 +12,7 @@
 #import <IJSVG/IJSVGEllipse.h>
 #import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGRoundedShape.h>
 #import <IJSVG/IJSVGTransform.h>
@@ -436,15 +437,25 @@ typedef NS_ENUM(NSUInteger, IJSVGGeometryKeyword) {
     IJSVGGeometryKeywordAuto
 };
 
-static IJSVGGeometryKeyword IJSVGGeometryKeywordFromString(NSString* value)
+static BOOL IJSVGParserBytesContainNonASCII(IJSVGStringBytes source)
 {
-    if ([value isEqualToString:@"inherit"]) {
+    for (NSUInteger index = 0; index < source.length; index++) {
+        if ((unsigned char)source.bytes[index] >= 128) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+static IJSVGGeometryKeyword IJSVGGeometryKeywordFromBytes(const char* value)
+{
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "inherit")) {
         return IJSVGGeometryKeywordInherit;
     }
-    if ([value isEqualToString:@"initial"] || [value isEqualToString:@"unset"] || [value isEqualToString:@"revert"] || [value isEqualToString:@"revert-layer"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "initial") || IJSVGCharBufferCaseInsensitiveCompare(value, "unset") || IJSVGCharBufferCaseInsensitiveCompare(value, "revert") || IJSVGCharBufferCaseInsensitiveCompare(value, "revert-layer")) {
         return IJSVGGeometryKeywordInitial;
     }
-    return [value isEqualToString:@"auto"] ? IJSVGGeometryKeywordAuto : IJSVGGeometryKeywordNone;
+    return IJSVGCharBufferCaseInsensitiveCompare(value, "auto") ? IJSVGGeometryKeywordAuto : IJSVGGeometryKeywordNone;
 }
 
 IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
@@ -454,16 +465,26 @@ IJSVGUnitLength* IJSVGGeometryInitialLength(IJSVGNodeAttribute attribute)
 
 static BOOL IJSVGParseGeometryLength(NSString* value, IJSVGNodeAttribute attribute, IJSVGUnitLength** parsedLength)
 {
-    const char* chars = value.UTF8String;
-    if (chars == NULL) {
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    const char* chars = source.bytes;
+    if (chars == NULL || memchr(chars, 0, source.length) != NULL) {
         return NO;
     }
     while (IJSVGLengthListIsWhitespace(*chars)) {
         chars++;
     }
     if (strchr(chars, '(') == NULL && ((*chars >= 'a' && *chars <= 'z') || (*chars >= 'A' && *chars <= 'Z'))) {
-        NSString* keywordString = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-        IJSVGGeometryKeyword keyword = IJSVGGeometryKeywordFromString(keywordString);
+        NSString* normalized = nil;
+        if (IJSVGParserBytesContainNonASCII(source)) {
+            normalized = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            chars = normalized.UTF8String;
+        }
+        char* keywordBytes = IJSVGTimmedCharBufferCreate(chars);
+        if (keywordBytes == NULL) {
+            return NO;
+        }
+        IJSVGGeometryKeyword keyword = IJSVGGeometryKeywordFromBytes(keywordBytes);
+        free(keywordBytes);
         if (keyword == IJSVGGeometryKeywordNone || (keyword == IJSVGGeometryKeywordAuto && !IJSVGGeometryPropertyAllowsAuto(attribute))) {
             return NO;
         }
@@ -492,23 +513,44 @@ IJSVGUnitLength* IJSVGGeometryLengthFromString(NSString* value, IJSVGNodeAttribu
 
 IJSVGPaintOrder IJSVGPaintOrderFromString(NSString* value)
 {
-    value = [value.lowercaseString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
-    if ([value isEqualToString:@"normal"] || [value isEqualToString:@"initial"]) {
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    if (source.bytes == NULL || memchr(source.bytes, 0, source.length) != NULL) {
+        return IJSVGPaintOrderInherit;
+    }
+    if (IJSVGParserBytesContainNonASCII(source)) {
+        value = [[value.lowercaseString componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] componentsJoinedByString:@" "];
+        source = IJSVGStringGetBytes(value);
+    }
+    char* buffer = IJSVGTimmedCharBufferCreate(source.bytes);
+    if (buffer == NULL) {
+        return IJSVGPaintOrderInherit;
+    }
+    if (IJSVGCharBufferCaseInsensitiveCompare(buffer, "normal") || IJSVGCharBufferCaseInsensitiveCompare(buffer, "initial")) {
+        free(buffer);
         return IJSVGPaintOrderNormal;
     }
-    NSArray<NSString*>* names = @[ @"fill", @"stroke", @"markers" ];
     NSUInteger seen = 0, order = 0, count = 0;
-    for (NSString* token in [value componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet]) {
-        if (token.length == 0) {
-            continue;
+    char* state = NULL;
+    for (char* token = strtok_r(buffer, " \t\r\n\f\v", &state); token != NULL; token = strtok_r(NULL, " \t\r\n\f\v", &state)) {
+        NSUInteger operation;
+        if (IJSVGCharBufferCaseInsensitiveCompare(token, "fill")) {
+            operation = 0;
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(token, "stroke")) {
+            operation = 1;
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(token, "markers")) {
+            operation = 2;
+        } else {
+            free(buffer);
+            return IJSVGPaintOrderInherit;
         }
-        NSUInteger operation = [names indexOfObject:token];
-        if (operation == NSNotFound || (seen & (1 << operation)) != 0) {
+        if ((seen & (1 << operation)) != 0) {
+            free(buffer);
             return IJSVGPaintOrderInherit;
         }
         seen |= 1 << operation;
         order |= operation << (2 * count++);
     }
+    free(buffer);
     if (count == 0) {
         return IJSVGPaintOrderInherit;
     }

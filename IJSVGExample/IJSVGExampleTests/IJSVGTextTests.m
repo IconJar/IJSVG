@@ -346,6 +346,20 @@
 
 - (void)testOpenTypeSettingsAndKeywordLists
 {
+    NSArray<NSArray*>* featureCases = @[
+        @[ @" 'kern' ON,, 'liga' off, 'salt' +2 ", @{ @"kern": @1, @"liga": @0, @"salt": @2 } ],
+        @[ @"'kern', 'kern' 3, 'liga' invalid", @{ @"kern": @3, @"liga": @0 } ],
+        @[ @"'bad' 2, 'longer' 1, 'café' 4", @{ @"café": @4 } ],
+        @[ @"'kern' -2, 'salt' 2junk", @{ @"kern": @(-2), @"salt": @2 } ],
+        @[ @"'kern' 999999999999999999999", @{ @"kern": @(NSIntegerMax) } ],
+        @[ @"normal", @{} ],
+        @[ @" , , ", @{} ]
+    ];
+    for (NSArray* entry in featureCases) {
+        IJSVGTextAttributeValue* parsed = IJSVGParseTextAttribute(entry[0], IJSVGNodeAttributeFontFeatureSettings);
+        XCTAssertEqualObjects(parsed.features, entry[1], @"%@", entry[0]);
+    }
+
     IJSVGText* text = [self textWithBody:@"<text font-feature-settings=\"'liga' off, 'kern' on, 'salt' "
                                           "2\" font-variant-ligatures='no-common-ligatures contextual' "
                                           "text-decoration='underline overline line-through'>AB</text>"];
@@ -434,6 +448,18 @@
 
 - (void)testTextLengthsUseSharedUnitConversions
 {
+    NSMutableString* source = [@" , 1px,,\t-2em\n25%  café  " mutableCopy];
+    IJSVGTextAttributeValue* parsed = IJSVGParseTextAttribute(source, IJSVGNodeAttributeX);
+    [source setString:@"changed"];
+    XCTAssertEqual(parsed.lengths.count, 4u);
+    XCTAssertEqualObjects(parsed.lengths[0].string, @"1px");
+    XCTAssertEqualObjects(parsed.lengths[1].string, @"-2em");
+    XCTAssertEqualObjects(parsed.lengths[2].string, @"25%");
+    XCTAssertEqualObjects(parsed.lengths[3].string, @"café");
+    XCTAssertEqualWithAccuracy(parsed.lengths[1].number, -2, .000001);
+    XCTAssertEqualWithAccuracy(parsed.lengths[2].number, .25, .000001);
+    XCTAssertEqual(IJSVGParseTextAttribute(@" , \t\r\n", IJSVGNodeAttributeX).lengths.count, 0u);
+
     IJSVGText* text = [self textWithBody:@"<text x='25%, 1in, 2em, 3ex' font-size='12pt' "
                                           "letter-spacing='2px' word-spacing='10%' line-height='1.5'>"
                                           "AB</text>"];

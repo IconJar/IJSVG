@@ -600,6 +600,29 @@
 
 - (void)testGeometryValidationMatchesLengthParsing
 {
+    for (NSString* keyword in @[ @" AUTO ", @"auto\u00a0", @"INITIAL", @" unset ", @"ReVeRt-LaYeR" ]) {
+        XCTAssertTrue(IJSVGGeometryLengthIsValid(keyword, IJSVGNodeAttributeWidth), @"%@", keyword);
+    }
+    XCTAssertTrue(IJSVGGeometryLengthFromString(@" INHERIT ", IJSVGNodeAttributeWidth).inherit);
+    XCTAssertFalse(IJSVGGeometryLengthIsValid(@"inherit\0junk", IJSVGNodeAttributeWidth));
+    XCTAssertFalse(IJSVGGeometryLengthIsValid(@"initially", IJSVGNodeAttributeWidth));
+    XCTAssertFalse(IJSVGGeometryLengthIsValid(@"auto junk", IJSVGNodeAttributeWidth));
+    NSArray<NSArray*>* paintOrders = @[
+        @[ @"stroke fill markers", @"stroke fill markers" ],
+        @[ @" MARKERS\tFILL ", @"markers fill stroke" ],
+        @[ @"fill", @"fill stroke markers" ],
+        @[ @"stroke", @"stroke fill markers" ],
+        @[ @"markers", @"markers fill stroke" ],
+        @[ @"\u00a0FILL\u2003stroke", @"fill stroke markers" ],
+        @[ @"INITIAL", @"fill stroke markers" ]
+    ];
+    for (NSArray* entry in paintOrders) {
+        XCTAssertEqualObjects(IJSVGStringFromPaintOrder(IJSVGPaintOrderFromString(entry[0])), entry[1]);
+    }
+    for (NSString* invalid in @[ @"", @" ", @"stroke stroke", @"fill markers fill", @"normal fill", @"filler", @"fill\0stroke" ]) {
+        XCTAssertEqual(IJSVGPaintOrderFromString(invalid), IJSVGPaintOrderInherit, @"%@", invalid);
+    }
+
     NSArray<NSString*>* values = @[ @"12.5", @"-2em", @"50%", @"1e-320", @"-1e-999", @"auto", @"inherit", @"initial", @"1,2", @"1 2", @"1e999", @"4unknown", @"", @"1\0em", @" 2ex " ];
     for (NSNumber* attribute in @[ @(IJSVGNodeAttributeX), @(IJSVGNodeAttributeR), @(IJSVGNodeAttributeWidth) ]) {
         for (NSString* value in values) {

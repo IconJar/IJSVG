@@ -13,6 +13,14 @@
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGSwitch.h>
+#import <IJSVG/IJSVGParsing.h>
+#import <IJSVG/IJSVGUtils.h>
+
+static const char* IJSVGNodeKeywordBytes(NSString* value)
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(value);
+    return source.bytes != NULL && memchr(source.bytes, 0, source.length) == NULL ? source.bytes : "";
+}
 
 BOOL IJSVGParserAttributeHasValue(NSString* __unsafe_unretained const* values, IJSVGNodeAttribute attribute, NSString* __strong* value)
 {
@@ -29,12 +37,12 @@ void IJSVGParseColorAttributes(IJSVGNode* node, IJSVGNodeParsingContext* context
     NSString* __unsafe_unretained* attributeValues = context->values;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeColor, &value)) {
-        NSString* keyword = value.lowercaseString;
-        if ([keyword isEqualToString:@"initial"]) {
+        const char* keyword = IJSVGNodeKeywordBytes(value);
+        if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "initial")) {
             node.currentColor = IJSVGColor.blackColor;
-        } else if ([keyword isEqualToString:@"currentcolor"] || [keyword isEqualToString:@"inherit"] || [keyword isEqualToString:@"unset"]) {
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "currentcolor") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "inherit") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "unset")) {
             node.currentColor = nil;
-        } else if ([keyword isEqualToString:@"transparent"]) {
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "transparent")) {
             node.currentColor = IJSVGColor.clearColor;
         } else {
             node.currentColor = [IJSVGColor colorFromString:value];
@@ -47,17 +55,17 @@ void IJSVGParseDisplayAttributes(IJSVGNode* node, IJSVGNodeParsingContext* conte
     NSString* __unsafe_unretained* attributeValues = context->values;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeVisibility, &value)) {
-        NSString* keyword = value.lowercaseString;
-        if ([keyword isEqualToString:@"hidden"] || [keyword isEqualToString:@"collapse"]) {
+        const char* keyword = IJSVGNodeKeywordBytes(value);
+        if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "hidden") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "collapse")) {
             node.visibility = IJSVGVisibilityHidden;
-        } else if ([keyword isEqualToString:@"visible"] || [keyword isEqualToString:@"initial"]) {
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "visible") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "initial")) {
             node.visibility = IJSVGVisibilityVisible;
         } else {
             node.visibility = IJSVGVisibilityInherit;
         }
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeDisplay, &value)) {
-        if ([value caseInsensitiveCompare:IJSVGStringNone] == NSOrderedSame) {
+        if (IJSVGCharBufferCaseInsensitiveCompare(IJSVGNodeKeywordBytes(value), "none")) {
             node.shouldRender = NO;
         }
     }
@@ -313,18 +321,18 @@ void IJSVGApplyDeferredAttributes(const IJSVGNodeDeferredAttributes* attributes,
     }
 }
 
-static IJSVGTransformBox IJSVGTransformBoxFromString(NSString* value)
+static IJSVGTransformBox IJSVGTransformBoxFromBytes(const char* value)
 {
-    if ([value isEqualToString:@"fill-box"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "fill-box")) {
         return IJSVGTransformBoxFillBox;
     }
-    if ([value isEqualToString:@"stroke-box"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "stroke-box")) {
         return IJSVGTransformBoxStrokeBox;
     }
-    if ([value isEqualToString:@"content-box"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "content-box")) {
         return IJSVGTransformBoxContentBox;
     }
-    if ([value isEqualToString:@"border-box"]) {
+    if (IJSVGCharBufferCaseInsensitiveCompare(value, "border-box")) {
         return IJSVGTransformBoxBorderBox;
     }
 
@@ -340,15 +348,16 @@ void IJSVGParseTransformAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingCont
     IJSVGStyleSheetStyle* nodeStyle = context->inlineStyle;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformOrigin, &value)) {
+        const char* keyword = IJSVGNodeKeywordBytes(value);
         if ([value isEqualToString:@"inherit"]) {
             node.transformOrigin = node.styleParent.transformOrigin;
         } else {
-            node.transformOrigin = IJSVGTransformOriginFromString(([@[ @"initial", @"unset" ] containsObject:value.lowercaseString]) ? @"center" : value);
+            node.transformOrigin = IJSVGTransformOriginFromString((IJSVGCharBufferCaseInsensitiveCompare(keyword, "initial") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "unset")) ? @"center" : value);
         }
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransformBox, &value)) {
-        NSString* keyword = value.lowercaseString;
-        node.transformBox = [keyword isEqualToString:@"inherit"] ? node.styleParent.transformBox : IJSVGTransformBoxFromString(keyword);
+        const char* keyword = IJSVGNodeKeywordBytes(value);
+        node.transformBox = IJSVGCharBufferCaseInsensitiveCompare(keyword, "inherit") ? node.styleParent.transformBox : IJSVGTransformBoxFromBytes(keyword);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeTransform, &value)) {
         BOOL css = [nodeStyle property:IJSVGAttributeTransform] != nil || [styleSheet property:IJSVGAttributeTransform] != nil;
@@ -361,11 +370,12 @@ void IJSVGParseViewportAttributes(IJSVGViewportNode* node, IJSVGNodeParsingConte
     NSString* __unsafe_unretained* attributeValues = context->values;
     NSString* value = nil;
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeOverflow, &value)) {
-        if ([value caseInsensitiveCompare:@"hidden"] == NSOrderedSame || [value caseInsensitiveCompare:@"scroll"] == NSOrderedSame || [value caseInsensitiveCompare:@"clip"] == NSOrderedSame) {
+        const char* keyword = IJSVGNodeKeywordBytes(value);
+        if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "hidden") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "scroll") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "clip")) {
             node.overflowVisibility = IJSVGOverflowVisibilityHidden;
-        } else if ([value caseInsensitiveCompare:@"visible"] == NSOrderedSame || [value caseInsensitiveCompare:IJSVGStringAuto] == NSOrderedSame || [value caseInsensitiveCompare:@"initial"] == NSOrderedSame || [value caseInsensitiveCompare:@"unset"] == NSOrderedSame) {
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "visible") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "auto") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "initial") || IJSVGCharBufferCaseInsensitiveCompare(keyword, "unset")) {
             node.overflowVisibility = IJSVGOverflowVisibilityVisible;
-        } else if ([value caseInsensitiveCompare:@"inherit"] == NSOrderedSame) {
+        } else if (IJSVGCharBufferCaseInsensitiveCompare(keyword, "inherit")) {
             node.overflowVisibility = node.parentNode != nil ? node.parentNode.overflowVisibility : IJSVGOverflowVisibilityVisible;
         }
     }
