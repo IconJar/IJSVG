@@ -40,7 +40,6 @@ typedef NS_ENUM(NSUInteger, IJSVGGradientSpreadMethod) {
 
 + (CGFloat* _Nullable)computeColorStops:(IJSVGGradient*)gradient colors:(NSArray* _Nonnull* _Nonnull)someColors;
 
-- (void)parseSpreadMethod:(NSXMLElement*)element;
 - (BOOL)drawSpreadInContext:(CGContextRef)ctx startPoint:(CGPoint)start endPoint:(CGPoint)end startRadius:(CGFloat)startRadius endRadius:(CGFloat)endRadius radial:(BOOL)radial;
 
 - (CGGradientRef _Nullable)CGGradient CF_RETURNS_NOT_RETAINED;

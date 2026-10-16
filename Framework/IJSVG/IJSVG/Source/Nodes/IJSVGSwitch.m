@@ -6,11 +6,11 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGSwitch.h>
+#import <IJSVGXML.h>
 #import <ctype.h>
 #import <string.h>
 
@@ -54,41 +54,10 @@ static BOOL IJSVGSwitchLanguageMatches(const char* languages, const char* prefer
     return IJSVGNodeTypeSwitch;
 }
 
-+ (NSXMLElement*)selectedChildInElement:(NSXMLElement*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages
-{
-    for (NSXMLNode* child in element.children) {
-        if (child.kind != NSXMLElementKind || IJSVGNodeTypeForString(child.localName, child.kind) == IJSVGNodeTypeStyle) {
-            continue;
-        }
-        NSXMLElement* candidate = (NSXMLElement*)child;
-
-        // No extension languages are implemented. An explicitly empty
-        // requiredExtensions also fails conditional processing.
-        if ([candidate attributeForName:IJSVGAttributeRequiredExtensions] != nil) {
-            continue;
-        }
-        NSString* languages = [candidate attributeForName:IJSVGAttributeSystemLanguage].stringValue;
-        if (languages == nil) {
-            return candidate;
-        }
-        const char* bytes = languages.UTF8String;
-        if (bytes == NULL || strlen(bytes) != [languages lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) {
-            continue;
-        }
-        for (NSString* preferred in preferredLanguages) {
-            const char* preference = preferred.UTF8String;
-            if (preference != NULL && strlen(preference) == [preferred lengthOfBytesUsingEncoding:NSUTF8StringEncoding] && IJSVGSwitchLanguageMatches(bytes, preference)) {
-                return candidate;
-            }
-        }
-    }
-    return nil;
-}
-
 + (IJSVGXMLNode*)selectedChildInXML:(IJSVGXMLNode*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages
 {
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGXMLType(child) == IJSVGNodeTypeStyle) {
+        if (IJSVGXMLKind(child) != IJSVGXMLNodeKindElement || IJSVGXMLType(child) == IJSVGNodeTypeStyle) {
             continue;
         }
         IJSVGXMLNode* candidate = (IJSVGXMLNode*)child;

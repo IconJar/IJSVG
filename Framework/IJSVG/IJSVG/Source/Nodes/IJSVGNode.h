@@ -13,6 +13,7 @@
 #import <IJSVG/IJSVGTraitedColorStorage.h>
 #import <IJSVG/IJSVGUnitLength.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVG/IJSVGXMLTypes.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -314,7 +315,7 @@ typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeSymbol
 };
 
-FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string, NSXMLNodeKind kind);
+FOUNDATION_EXPORT IJSVGNodeType IJSVGNodeTypeForString(NSString* _Nullable string, IJSVGXMLNodeKind kind);
 
 typedef NS_ENUM(NSInteger, IJSVGWindingRule) {
     IJSVGWindingRuleNonZero,
@@ -444,7 +445,7 @@ void IJSVGAssertPaintableObject(id object);
 + (BOOL)node:(IJSVGNode*)node containsNodesMatchingTraits:(IJSVGNodeTraits)traits;
 
 // Returns not found for absent names and non element nodes.
-+ (IJSVGNodeType)typeForString:(NSString* _Nullable)string kind:(NSXMLNodeKind)kind;
++ (IJSVGNodeType)typeForString:(NSString* _Nullable)string kind:(IJSVGXMLNodeKind)kind;
 + (BOOL)typeIsPathable:(IJSVGNodeType)type;
 
 - (BOOL)containsRelativeUnits;

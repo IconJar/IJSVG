@@ -24,6 +24,7 @@
 
 // Conservative: custom properties can affect any attribute through var().
 - (BOOL)mayAffectAttributes:(IJSVGBitFlags*)attributes;
+
 // Media conditions are evaluated once while parsing, using screen media.
 - (void)parseStyleBlock:(NSString*)string;
 - (void)parseStyleBlock:(NSString*)string viewport:(CGSize)viewport;

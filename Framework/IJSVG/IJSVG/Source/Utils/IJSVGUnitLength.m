@@ -388,10 +388,10 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
     }
     if (self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
         NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
-        return [NSString stringWithFormat:@"%@%@", IJSVGShortFloatString(self.value), suffix];
+        return [IJSVGShortFloatString(self.value) stringByAppendingString:suffix];
     }
     if (self.type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
-        return [NSString stringWithFormat:@"%@%%", IJSVGShortFloatString(self.value * 100.f)];
+        return [IJSVGShortFloatString(self.value * 100.f) stringByAppendingString:@"%"];
     }
     return IJSVGShortFloatString(self.value);
 }
@@ -407,10 +407,10 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
     if (self.type == IJSVGUnitLengthTypeEM || self.type == IJSVGUnitLengthTypeEX) {
         NSString* suffix = self.type == IJSVGUnitLengthTypeEM ? @"em" : @"ex";
         NSString* number = IJSVGShortFloatStringWithOptions(self.value, options);
-        return [NSString stringWithFormat:@"%@%@", number, suffix];
+        return [number stringByAppendingString:suffix];
     }
     if (_type == IJSVGUnitLengthTypePercentage && self.value != 0.f) {
-        return [NSString stringWithFormat:@"%@%%", IJSVGShortFloatStringWithOptions(_value * 100.f, options)];
+        return [IJSVGShortFloatStringWithOptions(_value * 100.f, options) stringByAppendingString:@"%"];
     }
     return IJSVGShortFloatStringWithOptions(_value, options);
 }

@@ -266,7 +266,46 @@ NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions 
 
 NSString* IJSVGShortFloatString(CGFloat f)
 {
-    return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
+    // %g emits integers below one million without an exponent. These values
+    // occur frequently in default geometry and filter parameters.
+    if (f == 0.f) {
+        return signbit(f) ? @"-0" : @"0";
+    }
+    if (f == 1.f) {
+        return @"1";
+    }
+    if (f > -1000000.f && f < 1000000.f) {
+        int integer = (int)f;
+        if ((CGFloat)integer == f) {
+            char digits[8];
+            char* end = digits + sizeof(digits);
+            char* cursor = end;
+            unsigned int magnitude = integer < 0 ? (unsigned int)-integer : (unsigned int)integer;
+            do {
+                *--cursor = (char)('0' + magnitude % 10);
+                magnitude /= 10;
+            } while (magnitude != 0);
+            if (integer < 0) {
+                *--cursor = '-';
+            }
+            return [[NSString alloc] initWithBytes:cursor length:(NSUInteger)(end - cursor) encoding:NSASCIIStringEncoding];
+        }
+    }
+    char buffer[64];
+    int length = snprintf(buffer, sizeof(buffer), "%g", f);
+
+    // Keep the Foundation fallback for errors or a non-C numeric locale.
+    if (length < 0 || length >= sizeof(buffer) || strchr(buffer, ',') != NULL) {
+        return IJSVGShortenFloatString([NSString stringWithFormat:@"%g", f]);
+    }
+    const char* output = buffer;
+    if (buffer[0] == '-' && buffer[1] == '0' && strchr(buffer, '.') != NULL) {
+        buffer[1] = '-';
+        output++;
+    } else if (buffer[0] == '0' && buffer[1] == '.') {
+        output++;
+    }
+    return [NSString stringWithUTF8String:output];
 };
 
 NSString* IJSVGCompressFloatParameterArray(NSArray<NSString*>* strings)
@@ -313,7 +352,29 @@ NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision)
 
 NSString* IJSVGPointToCommandString(CGPoint point)
 {
-    return [NSString stringWithFormat:@"%@ %@", IJSVGShortFloatString(point.x), IJSVGShortFloatString(point.y)];
+    // Format both coordinates in one buffer, avoiding two temporary NSStrings
+    // and Foundation's object-formatting machinery for every polygon vertex.
+    char buffer[128];
+    int length = snprintf(buffer, sizeof(buffer), "%g %g", point.x, point.y);
+    if (length < 0 || length >= sizeof(buffer) || strchr(buffer, ',') != NULL) {
+        return [NSString stringWithFormat:@"%@ %@", IJSVGShortFloatString(point.x), IJSVGShortFloatString(point.y)];
+    }
+    char* output = buffer;
+    for (const char* input = buffer; *input != 0;) {
+        if (*input == '-') {
+            *output++ = *input++;
+        }
+        if (input[0] == '0' && input[1] == '.') {
+            input++;
+        }
+        while (*input != 0 && *input != ' ') {
+            *output++ = *input++;
+        }
+        if (*input == ' ') {
+            *output++ = *input++;
+        }
+    }
+    return [[NSString alloc] initWithBytes:buffer length:(NSUInteger)(output - buffer) encoding:NSUTF8StringEncoding];
 };
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar)
@@ -409,9 +470,12 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     return [[NSString alloc] initWithBytes:start length:end - start encoding:NSUTF8StringEncoding];
 }
 
-+ (NSString* _Nullable)defURL:(NSString*)string
+NSString* IJSVGDefURLFromBytes(const char* bytes, NSUInteger length)
 {
-    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    if (bytes == NULL || length == 0) {
+        return nil;
+    }
+    IJSVGStringBytes source = { bytes, length };
     if (source.length != 0 && source.bytes[0] == '#') {
         return nil;
     }
@@ -435,6 +499,12 @@ static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const 
     NSString* identifier = valid && components.count != 0 ? IJSVGURLIdentifier(&components, components.values, NO) : nil;
     IJSVGCSSComponentsRelease(&components);
     return identifier;
+}
+
++ (NSString* _Nullable)defURL:(NSString*)string
+{
+    IJSVGStringBytes source = IJSVGStringGetBytes(string);
+    return IJSVGDefURLFromBytes(source.bytes, source.length);
 }
 
 + (NSArray<NSString*>*)defURLs:(NSString*)string

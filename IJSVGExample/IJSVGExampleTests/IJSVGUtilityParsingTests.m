@@ -1371,4 +1371,31 @@
     XCTAssertEqualWithAccuracy([length computeValue:100], 12, 1e-12);
 }
 
+- (void)testShortFloatFormattingMatchesFoundationAcrossDoubleValues
+{
+    for (NSInteger integer = -1000010; integer <= 1000010; integer += 97) {
+        for (NSUInteger fractional = 0; fractional < 2; fractional++) {
+            CGFloat value = integer + fractional * 0.125;
+            NSString* expected = IJSVGShortenFloatString([NSString stringWithFormat:@"%g", value]);
+            XCTAssertEqualObjects(IJSVGShortFloatString(value), expected);
+        }
+    }
+    const double edgeCases[] = { 0., -0., 0.5, -0.5, 1e-5, 1e-4, 999999., 1e6, DBL_MIN, DBL_MAX, INFINITY, -INFINITY, NAN };
+    for (NSUInteger index = 0; index < sizeof(edgeCases) / sizeof(*edgeCases); index++) {
+        double value = edgeCases[index];
+        XCTAssertEqualObjects(IJSVGShortFloatString(value), IJSVGShortenFloatString([NSString stringWithFormat:@"%g", value]));
+        NSString* point = [NSString stringWithFormat:@"%@ %@", IJSVGShortFloatString(value), IJSVGShortFloatString(-value)];
+        XCTAssertEqualObjects(IJSVGPointToCommandString(CGPointMake(value, -value)), point);
+    }
+    uint64_t state = 42;
+    for (NSUInteger index = 0; index < 10000; index++) {
+        state = state * UINT64_C(6364136223846793005) + 1;
+        double value;
+        memcpy(&value, &state, sizeof(value));
+        XCTAssertEqualObjects(IJSVGShortFloatString(value), IJSVGShortenFloatString([NSString stringWithFormat:@"%g", value]));
+        NSString* point = [NSString stringWithFormat:@"%@ %@", IJSVGShortFloatString(value), IJSVGShortFloatString(-value)];
+        XCTAssertEqualObjects(IJSVGPointToCommandString(CGPointMake(value, -value)), point);
+    }
+}
+
 @end

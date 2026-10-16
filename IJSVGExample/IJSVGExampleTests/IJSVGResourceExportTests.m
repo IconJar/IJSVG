@@ -98,4 +98,72 @@
                            "stroke-width='4'/></svg>"];
 }
 
+- (void)testBytePathSerializationMatchesStringFormatter
+{
+    const char commands[] = "MmLlHhVvCcSsQqTtAaZz";
+    const NSUInteger counts[] = { 2, 2, 2, 2, 1, 1, 1, 1, 6, 6, 4, 4, 4, 4, 2, 2, 7, 7, 0, 0 };
+    for (NSNumber* round in @[ @NO, @YES ]) {
+        IJSVGFloatingPointOptions options = IJSVGFloatingPointOptionsMake(round.boolValue, 3);
+        NSMutableArray* instructions = [[NSMutableArray alloc] init];
+        NSMutableArray* referenceCommands = [[NSMutableArray alloc] init];
+        for (NSUInteger index = 0; index < 2048; index++) {
+            NSUInteger type = (index / 3) % (sizeof(commands) - 1);
+            IJSVGExporterPathInstruction* instruction = [[IJSVGExporterPathInstruction alloc] initWithInstruction:commands[type] dataCount:counts[type]];
+            IJSVGExporterPathInstructionCommand* reference = [[IJSVGExporterPathInstructionCommand alloc] init];
+            reference.instruction = commands[type];
+            NSMutableArray* parameters = [[NSMutableArray alloc] init];
+            for (NSUInteger coordinate = 0; coordinate < counts[type]; coordinate++) {
+                CGFloat value = (CGFloat)((NSInteger)((index * 31 + coordinate * 19) % 10000) - 5000) / 1000.;
+
+                // Exercise the integer fast path, its exponent boundaries and
+                // values that become integral only after rounding.
+                const CGFloat boundaries[] = { -0., 0., 1., -1., 999999., -999999., 1000000., -1000000., 999999.9999, -999999.9999, 12345., -54321. };
+                if (index % 2 == 0) {
+                    value = boundaries[(index / 2 + coordinate) % (sizeof(boundaries) / sizeof(*boundaries))];
+                }
+                instruction.data[coordinate] = value;
+                [parameters addObject:IJSVGShortFloatStringWithOptions(value, options)];
+            }
+            reference.params = parameters;
+            [instructions addObject:instruction];
+            [referenceCommands addObject:reference];
+        }
+        NSString* expected = [IJSVGExporterPathInstruction pathStringWithInstructionSet:referenceCommands floatingPointOptions:options];
+        XCTAssertEqualObjects([IJSVGExporterPathInstruction pathStringFromInstructions:instructions floatingPointOptions:options], expected);
+        XCTAssertEqualObjects([IJSVGExporterPathInstruction pathStringFromInstructions:@[] floatingPointOptions:options], @"");
+    }
+}
+
+- (void)testCachedPathCleanupMatchesSeparatePasses
+{
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathMoveToPoint(path, NULL, -0., 0.);
+    for (NSUInteger index = 0; index < 300; index++) {
+        CGFloat x = (index % 31) * .173;
+        CGFloat y = (index % 17) * -.219;
+        CGPathAddLineToPoint(path, NULL, x, y);
+        CGPathAddCurveToPoint(path, NULL, x + .5, y - .25, x + 1., y, x, y);
+        if (index % 13 == 0) {
+            CGPathCloseSubpath(path);
+            CGPathMoveToPoint(path, NULL, x, y);
+        }
+    }
+    for (NSNumber* round in @[ @NO, @YES ]) {
+        IJSVGFloatingPointOptions options = IJSVGFloatingPointOptionsMake(round.boolValue, 3);
+        NSArray* expected = [IJSVGExporterPathInstruction instructionsFromPath:path floatingPointOptions:options];
+        [IJSVGExporterPathInstruction convertInstructionsDataToRoundedAndRecalculateCoordinates:expected floatingPointOptions:options];
+        [IJSVGExporterPathInstruction convertInstructionsToMixedAbsoluteRelative:expected floatingPointOptions:options];
+        expected = [IJSVGExporterPathInstruction convertInstructionsCurves:expected floatingPointOptions:options];
+        NSString* expectedString = [IJSVGExporterPathInstruction pathStringFromInstructions:expected floatingPointOptions:options];
+        NSArray* actual = [IJSVGExporterPathInstruction instructionsFromPath:path floatingPointOptions:options];
+        XCTAssertEqualObjects([IJSVGExporterPathInstruction pathStringFromInstructions:actual floatingPointOptions:options cleanup:YES], expectedString);
+    }
+    CGPathRelease(path);
+    IJSVGExporterPathInstruction* mutable = [[IJSVGExporterPathInstruction alloc] initWithInstruction:'M' dataCount:2];
+    mutable.data[0] = -0.;
+    XCTAssertEqualObjects([IJSVGExporterPathInstruction pathStringFromInstructions:@[ mutable ] floatingPointOptions:IJSVGFloatingPointOptionsDefault()], @"M-0 0");
+    mutable.data[0] = .5;
+    XCTAssertEqualObjects([IJSVGExporterPathInstruction pathStringFromInstructions:@[ mutable ] floatingPointOptions:IJSVGFloatingPointOptionsDefault()], @"M.5 0");
+}
+
 @end

@@ -6,10 +6,10 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVGNodeParsing.h>
+#import <IJSVGXML.h>
 
 @implementation IJSVGRadialGradient
 
@@ -36,14 +36,6 @@
 }
 
 #pragma mark - Parsing
-
-+ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGRadialGradient*)gradient
-{
-    IJSVGXMLDocument* document = IJSVGXMLDocumentForElementAttributes(element);
-    [self parseGeometryFromAttributes:IJSVGXMLAttributes(IJSVGXMLRoot(document)) gradient:gradient];
-    [gradient parseColorStops];
-    IJSVGXMLDocumentDestroy(document);
-}
 
 + (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGRadialGradient*)gradient
 {

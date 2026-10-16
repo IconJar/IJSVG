@@ -47,6 +47,7 @@ CGFloat IJSVGExporterPathFloatToFixed(CGFloat number, int precision);
 + (void)convertInstructionsDataToRoundedAndRecalculateCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (void)convertInstructionsToRelativeCoordinates:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 + (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
++ (NSString*)pathStringFromInstructions:(NSArray<IJSVGExporterPathInstruction*>*)instructions floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions cleanup:(BOOL)cleanup;
 + (NSString*)pathStringWithInstructionSet:(NSArray<NSValue*>*)instructionSets floatingPointOptions:(IJSVGFloatingPointOptions)floatingPointOptions;
 
 @end

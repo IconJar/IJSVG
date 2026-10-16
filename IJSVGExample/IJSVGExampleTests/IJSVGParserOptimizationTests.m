@@ -12,9 +12,24 @@
 #import <IJSVG/IJSVGRadialGradient.h>
 #import <IJSVG/IJSVGRect.h>
 #import <IJSVG/IJSVGUse.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGParsedPathCache.h>
 #import <IJSVGParserUtils.h>
 #import <IJSVGTestHelpers.h>
+
+static void IJSVGTestParseGradientAttributes(NSXMLElement* element, IJSVGGradient* gradient)
+{
+    NSData* data = [element.XMLString dataUsingEncoding:NSUTF8StringEncoding];
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(data.bytes, data.length);
+    XCTAssertNotEqual(document, NULL);
+    IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(IJSVGXMLRoot(document));
+    if ([gradient isKindOfClass:IJSVGLinearGradient.class]) {
+        [IJSVGLinearGradient parseGeometryFromAttributes:attributes gradient:(IJSVGLinearGradient*)gradient];
+    } else {
+        [IJSVGRadialGradient parseGeometryFromAttributes:attributes gradient:(IJSVGRadialGradient*)gradient];
+    }
+    IJSVGXMLDocumentDestroy(document);
+}
 
 @interface IJSVGParserOptimizationTests : XCTestCase
 @end
@@ -330,23 +345,23 @@
     for (NSUInteger index = 0; index < names.count; index++) {
         NSString* name = names[index];
         XCTAssertEqual(IJSVGNodeTypeForBytes(name.UTF8String, [name lengthOfBytesUsingEncoding:NSUTF8StringEncoding]), types[index]);
-        XCTAssertEqual(IJSVGNodeTypeForString(name, NSXMLElementKind), types[index]);
-        XCTAssertEqual(IJSVGNodeTypeForString(name.uppercaseString, NSXMLElementKind), types[index]);
-        XCTAssertEqual(IJSVGNodeTypeForString([name stringByAppendingString:@"x"], NSXMLElementKind), IJSVGNodeTypeUnknown);
-        XCTAssertEqual(IJSVGNodeTypeForString(name, NSXMLCommentKind), IJSVGNodeTypeNotFound);
-        XCTAssertEqual([IJSVGNode typeForString:name kind:NSXMLElementKind], types[index]);
-        XCTAssertEqual([IJSVGNode typeForString:name.uppercaseString kind:NSXMLElementKind], types[index]);
-        XCTAssertEqual([IJSVGNode typeForString:[name stringByAppendingString:@"x"] kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-        XCTAssertEqual([IJSVGNode typeForString:name kind:NSXMLCommentKind], IJSVGNodeTypeNotFound);
+        XCTAssertEqual(IJSVGNodeTypeForString(name, IJSVGXMLNodeKindElement), types[index]);
+        XCTAssertEqual(IJSVGNodeTypeForString(name.uppercaseString, IJSVGXMLNodeKindElement), types[index]);
+        XCTAssertEqual(IJSVGNodeTypeForString([name stringByAppendingString:@"x"], IJSVGXMLNodeKindElement), IJSVGNodeTypeUnknown);
+        XCTAssertEqual(IJSVGNodeTypeForString(name, IJSVGXMLNodeKindComment), IJSVGNodeTypeNotFound);
+        XCTAssertEqual([IJSVGNode typeForString:name kind:IJSVGXMLNodeKindElement], types[index]);
+        XCTAssertEqual([IJSVGNode typeForString:name.uppercaseString kind:IJSVGXMLNodeKindElement], types[index]);
+        XCTAssertEqual([IJSVGNode typeForString:[name stringByAppendingString:@"x"] kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeUnknown);
+        XCTAssertEqual([IJSVGNode typeForString:name kind:IJSVGXMLNodeKindComment], IJSVGNodeTypeNotFound);
     }
-    XCTAssertEqual(IJSVGNodeTypeForString(nil, NSXMLElementKind), IJSVGNodeTypeNotFound);
-    XCTAssertEqual(IJSVGNodeTypeForString(@"", NSXMLElementKind), IJSVGNodeTypeUnknown);
-    XCTAssertEqual(IJSVGNodeTypeForString(@"réct", NSXMLElementKind), IJSVGNodeTypeUnknown);
-    XCTAssertEqual(IJSVGNodeTypeForString(@"feComponentTransferExtra", NSXMLElementKind), IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);
-    XCTAssertEqual([IJSVGNode typeForString:@"" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"réct" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"feComponentTransferExtra" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
+    XCTAssertEqual(IJSVGNodeTypeForString(nil, IJSVGXMLNodeKindElement), IJSVGNodeTypeNotFound);
+    XCTAssertEqual(IJSVGNodeTypeForString(@"", IJSVGXMLNodeKindElement), IJSVGNodeTypeUnknown);
+    XCTAssertEqual(IJSVGNodeTypeForString(@"réct", IJSVGXMLNodeKindElement), IJSVGNodeTypeUnknown);
+    XCTAssertEqual(IJSVGNodeTypeForString(@"feComponentTransferExtra", IJSVGXMLNodeKindElement), IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:nil kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:@"" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"réct" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"feComponentTransferExtra" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeUnknown);
 }
 
 - (void)testXMLCachesElementTypesWithoutChangingNamesOrNodeKinds
@@ -373,12 +388,6 @@
     XCTAssertEqual(count, sizeof(expected) / sizeof(*expected));
     XCTAssertEqualObjects(IJSVGXMLLocalName(IJSVGXMLFirstChild(root)), @"PATH");
     XCTAssertEqual(IJSVGXMLType(NULL), IJSVGNodeTypeNotFound);
-    IJSVGXMLDocumentDestroy(document);
-
-    // The attribute adapter uses a synthetic group regardless of the source name.
-    NSXMLElement* element = [[NSXMLElement alloc] initWithName:@"feGaussianBlur"];
-    document = IJSVGXMLDocumentForElementAttributes(element);
-    XCTAssertEqual(IJSVGXMLType(IJSVGXMLRoot(document)), IJSVGNodeTypeGroup);
     IJSVGXMLDocumentDestroy(document);
 }
 
@@ -744,8 +753,8 @@
             IJSVGLinearGradient* linear = [[IJSVGLinearGradient alloc] init];
             IJSVGRadialGradient* radial = [[IJSVGRadialGradient alloc] init];
             linear.units = radial.units = units;
-            [IJSVGLinearGradient parseGradient:element gradient:linear];
-            [IJSVGRadialGradient parseGradient:element gradient:radial];
+            IJSVGTestParseGradientAttributes(element, linear);
+            IJSVGTestParseGradientAttributes(element, radial);
             IJSVGUnitLength* parsed = [IJSVGUnitLength unitWithString:value fromUnitType:units];
             IJSVGUnitLength* zero = units == IJSVGUnitObjectBoundingBox ? IJSVGZeroBoundingBoxUnitLength : IJSVGZeroUnitLength;
             NSArray* expected = @[ parsed ?: zero, parsed ?: IJSVGOnePercentageUnitLength, parsed ?: zero, parsed ?: zero, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGHalfPercentageUnitLength, parsed ?: IJSVGZeroPercentageUnitLength ];
@@ -767,17 +776,17 @@
 {
     NSString* linearSource = @"<linearGradient xmlns:other='urn:other' other:x1='99' other:y1='99' x1='25%' x2='75%' y1='10%' y2='90%' other:spreadMethod='reflect' spreadMethod='repeat'/>";
     NSString* radialSource = @"<radialGradient xmlns:other='urn:other' other:cx='99' other:cy='99' other:r='99' other:fx='99' other:fy='99' other:fr='99' cx='25%' cy='35%' r='45%' fx='15%' fy='20%' fr='5%' other:spreadMethod='repeat' spreadMethod='reflect'/>";
-    for (NSNumber* publicAPI in @[ @NO, @YES ]) {
+    for (NSNumber* directAttributes in @[ @NO, @YES ]) {
         IJSVGLinearGradient* linear = nil;
         IJSVGRadialGradient* radial = nil;
-        if (publicAPI.boolValue) {
+        if (directAttributes.boolValue) {
             linear = [[IJSVGLinearGradient alloc] init];
             radial = [[IJSVGRadialGradient alloc] init];
             linear.units = radial.units = IJSVGUnitObjectBoundingBox;
             NSXMLElement* linearElement = [[NSXMLElement alloc] initWithXMLString:linearSource error:nil];
             NSXMLElement* radialElement = [[NSXMLElement alloc] initWithXMLString:radialSource error:nil];
-            [IJSVGLinearGradient parseGradient:linearElement gradient:linear];
-            [IJSVGRadialGradient parseGradient:radialElement gradient:radial];
+            IJSVGTestParseGradientAttributes(linearElement, linear);
+            IJSVGTestParseGradientAttributes(radialElement, radial);
         } else {
             NSString* body = [NSString stringWithFormat:@"<defs>%@%@</defs><rect width='10' height='10' fill='url(#linear)'/><rect width='10' height='10' fill='url(#radial)'/>", [linearSource stringByReplacingOccurrencesOfString:@"<linearGradient " withString:@"<linearGradient id='linear' "], [radialSource stringByReplacingOccurrencesOfString:@"<radialGradient " withString:@"<radialGradient id='radial' "]];
             IJSVG* svg = [[IJSVG alloc] initWithSVGString:IJSVGTestSVG(body)];
@@ -809,14 +818,14 @@
         NSString* source = [NSString stringWithFormat:@"<linearGradient xmlns:other='urn:other' other:spreadMethod='repeat' spreadMethod='%@'/>", values[index]];
         NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:source error:nil];
         IJSVGLinearGradient* gradient = [[IJSVGLinearGradient alloc] init];
-        [IJSVGLinearGradient parseGradient:element gradient:gradient];
+        IJSVGTestParseGradientAttributes(element, gradient);
         IJSVGGradientSpreadMethod expected = index == 0 ? IJSVGGradientSpreadMethodReflect : index == 1 ? IJSVGGradientSpreadMethodRepeat
                                                                                                         : IJSVGGradientSpreadMethodPad;
         XCTAssertEqual(gradient.spreadMethod, expected, @"%@", values[index]);
     }
     NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:@"<linearGradient xmlns:other='urn:other' other:spreadMethod='repeat'/>" error:nil];
     IJSVGLinearGradient* gradient = [[IJSVGLinearGradient alloc] init];
-    [IJSVGLinearGradient parseGradient:element gradient:gradient];
+    IJSVGTestParseGradientAttributes(element, gradient);
     XCTAssertEqual(gradient.spreadMethod, IJSVGGradientSpreadMethodPad);
 }
 

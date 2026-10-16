@@ -1,12 +1,12 @@
 #import <Foundation/Foundation.h>
-#import <IJSVGParserUtils.h>
-#import <IJSVGParserTextUtils.h>
-#import <time.h>
-#import <IJSVGStyleSheetUtils.h>
+#import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGImage.h>
 #import <IJSVG/IJSVGUtils.h>
-#import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGViewBox.h>
+#import <IJSVGParserTextUtils.h>
+#import <IJSVGParserUtils.h>
+#import <IJSVGStyleSheetUtils.h>
+#import <time.h>
 
 @interface IJSVGBenchmarkImage : IJSVGImage
 @property (nonatomic) NSUInteger URLLength;

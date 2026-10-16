@@ -47,6 +47,7 @@ int main(void)
             [documents addObject:[NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='500'><style>%@</style>%@</svg>", css, body]];
             printf("variant=%s shapes=%lu rules=%lu css_bytes=%lu document_bytes=%lu\n", names[variant].UTF8String, shapes, rules, [css lengthOfBytesUsingEncoding:NSUTF8StringEncoding], [documents.lastObject lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         }
+
         // Rotate variant order to reduce systematic cache and thermal bias.
         // Input construction and output verification are outside timed regions.
         for (NSUInteger run = 0; run < samples + 2; run++) {

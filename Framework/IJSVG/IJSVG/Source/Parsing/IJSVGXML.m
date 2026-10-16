@@ -6,8 +6,8 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
-#import "IJSVGParserUtils.h"
+#import <IJSVGParserUtils.h>
+#import <IJSVGXML.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -428,51 +428,6 @@ IJSVGXMLDocument* IJSVGXMLDocumentCreate(const void* bytes, size_t length)
     return IJSVGXMLDocumentFinalize(document);
 }
 
-// Compatibility boundary for the public NSXMLElement gradient APIs. Copy just
-// the attributes they consume. Serializing a subtree can lose inherited
-// namespace declarations or reject values previously accepted by these APIs.
-IJSVGXMLDocument* IJSVGXMLDocumentForElementAttributes(NSXMLElement* element)
-{
-    IJSVGXMLDocument* document = calloc(1, sizeof(*document));
-    if (document == NULL) {
-        return NULL;
-    }
-    document->root = document->current = IJSVGXMLNodeNotFound;
-    document->names = xmlDictCreate();
-    if (document->names == NULL) {
-        IJSVGXMLDocumentDestroy(document);
-        return NULL;
-    }
-    IJSVGXMLParserStartElement(document, (const xmlChar*)"g", NULL, NULL, 0, NULL, 0, 0, NULL);
-    NSArray<NSXMLNode*>* attributes = element.attributes;
-    if (document->failed || attributes.count > UINT32_MAX || !IJSVGXMLStorageGrow((void**)&document->attributes, &document->attributeCapacity, (uint32_t)attributes.count, sizeof(IJSVGXMLAttribute))) {
-        IJSVGXMLDocumentDestroy(document);
-        return NULL;
-    }
-    for (NSXMLNode* input in attributes) {
-        const char* prefix = input.prefix.UTF8String;
-        if (prefix != NULL && *prefix == 0) {
-            prefix = NULL;
-        }
-        NSString* value = input.stringValue ?: @"";
-        NSString* name = input.name;
-        IJSVGXMLAttribute* attribute = document->attributes + document->attributeCount++;
-        *attribute = (IJSVGXMLAttribute) {
-            .name = IJSVGXMLDocumentInternName(document, (const xmlChar*)input.localName.UTF8String),
-            .prefix = IJSVGXMLDocumentInternName(document, (const xmlChar*)prefix),
-            .uri = IJSVGXMLDocumentInternName(document, (const xmlChar*)input.URI.UTF8String),
-            .value = IJSVGXMLDocumentStoreBytes(document, value.UTF8String, [value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]),
-            .identifier = IJSVGNodeAttributeForName(name)
-        };
-    }
-    if (document->failed) {
-        IJSVGXMLDocumentDestroy(document);
-        return NULL;
-    }
-    document->nodes[document->root].attributeCount = document->attributeCount;
-    return IJSVGXMLDocumentFinalize(document);
-}
-
 #pragma mark - Node access
 
 IJSVGXMLNode* IJSVGXMLNodeAtIndex(IJSVGXMLDocument* document, uint32_t index)
@@ -510,22 +465,12 @@ NSUInteger IJSVGXMLChildCount(IJSVGXMLNode* node)
     return node == NULL ? 0 : node->childCount;
 }
 
-NSXMLNodeKind IJSVGXMLKind(IJSVGXMLNode* node)
+IJSVGXMLNodeKind IJSVGXMLKind(IJSVGXMLNode* node)
 {
     if (node == NULL) {
-        return NSXMLInvalidKind;
+        return IJSVGXMLNodeKindInvalid;
     }
-    switch (node->kind) {
-        case IJSVGXMLNodeKindElement:
-            return NSXMLElementKind;
-        case IJSVGXMLNodeKindText:
-        case IJSVGXMLNodeKindCDATA:
-            return NSXMLTextKind;
-        case IJSVGXMLNodeKindComment:
-            return NSXMLCommentKind;
-        case IJSVGXMLNodeKindProcessingInstruction:
-            return NSXMLProcessingInstructionKind;
-    }
+    return node->kind == IJSVGXMLNodeKindCDATA ? IJSVGXMLNodeKindText : node->kind;
 }
 
 static NSString* IJSVGXMLDocumentInternString(IJSVGXMLDocument* document, const char* name)

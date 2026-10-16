@@ -353,11 +353,11 @@
     XCTAssertEqual(IJSVGParseTextAttribute(@"contextual\tNO-COMMON-LIGATURES", IJSVGNodeAttributeFontVariantLigatures).keyword, IJSVGTextKeywordNoCommonLigatures);
     XCTAssertNotEqual(IJSVGParseTextAttribute(@"no-common-ligatures-extra", IJSVGNodeAttributeFontVariantLigatures).keyword, IJSVGTextKeywordNoCommonLigatures);
     NSArray<NSArray*>* featureCases = @[
-        @[ @" 'kern' ON,, 'liga' off, 'salt' +2 ", @{ @"kern": @1, @"liga": @0, @"salt": @2 } ],
-        @[ @"'kern', 'kern' 3, 'liga' invalid", @{ @"kern": @3, @"liga": @0 } ],
-        @[ @"'bad' 2, 'longer' 1, 'café' 4", @{ @"café": @4 } ],
-        @[ @"'kern' -2, 'salt' 2junk", @{ @"kern": @(-2), @"salt": @2 } ],
-        @[ @"'kern' 999999999999999999999", @{ @"kern": @(NSIntegerMax) } ],
+        @[ @" 'kern' ON,, 'liga' off, 'salt' +2 ", @{ @"kern" : @1, @"liga" : @0, @"salt" : @2 } ],
+        @[ @"'kern', 'kern' 3, 'liga' invalid", @{ @"kern" : @3, @"liga" : @0 } ],
+        @[ @"'bad' 2, 'longer' 1, 'café' 4", @{ @"café" : @4 } ],
+        @[ @"'kern' -2, 'salt' 2junk", @{ @"kern" : @(-2), @"salt" : @2 } ],
+        @[ @"'kern' 999999999999999999999", @{ @"kern" : @(NSIntegerMax) } ],
         @[ @"normal", @{} ],
         @[ @" , , ", @{} ]
     ];

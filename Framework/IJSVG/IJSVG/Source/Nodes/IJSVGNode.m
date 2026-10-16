@@ -15,9 +15,9 @@
 #import <IJSVGNodeParsing.h>
 #import <IJSVGQuartzRenderer.h>
 
-IJSVGNodeType IJSVGNodeTypeForString(NSString* string, NSXMLNodeKind kind)
+IJSVGNodeType IJSVGNodeTypeForString(NSString* string, IJSVGXMLNodeKind kind)
 {
-    if (string == nil || kind != NSXMLElementKind) {
+    if (string == nil || kind != IJSVGXMLNodeKindElement) {
         return IJSVGNodeTypeNotFound;
     }
 
@@ -470,7 +470,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 @synthesize styleParent = _styleParent;
 
 // Returns not found for absent names and non element nodes.
-+ (IJSVGNodeType)typeForString:(NSString* _Nullable)string kind:(NSXMLNodeKind)kind
++ (IJSVGNodeType)typeForString:(NSString* _Nullable)string kind:(IJSVGXMLNodeKind)kind
 {
     return IJSVGNodeTypeForString(string, kind);
 }

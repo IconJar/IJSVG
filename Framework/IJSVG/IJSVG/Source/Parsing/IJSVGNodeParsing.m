@@ -10,11 +10,11 @@
 #import <IJSVG/IJSVGClipPath.h>
 #import <IJSVG/IJSVGForeignObject.h>
 #import <IJSVG/IJSVGMask.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGSwitch.h>
-#import <IJSVG/IJSVGParsing.h>
-#import <IJSVG/IJSVGUtils.h>
 
 static const char* IJSVGNodeKeywordBytes(NSString* value)
 {

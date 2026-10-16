@@ -7,8 +7,8 @@
 //
 
 #import <IJSVG/IJSVGStyleSheetSelectorRaw.h>
-#import <IJSVGTestHelpers.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGTestHelpers.h>
 
 BOOL IJSVGStyleSheetCharIsWhitespace(char aChar);
 BOOL IJSVGStyleSheetCharIsCombinator(char aChar);

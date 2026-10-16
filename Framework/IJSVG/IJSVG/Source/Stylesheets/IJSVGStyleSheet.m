@@ -9,8 +9,8 @@
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
-#import <IJSVGStyleSheetUtils.h>
 #import <IJSVGByteCache.h>
+#import <IJSVGStyleSheetUtils.h>
 
 @interface IJSVGStyleSheetWinner : NSObject {
 @public
@@ -200,6 +200,7 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     [_selectors removeAllObjects];
     NSMutableDictionary* namespaces = [[NSMutableDictionary alloc] init];
     IJSVGMediaEnvironment environment = { viewport, IJSVGMediaTypeScreen };
+
     // Conditions share one immutable environment for this parse. Keep the cache
     // local so another style block or viewport cannot reuse stale results.
     IJSVGByteCache* mediaMatches = NULL;

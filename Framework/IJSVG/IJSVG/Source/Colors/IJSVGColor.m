@@ -604,6 +604,27 @@ static BOOL IJSVGParseLegacyHEXBytes(const char* bytes, NSUInteger* hex, BOOL* h
 
     // always return hex unless criteria is met
     if (forceHex == YES || allowRRGGBBAA == YES || alpha == 100 || (red == 0 && green == 0 && blue == 0 && alpha == 0) || (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
+        unsigned int channels[] = { (unsigned int)red, (unsigned int)green, (unsigned int)blue, (unsigned int)(int)(components[3] * 0xFF) };
+        if (channels[0] <= 255 && channels[1] <= 255 && channels[2] <= 255 && channels[3] <= 255) {
+            static const char digits[] = "0123456789ABCDEF";
+            BOOL shorthand = allowShortHand;
+            NSUInteger checkCount = allowRRGGBBAA ? 4 : 3;
+            for (NSUInteger index = 0; index < checkCount; index++) {
+                shorthand = shorthand && (channels[index] >> 4) == (channels[index] & 15);
+            }
+            NSUInteger count = allowRRGGBBAA && alpha != 100 ? 4 : 3;
+            char bytes[9] = { '#' };
+            NSUInteger length = 1;
+            for (NSUInteger index = 0; index < count; index++) {
+                bytes[length++] = digits[channels[index] >> 4];
+                if (!shorthand) {
+                    bytes[length++] = digits[channels[index] & 15];
+                }
+            }
+            return [[NSString alloc] initWithBytes:bytes length:length encoding:NSASCIIStringEncoding];
+        }
+
+        // Preserve the existing formatting for extended-range color components.
         // we need to make sure the last 2 chars
         // are the same or we cant enable shorthand
         if (allowRRGGBBAA == YES) {

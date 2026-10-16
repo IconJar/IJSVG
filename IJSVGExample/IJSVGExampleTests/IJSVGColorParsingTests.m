@@ -9,6 +9,64 @@
 #import <IJSVG/IJSVGColor.h>
 #import <IJSVGTestHelpers.h>
 
+// Original formatter retained as an independent output oracle.
+static NSString* IJSVGReferenceColorString(CGColorRef color, IJSVGColorStringOptions options)
+{
+    // convert to RGB
+    color = [IJSVGColor computeColorSpace:color];
+    CGFloat components[4] = { 0 };
+    if (color != NULL) {
+        memcpy(components, CGColorGetComponents(color), sizeof(components));
+    }
+
+    int red = components[0] * 0xFF;
+    int green = components[1] * 0xFF;
+    int blue = components[2] * 0xFF;
+    int alpha = (int)(components[3] * 100);
+
+    BOOL forceHex = (options & IJSVGColorStringOptionForceHEX) != 0;
+    BOOL allowShortHand = (options & IJSVGColorStringOptionAllowShortHand) != 0;
+    BOOL allowRRGGBBAA = (options & IJSVGColorStringOptionAllowRRGGBBAA) != 0;
+
+    // jsut return none
+    if (alpha == 0 && forceHex == NO) {
+        return IJSVGStringNone;
+    }
+
+    // always return hex unless criteria is met
+    if (forceHex == YES || allowRRGGBBAA == YES || alpha == 100 || (red == 0 && green == 0 && blue == 0 && alpha == 0) || (red == 255 && green == 255 && blue == 255 && alpha == 100)) {
+        // we need to make sure the last 2 chars
+        // are the same or we cant enable shorthand
+        if (allowRRGGBBAA == YES) {
+            NSString* alphaHexString = [NSString stringWithFormat:@"%02X", (int)(components[3] * 0xFF)];
+            if ([alphaHexString characterAtIndex:0] != [alphaHexString characterAtIndex:1]) {
+                allowShortHand = NO;
+            }
+        }
+
+        if (allowShortHand == YES) {
+            NSString* r = [NSString stringWithFormat:@"%02X", red];
+            NSString* g = [NSString stringWithFormat:@"%02X", green];
+            NSString* b = [NSString stringWithFormat:@"%02X", blue];
+            if ([r characterAtIndex:0] == [r characterAtIndex:1] && [g characterAtIndex:0] == [g characterAtIndex:1] && [b characterAtIndex:0] == [b characterAtIndex:1]) {
+                // allow shorthand alpha
+                if (allowRRGGBBAA == YES && alpha != 100) {
+                    NSString* a = [NSString stringWithFormat:@"%02X", (int)(components[3] * 0xFF)];
+                    return [NSString stringWithFormat:@"#%c%c%c%c", [r characterAtIndex:0], [g characterAtIndex:0], [b characterAtIndex:0], [a characterAtIndex:0]];
+                }
+                return [NSString stringWithFormat:@"#%c%c%c", [r characterAtIndex:0], [g characterAtIndex:0], [b characterAtIndex:0]];
+            }
+        }
+        if (allowRRGGBBAA == YES && alpha != 100) {
+            return [NSString stringWithFormat:@"#%02X%02X%02X%02X", red, green, blue, (int)(components[3] * 0xFF)];
+        }
+        return [NSString stringWithFormat:@"#%02X%02X%02X", red, green, blue];
+    }
+
+    // note the %g, CSS alpha is 0 to 1, not 0 to 100, my bad!
+    return [NSString stringWithFormat:@"rgba(%d,%d,%d,%@)", red, green, blue, IJSVGShortFloatString((float)alpha / 100.f)];
+}
+
 @interface IJSVGColorParsingTests : XCTestCase
 @end
 
@@ -74,7 +132,7 @@
 
 - (void)testNamedColorLookupBoundaries
 {
-    NSDictionary<NSString*, NSNumber*>* colors = @{ @"aliceblue": @0xf0f8ff, @"black": @0x000000, @"yellowgreen": @0x9acd32, @" \tCornFlowerBlue\n": @0x6495ed, @"DARKGREEN": @0x006400 };
+    NSDictionary<NSString*, NSNumber*>* colors = @{ @"aliceblue" : @0xf0f8ff, @"black" : @0x000000, @"yellowgreen" : @0x9acd32, @" \tCornFlowerBlue\n" : @0x6495ed, @"DARKGREEN" : @0x006400 };
     for (NSString* name in colors) {
         uint32_t rgb = colors[name].unsignedIntValue;
         CGColorRef retained = [IJSVGColor newCGColorFromString:name];
@@ -275,6 +333,25 @@
 
     [self assertColor:firstColor.color red:0x33 / 255.f green:0x66 / 255.f blue:0x99 / 255.f alpha:0.25f];
     [self assertColor:secondColor.color red:0.f green:1.f blue:0.f alpha:1.f];
+}
+
+- (void)testHexFormattingMatchesOriginalAcrossChannelsAndOptions
+{
+    const CGFloat alphas[] = { 0., 1. / 255., 17. / 255., 0.5, 128. / 255., 254. / 255., 1. };
+    CGColorSpaceRef space = CGColorSpaceCreateDeviceRGB();
+    for (NSUInteger value = 0; value < 256; value++) {
+        @autoreleasepool {
+            for (NSUInteger alpha = 0; alpha < sizeof(alphas) / sizeof(*alphas); alpha++) {
+                CGFloat components[] = { value / 255., ((value * 17) % 256) / 255., ((value * 31) % 256) / 255., alphas[alpha] };
+                CGColorRef color = CGColorCreate(space, components);
+                for (NSUInteger flags = 0; flags < 16; flags++) {
+                    XCTAssertEqualObjects([IJSVGColor colorStringFromColor:color options:flags], IJSVGReferenceColorString(color, flags));
+                }
+                CGColorRelease(color);
+            }
+        }
+    }
+    CGColorSpaceRelease(space);
 }
 
 @end

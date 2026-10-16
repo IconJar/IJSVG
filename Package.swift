@@ -30,6 +30,7 @@ let package = Package(
             cSettings: [
                 .headerSearchPath("PrivateHeaders/IJSVG"),
                 .headerSearchPath("Source/Nodes"),
+                .headerSearchPath("Source/Exporter"),
                 .headerSearchPath("Source/Rendering"),
                 .headerSearchPath("Source/Parsing"),
                 .headerSearchPath("Source/Stylesheets")

@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IJSVGSwitch : IJSVGGroup
 
 // Select before parsing: display/visibility do not choose a later branch.
-+ (NSXMLElement* _Nullable)selectedChildInElement:(NSXMLElement*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages;
 
 @end
 

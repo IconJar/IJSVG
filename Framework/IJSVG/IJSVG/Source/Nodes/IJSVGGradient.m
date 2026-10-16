@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGStop.h>
@@ -14,6 +13,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
+#import <IJSVGXML.h>
 #include <string.h>
 
 typedef struct {
@@ -168,13 +168,6 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
 }
 
 #pragma mark - Parsing
-
-- (void)parseSpreadMethod:(NSXMLElement*)element
-{
-    IJSVGXMLDocument* document = IJSVGXMLDocumentForElementAttributes(element);
-    [self parseSpreadMethodFromAttributes:IJSVGXMLAttributes(IJSVGXMLRoot(document))];
-    IJSVGXMLDocumentDestroy(document);
-}
 
 - (void)parseSpreadMethodFromAttributes:(IJSVGXMLAttributeList)attributes
 {

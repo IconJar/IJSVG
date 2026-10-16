@@ -6,10 +6,10 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVGGradientStopData.h>
 #import <IJSVGGradientStops.h>
 #import <IJSVGNodeParsing.h>
+#import <IJSVGXML.h>
 
 static BOOL IJSVGGradientBytesMatch(const unsigned char* bytes, const char* keyword, NSUInteger length)
 {
@@ -155,7 +155,7 @@ BOOL IJSVGPopulatePlainGradientStops(IJSVGGradient* gradient, IJSVGXMLNode* elem
 + (BOOL)canCacheElement:(IJSVGXMLNode*)element
 {
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(element); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind || IJSVGXMLType(child) != IJSVGNodeTypeStop || strcmp(child->name, "stop") != 0 || IJSVGXMLChildCount(child) != 0) {
+        if (IJSVGXMLKind(child) != IJSVGXMLNodeKindElement || IJSVGXMLType(child) != IJSVGNodeTypeStop || strcmp(child->name, "stop") != 0 || IJSVGXMLChildCount(child) != 0) {
             return NO;
         }
         IJSVGXMLAttribute* color = IJSVGXMLAttributeForIdentifier(child, IJSVGNodeAttributeStopColor);

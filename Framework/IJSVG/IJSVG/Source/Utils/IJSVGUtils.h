@@ -77,6 +77,7 @@ NSString* IJSVGShortFloatStringWithOptions(CGFloat f, IJSVGFloatingPointOptions 
 NSString* IJSVGShortenFloatString(NSString* string);
 NSString* IJSVGPointToCommandString(CGPoint point);
 NSString* IJSVGShortFloatString(CGFloat f);
+NSString* _Nullable IJSVGDefURLFromBytes(const char* _Nullable bytes, NSUInteger length);
 NSString* IJSVGShortFloatStringWithPrecision(CGFloat f, NSInteger precision);
 
 BOOL IJSVGIsLegalCommandCharacter(unichar aChar);

@@ -52,10 +52,98 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     return maximum;
 }
 
+@interface IJSVGFilterExportDelegate : NSObject <IJSVGExporterDelegate>
+@property (nonatomic) NSUInteger filterCount;
+@end
+
+@implementation IJSVGFilterExportDelegate
+- (NSString*)svgExporter:(IJSVGExporter*)exporter identifierForElement:(IJSVGExportElement*)element type:(IJSVGNodeType)type defaultID:(NSString* (^)(void))defaultID
+{
+    if ([element.name isEqualToString:@"filter"]) {
+        self.filterCount++;
+        [element setAttributeWithName:@"data-application" stringValue:@(self.filterCount).stringValue];
+    }
+    return defaultID();
+}
+@end
+
 @interface IJSVGFilterTests : XCTestCase
 @end
 
 @implementation IJSVGFilterTests
+
+- (void)testExportSharesFilterAndPreservesPerElementPaintInputs
+{
+    for (NSString* input in @[ @"SourceGraphic", @"FillPaint", @"StrokePaint" ]) {
+        NSString* original = [self document:[NSString stringWithFormat:
+                                                    @"<defs><filter id='f'><feComposite in='%@' in2='SourceAlpha' operator='in'/></filter></defs>"
+                                                     "<rect x='2' y='2' width='5' height='5' fill='red' stroke='green' filter='url(#f)'/>"
+                                                     "<rect x='15' y='1' width='10' height='7' fill='blue' stroke='cyan' filter='url(#f)'/>",
+                                                input]];
+        NSData* before = [self render:original scale:10];
+        for (NSNumber* options in @[ @(IJSVGExporterOptionNone), @(IJSVGExporterOptionAll) ]) {
+            IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(original) size:CGSizeMake(300, 100) options:options.integerValue];
+            NSString* exported = exporter.SVGString;
+            NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+            NSArray<NSXMLElement*>* filters = (id)[xml nodesForXPath:@"//filter" error:nil];
+            XCTAssertEqual(filters.count, 1);
+            NSArray<NSXMLNode*>* references = [xml nodesForXPath:@"//@filter" error:nil];
+            XCTAssertEqual(references.count, 2);
+            NSString* reference = [NSString stringWithFormat:@"url(#%@)", [filters.firstObject attributeForName:@"id"].stringValue];
+            for (NSXMLNode* attribute in references) {
+                XCTAssertEqualObjects(attribute.stringValue, reference);
+            }
+            XCTAssertLessThan(IJSVGFilterMeanError(before, [self render:exported scale:10]), 1, @"%@", input);
+        }
+    }
+}
+
+- (void)testExportKeepsDifferentFiltersDistinct
+{
+    NSString* original = [self document:
+            @"<defs><filter id='a'><feOffset dx='1'/></filter>"
+             "<filter id='b'><feOffset dx='2'/></filter>"
+             "<filter id='c'><feOffset dx='1'/></filter></defs>"
+             "<rect x='2' y='2' width='5' height='5' fill='red' filter='url(#a)'/>"
+             "<rect x='15' y='2' width='5' height='5' fill='blue' filter='url(#b)'/>"
+             "<rect x='23' y='2' width='3' height='5' fill='green' filter='url(#c)'/>"];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(original) size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
+    NSXMLDocument* xml = IJSVGTestXMLDocument(exporter.SVGString);
+    XCTAssertEqual([xml nodesForXPath:@"//filter" error:nil].count, 2);
+    XCTAssertLessThan(IJSVGFilterMeanError([self render:original scale:10], [self render:exporter.SVGString scale:10]), 1);
+}
+
+- (void)testExportKeepsDelegateFilterCustomizationPerApplication
+{
+    NSString* original = [self document:
+            @"<defs><filter id='f'><feOffset dx='1'/></filter></defs>"
+             "<rect x='2' y='2' width='5' height='5' filter='url(#f)'/>"
+             "<rect x='15' y='2' width='5' height='5' filter='url(#f)'/>"];
+    IJSVGFilterExportDelegate* delegate = [[IJSVGFilterExportDelegate alloc] init];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(original) size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
+    exporter.delegate = delegate;
+    NSXMLDocument* xml = IJSVGTestXMLDocument(exporter.SVGString);
+    XCTAssertEqual(delegate.filterCount, 2);
+    XCTAssertEqual([xml nodesForXPath:@"//filter[@data-application='1']" error:nil].count, 1);
+    XCTAssertEqual([xml nodesForXPath:@"//filter[@data-application='2']" error:nil].count, 1);
+}
+
+- (void)testExportKeepsContextualImageFiltersSeparate
+{
+    NSString* original = [self document:
+            @"<defs><rect id='image' width='30' height='10' fill='cyan'/>"
+             "<filter id='f'><feImage href='#image'/></filter></defs>"
+             "<rect x='2' y='2' width='3' height='3' filter='url(#f)'/>"
+             "<rect x='15' y='1' width='10' height='7' filter='url(#f)'/>"];
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(original) size:CGSizeMake(300, 100) options:IJSVGExporterOptionAll];
+    NSString* exported = exporter.SVGString;
+    NSXMLDocument* xml = IJSVGTestXMLDocument(exported);
+    XCTAssertEqual([xml nodesForXPath:@"//filter" error:nil].count, 2);
+    NSArray<NSXMLNode*>* images = [xml nodesForXPath:@"//feImage/@href" error:nil];
+    XCTAssertEqual(images.count, 2);
+    XCTAssertNotEqualObjects(images.firstObject.stringValue, images.lastObject.stringValue);
+    XCTAssertLessThan(IJSVGFilterMeanError([self render:original scale:10], [self render:exported scale:10]), 1);
+}
 
 - (void)testOffsetPreservesSubregionForFollowingBlur
 {

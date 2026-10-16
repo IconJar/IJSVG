@@ -303,6 +303,7 @@ IJSVGMediaQuery* IJSVGMediaQueryCreateFromCleanBytes(const char* bytes, NSUInteg
     if (length == NSUIntegerMax || memchr(bytes, '\0', length) != NULL) {
         return NULL;
     }
+
     // The existing numeric/token readers require a terminator. Keep common
     // queries on the stack and normalize ASCII without allocating NSStrings.
     char storage[512];

@@ -6,9 +6,6 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGByteCache.h"
-#import "IJSVGByteHash.h"
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGMarker.h>
@@ -17,6 +14,8 @@
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUnitPoint.h>
 #import <IJSVG/IJSVGUnitRect.h>
+#import <IJSVGByteCache.h>
+#import <IJSVGByteHash.h>
 #import <IJSVGCSSParser.h>
 #import <IJSVGCSSVariables.h>
 #import <IJSVGGradientGeometry.h>
@@ -28,6 +27,7 @@
 #import <IJSVGParserUtils.h>
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVGSwitch.h>
+#import <IJSVGXML.h>
 
 // Hash all identifier bytes to reduce table probes for patterned SVG IDs.
 // Keep CF string equality and ownership and reuse the existing byte hash.
@@ -1239,7 +1239,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGXMLNode* children = IJSVGXMLFirstChild(element);
     NSMutableArray<id>* content = [[NSMutableArray alloc] initWithCapacity:IJSVGXMLChildCount(element)];
     for (IJSVGXMLNode* child = children; child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) == NSXMLTextKind) {
+        if (IJSVGXMLKind(child) == IJSVGXMLNodeKindText) {
             [content addObject:IJSVGXMLText(child) ?: @""];
         } else {
             IJSVGNodeType childType = IJSVGXMLType(child);
@@ -1528,7 +1528,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     BOOL isSwitch = [node isKindOfClass:IJSVGSwitch.class];
     IJSVGXMLNode* selectedChild = isSwitch ? [IJSVGSwitch selectedChildInXML:element preferredLanguages:NSLocale.preferredLanguages] : nil;
     for (IJSVGXMLNode* childNode = IJSVGXMLFirstChild(element); childNode != NULL; childNode = IJSVGXMLNext(childNode)) {
-        if (IJSVGXMLKind(childNode) != NSXMLElementKind) {
+        if (IJSVGXMLKind(childNode) != IJSVGXMLNodeKindElement) {
             continue;
         }
         IJSVGXMLNode* child = (IJSVGXMLNode*)childNode;
@@ -1571,7 +1571,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             // Selectors 3/browser :empty semantics: even whitespace text counts.
             parent.selectorHasContent |= child->text.length != 0;
         }
-        if (IJSVGXMLKind(child) != NSXMLElementKind) {
+        if (IJSVGXMLKind(child) != IJSVGXMLNodeKindElement) {
             continue;
         }
         parent.selectorHasContent = YES;
@@ -1632,7 +1632,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (IJSVGGraphicsNode*)styleAncestorForElement:(IJSVGXMLNode*)element
 {
-    if (IJSVGXMLKind(element) != NSXMLElementKind) {
+    if (IJSVGXMLKind(element) != IJSVGXMLNodeKindElement) {
         return nil;
     }
     IJSVGXMLNode* source = (IJSVGXMLNode*)element;
@@ -2036,7 +2036,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         }
     }
     for (IJSVGXMLNode* child = IJSVGXMLFirstChild(reference); child != NULL; child = IJSVGXMLNext(child)) {
-        if (IJSVGXMLKind(child) != NSXMLElementKind || ![IJSVGXMLLocalName(child) isEqualToString:@"stop"]) {
+        if (IJSVGXMLKind(child) != IJSVGXMLNodeKindElement || ![IJSVGXMLLocalName(child) isEqualToString:@"stop"]) {
             return NO;
         }
         IJSVGXMLNode* stop = (IJSVGXMLNode*)child;

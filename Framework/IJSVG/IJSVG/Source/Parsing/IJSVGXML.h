@@ -25,14 +25,6 @@ typedef struct {
     uint32_t length;
 } IJSVGXMLByteRange;
 
-typedef enum {
-    IJSVGXMLNodeKindElement,
-    IJSVGXMLNodeKindText,
-    IJSVGXMLNodeKindCDATA,
-    IJSVGXMLNodeKindComment,
-    IJSVGXMLNodeKindProcessingInstruction
-} IJSVGXMLNodeKind;
-
 typedef struct IJSVGXMLAttribute {
     IJSVGXMLDocument* document;
     CFStringRef cachedValue;
@@ -92,7 +84,6 @@ typedef struct {
 // Document lifecycle. Attribute lists and byte ranges borrow document storage.
 // DOCTYPE declarations do not load a DTD. Custom entity references are rejected.
 IJSVGXMLDocument* IJSVGXMLDocumentCreate(const void* bytes, size_t length);
-IJSVGXMLDocument* IJSVGXMLDocumentForElementAttributes(NSXMLElement* element);
 void IJSVGXMLDocumentDestroy(IJSVGXMLDocument* document);
 
 // Node traversal and content.
@@ -107,7 +98,7 @@ IJSVGXMLNode* IJSVGXMLNext(IJSVGXMLNode* node);
 
 IJSVGNodeType IJSVGXMLType(IJSVGXMLNode* node);
 NSUInteger IJSVGXMLChildCount(IJSVGXMLNode* node);
-NSXMLNodeKind IJSVGXMLKind(IJSVGXMLNode* node);
+IJSVGXMLNodeKind IJSVGXMLKind(IJSVGXMLNode* node);
 NSString* IJSVGXMLLocalName(IJSVGXMLNode* node);
 NSString* IJSVGXMLText(IJSVGXMLNode* node);
 

@@ -6,11 +6,11 @@
 //  Copyright (c) 2014 Curtis Hard. All rights reserved.
 //
 
-#import "IJSVGXML.h"
 #import <IJSVG/IJSVGLinearGradient.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
+#import <IJSVGXML.h>
 
 static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribute, IJSVGUnitType units, BOOL endPoint)
 {
@@ -32,14 +32,6 @@ static IJSVGUnitLength* IJSVGLinearGradientCoordinate(IJSVGXMLAttribute* attribu
 }
 
 #pragma mark - Parsing
-
-+ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGLinearGradient*)aGradient
-{
-    IJSVGXMLDocument* document = IJSVGXMLDocumentForElementAttributes(element);
-    [self parseGeometryFromAttributes:IJSVGXMLAttributes(IJSVGXMLRoot(document)) gradient:aGradient];
-    [aGradient parseColorStops];
-    IJSVGXMLDocumentDestroy(document);
-}
 
 + (void)parseGeometryFromAttributes:(IJSVGXMLAttributeList)attributes gradient:(IJSVGLinearGradient*)aGradient
 {

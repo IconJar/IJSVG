@@ -20,8 +20,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) IJSVGUnitLength* fr;
 @property (nonatomic, strong, nullable) IJSVGUnitLength* r;
 
-+ (void)parseGradient:(NSXMLElement*)element gradient:(IJSVGRadialGradient*)gradient;
-
 @end
 
 NS_ASSUME_NONNULL_END

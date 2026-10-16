@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <IJSVG/IJSVGExportDocument.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 #import <IJSVG/IJSVGUtils.h>
 
@@ -65,7 +66,7 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
 @protocol IJSVGExporterDelegate <NSObject>
 
 @optional
-- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter identifierForElement:(NSXMLElement* _Nullable)element type:(IJSVGNodeType)type defaultID:(NSString* (^)(void))defaultID;
+- (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter identifierForElement:(IJSVGExportElement* _Nullable)element type:(IJSVGNodeType)type defaultID:(NSString* (^)(void))defaultID;
 - (NSString* _Nullable)svgExporter:(IJSVGExporter*)exporter stringForColor:(CGColorRef)color flags:(IJSVGColorUsageTraits)flag options:(IJSVGColorStringOptions)options;
 
 @end
@@ -77,8 +78,6 @@ const NSDictionary<NSString*, NSString*>* IJSVGDefaultAttributes(void);
     IJSVGRenderingOptions* _renderingOptions;
     CGSize _size;
     IJSVGExporterOptions _options;
-    NSXMLDocument* _dom;
-    NSXMLElement* _defElement;
     NSInteger _idCount;
     NSInteger _shortIdCount;
     BOOL _appliedXLink;

@@ -11,6 +11,7 @@
 #import <CoreText/CoreText.h>
 #import <IJSVG/IJSVG.h>
 #import <IJSVG/IJSVGRect.h>
+#import <IJSVGNodeParsing.h>
 #import <IJSVGQuartzRenderer.h>
 #import <IJSVGShapePaint.h>
 #import <IJSVGSwitch.h>
@@ -735,16 +736,20 @@
                      "<rect id='regional' systemLanguage='de, EN-gb'/>"
                      "<rect id='english' systemLanguage='en' display='none'/>"
                      "<rect id='fallback'/></switch>";
-    NSXMLElement* element = [[NSXMLElement alloc] initWithXMLString:xml error:nil];
+    NSData* xmlData = [xml dataUsingEncoding:NSUTF8StringEncoding];
+    IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(xmlData.bytes, xmlData.length);
+    XCTAssertNotEqual(document, NULL);
     NSArray<NSArray<id>*>* cases = @[ @[ @[ @"en-GB" ], @"regional" ], @[ @[ @"en-GB-x-private" ], @"regional" ], @[ @[ @"en-US" ], @"english" ], @[ @[ @"en" ], @"english" ], @[ @[ @"eng" ], @"fallback" ], @[ @[ @"fr", @"DE" ], @"regional" ], @[ @[], @"fallback" ] ];
     for (NSArray<id>* item in cases) {
-        NSXMLElement* selected = [IJSVGSwitch selectedChildInElement:element preferredLanguages:item[0]];
-        XCTAssertEqualObjects([selected attributeForName:IJSVGAttributeID].stringValue, item[1]);
+        IJSVGXMLNode* selected = [IJSVGSwitch selectedChildInXML:IJSVGXMLRoot(document) preferredLanguages:item[0]];
+        XCTAssertEqualObjects(IJSVGXMLAttributeValue(IJSVGXMLAttributeNamed(selected, IJSVGAttributeID)), item[1]);
     }
-    NSXMLElement* noMatch = [[NSXMLElement alloc] initWithXMLString:@"<switch><rect systemLanguage=' , '/><rect "
-                                                                    @"requiredExtensions=''/></switch>"
-                                                              error:nil];
-    XCTAssertNil([IJSVGSwitch selectedChildInElement:noMatch preferredLanguages:@[ @"en-GB" ]]);
+    IJSVGXMLDocumentDestroy(document);
+    NSData* noMatchData = [@"<switch><rect systemLanguage=' , '/><rect requiredExtensions=''/></switch>" dataUsingEncoding:NSUTF8StringEncoding];
+    document = IJSVGXMLDocumentCreate(noMatchData.bytes, noMatchData.length);
+    XCTAssertNotEqual(document, NULL);
+    XCTAssertEqual([IJSVGSwitch selectedChildInXML:IJSVGXMLRoot(document) preferredLanguages:@[ @"en-GB" ]], NULL);
+    IJSVGXMLDocumentDestroy(document);
     IJSVG* svg = [self svgWithBody:@"<switch><rect width='8' height='8'/><circle r='4'/></switch>"];
     IJSVGSwitch* node = (IJSVGSwitch*)svg.rootNode.children.firstObject;
     XCTAssertTrue([node isKindOfClass:IJSVGSwitch.class]);

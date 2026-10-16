@@ -641,15 +641,15 @@
 
 - (void)testNodeTypeMappingCoversKnownElementsAndUnsupportedText
 {
-    XCTAssertEqual([IJSVGNode typeForString:@"g" kind:NSXMLElementKind], IJSVGNodeTypeGroup);
-    XCTAssertEqual([IJSVGNode typeForString:@"PATH" kind:NSXMLElementKind], IJSVGNodeTypePath);
-    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient" kind:NSXMLElementKind], IJSVGNodeTypeLinearGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient" kind:NSXMLElementKind], IJSVGNodeTypeRadialGradient);
-    XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:NSXMLElementKind], IJSVGNodeTypeClipPath);
-    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:NSXMLElementKind], IJSVGNodeTypeFilterGaussianBlur);
-    XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:NSXMLElementKind], IJSVGNodeTypeUnknown);
-    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:NSXMLTextKind], IJSVGNodeTypeNotFound);
-    XCTAssertEqual([IJSVGNode typeForString:nil kind:NSXMLElementKind], IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:@"g" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeGroup);
+    XCTAssertEqual([IJSVGNode typeForString:@"PATH" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypePath);
+    XCTAssertEqual([IJSVGNode typeForString:@"linearGradient" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeLinearGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"radialGradient" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeRadialGradient);
+    XCTAssertEqual([IJSVGNode typeForString:@"clipPath" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeClipPath);
+    XCTAssertEqual([IJSVGNode typeForString:@"feGaussianBlur" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeFilterGaussianBlur);
+    XCTAssertEqual([IJSVGNode typeForString:@"unknown" kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeUnknown);
+    XCTAssertEqual([IJSVGNode typeForString:@"text body" kind:IJSVGXMLNodeKindText], IJSVGNodeTypeNotFound);
+    XCTAssertEqual([IJSVGNode typeForString:nil kind:IJSVGXMLNodeKindElement], IJSVGNodeTypeNotFound);
 }
 
 - (void)testNodeTypeIsPathableOnlyForPathShapes

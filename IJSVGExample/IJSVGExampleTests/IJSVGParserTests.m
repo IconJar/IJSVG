@@ -276,8 +276,8 @@
     for (NSArray* entry in cases) {
         for (NSString* media in @[ @"screen", @"print" ]) {
             NSString* xml = [NSString stringWithFormat:
-                @"<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200'>"
-                 "<style media='%@'>%@</style><rect id='target' width='10' height='10' stroke-width='1'/></svg>",
+                    @"<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200'>"
+                     "<style media='%@'>%@</style><rect id='target' width='10' height='10' stroke-width='1'/></svg>",
                 media, entry[0]];
             IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
             IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(300, 150)];
@@ -288,8 +288,8 @@
     }
     for (NSNumber* size in @[ @400, @800 ]) {
         NSString* xml = @"<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='200'>"
-                        "<style>rect{stroke-width:1}@media (min-width:600px){rect{stroke-width:2}}</style>"
-                        "<rect width='10' height='10'/></svg>";
+                         "<style>rect{stroke-width:1}@media (min-width:600px){rect{stroke-width:2}}</style>"
+                         "<rect width='10' height='10'/></svg>";
         IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
         IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(size.doubleValue, 200)];
         XCTAssertEqualWithAccuracy(((IJSVGGraphicsNode*)root.children.lastObject).strokeWidth.value,
