@@ -80,6 +80,29 @@
 
 - (void)testParsedMediaQueryCanMatchDifferentEnvironments
 {
+    IJSVGMediaEnvironment byteEnvironment = { CGSizeMake(800, 200), IJSVGMediaTypeScreen };
+    const char unterminated[] = { 'S', 'C', 'R', 'E', 'E', 'N' };
+    IJSVGMediaQuery* byteQuery = IJSVGMediaQueryCreateFromCleanBytes(unterminated, sizeof(unterminated));
+    XCTAssertTrue(IJSVGMediaQueryMatches(byteQuery, byteEnvironment));
+    IJSVGMediaQueryRelease(byteQuery);
+
+    const char trailing[] = "screen and";
+    byteQuery = IJSVGMediaQueryCreateFromCleanBytes(trailing, 6);
+    XCTAssertTrue(IJSVGMediaQueryMatches(byteQuery, byteEnvironment));
+    IJSVGMediaQueryRelease(byteQuery);
+    byteQuery = IJSVGMediaQueryCreateFromCleanBytes(trailing, sizeof(trailing) - 1);
+    XCTAssertFalse(IJSVGMediaQueryMatches(byteQuery, byteEnvironment));
+    IJSVGMediaQueryRelease(byteQuery);
+    const char embeddedNUL[] = { 's', 'c', 'r', 'e', 'e', 'n', 0, 'x' };
+    XCTAssertEqual(IJSVGMediaQueryCreateFromCleanBytes(embeddedNUL, sizeof(embeddedNUL)), NULL);
+
+    for (NSUInteger length = 511; length <= 513; length++) {
+        NSString* padded = [@"SCREEN AND (MIN-WIDTH:40EM)" stringByPaddingToLength:length withString:@" " startingAtIndex:0];
+        byteQuery = IJSVGMediaQueryCreateFromCleanBytes(padded.UTF8String, length);
+        XCTAssertTrue(IJSVGMediaQueryMatches(byteQuery, byteEnvironment));
+        IJSVGMediaQueryRelease(byteQuery);
+    }
+
     IJSVGMediaQuery* query = IJSVGMediaQueryCreate(@"screen and (min-width:40em) and (orientation:landscape), print");
     XCTAssertNotEqual(query, NULL);
     IJSVGMediaEnvironment environment = { CGSizeMake(800, 200), IJSVGMediaTypeScreen };
@@ -205,6 +228,73 @@
 
 - (void)testStyleMediaUsesDocumentViewport
 {
+    IJSVGStyleSheet* sheet = [[IJSVGStyleSheet alloc] init];
+    NSString* repeated = @"@media (min-width:600px){rect{stroke-width:2}}"
+                          "@media (min-width:600px){rect{stroke-width:3}}";
+    [sheet parseStyleBlock:repeated viewport:CGSizeMake(400, 200)];
+    XCTAssertEqual(sheet.ruleCount, 0u);
+    [sheet parseStyleBlock:repeated viewport:CGSizeMake(800, 200)];
+    XCTAssertEqual(sheet.ruleCount, 2u);
+    [sheet parseStyleBlock:repeated viewport:CGSizeMake(400, 200)];
+    XCTAssertEqual(sheet.ruleCount, 2u);
+
+    NSMutableString* uniqueConditions = [NSMutableString string];
+    for (NSUInteger index = 0; index < 300; index++) {
+        [uniqueConditions appendFormat:@"@media (min-width:%lupx){rect{stroke-width:2}}", index];
+    }
+    [sheet parseStyleBlock:uniqueConditions viewport:CGSizeMake(1000, 500)];
+    XCTAssertEqual(sheet.ruleCount, 302u);
+
+    // A valid condition larger than the cache budget still evaluates normally.
+    NSString* padding = [@"" stringByPaddingToLength:70 * 1024 withString:@" " startingAtIndex:0];
+    NSString* oversized = [NSString stringWithFormat:@"@media %@screen{rect{stroke-width:4}}", padding];
+    [sheet parseStyleBlock:[oversized stringByAppendingString:oversized] viewport:CGSizeMake(1000, 500)];
+    XCTAssertEqual(sheet.ruleCount, 304u);
+
+    // Exercise block rules through the SVG parser, including viewport resolution,
+    // cascade order, inherited namespaces and conjunction with the media attribute.
+    NSArray<NSArray*>* cases = @[
+        @[ @"rect{stroke-width:1}@media screen{rect{stroke-width:2}}", @2 ],
+        @[ @"@media screen{rect{stroke-width:2}}rect{stroke-width:3}", @3 ],
+        @[ @"@media screen{rect{stroke-width:2!important}}rect{stroke-width:3}", @2 ],
+        @[ @"#target{stroke-width:4}@media screen{rect{stroke-width:2}}", @4 ],
+        @[ @"@media screen{@media (width:800px){rect{stroke-width:5}}}", @5 ],
+        @[ @"@media print{@media screen{rect{stroke-width:9}}}rect{stroke-width:2}", @2 ],
+        @[ @"@media screen{@media print{rect{stroke-width:9}}rect{stroke-width:3}}", @3 ],
+        @[ @"@media (unknown:1){rect{stroke-width:9}}@media screen{rect{stroke-width:2}}", @2 ],
+        @[ @"@unknown screen{rect{stroke-width:9}}@media screen{rect{stroke-width:2}}", @2 ],
+        @[ @"@MEDIA /* comment */ (min-width:600px){rect{stroke-width:2}}", @2 ],
+        @[ @"@media{rect{stroke-width:2}}", @2 ],
+        @[ @" \t@MEDIA SCREEN AND (MIN-WIDTH:40EM) \n {rect{stroke-width:2}}", @2 ],
+        @[ @"@media (min-width:600px){.café{stroke-width:9}rect{stroke-width:2}}", @2 ],
+        @[ @"@media screen{rect{--value:6;stroke-width:var(--value)}}", @6 ],
+        @[ @"@namespace s url(http://www.w3.org/2000/svg);@media screen{s|rect{stroke-width:7}}", @7 ],
+        @[ @"@namespace s url(http://www.w3.org/2000/svg);@media screen{@namespace s url(urn:wrong);s|rect{stroke-width:7}}s|rect{stroke-width:8}", @8 ],
+        @[ @"@media screen{rect{--text:'}';stroke-width:2}}rect{stroke-width:3}", @3 ],
+        @[ @"@media screen{ }rect{stroke-width:3}", @3 ]
+    ];
+    for (NSArray* entry in cases) {
+        for (NSString* media in @[ @"screen", @"print" ]) {
+            NSString* xml = [NSString stringWithFormat:
+                @"<svg xmlns='http://www.w3.org/2000/svg' width='800' height='200'>"
+                 "<style media='%@'>%@</style><rect id='target' width='10' height='10' stroke-width='1'/></svg>",
+                media, entry[0]];
+            IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+            IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(300, 150)];
+            IJSVGGraphicsNode* rect = (IJSVGGraphicsNode*)root.children.lastObject;
+            CGFloat expected = [media isEqualToString:@"screen"] ? [entry[1] doubleValue] : 1;
+            XCTAssertEqualWithAccuracy(rect.strokeWidth.value, expected, .001, @"%@", entry[0]);
+        }
+    }
+    for (NSNumber* size in @[ @400, @800 ]) {
+        NSString* xml = @"<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='200'>"
+                        "<style>rect{stroke-width:1}@media (min-width:600px){rect{stroke-width:2}}</style>"
+                        "<rect width='10' height='10'/></svg>";
+        IJSVGParser* parser = [[IJSVGParser alloc] initWithSVGString:xml fileURL:nil error:nil];
+        IJSVGRootNode* root = [parser rootNodeWithSize:CGSizeMake(size.doubleValue, 200)];
+        XCTAssertEqualWithAccuracy(((IJSVGGraphicsNode*)root.children.lastObject).strokeWidth.value,
+            size.doubleValue >= 600 ? 2 : 1, .001);
+    }
     NSArray<NSString*>* queries = @[ @"screen and (min-width:600px)", @"(width >= 600px)", @"print, (width > 599px) and (height:200px)", @"not screen and (max-width:599px)" ];
     for (NSString* query in queries) {
         for (NSNumber* width in @[ @400, @800 ]) {

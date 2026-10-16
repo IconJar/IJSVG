@@ -240,13 +240,8 @@ static BOOL IJSVGMediaParseFeature(const char** cursor, IJSVGMediaCondition* con
     return *valid;
 }
 
-IJSVGMediaQuery* IJSVGMediaQueryCreate(NSString* media)
+static IJSVGMediaQuery* IJSVGMediaQueryCreateNormalized(const char* cursor)
 {
-    NSString* clean = IJSVGStyleSheetStringByRemovingCSSComments(media ?: @"").lowercaseString;
-    const char* cursor = clean.UTF8String;
-    if (cursor == NULL) {
-        return NULL;
-    }
     NSUInteger capacity = 1;
     for (const char* character = cursor; *character != '\0'; character++) {
         if (*character == '(' || *character == ',') {
@@ -301,6 +296,36 @@ IJSVGMediaQuery* IJSVGMediaQueryCreate(NSString* media)
         IJSVGMediaSkipWhitespace(&cursor);
     } while (YES);
     return query;
+}
+
+IJSVGMediaQuery* IJSVGMediaQueryCreateFromCleanBytes(const char* bytes, NSUInteger length)
+{
+    if (length == NSUIntegerMax || memchr(bytes, '\0', length) != NULL) {
+        return NULL;
+    }
+    // The existing numeric/token readers require a terminator. Keep common
+    // queries on the stack and normalize ASCII without allocating NSStrings.
+    char storage[512];
+    char* normalized = length < sizeof(storage) ? storage : malloc(length + 1);
+    if (normalized == NULL) {
+        return NULL;
+    }
+    for (NSUInteger index = 0; index < length; index++) {
+        normalized[index] = IJSVGCharToLower(bytes[index]);
+    }
+    normalized[length] = '\0';
+    IJSVGMediaQuery* query = IJSVGMediaQueryCreateNormalized(normalized);
+    if (normalized != storage) {
+        free(normalized);
+    }
+    return query;
+}
+
+IJSVGMediaQuery* IJSVGMediaQueryCreate(NSString* media)
+{
+    NSString* clean = IJSVGStyleSheetStringByRemovingCSSComments(media ?: @"");
+    const char* bytes = clean.UTF8String;
+    return bytes == NULL ? NULL : IJSVGMediaQueryCreateFromCleanBytes(bytes, [clean lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
 }
 
 void IJSVGMediaQueryRelease(IJSVGMediaQuery* query)

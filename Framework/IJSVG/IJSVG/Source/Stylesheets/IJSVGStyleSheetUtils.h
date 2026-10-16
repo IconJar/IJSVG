@@ -54,6 +54,8 @@ typedef struct IJSVGMediaQuery IJSVGMediaQuery;
 
 // The caller owns the immutable query until release.
 IJSVGMediaQuery* _Nullable IJSVGMediaQueryCreate(NSString* _Nullable media);
+// Bounded UTF8 span with CSS comments already removed. No NUL terminator needed.
+IJSVGMediaQuery* _Nullable IJSVGMediaQueryCreateFromCleanBytes(const char* bytes, NSUInteger length);
 void IJSVGMediaQueryRelease(IJSVGMediaQuery* _Nullable query);
 BOOL IJSVGMediaQueryMatches(const IJSVGMediaQuery* _Nullable query, IJSVGMediaEnvironment environment);
 

@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGStyleSheet.h>
 #import <IJSVG/IJSVGStyleSheetStyle.h>
 #import <IJSVGStyleSheetUtils.h>
+#import <IJSVGByteCache.h>
 
 @interface IJSVGStyleSheetWinner : NSObject {
 @public
@@ -179,6 +180,11 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
 
 - (void)parseStyleBlock:(NSString*)string
 {
+    [self parseStyleBlock:string viewport:CGSizeZero];
+}
+
+- (void)parseStyleBlock:(NSString*)string viewport:(CGSize)viewport
+{
     NSString* cleanString = IJSVGStyleSheetStringByRemovingCSSComments(string);
     const char* chars = cleanString.UTF8String;
     if (chars == NULL) {
@@ -193,19 +199,34 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
     // Namespace bindings are local to this style element, including cache entries.
     [_selectors removeAllObjects];
     NSMutableDictionary* namespaces = [[NSMutableDictionary alloc] init];
-    BOOL allowsNamespaces = YES;
+    IJSVGMediaEnvironment environment = { viewport, IJSVGMediaTypeScreen };
+    // Conditions share one immutable environment for this parse. Keep the cache
+    // local so another style block or viewport cannot reuse stale results.
+    IJSVGByteCache* mediaMatches = NULL;
+    [self parseStyleBytes:chars length:length namespaces:namespaces environment:environment mediaMatches:&mediaMatches nesting:0];
+    IJSVGByteCacheDestroy(mediaMatches);
+}
+
+- (void)parseStyleBytes:(const char*)chars length:(NSUInteger)length namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
+{
+    // Bound recursion for untrusted stylesheets. Namespace declarations are only
+    // allowed at the top level. Nested media rules inherit the existing bindings.
+    if (nesting > 64) {
+        return;
+    }
+    BOOL allowsNamespaces = nesting == 0;
     NSUInteger depth = 0;
     NSUInteger marker = 0;
     NSUInteger parenDepth = 0;
     char quote = 0;
     BOOL escaped = NO;
-    NSCharacterSet* whitespaceCharSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    NSString* selector = nil;
+    NSUInteger preludeStart = 0;
+    NSUInteger preludeLength = 0;
 
     for (NSUInteger i = 0; i < length; i++) {
         if (quote == 0 && !escaped) {
             i += strcspn(chars + i, ";{}()'\"\\");
-            if (i == length) {
+            if (i >= length) {
                 break;
             }
         }
@@ -236,8 +257,12 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
         if (c == '{' && parenDepth == 0) {
             if (depth == 0) {
                 allowsNamespaces = NO;
-                selector = IJSVGStyleSheetStringFromUTF8Bytes(chars, marker, i);
-                selector = [selector stringByTrimmingCharactersInSet:whitespaceCharSet];
+                preludeStart = IJSVGStyleSheetIndexBySkippingWhitespace(chars, marker, i);
+                NSUInteger preludeEnd = i;
+                while (preludeEnd > preludeStart && IJSVGStyleSheetCharIsWhitespace(chars[preludeEnd - 1])) {
+                    preludeEnd--;
+                }
+                preludeLength = preludeEnd - preludeStart;
                 marker = i + 1;
             }
             depth += 1;
@@ -250,16 +275,54 @@ static void IJSVGStyleSheetParseNamespace(NSString* statement, NSMutableDictiona
                 continue;
             }
             if (depth == 1) {
-                NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector namespaces:namespaces];
-                if (i != marker && selectors.count != 0) {
-                    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars + marker length:i - marker];
-                    [self addParsedStyle:style withSelectors:selectors];
-                }
+                [self parseRuleBody:chars + marker length:i - marker prelude:chars + preludeStart preludeLength:preludeLength namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting];
                 marker = i + 1;
             }
             depth--;
         }
     }
+}
+
+- (BOOL)mediaRuleMatches:(const char*)bytes length:(NSUInteger)length environment:(IJSVGMediaEnvironment)environment cache:(IJSVGByteCache**)cache
+{
+    CFTypeRef cached = IJSVGByteCacheGetValue(*cache, bytes, length);
+    if (cached != NULL) {
+        return cached == kCFBooleanTrue;
+    }
+
+    // Ordinary stylesheets never allocate bucket storage for the cache.
+    if (*cache == NULL) {
+        *cache = IJSVGByteCacheCreate(256, 64 * 1024);
+    }
+    NSUInteger cursor = 1;
+    char keyword[16] = { 0 };
+    BOOL matches = NO;
+    if (IJSVGStyleSheetConsumeASCIIIdentifier(bytes, length, &cursor, keyword, sizeof(keyword)) && strcasecmp(keyword, "media") == 0) {
+        IJSVGMediaQuery* query = IJSVGMediaQueryCreateFromCleanBytes(bytes + cursor, length - cursor);
+        matches = IJSVGMediaQueryMatches(query, environment);
+        IJSVGMediaQueryRelease(query);
+    }
+
+    IJSVGByteCacheSetValue(*cache, bytes, length, matches ? kCFBooleanTrue : kCFBooleanFalse);
+    return matches;
+}
+
+- (void)parseRuleBody:(const char*)chars length:(NSUInteger)length prelude:(const char*)prelude preludeLength:(NSUInteger)preludeLength namespaces:(NSMutableDictionary*)namespaces environment:(IJSVGMediaEnvironment)environment mediaMatches:(IJSVGByteCache**)mediaMatches nesting:(NSUInteger)nesting
+{
+    if (preludeLength != 0 && prelude[0] == '@') {
+        if ([self mediaRuleMatches:prelude length:preludeLength environment:environment cache:mediaMatches]) {
+            [self parseStyleBytes:chars length:length namespaces:namespaces environment:environment mediaMatches:mediaMatches nesting:nesting + 1];
+        }
+        return;
+    }
+
+    NSString* selector = IJSVGStyleSheetStringFromUTF8Bytes(prelude, 0, preludeLength);
+    NSArray<IJSVGStyleSheetSelector*>* selectors = [self selectorsWithSelectorString:selector namespaces:namespaces];
+    if (length == 0 || selectors.count == 0) {
+        return;
+    }
+    IJSVGStyleSheetStyle* style = [IJSVGStyleSheetStyle parseStyleBytes:chars length:length];
+    [self addParsedStyle:style withSelectors:selectors];
 }
 
 - (void)addStyleRule:(NSString*)rule withSelectors:(NSArray<IJSVGStyleSheetSelector*>*)selectors

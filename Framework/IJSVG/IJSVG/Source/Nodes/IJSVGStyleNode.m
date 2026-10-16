@@ -27,15 +27,15 @@
 + (BOOL)consumeElement:(IJSVGXMLNode*)element rootElement:(IJSVGXMLNode*)rootElement viewport:(CGSize)viewport styleSheet:(IJSVGStyleSheet*)styleSheet
 {
     NSString* media = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeMedia));
+    NSString* width = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeWidth));
+    NSString* height = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeHeight));
+    if (width != nil) {
+        viewport.width = [[IJSVGUnitLength unitWithString:width] computeValue:viewport.width];
+    }
+    if (height != nil) {
+        viewport.height = [[IJSVGUnitLength unitWithString:height] computeValue:viewport.height];
+    }
     if (media.length != 0) {
-        NSString* width = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeWidth));
-        NSString* height = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(rootElement, IJSVGNodeAttributeHeight));
-        if (width != nil) {
-            viewport.width = [[IJSVGUnitLength unitWithString:width] computeValue:viewport.width];
-        }
-        if (height != nil) {
-            viewport.height = [[IJSVGUnitLength unitWithString:height] computeValue:viewport.height];
-        }
         IJSVGMediaEnvironment environment = { viewport, IJSVGMediaTypeScreen };
         IJSVGMediaQuery* query = IJSVGMediaQueryCreate(media);
         BOOL matches = IJSVGMediaQueryMatches(query, environment);
@@ -44,7 +44,7 @@
             return NO;
         }
     }
-    [styleSheet parseStyleBlock:IJSVGXMLText(element)];
+    [styleSheet parseStyleBlock:IJSVGXMLText(element) viewport:viewport];
     return YES;
 }
 
