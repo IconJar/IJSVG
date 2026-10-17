@@ -28,6 +28,8 @@ typedef NS_OPTIONS(NSUInteger, IJSVGFilterInputs) {
 - (instancetype)initWithFilter:(IJSVGFilter*)filter;
 @end
 
+CGRect IJSVGFilterRegionForNode(IJSVGGraphicsNode* node, IJSVGUnitType units, CGRect boundingBox, CGRect viewPort, CGRect region);
+
 @interface IJSVGFilterGraph : NSObject
 
 @property (nonatomic, strong) IJSVGFilter* filter;

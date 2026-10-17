@@ -23,6 +23,7 @@
 // invalidate.
 @property (nonatomic, assign) BOOL cachesRenderedOutput;
 @property (nonatomic, readonly) IJSVGPaint* sourcePaint;
+@property (nonatomic, readonly) CGRect filterRegion;
 - (instancetype)initWithSourcePaint:(IJSVGPaint*)paint filter:(IJSVGFilter*)filter viewPort:(CGRect)viewPort;
 
 // Registers storage owned by the renderer, never probe an arbitrary display/PDF

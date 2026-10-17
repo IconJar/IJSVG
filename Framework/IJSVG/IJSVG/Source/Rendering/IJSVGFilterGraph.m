@@ -409,26 +409,38 @@ static IJSVGFilterInputs IJSVGFilterInputsForName(NSString* name)
     return _resolvedMetadata.filter == self.filter ? _resolvedMetadata.inputs : [[IJSVGFilterMetadata alloc] initWithFilter:self.filter].inputs;
 }
 
-- (CGRect)regionForNode:(IJSVGGraphicsNode*)node units:(IJSVGUnitType)units defaultRegion:(CGRect)region
+CGRect IJSVGFilterRegionForNode(IJSVGGraphicsNode* node, IJSVGUnitType units, CGRect boundingBox, CGRect viewPort, CGRect region)
 {
-    CGRect bounds = units == IJSVGUnitObjectBoundingBox ? self.boundingBox : self.viewPort;
+    CGRect bounds = units == IJSVGUnitObjectBoundingBox ? boundingBox : viewPort;
     BOOL objectUnits = units == IJSVGUnitObjectBoundingBox;
-    IJSVGUnitLength* lengths[] = { node.x, node.y, node.width, node.height };
+
+    // The node owns these immutable lengths throughout the calculation.
+    IJSVGUnitLength* __unsafe_unretained lengths[] = { node.x, node.y, node.width, node.height };
     CGFloat values[] = { region.origin.x, region.origin.y, region.size.width, region.size.height };
     for (NSUInteger index = 0; index < 4; index++) {
         IJSVGUnitLength* length = lengths[index];
         if (length == nil) {
             continue;
         }
-        if (objectUnits) {
-            length = [length lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+        CGFloat basis = index % 2 == 0 ? bounds.size.width : bounds.size.height;
+        if (objectUnits && !length.isCalculated) {
+            values[index] = (basis / 100.f) * (length.value * 100.f);
+        } else {
+            if (objectUnits) {
+                length = [length lengthWithUnitType:IJSVGUnitLengthTypePercentage];
+            }
+            values[index] = [length computeValue:basis];
         }
-        values[index] = [length computeValue:index % 2 == 0 ? bounds.size.width : bounds.size.height];
         if (index < 2 && (objectUnits || length.type == IJSVGUnitLengthTypePercentage)) {
             values[index] += index == 0 ? bounds.origin.x : bounds.origin.y;
         }
     }
     return CGRectMake(values[0], values[1], values[2], values[3]);
+}
+
+- (CGRect)regionForNode:(IJSVGGraphicsNode*)node units:(IJSVGUnitType)units defaultRegion:(CGRect)region
+{
+    return IJSVGFilterRegionForNode(node, units, self.boundingBox, self.viewPort, region);
 }
 
 - (IJSVGFilterContext*)renderingContext

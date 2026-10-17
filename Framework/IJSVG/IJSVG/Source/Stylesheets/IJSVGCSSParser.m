@@ -108,6 +108,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             break;
         case 5:
+            if (strcmp(normalized, "sepia") == 0) {
+                return IJSVGCSSFunctionSepia;
+            }
             if (strcmp(normalized, "clamp") == 0) {
                 return IJSVGCSSFunctionClamp;
             }
@@ -131,6 +134,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             break;
         case 6:
+            if (strcmp(normalized, "invert") == 0) {
+                return IJSVGCSSFunctionInvert;
+            }
             if (strcmp(normalized, "circle") == 0) {
                 return IJSVGCSSFunctionCircle;
             }
@@ -142,6 +148,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             break;
         case 7:
+            if (strcmp(normalized, "opacity") == 0) {
+                return IJSVGCSSFunctionOpacity;
+            }
             if (strcmp(normalized, "polygon") == 0) {
                 return IJSVGCSSFunctionPolygon;
             }
@@ -149,12 +158,29 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
                 return IJSVGCSSFunctionEllipse;
             }
             break;
+        case 8:
+            if (strcmp(normalized, "contrast") == 0) {
+                return IJSVGCSSFunctionContrast;
+            }
+            if (strcmp(normalized, "saturate") == 0) {
+                return IJSVGCSSFunctionSaturate;
+            }
+            break;
         case 9:
+            if (strcmp(normalized, "grayscale") == 0) {
+                return IJSVGCSSFunctionGrayscale;
+            }
             if (strcmp(normalized, "translate") == 0) {
                 return IJSVGCSSFunctionTranslate;
             }
             break;
         case 10:
+            if (strcmp(normalized, "brightness") == 0) {
+                return IJSVGCSSFunctionBrightness;
+            }
+            if (strcmp(normalized, "hue-rotate") == 0) {
+                return IJSVGCSSFunctionHueRotate;
+            }
             if (strcmp(normalized, "translatex") == 0) {
                 return IJSVGCSSFunctionTranslateX;
             }

@@ -48,7 +48,15 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionSkewY,
     IJSVGCSSFunctionCircle,
     IJSVGCSSFunctionEllipse,
-    IJSVGCSSFunctionVar
+    IJSVGCSSFunctionVar,
+    IJSVGCSSFunctionBrightness,
+    IJSVGCSSFunctionContrast,
+    IJSVGCSSFunctionGrayscale,
+    IJSVGCSSFunctionHueRotate,
+    IJSVGCSSFunctionInvert,
+    IJSVGCSSFunctionOpacity,
+    IJSVGCSSFunctionSaturate,
+    IJSVGCSSFunctionSepia
 };
 
 typedef NS_ENUM(uint8_t, IJSVGCSSNumericKeyword) {

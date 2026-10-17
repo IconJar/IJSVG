@@ -16,10 +16,83 @@
 @property (nonatomic, strong) WKWebView* webView;
 @property (nonatomic, strong) NSWindow* window;
 @property (nonatomic, copy) NSString* expectedDifference;
+@property (nonatomic, copy) NSString* referenceHTML;
 
 @end
 
 @implementation IJSVGCompositingWebKitTests
+
+- (void)compareCSSFilterValues:(NSArray<NSString*>*)values name:(NSString*)name
+{
+    NSMutableString* body = [NSMutableString stringWithString:@"<rect width='400' height='200' fill='#d0c0b0'/>"];
+    NSMutableString* html = [NSMutableString stringWithString:@"<div style='position:absolute;width:400px;height:200px;background:#d0c0b0'></div>"];
+    for (NSUInteger index = 0; index < values.count; index++) {
+        // WebKit applies CSS functions to HTML wrappers but ignores them on SVG groups.
+        [html appendFormat:@"<div style='position:absolute;left:%lupx;top:%lupx;width:200px;height:100px;filter:%@'><svg xmlns='http://www.w3.org/2000/svg' width='200' height='100'><rect x='12' y='12' width='120' height='65' fill='#b04020'/><rect x='65' y='25' width='115' height='60' fill='#2060d0' fill-opacity='.6'/><path d='M 15 85 L 155 15' fill='none' stroke='#309050' stroke-width='9'/></svg></div>", (unsigned long)(index % 2 * 200), (unsigned long)(index / 2 * 100), values[index]];
+        [body appendFormat:@"<g transform='translate(%lu %lu)' color-interpolation-filters='linearRGB'><g style='filter:%@'><rect x='12' y='12' width='120' height='65' fill='#b04020'/><rect x='65' y='25' width='115' height='60' fill='#2060d0' fill-opacity='.6'/><path d='M 15 85 L 155 15' fill='none' stroke='#309050' stroke-width='9'/></g></g>", (unsigned long)(index % 2 * 200), (unsigned long)(index / 2 * 100), values[index]];
+    }
+    self.referenceHTML = html;
+    [self compareBody:body name:name tolerance:.008];
+}
+
+- (void)testCSSBrightnessMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"brightness()", @"brightness(0)", @"brightness(45%)", @"brightness(1.8)" ] name:@"css-brightness"];
+}
+
+- (void)testCSSContrastMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"contrast()", @"contrast(0)", @"contrast(.45)", @"contrast(1.8)" ] name:@"css-contrast"];
+}
+
+- (void)testCSSGrayscaleMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"grayscale()", @"grayscale(0)", @"grayscale(45%)", @"grayscale(2)" ] name:@"css-grayscale"];
+}
+
+- (void)testCSSHueRotateMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"hue-rotate()", @"hue-rotate(90deg)", @"hue-rotate(-.25turn)", @"hue-rotate(100grad)" ] name:@"css-huerotate"];
+}
+
+- (void)testCSSInvertMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"invert()", @"invert(0)", @"invert(45%)", @"invert(2)" ] name:@"css-invert"];
+}
+
+- (void)testCSSOpacityMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"opacity()", @"opacity(0)", @"opacity(45%)", @"opacity(2)" ] name:@"css-opacity"];
+}
+
+- (void)testCSSSaturateMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"saturate()", @"saturate(0)", @"saturate(45%)", @"saturate(2)" ] name:@"css-saturate"];
+}
+
+- (void)testCSSSepiaMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"sepia()", @"sepia(0)", @"sepia(45%)", @"sepia(2)" ] name:@"css-sepia"];
+}
+
+- (void)testCSSFilterChainsMatchWebKit
+{
+    [self compareCSSFilterValues:@[ @"invert(.8) brightness(.7)", @"brightness(.7) invert(.8)", @"grayscale(.4) sepia(.3) saturate(1.8) hue-rotate(35deg)", @"opacity(.6) contrast(1.4)" ] name:@"css-chains"];
+}
+
+- (void)testCSSFiltersMixedWithURLMatchWebKit
+{
+    NSString* body = @"<defs><filter id='f' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters='sRGB'><feOffset dx='12' dy='8'/><feComponentTransfer><feFuncR type='linear' slope='.5'/></feComponentTransfer></filter></defs><rect width='400' height='200' fill='#d0c0b0'/><g filter='invert(.8) url(#f) opacity(.7)'><rect x='30' y='30' width='140' height='120' fill='#b04020'/></g><g filter='url(#f) invert(.8) opacity(.7)'><rect x='220' y='30' width='140' height='120' fill='#b04020'/></g>";
+    self.referenceHTML = @"<div style='position:absolute;width:400px;height:200px;background:#d0c0b0'></div><svg width='0' height='0'><defs><filter id='f' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters='sRGB'><feOffset dx='12' dy='8'/><feComponentTransfer><feFuncR type='linear' slope='.5'/></feComponentTransfer></filter></defs></svg><div style='position:absolute;width:400px;height:200px;filter:invert(.8) url(#f) opacity(.7)'><svg width='400' height='200'><rect x='30' y='30' width='140' height='120' fill='#b04020'/></svg></div><div style='position:absolute;width:400px;height:200px;filter:url(#f) invert(.8) opacity(.7)'><svg width='400' height='200'><rect x='220' y='30' width='140' height='120' fill='#b04020'/></svg></div>";
+    [self compareBody:body name:@"css-url-chains" tolerance:.008];
+}
+
+- (void)testCSSFilterVariablesAndClippingMatchWebKit
+{
+    NSString* body = @"<style>.filtered { --amount: 40%; filter: grayscale(var(--amount)) brightness(calc(.5 + .25)); }</style><defs><clipPath id='c'><circle cx='170' cy='100' r='70'/></clipPath></defs><rect width='400' height='200' fill='#c0d0e0'/><g class='filtered' opacity='.7' clip-path='url(#c)' transform='translate(20 5) rotate(5 170 100)'><rect x='40' y='20' width='260' height='150' fill='#e04020'/><rect x='140' y='60' width='180' height='100' fill='#2070d0' fill-opacity='.5'/></g>";
+    self.referenceHTML = @"<div style='position:absolute;width:400px;height:200px;background:#c0d0e0'></div><div style='width:400px;height:200px;transform:translate(20px,5px) rotate(5deg);transform-origin:170px 100px;opacity:.7;clip-path:circle(70px at 170px 100px)'><div style='--amount:40%;filter:grayscale(var(--amount)) brightness(calc(.5 + .25))'><svg width='400' height='200'><rect x='40' y='20' width='260' height='150' fill='#e04020'/><rect x='140' y='60' width='180' height='100' fill='#2070d0' fill-opacity='.5'/></svg></div></div>";
+    [self compareBody:body name:@"css-variables-clip" tolerance:.008];
+}
 
 - (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation
 {
@@ -114,6 +187,10 @@
         [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' "
                                     "width='400' height='200' viewBox='0 0 400 200'>%@</svg>",
             referenceBody]];
+    if (self.referenceHTML != nil) {
+        html = [NSString stringWithFormat:@"<!doctype html><html><head><style>html,body{margin:0;padding:0;background:white;}svg{display:block;}</style></head><body>%@</body></html>", self.referenceHTML];
+        self.referenceHTML = nil;
+    }
     [self.webView loadHTMLString:html baseURL:nil];
     [self waitForExpectations:@[ self.navigation ] timeout:20];
     XCTestExpectation* snapshot = [self expectationWithDescription:@"WebKit snapshot"];

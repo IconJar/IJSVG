@@ -418,13 +418,10 @@ static BOOL IJSVGRectIsFinite(CGRect rect)
     CGRect bounds = filteredPaint ? CGRectNull : [self artworkBoundsForChildrenOfPaint:paint];
     if (filteredPaint) {
         IJSVGFilterPaint* filtered = (IJSVGFilterPaint*)paint;
-        IJSVGFilterGraph* graph = [[IJSVGFilterGraph alloc] init];
-        graph.boundingBox = filtered.boundingBox;
-        graph.viewPort = filtered.viewPort;
 
         // Filters can generate pixels beyond the source, but never beyond this
         // region.
-        bounds = [graph regionForNode:filtered.filter units:filtered.filter.units defaultRegion:CGRectZero];
+        bounds = filtered.filterRegion;
     } else if ([paint isKindOfClass:IJSVGShapePaint.class]) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         if (shape.path != NULL) {
@@ -2700,6 +2697,21 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         return paint;
     }
     _buildHasFilters = YES;
+
+    if (filter.usesSourceRegion) {
+        CGRect region = [self artworkBoundsForPaint:paint];
+        region = CGRectOffset(region, paint.frame.origin.x, paint.frame.origin.y);
+        if (CGRectIsNull(region) || CGRectIsInfinite(region) || CGRectIsEmpty(region)) {
+            return paint;
+        }
+        filter = filter.copy;
+        filter.usesSourceRegion = NO;
+        filter.units = IJSVGUnitUserSpaceOnUse;
+        filter.x = [IJSVGUnitLength unitWithFloat:region.origin.x];
+        filter.y = [IJSVGUnitLength unitWithFloat:region.origin.y];
+        filter.width = [IJSVGUnitLength unitWithFloat:region.size.width];
+        filter.height = [IJSVGUnitLength unitWithFloat:region.size.height];
+    }
 
     BOOL relative = [self hasFontRelativeRegion:filter];
     for (IJSVGFilterPrimitive* primitive in filter.primitives) {

@@ -16,6 +16,7 @@
 #import <IJSVG/IJSVGUnitRect.h>
 #import <IJSVGByteCache.h>
 #import <IJSVGByteHash.h>
+#import <IJSVGCSSMathExpression.h>
 #import <IJSVGCSSParser.h>
 #import <IJSVGCSSVariables.h>
 #import <IJSVGGradientGeometry.h>
@@ -28,6 +29,120 @@
 #import <IJSVGStyleSheetUtils.h>
 #import <IJSVGSwitch.h>
 #import <IJSVGXML.h>
+
+static IJSVGFilter* IJSVGCSSColorFilter(const IJSVGCSSComponents* components, NSUInteger index)
+{
+    const IJSVGCSSComponent* function = components->values + index;
+    if (function->kind != IJSVGCSSComponentFunction || function->function < IJSVGCSSFunctionBrightness || function->function > IJSVGCSSFunctionSepia) {
+        return nil;
+    }
+    BOOL angle = function->function == IJSVGCSSFunctionHueRotate;
+    CGFloat amount = angle ? 0 : 1;
+    if (index + 1 < function->next) {
+        const IJSVGCSSComponent* argument = components->values + index + 1;
+        if (argument->next != function->next) {
+            return nil;
+        }
+        if (angle) {
+            amount = argument->number;
+            if (argument->kind == IJSVGCSSComponentNumber && amount == 0) {
+                amount = 0;
+            } else if (argument->kind == IJSVGCSSComponentDimension && argument->angleUnit != IJSVGCSSAngleUnitNone) {
+                switch (argument->angleUnit) {
+                    case IJSVGCSSAngleUnitRadians:
+                        amount *= 180 / M_PI;
+                        break;
+                    case IJSVGCSSAngleUnitGradians:
+                        amount *= .9;
+                        break;
+                    case IJSVGCSSAngleUnitTurns:
+                        amount *= 360;
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                return nil;
+            }
+        } else {
+            if (argument->kind == IJSVGCSSComponentNumber || argument->kind == IJSVGCSSComponentPercentage) {
+                amount = argument->number * (argument->kind == IJSVGCSSComponentPercentage ? .01 : 1);
+            } else {
+                IJSVGCSSNumericValue number;
+                if (!IJSVGCSSMathExpressionEvaluateNumber(components, index + 1, 1, &number)) {
+                    return nil;
+                }
+                amount = number.value;
+            }
+            if (amount < 0) {
+                if (!IJSVGCSSFunctionIsCalculation(argument->function)) {
+                    return nil;
+                }
+                amount = 0;
+            }
+        }
+    }
+    if (!isfinite(amount)) {
+        return nil;
+    }
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    filter.usesSourceRegion = YES;
+    filter.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+    IJSVGFilterPrimitive* primitive = [[IJSVGNodeClassForType(IJSVGNodeTypeFilterColorMatrix) alloc] init];
+    primitive.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+    if (angle || function->function == IJSVGCSSFunctionSaturate) {
+        primitive.parameters = @{IJSVGAttributeType : angle ? @"hueRotate" : @"saturate",
+            IJSVGAttributeValues : @(amount).stringValue};
+    } else {
+        CGFloat matrix[20] = { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0 };
+        switch (function->function) {
+            case IJSVGCSSFunctionBrightness:
+                matrix[0] = matrix[6] = matrix[12] = amount;
+                break;
+            case IJSVGCSSFunctionContrast:
+                matrix[0] = matrix[6] = matrix[12] = amount;
+                matrix[4] = matrix[9] = matrix[14] = .5 * (1 - amount);
+                break;
+            case IJSVGCSSFunctionInvert:
+                amount = MIN(amount, 1);
+                matrix[0] = matrix[6] = matrix[12] = 1 - 2 * amount;
+                matrix[4] = matrix[9] = matrix[14] = amount;
+                break;
+            case IJSVGCSSFunctionOpacity:
+                matrix[18] = MIN(amount, 1);
+                break;
+            case IJSVGCSSFunctionGrayscale: {
+                amount = MIN(amount, 1);
+                const CGFloat luminance[3] = { .2126, .7152, .0722 };
+                for (NSUInteger row = 0; row < 3; row++) {
+                    for (NSUInteger column = 0; column < 3; column++) {
+                        matrix[row * 5 + column] = (row == column ? 1 - amount : 0) + amount * luminance[column];
+                    }
+                }
+                break;
+            }
+            case IJSVGCSSFunctionSepia: {
+                amount = MIN(amount, 1);
+                const CGFloat sepia[9] = { .393, .769, .189, .349, .686, .168, .272, .534, .131 };
+                for (NSUInteger row = 0; row < 3; row++) {
+                    for (NSUInteger column = 0; column < 3; column++) {
+                        matrix[row * 5 + column] = (row == column ? 1 - amount : 0) + amount * sepia[row * 3 + column];
+                    }
+                }
+                break;
+            }
+            default:
+                return nil;
+        }
+        NSMutableArray<NSString*>* values = [[NSMutableArray alloc] initWithCapacity:20];
+        for (NSUInteger component = 0; component < 20; component++) {
+            [values addObject:@(matrix[component]).stringValue];
+        }
+        primitive.parameters = @ { IJSVGAttributeType : @"matrix", IJSVGAttributeValues : [values componentsJoinedByString:@" "] };
+    }
+    [filter addChild:primitive];
+    return filter;
+}
 
 // Hash all identifier bytes to reduce table probes for patterned SVG IDs.
 // Keep CF string equality and ownership and reuse the existing byte hash.
@@ -1665,14 +1780,13 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     // An unresolved server paints nothing unless an explicit fallback is supplied.
     // Keep this distinct from nil, which means inherited paint on graphics nodes.
     IJSVGColorNode* fallback = nil;
-    const char* bytes = value.UTF8String;
-    NSUInteger length = strlen(bytes);
 
     // The common unquoted fragment form was already validated by defURL:.
-    // Its exact length rules out a fallback without allocating CSS components.
-    BOOL simpleReference = length > 6 && memcmp(bytes, "url(#", 5) == 0 && bytes[length - 1] == ')'
-        && length == [identifier lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 6;
+    // Its exact length rules out a fallback without encoding the strings again.
+    BOOL simpleReference = value.length == identifier.length + 6 && [value hasPrefix:@"url(#"] && [value hasSuffix:@")"];
     if (!simpleReference) {
+        const char* bytes = value.UTF8String;
+        NSUInteger length = strlen(bytes);
         IJSVGCSSComponents components;
         BOOL valid = IJSVGCSSComponentsCreateWithOptions(bytes, length, IJSVGCSSParserOptionLeadingURL, &components);
         if (valid && components.count != 0) {
@@ -2619,6 +2733,30 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     NSArray<NSString*>* identifiers = [self filterIdentifiersForValue:value];
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
+    if (identifiers.count == 0) {
+        NSData* source = [value dataUsingEncoding:NSUTF8StringEncoding];
+        IJSVGCSSComponents components;
+        BOOL valid = IJSVGCSSComponentsCreate(source.bytes, source.length, &components);
+        for (NSUInteger index = 0; valid && index < components.count; index = components.values[index].next) {
+            const IJSVGCSSComponent* component = components.values + index;
+            IJSVGFilter* filter = nil;
+            if (component->kind == IJSVGCSSComponentFunction && component->function == IJSVGCSSFunctionURL) {
+                NSString* reference = [[NSString alloc] initWithBytes:components.bytes + component->offset length:component->length encoding:NSUTF8StringEncoding];
+                NSString* identifier = [IJSVGUtils defURL:reference];
+                if (identifier != nil && IJSVGXMLType([self detachedElementWithIdentifier:identifier]) == IJSVGNodeTypeFilter) {
+                    filter = (IJSVGFilter*)[self filterReferenceWithIdentifier:identifier referencingNode:node element:element];
+                }
+            } else {
+                filter = IJSVGCSSColorFilter(&components, index);
+            }
+            valid = filter != nil;
+            if (valid) {
+                [filters addObject:filter];
+            }
+        }
+        IJSVGCSSComponentsRelease(&components);
+        return valid ? filters : @[];
+    }
     for (NSString* identifier in identifiers) {
         IJSVGXMLNode* definition = [self detachedElementWithIdentifier:identifier];
         if (IJSVGXMLType(definition) != IJSVGNodeTypeFilter) {

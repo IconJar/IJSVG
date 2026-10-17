@@ -617,6 +617,8 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     IJSVGFilterMetadata* _filterMetadata;
     BOOL _checkedBackground;
     BOOL _cachedUsesBackground;
+    BOOL _hasFilterRegion;
+    CGRect _filterRegion;
 }
 
 @end
@@ -723,6 +725,36 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     return _filterMetadata;
 }
 
+- (CGRect)filterRegion
+{
+    if (!self.cachesRenderedOutput) {
+        return IJSVGFilterRegionForNode(self.filter, self.filter.units, self.boundingBox, self.viewPort, CGRectZero);
+    }
+    if (!_hasFilterRegion) {
+        _filterRegion = IJSVGFilterRegionForNode(self.filter, self.filter.units, self.boundingBox, self.viewPort, CGRectZero);
+        _hasFilterRegion = YES;
+    }
+    return _filterRegion;
+}
+
+- (void)setBoundingBox:(CGRect)boundingBox
+{
+    [super setBoundingBox:boundingBox];
+    _hasFilterRegion = NO;
+}
+
+- (void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    _hasFilterRegion = NO;
+}
+
+- (void)setViewPort:(CGRect)viewPort
+{
+    [super setViewPort:viewPort];
+    _hasFilterRegion = NO;
+}
+
 - (BOOL)usesBackground
 {
     if (!self.cachesRenderedOutput) {
@@ -745,6 +777,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 {
     _filter = filter;
     _filterMetadata = nil;
+    _hasFilterRegion = NO;
     _checkedBackground = NO;
 }
 
@@ -775,6 +808,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     _cachesRenderedOutput = cachesRenderedOutput;
+    _hasFilterRegion = NO;
     _checkedBackground = NO;
     _filterMetadata = nil;
     if (_outputCacheKey != nil) {
@@ -1505,7 +1539,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return;
     }
     IJSVGFilterGraph* graph = self.filterGraph;
-    CGRect region = [graph regionForNode:_filter units:_filter.units defaultRegion:CGRectZero];
+    CGRect region = self.filterRegion;
 
     if (IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
         return;

@@ -17,6 +17,7 @@
 {
     [super applyPropertiesFromNode:node];
     self.reference = node.reference;
+    self.usesSourceRegion = node.usesSourceRegion;
 }
 
 + (IJSVGNodeType)defaultNodeType

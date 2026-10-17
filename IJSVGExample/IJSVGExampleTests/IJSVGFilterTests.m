@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGFilter.h>
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGFilterPaint.h>
 #import <IJSVGTestHelpers.h>
 
 static const uint8_t* IJSVGFilterPixel(NSData* data, NSInteger x, NSInteger y, NSInteger scale)
@@ -71,6 +72,132 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 @end
 
 @implementation IJSVGFilterTests
+
+- (void)testCachedFilterRegionTracksGeometryAndCacheMode
+{
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    IJSVGFilterPaint* paint = [[IJSVGFilterPaint alloc] init];
+    paint.filter = filter;
+    paint.boundingBox = CGRectMake(10, 20, 100, 50);
+    paint.cachesRenderedOutput = YES;
+    XCTAssertEqualWithAccuracy(paint.filterRegion.origin.x, 0, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.origin.y, 15, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 120, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.height, 60, .0001);
+    paint.boundingBox = CGRectMake(20, 30, 200, 100);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.origin.x, 0, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.origin.y, 20, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 240, .0001);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.height, 120, .0001);
+    paint.cachesRenderedOutput = NO;
+    filter.width = [IJSVGUnitLength unitWithPercentageFloat:2];
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 400, .000001);
+    paint.cachesRenderedOutput = YES;
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 400, .000001);
+
+    IJSVGFilter* viewportFilter = [[IJSVGFilter alloc] init];
+    viewportFilter.units = IJSVGUnitUserSpaceOnUse;
+    paint.filter = viewportFilter;
+    paint.viewPort = CGRectMake(0, 0, 300, 150);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 360, .0001);
+    paint.viewPort = CGRectMake(0, 0, 400, 200);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 480, .0001);
+    paint.filter = [[IJSVGFilter alloc] init];
+    paint.boundingBox = CGRectNull;
+    paint.frame = CGRectMake(0, 0, 50, 20);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 60, .0001);
+    paint.frame = CGRectMake(0, 0, 100, 40);
+    XCTAssertEqualWithAccuracy(paint.filterRegion.size.width, 120, .0001);
+}
+
+- (void)testCSSColorFunctionsMatchSVGPrimitives
+{
+    NSDictionary<NSString*, NSString*>* cases = @{
+        @"brightness(150%)" : @"<feComponentTransfer><feFuncR type='linear' slope='1.5'/><feFuncG type='linear' slope='1.5'/><feFuncB type='linear' slope='1.5'/></feComponentTransfer>",
+        @"contrast(.5)" : @"<feComponentTransfer><feFuncR type='linear' slope='.5' intercept='.25'/><feFuncG type='linear' slope='.5' intercept='.25'/><feFuncB type='linear' slope='.5' intercept='.25'/></feComponentTransfer>",
+        @"invert(25%)" : @"<feComponentTransfer><feFuncR type='table' tableValues='.25 .75'/><feFuncG type='table' tableValues='.25 .75'/><feFuncB type='table' tableValues='.25 .75'/></feComponentTransfer>",
+        @"opacity(40%)" : @"<feComponentTransfer><feFuncA type='linear' slope='.4'/></feComponentTransfer>",
+        @"grayscale(.75)" : @"<feColorMatrix values='.40945 .5364 .05415 0 0 .15945 .7864 .05415 0 0 .15945 .5364 .30415 0 0 0 0 0 1 0'/>",
+        @"saturate(2)" : @"<feColorMatrix type='saturate' values='2'/>",
+        @"hue-rotate(.25turn)" : @"<feColorMatrix type='hueRotate' values='90'/>",
+        @"sepia()" : @"<feColorMatrix values='.393 .769 .189 0 0 .349 .686 .168 0 0 .272 .534 .131 0 0 0 0 0 1 0'/>"
+    };
+    NSString* shape = @"<rect x='5' y='3' width='20' height='4' fill='#a04820' fill-opacity='.6' stroke='#3070a0' stroke-width='4'/>";
+    for (NSString* function in cases) {
+        NSString* actual = [self document:[NSString stringWithFormat:@"<g filter='%@'>%@</g>", function, shape]];
+        NSString* expected = [self document:[NSString stringWithFormat:@"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='30' height='10' color-interpolation-filters='sRGB'>%@</filter></defs><g filter='url(#f)'>%@</g>", cases[function], shape]];
+        XCTAssertLessThan(IJSVGFilterMaximumError([self render:actual scale:3], [self render:expected scale:3]), 3, @"%@", function);
+    }
+}
+
+- (void)testCSSGrayscaleUsesSpecifiedLuminance
+{
+    IJSVG* svg = IJSVGTestSVGObject([self document:@"<rect width='30' height='10' filter='grayscale(1)'/>"]);
+    IJSVGGraphicsNode* node = (id)svg.rootNode.children.lastObject;
+    NSArray<NSNumber*>* values = [node.filters.firstObject.primitives.firstObject numbersForParameter:IJSVGAttributeValues];
+    XCTAssertEqual(values.count, 20);
+    if (values.count == 20) {
+        XCTAssertEqualWithAccuracy(values[0].doubleValue, .2126, .0000001);
+        XCTAssertEqualWithAccuracy(values[1].doubleValue, .7152, .0000001);
+        XCTAssertEqualWithAccuracy(values[2].doubleValue, .0722, .0000001);
+    }
+}
+
+- (void)testCSSFilterDefaultsAndClamping
+{
+    NSDictionary<NSString*, NSString*>* cases = @{
+        @"brightness()" : @"brightness(1)",
+        @"contrast()" : @"contrast(1)",
+        @"grayscale()" : @"grayscale(1)",
+        @"invert()" : @"invert(1)",
+        @"opacity()" : @"opacity(1)",
+        @"saturate()" : @"saturate(1)",
+        @"hue-rotate()" : @"hue-rotate(0deg)",
+        @"hue-rotate(100grad)" : @"hue-rotate(90deg)",
+        @"hue-rotate(1.5707963267948966rad)" : @"hue-rotate(90deg)",
+        @"invert(300%)" : @"invert(1)",
+        @"opacity(2)" : @"opacity(1)",
+        @"sepia(2)" : @"sepia(1)",
+        @"grayscale(2)" : @"grayscale(1)",
+        @"BRIGHTNESS(calc(1 + .5))" : @"brightness(1.5)",
+        @"contrast(calc(-1))" : @"contrast(0)",
+        @"brightness(calc(50% + 25%))" : @"brightness(.75)"
+    };
+    for (NSString* function in cases) {
+        NSString* format = @"<rect x='3' y='2' width='24' height='6' fill='#908030' filter='%@'/>";
+        NSData* actual = [self render:[self document:[NSString stringWithFormat:format, function]] scale:1];
+        NSData* expected = [self render:[self document:[NSString stringWithFormat:format, cases[function]]] scale:1];
+        XCTAssertEqualObjects(actual, expected, @"%@", function);
+    }
+}
+
+- (void)testCSSFilterInvalidListsAreRejected
+{
+    for (NSString* value in @[ @"invert(-1)", @"brightness(1px)", @"opacity(1, 2)", @"hue-rotate(45)", @"hue-rotate(50%)", @"sepia(1 2)", @"contrast(1) unknown(2)", @"none invert(1)", @"invert(1) url(#missing)", @"url(#missing) invert(1)", @"invert(1", @"invert(1), opacity(.5)" ]) {
+        IJSVG* svg = IJSVGTestSVGObject([self document:[NSString stringWithFormat:@"<rect width='30' height='10' filter='%@'/>", value]]);
+        XCTAssertEqual(((IJSVGGraphicsNode*)svg.rootNode.children.lastObject).filters.count, 0, @"%@", value);
+    }
+}
+
+- (void)testCSSFiltersKeepMixedURLOrderAndExport
+{
+    NSString* definitions = @"<defs><filter id='f' color-interpolation-filters='sRGB'><feComponentTransfer><feFuncR type='linear' slope='.5'/><feFuncG type='linear' slope='.5'/><feFuncB type='linear' slope='.5'/></feComponentTransfer></filter></defs>";
+    for (NSString* functions in @[ @"invert(1) url(#f)", @"url(#f) invert(1)" ]) {
+        NSString* source = [self document:[NSString stringWithFormat:@"%@<rect x='3' y='2' width='24' height='6' fill='#804020' style='filter:%@'/>", definitions, functions]];
+        NSData* actual = [self render:source scale:2];
+        NSString* ordered = [functions hasPrefix:@"invert"] ? @"<g filter='url(#f)'><rect x='3' y='2' width='24' height='6' fill='#7fbfdf'/></g>" : @"<rect x='3' y='2' width='24' height='6' fill='#bfdfef'/>";
+        XCTAssertLessThan(IJSVGFilterMaximumError(actual, [self render:[self document:[definitions stringByAppendingString:ordered]] scale:2]), 3);
+        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(source) size:CGSizeMake(60, 20) options:IJSVGExporterOptionAll];
+        XCTAssertLessThan(IJSVGFilterMaximumError(actual, [self render:exporter.SVGString scale:2]), 3);
+    }
+}
+
+- (void)testCSSFilterStylesheetVariablesAndStrokeBounds
+{
+    NSString* source = [self document:@"<style>path { --amount: 100%; filter: invert(var(--amount)); }</style><path d='M 5 5 H 25' stroke='red' stroke-width='6'/>"];
+    NSString* expected = [self document:@"<path d='M 5 5 H 25' stroke='cyan' stroke-width='6'/>"];
+    XCTAssertEqualObjects([self render:source scale:2], [self render:expected scale:2]);
+}
 
 - (void)testExportSharesFilterAndPreservesPerElementPaintInputs
 {
