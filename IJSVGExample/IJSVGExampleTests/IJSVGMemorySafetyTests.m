@@ -6,6 +6,7 @@
 #import <IJSVG/IJSVGCommandParser.h>
 #import <IJSVG/IJSVGGradient.h>
 #import <IJSVG/IJSVGPath.h>
+#import <IJSVG/IJSVGThreadManager.h>
 #import <XCTest/XCTest.h>
 #include <dlfcn.h>
 
@@ -13,6 +14,17 @@
 @end
 
 @implementation IJSVGMemorySafetyTests
+
+- (void)testManagerLookupEnumeratesManagers
+{
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:@"<svg width='10' height='10'/>"];
+    IJSVGThreadManager* manager = IJSVGThreadManager.currentManager;
+    XCTAssertEqual([IJSVGThreadManager managerForSVG:svg], manager);
+    [manager remove:svg];
+    XCTAssertNil([IJSVGThreadManager managerForSVG:svg]);
+    [manager adopt:svg];
+    XCTAssertEqual([IJSVGThreadManager managerForSVG:svg], manager);
+}
 
 - (void)testOversizedPathStreamsAreRejected
 {

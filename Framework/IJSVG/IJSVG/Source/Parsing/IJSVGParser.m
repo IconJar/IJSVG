@@ -585,7 +585,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 + (BOOL)isDataSVG:(NSData*)data
 {
     IJSVGXMLDocument* document = IJSVGXMLDocumentCreate(data.bytes, data.length);
-    BOOL valid = document != NULL;
+    BOOL valid = IJSVGXMLType(IJSVGXMLRoot(document)) == IJSVGNodeTypeSVG;
     IJSVGXMLDocumentDestroy(document);
     return valid;
 }
@@ -613,7 +613,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (BOOL)_validateParse:(NSError**)error
 {
-    if (_rootNode.viewBox.size.isZeroSize == YES) {
+    if (IJSVGXMLType(IJSVGXMLRoot(_document)) != IJSVGNodeTypeSVG || _rootNode.viewBox.size.isZeroSize == YES) {
         if (error != NULL) {
             *error = [[NSError alloc] initWithDomain:IJSVGErrorDomain code:IJSVGErrorParsingSVG userInfo:nil];
         }
@@ -873,12 +873,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
     node.reference = [self referenceForElement:element];
     if (fillValue.length != 0) {
-        NSString* paintIdentifier = [IJSVGUtils defURL:fillValue];
-        if (paintIdentifier != nil) {
-            [self applyPaintReference:paintIdentifier node:node element:element stroke:NO];
-        } else {
-            node.fill = [self colorPaintForValue:fillValue];
-        }
+        [self applyPaintValue:fillValue node:node element:element stroke:NO];
     }
     return YES;
 }
@@ -1384,6 +1379,9 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 - (IJSVGNode*)parseElement:(IJSVGXMLNode*)element parentNode:(IJSVGGraphicsNode*)node
 {
     IJSVGNodeType nodeType = IJSVGXMLType(element);
+    if (nodeType == IJSVGNodeTypeNotFound) {
+        return nil;
+    }
 
     [self parseDefElement:element parentNode:node recursive:NO];
 
@@ -1651,16 +1649,63 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     return ancestor;
 }
 
-- (void)applyPaintReference:(NSString*)identifier node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke
+- (void)applyPaintValue:(NSString*)value node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke
 {
-    if ([self.styleAncestors objectForKey:IJSVGXMLKey(element)] == node && [self.activeReferences containsObject:identifier]) {
-        void (^apply)(IJSVGNode*) = ^(IJSVGNode* paint) {
-            if (stroke) {
-                node.stroke = paint;
-            } else {
-                node.fill = paint;
+    NSString* identifier = [IJSVGUtils defURL:value];
+    if (identifier == nil) {
+        IJSVGColorNode* color = [self colorPaintForValue:value];
+        if (stroke) {
+            node.stroke = color;
+        } else {
+            node.fill = color;
+        }
+        return;
+    }
+
+    // An unresolved server paints nothing unless an explicit fallback is supplied.
+    // Keep this distinct from nil, which means inherited paint on graphics nodes.
+    IJSVGColorNode* fallback = nil;
+    const char* bytes = value.UTF8String;
+    NSUInteger length = strlen(bytes);
+
+    // The common unquoted fragment form was already validated by defURL:.
+    // Its exact length rules out a fallback without allocating CSS components.
+    BOOL simpleReference = length > 6 && memcmp(bytes, "url(#", 5) == 0 && bytes[length - 1] == ')'
+        && length == [identifier lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 6;
+    if (!simpleReference) {
+        IJSVGCSSComponents components;
+        BOOL valid = IJSVGCSSComponentsCreateWithOptions(bytes, length, IJSVGCSSParserOptionLeadingURL, &components);
+        if (valid && components.count != 0) {
+            NSUInteger next = components.values[0].next;
+            if (next < components.count) {
+                const IJSVGCSSComponent* token = components.values + next;
+                NSString* fallbackValue = [[NSString alloc] initWithBytes:bytes + token->offset length:token->length encoding:NSUTF8StringEncoding];
+                fallback = [self colorPaintForValue:fallbackValue];
+                valid = token->next == components.count && fallback.contextPaint == IJSVGContextPaintNone
+                    && (fallback.color != NULL || fallback.usesCurrentColor || fallback.isNoneOrTransparent);
             }
-        };
+        }
+        IJSVGCSSComponentsRelease(&components);
+        if (!valid) {
+            return;
+        }
+    }
+
+    void (^apply)(IJSVGNode*) = ^(IJSVGNode* paint) {
+        // References to elements other than paint servers are also invalid.
+        IJSVGNode* resolved = [paint isKindOfClass:IJSVGGradient.class] || [paint isKindOfClass:IJSVGPattern.class] ? paint : fallback;
+        if (resolved == nil) {
+            IJSVGColorNode* empty = [[IJSVGColorNode alloc] initWithColor:NULL];
+            empty.isNoneOrTransparent = YES;
+            resolved = empty;
+        }
+        if (stroke) {
+            node.stroke = resolved;
+        } else {
+            node.fill = resolved;
+        }
+    };
+    if ([self.styleAncestors objectForKey:IJSVGXMLKey(element)] == node && [self.activeReferences containsObject:identifier]) {
         NSMutableArray<void (^)(IJSVGNode*)>* pending = self.pendingStylePaints[identifier];
         if (pending == nil) {
             pending = [[NSMutableArray alloc] init];
@@ -1669,12 +1714,12 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         [pending addObject:apply];
         return;
     }
-    IJSVGNode* paint = [self computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element];
-    if (stroke) {
-        node.stroke = paint;
-    } else {
-        node.fill = paint;
+    IJSVGNodeType type = IJSVGXMLType([self detachedElementWithIdentifier:identifier]);
+    if (type != IJSVGNodeTypeLinearGradient && type != IJSVGNodeTypeRadialGradient && type != IJSVGNodeTypePattern) {
+        apply(nil);
+        return;
     }
+    apply([self computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element]);
 }
 
 // Cache only context independent composite definitions. Geometry, styles,

@@ -15,6 +15,59 @@
 
 @implementation IJSVGParserTests
 
+- (void)testForeignRootIsNotAnSVGDocument
+{
+    NSData* data = [@"<svg xmlns='urn:private' width='10' height='10'/>" dataUsingEncoding:NSUTF8StringEncoding];
+    XCTAssertFalse([IJSVGParser isDataSVG:data]);
+    NSError* error = nil;
+    XCTAssertNil([[IJSVG alloc] initWithSVGData:data error:&error]);
+    XCTAssertNotNil(error);
+    XCTAssertNotNil([[IJSVG alloc] initWithSVGString:@"<s:svg xmlns:s='http://www.w3.org/2000/svg' width='10' height='10'/>"]);
+    XCTAssertNotNil([[IJSVG alloc] initWithSVGString:@"<svg width='10' height='10'/>"]);
+}
+
+- (void)testEmbeddedSVGRejectsCircularExternalImages
+{
+    NSURL* directory = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
+    XCTAssertTrue([NSFileManager.defaultManager createDirectoryAtURL:directory withIntermediateDirectories:YES attributes:nil error:nil]);
+    NSURL* first = [directory URLByAppendingPathComponent:@"first.svg"];
+    NSURL* second = [directory URLByAppendingPathComponent:@"second.svg"];
+    NSString* (^document)(NSURL*) = ^NSString*(NSURL* target) {
+        return [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><image width='10' height='10' href='%@'/></svg>", target.absoluteString];
+    };
+    @try {
+        for (NSURL* target in @[ first, second ]) {
+            XCTAssertTrue([document(target) writeToURL:first atomically:YES encoding:NSUTF8StringEncoding error:nil]);
+            XCTAssertTrue([document(first) writeToURL:second atomically:YES encoding:NSUTF8StringEncoding error:nil]);
+            IJSVG* svg = [[IJSVG alloc] initWithFilePathURL:first];
+            XCTAssertNotNil(svg);
+            IJSVGImage* outer = (id)svg.rootNode.children.firstObject;
+            XCTAssertNotNil(outer.embeddedSVG);
+            IJSVGImage* nested = (id)outer.embeddedSVG.rootNode.children.firstObject;
+            XCTAssertNil(nested.embeddedSVG);
+            XCTAssertEqual(nested.CGImage, NULL);
+        }
+    } @finally {
+        [NSFileManager.defaultManager removeItemAtURL:directory error:nil];
+    }
+}
+
+- (void)testEmbeddedSVGStillAllowsNestedDataImages
+{
+    NSString* document = @"<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><rect width='10' height='10' fill='red'/></svg>";
+    for (NSUInteger index = 0; index < 3; index++) {
+        NSString* data = [[document dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+        document = [NSString stringWithFormat:@"<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><image width='10' height='10' href='data:image/svg+xml;base64,%@'/></svg>", data];
+    }
+    IJSVG* svg = [[IJSVG alloc] initWithSVGString:document];
+    for (NSUInteger index = 0; index < 3; index++) {
+        IJSVGImage* image = (id)svg.rootNode.children.firstObject;
+        svg = image.embeddedSVG;
+        XCTAssertNotNil(svg);
+    }
+    XCTAssertEqual(svg.rootNode.children.firstObject.type, IJSVGNodeTypeRect);
+}
+
 - (void)testParserRecognizesValidXMLDataAndRejectsMalformedData
 {
     NSData* validData = [IJSVGTestSVG(@"<rect width=\"8\" height=\"8\"/>") dataUsingEncoding:NSUTF8StringEncoding];

@@ -42,6 +42,7 @@ typedef struct IJSVGXMLNode {
 
     // Preserve CSS :empty information even when layout whitespace is discarded.
     bool hasSelectorText : 1;
+    bool preservesTextWhitespace : 1;
     const char* name;
     const char* prefix;
     const char* uri;

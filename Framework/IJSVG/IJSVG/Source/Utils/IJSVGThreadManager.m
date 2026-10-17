@@ -119,7 +119,7 @@ static NSMapTable<NSThread*, IJSVGThreadManager*>* managerMap;
     NSMapTable* map = [self mapTable];
     IJSVGThreadManager* found = nil;
     @synchronized(map) {
-        for (IJSVGThreadManager* manager in map) {
+        for (IJSVGThreadManager* manager in map.objectEnumerator) {
             if ([manager manages:svg] == YES) {
                 found = manager;
                 break;

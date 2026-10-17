@@ -601,8 +601,11 @@ static void IJSVGTestParseGradientAttributes(NSXMLElement* element, IJSVGGradien
     XCTAssertEqual(ancestor.fill.type, IJSVGNodeTypeLinearGradient);
     XCTAssertEqual(((IJSVGGradient*)ancestor.fill).children.count, 2);
     XCTAssertEqual(ancestor.stroke, ancestor.fill);
-    XCTAssertNil(group.fill);
-    XCTAssertNil(group.stroke);
+
+    // The initial group lookup precedes registration of its nested definitions.
+    // An unresolved reference must explicitly paint nothing instead of inheriting paint.
+    XCTAssertTrue(((IJSVGColorNode*)group.fill).isNoneOrTransparent);
+    XCTAssertTrue(((IJSVGColorNode*)group.stroke).isNoneOrTransparent);
 }
 
 - (void)testRepeatedFilterAttributesRefreshWhenStylesChange

@@ -129,7 +129,7 @@ typedef struct {
 - (IJSVGNode*)computeDetachedNodeWithIdentifier:(NSString*)identifier referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 - (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element;
 - (NSArray<IJSVGTransform*>*)parsedTransformsForValue:(NSString*)value allowCSSUnits:(BOOL)allowCSSUnits;
-- (void)applyPaintReference:(NSString*)identifier node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke;
+- (void)applyPaintValue:(NSString*)value node:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element stroke:(BOOL)stroke;
 - (IJSVGColorNode*)colorPaintForValue:(NSString*)value;
 - (CGColorRef)parsedStopColorForValue:(NSString*)value;
 - (CGColorRef)parsedStopColorForAttribute:(IJSVGXMLAttribute*)attribute;

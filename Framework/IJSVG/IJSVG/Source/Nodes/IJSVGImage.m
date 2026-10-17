@@ -15,6 +15,10 @@
 #import <IJSVGNodeParsing.h>
 #import <ImageIO/ImageIO.h>
 
+// Image subdocuments are parsed synchronously and cannot load external resources.
+// Bound nested data images as well, without sharing state between parsing threads.
+static _Thread_local NSUInteger IJSVGEmbeddedImageDepth;
+
 static BOOL IJSVGImageURLIsWhitespace(unsigned char character)
 {
     return character == ' ' || (character >= '\t' && character <= '\r');
@@ -106,9 +110,14 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
 
 - (void)loadFromURL:(NSURL*)aURL
 {
+    BOOL dataURL = [aURL.scheme.lowercaseString isEqualToString:@"data"];
+    if (IJSVGEmbeddedImageDepth >= 64 || (IJSVGEmbeddedImageDepth != 0 && !dataURL)) {
+        return;
+    }
+
     // If we are not a data URL, lets check what its trying to reach is actually
     // reachable, if not, just return as cant load it.
-    if (![aURL.scheme isEqualToString:@"data"] && ![aURL checkResourceIsReachableAndReturnError:nil]) {
+    if (!dataURL && ![aURL checkResourceIsReachableAndReturnError:nil]) {
 #if DEBUG
         NSLog(@"<%@> references: \"%@\", which cannot be reached.", NSStringFromClass(self.class), aURL);
 #endif
@@ -146,7 +155,13 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
         self.CGImage = pixels;
         CGImageRelease(pixels);
     } else {
-        IJSVG* svg = [[IJSVG alloc] initWithSVGData:data];
+        IJSVG* svg = nil;
+        IJSVGEmbeddedImageDepth++;
+        @try {
+            svg = [[IJSVG alloc] initWithSVGData:data];
+        } @finally {
+            IJSVGEmbeddedImageDepth--;
+        }
         if (svg == nil) {
             return;
         }

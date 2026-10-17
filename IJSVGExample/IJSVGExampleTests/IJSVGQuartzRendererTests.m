@@ -30,6 +30,51 @@
 
 @implementation IJSVGQuartzRendererTests
 
+- (void)testPaintReferenceFallbacks
+{
+    for (NSString* target in @[ @"missing", @"wrong" ]) {
+        NSString* definitions = @"<defs><rect id='wrong' width='32' height='32'/><rect id='shape' width='32' height='32'/></defs>";
+        for (NSString* fallback in @[ @"red", @"none", @"currentColor", @"rgb(255, 0, 0)", @"" ]) {
+            NSString* value = [NSString stringWithFormat:@"url(#%@) %@", target, fallback];
+            NSString* expected = fallback.length == 0 ? @"none" : fallback;
+            for (NSString* property in @[ @"fill", @"stroke" ]) {
+                NSString* geometry = @"width='24' height='24' x='4' y='4' stroke-width='4'";
+                [self assertBody:[NSString stringWithFormat:@"%@<g fill='blue' stroke='blue' color='red'><rect %@ %@='%@'/></g>", definitions, geometry, property, value]
+                     rendersLike:[NSString stringWithFormat:@"<g fill='blue' stroke='blue' color='red'><rect %@ %@='%@'/></g>", geometry, property, expected]];
+                [self assertBody:[NSString stringWithFormat:@"%@<g fill='blue' stroke='blue' color='red'><rect %@ style='%@:%@'/></g>", definitions, geometry, property, value]
+                     rendersLike:[NSString stringWithFormat:@"<g fill='blue' stroke='blue' color='red'><rect %@ %@='%@'/></g>", geometry, property, expected]];
+            }
+
+            // Exercise the optimized use parser, which bypasses the normal cascade.
+            [self assertBody:[NSString stringWithFormat:@"%@<g fill='blue' color='red'><use href='#shape' fill='%@'/></g>", definitions, value]
+                 rendersLike:[NSString stringWithFormat:@"<rect width='32' height='32' color='red' fill='%@'/>", expected]];
+        }
+    }
+}
+
+- (void)testValidPaintServerTakesPrecedenceOverFallback
+{
+    NSString* gradient = @"<defs><linearGradient id='g'><stop stop-color='red'/><stop offset='1' stop-color='blue'/></linearGradient></defs>";
+    [self assertBody:[gradient stringByAppendingString:@"<rect width='32' height='32' fill=\"url('#g') lime\"/>"]
+         rendersLike:[gradient stringByAppendingString:@"<rect width='32' height='32' fill='url(#g)'/>"]];
+}
+
+- (void)testForeignNamespacesDoNotRenderOrApplyStyles
+{
+    for (NSString* body in @[
+             @"<private:rect xmlns:private='urn:private' width='32' height='32' fill='blue'/>",
+             @"<rect xmlns='urn:private' width='32' height='32' fill='blue'/>",
+             @"<private:g xmlns:private='urn:private'><style>rect{fill:blue}</style><rect width='32' height='32' fill='blue'/></private:g>",
+             @"<private:style xmlns:private='urn:private'>rect{fill:blue}</private:style>",
+             @"<defs><private:linearGradient xmlns:private='urn:private' id='foreign'><stop stop-color='blue'/></private:linearGradient></defs><rect width='32' height='32' fill='url(#foreign) none'/>"
+         ]) {
+        [self assertBody:[@"<rect width='32' height='32' fill='red'/>" stringByAppendingString:body]
+             rendersLike:@"<rect width='32' height='32' fill='red'/>"];
+    }
+    [self assertBody:@"<s:rect xmlns:s='http://www.w3.org/2000/svg' width='32' height='32' fill='red'/>"
+         rendersLike:@"<rect width='32' height='32' fill='red'/>"];
+}
+
 - (void)testContextPatternAndInheritedTokens
 {
     NSString* pattern = @"<pattern id='p' width='.5' height='1' patternContentUnits='objectBoundingBox'><rect width='.25' height='1' fill='red'/><rect x='.25' width='.25' height='1' fill='blue'/></pattern>";

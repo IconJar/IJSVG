@@ -231,13 +231,7 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
         node.lineJoinStyle = IJSVGLineJoinStyleFromString(value);
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStroke, &value)) {
-        NSString* fillIdentifier = [IJSVGUtils defURL:value];
-        if (fillIdentifier != nil) {
-            [parser applyPaintReference:fillIdentifier node:node element:element stroke:YES];
-        } else {
-            IJSVGColorNode* colorNode = [parser colorPaintForValue:value];
-            node.stroke = colorNode;
-        }
+        [parser applyPaintValue:value node:node element:element stroke:YES];
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeStrokeDashArray, &value)) {
         if ([value isEqualToString:IJSVGStringNone]) {
@@ -257,13 +251,7 @@ void IJSVGParsePaintAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContext*
         }
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFill, &value)) {
-        NSString* fillIdentifier = [IJSVGUtils defURL:value];
-        if (fillIdentifier != nil) {
-            [parser applyPaintReference:fillIdentifier node:node element:element stroke:NO];
-        } else {
-            IJSVGColorNode* colorNode = [parser colorPaintForValue:value];
-            node.fill = colorNode;
-        }
+        [parser applyPaintValue:value node:node element:element stroke:NO];
     }
     if (IJSVGParserAttributeHasValue(attributeValues, IJSVGNodeAttributeFillOpacity, &value)) {
         node.fillOpacity = [IJSVGUnitLength unitWithString:value];

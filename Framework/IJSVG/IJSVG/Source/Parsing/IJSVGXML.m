@@ -85,9 +85,23 @@ static const char* IJSVGXMLDocumentInternName(IJSVGXMLDocument* document, const 
     return result;
 }
 
+static bool IJSVGXMLNodeUsesSVGNamespace(const IJSVGXMLNode* node)
+{
+    // Continue accepting legacy SVG documents without an explicit namespace.
+    return node->uri == NULL || strcmp(node->uri, "http://www.w3.org/2000/svg") == 0;
+}
+
+static bool IJSVGXMLPreservesTextWhitespace(IJSVGXMLDocument* document)
+{
+    return !document->failed && document->current != IJSVGXMLNodeNotFound && document->nodes[document->current].preservesTextWhitespace;
+}
+
 static void IJSVGXMLDiscardTrailingWhitespace(IJSVGXMLDocument* document)
 {
     if (document->failed || document->current == IJSVGXMLNodeNotFound) {
+        return;
+    }
+    if (IJSVGXMLPreservesTextWhitespace(document)) {
         return;
     }
     IJSVGXMLNode* parent = document->nodes + document->current;
@@ -158,6 +172,11 @@ static void IJSVGXMLParserStartElement(void* context, const xmlChar* local, cons
     node->name = IJSVGXMLDocumentInternName(document, local);
     node->prefix = IJSVGXMLDocumentInternName(document, prefix);
     node->uri = IJSVGXMLDocumentInternName(document, uri);
+
+    // Cache the inherited text context once per element, rather than walking
+    // ancestors for every SAX whitespace event.
+    node->preservesTextWhitespace = IJSVGXMLPreservesTextWhitespace(document)
+        || (strcmp((const char*)local, "text") == 0 && IJSVGXMLNodeUsesSVGNamespace(node));
     node->firstAttribute = document->attributeCount;
     node->attributeCount = (uint32_t)count;
     if (document->root == IJSVGXMLNodeNotFound) {
@@ -184,6 +203,7 @@ static void IJSVGXMLParserEndElement(void* context, const xmlChar* local, const 
     }
     IJSVGXMLDiscardTrailingWhitespace(document);
     IJSVGXMLNode* node = document->nodes + document->current;
+    bool preserveWhitespace = IJSVGXMLPreservesTextWhitespace(document);
     uint32_t previous = IJSVGXMLNodeNotFound;
     for (uint32_t index = node->firstChild; index != IJSVGXMLNodeNotFound;) {
         IJSVGXMLNode* child = document->nodes + index;
@@ -194,9 +214,9 @@ static void IJSVGXMLParserEndElement(void* context, const xmlChar* local, const 
             blank = c == ' ' || c == '\t' || c == '\r' || c == '\n';
         }
 
-        // Foundation options:0 strips whitespace only text, including IJSVGXMLParserCDATA
-        // and xml:space. Merge SAX chunks before making that decision.
-        if (blank) {
+        // Text layout must apply CSS and xml:space after parsing the complete tree.
+        // Outside text content, retain the compact whitespace policy.
+        if (blank && !preserveWhitespace) {
             if (previous == IJSVGXMLNodeNotFound) {
                 node->firstChild = next;
             } else {
@@ -260,8 +280,11 @@ static void IJSVGXMLParserCDATA(void* context, const xmlChar* bytes, int length)
 
 static void IJSVGXMLParserIgnoreWhitespace(void* context, const xmlChar* bytes, int length)
 {
-    // Keep the layout whitespace policy and remember text for CSS :empty.
-    IJSVGXMLMarkSelectorText(context, length);
+    if (IJSVGXMLPreservesTextWhitespace(context)) {
+        IJSVGXMLParserCharacters(context, bytes, length);
+    } else {
+        IJSVGXMLMarkSelectorText(context, length);
+    }
 }
 
 static void IJSVGXMLParserComment(void* context, const xmlChar* bytes)
@@ -392,7 +415,7 @@ static IJSVGXMLDocument* IJSVGXMLDocumentFinalize(IJSVGXMLDocument* document)
     for (uint32_t i = 0; i < document->nodeCount; i++) {
         IJSVGXMLNode* node = document->nodes + i;
         node->document = document;
-        node->type = node->kind == IJSVGXMLNodeKindElement ? IJSVGNodeTypeForBytes(node->name, strlen(node->name)) : IJSVGNodeTypeNotFound;
+        node->type = node->kind == IJSVGXMLNodeKindElement && IJSVGXMLNodeUsesSVGNamespace(node) ? IJSVGNodeTypeForBytes(node->name, strlen(node->name)) : IJSVGNodeTypeNotFound;
         for (uint32_t child = node->firstChild; child != IJSVGXMLNodeNotFound; child = document->nodes[child].nextSibling) {
             node->childCount++;
         }

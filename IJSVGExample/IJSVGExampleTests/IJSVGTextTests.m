@@ -25,6 +25,30 @@
 
 @implementation IJSVGTextTests
 
+- (void)testWhitespaceBetweenSpansSurvivesXMLParsing
+{
+    for (NSString* attributes in @[ @"", @"xml:space='preserve'", @"style='white-space:pre'", @"style='white-space:normal'" ]) {
+        NSString* source = [NSString stringWithFormat:@"<text font-family='Times' font-size='20' %@><tspan>A</tspan> <tspan>B</tspan></text>", attributes];
+        NSString* reference = [NSString stringWithFormat:@"<text font-family='Times' font-size='20' %@>A B</text>", attributes];
+        IJSVGTextLayout* actual = [self layout:source];
+        IJSVGTextLayout* expected = [self layout:reference];
+        XCTAssertEqual(actual.characterPositions.count, expected.characterPositions.count, @"%@", attributes);
+        XCTAssertEqualWithAccuracy(actual.advance, expected.advance, .00001, @"%@", attributes);
+        XCTAssertEqualObjects(actual.characterPositions, expected.characterPositions, @"%@", attributes);
+    }
+}
+
+- (void)testPreservedWhitespaceOnlySpanAndCDATA
+{
+    for (NSString* space in @[ @"<tspan>  </tspan>", @"<![CDATA[  ]]>" ]) {
+        NSString* source = [NSString stringWithFormat:@"<text font-family='Times' font-size='20' style='white-space:pre'><tspan>A</tspan>%@<tspan>B</tspan></text>", space];
+        IJSVGTextLayout* actual = [self layout:source];
+        IJSVGTextLayout* expected = [self layout:@"<text font-family='Times' font-size='20' style='white-space:pre'>A  B</text>"];
+        XCTAssertEqualObjects(actual.characterPositions, expected.characterPositions);
+        XCTAssertEqualWithAccuracy(actual.advance, expected.advance, .00001);
+    }
+}
+
 - (void)testAutomaticKerningHonoursRenderingPreference
 {
     IJSVGTextLayout* automatic = [self layout:@"<text font-family='Times' font-size='30'>AVATAR</text>"];
