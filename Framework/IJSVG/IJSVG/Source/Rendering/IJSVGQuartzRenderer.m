@@ -22,6 +22,7 @@
 #import <IJSVG/IJSVGTransform.h>
 #import <IJSVG/IJSVGUse.h>
 #import <IJSVG/IJSVGUtils.h>
+#import <IJSVGColorMatrixFilterEffect.h>
 #import <IJSVGFilterGraph.h>
 #import <IJSVGFilterPaint.h>
 #import <IJSVGGradientPaint.h>
@@ -38,6 +39,34 @@
 #import <IJSVGTextFontResolver.h>
 #import <IJSVGTextPathMetrics.h>
 #import <IJSVGTransformPaint.h>
+
+static IJSVGFilterPrimitive* IJSVGCSSChainColorPrimitive(IJSVGFilter* filter)
+{
+    if (!filter.usesSourceRegion || filter.cssBlurRadius != nil || filter.children.count != 1 || filter.filterColorInterpolation != IJSVGColorInterpolationSRGB) {
+        return nil;
+    }
+    IJSVGFilterPrimitive* primitive = (id)filter.children.firstObject;
+    if (primitive.type != IJSVGNodeTypeFilterColorMatrix || primitive.filterColorInterpolation != IJSVGColorInterpolationSRGB || primitive.input.length != 0 || primitive.input2.length != 0 || primitive.result.length != 0 || primitive.children.count != 0 || primitive.x != nil || primitive.y != nil || primitive.width != nil || primitive.height != nil) {
+        return nil;
+    }
+    return primitive;
+}
+
+static BOOL IJSVGColorMatrixIsIdentity(IJSVGFilterPrimitive* primitive)
+{
+    NSData* coefficients = [IJSVGColorMatrixFilterEffect preparedMatrixForPrimitive:primitive][@"matrix"];
+    if (coefficients.length != 20 * sizeof(double)) {
+        return NO;
+    }
+    const double* matrix = coefficients.bytes;
+    for (NSUInteger index = 0; index < 20; index++) {
+        double expected = index == 0 || index == 6 || index == 12 || index == 18 ? 1 : 0;
+        if (matrix[index] != expected) {
+            return NO;
+        }
+    }
+    return YES;
+}
 
 // Separate point subpaths before Quartz chooses an arbitrary cap direction.
 static BOOL IJSVGQuartzSeparatePointSubpaths(CGPathRef path, CGMutablePathRef segments, CGMutablePathRef points)
@@ -913,8 +942,34 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     // Resolving geometry must not initialize the GPU. Bitmap CPU fast paths and
     // completely clipped content may never need a Core Image context.
     if (!_resolvingGeometryOnly && _renderingOptions.filtersEnabled && node.filters.count != 0) {
-        for (IJSVGFilter* filter in node.filters) {
+        NSArray<IJSVGFilter*>* filters = node.filters;
+        for (NSUInteger index = 0; index < filters.count;) {
+            IJSVGFilter* filter = filters[index];
+            NSUInteger end = index + 1;
+            if (end < filters.count && IJSVGCSSChainColorPrimitive(filter) != nil) {
+                while (end < filters.count && IJSVGCSSChainColorPrimitive(filters[end]) != nil) {
+                    end++;
+                }
+            }
+            if (end > index + 1) {
+                IJSVGFilter* chain = [[IJSVGFilter alloc] init];
+                chain.usesSourceRegion = YES;
+                chain.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+                for (NSUInteger stage = index; stage < end; stage++) {
+                    IJSVGFilterPrimitive* primitive = (id)filters[stage].children.firstObject;
+                    if (!IJSVGColorMatrixIsIdentity(primitive)) {
+                        // Preserve separate operations so each stage still clamps its output.
+                        [chain addChild:primitive.copy];
+                    }
+                }
+                if (chain.children.count == 0) {
+                    // An identity filter still groups its source before compositing.
+                    [chain addChild:filter.children.firstObject.copy];
+                }
+                filter = chain;
+            }
             paint = [self applyFilter:filter toPaint:paint fromNode:node];
+            index = end;
         }
     }
     [self applyDefaultsToPaint:paint fromNode:node style:style];

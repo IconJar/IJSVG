@@ -35,6 +35,30 @@
     [self compareBody:body name:name tolerance:.008];
 }
 
+- (void)testCSSClampedColorChainsMatchWebKitSVGPrimitives
+{
+    // Explicit SVG primitives provide the reference for intermediate clamping.
+    // WebKit CSS functions differ on translucent colors in these cases.
+    NSArray* values = @[ @"brightness(2) brightness(.5)", @"contrast(2) contrast(.5)" ];
+    NSArray* primitives = @[
+        @"<feComponentTransfer><feFuncR type='linear' slope='2'/><feFuncG type='linear' slope='2'/><feFuncB type='linear' slope='2'/></feComponentTransfer><feComponentTransfer><feFuncR type='linear' slope='.5'/><feFuncG type='linear' slope='.5'/><feFuncB type='linear' slope='.5'/></feComponentTransfer>",
+        @"<feComponentTransfer><feFuncR type='linear' slope='2' intercept='-.5'/><feFuncG type='linear' slope='2' intercept='-.5'/><feFuncB type='linear' slope='2' intercept='-.5'/></feComponentTransfer><feComponentTransfer><feFuncR type='linear' slope='.5' intercept='.25'/><feFuncG type='linear' slope='.5' intercept='.25'/><feFuncB type='linear' slope='.5' intercept='.25'/></feComponentTransfer>"
+    ];
+    NSMutableString* body = [NSMutableString stringWithString:@"<rect width='400' height='200' fill='#d0c0b0'/>"];
+    NSMutableString* reference = body.mutableCopy;
+    for (NSUInteger index = 0; index < values.count; index++) {
+        NSString* shape = @"<rect x='12' y='12' width='120' height='65' fill='#b04020'/><rect x='65' y='25' width='115' height='60' fill='#2060d0' fill-opacity='.6'/>";
+        [body appendFormat:@"<g transform='translate(%lu 0)'><g filter='%@'>%@</g></g>", (unsigned long)(index * 200), values[index], shape];
+        [reference appendFormat:@"<defs><filter id='f%lu' color-interpolation-filters='sRGB'>%@</filter></defs><g transform='translate(%lu 0)'><g filter='url(#f%lu)'>%@</g></g>", (unsigned long)index, primitives[index], (unsigned long)(index * 200), (unsigned long)index, shape];
+    }
+    [self compareBody:body referenceBody:reference name:@"css-clamped-svg-reference" tolerance:.008];
+}
+
+- (void)testCSSIdentityAndSpatialColorChainsMatchWebKit
+{
+    [self compareCSSFilterValues:@[ @"brightness(1) contrast(1) invert(0) opacity(1) sepia(0)", @"brightness(1) invert(.8) contrast(1) opacity(.7)", @"brightness(2) brightness(.5) blur(2px) invert(.2) opacity(.7)", @"contrast(1.5) invert(.4) drop-shadow(4px 2px 2px blue) grayscale(.5) sepia(.3)" ] name:@"css-identity-spatial-chains"];
+}
+
 - (void)testCSSBlurMatchesWebKit
 {
     [self compareCSSFilterValues:@[ @"blur()", @"blur(.5px)", @"blur(2px)", @"blur(5px)" ] name:@"css-blur"];

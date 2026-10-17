@@ -73,6 +73,57 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 @implementation IJSVGFilterTests
 
+- (void)testCSSColorChainsPreserveIntermediateClampingAndExport
+{
+    NSDictionary* cases = @{
+        @"brightness(2) brightness(.5)" : @"<feComponentTransfer><feFuncR type='linear' slope='2'/><feFuncG type='linear' slope='2'/><feFuncB type='linear' slope='2'/></feComponentTransfer><feComponentTransfer><feFuncR type='linear' slope='.5'/><feFuncG type='linear' slope='.5'/><feFuncB type='linear' slope='.5'/></feComponentTransfer>",
+        @"contrast(2) contrast(.5)" : @"<feComponentTransfer><feFuncR type='linear' slope='2' intercept='-.5'/><feFuncG type='linear' slope='2' intercept='-.5'/><feFuncB type='linear' slope='2' intercept='-.5'/></feComponentTransfer><feComponentTransfer><feFuncR type='linear' slope='.5' intercept='.25'/><feFuncG type='linear' slope='.5' intercept='.25'/><feFuncB type='linear' slope='.5' intercept='.25'/></feComponentTransfer>",
+        @"opacity(.4) invert(1)" : @"<feComponentTransfer><feFuncA type='linear' slope='.4'/></feComponentTransfer><feColorMatrix values='-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0'/>"
+    };
+    NSString* shape = @"<rect x='2.25' y='1.5' width='25.5' height='7' fill='#c040e0' fill-opacity='.7' stroke='#20e080' stroke-width='1.5'/>";
+    for (NSString* value in cases) {
+        NSString* actual = [self document:[NSString stringWithFormat:@"<g filter='%@'>%@</g>", value, shape]];
+        NSString* expected = [self document:[NSString stringWithFormat:@"<defs><filter id='f' filterUnits='userSpaceOnUse' x='1.5' y='.75' width='27' height='8.5' color-interpolation-filters='sRGB'>%@</filter></defs><g filter='url(#f)'>%@</g>", cases[value], shape]];
+        for (NSNumber* scale in @[ @1, @3 ]) {
+            NSData* pixels = [self render:actual scale:scale.integerValue];
+            XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(pixels, [self render:expected scale:scale.integerValue]), 3, @"%@", value);
+            IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(actual) size:CGSizeMake(30 * scale.integerValue, 10 * scale.integerValue) options:IJSVGExporterOptionAll];
+            XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(pixels, [self render:exporter.SVGString scale:scale.integerValue]), 3, @"%@", value);
+        }
+    }
+}
+
+- (void)testCSSIdentityChainsPreserveGrouping
+{
+    NSString* format = @"<rect width='30' height='10' fill='#40a080'/><g opacity='.7' filter='%@'><rect x='2' y='1' width='20' height='8' fill='#d05030'/><rect x='10' y='2' width='18' height='6' fill='#3090d0' style='mix-blend-mode:multiply'/></g>";
+    NSString* expected = [self document:[NSString stringWithFormat:format, @"brightness(1)"]];
+    NSString* actual = [self document:[NSString stringWithFormat:format, @"brightness(1) contrast(1) grayscale(0) opacity(1) invert(0) sepia(0) saturate(1) hue-rotate(0deg)"]];
+    XCTAssertEqualObjects([self render:actual scale:3], [self render:expected scale:3]);
+    NSString* identityMix = [self document:[NSString stringWithFormat:format, @"brightness(1) invert(.4) contrast(1) opacity(.6) sepia(0)"]];
+    NSString* reduced = [self document:[NSString stringWithFormat:format, @"invert(.4) opacity(.6)"]];
+    XCTAssertEqualObjects([self render:identityMix scale:3], [self render:reduced scale:3]);
+}
+
+- (void)testCSSColorChainKeepsURLBoundary
+{
+    NSString* definitions = @"<defs><filter id='f' color-interpolation-filters='sRGB'><feColorMatrix in='SourceGraphic' type='saturate' values='.3'/></filter></defs>";
+    NSString* shape = @"<rect x='4' y='2' width='20' height='6' fill='#c03080'/>";
+    NSString* actual = [self document:[NSString stringWithFormat:@"%@<g filter='brightness(2) brightness(.5) url(#f) invert(.8) opacity(.7)'>%@</g>", definitions, shape]];
+    NSString* expected = [self document:[NSString stringWithFormat:@"%@<g filter='invert(.8) opacity(.7)'><g filter='url(#f)'><g filter='brightness(2) brightness(.5)'>%@</g></g></g>", definitions, shape]];
+    XCTAssertEqualObjects([self render:actual scale:3], [self render:expected scale:3]);
+}
+
+- (void)testEditedCSSColorInputPreventsChainCombination
+{
+    NSString* body = @"<rect x='4' y='2' width='20' height='6' fill='#c03080' filter='brightness(.5) invert(1)'/>";
+    IJSVG* svg = IJSVGTestSVGObject([self document:body]);
+    IJSVGGraphicsNode* node = (id)svg.rootNode.children.lastObject;
+    node.filters.lastObject.primitives.firstObject.input = IJSVGStringSourceAlpha;
+    IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:svg size:CGSizeMake(90, 30) options:IJSVGExporterOptionAll];
+    NSString* expected = [self document:@"<rect x='4' y='2' width='20' height='6' fill='white'/>"];
+    XCTAssertEqualObjects([self render:exporter.SVGString scale:3], [self render:expected scale:3]);
+}
+
 - (void)testCSSSpatialFiltersMatchSVGAndExport
 {
     NSDictionary* cases = @{
