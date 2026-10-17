@@ -58,7 +58,7 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
     if (name == NULL) {
         return IJSVGCSSFunctionUnknown;
     }
-    char normalized[11];
+    char normalized[12];
     NSUInteger index = 0;
     do {
         if (index == sizeof(normalized)) {
@@ -88,6 +88,9 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             break;
         case 4:
+            if (strcmp(normalized, "blur") == 0) {
+                return IJSVGCSSFunctionBlur;
+            }
             if (strcmp(normalized, "calc") == 0) {
                 return IJSVGCSSFunctionCalc;
             }
@@ -186,6 +189,11 @@ IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name)
             }
             if (strcmp(normalized, "translatey") == 0) {
                 return IJSVGCSSFunctionTranslateY;
+            }
+            break;
+        case 11:
+            if (strcmp(normalized, "drop-shadow") == 0) {
+                return IJSVGCSSFunctionDropShadow;
             }
             break;
         default:

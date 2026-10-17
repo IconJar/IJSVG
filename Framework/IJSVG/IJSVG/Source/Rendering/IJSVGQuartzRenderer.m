@@ -2706,6 +2706,36 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         }
         filter = filter.copy;
         filter.usesSourceRegion = NO;
+        if (filter.cssBlurRadius != nil) {
+            CGFloat radius = [self resolveCSSLength:filter.cssBlurRadius percentage:0 node:node];
+            CGFloat dx = filter.cssShadowX != nil ? [self resolveCSSLength:filter.cssShadowX percentage:0 node:node] : 0;
+            CGFloat dy = filter.cssShadowY != nil ? [self resolveCSSLength:filter.cssShadowY percentage:0 node:node] : 0;
+            if (!isfinite(radius) || !isfinite(dx) || !isfinite(dy)) {
+                return paint;
+            }
+            radius = MAX(0, radius);
+            if (radius == 0 && filter.cssShadowX == nil) {
+                return paint;
+            }
+            IJSVGFilterPrimitive* primitive = filter.primitives.firstObject;
+            NSMutableDictionary* parameters = primitive.parameters.mutableCopy;
+            parameters[IJSVGAttributeStdDeviation] = @(radius).stringValue;
+            if (filter.cssShadowX != nil) {
+                parameters[IJSVGAttributeDX] = @(dx).stringValue;
+                parameters[IJSVGAttributeDY] = @(dy).stringValue;
+                if ([parameters[IJSVGAttributeFloodColor] caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame) {
+                    parameters[IJSVGAttributeFloodColor] = [IJSVGColor colorStringFromColor:[node resolvedPaintStyle].currentColor ?: IJSVGColor.blackColor];
+                }
+            }
+            primitive.parameters = parameters;
+
+            // Include the visible Gaussian tail and translated shadow without clipping the source.
+            CGRect expanded = CGRectInset(region, -ceil(radius * 3), -ceil(radius * 3));
+            region = filter.cssShadowX != nil ? CGRectUnion(region, CGRectOffset(expanded, dx, dy)) : expanded;
+            filter.cssBlurRadius = nil;
+            filter.cssShadowX = nil;
+            filter.cssShadowY = nil;
+        }
         filter.units = IJSVGUnitUserSpaceOnUse;
         filter.x = [IJSVGUnitLength unitWithFloat:region.origin.x];
         filter.y = [IJSVGUnitLength unitWithFloat:region.origin.y];

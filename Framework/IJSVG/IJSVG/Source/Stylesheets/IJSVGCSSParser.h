@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGUnitLength.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_ENUM(uint8_t, IJSVGCSSWideKeyword) {
     IJSVGCSSWideKeywordUnknown,
     IJSVGCSSWideKeywordInherit,
@@ -18,7 +20,7 @@ typedef NS_ENUM(uint8_t, IJSVGCSSWideKeyword) {
     IJSVGCSSWideKeywordRevertLayer
 };
 
-IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* value);
+IJSVGCSSWideKeyword IJSVGCSSWideKeywordFromString(NSString* _Nullable value);
 
 typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionUnknown,
@@ -56,7 +58,9 @@ typedef NS_ENUM(uint8_t, IJSVGCSSFunction) {
     IJSVGCSSFunctionInvert,
     IJSVGCSSFunctionOpacity,
     IJSVGCSSFunctionSaturate,
-    IJSVGCSSFunctionSepia
+    IJSVGCSSFunctionSepia,
+    IJSVGCSSFunctionBlur,
+    IJSVGCSSFunctionDropShadow
 };
 
 typedef NS_ENUM(uint8_t, IJSVGCSSNumericKeyword) {
@@ -90,7 +94,7 @@ typedef NS_ENUM(char, IJSVGCSSSymbol) {
 };
 
 // Classify ASCII names at the text boundary without case sensitivity.
-IJSVGCSSFunction IJSVGCSSFunctionForName(const char* name);
+IJSVGCSSFunction IJSVGCSSFunctionForName(const char* _Nullable name);
 
 typedef NS_ENUM(uint8_t, IJSVGCSSComponentKind) {
     IJSVGCSSComponentNumber,
@@ -130,9 +134,9 @@ enum {
 // Keep common expressions in caller storage and grow only for larger trees.
 // This owns its storage and must not be copied by value.
 typedef struct IJSVGCSSComponents {
-    IJSVGCSSComponent* values;
+    IJSVGCSSComponent* _Nullable values;
     NSUInteger count;
-    const char* bytes;
+    const char* _Nullable bytes;
     IJSVGCSSComponent inlineValues[IJSVGCSSParserInlineCapacity];
 } IJSVGCSSComponents;
 
@@ -141,8 +145,11 @@ typedef struct IJSVGCSSComponents {
 // the buffer, including on failure. The source must remain alive while
 // accessing component source ranges. Limits: 64 nested blocks, 4096 components,
 // 64 KiB of UTF8.
-BOOL IJSVGCSSComponentsCreate(const char* bytes, NSUInteger length, IJSVGCSSComponents* components);
+BOOL IJSVGCSSComponentsCreate(const char* _Nullable bytes, NSUInteger length, IJSVGCSSComponents* components);
 void IJSVGCSSComponentsRelease(IJSVGCSSComponents* components);
+
+// Read an already tokenized URL without reparsing its source.
+NSString* _Nullable IJSVGCSSURLIdentifier(const IJSVGCSSComponents* components, const IJSVGCSSComponent* component, BOOL requireFragment);
 
 typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) {
     IJSVGCSSParserOptionNone = 0,
@@ -150,8 +157,10 @@ typedef NS_OPTIONS(NSUInteger, IJSVGCSSParserOptions) {
     IJSVGCSSParserOptionLeadingURL = 1 << 1
 };
 
-BOOL IJSVGCSSComponentsCreateWithOptions(const char* bytes, NSUInteger length, IJSVGCSSParserOptions options, IJSVGCSSComponents* components);
+BOOL IJSVGCSSComponentsCreateWithOptions(const char* _Nullable bytes, NSUInteger length, IJSVGCSSParserOptions options, IJSVGCSSComponents* components);
 BOOL IJSVGCSSFunctionIsCalculation(IJSVGCSSFunction function);
-BOOL IJSVGCSSPathDataIsValid(NSString* value);
-NSString* IJSVGCSSPathDataFromString(NSString* value);
-char* IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components, const IJSVGCSSComponent* component);
+BOOL IJSVGCSSPathDataIsValid(NSString* _Nullable value);
+NSString* _Nullable IJSVGCSSPathDataFromString(NSString* _Nullable value);
+char* _Nullable IJSVGCSSComponentCopyArguments(const IJSVGCSSComponents* components, const IJSVGCSSComponent* component);
+
+NS_ASSUME_NONNULL_END

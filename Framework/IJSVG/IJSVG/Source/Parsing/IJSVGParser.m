@@ -10,6 +10,7 @@
 #import <IJSVG/IJSVGFilterPrimitive.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGParsing.h>
 #import <IJSVG/IJSVGText.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUnitPoint.h>
@@ -61,7 +62,7 @@ static IJSVGFilter* IJSVGCSSColorFilter(const IJSVGCSSComponents* components, NS
                     default:
                         break;
                 }
-            } else {
+            } else if (!IJSVGCSSMathExpressionEvaluateAngle(components, index + 1, &amount)) {
                 return nil;
             }
         } else {
@@ -140,6 +141,104 @@ static IJSVGFilter* IJSVGCSSColorFilter(const IJSVGCSSComponents* components, NS
         }
         primitive.parameters = @ { IJSVGAttributeType : @"matrix", IJSVGAttributeValues : [values componentsJoinedByString:@" "] };
     }
+    [filter addChild:primitive];
+    return filter;
+}
+
+static IJSVGUnitLength* IJSVGCSSFilterLength(const IJSVGCSSComponents* components, NSUInteger index, BOOL nonnegative)
+{
+    const IJSVGCSSComponent* token = components->values + index;
+    if (IJSVGCSSFunctionIsCalculation(token->function)) {
+        IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:components atIndex:index];
+        if (expression == nil || expression.lengthExponent != 1 || expression.usesPercentage) {
+            return nil;
+        }
+        return [IJSVGUnitLength unitWithCalculationExpression:expression allowNegative:!nonnegative];
+    }
+    if (!isfinite(token->number) || (nonnegative && token->negativeNonzero)) {
+        return nil;
+    }
+    if (token->kind == IJSVGCSSComponentNumber && token->number == 0) {
+        return IJSVGZeroUnitLength;
+    }
+    if (token->kind != IJSVGCSSComponentDimension || token->unit < IJSVGUnitLengthTypeCM || token->unit > IJSVGUnitLengthTypeEX) {
+        return nil;
+    }
+    return [IJSVGUnitLength unitWithFloat:IJSVGConvertUnitValue(token->number, token->unit)
+                                     type:(token->unit == IJSVGUnitLengthTypeEM || token->unit == IJSVGUnitLengthTypeEX) ? token->unit : IJSVGUnitLengthTypeNumber
+                             originalType:token->unit
+                                  inherit:NO];
+}
+
+static IJSVGFilter* IJSVGCSSSpatialFilter(const IJSVGCSSComponents* components, NSUInteger index)
+{
+    const IJSVGCSSComponent* function = components->values + index;
+    if (function->kind != IJSVGCSSComponentFunction || (function->function != IJSVGCSSFunctionBlur && function->function != IJSVGCSSFunctionDropShadow)) {
+        return nil;
+    }
+    BOOL shadow = function->function == IJSVGCSSFunctionDropShadow;
+    IJSVGUnitLength* lengths[3] = { nil, nil, nil };
+    NSUInteger count = 0;
+    NSString* color = nil;
+    BOOL endedLengths = NO;
+    for (NSUInteger child = index + 1; child < function->next; child = components->values[child].next) {
+        const IJSVGCSSComponent* token = components->values + child;
+        if (child != index + 1 && !token->precedingWhitespace) {
+            return nil;
+        }
+        IJSVGUnitLength* length = IJSVGCSSFilterLength(components, child, !shadow || count == 2);
+        if (length != nil) {
+            if (endedLengths || count >= (shadow ? 3 : 1)) {
+                return nil;
+            }
+            lengths[count++] = length;
+        } else {
+            if (!shadow || color != nil || (count != 0 && count < 2)) {
+                return nil;
+            }
+            NSUInteger colorLength = token->length;
+            if (token->kind == IJSVGCSSComponentDelimiter && token->symbol == '#') {
+                NSUInteger next = token->next;
+                if (next >= function->next || components->values[next].offset != token->offset + token->length) {
+                    return nil;
+                }
+                colorLength += components->values[next].length;
+                uint32_t rgba;
+                if (!IJSVGParseHexColorBytes(components->bytes + token->offset, colorLength, &rgba)) {
+                    return nil;
+                }
+                child = next;
+            }
+            if (token->kind == IJSVGCSSComponentFunction) {
+                NSUInteger channels = 0;
+                for (NSUInteger argument = child + 1; argument < token->next; argument = components->values[argument].next) {
+                    channels += components->values[argument].kind != IJSVGCSSComponentDelimiter;
+                }
+                if (channels < 3) {
+                    return nil;
+                }
+            }
+            color = [[NSString alloc] initWithBytes:components->bytes + token->offset length:colorLength encoding:NSUTF8StringEncoding];
+            BOOL current = [color caseInsensitiveCompare:IJSVGColorCurrentColorName] == NSOrderedSame;
+            BOOL transparent = [color caseInsensitiveCompare:@"transparent"] == NSOrderedSame;
+            if (!current && !transparent && [IJSVGColor colorFromString:color] == NULL) {
+                return nil;
+            }
+            endedLengths = count != 0;
+        }
+    }
+    if (shadow && count < 2) {
+        return nil;
+    }
+    IJSVGFilter* filter = [[IJSVGFilter alloc] init];
+    filter.usesSourceRegion = YES;
+    filter.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+    filter.cssBlurRadius = lengths[shadow ? 2 : 0] ?: IJSVGZeroUnitLength;
+    filter.cssShadowX = shadow ? lengths[0] : nil;
+    filter.cssShadowY = shadow ? lengths[1] : nil;
+    IJSVGFilterPrimitive* primitive = [[IJSVGNodeClassForType(shadow ? IJSVGNodeTypeFilterDropShadow : IJSVGNodeTypeFilterGaussianBlur) alloc] init];
+    primitive.filterColorInterpolation = IJSVGColorInterpolationSRGB;
+    primitive.parameters = shadow ? @ { IJSVGAttributeFloodColor : color ?: IJSVGColorCurrentColorName } : @ {};
     [filter addChild:primitive];
     return filter;
 }
@@ -2714,40 +2813,33 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
 }
 
-- (NSArray<NSString*>*)filterIdentifiersForValue:(NSString*)value
-{
-    NSArray<NSString*>* identifiers = _parsedFilterReferences[value];
-    if (identifiers == nil) {
-        identifiers = [IJSVGUtils defURLs:value];
-        if (value.length <= 4096 && _parsedFilterReferences.count < 128) {
-            if (_parsedFilterReferences == nil) {
-                _parsedFilterReferences = [[NSMutableDictionary alloc] init];
-            }
-            _parsedFilterReferences[value] = identifiers.copy;
-        }
-    }
-    return identifiers;
-}
-
 - (NSArray<IJSVGFilter*>*)filtersForValue:(NSString*)value referencingNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element
 {
-    NSArray<NSString*>* identifiers = [self filterIdentifiersForValue:value];
+    NSArray<NSString*>* identifiers = _parsedFilterReferences[value];
     NSMutableArray<IJSVGFilter*>* filters = [[NSMutableArray alloc] init];
-    if (identifiers.count == 0) {
-        NSData* source = [value dataUsingEncoding:NSUTF8StringEncoding];
+    if (identifiers == nil) {
+        IJSVGStringBytes source = IJSVGStringGetBytes(value);
         IJSVGCSSComponents components;
         BOOL valid = IJSVGCSSComponentsCreate(source.bytes, source.length, &components);
+        BOOL urlsOnly = YES;
+        NSMutableArray<NSString*>* parsedIdentifiers = nil;
         for (NSUInteger index = 0; valid && index < components.count; index = components.values[index].next) {
             const IJSVGCSSComponent* component = components.values + index;
             IJSVGFilter* filter = nil;
             if (component->kind == IJSVGCSSComponentFunction && component->function == IJSVGCSSFunctionURL) {
-                NSString* reference = [[NSString alloc] initWithBytes:components.bytes + component->offset length:component->length encoding:NSUTF8StringEncoding];
-                NSString* identifier = [IJSVGUtils defURL:reference];
+                NSString* identifier = IJSVGCSSURLIdentifier(&components, component, YES);
                 if (identifier != nil && IJSVGXMLType([self detachedElementWithIdentifier:identifier]) == IJSVGNodeTypeFilter) {
                     filter = (IJSVGFilter*)[self filterReferenceWithIdentifier:identifier referencingNode:node element:element];
+                    if (urlsOnly) {
+                        if (parsedIdentifiers == nil) {
+                            parsedIdentifiers = [[NSMutableArray alloc] init];
+                        }
+                        [parsedIdentifiers addObject:identifier];
+                    }
                 }
             } else {
-                filter = IJSVGCSSColorFilter(&components, index);
+                urlsOnly = NO;
+                filter = IJSVGCSSColorFilter(&components, index) ?: IJSVGCSSSpatialFilter(&components, index);
             }
             valid = filter != nil;
             if (valid) {
@@ -2755,6 +2847,12 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
             }
         }
         IJSVGCSSComponentsRelease(&components);
+        if (valid && urlsOnly && value.length <= 4096 && _parsedFilterReferences.count < 128) {
+            if (_parsedFilterReferences == nil) {
+                _parsedFilterReferences = [[NSMutableDictionary alloc] init];
+            }
+            _parsedFilterReferences[value] = parsedIdentifiers.copy ?: @[];
+        }
         return valid ? filters : @[];
     }
     for (NSString* identifier in identifiers) {

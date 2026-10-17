@@ -430,17 +430,7 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
 + (IJSVGUnitLength*)unitWithCalculationComponents:(const IJSVGCSSComponents*)components atIndex:(NSUInteger)index allowNegative:(BOOL)allowNegative
 {
     IJSVGCSSMathExpression* expression = [IJSVGCSSMathExpression expressionWithComponents:components atIndex:index];
-    if (expression == nil) {
-        return nil;
-    }
-    BOOL percentageOnly = expression.usesPercentage && !expression.usesLength && expression.lengthExponent == 1;
-    IJSVGUnitLength* result = [self unitWithFloat:0 type:percentageOnly ? IJSVGUnitLengthTypePercentage : IJSVGUnitLengthTypeCalculation];
-    result.calculation = expression;
-    result.calculationNonnegative = !allowNegative;
-    if (!expression.usesPercentage && !expression.usesFontMetrics) {
-        result->_value = [result computeValue:0];
-    }
-    return result;
+    return [self unitWithCalculationExpression:expression allowNegative:allowNegative];
 }
 
 - (IJSVGUnitLength*)lengthByScalingAbsoluteUnits:(CGFloat)scale
@@ -494,6 +484,25 @@ CGFloat IJSVGConvertUnitValue(CGFloat unit, IJSVGUnitLengthType type)
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%f%@", _value, (_value == IJSVGUnitLengthTypePercentage ? @"%" : @"")];
+}
+
+@end
+
+@implementation IJSVGUnitLength (CSSCalculation)
+
++ (IJSVGUnitLength*)unitWithCalculationExpression:(IJSVGCSSMathExpression*)expression allowNegative:(BOOL)allowNegative
+{
+    if (expression == nil) {
+        return nil;
+    }
+    BOOL percentageOnly = expression.usesPercentage && !expression.usesLength && expression.lengthExponent == 1;
+    IJSVGUnitLength* result = [self unitWithFloat:0 type:percentageOnly ? IJSVGUnitLengthTypePercentage : IJSVGUnitLengthTypeCalculation];
+    result.calculation = expression;
+    result.calculationNonnegative = !allowNegative;
+    if (!expression.usesPercentage && !expression.usesFontMetrics) {
+        result->_value = [result computeValue:0];
+    }
+    return result;
 }
 
 @end

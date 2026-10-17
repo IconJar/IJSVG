@@ -17,6 +17,8 @@ typedef struct {
     CGFloat xHeight;
 } IJSVGCSSCalculationContext;
 
+BOOL IJSVGCSSMathExpressionEvaluateAngle(const IJSVGCSSComponents* components, NSUInteger index, CGFloat* degrees);
+
 BOOL IJSVGCSSMathExpressionIsValid(const IJSVGCSSComponents* components, NSUInteger index);
 
 typedef struct {
@@ -41,6 +43,11 @@ BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components, 
 - (IJSVGCSSMathExpression*)expressionByResolvingFontSize:(CGFloat)fontSize xHeight:(CGFloat)xHeight;
 - (IJSVGCSSMathExpression*)expressionByScalingLengths:(CGFloat)scale;
 
+@end
+
+// Reuse the validated expression without building its arena again.
+@interface IJSVGUnitLength (CSSCalculation)
++ (nullable IJSVGUnitLength*)unitWithCalculationExpression:(nullable IJSVGCSSMathExpression*)expression allowNegative:(BOOL)allowNegative;
 @end
 
 NS_ASSUME_NONNULL_END

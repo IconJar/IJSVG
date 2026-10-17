@@ -20,4 +20,5 @@ xcrun clang -O3 -fobjc-arc -fmodules \
     -framework CoreImage -framework Metal -framework Accelerate \
     -framework UniformTypeIdentifiers -lxml2 \
     -o "$scratch_directory/benchmark-rendering"
+ditto "$products/IJSVG_IJSVG.bundle" "$scratch_directory/IJSVG_IJSVG.bundle"
 "$scratch_directory/benchmark-rendering" "$@"

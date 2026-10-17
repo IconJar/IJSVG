@@ -35,6 +35,34 @@
     [self compareBody:body name:name tolerance:.008];
 }
 
+- (void)testCSSBlurMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"blur()", @"blur(.5px)", @"blur(2px)", @"blur(5px)" ] name:@"css-blur"];
+}
+
+- (void)testCSSDropShadowMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"drop-shadow(5px 3px)", @"drop-shadow(-4px 2px 2px #4070a080)", @"drop-shadow(red 2px -3px 1px)", @"drop-shadow(0 0 4px rgba(0,0,255,.5))" ] name:@"css-shadow"];
+}
+
+- (void)testCSSSpatialChainsMatchWebKit
+{
+    [self compareCSSFilterValues:@[ @"blur(1px) drop-shadow(4px 2px 1px red)", @"drop-shadow(4px 2px 1px red) blur(1px)", @"drop-shadow(2px 2px blue) drop-shadow(-3px -2px red)", @"blur(2px) invert(.6)" ] name:@"css-spatial-chains"];
+}
+
+- (void)testCSSSpatialInheritedValuesAndClippingMatchWebKit
+{
+    NSString* shape = @"<rect x='40' y='35' width='180' height='90' fill='#2070a0' fill-opacity='.7'/><path d='M45 130L210 40' stroke='#b04020' stroke-width='8'/>";
+    self.referenceHTML = [NSString stringWithFormat:@"<div style='position:absolute;left:15px;top:10px;width:270px;height:150px;overflow:hidden;opacity:.75'><div style='color:purple;font-size:24px;filter:drop-shadow(.5em -.25em .125em) blur(.0625em)'><svg xmlns='http://www.w3.org/2000/svg' width='400' height='200'>%@</svg></div></div>", shape];
+    NSString* body = [NSString stringWithFormat:@"<defs><clipPath id='clip'><rect width='270' height='150'/></clipPath></defs><g transform='translate(15 10)' opacity='.75' clip-path='url(#clip)'><g color='purple' font-size='24' filter='drop-shadow(.5em -.25em .125em) blur(.0625em)'>%@</g></g>", shape];
+    [self compareBody:body name:@"css-spatial-inherited-clip" tolerance:.008];
+}
+
+- (void)testCSSCalculatedHueMatchesWebKit
+{
+    [self compareCSSFilterValues:@[ @"hue-rotate(calc(.5turn - 90deg))", @"hue-rotate(min(180deg, .25turn))", @"hue-rotate(clamp(0deg, 2rad, 90deg))", @"hue-rotate(calc(100grad * 2))" ] name:@"css-calculated-hue"];
+}
+
 - (void)testCSSBrightnessMatchesWebKit
 {
     [self compareCSSFilterValues:@[ @"brightness()", @"brightness(0)", @"brightness(45%)", @"brightness(1.8)" ] name:@"css-brightness"];

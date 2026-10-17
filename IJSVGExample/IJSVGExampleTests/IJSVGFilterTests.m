@@ -73,6 +73,92 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
 
 @implementation IJSVGFilterTests
 
+- (void)testCSSSpatialFiltersMatchSVGAndExport
+{
+    NSDictionary* cases = @{
+        @"blur(1px)" : @"<feGaussianBlur stdDeviation='1'/>",
+        @"drop-shadow(2px -1px 1px #4070a080)" : @"<feDropShadow dx='2' dy='-1' stdDeviation='1' flood-color='#4070a080'/>",
+        @"drop-shadow(red -2px 1px)" : @"<feDropShadow dx='-2' dy='1' stdDeviation='0' flood-color='red'/>",
+        @"drop-shadow(1px 2px 0 transparent)" : @"<feDropShadow dx='1' dy='2' stdDeviation='0' flood-color='transparent'/>"
+    };
+    NSString* shape = @"<rect x='10' y='4' width='8' height='2' fill='#a04820' fill-opacity='.6'/><path d='M10 5H18' stroke='#2070a0'/>";
+    for (NSString* function in cases) {
+        NSString* actual = [self document:[NSString stringWithFormat:@"<g filter='%@'>%@</g>", function, shape]];
+        NSString* expected = [self document:[NSString stringWithFormat:@"<defs><filter id='f' filterUnits='userSpaceOnUse' x='0' y='0' width='30' height='10' color-interpolation-filters='sRGB'>%@</filter></defs><g filter='url(#f)'>%@</g>", cases[function], shape]];
+        IJSVG* parsed = IJSVGTestSVGObject(actual);
+        XCTAssertEqual(((IJSVGGraphicsNode*)parsed.rootNode.children.lastObject).filters.count, 1, @"%@", function);
+        NSData* rendered = [self render:actual scale:3];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(rendered, [self render:expected scale:3]), 3, @"%@", function);
+        IJSVGExporter* exporter = [[IJSVGExporter alloc] initWithSVG:IJSVGTestSVGObject(actual) size:CGSizeMake(90, 30) options:IJSVGExporterOptionAll];
+        XCTAssertLessThanOrEqual(IJSVGFilterMaximumError(rendered, [self render:exporter.SVGString scale:3]), 3, @"%@", function);
+    }
+}
+
+- (void)testCSSSpatialLengthsAndCalculatedAngles
+{
+    NSDictionary* cases = @{
+        @"blur()" : @"blur(0px)",
+        @"blur(calc(-1px))" : @"blur(0px)",
+        @"blur(calc(2px / 2))" : @"blur(1px)",
+        @"blur(.0625em)" : @"blur(1px)",
+        @"blur(.75pt)" : @"blur(1px)",
+        @"drop-shadow(calc(1px + 1px) -1px calc(-2px) red)" : @"drop-shadow(2px -1px 0 red)",
+        @"hue-rotate(calc(.5turn - 90deg))" : @"hue-rotate(90deg)",
+        @"hue-rotate(min(.5turn, 100grad))" : @"hue-rotate(90deg)",
+        @"hue-rotate(clamp(0deg, calc(1rad * 2), 90deg))" : @"hue-rotate(90deg)",
+        @"hue-rotate(calc(90deg * 2deg / 2deg))" : @"hue-rotate(90deg)"
+    };
+    for (NSString* function in cases) {
+        NSString* format = @"<g font-size='16'><rect x='8' y='3' width='12' height='4' fill='#a04080' filter='%@'/></g>";
+        NSData* actual = [self render:[self document:[NSString stringWithFormat:format, function]] scale:3];
+        NSData* expected = [self render:[self document:[NSString stringWithFormat:format, cases[function]]] scale:3];
+        XCTAssertEqualObjects(actual, expected, @"%@", function);
+    }
+}
+
+- (void)testCSSMixedFilterURLsRequireLocalFragments
+{
+    NSString* definitions = @"<defs><filter id='f'><feGaussianBlur stdDeviation='.5'/></filter></defs>";
+    for (NSString* value in @[ @"url(f)", @"blur(1px) url(f)", @"url(f) blur(1px)", @"url(other.svg#f) blur(1px)", @"blur(1px) url(#missing)" ]) {
+        NSString* body = [NSString stringWithFormat:@"%@<rect width='30' height='10' filter='%@'/>", definitions, value];
+        IJSVG* svg = IJSVGTestSVGObject([self document:body]);
+        XCTAssertEqual(((IJSVGGraphicsNode*)svg.rootNode.children.lastObject).filters.count, 0, @"%@", value);
+    }
+    for (NSString* value in @[ @"url(#f)", @"url(&quot;#f&quot;)", @"blur(1px) url(#f)", @"url(&quot;#f&quot;) blur(1px)" ]) {
+        NSString* body = [NSString stringWithFormat:@"%@<rect width='30' height='10' filter='%@'/><rect width='15' height='5' filter='%@'/>", definitions, value, value];
+        IJSVG* svg = IJSVGTestSVGObject([self document:body]);
+        NSUInteger count = [value containsString:@"blur"] ? 2 : 1;
+        for (IJSVGGraphicsNode* node in svg.rootNode.children) {
+            if (node.type == IJSVGNodeTypeRect) {
+                XCTAssertEqual(node.filters.count, count, @"%@", value);
+            }
+        }
+    }
+}
+
+- (void)testCSSSpatialInvalidValuesAreRejected
+{
+    NSArray* values = @[ @"blur(-1px)", @"blur(1)", @"blur(20%)", @"blur(1px 2px)", @"blur(calc(1))", @"blur(calc(1px + 2%))", @"blur(calc(1deg))", @"drop-shadow()", @"drop-shadow(1px)", @"drop-shadow(1 2)", @"drop-shadow(1px 2px -1px)", @"drop-shadow(1px 2px 3px 4px)", @"drop-shadow(inset 1px 2px)", @"drop-shadow(red 1px blue 2px)", @"drop-shadow(1px red 2px)", @"drop-shadow(1px 2px red 3px)", @"drop-shadow(1px, 2px)", @"drop-shadow(1px 2px none)", @"drop-shadow(1px 2px #)", @"drop-shadow(1px 2px #12345)", @"drop-shadow(1px 2px rgb(1,2))", @"hue-rotate(calc(0))", @"hue-rotate(calc(1px))", @"hue-rotate(calc(90deg + 1))", @"hue-rotate(calc(90deg + 10%))", @"hue-rotate(calc(90deg / 1deg))", @"hue-rotate(calc(90deg * 1deg))" ];
+    for (NSString* value in values) {
+        IJSVG* svg = IJSVGTestSVGObject([self document:[NSString stringWithFormat:@"<rect width='30' height='10' filter='%@'/>", value]]);
+        XCTAssertEqual(((IJSVGGraphicsNode*)svg.rootNode.children.lastObject).filters.count, 0, @"%@", value);
+    }
+}
+
+- (void)testCSSShadowResolvesInheritedColorAndFontPerElement
+{
+    NSString* actual = [self document:@"<defs><g id='shape'><rect x='5' y='3' width='4' height='3' filter='drop-shadow(.125em 0)'/></g></defs><g color='red' font-size='16'><use href='#shape'/></g><g color='blue' font-size='32'><use href='#shape' x='12'/></g>"];
+    NSString* expected = [self document:@"<g><rect x='5' y='3' width='4' height='3' filter='drop-shadow(2px 0 red)'/></g><g transform='translate(12)'><rect x='5' y='3' width='4' height='3' filter='drop-shadow(4px 0 blue)'/></g>"];
+    XCTAssertEqualObjects([self render:actual scale:3], [self render:expected scale:3]);
+}
+
+- (void)testCSSSpatialChainsAndStrokeBounds
+{
+    NSString* actual = [self document:@"<path d='M 8 5 H 20' stroke='red' stroke-width='2' filter='drop-shadow(0 2px blue) blur(.5px)'/>"];
+    NSString* expected = [self document:@"<g filter='blur(.5px)'><path d='M 8 5 H 20' stroke='red' stroke-width='2' filter='drop-shadow(0 2px blue)'/></g>"];
+    XCTAssertEqualObjects([self render:actual scale:3], [self render:expected scale:3]);
+}
+
 - (void)testCachedFilterRegionTracksGeometryAndCacheMode
 {
     IJSVGFilter* filter = [[IJSVGFilter alloc] init];

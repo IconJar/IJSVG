@@ -435,7 +435,7 @@ CGFloat IJSVGDegreesToRadians(CGFloat degrees)
     return isupper(commandChar) ? kIJSVGCommandTypeAbsolute : kIJSVGCommandTypeRelative;
 }
 
-static NSString* IJSVGURLIdentifier(const IJSVGCSSComponents* components, const IJSVGCSSComponent* component, BOOL requireFragment)
+NSString* IJSVGCSSURLIdentifier(const IJSVGCSSComponents* components, const IJSVGCSSComponent* component, BOOL requireFragment)
 {
     if (component->kind != IJSVGCSSComponentFunction || component->function != IJSVGCSSFunctionURL) {
         return nil;
@@ -496,7 +496,7 @@ NSString* IJSVGDefURLFromBytes(const char* bytes, NSUInteger length)
     }
     IJSVGCSSComponents components;
     BOOL valid = IJSVGCSSComponentsCreateWithOptions(source.bytes, source.length, IJSVGCSSParserOptionLeadingURL, &components);
-    NSString* identifier = valid && components.count != 0 ? IJSVGURLIdentifier(&components, components.values, NO) : nil;
+    NSString* identifier = valid && components.count != 0 ? IJSVGCSSURLIdentifier(&components, components.values, NO) : nil;
     IJSVGCSSComponentsRelease(&components);
     return identifier;
 }
@@ -519,7 +519,7 @@ NSString* IJSVGDefURLFromBytes(const char* bytes, NSUInteger length)
     NSMutableArray<NSString*>* identifiers = [[NSMutableArray alloc] initWithCapacity:components.count];
     for (NSUInteger index = 0; index < components.count;) {
         const IJSVGCSSComponent* component = components.values + index;
-        NSString* identifier = IJSVGURLIdentifier(&components, component, YES);
+        NSString* identifier = IJSVGCSSURLIdentifier(&components, component, YES);
         if (identifier == nil) {
             valid = NO;
             break;

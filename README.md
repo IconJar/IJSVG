@@ -281,7 +281,7 @@ the style or position of part of the text.
 * Painting and compositing: `paint-order`, group opacity, `mix-blend-mode`, `isolation`, clipping, alpha/luminance masks, `display` and `visibility`.
 * Text: system font selection and fallback, font shorthand and OpenType settings, character positioning and rotation, `textLength` / `lengthAdjust`, text on paths, baseline alignment, spacing, bidirectional and vertical text, decorations, whitespace handling and wrapping with `inline-size`.
 * Filters: `feBlend`, `feColorMatrix`, `feComponentTransfer`, `feComposite`, `feConvolveMatrix`, `feDisplacementMap`, `feMorphology`, `feTile`, `feFlood`, `feOffset`, `feImage`, `feMerge`, `feGaussianBlur`, `feDropShadow`, `feTurbulence`, `feDiffuseLighting` and `feSpecularLighting`.
-* CSS filter functions: `brightness()`, `contrast()`, `grayscale()`, `hue-rotate()`, `invert()`, `opacity()`, `saturate()` and `sepia()`, including ordered chains mixed with local `url(...)` filters. CSS functions use sRGB and export as SVG primitives. Numeric amounts support percentages and CSS math expressions.
+* CSS filter functions: `blur()`, `brightness()`, `contrast()`, `drop-shadow()`, `grayscale()`, `hue-rotate()`, `invert()`, `opacity()`, `saturate()` and `sepia()`, including ordered chains mixed with local `url(...)` filters. CSS functions use sRGB and export as SVG primitives. Numeric amounts support percentages and CSS math expressions. Blur and shadow lengths support absolute units, `em`, `ex` and CSS math. Shadows default to the element color. Hue rotation supports `deg`, `rad`, `grad`, `turn` and calculated angles.
 * Filter inputs: `SourceGraphic`, `SourceAlpha`, `BackgroundImage`, `BackgroundAlpha`, `FillPaint`, `StrokePaint` and named intermediate results.
 
 ### Known limitations
@@ -294,7 +294,6 @@ interactive document behavior or SVG/CSS animation playback.
 * Media queries are evaluated during parsing against the document viewport using the `screen` media type, including when the artwork is later exported to PDF. Drawing at a different size does not reevaluate the stylesheet. Supported media lengths include `px`, `in`, `pt`, `pc`, `cm`, `mm`, `em` and `rem`, with a fixed 16px basis for `em` and `rem`. Other media features such as resolution, aspect ratio and user preferences, general `or` expressions, and reversed or chained range comparisons are not implemented.
 * Fragment references such as `href="#symbol"` are supported, but external SVG document references such as `href="icons.svg#symbol"` are not resolved. Ordinary `<image>` loading does not currently resolve relative paths against the source document URL.
 * `color-interpolation` controls gradient stop interpolation. Per-element linear RGB compositing/blending is not implemented; general compositing still uses the drawing context's color space. Filter interpolation remains controlled separately by `color-interpolation-filters`.
-* CSS `blur()` and `drop-shadow()` are not implemented yet. `hue-rotate()` accepts literal angles in `deg`, `rad`, `grad` and `turn`, or unitless zero. Calculated angles are not supported.
 * `<foreignObject>` content is skipped. HTML layout and embedded web fonts are not supported; text uses locally available fonts.
 
 Useful areas for further compatibility work include the remaining CSS selectors and at-rules,

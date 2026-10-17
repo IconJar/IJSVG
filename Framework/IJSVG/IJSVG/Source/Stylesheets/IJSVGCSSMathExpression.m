@@ -50,6 +50,7 @@ typedef struct {
     uint32_t count;
     uint32_t capacity;
     BOOL validatesOnly;
+    BOOL angle;
 } IJSVGCalculationParser;
 
 static CGFloat IJSVGCalculationMinimum(CGFloat left, CGFloat right)
@@ -301,8 +302,32 @@ static uint32_t IJSVGCalculationValue(IJSVGCalculationParser* parser, NSUInteger
         case IJSVGCSSComponentNumber:
             return IJSVGCalculationLiteralValue(parser, token->number, IJSVGUnitLengthTypeNumber);
         case IJSVGCSSComponentPercentage:
+            if (parser->angle) {
+                return IJSVGCalculationInvalid;
+            }
             return IJSVGCalculationLiteralValue(parser, token->number / 100.f, IJSVGUnitLengthTypePercentage);
         case IJSVGCSSComponentDimension: {
+            if (parser->angle) {
+                CGFloat degrees = token->number;
+                switch (token->angleUnit) {
+                    case IJSVGCSSAngleUnitDegrees:
+                        break;
+                    case IJSVGCSSAngleUnitRadians:
+                        degrees *= 180 / M_PI;
+                        break;
+                    case IJSVGCSSAngleUnitGradians:
+                        degrees *= .9;
+                        break;
+                    case IJSVGCSSAngleUnitTurns:
+                        degrees *= 360;
+                        break;
+                    default:
+                        return IJSVGCalculationInvalid;
+                }
+
+                // The isolated angle parser uses the dimensional exponent for angles.
+                return IJSVGCalculationLiteralValue(parser, degrees, IJSVGUnitLengthTypePX);
+            }
             if (token->unit == IJSVGUnitLengthTypeNumber) {
                 return IJSVGCalculationInvalid;
             }
@@ -488,6 +513,31 @@ BOOL IJSVGCSSMathExpressionEvaluateNumber(const IJSVGCSSComponents* components, 
     if (valid) {
         result->value = IJSVGCalculationEvaluate(nodes, root, (IJSVGCSSCalculationContext) { percentage, 0, 0 });
         result->percentage = nodes[root].exponent == 1;
+    }
+    if (nodes != inlineNodes) {
+        free(nodes);
+    }
+    return valid;
+}
+
+BOOL IJSVGCSSMathExpressionEvaluateAngle(const IJSVGCSSComponents* components, NSUInteger index, CGFloat* degrees)
+{
+    if (index >= components->count || !IJSVGCSSFunctionIsCalculation(components->values[index].function)) {
+        return NO;
+    }
+    NSUInteger end = components->values[index].next;
+    uint32_t capacity = (uint32_t)(end - index);
+    IJSVGCalculationNode inlineNodes[IJSVGCSSParserInlineCapacity];
+    IJSVGCalculationNode* nodes = capacity <= IJSVGCSSParserInlineCapacity ? inlineNodes : malloc(capacity * sizeof(*nodes));
+    if (nodes == NULL) {
+        return NO;
+    }
+    IJSVGCalculationParser parser = { components->values, nodes, 0, capacity, YES, YES };
+    uint32_t root = IJSVGCalculationParseRoot(&parser, index, end);
+    BOOL valid = root != IJSVGCalculationInvalid && nodes[root].exponent == 1;
+    if (valid) {
+        *degrees = IJSVGCalculationEvaluate(nodes, root, (IJSVGCSSCalculationContext) { 0, 0, 0 });
+        valid = isfinite(*degrees);
     }
     if (nodes != inlineNodes) {
         free(nodes);

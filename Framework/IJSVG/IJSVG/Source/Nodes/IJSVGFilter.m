@@ -18,6 +18,9 @@
     [super applyPropertiesFromNode:node];
     self.reference = node.reference;
     self.usesSourceRegion = node.usesSourceRegion;
+    self.cssBlurRadius = node.cssBlurRadius;
+    self.cssShadowX = node.cssShadowX;
+    self.cssShadowY = node.cssShadowY;
 }
 
 + (IJSVGNodeType)defaultNodeType

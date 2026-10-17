@@ -21,8 +21,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSSet<NSString*>* inputNames;
 @property (nonatomic, readonly) BOOL requiresSupersampling;
 
-// CSS color functions use the complete painted source as their filter region.
+// CSS functions derive their filter region from the complete painted source.
 @property (nonatomic) BOOL usesSourceRegion;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cssBlurRadius;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cssShadowX;
+@property (nonatomic, strong, nullable) IJSVGUnitLength* cssShadowY;
 
 // Recognised exporter style inner shadows retain the original antialiased
 // coverage.
