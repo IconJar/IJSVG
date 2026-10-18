@@ -186,3 +186,7 @@ void IJSVGParseMarkersAttributes(IJSVGGraphicsNode* node, IJSVGNodeParsingContex
 @interface IJSVGSwitch (XMLParsing)
 + (IJSVGXMLNode*)selectedChildInXML:(IJSVGXMLNode*)element preferredLanguages:(NSArray<NSString*>*)preferredLanguages;
 @end
+
+@interface IJSVGFilterPrimitive (ParameterTemplate)
+- (instancetype)initWithParameterStateFromPrimitive:(IJSVGFilterPrimitive*)source;
+@end

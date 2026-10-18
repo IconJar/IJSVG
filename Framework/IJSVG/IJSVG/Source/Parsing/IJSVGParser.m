@@ -243,11 +243,17 @@ static IJSVGFilter* IJSVGCSSSpatialFilter(const IJSVGCSSComponents* components, 
     return filter;
 }
 
-// Hash all identifier bytes to reduce table probes for patterned SVG IDs.
-// Keep CF string equality and ownership and reuse the existing byte hash.
+// Hash every character to reduce table probes for patterned SVG IDs.
+// Short identifiers avoid UTF8 conversion and its temporary string storage.
 static CFHashCode IJSVGParserIdentifierHash(const void* value)
 {
     NSString* string = (__bridge NSString*)value;
+    NSUInteger length = string.length;
+    if (length <= 64) {
+        unichar characters[64];
+        [string getCharacters:characters range:NSMakeRange(0, length)];
+        return (CFHashCode)IJSVGHashBytes(characters, length * sizeof(unichar));
+    }
     const char* bytes = string.UTF8String;
     return bytes != NULL ? (CFHashCode)IJSVGHashBytes(bytes, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]) : CFHash(value);
 }
@@ -1946,17 +1952,17 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     filter.name = source.name;
     filter.styleParent = source.styleParent;
     IJSVGFilterPrimitive* original = source.primitives.firstObject;
-    IJSVGFilterPrimitive* primitive = [[original.class alloc] init];
+    IJSVGFilterPrimitive* primitive = [[original.class alloc] initWithParameterStateFromPrimitive:original];
     primitive.name = original.name;
     primitive.input = original.input;
     primitive.input2 = original.input2;
-    primitive.parameters = original.parameters;
     [filter addChild:primitive];
     return filter;
 }
 
-- (BOOL)canCachePlainFilterElement:(IJSVGXMLNode*)element
+- (BOOL)canCachePlainFilterElement:(IJSVGXMLNode*)element prototype:(IJSVGFilter* __autoreleasing*)prototype
 {
+    *prototype = nil;
     if (IJSVGXMLType(element) != IJSVGNodeTypeFilter || element->childCount != 1) {
         return NO;
     }
@@ -1971,6 +1977,13 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
     if (_hasPlainFilterStyles) {
         return NO;
+    }
+
+    // XML is immutable for this parse. A cached template has already passed
+    // these structural checks. Refresh stylesheet eligibility before reuse.
+    *prototype = (__bridge IJSVGFilter*)IJSVGByteCacheGetValue(_plainFilterTemplates, &element, sizeof(element));
+    if (*prototype != nil) {
+        return YES;
     }
     IJSVGXMLAttributeList attributes = IJSVGXMLAttributes(element);
     for (NSUInteger index = 0; index < attributes.count; index++) {
@@ -2025,8 +2038,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         [self recursionDetectedOn:element decendentOf:source identifier:identifier];
         return nil;
     }
-    BOOL cacheable = [self canCachePlainFilterElement:source];
-    IJSVGFilter* prototype = cacheable ? (__bridge IJSVGFilter*)IJSVGByteCacheGetValue(_plainFilterTemplates, &source, sizeof(source)) : nil;
+    IJSVGFilter* prototype = nil;
+    BOOL cacheable = [self canCachePlainFilterElement:source prototype:&prototype];
     if (prototype != nil) {
         return [self plainFilterFromTemplate:prototype];
     }

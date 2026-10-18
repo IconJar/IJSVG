@@ -1538,20 +1538,22 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         batch.invalid = YES;
         return;
     }
-    IJSVGFilterGraph* graph = self.filterGraph;
     CGRect region = self.filterRegion;
 
     if (IJSVGFilterRectIsFinite(region) == NO || CGRectIsEmpty(region) == YES) {
         return;
     }
 
-    IJSVGFilterPrimitive* primitive = self.filterMetadata.primitives.firstObject;
-    if (!self.usesBackground && self.filterMetadata.usesBackdropAddition && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
+    IJSVGFilterMetadata* metadata = self.filterMetadata;
+    IJSVGFilterPrimitive* primitive = metadata.primitives.firstObject;
+    if (!self.usesBackground && metadata.usesBackdropAddition && primitive.x == nil && primitive.y == nil && primitive.width == nil && primitive.height == nil) {
         // Adding transparent black leaves the source unchanged.
         CGContextSaveGState(ctx);
         CGContextClipToRect(ctx, region);
-        CGContextTranslateCTM(ctx, self.sourcePaint.frame.origin.x, self.sourcePaint.frame.origin.y);
-        [self.sourcePaint renderInContext:ctx];
+        IJSVGPaint* source = self.sourcePaint;
+        CGPoint origin = source.frame.origin;
+        CGContextTranslateCTM(ctx, origin.x, origin.y);
+        [source renderInContext:ctx];
         CGContextRestoreGState(ctx);
         return;
     }
@@ -1593,6 +1595,9 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     workRect = CGRectIntegral(workRect);
     workRect = CGRectApplyAffineTransform(workRect, CGAffineTransformInvert(grid));
     CGSize pixelSize = CGSizeMake(round(workRect.size.width * scale), round(workRect.size.height * scale));
+
+    // Fast paths above render without evaluating a filter graph.
+    IJSVGFilterGraph* graph = self.filterGraph;
     graph.extent = (CGRect) { CGPointZero, pixelSize };
     graph.imageTransform = CGAffineTransformMake(scale, 0, 0, scale, -workRect.origin.x * scale, -workRect.origin.y * scale);
 

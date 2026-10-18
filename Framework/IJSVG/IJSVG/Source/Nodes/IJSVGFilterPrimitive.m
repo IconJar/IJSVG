@@ -85,6 +85,29 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     NSMutableDictionary<NSString*, NSArray<NSNumber*>*>* _parsedNumbers;
 }
 
+- (instancetype)initWithParameterStateFromPrimitive:(IJSVGFilterPrimitive*)source
+{
+    if ((self = [self init]) != nil) {
+        // Reuse immutable parameters and derived scalars while keeping
+        // mutable preparation and numeric caches separate for each primitive.
+        @synchronized(source) {
+            _parameters = source->_parameters;
+            _compositeOperator = source->_compositeOperator;
+            _edgeMode = source->_edgeMode;
+            _colorMatrixType = source->_colorMatrixType;
+            _transferType = source->_transferType;
+            _morphologyOperator = source->_morphologyOperator;
+            _turbulenceType = source->_turbulenceType;
+            _xChannel = source->_xChannel;
+            _yChannel = source->_yChannel;
+            _filterBlendMode = source->_filterBlendMode;
+            _preserveAlpha = source->_preserveAlpha;
+            _stitchTiles = source->_stitchTiles;
+        }
+    }
+    return self;
+}
+
 - (void)setImage:(CGImageRef)image
 {
     CGImageRef retained = image != NULL ? CGImageRetain(image) : NULL;

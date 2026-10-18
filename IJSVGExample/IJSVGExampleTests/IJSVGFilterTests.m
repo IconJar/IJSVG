@@ -1566,7 +1566,13 @@ static double IJSVGFilterMaximumError(NSData* actual, NSData* expected)
     XCTAssertNotEqual(second, third);
     XCTAssertNotEqual(first.primitives.firstObject, second.primitives.firstObject);
     XCTAssertEqual(second.primitives.firstObject.parentNode, second);
-    second.primitives.firstObject.parameters = @{ @"operator" : @"arithmetic", @"k2" : @"0" };
+    XCTAssertEqual(first.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorArithmetic);
+    XCTAssertEqual(second.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorArithmetic);
+    XCTAssertEqual(third.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorArithmetic);
+    second.primitives.firstObject.parameters = @{ @"operator" : @"over", @"k2" : @"0" };
+    XCTAssertEqual(second.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorOver);
+    XCTAssertEqual(first.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorArithmetic);
+    XCTAssertEqual(third.primitives.firstObject.compositeOperator, IJSVGFilterCompositeOperatorArithmetic);
     XCTAssertEqual([first.primitives.firstObject numberForParameter:@"k2" defaultValue:-1], 1);
     XCTAssertEqual([third.primitives.firstObject numberForParameter:@"k2" defaultValue:-1], 1);
     [first removeChild:first.primitives.firstObject];

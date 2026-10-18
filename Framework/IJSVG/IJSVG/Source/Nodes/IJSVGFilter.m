@@ -42,8 +42,13 @@
 
 - (NSArray<IJSVGFilterPrimitive*>*)primitives
 {
+    NSArray<IJSVGNode*>* children = self.children;
+    if (children.count <= 1) {
+        IJSVGNode* node = children.firstObject;
+        return [node isKindOfClass:IJSVGFilterPrimitive.class] ? @[ (IJSVGFilterPrimitive*)node ] : @[];
+    }
     NSMutableArray<IJSVGFilterPrimitive*>* primitives = [[NSMutableArray alloc] init];
-    for (IJSVGNode* node in self.children) {
+    for (IJSVGNode* node in children) {
         if ([node isKindOfClass:IJSVGFilterPrimitive.class]) {
             [primitives addObject:(IJSVGFilterPrimitive*)node];
         }
