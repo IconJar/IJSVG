@@ -29,6 +29,8 @@ typedef NS_OPTIONS(NSInteger, IJSVGColorUsageTraits) {
 
 + (IJSVGTraitedColor*)colorWithColor:(CGColorRef)color traits:(IJSVGColorUsageTraits)mask;
 
+- (BOOL)isEqualToTraitedColor:(nullable IJSVGTraitedColor*)other;
+
 - (void)addTraits:(IJSVGColorUsageTraits)traits;
 - (void)removeTraits:(IJSVGColorUsageTraits)traits;
 - (BOOL)matchesTraits:(IJSVGColorUsageTraits)traits;

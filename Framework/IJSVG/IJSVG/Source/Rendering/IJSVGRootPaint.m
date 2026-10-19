@@ -18,6 +18,11 @@
 
 @implementation IJSVGRootPaint
 
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitGroup | IJSVGPaintTraitRoot;
+}
+
 - (void)setBackgroundColor:(CGColorRef)value
 {
     CGColorRef retained = CGColorRetain(value);

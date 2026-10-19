@@ -11,6 +11,11 @@
 
 @implementation IJSVGColorNode
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitColor;
+}
+
 - (void)setColor:(CGColorRef)value
 {
     CGColorRef retained = CGColorRetain(value);
@@ -40,7 +45,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];
-    if ([node isKindOfClass:IJSVGColorNode.class]) {
+    if ((node.nodeTraits & IJSVGNodeTypeTraitColor) != 0) {
         IJSVGColorNode* colorNode = (IJSVGColorNode*)node;
         self.color = colorNode.color;
         self.isNoneOrTransparent = colorNode.isNoneOrTransparent;

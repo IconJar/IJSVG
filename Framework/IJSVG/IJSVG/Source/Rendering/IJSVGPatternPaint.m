@@ -24,6 +24,11 @@
 
 @implementation IJSVGPatternPaint
 
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitPattern;
+}
+
 static void IJSVGQuartzPatternRelease(void* info)
 {
     CFRelease(info);

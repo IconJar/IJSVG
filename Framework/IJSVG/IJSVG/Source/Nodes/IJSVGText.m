@@ -11,11 +11,38 @@
 #import <IJSVG/IJSVGText.h>
 #import <IJSVGNodeParsing.h>
 
+@implementation IJSVGTextContent
+
+- (instancetype)initWithString:(NSString*)string
+{
+    if ((self = [super init])) {
+        _kind = IJSVGTextContentKindString;
+        _string = [string copy];
+    }
+    return self;
+}
+
+- (instancetype)initWithSpan:(IJSVGText*)span
+{
+    if ((self = [super init])) {
+        _kind = IJSVGTextContentKindSpan;
+        _span = span;
+    }
+    return self;
+}
+
+@end
+
 @implementation IJSVGTextAttributeValue
 
 @end
 
 @implementation IJSVGText
+
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitText;
+}
 
 + (IJSVGNodeType)defaultNodeType
 {
@@ -34,16 +61,16 @@
 - (id)copyWithZone:(NSZone*)zone
 {
     IJSVGText* copy = [super copyWithZone:zone];
-    NSMutableArray<id>* content = [NSMutableArray arrayWithCapacity:self.textContent.count];
-    for (id item in self.textContent) {
-        if ([item isKindOfClass:IJSVGText.class]) {
+    NSMutableArray<IJSVGTextContent*>* content = [NSMutableArray arrayWithCapacity:self.textContent.count];
+    for (IJSVGTextContent* item in self.textContent) {
+        if (item.kind == IJSVGTextContentKindSpan) {
             // Point mixed text content at the copied children.
-            NSUInteger index = [self.children indexOfObjectIdenticalTo:item];
+            NSUInteger index = [self.children indexOfObjectIdenticalTo:item.span];
             if (index != NSNotFound) {
-                [content addObject:copy.children[index]];
+                [content addObject:[[IJSVGTextContent alloc] initWithSpan:(IJSVGText*)copy.children[index]]];
             }
         } else {
-            [content addObject:[item copy]];
+            [content addObject:item];
         }
     }
     copy.textContent = content;
@@ -56,8 +83,8 @@
 // Identifies direct text runs without counting child span containers.
 - (BOOL)hasTextContent
 {
-    for (id item in self.textContent) {
-        if ([item isKindOfClass:NSString.class] && [item length] != 0) {
+    for (IJSVGTextContent* item in self.textContent) {
+        if (item.kind == IJSVGTextContentKindString && item.string.length != 0) {
             return YES;
         }
     }
@@ -72,7 +99,7 @@
     if (!self.hasTextContent || self.stroke == nil) {
         return;
     }
-    if ([self.stroke isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)self.stroke).isNoneOrTransparent) {
+    if ((self.stroke.nodeTraits & IJSVGNodeTypeTraitColor) != 0 && ((IJSVGColorNode*)self.stroke).isNoneOrTransparent) {
         return;
     }
     [self addTraits:IJSVGNodeTraitStroked];

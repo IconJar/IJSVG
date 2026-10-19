@@ -35,6 +35,11 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
 
 @implementation IJSVGGradientPaint
 
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitGradient;
+}
+
 - (void)setGradient:(IJSVGGradient*)gradient
 {
     _gradient = gradient;
@@ -56,7 +61,7 @@ typedef NS_ENUM(NSUInteger, IJSVGResolvedGradientKind) {
     IJSVGRootPaint* root = _gradientRoot;
     if (userSpace && root == nil) {
         IJSVGPaint* ancestor = [IJSVGPaint rootPaintForPaint:self];
-        if ([ancestor isKindOfClass:IJSVGRootPaint.class]) {
+        if ((ancestor.paintTraits & IJSVGPaintTraitRoot) != 0) {
             root = (IJSVGRootPaint*)ancestor;
             _gradientRoot = root;
             _hasResolvedPlacement = NO;

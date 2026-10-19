@@ -18,12 +18,18 @@
 @implementation IJSVGPaintNode {
     unsigned char _initializedDefaultLengths;
 }
+
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint;
+}
+
 @synthesize fill = _fill, fillOpacity = _fillOpacity;
 
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if ([source isKindOfClass:IJSVGPaintNode.class]) {
+    if ((source.nodeTraits & IJSVGNodeTypeTraitPaint) != 0) {
         IJSVGPaintNode* node = (IJSVGPaintNode*)source;
         self.fill = node.fill;
         self.fillOpacity = node.fillOpacity;

@@ -30,27 +30,26 @@
 #import <IJSVGTextFontResolver.h>
 #import <IJSVGTransformPaint.h>
 #import <ImageIO/ImageIO.h>
+#import <objc/runtime.h>
 
-// NSArray and NSDictionary hashes primarily reflect their sizes. Include
-// nested values to avoid quadratic lookups when many different filters share
-// the same attribute/primitive counts.
-static NSUInteger IJSVGExporterFilterContentHash(id value)
+// Filter descriptions have a fixed name, attributes and ordered children layout.
+// Include every value so filters of the same size do not share a trivial hash.
+static NSUInteger IJSVGExporterFilterContentHash(NSArray* description)
 {
-    if ([value isKindOfClass:NSArray.class]) {
-        NSUInteger hash = [value count];
-        for (id child in value) {
-            hash = hash * 31U + IJSVGExporterFilterContentHash(child);
-        }
-        return hash;
+    NSString* name = description[0];
+    NSDictionary<NSString*, NSString*>* attributes = description[1];
+    NSArray<NSArray*>* children = description[2];
+    NSUInteger attributesHash = attributes.count;
+    for (NSString* key in attributes) {
+        attributesHash ^= key.hash * 31U + attributes[key].hash;
     }
-    if ([value isKindOfClass:NSDictionary.class]) {
-        NSUInteger hash = [value count];
-        for (NSString* name in value) {
-            hash ^= name.hash * 31U + IJSVGExporterFilterContentHash(value[name]);
-        }
-        return hash;
+    NSUInteger childrenHash = children.count;
+    for (NSArray* child in children) {
+        childrenHash = childrenHash * 31U + IJSVGExporterFilterContentHash(child);
     }
-    return [value hash];
+    NSUInteger hash = description.count * 31U + name.hash;
+    hash = hash * 31U + attributesHash;
+    return hash * 31U + childrenHash;
 }
 
 @interface IJSVGExporterFilterKey : NSObject <NSCopying>
@@ -76,7 +75,14 @@ static NSUInteger IJSVGExporterFilterContentHash(id value)
 
 - (BOOL)isEqual:(id)object
 {
-    return object == self || ([object isKindOfClass:IJSVGExporterFilterKey.class] && [_content isEqualToArray:((IJSVGExporterFilterKey*)object).content]);
+    if (object == self) {
+        return YES;
+    }
+    if (object_getClass(object) != IJSVGExporterFilterKey.class) {
+        return NO;
+    }
+    IJSVGExporterFilterKey* other = (IJSVGExporterFilterKey*)object;
+    return [_content isEqualToArray:other.content];
 }
 
 - (id)copyWithZone:(NSZone*)zone
@@ -495,7 +501,7 @@ NSString* IJSVGHash(NSString* key)
     NSSet<NSString*>* referencedIdentifiers = [self referencedIdentifiers];
     NSArray<IJSVGExportNode*>* elements = self.defElement.children;
     for (IJSVGExportNode* child in elements) {
-        if ([child isKindOfClass:IJSVGExportElement.class] == NO) {
+        if (child.kind != IJSVGXMLNodeKindElement) {
             continue;
         }
         IJSVGExportElement* element = (IJSVGExportElement*)child;
@@ -572,7 +578,7 @@ NSString* IJSVGHash(NSString* key)
 {
     NSMutableArray<IJSVGExportElement*>* gradients = [[NSMutableArray alloc] init];
     for (IJSVGExportNode* child in self.defElement.children) {
-        if ([child isKindOfClass:IJSVGExportElement.class] == NO) {
+        if (child.kind != IJSVGXMLNodeKindElement) {
             continue;
         }
         IJSVGExportElement* element = (IJSVGExportElement*)child;
@@ -759,7 +765,7 @@ NSString* IJSVGHash(NSString* key)
             continue;
         }
         IJSVGExportElement* child = (IJSVGExportElement*)group.children.firstObject;
-        if (![child isKindOfClass:IJSVGExportElement.class] || [child attributeForName:IJSVGAttributeTransform] != nil) {
+        if (child.kind != IJSVGXMLNodeKindElement || [child attributeForName:IJSVGAttributeTransform] != nil) {
             continue;
         }
         for (IJSVGExportNode* attribute in group.attributes) {
@@ -845,17 +851,17 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // shape paint
-    if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitShape) != 0) {
         return [self elementForShape:(IJSVGShapePaint*)paint fromParent:element];
     }
 
     // image paint
-    if ([paint isKindOfClass:IJSVGImagePaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitImage) != 0) {
         return [self elementForImage:(IJSVGImagePaint*)paint fromParent:element];
     }
 
     // group paint, or paint that acts as a group
-    if ([paint isKindOfClass:IJSVGGroupPaint.class] || paint.class == IJSVGTransformPaint.class || paint.class == IJSVGPaint.class) {
+    if ((paint.paintTraits & IJSVGPaintTraitGroup) != 0 || paint.class == IJSVGTransformPaint.class || paint.class == IJSVGPaint.class) {
         return [self elementForGroup:paint fromParent:element];
     }
     return nil;
@@ -931,7 +937,7 @@ NSString* IJSVGHash(NSString* key)
     // Converting a stroke into geometry changes objectBoundingBox units.
     // Preserve source strokes while serializing a filtered subtree.
     IJSVGExporterOptions options = _options;
-    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         _options &= ~IJSVGExporterOptionConvertStrokesToPaths;
     }
     @try {
@@ -1226,7 +1232,7 @@ NSString* IJSVGHash(NSString* key)
 
     // Outlining a stroke changes its object bounding box. Keep the gradient
     // mapped to the original resolved stroke coordinate system.
-    if (!stroke && gradient.units == IJSVGUnitObjectBoundingBox && [parentPaint isKindOfClass:IJSVGShapePaint.class] && ((IJSVGShapePaint*)parentPaint).strokePaint == paint && paint.clipPath != NULL) {
+    if (!stroke && gradient.units == IJSVGUnitObjectBoundingBox && (parentPaint.paintTraits & IJSVGPaintTraitShape) != 0 && ((IJSVGShapePaint*)parentPaint).strokePaint == paint && paint.clipPath != NULL) {
         CGRect outlineBounds = CGPathGetPathBoundingBox(paint.clipPath);
         if (outlineBounds.size.width > 0.f && outlineBounds.size.height > 0.f) {
             CGRect sourceBounds = parentPaint.boundingBox;
@@ -1703,7 +1709,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // fill color
-    IJSVGShapePaint* fillPaint = paint.directFill ? paint : (IJSVGShapePaint*)([paint.fillPaint isKindOfClass:IJSVGShapePaint.class] ? paint.fillPaint : nil);
+    IJSVGShapePaint* fillPaint = paint.directFill ? paint : (IJSVGShapePaint*)((paint.fillPaint.paintTraits & IJSVGPaintTraitShape) != 0 ? paint.fillPaint : nil);
     if (fillPaint != nil) {
         NSString* colorString = IJSVGStringNone;
         if (fillPaint.fillColor != NULL) {
@@ -1720,7 +1726,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // is there a gradient fill?
-    IJSVGGradientPaint* gradientPaint = (IJSVGGradientPaint*)([paint.fillPaint isKindOfClass:IJSVGGradientPaint.class] ? paint.fillPaint : nil);
+    IJSVGGradientPaint* gradientPaint = (IJSVGGradientPaint*)((paint.fillPaint.paintTraits & IJSVGPaintTraitGradient) != 0 ? paint.fillPaint : nil);
     if (paint.fillGradient != nil) {
         gradientPaint = IJSVGGradientPaint.paint;
         gradientPaint.gradient = paint.fillGradient;
@@ -1730,7 +1736,7 @@ NSString* IJSVGHash(NSString* key)
     }
 
     // is there a pattern?
-    IJSVGPatternPaint* patternPaint = (IJSVGPatternPaint*)([paint.fillPaint isKindOfClass:IJSVGPatternPaint.class] ? paint.fillPaint : nil);
+    IJSVGPatternPaint* patternPaint = (IJSVGPatternPaint*)((paint.fillPaint.paintTraits & IJSVGPaintTraitPattern) != 0 ? paint.fillPaint : nil);
     if (patternPaint != nil) {
         [self applyPatternFromPaint:patternPaint parentPaint:(IJSVGPaint*)paint stroke:NO toElement:e];
     }
@@ -1740,7 +1746,7 @@ NSString* IJSVGHash(NSString* key)
         // Non scaling strokes must remain strokes: outlining freezes their width
         // at the export viewport and loses their behavior when the SVG is resized.
         if (IJSVGExporterHasOption(_options, IJSVGExporterOptionConvertStrokesToPaths) == YES && !paint.strokeStyle.nonScalingStroke) {
-            IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
+            IJSVGPaintFillType usageType = ((paint.strokePaint.paintTraits & IJSVGPaintTraitGradient) != 0 ? IJSVGPaintFillTypeGradient : ((paint.strokePaint.paintTraits & IJSVGPaintTraitPattern) != 0 ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             CGPathRef path = NULL;
             IJSVGShapePaint* strokePaint = (IJSVGStrokePaint*)paint.strokePaint;
             IJSVGExportElement* strokedPath = [[IJSVGExportElement alloc] initWithName:@"path"];
@@ -1829,7 +1835,7 @@ NSString* IJSVGHash(NSString* key)
             }
         } else {
             // normal stroke applied to parent element
-            IJSVGPaintFillType usageType = ([paint.strokePaint isKindOfClass:IJSVGGradientPaint.class] ? IJSVGPaintFillTypeGradient : ([paint.strokePaint isKindOfClass:IJSVGPatternPaint.class] ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
+            IJSVGPaintFillType usageType = ((paint.strokePaint.paintTraits & IJSVGPaintTraitGradient) != 0 ? IJSVGPaintFillTypeGradient : ((paint.strokePaint.paintTraits & IJSVGPaintTraitPattern) != 0 ? IJSVGPaintFillTypePattern : IJSVGPaintFillTypeColor));
             IJSVGShapePaint* strokePaint = (IJSVGShapePaint*)paint.strokePaint;
 
             // stroke gradient
@@ -2016,7 +2022,7 @@ NSString* IJSVGHash(NSString* key)
     // apply transforms
     [self applyTransformToElement:element fromPaint:paint];
 
-    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         [self applyFilterToElement:element fromPaint:(IJSVGFilterPaint*)paint];
     }
 
@@ -2366,7 +2372,7 @@ static BOOL IJSVGExporterFilterHasContextualImage(NSArray<IJSVGFilterPrimitive*>
     IJSVGApplyAttributesToElement(@{ IJSVGAttributeID : identifier, IJSVGAttributeMaskUnits : node.units == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeMaskType : node.maskType == IJSVGMaskTypeAlpha ? @"alpha" : @"luminance", IJSVGAttributeMaskContentUnits : node.contentUnits == IJSVGUnitObjectBoundingBox ? IJSVGStringObjectBoundingBox : IJSVGStringUserSpaceOnUse, IJSVGAttributeX : [[resolver unitByResolvingFontLength:node.x node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeY : [[resolver unitByResolvingFontLength:node.y node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeWidth : [[resolver unitByResolvingFontLength:node.width node:node] stringValueWithFloatingPointOptions:_floatingPointOptions], IJSVGAttributeHeight : [[resolver unitByResolvingFontLength:node.height node:node] stringValueWithFloatingPointOptions:_floatingPointOptions] }, mask);
     CGRect bounds = node.contentUnits == IJSVGUnitObjectBoundingBox ? CGRectMake(0, 0, 1, 1) : paint.viewPort;
     IJSVGPaint* content = [_paintResolver drawablePaintForNode:node inViewPort:bounds];
-    if ([content isKindOfClass:IJSVGGroupPaint.class] && CGAffineTransformIsIdentity(content.affineTransform)) {
+    if ((content.paintTraits & IJSVGPaintTraitGroup) != 0 && CGAffineTransformIsIdentity(content.affineTransform)) {
         [self applyDefaultsToElement:mask fromPaint:content];
         for (IJSVGPaint* child in content.children) {
             [self _recursiveParseFromPaint:child intoElement:mask];

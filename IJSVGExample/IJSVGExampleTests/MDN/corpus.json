@@ -11029,19 +11029,34 @@
       "id": "reference_attribute_preserveaspectratio_block_4_1",
       "example": "reference/attribute/preserveaspectratio/block-4",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 40\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"0\" y=\"0\" width=\"60\" height=\"30\">\n  <title>xMidYMid meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMidYMid meet\"\n  x=\"0\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "0f2c26ccb54027d7dc6f53ac2a3b1018da6509d833f4d969399d1499b93aae6b"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_5_1",
       "example": "reference/attribute/preserveaspectratio/block-5",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 40\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"70\" y=\"0\" width=\"60\" height=\"30\">\n  <title>xMinYMid meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMinYMid meet\"\n  x=\"70\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "cb720e36c503efa67543eb9123f039972dbcfbd4f1f119534b1f1fa68fecfe87"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_6_1",
       "example": "reference/attribute/preserveaspectratio/block-6",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 40\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"140\" y=\"0\" width=\"60\" height=\"30\">\n  <title>xMaxYMid meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMaxYMid meet\"\n  x=\"140\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "aa4f941ace4e445d3355e1897c8dca268939ac7bf3c39c9cab0cc172a549ce7c"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_7_1",
@@ -11059,19 +11074,34 @@
       "id": "reference_attribute_preserveaspectratio_block_11_1",
       "example": "reference/attribute/preserveaspectratio/block-11",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 57\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"0\" y=\"15\" width=\"60\" height=\"30\">\n  <title>xMidYMin slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMidYMin slice\"\n  x=\"0\"\n  y=\"15\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "22d94d6111cd43a64afb8db0b78ad37e100e6c6a692c6e9446f21b81f15f373b"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_12_1",
       "example": "reference/attribute/preserveaspectratio/block-12",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 57\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"70\" y=\"15\" width=\"60\" height=\"30\">\n  <title>xMidYMid slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMidYMid slice\"\n  x=\"70\"\n  y=\"15\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "3fea81a1ecf50a2ab539c4eea3c5f63bf9ab0214b4c04f28f359a7af3de1731b"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_13_1",
       "example": "reference/attribute/preserveaspectratio/block-13",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 57\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"140\" y=\"15\" width=\"60\" height=\"30\">\n  <title>xMidYMax slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"60\"\n  height=\"30\"\n  preserveAspectRatio=\"xMidYMax slice\"\n  x=\"140\"\n  y=\"15\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "4332590f4ae083f4ba5a84d5301ac2fc891311b948c14f93b9f0b371f5cd2f77"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_14_1",
@@ -11089,19 +11119,34 @@
       "id": "reference_attribute_preserveaspectratio_block_18_1",
       "example": "reference/attribute/preserveaspectratio/block-18",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"0\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMidYMin meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMidYMin meet\"\n  x=\"0\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "f3a50e75acb67fa1f041d39c486f987d1c5afbdccbecc493d58156e0f2db4e8c"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_19_1",
       "example": "reference/attribute/preserveaspectratio/block-19",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"35\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMidYMid meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMidYMid meet\"\n  x=\"35\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "b0083e43cf6626a95dfb85821a199e9ac140866af30f14ac52b97eba3dbc284b"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_20_1",
       "example": "reference/attribute/preserveaspectratio/block-20",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"70\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMidYMax meet</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMidYMax meet\"\n  x=\"70\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "2b194e694d5241c94e532e3609d2e59266776df46288e9fdf7d7b043d179e1b7"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_21_1",
@@ -11119,19 +11164,34 @@
       "id": "reference_attribute_preserveaspectratio_block_25_1",
       "example": "reference/attribute/preserveaspectratio/block-25",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"0\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMinYMid slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMinYMid slice\"\n  x=\"0\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "7f20a789ddfa2f03bed48970e43582f0d8c606f9f7031047b5ccee678061d96f"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_26_1",
       "example": "reference/attribute/preserveaspectratio/block-26",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"35\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMidYMid slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMidYMid slice\"\n  x=\"35\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "98d47f992452b2c20a52195aad248393f39753b413a70c1936445dbcb3d90ac7"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_27_1",
       "example": "reference/attribute/preserveaspectratio/block-27",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 202 80\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"70\" y=\"0\" width=\"30\" height=\"75\">\n  <title>xMaxYMid slice</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"30\"\n  height=\"75\"\n  preserveAspectRatio=\"xMaxYMid slice\"\n  x=\"70\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "1ae4b2c6ebba9ff3f50e5ede78032c6b5ad88654135400b1aa8316b2a8bd08f9"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_28_1",
@@ -11149,7 +11209,12 @@
       "id": "reference_attribute_preserveaspectratio_block_32_1",
       "example": "reference/attribute/preserveaspectratio/block-32",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/preserveAspectRatio",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"-1 -1 192 62\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\npath {\n  fill: yellow;\n  stroke: black;\n  stroke-width: 8px;\n  stroke-linecap: round;\n  stroke-linejoin: round;\n  pointer-events: none;\n}\n\nrect:hover,\nrect:active {\n  outline: 1px solid red;\n}\n\n]]></style>\n  <defs>\n    <path\n      id=\"smiley\"\n      d=\"M50,10 A40,40,1,1,1,50,90 A40,40,1,1,1,50,10 M30,40 Q36,35,42,40 M58,40 Q64,35,70,40 M30,60 Q50,75,70,60 Q50,75,30,60\" />\n  </defs>\n<rect x=\"0\" y=\"0\" width=\"160\" height=\"60\">\n  <title>none</title>\n</rect>\n<svg\n  viewBox=\"0 0 100 100\"\n  width=\"160\"\n  height=\"60\"\n  preserveAspectRatio=\"none\"\n  x=\"0\"\n  y=\"0\">\n  <use href=\"#smiley\" />\n</svg></svg>\n",
+      "adaptations": [
+        "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "c11b344e1fc8681de1ea27aca58c0a596d19c40634b5f438dc2d651edb54c004"
     },
     {
       "id": "reference_attribute_preserveaspectratio_block_33_1",
@@ -12803,43 +12868,71 @@
       "id": "tutorials_svg_from_scratch_basic_shapes_block_2_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-2",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><rect x=\"10\" y=\"10\" width=\"30\" height=\"30\"/>\n<rect x=\"60\" y=\"10\" rx=\"10\" ry=\"10\" width=\"30\" height=\"30\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "fb44aa0974402258a81c5d4a18eaeed79098660e31576a45e9dc1bffb367e27a"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_3_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-3",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><circle cx=\"25\" cy=\"75\" r=\"20\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "872e1936be4a8f1ccc62718a255b4ae918167f0dd1ef806ef6b3d71cd77dca9f"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_4_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-4",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><ellipse cx=\"75\" cy=\"75\" rx=\"20\" ry=\"5\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "a7899e3178897bfea3eb6c39ee3b5d6087e249de962ac47ccb9c4b2a85123aa6"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_5_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-5",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><line x1=\"10\" x2=\"50\" y1=\"110\" y2=\"150\" stroke=\"black\" stroke-width=\"5\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "9b887ab2e8b03843fa1c7483bc353179728b7dd4c525b48665e9f9c712f3bb56"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_6_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-6",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><polyline points=\"60, 110 65, 120 70, 115 75, 130 80, 125 85, 140 90, 135 95, 150 100, 145\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "52a27d7a0bbfaf484eb9ba4716edb57f50c5d292b68344c1d3f58370c620497c"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_7_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-7",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><polygon points=\"50, 160 55, 180 70, 180 60, 190 65, 205 50, 195 35, 205 40, 190 30, 180 45, 180\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "c02410ca6596615163a5aff6237c99af4df51d7057b0aa292996287dde7dcc07"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_shapes_block_8_1",
       "example": "tutorials/svg_from_scratch/basic_shapes/block-8",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Basic_shapes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"250\" viewBox=\"0 0 200 250\"><path d=\"M20,230 Q40,205 50,230 T90,230\" fill=\"none\" stroke=\"blue\" stroke-width=\"5\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "69abbe443cdbff1f8e0e46bcf78cd6eb6a75637bd47663cb9cca385422d192fb"
     },
     {
       "id": "tutorials_svg_from_scratch_basic_transformations_block_1_1",
@@ -12920,7 +13013,11 @@
       "id": "tutorials_svg_from_scratch_clipping_and_masking_block_3_1",
       "example": "tutorials/svg_from_scratch/clipping_and_masking/block-3",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Clipping_and_masking",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" opacity=\".5\" /></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "fdc0ab58bfb6766e2ae41cc7012b557f8c551c7395794a7b32de08af9ead62d8"
     },
     {
       "id": "tutorials_svg_from_scratch_clipping_and_masking_block_4_1",
@@ -12974,7 +13071,11 @@
       "id": "tutorials_svg_from_scratch_fills_and_strokes_block_6_1",
       "example": "tutorials/svg_from_scratch/fills_and_strokes/block-6",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Fills_and_strokes",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect x=\"10\" height=\"180\" y=\"10\" width=\"180\" style=\"stroke: black; fill: red;\"/></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "83aa470e3554a2945a138d76c9beaab8e131957a1252ae96f47b6dd33ff52c47"
     },
     {
       "id": "tutorials_svg_from_scratch_fills_and_strokes_block_7_1",
@@ -13159,13 +13260,21 @@
       "id": "tutorials_svg_from_scratch_paths_block_12_1",
       "example": "tutorials/svg_from_scratch/paths/block-12",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><path d=\"M 10 10 H 90 V 90 H 10 Z\" fill=\"none\" stroke=\"black\" /></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "c53434739b53cead8db4102afd208d339fe322e74f5db1f513fd070922c0d7bb"
     },
     {
       "id": "tutorials_svg_from_scratch_paths_block_13_1",
       "example": "tutorials/svg_from_scratch/paths/block-13",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Paths",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><path d=\"M 10 10 h 80 v 80 h -80 Z\" fill=\"none\" stroke=\"black\" /></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "ea043bb68e924e14431acf35f7471b3bf88cfa2462e3e945c6a54bff787e33cb"
     },
     {
       "id": "tutorials_svg_from_scratch_paths_block_15_1",
@@ -13338,7 +13447,11 @@
       "id": "tutorials_svg_from_scratch_texts_block_1_1",
       "example": "tutorials/svg_from_scratch/texts/block-1",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Texts",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"100\" viewBox=\"0 0 200 100\"><text x=\"10\" y=\"10\">Hello World!</text></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "6ae527de6a449ee0791d83dcedcd04f66cfe07089c821b5652935b2947d0cc38"
     },
     {
       "id": "tutorials_svg_from_scratch_texts_block_2_1",

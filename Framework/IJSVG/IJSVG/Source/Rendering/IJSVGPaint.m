@@ -67,9 +67,9 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 @synthesize frame = _frame;
 
-- (BOOL)isFilterPaint
+- (IJSVGPaintTraits)paintTraits
 {
-    return NO;
+    return IJSVGPaintTraitNone;
 }
 
 + (instancetype)paint
@@ -94,7 +94,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 - (IJSVGPaint*)copyForMarker
 {
     Class type = self.class;
-    if ((type != IJSVGPaint.class && type != IJSVGGroupPaint.class && type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class && type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) || _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil || [_sourceNode isKindOfClass:IJSVGText.class] || (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
+    if ((type != IJSVGPaint.class && type != IJSVGGroupPaint.class && type != IJSVGTransformPaint.class && type != IJSVGShapePaint.class && type != IJSVGRectPaint.class && type != IJSVGStrokePaint.class) || _maskPaint != nil || _clipPaints.count != 0 || _sourceNode.clipPath != nil || (_sourceNode.nodeTraits & IJSVGNodeTypeTraitText) != 0 || (_sourceNode != nil && !CGRectIsNull(_sourceNode.backgroundRect))) {
         return nil;
     }
     NSArray<IJSVGPaint*>* children = @[];
@@ -171,7 +171,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
             continue;
         }
         [visited addObject:paint];
-        if (paint.isFilterPaint || [paint isKindOfClass:IJSVGPatternPaint.class] || (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+        if ((paint.paintTraits & (IJSVGPaintTraitFilter | IJSVGPaintTraitPattern)) != 0 || (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
             return;
         }
         [pending addObjectsFromArray:paint.children];
@@ -274,15 +274,15 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     self.children = [self.children arrayByAddingObject:paint];
 }
 
-+ (IJSVGPaintFillType)fillTypeForFill:(id)fill
++ (IJSVGPaintFillType)fillTypeForFill:(IJSVGNode*)fill
 {
-    if ([fill isKindOfClass:IJSVGColorNode.class]) {
+    if ((fill.nodeTraits & IJSVGNodeTypeTraitColor) != 0) {
         return IJSVGPaintFillTypeColor;
     }
-    if ([fill isKindOfClass:IJSVGGradient.class]) {
+    if ((fill.nodeTraits & IJSVGNodeTypeTraitGradient) != 0) {
         return IJSVGPaintFillTypeGradient;
     }
-    if ([fill isKindOfClass:IJSVGPattern.class]) {
+    if ((fill.nodeTraits & IJSVGNodeTypeTraitPattern) != 0) {
         return IJSVGPaintFillTypePattern;
     }
     return IJSVGPaintFillTypeUnknown;
@@ -293,7 +293,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     CGRect rect = CGRectNull;
     for (IJSVGPaint* child in children) {
         CGRect bounds = child.outerBoundingBox;
-        if ([child isKindOfClass:IJSVGTransformPaint.class]) {
+        if ((child.paintTraits & IJSVGPaintTraitTransform) != 0) {
             bounds = CGRectApplyAffineTransform([self calculateFrameForChildren:child.children], child.affineTransform);
         }
         rect = CGRectUnion(rect, bounds);
@@ -306,7 +306,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     CGRect rect = CGRectNull;
     for (IJSVGPaint* child in children) {
         CGRect bounds = child.boundingBox;
-        if ([child isKindOfClass:IJSVGTransformPaint.class]) {
+        if ((child.paintTraits & IJSVGPaintTraitTransform) != 0) {
             bounds = CGRectApplyAffineTransform([self calculateBoundingBoxForChildren:child.children], child.affineTransform);
         }
         rect = CGRectUnion(rect, bounds);
@@ -322,7 +322,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 + (IJSVGPaint*)rootPaintForPaint:(IJSVGPaint*)paint
 {
     IJSVGPaint* parent = paint.referencingPaint;
-    while (parent.referencingPaint != nil && ![parent isKindOfClass:IJSVGRootPaint.class]) {
+    while (parent.referencingPaint != nil && (parent.paintTraits & IJSVGPaintTraitRoot) == 0) {
         parent = parent.referencingPaint;
     }
     return parent;
@@ -338,7 +338,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     if (paint.maskPaint != nil) {
         [self setBackingScaleFactor:scale renderQuality:quality recursivelyToPaint:paint.maskPaint];
     }
-    if ([paint isKindOfClass:IJSVGPatternPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitPattern) != 0) {
         [self setBackingScaleFactor:scale renderQuality:quality recursivelyToPaint:((IJSVGPatternPaint*)paint).pattern];
     }
 }
@@ -388,7 +388,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
     if (cached != nil && cached.scale == scale && cached.quality == mask.renderQuality && CGSizeEqualToSize(cached.size, frame.size) && CGRectEqualToRect(cached.bounds, bounds)) {
         image = CGImageRetain(cached.image);
     } else {
-        BOOL alphaMask = [mask.sourceNode isKindOfClass:IJSVGMask.class] && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
+        BOOL alphaMask = (mask.sourceNode.nodeTraits & IJSVGNodeTypeTraitMask) != 0 && ((IJSVGMask*)mask.sourceNode).maskType == IJSVGMaskTypeAlpha;
 
         // A color image supplies its alpha to ClipToMask, a gray image supplies
         // luminance. Preserve RGB here so black alpha mask content stays opaque.
@@ -495,7 +495,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         // Stop before allocating masks, filter sources or transparency layers.
         // Query after placement and clipping, geometry alone cannot cull effects
         // such as floods and blurs that paint outside their source paths.
-        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil || _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal || self.isFilterPaint;
+        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil || _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal || (self.paintTraits & IJSVGPaintTraitFilter) != 0;
         if (allocatesEffects && CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
             return;
         }

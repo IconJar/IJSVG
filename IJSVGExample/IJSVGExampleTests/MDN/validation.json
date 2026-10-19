@@ -3601,5 +3601,289 @@
     "passed": 5,
     "failed": 0,
     "note": "Original mask and filter definitions are preserved and applied to colored shapes. White specular lighting receives a gray backdrop. Implicit line coordinates following moveto are recognized by the importer. Six path classification checks passed and exactly five corpus cases changed."
+  },
+  "standaloneFragmentValidation": {
+    "recordedAt": "2026-10-19T21:53:05.295106+00:00",
+    "passedComparisons": 12,
+    "inventoryTest": "Passed",
+    "importerTestsPassed": 12,
+    "remainingSkippedFixtures": 140,
+    "excludedComparisons": 18,
+    "note": "Reviewed drawing fragments use explicit viewports and retain their original geometry and inline styling. They run as isolated drawings without enclosing page CSS or JavaScript. All comparisons contain visible ink. Existing tolerances and browser difference exclusions are unchanged. These counts describe the targeted run rather than a new full suite run.",
+    "cases": [
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_2_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 6904
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_3_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 5124
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_4_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 1320
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_5_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 1208
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_6_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 663
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_7_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 2630
+      },
+      {
+        "id": "tutorials_svg_from_scratch_basic_shapes_block_8_1",
+        "state": "Passed",
+        "meanInkError": 1e-06,
+        "tolerance": 0.025,
+        "inkPixels": 1988
+      },
+      {
+        "id": "tutorials_svg_from_scratch_clipping_and_masking_block_3_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 40000
+      },
+      {
+        "id": "tutorials_svg_from_scratch_fills_and_strokes_block_6_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 131044
+      },
+      {
+        "id": "tutorials_svg_from_scratch_paths_block_12_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 1280
+      },
+      {
+        "id": "tutorials_svg_from_scratch_paths_block_13_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 1280
+      },
+      {
+        "id": "tutorials_svg_from_scratch_texts_block_1_1",
+        "state": "Passed",
+        "meanInkError": 0.084565,
+        "tolerance": 0.16,
+        "inkPixels": 1335
+      }
+    ]
+  },
+  "aspectRatioAndLinkAudit": {
+    "recordedAt": "2026-10-19T21:56:04.649363+00:00",
+    "enabledComparisons": 13,
+    "inventoryTest": "Passed",
+    "importerTestsPassed": 13,
+    "remainingSkippedFixtures": 127,
+    "remainingSkipReasons": {
+      "HTML wrapper or incomplete SVG fragment": 63,
+      "External resource not embedded in the MDN source checkout": 17,
+      "Definition-only or non-painting snippet; no visual comparison to assert": 5,
+      "Scripted or interactive SVG": 3,
+      "Live sample requires JavaScript; static SVG comparison cannot reproduce its behavior": 5,
+      "Animation requires a separately defined timeline expectation": 33,
+      "External CSS resource": 1
+    },
+    "note": "Aspect ratio fragments retain their original nested viewport attributes and use the shared definitions and drawing CSS from their MDN sample. Host page layout CSS is not included. All 13 comparisons pass at existing tolerances. Eleven navigation link fixtures were temporarily enabled without source changes and all failed visual comparison. Their original skips remain in place. The importer external resource label is overly broad for navigation links, but the measured rendering failures also block enabling these cases as passing comparisons. No tolerances or browser difference exclusions changed. This records targeted runs rather than a new full suite run.",
+    "passedCases": [
+      {
+        "id": "reference_attribute_preserveaspectratio_block_11_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_12_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_13_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_18_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_19_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_20_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_25_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_26_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_27_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 36000
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_32_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 345600
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_4_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_5_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      },
+      {
+        "id": "reference_attribute_preserveaspectratio_block_6_1",
+        "state": "Passed",
+        "meanInkError": 0.0,
+        "tolerance": 0.025,
+        "inkPixels": 28800
+      }
+    ],
+    "blockedLinkCases": [
+      {
+        "id": "guides_linking_block_2_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.490219,
+        "tolerance": 0.16,
+        "inkPixels": 21472
+      },
+      {
+        "id": "guides_linking_block_5_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.501834,
+        "tolerance": 0.16,
+        "inkPixels": 313167
+      },
+      {
+        "id": "reference_attribute_href_block_2_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.877556,
+        "tolerance": 0.16,
+        "inkPixels": 12835
+      },
+      {
+        "id": "reference_attribute_hreflang_block_1_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.86035,
+        "tolerance": 0.16,
+        "inkPixels": 6397
+      },
+      {
+        "id": "reference_attribute_ping_block_1_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.863704,
+        "tolerance": 0.16,
+        "inkPixels": 7072
+      },
+      {
+        "id": "reference_attribute_referrerpolicy_block_1_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.86035,
+        "tolerance": 0.16,
+        "inkPixels": 6397
+      },
+      {
+        "id": "reference_attribute_rel_block_1_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.86035,
+        "tolerance": 0.16,
+        "inkPixels": 6397
+      },
+      {
+        "id": "reference_attribute_target_block_2_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.600744,
+        "tolerance": 0.16,
+        "inkPixels": 67580
+      },
+      {
+        "id": "reference_attribute_xlink_colon_actuate_block_1_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.877556,
+        "tolerance": 0.16,
+        "inkPixels": 12835
+      },
+      {
+        "id": "reference_attribute_xlink_colon_href_block_2_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.877556,
+        "tolerance": 0.16,
+        "inkPixels": 12835
+      },
+      {
+        "id": "reference_element_a_block_2_1",
+        "state": "Failed during audit",
+        "meanInkError": 0.977902,
+        "tolerance": 0.16,
+        "inkPixels": 259400
+      }
+    ]
   }
 }

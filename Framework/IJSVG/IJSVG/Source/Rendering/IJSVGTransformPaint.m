@@ -9,4 +9,9 @@
 #import <IJSVGTransformPaint.h>
 
 @implementation IJSVGTransformPaint
+
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitTransform;
+}
 @end

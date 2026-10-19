@@ -12,6 +12,11 @@
 
 @implementation IJSVGGroup
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeGroup;
@@ -87,7 +92,7 @@
         return;
     }
 
-    if ([child.parentNode isKindOfClass:IJSVGGroup.class] && child.parentNode != self) {
+    if ((child.parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0 && child.parentNode != self) {
         [(IJSVGGroup*)child.parentNode removeChild:child];
     }
 

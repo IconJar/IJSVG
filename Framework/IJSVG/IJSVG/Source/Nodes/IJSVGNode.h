@@ -253,6 +253,30 @@ typedef NS_OPTIONS(NSInteger, IJSVGNodeTraits) {
     IJSVGNodeTraitPathed = 1 << 2
 };
 
+typedef NS_OPTIONS(NSUInteger, IJSVGNodeTypeTraits) {
+    IJSVGNodeTypeTraitNone = 0,
+    IJSVGNodeTypeTraitPaint = 1UL << 0,
+    IJSVGNodeTypeTraitGraphics = 1UL << 1,
+    IJSVGNodeTypeTraitViewport = 1UL << 2,
+    IJSVGNodeTypeTraitGroup = 1UL << 3,
+    IJSVGNodeTypeTraitPath = 1UL << 4,
+    IJSVGNodeTypeTraitText = 1UL << 5,
+    IJSVGNodeTypeTraitRoot = 1UL << 6,
+    IJSVGNodeTypeTraitImage = 1UL << 7,
+    IJSVGNodeTypeTraitGradient = 1UL << 8,
+    IJSVGNodeTypeTraitRadialGradient = 1UL << 9,
+    IJSVGNodeTypeTraitPattern = 1UL << 10,
+    IJSVGNodeTypeTraitColor = 1UL << 11,
+    IJSVGNodeTypeTraitMask = 1UL << 12,
+    IJSVGNodeTypeTraitFilterPrimitive = 1UL << 13,
+    IJSVGNodeTypeTraitFilter = 1UL << 14,
+    IJSVGNodeTypeTraitMarker = 1UL << 15,
+    IJSVGNodeTypeTraitSwitch = 1UL << 16,
+    IJSVGNodeTypeTraitGlyph = 1UL << 17,
+    IJSVGNodeTypeTraitStop = 1UL << 18,
+    IJSVGNodeTypeTraitSymbol = 1UL << 19
+};
+
 typedef NS_ENUM(NSInteger, IJSVGNodeType) {
     IJSVGNodeTypeUnknown = 0,
     IJSVGNodeTypeGroup,
@@ -404,6 +428,8 @@ static CGFloat IJSVGInheritedIntegerValue = INT_MIN;
 
 void IJSVGAssertPaintableObject(id object);
 
+// Structural types are inherited by subclasses and do not depend on mutable style traits.
+@property (nonatomic, readonly) IJSVGNodeTypeTraits nodeTraits;
 @property (nonatomic, assign) IJSVGNodeTraits traits;
 @property (nonatomic, assign, readonly) CGRect bounds;
 @property (nonatomic, readonly) BOOL containsRelativeUnits;

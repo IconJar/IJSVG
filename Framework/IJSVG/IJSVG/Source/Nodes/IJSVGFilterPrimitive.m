@@ -85,6 +85,11 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
     NSMutableDictionary<NSString*, NSArray<NSNumber*>*>* _parsedNumbers;
 }
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitFilterPrimitive;
+}
+
 - (instancetype)initWithParameterStateFromPrimitive:(IJSVGFilterPrimitive*)source
 {
     if ((self = [self init]) != nil) {
@@ -238,7 +243,7 @@ static IJSVGBlendMode IJSVGBlendModeForString(NSString* value)
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];
-    if ([node isKindOfClass:IJSVGFilterPrimitive.class]) {
+    if ((node.nodeTraits & IJSVGNodeTypeTraitFilterPrimitive) != 0) {
         IJSVGFilterPrimitive* primitive = (IJSVGFilterPrimitive*)node;
         self.input = primitive.input;
         self.result = primitive.result;

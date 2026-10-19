@@ -109,7 +109,7 @@ static CGFloat IJSVGClipSideRadius(CGFloat position, CGFloat dimension, BOOL far
 
 static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
 {
-    if ([node matchesTraits:IJSVGNodeTraitPathed] || [node isKindOfClass:IJSVGText.class]) {
+    if ([node matchesTraits:IJSVGNodeTraitPathed] || (node.nodeTraits & IJSVGNodeTypeTraitText) != 0) {
         return YES;
     }
     if (node.type != IJSVGNodeTypeUse) {
@@ -351,7 +351,7 @@ static BOOL IJSVGClipPathSupportsNode(IJSVGNode* node)
     __block IJSVGWindingRule rule = IJSVGWindingRuleInherit;
     __weak IJSVGClipPath* weakSelf = self;
     IJSVGNodeWalkHandler handler = ^(IJSVGNode* node, BOOL* allowChildNodes, BOOL* stop) {
-        if (node == weakSelf || ![node isKindOfClass:IJSVGGraphicsNode.class]) {
+        if (node == weakSelf || (node.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0) {
             return;
         }
         IJSVGWindingRule clipRule = ((IJSVGGraphicsNode*)node).clipRule;

@@ -134,7 +134,7 @@
     }
     NSString* declaration = prefix == nil ? @"xmlns" : [@"xmlns:" stringByAppendingString:prefix];
     for (IJSVGExportNode* node = self; node != nil; node = node.parent) {
-        if ([node isKindOfClass:IJSVGExportElement.class]) {
+        if (node.kind == IJSVGXMLNodeKindElement) {
             NSString* uri = [(IJSVGExportElement*)node attributeForName:declaration].stringValue;
             if (uri != nil) {
                 return uri;

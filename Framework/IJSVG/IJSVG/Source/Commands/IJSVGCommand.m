@@ -22,6 +22,11 @@
 
 @implementation IJSVGCommand
 
+- (BOOL)startsNewSubpath
+{
+    return NO;
+}
+
 + (BOOL)requiresCustomParameterParsing
 {
     return NO;
@@ -90,7 +95,7 @@
     // If there are some commands in the array and the first one is NOT a move
     // command then we need to implicitly moe the path to zero point or CG will
     // throw warnings at us.
-    if (commands.count > 0 && ![commands.firstObject isKindOfClass:IJSVGCommandMove.class]) {
+    if (commands.count > 0 && !commands.firstObject.startsNewSubpath) {
         CGPathMoveToPoint(path, NULL, 0, 0);
     }
 

@@ -16,6 +16,18 @@ typedef NS_ENUM(NSUInteger, IJSVGPaintFillType) {
     IJSVGPaintFillTypePattern
 };
 
+typedef NS_OPTIONS(NSUInteger, IJSVGPaintTraits) {
+    IJSVGPaintTraitNone = 0,
+    IJSVGPaintTraitFilter = 1 << 0,
+    IJSVGPaintTraitPattern = 1 << 1,
+    IJSVGPaintTraitShape = 1 << 2,
+    IJSVGPaintTraitRoot = 1 << 3,
+    IJSVGPaintTraitGroup = 1 << 4,
+    IJSVGPaintTraitImage = 1 << 5,
+    IJSVGPaintTraitGradient = 1 << 6,
+    IJSVGPaintTraitTransform = 1 << 7
+};
+
 typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
     IJSVGPaintDrawingOptionNone = 0,
     IJSVGPaintDrawingOptionIgnoreClipping = 1 << 1
@@ -64,11 +76,11 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 
-// Filter subclasses inherit this discriminator without walking the class hierarchy.
-@property (nonatomic, readonly) BOOL isFilterPaint;
+// Subclasses inherit paint traits without walking the class hierarchy.
+@property (nonatomic, readonly) IJSVGPaintTraits paintTraits;
 
 + (instancetype)paint;
-+ (IJSVGPaintFillType)fillTypeForFill:(id)fill;
++ (IJSVGPaintFillType)fillTypeForFill:(IJSVGNode*)fill;
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children;
 
 // Object bounding box resources use geometry bounds, excluding strokes.

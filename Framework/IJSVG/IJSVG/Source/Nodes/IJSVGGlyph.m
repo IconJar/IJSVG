@@ -11,6 +11,11 @@
 
 @implementation IJSVGGlyph
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitGlyph;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeGlyph;
@@ -19,7 +24,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if ([source isKindOfClass:IJSVGGlyph.class]) {
+    if ((source.nodeTraits & IJSVGNodeTypeTraitGlyph) != 0) {
         self.unicode = ((IJSVGGlyph*)source).unicode.copy;
     }
 }

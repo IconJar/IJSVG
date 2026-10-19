@@ -11,6 +11,11 @@
 
 @implementation IJSVGSymbol
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitRoot | IJSVGNodeTypeTraitSymbol;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeSymbol;
@@ -19,7 +24,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if ([source isKindOfClass:IJSVGSymbol.class]) {
+    if ((source.nodeTraits & IJSVGNodeTypeTraitSymbol) != 0) {
         IJSVGSymbol* symbol = (IJSVGSymbol*)source;
         self.refX = symbol.refX.copy;
         self.refY = symbol.refY.copy;

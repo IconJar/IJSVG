@@ -1318,7 +1318,7 @@ static BOOL IJSVGStyleSheetTransformBoxIsValid(NSString* value)
 static BOOL IJSVGStyleSheetDeclarationValueIsValid(NSUInteger attribute, NSString* value)
 {
     if (IJSVGAttributeIsGeometryProperty(attribute)) {
-        return [value isKindOfClass:NSString.class] && IJSVGGeometryLengthIsValid(value, (IJSVGNodeAttribute)attribute);
+        return IJSVGGeometryLengthIsValid(value, (IJSVGNodeAttribute)attribute);
     }
     switch (attribute) {
         case IJSVGNodeAttributeStrokeWidth:

@@ -12,6 +12,11 @@
 
 @implementation IJSVGMask
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitMask;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeMask;
@@ -47,7 +52,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];
-    if ([node isKindOfClass:IJSVGMask.class]) {
+    if ((node.nodeTraits & IJSVGNodeTypeTraitMask) != 0) {
         self.maskType = ((IJSVGMask*)node).maskType;
     }
 }

@@ -18,6 +18,12 @@
     BOOL _hasPointSubpaths;
     BOOL _pathInitialized;
 }
+
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitPath;
+}
+
 @synthesize path = _path;
 
 + (IJSVGNodeType)defaultNodeType
@@ -35,7 +41,7 @@
         }
 
         // could be a use group
-        if ([pathNode isKindOfClass:IJSVGGroup.class] == YES) {
+        if ((pathNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
             IJSVGGroup* useGroup = (IJSVGGroup*)pathNode;
             [self recursivelyAddPathedNodesPaths:useGroup.children transform:transform toPath:mutPath];
         }
@@ -176,7 +182,7 @@
 
         // if we detect the stroke was a color, we need to check its alpha
         // component to then remove the trait if its 0.f
-        if ([stroke isKindOfClass:IJSVGColorNode.class] == YES) {
+        if ((stroke.nodeTraits & IJSVGNodeTypeTraitColor) != 0) {
             IJSVGColorNode* strokeColor = (IJSVGColorNode*)stroke;
             CGColorRef color = strokeColor.color;
             if (color == NULL || CGColorGetAlpha(color) == 0.f || strokeColor.isNoneOrTransparent == YES) {

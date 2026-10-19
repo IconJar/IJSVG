@@ -27,6 +27,54 @@ FENCES = re.compile(r"^```([^\n]*)\n(.*?)^```\s*$", re.M | re.S)
 SVG = re.compile(r"</?svg\b[^>]*>", re.I)
 FOREIGN_OBJECT = re.compile(r"<(?:[\w.-]+:)?foreignObject\b", re.I)
 
+FRAGMENT_VIEWPORTS = {
+    **{f"tutorials/svg_from_scratch/basic_shapes/block-{index}": (200, 250)
+       for index in range(2, 9)},
+    "tutorials/svg_from_scratch/clipping_and_masking/block-3": (100, 100),
+    "tutorials/svg_from_scratch/fills_and_strokes/block-6": (200, 200),
+    "tutorials/svg_from_scratch/paths/block-12": (100, 100),
+    "tutorials/svg_from_scratch/paths/block-13": (100, 100),
+    "tutorials/svg_from_scratch/texts/block-1": (200, 100),
+}
+
+
+def standalone_fragment(code, example_id):
+    viewport = FRAGMENT_VIEWPORTS.get(example_id)
+    if viewport is None:
+        return None
+    width, height = viewport
+    xml = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+           f'viewBox="0 0 {width} {height}">{code}</svg>')
+    try:
+        root = ET.fromstring(xml)
+    except ET.ParseError:
+        return None
+    shapes = {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'}
+    if not len(root) or any(node.tag.split('}')[-1] not in shapes for node in root):
+        return None
+    return xml
+
+
+def aspect_ratio_fragment(code, example_id, sources):
+    prefix = 'reference/attribute/preserveaspectratio/block-'
+    if not example_id.startswith(prefix):
+        return None
+    number = int(example_id.removeprefix(prefix))
+    for opening, closing, stylesheet in [(3, 7, 8), (10, 14, 15), (17, 21, 22),
+                                          (24, 28, 29), (31, 33, 34)]:
+        if not opening < number < closing:
+            continue
+        required = [prefix + str(index) for index in (opening, closing, stylesheet)]
+        if any(key not in sources for key in required):
+            return None
+        xml = sources[required[0]] + code + sources[required[1]]
+        try:
+            ET.fromstring(xml)
+        except ET.ParseError:
+            return None
+        return xml, sources[required[2]]
+    return None
+
 
 def documents(code):
     """Keep nested SVGs intact, splitting only top-level documents."""
@@ -170,6 +218,8 @@ def main():
         slug = re.search(r"^slug: (.+)$", text, re.M)[1]
         page_id = str(page.parent.relative_to(source))
         blocks = list(FENCES.finditer(text))
+        block_sources = {f"{page_id}/block-{index}": block[2]
+                         for index, block in enumerate(blocks, 1)}
         headings = list(re.finditer(r"^(#{2,6}) (.+)$", text, re.M))
         # EmbedLiveSample references a heading and includes the subtree under that heading.
         groups = []
@@ -194,6 +244,12 @@ def main():
                 continue
             code = re.sub(r"<!--.*?-->|<\?xml.*?\?>|<!DOCTYPE[^>]*>", "", block[2], flags=re.S).strip()
             docs, reason = documents(code)
+            fragment = standalone_fragment(code, entry["id"]) if not docs else None
+            aspect_fragment = aspect_ratio_fragment(code, entry["id"], block_sources) if not docs else None
+            if fragment is not None:
+                docs, reason = [fragment], None
+            elif aspect_fragment is not None:
+                docs, reason = [aspect_fragment[0]], None
             group = next(((a, b) for a, b in groups if a <= block.start() < b), None)
             companions = [b for b in blocks if group and group[0] <= b.start() < group[1]]
             css = "\n".join(b[2] for b in companions if b[1].split()[0] == "css")
@@ -201,15 +257,21 @@ def main():
                 # The later <use> variant shares the CSS from the first live sample.
                 css = "\n".join(b[2] for b in blocks if b[1].split()[0] == "css")
             javascript = any(b[1].split()[0] in {"js", "javascript"} for b in companions)
+            if aspect_fragment is not None:
+                css, javascript = aspect_fragment[1], False
             if not docs:
                 docs = [None]
             for number, document in enumerate(docs, 1):
                 case_id = re.sub(r"[^a-zA-Z0-9]", "_", f"{page_id}_block_{index}_{number}")
                 case = {"id": case_id, "example": entry["id"], "url": entry["url"]}
                 if document:
-                    xml, changes = normalize(document, css, page, checkout)
+                    xml, changes = normalize(document, "" if fragment is not None else css, page, checkout)
+                    if fragment is not None:
+                        changes.insert(0, "Wrapped standalone drawing fragment in an explicit SVG viewport")
+                    elif aspect_fragment is not None:
+                        changes.insert(0, "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS")
                     case.update(svg=xml, adaptations=changes, sha256=hashlib.sha256(xml.encode()).hexdigest())
-                    reason = exclusion(xml, javascript)
+                    reason = exclusion(xml, javascript if fragment is None else False)
                 if reason:
                     case["skip"] = reason
                 cases.append(case)

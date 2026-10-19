@@ -13,6 +13,11 @@
 
 @implementation IJSVGPattern
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitPattern;
+}
+
 - (void)applyPropertiesFromNode:(IJSVGPattern*)node
 {
     [super applyPropertiesFromNode:node];

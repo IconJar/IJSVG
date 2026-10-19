@@ -11,6 +11,11 @@
 
 @implementation IJSVGImagePaint
 
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitImage;
+}
+
 - (id)initWithImage:(IJSVGImage*)image
 {
     if ((self = [super init]) != nil) {

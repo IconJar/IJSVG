@@ -126,11 +126,30 @@ typedef NS_OPTIONS(NSUInteger, IJSVGTextDecoration) {
 
 @end
 
-// Retains mixed XML content in document order. Strings are never replaced by
-// outlines.
+@class IJSVGText;
+
+typedef NS_ENUM(NSUInteger, IJSVGTextContentKind) {
+    IJSVGTextContentKindString,
+    IJSVGTextContentKindSpan
+};
+
+// Each entry retains one typed value in document order.
+@interface IJSVGTextContent : NSObject
+
+@property (nonatomic, readonly) IJSVGTextContentKind kind;
+@property (nonatomic, copy, readonly, nullable) NSString* string;
+@property (nonatomic, strong, readonly, nullable) IJSVGText* span;
+
+- (instancetype)initWithString:(NSString*)string;
+- (instancetype)initWithSpan:(IJSVGText*)span;
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)new NS_UNAVAILABLE;
+
+@end
+
 @interface IJSVGText : IJSVGGroup
 
-@property (nonatomic, copy) NSArray<id>* textContent;
+@property (nonatomic, copy) NSArray<IJSVGTextContent*>* textContent;
 
 // Whether this node owns text rather than only containing styled child spans.
 @property (nonatomic, readonly) BOOL hasTextContent;

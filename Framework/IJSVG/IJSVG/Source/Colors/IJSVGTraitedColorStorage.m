@@ -41,7 +41,7 @@
 {
     if ([_colors containsObject:color] == YES) {
         void (^handler)(IJSVGTraitedColor* _Nonnull obj, BOOL* _Nonnull stop) = ^(IJSVGTraitedColor* _Nonnull obj, BOOL* _Nonnull stop) {
-            if ([obj isEqual:color] == YES) {
+            if ([obj isEqualToTraitedColor:color] == YES) {
                 [obj addTraits:color.traits];
                 *stop = YES;
             }

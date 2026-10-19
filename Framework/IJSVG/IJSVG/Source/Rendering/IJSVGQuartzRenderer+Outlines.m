@@ -343,10 +343,10 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 
 - (BOOL)outlineBoundsIncludeAllCoverage:(IJSVGPaint*)paint
 {
-    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         return YES;
     }
-    if ([paint isKindOfClass:IJSVGRootPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitRoot) != 0) {
         return NO;
     }
     for (IJSVGPaint* child in paint.children) {
@@ -376,11 +376,11 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
         return 0;
     }
     BOOL structural = paint.class == IJSVGGroupPaint.class || paint.class == IJSVGTransformPaint.class;
-    if ((structural || [paint isKindOfClass:IJSVGShapePaint.class]) && paint.children.count == 1) {
+    if ((structural || (paint.paintTraits & IJSVGPaintTraitShape) != 0) && paint.children.count == 1) {
         IJSVGPaint* child = paint.children.firstObject;
         return [self outlineRectangleAreaForPaint:child transform:CGAffineTransformConcat(child.placementTransform, transform)];
     }
-    if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitShape) != 0) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         CGRect rectangle;
         if (shape.fillColor != NULL && CGColorGetAlpha(shape.fillColor) > 0 && CGPathIsRect(shape.path, &rectangle)) {
@@ -393,7 +393,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 - (CGAffineTransform)outlinePlacementForChild:(IJSVGPaint*)child parent:(IJSVGPaint*)parent transform:(CGAffineTransform)transform
 {
     // A filter translates its source frame. The wrapper owns the node transform.
-    CGAffineTransform placement = [parent isKindOfClass:IJSVGFilterPaint.class] ? CGAffineTransformMakeTranslation(child.frame.origin.x, child.frame.origin.y) : child.placementTransform;
+    CGAffineTransform placement = (parent.paintTraits & IJSVGPaintTraitFilter) != 0 ? CGAffineTransformMakeTranslation(child.frame.origin.x, child.frame.origin.y) : child.placementTransform;
     return CGAffineTransformConcat(placement, transform);
 }
 
@@ -438,7 +438,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if (structural && paint.clipPath == NULL && paint.maskPaint == nil && paint.blendingMode <= kCGBlendModeLuminosity) {
         return [self appendPlacedChildOutlinesForPaint:paint transform:transform paths:paths pendingFilters:pending];
     }
-    if (pending != nil && [paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if (pending != nil && (paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         NSArray<IJSVGFilterPrimitive*>* primitives = ((IJSVGFilterPaint*)paint).filterMetadata.primitives;
 
         // Containment pays for itself on expanding filters, not cheap inner
@@ -634,13 +634,13 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 
 - (BOOL)appendOwnOutlineForPaint:(IJSVGPaint*)paint paths:(NSMutableArray<id>*)paths
 {
-    if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitShape) != 0) {
         return [self appendShapeOutline:(IJSVGShapePaint*)paint paths:paths];
     }
-    if ([paint isKindOfClass:IJSVGGradientPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitGradient) != 0) {
         return [self appendGradientOutline:(IJSVGGradientPaint*)paint paths:paths];
     }
-    if ([paint isKindOfClass:IJSVGRootPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitRoot) != 0) {
         IJSVGRootPaint* root = (IJSVGRootPaint*)paint;
         if (CGColorGetAlpha(root.backgroundColor) > 0) {
             CGRect bounds = IJSVGPaintGetBoundingBoxBounds(root);
@@ -682,7 +682,7 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
 - (CGPathRef)newClippedOutline:(CGPathRef)outline paint:(IJSVGPaint*)paint
 {
     // Gradient coverage is already its resolved clip.
-    BOOL gradientCoverage = [paint isKindOfClass:IJSVGGradientPaint.class] && paint.children.count == 0;
+    BOOL gradientCoverage = (paint.paintTraits & IJSVGPaintTraitGradient) != 0 && paint.children.count == 0;
     if (paint.clipPath == NULL || gradientCoverage) {
         return CGPathCreateCopy(outline);
     }
@@ -706,16 +706,16 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if (paint == nil || paint.hidden || paint.opacity <= 0 || (paint.clipPath != NULL && CGPathIsEmpty(paint.clipPath))) {
         return CGPathCreateMutable();
     }
-    if (paint.maskPaint != nil || [paint isKindOfClass:IJSVGImagePaint.class] || [paint isKindOfClass:IJSVGPatternPaint.class] || paint.blendingMode > kCGBlendModeLuminosity) {
+    if (paint.maskPaint != nil || (paint.paintTraits & IJSVGPaintTraitImage) != 0 || (paint.paintTraits & IJSVGPaintTraitPattern) != 0 || paint.blendingMode > kCGBlendModeLuminosity) {
         return NULL;
     }
     CGPathRef outline = [self newSourceOutlineForPaint:paint];
-    if (outline != NULL && [paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if (outline != NULL && (paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         CGPathRef filtered = [self newFilteredOutline:outline paint:(IJSVGFilterPaint*)paint];
         CGPathRelease(outline);
         outline = filtered;
     }
-    if (outline != NULL && !outerRoot && [paint isKindOfClass:IJSVGRootPaint.class]) {
+    if (outline != NULL && !outerRoot && (paint.paintTraits & IJSVGPaintTraitRoot) != 0) {
         CGPathRef placed = [self newViewportOutline:outline root:(IJSVGRootPaint*)paint];
         CGPathRelease(outline);
         outline = placed;
@@ -734,17 +734,17 @@ static CGPathRef IJSVGOutlineFillHoles(CGPathRef path)
     if (paint == nil || paint.hidden || paint.opacity <= 0 || (paint.clipPath != NULL && CGPathIsEmpty(paint.clipPath))) {
         return YES;
     }
-    if (paint.maskPaint != nil || [paint isKindOfClass:IJSVGImagePaint.class] || [paint isKindOfClass:IJSVGPatternPaint.class] || paint.blendingMode > kCGBlendModeLuminosity) {
+    if (paint.maskPaint != nil || (paint.paintTraits & IJSVGPaintTraitImage) != 0 || (paint.paintTraits & IJSVGPaintTraitPattern) != 0 || paint.blendingMode > kCGBlendModeLuminosity) {
         return NO;
     }
-    if ([paint isKindOfClass:IJSVGShapePaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitShape) != 0) {
         IJSVGShapePaint* shape = (IJSVGShapePaint*)paint;
         if (shape.strokeColor != NULL && CGColorGetAlpha(shape.strokeColor) > 0 && shape.lineWidth > 0) {
             // Resolve the lazy stroke flag before independent outline workers start.
             (void)shape.hasPointSubpaths;
         }
     }
-    if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+    if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
         IJSVGFilterPaint* filterPaint = (IJSVGFilterPaint*)paint;
         if (![IJSVGFilterGraph canOutlineMetadata:filterPaint.filterMetadata backgroundIsEmpty:!filterPaint.usesBackground]) {
             return NO;

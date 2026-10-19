@@ -76,10 +76,9 @@ static CIColorKernel* IJSVGCompositeArithmeticKernel(void)
         if (source == nil) {
             return;
         }
-        CIKernel* kernel = [CIKernel kernelsWithMetalString:source error:NULL].firstObject;
-        if ([kernel isKindOfClass:CIColorKernel.class]) {
-            arithmeticKernel = (CIColorKernel*)kernel;
-        }
+
+        // The bundled shader declares one color kernel.
+        arithmeticKernel = (CIColorKernel*)[CIKernel kernelsWithMetalString:source error:NULL].firstObject;
     });
     return arithmeticKernel;
 }

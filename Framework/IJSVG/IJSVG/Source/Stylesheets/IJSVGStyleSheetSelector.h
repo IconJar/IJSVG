@@ -15,6 +15,11 @@
 struct IJSVGXMLNode;
 struct IJSVGXMLAttribute;
 
+typedef NS_ENUM(NSUInteger, IJSVGStyleSheetSelectorNodeKind) {
+    IJSVGStyleSheetSelectorNodeKindRenderNode,
+    IJSVGStyleSheetSelectorNodeKindXMLRecord
+};
+
 // Match selectors against either render nodes or lightweight XML records.
 @protocol IJSVGStyleSheetSelectorNode <NSObject>
 - (NSString*)name;
@@ -22,6 +27,7 @@ struct IJSVGXMLAttribute;
 - (NSSet<NSString*>*)classNameList;
 - (id<IJSVGStyleSheetSelectorNode>)selectorParent;
 - (id<IJSVGStyleSheetSelectorNode>)selectorPreviousSibling;
+@property (nonatomic, readonly) IJSVGStyleSheetSelectorNodeKind selectorNodeKind;
 @optional
 - (NSString*)namespaceURI;
 - (BOOL)selectorMatchesAttribute:(IJSVGStyleSheetAttributeSelector*)attribute;

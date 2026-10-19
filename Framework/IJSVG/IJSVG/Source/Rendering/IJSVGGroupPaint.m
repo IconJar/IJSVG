@@ -21,7 +21,7 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
             continue;
         }
         [visited addObject:paint];
-        if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
             IJSVGFilterPaint* filtered = (IJSVGFilterPaint*)paint;
             if (filtered.usesBackground) {
                 return YES;
@@ -40,7 +40,7 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
         if (paint.maskPaint != nil) {
             [pending addObject:paint.maskPaint];
         }
-        if ([paint isKindOfClass:IJSVGPatternPaint.class]) {
+        if ((paint.paintTraits & IJSVGPaintTraitPattern) != 0) {
             IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
             if (pattern != nil) {
                 [pending addObject:pattern];
@@ -51,6 +51,11 @@ static BOOL IJSVGGroupNeedsBackgroundPixels(IJSVGPaint* root)
 }
 
 @implementation IJSVGGroupPaint
+
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitGroup;
+}
 
 - (void)performRenderInContext:(CGContextRef)ctx
 {

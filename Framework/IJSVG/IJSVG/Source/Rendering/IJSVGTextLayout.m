@@ -360,11 +360,14 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     if (node.isTextPath) {
         path = node;
     }
-    for (id item in node.textContent) {
-        if ([item isKindOfClass:NSString.class]) {
-            [self appendString:item owner:node path:path];
-        } else if ([item isKindOfClass:IJSVGText.class]) {
-            [self collect:item path:path];
+    for (IJSVGTextContent* item in node.textContent) {
+        switch (item.kind) {
+            case IJSVGTextContentKindString:
+                [self appendString:item.string owner:node path:path];
+                break;
+            case IJSVGTextContentKindSpan:
+                [self collect:item.span path:path];
+                break;
         }
     }
 }

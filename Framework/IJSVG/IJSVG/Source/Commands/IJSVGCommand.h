@@ -22,6 +22,7 @@ typedef NS_ENUM(NSInteger, IJSVGCommandType) {
     NSInteger _currentIndex;
 }
 
+@property (nonatomic, readonly) BOOL startsNewSubpath;
 @property (nonatomic, assign) char command;
 @property (nonatomic, assign) CGFloat* parameters;
 @property (nonatomic, assign) NSInteger parameterCount;

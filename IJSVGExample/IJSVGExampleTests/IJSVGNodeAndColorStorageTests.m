@@ -30,6 +30,11 @@
 }
 @end
 
+@interface IJSVGEqualityTestColor : IJSVGTraitedColor
+@end
+@implementation IJSVGEqualityTestColor
+@end
+
 @interface IJSVGNodeAndColorStorageTests : XCTestCase
 @end
 
@@ -806,6 +811,14 @@
     IJSVGTraitedColor* sameColor = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitStroke];
     IJSVGTraitedColor* differentColor = [IJSVGTraitedColor colorWithColor:[IJSVGColor colorFromString:@"blue"] traits:IJSVGColorUsageTraitFill];
 
+    IJSVGTraitedColor* subclassColor = [IJSVGEqualityTestColor colorWithColor:[IJSVGColor colorFromString:@"red"] traits:IJSVGColorUsageTraitFill];
+    XCTAssertEqualObjects(color, subclassColor);
+    XCTAssertEqualObjects(subclassColor, color);
+    XCTAssertEqual(color.hash, subclassColor.hash);
+    XCTAssertFalse([color isEqual:[[NSObject alloc] init]]);
+    XCTAssertFalse([color isEqual:[NSNull null]]);
+    XCTAssertFalse([color isEqual:@"red"]);
+    XCTAssertFalse([color isEqual:nil]);
     XCTAssertEqualObjects(color, sameColor);
     XCTAssertNotEqualObjects(color, differentColor);
     XCTAssertTrue([color matchesTraits:IJSVGColorUsageTraitFill]);

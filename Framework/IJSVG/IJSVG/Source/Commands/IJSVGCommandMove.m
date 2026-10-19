@@ -11,6 +11,11 @@
 
 @implementation IJSVGCommandMove
 
+- (BOOL)startsNewSubpath
+{
+    return YES;
+}
+
 + (NSInteger)requiredParameterCount
 {
     return 2;

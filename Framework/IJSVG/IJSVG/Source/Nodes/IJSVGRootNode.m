@@ -12,6 +12,11 @@
 
 @implementation IJSVGRootNode
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitRoot;
+}
+
 - (void)setBackgroundColor:(CGColorRef)value
 {
     CGColorRef retained = CGColorRetain(value);
@@ -32,7 +37,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)node
 {
     [super applyPropertiesFromNode:node];
-    if ([node isKindOfClass:IJSVGRootNode.class]) {
+    if ((node.nodeTraits & IJSVGNodeTypeTraitRoot) != 0) {
         IJSVGRootNode* root = (IJSVGRootNode*)node;
         self.styleAncestors = root.styleAncestors;
         self.clientSize = root.clientSize;
@@ -110,7 +115,7 @@
     IJSVGRootNode* rootNode = nil;
     if ((rootNode = super.rootNode) == self) {
         IJSVGNode* parent = self.parentNode;
-        if ([parent isKindOfClass:IJSVGRootNode.class]) {
+        if ((parent.nodeTraits & IJSVGNodeTypeTraitRoot) != 0) {
             return (IJSVGRootNode*)parent;
         }
         return parent.rootNode;

@@ -14,6 +14,7 @@
 #import <IJSVG/IJSVGUtils.h>
 #import <IJSVGNodeParsing.h>
 #import <IJSVGQuartzRenderer.h>
+#import <objc/runtime.h>
 
 IJSVGNodeType IJSVGNodeTypeForString(NSString* string, IJSVGXMLNodeKind kind)
 {
@@ -425,7 +426,34 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     }
 }
 
+// Arbitrary Class queries retain subclass matching for existing callers.
+// Each concrete ancestor class is resolved once during a query.
+static BOOL IJSVGNodeClassMatches(Class candidate, Class requested, NSMapTable<Class, NSNumber*>* results)
+{
+    if (candidate == requested) {
+        return YES;
+    }
+    NSNumber* cached = [results objectForKey:candidate];
+    if (cached != nil) {
+        return cached.boolValue;
+    }
+    BOOL matches = NO;
+    for (Class ancestor = class_getSuperclass(candidate); ancestor != Nil; ancestor = class_getSuperclass(ancestor)) {
+        if (ancestor == requested) {
+            matches = YES;
+            break;
+        }
+    }
+    [results setObject:@(matches) forKey:candidate];
+    return matches;
+}
+
 @implementation IJSVGNode
+
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitNone;
+}
 @synthesize currentColor = _currentColor;
 
 - (void)setCurrentColor:(CGColorRef)value
@@ -534,7 +562,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 
     // child nodes only work for nodes
     // that are type group
-    if (*allowChildNodes == NO || [node isKindOfClass:IJSVGGroup.class] == NO) {
+    if (*allowChildNodes == NO || (node.nodeTraits & IJSVGNodeTypeTraitGroup) == 0) {
         *allowChildNodes = YES;
         return;
     }
@@ -720,7 +748,7 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
 - (IJSVGRootNode*)rootNode
 {
     IJSVGNode* parent = self;
-    while ([parent isKindOfClass:IJSVGRootNode.class] == NO) {
+    while ((parent.nodeTraits & IJSVGNodeTypeTraitRoot) == 0) {
         parent = parent.parentNode;
         if (parent == nil) {
             return nil;
@@ -741,29 +769,32 @@ static NSString* IJSVGNodeNameForType(IJSVGNodeType type)
     return nodes.copy;
 }
 
-- (instancetype)parentNodeMatchingClass:(Class)class
+- (instancetype)parentNodeMatchingClass:(Class)requestedClass
 {
-    IJSVGNode* parent = self.parentNode;
-    if ([parent isKindOfClass:class] == YES) {
-        return parent;
+    if (requestedClass == Nil) {
+        return nil;
     }
-    return [parent parentNodeMatchingClass:class];
+    NSMapTable<Class, NSNumber*>* matches = [NSMapTable strongToStrongObjectsMapTable];
+    for (IJSVGNode* parent = self.parentNode; parent != nil; parent = parent.parentNode) {
+        if (IJSVGNodeClassMatches(object_getClass(parent), requestedClass, matches)) {
+            return parent;
+        }
+    }
+    return nil;
 }
 
-- (instancetype)rootNodeMatchingClass:(Class)class
+- (instancetype)rootNodeMatchingClass:(Class)requestedClass
 {
+    if (requestedClass == Nil) {
+        return nil;
+    }
     IJSVGRootNode* rootNode = self.rootNode;
-    IJSVGNode* parentNode = self.parentNode;
     IJSVGNode* foundNode = nil;
-    while (parentNode != nil) {
-        // break on root node or if its matching
-        if (parentNode == rootNode || parentNode == nil) {
-            break;
+    NSMapTable<Class, NSNumber*>* matches = [NSMapTable strongToStrongObjectsMapTable];
+    for (IJSVGNode* parent = self.parentNode; parent != nil && parent != rootNode; parent = parent.parentNode) {
+        if (IJSVGNodeClassMatches(object_getClass(parent), requestedClass, matches)) {
+            foundNode = parent;
         }
-        if ([parentNode isKindOfClass:class] == YES) {
-            foundNode = parentNode;
-        }
-        parentNode = parentNode.parentNode;
     }
     return foundNode;
 }

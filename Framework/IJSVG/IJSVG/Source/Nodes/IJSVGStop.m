@@ -11,6 +11,11 @@
 
 @implementation IJSVGStop
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitStop;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeStop;
@@ -19,7 +24,7 @@
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if ([source isKindOfClass:IJSVGStop.class]) {
+    if ((source.nodeTraits & IJSVGNodeTypeTraitStop) != 0) {
         self.offset = ((IJSVGStop*)source).offset.copy;
     }
 }

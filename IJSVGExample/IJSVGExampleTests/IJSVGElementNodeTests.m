@@ -7,13 +7,149 @@
 //
 
 #import <IJSVG/IJSVGUmbrella.h>
+#import <IJSVGPaint.h>
+#import <IJSVGStrokePaint.h>
 #import <XCTest/XCTest.h>
 #import <objc/runtime.h>
+
+@interface IJSVGTraitTestText : IJSVGText
+@end
+@implementation IJSVGTraitTestText
+@end
+
+@interface IJSVGTraitTestStrokePaint : IJSVGStrokePaint
+@end
+@implementation IJSVGTraitTestStrokePaint
+@end
 
 @interface IJSVGElementNodeTests : XCTestCase
 @end
 
 @implementation IJSVGElementNodeTests
+
+- (void)testAncestorSearchPreservesSubclassAndRootBoundaries
+{
+    IJSVGRootNode* root = [[IJSVGRootNode alloc] init];
+    IJSVGTraitTestText* outer = [[IJSVGTraitTestText alloc] init];
+    IJSVGTraitTestText* inner = [[IJSVGTraitTestText alloc] init];
+    IJSVGNode* leaf = [[IJSVGPath alloc] init];
+    [root addChild:outer];
+    [outer addChild:inner];
+    [inner addChild:leaf];
+
+    XCTAssertEqual([leaf parentNodeMatchingClass:IJSVGText.class], inner);
+    XCTAssertEqual([leaf rootNodeMatchingClass:IJSVGText.class], outer);
+    XCTAssertEqual([leaf parentNodeMatchingClass:IJSVGTraitTestText.class], inner);
+    XCTAssertEqual([leaf rootNodeMatchingClass:IJSVGTraitTestText.class], outer);
+    XCTAssertEqual([leaf parentNodeMatchingClass:IJSVGRootNode.class], root);
+    XCTAssertNil([leaf rootNodeMatchingClass:IJSVGRootNode.class]);
+    XCTAssertNil([leaf parentNodeMatchingClass:IJSVGImage.class]);
+    XCTAssertNil([leaf rootNodeMatchingClass:IJSVGImage.class]);
+    XCTAssertEqual([leaf parentNodeMatchingClass:NSObject.class], inner);
+    XCTAssertEqual([leaf rootNodeMatchingClass:NSObject.class], outer);
+}
+
+- (void)testMixedTextContentPreservesStringsAndCopiedSubclassChildren
+{
+    IJSVGText* text = [[IJSVGText alloc] init];
+    IJSVGTraitTestText* span = [[IJSVGTraitTestText alloc] init];
+    span.textContent = @[ [[IJSVGTextContent alloc] initWithString:@"child"] ];
+    [text addChild:span];
+    IJSVGTextContent* child = [[IJSVGTextContent alloc] initWithSpan:span];
+    text.textContent = @[ child, [[IJSVGTextContent alloc] initWithString:@""] ];
+    XCTAssertFalse(text.hasTextContent);
+    NSMutableString* source = [@"parent" mutableCopy];
+    IJSVGTextContent* run = [[IJSVGTextContent alloc] initWithString:source];
+    [source setString:@"changed"];
+    text.textContent = @[ run, child ];
+    XCTAssertTrue(text.hasTextContent);
+    XCTAssertEqual(run.kind, IJSVGTextContentKindString);
+    XCTAssertNil(run.span);
+    XCTAssertEqual(child.kind, IJSVGTextContentKindSpan);
+    XCTAssertNil(child.string);
+
+    IJSVGText* copy = [text copy];
+    XCTAssertTrue(copy.hasTextContent);
+    XCTAssertEqualObjects(copy.textContent[0].string, @"parent");
+    XCTAssertEqual(copy.textContent[1].span, copy.children[0]);
+    XCTAssertNotEqual(copy.textContent[1].span, span);
+    XCTAssertEqualObjects(copy.textContent[1].span.textContent[0].string, @"child");
+}
+
+- (void)testImplicitTraitsMatchClassFamiliesAfterStyleEditsAndCopying
+{
+    NSDictionary<NSString*, NSNumber*>* nodeFamilies = @{
+        @"IJSVGPaintNode" : @(IJSVGNodeTypeTraitPaint),
+        @"IJSVGGraphicsNode" : @(IJSVGNodeTypeTraitGraphics),
+        @"IJSVGViewportNode" : @(IJSVGNodeTypeTraitViewport),
+        @"IJSVGGroup" : @(IJSVGNodeTypeTraitGroup),
+        @"IJSVGPath" : @(IJSVGNodeTypeTraitPath),
+        @"IJSVGText" : @(IJSVGNodeTypeTraitText),
+        @"IJSVGRootNode" : @(IJSVGNodeTypeTraitRoot),
+        @"IJSVGImage" : @(IJSVGNodeTypeTraitImage),
+        @"IJSVGGradient" : @(IJSVGNodeTypeTraitGradient),
+        @"IJSVGRadialGradient" : @(IJSVGNodeTypeTraitRadialGradient),
+        @"IJSVGPattern" : @(IJSVGNodeTypeTraitPattern),
+        @"IJSVGColorNode" : @(IJSVGNodeTypeTraitColor),
+        @"IJSVGMask" : @(IJSVGNodeTypeTraitMask),
+        @"IJSVGFilterPrimitive" : @(IJSVGNodeTypeTraitFilterPrimitive),
+        @"IJSVGFilter" : @(IJSVGNodeTypeTraitFilter),
+        @"IJSVGMarker" : @(IJSVGNodeTypeTraitMarker),
+        @"IJSVGSwitch" : @(IJSVGNodeTypeTraitSwitch),
+        @"IJSVGGlyph" : @(IJSVGNodeTypeTraitGlyph),
+        @"IJSVGStop" : @(IJSVGNodeTypeTraitStop),
+        @"IJSVGSymbol" : @(IJSVGNodeTypeTraitSymbol)
+    };
+    NSDictionary<NSString*, NSNumber*>* paintFamilies = @{
+        @"IJSVGFilterPaint" : @(IJSVGPaintTraitFilter),
+        @"IJSVGPatternPaint" : @(IJSVGPaintTraitPattern),
+        @"IJSVGShapePaint" : @(IJSVGPaintTraitShape),
+        @"IJSVGRootPaint" : @(IJSVGPaintTraitRoot),
+        @"IJSVGGroupPaint" : @(IJSVGPaintTraitGroup),
+        @"IJSVGImagePaint" : @(IJSVGPaintTraitImage),
+        @"IJSVGGradientPaint" : @(IJSVGPaintTraitGradient),
+        @"IJSVGTransformPaint" : @(IJSVGPaintTraitTransform)
+    };
+    unsigned int count = 0;
+    Class* classes = objc_copyClassList(&count);
+    NSUInteger checkedNodes = 0;
+    NSUInteger checkedPaints = 0;
+    for (unsigned int index = 0; index < count; index++) {
+        Class candidate = classes[index];
+        if (![NSStringFromClass(candidate) hasPrefix:@"IJSVG"]) {
+            continue;
+        }
+        if ([candidate isSubclassOfClass:IJSVGNode.class]) {
+            IJSVGNode* node = [[candidate alloc] init];
+            IJSVGNodeTypeTraits expected = IJSVGNodeTypeTraitNone;
+            for (NSString* family in nodeFamilies) {
+                if ([node isKindOfClass:NSClassFromString(family)]) {
+                    expected |= nodeFamilies[family].unsignedIntegerValue;
+                }
+            }
+            XCTAssertEqual(node.nodeTraits, expected, @"%@", candidate);
+            node.type = IJSVGNodeTypeUnknown;
+            node.traits = IJSVGNodeTraitNone;
+            XCTAssertEqual(node.nodeTraits, expected, @"%@", candidate);
+            IJSVGNode* copy = node.copy;
+            XCTAssertEqual(copy.nodeTraits, expected, @"%@", candidate);
+            checkedNodes++;
+        } else if ([candidate isSubclassOfClass:IJSVGPaint.class]) {
+            IJSVGPaint* paint = [[candidate alloc] init];
+            IJSVGPaintTraits expected = IJSVGPaintTraitNone;
+            for (NSString* family in paintFamilies) {
+                if ([paint isKindOfClass:NSClassFromString(family)]) {
+                    expected |= paintFamilies[family].unsignedIntegerValue;
+                }
+            }
+            XCTAssertEqual(paint.paintTraits, expected, @"%@", candidate);
+            checkedPaints++;
+        }
+    }
+    free(classes);
+    XCTAssertGreaterThan(checkedNodes, 50u);
+    XCTAssertGreaterThan(checkedPaints, 10u);
+}
 
 - (void)testParsedCanonicalNamesRemainDerivedAfterCopying
 {
@@ -261,9 +397,9 @@
     IJSVGText* text = (IJSVGText*)node.children.firstObject;
     XCTAssertTrue([text.children.firstObject isKindOfClass:IJSVGAnchor.class]);
     IJSVGAnchor* anchor = (IJSVGAnchor*)text.children.firstObject;
-    XCTAssertTrue([anchor.textContent containsObject:@"linked"]);
+    XCTAssertEqualObjects(anchor.textContent.firstObject.string, @"linked");
     XCTAssertTrue([anchor.children.firstObject isKindOfClass:IJSVGTextSpan.class]);
-    XCTAssertTrue([text.textContent containsObject:@"after"]);
+    XCTAssertEqualObjects(text.textContent.lastObject.string, @"after");
 }
 
 - (void)testDefinitionsAndMetadataDoNotBecomeRenderedChildren

@@ -33,6 +33,11 @@ static BOOL IJSVGShapeBoundsAreFinite(CGRect bounds)
 
 @implementation IJSVGShapePaint
 
+- (IJSVGPaintTraits)paintTraits
+{
+    return IJSVGPaintTraitShape;
+}
+
 @synthesize lineDashPattern = _lineDashPattern;
 
 - (NSData*)lineDashData

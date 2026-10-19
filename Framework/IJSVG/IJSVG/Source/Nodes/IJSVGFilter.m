@@ -13,6 +13,11 @@
 
 @implementation IJSVGFilter
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitFilter;
+}
+
 - (void)applyPropertiesFromNode:(IJSVGFilter*)node
 {
     [super applyPropertiesFromNode:node];
@@ -45,11 +50,11 @@
     NSArray<IJSVGNode*>* children = self.children;
     if (children.count <= 1) {
         IJSVGNode* node = children.firstObject;
-        return [node isKindOfClass:IJSVGFilterPrimitive.class] ? @[ (IJSVGFilterPrimitive*)node ] : @[];
+        return (node.nodeTraits & IJSVGNodeTypeTraitFilterPrimitive) != 0 ? @[ (IJSVGFilterPrimitive*)node ] : @[];
     }
     NSMutableArray<IJSVGFilterPrimitive*>* primitives = [[NSMutableArray alloc] init];
     for (IJSVGNode* node in children) {
-        if ([node isKindOfClass:IJSVGFilterPrimitive.class]) {
+        if ((node.nodeTraits & IJSVGNodeTypeTraitFilterPrimitive) != 0) {
             [primitives addObject:(IJSVGFilterPrimitive*)node];
         }
     }

@@ -54,6 +54,11 @@ static NSString* IJSVGImageURLWithoutWhitespace(NSString* string)
 
 @implementation IJSVGImage
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitImage;
+}
+
 - (void)applyPropertiesFromNode:(IJSVGImage*)node
 {
     [super applyPropertiesFromNode:node];

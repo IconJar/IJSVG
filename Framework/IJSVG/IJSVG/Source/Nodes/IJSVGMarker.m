@@ -12,6 +12,11 @@
 
 @implementation IJSVGMarker
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitMarker;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeMarker;

@@ -1322,7 +1322,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     }
 
     NSString* attributePathData = IJSVGAttributeValue(attributeValues, IJSVGNodeAttributeD);
-    BOOL isFilterPrimitive = [node isKindOfClass:IJSVGFilterPrimitive.class];
+    BOOL isFilterPrimitive = (node.nodeTraits & IJSVGNodeTypeTraitFilterPrimitive) != 0;
 
     // Reuse declarations while resolving inherited values on each new node.
     BOOL cacheFilterAttributes = raw != nil && ignoringAttributes == nil && self.selectorScope == nil && (isFilterPrimitive || node.type == IJSVGNodeTypeFilter);
@@ -1382,7 +1382,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     // color interpolation presentation property of the referenced gradient.
     __attribute__((objc_precise_lifetime)) IJSVGStyleSheetStyle* ownInterpolationStyle = nil;
     __attribute__((objc_precise_lifetime)) NSString* ownInterpolationValue = nil;
-    if (input.hasReference && [node isKindOfClass:IJSVGGradient.class]) {
+    if (input.hasReference && (node.nodeTraits & IJSVGNodeTypeTraitGradient) != 0) {
         IJSVGBitFlags* interpolationAttribute = [[IJSVGBitFlags alloc] initWithLength:kIJSVGNodeAttributeStorageLength];
         [interpolationAttribute setBit:IJSVGNodeAttributeColorInterpolation];
         NSString* ownStyle = IJSVGXMLAttributeValue(IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeStyle));
@@ -1396,7 +1396,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         }
     }
     [node consumeAttributes:&context];
-    if ((attributeValues[IJSVGNodeAttributeColorInterpolation] != nil || attributeValues[IJSVGNodeAttributeShapeRendering] != nil || attributeValues[IJSVGNodeAttributeImageRendering] != nil) && [node isKindOfClass:IJSVGGraphicsNode.class]) {
+    if ((attributeValues[IJSVGNodeAttributeColorInterpolation] != nil || attributeValues[IJSVGNodeAttributeShapeRendering] != nil || attributeValues[IJSVGNodeAttributeImageRendering] != nil) && (node.nodeTraits & IJSVGNodeTypeTraitGraphics) != 0) {
         IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
         graphics.colorInterpolation = IJSVGPaintColorInterpolationForString(attributeValues[IJSVGNodeAttributeColorInterpolation]);
         graphics.shapeRendering = IJSVGShapeRenderingForString(attributeValues[IJSVGNodeAttributeShapeRendering]);
@@ -1442,7 +1442,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     node.type = type;
     IJSVGPreserveElementName(node, element);
     node.isTextPath = type == IJSVGNodeTypeTextPath;
-    if ([parentNode isKindOfClass:IJSVGGroup.class]) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         [(IJSVGGroup*)parentNode addChild:node];
     }
     IJSVGNodeDeferredAttributes deferredAttributes = { 0 };
@@ -1452,15 +1452,15 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     node.x = nil;
     node.y = nil;
     IJSVGXMLNode* children = IJSVGXMLFirstChild(element);
-    NSMutableArray<id>* content = [[NSMutableArray alloc] initWithCapacity:IJSVGXMLChildCount(element)];
+    NSMutableArray<IJSVGTextContent*>* content = [[NSMutableArray alloc] initWithCapacity:IJSVGXMLChildCount(element)];
     for (IJSVGXMLNode* child = children; child != NULL; child = IJSVGXMLNext(child)) {
         if (IJSVGXMLKind(child) == IJSVGXMLNodeKindText) {
-            [content addObject:IJSVGXMLText(child) ?: @""];
+            [content addObject:[[IJSVGTextContent alloc] initWithString:IJSVGXMLText(child) ?: @""]];
         } else {
             IJSVGNodeType childType = IJSVGXMLType(child);
             if (childType == IJSVGNodeTypeTextSpan || childType == IJSVGNodeTypeTextPath || childType == IJSVGNodeTypeAnchor) {
                 IJSVGText* span = [self parseTextElement:(IJSVGXMLNode*)child type:childType parentNode:node];
-                [content addObject:span];
+                [content addObject:[[IJSVGTextContent alloc] initWithSpan:span]];
             }
         }
     }
@@ -1480,7 +1480,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGNode* definition = identifier == nil ? nil : [self computeDetachedNodeWithIdentifier:identifier referencingNode:node element:element];
 
     // An empty marker overrides inheritance for none and invalid references.
-    return [definition isKindOfClass:IJSVGMarker.class] ? (IJSVGMarker*)definition : [[IJSVGMarker alloc] init];
+    return (definition.nodeTraits & IJSVGNodeTypeTraitMarker) != 0 ? (IJSVGMarker*)definition : [[IJSVGMarker alloc] init];
 }
 
 - (void)applyMarkerStart:(NSString*)start mid:(NSString*)mid end:(NSString*)end toNode:(IJSVGGraphicsNode*)node element:(IJSVGXMLNode*)element
@@ -1743,7 +1743,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         return;
     }
     [self computeDefsForElement:element parentNode:node];
-    BOOL isSwitch = [node isKindOfClass:IJSVGSwitch.class];
+    BOOL isSwitch = (node.nodeTraits & IJSVGNodeTypeTraitSwitch) != 0;
     IJSVGXMLNode* selectedChild = isSwitch ? [IJSVGSwitch selectedChildInXML:element preferredLanguages:NSLocale.preferredLanguages] : nil;
     for (IJSVGXMLNode* childNode = IJSVGXMLFirstChild(element); childNode != NULL; childNode = IJSVGXMLNext(childNode)) {
         if (IJSVGXMLKind(childNode) != IJSVGXMLNodeKindElement) {
@@ -1912,7 +1912,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
     void (^apply)(IJSVGNode*) = ^(IJSVGNode* paint) {
         // References to elements other than paint servers are also invalid.
-        IJSVGNode* resolved = [paint isKindOfClass:IJSVGGradient.class] || [paint isKindOfClass:IJSVGPattern.class] ? paint : fallback;
+        IJSVGNode* resolved = (paint.nodeTraits & IJSVGNodeTypeTraitGradient) != 0 || (paint.nodeTraits & IJSVGNodeTypeTraitPattern) != 0 ? paint : fallback;
         if (resolved == nil) {
             IJSVGColorNode* empty = [[IJSVGColorNode alloc] initWithColor:NULL];
             empty.isNoneOrTransparent = YES;
@@ -2391,7 +2391,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGStop* node = [[IJSVGStop alloc] init];
     IJSVGPreserveElementName(node, element);
 
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2516,7 +2516,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGPath* node = [[IJSVGPath alloc] init];
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2530,7 +2530,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGPath* node = [[IJSVGLine alloc] init];
     IJSVGPreserveElementName(node, element);
 
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2544,7 +2544,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGPath* node = [[IJSVGPolyline alloc] init];
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2558,7 +2558,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGPath* node = [[IJSVGPolygon alloc] init];
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2573,7 +2573,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGPath* node = [[IJSVGEllipse alloc] init];
     IJSVGPreserveElementName(node, element);
 
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2588,7 +2588,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGPath* node = [[IJSVGCircle alloc] init];
     IJSVGPreserveElementName(node, element);
 
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2603,7 +2603,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGGroup* node = [[IJSVGNodeClassForType(nodeType) alloc] init];
     node.type = nodeType;
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2618,7 +2618,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     node.name = nil;
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2663,7 +2663,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     IJSVGPath* node = [[IJSVGRect alloc] init];
     IJSVGPreserveElementName(node, element);
 
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2677,7 +2677,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGImage* node = [[IJSVGImage alloc] init];
     IJSVGPreserveElementName(node, element);
-    if ([parentNode isKindOfClass:IJSVGGroup.class] == YES) {
+    if ((parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0) {
         IJSVGGroup* group = (IJSVGGroup*)parentNode;
         [group addChild:node];
     }
@@ -2718,7 +2718,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 {
     IJSVGUse* node = [[IJSVGUse alloc] init];
     IJSVGPreserveElementName(node, element);
-    IJSVGGroup* parentGroup = [parentNode isKindOfClass:IJSVGGroup.class] ? (IJSVGGroup*)parentNode : nil;
+    IJSVGGroup* parentGroup = (parentNode.nodeTraits & IJSVGNodeTypeTraitGroup) != 0 ? (IJSVGGroup*)parentNode : nil;
     [parentGroup addChild:node];
     [self computeAttributesFromElement:element onNode:node ignoredAttributes:nil deferredAttributes:deferredAttributes];
     NSString* xlinkID = node.reference.fragmentIdentifier;
@@ -2933,7 +2933,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
     NSString* identifier = node.reference.fragmentIdentifier;
     if (identifier != nil) {
         IJSVGNode* inherited = [self filterReferenceWithIdentifier:identifier referencingNode:node element:element];
-        if ([inherited isKindOfClass:IJSVGFilter.class]) {
+        if ((inherited.nodeTraits & IJSVGNodeTypeTraitFilter) != 0) {
             IJSVGFilter* template = (IJSVGFilter*)inherited;
             if (IJSVGXMLAttributeForIdentifier(element, IJSVGNodeAttributeX) == nil) {
                 node.x = template.x;

@@ -940,7 +940,7 @@
     CGSize viewport = CGSizeMake(400, 200);
     IJSVGText* text = [self textWithBody:@"<text x='20' y='50' font-size='30'>Repeat <tspan fill='red'>"
                                           "me</tspan></text>"];
-    NSArray<id>* content = text.textContent;
+    NSArray<IJSVGTextContent*>* content = text.textContent;
     IJSVGTextLayout* first = [[IJSVGTextLayout alloc] initWithText:text viewport:viewport pathResolver:nil];
     IJSVGTextLayout* second = [[IJSVGTextLayout alloc] initWithText:text viewport:viewport pathResolver:nil];
     XCTAssertEqualObjects(first.characterPositions, second.characterPositions);

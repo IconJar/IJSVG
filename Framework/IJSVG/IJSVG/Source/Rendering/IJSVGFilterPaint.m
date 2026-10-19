@@ -196,10 +196,10 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
 
         // Keep unsupported branches in the ordinary replay, while independent
         // siblings can still batch. Collection visits only selected branches.
-        if (paint.maskPaint != nil || (paint.clipPaints.count != 0 && (IJSVGFilterRenderDepth == 0 || paint.isFilterPaint))) {
+        if (paint.maskPaint != nil || (paint.clipPaints.count != 0 && (IJSVGFilterRenderDepth == 0 || (paint.paintTraits & IJSVGPaintTraitFilter) != 0))) {
             continue;
         }
-        if (paint.isFilterPaint) {
+        if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
             IJSVGFilterPaint* filtered = (id)paint;
             if (filtered.usesBackground) {
                 continue;
@@ -209,7 +209,7 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
             while (descendants.count != 0) {
                 IJSVGPaint* descendant = descendants.lastObject;
                 [descendants removeLastObject];
-                if (descendant.maskPaint != nil || (descendant.clipPaints.count != 0 && IJSVGFilterRenderDepth == 0) || descendant.isFilterPaint) {
+                if (descendant.maskPaint != nil || (descendant.clipPaints.count != 0 && IJSVGFilterRenderDepth == 0) || (descendant.paintTraits & IJSVGPaintTraitFilter) != 0) {
                     independent = NO;
                     break;
                 }
@@ -525,7 +525,7 @@ static BOOL IJSVGFilterImageNodeIsIndependent(IJSVGNode* node)
     if (node == nil || node.parentNode != nil || node.styleParent != nil) {
         return NO;
     }
-    if (![node isKindOfClass:IJSVGGraphicsNode.class]) {
+    if ((node.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0) {
         return YES;
     }
     IJSVGGraphicsNode* graphics = (IJSVGGraphicsNode*)node;
@@ -537,7 +537,7 @@ static void IJSVGFilterDetachImageValues(IJSVGNode* destination, IJSVGNode* orig
 {
     destination.parentNode = nil;
     destination.styleParent = nil;
-    if (![original isKindOfClass:IJSVGGraphicsNode.class] || ![destination isKindOfClass:IJSVGGraphicsNode.class]) {
+    if ((original.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0 || (destination.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0) {
         return;
     }
     IJSVGGraphicsNode* copy = (IJSVGGraphicsNode*)destination;
@@ -635,9 +635,9 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 @implementation IJSVGFilterPaint
 
-- (BOOL)isFilterPaint
+- (IJSVGPaintTraits)paintTraits
 {
-    return YES;
+    return IJSVGPaintTraitGroup | IJSVGPaintTraitFilter;
 }
 
 @synthesize cachesRenderedOutput = _cachesRenderedOutput;
@@ -808,7 +808,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         return NO;
     }
     for (IJSVGNode* node = self.sourceNode.parentNode; node != nil; node = node.parentNode) {
-        if ([node isKindOfClass:IJSVGGraphicsNode.class] && !CGRectIsNull(((IJSVGGraphicsNode*)node).backgroundRect)) {
+        if ((node.nodeTraits & IJSVGNodeTypeTraitGraphics) != 0 && !CGRectIsNull(((IJSVGGraphicsNode*)node).backgroundRect)) {
             return YES;
         }
     }
@@ -861,7 +861,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             continue;
         }
         [visited addObject:paint];
-        if (paint.isFilterPaint) {
+        if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
             IJSVGFilter* filter = ((IJSVGFilterPaint*)paint).filter;
             if (((IJSVGFilterPaint*)paint).usesBackground) {
                 return NO;
@@ -881,7 +881,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         if (paint.maskPaint != nil) {
             [pending addObject:paint.maskPaint];
         }
-        if ([paint isKindOfClass:IJSVGPatternPaint.class]) {
+        if ((paint.paintTraits & IJSVGPaintTraitPattern) != 0) {
             IJSVGPaint* pattern = ((IJSVGPatternPaint*)paint).pattern;
             if (pattern != nil) {
                 [pending addObject:pattern];
@@ -1105,7 +1105,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     while (pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
-        if (paint.isFilterPaint) {
+        if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
             if ([(IJSVGFilterPaint*)paint requiresFilterSupersampling]) {
                 return YES;
             }
@@ -1151,7 +1151,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         while (pending.count != 0) {
             IJSVGPaint* paint = pending.lastObject;
             [pending removeLastObject];
-            if (paint.isFilterPaint) {
+            if ((paint.paintTraits & IJSVGPaintTraitFilter) != 0) {
                 graph.hasNestedFilters = YES;
                 break;
             }

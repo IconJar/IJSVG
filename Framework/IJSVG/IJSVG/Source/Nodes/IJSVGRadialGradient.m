@@ -13,6 +13,11 @@
 
 @implementation IJSVGRadialGradient
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitGradient | IJSVGNodeTypeTraitRadialGradient;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeRadialGradient;

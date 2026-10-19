@@ -319,6 +319,11 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 
 @implementation IJSVGStyleSheetSelectorRecord
 
+- (IJSVGStyleSheetSelectorNodeKind)selectorNodeKind
+{
+    return IJSVGStyleSheetSelectorNodeKindXMLRecord;
+}
+
 - (IJSVGXMLAttributeList)selectorAttributes
 {
     if (_selectorAttributeOverlay != NULL) {
@@ -375,6 +380,11 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 
 @implementation IJSVGNode (IJSVGStyleSheetSelectorNode)
 
+- (IJSVGStyleSheetSelectorNodeKind)selectorNodeKind
+{
+    return IJSVGStyleSheetSelectorNodeKindRenderNode;
+}
+
 - (id<IJSVGStyleSheetSelectorNode>)selectorParent
 {
     return self.parentNode;
@@ -383,7 +393,7 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 - (id<IJSVGStyleSheetSelectorNode>)selectorPreviousSibling
 {
     IJSVGGroup* group = (IJSVGGroup*)self.parentNode;
-    if (![group isKindOfClass:IJSVGGroup.class]) {
+    if ((group.nodeTraits & IJSVGNodeTypeTraitGroup) == 0) {
         return nil;
     }
     NSUInteger index = [group.children indexOfObjectIdenticalTo:self];
@@ -393,7 +403,7 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 - (id<IJSVGStyleSheetSelectorNode>)selectorNextSibling
 {
     IJSVGGroup* group = (IJSVGGroup*)self.parentNode;
-    if (![group isKindOfClass:IJSVGGroup.class]) {
+    if ((group.nodeTraits & IJSVGNodeTypeTraitGroup) == 0) {
         return nil;
     }
     NSUInteger index = [group.children indexOfObjectIdenticalTo:self];
@@ -402,7 +412,7 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 
 - (id<IJSVGStyleSheetSelectorNode>)selectorFirstChild
 {
-    return [self isKindOfClass:IJSVGGroup.class] ? ((IJSVGGroup*)self).children.firstObject : nil;
+    return (self.nodeTraits & IJSVGNodeTypeTraitGroup) != 0 ? ((IJSVGGroup*)self).children.firstObject : nil;
 }
 
 - (BOOL)selectorIsEmpty
@@ -414,7 +424,7 @@ static BOOL IJSVGSelectorLanguageMatches(const char* language, const char* range
 - (NSUInteger)selectorIndexOfType:(BOOL)ofType fromEnd:(BOOL)fromEnd
 {
     IJSVGGroup* group = (IJSVGGroup*)self.parentNode;
-    if (![group isKindOfClass:IJSVGGroup.class]) {
+    if ((group.nodeTraits & IJSVGNodeTypeTraitGroup) == 0) {
         return 1;
     }
     NSUInteger index = 0;
@@ -648,8 +658,9 @@ static BOOL IJSVGSelectorMatchPseudo(IJSVGStyleSheetPseudoClass* pseudo, id<IJSV
 
         // Immutable XML siblings share one filter pass for each nth selector.
         // Render nodes retain the uncached path because callers can mutate them.
-        IJSVGStyleSheetSelectorRecord* parent = (id)node.selectorParent;
-        if ([node isKindOfClass:IJSVGStyleSheetSelectorRecord.class] && [parent isKindOfClass:IJSVGStyleSheetSelectorRecord.class]) {
+        id<IJSVGStyleSheetSelectorNode> parentNode = node.selectorParent;
+        if (node.selectorNodeKind == IJSVGStyleSheetSelectorNodeKindXMLRecord && parentNode.selectorNodeKind == IJSVGStyleSheetSelectorNodeKindXMLRecord) {
+            IJSVGStyleSheetSelectorRecord* parent = (IJSVGStyleSheetSelectorRecord*)parentNode;
             if (parent.filteredPositions == nil) {
                 parent.filteredPositions = [NSMapTable strongToStrongObjectsMapTable];
             }

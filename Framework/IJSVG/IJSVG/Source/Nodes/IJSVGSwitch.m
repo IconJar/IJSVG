@@ -49,6 +49,11 @@ static BOOL IJSVGSwitchLanguageMatches(const char* languages, const char* prefer
 
 @implementation IJSVGSwitch
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitSwitch;
+}
+
 + (IJSVGNodeType)defaultNodeType
 {
     return IJSVGNodeTypeSwitch;

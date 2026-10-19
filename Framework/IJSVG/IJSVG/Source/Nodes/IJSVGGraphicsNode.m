@@ -212,6 +212,12 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     unsigned char _initializedDefaultLengths;
     uint8_t _paintColorInterpolation;
 }
+
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics;
+}
+
 @synthesize opacity = _opacity, strokeOpacity = _strokeOpacity, strokeWidth = _strokeWidth;
 @synthesize strokeDashOffset = _strokeDashOffset, paintOrder = _paintOrder;
 @synthesize stroke = _stroke, strokeDashArray = _strokeDashArray;
@@ -409,7 +415,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 - (void)applyPropertiesFromNode:(IJSVGNode*)source
 {
     [super applyPropertiesFromNode:source];
-    if (![source isKindOfClass:IJSVGGraphicsNode.class]) {
+    if ((source.nodeTraits & IJSVGNodeTypeTraitGraphics) == 0) {
         return;
     }
     IJSVGGraphicsNode* node = (IJSVGGraphicsNode*)source;
@@ -516,7 +522,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     }
 
     IJSVGNode* fill = self.fill;
-    if ([fill isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)fill).usesCurrentColor) {
+    if ((fill.nodeTraits & IJSVGNodeTypeTraitColor) != 0 && ((IJSVGColorNode*)fill).usesCurrentColor) {
         fill = [IJSVGColorNode colorNodeWithColor:self.currentColor];
     }
     if (fill == nil) {
@@ -529,7 +535,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 
     if ([self matchesTraits:IJSVGNodeTraitStroked] == YES) {
         IJSVGNode* stroke = self.stroke;
-        if ([stroke isKindOfClass:IJSVGColorNode.class] && ((IJSVGColorNode*)stroke).usesCurrentColor) {
+        if ((stroke.nodeTraits & IJSVGNodeTypeTraitColor) != 0 && ((IJSVGColorNode*)stroke).usesCurrentColor) {
             stroke = [IJSVGColorNode colorNodeWithColor:self.currentColor];
         }
         IJSVGTraitedColorStorage* strokeStorage = nil;
@@ -666,7 +672,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 
 - (CGRect)backgroundRect
 {
-    if (![self isKindOfClass:IJSVGGroup.class]) {
+    if ((self.nodeTraits & IJSVGNodeTypeTraitGroup) == 0) {
         return CGRectNull;
     }
     if (self.backgroundEnabled == IJSVGBackgroundEnabledInherit) {

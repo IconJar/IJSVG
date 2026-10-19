@@ -218,7 +218,7 @@ NSUInteger IJSVGTextBuildSpacingUnits(IJSVGTextCharacter* characters, NSRange ra
             previousOwner = character->owner;
             resolved = nil;
             for (IJSVGNode* parent = previousOwner; parent != nil && parent != node; parent = parent.parentNode) {
-                if ([parent isKindOfClass:IJSVGText.class] && ((IJSVGText*)parent).positioning[IJSVGAttributeTextLength] != nil) {
+                if ((parent.nodeTraits & IJSVGNodeTypeTraitText) != 0 && ((IJSVGText*)parent).positioning[IJSVGAttributeTextLength] != nil) {
                     resolved = (IJSVGText*)parent;
                 }
             }

@@ -11,10 +11,47 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from import_mdn_svg import documents, exclusion, normalize
+from import_mdn_svg import aspect_ratio_fragment, documents, exclusion, normalize, standalone_fragment
 
 
 class MDNImportTests(unittest.TestCase):
+    def test_aspect_ratio_fragments_retain_definitions_css_and_nested_viewports(self):
+        prefix = 'reference/attribute/preserveaspectratio/block-'
+        sources = {prefix + '3': '<svg viewBox="-1 -1 202 40"><defs><path id="smiley" d="M0 0L10 10"/></defs>',
+                   prefix + '7': '</svg>', prefix + '8': 'path {fill: yellow}'}
+        code = '<svg width="60" height="30" preserveAspectRatio="xMinYMid meet"><use href="#smiley"/></svg>'
+        xml, css = aspect_ratio_fragment(code, prefix + '5', sources)
+        self.assertIn(code, xml)
+        self.assertIn('id="smiley"', xml)
+        self.assertIn('viewBox="-1 -1 202 40"', xml)
+        self.assertEqual(css, sources[prefix + '8'])
+        self.assertIsNone(exclusion(xml, False))
+        for missing in sources:
+            self.assertIsNone(aspect_ratio_fragment(code, prefix + '5',
+                                                    {k: v for k, v in sources.items() if k != missing}))
+        self.assertIsNone(aspect_ratio_fragment('<svg>', prefix + '5', sources))
+        self.assertIsNone(aspect_ratio_fragment(code, prefix + '3', sources))
+        self.assertIsNone(aspect_ratio_fragment(code, 'other/block-5', sources))
+
+    def test_reviewed_drawing_fragments_preserve_geometry_and_viewport(self):
+        code = '<path d="M20,230 Q40,205 50,230 T90,230" fill="none" stroke="blue"/>'
+        xml = standalone_fragment(code, 'tutorials/svg_from_scratch/basic_shapes/block-8')
+        self.assertIn(code, xml)
+        self.assertIn('viewBox="0 0 200 250"', xml)
+        self.assertIsNone(exclusion(xml, False))
+
+    def test_fragment_adaptation_does_not_accept_unreviewed_or_incomplete_context(self):
+        known = 'tutorials/svg_from_scratch/basic_shapes/block-2'
+        self.assertIsNone(standalone_fragment('<rect width="10"/>', 'unknown'))
+        for code in ['<rect', '<div><rect/></div>', '<defs><rect/></defs>', '<script/>']:
+            self.assertIsNone(standalone_fragment(code, known))
+
+    def test_fragment_adaptation_retains_script_and_resource_exclusions(self):
+        known = 'tutorials/svg_from_scratch/basic_shapes/block-2'
+        for code in ['<rect width="10" onclick="run()"/>',
+                     '<rect width="10" fill="url(https://example.org/paint)"/>']:
+            self.assertIsNotNone(exclusion(standalone_fragment(code, known), False))
+
     def test_nested_svg_is_not_split(self):
         xml = '<svg><svg><circle r="10"/></svg></svg>'
         self.assertEqual(documents(xml), ([xml], None))

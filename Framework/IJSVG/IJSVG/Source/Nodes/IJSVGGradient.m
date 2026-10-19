@@ -119,6 +119,11 @@ static CGGradientRef IJSVGCreateSpreadGradient(IJSVGSpreadFunction* function, CG
     BOOL _gradientIsLinear;
 }
 
+- (IJSVGNodeTypeTraits)nodeTraits
+{
+    return IJSVGNodeTypeTraitPaint | IJSVGNodeTypeTraitGraphics | IJSVGNodeTypeTraitViewport | IJSVGNodeTypeTraitGroup | IJSVGNodeTypeTraitGradient;
+}
+
 // Render colors and locations are already available. Keep editable stop nodes
 // out of the rendering path until a caller inspects or changes the children.
 - (void)deferStops:(IJSVGGradientStops*)stops

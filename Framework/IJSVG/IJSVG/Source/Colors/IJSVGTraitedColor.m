@@ -9,6 +9,8 @@
 #import <IJSVG/IJSVGColor.h>
 #import <IJSVG/IJSVGTraitedColor.h>
 
+#import <objc/runtime.h>
+
 @implementation IJSVGTraitedColor
 
 + (IJSVGTraitedColor*)colorWithColor:(CGColorRef)color traits:(IJSVGColorUsageTraits)traits
@@ -29,10 +31,18 @@
 
 - (BOOL)isEqual:(id)object
 {
-    if ([object isKindOfClass:IJSVGTraitedColor.class] == NO) {
-        return NO;
+    // Foundation equality accepts arbitrary objects.
+    for (Class type = object_getClass(object); type != Nil; type = class_getSuperclass(type)) {
+        if (type == IJSVGTraitedColor.class) {
+            return [self isEqualToTraitedColor:(IJSVGTraitedColor*)object];
+        }
     }
-    return CGColorEqualToColor(self.color, ((IJSVGTraitedColor*)object).color);
+    return NO;
+}
+
+- (BOOL)isEqualToTraitedColor:(IJSVGTraitedColor*)other
+{
+    return other != nil && CGColorEqualToColor(self.color, other.color);
 }
 
 - (void)setColor:(CGColorRef)color

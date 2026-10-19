@@ -19,7 +19,7 @@ typedef struct {
 
 @interface IJSVGStyleSheetStyle : NSObject {
 @private
-    NSMutableDictionary<NSString*, id>* _dict;
+    NSMutableDictionary<NSString*, NSString*>* _dict;
     NSMutableSet<NSString*>* _importantProperties;
     BOOL _geometryPropertiesKnown;
     BOOL _hasGeometryProperties;
@@ -36,9 +36,9 @@ typedef struct {
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string;
 + (IJSVGStyleSheetStyle*)parseStyleString:(NSString*)string removeComments:(BOOL)removeComments;
 
-- (void)setPropertyValue:(id)value forProperty:(NSString*)key;
-- (id)property:(NSString*)key;
-- (NSDictionary<NSString*, id>*)properties;
+- (void)setPropertyValue:(NSString*)value forProperty:(NSString*)key;
+- (NSString*)property:(NSString*)key;
+- (NSDictionary<NSString*, NSString*>*)properties;
 - (BOOL)hasGeometryProperties;
 - (BOOL)hasCustomProperties;
 - (void)copyProperty:(NSString*)property fromStyle:(IJSVGStyleSheetStyle*)style;
@@ -48,7 +48,7 @@ typedef struct {
 - (const IJSVGStyleSheetAttribute*)attributesWithCount:(NSUInteger*)count;
 - (BOOL)isPropertyImportant:(NSString*)key;
 - (BOOL)hasImportantProperties;
-- (void)setResolvedValue:(id)value forProperty:(NSString*)key important:(BOOL)important;
+- (void)setResolvedValue:(NSString*)value forProperty:(NSString*)key important:(BOOL)important;
 
 - (void)addPropertiesFromStyle:(IJSVGStyleSheetStyle*)style;
 - (IJSVGStyleSheetStyle*)mergedStyle:(IJSVGStyleSheetStyle*)style;
