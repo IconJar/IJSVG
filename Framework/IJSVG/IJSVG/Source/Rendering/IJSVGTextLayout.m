@@ -7,6 +7,7 @@
 //
 
 #import <CoreText/CoreText.h>
+#import <IJSVG/IJSVGAnchor.h>
 #import <IJSVG/IJSVGParser.h>
 #import <IJSVG/IJSVGTextLayout.h>
 #import <IJSVG/IJSVGTransform.h>
@@ -884,14 +885,14 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
     if (group) {
         return group;
     }
-    group = [[IJSVGGroup alloc] init];
+    group = node.type == IJSVGNodeTypeAnchor ? [[IJSVGAnchor alloc] init] : [[IJSVGGroup alloc] init];
     [group applyPropertiesFromNode:node];
 
     // Glyph outlines follow text rendering, not inherited shape hints.
     group.shapeRendering = IJSVGShapeRenderingAuto;
     group.x = group.y = nil;
     group.mask = node.mask;
-    group.type = IJSVGNodeTypeGroup;
+    group.type = node.type == IJSVGNodeTypeAnchor ? IJSVGNodeTypeAnchor : IJSVGNodeTypeGroup;
     group.parentNode = nil;
 
     // The renderer applies the root text elements effects exactly once.
@@ -1297,6 +1298,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
 
 - (instancetype)initWithText:(IJSVGText*)text viewport:(CGSize)viewport renderScale:(CGFloat)renderScale renderingOptions:(IJSVGRenderingOptions*)renderingOptions pathResolver:(IJSVGTextPathResolver)pathResolver
 {
+    return [self initWithText:text viewport:viewport renderScale:renderScale renderingOptions:renderingOptions pathResolver:pathResolver geometryHandler:nil];
+}
+
+- (instancetype)initWithText:(IJSVGText*)text viewport:(CGSize)viewport renderScale:(CGFloat)renderScale renderingOptions:(IJSVGRenderingOptions*)renderingOptions pathResolver:(IJSVGTextPathResolver)pathResolver geometryHandler:(void (^)(IJSVGGroup* group, IJSVGText* source))geometryHandler
+{
     if ((self = [super init])) {
         _root = text;
         _viewport = viewport;
@@ -1319,6 +1325,11 @@ static NSRange IJSVGTextAccumulateRanges(IJSVGText* node, CFMutableDictionaryRef
         [self positionOnPaths];
         @autoreleasepool {
             [self buildGeometry];
+        }
+        if (geometryHandler != nil) {
+            for (IJSVGText* source in _groups) {
+                geometryHandler([_groups objectForKey:source], source);
+            }
         }
         [self finishLayout];
     }

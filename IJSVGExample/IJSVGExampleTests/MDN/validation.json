@@ -3885,5 +3885,108 @@
         "inkPixels": 259400
       }
     ]
+  },
+  "anchorRenderingValidation": {
+    "recordedAt": "2026-10-19T22:14:24+00:00",
+    "passed": 11,
+    "failed": 0,
+    "remainingSkippedExamples": 116,
+    "note": "Enabled the existing anchor fixtures after implementing graphical and inline anchor rendering. Original SVG sources and comparison tolerances are unchanged. Navigation links and CSS namespace identifiers no longer count as external rendering resources. Earlier audit failures remain above as historical evidence.",
+    "cases": [
+      {
+        "id": "guides_linking_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "guides_linking_block_5_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_href_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_hreflang_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_ping_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_referrerpolicy_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_rel_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_target_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_xlink_colon_actuate_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_xlink_colon_href_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_element_a_block_2_1",
+        "state": "Passed"
+      }
+    ]
+  },
+  "additionalAnchorFixtureValidation": {
+    "recordedAt": "2026-10-19T22:34:03+00:00",
+    "passed": 3,
+    "failed": 0,
+    "remainingSkippedExamples": 114,
+    "note": "Wrapped the standalone linked circle in an explicit viewport and separated the two complete SVG documents around the download example HTML divider. Original anchor content and comparison tolerances are unchanged. Download behavior is not exercised by static rendering comparisons.",
+    "cases": [
+      {
+        "id": "guides_linking_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_download_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_download_block_2_2",
+        "state": "Passed"
+      }
+    ]
+  },
+  "staticContextFixtureValidation": {
+    "recordedAt": "2026-10-19T22:39:18+00:00",
+    "passed": 5,
+    "failed": 0,
+    "remainingSkippedExamples": 109,
+    "note": "Extracted three independent SVG documents from reviewed static HTML examples and applied two pattern variants to the complete example from the same page. Original source blocks and comparison tolerances are unchanged. These comparisons cover SVG rendering rather than HTML integration.",
+    "cases": [
+      {
+        "id": "guides_namespaces_crash_course_block_4_1",
+        "state": "Passed"
+      },
+      {
+        "id": "guides_svg_in_html_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "reference_attribute_class_block_1_1",
+        "state": "Passed"
+      },
+      {
+        "id": "tutorials_svg_from_scratch_patterns_block_2_1",
+        "state": "Passed"
+      },
+      {
+        "id": "tutorials_svg_from_scratch_patterns_block_3_1",
+        "state": "Passed"
+      }
+    ]
   }
 }

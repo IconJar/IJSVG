@@ -242,6 +242,8 @@
 		59D6A7253082B7C900E99DEB /* IJSVGExportUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 59D6A7243082B7C900E99DEB /* IJSVGExportUtilities.m */; };
 		59DB84E028C9F70000A9696A /* IJSVGBitFlags64.h in Headers */ = {isa = PBXBuildFile; fileRef = 59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59DB84E128C9F70000A9696A /* IJSVGBitFlags64.m in Sources */ = {isa = PBXBuildFile; fileRef = 59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */; };
+		59DCD5793086CDF80054B322 /* IJSVGRegion.h in Headers */ = {isa = PBXBuildFile; fileRef = 59DCD5783086CDF80054B322 /* IJSVGRegion.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		59DCD57B3086CDF90054B322 /* IJSVGRegion.m in Sources */ = {isa = PBXBuildFile; fileRef = 59DCD57A3086CDF90054B322 /* IJSVGRegion.m */; };
 		59E6690D287D6C810085EDF5 /* IJSVGFeatureFlag.h in Headers */ = {isa = PBXBuildFile; fileRef = 59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		59E6690E287D6C810085EDF5 /* IJSVGFeatureFlag.m in Sources */ = {isa = PBXBuildFile; fileRef = 59E6690C287D6C810085EDF5 /* IJSVGFeatureFlag.m */; };
 		59E7CFAF23B148600077D599 /* IJSVGCommandParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 59E7CFAD23B148600077D599 /* IJSVGCommandParser.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -605,6 +607,8 @@
 		59D6A7243082B7C900E99DEB /* IJSVGExportUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGExportUtilities.m; sourceTree = "<group>"; };
 		59DB84DE28C9F70000A9696A /* IJSVGBitFlags64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGBitFlags64.h; sourceTree = "<group>"; };
 		59DB84DF28C9F70000A9696A /* IJSVGBitFlags64.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGBitFlags64.m; sourceTree = "<group>"; };
+		59DCD5783086CDF80054B322 /* IJSVGRegion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGRegion.h; sourceTree = "<group>"; };
+		59DCD57A3086CDF90054B322 /* IJSVGRegion.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRegion.m; sourceTree = "<group>"; };
 		59E6690B287D6C810085EDF5 /* IJSVGFeatureFlag.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IJSVGFeatureFlag.h; sourceTree = "<group>"; };
 		59E6690C287D6C810085EDF5 /* IJSVGFeatureFlag.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGFeatureFlag.m; sourceTree = "<group>"; };
 		59E7CFAD23B148600077D599 /* IJSVGCommandParser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IJSVGCommandParser.h; path = IJSVG/Source/Parsing/IJSVGCommandParser.h; sourceTree = SOURCE_ROOT; };
@@ -1216,6 +1220,8 @@
 				59EB75A223905F6E00F5AE63 /* IJSVG.m */,
 				59EB758423905F6C00F5AE63 /* IJSVGError.h */,
 				595FD12E29EC56BA00666897 /* IJSVGUmbrella.h */,
+				59DCD5783086CDF80054B322 /* IJSVGRegion.h */,
+				59DCD57A3086CDF90054B322 /* IJSVGRegion.m */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -1320,6 +1326,7 @@
 				594688A3307E8480008E2E8A /* IJSVGRoundedShape.h in Headers */,
 				59B649E630759E8A0004EFC2 /* IJSVGTextPathMetrics.h in Headers */,
 				59EB760623905F7300F5AE63 /* IJSVGCommandHorizontalLine.h in Headers */,
+				59DCD5793086CDF80054B322 /* IJSVGRegion.h in Headers */,
 				59468835307E807C008E2E8A /* IJSVGAnchor.h in Headers */,
 				59FC3552306EAC5A0028BEAC /* IJSVGGradientPaint.h in Headers */,
 				594385C0306C3E57006A5F63 /* IJSVGFilterContext.h in Headers */,
@@ -1526,6 +1533,7 @@
 				594688B5307EA240008E2E8A /* IJSVGInheritedElement.m in Sources */,
 				5946889F307E818A008E2E8A /* IJSVGGraphicsNode.m in Sources */,
 				59468877307E8087008E2E8A /* IJSVGDefinitions.m in Sources */,
+				59DCD57B3086CDF90054B322 /* IJSVGRegion.m in Sources */,
 				59DB84E128C9F70000A9696A /* IJSVGBitFlags64.m in Sources */,
 				59468861307E8085008E2E8A /* IJSVGFilterDiffuseLightingPrimitive.m in Sources */,
 				59EB763A23905F7300F5AE63 /* IJSVGForeignObject.m in Sources */,

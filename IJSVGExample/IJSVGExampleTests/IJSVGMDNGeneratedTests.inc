@@ -409,6 +409,11 @@
     [self compareCase:@"reference_attribute_download_block_2_1"];
 }
 
+- (void)test_reference_attribute_download_block_2_2
+{
+    [self compareCase:@"reference_attribute_download_block_2_2"];
+}
+
 - (void)test_reference_attribute_dur_block_2_1
 {
     [self compareCase:@"reference_attribute_dur_block_2_1"];

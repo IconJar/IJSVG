@@ -11,10 +11,76 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from import_mdn_svg import aspect_ratio_fragment, documents, exclusion, normalize, standalone_fragment
+from import_mdn_svg import aspect_ratio_fragment, documents, embedded_svg, exclusion, normalize, pattern_fragment, standalone_fragment
 
 
 class MDNImportTests(unittest.TestCase):
+    def test_pattern_variants_reuse_the_complete_example_context(self):
+        prefix = 'tutorials/svg_from_scratch/patterns/block-'
+        source = '<svg><defs><linearGradient id="Gradient1"/><linearGradient id="Gradient2"/><pattern id="Pattern"><rect width="50"/></pattern></defs><rect fill="url(#Pattern)" width="200" height="200"/></svg>'
+        variant = '<pattern id="Pattern" patternContentUnits="objectBoundingBox"><circle r=".1" fill="url(#Gradient1)"/></pattern>'
+        xml = pattern_fragment(variant, prefix + '2', {prefix + '1': source})
+        self.assertIn(variant, xml)
+        self.assertIn('<linearGradient id="Gradient2"/>', xml)
+        self.assertIn('<rect fill="url(#Pattern)" width="200" height="200"/>', xml)
+        self.assertNotIn('<rect width="50"/>', xml)
+        self.assertIsNone(pattern_fragment(variant, prefix + '2', {}))
+        self.assertIsNone(pattern_fragment(variant, 'unknown', {prefix + '1': source}))
+        self.assertIsNone(pattern_fragment('<pattern', prefix + '2', {prefix + '1': source}))
+        self.assertIsNone(pattern_fragment(variant, prefix + '2', {prefix + '1': source.replace('Gradient2', 'missing')}))
+
+    def test_reviewed_embedded_svg_preserves_namespaces_styles_and_geometry(self):
+        source = '<html xmlns:svg="http://www.w3.org/2000/svg"><body><svg:svg width="300" height="200"><svg:circle cx="150" cy="100" r="50" fill="red"/></svg:svg></body></html>'
+        xml = embedded_svg(source, 'guides/namespaces_crash_course/block-4')
+        self.assertIn('xmlns="http://www.w3.org/2000/svg"', xml)
+        self.assertIn('cx="150"', xml)
+        self.assertIn('fill="red"', xml)
+        self.assertEqual(documents(xml), ([xml], None))
+        source = '<html><svg><style>rect.example {fill: red}</style><rect class="example" width="10" height="10"/></svg></html>'
+        xml = embedded_svg(source, 'reference/attribute/class/block-1')
+        self.assertIn('rect.example {fill: red}', xml)
+        self.assertIn('class="example"', xml)
+        self.assertIsNone(exclusion(xml, False))
+
+    def test_embedded_svg_requires_reviewed_static_complete_context(self):
+        known = 'guides/svg_in_html/block-1'
+        self.assertIsNone(embedded_svg('<html><svg/></html>', 'unknown'))
+        for source in ['<html><svg>', '<html/>', '<html><svg/><svg/></html>',
+                       '<html onload="run()"><svg/></html>',
+                       '<html><script>run()</script><svg/></html>']:
+            self.assertIsNone(embedded_svg(source, known))
+
+    def test_reviewed_anchor_fragment_preserves_link_and_geometry(self):
+        code = '<a href="https://example.com/"><circle cx="50" cy="50" r="40"/></a>'
+        xml = standalone_fragment(code, 'guides/linking/block-1')
+        self.assertIn(code, xml)
+        self.assertIn('viewBox="0 0 100 100"', xml)
+        self.assertIsNone(exclusion(xml, False))
+        self.assertIsNone(standalone_fragment(code, 'unknown'))
+
+    def test_download_examples_split_only_the_reviewed_html_divider(self):
+        first = '<svg><a href="data:image/svg+xml,example"><text>Display</text></a></svg>'
+        second = '<svg><a href="data:image/svg+xml,example" download="heart.svg"><text>Download</text></a></svg>'
+        code = first + '<hr />' + second
+        self.assertEqual(documents(code, 'reference/attribute/download/block-2'), ([first, second], None))
+        self.assertIsNotNone(documents(code)[1])
+        self.assertIsNotNone(documents('<div>' + code + '</div>', 'reference/attribute/download/block-2')[1])
+
+    def test_navigation_links_do_not_require_external_rendering_resources(self):
+        for href in ['href', 'xlink:href']:
+            xml = (f'<svg xmlns:xlink="http://www.w3.org/1999/xlink">'
+                   f'<a {href}="https://example.org/"><circle r="5"/></a></svg>')
+            self.assertIsNone(exclusion(xml, False))
+        xml = '<svg><a href="https://example.org"><image href="missing.png"/></a></svg>'
+        self.assertIn('External resource', exclusion(xml, False))
+
+    def test_css_namespace_urls_are_identifiers_but_paint_urls_are_resources(self):
+        css = '@namespace svg url("http://www.w3.org/2000/svg");'
+        xml = '<svg><style>' + css + '</style><circle r="5"/></svg>'
+        self.assertIsNone(exclusion(xml, False))
+        for extra in ['circle {fill: url(https://example.org/paint)}', '@import "external.css";']:
+            self.assertIn('External CSS', exclusion(xml.replace('</style>', extra + '</style>'), False))
+
     def test_aspect_ratio_fragments_retain_definitions_css_and_nested_viewports(self):
         prefix = 'reference/attribute/preserveaspectratio/block-'
         sources = {prefix + '3': '<svg viewBox="-1 -1 202 40"><defs><path id="smiley" d="M0 0L10 10"/></defs>',

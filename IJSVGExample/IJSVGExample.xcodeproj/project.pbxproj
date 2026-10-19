@@ -137,6 +137,7 @@
 		59D6B1A3284F669B0058DE6B /* pattern-alignment.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */; };
 		59D6B1A5284F67FC0058DE6B /* gump-bench.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A4284F67FC0058DE6B /* gump-bench.svg */; };
 		59D6B1A7284F698F0058DE6B /* sh.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59D6B1A6284F698F0058DE6B /* sh.svg */; };
+		59DCD57D3086D10A0054B322 /* IJSVGRegionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 59DCD57C3086D10A0054B322 /* IJSVGRegionTests.m */; };
 		59F799E219B880CE00096CB7 /* htc_one.svg in Resources */ = {isa = PBXBuildFile; fileRef = 59F799E119B880CE00096CB7 /* htc_one.svg */; };
 		59FB54BE280B03E600D148FA /* IJSVG.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; };
 		59FB54C0280B03F400D148FA /* IJSVG.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 59FB54B8280B038200D148FA /* IJSVG.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -344,6 +345,7 @@
 		59D6B1A2284F669B0058DE6B /* pattern-alignment.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "pattern-alignment.svg"; sourceTree = "<group>"; };
 		59D6B1A4284F67FC0058DE6B /* gump-bench.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "gump-bench.svg"; sourceTree = "<group>"; };
 		59D6B1A6284F698F0058DE6B /* sh.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sh.svg; sourceTree = "<group>"; };
+		59DCD57C3086D10A0054B322 /* IJSVGRegionTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGRegionTests.m; sourceTree = "<group>"; };
 		59F799E119B880CE00096CB7 /* htc_one.svg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = htc_one.svg; sourceTree = "<group>"; };
 		59FB54B3280B038200D148FA /* IJSVG.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = IJSVG.xcodeproj; path = ../Framework/IJSVG/IJSVG.xcodeproj; sourceTree = "<group>"; };
 		59FC3868306EBD560028BEAC /* IJSVGQuartzRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = IJSVGQuartzRendererTests.m; sourceTree = "<group>"; };
@@ -580,6 +582,7 @@
 				59C8A6223080D54D003819E4 /* IJSVGFilterVectorTests.m */,
 				5990CDC0308142D500610D9A /* IJSVGPseudoSelectorTests.m */,
 				59D6A7163082AC9200E99DEB /* IJSVGExportDocumentTests.m */,
+				59DCD57C3086D10A0054B322 /* IJSVGRegionTests.m */,
 			);
 			path = IJSVGExampleTests;
 			sourceTree = "<group>";
@@ -880,6 +883,7 @@
 				59FC38EE306ED9690028BEAC /* IJSVGFilterOutputCacheTests.m in Sources */,
 				59B649D4307584280004EFC2 /* IJSVGTextWebKitTests.m in Sources */,
 				59468B4830803518008E2E8A /* IJSVGRasterColorSpaceTests.m in Sources */,
+				59DCD57D3086D10A0054B322 /* IJSVGRegionTests.m in Sources */,
 				595151B33080CD5800B07555 /* IJSVGMemorySafetyTests.m in Sources */,
 				59835AA630769CF0007A1232 /* IJSVGRegressionRegistration.m in Sources */,
 				5929C378306DC63E003D5C0C /* IJSVGFilterSamplerTests.m in Sources */,

@@ -6,11 +6,12 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGRegion.h>
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGStyle.h>
 
-@class IJSVGPaint, IJSVGRootPaint, IJSVGShapePaint;
+@class IJSVGPaint, IJSVGRootPaint, IJSVGShapePaint, IJSVGRegion;
 
 // Resolves the parsed node graph into plain Quartz paint objects.
 @interface IJSVGQuartzRenderer : NSObject
@@ -24,6 +25,8 @@
 - (void)drawPaint:(IJSVGNode*)paint boundingBox:(CGRect)boundingBox viewPort:(CGRect)viewPort region:(CGRect)region inContext:(CGContextRef)context;
 
 // Measures painted geometry before clipping to the outer SVG viewport.
+- (NSArray<IJSVGRegion*>*)regionsForRootNode:(IJSVGRootNode*)rootNode inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace nodeTypes:(NSArray<NSNumber*>*)nodeTypes matchingNode:(IJSVGNode*)matchingNode identifier:(NSString*)identifier;
+
 - (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode;
 - (CGRect)artworkBoundsForRootNode:(IJSVGRootNode*)rootNode includingFilters:(BOOL)includingFilters;
 
@@ -87,6 +90,7 @@ typedef struct {
 } IJSVGResolvedStrokeStyle;
 
 @interface IJSVGGraphicsNode (Rendering)
+- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGGraphicsNode**)referencingNode cache:(CFMutableDictionaryRef)cache;
 - (IJSVGResolvedStrokeStyle)resolvedStrokeStyle;
 - (IJSVGResolvedPaintStyle)resolvedPaintStyle;
 @end

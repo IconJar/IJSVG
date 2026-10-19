@@ -21,6 +21,31 @@
 
 @implementation IJSVGPaintOrderWebKitTests
 
+- (void)testAnchorContainersPreserveTransformsClippingAndPaintInheritance
+{
+    NSString* body = @"<defs><linearGradient id='paint'><stop stop-color='red'/>"
+                      "<stop offset='1' stop-color='blue'/></linearGradient>"
+                      "<clipPath id='clip'><circle cx='70' cy='60' r='55'/></clipPath>"
+                      "<a id='shape' href='https://example.org/'><rect width='25' height='20' fill='green'/></a>"
+                      "</defs><a href='https://example.org/' fill='url(#paint)' opacity='.65' "
+                      "transform='translate(25 15)' clip-path='url(#clip)'>"
+                      "<rect width='100' height='80'/><g stroke='black' stroke-width='3'>"
+                      "<circle cx='100' cy='70' r='30'/></g></a>"
+                      "<a fill='orange'><rect x='160' y='20' width='30' height='40'/></a>"
+                      "<use href='#shape' x='160' y='100'/>";
+    [self compareBody:body name:@"anchor-container-effects" tolerance:.025];
+}
+
+- (void)testLinkedTextKeepsSpanPositioningAndContainerStyles
+{
+    NSString* body = @"<style>a text {fill: #305080}</style>"
+                      "<a href='https://example.org/' transform='translate(10 15)' opacity='.8'>"
+                      "<text x='5' y='50' font-family='Helvetica' font-size='22'>"
+                      "before<a href='#target' dx='4' fill='red'>link<tspan dy='10'>span</tspan></a>"
+                      "<tspan x='5' y='95'>after</tspan></text></a>";
+    [self compareBody:body name:@"linked-text-positioning" tolerance:.16];
+}
+
 - (void)testInlineTextPathMatchesReferencedPath
 {
     NSString* path = @"M20 150 Q150 150 150 90 Q150 20 80 20 Q20 20 20 70";

@@ -1438,7 +1438,8 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
 
 - (IJSVGText*)parseTextElement:(IJSVGXMLNode*)element type:(IJSVGNodeType)type parentNode:(IJSVGGraphicsNode*)parentNode
 {
-    IJSVGText* node = [[IJSVGNodeClassForType(type) alloc] init];
+    Class nodeClass = type == IJSVGNodeTypeAnchor ? IJSVGTextAnchor.class : IJSVGNodeClassForType(type);
+    IJSVGText* node = [[nodeClass alloc] init];
     node.type = type;
     IJSVGPreserveElementName(node, element);
     node.isTextPath = type == IJSVGNodeTypeTextPath;
@@ -1639,6 +1640,7 @@ static IJSVGGraphicsNode* IJSVGDefinitionParentForElement(IJSVGDefinitionStylePa
         case IJSVGNodeTypeGlyph:
         case IJSVGNodeTypeUnknown:
         case IJSVGNodeTypeSwitch:
+        case IJSVGNodeTypeAnchor:
         case IJSVGNodeTypeGroup: {
             computedNode = [self parseGroupElement:element parentNode:node nodeType:nodeType deferredAttributes:&deferredAttributes];
             break;

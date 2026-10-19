@@ -246,7 +246,7 @@
 - (void)testReferencesRemainIndependentWhenNodesAreCopied
 {
     IJSVGReference* reference = [[IJSVGReference alloc] initWithHref:@"#source"];
-    NSArray<IJSVGNode<IJSVGReferenceNode>*>* nodes = @[ [[IJSVGUse alloc] init], [[IJSVGLinearGradient alloc] init], [[IJSVGRadialGradient alloc] init], [[IJSVGPattern alloc] init], [[IJSVGImage alloc] init], [[IJSVGFilter alloc] init], [[IJSVGFilterImagePrimitive alloc] init], [[IJSVGTextPath alloc] init], [[IJSVGAnchor alloc] init] ];
+    NSArray<IJSVGNode<IJSVGReferenceNode>*>* nodes = @[ [[IJSVGUse alloc] init], [[IJSVGLinearGradient alloc] init], [[IJSVGRadialGradient alloc] init], [[IJSVGPattern alloc] init], [[IJSVGImage alloc] init], [[IJSVGFilter alloc] init], [[IJSVGFilterImagePrimitive alloc] init], [[IJSVGTextPath alloc] init], [[IJSVGAnchor alloc] init], [[IJSVGTextAnchor alloc] init] ];
     for (IJSVGNode<IJSVGReferenceNode>* node in nodes) {
         node.reference = reference;
         IJSVGNode<IJSVGReferenceNode>* copy = node.copy;
@@ -389,14 +389,39 @@
     XCTAssertNil(function.parameters[@"stdDeviation"]);
 }
 
+- (void)testGraphicalAnchorsRetainChildrenAndReferencesWhenCopied
+{
+    IJSVGRootNode* root = [self root:@"<a href='https://example.org/' fill='red'>"
+                                      "<rect width='10' height='10'/><text y='20'>linked</text></a>"
+                                      "<a xmlns:l='http://www.w3.org/1999/xlink' l:href='#target'>"
+                                      "<circle r='5'/></a><a><rect width='5' height='5'/></a>"];
+    XCTAssertEqual(root.children.count, 3u);
+    IJSVGAnchor* anchor = (IJSVGAnchor*)root.children[0];
+    XCTAssertEqual(anchor.type, IJSVGNodeTypeAnchor);
+    XCTAssertEqual(anchor.nodeTraits & IJSVGNodeTypeTraitText, 0u);
+    XCTAssertEqual(anchor.children.count, 2u);
+    XCTAssertEqualObjects(anchor.reference.href, @"https://example.org/");
+    XCTAssertEqualObjects(((IJSVGAnchor*)root.children[1]).reference.fragmentIdentifier, @"target");
+    XCTAssertEqual(((IJSVGAnchor*)root.children[2]).children.count, 1u);
+    IJSVGText* text = (IJSVGText*)anchor.children[1];
+    XCTAssertEqualObjects(text.textContent.firstObject.string, @"linked");
+
+    IJSVGAnchor* copy = [anchor copy];
+    XCTAssertEqual(copy.children.count, 2u);
+    XCTAssertEqualObjects(copy.reference.href, anchor.reference.href);
+    XCTAssertNotEqual(copy.children[0], anchor.children[0]);
+    XCTAssertEqual(copy.children[0].parentNode, copy);
+    XCTAssertEqual(anchor.children[0].parentNode, anchor);
+}
+
 - (void)testTextAnchorsRetainMixedContent
 {
     IJSVGRootNode* node = [self root:@"<text x='1' y='20'>before<a href='#target'>linked<tspan> "
                                      @"span</tspan></a>after</text>"];
     XCTAssertTrue([node.children.firstObject isKindOfClass:IJSVGText.class]);
     IJSVGText* text = (IJSVGText*)node.children.firstObject;
-    XCTAssertTrue([text.children.firstObject isKindOfClass:IJSVGAnchor.class]);
-    IJSVGAnchor* anchor = (IJSVGAnchor*)text.children.firstObject;
+    XCTAssertTrue([text.children.firstObject isKindOfClass:IJSVGTextAnchor.class]);
+    IJSVGTextAnchor* anchor = (IJSVGTextAnchor*)text.children.firstObject;
     XCTAssertEqualObjects(anchor.textContent.firstObject.string, @"linked");
     XCTAssertTrue([anchor.children.firstObject isKindOfClass:IJSVGTextSpan.class]);
     XCTAssertEqualObjects(text.textContent.lastObject.string, @"after");

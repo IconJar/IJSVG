@@ -405,7 +405,8 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/download",
       "blocks": 2,
       "cases": [
-        "reference_attribute_download_block_2_1"
+        "reference_attribute_download_block_2_1",
+        "reference_attribute_download_block_2_2"
       ]
     },
     {
@@ -9486,7 +9487,11 @@
       "id": "guides_linking_block_1_1",
       "example": "guides/linking/block-1",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\" viewBox=\"0 0 100 100\"><a href=\"https://example.com/\">\n  <circle cx=\"50\" cy=\"50\" r=\"40\" />\n</a></svg>",
+      "adaptations": [
+        "Wrapped standalone drawing fragment in an explicit SVG viewport"
+      ],
+      "sha256": "c49989242b8a34b3bbf6ae9eaa66275f4a19968b3ea69cc63a816f78186cb372"
     },
     {
       "id": "guides_linking_block_2_1",
@@ -9496,8 +9501,7 @@
       "adaptations": [
         "Included CSS from the enclosing live sample"
       ],
-      "sha256": "fa4b7e4a7525cf68df5d614a51999aa8c1710553d3f245235b3ea654da36380f",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "fa4b7e4a7525cf68df5d614a51999aa8c1710553d3f245235b3ea654da36380f"
     },
     {
       "id": "guides_linking_block_4_1",
@@ -9511,8 +9515,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Linking",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 50\">\n  <a href=\"page2.html\" target=\"_top\">\n    <title>Go to page 2</title>\n    <rect width=\"100\" height=\"50\" fill=\"steelblue\" />\n    <text x=\"50\" y=\"30\" fill=\"white\" text-anchor=\"middle\">Page 2</text>\n  </a>\n</svg>",
       "adaptations": [],
-      "sha256": "7ec07070f73437432fff3feccba7f163777fe4c7d6da493e25538ebb22db1d67",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "7ec07070f73437432fff3feccba7f163777fe4c7d6da493e25538ebb22db1d67"
     },
     {
       "id": "guides_linking_block_6_1",
@@ -9568,7 +9571,11 @@
       "id": "guides_namespaces_crash_course_block_4_1",
       "example": "guides/namespaces_crash_course/block-4",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/Namespaces_crash_course",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300px\" height=\"200px\">\n      <circle cx=\"150\" cy=\"100\" r=\"50\" fill=\"red\" />\n    </svg>",
+      "adaptations": [
+        "Extracted independent SVG artwork from static HTML context"
+      ],
+      "sha256": "ebbb0e6298a9976c6f73fcc3a87bd214d396b6b6686232c0867fd3662497c0d8"
     },
     {
       "id": "guides_namespaces_crash_course_block_10_1",
@@ -9690,7 +9697,11 @@
       "id": "guides_svg_in_html_block_1_1",
       "example": "guides/svg_in_html/block-1",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Guides/SVG_in_HTML",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"0 0 100 100\" preserveAspectRatio=\"xMidYMid slice\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\">\n      <title>A gradient</title>\n      <linearGradient id=\"gradient\">\n        <stop class=\"begin\" offset=\"0%\" stop-color=\"red\" />\n        <stop class=\"end\" offset=\"100%\" stop-color=\"black\" />\n      </linearGradient>\n      <rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" fill=\"url(#gradient)\" />\n      <circle cx=\"50\" cy=\"50\" r=\"30\" fill=\"url(#gradient)\" />\n    </svg>",
+      "adaptations": [
+        "Extracted independent SVG artwork from static HTML context"
+      ],
+      "sha256": "3e120a05cdab6e18ec083e7c50d16d47782108f51fb7d3773ef3e0eb85b83cab"
     },
     {
       "id": "guides_svg_in_html_block_2_1",
@@ -9829,7 +9840,11 @@
       "id": "reference_attribute_class_block_1_1",
       "example": "reference/attribute/class/block-1",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/class",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"120\" height=\"220\" viewPort=\"0 0 120 120\">\n      <style>\n        \n          rect.rectClass {\n            stroke: #000066;\n            fill: #00cc00;\n          }\n          circle.circleClass {\n            stroke: #006600;\n            fill: #cc0000;\n          }\n        \n      </style>\n\n      <rect class=\"rectClass\" x=\"10\" y=\"10\" width=\"100\" height=\"100\" />\n      <circle class=\"circleClass\" cx=\"40\" cy=\"50\" r=\"26\" />\n    </svg>",
+      "adaptations": [
+        "Extracted independent SVG artwork from static HTML context"
+      ],
+      "sha256": "05d84445ccd4b68e0999f1e52a217d3c790055f6cc1e7ea96f329ed15db76a32"
     },
     {
       "id": "reference_attribute_clip_block_2_1",
@@ -10136,7 +10151,23 @@
       "id": "reference_attribute_download_block_2_1",
       "example": "reference/attribute/download/block-2",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/download",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg viewBox=\"0 0 160 40\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\nhtml,\nbody {\n  height: 100%;\n}\n\nsvg {\n  height: 100px;\n}\n\n]]></style>\n  <a\n    href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 85 C20 55 5 35 5 22 C5 8 15 0 28 0 C36 0 44 5 50 14 C56 5 64 0 72 0 C85 0 95 8 95 22 C95 35 80 55 50 85Z' fill='%23e03'/%3E%3C/svg%3E\">\n    <text x=\"10\" y=\"25\">Display my image</text>\n  </a>\n</svg>",
+      "adaptations": [
+        "Separated standalone SVG documents around the HTML divider",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "57638c3f65379c2ff1405d3df6e622a36490d06b0d9d14c1928095163b013ade"
+    },
+    {
+      "id": "reference_attribute_download_block_2_2",
+      "example": "reference/attribute/download/block-2",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/download",
+      "svg": "<svg viewBox=\"0 0 160 40\" xmlns=\"http://www.w3.org/2000/svg\"><style><![CDATA[\nhtml,\nbody {\n  height: 100%;\n}\n\nsvg {\n  height: 100px;\n}\n\n]]></style>\n  <a\n    href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 85 C20 55 5 35 5 22 C5 8 15 0 28 0 C36 0 44 5 50 14 C56 5 64 0 72 0 C85 0 95 8 95 22 C95 35 80 55 50 85Z' fill='%23e03'/%3E%3C/svg%3E\"\n    download=\"heart.svg\">\n    <text x=\"10\" y=\"25\">Download my image</text>\n  </a>\n</svg>",
+      "adaptations": [
+        "Separated standalone SVG documents around the HTML divider",
+        "Included CSS from the enclosing live sample"
+      ],
+      "sha256": "5381d5416624eddbd65aedfb987b571e1666654b5b473879566a0a2b0f72f9c0"
     },
     {
       "id": "reference_attribute_dur_block_2_1",
@@ -10467,8 +10498,7 @@
       "adaptations": [
         "Included CSS from the enclosing live sample"
       ],
-      "sha256": "eccfb224779347abafdcaf01efa4cafbcd2f97531e929f4dc6e1c43a29e44289",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "eccfb224779347abafdcaf01efa4cafbcd2f97531e929f4dc6e1c43a29e44289"
     },
     {
       "id": "reference_attribute_href_block_4_1",
@@ -10487,8 +10517,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/hreflang",
       "svg": "<svg viewBox=\"0 0 150 20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <a href=\"https://example.com\" hreflang=\"en\">\n    <text x=\"5\" y=\"15\">Website</text>\n  </a>\n</svg>",
       "adaptations": [],
-      "sha256": "02d96f837ce85f407338a89037c1d210c5f9807a60cee0acbdc56cadb16657db",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "02d96f837ce85f407338a89037c1d210c5f9807a60cee0acbdc56cadb16657db"
     },
     {
       "id": "reference_attribute_id_block_1_1",
@@ -10933,8 +10962,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/ping",
       "svg": "<svg viewBox=\"0 0 150 20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <a\n    href=\"https://example.com\"\n    ping=\"https://example.com/ping https://example.net/log\">\n    <text x=\"5\" y=\"15\">Example</text>\n  </a>\n</svg>",
       "adaptations": [],
-      "sha256": "063311c1a74e55a4f19756ec365e8199db4c7f0fbfcf27efc00482291f6e1e4c",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "063311c1a74e55a4f19756ec365e8199db4c7f0fbfcf27efc00482291f6e1e4c"
     },
     {
       "id": "reference_attribute_pointer_events_block_2_1",
@@ -11238,8 +11266,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/referrerpolicy",
       "svg": "<svg viewBox=\"0 0 150 20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <a href=\"https://example.com\" referrerpolicy=\"origin\">\n    <text x=\"5\" y=\"15\">Website</text>\n  </a>\n</svg>",
       "adaptations": [],
-      "sha256": "38fb339f797db94ba9620cb74ca0accf5e213231d0bd18419f04d56817214554",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "38fb339f797db94ba9620cb74ca0accf5e213231d0bd18419f04d56817214554"
     },
     {
       "id": "reference_attribute_rel_block_1_1",
@@ -11247,8 +11274,7 @@
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/rel",
       "svg": "<svg viewBox=\"0 0 150 20\" xmlns=\"http://www.w3.org/2000/svg\">\n  <a href=\"https://example.com\" rel=\"external noopener\">\n    <text x=\"5\" y=\"15\">Website</text>\n  </a>\n</svg>",
       "adaptations": [],
-      "sha256": "f529217eae1323bd8c0e24a5d77a8cb6ede41fefecd368f40fba524f31c1a136",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "f529217eae1323bd8c0e24a5d77a8cb6ede41fefecd368f40fba524f31c1a136"
     },
     {
       "id": "reference_attribute_repeatcount_block_2_1",
@@ -11694,8 +11720,7 @@
       "adaptations": [
         "Included CSS from the enclosing live sample"
       ],
-      "sha256": "2114cc661ee6411c53cd10c3d37e8bcab33a0fc81fdd40a474bf6b9b7efa6f80",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "2114cc661ee6411c53cd10c3d37e8bcab33a0fc81fdd40a474bf6b9b7efa6f80"
     },
     {
       "id": "reference_attribute_text_anchor_block_2_1",
@@ -12057,8 +12082,7 @@
       "adaptations": [
         "Added xlink namespace"
       ],
-      "sha256": "6eb778613e5e2cdcd14e9a7021a927d3f633236e649af292ae413ac88d33d94f",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "6eb778613e5e2cdcd14e9a7021a927d3f633236e649af292ae413ac88d33d94f"
     },
     {
       "id": "reference_attribute_xlink_colon_href_block_2_1",
@@ -12069,8 +12093,7 @@
         "Added xlink namespace",
         "Included CSS from the enclosing live sample"
       ],
-      "sha256": "235790e9a84c1f60f8132bc753be435c1934463becd6066a41c12da58381d723",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "235790e9a84c1f60f8132bc753be435c1934463becd6066a41c12da58381d723"
     },
     {
       "id": "reference_attribute_xml_colon_lang_block_1_1",
@@ -12208,8 +12231,7 @@
       "adaptations": [
         "Included CSS from the enclosing live sample"
       ],
-      "sha256": "4b78f9e7ae905ccbdd053d207a9bb54359ec2374123ea9b6755aca1087b7f39f",
-      "skip": "External resource not embedded in the MDN source checkout"
+      "sha256": "4b78f9e7ae905ccbdd053d207a9bb54359ec2374123ea9b6755aca1087b7f39f"
     },
     {
       "id": "reference_element_animate_block_2_1",
@@ -13392,13 +13414,21 @@
       "id": "tutorials_svg_from_scratch_patterns_block_2_1",
       "example": "tutorials/svg_from_scratch/patterns/block-2",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg width=\"200\" height=\"200\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <linearGradient id=\"Gradient1\">\n      <stop offset=\"5%\" stop-color=\"white\" />\n      <stop offset=\"95%\" stop-color=\"blue\" />\n    </linearGradient>\n    <linearGradient id=\"Gradient2\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">\n      <stop offset=\"5%\" stop-color=\"red\" />\n      <stop offset=\"95%\" stop-color=\"orange\" />\n    </linearGradient>\n\n    <pattern id=\"Pattern\" width=\".25\" height=\".25\" patternContentUnits=\"objectBoundingBox\">\n   <rect x=\"0\" y=\"0\" width=\".25\" height=\".25\" fill=\"skyblue\"/>\n   <rect x=\"0\" y=\"0\" width=\".125\" height=\".125\" fill=\"url(#Gradient2)\"/>\n   <circle cx=\".125\" cy=\".125\" r=\".1\" fill=\"url(#Gradient1)\" fill-opacity=\"0.5\"/>\n </pattern>\n  </defs>\n\n  <rect fill=\"url(#Pattern)\" stroke=\"black\" width=\"200\" height=\"200\" />\n</svg>\n",
+      "adaptations": [
+        "Applied pattern variant to the shared gradients and drawing from the complete example"
+      ],
+      "sha256": "78943e30aaca0383d341a84cb2548dead1ba22d2c40b0d7847907fe400fb6524"
     },
     {
       "id": "tutorials_svg_from_scratch_patterns_block_3_1",
       "example": "tutorials/svg_from_scratch/patterns/block-3",
       "url": "https://developer.mozilla.org/en-US/docs/Web/SVG/Tutorials/SVG_from_scratch/Patterns",
-      "skip": "HTML wrapper or incomplete SVG fragment"
+      "svg": "<svg width=\"200\" height=\"200\" xmlns=\"http://www.w3.org/2000/svg\">\n  <defs>\n    <linearGradient id=\"Gradient1\">\n      <stop offset=\"5%\" stop-color=\"white\" />\n      <stop offset=\"95%\" stop-color=\"blue\" />\n    </linearGradient>\n    <linearGradient id=\"Gradient2\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">\n      <stop offset=\"5%\" stop-color=\"red\" />\n      <stop offset=\"95%\" stop-color=\"orange\" />\n    </linearGradient>\n\n    <pattern id=\"Pattern\" x=\"10\" y=\"10\" width=\"50\" height=\"50\" patternUnits=\"userSpaceOnUse\">\n   <rect x=\"0\" y=\"0\" width=\"50\" height=\"50\" fill=\"skyblue\"/>\n   <rect x=\"0\" y=\"0\" width=\"25\" height=\"25\" fill=\"url(#Gradient2)\"/>\n   <circle cx=\"25\" cy=\"25\" r=\"20\" fill=\"url(#Gradient1)\" fill-opacity=\"0.5\"/>\n </pattern>\n  </defs>\n\n  <rect fill=\"url(#Pattern)\" stroke=\"black\" width=\"200\" height=\"200\" />\n</svg>\n",
+      "adaptations": [
+        "Applied pattern variant to the shared gradients and drawing from the complete example"
+      ],
+      "sha256": "9f6706b8e28e3b3134a47600c2b0b349b9e1d13e445e413b71216180cdf06ab0"
     },
     {
       "id": "tutorials_svg_from_scratch_positions_block_1_1",

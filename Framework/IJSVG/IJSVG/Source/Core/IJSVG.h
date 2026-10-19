@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <IJSVG/IJSVGExporter.h>
 #import <IJSVG/IJSVGParser.h>
+#import <IJSVG/IJSVGRegion.h>
 #import <IJSVG/IJSVGRendering.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGStyle.h>
@@ -68,6 +69,25 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Conservative extent including enabled filters, before viewport clipping.
 - (CGRect)artworkExtent;
+
+// Returns one region per rendered anchor instance with the original href as its value.
+// Results follow painting order and can be queried before drawing.
+// Rectangles use the same user coordinates as drawInRect with SVG Y increasing downward.
+// Bounds include transforms and viewport clipping but are conservative for curved clips
+// and masks and exclude filter effects and occlusion by other artwork.
+// Relative values and fragments are preserved for the caller to resolve.
+- (NSArray<IJSVGRegion*>*)regionsInRect:(CGRect)rect NS_SWIFT_NAME(regions(in:));
+
+// Bounds include strokes but exclude filters and masks.
+// Local bounds precede the node transform and include child transforms.
+// They ignore ancestor clipping and use inner user coordinates for SVG viewports.
+// User bounds use the outer SVG user coordinates before destination mapping.
+// Only destination bounds are clipped to the supplied drawing rectangle.
+// A nil type list includes all rendered nodes and an empty list includes none.
+// The drawing size resolves relative units in every coordinate space.
+- (NSArray<IJSVGRegion*>*)regionsInRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace nodeTypes:(nullable NSArray<NSNumber*>*)nodeTypes NS_SWIFT_NAME(regions(in:coordinateSpace:nodeTypes:));
+- (NSArray<IJSVGRegion*>*)regionsForNode:(IJSVGNode*)node inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace NS_SWIFT_NAME(regions(for:in:coordinateSpace:));
+- (NSArray<IJSVGRegion*>*)regionsForIdentifier:(NSString*)identifier inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace NS_SWIFT_NAME(regions(forIdentifier:in:coordinateSpace:));
 
 // Cached proof that painted geometry is outside the viewBox. Query before
 // fitting. NO includes unknown, does not detect overlap by other nodes.

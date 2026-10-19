@@ -28,6 +28,7 @@ SVG = re.compile(r"</?svg\b[^>]*>", re.I)
 FOREIGN_OBJECT = re.compile(r"<(?:[\w.-]+:)?foreignObject\b", re.I)
 
 FRAGMENT_VIEWPORTS = {
+    "guides/linking/block-1": (100, 100),
     **{f"tutorials/svg_from_scratch/basic_shapes/block-{index}": (200, 250)
        for index in range(2, 9)},
     "tutorials/svg_from_scratch/clipping_and_masking/block-3": (100, 100),
@@ -50,7 +51,56 @@ def standalone_fragment(code, example_id):
     except ET.ParseError:
         return None
     shapes = {'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text'}
+    if example_id == 'guides/linking/block-1':
+        shapes.add('a')
     if not len(root) or any(node.tag.split('}')[-1] not in shapes for node in root):
+        return None
+    return xml
+
+
+def embedded_svg(code, example_id):
+    reviewed = {'guides/namespaces_crash_course/block-4',
+                'guides/svg_in_html/block-1', 'reference/attribute/class/block-1'}
+    if example_id not in reviewed:
+        return None
+    try:
+        root = ET.fromstring(code)
+    except ET.ParseError:
+        return None
+    nodes = list(root.iter())
+    if any(node.tag.split('}')[-1] == 'script' or
+           any(key.lower().startswith('on') for key in node.attrib) for node in nodes):
+        return None
+    candidates = [node for node in nodes if node.tag.split('}')[-1] == 'svg']
+    if len(candidates) != 1:
+        return None
+    ET.register_namespace('', 'http://www.w3.org/2000/svg')
+    svg = candidates[0]
+    if not svg.tag.startswith('{'):
+        svg.set('xmlns', 'http://www.w3.org/2000/svg')
+    return ET.tostring(svg, encoding='unicode').strip()
+
+
+def pattern_fragment(code, example_id, sources):
+    prefix = 'tutorials/svg_from_scratch/patterns/block-'
+    if example_id not in {prefix + '2', prefix + '3'}:
+        return None
+    source = sources.get(prefix + '1')
+    if source is None:
+        return None
+    try:
+        pattern = ET.fromstring(code)
+        root = ET.fromstring(source)
+    except ET.ParseError:
+        return None
+    if pattern.tag.split('}')[-1] != 'pattern' or pattern.get('id') != 'Pattern':
+        return None
+    identifiers = {node.get('id') for node in root.iter()}
+    if not {'Pattern', 'Gradient1', 'Gradient2'}.issubset(identifiers):
+        return None
+    xml, count = re.subn(r'<pattern\b[^>]*>.*?</pattern>', lambda match: code,
+                         source, flags=re.S)
+    if count != 1:
         return None
     return xml
 
@@ -76,8 +126,10 @@ def aspect_ratio_fragment(code, example_id, sources):
     return None
 
 
-def documents(code):
+def documents(code, example_id=None):
     """Keep nested SVGs intact, splitting only top-level documents."""
+    if example_id == 'reference/attribute/download/block-2':
+        code = re.sub(r'<hr\s*/?>', '', code, flags=re.I)
     depth, start, end = 0, 0, 0
     result = []
     for match in SVG.finditer(code):
@@ -170,16 +222,23 @@ def exclusion(xml, javascript):
         return "Animation requires a separately defined timeline expectation"
     if re.search(r"<script\b|\son\w+\s*=", xml, re.I):
         return "Scripted or interactive SVG"
-    if re.search(r'''(?:href|src)\s*=\s*["'](?!#|data:)[^"']+''', xml):
-        return "External resource not embedded in the MDN source checkout"
-    if re.search(r'''url\(\s*["']?(?!#|data:)[^\s)"']''', xml) or "@import" in xml:
-        return "External CSS resource"
     if "{{" in xml:
         return "Unexpanded MDN template in source"
     try:
         root = ET.fromstring(xml)
     except ET.ParseError as error:
         return "Not standalone XML: " + str(error)
+    for node in root.iter():
+        tag = node.tag.split('}')[-1]
+        for attribute, value in node.attrib.items():
+            name = attribute.split('}')[-1]
+            if name not in {'href', 'src'} or (tag == 'a' and name == 'href'):
+                continue
+            if not value.startswith(('#', 'data:')):
+                return "External resource not embedded in the MDN source checkout"
+    resource_css = re.sub(r'@namespace\b[^;]*;', '', xml, flags=re.I)
+    if re.search(r'''url\(\s*["']?(?!#|data:)[^\s)"']''', resource_css) or "@import" in resource_css:
+        return "External CSS resource"
     def paints(node):
         tag = node.tag.split('}')[-1]
         if tag in {'defs', 'symbol', 'clipPath', 'mask', 'marker', 'pattern', 'filter', 'style', 'metadata'}:
@@ -242,14 +301,20 @@ def main():
             examples.append(entry)
             if language not in {"html", "html-nolint", "xml", "svg"}:
                 continue
-            code = re.sub(r"<!--.*?-->|<\?xml.*?\?>|<!DOCTYPE[^>]*>", "", block[2], flags=re.S).strip()
-            docs, reason = documents(code)
+            code = re.sub(r"<!--.*?-->|<\?xml.*?\?>|<!DOCTYPE[^>]*>", "", block[2], flags=re.S | re.I).strip()
+            docs, reason = documents(code, entry["id"])
+            pattern = pattern_fragment(code, entry["id"], block_sources) if not docs else None
+            embedded = embedded_svg(code, entry["id"]) if not docs else None
             fragment = standalone_fragment(code, entry["id"]) if not docs else None
             aspect_fragment = aspect_ratio_fragment(code, entry["id"], block_sources) if not docs else None
             if fragment is not None:
                 docs, reason = [fragment], None
             elif aspect_fragment is not None:
                 docs, reason = [aspect_fragment[0]], None
+            elif embedded is not None:
+                docs, reason = [embedded], None
+            elif pattern is not None:
+                docs, reason = [pattern], None
             group = next(((a, b) for a, b in groups if a <= block.start() < b), None)
             companions = [b for b in blocks if group and group[0] <= b.start() < group[1]]
             css = "\n".join(b[2] for b in companions if b[1].split()[0] == "css")
@@ -270,6 +335,12 @@ def main():
                         changes.insert(0, "Wrapped standalone drawing fragment in an explicit SVG viewport")
                     elif aspect_fragment is not None:
                         changes.insert(0, "Reassembled aspect ratio fragment with its shared SVG definitions and drawing CSS")
+                    if pattern is not None:
+                        changes.insert(0, "Applied pattern variant to the shared gradients and drawing from the complete example")
+                    if embedded is not None:
+                        changes.insert(0, "Extracted independent SVG artwork from static HTML context")
+                    if entry['id'] == 'reference/attribute/download/block-2':
+                        changes.insert(0, "Separated standalone SVG documents around the HTML divider")
                     case.update(svg=xml, adaptations=changes, sha256=hashlib.sha256(xml.encode()).hexdigest())
                     reason = exclusion(xml, javascript if fragment is None else False)
                 if reason:

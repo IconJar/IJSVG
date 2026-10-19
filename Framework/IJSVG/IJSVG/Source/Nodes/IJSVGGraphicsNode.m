@@ -6,14 +6,20 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVG/IJSVGAnchor.h>
+#import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGClipPath.h>
+#import <IJSVG/IJSVGEllipse.h>
 #import <IJSVG/IJSVGGraphicsNode.h>
 #import <IJSVG/IJSVGGroup.h>
+#import <IJSVG/IJSVGLine.h>
 #import <IJSVG/IJSVGMarker.h>
 #import <IJSVG/IJSVGMask.h>
 #import <IJSVG/IJSVGNode.h>
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPolygon.h>
+#import <IJSVG/IJSVGPolyline.h>
+#import <IJSVG/IJSVGRect.h>
 #import <IJSVG/IJSVGRootNode.h>
 #import <IJSVG/IJSVGThreadManager.h>
 #import <IJSVG/IJSVGUse.h>
@@ -860,7 +866,35 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
 
 @end
 
+static BOOL IJSVGUsesStoredPaintProperties(Class type)
+{
+    return type == IJSVGPath.class || type == IJSVGGroup.class || type == IJSVGUse.class || type == IJSVGPolygon.class || type == IJSVGRootNode.class || type == IJSVGClipPath.class || type == IJSVGMask.class || type == IJSVGAnchor.class || type == IJSVGRect.class || type == IJSVGCircle.class || type == IJSVGEllipse.class || type == IJSVGLine.class || type == IJSVGPolyline.class;
+}
+
 @implementation IJSVGGraphicsNode (Rendering)
+
+- (IJSVGUnitType)contentUnitsWithReferencingNode:(IJSVGGraphicsNode**)referencingNode cache:(CFMutableDictionaryRef)cache
+{
+    if (!IJSVGUsesStoredPaintProperties(self.class)) {
+        return [self contentUnitsWithReferencingNode:referencingNode];
+    }
+    IJSVGGraphicsNode* owner = (__bridge IJSVGGraphicsNode*)CFDictionaryGetValue(cache, (__bridge const void*)self);
+    if (owner == nil) {
+        IJSVGGraphicsNode* parent = self.parentNode;
+        if (_contentUnits == IJSVGUnitInherit && parent != nil) {
+            IJSVGUnitType units = [parent contentUnitsWithReferencingNode:&owner cache:cache];
+            if (owner == nil || units != owner->_contentUnits) {
+                *referencingNode = owner;
+                return units;
+            }
+        } else {
+            owner = self;
+        }
+        CFDictionarySetValue(cache, (__bridge const void*)self, (__bridge const void*)owner);
+    }
+    *referencingNode = owner;
+    return owner->_contentUnits;
+}
 
 - (IJSVGResolvedStrokeStyle)resolvedStrokeStyle
 {
@@ -879,7 +913,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
         Class type = node.class;
 
         // Custom subclasses can supply computed values through their getters.
-        if (type != IJSVGPath.class && type != IJSVGGroup.class && type != IJSVGUse.class && type != IJSVGPolygon.class && type != IJSVGRootNode.class && type != IJSVGClipPath.class && type != IJSVGMask.class) {
+        if (!IJSVGUsesStoredPaintProperties(type)) {
             style.usesCustomDashPattern = node == self;
             if (style.vectorEffect == IJSVGVectorEffectInherit) {
                 style.vectorEffect = node.resolvedVectorEffect;
@@ -1012,7 +1046,7 @@ static void IJSVGNodeAddColorToStorage(IJSVGTraitedColorStorage* storage, CGColo
     Class type = self.class;
 
     // Preserve custom inherited getters instead of reading their backing storage.
-    if (type != IJSVGPath.class && type != IJSVGGroup.class && type != IJSVGUse.class && type != IJSVGPolygon.class && type != IJSVGRootNode.class && type != IJSVGClipPath.class && type != IJSVGMask.class) {
+    if (!IJSVGUsesStoredPaintProperties(type)) {
         style->currentColor = style->currentColor ?: self.currentColor;
         if (style->visibility == IJSVGVisibilityInherit) {
             style->visibility = self.visibilityHidden ? IJSVGVisibilityHidden : IJSVGVisibilityVisible;

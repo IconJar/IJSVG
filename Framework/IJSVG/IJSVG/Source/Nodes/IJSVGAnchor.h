@@ -11,7 +11,12 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface IJSVGAnchor : IJSVGText <IJSVGReferenceNode>
+@interface IJSVGAnchor : IJSVGGroup <IJSVGReferenceNode>
+
+@property (nonatomic, strong, nullable) IJSVGReference* reference;
+@end
+
+@interface IJSVGTextAnchor : IJSVGText <IJSVGReferenceNode>
 
 @property (nonatomic, strong, nullable) IJSVGReference* reference;
 @end

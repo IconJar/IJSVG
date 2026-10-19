@@ -410,6 +410,47 @@ static CGImageRef IJSVGRasterImageFailure(NSError** error, NSString* description
 }
 
 // Measures conservative effect coverage without clipping the outer viewport.
+- (NSArray<IJSVGRegion*>*)regionsInRect:(CGRect)rect
+{
+    NSMutableArray<IJSVGRegion*>* links = [NSMutableArray array];
+    for (IJSVGRegion* region in [self regionsInRect:rect coordinateSpace:IJSVGRegionCoordinateSpaceDestination nodeTypes:@[ @(IJSVGNodeTypeAnchor) ]]) {
+        if (region.value != nil) {
+            [links addObject:region];
+        }
+    }
+    return links.copy;
+}
+
+- (NSArray<IJSVGRegion*>*)regionsForNode:(IJSVGNode*)node inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace
+{
+    return [self regionsInRect:rect coordinateSpace:coordinateSpace nodeTypes:nil matchingNode:node identifier:nil];
+}
+
+- (NSArray<IJSVGRegion*>*)regionsForIdentifier:(NSString*)identifier inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace
+{
+    return [self regionsInRect:rect coordinateSpace:coordinateSpace nodeTypes:nil matchingNode:nil identifier:identifier];
+}
+
+- (NSArray<IJSVGRegion*>*)regionsInRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace nodeTypes:(NSArray<NSNumber*>*)nodeTypes
+{
+    return [self regionsInRect:rect coordinateSpace:coordinateSpace nodeTypes:nodeTypes matchingNode:nil identifier:nil];
+}
+
+- (NSArray<IJSVGRegion*>*)regionsInRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace nodeTypes:(NSArray<NSNumber*>*)nodeTypes matchingNode:(IJSVGNode*)node identifier:(NSString*)identifier
+{
+    if (_rootNode == nil || CGRectIsEmpty(rect) || CGRectIsInfinite(rect) || !isfinite(rect.origin.x) || !isfinite(rect.origin.y) || !isfinite(rect.size.width) || !isfinite(rect.size.height)) {
+        return @[];
+    }
+    if (_rootNode.containsRelativeUnits && !CGSizeEqualToSize(_rootNode.clientSize, rect.size)) {
+        _rootNode.clientSize = rect.size;
+        [self _setupBasicInfoFromGroup];
+    }
+    IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+    renderer.style = _style;
+    renderer.renderingOptions = _renderingOptions;
+    return [renderer regionsForRootNode:_rootNode inRect:rect coordinateSpace:coordinateSpace nodeTypes:nodeTypes matchingNode:node identifier:identifier];
+}
+
 - (CGRect)artworkExtent
 {
     IJSVGRootNode* root = self.rootNode;

@@ -66,6 +66,7 @@
 #import <IJSVG/IJSVGPolyline.h>
 #import <IJSVG/IJSVGRect.h>
 #import <IJSVG/IJSVGReference.h>
+#import <IJSVG/IJSVGRegion.h>
 #import <IJSVG/IJSVGRoundedShape.h>
 #import <IJSVG/IJSVGStyleNode.h>
 #import <IJSVG/IJSVGSymbol.h>

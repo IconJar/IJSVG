@@ -7,6 +7,7 @@
 //
 
 #import "IJSVGByteCache.h"
+#import <IJSVG/IJSVGAnchor.h>
 #import <IJSVG/IJSVGCircle.h>
 #import <IJSVG/IJSVGEllipse.h>
 #import <IJSVG/IJSVGGroup.h>
@@ -15,6 +16,7 @@
 #import <IJSVG/IJSVGPath.h>
 #import <IJSVG/IJSVGPattern.h>
 #import <IJSVG/IJSVGRect.h>
+#import <IJSVG/IJSVGRegion.h>
 #import <IJSVG/IJSVGRoundedShape.h>
 #import <IJSVG/IJSVGSymbol.h>
 #import <IJSVG/IJSVGTextLayout.h>
@@ -296,7 +298,32 @@ static void IJSVGCountStrokeOutlineCost(void* info, const CGPathElement* element
     }
 }
 
+@interface IJSVGRegionNodeStyle : NSObject
+@property (nonatomic, assign) IJSVGResolvedPaintStyle paintStyle;
+@end
+
+@implementation IJSVGRegionNodeStyle
+@end
+
+@interface IJSVGRegionPaintInfo : NSObject
+@property (nonatomic, strong) IJSVGNode* node;
+@property (nonatomic, strong) IJSVGPaint* localPaint;
+@property (nonatomic, assign) BOOL inactiveAnchor;
+@property (nonatomic, assign) CGRect measuredBounds;
+@property (nonatomic, assign) CGRect localBounds;
+@property (nonatomic, assign) BOOL hasLocalBounds;
+@end
+
+@implementation IJSVGRegionPaintInfo
+@end
+
 @interface IJSVGQuartzRenderer () {
+    NSMapTable<IJSVGPaint*, IJSVGRegionPaintInfo*>* _regionPaints;
+    CFMutableDictionaryRef _regionUnitNodes;
+    NSMapTable<IJSVGPaint*, NSValue*>* _regionArtworkBounds;
+    NSMapTable<IJSVGGraphicsNode*, IJSVGRegionNodeStyle*>* _regionStyles;
+    NSMapTable<IJSVGNode*, IJSVGNode*>* _regionTextNodes;
+    NSUInteger _regionTextDepth;
     NSMutableArray<IJSVGQuartzClipPath*>* _sharedClipPaths;
     IJSVGByteCache* _strokeOutlineCache;
     BOOL _buildingStrokeOutlines;
@@ -825,22 +852,31 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     _containsText = YES;
     CGFloat scale = sqrt((_textTransform.a * _textTransform.a + _textTransform.b * _textTransform.b + _textTransform.c * _textTransform.c + _textTransform.d * _textTransform.d) / 2);
     IJSVGTextLayout* layout = [[IJSVGTextLayout alloc] initWithText:node
-                                                           viewport:[self unitResolutionBoundsForNode:node].size
-                                                        renderScale:scale
-                                                   renderingOptions:_renderingOptions
-                                                       pathResolver:^CGPathRef(IJSVGPath* pathNode) {
-                                                           CGMutablePathRef path = CGPathCreateMutable();
-                                                           CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
-                                                           [self appendResolvedPathForPathNode:pathNode transform:transform toPath:path];
-                                                           return path;
-                                                       }];
+        viewport:[self unitResolutionBoundsForNode:node].size
+        renderScale:scale
+        renderingOptions:_renderingOptions
+        pathResolver:^CGPathRef(IJSVGPath* pathNode) {
+            CGMutablePathRef path = CGPathCreateMutable();
+            CGAffineTransform transform = IJSVGConcatTransforms(pathNode.transforms);
+            [self appendResolvedPathForPathNode:pathNode transform:transform toPath:path];
+            return path;
+        }
+        geometryHandler:_regionTextNodes == nil ? nil : ^(IJSVGGroup* group, IJSVGText* source) {
+            [self->_regionTextNodes setObject:source forKey:group];
+        }];
     return layout;
 }
 
 - (IJSVGPaint*)drawablePaintForTextNode:(IJSVGText*)node
 {
     IJSVGTextLayout* layout = [self textLayoutForNode:node];
-    IJSVGPaint* paint = [self drawablePaintForGroupNode:layout.group];
+    IJSVGPaint* paint = nil;
+    _regionTextDepth++;
+    @try {
+        paint = [self drawablePaintForGroupNode:layout.group];
+    } @finally {
+        _regionTextDepth--;
+    }
     paint.boundingBox = layout.boundingBox;
     return paint;
 }
@@ -879,7 +915,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     CGAffineTransform previous = _textTransform;
     CGRect bounds = [self unitResolutionBoundsForNode:node];
     IJSVGGraphicsNode* referencingNode = nil;
-    IJSVGUnitType units = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    IJSVGUnitType units = [self contentUnitsForNode:node.parentNode referencingNode:&referencingNode];
     CGAffineTransform local = CGAffineTransformIdentity;
     for (IJSVGTransform* transform in node.transforms.reverseObjectEnumerator) {
         IJSVGTransform* resolved = [transform transformByApplyingUnits:units bounds:bounds];
@@ -893,6 +929,53 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 }
 
+- (IJSVGResolvedPaintStyle)resolvedPaintStyleForNode:(IJSVGGraphicsNode*)node
+{
+    if (_regionStyles == nil) {
+        return [node resolvedPaintStyle];
+    }
+    IJSVGRegionNodeStyle* entry = [_regionStyles objectForKey:node];
+    if (entry != nil) {
+        return entry.paintStyle;
+    }
+    IJSVGGraphicsNode* parent = node.styleParent;
+    IJSVGResolvedPaintStyle style = { .windingRule = IJSVGWindingRuleInherit, .paintOrder = IJSVGPaintOrderInherit };
+    [node addSpecifiedPaintPropertiesToStyle:&style atRoot:parent == nil];
+    if (!style.complete && parent != nil) {
+        IJSVGResolvedPaintStyle inherited = [self resolvedPaintStyleForNode:parent];
+        style.fill = style.fill ?: inherited.fill;
+        if (!style.hasFillOpacity) {
+            style.fillOpacity = inherited.fillOpacity;
+            style.hasFillOpacity = inherited.hasFillOpacity;
+        }
+        if (style.windingRule == IJSVGWindingRuleInherit) {
+            style.windingRule = inherited.windingRule;
+        }
+        if (style.paintOrder == IJSVGPaintOrderInherit) {
+            style.paintOrder = inherited.paintOrder;
+        }
+        if (style.visibility == IJSVGVisibilityInherit) {
+            style.visibility = inherited.visibility;
+        }
+        style.currentColor = style.currentColor ?: inherited.currentColor ?
+                                                                          : IJSVGColor.blackColor;
+        style.markerStart = style.markerStart ?: inherited.markerStart;
+        style.markerMid = style.markerMid ?: inherited.markerMid;
+        style.markerEnd = style.markerEnd ?: inherited.markerEnd;
+    }
+    if (style.visibility == IJSVGVisibilityInherit) {
+        style.visibility = IJSVGVisibilityVisible;
+    }
+    if (!style.complete && style.paintOrder == IJSVGPaintOrderInherit) {
+        style.paintOrder = IJSVGPaintOrderNormal;
+    }
+    style.opacity = node.opacity.value;
+    entry = [[IJSVGRegionNodeStyle alloc] init];
+    entry.paintStyle = style;
+    [_regionStyles setObject:entry forKey:node];
+    return style;
+}
+
 // Build the paint and apply filters when they are enabled.
 - (IJSVGPaint*)drawablePaintForNodeWithTextTransform:(IJSVGGraphicsNode*)node
 {
@@ -902,7 +985,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     if ((node.nodeTraits & IJSVGNodeTypeTraitText) != 0) {
         paint = [self drawablePaintForTextNode:(IJSVGText*)node];
     } else if ((node.nodeTraits & IJSVGNodeTypeTraitPath) != 0) {
-        style = [node resolvedPaintStyle];
+        style = [self resolvedPaintStyleForNode:node];
         hasResolvedStyle = YES;
         paint = [self drawablePaintForPathNode:(IJSVGPath*)node style:&style];
     } else if (node.type == IJSVGNodeTypeSymbol) {
@@ -918,7 +1001,18 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         if (![self hasSymbolContentEffects:node]) {
             paint = [self applyEffectsToPaint:paint fromNode:node style:hasResolvedStyle ? &style : NULL];
         }
-        return [self applyTransforms:node.transforms toPaint:paint fromNode:node];
+        IJSVGPaint* localPaint = paint;
+        paint = [self applyTransforms:node.transforms toPaint:paint fromNode:node];
+        if (_regionPaints != nil) {
+            IJSVGNode* source = [_regionTextNodes objectForKey:node];
+            if (source != nil || _regionTextDepth == 0) {
+                IJSVGRegionPaintInfo* info = [[IJSVGRegionPaintInfo alloc] init];
+                info.node = source ?: node;
+                info.localPaint = localPaint;
+                [_regionPaints setObject:info forKey:paint];
+            }
+        }
+        return paint;
     }
     return paint;
 }
@@ -1001,6 +1095,14 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     return bounds;
 }
 
+- (IJSVGUnitType)contentUnitsForNode:(IJSVGGraphicsNode*)node referencingNode:(IJSVGGraphicsNode**)referencingNode
+{
+    if (_regionUnitNodes != NULL) {
+        return [node contentUnitsWithReferencingNode:referencingNode cache:_regionUnitNodes];
+    }
+    return [node contentUnitsWithReferencingNode:referencingNode];
+}
+
 - (IJSVGUnitLength*)unit:(IJSVGUnitLength*)unit matchingNode:(IJSVGGraphicsNode*)node
 {
     if (unit == nil || node.parentNode == nil) {
@@ -1008,7 +1110,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     IJSVGGraphicsNode* referencingNode = nil;
-    IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    IJSVGUnitType contentUnits = [self contentUnitsForNode:node.parentNode referencingNode:&referencingNode];
     if (contentUnits == IJSVGUnitObjectBoundingBox) {
         if (unit.usesFontMetrics) {
             BOOL css = node.type == IJSVGNodeTypeRect || node.type == IJSVGNodeTypeCircle || node.type == IJSVGNodeTypeEllipse || node.type == IJSVGNodeTypeImage;
@@ -2918,7 +3020,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     }
 
     IJSVGGraphicsNode* referencingNode = nil;
-    IJSVGUnitType contentUnits = [node.parentNode contentUnitsWithReferencingNode:&referencingNode];
+    IJSVGUnitType contentUnits = [self contentUnitsForNode:node.parentNode referencingNode:&referencingNode];
 
     // Use one wrapper for all transforms to save memory.
     // Keep their original order.
@@ -2971,7 +3073,7 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
     BOOL autoHeight = image.height == nil || image.height.value < 0.f;
     CGSize intrinsic = image.intrinsicSize;
     IJSVGGraphicsNode* referencingNode = nil;
-    BOOL objectUnits = image.parentNode != nil && [image.parentNode contentUnitsWithReferencingNode:&referencingNode] == IJSVGUnitObjectBoundingBox;
+    BOOL objectUnits = image.parentNode != nil && [self contentUnitsForNode:image.parentNode referencingNode:&referencingNode] == IJSVGUnitObjectBoundingBox;
     CGFloat percentageWidth = objectUnits ? 1.f : width;
     CGFloat percentageHeight = objectUnits ? 1.f : height;
     CGFloat resolvedWidth = autoWidth ? intrinsic.width : [self resolveCSSLength:image.width percentage:percentageWidth node:image];
@@ -3172,6 +3274,144 @@ static BOOL IJSVGPathMayIntersectViewBox(CGPathRef path, CGAffineTransform trans
         }
     }
     return YES;
+}
+
+- (CGRect)measureRegionPaint:(IJSVGPaint*)paint transform:(CGAffineTransform)transform clip:(CGRect)clip outerRoot:(IJSVGRootNode*)outerRoot recordBounds:(BOOL)recordBounds order:(NSMutableArray<IJSVGPaint*>*)order insideAnchor:(BOOL)insideAnchor
+{
+    if (paint.hidden || paint.opacity <= 0.f) {
+        return CGRectNull;
+    }
+    BOOL collectingLocal = order != nil && !recordBounds;
+    IJSVGRegionPaintInfo* info = [_regionPaints objectForKey:paint];
+
+    // Translation preserves the measured bounds of an entire subtree.
+    // Other transforms must still measure leaves to avoid enlarged bounds.
+    BOOL rootPaint = (paint.paintTraits & IJSVGPaintTraitRoot) != 0;
+    BOOL cacheLocal = order == nil && info != nil && CGRectIsInfinite(clip) && transform.a == 1 && transform.b == 0 && transform.c == 0 && transform.d == 1 && (!rootPaint || ((IJSVGRootPaint*)paint).sourceNode != outerRoot);
+    if (cacheLocal && info.hasLocalBounds) {
+        return CGRectOffset(info.localBounds, transform.tx, transform.ty);
+    }
+    if (!collectingLocal && paint.clipPath != NULL) {
+        clip = CGRectIntersection(clip, CGRectApplyAffineTransform(CGPathGetPathBoundingBox(paint.clipPath), transform));
+    }
+    CGAffineTransform childrenTransform = transform;
+    if (rootPaint) {
+        IJSVGRootPaint* root = (IJSVGRootPaint*)paint;
+        if (root.sourceNode != outerRoot) {
+            CGRect viewport = IJSVGPaintGetBoundingBoxBounds(root);
+            if (!collectingLocal && root.sourceNode.overflowVisibility == IJSVGOverflowVisibilityHidden) {
+                clip = CGRectIntersection(clip, CGRectApplyAffineTransform(viewport, transform));
+            }
+            if (root.viewBox != nil) {
+                CGRect viewBox = [root.viewBox computeValue:root.frame.size];
+                childrenTransform = CGAffineTransformConcat(IJSVGViewBoxComputeTransform(viewBox, viewport, root.viewBoxAlignment, root.viewBoxMeetOrSlice), transform);
+            }
+        }
+    }
+    if (CGRectIsEmpty(clip)) {
+        return CGRectNull;
+    }
+    BOOL anchor = info.node.type == IJSVGNodeTypeAnchor;
+    if (info != nil && order != nil) {
+        info.inactiveAnchor = insideAnchor;
+        [order addObject:paint];
+    }
+    CGRect bounds = CGRectNull;
+    for (IJSVGPaint* child in paint.children) {
+        CGAffineTransform placement = CGAffineTransformConcat(child.placementTransform, childrenTransform);
+        bounds = CGRectUnion(bounds, [self measureRegionPaint:child transform:placement clip:clip outerRoot:outerRoot recordBounds:recordBounds order:order insideAnchor:insideAnchor || anchor]);
+    }
+    if (!collectingLocal && !rootPaint && paint.children.count == 0) {
+        CGRect local;
+
+        // Internal fill and stroke geometry stays fixed during one region query.
+        // Cache before applying the transform or any ancestor clipping.
+        BOOL cacheArtwork = _regionArtworkBounds != nil && !CGRectIsInfinite(clip);
+        NSValue* measured = cacheArtwork ? [_regionArtworkBounds objectForKey:paint] : nil;
+        if (measured != nil) {
+            [measured getValue:&local size:sizeof(local)];
+        } else {
+            local = [self artworkBoundsForPaint:paint];
+            if (cacheArtwork) {
+                [_regionArtworkBounds setObject:[NSValue valueWithBytes:&local objCType:@encode(CGRect)] forKey:paint];
+            }
+        }
+        if (!CGRectIsNull(local) && !CGRectIsInfinite(local)) {
+            bounds = CGRectUnion(bounds, CGRectApplyAffineTransform(local, transform));
+        }
+    }
+    bounds = CGRectIntersection(bounds, clip);
+    if (recordBounds) {
+        info.measuredBounds = bounds;
+    }
+    if (cacheLocal) {
+        info.localBounds = CGRectOffset(bounds, -transform.tx, -transform.ty);
+        info.hasLocalBounds = YES;
+    }
+    return bounds;
+}
+
+- (NSArray<IJSVGRegion*>*)regionsForRootNode:(IJSVGRootNode*)rootNode inRect:(CGRect)rect coordinateSpace:(IJSVGRegionCoordinateSpace)coordinateSpace nodeTypes:(NSArray<NSNumber*>*)nodeTypes matchingNode:(IJSVGNode*)matchingNode identifier:(NSString*)identifier
+{
+    if (coordinateSpace > IJSVGRegionCoordinateSpaceDestination || (nodeTypes != nil && nodeTypes.count == 0)) {
+        return @[];
+    }
+    CGRect frame = [self renderFrameForRootNode:rootNode viewport:rect];
+    BOOL previousGeometry = _resolvingGeometryOnly;
+    BOOL previousMeasurements = _resolvingMeasurements;
+    _resolvingGeometryOnly = YES;
+    _resolvingMeasurements = YES;
+    _regionArtworkBounds = coordinateSpace == IJSVGRegionCoordinateSpaceLocal ? [NSMapTable strongToStrongObjectsMapTable] : nil;
+    _regionStyles = [NSMapTable strongToStrongObjectsMapTable];
+    _regionUnitNodes = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, NULL);
+    _regionPaints = [NSMapTable strongToStrongObjectsMapTable];
+    _regionTextNodes = [NSMapTable strongToStrongObjectsMapTable];
+    @try {
+        IJSVGRootPaint* root = [self rootPaintForRootNode:rootNode viewportSize:frame.size];
+        root.frame = frame;
+        BOOL destination = coordinateSpace == IJSVGRegionCoordinateSpaceDestination;
+        IJSVGRootNode* outerRoot = destination ? nil : rootNode;
+        CGAffineTransform transform = destination ? CGAffineTransformMakeTranslation(rect.origin.x, rect.origin.y) : CGAffineTransformIdentity;
+        CGRect clip = destination ? rect : CGRectInfinite;
+        NSMutableArray<IJSVGPaint*>* order = [NSMutableArray array];
+        [self measureRegionPaint:root transform:transform clip:clip outerRoot:outerRoot recordBounds:coordinateSpace != IJSVGRegionCoordinateSpaceLocal order:order insideAnchor:NO];
+        NSMutableArray<IJSVGRegion*>* regions = [NSMutableArray array];
+        NSMutableDictionary<id<NSCopying>, NSNumber*>* instances = [NSMutableDictionary dictionary];
+        for (IJSVGPaint* paint in order) {
+            IJSVGRegionPaintInfo* info = [_regionPaints objectForKey:paint];
+            IJSVGNode* node = info.node;
+            id<NSCopying> key = node.identifier ?: [NSValue valueWithNonretainedObject:node];
+            NSUInteger instanceIndex = [instances[key] unsignedIntegerValue];
+            instances[key] = @(instanceIndex + 1);
+            if ((matchingNode != nil && node != matchingNode) || (identifier != nil && ![node.identifier isEqualToString:identifier]) || (nodeTypes != nil && ![nodeTypes containsObject:@(node.type)])) {
+                continue;
+            }
+            CGRect bounds = info.measuredBounds;
+            if (coordinateSpace == IJSVGRegionCoordinateSpaceLocal) {
+                IJSVGPaint* local = info.localPaint;
+                BOOL viewport = (local.paintTraits & IJSVGPaintTraitRoot) != 0;
+                bounds = [self measureRegionPaint:local transform:viewport ? CGAffineTransformIdentity : local.placementTransform clip:CGRectInfinite outerRoot:viewport ? (IJSVGRootNode*)node : nil recordBounds:NO order:nil insideAnchor:NO];
+            }
+            if (CGRectIsEmpty(bounds) || !IJSVGRectIsFinite(bounds)) {
+                continue;
+            }
+            NSString* value = nil;
+            if (node.type == IJSVGNodeTypeAnchor && !info.inactiveAnchor) {
+                value = ((id<IJSVGReferenceNode>)node).reference.href;
+            }
+            [regions addObject:[[IJSVGRegion alloc] initWithRect:bounds type:node.type value:value node:node coordinateSpace:coordinateSpace instanceIndex:instanceIndex]];
+        }
+        return regions.copy;
+    } @finally {
+        _resolvingGeometryOnly = previousGeometry;
+        _resolvingMeasurements = previousMeasurements;
+        CFRelease(_regionUnitNodes);
+        _regionUnitNodes = NULL;
+        _regionStyles = nil;
+        _regionArtworkBounds = nil;
+        _regionPaints = nil;
+        _regionTextNodes = nil;
+    }
 }
 
 - (CGRect)renderFrameForRootNode:(IJSVGRootNode*)rootNode viewport:(CGRect)viewPort
