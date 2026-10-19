@@ -64,6 +64,9 @@ typedef NS_OPTIONS(NSUInteger, IJSVGPaintDrawingOptions) {
 @property (nonatomic, assign) IJSVGRenderQuality renderQuality;
 @property (nonatomic, readonly) BOOL treatImplicitOriginAsTransform;
 
+// Filter subclasses inherit this discriminator without walking the class hierarchy.
+@property (nonatomic, readonly) BOOL isFilterPaint;
+
 + (instancetype)paint;
 + (IJSVGPaintFillType)fillTypeForFill:(id)fill;
 + (CGRect)calculateFrameForChildren:(NSArray<IJSVGPaint*>*)children;

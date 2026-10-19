@@ -67,6 +67,11 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
 
 @synthesize frame = _frame;
 
+- (BOOL)isFilterPaint
+{
+    return NO;
+}
+
 + (instancetype)paint
 {
     return [[self alloc] init];
@@ -166,7 +171,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
             continue;
         }
         [visited addObject:paint];
-        if ([paint isKindOfClass:IJSVGFilterPaint.class] || [paint isKindOfClass:IJSVGPatternPaint.class] || (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
+        if (paint.isFilterPaint || [paint isKindOfClass:IJSVGPatternPaint.class] || (paint.sourceNode != nil && !CGRectIsNull(paint.sourceNode.backgroundRect))) {
             return;
         }
         [pending addObjectsFromArray:paint.children];
@@ -490,7 +495,7 @@ static NSCache<NSObject*, IJSVGMaskCachedImage*>* IJSVGMaskImageCache(void)
         // Stop before allocating masks, filter sources or transparency layers.
         // Query after placement and clipping, geometry alone cannot cull effects
         // such as floods and blurs that paint outside their source paths.
-        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil || _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal || [self isKindOfClass:IJSVGFilterPaint.class];
+        BOOL allocatesEffects = _clipPath != NULL || _maskPaint != nil || _opacity != 1.f || _isolated || _blendingMode != kCGBlendModeNormal || self.isFilterPaint;
         if (allocatesEffects && CGRectIsEmpty(CGContextGetClipBoundingBox(ctx))) {
             return;
         }

@@ -6,12 +6,61 @@
 //  Copyright © 2026 Curtis Hard. All rights reserved.
 //
 
+#import <IJSVGFilterPaint.h>
 #import <IJSVGFilterTestHelpers.h>
 
 @interface IJSVGNestedFilterBatchTests : XCTestCase
 @end
 
 @implementation IJSVGNestedFilterBatchTests
+
+- (void)testIndependentSiblingsBatchAroundUnsupportedBranches
+{
+    NSArray<NSString*>* branches = @[
+        @"<g mask='url(#partial)'><rect width='32' height='32' fill='#2060b0'/></g>",
+        (@"<g filter='url(#blur)'><circle cx='10' cy='10' r='5' fill='#c04080' filter='url(#blur)'/>"
+          "<circle cx='22' cy='10' r='5' fill='#8040c0' filter='url(#blur)'/>"
+          "<circle cx='10' cy='22' r='5' fill='#40c080' filter='url(#blur)'/>"
+          "<circle cx='22' cy='22' r='5' fill='#c08040' filter='url(#blur)'/></g>"),
+        @"<rect x='5' y='5' width='22' height='22' fill='#804020' filter='url(#backdrop)'/>"
+    ];
+    for (NSString* branch in branches) {
+        for (NSUInteger placement = 0; placement < 3; placement++) {
+            NSMutableString* contents = [[NSMutableString alloc] init];
+            for (NSUInteger index = 0; index < 4; index++) {
+                if (index == placement) {
+                    [contents appendString:branch];
+                }
+                [contents appendFormat:@"<circle cx='%lu' cy='%lu' r='6' fill='#30b070' fill-opacity='.6' filter='url(#blur)'/>",
+                    (unsigned long)(6 + index * 6), (unsigned long)(8 + index * 4)];
+            }
+            NSString* header = @"<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' enable-background='new'>"
+                                "<defs><filter id='blur' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters='sRGB'>"
+                                "<feGaussianBlur stdDeviation='.4'/></filter>"
+                                "<filter id='backdrop'><feBlend in='SourceGraphic' in2='BackgroundImage' mode='multiply'/></filter>"
+                                "<mask id='partial' maskUnits='userSpaceOnUse' x='0' y='0' width='32' height='32'>"
+                                "<rect width='19' height='32' fill='white'/></mask>"
+                                "<mask id='whole' maskUnits='userSpaceOnUse' x='-32' y='-32' width='96' height='96'>"
+                                "<rect x='-32' y='-32' width='96' height='96' fill='white'/></mask></defs>";
+            NSString* actual = [NSString stringWithFormat:@"%@%@</svg>", header, contents];
+            NSString* reference = [NSString stringWithFormat:@"%@<g mask='url(#whole)'>%@</g></svg>", header, contents];
+            IJSVG* svg = IJSVGTestSVGObject(actual);
+            IJSVGQuartzRenderer* renderer = [[IJSVGQuartzRenderer alloc] init];
+            IJSVGRootPaint* root = [renderer rootPaintForRootNode:svg.rootNode];
+            XCTAssertEqual([IJSVGFilterPaint batchableFiltersForPaint:root].count, 4);
+            for (NSNumber* size in @[ @32, @128 ]) {
+                for (NSNumber* flipped in @[ @NO, @YES ]) {
+                    NSData* result = [self renderDocument:actual size:size.unsignedIntegerValue flipped:flipped.boolValue];
+                    NSData* expected = [self renderDocument:reference size:size.unsignedIntegerValue flipped:flipped.boolValue];
+                    XCTAssertNotNil(result);
+                    XCTAssertNotNil(expected);
+                    XCTAssertTrue([self containsPaintedPixels:result]);
+                    XCTAssertLessThanOrEqual([self maximumDifference:result other:expected], 2, @"branch=%@ placement=%lu", branch, (unsigned long)placement);
+                }
+            }
+        }
+    }
+}
 
 - (void)testNestedFiltersPreserveClipsAndCompositing
 {

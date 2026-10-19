@@ -194,25 +194,35 @@ static BOOL IJSVGQuartzFilterBatchEligible(IJSVGPaint* root, NSMutableSet<IJSVGF
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
 
-        // Nested source batches replay ancestor clips in Quartz. Keep the
-        // top level eligibility rules and reject masks in either scope.
-        if (paint.maskPaint != nil || (paint.clipPaints.count != 0 && (IJSVGFilterRenderDepth == 0 || [paint isKindOfClass:IJSVGFilterPaint.class]))) {
-            return NO;
+        // Keep unsupported branches in the ordinary replay, while independent
+        // siblings can still batch. Collection visits only selected branches.
+        if (paint.maskPaint != nil || (paint.clipPaints.count != 0 && (IJSVGFilterRenderDepth == 0 || paint.isFilterPaint))) {
+            continue;
         }
-        if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        if (paint.isFilterPaint) {
             IJSVGFilterPaint* filtered = (id)paint;
             if (filtered.usesBackground) {
-                return NO;
+                continue;
             }
-            for (IJSVGPaint* parent = paint.parentPaint; parent != nil && parent != root.parentPaint; parent = parent.parentPaint) {
-                if ([parent isKindOfClass:IJSVGFilterPaint.class]) {
-                    return NO;
+            BOOL independent = YES;
+            NSMutableArray<IJSVGPaint*>* descendants = paint.children.mutableCopy;
+            while (descendants.count != 0) {
+                IJSVGPaint* descendant = descendants.lastObject;
+                [descendants removeLastObject];
+                if (descendant.maskPaint != nil || (descendant.clipPaints.count != 0 && IJSVGFilterRenderDepth == 0) || descendant.isFilterPaint) {
+                    independent = NO;
+                    break;
                 }
+                [descendants addObjectsFromArray:descendant.children ?: @[]];
+            }
+            if (!independent) {
+                continue;
             }
             [eligiblePaints addObject:filtered];
             if (++filters > 128) {
                 return NO;
             }
+            continue;
         }
         [pending addObjectsFromArray:paint.children ?: @[]];
     }
@@ -625,6 +635,11 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 @implementation IJSVGFilterPaint
 
+- (BOOL)isFilterPaint
+{
+    return YES;
+}
+
 @synthesize cachesRenderedOutput = _cachesRenderedOutput;
 
 + (void)drawInContext:(CGContextRef)context pixelTransform:(CGAffineTransform)pixelTransform drawingBlock:(void (^)(void))drawingBlock
@@ -846,7 +861,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
             continue;
         }
         [visited addObject:paint];
-        if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        if (paint.isFilterPaint) {
             IJSVGFilter* filter = ((IJSVGFilterPaint*)paint).filter;
             if (((IJSVGFilterPaint*)paint).usesBackground) {
                 return NO;
@@ -1090,7 +1105,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
     while (pending.count != 0) {
         IJSVGPaint* paint = pending.lastObject;
         [pending removeLastObject];
-        if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+        if (paint.isFilterPaint) {
             if ([(IJSVGFilterPaint*)paint requiresFilterSupersampling]) {
                 return YES;
             }
@@ -1103,11 +1118,18 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
 
 - (void)drawInContext:(CGContextRef)ctx
 {
+    // An unbatched sibling may have its own nested batch. Suspend replay state
+    // while rendering it, then restore the completed sibling images.
+    IJSVGQuartzFilterBatch* previousBatch = IJSVGCurrentFilterBatch;
+    if (previousBatch != nil && !previousBatch.collecting && IJSVGFilterRenderDepth == previousBatch.renderDepth && ![previousBatch.eligiblePaints containsObject:self]) {
+        IJSVGCurrentFilterBatch = nil;
+    }
     IJSVGFilterRenderDepth++;
     @try {
         [self drawFilterInContext:ctx];
     } @finally {
         IJSVGFilterRenderDepth--;
+        IJSVGCurrentFilterBatch = previousBatch;
     }
 }
 
@@ -1129,7 +1151,7 @@ static IJSVGNode* IJSVGFilterSnapshotImage(IJSVGFilterPrimitive* primitive)
         while (pending.count != 0) {
             IJSVGPaint* paint = pending.lastObject;
             [pending removeLastObject];
-            if ([paint isKindOfClass:IJSVGFilterPaint.class]) {
+            if (paint.isFilterPaint) {
                 graph.hasNestedFilters = YES;
                 break;
             }
